@@ -195,322 +195,122 @@ specfem::compute::sources::sources(
 
 #undef ASSIGN_MEMBERS
 
-#define COUNT_SOURCES_PER_ELEMENT_TYPE(DIMENSION_TAG, MEDIUM_TAG,              \
-                                       PROPERTY_TAG, BOUNDARY_TAG)             \
-  int CREATE_VARIABLE_NAME(count_forward, GET_NAME(DIMENSION_TAG),             \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),       \
-                           GET_NAME(BOUNDARY_TAG)) = 0;                        \
-  int CREATE_VARIABLE_NAME(count_backward, GET_NAME(DIMENSION_TAG),            \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),       \
-                           GET_NAME(BOUNDARY_TAG)) = 0;                        \
-  int CREATE_VARIABLE_NAME(count_adjoint, GET_NAME(DIMENSION_TAG),             \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),       \
-                           GET_NAME(BOUNDARY_TAG)) = 0;                        \
-  /* Loop over the sources */                                                  \
-  for (int isource = 0; isource < sources.size(); isource++) {                 \
-    if ((h_medium_types(isource) == GET_TAG(MEDIUM_TAG)) &&                    \
-        (h_property_types(isource) == GET_TAG(PROPERTY_TAG)) &&                \
-        (h_boundary_types(isource) == GET_TAG(BOUNDARY_TAG))) {                \
-      /* Count the number of sources for each wavefield type */                \
-      if (h_wavefield_types(isource) ==                                        \
-          specfem::wavefield::simulation_field::forward) {                     \
-        CREATE_VARIABLE_NAME(count_forward, GET_NAME(DIMENSION_TAG),           \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG))                           \
-        ++;                                                                    \
-      } else if (h_wavefield_types(isource) ==                                 \
-                 specfem::wavefield::simulation_field::backward) {             \
-        CREATE_VARIABLE_NAME(count_backward, GET_NAME(DIMENSION_TAG),          \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG))                           \
-        ++;                                                                    \
-      } else if (h_wavefield_types(isource) ==                                 \
-                 specfem::wavefield::simulation_field::adjoint) {              \
-        CREATE_VARIABLE_NAME(count_adjoint, GET_NAME(DIMENSION_TAG),           \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG))                           \
-        ++;                                                                    \
-      }                                                                        \
-    }                                                                          \
-  }
+  FOR_EACH(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+                 (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                  BOUNDARY_TAG_STACEY,
+                  BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+      CAPTURE(element_indices_forward, element_indices_backward,
+              element_indices_adjoint, source_indices_forward,
+              source_indices_backward, source_indices_adjoint,
+              h_element_indices_forward, h_element_indices_backward,
+              h_element_indices_adjoint, h_source_indices_forward,
+              h_source_indices_backward, h_source_indices_adjoint) {
+        int count_forward = 0;
+        int count_backward = 0;
+        int count_adjoint = 0;
 
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      COUNT_SOURCES_PER_ELEMENT_TYPE,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+        /* Loop over the sources */
+        for (int isource = 0; isource < sources.size(); isource++) {
+          if ((h_medium_types(isource) == _medium_tag_) &&
+              (h_property_types(isource) == _property_tag_) &&
+              (h_boundary_types(isource) == _boundary_tag_)) {
+            /* Count the number of sources for each wavefield type */
+            if (h_wavefield_types(isource) ==
+                specfem::wavefield::simulation_field::forward) {
+              count_forward++;
+            } else if (h_wavefield_types(isource) ==
+                       specfem::wavefield::simulation_field::backward) {
+              count_backward++;
+            } else if (h_wavefield_types(isource) ==
+                       specfem::wavefield::simulation_field::adjoint) {
+              count_adjoint++;
+            }
+          }
+        }
 
-#undef COUNT_SOURCES_PER_ELEMENT_TYPE
+        /* ==================================== */
+        /* Allocating the element specific element_indices array */
+        _element_indices_forward_ =
+            IndexViewType("specfem::compute::sources::element_indices_forward",
+                          count_forward);
+        _element_indices_backward_ =
+            IndexViewType("specfem::compute::sources::element_indices_backward",
+                          count_backward);
+        _element_indices_adjoint_ =
+            IndexViewType("specfem::compute::sources::element_indices_adjoint",
+                          count_adjoint);
 
-// Allocate memory for the sources per element type
-#define ALLOCATE_SOURCES_PER_ELEMENT_TYPE(DIMENSION_TAG, MEDIUM_TAG,           \
-                                          PROPERTY_TAG, BOUNDARY_TAG)          \
-  /* ==================================== */                                   \
-  /* Allocating the element specific element_indices array */                  \
-  this->CREATE_VARIABLE_NAME(element_indices_forward, GET_NAME(DIMENSION_TAG), \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG)) =                         \
-      IndexViewType(                                                           \
-          "specfem::compute::sources::element_indices_forward",                \
-          CREATE_VARIABLE_NAME(count_forward, GET_NAME(DIMENSION_TAG),         \
-                               GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),   \
-                               GET_NAME(BOUNDARY_TAG)));                       \
-  this->CREATE_VARIABLE_NAME(element_indices_backward,                         \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)) = \
-      IndexViewType(                                                           \
-          "specfem::compute::sources::element_indices_backward",               \
-          CREATE_VARIABLE_NAME(count_backward, GET_NAME(DIMENSION_TAG),        \
-                               GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),   \
-                               GET_NAME(BOUNDARY_TAG)));                       \
-  this->CREATE_VARIABLE_NAME(element_indices_adjoint, GET_NAME(DIMENSION_TAG), \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG)) =                         \
-      IndexViewType(                                                           \
-          "specfem::compute::sources::element_indices_adjoint",                \
-          CREATE_VARIABLE_NAME(count_adjoint, GET_NAME(DIMENSION_TAG),         \
-                               GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),   \
-                               GET_NAME(BOUNDARY_TAG)));                       \
-  this->CREATE_VARIABLE_NAME(h_element_indices_forward,                        \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)) = \
-      Kokkos::create_mirror_view(this->CREATE_VARIABLE_NAME(                   \
-          element_indices_forward, GET_NAME(DIMENSION_TAG),                    \
-          GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                        \
-          GET_NAME(BOUNDARY_TAG)));                                            \
-  this->CREATE_VARIABLE_NAME(h_element_indices_backward,                       \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)) = \
-      Kokkos::create_mirror_view(this->CREATE_VARIABLE_NAME(                   \
-          element_indices_backward, GET_NAME(DIMENSION_TAG),                   \
-          GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                        \
-          GET_NAME(BOUNDARY_TAG)));                                            \
-  this->CREATE_VARIABLE_NAME(h_element_indices_adjoint,                        \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)) = \
-      Kokkos::create_mirror_view(this->CREATE_VARIABLE_NAME(                   \
-          element_indices_adjoint, GET_NAME(DIMENSION_TAG),                    \
-          GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                        \
-          GET_NAME(BOUNDARY_TAG)));                                            \
-  /* ==================================== */                                   \
-  /* Allocation the element specific source_indices arrays. */                 \
-  /* We do not need a separate counter for this as it is the same */           \
-  /* as the count for the element_indices */                                   \
-  this->CREATE_VARIABLE_NAME(source_indices_forward, GET_NAME(DIMENSION_TAG),  \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG)) =                         \
-      IndexViewType(                                                           \
-          "specfem::compute::sources::source_indices_forward",                 \
-          CREATE_VARIABLE_NAME(count_forward, GET_NAME(DIMENSION_TAG),         \
-                               GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),   \
-                               GET_NAME(BOUNDARY_TAG)));                       \
-  this->CREATE_VARIABLE_NAME(source_indices_backward, GET_NAME(DIMENSION_TAG), \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG)) =                         \
-      IndexViewType(                                                           \
-          "specfem::compute::sources::source_indices_backward",                \
-          CREATE_VARIABLE_NAME(count_backward, GET_NAME(DIMENSION_TAG),        \
-                               GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),   \
-                               GET_NAME(BOUNDARY_TAG)));                       \
-  this->CREATE_VARIABLE_NAME(source_indices_adjoint, GET_NAME(DIMENSION_TAG),  \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG)) =                         \
-      IndexViewType(                                                           \
-          "specfem::compute::sources::source_indices_adjoint",                 \
-          CREATE_VARIABLE_NAME(count_adjoint, GET_NAME(DIMENSION_TAG),         \
-                               GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),   \
-                               GET_NAME(BOUNDARY_TAG)));                       \
-  this->CREATE_VARIABLE_NAME(h_source_indices_forward,                         \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)) = \
-      Kokkos::create_mirror_view(this->CREATE_VARIABLE_NAME(                   \
-          source_indices_forward, GET_NAME(DIMENSION_TAG),                     \
-          GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                        \
-          GET_NAME(BOUNDARY_TAG)));                                            \
-  this->CREATE_VARIABLE_NAME(h_source_indices_backward,                        \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)) = \
-      Kokkos::create_mirror_view(this->CREATE_VARIABLE_NAME(                   \
-          source_indices_backward, GET_NAME(DIMENSION_TAG),                    \
-          GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                        \
-          GET_NAME(BOUNDARY_TAG)));                                            \
-  this->CREATE_VARIABLE_NAME(h_source_indices_adjoint,                         \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)) = \
-      Kokkos::create_mirror_view(this->CREATE_VARIABLE_NAME(                   \
-          source_indices_adjoint, GET_NAME(DIMENSION_TAG),                     \
-          GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                        \
-          GET_NAME(BOUNDARY_TAG)));
-  // Creating the views for all the sources
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      ALLOCATE_SOURCES_PER_ELEMENT_TYPE,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+        _h_element_indices_forward_ =
+            Kokkos::create_mirror_view(_element_indices_forward_);
+        _h_element_indices_backward_ =
+            Kokkos::create_mirror_view(_element_indices_backward_);
+        _h_element_indices_adjoint_ =
+            Kokkos::create_mirror_view(_element_indices_adjoint_);
 
-#undef ALLOCATE_SOURCES_PER_ELEMENT_TYPE
+        /* ==================================== */
+        /* Allocation the element specific source_indices arrays. */
+        /* We do not need a separate counter for this as it is the same */
+        /* as the count for the element_indices */
+        _source_indices_forward_ = IndexViewType(
+            "specfem::compute::sources::source_indices_forward", count_forward);
+        _source_indices_backward_ =
+            IndexViewType("specfem::compute::sources::source_indices_backward",
+                          count_backward);
+        _source_indices_adjoint_ = IndexViewType(
+            "specfem::compute::sources::source_indices_adjoint", count_adjoint);
 
-#define ASSIGN_SOURCES_PER_ELEMENT_TYPE(DIMENSION_TAG, MEDIUM_TAG,             \
-                                        PROPERTY_TAG, BOUNDARY_TAG)            \
-  /* Initialize the index variables */                                         \
-  /* I don't think the name needs to be tracked for later use?*/               \
-  int CREATE_VARIABLE_NAME(index_forward, GET_NAME(DIMENSION_TAG),             \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),       \
-                           GET_NAME(BOUNDARY_TAG)) = 0;                        \
-  int CREATE_VARIABLE_NAME(index_backward, GET_NAME(DIMENSION_TAG),            \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),       \
-                           GET_NAME(BOUNDARY_TAG)) = 0;                        \
-  int CREATE_VARIABLE_NAME(index_adjoint, GET_NAME(DIMENSION_TAG),             \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),       \
-                           GET_NAME(BOUNDARY_TAG)) = 0;                        \
-  /* Loop over all sources */                                                  \
-  for (int isource = 0; isource < sources.size(); isource++) {                 \
-    int ispec = h_element_indices(isource);                                    \
-    if ((h_medium_types(isource) == GET_TAG(MEDIUM_TAG)) &&                    \
-        (h_property_types(isource) == GET_TAG(PROPERTY_TAG)) &&                \
-        (h_boundary_types(isource) == GET_TAG(BOUNDARY_TAG))) {                \
-      if (h_wavefield_types(isource) ==                                        \
-          specfem::wavefield::simulation_field::forward) {                     \
-                                                                               \
-        /* Assign global ispec to local forward element index array */         \
-        /* h_element_indices_forward_<dim>_<medium>_<property> = ispec*/       \
-        this->CREATE_VARIABLE_NAME(                                            \
-            h_element_indices_forward, GET_NAME(DIMENSION_TAG),                \
-            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                      \
-            GET_NAME(BOUNDARY_TAG))(CREATE_VARIABLE_NAME(                      \
-            index_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
-            GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG))) = ispec;          \
-        /* Assign global forward source index to local source index */         \
-        /* h_source_indices_forward_<dim>_<medium>_<property> = isource */     \
-        this->CREATE_VARIABLE_NAME(                                            \
-            h_source_indices_forward, GET_NAME(DIMENSION_TAG),                 \
-            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                      \
-            GET_NAME(BOUNDARY_TAG))(CREATE_VARIABLE_NAME(                      \
-            index_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
-            GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG))) = isource;        \
-        /* Increase forward counter index*/                                    \
-        CREATE_VARIABLE_NAME(index_forward, GET_NAME(DIMENSION_TAG),           \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG))                           \
-        ++;                                                                    \
-      } else if (h_wavefield_types(isource) ==                                 \
-                 specfem::wavefield::simulation_field::backward) {             \
-        /* Assign global ispec to local backward element index array */        \
-        /* h_element_indices_backward_<dim>_<medium>_<property> = ispec */     \
-        this->CREATE_VARIABLE_NAME(                                            \
-            h_element_indices_backward, GET_NAME(DIMENSION_TAG),               \
-            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                      \
-            GET_NAME(BOUNDARY_TAG))(CREATE_VARIABLE_NAME(                      \
-            index_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),     \
-            GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG))) = ispec;          \
-        /* Assign global backward source index to local source index */        \
-        /* h_source_indices_backward_<dim>_<medium>_<property> = isource */    \
-        this->CREATE_VARIABLE_NAME(                                            \
-            h_source_indices_backward, GET_NAME(DIMENSION_TAG),                \
-            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                      \
-            GET_NAME(BOUNDARY_TAG))(CREATE_VARIABLE_NAME(                      \
-            index_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),     \
-            GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG))) = isource;        \
-        CREATE_VARIABLE_NAME(index_backward, GET_NAME(DIMENSION_TAG),          \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG))                           \
-        ++;                                                                    \
-      } else if (h_wavefield_types(isource) ==                                 \
-                 specfem::wavefield::simulation_field::adjoint) {              \
-        /* Assign global ispec to local adjoint element index array */         \
-        /* h_element_indices_backward_<dim>_<medium>_<property> = ispec */     \
-        this->CREATE_VARIABLE_NAME(                                            \
-            h_element_indices_adjoint, GET_NAME(DIMENSION_TAG),                \
-            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                      \
-            GET_NAME(BOUNDARY_TAG))(CREATE_VARIABLE_NAME(                      \
-            index_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
-            GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG))) = ispec;          \
-        this->CREATE_VARIABLE_NAME(                                            \
-            h_source_indices_adjoint, GET_NAME(DIMENSION_TAG),                 \
-            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),                      \
-            GET_NAME(BOUNDARY_TAG))(CREATE_VARIABLE_NAME(                      \
-            index_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
-            GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG))) = isource;        \
-        CREATE_VARIABLE_NAME(index_adjoint, GET_NAME(DIMENSION_TAG),           \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG))                           \
-        ++;                                                                    \
-      }                                                                        \
-    }                                                                          \
-  }                                                                            \
-                                                                               \
-  /* Copy the indeces from the HOST -> DEVICE */                               \
-  /* element_indices_forward_<dim>_<medium>_<property> */                      \
-  Kokkos::deep_copy(this->CREATE_VARIABLE_NAME(                                \
-                        element_indices_forward, GET_NAME(DIMENSION_TAG),      \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)),                               \
-                    this->CREATE_VARIABLE_NAME(                                \
-                        h_element_indices_forward, GET_NAME(DIMENSION_TAG),    \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)));                              \
-  /* element_indices_backward_<dim>_<medium>_<property> */                     \
-  Kokkos::deep_copy(this->CREATE_VARIABLE_NAME(                                \
-                        element_indices_backward, GET_NAME(DIMENSION_TAG),     \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)),                               \
-                    this->CREATE_VARIABLE_NAME(                                \
-                        h_element_indices_backward, GET_NAME(DIMENSION_TAG),   \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)));                              \
-  /* element_indices_adjoint_<dim>_<medium>_<property> */                      \
-  Kokkos::deep_copy(this->CREATE_VARIABLE_NAME(                                \
-                        element_indices_adjoint, GET_NAME(DIMENSION_TAG),      \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)),                               \
-                    this->CREATE_VARIABLE_NAME(                                \
-                        h_element_indices_adjoint, GET_NAME(DIMENSION_TAG),    \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)));                              \
-  /* source_indices_forward_<dim>_<medium>_<property> */                       \
-  Kokkos::deep_copy(this->CREATE_VARIABLE_NAME(                                \
-                        source_indices_forward, GET_NAME(DIMENSION_TAG),       \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)),                               \
-                    this->CREATE_VARIABLE_NAME(                                \
-                        h_source_indices_forward, GET_NAME(DIMENSION_TAG),     \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)));                              \
-  /* source_indices_backward_<dim>_<medium>_<property> */                      \
-  Kokkos::deep_copy(this->CREATE_VARIABLE_NAME(                                \
-                        source_indices_backward, GET_NAME(DIMENSION_TAG),      \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)),                               \
-                    this->CREATE_VARIABLE_NAME(                                \
-                        h_source_indices_backward, GET_NAME(DIMENSION_TAG),    \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)));                              \
-  /* source_indices_adjoint_<dim>_<medium>_<property> */                       \
-  Kokkos::deep_copy(this->CREATE_VARIABLE_NAME(                                \
-                        source_indices_adjoint, GET_NAME(DIMENSION_TAG),       \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)),                               \
-                    this->CREATE_VARIABLE_NAME(                                \
-                        h_source_indices_adjoint, GET_NAME(DIMENSION_TAG),     \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),          \
-                        GET_NAME(BOUNDARY_TAG)));
+        _h_source_indices_forward_ =
+            Kokkos::create_mirror_view(_source_indices_forward_);
+        _h_source_indices_backward_ =
+            Kokkos::create_mirror_view(_source_indices_backward_);
+        _h_source_indices_adjoint_ =
+            Kokkos::create_mirror_view(_source_indices_adjoint_);
 
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      ASSIGN_SOURCES_PER_ELEMENT_TYPE,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef ASSIGN_SOURCES_PER_ELEMENT_TYPE
+        /* Initialize the index variables */
+        int index_forward = 0;
+        int index_backward = 0;
+        int index_adjoint = 0;
+        /* Loop over all sources */
+        for (int isource = 0; isource < sources.size(); isource++) {
+          int ispec = h_element_indices(isource);
+          if ((h_medium_types(isource) == _medium_tag_) &&
+              (h_property_types(isource) == _property_tag_) &&
+              (h_boundary_types(isource) == _boundary_tag_)) {
+            if (h_wavefield_types(isource) ==
+                specfem::wavefield::simulation_field::forward) {
+              /* Assign global ispec to local forward element index array */
+              /* h_element_indices_forward_<dim>_<medium>_<property> = ispec*/
+              _h_element_indices_forward_(index_forward) = ispec;
+              /* Assign global forward source index to local source index */
+              /* h_source_indices_forward_<dim>_<medium>_<property> = isource */
+              _h_source_indices_forward_(index_forward) = isource;
+              /* Increase forward counter index*/
+              index_forward++;
+            } else if (h_wavefield_types(isource) ==
+                       specfem::wavefield::simulation_field::backward) {
+              /* Assign global ispec to local backward element index array */
+              /* h_element_indices_backward_<dim>_<medium>_<property> = ispec */
+              _h_element_indices_backward_(index_backward) = ispec;
+              /* Assign global backward source index to local source index */
+              /* h_source_indices_backward_<dim>_<medium>_<property> = isource
+               */
+              _h_source_indices_backward_(index_backward) = isource;
+              index_backward++;
+            } else if (h_wavefield_types(isource) ==
+                       specfem::wavefield::simulation_field::adjoint) {
+              /* Assign global ispec to local adjoint element index array */
+              /* h_element_indices_adjoint_<dim>_<medium>_<property> = ispec */
+              _h_element_indices_adjoint_(index_adjoint) = ispec;
+              _h_source_indices_adjoint_(index_adjoint) = isource;
+              index_adjoint++;
+            }
+          }
+        }
+      })
 
   Kokkos::deep_copy(medium_types, h_medium_types);
   Kokkos::deep_copy(wavefield_types, h_wavefield_types);
@@ -525,55 +325,36 @@ specfem::compute::sources::get_sources_on_host(
     const specfem::element::property_tag property,
     const specfem::element::boundary_tag boundary,
     const specfem::wavefield::simulation_field wavefield) const {
-
-#define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG)    \
-  if ((wavefield == specfem::wavefield::simulation_field::forward) &&          \
-      (medium == GET_TAG(MEDIUM_TAG)) &&                                       \
-      (property == GET_TAG(PROPERTY_TAG)) &&                                   \
-      (boundary == GET_TAG(BOUNDARY_TAG))) {                                   \
-    return std::make_tuple(                                                    \
-        CREATE_VARIABLE_NAME(h_element_indices_forward,                        \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)),  \
-        CREATE_VARIABLE_NAME(h_source_indices_forward,                         \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG))); \
-  }                                                                            \
-  if ((wavefield == specfem::wavefield::simulation_field::backward) &&         \
-      (medium == GET_TAG(MEDIUM_TAG)) &&                                       \
-      (property == GET_TAG(PROPERTY_TAG)) &&                                   \
-      (boundary == GET_TAG(BOUNDARY_TAG))) {                                   \
-    return std::make_tuple(                                                    \
-        CREATE_VARIABLE_NAME(h_element_indices_backward,                       \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)),  \
-        CREATE_VARIABLE_NAME(h_source_indices_backward,                        \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG))); \
-  }                                                                            \
-  if ((wavefield == specfem::wavefield::simulation_field::adjoint) &&          \
-      (medium == GET_TAG(MEDIUM_TAG)) &&                                       \
-      (property == GET_TAG(PROPERTY_TAG)) &&                                   \
-      (boundary == GET_TAG(BOUNDARY_TAG))) {                                   \
-    return std::make_tuple(                                                    \
-        CREATE_VARIABLE_NAME(h_element_indices_adjoint,                        \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)),  \
-        CREATE_VARIABLE_NAME(h_source_indices_adjoint,                         \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG))); \
-  }
-
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      RETURN_VALUE,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef RETURN_VALUE
+  FOR_EACH(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+                 (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                  BOUNDARY_TAG_STACEY,
+                  BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+      CAPTURE(h_element_indices_forward, h_element_indices_backward,
+              h_element_indices_adjoint, h_source_indices_forward,
+              h_source_indices_backward, h_source_indices_adjoint) {
+        if ((wavefield == specfem::wavefield::simulation_field::forward) &&
+            (medium == _medium_tag_) && (property == _property_tag_) &&
+            (boundary == _boundary_tag_)) {
+          return std::make_tuple(_h_element_indices_forward_,
+                                 _h_source_indices_forward_);
+        } else if ((wavefield ==
+                    specfem::wavefield::simulation_field::backward) &&
+                   (medium == _medium_tag_) && (property == _property_tag_) &&
+                   (boundary == _boundary_tag_)) {
+          return std::make_tuple(_h_element_indices_backward_,
+                                 _h_source_indices_backward_);
+        } else if ((wavefield ==
+                    specfem::wavefield::simulation_field::adjoint) &&
+                   (medium == _medium_tag_) && (property == _property_tag_) &&
+                   (boundary == _boundary_tag_)) {
+          return std::make_tuple(_h_element_indices_adjoint_,
+                                 _h_source_indices_adjoint_);
+        }
+      })
 
   Kokkos::abort("No sources found for the given parameters. Please check the "
                 "input parameters and try again.");
@@ -592,55 +373,36 @@ specfem::compute::sources::get_sources_on_device(
     const specfem::element::property_tag property,
     const specfem::element::boundary_tag boundary,
     const specfem::wavefield::simulation_field wavefield) const {
-
-#define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG)    \
-  if ((wavefield == specfem::wavefield::simulation_field::forward) &&          \
-      (medium == GET_TAG(MEDIUM_TAG)) &&                                       \
-      (property == GET_TAG(PROPERTY_TAG)) &&                                   \
-      (boundary == GET_TAG(BOUNDARY_TAG))) {                                   \
-    return std::make_tuple(                                                    \
-        CREATE_VARIABLE_NAME(element_indices_forward, GET_NAME(DIMENSION_TAG), \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG)),                          \
-        CREATE_VARIABLE_NAME(source_indices_forward, GET_NAME(DIMENSION_TAG),  \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG)));                         \
-  }                                                                            \
-  if ((wavefield == specfem::wavefield::simulation_field::backward) &&         \
-      (medium == GET_TAG(MEDIUM_TAG)) &&                                       \
-      (property == GET_TAG(PROPERTY_TAG)) &&                                   \
-      (boundary == GET_TAG(BOUNDARY_TAG))) {                                   \
-    return std::make_tuple(                                                    \
-        CREATE_VARIABLE_NAME(element_indices_backward,                         \
-                             GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),    \
-                             GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG)),  \
-        CREATE_VARIABLE_NAME(source_indices_backward, GET_NAME(DIMENSION_TAG), \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG)));                         \
-  }                                                                            \
-  if ((wavefield == specfem::wavefield::simulation_field::adjoint) &&          \
-      (medium == GET_TAG(MEDIUM_TAG)) &&                                       \
-      (property == GET_TAG(PROPERTY_TAG)) &&                                   \
-      (boundary == GET_TAG(BOUNDARY_TAG))) {                                   \
-    return std::make_tuple(                                                    \
-        CREATE_VARIABLE_NAME(element_indices_adjoint, GET_NAME(DIMENSION_TAG), \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG)),                          \
-        CREATE_VARIABLE_NAME(source_indices_adjoint, GET_NAME(DIMENSION_TAG),  \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
-                             GET_NAME(BOUNDARY_TAG)));                         \
-  }
-
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      RETURN_VALUE,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef RETURN_VALUE
+  FOR_EACH(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+                 (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                  BOUNDARY_TAG_STACEY,
+                  BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+      CAPTURE(element_indices_forward, element_indices_backward,
+              element_indices_adjoint, source_indices_forward,
+              source_indices_backward, source_indices_adjoint) {
+        if ((wavefield == specfem::wavefield::simulation_field::forward) &&
+            (medium == _medium_tag_) && (property == _property_tag_) &&
+            (boundary == _boundary_tag_)) {
+          return std::make_tuple(_element_indices_forward_,
+                                 _source_indices_forward_);
+        } else if ((wavefield ==
+                    specfem::wavefield::simulation_field::backward) &&
+                   (medium == _medium_tag_) && (property == _property_tag_) &&
+                   (boundary == _boundary_tag_)) {
+          return std::make_tuple(_element_indices_backward_,
+                                 _source_indices_backward_);
+        } else if ((wavefield ==
+                    specfem::wavefield::simulation_field::adjoint) &&
+                   (medium == _medium_tag_) && (property == _property_tag_) &&
+                   (boundary == _boundary_tag_)) {
+          return std::make_tuple(_element_indices_adjoint_,
+                                 _source_indices_adjoint_);
+        }
+      })
 
   Kokkos::abort("No sources found for the given parameters. Please check the "
                 "input parameters and try again.");
