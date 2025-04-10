@@ -15,43 +15,22 @@ specfem::compute::kernels::kernels(
   this->h_property_index_mapping =
       Kokkos::create_mirror_view(property_index_mapping);
 
-#define GET_ELEMENTS(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
-  const auto CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),           \
-                                  GET_NAME(MEDIUM_TAG),                        \
-                                  GET_NAME(PROPERTY_TAG)) =                    \
-      element_types.get_elements_on_host(GET_TAG(MEDIUM_TAG),                  \
-                                         GET_TAG(PROPERTY_TAG));
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      GET_ELEMENTS,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
-
-#undef GET_ELEMENTS
-
   for (int ispec = 0; ispec < nspec; ++ispec) {
     h_property_index_mapping(ispec) = -1;
   }
 
-#define ASSIGN_KERNEL_CONTAINERS(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)      \
-  CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-                       GET_NAME(PROPERTY_TAG)) =                               \
-      specfem::medium::kernels_container<GET_TAG(MEDIUM_TAG),                  \
-                                         GET_TAG(PROPERTY_TAG)>(               \
-          CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),              \
-                               GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),  \
-          ngllz, ngllx, h_property_index_mapping);
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      ASSIGN_KERNEL_CONTAINERS,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
-
-#undef ASSIGN_KERNEL_CONTAINERS
+  FOR_EACH_MATERIAL_SYSTEM(
+      IN((DIMENSION_TAG_DIM2),
+         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC),
+         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      CAPTURE(value) {
+        _value_ =
+            specfem::medium::kernels_container<_medium_tag_, _property_tag_>(
+                element_types.get_elements_on_host(_medium_tag_,
+                                                   _property_tag_),
+                ngllz, ngllx, h_property_index_mapping);
+      })
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
 
