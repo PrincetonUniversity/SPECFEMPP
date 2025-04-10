@@ -115,6 +115,10 @@ void check_load(specfem::compute::assembly &assembly) {
 
   using PointType = specfem::point::source<Dimension, MediumTag, WavefieldType>;
 
+  using mapped_chunk_index_type =
+      specfem::iterator::impl::mapped_chunk_index_type<
+          false, specfem::dimension::type::dim2>;
+
   Kokkos::View<PointType ***, Kokkos::DefaultExecutionSpace> point_sources(
       "point_sources", ngllz, ngllx, nelements);
 
@@ -132,8 +136,11 @@ void check_load(specfem::compute::assembly &assembly) {
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
 
+        const auto mapped_iterator_index =
+            mapped_chunk_index_type(ielement, index, source_indices(i));
+
         PointType point;
-        specfem::compute::load_on_device(index, sources, point);
+        specfem::compute::load_on_device(mapped_iterator_index, sources, point);
 
         point_sources(iz, ix, i) = point;
       });
@@ -287,9 +294,9 @@ void test_sources(specfem::compute::assembly &assembly){
   check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
               GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
               specfem::wavefield::simulation_field::forward>(assembly);        \
-  check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
-              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
-              specfem::wavefield::simulation_field::forward>(assembly);
+  check_load<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                      \
+             GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                     \
+             specfem::wavefield::simulation_field::forward>(assembly);
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       TEST_STORE_LOAD,
