@@ -14,7 +14,7 @@ enum class simulation_field { forward, adjoint, backward, buffer };
  * @brief Type of wavefield component
  *
  */
-enum class type { displacement, velocity, acceleration, pressure };
+enum class type { displacement, velocity, acceleration, pressure, rotation };
 
 /**
  * @brief Defines compile time constants for wavefield components
