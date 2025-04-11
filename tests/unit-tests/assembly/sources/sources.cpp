@@ -132,12 +132,13 @@ void check_load(specfem::compute::assembly &assembly) {
         // element indices and source indices from elements_and_sources
         auto const &[element_indices, source_indices] = elements_and_sources;
         const int ielement = element_indices(i);
+        const int isource = source_indices(i);
 
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
 
         const auto mapped_iterator_index =
-            mapped_chunk_index_type(ielement, index, source_indices(i));
+            mapped_chunk_index_type(ielement, index, isource);
 
         PointType point;
         specfem::compute::load_on_device(mapped_iterator_index, sources, point);
