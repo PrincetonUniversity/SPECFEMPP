@@ -91,45 +91,60 @@ specfem::compute::sources::sources(
   // THERE SHOULD BE LOCATE SOURCES HERE, AND SOURCE SHOULD BE POPULATED
   // WITH THE LOCAL COORDINATES AND THE GLOBAL ELEMENT INDEX
 
-// Here we sort the sources by the different media and create
-// a vector of sources for each medium named source_<dim>_<medium>
-// and a vector of indices of the sources in the original sources vector
-// named source_indices_<dim>_<medium>
-#define SORT_SOURCES_PER_MEDIUM(DIMENSION_TAG, MEDIUM_TAG)                     \
-  auto [CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),                  \
-                             GET_NAME(MEDIUM_TAG)),                            \
-        CREATE_VARIABLE_NAME(source_indices, GET_NAME(DIMENSION_TAG),          \
-                             GET_NAME(MEDIUM_TAG))] =                          \
-      sort_sources_per_medium<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG)>(    \
-          sources, element_types, mesh);
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      SORT_SOURCES_PER_MEDIUM,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
-
-#undef SORT_SOURCES_PER_MEDIUM
+  // Here we sort the sources by the different media and create
+  // a vector of sources for each medium named source_<dim>_<medium>
+  // and a vector of indices of the sources in the original sources vector
+  // named source_indices_<dim>_<medium>
 
   int nsources = 0;
   int nsource_indices = 0;
-// For a sanity check we count the number of sources and source indices
-// for each medium and dimension
-#define COUNT_SOURCES(DIMENSION_TAG, MEDIUM_TAG)                               \
-  nsources += CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),            \
-                                   GET_NAME(MEDIUM_TAG))                       \
-                  .size();                                                     \
-  nsource_indices +=                                                           \
-      CREATE_VARIABLE_NAME(source_indices, GET_NAME(DIMENSION_TAG),            \
-                           GET_NAME(MEDIUM_TAG))                               \
-          .size();
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      COUNT_SOURCES, WHERE(DIMENSION_TAG_DIM2)
-                         WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
+  FOR_EACH(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+      CAPTURE(source) {
+        auto [sorted_sources, source_indices] =
+            sort_sources_per_medium<_dimension_tag_, _medium_tag_>(
+                sources, element_types, mesh);
 
-#undef COUNT_SOURCES
+        /** For a sanity check we count the number of sources and source indices
+         * for each medium and dimension
+         */
+        nsources += sorted_sources.size();
+        nsource_indices += source_indices.size();
+
+        /* Loops over the current source*/
+        for (int isource = 0; isource < sorted_sources.size(); isource++) {
+          const auto &source = sorted_sources[isource];
+          const type_real x = source->get_x();
+          const type_real z = source->get_z();
+          const specfem::point::global_coordinates<_dimension_tag_> coord(x, z);
+
+          /* Locates the source in the mesh. Should have been stored already. */
+          const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
+          if (lcoord.ispec < 0) {
+            throw std::runtime_error("Source is outside of the domain");
+          }
+          int ispec = lcoord.ispec;
+          const int global_isource = source_indices[isource];
+
+          /* setting local source to global element mapping */
+          h_element_indices(global_isource) = ispec;
+          assert(element_types.get_medium_tag(ispec) == _medium_tag_);
+          h_medium_types(global_isource) = _medium_tag_;
+          h_property_types(global_isource) =
+              element_types.get_property_tag(ispec);
+          h_boundary_types(global_isource) =
+              element_types.get_boundary_tag(ispec);
+          h_wavefield_types(global_isource) = source->get_wavefield_type();
+        }
+
+        _source_ = specfem::compute::impl::source_medium<_dimension_tag_,
+                                                         _medium_tag_>(
+            sorted_sources, mesh, partial_derivatives, element_types, t0, dt,
+            nsteps);
+      })
 
   // if the number of sources is not equal to the number of sources
   if (nsources != sources.size()) {
@@ -138,62 +153,6 @@ specfem::compute::sources::sources(
     throw std::runtime_error(
         "Not all sources were assigned or sources are assigned multiple times");
   }
-  if (nsources != sources.size()) {
-    std::cout << "nsources: " << nsources << std::endl;
-    std::cout << "sources.size(): " << sources.size() << std::endl;
-    throw std::runtime_error(
-        "Not all sources were assigned or sources are assigned multiple times");
-  }
-
-  // Reminder we already have
-  //    vector<source> current_sources =  source_<dim>_<medium>
-  // The goal for this loop is to assign the source to the source_medium
-  // object and store the spectral element indices for each source
-#define ASSIGN_MEMBERS(DIMENSION_TAG, MEDIUM_TAG)                              \
-  {                                                                            \
-    /* Gets the sources and global indices for the current source medium */    \
-    auto current_sources = CREATE_VARIABLE_NAME(                               \
-        source, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG));                \
-    auto current_source_indices = CREATE_VARIABLE_NAME(                        \
-        source_indices, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG));        \
-    /* Loops over the current source*/                                         \
-    for (int isource = 0; isource < current_sources.size(); isource++) {       \
-      const auto &source = current_sources[isource];                           \
-      const type_real x = source->get_x();                                     \
-      const type_real z = source->get_z();                                     \
-      const specfem::point::global_coordinates<GET_TAG(DIMENSION_TAG)> coord(  \
-          x, z);                                                               \
-      /* Locates the source in the mesh. Should have been stored already. */   \
-      const auto lcoord = specfem::algorithms::locate_point(coord, mesh);      \
-      if (lcoord.ispec < 0) {                                                  \
-        throw std::runtime_error("Source is outside of the domain");           \
-      }                                                                        \
-      int ispec = lcoord.ispec;                                                \
-      const int global_isource = current_source_indices[isource];              \
-      /* setting local source to global element mapping */                     \
-      h_element_indices(global_isource) = ispec;                               \
-      assert(element_types.get_medium_tag(ispec) == GET_TAG(MEDIUM_TAG));      \
-      h_medium_types(global_isource) = GET_TAG(MEDIUM_TAG);                    \
-      h_property_types(global_isource) =                                       \
-          element_types.get_property_tag(ispec);                               \
-      h_boundary_types(global_isource) =                                       \
-          element_types.get_boundary_tag(ispec);                               \
-      h_wavefield_types(global_isource) = source->get_wavefield_type();        \
-    }                                                                          \
-    this->CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),                \
-                               GET_NAME(MEDIUM_TAG)) =                         \
-        specfem::compute::impl::source_medium<GET_TAG(DIMENSION_TAG),          \
-                                              GET_TAG(MEDIUM_TAG)>(            \
-            current_sources, mesh, partial_derivatives, element_types, t0, dt, \
-            nsteps);                                                           \
-  }
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      ASSIGN_MEMBERS, WHERE(DIMENSION_TAG_DIM2)
-                          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
-
-#undef ASSIGN_MEMBERS
 
   FOR_EACH(
       IN_PRODUCT((DIMENSION_TAG_DIM2),

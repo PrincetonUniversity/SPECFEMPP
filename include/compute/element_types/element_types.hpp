@@ -120,20 +120,11 @@ public:
   }
 
 private:
-#define MEDIUM_TAG_VARIABLES(DIMENSION_TAG, MEDIUM_TAG)                        \
-  IndexViewType CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),        \
-                                     GET_NAME(MEDIUM_TAG));                    \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG));
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MEDIUM_TAG_VARIABLES,
-                                 WHERE(DIMENSION_TAG_DIM2)
-                                     WHERE(MEDIUM_TAG_ELASTIC_PSV,
-                                           MEDIUM_TAG_ELASTIC_SH,
-                                           MEDIUM_TAG_ACOUSTIC,
-                                           MEDIUM_TAG_POROELASTIC))
-
-#undef MEDIUM_TAG_VARIABLES
+  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+           DECLARE((IndexViewType, elements),
+                   (IndexViewType::HostMirror, h_elements)))
 
   FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
                       (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
@@ -151,6 +142,14 @@ private:
                        BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
            DECLARE((IndexViewType, elements),
                    (IndexViewType::HostMirror, h_elements)))
+
+  // FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+  //                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+  //                      POROELASTIC), PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+  //                      BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+  //                      COMPOSITE_STACEY_DIRICHLET)),
+  //          DECLARE((IndexViewType, elements),
+  //                  (IndexViewType::HostMirror, h_elements)))
 };
 
 } // namespace compute
