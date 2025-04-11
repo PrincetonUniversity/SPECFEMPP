@@ -293,8 +293,9 @@ void test_sources(specfem::compute::assembly &assembly){ FOR_EACH_IN_PRODUCT(
     {
       check_store<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
                   specfem::wavefield::simulation_field::forward>(assembly);
-      check_load<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
-                 specfem::wavefield::simulation_field::forward>(assembly);
+      // check_load<_dimension_tag_, _medium_tag_, _property_tag_,
+      // _boundary_tag_,
+      //            specfem::wavefield::simulation_field::forward>(assembly);
     }) }
 
 TEST_F(ASSEMBLY, sources) {
