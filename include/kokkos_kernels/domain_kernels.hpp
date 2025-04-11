@@ -25,7 +25,7 @@ public:
   constexpr static auto ngll = NGLL;
 
   domain_kernels(const specfem::compute::assembly &assembly)
-      : assembly(assembly), coupling_interfaces_elastic_sv(assembly),
+      : assembly(assembly), coupling_interfaces_elastic_psv(assembly),
         coupling_interfaces_acoustic(assembly) {}
 
   template <specfem::element::medium_tag medium>
@@ -43,7 +43,7 @@ public:
     CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
         CALL_COUPLING_INTERFACES_FUNCTION,
         WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ACOUSTIC))
+            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC))
 
 #undef CALL_COUPLING_INTERFACES_FUNCTION
 
@@ -58,12 +58,13 @@ public:
 
     CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
         CALL_SOURCE_FORCE_UPDATE,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
-                      BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                      BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+        WHERE(DIMENSION_TAG_DIM2)
+            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+                    WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
+                          BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                          BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef CALL_SOURCE_FORCE_UPDATE
 
@@ -78,12 +79,13 @@ public:
 
     CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
         CALL_STIFFNESS_FORCE_UPDATE,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
-                      BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                      BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+        WHERE(DIMENSION_TAG_DIM2)
+            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+                    WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
+                          BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                          BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef CALL_STIFFNESS_FORCE_UPDATE
 
@@ -96,8 +98,9 @@ public:
 
     CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
         CALL_DIVIDE_MASS_MATRIX_FUNCTION,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+        WHERE(DIMENSION_TAG_DIM2)
+            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef CALL_DIVIDE_MASS_MATRIX_FUNCTION
 
@@ -116,12 +119,13 @@ public:
 
     CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
         CALL_COMPUTE_MASS_MATRIX_FUNCTION,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
-                      BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                      BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+        WHERE(DIMENSION_TAG_DIM2)
+            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+                    WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
+                          BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                          BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef CALL_COMPUTE_MASS_MATRIX_FUNCTION
 
@@ -133,8 +137,9 @@ public:
 
     CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
         CALL_INITIALIZE_FUNCTION,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+        WHERE(DIMENSION_TAG_DIM2)
+            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef CALL_INITIALIZE_FUNCTION
 
@@ -143,20 +148,17 @@ public:
 
   inline void compute_seismograms(const int &isig_step) {
 
-#define CALL_COMPUTE_SEISMOGRAMS_FUNCTION(DIMENSION_TAG, MEDIUM_TAG,           \
-                                          PROPERTY_TAG)                        \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    impl::compute_seismograms<dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG), \
-                              GET_TAG(PROPERTY_TAG)>(assembly, isig_step);     \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        CALL_COMPUTE_SEISMOGRAMS_FUNCTION,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef CALL_COMPUTE_SEISMOGRAMS_FUNCTION
+    FOR_EACH_MATERIAL_SYSTEM(
+        IN((DIMENSION_TAG_DIM2),
+           (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC),
+           (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        {
+          if constexpr (dimension == _dimension_tag_) {
+            impl::compute_seismograms<dimension, wavefield, ngll, _medium_tag_,
+                                      _property_tag_>(assembly, isig_step);
+          }
+        })
   }
 
 private:
@@ -168,7 +170,7 @@ private:
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(COUPLING_INTERFACES_DECLARATION,
                                  WHERE(DIMENSION_TAG_DIM2)
-                                     WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                     WHERE(MEDIUM_TAG_ELASTIC_PSV,
                                            MEDIUM_TAG_ACOUSTIC))
 
 #undef COUPLING_INTERFACES_DECLARATION

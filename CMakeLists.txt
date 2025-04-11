@@ -13,6 +13,10 @@ option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 
+# To fix the CMake policy warning for yaml-cpp and google test
+# This should be removed once both packages are updated (Today: April 4, 2025)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
@@ -71,15 +75,16 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
   kokkos
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
   DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
 )
 FetchContent_MakeAvailable(kokkos)
 
+# Install yaml content
 FetchContent_Declare(
         yaml
-        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
 )
 FetchContent_MakeAvailable(yaml)
 
@@ -121,9 +126,9 @@ find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor)
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd)
     set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
-                   Boost::algorithm Boost::tokenizer Boost::preprocessor)
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd)
     set(BOOST_ENABLE_CMAKE ON)
     set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
     set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
@@ -516,6 +521,12 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
+target_include_directories(
+        compute
+        INTERFACE
+        ${HDF5_INCLUDE_DIRS}
+)
+
 add_library(
         boundary_conditions
         src/boundary_conditions/boundary_conditions.cpp
@@ -634,6 +645,7 @@ add_library(
         src/parameter_parser/header.cpp
         src/parameter_parser/quadrature.cpp
         src/parameter_parser/elastic_wave.cpp
+        src/parameter_parser/electromagnetic_wave.cpp
         src/parameter_parser/receivers.cpp
         src/parameter_parser/writer/seismogram.cpp
         src/parameter_parser/setup.cpp

@@ -1,6 +1,13 @@
 name: Build
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+      - devel
+  pull_request:
+    branches:
+      - '*' # All branches
 
 jobs:
   build-serial:

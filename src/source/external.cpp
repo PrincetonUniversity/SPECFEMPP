@@ -62,11 +62,11 @@ void specfem::sources::external::compute_source_array(
               "External source requires 1 component for elastic SH medium");
         }
         source_array(0, iz, ix) = hlagrange;
-      } else if ((el_type == specfem::element::medium_tag::elastic_sv)) {
+      } else if ((el_type == specfem::element::medium_tag::elastic_psv)) {
         if (ncomponents != 2) {
-          throw std::runtime_error(
-              "External source for elastic SV, poroelastic, or electromagnetic "
-              "SV requires 2 components");
+          throw std::runtime_error("External source for elastic PSV, "
+                                   "poroelastic, or electromagnetic TE"
+                                   "SV requires 2 components");
         }
         source_array(0, iz, ix) = hlagrange;
         source_array(1, iz, ix) = hlagrange;

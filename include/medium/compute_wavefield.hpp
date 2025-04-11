@@ -3,6 +3,7 @@
 #include "dim2/acoustic/isotropic/wavefield.hpp"
 #include "dim2/elastic/anisotropic/wavefield.hpp"
 #include "dim2/elastic/isotropic/wavefield.hpp"
+#include "dim2/poroelastic/isotropic/wavefield.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

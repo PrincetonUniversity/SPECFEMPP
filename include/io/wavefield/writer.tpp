@@ -20,21 +20,24 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
 
   typename OutputLibrary::File file(output_folder + "/ForwardWavefield");
 
-  typename OutputLibrary::Group elastic_sv = file.createGroup("/ElasticSV");
-  const auto &elastic_sv_field =
-      forward.get_field<specfem::element::medium_tag::elastic_sv>();
+  typename OutputLibrary::Group elastic_psv = file.createGroup("/ElasticSV");
+  const auto &elastic_psv_field =
+      forward.get_field<specfem::element::medium_tag::elastic_psv>();
   typename OutputLibrary::Group elastic_sh = file.createGroup("/ElasticSH");
   const auto &elastic_sh_field =
       forward.get_field<specfem::element::medium_tag::elastic_sh>();
   typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
   const auto &acoustic_field =
       forward.get_field<specfem::element::medium_tag::acoustic>();
+  typename OutputLibrary::Group poroelastic = file.createGroup("/Poroelastic");
+  const auto &poroelastic_field =
+      forward.get_field<specfem::element::medium_tag::poroelastic>();
   typename OutputLibrary::Group boundary = file.createGroup("/Boundary");
   typename OutputLibrary::Group stacey = boundary.createGroup("/Stacey");
 
-  elastic_sv.createDataset("Displacement", elastic_sv_field.h_field).write();
-  elastic_sv.createDataset("Velocity", elastic_sv_field.h_field_dot).write();
-  elastic_sv.createDataset("Acceleration", elastic_sv_field.h_field_dot_dot)
+  elastic_psv.createDataset("Displacement", elastic_psv_field.h_field).write();
+  elastic_psv.createDataset("Velocity", elastic_psv_field.h_field_dot).write();
+  elastic_psv.createDataset("Acceleration", elastic_psv_field.h_field_dot_dot)
       .write();
 
   elastic_sh.createDataset("Displacement", elastic_sh_field.h_field).write();
@@ -45,6 +48,11 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
   acoustic.createDataset("Potential", acoustic_field.h_field).write();
   acoustic.createDataset("PotentialDot", acoustic_field.h_field_dot).write();
   acoustic.createDataset("PotentialDotDot", acoustic_field.h_field_dot_dot).write();
+
+  poroelastic.createDataset("Displacement", poroelastic_field.h_field).write();
+  poroelastic.createDataset("Velocity", poroelastic_field.h_field_dot).write();
+  poroelastic.createDataset("Acceleration", poroelastic_field.h_field_dot_dot)
+      .write();
 
   stacey
       .createDataset("IndexMapping",
@@ -57,6 +65,10 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
   stacey
       .createDataset("AcousticAcceleration",
                      boundary_values.stacey.acoustic.h_values)
+      .write();
+  stacey
+      .createDataset("PoroelasticAcceleration",
+                     boundary_values.stacey.poroelastic.h_values)
       .write();
 
   std::cout << "Wavefield written to " << output_folder + "/ForwardWavefield"

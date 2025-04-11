@@ -1,6 +1,14 @@
 name: Unittests
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+      - devel
+  pull_request:
+    branches:
+      - '*' # All branches should run on PRs
+
 
 jobs:
   build-and-test:

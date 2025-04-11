@@ -29,7 +29,7 @@ struct impl_kernels_container
 };
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag, typename Enable = void>
 class kernels_container;
 
 } // namespace medium
@@ -40,3 +40,4 @@ class kernels_container;
 #include "dim2/acoustic/isotropic/kernels_container.hpp"
 #include "dim2/elastic/anisotropic/kernels_container.hpp"
 #include "dim2/elastic/isotropic/kernels_container.hpp"
+#include "dim2/poroelastic/isotropic/kernels_container.hpp"
