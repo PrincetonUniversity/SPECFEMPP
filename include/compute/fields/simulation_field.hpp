@@ -74,9 +74,8 @@ public:
     this->assembly_index_mapping = rhs.assembly_index_mapping;
     this->h_assembly_index_mapping = rhs.h_assembly_index_mapping;
     FOR_EACH_IN_PRODUCT(
-        IN_PRODUCT((DIMENSION_TAG_DIM2),
-                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
         CAPTURE(field, (rhs_field, rhs.field)) { _field_ = _rhs_field_; })
   }
 
@@ -89,9 +88,8 @@ public:
   template <specfem::element::medium_tag MediumType>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
     FOR_EACH_IN_PRODUCT(
-        IN_PRODUCT((DIMENSION_TAG_DIM2),
-                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
         CAPTURE(field) {
           if constexpr (MediumType == _medium_tag_) {
             return _field_.nglob;
@@ -111,9 +109,8 @@ public:
       specfem::dimension::type::dim2, MediumTag> const &
   get_field() const {
     FOR_EACH_IN_PRODUCT(
-        IN_PRODUCT((DIMENSION_TAG_DIM2),
-                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
         CAPTURE(field) {
           if constexpr (MediumTag == _medium_tag_) {
             return _field_;
@@ -160,9 +157,8 @@ public:
                specfem::kokkos::HostMemSpace>
       h_assembly_index_mapping;
 
-  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                                                       ACOUSTIC, POROELASTIC)),
                       DECLARE(((specfem::compute::impl::field_impl,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                field)))
@@ -172,9 +168,8 @@ public:
 private:
   template <specfem::sync::kind sync> void sync_fields() {
     FOR_EACH_IN_PRODUCT(
-        IN_PRODUCT((DIMENSION_TAG_DIM2),
-                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
         CAPTURE(field) { _field_.template sync_fields<sync>(); })
   }
 
@@ -189,13 +184,11 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
   Kokkos::deep_copy(dst.assembly_index_mapping, src.assembly_index_mapping);
   Kokkos::deep_copy(dst.h_assembly_index_mapping, src.h_assembly_index_mapping);
 
-  FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
-      CAPTURE((src_field, src.field), (dst_field, dst.field)) {
-        specfem::compute::deep_copy(_dst_field_, _src_field_);
-      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                                                       ACOUSTIC, POROELASTIC)),
+                      CAPTURE((src_field, src.field), (dst_field, dst.field)) {
+                        specfem::compute::deep_copy(_dst_field_, _src_field_);
+                      })
 }
 
 /**

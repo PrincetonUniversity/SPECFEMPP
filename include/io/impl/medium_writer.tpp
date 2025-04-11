@@ -28,10 +28,10 @@ void specfem::io::impl::write_container(
   int n_written = 0;
 
   FOR_EACH_IN_PRODUCT(
-        IN_PRODUCT((DIMENSION_TAG_DIM2),
-               (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC),
-               (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)), {
+        (DIMENSION_TAG(DIM2),
+               MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                ACOUSTIC),
+               PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)), {
                const std::string name =
           std::string("/") +
           specfem::element::to_string(_medium_tag_, _property_tag_);

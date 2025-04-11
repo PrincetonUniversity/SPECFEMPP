@@ -58,9 +58,9 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
   }
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+      (DIMENSION_TAG(DIM2),
+                 MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                  ACOUSTIC, POROELASTIC)),
       CAPTURE(field) {
         auto index = Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
                                      static_cast<int>(_medium_tag_));
@@ -82,9 +82,9 @@ int specfem::compute::simulation_field<
   }
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+      (DIMENSION_TAG(DIM2),
+                 MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                  ACOUSTIC, POROELASTIC)),
       CAPTURE(field) {
         total_degrees_of_freedom +=
             this->get_nglob<_medium_tag_>() *

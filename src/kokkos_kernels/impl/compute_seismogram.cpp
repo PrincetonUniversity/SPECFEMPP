@@ -3,10 +3,9 @@
 #include "kokkos_kernels/impl/compute_seismogram.tpp"
 
 FOR_EACH_IN_PRODUCT(
-    IN_PRODUCT((DIMENSION_TAG_DIM2),
-               (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-               (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+    (DIMENSION_TAG(DIM2),
+     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
     INSTANTIATE(
         /** instantiation for NGLL = 5     */
         (template void specfem::kokkos_kernels::impl::compute_seismograms,

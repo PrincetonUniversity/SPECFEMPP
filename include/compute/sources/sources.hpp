@@ -151,9 +151,8 @@ private:
   PropertyTagViewType::HostMirror h_property_types; ///< Host mirror of
                                                     ///< property_types
 
-  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                                                       ACOUSTIC, POROELASTIC)),
                       DECLARE(((specfem::compute::impl::source_medium,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                source)))
@@ -161,13 +160,11 @@ private:
   int timestep; ///< Current time step
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
-                 (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                  BOUNDARY_TAG_STACEY,
-                  BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET)),
       DECLARE((IndexViewType, element_indices_forward),
               (IndexViewType::HostMirror, h_element_indices_forward),
               (IndexViewType, element_indices_backward),
@@ -258,9 +255,8 @@ load_on_device(const IteratorIndexType iterator_index,
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -326,9 +322,8 @@ void load_on_host(const IteratorIndexType iterator_index,
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -393,9 +388,8 @@ store_on_device(const IteratorIndexType iterator_index,
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -459,9 +453,8 @@ void store_on_host(const IteratorIndexType iterator_index,
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {

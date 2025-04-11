@@ -276,9 +276,8 @@ void test_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     specfem::compute::assembly &assembly) {
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
       {
         check_assembly_source_construction<_dimension_tag_, _medium_tag_>(
             sources, assembly);
@@ -286,12 +285,11 @@ void test_assembly_source_construction(
 }
 
 void test_sources(specfem::compute::assembly &assembly){ FOR_EACH_IN_PRODUCT(
-    IN_PRODUCT((DIMENSION_TAG_DIM2),
-               (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-               (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
-               (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+    (DIMENSION_TAG(DIM2),
+     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+     BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                  COMPOSITE_STACEY_DIRICHLET)),
     {
       check_store<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
                   specfem::wavefield::simulation_field::forward>(assembly);

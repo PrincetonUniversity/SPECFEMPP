@@ -100,9 +100,8 @@ specfem::compute::sources::sources(
   int nsource_indices = 0;
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
       CAPTURE(source) {
         auto [sorted_sources, source_indices] =
             sort_sources_per_medium<_dimension_tag_, _medium_tag_>(
@@ -155,13 +154,11 @@ specfem::compute::sources::sources(
   }
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
-                 (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                  BOUNDARY_TAG_STACEY,
-                  BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET)),
       CAPTURE(element_indices_forward, element_indices_backward,
               element_indices_adjoint, source_indices_forward,
               source_indices_backward, source_indices_adjoint,
@@ -285,13 +282,11 @@ specfem::compute::sources::get_sources_on_host(
     const specfem::element::boundary_tag boundary,
     const specfem::wavefield::simulation_field wavefield) const {
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
-                 (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                  BOUNDARY_TAG_STACEY,
-                  BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET)),
       CAPTURE(h_element_indices_forward, h_element_indices_backward,
               h_element_indices_adjoint, h_source_indices_forward,
               h_source_indices_backward, h_source_indices_adjoint) {
@@ -333,13 +328,11 @@ specfem::compute::sources::get_sources_on_device(
     const specfem::element::boundary_tag boundary,
     const specfem::wavefield::simulation_field wavefield) const {
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
-                 (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                  BOUNDARY_TAG_STACEY,
-                  BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET)),
       CAPTURE(element_indices_forward, element_indices_backward,
               element_indices_adjoint, source_indices_forward,
               source_indices_backward, source_indices_adjoint) {

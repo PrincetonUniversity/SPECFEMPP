@@ -17,9 +17,6 @@
 
 #define _CREATE_SEQ(r, elem) (elem)
 
-#define _EXPAND_VARIADIC(s, data, elem)                                        \
-  BOOST_PP_EXPAND(BOOST_PP_VARIADIC_TO_SEQ elem)
-
 #define _REFLECT(elem) elem
 
 #define _REFLECT_1(data, elem) elem

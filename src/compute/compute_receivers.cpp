@@ -97,10 +97,9 @@ specfem::compute::receivers::receivers(
   }
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
       CAPTURE(elements, h_elements, receiver_indices, h_receiver_indices) {
         int count = 0;
         int index = 0;
@@ -147,10 +146,9 @@ specfem::compute::receivers::get_indices_on_host(
     const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
       CAPTURE(h_elements, h_receiver_indices) {
         if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
           return std::make_tuple(_h_elements_, _h_receiver_indices_);
@@ -171,10 +169,9 @@ specfem::compute::receivers::get_indices_on_device(
     const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
-      IN_PRODUCT((DIMENSION_TAG_DIM2),
-                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
       CAPTURE(elements, receiver_indices) {
         if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
           return std::make_tuple(_elements_, _receiver_indices_);
