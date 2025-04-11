@@ -101,10 +101,6 @@ template <> struct materials<specfem::dimension::type::dim2> {
 
   ///@}
 
-private:
-#define TYPE_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                     \
-  (CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)))
-
 public:
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>

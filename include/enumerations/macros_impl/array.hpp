@@ -9,22 +9,22 @@
  * @brief Sequence transformation function for _MAKE_CONSTEXPR_ARRAY.
  */
 #define _MAKE_ARRAY_ELEM_MEDIUM(s, data, elem)                                 \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)))
+  std::make_tuple(_GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                      \
+                  _GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)))
 
 /**
  * @brief Sequence transformation function for _MAKE_CONSTEXPR_ARRAY.
  */
 #define _MAKE_ARRAY_ELEM_MAT_SYS(s, data, elem)                                \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)))
+  std::make_tuple(_GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                      \
+                  _GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                      \
+                  _GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)))
 
 /**
  * @brief Sequence transformation function for _MAKE_CONSTEXPR_ARRAY.
  */
 #define _MAKE_ARRAY_ELEM_ELEM(s, data, elem)                                   \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(3, elem)))
+  std::make_tuple(_GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                      \
+                  _GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                      \
+                  _GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)),                      \
+                  _GET_TAG(BOOST_PP_TUPLE_ELEM(3, elem)))

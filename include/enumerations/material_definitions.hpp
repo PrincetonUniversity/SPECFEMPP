@@ -1,7 +1,7 @@
 #pragma once
 
 #include "macros_impl/array.hpp"
-#include "macros_impl/medium_tags.hpp"
+#include "macros_impl/utils.hpp"
 
 /**
  * @name Element Tag macros
@@ -94,21 +94,13 @@
        PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
 
 /**
- * @brief Tag getters for tokens inside DECLARE(...)
+ * @brief Tag getters. The macros are intended to be used only in @ref DECLARE
+ * and @ref INSTANTIATE.
  */
 #define _DIMENSION_TAG_ BOOST_PP_SEQ_TO_LIST((0))
 #define _MEDIUM_TAG_ BOOST_PP_SEQ_TO_LIST((1))
 #define _PROPERTY_TAG_ BOOST_PP_SEQ_TO_LIST((2))
 #define _BOUNDARY_TAG_ BOOST_PP_SEQ_TO_LIST((3))
-
-/**
- * @brief Filter sequence for different tags.
- *
- * This macro is to be only used in conjunction with @ref
- * CALL_MACRO_FOR_ALL_MEDIUM_TAGS
- *
- */
-#define WHERE(...) (BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 /**
  * @brief Declare for each tag.
@@ -157,32 +149,6 @@
 #define FOR_EACH(seq, ...)                                                     \
   BOOST_PP_SEQ_FOR_EACH(_FOR_ONE_TAG_SEQ,                                      \
                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
-
-/**
- * @brief Call a macro for all medium types
- *
- * Invoking CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MACRO, seq) will call MACRO for all
- * medium types listed in macro sequence @ref MEDIUM_TAGS.
- *
- * @param MACRO The macro to be called. MACRO must have the following signature:
- * MACRO(DIMENSION_TAG, MEDIUM_TAG)
- *
- * @param seq A sequence filter for medium types. Sequences can be generated
- * using the @ref WHERE macro.
- *
- * @code
- *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG)
- * \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG)>();
- *
- *   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
- * WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH))
- * @endcode
- *
- *
- */
-#define CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MACRO, seq)                             \
-  BOOST_PP_SEQ_FOR_EACH(_CALL_FOR_ONE_MEDIUM_TAG, MACRO,                       \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
 
 namespace specfem {
