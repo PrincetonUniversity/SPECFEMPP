@@ -2,9 +2,8 @@
 #include "kokkos_kernels/impl/divide_mass_matrix.tpp"
 
 FOR_EACH_IN_PRODUCT(
-    IN_PRODUCT((DIMENSION_TAG_DIM2),
-               (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+    (DIMENSION_TAG(DIM2),
+     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
     INSTANTIATE(
         (template void specfem::kokkos_kernels::impl::divide_mass_matrix,
          (_DIMENSION_TAG_, specfem::wavefield::simulation_field::forward,

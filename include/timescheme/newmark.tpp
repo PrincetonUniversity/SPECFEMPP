@@ -121,9 +121,9 @@ int specfem::time_scheme::newmark<specfem::simulation::type::forward>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
 
-  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC)),
            {
              if (tag == _medium_tag_) {
                return corrector_phase_impl<_medium_tag_, wavefield>(
@@ -142,9 +142,9 @@ int specfem::time_scheme::newmark<specfem::simulation::type::forward>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
 
-  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC)),
            {
              if (tag == _medium_tag_) {
                return predictor_phase_impl<_medium_tag_, wavefield>(
@@ -163,9 +163,9 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
 
-  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC)),
            {
              if (tag == _medium_tag_) {
                return corrector_phase_impl<_medium_tag_, wavefield>(
@@ -184,9 +184,9 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
 
-  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC)),
            {
              if (tag == _medium_tag_) {
                return corrector_phase_impl<_medium_tag_, wavefield>(
@@ -205,9 +205,9 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
 
-  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC)),
            {
              if (tag == _medium_tag_) {
                return predictor_phase_impl<_medium_tag_, wavefield>(
@@ -226,9 +226,9 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
 
-  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC)),
            {
              if (tag == _medium_tag_) {
                return predictor_phase_impl<_medium_tag_, wavefield>(

@@ -65,12 +65,10 @@ template <> struct materials<specfem::dimension::type::dim2> {
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties
 
-  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                                  MEDIUM_TAG_ELECTROMAGNETIC_TE),
-                                 (PROPERTY_TAG_ISOTROPIC,
-                                  PROPERTY_TAG_ANISOTROPIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELECTROMAGNETIC_TE),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
                       DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_),
                                 ::material, (_MEDIUM_TAG_, _PROPERTY_TAG_)),
                                material)))
@@ -116,11 +114,10 @@ public:
     const auto &material_specification = this->material_index_mapping(index);
 
     FOR_EACH_IN_PRODUCT(
-        IN_PRODUCT((DIMENSION_TAG_DIM2),
-                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                    MEDIUM_TAG_ELECTROMAGNETIC_TE),
-                   (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELECTROMAGNETIC_TE),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
         CAPTURE(material) {
           if constexpr (MediumTag == _medium_tag_ &&
                         PropertyTag == _property_tag_) {
@@ -145,18 +142,16 @@ public:
   specfem::mesh::materials<dimension>::material<MediumTag, PropertyTag> &
   get_container() {
 
-    FOR_EACH_IN_PRODUCT(
-        IN_PRODUCT((DIMENSION_TAG_DIM2),
-                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                    MEDIUM_TAG_ELECTROMAGNETIC_TE),
-                   (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-        CAPTURE(material) {
-          if constexpr (_medium_tag_ == MediumTag &&
-                        _property_tag_ == PropertyTag) {
-            return _material_;
-          }
-        })
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                    POROELASTIC, ELECTROMAGNETIC_TE),
+                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                        CAPTURE(material) {
+                          if constexpr (_medium_tag_ == MediumTag &&
+                                        _property_tag_ == PropertyTag) {
+                            return _material_;
+                          }
+                        })
 
     Kokkos::abort("Invalid material type detected in material specification");
   }

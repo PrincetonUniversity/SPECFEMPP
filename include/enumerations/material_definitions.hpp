@@ -125,16 +125,6 @@
 #define CAPTURE(...) BOOST_PP_VARIADIC_TO_TUPLE(BOOST_PP_EMPTY(), __VA_ARGS__),
 
 /**
- * @brief Filter sequence for different tags.
- *
- * This macro is to be only used in conjunction with @ref FOR_EACH_IN_PRODUCT
- *
- */
-#define IN_PRODUCT(...)                                                        \
-  BOOST_PP_SEQ_TO_TUPLE(BOOST_PP_SEQ_TRANSFORM(                                \
-      _EXPAND_VARIADIC, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)))
-
-/**
  * @brief Converts tag arguments to a sequence of tag tuples,
  * e.g. DIMENSION_TAG(DIM2) expands to DIMENSION_TAG_DIM2
  */
