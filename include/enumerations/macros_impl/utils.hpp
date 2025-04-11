@@ -5,17 +5,15 @@
 #include <boost/preprocessor.hpp>
 #include <boost/vmd/vmd.hpp>
 
-#define GET_ID(elem) BOOST_PP_TUPLE_ELEM(0, elem)
-#define GET_TAG(elem) BOOST_PP_TUPLE_ELEM(1, elem)
-#define GET_NAME(elem) BOOST_PP_TUPLE_ELEM(2, elem)
+#define _GET_ID(elem) BOOST_PP_TUPLE_ELEM(0, elem)
 
-#define CREATE_VARIABLE_NAME(prefix, ...)                                      \
-  BOOST_PP_SEQ_CAT((prefix)BOOST_PP_SEQ_TRANSFORM(                             \
-      _ADD_UNDERSCORE, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)))
+#define _GET_TAG(elem) BOOST_PP_TUPLE_ELEM(1, elem)
 
-#define _ADD_UNDERSCORE(s, data, elem) BOOST_PP_CAT(_, elem)
+#define _GET_NAME(elem) BOOST_PP_TUPLE_ELEM(2, elem)
 
 #define _EMPTY_MACRO(...)
+
+#define _EMPTY_SEQ(...) ()
 
 #define _CREATE_SEQ(r, elem) (elem)
 
@@ -24,9 +22,7 @@
 
 #define _REFLECT(elem) elem
 
-#define _REFLECT_1(_, elem) elem
-
-#define _EMPTY_SEQ(...) ()
+#define _REFLECT_1(data, elem) elem
 
 #define _TRANSFORM_INSTANTIATE(s, data, elem) (elem, )
 
@@ -69,14 +65,16 @@
  * second element is used as the variable to be captured, e.g. for (value,
  * rhs.value), the output is auto &value = rhs.value_dim2_elastic_isotropic;
  */
-#define _REFERENCE_0(elem)                                                     \
+#define _REFERENCE_LEFT(elem)                                                  \
   BOOST_PP_IF(BOOST_VMD_IS_TUPLE(elem), BOOST_PP_TUPLE_ELEM(0, elem), elem)
-#define _REFERENCE_1(elem)                                                     \
+
+#define _REFERENCE_RIGHT(elem)                                                 \
   BOOST_PP_IF(BOOST_VMD_IS_TUPLE(elem), BOOST_PP_TUPLE_ELEM(1, elem), elem)
+
 #define _WRITE_CAPTURE(data, elem)                                             \
   BOOST_PP_IF(BOOST_PP_IS_EMPTY(elem), BOOST_PP_EMPTY(),                       \
-              auto &BOOST_PP_SEQ_CAT((_)(_REFERENCE_0(elem))(_)) =             \
-                  _VAR_NAME_FROM_TAGS(data, _REFERENCE_1(elem));)
+              auto &BOOST_PP_SEQ_CAT((_)(_REFERENCE_LEFT(elem))(_)) =          \
+                  _VAR_NAME_FROM_TAGS(data, _REFERENCE_RIGHT(elem));)
 
 /**
  * @brief Obtain Name of the variable to be declared from type declaration
@@ -87,7 +85,7 @@
  * _MEDIUM_TAG_, _PROPERTY_TAG_)), the output is value_dim2_elastic_isotropic
  */
 
-#define _TRANSFORM_TAG_DATA(s, data, elem) BOOST_PP_CAT(_, GET_NAME(elem))
+#define _TRANSFORM_TAG_DATA(s, data, elem) BOOST_PP_CAT(_, _GET_NAME(elem))
 
 #define _VAR_NAME_FROM_TAGS(data, elem)                                        \
   BOOST_PP_SEQ_CAT((elem)BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAG_DATA, _,        \
@@ -99,7 +97,7 @@
  */
 #define _REPLACE_TAGS(s, data, elem)                                           \
   BOOST_PP_IF(BOOST_VMD_IS_LIST(elem),                                         \
-              GET_TAG(BOOST_PP_TUPLE_ELEM(BOOST_PP_LIST_AT(elem, 0), data)),   \
+              _GET_TAG(BOOST_PP_TUPLE_ELEM(BOOST_PP_LIST_AT(elem, 0), data)),  \
               elem)
 /**
  * @brief Replace tuple inside type declaration sequence with angle brackets.
@@ -156,7 +154,7 @@
  * in code block.
  */
 #define _WRITE_TAG(tag, data, i)                                               \
-  constexpr auto tag = GET_TAG(BOOST_PP_TUPLE_ELEM(i, data));
+  constexpr auto tag = _GET_TAG(BOOST_PP_TUPLE_ELEM(i, data));
 
 // clang-format off
 #define _WRITE_TAGS(data, n)                                           \
@@ -208,10 +206,10 @@
   BOOST_PP_IF(                                                                 \
       BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 2),                           \
       BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
-                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
-          BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),    \
-                                     GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),    \
+          BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),               \
+                         _GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),               \
+          BOOST_PP_IF(BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),   \
+                                     _GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),   \
                       1, 0),                                                   \
           0),                                                                  \
       0)
@@ -220,13 +218,13 @@
   BOOST_PP_IF(                                                                 \
       BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 3),                           \
       BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
-                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
-          BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),    \
-                                     GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),    \
+          BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),               \
+                         _GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),               \
+          BOOST_PP_IF(BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),   \
+                                     _GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),   \
                       BOOST_PP_IF(BOOST_PP_EQUAL(                              \
-                                      GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),   \
-                                      GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),   \
+                                      _GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),  \
+                                      _GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),  \
                                   1, 0),                                       \
                       0),                                                      \
           0),                                                                  \
@@ -236,17 +234,17 @@
   BOOST_PP_IF(                                                                 \
       BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 4),                           \
       BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
-                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
+          BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),               \
+                         _GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),               \
           BOOST_PP_IF(                                                         \
-              BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),            \
-                             GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),            \
+              BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),           \
+                             _GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),           \
               BOOST_PP_IF(                                                     \
-                  BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),        \
-                                 GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),        \
+                  BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),       \
+                                 _GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),       \
                   BOOST_PP_IF(                                                 \
-                      BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(3, tuple)),    \
-                                     GET_ID(BOOST_PP_TUPLE_ELEM(3, elem))),    \
+                      BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(3, tuple)),   \
+                                     _GET_ID(BOOST_PP_TUPLE_ELEM(3, elem))),   \
                       1, 0),                                                   \
                   0),                                                          \
               0),                                                              \
