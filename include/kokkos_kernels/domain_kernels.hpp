@@ -25,27 +25,23 @@ public:
   constexpr static auto ngll = NGLL;
 
   domain_kernels(const specfem::compute::assembly &assembly)
-      : assembly(assembly), coupling_interfaces_elastic_psv(assembly),
-        coupling_interfaces_acoustic(assembly) {}
+      : assembly(assembly), coupling_interfaces_dim2_elastic_psv(assembly),
+        coupling_interfaces_dim2_acoustic(assembly) {}
 
   template <specfem::element::medium_tag medium>
   inline int update_wavefields(const int istep) {
 
     int elements_updated = 0;
 
-#define CALL_COUPLING_INTERFACES_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)           \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
-                medium == GET_TAG(MEDIUM_TAG)) {                               \
-    CREATE_VARIABLE_NAME(coupling_interfaces, GET_NAME(MEDIUM_TAG))            \
-        .compute_coupling();                                                   \
-  }
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        CALL_COUPLING_INTERFACES_FUNCTION,
-        WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC))
-
-#undef CALL_COUPLING_INTERFACES_FUNCTION
+    FOR_EACH(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
+                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC)),
+        CAPTURE(coupling_interfaces) {
+          if constexpr (dimension == _dimension_tag_ &&
+                        medium == _medium_tag_) {
+            _coupling_interfaces_.compute_coupling();
+          }
+        })
 
     FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
                         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
@@ -80,26 +76,21 @@ public:
                }
              })
 
-#define CALL_DIVIDE_MASS_MATRIX_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)            \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
-                medium == GET_TAG(MEDIUM_TAG)) {                               \
-    impl::divide_mass_matrix<dimension, wavefield, GET_TAG(MEDIUM_TAG)>(       \
-        assembly);                                                             \
-  }
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        CALL_DIVIDE_MASS_MATRIX_FUNCTION,
-        WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
-
-#undef CALL_DIVIDE_MASS_MATRIX_FUNCTION
+    FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                         MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+             {
+               if constexpr (dimension == _dimension_tag_ &&
+                             medium == _medium_tag_) {
+                 impl::divide_mass_matrix<dimension, wavefield, _medium_tag_>(
+                     assembly);
+               }
+             })
 
     return elements_updated;
   }
 
   void initialize(const type_real &dt) {
-
     FOR_EACH(
         IN_PRODUCT((DIMENSION_TAG_DIM2),
                    (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
@@ -116,19 +107,15 @@ public:
           }
         })
 
-#define CALL_INITIALIZE_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)                    \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    impl::invert_mass_matrix<dimension, wavefield, GET_TAG(MEDIUM_TAG)>(       \
-        assembly);                                                             \
-  }
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        CALL_INITIALIZE_FUNCTION,
-        WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
-
-#undef CALL_INITIALIZE_FUNCTION
+    FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                         MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+             {
+               if constexpr (dimension == _dimension_tag_) {
+                 impl::invert_mass_matrix<dimension, wavefield, _medium_tag_>(
+                     assembly);
+               }
+             })
 
     return;
   }
@@ -150,17 +137,12 @@ public:
 
 private:
   specfem::compute::assembly assembly;
-#define COUPLING_INTERFACES_DECLARATION(DIMENSION_TAG, MEDIUM_TAG)             \
-  impl::interface_kernels<WavefieldType, GET_TAG(DIMENSION_TAG),               \
-                          GET_TAG(MEDIUM_TAG)>                                 \
-      CREATE_VARIABLE_NAME(coupling_interfaces, GET_NAME(MEDIUM_TAG));
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(COUPLING_INTERFACES_DECLARATION,
-                                 WHERE(DIMENSION_TAG_DIM2)
-                                     WHERE(MEDIUM_TAG_ELASTIC_PSV,
-                                           MEDIUM_TAG_ACOUSTIC))
-
-#undef COUPLING_INTERFACES_DECLARATION
+  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC)),
+           DECLARE(((impl::interface_kernels,
+                     (WavefieldType, _DIMENSION_TAG_, _MEDIUM_TAG_)),
+                    coupling_interfaces)))
 };
 
 } // namespace kokkos_kernels

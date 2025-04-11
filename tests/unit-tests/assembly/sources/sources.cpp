@@ -275,17 +275,13 @@ void check_assembly_source_construction(
 void test_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     specfem::compute::assembly &assembly) {
-
-#define TEST_ASSEMBLY_SOURCE_CONSTRUCTION(Dimension, MediumTag)                \
-  check_assembly_source_construction<GET_TAG(Dimension), GET_TAG(MediumTag)>(  \
-      sources, assembly);
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      TEST_ASSEMBLY_SOURCE_CONSTRUCTION,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC))
-
-#undef TEST_ASSEMBLY_SOURCE_CONSTRUCTION
+  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+           {
+             check_assembly_source_construction<_dimension_tag_, _medium_tag_>(
+                 sources, assembly);
+           })
 }
 
 void test_sources(specfem::compute::assembly &assembly){ FOR_EACH(
