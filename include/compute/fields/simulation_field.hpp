@@ -73,19 +73,11 @@ public:
     this->nglob = rhs.nglob;
     this->assembly_index_mapping = rhs.assembly_index_mapping;
     this->h_assembly_index_mapping = rhs.h_assembly_index_mapping;
-
-#define COPY_MEDIUM_FIELD(DIMENSION_TAG, MEDIUM_TAG)                           \
-  this->CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                   \
-                             GET_NAME(MEDIUM_TAG)) =                           \
-      rhs.CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                 \
-                               GET_NAME(MEDIUM_TAG));
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        COPY_MEDIUM_FIELD, WHERE(DIMENSION_TAG_DIM2) WHERE(
-                               MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
-
-#undef COPY_MEDIUM_FIELD
+    FOR_EACH(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
+                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+        CAPTURE(field, (rhs_field, rhs.field)) { _field_ = _rhs_field_; })
   }
 
   /**
@@ -96,20 +88,15 @@ public:
    */
   template <specfem::element::medium_tag MediumType>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-
-#define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG)                                \
-  if constexpr (MediumType == GET_TAG(MEDIUM_TAG)) {                           \
-    return CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                \
-                                GET_NAME(MEDIUM_TAG))                          \
-        .nglob;                                                                \
-  }
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        RETURN_VALUE, WHERE(DIMENSION_TAG_DIM2)
-                          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
-
-#undef RETURN_VALUE
+    FOR_EACH(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
+                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+        CAPTURE(field) {
+          if constexpr (MediumType == _medium_tag_) {
+            return _field_.nglob;
+          }
+        })
 
     Kokkos::abort("Medium type not supported");
     return 0;
