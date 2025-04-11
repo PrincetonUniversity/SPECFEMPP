@@ -65,14 +65,15 @@ template <> struct materials<specfem::dimension::type::dim2> {
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties
 
-  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                       MEDIUM_TAG_ELECTROMAGNETIC_TE),
-                      (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-           DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
-                     (_MEDIUM_TAG_, _PROPERTY_TAG_)),
-                    material)))
+  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
+                                  MEDIUM_TAG_ELECTROMAGNETIC_TE),
+                                 (PROPERTY_TAG_ISOTROPIC,
+                                  PROPERTY_TAG_ANISOTROPIC)),
+                      DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_),
+                                ::material, (_MEDIUM_TAG_, _PROPERTY_TAG_)),
+                               material)))
 
   specfem::mesh::materials<specfem::dimension::type::dim2>::material<
       specfem::element::medium_tag::electromagnetic_te,
@@ -114,7 +115,7 @@ public:
   get_material(const int index) const {
     const auto &material_specification = this->material_index_mapping(index);
 
-    FOR_EACH(
+    FOR_EACH_IN_PRODUCT(
         IN_PRODUCT((DIMENSION_TAG_DIM2),
                    (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
@@ -144,7 +145,7 @@ public:
   specfem::mesh::materials<dimension>::material<MediumTag, PropertyTag> &
   get_container() {
 
-    FOR_EACH(
+    FOR_EACH_IN_PRODUCT(
         IN_PRODUCT((DIMENSION_TAG_DIM2),
                    (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,

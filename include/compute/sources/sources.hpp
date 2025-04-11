@@ -151,34 +151,35 @@ private:
   PropertyTagViewType::HostMirror h_property_types; ///< Host mirror of
                                                     ///< property_types
 
-  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
-           DECLARE(((specfem::compute::impl::source_medium,
-                     (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-                    source)))
+  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+                      DECLARE(((specfem::compute::impl::source_medium,
+                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
+                               source)))
 
   int timestep; ///< Current time step
 
-  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                      (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
-                      (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                       BOUNDARY_TAG_STACEY,
-                       BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
-           DECLARE((IndexViewType, element_indices_forward),
-                   (IndexViewType::HostMirror, h_element_indices_forward),
-                   (IndexViewType, element_indices_backward),
-                   (IndexViewType::HostMirror, h_element_indices_backward),
-                   (IndexViewType, element_indices_adjoint),
-                   (IndexViewType::HostMirror, h_element_indices_adjoint),
-                   (IndexViewType, source_indices_forward),
-                   (IndexViewType::HostMirror, h_source_indices_forward),
-                   (IndexViewType, source_indices_backward),
-                   (IndexViewType::HostMirror, h_source_indices_backward),
-                   (IndexViewType, source_indices_adjoint),
-                   (IndexViewType::HostMirror, h_source_indices_adjoint)))
+  FOR_EACH_IN_PRODUCT(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+                 (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                  BOUNDARY_TAG_STACEY,
+                  BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+      DECLARE((IndexViewType, element_indices_forward),
+              (IndexViewType::HostMirror, h_element_indices_forward),
+              (IndexViewType, element_indices_backward),
+              (IndexViewType::HostMirror, h_element_indices_backward),
+              (IndexViewType, element_indices_adjoint),
+              (IndexViewType::HostMirror, h_element_indices_adjoint),
+              (IndexViewType, source_indices_forward),
+              (IndexViewType::HostMirror, h_source_indices_forward),
+              (IndexViewType, source_indices_backward),
+              (IndexViewType::HostMirror, h_source_indices_backward),
+              (IndexViewType, source_indices_adjoint),
+              (IndexViewType::HostMirror, h_source_indices_adjoint)))
 
   template <typename IteratorIndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
@@ -256,7 +257,7 @@ load_on_device(const IteratorIndexType iterator_index,
   }
 #endif
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
@@ -324,7 +325,7 @@ void load_on_host(const IteratorIndexType iterator_index,
   }
 #endif
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
@@ -391,7 +392,7 @@ store_on_device(const IteratorIndexType iterator_index,
   }
 #endif
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
@@ -457,7 +458,7 @@ void store_on_host(const IteratorIndexType iterator_index,
   }
 #endif
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),

@@ -36,7 +36,7 @@ public:
    * @param dt Time interval.
    */
   inline void compute_derivatives(const type_real &dt) {
-    FOR_EACH(
+    FOR_EACH_IN_PRODUCT(
         IN_PRODUCT((DIMENSION_TAG_DIM2),
                    (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),

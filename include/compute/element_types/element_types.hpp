@@ -120,36 +120,26 @@ public:
   }
 
 private:
-  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
-           DECLARE((IndexViewType, elements),
-                   (IndexViewType::HostMirror, h_elements)))
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                                                       ACOUSTIC, POROELASTIC)),
+                      DECLARE((IndexViewType, elements),
+                              (IndexViewType::HostMirror, h_elements)))
 
-  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                      (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-           DECLARE((IndexViewType, elements),
-                   (IndexViewType::HostMirror, h_elements)))
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                      DECLARE((IndexViewType, elements),
+                              (IndexViewType::HostMirror, h_elements)))
 
-  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                      (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
-                      (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                       BOUNDARY_TAG_STACEY,
-                       BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
-           DECLARE((IndexViewType, elements),
-                   (IndexViewType::HostMirror, h_elements)))
-
-  // FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-  //                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-  //                      POROELASTIC), PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
-  //                      BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-  //                      COMPOSITE_STACEY_DIRICHLET)),
-  //          DECLARE((IndexViewType, elements),
-  //                  (IndexViewType::HostMirror, h_elements)))
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                                    COMPOSITE_STACEY_DIRICHLET)),
+                      DECLARE((IndexViewType, elements),
+                              (IndexViewType::HostMirror, h_elements)))
 };
 
 } // namespace compute
