@@ -117,35 +117,36 @@ void check_material(
     const int index = material_specification.index;
     const int imaterial = material_specification.database_index;
 
-    FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                         MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                         MEDIUM_TAG_ELECTROMAGNETIC_TE),
-                        (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-             {
-               if ((medium_tag == _medium_tag_) &&
-                   (property_tag == _property_tag_)) {
-                 const auto icomputed =
-                     computed.get_material<_medium_tag_, _property_tag_>(ispec);
-                 const auto iexpected = std::any_cast<
-                     specfem::medium::material<_medium_tag_, _property_tag_> >(
-                     expected[imaterial]);
-                 if (icomputed != iexpected) {
-                   std::ostringstream error_message;
-                   error_message << "Material " << index << " is not the same ["
-                                 << __FILE__ << ":" << __LINE__ << "]\n"
-                                 << "  imaterial: " << imaterial << "\n"
-                                 << "  index:     " << index << "\n"
-                                 << "  ispec:     " << ispec << "\n"
-                                 << "Computed: \n"
-                                 << icomputed.print() << "\n"
-                                 << "Expected: \n"
-                                 << iexpected.print() << "\n";
-                   throw std::runtime_error(error_message.str());
-                 }
-                 return;
-               }
-             })
+    FOR_EACH_IN_PRODUCT(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
+                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
+                    MEDIUM_TAG_ELECTROMAGNETIC_TE),
+                   (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        {
+          if ((medium_tag == _medium_tag_) &&
+              (property_tag == _property_tag_)) {
+            const auto icomputed =
+                computed.get_material<_medium_tag_, _property_tag_>(ispec);
+            const auto iexpected = std::any_cast<
+                specfem::medium::material<_medium_tag_, _property_tag_> >(
+                expected[imaterial]);
+            if (icomputed != iexpected) {
+              std::ostringstream error_message;
+              error_message << "Material " << index << " is not the same ["
+                            << __FILE__ << ":" << __LINE__ << "]\n"
+                            << "  imaterial: " << imaterial << "\n"
+                            << "  index:     " << index << "\n"
+                            << "  ispec:     " << ispec << "\n"
+                            << "Computed: \n"
+                            << icomputed.print() << "\n"
+                            << "Expected: \n"
+                            << iexpected.print() << "\n";
+              throw std::runtime_error(error_message.str());
+            }
+            return;
+          }
+        })
 
     // If we reach here, the material type is not supported
     std::ostringstream error_message;

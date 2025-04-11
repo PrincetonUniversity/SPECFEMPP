@@ -39,11 +39,12 @@ struct value_containers {
     }
   }
 
-  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                      (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-           DECLARE(((containers_type, (_MEDIUM_TAG_, _PROPERTY_TAG_)), value)))
+  FOR_EACH_IN_PRODUCT(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      DECLARE(((containers_type, (_MEDIUM_TAG_, _PROPERTY_TAG_)), value)))
 
   /**
    * @name Constructors
@@ -66,7 +67,7 @@ struct value_containers {
       constexpr containers_type<MediumTag, PropertyTag> const &
       get_container() const {
 
-    FOR_EACH(
+    FOR_EACH_IN_PRODUCT(
         IN_PRODUCT((DIMENSION_TAG_DIM2),
                    (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -92,7 +93,7 @@ struct value_containers {
    *
    */
   void copy_to_host() {
-    FOR_EACH(
+    FOR_EACH_IN_PRODUCT(
         IN_PRODUCT((DIMENSION_TAG_DIM2),
                    (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -101,7 +102,7 @@ struct value_containers {
   }
 
   void copy_to_device() {
-    FOR_EACH(
+    FOR_EACH_IN_PRODUCT(
         IN_PRODUCT((DIMENSION_TAG_DIM2),
                    (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),

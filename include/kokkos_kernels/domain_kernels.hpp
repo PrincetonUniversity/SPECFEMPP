@@ -33,7 +33,7 @@ public:
 
     int elements_updated = 0;
 
-    FOR_EACH(
+    FOR_EACH_IN_PRODUCT(
         IN_PRODUCT((DIMENSION_TAG_DIM2),
                    (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC)),
         CAPTURE(coupling_interfaces) {
@@ -43,55 +43,57 @@ public:
           }
         })
 
-    FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                         MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                        (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
-                        (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                         BOUNDARY_TAG_STACEY,
-                         BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
-             {
-               if constexpr (dimension == _dimension_tag_ &&
-                             medium == _medium_tag_) {
-                 impl::compute_source_interaction<dimension, wavefield, ngll,
-                                                  _medium_tag_, _property_tag_,
-                                                  _boundary_tag_>(assembly,
-                                                                  istep);
-               }
-             })
+    FOR_EACH_IN_PRODUCT(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
+                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                   (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+                   (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                    BOUNDARY_TAG_STACEY,
+                    BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+        {
+          if constexpr (dimension == _dimension_tag_ &&
+                        medium == _medium_tag_) {
+            impl::compute_source_interaction<dimension, wavefield, ngll,
+                                             _medium_tag_, _property_tag_,
+                                             _boundary_tag_>(assembly, istep);
+          }
+        })
 
-    FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                         MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                        (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
-                        (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                         BOUNDARY_TAG_STACEY,
-                         BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
-             {
-               if constexpr (dimension == _dimension_tag_ &&
-                             medium == _medium_tag_) {
-                 elements_updated += impl::compute_stiffness_interaction<
-                     dimension, wavefield, ngll, _medium_tag_, _property_tag_,
-                     _boundary_tag_>(assembly, istep);
-               }
-             })
+    FOR_EACH_IN_PRODUCT(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
+                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                   (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+                   (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                    BOUNDARY_TAG_STACEY,
+                    BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+        {
+          if constexpr (dimension == _dimension_tag_ &&
+                        medium == _medium_tag_) {
+            elements_updated += impl::compute_stiffness_interaction<
+                dimension, wavefield, ngll, _medium_tag_, _property_tag_,
+                _boundary_tag_>(assembly, istep);
+          }
+        })
 
-    FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                         MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
-             {
-               if constexpr (dimension == _dimension_tag_ &&
-                             medium == _medium_tag_) {
-                 impl::divide_mass_matrix<dimension, wavefield, _medium_tag_>(
-                     assembly);
-               }
-             })
+    FOR_EACH_IN_PRODUCT(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
+                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+        {
+          if constexpr (dimension == _dimension_tag_ &&
+                        medium == _medium_tag_) {
+            impl::divide_mass_matrix<dimension, wavefield, _medium_tag_>(
+                assembly);
+          }
+        })
 
     return elements_updated;
   }
 
   void initialize(const type_real &dt) {
-    FOR_EACH(
+    FOR_EACH_IN_PRODUCT(
         IN_PRODUCT((DIMENSION_TAG_DIM2),
                    (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -107,42 +109,43 @@ public:
           }
         })
 
-    FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                         MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
-             {
-               if constexpr (dimension == _dimension_tag_) {
-                 impl::invert_mass_matrix<dimension, wavefield, _medium_tag_>(
-                     assembly);
-               }
-             })
+    FOR_EACH_IN_PRODUCT(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
+                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
+        {
+          if constexpr (dimension == _dimension_tag_) {
+            impl::invert_mass_matrix<dimension, wavefield, _medium_tag_>(
+                assembly);
+          }
+        })
 
     return;
   }
 
   inline void compute_seismograms(const int &isig_step) {
 
-    FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                         MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                        (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-             {
-               if constexpr (dimension == _dimension_tag_) {
-                 impl::compute_seismograms<dimension, wavefield, ngll,
-                                           _medium_tag_, _property_tag_>(
-                     assembly, isig_step);
-               }
-             })
+    FOR_EACH_IN_PRODUCT(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
+                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                   (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        {
+          if constexpr (dimension == _dimension_tag_) {
+            impl::compute_seismograms<dimension, wavefield, ngll, _medium_tag_,
+                                      _property_tag_>(assembly, isig_step);
+          }
+        })
   }
 
 private:
   specfem::compute::assembly assembly;
 
-  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
-                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC)),
-           DECLARE(((impl::interface_kernels,
-                     (WavefieldType, _DIMENSION_TAG_, _MEDIUM_TAG_)),
-                    coupling_interfaces)))
+  FOR_EACH_IN_PRODUCT(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC)),
+                      DECLARE(((impl::interface_kernels,
+                                (WavefieldType, _DIMENSION_TAG_, _MEDIUM_TAG_)),
+                               coupling_interfaces)))
 };
 
 } // namespace kokkos_kernels

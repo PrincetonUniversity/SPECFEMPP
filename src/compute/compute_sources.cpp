@@ -99,7 +99,7 @@ specfem::compute::sources::sources(
   int nsources = 0;
   int nsource_indices = 0;
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
@@ -154,7 +154,7 @@ specfem::compute::sources::sources(
         "Not all sources were assigned or sources are assigned multiple times");
   }
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -284,7 +284,7 @@ specfem::compute::sources::get_sources_on_host(
     const specfem::element::property_tag property,
     const specfem::element::boundary_tag boundary,
     const specfem::wavefield::simulation_field wavefield) const {
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -332,7 +332,7 @@ specfem::compute::sources::get_sources_on_device(
     const specfem::element::property_tag property,
     const specfem::element::boundary_tag boundary,
     const specfem::wavefield::simulation_field wavefield) const {
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),

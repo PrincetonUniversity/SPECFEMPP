@@ -105,14 +105,14 @@
 /**
  * @brief Declare for each tag.
  *
- * This macro is to be only used in conjunction with @ref FOR_EACH
+ * This macro is to be only used in conjunction with @ref FOR_EACH_IN_PRODUCT
  *
  */
 #define DECLARE(...) BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)
 /**
  * @brief Instantiate templates for each tag.
  *
- * This macro is to be only used in conjunction with @ref FOR_EACH
+ * This macro is to be only used in conjunction with @ref FOR_EACH_IN_PRODUCT
  *
  */
 #define INSTANTIATE(...)                                                       \
@@ -127,11 +127,31 @@
 /**
  * @brief Filter sequence for different tags.
  *
- * This macro is to be only used in conjunction with @ref FOR_EACH
+ * This macro is to be only used in conjunction with @ref FOR_EACH_IN_PRODUCT
  *
  */
 #define IN_PRODUCT(...)                                                        \
-  BOOST_PP_SEQ_TRANSFORM(_EXPAND_VARIADIC, _,                                  \
+  BOOST_PP_SEQ_TO_TUPLE(BOOST_PP_SEQ_TRANSFORM(                                \
+      _EXPAND_VARIADIC, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)))
+
+/**
+ * @brief Converts tag arguments to a sequence of tag tuples,
+ * e.g. DIMENSION_TAG(DIM2) expands to DIMENSION_TAG_DIM2
+ */
+#define DIMENSION_TAG(...)                                                     \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, DIMENSION_TAG_,                      \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define MEDIUM_TAG(...)                                                        \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, MEDIUM_TAG_,                         \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define PROPERTY_TAG(...)                                                      \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, PROPERTY_TAG_,                       \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define BOUNDARY_TAG(...)                                                      \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, BOUNDARY_TAG_,                       \
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 /**
@@ -146,10 +166,10 @@
  * argument, e.g. CAPTURE(value, elements, h_elements). The last argument is the
  * code block to be executed.
  */
-#define FOR_EACH(seq, ...)                                                     \
-  BOOST_PP_SEQ_FOR_EACH(_FOR_ONE_TAG_SEQ,                                      \
-                        BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
+#define FOR_EACH_IN_PRODUCT(seq, ...)                                          \
+  BOOST_PP_SEQ_FOR_EACH(                                                       \
+      _FOR_ONE_TAG_SEQ, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
+      BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, BOOST_PP_TUPLE_TO_SEQ(seq)))
 
 namespace specfem {
 namespace element {

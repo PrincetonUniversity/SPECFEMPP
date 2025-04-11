@@ -16,7 +16,7 @@ specfem::compute::element_types::element_types(
     boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
   }
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
@@ -40,7 +40,7 @@ specfem::compute::element_types::element_types(
         Kokkos::deep_copy(_elements_, _h_elements_);
       })
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -71,7 +71,7 @@ specfem::compute::element_types::element_types(
         Kokkos::deep_copy(_elements_, _h_elements_);
       })
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -111,7 +111,7 @@ specfem::compute::element_types::element_types(
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
 specfem::compute::element_types::get_elements_on_host(
     const specfem::element::medium_tag medium_tag) const {
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
@@ -127,7 +127,7 @@ specfem::compute::element_types::get_elements_on_host(
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
 specfem::compute::element_types::get_elements_on_device(
     const specfem::element::medium_tag medium_tag) const {
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)),
@@ -145,7 +145,7 @@ specfem::compute::element_types::get_elements_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -164,7 +164,7 @@ specfem::compute::element_types::get_elements_on_device(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -183,7 +183,7 @@ specfem::compute::element_types::get_elements_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag,
     const specfem::element::boundary_tag boundary_tag) const {
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -208,7 +208,7 @@ specfem::compute::element_types::get_elements_on_device(
     const specfem::element::property_tag property_tag,
     const specfem::element::boundary_tag boundary_tag) const {
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),

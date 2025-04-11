@@ -24,6 +24,8 @@
 
 #define _REFLECT_1(data, elem) elem
 
+#define _TRANSFORM_TAGS(s, data, elem) BOOST_PP_CAT(data, elem)
+
 #define _TRANSFORM_INSTANTIATE(s, data, elem) (elem, )
 
 #define _OP_OR(s, state, elem) BOOST_PP_OR(state, elem)

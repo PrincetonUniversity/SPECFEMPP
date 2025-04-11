@@ -96,7 +96,7 @@ specfem::compute::receivers::receivers(
     }
   }
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -146,7 +146,7 @@ specfem::compute::receivers::get_indices_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
@@ -170,7 +170,7 @@ specfem::compute::receivers::get_indices_on_device(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-  FOR_EACH(
+  FOR_EACH_IN_PRODUCT(
       IN_PRODUCT((DIMENSION_TAG_DIM2),
                  (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
