@@ -65,11 +65,18 @@
 /**
  * @brief Create a reference to the variable to be captured inside the code
  * block. e.g. auto &value = value_dim2_elastic_isotropic;
+ * If elem is a tuple, the first element is used as the variable name and the
+ * second element is used as the variable to be captured, e.g. for (value,
+ * rhs.value), the output is auto &value = rhs.value_dim2_elastic_isotropic;
  */
+#define _REFERENCE_0(elem)                                                     \
+  BOOST_PP_IF(BOOST_VMD_IS_TUPLE(elem), BOOST_PP_TUPLE_ELEM(0, elem), elem)
+#define _REFERENCE_1(elem)                                                     \
+  BOOST_PP_IF(BOOST_VMD_IS_TUPLE(elem), BOOST_PP_TUPLE_ELEM(1, elem), elem)
 #define _WRITE_CAPTURE(data, elem)                                             \
   BOOST_PP_IF(BOOST_PP_IS_EMPTY(elem), BOOST_PP_EMPTY(),                       \
-              auto &BOOST_PP_SEQ_CAT((_)(elem)(_)) =                           \
-                  _VAR_NAME_FROM_TAGS(data, elem);)
+              auto &BOOST_PP_SEQ_CAT((_)(_REFERENCE_0(elem))(_)) =             \
+                  _VAR_NAME_FROM_TAGS(data, _REFERENCE_1(elem));)
 
 /**
  * @brief Obtain Name of the variable to be declared from type declaration
@@ -148,12 +155,15 @@
  * @brief Create reference to tags for dimension, medium, property and boundary
  * in code block.
  */
+#define _WRITE_TAG(tag, data, i)                                               \
+  constexpr auto tag = GET_TAG(BOOST_PP_TUPLE_ELEM(i, data));
+
 // clang-format off
 #define _WRITE_TAGS(data, n)                                           \
-  BOOST_PP_IF(BOOST_PP_LESS(0, n), constexpr auto _dimension_tag_ = GET_TAG(BOOST_PP_TUPLE_ELEM(0, data));, BOOST_PP_EMPTY())  \
-  BOOST_PP_IF(BOOST_PP_LESS(1, n), constexpr auto _medium_tag_ = GET_TAG(BOOST_PP_TUPLE_ELEM(1, data));, BOOST_PP_EMPTY())     \
-  BOOST_PP_IF(BOOST_PP_LESS(2, n), constexpr auto _property_tag_ = GET_TAG(BOOST_PP_TUPLE_ELEM(2, data));, BOOST_PP_EMPTY())   \
-  BOOST_PP_IF(BOOST_PP_LESS(3, n), constexpr auto _boundary_tag_ = GET_TAG(BOOST_PP_TUPLE_ELEM(3, data));, BOOST_PP_EMPTY())
+  BOOST_PP_IF(BOOST_PP_LESS(0, n), _WRITE_TAG, _EMPTY_MACRO)(_dimension_tag_, data, 0)  \
+  BOOST_PP_IF(BOOST_PP_LESS(1, n), _WRITE_TAG, _EMPTY_MACRO)(_medium_tag_, data, 1)     \
+  BOOST_PP_IF(BOOST_PP_LESS(2, n), _WRITE_TAG, _EMPTY_MACRO)(_property_tag_, data, 2)     \
+  BOOST_PP_IF(BOOST_PP_LESS(3, n), _WRITE_TAG, _EMPTY_MACRO)(_boundary_tag_, data, 3)
 // clang-format on
 
 /**
