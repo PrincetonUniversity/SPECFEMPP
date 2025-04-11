@@ -171,13 +171,14 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     const auto database_file = setup.get_databases();
     const auto source_node = setup.get_sources();
     const auto elastic_wave = setup.get_elastic_wave_type();
+    const auto electromagnetic_wave = setup.get_electromagnetic_wave_type();
 
     // Set up GLL quadrature points
     const auto quadratures = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh =
-        specfem::io::read_2d_mesh(database_file, elastic_wave, mpi);
+    specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
+        database_file, elastic_wave, electromagnetic_wave, mpi);
     const type_real dt = setup.get_dt();
     const int nsteps = setup.get_nsteps();
 
@@ -257,7 +258,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
           filename.push_back(Test.database.traces + "/" + network_name + "." +
                              station_name + ".S2.BXY.semd");
-        } else if (elastic_wave == specfem::enums::elastic_wave::p_sv) {
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
           filename.push_back(Test.database.traces + "/" + network_name + "." +
                              station_name + ".S2.BXX.semd");
           filename.push_back(Test.database.traces + "/" + network_name + "." +
@@ -268,7 +269,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
           filename.push_back(Test.database.traces + "/" + network_name + "." +
                              station_name + ".S2.BXY.semv");
-        } else if (elastic_wave == specfem::enums::elastic_wave::p_sv) {
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
           filename.push_back(Test.database.traces + "/" + network_name + "." +
                              station_name + ".S2.BXX.semv");
           filename.push_back(Test.database.traces + "/" + network_name + "." +
@@ -279,7 +280,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
           filename.push_back(Test.database.traces + "/" + network_name + "." +
                              station_name + ".S2.BXY.sema");
-        } else if (elastic_wave == specfem::enums::elastic_wave::p_sv) {
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
           filename.push_back(Test.database.traces + "/" + network_name + "." +
                              station_name + ".S2.BXX.sema");
           filename.push_back(Test.database.traces + "/" + network_name + "." +
@@ -297,7 +298,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
                  << " - Station: " << station_name << "\n"
                  << "--------------------------------------------------\n\n"
                  << std::endl;
-        } else if (elastic_wave == specfem::enums::elastic_wave::p_sv) {
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
           filename.push_back(Test.database.traces + "/" + network_name + "." +
                              station_name + ".S2.PRE.semp");
         }

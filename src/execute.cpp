@@ -43,7 +43,8 @@ void execute(
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
   const auto mesh = specfem::io::read_2d_mesh(
-      database_filename, setup.get_elastic_wave_type(), mpi);
+      database_filename, setup.get_elastic_wave_type(),
+      setup.get_electromagnetic_wave_type(), mpi);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

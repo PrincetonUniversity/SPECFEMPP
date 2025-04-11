@@ -16,7 +16,8 @@ namespace point {
  */
 template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, bool UseSIMD>
+          specfem::element::property_tag PropertyTag, bool UseSIMD,
+          typename Enable = void>
 struct kernels;
 
 /**
@@ -26,10 +27,11 @@ struct kernels;
  * @tparam UseSIMD  Use SIMD instructions
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct kernels<specfem::dimension::type::dim2, MediumTag,
-               specfem::element::property_tag::isotropic, UseSIMD>
-    : public impl::point_data<6, UseSIMD>,
-      specfem::element::is_elastic<MediumTag> {
+struct kernels<
+    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::property_tag::isotropic, UseSIMD,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
+    : public impl::point_data<6, UseSIMD> {
 
   /**
    * @name Typedefs
@@ -71,10 +73,11 @@ struct kernels<specfem::dimension::type::dim2, MediumTag,
  * @tparam UseSIMD  Use SIMD instructions
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct kernels<specfem::dimension::type::dim2, MediumTag,
-               specfem::element::property_tag::anisotropic, UseSIMD>
-    : public impl::point_data<7, UseSIMD>,
-      specfem::element::is_elastic<MediumTag> {
+struct kernels<
+    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::property_tag::anisotropic, UseSIMD,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
+    : public impl::point_data<7, UseSIMD> {
 
   /**
    * @name Typedefs
@@ -171,10 +174,11 @@ struct kernels<specfem::dimension::type::dim2,
  *
  * @tparam UseSIMD  Use SIMD instructions
  */
-template <bool UseSIMD>
-struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::electromagnetic_sv,
-               specfem::element::property_tag::isotropic, UseSIMD>
+template <specfem::element::medium_tag MediumTag, bool UseSIMD>
+struct kernels<
+    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::property_tag::isotropic, UseSIMD,
+    std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> >
     : public impl::point_data<1, UseSIMD> {
 
   /**
@@ -186,8 +190,7 @@ struct kernels<specfem::dimension::type::dim2,
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag =
-      specfem::element::medium_tag::electromagnetic_sv;
+  constexpr static auto medium_tag = MediumTag;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
 
@@ -202,7 +205,7 @@ struct kernels<specfem::dimension::type::dim2,
   KOKKOS_FUNCTION
   kernels(const value_type param) : kernels(param) {
     Kokkos::abort(
-        "Point Kernels not implemented for electromagnetic sv isotropic");
+        "Point Kernels not implemented for electromagnetic te isotropic");
   }
   using base_type::base_type;
 
@@ -243,6 +246,7 @@ struct kernels<specfem::dimension::type::dim2,
   constexpr static bool is_point_properties = true;
   ///@}
 
+  using base_type::base_type;
   /**
    * @brief Constructor
    *
@@ -256,7 +260,7 @@ struct kernels<specfem::dimension::type::dim2,
           const value_type rhofbb, const value_type ratio,
           const value_type phib)
       : kernels(rhot, rhof, eta, sm, mu_fr, B, C, M, mu_fr, (rhot + B + mu_fr),
-                (rhof + C + M + sm), (static_cast<value_type>(1.0) * (sm + M)),
+                (rhof + C + M + sm), (static_cast<value_type>(-1.0) * (sm + M)),
                 cpI, cpII, cs, rhobb, rhofbb, ratio, phib) {}
 
   /**

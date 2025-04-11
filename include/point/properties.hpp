@@ -15,7 +15,8 @@ namespace point {
  */
 template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, bool UseSIMD>
+          specfem::element::property_tag PropertyTag, bool UseSIMD,
+          typename Enable = void>
 struct properties;
 
 /**
@@ -24,10 +25,11 @@ struct properties;
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct properties<specfem::dimension::type::dim2, MediumTag,
-                  specfem::element::property_tag::isotropic, UseSIMD>
-    : public impl::point_data<3, UseSIMD>,
-      specfem::element::is_elastic<MediumTag> {
+struct properties<
+    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::property_tag::isotropic, UseSIMD,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
+    : public impl::point_data<3, UseSIMD> {
 
   /**
    * @name Typedefs
@@ -68,10 +70,11 @@ struct properties<specfem::dimension::type::dim2, MediumTag,
 };
 
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct properties<specfem::dimension::type::dim2, MediumTag,
-                  specfem::element::property_tag::anisotropic, UseSIMD>
-    : public impl::point_data<10, UseSIMD>,
-      specfem::element::is_elastic<MediumTag> {
+struct properties<
+    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::property_tag::anisotropic, UseSIMD,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
+    : public impl::point_data<10, UseSIMD> {
 
   /**
    * @name Typedefs
@@ -234,6 +237,47 @@ struct properties<specfem::dimension::type::dim2,
     return (((static_cast<type_real>(1.0) - this->phi()) * this->rho_s()) +
             (this->phi() * this->rho_f()));
   }
+
+  KOKKOS_INLINE_FUNCTION const value_type vpI() const {
+    ///< Helper variable for readability
+    const auto phi_over_tort = this->phi() / this->tortuosity();
+    const auto afactor = rho_bar() - phi_over_tort * rho_f();
+    const auto bfactor =
+        this->H_Biot() + phi_over_tort * rho_bar() / rho_f() * this->M_Biot() -
+        static_cast<value_type>(2.0) * phi_over_tort * this->C_Biot();
+    const auto cfactor =
+        phi_over_tort / rho_f() *
+        (this->H_Biot() * this->M_Biot() - this->C_Biot() * this->C_Biot());
+
+    return Kokkos::sqrt(bfactor + Kokkos::sqrt(bfactor * bfactor -
+                                               static_cast<type_real>(4.0) *
+                                                   afactor * cfactor)) /
+           (static_cast<type_real>(2.0) * afactor);
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vpII() const {
+    ///< Helper variable for readability
+    const auto phi_over_tort = this->phi() / this->tortuosity();
+    const auto afactor = rho_bar() - phi_over_tort * rho_f();
+    const auto bfactor =
+        this->H_Biot() + phi_over_tort * rho_bar() / rho_f() * this->M_Biot() -
+        static_cast<value_type>(2.0) * phi_over_tort * this->C_Biot();
+    const auto cfactor =
+        phi_over_tort / rho_f() *
+        (this->H_Biot() * this->M_Biot() - this->C_Biot() * this->C_Biot());
+
+    return Kokkos::sqrt(bfactor - Kokkos::sqrt(bfactor * bfactor -
+                                               static_cast<type_real>(4.0) *
+                                                   afactor * cfactor)) /
+           (static_cast<type_real>(2.0) * afactor);
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vs() const {
+    ///< Helper variable for readability
+    const auto phi_over_tort = this->phi() / this->tortuosity();
+    const auto afactor = rho_bar() - phi_over_tort * rho_f();
+    return Kokkos::sqrt(mu_G() / afactor);
+  }
 };
 
 /**
@@ -241,10 +285,11 @@ struct properties<specfem::dimension::type::dim2,
  *
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
-template <bool UseSIMD>
-struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::electromagnetic_sv,
-                  specfem::element::property_tag::isotropic, UseSIMD>
+template <specfem::element::medium_tag MediumTag, bool UseSIMD>
+struct properties<
+    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::property_tag::isotropic, UseSIMD,
+    std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> >
     : public impl::point_data<5, UseSIMD> {
 
   /**
@@ -257,7 +302,7 @@ struct properties<specfem::dimension::type::dim2,
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto medium_tag =
-      specfem::element::medium_tag::electromagnetic_sv;
+      specfem::element::medium_tag::electromagnetic_te;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
 

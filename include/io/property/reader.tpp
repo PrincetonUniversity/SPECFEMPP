@@ -20,28 +20,21 @@ void specfem::io::property_reader<InputLibrary>::read(
 
   typename InputLibrary::File file(input_folder + "/Properties");
 
-#define READ_PROPERTY(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                 \
-  {                                                                            \
-    const std::string name =                                                   \
-        std::string("/") + specfem::element::to_string(GET_TAG(MEDIUM_TAG),    \
-                                                       GET_TAG(PROPERTY_TAG)); \
-    typename InputLibrary::Group group = file.openGroup(name);                 \
-    group                                                                      \
-        .openDataset(                                                          \
-            "data",                                                            \
-            properties                                                         \
-                .get_container<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>()   \
-                .h_data)                                                       \
-        .read();                                                               \
-  }
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      READ_PROPERTY,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
-
-#undef READ_PROPERTY
+FOR_EACH_MATERIAL_SYSTEM(
+        IN((DIMENSION_TAG_DIM2),
+               (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC),
+               (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)), {
+               const std::string name =
+          std::string("/") +
+          specfem::element::to_string(_medium_tag_, _property_tag_);
+      typename InputLibrary::Group group = file.openGroup(name);
+      group
+          .openDataset(
+              "data",
+              properties.get_container<_medium_tag_, _property_tag_>().h_data)
+          .read();
+               })
 
   // {
   //   typename InputLibrary::Group elastic =
@@ -51,7 +44,7 @@ void specfem::io::property_reader<InputLibrary>::read(
   //       .openDataset(
   //           "data",
   //           properties
-  //               .get_container<specfem::element::medium_tag::elastic_sv,
+  //               .get_container<specfem::element::medium_tag::elastic_psv,
   //                              specfem::element::property_tag::isotropic>()
   //               .h_data)
   //       .read();
@@ -79,7 +72,7 @@ void specfem::io::property_reader<InputLibrary>::read(
   //       .openDataset(
   //           "data",
   //           properties
-  //               .get_container<specfem::element::medium_tag::elastic_sv,
+  //               .get_container<specfem::element::medium_tag::elastic_psv,
   //                              specfem::element::property_tag::anisotropic>()
   //               .h_data)
   //       .read();

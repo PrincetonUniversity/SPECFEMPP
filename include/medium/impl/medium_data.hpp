@@ -19,6 +19,65 @@ namespace specfem {
 namespace medium {
 
 namespace impl {
+
+template <typename GlobalReducer, typename ContainerType, typename LocalReducer,
+          typename PointValues, typename WorkItems>
+void reduce(const ContainerType container, const WorkItems work_items,
+            PointValues &values, const LocalReducer &reducer) {
+
+  constexpr auto dimension = ContainerType::dimension;
+  constexpr auto medium_tag = ContainerType::medium_tag;
+  constexpr auto property_tag = ContainerType::property_tag;
+
+  const int ngllz = container.ngllz;
+  const int ngllx = container.ngllx;
+
+  static_assert(PointValues::dimension == dimension, "Dimension mismatch");
+  static_assert(PointValues::medium_tag == medium_tag, "Medium tag mismatch");
+  static_assert(PointValues::property_tag == property_tag,
+                "Property tag mismatch");
+
+  constexpr std::size_t nprops = ContainerType::nprops;
+
+  static_assert(nprops == PointValues::nprops,
+                "Number of properties in PointValues must match the container");
+
+  if (work_items.size() == 0)
+    return;
+
+  constexpr bool on_device = std::is_same<typename WorkItems::execution_space,
+                                          Kokkos::DefaultExecutionSpace>::value;
+
+  using policy_type = Kokkos::MDRangePolicy<
+      typename WorkItems::execution_space,
+      Kokkos::Rank<3, Kokkos::Iterate::Left> >; // Use the execution
+                                                // space of the work
+                                                // items
+
+  const int nwork_items =
+      work_items.extent(0); // Number of work items to be used for reduction
+
+  for (std::size_t iprop = 0; iprop < nprops; ++iprop) {
+    // Reduce the values in the container
+
+    Kokkos::parallel_reduce(
+        "reduce_medium_data",
+        policy_type({ 0, 0, 0 }, { nwork_items, ngllz, ngllx }),
+        KOKKOS_LAMBDA(const int i, const int iz, const int ix,
+                      type_real &lvalue) {
+          const int ispec = work_items(i); // Get the ispec from the work items
+          // Access the data based on the device or host
+          type_real value =
+              container.template get_data<on_device>(ispec, iz, ix, i);
+          // Perform Local reduction
+          lvalue = reducer(value, lvalue);
+        },
+        GlobalReducer(values.data[iprop]));
+  }
+
+  return;
+}
+
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, std::size_t N>
 struct medium_data {
@@ -251,9 +310,33 @@ public:
     add_values<false>(index, values);
   }
 
+  template <typename WorkItems, typename PointValues>
+  void max(const WorkItems &work_items, PointValues &values) const {
+
+    for (std::size_t i = 0; i < values.nprops; ++i) {
+      // Initialize the values to the minimum possible value
+      // for max reduction
+      values.data[i] = Kokkos::reduction_identity<type_real>::max();
+    }
+    // Reduce the values on device
+    reduce<Kokkos::Max<type_real> >(
+        *this, work_items, values,
+        KOKKOS_LAMBDA(type_real value, type_real lvalue) {
+          // Local reducer for max
+          return (value > lvalue) ? value : lvalue;
+        });
+
+    return;
+  }
+
   void copy_to_device() { Kokkos::deep_copy(data, h_data); }
 
   void copy_to_host() { Kokkos::deep_copy(h_data, data); }
+
+  template <typename GlobalReducer, typename ContainerType,
+            typename LocalReducer, typename PointValues, typename WorkItems>
+  friend void reduce(const ContainerType container, const WorkItems work_items,
+                     PointValues &values, const LocalReducer &reducer);
 };
 } // namespace impl
 

@@ -29,8 +29,9 @@ specfem::compute::element_types::element_types(
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       COUNT_MEDIUM_TAG_INDICES,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef COUNT_MEDIUM_TAG_INDICES
 
@@ -47,8 +48,9 @@ specfem::compute::element_types::element_types(
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       ALLOCATE_MEDIUM_TAG_VIEWS,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef ALLOCATE_MEDIUM_TAG_VIEWS
 
@@ -73,84 +75,42 @@ specfem::compute::element_types::element_types(
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       ASSIGN_MEDIUM_TAG_INDICES,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef ASSIGN_MEDIUM_TAG_INDICES
 
-#define COUNT_MATERIAL_SYSTEM_INDICES(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG) \
-  int CREATE_VARIABLE_NAME(count, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) = 0;  \
-  for (int ispec = 0; ispec < nspec; ispec++) {                                \
-    if (medium_tags(ispec) == GET_TAG(MEDIUM_TAG) &&                           \
-        property_tags(ispec) == GET_TAG(PROPERTY_TAG)) {                       \
-      CREATE_VARIABLE_NAME(count, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG))       \
-      ++;                                                                      \
-    }                                                                          \
-  }
+  FOR_EACH_MATERIAL_SYSTEM(
+      IN((DIMENSION_TAG_DIM2),
+         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC),
+         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      CAPTURE(elements, h_elements) {
+        int count = 0;
+        int index = 0;
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      COUNT_MATERIAL_SYSTEM_INDICES,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+        for (int ispec = 0; ispec < nspec; ispec++) {
+          if (medium_tags(ispec) == _medium_tag_ &&
+              property_tags(ispec) == _property_tag_) {
+            count++;
+          }
+        }
 
-#undef COUNT_MATERIAL_SYSTEM_INDICES
+        _elements_ =
+            IndexViewType("specfem::compute::element_types::elements", count);
+        _h_elements_ = Kokkos::create_mirror_view(_elements_);
 
-#define ALLOCATE_MATERIAL_SYSTEM_VIEWS(DIMENSION_TAG, MEDIUM_TAG,              \
-                                       PROPERTY_TAG)                           \
-  this->CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),                \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) =   \
-      IndexViewType("specfem::compute::element_types::elements",               \
-                    CREATE_VARIABLE_NAME(count, GET_NAME(DIMENSION_TAG),       \
-                                         GET_NAME(MEDIUM_TAG),                 \
-                                         GET_NAME(PROPERTY_TAG)));             \
-  this->CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENSION_TAG),              \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) =   \
-      Kokkos::create_mirror_view(this->CREATE_VARIABLE_NAME(                   \
-          elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),             \
-          GET_NAME(PROPERTY_TAG)));
+        for (int ispec = 0; ispec < nspec; ispec++) {
+          if (medium_tags(ispec) == _medium_tag_ &&
+              property_tags(ispec) == _property_tag_) {
+            _h_elements_(index) = ispec;
+            index++;
+          }
+        }
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      ALLOCATE_MATERIAL_SYSTEM_VIEWS,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef ALLOCATE_MATERIAL_SYSTEM_VIEWS
-
-#define ASSIGN_MATERIAL_SYSTEM_INDICES(DIMENSION_TAG, MEDIUM_TAG,              \
-                                       PROPERTY_TAG)                           \
-  int CREATE_VARIABLE_NAME(index, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) = 0;  \
-  for (int ispec = 0; ispec < nspec; ispec++) {                                \
-    if (medium_tags(ispec) == GET_TAG(MEDIUM_TAG) &&                           \
-        property_tags(ispec) == GET_TAG(PROPERTY_TAG)) {                       \
-      this->CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENSION_TAG),          \
-                                 GET_NAME(MEDIUM_TAG),                         \
-                                 GET_NAME(PROPERTY_TAG))(CREATE_VARIABLE_NAME( \
-          index, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),                \
-          GET_NAME(PROPERTY_TAG))) = ispec;                                    \
-      CREATE_VARIABLE_NAME(index, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG))       \
-      ++;                                                                      \
-    }                                                                          \
-  }                                                                            \
-  Kokkos::deep_copy(this->CREATE_VARIABLE_NAME(                                \
-                        elements, GET_NAME(DIMENSION_TAG),                     \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),         \
-                    this->CREATE_VARIABLE_NAME(                                \
-                        h_elements, GET_NAME(DIMENSION_TAG),                   \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)));
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      ASSIGN_MATERIAL_SYSTEM_INDICES,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef ASSIGN_MATERIAL_SYSTEM_INDICES
+        Kokkos::deep_copy(_elements_, _h_elements_);
+      })
 
 #define COUNT_ELEMENT_TYPES_INDICES(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,   \
                                     BOUNDARY_TAG)                              \
@@ -170,11 +130,12 @@ specfem::compute::element_types::element_types(
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       COUNT_ELEMENT_TYPES_INDICES,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-              BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-              BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
+                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef COUNT_ELEMENT_TYPES_INDICES
 
@@ -196,11 +157,12 @@ specfem::compute::element_types::element_types(
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       ALLOCATE_ELEMENT_TYPES_VIEWS,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-              BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-              BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
+                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef ALLOCATE_ELEMENT_TYPES_VIEWS
 
@@ -234,11 +196,12 @@ specfem::compute::element_types::element_types(
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       ASSIGN_ELEMENT_TYPES_INDICES,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-              BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-              BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
+                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef ASSIGN_ELEMENT_TYPES_INDICES
 }
@@ -255,8 +218,8 @@ specfem::compute::element_types::get_elements_on_host(
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       RETURN_VARIABLE, WHERE(DIMENSION_TAG_DIM2)
-                           WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
-                                 MEDIUM_TAG_ACOUSTIC))
+                           WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef RETURN_VARIABLE
 
@@ -275,8 +238,8 @@ specfem::compute::element_types::get_elements_on_device(
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       RETURN_VARIABLE, WHERE(DIMENSION_TAG_DIM2)
-                           WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
-                                 MEDIUM_TAG_ACOUSTIC))
+                           WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef RETURN_VARIABLE
 
@@ -288,21 +251,16 @@ specfem::compute::element_types::get_elements_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-#define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)               \
-  if (GET_TAG(MEDIUM_TAG) == medium_tag &&                                     \
-      GET_TAG(PROPERTY_TAG) == property_tag) {                                 \
-    return this->CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENSION_TAG),     \
-                                      GET_NAME(MEDIUM_TAG),                    \
-                                      GET_NAME(PROPERTY_TAG));                 \
-  }
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef RETURN_VARIABLE
+  FOR_EACH_MATERIAL_SYSTEM(
+      IN((DIMENSION_TAG_DIM2),
+         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC),
+         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      CAPTURE(h_elements) {
+        if (_medium_tag_ == medium_tag && _property_tag_ == property_tag) {
+          return _h_elements_;
+        }
+      })
 
   throw std::runtime_error("Medium tag or property tag not found");
 }
@@ -312,21 +270,16 @@ specfem::compute::element_types::get_elements_on_device(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-#define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)               \
-  if (GET_TAG(MEDIUM_TAG) == medium_tag &&                                     \
-      GET_TAG(PROPERTY_TAG) == property_tag) {                                 \
-    return this->CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),       \
-                                      GET_NAME(MEDIUM_TAG),                    \
-                                      GET_NAME(PROPERTY_TAG));                 \
-  }
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef RETURN_VARIABLE
+  FOR_EACH_MATERIAL_SYSTEM(
+      IN((DIMENSION_TAG_DIM2),
+         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC),
+         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      CAPTURE(elements) {
+        if (_medium_tag_ == medium_tag && _property_tag_ == property_tag) {
+          return _elements_;
+        }
+      })
 
   throw std::runtime_error("Medium tag or property tag not found");
 }
@@ -348,11 +301,12 @@ specfem::compute::element_types::get_elements_on_host(
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-              BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-              BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
+                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef RETURN_VARIABLE
 
@@ -377,11 +331,12 @@ specfem::compute::element_types::get_elements_on_device(
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-              BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-              BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
+                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef RETURN_VARIABLE
 

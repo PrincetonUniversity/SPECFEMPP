@@ -64,7 +64,7 @@ struct impl_properties_container
 };
 
 template <specfem::element::medium_tag type,
-          specfem::element::property_tag property>
+          specfem::element::property_tag property, typename Enable = void>
 struct properties_container {
   static_assert("Material type not implemented");
 };
@@ -77,3 +77,4 @@ struct properties_container {
 #include "dim2/acoustic/isotropic/properties_container.hpp"
 #include "dim2/elastic/anisotropic/properties_container.hpp"
 #include "dim2/elastic/isotropic/properties_container.hpp"
+#include "dim2/poroelastic/isotropic/properties_container.hpp"

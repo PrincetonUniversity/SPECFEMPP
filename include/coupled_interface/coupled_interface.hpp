@@ -16,11 +16,11 @@ class coupled_interface;
 
 template <specfem::dimension::type DimensionType>
 class coupled_interface<DimensionType, specfem::element::medium_tag::acoustic,
-                        specfem::element::medium_tag::elastic_sv> {
+                        specfem::element::medium_tag::elastic_psv> {
 public:
   using CoupledPointFieldType =
       specfem::point::field<DimensionType,
-                            specfem::element::medium_tag::elastic_sv, true,
+                            specfem::element::medium_tag::elastic_psv, true,
                             false, false, false, false>;
   using SelfPointFieldType =
       specfem::point::field<DimensionType,
@@ -29,7 +29,8 @@ public:
 };
 
 template <specfem::dimension::type DimensionType>
-class coupled_interface<DimensionType, specfem::element::medium_tag::elastic_sv,
+class coupled_interface<DimensionType,
+                        specfem::element::medium_tag::elastic_psv,
                         specfem::element::medium_tag::acoustic> {
 public:
   using CoupledPointFieldType =
@@ -38,7 +39,7 @@ public:
                             false, true, false, false>;
   using SelfPointFieldType =
       specfem::point::field<DimensionType,
-                            specfem::element::medium_tag::elastic_sv, false,
+                            specfem::element::medium_tag::elastic_psv, false,
                             false, true, false, false>;
 };
 
@@ -82,8 +83,8 @@ public:
                 "Error: self_medium cannot be equal to coupled_medium");
 
   static_assert(((SelfMedium == specfem::element::medium_tag::acoustic &&
-                  CoupledMedium == specfem::element::medium_tag::elastic_sv) ||
-                 (SelfMedium == specfem::element::medium_tag::elastic_sv &&
+                  CoupledMedium == specfem::element::medium_tag::elastic_psv) ||
+                 (SelfMedium == specfem::element::medium_tag::elastic_psv &&
                   CoupledMedium == specfem::element::medium_tag::acoustic)),
                 "Only acoustic-elastic coupling is supported at the moment.");
 
