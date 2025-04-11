@@ -138,28 +138,28 @@ public:
     size_type chunk_size;
 
     template <typename... IndexType>
-    constexpr size_type tile_offset(IndexType... indices) const noexcept {
-      static_assert(sizeof...(indices) == extents_type::rank(),
-                    "Number of indices must match the rank of extents.");
+    constexpr size_type tile_offset(std::size_t ispec,
+                                    IndexType... /* indices */) const noexcept {
 
-      size_type index_array[] = { static_cast<size_type>(indices)... };
+      // size_type index_array[] = { static_cast<size_type>(indices)... };
 
-      size_type t_index[extents_type::rank()];
+      // size_type t_index[extents_type::rank()];
 
-      for (std::size_t i = 0; i < extents_type::rank(); ++i) {
-        t_index[i] =
-            index_array[i] / impl::tile_size<ElementChunkSize>(extents_, i);
-      }
+      // for (std::size_t i = 0; i < extents_type::rank(); ++i) {
+      //   t_index[i] =
+      //       index_array[i] / impl::tile_size<ElementChunkSize>(extents_, i);
+      // }
 
-      size_type offset = t_index[0];
+      // size_type offset = t_index[0];
 
-      // Hardcoded tiles with Layout left
-      for (std::size_t i = 1; i < extents_type::rank(); ++i) {
-        offset +=
-            t_index[i] * impl::fwd_prod_of_tiles<ElementChunkSize>(extents_, i);
-      }
+      // // Hardcoded tiles with Layout left
+      // for (std::size_t i = 1; i < extents_type::rank(); ++i) {
+      //   offset +=
+      //       t_index[i] * impl::fwd_prod_of_tiles<ElementChunkSize>(extents_,
+      //       i);
+      // }
 
-      return offset * chunk_size;
+      return (ispec / ElementChunkSize) * chunk_size;
     } // tile_offset
 
     template <typename... IndexType>
@@ -169,18 +169,11 @@ public:
 
       size_type index_array[] = { static_cast<size_type>(indices)... };
 
-      size_type t_index[extents_type::rank()];
-
-      for (std::size_t i = 0; i < extents_type::rank(); ++i) {
-        t_index[i] =
-            index_array[i] % impl::tile_size<ElementChunkSize>(extents_, i);
-      }
-
-      size_type offset = t_index[0];
+      std::size_t offset = index_array[0] % ElementChunkSize;
 
       // Hardcoded Layout left within tiles
       for (std::size_t i = 1; i < extents_type::rank(); ++i) {
-        offset += t_index[i] *
+        offset += index_array[i] *
                   impl::fwd_prod_of_tile_size<ElementChunkSize>(extents_, i);
       }
 
