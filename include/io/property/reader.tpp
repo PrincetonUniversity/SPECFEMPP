@@ -32,7 +32,7 @@ FOR_EACH_MATERIAL_SYSTEM(
       group
           .openDataset(
               "data",
-              properties.get_container<_medium_tag_, _property_tag_>().h_data)
+              properties.get_container<_medium_tag_, _property_tag_>().h_data[0])
           .read();
                })
 
