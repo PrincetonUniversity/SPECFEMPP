@@ -51,7 +51,12 @@ RUN echo "Installing vtk..." && \
     tar -xzf VTK-9.4.2.tar.gz && \
     mkdir ${VTK_DIR} && \
     cd ${VTK_DIR} && \
-    cmake -S /usr/local/vtk/VTK-9.4.2 -B ${VTK_DIR} -DCMAKE_BUILD_TYPE=Release -DVTK_DEFAULT_RENDER_WINDOW_HEADLESS=ON && \
+    cmake -S /usr/local/vtk/VTK-9.4.2 -B ${VTK_DIR} \
+     -DCMAKE_BUILD_TYPE=Release \
+     -DVTK_USE_X=OFF \
+     -DVTK_OPENGL_HAS_OSMESA=ON \
+     -DVTK_USE_OSMESA=ON \
+     -DVTK_DEFAULT_RENDER_WINDOW_HEADLESS=ON && \
     cmake --build ${VTK_DIR} -j4 && \
     echo "Done."
 
