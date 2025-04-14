@@ -611,6 +611,7 @@ add_library(
         periodic_tasks
         src/periodic_tasks/plot_wavefield.cpp
         src/periodic_tasks/check_signal.cpp
+        src/utilities/string.cpp
 )
 
 if (NOT VTK_CXX_BUILD)
@@ -653,6 +654,9 @@ add_library(
         src/parameter_parser/writer/plot_wavefield.cpp
         src/parameter_parser/writer/kernel.cpp
         src/parameter_parser/writer/property.cpp
+        src/periodic_tasks/wavefield_reader.cpp
+        src/periodic_tasks/wavefield_writer.cpp
+        src/utilities/string.cpp
 )
 
 target_link_libraries(

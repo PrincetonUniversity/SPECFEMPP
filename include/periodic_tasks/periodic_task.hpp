@@ -1,6 +1,12 @@
 #pragma once
 
 namespace specfem {
+namespace compute {
+struct assembly;
+} // namespace compute
+} // namespace specfem
+
+namespace specfem {
 namespace periodic_tasks {
 /**
  * @brief Base writer class
@@ -22,7 +28,7 @@ public:
    * @brief Method to plot the data
    *
    */
-  virtual void run(const int istep) {};
+  virtual void run(specfem::compute::assembly &assembly, const int istep) {};
 
   /**
    * @brief Returns true if the data should be plotted at the current

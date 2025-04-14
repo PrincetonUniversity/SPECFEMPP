@@ -4,6 +4,8 @@
 #include "io/reader.hpp"
 #include "io/wavefield/reader.hpp"
 #include "io/wavefield/writer.hpp"
+#include "periodic_tasks/wavefield_reader.hpp"
+#include "periodic_tasks/wavefield_writer.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::wavefield::wavefield(
@@ -53,15 +55,15 @@ specfem::runtime_configuration::wavefield::wavefield(
     }
   }();
 
-  const bool write_last_step = [&]() -> bool {
-    if (Node["write_last_step"]) {
-      return Node["write_last_step"].as<bool>();
+  const bool include_last_step = [&]() -> bool {
+    if (Node["include_last_step"]) {
+      return Node["include_last_step"].as<bool>();
     } else {
       return true;
     }
   }();
 
-  if (time_interval == 0 && !write_last_step) {
+  if (time_interval == 0 && !include_last_step) {
     std::ostringstream message;
     message << "************************************************\n"
             << "Warning : Wavefield writer does not write any wavefield. \n"
@@ -71,24 +73,26 @@ specfem::runtime_configuration::wavefield::wavefield(
 
   *this = specfem::runtime_configuration::wavefield(
       output_format, output_folder, type, time_interval,
-      time_interval_by_memory, write_last_step);
+      time_interval_by_memory, include_last_step);
 
   return;
 }
 
-std::shared_ptr<specfem::io::writer>
+std::shared_ptr<specfem::periodic_tasks::periodic_task>
 specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
     const {
 
-  const std::shared_ptr<specfem::io::writer> writer =
-      [&]() -> std::shared_ptr<specfem::io::writer> {
+  const std::shared_ptr<specfem::periodic_tasks::periodic_task> writer =
+      [&]() -> std::shared_ptr<specfem::periodic_tasks::periodic_task> {
     if (this->simulation_type == specfem::simulation::type::forward) {
       if (this->output_format == "HDF5") {
-        return std::make_shared<specfem::io::wavefield_writer<
-            specfem::io::HDF5<specfem::io::write> > >(this->output_folder);
+        return std::make_shared<specfem::periodic_tasks::wavefield_writer<
+            specfem::io::HDF5<specfem::io::write> > >(
+            this->output_folder, this->time_interval, this->include_last_step);
       } else if (this->output_format == "ASCII") {
-        return std::make_shared<specfem::io::wavefield_writer<
-            specfem::io::ASCII<specfem::io::write> > >(this->output_folder);
+        return std::make_shared<specfem::periodic_tasks::wavefield_writer<
+            specfem::io::ASCII<specfem::io::write> > >(
+            this->output_folder, this->time_interval, this->include_last_step);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }
@@ -100,19 +104,21 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
   return writer;
 }
 
-std::shared_ptr<specfem::io::reader>
+std::shared_ptr<specfem::periodic_tasks::periodic_task>
 specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
     const {
 
-  const std::shared_ptr<specfem::io::reader> reader =
-      [&]() -> std::shared_ptr<specfem::io::reader> {
+  const std::shared_ptr<specfem::periodic_tasks::periodic_task> reader =
+      [&]() -> std::shared_ptr<specfem::periodic_tasks::periodic_task> {
     if (this->simulation_type == specfem::simulation::type::combined) {
       if (this->output_format == "HDF5") {
-        return std::make_shared<specfem::io::wavefield_reader<
-            specfem::io::HDF5<specfem::io::read> > >(this->output_folder);
+        return std::make_shared<specfem::periodic_tasks::wavefield_reader<
+            specfem::io::HDF5<specfem::io::read> > >(
+            this->output_folder, this->time_interval, this->include_last_step);
       } else if (this->output_format == "ASCII") {
-        return std::make_shared<specfem::io::wavefield_reader<
-            specfem::io::ASCII<specfem::io::read> > >(this->output_folder);
+        return std::make_shared<specfem::periodic_tasks::wavefield_reader<
+            specfem::io::ASCII<specfem::io::read> > >(
+            this->output_folder, this->time_interval, this->include_last_step);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }

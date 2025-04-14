@@ -31,7 +31,8 @@ void catch_signals() {
   signal(SIGINT, signal_handler);
 }
 
-void specfem::periodic_tasks::check_signal::run(const int istep) {
+void specfem::periodic_tasks::check_signal::run(
+    specfem::compute::assembly &assembly, const int istep) {
   // Catch signals
   catch_signals();
 
