@@ -219,7 +219,7 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
 }
 } // namespace
 
-void specfem::periodic_tasks::plot_wavefield::run() {
+void specfem::periodic_tasks::plot_wavefield::run(const int istep) {
 
   auto colors = vtkSmartPointer<vtkNamedColors>::New();
 
@@ -307,16 +307,14 @@ void specfem::periodic_tasks::plot_wavefield::run() {
     // Save the plot
     if (this->output_format == specfem::display::format::PNG) {
       const auto filename =
-          this->output_folder /
-          ("wavefield" + to_zero_lead(this->m_istep, 6) + ".png");
+          this->output_folder / ("wavefield" + to_zero_lead(istep, 6) + ".png");
       auto writer = vtkSmartPointer<vtkPNGWriter>::New();
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());
       writer->Write();
     } else if (this->output_format == specfem::display::format::JPG) {
       const auto filename =
-          this->output_folder /
-          ("wavefield" + std::to_string(this->m_istep) + ".jpg");
+          this->output_folder / ("wavefield" + std::to_string(istep) + ".jpg");
       auto writer = vtkSmartPointer<vtkJPEGWriter>::New();
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());
