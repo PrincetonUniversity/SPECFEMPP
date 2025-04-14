@@ -31,16 +31,16 @@ public:
    * nsteps_between_samples_by_memory will be used instead.
    * @param time_interval_by_memory automatically determine the number of
    * timesteps between wavefield by the memory value provided, e.g. 100MB, 20GB.
-   * @param write_final_step Whether or not to write the final time step.
+   * @param write_last_step Whether or not to write the final time step.
    */
   wavefield(const std::string output_format, const std::string output_folder,
             const specfem::simulation::type type, const int time_interval,
             const std::string time_interval_by_memory,
-            const bool write_final_step)
+            const bool write_last_step)
       : output_format(output_format), output_folder(output_folder),
         simulation_type(type), time_interval(time_interval),
         time_interval_by_memory(time_interval_by_memory),
-        write_final_step(write_final_step) {}
+        write_last_step(write_last_step) {}
 
   /**
    * @brief Construct a new wavefield configuration object from YAML node
@@ -81,7 +81,7 @@ private:
                                        ///< of timesteps between wavefield by
                                        ///< the memory value provided, e.g.
                                        ///< 100MB, 20GB.
-  bool write_final_step; ///< Whether or not to write the final time step
+  bool write_last_step; ///< Whether or not to write the final time step
 };
 } // namespace runtime_configuration
 } // namespace specfem

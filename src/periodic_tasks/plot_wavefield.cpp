@@ -40,7 +40,7 @@
 
 #ifdef NO_VTK
 
-void specfem::periodic_tasks::plot_wavefield::run() {
+void specfem::periodic_tasks::plot_wavefield::run(const int istep) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "

@@ -22,7 +22,7 @@ public:
    * @brief Method to plot the data
    *
    */
-  virtual void run([[maybe_unused]] const int istep) {};
+  virtual void run(const int istep) {};
 
   /**
    * @brief Returns true if the data should be plotted at the current

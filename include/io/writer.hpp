@@ -21,7 +21,6 @@ public:
    *
    */
   virtual void write(specfem::compute::assembly &assembly) {};
-  virtual void write(specfem::compute::assembly &assembly, int istep) {};
 };
 
 } // namespace io
