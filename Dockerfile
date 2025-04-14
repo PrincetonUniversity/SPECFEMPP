@@ -40,24 +40,24 @@ RUN echo "HDF5 version:" && \
     h5cc -showconfig && \
     echo "Done."
 
-# # Set up WORKDIR
-# WORKDIR /usr/local/vtk
+# Set up WORKDIR
+WORKDIR /usr/local/vtk
 
-# RUN echo "Installing vtk..." && \
-#     echo "========================" && \
-#     echo "" && \
-#     wget https://www.vtk.org/files/release/9.4/VTK-9.4.2.tar.gz && \
-#     tar -xzf VTK-9.4.2.tar.gz && \
-#     mkdir ${VTK_DIR} && \
-#     cd ${VTK_DIR} && \
-#     cmake -S /usr/local/vtk/VTK-9.4.2 -B ${VTK_DIR} \
-#      -DCMAKE_BUILD_TYPE=Release \
-#      -DVTK_USE_X=OFF \
-#      -DVTK_OPENGL_HAS_OSMESA=ON \
-#      -DVTK_USE_OSMESA=ON \
-#      -DVTK_DEFAULT_RENDER_WINDOW_HEADLESS=ON && \
-#     cmake --build ${VTK_DIR} -j4 && \
-#     echo "Done."
+RUN echo "Installing vtk..." && \
+    echo "========================" && \
+    echo "" && \
+    wget https://www.vtk.org/files/release/9.4/VTK-9.4.2.tar.gz && \
+    tar -xzf VTK-9.4.2.tar.gz && \
+    mkdir ${VTK_DIR} && \
+    cd ${VTK_DIR} && \
+    cmake -S /usr/local/vtk/VTK-9.4.2 -B ${VTK_DIR} \
+     -DCMAKE_BUILD_TYPE=Release \
+     -DVTK_USE_X=OFF \
+     -DVTK_OPENGL_HAS_OSMESA=ON \
+     -DVTK_USE_OSMESA=ON \
+     -DVTK_DEFAULT_RENDER_WINDOW_HEADLESS=ON && \
+    cmake --build ${VTK_DIR} -j4 && \
+    echo "Done."
 
 
 # Change dir to specfempp
