@@ -69,8 +69,8 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     }
     // Run periodic tasks such as plotting, etc.
     for (const auto &task : tasks) {
-      if (task && task->should_run(istep)) {
-        task->run(istep);
+      if (task && task->should_run(istep+1)) {
+        task->run(assembly, istep+1);
       }
     }
 
@@ -100,8 +100,8 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   }
 
   for (const auto &task : tasks) {
-    if (task && !task->should_run(nstep-1) && task->should_run(-1)) {
-      task->run(nstep-1);
+    if (task && !task->should_run(nstep) && task->should_run(-1)) {
+      task->run(assembly, nstep);
     }
   }
 
@@ -130,12 +130,18 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
   const int total_elements_to_be_updated = 2 * assembly.get_total_number_of_elements();
 
   for (const auto &task : tasks) {
-    if (task && !task->should_run(nstep-1) && task->should_run(-1)) {
-      task->run(nstep-1);
+    if (task && !task->should_run(nstep) && task->should_run(-1)) {
+      task->run(assembly, nstep);
     }
   }
 
   for (const auto [istep, dt] : time_scheme->iterate_backward()) {
+    for (const auto &task : tasks) {
+      if (task && task->should_run(istep+1)) {
+        task->run(assembly, istep+1);
+      }
+    }
+
     int dofs_updated = 0;
     int elements_updated = 0;
     // Adjoint time step
@@ -186,12 +192,6 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
       // compute seismogram for backward time step
       backward_kernels.compute_seismograms(time_scheme->get_seismogram_step());
       time_scheme->increment_seismogram_step();
-    }
-
-    for (const auto &task : tasks) {
-      if (task && task->should_run(istep)) {
-        task->run(istep);
-      }
     }
 
     if (istep % 10 == 0) {

@@ -50,7 +50,7 @@ public:
    * @brief Plot the wavefield
    *
    */
-  void run(const int istep) override;
+  void run(specfem::compute::assembly &assembly, const int istep) override;
 
 private:
   const specfem::display::format output_format; ///< Output format of the plot

@@ -127,13 +127,16 @@ void execute(
   //                   Read wavefields
   // --------------------------------------------------------------
   const auto wavefield_reader = setup.instantiate_wavefield_reader();
-  if (wavefield_reader) {
-    mpi->cout("Reading wavefield files:");
-    mpi->cout("-------------------------------");
+  // if (wavefield_reader) {
+  //   mpi->cout("Reading wavefield files:");
+  //   mpi->cout("-------------------------------");
 
-    wavefield_reader->read(assembly);
-    // Transfer the buffer field to device
-    assembly.fields.buffer.copy_to_device();
+  //   wavefield_reader->read(assembly);
+  //   // Transfer the buffer field to device
+  //   assembly.fields.buffer.copy_to_device();
+  // }
+  if (wavefield_reader) {
+    tasks.push_back(wavefield_reader);
   }
   // --------------------------------------------------------------
 
@@ -141,13 +144,18 @@ void execute(
   //                  Write Forward Wavefields
   // --------------------------------------------------------------
   const auto wavefield_writer = setup.instantiate_wavefield_writer();
+  if (wavefield_writer) {
+    tasks.push_back(wavefield_writer);
+  }
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Instantiate plotter
   // --------------------------------------------------------------
   const auto wavefield_plotter = setup.instantiate_wavefield_plotter(assembly);
-  tasks.push_back(wavefield_plotter);
+  if (wavefield_plotter) {
+    tasks.push_back(wavefield_plotter);
+  }
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -184,16 +192,16 @@ void execute(
   }
   // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                  Write Forward Wavefields
-  // --------------------------------------------------------------
-  if (wavefield_writer) {
-    mpi->cout("Writing wavefield files:");
-    mpi->cout("-------------------------------");
+  // // --------------------------------------------------------------
+  // //                  Write Forward Wavefields
+  // // --------------------------------------------------------------
+  // if (wavefield_writer) {
+  //   mpi->cout("Writing wavefield files:");
+  //   mpi->cout("-------------------------------");
 
-    wavefield_writer->write(assembly);
-  }
-  // --------------------------------------------------------------
+  //   wavefield_writer->write(assembly);
+  // }
+  // // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                Write Kernels
