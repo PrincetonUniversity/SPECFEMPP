@@ -32,8 +32,46 @@ specfem::runtime_configuration::wavefield::wavefield(
     throw std::runtime_error(message.str());
   }
 
-  *this = specfem::runtime_configuration::wavefield(output_format,
-                                                    output_folder, type);
+  const int time_interval = [&]() -> int {
+    if (Node["time_interval"]) {
+      return Node["time_interval"].as<int>();
+    } else {
+      return 0;
+    }
+  }();
+
+  const std::string time_interval_by_memory = [&]() -> std::string {
+    if (Node["time_interval_by_memory"]) {
+      if (time_interval != 0) {
+        throw std::runtime_error(
+            "time_interval and time_interval_by_memory cannot be used "
+            "simultaneously");
+      }
+      return Node["time_interval_by_memory"].as<std::string>();
+    } else {
+      return "";
+    }
+  }();
+
+  const bool write_final_step = [&]() -> bool {
+    if (Node["write_final_step"]) {
+      return Node["write_final_step"].as<bool>();
+    } else {
+      return true;
+    }
+  }();
+
+  if (time_interval == 0 && !write_final_step) {
+    std::ostringstream message;
+    message << "************************************************\n"
+            << "Warning : Wavefield writer does not write any wavefield. \n"
+            << "************************************************\n";
+    std::cout << message.str();
+  }
+
+  *this = specfem::runtime_configuration::wavefield(
+      output_format, output_folder, type, time_interval,
+      time_interval_by_memory, write_final_step);
 
   return;
 }

@@ -70,7 +70,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     // Run periodic tasks such as plotting, etc.
     for (const auto &task : tasks) {
       if (task && task->should_run(istep)) {
-        task->run();
+        task->run(istep);
       }
     }
 
@@ -99,6 +99,12 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     }
   }
 
+  for (const auto &task : tasks) {
+    if (task && !task->should_run(nstep-1) && task->should_run(-1)) {
+      task->run(nstep-1);
+    }
+  }
+
   std::cout << std::endl;
 
   return;
@@ -122,6 +128,12 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
       4 * assembly.get_total_degrees_of_freedom();
 
   const int total_elements_to_be_updated = 2 * assembly.get_total_number_of_elements();
+
+  for (const auto &task : tasks) {
+    if (task && !task->should_run(nstep-1) && task->should_run(-1)) {
+      task->run(nstep-1);
+    }
+  }
 
   for (const auto [istep, dt] : time_scheme->iterate_backward()) {
     int dofs_updated = 0;
@@ -178,7 +190,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
     for (const auto &task : tasks) {
       if (task && task->should_run(istep)) {
-        task->run();
+        task->run(istep);
       }
     }
 
