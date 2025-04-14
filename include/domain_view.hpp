@@ -104,6 +104,17 @@ public:
     constexpr size_type operator()(IndexType... indices) const noexcept {
       static_assert(sizeof...(indices) == extents_type::rank(),
                     "Number of indices must match the rank of extents.");
+
+      // #ifdef KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
+      //       size_type index_array[] = { static_cast<size_type>(indices)... };
+
+      //       for (std::size_t i = 0; i < extents_type::rank(); ++i) {
+      //         if (index_array[i] >= extents_.extent(i)) {
+      //           Kokkos::abort("Index out of bounds in DomainViewMapping2D");
+      //         }
+      //       }
+      // #endif
+
       return tile_offset(indices...) + offset_in_tile(indices...);
     }
 
@@ -112,13 +123,7 @@ public:
 
     constexpr bool is_exhaustive() noexcept {
       // Only exhaustive if tiles fit exactly into extents
-      for (std::size_t i = 0; i < extents_type::rank(); ++i) {
-        const int tile_size = impl::tile_size<ElementChunkSize>(extents_, i);
-        if ((extents_.extent(i) % tile_size) != 0) {
-          return false;
-        }
-      }
-      return true;
+      return false;
     }
 
     static constexpr bool is_always_exhaustive() noexcept { return false; }

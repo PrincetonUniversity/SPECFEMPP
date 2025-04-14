@@ -8,11 +8,11 @@
 #define DEFINE_MEDIUM_VIEW(prop, index_value)                                  \
   KOKKOS_INLINE_FUNCTION type_real prop(const int &ispec, const int &iz,       \
                                         const int &ix) const {                 \
-    return base_type::data(ispec, iz, ix, index_value);                        \
+    return base_type::data[index_value](ispec, iz, ix);                        \
   }                                                                            \
   KOKKOS_INLINE_FUNCTION type_real h_##prop(const int &ispec, const int &iz,   \
                                             const int &ix) const {             \
-    return base_type::h_data(ispec, iz, ix, index_value);                      \
+    return base_type::h_data[index_value](ispec, iz, ix);                      \
   }
 
 namespace specfem {
@@ -81,8 +81,8 @@ void reduce(const ContainerType container, const WorkItems work_items,
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, std::size_t N>
 struct medium_data {
-  using view_type = Kokkos::View<type_real ****, Kokkos::LayoutLeft,
-                                 Kokkos::DefaultExecutionSpace::memory_space>;
+  using view_type = specfem::kokkos::DomainView2d<
+      type_real, 3, Kokkos::DefaultExecutionSpace::memory_space>;
   constexpr static auto nprops = N;
   constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto medium_tag = MediumTag;
@@ -92,15 +92,19 @@ struct medium_data {
   int ngllz; ///< number of quadrature points in z dimension
   int ngllx; ///< number of quadrature points in x dimension
 
-  view_type data;
-  typename view_type::HostMirror h_data;
+  view_type data[N];
+  typename view_type::HostMirror h_data[N];
 
   medium_data() = default;
 
   medium_data(const int nspec, const int ngllz, const int ngllx)
-      : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
-        data("specfem::medium::impl::container::data", nspec, ngllz, ngllx, N),
-        h_data(Kokkos::create_mirror_view(data)) {}
+      : nspec(nspec), ngllz(ngllz), ngllx(ngllx) {
+
+    for (std::size_t i = 0; i < nprops; i++) {
+      data[i] = view_type("medium_data", nspec, ngllz, ngllx);
+      h_data[i] = specfem::kokkos::create_mirror_view(data[i]);
+    }
+  }
 
 private:
   template <bool on_device>
@@ -108,9 +112,9 @@ private:
                                              const int &ix,
                                              const std::size_t &i) const {
     if constexpr (on_device) {
-      return data(ispec, iz, ix, i);
+      return data[i](ispec, iz, ix);
     } else {
-      return h_data(ispec, iz, ix, i);
+      return h_data[i](ispec, iz, ix);
     }
   }
 
@@ -329,9 +333,17 @@ public:
     return;
   }
 
-  void copy_to_device() { Kokkos::deep_copy(data, h_data); }
+  void copy_to_device() {
+    for (std::size_t i = 0; i < nprops; i++) {
+      Kokkos::deep_copy(data[i], h_data[i]);
+    }
+  }
 
-  void copy_to_host() { Kokkos::deep_copy(h_data, data); }
+  void copy_to_host() {
+    for (std::size_t i = 0; i < nprops; i++) {
+      Kokkos::deep_copy(h_data[i], data[i]);
+    }
+  }
 
   template <typename GlobalReducer, typename ContainerType,
             typename LocalReducer, typename PointValues, typename WorkItems>

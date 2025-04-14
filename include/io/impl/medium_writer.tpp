@@ -56,7 +56,7 @@ void specfem::io::impl::write_container(
           .createDataset(
               "data",
               container.template get_container<_medium_tag_, _property_tag_>()
-                  .h_data)
+                  .h_data[0])
           .write();
                })
   // int n_elastic_isotropic;
