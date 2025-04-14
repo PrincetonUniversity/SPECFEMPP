@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
+project(SPECFEMPP VERSION 0.1.0 LANGUAGES C CXX Fortran)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
@@ -94,15 +94,17 @@ include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
 if (VTK_CXX_BUILD)
 
     find_package(VTK COMPONENTS
-        CommonColor
-        CommonCore
-        FiltersSources
-        InteractionStyle
-        RenderingContextOpenGL2
-        RenderingCore
-        RenderingFreeType
-        RenderingGL2PSOpenGL2
-        RenderingOpenGL2
+        CommonCore        # For vtkSmartPointer, vtkPoints, vtkFloatArray, vtkUnsignedCharArray
+        CommonColor       # For vtkNamedColors
+        CommonDataModel   # For vtkUnstructuredGrid, vtkCellData, vtkPointData
+        FiltersCore       # For core filtering operations
+        FiltersExtraction # For vtkExtractEdges
+        InteractionStyle  # For vtkRenderWindowInteractor
+        IOCore            # For basic IO operations
+        IOImage           # For vtkJPEGWriter, vtkPNGWriter
+        RenderingCore     # For vtkRenderWindow, vtkRenderer, vtkActor, vtkProperty
+        RenderingOpenGL2  # For OpenGL rendering
+        RenderingFreeType # For text rendering (might be needed)
     )
 
     if (VTK_FOUND)
