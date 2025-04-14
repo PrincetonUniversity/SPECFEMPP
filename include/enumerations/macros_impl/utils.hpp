@@ -71,9 +71,10 @@
   BOOST_PP_IF(BOOST_VMD_IS_TUPLE(elem), BOOST_PP_TUPLE_ELEM(1, elem), elem)
 
 #define _WRITE_CAPTURE(data, elem)                                             \
-  BOOST_PP_IF(BOOST_PP_IS_EMPTY(elem), BOOST_PP_EMPTY(),                       \
-              auto &BOOST_PP_SEQ_CAT((_)(_REFERENCE_LEFT(elem))(_)) =          \
-                  _VAR_NAME_FROM_TAGS(data, _REFERENCE_RIGHT(elem));)
+  BOOST_PP_IF(                                                                 \
+      BOOST_PP_IS_EMPTY(elem), BOOST_PP_EMPTY(),                               \
+      [[maybe_unused]] auto &BOOST_PP_SEQ_CAT((_)(_REFERENCE_LEFT(elem))(_)) = \
+          _VAR_NAME_FROM_TAGS(data, _REFERENCE_RIGHT(elem));)
 
 /**
  * @brief Obtain Name of the variable to be declared from type declaration
@@ -153,7 +154,7 @@
  * in code block.
  */
 #define _WRITE_TAG(tag, data, i)                                               \
-  constexpr auto tag = _GET_TAG(BOOST_PP_TUPLE_ELEM(i, data));
+  [[maybe_unused]] constexpr auto tag = _GET_TAG(BOOST_PP_TUPLE_ELEM(i, data));
 
 // clang-format off
 #define _WRITE_TAGS(data, n)                                           \
