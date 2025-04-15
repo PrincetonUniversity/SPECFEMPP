@@ -2,7 +2,7 @@
 #include "periodic_tasks/plot_wavefield.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
-#include "utilities/string.hpp"
+#include "utilities/strings.hpp"
 
 #ifdef NO_VTK
 

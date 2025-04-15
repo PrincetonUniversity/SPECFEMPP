@@ -3,7 +3,7 @@
 #include "io/wavefield/writer.hpp"
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
-#include "utilities/string.hpp"
+#include "utilities/strings.hpp"
 
 template <typename OutputLibrary>
 specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
