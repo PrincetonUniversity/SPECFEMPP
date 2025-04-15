@@ -22,10 +22,13 @@ void check_store(specfem::compute::assembly &assembly) {
 
   // the structured binding ([element_indices, source_indices]) is not
   // supported by the intel compiler
-  auto elements_and_sources = assembly.sources.get_sources_on_device(
+  const auto elements_and_sources = sources.get_sources_on_device(
       MediumTag, PropertyTag, BoundaryTag, WavefieldType);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &element_indices =
+      std::get<0>(elements_and_sources);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &source_indices =
+      std::get<1>(elements_and_sources);
 
-  const auto &element_indices = std::get<0>(elements_and_sources);
   const int nelements = element_indices.size();
 
   constexpr int num_components =
@@ -57,8 +60,6 @@ void check_store(specfem::compute::assembly &assembly) {
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
         // element indices and source indices from elements_and_sources
-        auto const &[element_indices, source_indices] = elements_and_sources;
-
         const int ielement = element_indices(i);
         const int isource = source_indices(i);
 
@@ -95,8 +96,11 @@ void check_load(specfem::compute::assembly &assembly) {
 
   const auto elements_and_sources = sources.get_sources_on_device(
       MediumTag, PropertyTag, BoundaryTag, WavefieldType);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &element_indices =
+      std::get<0>(elements_and_sources);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &source_indices =
+      std::get<1>(elements_and_sources);
 
-  const auto &element_indices = std::get<0>(elements_and_sources);
   const int nelements = element_indices.size();
 
   constexpr int num_components =
@@ -113,10 +117,15 @@ void check_load(specfem::compute::assembly &assembly) {
 
   Kokkos::deep_copy(values_to_store, h_values_to_store);
 
-  using PointType = specfem::point::source<Dimension, MediumTag, WavefieldType>;
+  using PointSourceType =
+      specfem::point::source<Dimension, MediumTag, WavefieldType>;
 
-  Kokkos::View<PointType ***, Kokkos::DefaultExecutionSpace> point_sources(
-      "point_sources", ngllz, ngllx, nelements);
+  using mapped_chunk_index_type =
+      specfem::iterator::impl::mapped_chunk_index_type<
+          false, specfem::dimension::type::dim2>;
+
+  Kokkos::View<PointSourceType ***, Kokkos::DefaultExecutionSpace>
+      point_sources("point_sources", ngllz, ngllx, nelements);
 
   auto h_point_sources = Kokkos::create_mirror_view(point_sources);
 
@@ -126,14 +135,17 @@ void check_load(specfem::compute::assembly &assembly) {
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
         // element indices and source indices from elements_and_sources
-        auto const &[element_indices, source_indices] = elements_and_sources;
         const int ielement = element_indices(i);
+        const int isource = source_indices(i);
 
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
 
-        PointType point;
-        specfem::compute::load_on_device(index, sources, point);
+        const auto mapped_iterator_index =
+            mapped_chunk_index_type(ielement, index, isource);
+
+        PointSourceType point;
+        specfem::compute::load_on_device(mapped_iterator_index, sources, point);
 
         point_sources(iz, ix, i) = point;
       });
@@ -144,9 +156,9 @@ void check_load(specfem::compute::assembly &assembly) {
   for (int i = 0; i < nelements; i++) {
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
-        const auto &point_kernel = h_point_sources(iz, ix, i);
+        const auto &point_source = h_point_sources(iz, ix, i);
         for (int ic = 0; ic < num_components; ic++) {
-          const auto stf = point_kernel.stf(ic);
+          const auto stf = point_source.stf(ic);
           const auto expected = h_values_to_store(i);
           if (expected != stf) {
             std::ostringstream message;
@@ -161,7 +173,7 @@ void check_load(specfem::compute::assembly &assembly) {
           }
 
           const auto lagrange_interpolant =
-              point_kernel.lagrange_interpolant(ic);
+              point_source.lagrange_interpolant(ic);
           if (expected != lagrange_interpolant) {
             std::ostringstream message;
             message << "Error in source computation: \n"
@@ -287,9 +299,9 @@ void test_sources(specfem::compute::assembly &assembly){
   check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
               GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
               specfem::wavefield::simulation_field::forward>(assembly);        \
-  check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
-              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
-              specfem::wavefield::simulation_field::forward>(assembly);
+  check_load<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                      \
+             GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                     \
+             specfem::wavefield::simulation_field::forward>(assembly);
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       TEST_STORE_LOAD,
