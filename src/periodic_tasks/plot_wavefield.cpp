@@ -309,7 +309,8 @@ void specfem::periodic_tasks::plot_wavefield::run(
       writer->Write();
     } else if (this->output_format == specfem::display::format::JPG) {
       const auto filename =
-          this->output_folder / ("wavefield" + std::to_string(istep) + ".jpg");
+          this->output_folder /
+          ("wavefield" + specfem::utilities::to_zero_lead(istep, 6) + ".jpg");
       auto writer = vtkSmartPointer<vtkJPEGWriter>::New();
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());
