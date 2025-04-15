@@ -22,8 +22,12 @@ void check_store(specfem::compute::assembly &assembly) {
 
   // the structured binding ([element_indices, source_indices]) is not
   // supported by the intel compiler
-  const auto [element_indices, source_indices] = sources.get_sources_on_device(
+  const auto elements_and_sources = sources.get_sources_on_device(
       MediumTag, PropertyTag, BoundaryTag, WavefieldType);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &element_indices =
+      std::get<0>(elements_and_sources);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &source_indices =
+      std::get<1>(elements_and_sources);
 
   const int nelements = element_indices.size();
 
@@ -90,8 +94,12 @@ void check_load(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  const auto [element_indices, source_indices] = sources.get_sources_on_device(
+  const auto elements_and_sources = sources.get_sources_on_device(
       MediumTag, PropertyTag, BoundaryTag, WavefieldType);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &element_indices =
+      std::get<0>(elements_and_sources);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &source_indices =
+      std::get<1>(elements_and_sources);
 
   const int nelements = element_indices.size();
 
