@@ -411,6 +411,7 @@ target_link_libraries(
 
 add_library(
         reader
+        src/utilities/strings.cpp
         src/io/wavefield/reader.cpp
         src/io/property/reader.cpp
 )
@@ -594,6 +595,7 @@ target_link_libraries(
 
 add_library(
         writer
+        src/utilities/strings.cpp
         src/io/seismogram/writer.cpp
         src/io/wavefield/writer.cpp
         src/io/kernel/writer.cpp
@@ -611,7 +613,14 @@ add_library(
         periodic_tasks
         src/periodic_tasks/plot_wavefield.cpp
         src/periodic_tasks/check_signal.cpp
-        src/utilities/string.cpp
+        src/periodic_tasks/wavefield_reader.cpp
+        src/periodic_tasks/wavefield_writer.cpp
+)
+
+target_link_libraries(
+        periodic_tasks
+        reader
+        writer
 )
 
 if (NOT VTK_CXX_BUILD)
@@ -654,9 +663,6 @@ add_library(
         src/parameter_parser/writer/plot_wavefield.cpp
         src/parameter_parser/writer/kernel.cpp
         src/parameter_parser/writer/property.cpp
-        src/periodic_tasks/wavefield_reader.cpp
-        src/periodic_tasks/wavefield_writer.cpp
-        src/utilities/string.cpp
 )
 
 target_link_libraries(
@@ -665,6 +671,7 @@ target_link_libraries(
         timescheme
         receiver_class
         yaml-cpp
+        periodic_tasks
         writer
         reader
         kokkos_kernels

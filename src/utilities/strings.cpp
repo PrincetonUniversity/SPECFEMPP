@@ -1,5 +1,5 @@
+#include "utilities/strings.hpp"
 #include <algorithm>
-#include <string>
 
 namespace specfem {
 namespace utilities {
