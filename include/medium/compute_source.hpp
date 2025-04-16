@@ -3,6 +3,7 @@
 #include "dim2/acoustic/isotropic/source.hpp"
 #include "dim2/elastic/anisotropic/source.hpp"
 #include "dim2/elastic/isotropic/source.hpp"
+#include "dim2/elastic/isotropic_cosserat/source.hpp"
 #include "dim2/poroelastic/isotropic/source.hpp"
 #include <Kokkos_Core.hpp>
 

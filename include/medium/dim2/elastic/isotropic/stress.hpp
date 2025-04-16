@@ -18,6 +18,9 @@ KOKKOS_INLINE_FUNCTION
             specfem::dimension::type::dim2,
             specfem::element::medium_tag::elastic_psv,
             specfem::element::property_tag::isotropic, UseSIMD> &properties,
+        const specfem::point::field<specfem::dimension::type::dim2,
+                                    specfem::element::medium_tag::elastic_psv,
+                                    true, false, false, false, UseSIMD> &u,
         const specfem::point::field_derivatives<
             specfem::dimension::type::dim2,
             specfem::element::medium_tag::elastic_psv, UseSIMD>
@@ -60,6 +63,9 @@ impl_compute_stress(
                                      specfem::element::medium_tag::elastic_sh,
                                      specfem::element::property_tag::isotropic,
                                      UseSIMD> &properties,
+    const specfem::point::field<specfem::dimension::type::dim2,
+                                specfem::element::medium_tag::elastic_sh, true,
+                                false, false, false, UseSIMD> &u,
     const specfem::point::field_derivatives<
         specfem::dimension::type::dim2,
         specfem::element::medium_tag::elastic_sh, UseSIMD> &field_derivatives) {

@@ -18,6 +18,9 @@ impl_compute_stress(
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, UseSIMD> &properties,
+    const specfem::point::field<specfem::dimension::type::dim2,
+                                specfem::element::medium_tag::acoustic, true,
+                                false, false, false, UseSIMD> &u,
     const specfem::point::field_derivatives<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         UseSIMD> &field_derivatives) {

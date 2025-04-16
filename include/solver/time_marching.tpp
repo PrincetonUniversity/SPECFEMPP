@@ -14,6 +14,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   constexpr auto elastic_psv = specfem::element::medium_tag::elastic_psv;
   constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
   constexpr auto poroelastic = specfem::element::medium_tag::poroelastic;
+  constexpr auto elastic_psv_t = specfem::element::medium_tag::elastic_psv_t;
 
   // Calls to compute mass matrix and invert mass matrix
   this->kernels.initialize(time_scheme->get_timestep());
@@ -36,7 +37,8 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     dofs_updated +=
         this->time_scheme->apply_predictor_phase_forward(elastic_sh);
     dofs_updated += this->time_scheme->apply_predictor_phase_forward(poroelastic);
-
+    dofs_updated +=
+        this->time_scheme->apply_predictor_phase_forward(elastic_psv_t);
     // Update acoustic wavefield:
     // coupling, source interaction, stiffness, divide by mass matrix
     elements_updated += this->kernels.template update_wavefields<acoustic>(istep);
@@ -48,12 +50,15 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     // coupling, source, stiffness, divide by mass matrix
     elements_updated += this->kernels.template update_wavefields<elastic_psv>(istep);
     elements_updated += this->kernels.template update_wavefields<elastic_sh>(istep);
+    elements_updated += this->kernels.template update_wavefields<elastic_psv_t>(istep);
 
     // Corrector phase forward for elastic
     dofs_updated +=
         this->time_scheme->apply_corrector_phase_forward(elastic_psv);
     dofs_updated +=
         this->time_scheme->apply_corrector_phase_forward(elastic_sh);
+    dofs_updated +=
+        this->time_scheme->apply_corrector_phase_forward(elastic_psv_t);
 
     // Update wavefields for poroelastic wavefields:
     // coupling, source, stiffness, divide by mass matrix

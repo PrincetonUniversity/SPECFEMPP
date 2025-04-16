@@ -3,6 +3,7 @@
 #include "dim2/acoustic/isotropic/stress.hpp"
 #include "dim2/elastic/anisotropic/stress.hpp"
 #include "dim2/elastic/isotropic/stress.hpp"
+#include "dim2/elastic/isotropic_cosserat/stress.hpp"
 #include "dim2/poroelastic/isotropic/stress.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -26,15 +27,17 @@ namespace medium {
  * @param field_derivatives Field derivatives at the quadrature point
  * @return specfem::point::stress The stress tensor at the quadrature point
  */
-template <typename PointPropertiesType, typename PointFieldDerivativesType>
+template <typename PointPropertiesType, typename PointFieldType,
+          typename PointFieldDerivativesType>
 KOKKOS_INLINE_FUNCTION auto
-compute_stress(const PointPropertiesType &properties,
+compute_stress(const PointPropertiesType &properties, const PointFieldType &u,
                const PointFieldDerivativesType &field_derivatives)
-    -> decltype(specfem::medium::impl_compute_stress(properties,
+    -> decltype(specfem::medium::impl_compute_stress(properties, u,
                                                      field_derivatives)) {
 
   static_assert(PointPropertiesType::is_point_properties,
                 "properties is not a point properties type");
+
   static_assert(PointFieldDerivativesType::is_point_field_derivatives,
                 "field_derivatives is not a point field derivatives type");
 
@@ -51,7 +54,7 @@ compute_stress(const PointPropertiesType &properties,
           PointFieldDerivativesType::simd::using_simd,
       "properties and field_derivatives have different SIMD settings");
 
-  return specfem::medium::impl_compute_stress(properties, field_derivatives);
+  return specfem::medium::impl_compute_stress(properties, u, field_derivatives);
 }
 
 } // namespace medium
