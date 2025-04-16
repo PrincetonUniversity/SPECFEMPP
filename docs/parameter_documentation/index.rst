@@ -213,6 +213,19 @@ Parameter definitions
                     quadrature:
                         ngllz: 5
 
+        .. dropdown:: ``elastic-wave``
+
+            Parameter to set the system to solve the elastic wave equation for
+            in 2D
+
+            :default value: "P_SV"
+
+            :possible values: "P_SV" || "SH"
+
+            .. code-block:: yaml
+                :caption: Example
+
+                elastic-wave: "P_SV"
 
         .. dropdown:: ``solver``
 
