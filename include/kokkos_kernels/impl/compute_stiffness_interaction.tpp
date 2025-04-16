@@ -13,6 +13,7 @@
 #include "enumerations/wavefield.hpp"
 #include "medium/compute_stress.hpp"
 #include "medium/damping_force.hpp"
+#include "medium/couple_stress.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/boundary.hpp"
 #include "point/field.hpp"
@@ -94,6 +95,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                                  using_simd>;
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<dimension, medium_tag, using_simd>;
+
+
 
   const auto wgll = assembly.mesh.quadratures.gll.weights;
 
@@ -217,6 +220,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                         &iterator_index,
                     const typename PointAccelerationType::ViewType &result) {
                   const auto &index = iterator_index.index;
+                  const auto &ielement = iterator_index.ielement;
                   PointAccelerationType acceleration(result);
 
                   for (int icomponent = 0; icomponent < components;
@@ -236,24 +240,32 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   specfem::compute::load_on_device(index, boundaries,
                                                    point_boundary);
 
-                  const auto jacobian = [&]() {
-                    specfem::point::partial_derivatives<dimension, true,
-                                                        using_simd>
-                        point_partial_derivatives;
-                    specfem::compute::load_on_device(index, partial_derivatives,
-                                                     point_partial_derivatives);
-                    return point_partial_derivatives.jacobian;
-                  }();
+                  specfem::point::partial_derivatives<dimension, true, using_simd>
+                    point_partial_derivatives;
+
+                  specfem::compute::load_on_device(index, partial_derivatives,
+                                                    point_partial_derivatives);
 
                   const auto factor = quadrature.gll.weights(index.iz) *
                                       quadrature.gll.weights(index.ix) *
-                                      jacobian;
+                                      point_partial_derivatives.jacobian;
 
                   specfem::medium::compute_damping_force(
                       factor, point_property, velocity, acceleration);
 
+                  // Compute the couple stress from the stress integrand
+                  specfem::medium::compute_couple_stress(
+                    point_partial_derivatives,
+                    point_property,
+                    factor,
+                    Kokkos::subview(stress_integrand.F,
+                      ielement, index.iz, index.ix,
+                      Kokkos::ALL, Kokkos::ALL),
+                    acceleration);
+
+                  // Apply boundary conditions
                   specfem::boundary_conditions::apply_boundary_conditions(
-                      point_boundary, point_property, velocity, acceleration);
+                    point_boundary, point_property, velocity, acceleration);
 
                   // Store forward boundary values for reconstruction during
                   // adjoint simulations. The function does nothing if the
