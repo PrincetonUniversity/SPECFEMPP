@@ -3,6 +3,7 @@
 #include "io/wavefield/writer.hpp"
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
+#include "utilities/strings.hpp"
 
 template <typename OutputLibrary>
 specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
@@ -18,7 +19,13 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
   forward.copy_to_host();
   boundary_values.copy_to_host();
 
-  typename OutputLibrary::File file(output_folder + "/ForwardWavefield");
+  std::string dst = this->output_folder + "/ForwardWavefield";
+
+  if (this->istep != -1) {
+    dst += specfem::utilities::to_zero_lead(istep, 6);
+  }
+
+  typename OutputLibrary::File file(dst);
 
   typename OutputLibrary::Group elastic_psv = file.createGroup("/ElasticSV");
   const auto &elastic_psv_field =
@@ -71,6 +78,6 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
                      boundary_values.stacey.poroelastic.h_values)
       .write();
 
-  std::cout << "Wavefield written to " << output_folder + "/ForwardWavefield"
+  std::cout << "Wavefield written to " << dst
             << std::endl;
 }

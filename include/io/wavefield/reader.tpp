@@ -3,6 +3,7 @@
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
 #include "io/wavefield/reader.hpp"
+#include "utilities/strings.hpp"
 
 template <typename IOLibrary>
 specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
@@ -15,7 +16,13 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
   auto &buffer = assembly.fields.buffer;
   auto &boundary_values = assembly.boundary_values;
 
-  typename IOLibrary::File file(output_folder + "/ForwardWavefield");
+  std::string dst = this->output_folder + "/ForwardWavefield";
+
+  if (this->istep != -1) {
+    dst += specfem::utilities::to_zero_lead(istep, 6);
+  }
+
+  typename IOLibrary::File file(dst);
 
   typename IOLibrary::Group elastic_psv = file.openGroup("/ElasticSV");
 
