@@ -180,7 +180,8 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::io::writer> instantiate_wavefield_writer() const {
+  std::shared_ptr<specfem::periodic_tasks::periodic_task>
+  instantiate_wavefield_writer() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_writer();
     } else {
@@ -188,7 +189,8 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::io::reader> instantiate_wavefield_reader() const {
+  std::shared_ptr<specfem::periodic_tasks::periodic_task>
+  instantiate_wavefield_reader() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_reader();
     } else {

@@ -2,6 +2,7 @@
 #include "periodic_tasks/plot_wavefield.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
+#include "utilities/strings.hpp"
 
 #ifdef NO_VTK
 
@@ -40,7 +41,8 @@
 
 #ifdef NO_VTK
 
-void specfem::periodic_tasks::plot_wavefield::run() {
+void specfem::periodic_tasks::plot_wavefield::run(
+    specfem::compute::assembly &assembly, const int istep) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -52,15 +54,6 @@ void specfem::periodic_tasks::plot_wavefield::run() {
 #else
 
 namespace {
-
-// Convert integer to string with zero leading
-std::string to_zero_lead(const int value, const int n_zero) {
-  auto old_str = std::to_string(value);
-  int n_zero_fix =
-      n_zero - std::min(n_zero, static_cast<int>(old_str.length()));
-  auto new_str = std::string(n_zero_fix, '0') + old_str;
-  return new_str;
-}
 
 // Sigmoid function centered at 0.0
 double sigmoid(double x) { return (1 / (1 + std::exp(-100 * x)) - 0.5) * 1.5; }
@@ -219,7 +212,8 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
 }
 } // namespace
 
-void specfem::periodic_tasks::plot_wavefield::run() {
+void specfem::periodic_tasks::plot_wavefield::run(
+    specfem::compute::assembly &assembly, const int istep) {
 
   auto colors = vtkSmartPointer<vtkNamedColors>::New();
 
@@ -308,7 +302,7 @@ void specfem::periodic_tasks::plot_wavefield::run() {
     if (this->output_format == specfem::display::format::PNG) {
       const auto filename =
           this->output_folder /
-          ("wavefield" + to_zero_lead(this->m_istep, 6) + ".png");
+          ("wavefield" + specfem::utilities::to_zero_lead(istep, 6) + ".png");
       auto writer = vtkSmartPointer<vtkPNGWriter>::New();
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());
@@ -316,7 +310,7 @@ void specfem::periodic_tasks::plot_wavefield::run() {
     } else if (this->output_format == specfem::display::format::JPG) {
       const auto filename =
           this->output_folder /
-          ("wavefield" + std::to_string(this->m_istep) + ".jpg");
+          ("wavefield" + specfem::utilities::to_zero_lead(istep, 6) + ".jpg");
       auto writer = vtkSmartPointer<vtkJPEGWriter>::New();
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());
