@@ -82,6 +82,9 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
   using PointBoundaryType =
       specfem::point::boundary<boundary_tag, dimension, using_simd>;
+  using PointDisplacementType =
+      specfem::point::field<dimension, medium_tag, true, false, false, false,
+                            using_simd>;
   using PointVelocityType =
       specfem::point::field<dimension, medium_tag, false, true, false, false,
                             using_simd>;
@@ -194,8 +197,14 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
                   PointFieldDerivativesType field_derivatives(du);
 
+                  // Loading the field, this is unused for most
+                  // stress computations, so I'm not sure if this is a good
+                  // idea..
+                  PointDisplacementType displacement;
+                  specfem::compute::load_on_device(index, field, displacement);
+
                   const auto point_stress = specfem::medium::compute_stress(
-                      point_property, field_derivatives);
+                      point_property, displacement, field_derivatives);
 
                   const auto F = point_stress * point_partial_derivatives;
 
