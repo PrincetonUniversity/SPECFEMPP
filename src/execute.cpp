@@ -99,8 +99,6 @@ void execute(
   // --------------------------------------------------------------
   //                   Generate Assembly
   // --------------------------------------------------------------
-  mpi->cout("Generating assembly:");
-  mpi->cout("-------------------------------");
   const type_real dt = setup.get_dt();
   specfem::compute::assembly assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
@@ -108,6 +106,11 @@ void execute(
       nstep_between_samples, setup.get_simulation_type(),
       setup.instantiate_property_reader());
   time_scheme->link_assembly(assembly);
+
+  if (mpi->main_proc()) {
+    mpi->cout(assembly.print());
+  }
+  
 
   // --------------------------------------------------------------
   //                Read or Write properties
