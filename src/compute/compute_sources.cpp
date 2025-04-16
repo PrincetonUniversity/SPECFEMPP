@@ -266,6 +266,17 @@ specfem::compute::sources::sources(
             }
           }
         }
+
+        Kokkos::deep_copy(_element_indices_forward_,
+                          _h_element_indices_forward_);
+        Kokkos::deep_copy(_element_indices_backward_,
+                          _h_element_indices_backward_);
+        Kokkos::deep_copy(_element_indices_adjoint_,
+                          _h_element_indices_adjoint_);
+        Kokkos::deep_copy(_source_indices_forward_, _h_source_indices_forward_);
+        Kokkos::deep_copy(_source_indices_backward_,
+                          _h_source_indices_backward_);
+        Kokkos::deep_copy(_source_indices_adjoint_, _h_source_indices_adjoint_);
       })
 
   Kokkos::deep_copy(medium_types, h_medium_types);
