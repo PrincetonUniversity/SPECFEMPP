@@ -29,8 +29,12 @@ public:
    */
   void read(specfem::compute::assembly &assembly) override;
 
+  void set_istep(int istep) { this->istep = istep; }
+
 private:
   std::string output_folder; ///< Path to output folder
+  int istep = -1; ///< Current time step for file name, if value is -1, the time
+                  ///< step will be be included in the output file name.
 };
 
 } // namespace io
