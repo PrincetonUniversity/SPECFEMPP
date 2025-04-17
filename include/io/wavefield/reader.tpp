@@ -24,44 +24,25 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
 
   typename IOLibrary::File file(dst);
 
-  typename IOLibrary::Group elastic_psv = file.openGroup("/ElasticSV");
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      {
+        typename OutputLibrary::Group group =
+            file.createGroup(std::string("/") + specfem::element::to_string(_medium_tag_));
+        const auto &field = forward.get_field<_medium_tag_>();
 
-  const auto &elastic_psv_field =
-      buffer.get_field<specfem::element::medium_tag::elastic_psv>();
-
-  elastic_psv.openDataset("Displacement", elastic_psv_field.h_field).read();
-  elastic_psv.openDataset("Velocity", elastic_psv_field.h_field_dot).read();
-  elastic_psv.openDataset("Acceleration", elastic_psv_field.h_field_dot_dot)
-      .read();
-
-  typename IOLibrary::Group elastic_sh = file.openGroup("/ElasticSH");
-
-  const auto &elastic_sh_field =
-      buffer.get_field<specfem::element::medium_tag::elastic_sh>();
-
-  elastic_sh.openDataset("Displacement", elastic_sh_field.h_field).read();
-  elastic_sh.openDataset("Velocity", elastic_sh_field.h_field_dot).read();
-  elastic_sh.openDataset("Acceleration", elastic_sh_field.h_field_dot_dot)
-      .read();
-
-  typename IOLibrary::Group acoustic = file.openGroup("/Acoustic");
-  const auto &acoustic_field =
-      buffer.get_field<specfem::element::medium_tag::acoustic>();
-
-  acoustic.openDataset("Potential", acoustic_field.h_field).read();
-  acoustic.openDataset("PotentialDot", acoustic_field.h_field_dot).read();
-  acoustic.openDataset("PotentialDotDot", acoustic_field.h_field_dot_dot)
-      .read();
-
-  typename IOLibrary::Group poroelastic = file.openGroup("/Poroelastic");
-
-  const auto &poroelastic_field =
-      buffer.get_field<specfem::element::medium_tag::poroelastic>();
-
-  poroelastic.openDataset("Displacement", poroelastic_field.h_field).read();
-  poroelastic.openDataset("Velocity", poroelastic_field.h_field_dot).read();
-  poroelastic.openDataset("Acceleration", poroelastic_field.h_field_dot_dot)
-      .read();
+        if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
+          group.openDataset("Potential", field.h_field).read();
+          group.openDataset("PotentialDot", field.h_field_dot).read();
+          group.openDataset("PotentialDotDot", field.h_field_dot_dot).read();
+        }
+        else {
+          group.openDataset("Displacement", field.h_field).read();
+          group.openDataset("Velocity", field.h_field_dot).read();
+          group.openDataset("Acceleration", field.h_field_dot_dot).read();
+        }
+      });
 
   typename IOLibrary::Group boundary = file.openGroup("/Boundary");
   typename IOLibrary::Group stacey = boundary.openGroup("/Stacey");
