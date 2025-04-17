@@ -42,7 +42,7 @@ public:
       return true;
     }
 
-    if (istep % time_interval == 0) {
+    if (time_interval > 0 && istep % time_interval == 0) {
       return true;
     }
 
