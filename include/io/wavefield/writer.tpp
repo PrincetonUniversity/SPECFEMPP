@@ -27,39 +27,28 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
 
   typename OutputLibrary::File file(dst);
 
-  typename OutputLibrary::Group elastic_psv = file.createGroup("/ElasticSV");
-  const auto &elastic_psv_field =
-      forward.get_field<specfem::element::medium_tag::elastic_psv>();
-  typename OutputLibrary::Group elastic_sh = file.createGroup("/ElasticSH");
-  const auto &elastic_sh_field =
-      forward.get_field<specfem::element::medium_tag::elastic_sh>();
-  typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
-  const auto &acoustic_field =
-      forward.get_field<specfem::element::medium_tag::acoustic>();
-  typename OutputLibrary::Group poroelastic = file.createGroup("/Poroelastic");
-  const auto &poroelastic_field =
-      forward.get_field<specfem::element::medium_tag::poroelastic>();
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      {
+        typename OutputLibrary::Group group =
+            file.createGroup(std::string("/") + specfem::element::to_string(_medium_tag_));
+        const auto &field = forward.get_field<_medium_tag_>();
+
+        if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
+          group.createDataset("Potential", field.h_field).write();
+          group.createDataset("PotentialDot", field.h_field_dot).write();
+          group.createDataset("PotentialDotDot", field.h_field_dot_dot).write();
+        }
+        else {
+          group.createDataset("Displacement", field.h_field).write();
+          group.createDataset("Velocity", field.h_field_dot).write();
+          group.createDataset("Acceleration", field.h_field_dot_dot).write();
+        }
+      });
+
   typename OutputLibrary::Group boundary = file.createGroup("/Boundary");
   typename OutputLibrary::Group stacey = boundary.createGroup("/Stacey");
-
-  elastic_psv.createDataset("Displacement", elastic_psv_field.h_field).write();
-  elastic_psv.createDataset("Velocity", elastic_psv_field.h_field_dot).write();
-  elastic_psv.createDataset("Acceleration", elastic_psv_field.h_field_dot_dot)
-      .write();
-
-  elastic_sh.createDataset("Displacement", elastic_sh_field.h_field).write();
-  elastic_sh.createDataset("Velocity", elastic_sh_field.h_field_dot).write();
-  elastic_sh.createDataset("Acceleration", elastic_sh_field.h_field_dot_dot)
-      .write();
-
-  acoustic.createDataset("Potential", acoustic_field.h_field).write();
-  acoustic.createDataset("PotentialDot", acoustic_field.h_field_dot).write();
-  acoustic.createDataset("PotentialDotDot", acoustic_field.h_field_dot_dot).write();
-
-  poroelastic.createDataset("Displacement", poroelastic_field.h_field).write();
-  poroelastic.createDataset("Velocity", poroelastic_field.h_field_dot).write();
-  poroelastic.createDataset("Acceleration", poroelastic_field.h_field_dot_dot)
-      .write();
 
   stacey
       .createDataset("IndexMapping",
