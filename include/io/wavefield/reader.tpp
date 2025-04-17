@@ -28,9 +28,9 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
       {
-        typename OutputLibrary::Group group =
-            file.createGroup(std::string("/") + specfem::element::to_string(_medium_tag_));
-        const auto &field = forward.get_field<_medium_tag_>();
+        typename IOLibrary::Group group =
+            file.openGroup(std::string("/") + specfem::element::to_string(_medium_tag_));
+        const auto &field = buffer.get_field<_medium_tag_>();
 
         if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
           group.openDataset("Potential", field.h_field).read();

@@ -13,5 +13,23 @@ std::string to_zero_lead(const int value, const int n_zero) {
   return new_str;
 }
 
+// Convert snake_case string to PascalCase
+std::string snake_to_pascal(const std::string &str) {
+  std::string result;
+  bool capitalizeNext = true; // Capitalize the first character
+
+  for (char ch : str) {
+    if (ch == '_') {
+      capitalizeNext = true;
+    } else if (capitalizeNext) {
+      result += std::toupper(ch);
+      capitalizeNext = false;
+    } else {
+      result += ch;
+    }
+  }
+  return result;
+}
+
 } // namespace utilities
 } // namespace specfem
