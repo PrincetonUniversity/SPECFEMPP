@@ -113,6 +113,8 @@ public:
     return specfem::io::impl::HDF5::Group<OpType>(file, name);
   }
 
+  void flush() { file->flush(H5F_SCOPE_GLOBAL); }
+
   ~File() { file->close(); }
 
 private:
