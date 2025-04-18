@@ -12,24 +12,21 @@ specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
 
 template <typename IOLibrary>
 void specfem::io::wavefield_reader<IOLibrary>::read(
-    specfem::compute::assembly &assembly) {
+    specfem::compute::assembly &assembly, const int istep) {
   auto &buffer = assembly.fields.buffer;
   auto &boundary_values = assembly.boundary_values;
 
-  std::string dst = this->output_folder + "/ForwardWavefield";
+  typename IOLibrary::File file(output_folder + "/ForwardWavefield");
 
-  if (this->istep != -1) {
-    dst += specfem::utilities::to_zero_lead(istep, 6);
-  }
-
-  typename IOLibrary::File file(dst);
+  typename IOLibrary::Group base_group = file.openGroup(
+      std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
       {
         typename IOLibrary::Group group =
-            file.openGroup(std::string("/") + specfem::element::to_string(_medium_tag_));
+            base_group.openGroup(specfem::element::to_string(_medium_tag_));
         const auto &field = buffer.get_field<_medium_tag_>();
 
         if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
@@ -44,8 +41,8 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
         }
       });
 
-  typename IOLibrary::Group boundary = file.openGroup("/Boundary");
-  typename IOLibrary::Group stacey = boundary.openGroup("/Stacey");
+  typename IOLibrary::Group boundary = base_group.openGroup("Boundary");
+  typename IOLibrary::Group stacey = boundary.openGroup("Stacey");
 
   stacey
       .openDataset("IndexMapping",

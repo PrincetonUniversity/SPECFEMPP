@@ -20,7 +20,7 @@ public:
    * @param assembly Assembly object
    *
    */
-  virtual void read(specfem::compute::assembly &assembly) = 0;
+  virtual void read(specfem::compute::assembly &assembly) {}
 };
 } // namespace io
 } // namespace specfem

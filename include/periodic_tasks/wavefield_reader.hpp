@@ -29,8 +29,7 @@ public:
   void run(specfem::compute::assembly &assembly, const int istep) override {
     std::cout << "Reading wavefield files:" << std::endl;
     std::cout << "-------------------------------" << std::endl;
-    reader.set_istep(istep);
-    reader.read(assembly);
+    reader.read(assembly, istep);
   }
 };
 

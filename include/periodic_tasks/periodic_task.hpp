@@ -25,10 +25,18 @@ public:
       : time_interval(time_interval), include_last_step(include_last_step) {};
 
   /**
-   * @brief Method to plot the data
+   * @brief Function to be called periodically.
    *
    */
   virtual void run(specfem::compute::assembly &assembly, const int istep) {};
+
+  /**
+   * @brief Functions to be called once at the beginning and once at the end of
+   * the simulation.
+   *
+   */
+  virtual void initialize(specfem::compute::assembly &assembly) {};
+  virtual void finalize(specfem::compute::assembly &assembly) {};
 
   /**
    * @brief Returns true if the data should be plotted at the current
