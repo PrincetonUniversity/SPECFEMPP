@@ -96,7 +96,6 @@ specfem::compute::assembly::assembly(
   return;
 }
 
-
 std::string specfem::compute::assembly::print() const {
   std::ostringstream message;
   message << "Assembly information:\n"
@@ -105,60 +104,39 @@ std::string specfem::compute::assembly::print() const {
           << "Total number of geometric points : " << this->mesh.ngllz << "\n";
 
   int total_elements = 0;
-  
-  FOR_EACH_MATERIAL_SYSTEM(
-    IN((DIMENSION_TAG_DIM2),
-        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-        MEDIUM_TAG_POROELASTIC),
-        (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-    DECLARE((int, n_elements)))
-  
-  FOR_EACH_MATERIAL_SYSTEM(
-    IN((DIMENSION_TAG_DIM2),
-        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-        MEDIUM_TAG_POROELASTIC),
-        (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-    CAPTURE(n_elements)
-    {
-      // Getting the number of elements per medium
-      _n_elements_ = this->element_types.get_number_of_elements(
-          _medium_tag_, _property_tag_);
 
-      // Adding the number of elements to the total
-      total_elements += _n_elements_;
-      
-      // Printing the number of elements if more than 0
-      if (_n_elements_ > 0) {
-        message << "   Total number of elements of type "
-                << specfem::element::to_string(_medium_tag_, _property_tag_)
-                << " : " << _n_elements_ << "\n";
-      };
-
-    })
-  
   bool is_sh = false;
   bool is_psv = false;
 
-  FOR_EACH_MATERIAL_SYSTEM(
-    IN((DIMENSION_TAG_DIM2),
-        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-        MEDIUM_TAG_POROELASTIC),
-        (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-    CAPTURE(n_elements) 
-    {
-      if (_medium_tag_ == specfem::element::medium_tag::elastic_sh) {
-        if (_n_elements_ > 0) {
-          is_sh = true;
-        }
-      } else if (_medium_tag_ == specfem::element::medium_tag::elastic_psv) {
-        if (_n_elements_ > 0) {
-          is_psv = true;
-        }
-      } 
-    })
-  
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+      {
+        // Getting the number of elements per medium
+        int n_elements = this->element_types.get_number_of_elements(
+            _medium_tag_, _property_tag_);
+
+        // Printing the number of elements if more than 0
+        if (n_elements > 0) {
+          // Adding the number of elements to the total
+          total_elements += n_elements;
+
+          message << "   Total number of elements of type "
+                  << specfem::element::to_string(_medium_tag_, _property_tag_)
+                  << " : " << n_elements << "\n";
+          if (_medium_tag_ == specfem::element::medium_tag::elastic_sh) {
+            is_sh = true;
+          } else if (_medium_tag_ ==
+                     specfem::element::medium_tag::elastic_psv) {
+            is_psv = true;
+          }
+        };
+      })
+
   if (is_sh && is_psv) {
-    message << "   WARNING: This should not appear something's off in the code's handling of polarization.\n";
+    message << "   WARNING: This should not appear something's off in the "
+               "code's handling of polarization.\n";
   } else if (is_sh) {
     message << "   Elastic media will simulate SH polarized waves\n";
   } else if (is_psv) {
