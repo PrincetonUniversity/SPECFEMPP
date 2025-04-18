@@ -20,7 +20,7 @@ public:
    * @param assembly Assembly object
    *
    */
-  virtual void write(specfem::compute::assembly &assembly) {};
+  virtual void write(specfem::compute::assembly &assembly) = 0;
 };
 
 } // namespace io
