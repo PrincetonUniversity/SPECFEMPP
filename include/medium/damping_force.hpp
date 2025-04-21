@@ -1,38 +1,34 @@
 #pragma once
 
-#include "medium/dim2/acoustic/isotropic/damping.hpp"
-#include "medium/dim2/elastic/anisotropic/damping.hpp"
-#include "medium/dim2/elastic/isotropic/damping.hpp"
+#include "enumerations/medium.hpp"
 #include "medium/dim2/poroelastic/isotropic/damping.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace medium {
-
-/**
- * @defgroup MediumPhysics
- */
-
-/**
- * @brief Compute the damping term at a quadrature point
- *
- * @ingroup MediumPhysics
- *
- * @tparam PointPropertiesType Material properties at the quadrature point
- * specfem::point::properties
- * @tparam PointVelocityType Velocity at the quadrature point
- * specfem::point::field
- * @tparam PointAccelerationType Acceleration at the quadrature point
- * specfem::point::field
- * @param factor Prefactor for the damping term ($wx * wz * jacobian)
- * @param point_properties Material properties at the quadrature point
- * @param velocity Velocity at the quadrature point
- * @param acceleration Acceleration at the quadrature point
+/*
+ * There are two function here at the top outside of the namespace because they
+ * are used in the specialization of the function below. The first one is the
+ * specialization for the case where the damping force is not activated. A false
+ * type is passed to the function, and it does nothing. The second one is the
+ * specialization for the case where the damping force is activated. A true
+ * type is passed to the function, and it computes the damping force. This
+ * allows for compilation time checking for supposed existence of the damping
+ * term computation.
  */
 template <typename T, typename PointPropertiesType, typename PointVelocityType,
           typename PointAccelerationType>
-KOKKOS_INLINE_FUNCTION void compute_damping_force(
-    const T factor, const PointPropertiesType &point_properties,
+KOKKOS_INLINE_FUNCTION void
+execute_damping_force(std::false_type, const T factor,
+                      const PointPropertiesType &point_properties,
+                      const PointVelocityType &velocity,
+                      PointAccelerationType &acceleration) {
+  // No damping force
+  return;
+}
+
+template <typename T, typename PointPropertiesType, typename PointVelocityType,
+          typename PointAccelerationType>
+KOKKOS_INLINE_FUNCTION void execute_damping_force(
+    std::true_type, const T factor, const PointPropertiesType &point_properties,
     const PointVelocityType &velocity, PointAccelerationType &acceleration) {
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
@@ -88,10 +84,52 @@ KOKKOS_INLINE_FUNCTION void compute_damping_force(
   using property_dispatch =
       std::integral_constant<specfem::element::property_tag, PropertyTag>;
 
-  impl_compute_damping_force(dimension_dispatch(), medium_dispatch(),
-                             property_dispatch(), factor, point_properties,
-                             velocity, acceleration);
+  // Damping force
+  specfem::medium::impl_compute_damping_force(
+      dimension_dispatch(), medium_dispatch(), property_dispatch(), factor,
+      point_properties, velocity, acceleration);
 }
+namespace specfem {
+namespace medium {
 
+/**
+ * @defgroup MediumPhysics
+ */
+
+/**
+ * @brief Compute the damping term at a quadrature point
+ *
+ * @ingroup MediumPhysics
+ *
+ * @tparam PointPropertiesType Material properties at the quadrature point
+ * specfem::point::properties
+ * @tparam PointVelocityType Velocity at the quadrature point
+ * specfem::point::field
+ * @tparam PointAccelerationType Acceleration at the quadrature point
+ * specfem::point::field
+ * @param factor Prefactor for the damping term ($wx * wz * jacobian)
+ * @param point_properties Material properties at the quadrature point
+ * @param velocity Velocity at the quadrature point
+ * @param acceleration Acceleration at the quadrature point
+ */
+template <typename T, typename PointPropertiesType, typename PointVelocityType,
+          typename PointAccelerationType>
+KOKKOS_INLINE_FUNCTION void compute_damping_force(
+    const T factor, const PointPropertiesType &point_properties,
+    const PointVelocityType &velocity, PointAccelerationType &acceleration) {
+
+  constexpr auto DimensionTag = PointPropertiesType::dimension;
+  constexpr auto MediumTag = PointPropertiesType::medium_tag;
+  constexpr auto PropertyTag = PointPropertiesType::property_tag;
+  constexpr bool is_activated =
+      specfem::element::damping_force<DimensionTag, MediumTag,
+                                      PropertyTag>::activated;
+
+  using damping_force_activated_dispatch =
+      std::integral_constant<bool, is_activated>;
+
+  execute_damping_force(damping_force_activated_dispatch(), factor,
+                        point_properties, velocity, acceleration);
+}
 } // namespace medium
 } // namespace specfem
