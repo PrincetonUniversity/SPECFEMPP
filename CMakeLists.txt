@@ -454,6 +454,7 @@ target_link_libraries(
         read_seismogram
         Kokkos::kokkos
         point
+        utilities
 )
 
 add_library(
