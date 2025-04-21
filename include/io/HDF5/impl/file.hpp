@@ -45,6 +45,10 @@ public:
   specfem::io::impl::HDF5::Group<OpType> openGroup(const std::string &name) {
     throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
   }
+
+  void flush() {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+  }
 };
 
 #else
