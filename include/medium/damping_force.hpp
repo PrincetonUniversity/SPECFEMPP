@@ -120,10 +120,8 @@ KOKKOS_INLINE_FUNCTION void compute_damping_force(
 
   constexpr auto DimensionTag = PointPropertiesType::dimension;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
-  constexpr auto PropertyTag = PointPropertiesType::property_tag;
   constexpr bool is_activated =
-      specfem::element::damping_force<DimensionTag, MediumTag,
-                                      PropertyTag>::activated;
+      specfem::element::attributes<DimensionTag, MediumTag>::damping_force;
 
   using damping_force_activated_dispatch =
       std::integral_constant<bool, is_activated>;
