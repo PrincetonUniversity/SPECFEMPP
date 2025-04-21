@@ -69,6 +69,12 @@ bool is_te_string(const std::string &str) {
   return str_lower == "te";
 }
 
+// check if string indicates TM wave
+bool is_tm_string(const std::string &str) {
+  const auto str_lower = to_lower(str);
+  return str_lower == "tm";
+}
+
 // check if string is jpg
 bool is_jpg_string(const std::string &str) {
   const auto str_lower = to_lower(str);

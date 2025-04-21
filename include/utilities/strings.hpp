@@ -29,6 +29,9 @@ bool is_sh_string(const std::string &str);
 // check if string indicates TE wave
 bool is_te_string(const std::string &str);
 
+// check if string indicates TM wave
+bool is_tm_string(const std::string &str);
+
 // check if string is jpg
 bool is_jpg_string(const std::string &str);
 
