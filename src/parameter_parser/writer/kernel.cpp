@@ -2,6 +2,7 @@
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
 #include "io/kernel/writer.hpp"
+#include "utilities/strings.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::kernel::kernel(
@@ -42,10 +43,10 @@ specfem::runtime_configuration::kernel::instantiate_kernel_writer() const {
   const std::shared_ptr<specfem::io::writer> writer =
       [&]() -> std::shared_ptr<specfem::io::writer> {
     if (this->simulation_type == specfem::simulation::type::combined) {
-      if (this->output_format == "HDF5") {
+      if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<specfem::io::kernel_writer<
             specfem::io::HDF5<specfem::io::write> > >(this->output_folder);
-      } else if (this->output_format == "ASCII") {
+      } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<specfem::io::kernel_writer<
             specfem::io::ASCII<specfem::io::write> > >(this->output_folder);
       } else {

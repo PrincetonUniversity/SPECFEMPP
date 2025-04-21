@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
+#include "utilities/strings.hpp"
 #include <string>
 #include <yaml-cpp/yaml.h>
 
@@ -29,9 +30,9 @@ public:
    * @return std::string Type of the elastic wave (P_SV or SH)
    */
   inline specfem::enums::elastic_wave get_elastic_wave_type() const {
-    if (this->elastic_wave_type == "P_SV") {
+    if (specfem::utilities::is_psv_string(this->elastic_wave_type)) {
       return specfem::enums::elastic_wave::psv;
-    } else if (this->elastic_wave_type == "SH") {
+    } else if (specfem::utilities::is_sh_string(this->elastic_wave_type)) {
       return specfem::enums::elastic_wave::sh;
     } else {
       throw std::runtime_error("Invalid elastic wave type: " +

@@ -3,6 +3,7 @@
 #include "io/HDF5/HDF5.hpp"
 #include "io/property/reader.hpp"
 #include "io/property/writer.hpp"
+#include "utilities/strings.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::property::property(const YAML::Node &Node,
@@ -45,10 +46,10 @@ specfem::runtime_configuration::property::instantiate_property_writer() const {
     if (!this->write_mode) {
       return nullptr;
     }
-    if (this->output_format == "HDF5") {
+    if (specfem::utilities::is_hdf5_string(this->output_format)) {
       return std::make_shared<specfem::io::property_writer<
           specfem::io::HDF5<specfem::io::write> > >(this->output_folder);
-    } else if (this->output_format == "ASCII") {
+    } else if (specfem::utilities::is_ascii_string(this->output_format)) {
       return std::make_shared<specfem::io::property_writer<
           specfem::io::ASCII<specfem::io::write> > >(this->output_folder);
     } else {
@@ -67,11 +68,11 @@ specfem::runtime_configuration::property::instantiate_property_reader() const {
     if (this->write_mode) {
       return nullptr;
     }
-    if (this->output_format == "HDF5") {
+    if (specfem::utilities::is_hdf5_string(this->output_format)) {
       return std::make_shared<
           specfem::io::property_reader<specfem::io::HDF5<specfem::io::read> > >(
           this->output_folder);
-    } else if (this->output_format == "ASCII") {
+    } else if (specfem::utilities::is_ascii_string(this->output_format)) {
       return std::make_shared<specfem::io::property_reader<
           specfem::io::ASCII<specfem::io::read> > >(this->output_folder);
     } else {
