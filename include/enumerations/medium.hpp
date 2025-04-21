@@ -125,5 +125,63 @@ using is_electromagnetic = typename std::conditional_t<
      MediumTag == specfem::element::medium_tag::electromagnetic_te),
     std::true_type, std::false_type>::type;
 
+// Has damping force
+// Base dispatcher struct for tag validation
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+struct damping_force {
+  // Will trigger for unregistered tags
+  static_assert(sizeof(Dimension) == 0,
+                "Unregistered damping tag! Please add a specialization for "
+                "medium enum value.");
+  static_assert(sizeof(MediumTag) == 0,
+                "Unregistered damping tag! Please add a specialization for "
+                "medium enum value.");
+  static_assert(sizeof(PropertyTag) == 0,
+                "Unregistered damping tag! Please add a specialization for "
+                "medium enum value.");
+  static constexpr bool activated = false;
+};
+
+// Elastic PSV Isotropic (Not activated)
+template <>
+struct damping_force<specfem::element::medium_tag::elastic_psv,
+                     specfem::element::property_tag::isotropic> {
+  static constexpr bool activated = false;
+};
+
+// Elastic SH Isotropic (Not activated)
+template <>
+struct damping_force<specfem::element::medium_tag::elastic_sh,
+                     specfem::element::property_tag::isotropic> {
+  static constexpr bool activated = false;
+};
+
+// Elastic PSV Anisotropic (Not activated)
+template <>
+struct damping_force<specfem::element::medium_tag::elastic_psv,
+                     specfem::element::property_tag::anisotropic> {
+  static constexpr bool activated = false;
+};
+// Elastic SH Anisotropic (Not activated)
+template <>
+struct damping_force<specfem::element::medium_tag::elastic_sh,
+                     specfem::element::property_tag::anisotropic> {
+  static constexpr bool activated = false;
+};
+// Acoustic Isotropic (Not activated)
+template <>
+struct damping_force<specfem::element::medium_tag::acoustic,
+                     specfem::element::property_tag::isotropic> {
+  static constexpr bool activated = false;
+};
+
+// Poroelastic Isotropic (Activated)
+template <>
+struct damping_force<specfem::element::medium_tag::poroelastic,
+                     specfem::element::property_tag::isotropic> {
+  static constexpr bool activated = true;
+};
+
 } // namespace element
 } // namespace specfem
