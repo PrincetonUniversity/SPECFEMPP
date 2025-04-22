@@ -151,73 +151,32 @@ private:
   PropertyTagViewType::HostMirror h_property_types; ///< Host mirror of
                                                     ///< property_types
 
-#define SOURCE_MEDIUM_DECLARATION(DIMENSION_TAG, MEDIUM_TAG)                   \
-  specfem::compute::impl::source_medium<GET_TAG(DIMENSION_TAG),                \
-                                        GET_TAG(MEDIUM_TAG)>                   \
-      CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),                    \
-                           GET_NAME(MEDIUM_TAG));
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(SOURCE_MEDIUM_DECLARATION,
-                                 WHERE(DIMENSION_TAG_DIM2)
-                                     WHERE(MEDIUM_TAG_ELASTIC_PSV,
-                                           MEDIUM_TAG_ELASTIC_SH,
-                                           MEDIUM_TAG_ACOUSTIC,
-                                           MEDIUM_TAG_POROELASTIC))
-
-#undef SOURCE_MEDIUM_DECLARATION
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                                                       ACOUSTIC, POROELASTIC)),
+                      DECLARE(((specfem::compute::impl::source_medium,
+                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
+                               source)))
 
   int timestep; ///< Current time step
 
-#define SOURCE_INDICES_VARIABLES_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, \
-                                      BOUNDARY_TAG)                            \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      element_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      element_indices_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      element_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_element_indices_forward, GET_NAME(DIMENSION_TAG),                      \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_element_indices_backward, GET_NAME(DIMENSION_TAG),                     \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_element_indices_adjoint, GET_NAME(DIMENSION_TAG),                      \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      source_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      source_indices_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      source_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_source_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_source_indices_backward, GET_NAME(DIMENSION_TAG),                      \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_source_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
-
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      SOURCE_INDICES_VARIABLES_NAME,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                  WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                        BOUNDARY_TAG_STACEY,
-                        BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef SOURCE_INDICES_VARIABLES_NAME
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET)),
+      DECLARE((IndexViewType, element_indices_forward),
+              (IndexViewType::HostMirror, h_element_indices_forward),
+              (IndexViewType, element_indices_backward),
+              (IndexViewType::HostMirror, h_element_indices_backward),
+              (IndexViewType, element_indices_adjoint),
+              (IndexViewType::HostMirror, h_element_indices_adjoint),
+              (IndexViewType, source_indices_forward),
+              (IndexViewType::HostMirror, h_source_indices_forward),
+              (IndexViewType, source_indices_backward),
+              (IndexViewType::HostMirror, h_source_indices_backward),
+              (IndexViewType, source_indices_adjoint),
+              (IndexViewType::HostMirror, h_source_indices_adjoint)))
 
   template <typename IteratorIndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
@@ -295,23 +254,17 @@ load_on_device(const IteratorIndexType iterator_index,
   }
 #endif
 
-#define SOURCE_MEDIUM_LOAD_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG)                \
-  if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
-    if constexpr (GET_TAG(MEDIUM_TAG) == PointSourceType::medium_tag) {        \
-      sources                                                                  \
-          .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
-                                GET_NAME(MEDIUM_TAG))                          \
-          .load_on_device(sources.timestep, iterator_index, point_source);     \
-    }                                                                          \
-  }
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      SOURCE_MEDIUM_LOAD_ON_DEVICE,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
-
-#undef SOURCE_MEDIUM_LOAD_ON_DEVICE
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      CAPTURE((source, sources.source)) {
+        if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
+          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
+            _source_.load_on_device(sources.timestep, iterator_index,
+                                    point_source);
+          }
+        }
+      })
 
   return;
 }
@@ -368,23 +321,17 @@ void load_on_host(const IteratorIndexType iterator_index,
   }
 #endif
 
-#define SOURCE_MEDIUM_LOAD_ON_HOST(DIMENSION_TAG, MEDIUM_TAG)                  \
-  if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
-    if constexpr (GET_TAG(MEDIUM_TAG) == PointSourceType::medium_tag) {        \
-      sources                                                                  \
-          .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
-                                GET_NAME(MEDIUM_TAG))                          \
-          .load_on_host(sources.timestep, iterator_index, point_source);       \
-    }                                                                          \
-  }
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      SOURCE_MEDIUM_LOAD_ON_HOST,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
-
-#undef SOURCE_MEDIUM_LOAD_ON_HOST
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      CAPTURE((source, sources.source)) {
+        if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
+          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
+            _source_.load_on_host(sources.timestep, iterator_index,
+                                  point_source);
+          }
+        }
+      })
 
   return;
 }
@@ -440,23 +387,17 @@ store_on_device(const IteratorIndexType iterator_index,
   }
 #endif
 
-#define SOURCE_MEDIUM_STORE_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG)               \
-  if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
-    if constexpr (GET_TAG(MEDIUM_TAG) == PointSourceType::medium_tag) {        \
-      sources                                                                  \
-          .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
-                                GET_NAME(MEDIUM_TAG))                          \
-          .store_on_device(sources.timestep, iterator_index, point_source);    \
-    }                                                                          \
-  }
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      SOURCE_MEDIUM_STORE_ON_DEVICE,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
-
-#undef SOURCE_MEDIUM_STORE_ON_DEVICE
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      CAPTURE((source, sources.source)) {
+        if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
+          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
+            _source_.store_on_device(sources.timestep, iterator_index,
+                                     point_source);
+          }
+        }
+      })
 
   return;
 }
@@ -511,23 +452,17 @@ void store_on_host(const IteratorIndexType iterator_index,
   }
 #endif
 
-#define SOURCE_MEDIUM_STORE_ON_HOST(DIMENSION_TAG, MEDIUM_TAG)                 \
-  if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
-    if constexpr (GET_TAG(MEDIUM_TAG) == PointSourceType::medium_tag) {        \
-      sources                                                                  \
-          .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
-                                GET_NAME(MEDIUM_TAG))                          \
-          .store_on_host(sources.timestep, iterator_index, point_source);      \
-    }                                                                          \
-  }
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      SOURCE_MEDIUM_STORE_ON_HOST,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
-
-#undef SOURCE_MEDIUM_STORE_ON_HOST
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      CAPTURE((source, sources.source)) {
+        if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
+          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
+            _source_.store_on_host(sources.timestep, iterator_index,
+                                   point_source);
+          }
+        }
+      })
 
   return;
 }

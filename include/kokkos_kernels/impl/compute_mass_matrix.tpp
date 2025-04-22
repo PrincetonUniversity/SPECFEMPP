@@ -3,6 +3,7 @@
 #include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
+#include "boundary_conditions/boundary_conditions.tpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"

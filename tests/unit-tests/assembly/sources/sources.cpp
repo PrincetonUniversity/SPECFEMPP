@@ -280,40 +280,27 @@ void check_assembly_source_construction(
 void test_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     specfem::compute::assembly &assembly) {
-
-#define TEST_ASSEMBLY_SOURCE_CONSTRUCTION(Dimension, MediumTag)                \
-  check_assembly_source_construction<GET_TAG(Dimension), GET_TAG(MediumTag)>(  \
-      sources, assembly);
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      TEST_ASSEMBLY_SOURCE_CONSTRUCTION,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC))
-
-#undef TEST_ASSEMBLY_SOURCE_CONSTRUCTION
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      {
+        check_assembly_source_construction<_dimension_tag_, _medium_tag_>(
+            sources, assembly);
+      })
 }
 
-void test_sources(specfem::compute::assembly &assembly){
-
-#define TEST_STORE_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG) \
-  check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
-              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
-              specfem::wavefield::simulation_field::forward>(assembly);        \
-  check_load<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                      \
-             GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                     \
-             specfem::wavefield::simulation_field::forward>(assembly);
-
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      TEST_STORE_LOAD,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                  WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                        BOUNDARY_TAG_STACEY,
-                        BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef TEST_STORE_LOAD
-}
+void test_sources(specfem::compute::assembly &assembly){ FOR_EACH_IN_PRODUCT(
+    (DIMENSION_TAG(DIM2),
+     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+     BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                  COMPOSITE_STACEY_DIRICHLET)),
+    {
+      check_store<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
+                  specfem::wavefield::simulation_field::forward>(assembly);
+      check_load<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
+                 specfem::wavefield::simulation_field::forward>(assembly);
+    }) }
 
 TEST_F(ASSEMBLY, sources) {
   for (auto parameters : *this) {
