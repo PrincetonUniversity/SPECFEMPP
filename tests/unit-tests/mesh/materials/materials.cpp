@@ -6,36 +6,7 @@
 #include <variant>
 #include <vector>
 
-#define MEDIUM_TYPE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                   \
-  using CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG),                       \
-                             GET_NAME(PROPERTY_TAG)) =                         \
-      specfem::medium::material<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>;
-
-CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-    MEDIUM_TYPE,
-    WHERE(DIMENSION_TAG_DIM2)
-        WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-              MEDIUM_TAG_ELECTROMAGNETIC_TE)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef MEDIUM_TYPE
-
-#define TYPE_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                     \
-  (CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)))
-
-#define MAKE_VARIANT_RETURN                                                    \
-  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(          \
-      TYPE_NAME,                                                               \
-      WHERE(DIMENSION_TAG_DIM2) WHERE(                                         \
-          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,  \
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)               \
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
-
-using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
-
-#undef MAKE_VARIANT_RETURN
-#undef TYPE_NAME
+using MaterialVectorType = std::vector<std::any>; /// NOLINT
 
 const static std::unordered_map<std::string, MaterialVectorType>
     ground_truth = {
@@ -122,7 +93,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
                   90.0, 90.0) }) }
     };
 
-void check_test(
+void check_material(
     const specfem::mesh::materials<specfem::dimension::type::dim2> &computed,
     const MaterialVectorType &expected) {
 
@@ -141,22 +112,22 @@ void check_test(
   for (int ispec = 0; ispec < nspec; ispec++) {
     const auto material_specification = computed.material_index_mapping(ispec);
 
-    const auto type = material_specification.type;
-    const auto property = material_specification.property;
+    const auto medium_tag = material_specification.type;
+    const auto property_tag = material_specification.property;
     const int index = material_specification.index;
     const int imaterial = material_specification.database_index;
 
-    FOR_EACH_MATERIAL_SYSTEM(
-        IN((DIMENSION_TAG_DIM2),
-           (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE),
-           (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELECTROMAGNETIC_TE),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
         {
-          if ((type == _medium_tag_) && (property == _property_tag_)) {
-            const auto icomputed = std::get<
-                specfem::medium::material<_medium_tag_, _property_tag_> >(
-                computed[ispec]);
-            const auto iexpected = std::get<
+          if ((medium_tag == _medium_tag_) &&
+              (property_tag == _property_tag_)) {
+            const auto icomputed =
+                computed.get_material<_medium_tag_, _property_tag_>(ispec);
+            const auto iexpected = std::any_cast<
                 specfem::medium::material<_medium_tag_, _property_tag_> >(
                 expected[imaterial]);
             if (icomputed != iexpected) {
@@ -199,7 +170,7 @@ TEST_F(MESH, materials) {
       const auto computed = mesh.materials;
       const auto expected = ground_truth.at(Test.name);
 
-      check_test(computed, expected);
+      check_material(computed, expected);
 
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m Test " << Test.number << ": "

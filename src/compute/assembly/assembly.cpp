@@ -97,3 +97,53 @@ specfem::compute::assembly::assembly(
 
   return;
 }
+
+std::string specfem::compute::assembly::print() const {
+  std::ostringstream message;
+  message << "Assembly information:\n"
+          << "------------------------------\n"
+          << "Total number of spectral elements : " << this->mesh.nspec << "\n"
+          << "Total number of geometric points : " << this->mesh.ngllz << "\n";
+
+  int total_elements = 0;
+
+  bool is_sh = false;
+  bool is_psv = false;
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+      {
+        // Getting the number of elements per medium
+        int n_elements = this->element_types.get_number_of_elements(
+            _medium_tag_, _property_tag_);
+
+        // Printing the number of elements if more than 0
+        if (n_elements > 0) {
+          // Adding the number of elements to the total
+          total_elements += n_elements;
+
+          message << "   Total number of elements of type "
+                  << specfem::element::to_string(_medium_tag_, _property_tag_)
+                  << " : " << n_elements << "\n";
+          if (_medium_tag_ == specfem::element::medium_tag::elastic_sh) {
+            is_sh = true;
+          } else if (_medium_tag_ ==
+                     specfem::element::medium_tag::elastic_psv) {
+            is_psv = true;
+          }
+        };
+      })
+
+  if (is_sh && is_psv) {
+    message << "   WARNING: This should not appear something's off in the "
+               "code's handling of polarization.\n";
+  } else if (is_sh) {
+    message << "   Elastic media will simulate SH polarized waves\n";
+  } else if (is_psv) {
+    message << "   Elastic media will simulate P-SV polarized waves\n";
+  }
+
+  return message.str();
+}

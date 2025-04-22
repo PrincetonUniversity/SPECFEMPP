@@ -152,11 +152,11 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
   mpi->cout("Number of material systems = " +
             std::to_string(mesh.materials.n_materials) + "\n\n");
 
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELECTROMAGNETIC_TE),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
       {
         for (const auto material :
              mesh.materials.get_container<_medium_tag_, _property_tag_>()
@@ -167,16 +167,16 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
 
   int total_materials_read = 0;
 
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-      {
-        total_materials_read +=
-            mesh.materials.get_container<_medium_tag_, _property_tag_>()
-                .element_materials.size();
-      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELECTROMAGNETIC_TE),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                      {
+                        total_materials_read +=
+                            mesh.materials
+                                .get_container<_medium_tag_, _property_tag_>()
+                                .element_materials.size();
+                      })
 
   if (total_materials_read != mesh.materials.n_materials) {
     std::ostringstream message;
