@@ -1,8 +1,7 @@
 #pragma once
 
-#include "macros_impl/element_types.hpp"
-#include "macros_impl/material_systems.hpp"
-#include "macros_impl/medium_tags.hpp"
+#include "macros_impl/array.hpp"
+#include "macros_impl/utils.hpp"
 
 /**
  * @name Element Tag macros
@@ -95,7 +94,8 @@
        PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
 
 /**
- * @brief Tag getters for tokens inside DECLARE(...)
+ * @brief Tag getters. The macros are intended to be used only in @ref DECLARE
+ * and @ref INSTANTIATE.
  */
 #define _DIMENSION_TAG_ BOOST_PP_SEQ_TO_LIST((0))
 #define _MEDIUM_TAG_ BOOST_PP_SEQ_TO_LIST((1))
@@ -103,29 +103,16 @@
 #define _BOUNDARY_TAG_ BOOST_PP_SEQ_TO_LIST((3))
 
 /**
- * @brief Filter sequence for different tags.
- *
- * This macro is to be only used in conjunction with @ref
- * CALL_MACRO_FOR_ALL_ELEMENT_TYPES or @ref CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS.
- *
- */
-#define WHERE(...) (BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
-
-/**
  * @brief Declare for each tag.
  *
- * This macro is to be only used in conjunction with @ref
- * FOR_EACH_MEDIUM_TAG or @ref FOR_EACH_MATERIAL_SYSTEM or @ref
- * FOR_EACH_ELEMENT_TYPE.
+ * This macro is to be only used in conjunction with @ref FOR_EACH_IN_PRODUCT
  *
  */
 #define DECLARE(...) BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)
 /**
  * @brief Instantiate templates for each tag.
  *
- * This macro is to be only used in conjunction with @ref
- * FOR_EACH_MEDIUM_TAG or @ref FOR_EACH_MATERIAL_SYSTEM or @ref
- * FOR_EACH_ELEMENT_TYPE.
+ * This macro is to be only used in conjunction with @ref FOR_EACH_IN_PRODUCT
  *
  */
 #define INSTANTIATE(...)                                                       \
@@ -138,14 +125,23 @@
 #define CAPTURE(...) BOOST_PP_VARIADIC_TO_TUPLE(BOOST_PP_EMPTY(), __VA_ARGS__),
 
 /**
- * @brief Filter sequence for different tags.
- *
- * This macro is to be only used in conjunction with @ref
- * CALL_MACRO_FOR_ALL_ELEMENT_TYPES or @ref CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS.
- *
+ * @brief Converts tag arguments to a sequence of tag tuples,
+ * e.g. DIMENSION_TAG(DIM2) expands to DIMENSION_TAG_DIM2
  */
-#define IN(...)                                                                \
-  BOOST_PP_SEQ_TRANSFORM(_EXPAND_VARIADIC, _,                                  \
+#define DIMENSION_TAG(...)                                                     \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, DIMENSION_TAG_,                      \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define MEDIUM_TAG(...)                                                        \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, MEDIUM_TAG_,                         \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define PROPERTY_TAG(...)                                                      \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, PROPERTY_TAG_,                       \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define BOUNDARY_TAG(...)                                                      \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, BOUNDARY_TAG_,                       \
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 /**
@@ -160,92 +156,10 @@
  * argument, e.g. CAPTURE(value, elements, h_elements). The last argument is the
  * code block to be executed.
  */
-#define FOR_EACH_MATERIAL_SYSTEM(seq, ...)                                     \
-  BOOST_PP_SEQ_FOR_EACH(_FOR_ONE_MATERIAL_SYSTEM,                              \
-                        BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
-
-/**
- * @brief Call a macro for all medium types
- *
- * Invoking CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MACRO, seq) will call MACRO for all
- * medium types listed in macro sequence @ref MEDIUM_TAGS.
- *
- * @param MACRO The macro to be called. MACRO must have the following signature:
- * MACRO(DIMENSION_TAG, MEDIUM_TAG)
- *
- * @param seq A sequence filter for medium types. Sequences can be generated
- * using the @ref WHERE macro.
- *
- * @code
- *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG)
- * \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG)>();
- *
- *   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
- * WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH))
- * @endcode
- *
- *
- */
-#define CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MACRO, seq)                             \
-  BOOST_PP_SEQ_FOR_EACH(_CALL_FOR_ONE_MEDIUM_TAG, MACRO,                       \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
-
-/**
- * @brief Call a macro for all element types
- *
- * Invoking CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(MACRO, seq) will call MACRO for
- * all element types listed in macro sequence @ref MATERIAL_SYSTEMS.
- *
- * @param MACRO The macro to be called. MACRO must have the following signature:
- * MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG)
- *
- * @param seq A sequence filter for element types. Sequences can be generated
- * using the @ref WHERE macro.
- *
- * @code
- *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)
- * \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>();
- *
- *   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
- * WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH)
- * WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
- * @endcode
- *
- *
- */
-#define CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(MACRO, seq)                        \
-  BOOST_PP_SEQ_FOR_EACH(_CALL_FOR_ONE_MATERIAL_SYSTEM, MACRO,                  \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
-
-/**
- * @brief Call a macro for all element types
- *
- * Invoking CALL_MACRO_FOR_ALL_ELEMENT_TYPES(MACRO, seq) will call MACRO for all
- * element types listed in macro sequence @ref ELEMENT_TYPES.
- *
- * @param MACRO The macro to be called. MACRO must have the following signature:
- * MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG)
- *
- * @param seq A sequence filter for element types. Sequences can be generated
- * using the @ref WHERE macro.
- *
- * @code
- *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,
- * BOUNDARY_TAG) \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG),
- * GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>();
- *
- *   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
- * WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH)
- * WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
- * WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_STACEY))
- * @endcode
- *
- *
- */
-#define CALL_MACRO_FOR_ALL_ELEMENT_TYPES(MACRO, seq)                           \
-  BOOST_PP_SEQ_FOR_EACH(_CALL_FOR_ONE_ELEMENT_TYPE, MACRO,                     \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
+#define FOR_EACH_IN_PRODUCT(seq, ...)                                          \
+  BOOST_PP_SEQ_FOR_EACH(                                                       \
+      _FOR_ONE_TAG_SEQ, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
+      BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, BOOST_PP_TUPLE_TO_SEQ(seq)))
 
 namespace specfem {
 namespace element {

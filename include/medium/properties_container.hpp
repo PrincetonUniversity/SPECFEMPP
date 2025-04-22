@@ -43,9 +43,8 @@ struct properties_container
           for (int ix = 0; ix < ngllx; ++ix) {
             // Get the material at index from mesh::materials
             auto material =
-                std::get<specfem::medium::material<base_type::medium_tag,
-                                                   base_type::property_tag> >(
-                    materials[mesh_ispec]);
+                materials.get_material<base_type::medium_tag,
+                                       base_type::property_tag>(mesh_ispec);
 
             // Assign the material property to the property container
             auto point_property = material.get_properties();

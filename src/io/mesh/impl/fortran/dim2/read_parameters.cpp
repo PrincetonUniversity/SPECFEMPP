@@ -27,13 +27,13 @@ specfem::io::mesh::impl::fortran::dim2::read_mesh_parameters(
                                  &plot_lowerleft_corner_only);
 
   // ---------------------------------------------------------------------
-  if (ngnod != 9) {
-    std::ostringstream error_message;
-    error_message << "Number of control nodes per element must be 9, but is "
-                  << ngnod << "\n"
-                  << "Currently, there is a bug when NGNOD == 4 \n";
-    throw std::runtime_error(error_message.str());
-  }
+  // if (ngnod != 9) {
+  //   std::ostringstream error_message;
+  //   error_message << "Number of control nodes per element must be 9, but is "
+  //                 << ngnod << "\n"
+  //                 << "Currently, there is a bug when NGNOD == 4 \n";
+  //   throw std::runtime_error(error_message.str());
+  // }
 
   specfem::io::fortran_read_line(
       stream, &nelemabs, &nelem_acforcing, &nelem_acoustic_surface,
