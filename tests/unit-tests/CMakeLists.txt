@@ -335,7 +335,6 @@ target_link_libraries(
   algorithms
   io
   coupled_interface
-  periodic_tasks
   -lpthread -lm
 )
 

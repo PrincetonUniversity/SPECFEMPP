@@ -104,6 +104,8 @@ struct assembly {
   int get_total_degrees_of_freedom() {
     return fields.buffer.get_total_degrees_of_freedom();
   }
+
+  std::string print() const;
 };
 
 } // namespace compute

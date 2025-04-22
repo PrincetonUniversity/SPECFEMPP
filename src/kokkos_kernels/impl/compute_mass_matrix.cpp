@@ -1,43 +1,36 @@
 #include "kokkos_kernels/impl/compute_mass_matrix.hpp"
 #include "kokkos_kernels/impl/compute_mass_matrix.tpp"
 
-#define INSTANTIATION_MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,           \
-                            BOUNDARY_TAG)                                      \
-  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
-      GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::forward,   \
-      5, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
-      const type_real &, const specfem::compute::assembly &);                  \
-  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
-      GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::forward,   \
-      8, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
-      const type_real &, const specfem::compute::assembly &);                  \
-  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
-      GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::backward,  \
-      5, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
-      const type_real &, const specfem::compute::assembly &);                  \
-  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
-      GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::backward,  \
-      8, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
-      const type_real &, const specfem::compute::assembly &);                  \
-  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
-      GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::adjoint,   \
-      5, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
-      const type_real &, const specfem::compute::assembly &);                  \
-  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
-      GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::adjoint,   \
-      8, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
-      const type_real &, const specfem::compute::assembly &);
-
-CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-    INSTANTIATION_MACRO,
-    WHERE(DIMENSION_TAG_DIM2)
-        WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-              MEDIUM_TAG_ELASTIC_PSV_T)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
-                  PROPERTY_TAG_ISOTROPIC_COSSERAT)
-                WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
-                      BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                      BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef INSTANTIATION_MACRO
+FOR_EACH_IN_PRODUCT(
+    (DIMENSION_TAG(DIM2),
+     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
+     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+     BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                  COMPOSITE_STACEY_DIRICHLET)),
+    INSTANTIATE(
+        /** instantiation for NGLL = 5     */
+        (template void specfem::kokkos_kernels::impl::compute_mass_matrix,
+         (_DIMENSION_TAG_, specfem::wavefield::simulation_field::forward, 5,
+          _MEDIUM_TAG_, _PROPERTY_TAG_, _BOUNDARY_TAG_),
+         (const type_real &, const specfem::compute::assembly &);),
+        (template void specfem::kokkos_kernels::impl::compute_mass_matrix,
+         (_DIMENSION_TAG_, specfem::wavefield::simulation_field::backward, 5,
+          _MEDIUM_TAG_, _PROPERTY_TAG_, _BOUNDARY_TAG_),
+         (const type_real &, const specfem::compute::assembly &);),
+        (template void specfem::kokkos_kernels::impl::compute_mass_matrix,
+         (_DIMENSION_TAG_, specfem::wavefield::simulation_field::adjoint, 5,
+          _MEDIUM_TAG_, _PROPERTY_TAG_, _BOUNDARY_TAG_),
+         (const type_real &, const specfem::compute::assembly &);),
+        /** instantiation for NGLL = 8     */
+        (template void specfem::kokkos_kernels::impl::compute_mass_matrix,
+         (_DIMENSION_TAG_, specfem::wavefield::simulation_field::forward, 8,
+          _MEDIUM_TAG_, _PROPERTY_TAG_, _BOUNDARY_TAG_),
+         (const type_real &, const specfem::compute::assembly &);),
+        (template void specfem::kokkos_kernels::impl::compute_mass_matrix,
+         (_DIMENSION_TAG_, specfem::wavefield::simulation_field::backward, 8,
+          _MEDIUM_TAG_, _PROPERTY_TAG_, _BOUNDARY_TAG_),
+         (const type_real &, const specfem::compute::assembly &);),
+        (template void specfem::kokkos_kernels::impl::compute_mass_matrix,
+         (_DIMENSION_TAG_, specfem::wavefield::simulation_field::adjoint, 8,
+          _MEDIUM_TAG_, _PROPERTY_TAG_, _BOUNDARY_TAG_),
+         (const type_real &, const specfem::compute::assembly &);)))

@@ -22,9 +22,9 @@ inline void error_message_header(std::ostringstream &message,
     message << "\n\t Expected: " << value;
     message << "\n\t Got: \n";
   } else if (mode == 1) {
-    message << "\n\t Expected: ";
+    message << "\n\t Expected: \n";
   } else if (mode == 2) {
-    message << "\n\t Got: ";
+    message << "\n\t Got: \n";
   }
 }
 
@@ -1041,8 +1041,7 @@ void check_compute_to_mesh(
             ielement, iz, ix, properties);
         const int ispec_mesh = mapping.compute_to_mesh(ielement);
         auto material =
-            std::get<specfem::medium::material<MediumTag, PropertyTag> >(
-                materials[ispec_mesh]);
+            materials.get_material<MediumTag, PropertyTag>(ispec_mesh);
         auto value = material.get_properties();
         for (int l = 0; l < PointType::nprops; l++) {
           if (point_property.data[l] != value.data[l]) {
@@ -1275,20 +1274,16 @@ void test_properties(
   auto &element_types = assembly.element_types;
 
   //
-  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_TE ===
+  // ==================== HACKATHON TODO: ADD ELECTROMAGNETIC_TE ===
   //
 
   // stage 1: check if properties are correctly constructed from the assembly
-#define TEST_COMPUTE_TO_MESH(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)          \
-  check_compute_to_mesh<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(assembly,  \
-                                                                    mesh);
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      TEST_COMPUTE_TO_MESH,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_ELASTIC_PSV_T)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
-                PROPERTY_TAG_ISOTROPIC_COSSERAT))
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+      { check_compute_to_mesh<_medium_tag_, _property_tag_>(assembly, mesh); })
 
   // stage 2 prepare file path
   std::string output_dir = TOSTRING(TEST_OUTPUT_DIR);
@@ -1302,29 +1297,29 @@ void test_properties(
   writer.write(assembly);
 
   //
-  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_TE ===
+  // ==================== HACKATHON TODO: ADD POROELASTIC ==========
+  //
+
+  //
+  // ==================== HACKATHON TODO: ADD ELECTROMAGNETIC_TE ===
   //
 
   // stage 3: modify properties and check store_on_host and load_on_device
-#define TEST_STORE_AND_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)           \
-  check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
-      properties, element_types);                                              \
-  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(     \
-      properties, element_types);                                              \
-  check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(       \
-      properties, element_types);                                              \
-  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(      \
-      properties, element_types);
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      TEST_STORE_AND_LOAD,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
-                PROPERTY_TAG_ISOTROPIC_COSSERAT))
-
-#undef TEST_STORE_AND_LOAD
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+      {
+        check_store_on_host<_medium_tag_, _property_tag_, false>(properties,
+                                                                 element_types);
+        check_load_on_device<_medium_tag_, _property_tag_, false>(
+            properties, element_types);
+        check_store_on_host<_medium_tag_, _property_tag_, true>(properties,
+                                                                element_types);
+        check_load_on_device<_medium_tag_, _property_tag_, true>(properties,
+                                                                 element_types);
+      })
 
   // stage 4: restore properties to initial value from disk
   specfem::io::property_reader<specfem::io::ASCII<specfem::io::read> > reader(
@@ -1332,19 +1327,20 @@ void test_properties(
   reader.read(assembly);
 
   //
-  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_TE ===
+  // ==================== HACKATHON TODO: ADD POROELASTIC ==========
+  //
+
+  //
+  // ==================== HACKATHON TODO: ADD ELECTROMAGNETIC_TE ===
   //
 
   // stage 5: check if properties are correctly written and read
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      TEST_COMPUTE_TO_MESH,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
-                PROPERTY_TAG_ISOTROPIC_COSSERAT))
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+      { check_compute_to_mesh<_medium_tag_, _property_tag_>(assembly, mesh); })
 
-#undef TEST_COMPUTE_TO_MESH
   // check_compute_to_mesh<specfem::element::medium_tag::elastic_psv,
   //                       specfem::element::property_tag::isotropic>(assembly,
   //                                                                  mesh);
