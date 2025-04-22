@@ -418,7 +418,6 @@ add_library(
         reader
         src/io/property/reader.cpp
         src/io/wavefield/reader.cpp
-        src/periodic_tasks/wavefield_reader.cpp
 )
 
 target_link_libraries(
@@ -593,7 +592,6 @@ add_library(
         src/io/kernel/writer.cpp
         src/io/property/writer.cpp
         src/io/wavefield/writer.cpp
-        src/periodic_tasks/wavefield_writer.cpp
 )
 
 target_link_libraries(
@@ -608,6 +606,8 @@ add_library(
         periodic_tasks
         src/periodic_tasks/plot_wavefield.cpp
         src/periodic_tasks/check_signal.cpp
+        src/periodic_tasks/wavefield_writer.cpp
+        src/periodic_tasks/wavefield_reader.cpp
 )
 
 target_link_libraries(
