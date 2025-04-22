@@ -1,27 +1,27 @@
 #pragma once
 
-#include "medium/properties_container.hpp"
+#include "medium/impl/data_container.hpp"
 #include "point/interface.hpp"
 #include <Kokkos_SIMD.hpp>
 
 namespace specfem {
 namespace medium {
 
-template <specfem::element::medium_tag MediumTag>
-struct properties_container<
-    MediumTag, specfem::element::property_tag::isotropic,
-    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : public impl_properties_container<
-          MediumTag, specfem::element::property_tag::isotropic, 3> {
-  using base_type =
-      impl_properties_container<MediumTag,
-                                specfem::element::property_tag::isotropic, 3>;
-  using base_type::base_type;
+namespace properties {
 
-  DEFINE_MEDIUM_VIEW(lambdaplus2mu, 0)
-  DEFINE_MEDIUM_VIEW(mu, 1)
-  DEFINE_MEDIUM_VIEW(rho, 2)
+template <specfem::element::medium_tag MediumTag>
+struct data_container<
+    MediumTag, specfem::element::property_tag::isotropic,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  DATA_CONTAINER(lambdaplus2mu, mu, rho)
 };
+
+} // namespace properties
 
 } // namespace medium
 } // namespace specfem

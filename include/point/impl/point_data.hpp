@@ -39,6 +39,12 @@ template <int N, bool UseSIMD> struct point_data {
     }
   }
 
+  KOKKOS_FUNCTION
+  value_type &operator[](const int i) { return data[i]; }
+
+  KOKKOS_FUNCTION
+  const value_type &operator[](const int i) const { return data[i]; }
+
   /**
    * @brief value constructor
    *
