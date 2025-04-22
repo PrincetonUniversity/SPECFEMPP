@@ -13,7 +13,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "medium/compute_stress.hpp"
-#include "medium/damping_force.hpp"
+#include "medium/compute_damping_force.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/boundary.hpp"
 #include "point/field.hpp"
