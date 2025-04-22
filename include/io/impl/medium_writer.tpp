@@ -1,12 +1,12 @@
 #pragma once
 
 #include "compute/assembly/assembly.hpp"
+#include "domain_view.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
 #include "io/impl/medium_writer.hpp"
 #include "kokkos_abstractions.h"
-#include "domain_view.hpp"
 #include <Kokkos_Core.hpp>
 
 template <typename OutputLibrary, typename ContainerType>
@@ -28,10 +28,10 @@ void specfem::io::impl::write_container(
 
   int n_written = 0;
 
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
       {
         const std::string name =
             std::string("/") +
