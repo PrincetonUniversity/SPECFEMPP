@@ -50,39 +50,22 @@ enum class boundary_tag {
 };
 
 /*
- * @brief Default attributes class
- *
- * This class is used to define the default attributes of the element. It is
- * used to define the activation of extra physics, such as the damping force in
- * poroelasticity. This class is used as a base class for the attributes class.
- *
- */
-struct default_attributes {
-  constexpr static bool damping_force = false;
-};
-
-/*
  * @brief Attributes class
  *
  * This class is used to define the attributes of the element. It is specialized
  * for each combination of dimension and medium tag. The attributes are defined
  * in the specialization of the class. The attributes are used to define the
  * number of components, the dimension, and other extra physics, such as the
- * damping force in poroelasticity
+ * damping force in poroelasticity.
  *
  * @tparam Dimension Dimension of the element
  * @tparam MediumTag Medium tag of the element
  *
- * @note The default attributes are defined in the default_attributes class.
  *
- * The default constructor of the attributes class throws an error if the
- * attributes are used without being specialized. This is used to ensure that
- * the attributes are always specialized for the combination of dimension and
- * medium tag.
  */
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag>
-class attributes : public default_attributes {
+class attributes {
   static_assert(sizeof(Dimension) == 0 || sizeof(MediumTag) == 0,
                 "Unregistered attributes tag! Please add a specialization for "
                 "dimension/medium enum value.");
@@ -90,58 +73,60 @@ class attributes : public default_attributes {
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic_psv>
-    : public default_attributes {
+                 specfem::element::medium_tag::elastic_psv> {
 
 public:
   constexpr static int dimension() { return 2; }
 
   constexpr static int components() { return 2; }
+
+  constexpr static bool has_damping_force = false;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic_sh>
-    : public default_attributes {
+                 specfem::element::medium_tag::elastic_sh> {
 
 public:
   constexpr static int dimension() { return 2; }
 
   constexpr static int components() { return 1; }
+
+  constexpr static bool has_damping_force = false;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::acoustic>
-    : public default_attributes {
+                 specfem::element::medium_tag::acoustic> {
 
 public:
   constexpr static int dimension() { return 2; }
 
   constexpr static int components() { return 1; }
+
+  constexpr static bool has_damping_force = false;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-
-                 specfem::element::medium_tag::poroelastic>
-    : public default_attributes {
+                 specfem::element::medium_tag::poroelastic> {
 public:
   constexpr static int dimension() { return 2; }
 
   constexpr static int components() { return 4; }
 
-  constexpr static bool damping_force = true;
+  constexpr static bool has_damping_force = true;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::electromagnetic_te>
-    : public default_attributes {
+                 specfem::element::medium_tag::electromagnetic_te> {
 public:
   constexpr static int dimension() { return 2; }
 
   constexpr static int components() { return 2; }
+
+  constexpr static bool has_damping_force = false;
 };
 
 const std::string to_string(const medium_tag &medium,
