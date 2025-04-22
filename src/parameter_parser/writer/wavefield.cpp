@@ -84,12 +84,12 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
       [&]() -> std::shared_ptr<specfem::periodic_tasks::periodic_task> {
     if (this->simulation_type == specfem::simulation::type::forward) {
       if (this->output_format == "HDF5") {
-        return std::make_shared<specfem::periodic_tasks::wavefield_writer<
-            specfem::io::HDF5<specfem::io::write> > >(
+        return std::make_shared<
+            specfem::periodic_tasks::wavefield_writer<specfem::io::HDF5> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (this->output_format == "ASCII") {
-        return std::make_shared<specfem::periodic_tasks::wavefield_writer<
-            specfem::io::ASCII<specfem::io::write> > >(
+        return std::make_shared<
+            specfem::periodic_tasks::wavefield_writer<specfem::io::ASCII> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else {
         throw std::runtime_error("Unknown wavefield format");
@@ -110,12 +110,12 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
       [&]() -> std::shared_ptr<specfem::periodic_tasks::periodic_task> {
     if (this->simulation_type == specfem::simulation::type::combined) {
       if (this->output_format == "HDF5") {
-        return std::make_shared<specfem::periodic_tasks::wavefield_reader<
-            specfem::io::HDF5<specfem::io::read> > >(
+        return std::make_shared<
+            specfem::periodic_tasks::wavefield_reader<specfem::io::HDF5> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (this->output_format == "ASCII") {
-        return std::make_shared<specfem::periodic_tasks::wavefield_reader<
-            specfem::io::ASCII<specfem::io::read> > >(
+        return std::make_shared<
+            specfem::periodic_tasks::wavefield_reader<specfem::io::ASCII> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else {
         throw std::runtime_error("Unknown wavefield format");
