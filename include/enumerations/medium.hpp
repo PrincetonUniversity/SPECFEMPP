@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
+#include "utilities/errors.hpp"
 #include <array>
 #include <tuple>
 
@@ -60,13 +61,13 @@ enum class boundary_tag {
  *
  * @tparam Dimension Dimension of the element
  * @tparam MediumTag Medium tag of the element
- *
+
  *
  */
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag>
 class attributes {
-  static_assert(sizeof(Dimension) == 0 || sizeof(MediumTag) == 0,
+  static_assert(specfem::utilities::always_false<Dimension, MediumTag>,
                 "Unregistered attributes tag! Please add a specialization for "
                 "dimension/medium enum value.");
 };
