@@ -6,11 +6,10 @@
 #define _CREATE_NAMED_VARIABLE(prefix, postfix)                                \
   BOOST_PP_CAT(prefix, BOOST_PP_CAT(_, postfix))
 
-#define _ACCESS_ELEMENT_ON_DEVICE(elem, index)                                 \
-  BOOST_PP_SEQ_ELEM(0, elem)(index.ispec, index.iz, index.ix)
+#define _ACCESS_ELEMENT_ON_DEVICE(elem, index) BOOST_PP_SEQ_ELEM(0, elem)[index]
 
 #define _ACCESS_ELEMENT_ON_HOST(elem, index)                                   \
-  BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem))(index.ispec, index.iz, index.ix)
+  BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem))[index]
 
 #define _CALL_FUNCTOR_ON_DEVICE(r, data, elem)                                 \
   BOOST_PP_TUPLE_ELEM(0, data)                                                 \
@@ -26,11 +25,17 @@
   template <typename FunctorType, typename IndexType>                          \
   KOKKOS_INLINE_FUNCTION void for_each_on_device(const IndexType &index,       \
                                                  FunctorType f) const {        \
-    BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_DEVICE, (f, index), seq)            \
+    const auto &mapping =                                                      \
+        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
+    const std::size_t _index = mapping(index.ispec, index.iz, index.ix);       \
+    BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_DEVICE, (f, _index), seq)           \
   }                                                                            \
   template <typename FunctorType, typename IndexType>                          \
   void for_each_on_host(const IndexType &index, FunctorType f) const {         \
-    BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_HOST, (f, index), seq)              \
+    const auto &mapping =                                                      \
+        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
+    const std::size_t _index = mapping(index.ispec, index.iz, index.ix);       \
+    BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_HOST, (f, _index), seq)             \
   }
 
 #define _DEFINE_DOMAIN_VIEW(r, data, elem)                                     \
@@ -105,6 +110,75 @@
 
 #define _ARGS(...) BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)
 
+/**
+ * @brief Generate a data container where each element within the variadic
+ * argument list is a DomainView2d.
+ *
+ * @param ... Variadic arguments representing the names of the DomainView2d
+ * elements.
+ *
+ * @details This macro creates the following structure:
+ * - A data container with a set of DomainView2d elements, each named according
+ * to the provided arguments.
+ * - Data container constructor that initializes each DomainView2d with the
+ * specified number of spectral elements (nspec), number of GLL points in z
+ * (ngllz), and number of GLL points in x (ngllx).
+ * - Accessor methods for iterating over the elements on both device and host.
+ * - Synchronization methods to copy data between device and host views.
+ * - Accessor methods to iterate over the DomainView2d elements.
+ *
+ * Example usage:
+ * @code
+ * DATA_CONTAINER(rho, kappa)
+ * @endcode
+ * Generated code :
+ * @code
+ * DomainView2d rho;
+ * DomainView2d kappa;
+ * typename decltype(rho)::HostMirror h_rho;
+ * typename decltype(kappa)::HostMirror h_kappa;
+ * data_container() = default;
+ * data_container(const int nspec, const int ngllz, const int ngllx)
+ *     : rho("rho", nspec, ngllz, ngllx),
+ *       kappa("kappa", nspec, ngllz, ngllx),
+ *       h_rho(specfem::kokkos::create_mirror_view(rho)),
+ *       h_kappa(specfem::kokkos::create_mirror_view(kappa)) {}
+ * template <typename FunctorType, typename IndexType>
+ * KOKKOS_INLINE_FUNCTION
+ * void for_each_on_device(const IndexType &index, FunctorType f) const {
+ *   const auto mapping = rho.get_mapping();
+ *   const std::size_t _index = mapping(index.ispec, index.iz, index.ix);
+ *   f(rho[_index], "rho");
+ *   f(kappa[_index], "kappa");
+ * }
+ * template <typename FunctorType, typename IndexType>
+ * void for_each_on_host(const IndexType &index, FunctorType f) const {
+ *   const auto mapping = rho.get_mapping();
+ *   const std::size_t _index = mapping(index.ispec, index.iz, index.ix);
+ *   f(h_rho[_index], "rho");
+ *   f(h_kappa[_index], "kappa");
+ * }
+ * void copy_to_device() {
+ *   specfem::kokkos::deep_copy(rho, h_rho);
+ *   specfem::kokkos::deep_copy(kappa, h_kappa);
+ * }
+ * void copy_to_host() {
+ *   specfem::kokkos::deep_copy(h_rho, rho);
+ *   specfem::kokkos::deep_copy(h_kappa, kappa);
+ * }
+ * template <typename FunctorType>
+ * void for_each_device_view(FunctorType f) const {
+ *   f(rho, "rho");
+ *   f(kappa, "kappa");
+ * }
+ * template <typename FunctorType>
+ * void for_each_host_view(FunctorType f) const {
+ *   f(h_rho, "h_rho");
+ *   f(h_kappa, "h_kappa");
+ * }
+ * @endcode
+ *
+ */
 #define DATA_CONTAINER(...) _DATA_CONTAINER_SEQ(_ARGS(__VA_ARGS__))
 
 namespace specfem {

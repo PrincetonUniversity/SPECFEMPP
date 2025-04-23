@@ -209,11 +209,12 @@ public:
     return static_cast<base_type &>(*this)[index];
   }
 
+  KOKKOS_INLINE_FUNCTION
   base_type get_base_view() const {
     return static_cast<const base_type &>(*this);
   }
 
-  mapping_type get_mapping() const { return _mapping; }
+  const mapping_type &get_mapping() const { return _mapping; }
 
 private:
   mapping_type _mapping;
