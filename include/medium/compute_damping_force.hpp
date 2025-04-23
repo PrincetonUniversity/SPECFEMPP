@@ -97,15 +97,15 @@ KOKKOS_INLINE_FUNCTION void impl_compute_damping_force(
 
   // The enumeration is set to true for damping force, but there is
   // no implementation available for this dimension, medium and property
-  static_assert(
-      specfem::utilities::always_false<ActualDimensionTag::value,
-                                       ActualMediumTag::value,
-                                       ActualPropertyTag::value>,
-      "Damping force is not implemented for this medium and dimension.\n"
-      "    --> Either deactivate damping force in "
-      " enumerations/medium.hpp or \n"
-      "        implement the damping force in "
-      "medium/<dim>/<medium>/<property>/damping.hpp");
+  static_assert(specfem::utilities::always_false<ActualDimensionTag::value,
+                                                 ActualMediumTag::value,
+                                                 ActualPropertyTag::value>,
+                "\n\nDamping force is not implemented for this dimension, "
+                "medium, and property.\n"
+                "    --> Either deactivate damping force in "
+                " enumerations/medium.hpp or \n"
+                "        implement the damping force in "
+                "medium/<dim>/<medium>/<property>/damping.hpp\n");
   //  If the implementation is not available, we do nothing
   return;
 }
