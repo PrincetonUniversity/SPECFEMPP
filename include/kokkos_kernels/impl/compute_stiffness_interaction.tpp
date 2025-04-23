@@ -3,6 +3,7 @@
 #include "algorithms/divergence.hpp"
 #include "algorithms/gradient.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
+#include "boundary_conditions/boundary_conditions.tpp"
 #include "chunk_element/field.hpp"
 #include "chunk_element/stress_integrand.hpp"
 #include "compute/assembly/assembly.hpp"
@@ -197,14 +198,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
                   PointFieldDerivativesType field_derivatives(du);
 
-                  // Loading the field, this is unused for most
-                  // stress computations, so I'm not sure if this is a good
-                  // idea..
-                  PointDisplacementType displacement;
-                  specfem::compute::load_on_device(index, field, displacement);
-
                   const auto point_stress = specfem::medium::compute_stress(
-                      point_property, displacement, field_derivatives);
+                      point_property, field_derivatives);
 
                   const auto F = point_stress * point_partial_derivatives;
 

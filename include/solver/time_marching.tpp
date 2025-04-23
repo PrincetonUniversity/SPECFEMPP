@@ -26,6 +26,10 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
 
   const int total_elements_to_be_updated = assembly.get_total_number_of_elements();
 
+  for (const auto &task : tasks) {
+    task->initialize(assembly);
+  }
+
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
     int dofs_updated = 0;
     int elements_updated = 0;
@@ -74,8 +78,8 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     }
     // Run periodic tasks such as plotting, etc.
     for (const auto &task : tasks) {
-      if (task && task->should_run(istep)) {
-        task->run();
+      if (task && task->should_run(istep+1)) {
+        task->run(assembly, istep+1);
       }
     }
 
@@ -104,6 +108,16 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     }
   }
 
+  for (const auto &task : tasks) {
+    if (task && !task->should_run(nstep) && task->should_run(-1)) {
+      task->run(assembly, nstep);
+    }
+  }
+
+  for (const auto &task : tasks) {
+    task->finalize(assembly);
+  }
+
   std::cout << std::endl;
 
   return;
@@ -128,7 +142,23 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
   const int total_elements_to_be_updated = 2 * assembly.get_total_number_of_elements();
 
+  for (const auto &task : tasks) {
+    task->initialize(assembly);
+  }
+
+  for (const auto &task : tasks) {
+    if (task && !task->should_run(nstep) && task->should_run(-1)) {
+      task->run(assembly, nstep);
+    }
+  }
+
   for (const auto [istep, dt] : time_scheme->iterate_backward()) {
+    for (const auto &task : tasks) {
+      if (task && task->should_run(istep+1)) {
+        task->run(assembly, istep+1);
+      }
+    }
+
     int dofs_updated = 0;
     int elements_updated = 0;
     // Adjoint time step
@@ -181,12 +211,6 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
       time_scheme->increment_seismogram_step();
     }
 
-    for (const auto &task : tasks) {
-      if (task && task->should_run(istep)) {
-        task->run();
-      }
-    }
-
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep
                 << " steps" << std::endl;
@@ -211,6 +235,10 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
       throw std::runtime_error(message.str());
     }
+  }
+
+  for (const auto &task : tasks) {
+    task->finalize(assembly);
   }
 
   std::cout << std::endl;
