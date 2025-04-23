@@ -4,6 +4,7 @@
 #include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
+#include "boundary_conditions/boundary_conditions.tpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"

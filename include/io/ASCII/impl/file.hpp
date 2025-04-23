@@ -95,6 +95,8 @@ public:
     return specfem::io::impl::ASCII::Group<OpType>(folder_path, name);
   }
 
+  void flush() {};
+
   ~File() {}
 
 private:
