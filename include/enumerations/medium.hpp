@@ -77,9 +77,8 @@ class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::elastic_psv> {
 
 public:
-  constexpr static int dimension() { return 2; }
-
-  constexpr static int components() { return 2; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 2;
 
   constexpr static bool has_damping_force = false;
 };
@@ -89,9 +88,8 @@ class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::elastic_sh> {
 
 public:
-  constexpr static int dimension() { return 2; }
-
-  constexpr static int components() { return 1; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 1;
 
   constexpr static bool has_damping_force = false;
 };
@@ -101,9 +99,8 @@ class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::acoustic> {
 
 public:
-  constexpr static int dimension() { return 2; }
-
-  constexpr static int components() { return 1; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 1;
 
   constexpr static bool has_damping_force = false;
 };
@@ -112,9 +109,8 @@ template <>
 class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::poroelastic> {
 public:
-  constexpr static int dimension() { return 2; }
-
-  constexpr static int components() { return 4; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 4;
 
   constexpr static bool has_damping_force = true;
 };
@@ -123,9 +119,8 @@ template <>
 class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::electromagnetic_te> {
 public:
-  constexpr static int dimension() { return 2; }
-
-  constexpr static int components() { return 2; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 2;
 
   constexpr static bool has_damping_force = false;
 };
