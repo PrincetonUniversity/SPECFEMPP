@@ -27,21 +27,24 @@ struct value_containers {
                                                       ///< property index
                                                       ///< mapping
 
-#define GENERATE_CONTAINER_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)       \
-  containers_type<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>                  \
-      CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG));
+  template <bool on_device>
+  KOKKOS_INLINE_FUNCTION constexpr
+      typename std::conditional<on_device, IndexViewType,
+                                IndexViewType::HostMirror>::type
+      get_property_index_mapping() const {
+    if constexpr (on_device) {
+      return property_index_mapping;
+    } else {
+      return h_property_index_mapping;
+    }
+  }
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      GENERATE_CONTAINER_NAME,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                MEDIUM_TAG_ELASTIC_PSV_T)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
-                    PROPERTY_TAG_ISOTROPIC_COSSERAT));
-
-#undef GENERATE_CONTAINER_NAME
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+      DECLARE(((containers_type, (_MEDIUM_TAG_, _PROPERTY_TAG_)), value)))
 
   /**
    * @name Constructors
@@ -64,21 +67,17 @@ struct value_containers {
       constexpr containers_type<MediumTag, PropertyTag> const &
       get_container() const {
 
-#define GET_CONTAINER(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                 \
-  if constexpr ((GET_TAG(MEDIUM_TAG) == MediumTag) &&                          \
-                (GET_TAG(PROPERTY_TAG) == PropertyTag)) {                      \
-    return CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG),                \
-                                GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)); \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        GET_CONTAINER,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
-                  PROPERTY_TAG_ISOTROPIC_COSSERAT));
-#undef GET_CONTAINER
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+        CAPTURE(value) {
+          if constexpr (_medium_tag_ == MediumTag &&
+                        _property_tag_ == PropertyTag) {
+            return _value_;
+          }
+        })
 
     Kokkos::abort("Invalid material type detected in value containers");
 
@@ -94,37 +93,19 @@ struct value_containers {
    *
    */
   void copy_to_host() {
-#define COPY_TO_HOST(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
-  CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-                       GET_NAME(PROPERTY_TAG))                                 \
-      .copy_to_host();
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        COPY_TO_HOST,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
-                  PROPERTY_TAG_ISOTROPIC_COSSERAT));
-
-#undef COPY_TO_HOST
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                    POROELASTIC, ELASTIC_PSV_T),
+                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                        CAPTURE(value) { _value_.copy_to_host(); })
   }
 
   void copy_to_device() {
-#define COPY_TO_DEVICE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                \
-  CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-                       GET_NAME(PROPERTY_TAG))                                 \
-      .copy_to_device();
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        COPY_TO_DEVICE,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
-                  PROPERTY_TAG_ISOTROPIC_COSSERAT));
-
-#undef COPY_TO_DEVICE
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                    POROELASTIC, ELASTIC_PSV_T),
+                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                        CAPTURE(value) { _value_.copy_to_device(); })
   }
 };
 

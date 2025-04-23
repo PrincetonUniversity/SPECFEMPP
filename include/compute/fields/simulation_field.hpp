@@ -73,20 +73,10 @@ public:
     this->nglob = rhs.nglob;
     this->assembly_index_mapping = rhs.assembly_index_mapping;
     this->h_assembly_index_mapping = rhs.h_assembly_index_mapping;
-
-#define COPY_MEDIUM_FIELD(DIMENSION_TAG, MEDIUM_TAG)                           \
-  this->CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                   \
-                             GET_NAME(MEDIUM_TAG)) =                           \
-      rhs.CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                 \
-                               GET_NAME(MEDIUM_TAG));
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        COPY_MEDIUM_FIELD,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T))
-
-#undef COPY_MEDIUM_FIELD
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
+        CAPTURE(field, (rhs_field, rhs.field)) { _field_ = _rhs_field_; })
   }
 
   /**
@@ -97,21 +87,14 @@ public:
    */
   template <specfem::element::medium_tag MediumType>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-
-#define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG)                                \
-  if constexpr (MediumType == GET_TAG(MEDIUM_TAG)) {                           \
-    return CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                \
-                                GET_NAME(MEDIUM_TAG))                          \
-        .nglob;                                                                \
-  }
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        RETURN_VALUE, WHERE(DIMENSION_TAG_DIM2)
-                          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                                MEDIUM_TAG_ELASTIC_PSV_T))
-
-#undef RETURN_VALUE
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
+        CAPTURE(field) {
+          if constexpr (MediumType == _medium_tag_) {
+            return _field_.nglob;
+          }
+        })
 
     Kokkos::abort("Medium type not supported");
     return 0;
@@ -125,20 +108,14 @@ public:
   KOKKOS_INLINE_FUNCTION constexpr specfem::compute::impl::field_impl<
       specfem::dimension::type::dim2, MediumTag> const &
   get_field() const {
-
-#define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG)                                \
-  if constexpr (MediumTag == GET_TAG(MEDIUM_TAG)) {                            \
-    return CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                \
-                                GET_NAME(MEDIUM_TAG));                         \
-  }
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        RETURN_VALUE, WHERE(DIMENSION_TAG_DIM2)
-                          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                                MEDIUM_TAG_ELASTIC_PSV_T))
-
-#undef RETURN_VALUE
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
+        CAPTURE(field) {
+          if constexpr (MediumTag == _medium_tag_) {
+            return _field_;
+          }
+        })
 
     Kokkos::abort("Medium type not supported");
     /// Code path should never be reached
@@ -180,38 +157,21 @@ public:
                specfem::kokkos::HostMemSpace>
       h_assembly_index_mapping;
 
-#define GENERATE_MEDIUM_FIELD_VARIABLE(DIMENSION_TAG, MEDIUM_TAG)              \
-  specfem::compute::impl::field_impl<GET_TAG(DIMENSION_TAG),                   \
-                                     GET_TAG(MEDIUM_TAG)>                      \
-      CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG));
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(GENERATE_MEDIUM_FIELD_VARIABLE,
-                                 WHERE(DIMENSION_TAG_DIM2)
-                                     WHERE(MEDIUM_TAG_ELASTIC_PSV,
-                                           MEDIUM_TAG_ELASTIC_SH,
-                                           MEDIUM_TAG_ACOUSTIC,
-                                           MEDIUM_TAG_POROELASTIC,
-                                           MEDIUM_TAG_ELASTIC_PSV_T))
-
-#undef GENERATE_MEDIUM_FIELD_VARIABLE
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELASTIC_PSV_T)),
+                      DECLARE(((specfem::compute::impl::field_impl,
+                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
+                               field)))
 
   int get_total_degrees_of_freedom();
 
 private:
   template <specfem::sync::kind sync> void sync_fields() {
-
-#define SYNC_MEDIUM_FIELD(DIMENSION_TAG, MEDIUM_TAG)                           \
-  CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG))   \
-      .template sync_fields<sync>();
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        SYNC_MEDIUM_FIELD,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T))
-
-#undef SYNC_MEDIUM_FIELD
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
+        CAPTURE(field) { _field_.template sync_fields<sync>(); })
   }
 
   int total_degrees_of_freedom = 0; ///< Total number of degrees of freedom
@@ -225,20 +185,12 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
   Kokkos::deep_copy(dst.assembly_index_mapping, src.assembly_index_mapping);
   Kokkos::deep_copy(dst.h_assembly_index_mapping, src.h_assembly_index_mapping);
 
-#define DEEP_COPY_MEDIUM_FIELD(DIMENSION_TAG, MEDIUM_TAG)                      \
-  specfem::compute::deep_copy(                                                 \
-      dst.CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                 \
-                               GET_NAME(MEDIUM_TAG)),                          \
-      src.CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                 \
-                               GET_NAME(MEDIUM_TAG)));
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      DEEP_COPY_MEDIUM_FIELD,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T))
-
-#undef DEEP_COPY_MEDIUM_FIELD
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE((src_field, src.field), (dst_field, dst.field)) {
+        specfem::compute::deep_copy(_dst_field_, _src_field_);
+      })
 }
 
 /**

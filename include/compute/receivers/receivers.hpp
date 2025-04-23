@@ -373,31 +373,15 @@ private:
                               ///< stored on the host
   specfem::compute::element_types element_types; ///< Element types
 
-#define RECEIVER_INDICES_VARIABLE_NAME(DIMENSION_TAG, MEDIUM_TAG,              \
-                                       PROPERTY_TAG)                           \
-  IndexViewType CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),        \
-                                     GET_NAME(MEDIUM_TAG),                     \
-                                     GET_NAME(PROPERTY_TAG));                  \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),               \
-      GET_NAME(PROPERTY_TAG));                                                 \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      receiver_indices, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
-      GET_NAME(PROPERTY_TAG));                                                 \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_receiver_indices, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
-      GET_NAME(PROPERTY_TAG));
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RECEIVER_INDICES_VARIABLE_NAME,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                MEDIUM_TAG_ELASTIC_PSV_T)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
-                    PROPERTY_TAG_ISOTROPIC_COSSERAT))
-
-#undef RECEIVER_INDICES_VARIABLE_NAME
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELASTIC_PSV_T),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
+                                    ISOTROPIC_COSSERAT)),
+                      DECLARE((IndexViewType, receiver_indices),
+                              (IndexViewType::HostMirror, h_receiver_indices),
+                              (IndexViewType, elements),
+                              (IndexViewType::HostMirror, h_elements)))
 
   template <typename MemberType, typename IteratorType, typename ViewType>
   friend KOKKOS_FUNCTION void
