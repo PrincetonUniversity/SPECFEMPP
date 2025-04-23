@@ -79,18 +79,35 @@ KOKKOS_INLINE_FUNCTION void impl_compute_damping_force(
     const PointVelocityType &velocity, PointAccelerationType &acceleration) {
   // If the implementation is not available, we do nothing
   return;
-  // // Extract actual tag types for the static_assert message
-  // using ActualDimensionTag = typename DimensionTagType::type;
-  // using ActualMediumTag = typename MediumTagType::type;
-  // using ActualPropertyTag = typename PropertyTagType::type;
+}
 
-  // static_assert(specfem::utilities::always_false<ActualDimensionTag::value,
-  // ActualMediumTag::value,
-  //                                        ActualPropertyTag::value>,
-  //         "Damping force is not implemented for this medium and dimension.\n"
-  //         "    --> Either deactivate damping force in enumerations/medium.hpp
-  //         or \n" "        implement the damping force in
-  //         medium/<dim>/<medium>/<property>/damping.hpp");
+template <typename T, typename PointPropertiesType, typename PointVelocityType,
+          typename PointAccelerationType, typename DimensionTagType,
+          typename MediumTagType, typename PropertyTagType>
+KOKKOS_INLINE_FUNCTION void impl_compute_damping_force(
+    std::true_type, const DimensionTagType dimension_tag,
+    const MediumTagType medium_tag, const PropertyTagType property_tag,
+    const T factor, const PointPropertiesType &point_properties,
+    const PointVelocityType &velocity, PointAccelerationType &acceleration) {
+
+  // Extract actual tag types for the static_assert message
+  using ActualDimensionTag = typename DimensionTagType::type;
+  using ActualMediumTag = typename MediumTagType::type;
+  using ActualPropertyTag = typename PropertyTagType::type;
+
+  // The enumeration is set to true for damping force, but there is
+  // no implementation available for this dimension, medium and property
+  static_assert(
+      specfem::utilities::always_false<ActualDimensionTag::value,
+                                       ActualMediumTag::value,
+                                       ActualPropertyTag::value>,
+      "Damping force is not implemented for this medium and dimension.\n"
+      "    --> Either deactivate damping force in "
+      " enumerations/medium.hpp or \n"
+      "        implement the damping force in "
+      "medium/<dim>/<medium>/<property>/damping.hpp");
+  //  If the implementation is not available, we do nothing
+  return;
 }
 
 /**
