@@ -2,7 +2,6 @@
 
 #include "compute/interface.hpp"
 // #include "enumerations/interface.hpp"
-#include "io/reader.hpp"
 
 namespace specfem {
 namespace io {
@@ -11,7 +10,7 @@ namespace io {
  * @brief Reader to read wavefield data from disk
  *
  */
-template <typename IOLibrary> class wavefield_reader : public reader {
+template <typename IOLibrary> class wavefield_reader {
 
 public:
   /**
@@ -27,7 +26,7 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void read(specfem::compute::assembly &assembly) override;
+  void read(specfem::compute::assembly &assembly, const int istep);
 
 private:
   std::string output_folder; ///< Path to output folder

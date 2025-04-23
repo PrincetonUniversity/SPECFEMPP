@@ -3,6 +3,7 @@
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
 #include "io/wavefield/reader.hpp"
+#include "utilities/strings.hpp"
 
 template <typename IOLibrary>
 specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
@@ -11,62 +12,37 @@ specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
 
 template <typename IOLibrary>
 void specfem::io::wavefield_reader<IOLibrary>::read(
-    specfem::compute::assembly &assembly) {
+    specfem::compute::assembly &assembly, const int istep) {
   auto &buffer = assembly.fields.buffer;
   auto &boundary_values = assembly.boundary_values;
 
   typename IOLibrary::File file(output_folder + "/ForwardWavefield");
 
-  typename IOLibrary::Group elastic_psv = file.openGroup("/ElasticPSV");
+  typename IOLibrary::Group base_group = file.openGroup(
+      std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
 
-  const auto &elastic_psv_field =
-      buffer.get_field<specfem::element::medium_tag::elastic_psv>();
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+      {
+        typename IOLibrary::Group group =
+            base_group.openGroup(specfem::element::to_string(_medium_tag_));
+        const auto &field = buffer.get_field<_medium_tag_>();
 
-  elastic_psv.openDataset("Displacement", elastic_psv_field.h_field).read();
-  elastic_psv.openDataset("Velocity", elastic_psv_field.h_field_dot).read();
-  elastic_psv.openDataset("Acceleration", elastic_psv_field.h_field_dot_dot)
-      .read();
+        if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
+          group.openDataset("Potential", field.h_field).read();
+          group.openDataset("PotentialDot", field.h_field_dot).read();
+          group.openDataset("PotentialDotDot", field.h_field_dot_dot).read();
+        }
+        else {
+          group.openDataset("Displacement", field.h_field).read();
+          group.openDataset("Velocity", field.h_field_dot).read();
+          group.openDataset("Acceleration", field.h_field_dot_dot).read();
+        }
+      });
 
-  typename IOLibrary::Group elastic_sh = file.openGroup("/ElasticSH");
-
-  const auto &elastic_sh_field =
-      buffer.get_field<specfem::element::medium_tag::elastic_sh>();
-
-  elastic_sh.openDataset("Displacement", elastic_sh_field.h_field).read();
-  elastic_sh.openDataset("Velocity", elastic_sh_field.h_field_dot).read();
-  elastic_sh.openDataset("Acceleration", elastic_sh_field.h_field_dot_dot)
-      .read();
-
-  typename IOLibrary::Group elastic_psv_t = file.openGroup("/ElasticPSVT");
-  const auto &elastic_psv_t_field =
-      buffer.get_field<specfem::element::medium_tag::elastic_psv_t>();
-
-  elastic_psv_t.openDataset("Displacement", elastic_psv_t_field.h_field).read();
-  elastic_psv_t.openDataset("Velocity", elastic_psv_t_field.h_field_dot).read();
-  elastic_psv_t.openDataset("Acceleration", elastic_psv_t_field.h_field_dot_dot)
-      .read();
-
-  typename IOLibrary::Group acoustic = file.openGroup("/Acoustic");
-  const auto &acoustic_field =
-      buffer.get_field<specfem::element::medium_tag::acoustic>();
-
-  acoustic.openDataset("Potential", acoustic_field.h_field).read();
-  acoustic.openDataset("PotentialDot", acoustic_field.h_field_dot).read();
-  acoustic.openDataset("PotentialDotDot", acoustic_field.h_field_dot_dot)
-      .read();
-
-  typename IOLibrary::Group poroelastic = file.openGroup("/Poroelastic");
-
-  const auto &poroelastic_field =
-      buffer.get_field<specfem::element::medium_tag::poroelastic>();
-
-  poroelastic.openDataset("Displacement", poroelastic_field.h_field).read();
-  poroelastic.openDataset("Velocity", poroelastic_field.h_field_dot).read();
-  poroelastic.openDataset("Acceleration", poroelastic_field.h_field_dot_dot)
-      .read();
-
-  typename IOLibrary::Group boundary = file.openGroup("/Boundary");
-  typename IOLibrary::Group stacey = boundary.openGroup("/Stacey");
+  typename IOLibrary::Group boundary = base_group.openGroup("Boundary");
+  typename IOLibrary::Group stacey = boundary.openGroup("Stacey");
 
   stacey
       .openDataset("IndexMapping",
