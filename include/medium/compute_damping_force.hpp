@@ -2,30 +2,17 @@
 
 #include "enumerations/medium.hpp"
 #include "medium/dim2/poroelastic/isotropic/damping.hpp"
+#include "utilities/errors.hpp"
 #include <Kokkos_Core.hpp>
 
 // Function that is called when the implementation is available
 template <typename T, typename PointPropertiesType, typename PointVelocityType,
           typename PointAccelerationType>
-KOKKOS_INLINE_FUNCTION void
-sub_compute_damping_force(const std::true_type, const T factor,
-                          const PointPropertiesType &point_properties,
-                          const PointVelocityType &velocity,
-                          PointAccelerationType &acceleration) {
+KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
 
   constexpr auto DimensionTag = PointPropertiesType::dimension;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
-
-  // Get dispatch parameters
-  using dimension_dispatch =
-      std::integral_constant<specfem::dimension::type,
-                             specfem::dimension::type::dim2>;
-  using medium_dispatch =
-      std::integral_constant<specfem::element::medium_tag, MediumTag>;
-
-  using property_dispatch =
-      std::integral_constant<specfem::element::property_tag, PropertyTag>;
 
   // Check that the types are compatible
   static_assert(std::is_same_v<T, typename PointPropertiesType::simd::datatype>,
@@ -69,26 +56,42 @@ sub_compute_damping_force(const std::true_type, const T factor,
       PointPropertiesType::simd::using_simd ==
           PointAccelerationType::simd::using_simd,
       "point_properties and acceleration have different SIMD settings");
-
-  // Compute the damping force
-  specfem::medium::impl_compute_damping_force(
-      dimension_dispatch(), medium_dispatch(), property_dispatch(), factor,
-      point_properties, velocity, acceleration);
 }
 
 // Function that is called when the implementation is not available
 template <typename T, typename PointPropertiesType, typename PointVelocityType,
           typename PointAccelerationType>
-KOKKOS_INLINE_FUNCTION void
-sub_compute_damping_force(const std::false_type, const T factor,
-                          const PointPropertiesType &point_properties,
-                          const PointVelocityType &velocity,
-                          PointAccelerationType &acceleration) {
+KOKKOS_INLINE_FUNCTION void assert_types(const std::false_type) {
+  // If the implementation is not available, we do nothing
   return;
 }
 
 namespace specfem {
 namespace medium {
+
+template <typename T, typename PointPropertiesType, typename PointVelocityType,
+          typename PointAccelerationType, typename DimensionTagType,
+          typename MediumTagType, typename PropertyTagType>
+KOKKOS_INLINE_FUNCTION void impl_compute_damping_force(
+    std::false_type, const DimensionTagType dimension_tag,
+    const MediumTagType medium_tag, const PropertyTagType property_tag,
+    const T factor, const PointPropertiesType &point_properties,
+    const PointVelocityType &velocity, PointAccelerationType &acceleration) {
+  // If the implementation is not available, we do nothing
+  return;
+  // // Extract actual tag types for the static_assert message
+  // using ActualDimensionTag = typename DimensionTagType::type;
+  // using ActualMediumTag = typename MediumTagType::type;
+  // using ActualPropertyTag = typename PropertyTagType::type;
+
+  // static_assert(specfem::utilities::always_false<ActualDimensionTag::value,
+  // ActualMediumTag::value,
+  //                                        ActualPropertyTag::value>,
+  //         "Damping force is not implemented for this medium and dimension.\n"
+  //         "    --> Either deactivate damping force in enumerations/medium.hpp
+  //         or \n" "        implement the damping force in
+  //         medium/<dim>/<medium>/<property>/damping.hpp");
+}
 
 /**
  * @defgroup MediumPhysics
@@ -118,16 +121,33 @@ KOKKOS_INLINE_FUNCTION void compute_damping_force(
 
   constexpr auto DimensionTag = PointPropertiesType::dimension;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
+  constexpr auto PropertyTag = PointPropertiesType::property_tag;
   constexpr bool has_damping_force =
       specfem::element::attributes<DimensionTag, MediumTag>::has_damping_force;
+
+  using dimension_dispatch =
+      std::integral_constant<specfem::dimension::type, DimensionTag>;
+
+  using medium_dispatch =
+      std::integral_constant<specfem::element::medium_tag, MediumTag>;
+
+  using property_dispatch =
+      std::integral_constant<specfem::element::property_tag, PropertyTag>;
 
   using damping_force_dispatch =
       std::integral_constant<bool, has_damping_force>;
 
+  // Check that the types are compatible
+  assert_types<T, PointPropertiesType, PointVelocityType,
+               PointAccelerationType>(damping_force_dispatch());
+
   // If damping force is not available call empty function, else call the
   // implementation
-  sub_compute_damping_force(damping_force_dispatch(), factor, point_properties,
-                            velocity, acceleration);
+  // Compute the damping force
+  specfem::medium::impl_compute_damping_force(
+      damping_force_dispatch(), dimension_dispatch(), medium_dispatch(),
+      property_dispatch(), factor, point_properties, velocity, acceleration);
 }
+
 } // namespace medium
 } // namespace specfem
