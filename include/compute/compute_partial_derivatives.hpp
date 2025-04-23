@@ -91,33 +91,36 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(
   constexpr static bool StoreJacobian =
       PointPartialDerivativesType::store_jacobian;
 
+  const auto &mapping = derivatives.xix.get_mapping();
+  const std::size_t _index = mapping(ispec, iz, ix);
+
   mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
   if constexpr (on_device) {
     Kokkos::Experimental::where(mask, partial_derivatives.xix)
-        .copy_from(&derivatives.xix(ispec, iz, ix), tag_type());
+        .copy_from(&derivatives.xix[_index], tag_type());
     Kokkos::Experimental::where(mask, partial_derivatives.gammax)
-        .copy_from(&derivatives.gammax(ispec, iz, ix), tag_type());
+        .copy_from(&derivatives.gammax[_index], tag_type());
     Kokkos::Experimental::where(mask, partial_derivatives.xiz)
-        .copy_from(&derivatives.xiz(ispec, iz, ix), tag_type());
+        .copy_from(&derivatives.xiz[_index], tag_type());
     Kokkos::Experimental::where(mask, partial_derivatives.gammaz)
-        .copy_from(&derivatives.gammaz(ispec, iz, ix), tag_type());
+        .copy_from(&derivatives.gammaz[_index], tag_type());
     if constexpr (StoreJacobian) {
       Kokkos::Experimental::where(mask, partial_derivatives.jacobian)
-          .copy_from(&derivatives.jacobian(ispec, iz, ix), tag_type());
+          .copy_from(&derivatives.jacobian[_index], tag_type());
     }
   } else {
     Kokkos::Experimental::where(mask, partial_derivatives.xix)
-        .copy_from(&derivatives.h_xix(ispec, iz, ix), tag_type());
+        .copy_from(&derivatives.h_xix[_index], tag_type());
     Kokkos::Experimental::where(mask, partial_derivatives.gammax)
-        .copy_from(&derivatives.h_gammax(ispec, iz, ix), tag_type());
+        .copy_from(&derivatives.h_gammax[_index], tag_type());
     Kokkos::Experimental::where(mask, partial_derivatives.xiz)
-        .copy_from(&derivatives.h_xiz(ispec, iz, ix), tag_type());
+        .copy_from(&derivatives.h_xiz[_index], tag_type());
     Kokkos::Experimental::where(mask, partial_derivatives.gammaz)
-        .copy_from(&derivatives.h_gammaz(ispec, iz, ix), tag_type());
+        .copy_from(&derivatives.h_gammaz[_index], tag_type());
     if constexpr (StoreJacobian) {
       Kokkos::Experimental::where(mask, partial_derivatives.jacobian)
-          .copy_from(&derivatives.h_jacobian(ispec, iz, ix), tag_type());
+          .copy_from(&derivatives.h_jacobian[_index], tag_type());
     }
   }
 }
@@ -137,21 +140,24 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(
   constexpr static bool StoreJacobian =
       PointPartialDerivativesType::store_jacobian;
 
+  const auto &mapping = derivatives.xix.get_mapping();
+  const std::size_t _index = mapping(ispec, iz, ix);
+
   if constexpr (on_device) {
-    partial_derivatives.xix = derivatives.xix(ispec, iz, ix);
-    partial_derivatives.gammax = derivatives.gammax(ispec, iz, ix);
-    partial_derivatives.xiz = derivatives.xiz(ispec, iz, ix);
-    partial_derivatives.gammaz = derivatives.gammaz(ispec, iz, ix);
+    partial_derivatives.xix = derivatives.xix[_index];
+    partial_derivatives.gammax = derivatives.gammax[_index];
+    partial_derivatives.xiz = derivatives.xiz[_index];
+    partial_derivatives.gammaz = derivatives.gammaz[_index];
     if constexpr (StoreJacobian) {
-      partial_derivatives.jacobian = derivatives.jacobian(ispec, iz, ix);
+      partial_derivatives.jacobian = derivatives.jacobian[_index];
     }
   } else {
-    partial_derivatives.xix = derivatives.h_xix(ispec, iz, ix);
-    partial_derivatives.gammax = derivatives.h_gammax(ispec, iz, ix);
-    partial_derivatives.xiz = derivatives.h_xiz(ispec, iz, ix);
-    partial_derivatives.gammaz = derivatives.h_gammaz(ispec, iz, ix);
+    partial_derivatives.xix = derivatives.h_xix[_index];
+    partial_derivatives.gammax = derivatives.h_gammax[_index];
+    partial_derivatives.xiz = derivatives.h_xiz[_index];
+    partial_derivatives.gammaz = derivatives.h_gammaz[_index];
     if constexpr (StoreJacobian) {
-      partial_derivatives.jacobian = derivatives.h_jacobian(ispec, iz, ix);
+      partial_derivatives.jacobian = derivatives.h_jacobian[_index];
     }
   }
 }
@@ -179,17 +185,20 @@ inline void impl_store_on_host(
 
   mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
+  const auto &mapping = derivatives.xix.get_mapping();
+  const std::size_t _index = mapping(ispec, iz, ix);
+
   Kokkos::Experimental::where(mask, partial_derivatives.xix)
-      .copy_to(&derivatives.h_xix(ispec, iz, ix), tag_type());
+      .copy_to(&derivatives.h_xix[_index], tag_type());
   Kokkos::Experimental::where(mask, partial_derivatives.gammax)
-      .copy_to(&derivatives.h_gammax(ispec, iz, ix), tag_type());
+      .copy_to(&derivatives.h_gammax[_index], tag_type());
   Kokkos::Experimental::where(mask, partial_derivatives.xiz)
-      .copy_to(&derivatives.h_xiz(ispec, iz, ix), tag_type());
+      .copy_to(&derivatives.h_xiz[_index], tag_type());
   Kokkos::Experimental::where(mask, partial_derivatives.gammaz)
-      .copy_to(&derivatives.h_gammaz(ispec, iz, ix), tag_type());
+      .copy_to(&derivatives.h_gammaz[_index], tag_type());
   if constexpr (StoreJacobian) {
     Kokkos::Experimental::where(mask, partial_derivatives.jacobian)
-        .copy_to(&derivatives.h_jacobian(ispec, iz, ix), tag_type());
+        .copy_to(&derivatives.h_jacobian[_index], tag_type());
   }
 }
 
@@ -208,12 +217,15 @@ inline void impl_store_on_host(
   constexpr static bool StoreJacobian =
       PointPartialDerivativesType::store_jacobian;
 
-  derivatives.h_xix(ispec, iz, ix) = partial_derivatives.xix;
-  derivatives.h_gammax(ispec, iz, ix) = partial_derivatives.gammax;
-  derivatives.h_xiz(ispec, iz, ix) = partial_derivatives.xiz;
-  derivatives.h_gammaz(ispec, iz, ix) = partial_derivatives.gammaz;
+  const auto &mapping = derivatives.xix.get_mapping();
+  const std::size_t _index = mapping(ispec, iz, ix);
+
+  derivatives.h_xix[_index] = partial_derivatives.xix;
+  derivatives.h_gammax[_index] = partial_derivatives.gammax;
+  derivatives.h_xiz[_index] = partial_derivatives.xiz;
+  derivatives.h_gammaz[_index] = partial_derivatives.gammaz;
   if constexpr (StoreJacobian) {
-    derivatives.h_jacobian(ispec, iz, ix) = partial_derivatives.jacobian;
+    derivatives.h_jacobian[_index] = partial_derivatives.jacobian;
   }
 }
 
