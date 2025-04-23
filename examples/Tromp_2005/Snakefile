@@ -35,7 +35,7 @@ rule forward_simulation:
             network_name=["AA"],
             component=["BXX", "BXZ"],
         ),
-        forward_wavefield="OUTPUT_FILES/ForwardWavefield002004.h5",
+        forward_wavefield="OUTPUT_FILES/ForwardWavefield.h5",
     resources:
         nodes=1,
         tasks=1,
