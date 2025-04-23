@@ -24,9 +24,9 @@ struct stress {
    */
   ///@{
   constexpr static int dimension =
-      specfem::element::attributes<DimensionType, MediumTag>::dimension();
+      specfem::element::attributes<DimensionType, MediumTag>::dimension;
   constexpr static int components =
-      specfem::element::attributes<DimensionType, MediumTag>::components();
+      specfem::element::attributes<DimensionType, MediumTag>::components;
   ///@}
 
   /**

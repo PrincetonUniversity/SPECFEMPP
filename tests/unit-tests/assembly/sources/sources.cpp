@@ -32,7 +32,7 @@ void check_store(specfem::compute::assembly &assembly) {
   const int nelements = element_indices.size();
 
   constexpr int num_components =
-      specfem::element::attributes<Dimension, MediumTag>::components();
+      specfem::element::attributes<Dimension, MediumTag>::components;
 
   if (nelements == 0) {
     return;
@@ -104,7 +104,7 @@ void check_load(specfem::compute::assembly &assembly) {
   const int nelements = element_indices.size();
 
   constexpr int num_components =
-      specfem::element::attributes<Dimension, MediumTag>::components();
+      specfem::element::attributes<Dimension, MediumTag>::components;
 
   Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace> values_to_store(
       "values_to_store", nelements);
@@ -201,7 +201,7 @@ void check_assembly_source_construction(
   const int ngllx = assembly.mesh.ngllx;
 
   constexpr auto components =
-      specfem::element::attributes<Dimension, MediumTag>::components();
+      specfem::element::attributes<Dimension, MediumTag>::components;
 
   using PointSourceType =
       specfem::point::source<Dimension, MediumTag,
