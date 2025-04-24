@@ -154,11 +154,10 @@
   [[maybe_unused]] constexpr auto tag = _GET_TAG(BOOST_PP_TUPLE_ELEM(i, data));
 
 // clang-format off
-#define _WRITE_TAGS(data, n)                                                            \
-  BOOST_PP_IF(BOOST_PP_LESS(0, n), _WRITE_TAG, _EMPTY_MACRO)(_dimension_tag_, data, 0)  \
-  BOOST_PP_IF(BOOST_PP_LESS(1, n), _WRITE_TAG, _EMPTY_MACRO)(_medium_tag_, data, 1)     \
-  BOOST_PP_IF(BOOST_PP_LESS(2, n), _WRITE_TAG, _EMPTY_MACRO)(_property_tag_, data, 2)   \
-  BOOST_PP_IF(BOOST_PP_LESS(3, n), _WRITE_TAG, _EMPTY_MACRO)(_boundary_tag_, data, 3)
+#define _WRITE_TAGS_1(data) _WRITE_TAG(_dimension_tag_, data, 0)
+#define _WRITE_TAGS_2(data) _WRITE_TAGS_1(data) _WRITE_TAG(_medium_tag_, data, 1)
+#define _WRITE_TAGS_3(data) _WRITE_TAGS_2(data) _WRITE_TAG(_property_tag_, data, 2)
+#define _WRITE_TAGS_4(data) _WRITE_TAGS_3(data) _WRITE_TAG(_boundary_tag_, data, 3)
 // clang-format on
 
 /**
@@ -169,7 +168,7 @@
  * @param code code block to be executed for each material system.
  */
 #define _WRITE_BLOCK(data, seq, code)                                          \
-  { _WRITE_TAGS(data, BOOST_PP_TUPLE_SIZE(data))                               \
+  { BOOST_PP_CAT(_WRITE_TAGS_, BOOST_PP_TUPLE_SIZE(data))(data)                \
         _EXPAND_SEQ(_WRITE_CAPTURE, data, _GET_CAPTURE_SEQ(seq, code))         \
             BOOST_PP_SEQ_ENUM(_REMOVE_CAPTURE_FROM_CODE(code)) }
 
