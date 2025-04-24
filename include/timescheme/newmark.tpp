@@ -14,7 +14,7 @@ int corrector_phase_impl(
 
   constexpr int components =
       specfem::element::attributes<specfem::dimension::type::dim2,
-                                   MediumTag>::components();
+                                   MediumTag>::components;
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using LoadFieldType =
@@ -52,7 +52,7 @@ int corrector_phase_impl(
       });
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
-                                              MediumTag>::components();
+                                              MediumTag>::components;
 }
 
 template <specfem::element::medium_tag MediumTag,
@@ -64,7 +64,7 @@ int predictor_phase_impl(
 
   constexpr int components =
       specfem::element::attributes<specfem::dimension::type::dim2,
-                                   MediumTag>::components();
+                                   MediumTag>::components;
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using LoadFieldType =
@@ -112,7 +112,7 @@ int predictor_phase_impl(
       });
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
-                                              MediumTag>::components();
+                                              MediumTag>::components;
 }
 } // namespace
 

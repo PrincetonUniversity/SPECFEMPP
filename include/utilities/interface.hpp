@@ -1,6 +1,3 @@
-#ifndef _UTILITIES_INTERFACE_HPP
-#define _UTILITIES_INTERFACE_HPP
+#pragma once
 
 #include "utilities.hpp"
-
-#endif
