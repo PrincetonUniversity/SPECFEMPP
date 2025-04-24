@@ -2,28 +2,23 @@
  * @brief Macro to create a constexpr array from a sequence
  * Used by medium_types(), material_systems() and element_types()
  */
-#define _MAKE_CONSTEXPR_ARRAY(seq, macro)                                      \
-  BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(macro, _, seq))
+#define _MAKE_CONSTEXPR_ARRAY(seq)                                             \
+  BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(                                    \
+      BOOST_PP_CAT(_MAKE_ARRAY_, BOOST_PP_SEQ_SIZE(seq)), _, seq))
 
 /**
- * @brief Sequence transformation function for _MAKE_CONSTEXPR_ARRAY.
+ * @brief Sequence transformation macros for _MAKE_CONSTEXPR_ARRAY.
  */
-#define _MAKE_ARRAY_ELEM_MEDIUM(s, data, elem)                                 \
+#define _MAKE_ARRAY_2(s, data, elem)                                           \
   std::make_tuple(_GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                      \
                   _GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)))
 
-/**
- * @brief Sequence transformation function for _MAKE_CONSTEXPR_ARRAY.
- */
-#define _MAKE_ARRAY_ELEM_MAT_SYS(s, data, elem)                                \
+#define _MAKE_ARRAY_3(s, data, elem)                                           \
   std::make_tuple(_GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                      \
                   _GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                      \
                   _GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)))
 
-/**
- * @brief Sequence transformation function for _MAKE_CONSTEXPR_ARRAY.
- */
-#define _MAKE_ARRAY_ELEM_ELEM(s, data, elem)                                   \
+#define _MAKE_ARRAY_4(s, data, elem)                                           \
   std::make_tuple(_GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                      \
                   _GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                      \
                   _GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)),                      \
