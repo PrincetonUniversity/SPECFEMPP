@@ -49,12 +49,12 @@ public:
 private:
   constexpr static int num_dimensions =
       specfem::element::attributes<DimensionType,
-                                   MediumTag>::dimension(); ///< Number of
+                                   MediumTag>::dimension; ///< Number of
   ///< dimensions.
   constexpr static int components =
       specfem::element::attributes<DimensionType,
-                                   MediumTag>::components(); ///< Number of
-                                                             ///< components.
+                                   MediumTag>::components; ///< Number of
+                                                           ///< components.
 
 public:
   /**

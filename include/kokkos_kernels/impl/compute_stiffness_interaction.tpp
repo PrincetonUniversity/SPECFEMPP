@@ -13,7 +13,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "medium/compute_stress.hpp"
-#include "medium/damping_force.hpp"
+#include "medium/compute_damping_force.hpp"
 #include "medium/couple_stress.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/boundary.hpp"
@@ -64,9 +64,9 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   constexpr int chunk_size = parallel_config::chunk_size;
 
   constexpr int components =
-      specfem::element::attributes<dimension, medium_tag>::components();
+      specfem::element::attributes<dimension, medium_tag>::components;
   constexpr int num_dimensions =
-      specfem::element::attributes<dimension, medium_tag>::dimension();
+      specfem::element::attributes<dimension, medium_tag>::dimension;
 
   using ChunkPolicyType = specfem::policy::element_chunk<parallel_config>;
   using ChunkElementFieldType = specfem::chunk_element::field<
