@@ -89,7 +89,7 @@ int specfem::compute::simulation_field<
         total_degrees_of_freedom +=
             this->get_nglob<_medium_tag_>() *
             specfem::element::attributes<_dimension_tag_,
-                                         _medium_tag_>::components();
+                                         _medium_tag_>::components;
       })
 
   return total_degrees_of_freedom;

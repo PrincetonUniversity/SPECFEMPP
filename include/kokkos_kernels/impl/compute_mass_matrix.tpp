@@ -35,7 +35,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
       MediumTag, PropertyTag, BoundaryTag);
 
   constexpr int components =
-      specfem::element::attributes<dimension, medium_tag>::components();
+      specfem::element::attributes<dimension, medium_tag>::components;
 
   const int nelements = elements.extent(0);
 
