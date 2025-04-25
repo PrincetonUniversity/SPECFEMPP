@@ -82,16 +82,16 @@ public:
   /**
    * @brief Get the number of global degrees of freedom within a medium
    *
-   * @tparam MediumType Medium type
+   * @tparam MediumTag Medium type
    * @return int Number of global degrees of freedom
    */
-  template <specfem::element::medium_tag MediumType>
+  template <specfem::element::medium_tag MediumTag>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
         CAPTURE(field) {
-          if constexpr (MediumType == _medium_tag_) {
+          if constexpr (MediumTag == _medium_tag_) {
             return _field_.nglob;
           }
         })

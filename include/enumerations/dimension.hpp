@@ -14,9 +14,9 @@ enum class type { dim2, dim3 };
 /**
  * @brief Dimension
  *
- * @tparam DimensionType dimension type enumeration
+ * @tparam DimensionTag dimension type enumeration
  */
-template <specfem::dimension::type DimensionType> class dimension;
+template <specfem::dimension::type DimensionTag> class dimension;
 
 /**
  * @brief 2D dimension specialization

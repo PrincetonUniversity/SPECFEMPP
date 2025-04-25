@@ -13,14 +13,14 @@ namespace specfem {
 namespace compute {
 namespace impl {
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::boundary_tag BoundaryTag>
 class boundary_medium_container {
 private:
   constexpr static int components =
-      specfem::element::attributes<DimensionType, MediumTag>::components;
-  constexpr static auto dimension = DimensionType;
+      specfem::element::attributes<DimensionTag, MediumTag>::components;
+  constexpr static auto dimension = DimensionTag;
 
 public:
   using value_type =

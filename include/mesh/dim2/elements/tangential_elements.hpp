@@ -14,7 +14,7 @@ namespace elements {
  * @note Need to still document this section
  *
  */
-template <specfem::dimension::type DimensionType> struct tangential_elements;
+template <specfem::dimension::type DimensionTag> struct tangential_elements;
 
 template <> struct tangential_elements<specfem::dimension::type::dim2> {
 
