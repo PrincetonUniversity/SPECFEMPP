@@ -11,7 +11,7 @@ namespace medium {
 template <typename T, typename PointPartialDerivativesType,
           typename PointStressIntegrandViewType, typename PointPropertiesType,
           typename PointAccelerationType>
-KOKKOS_INLINE_FUNCTION void impl_compute_couple_stress(
+KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::true_type,
     const std::integral_constant<specfem::dimension::type,
                                  specfem::dimension::type::dim2>,
@@ -60,7 +60,7 @@ KOKKOS_INLINE_FUNCTION void impl_compute_couple_stress(
   const auto xxi = invD * gammaz;
   const auto zxi = -invD * gammax;
   const auto xgamma = -invD * xiz;
-  const auto zgamma = invf * xix;
+  const auto zgamma = invD * xix;
 
   /* The final contribution for the Forces comes from Levi-Civita symbol
    * dotted with stress tensor. For PSV-T system only the rotation around
