@@ -23,8 +23,10 @@ struct stress {
    *
    */
   ///@{
-  constexpr static int dimension =
+  constexpr static auto dimension = DimensionType;
+  constexpr static int ndim =
       specfem::element::attributes<DimensionType, MediumTag>::dimension;
+  constexpr static auto medium_tag = MediumTag; ///< Medium tag
   constexpr static int components =
       specfem::element::attributes<DimensionType, MediumTag>::components;
   ///@}
@@ -37,7 +39,7 @@ struct stress {
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
 
   using ViewType =
-      specfem::datatype::VectorPointViewType<type_real, dimension, components,
+      specfem::datatype::VectorPointViewType<type_real, ndim, components,
                                              UseSIMD>; ///< Underlying view type
                                                        ///< to store the stress
                                                        ///< tensor

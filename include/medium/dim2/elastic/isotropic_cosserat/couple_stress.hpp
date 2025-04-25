@@ -11,7 +11,8 @@ namespace medium {
 template <typename T, typename PointPartialDerivativesType,
           typename PointStressIntegrandViewType, typename PointPropertiesType,
           typename PointAccelerationType>
-KOKKOS_FUNCTION void impl_compute_couple_stress(
+KOKKOS_INLINE_FUNCTION void impl_compute_couple_stress(
+    const std::true_type,
     const std::integral_constant<specfem::dimension::type,
                                  specfem::dimension::type::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
@@ -29,20 +30,48 @@ KOKKOS_FUNCTION void impl_compute_couple_stress(
   const auto &gammax = point_partial_derivatives.gammax;
   const auto &gammaz = point_partial_derivatives.gammaz;
 
-  // Matrix inversion factor
-  const auto invf = static_cast<T>(1.0) / (xix * gammaz - xiz * gammax);
+  /*
+   * From:
+   *
+   * \partial w_{i}    \partial  w_{i}   \partial xi_{k}
+   * -------------- =  ---------------   ---------------
+   * \partial x_{j}    \partial xi_{k}   \partial  x_{j}
+   *
+   * Hence, we invert
+   *
+   *   | xix     xiz    |
+   *   | gammax  gammaz |
+   *
+   * Compute the determinant
+   *
+   *   det J = xix * gammaz - xiz * gammax
+   *
+   * Inverting the matrix
+   *
+   * | xxi     xgamma | =    1/   |   gammaz   - xiz |
+   * | zxi     zgamma |    det J  | - gammax     xix |
+   *
+   */
+
+  // Compute inv of the determinant
+  const auto invD = static_cast<T>(1.0) / (xix * gammaz - xiz * gammax);
 
   // Invert matrix (double check!)
-  const auto xxi = invf * gammaz;
-  const auto zxi = -invf * xiz;
-  const auto xgamma = -invf * gammax;
+  const auto xxi = invD * gammaz;
+  const auto zxi = -invD * gammax;
+  const auto xgamma = -invD * xiz;
   const auto zgamma = invf * xix;
 
-  // Get the stress tensor back
-  // point_stress(0,0) = F(0,0) * xxi + F(0,1) * zxi;
-  const auto t_xz = F(0, 0) * xgamma + F(0, 1) * zgamma;
-  const auto t_zx = F(1, 0) * xxi + F(1, 1) * zxi;
-  // point_stress(1,1) = F(1,0) * xgamma + F(1,1) * zgamma;
+  /* The final contribution for the Forces comes from Levi-Civita symbol
+   * dotted with stress tensor. For PSV-T system only the rotation around
+   * y-axis is non-zero meaning only t_{zx} and t_{xz} are relevant.
+   *
+   * Compute the components of the stress tensor from the integrand
+   */
+  // const auto t_xx = F(0, 0) * xxi + F(0, 1) * xgamma;
+  const auto t_xz = F(0, 0) * zxi + F(0, 1) * zgamma;
+  const auto t_zx = F(1, 0) * xxi + F(1, 1) * xgamma;
+  // const auto t_zz = F(1, 0) * zxi + F(1, 1) * zgamma;
 
   // Add to acceleration t_{zx} - t_{xz}
   // Notes on spin
