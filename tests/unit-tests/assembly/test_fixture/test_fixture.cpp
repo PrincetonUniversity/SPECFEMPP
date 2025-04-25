@@ -51,8 +51,8 @@ ASSEMBLY::ASSEMBLY() {
 
     this->Stations.push_back(receivers);
 
-    std::vector<specfem::enums::seismogram::type> seismogram_types = {
-      specfem::enums::seismogram::type::displacement
+    std::vector<specfem::wavefield::type> seismogram_types = {
+      specfem::wavefield::type::displacement
     };
 
     this->assemblies.push_back(specfem::compute::assembly(
