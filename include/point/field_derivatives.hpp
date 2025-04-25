@@ -14,13 +14,13 @@ namespace point {
  * The field derivatives are given by:
  * \f$ du_{i,k} = \partial_i u_k \f$
  *
- * @tparam DimensionType The dimension of the element where the quadrature point
+ * @tparam DimensionTag The dimension of the element where the quadrature point
  * is located
  * @tparam MediumTag The medium of the element where the quadrature point is
  * located
  * @tparam UseSIMD Use SIMD instructions
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct field_derivatives {
 
@@ -31,11 +31,11 @@ struct field_derivatives {
   ///@{
   constexpr static bool is_point_field_derivatives = true;
   static constexpr int components =
-      specfem::element::attributes<DimensionType, MediumTag>::components;
+      specfem::element::attributes<DimensionTag, MediumTag>::components;
   constexpr static auto medium_tag = MediumTag; ///< Medium tag for the element
-  constexpr static auto dimension = DimensionType; ///< Dimension of the element
+  constexpr static auto dimension = DimensionTag; ///< Dimension of the element
   constexpr static int num_dimensions =
-      specfem::element::attributes<DimensionType, MediumTag>::dimension;
+      specfem::element::attributes<DimensionTag, MediumTag>::dimension;
   ///@}
 
   /**

@@ -8,12 +8,12 @@ namespace point {
 /**
  * @brief Store properties of the medium at a quadrature point
  *
- * @tparam DimensionType Dimension of the spectral element
+ * @tparam DimensionTag Dimension of the spectral element
  * @tparam MediumTag Tag indicating the medium of the element
  * @tparam PropertyTag Tag indicating the property of the medium
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>

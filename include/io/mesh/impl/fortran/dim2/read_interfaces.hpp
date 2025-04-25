@@ -10,10 +10,10 @@ namespace impl {
 namespace fortran {
 namespace dim2 {
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag medium1,
           specfem::element::medium_tag medium2>
-specfem::mesh::interface_container<DimensionType, medium1, medium2>
+specfem::mesh::interface_container<DimensionTag, medium1, medium2>
 read_interfaces(const int num_interfaces, std::ifstream &stream,
                 const specfem::MPI::MPI *mpi);
 

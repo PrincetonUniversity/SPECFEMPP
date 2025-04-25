@@ -20,13 +20,13 @@ namespace point {
  * \f$ F_{ik} = \rho^{-1} \partial_i \xi_{k} \partial_k \chi_{k} \f$. Equation
  * (44) & (45) from Komatitsch and Tromp 2002 I. - Validation
  *
- * @tparam DimensionType The dimension of the element where the quadrature point
+ * @tparam DimensionTag The dimension of the element where the quadrature point
  * is located
  * @tparam MediumTag The medium of the element where the quadrature point is
  * located
  * @tparam UseSIMD Use SIMD instructions
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct stress_integrand {
   /**
@@ -35,9 +35,9 @@ struct stress_integrand {
    */
   ///@{
   constexpr static int dimension =
-      specfem::element::attributes<DimensionType, MediumTag>::dimension;
+      specfem::element::attributes<DimensionTag, MediumTag>::dimension;
   constexpr static int components =
-      specfem::element::attributes<DimensionType, MediumTag>::components;
+      specfem::element::attributes<DimensionTag, MediumTag>::components;
   ///@}
 
   /**

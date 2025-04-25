@@ -9,9 +9,9 @@ namespace mesh {
 /**
  * @brief Acoustic free surface boundary information
  *
- * @tparam DimensionType Dimension type for the mesh
+ * @tparam DimensionTag Dimension type for the mesh
  */
-template <specfem::dimension::type DimensionType> struct acoustic_free_surface;
+template <specfem::dimension::type DimensionTag> struct acoustic_free_surface;
 
 /**
  * @brief Acoustic free surface boundary information

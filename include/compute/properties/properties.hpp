@@ -107,9 +107,9 @@ load_on_device(const IndexType &lcoord,
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
-  constexpr auto DimensionType = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension;
 
-  static_assert(DimensionType == specfem::dimension::type::dim2,
+  static_assert(DimensionTag == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
   properties.get_container<MediumTag, PropertyTag>().load_device_values(
@@ -147,9 +147,9 @@ void load_on_host(const IndexType &lcoord,
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
-  constexpr auto DimensionType = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension;
 
-  static_assert(DimensionType == specfem::dimension::type::dim2,
+  static_assert(DimensionTag == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
   properties.get_container<MediumTag, PropertyTag>().load_host_values(
@@ -186,9 +186,9 @@ void store_on_host(const IndexType &lcoord,
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
-  constexpr auto DimensionType = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension;
 
-  static_assert(DimensionType == specfem::dimension::type::dim2,
+  static_assert(DimensionTag == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
   properties.get_container<MediumTag, PropertyTag>().store_host_values(

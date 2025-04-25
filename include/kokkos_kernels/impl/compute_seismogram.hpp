@@ -9,7 +9,7 @@ namespace specfem {
 namespace kokkos_kernels {
 namespace impl {
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>

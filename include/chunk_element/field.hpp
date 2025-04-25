@@ -232,21 +232,21 @@ public:
   }
 };
 
-template <int NumElements, int NGLL, specfem::dimension::type DimensionType,
+template <int NumElements, int NGLL, specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, typename MemorySpace,
           typename MemoryTraits, bool StoreDisplacement, bool StoreVelocity,
           bool StoreAcceleration, bool StoreMassMatrix, bool UseSIMD>
 struct FieldTraits
-    : public ImplFieldTraits<specfem::datatype::ScalarChunkViewType<
-                                 type_real, NumElements, NGLL,
-                                 specfem::element::attributes<
-                                     DimensionType, MediumTag>::components,
-                                 MemorySpace, MemoryTraits, UseSIMD>,
-                             StoreDisplacement, StoreVelocity,
-                             StoreAcceleration, StoreMassMatrix> {
+    : public ImplFieldTraits<
+          specfem::datatype::ScalarChunkViewType<
+              type_real, NumElements, NGLL,
+              specfem::element::attributes<DimensionTag, MediumTag>::components,
+              MemorySpace, MemoryTraits, UseSIMD>,
+          StoreDisplacement, StoreVelocity, StoreAcceleration,
+          StoreMassMatrix> {
 
   constexpr static int components =
-      specfem::element::attributes<DimensionType, MediumTag>::components;
+      specfem::element::attributes<DimensionTag, MediumTag>::components;
 
   using ViewType =
       specfem::datatype::ScalarChunkViewType<type_real, NumElements, NGLL,
@@ -280,7 +280,7 @@ struct FieldTraits
  *
  * @tparam NumElements Number of elements in the chunk
  * @tparam NGLL Number of Gauss-Lobatto-Legendre points
- * @tparam DimensionType Dimension of the elements within the chunk
+ * @tparam DimensionTag Dimension of the elements within the chunk
  * @tparam MediumTag Medium tag for the elements within the chunk
  * @tparam MemorySpace Memory space for the views
  * @tparam MemoryTraits Memory traits for the views
@@ -292,12 +292,12 @@ struct FieldTraits
  * @tparam StoreMassMatrix Boolean to indicate if mass matrix should be stored
  * @tparam UseSIMD Boolean to indicate to use SIMD instructions
  */
-template <int NumElements, int NGLL, specfem::dimension::type DimensionType,
+template <int NumElements, int NGLL, specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, typename MemorySpace,
           typename MemoryTraits, bool StoreDisplacement, bool StoreVelocity,
           bool StoreAcceleration, bool StoreMassMatrix, bool UseSIMD>
 struct field
-    : public impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
+    : public impl::FieldTraits<NumElements, NGLL, DimensionTag, MediumTag,
                                MemorySpace, MemoryTraits, StoreDisplacement,
                                StoreVelocity, StoreAcceleration,
                                StoreMassMatrix, UseSIMD> {
@@ -313,7 +313,7 @@ public:
    * @brief Underlying View type used to store the field data.
    */
   using ViewType =
-      typename impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
+      typename impl::FieldTraits<NumElements, NGLL, DimensionTag, MediumTag,
                                  MemorySpace, MemoryTraits, StoreDisplacement,
                                  StoreVelocity, StoreAcceleration,
                                  StoreMassMatrix, UseSIMD>::ViewType;
@@ -329,11 +329,10 @@ public:
   ///@{
   constexpr static int components = ViewType::components; ///< Number of
                                                           ///< components
-  constexpr static auto medium_tag = MediumTag; ///< Medium tag for the
-                                                ///< elements within the chunk
-  constexpr static auto dimension =
-      DimensionType; ///< Dimension of the
-                     ///< elements within the chunk
+  constexpr static auto medium_tag = MediumTag;   ///< Medium tag for the
+                                                  ///< elements within the chunk
+  constexpr static auto dimension = DimensionTag; ///< Dimension of the
+                                                  ///< elements within the chunk
   constexpr static int num_elements = NumElements; ///< Number of elements in
                                                    ///< the chunk
   constexpr static int ngll = NGLL; ///< Number of Gauss-Lobatto-Legendre
@@ -381,7 +380,7 @@ public:
    * @param view View to initialize the field with.
    */
   KOKKOS_FUNCTION field(const ViewType &view)
-      : impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
+      : impl::FieldTraits<NumElements, NGLL, DimensionTag, MediumTag,
                           MemorySpace, MemoryTraits, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view) {}
@@ -406,7 +405,7 @@ public:
    * && StoreAcceleration == true) @endcode
    */
   KOKKOS_FUNCTION field(const ViewType &view1, const ViewType &view2)
-      : impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
+      : impl::FieldTraits<NumElements, NGLL, DimensionTag, MediumTag,
                           MemorySpace, MemoryTraits, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view1, view2) {}
@@ -423,7 +422,7 @@ public:
    */
   KOKKOS_FUNCTION field(const ViewType &view1, const ViewType &view2,
                         const ViewType &view3)
-      : impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
+      : impl::FieldTraits<NumElements, NGLL, DimensionTag, MediumTag,
                           MemorySpace, MemoryTraits, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view1, view2, view3) {}
@@ -437,7 +436,7 @@ public:
    */
   template <typename MemberType>
   KOKKOS_FUNCTION field(const MemberType &team)
-      : impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
+      : impl::FieldTraits<NumElements, NGLL, DimensionTag, MediumTag,
                           MemorySpace, MemoryTraits, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(team) {
