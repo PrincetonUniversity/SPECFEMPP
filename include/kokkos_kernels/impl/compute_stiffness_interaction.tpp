@@ -15,6 +15,7 @@
 #include "medium/compute_stress.hpp"
 #include "medium/compute_damping_force.hpp"
 #include "medium/compute_cosserat_stress.hpp"
+#include "medium/compute_cosserat_couple_stress.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/boundary.hpp"
 #include "point/field.hpp"
@@ -264,15 +265,15 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   specfem::medium::compute_damping_force(
                       factor, point_property, velocity, acceleration);
 
-                //   // Compute the couple stress from the stress integrand
-                //   specfem::medium::compute_couple_stress(
-                //     point_partial_derivatives,
-                //     point_property,
-                //     factor,
-                //     Kokkos::subview(stress_integrand.F,
-                //       ielement, index.iz, index.ix,
-                //       Kokkos::ALL, Kokkos::ALL),
-                //     acceleration);
+                  // Compute the couple stress from the stress integrand
+                  specfem::medium::compute_couple_stress(
+                    point_partial_derivatives,
+                    point_property,
+                    factor,
+                    Kokkos::subview(stress_integrand.F,
+                      ielement, index.iz, index.ix,
+                      Kokkos::ALL, Kokkos::ALL),
+                    acceleration);
 
                   // Apply boundary conditions
                   specfem::boundary_conditions::apply_boundary_conditions(

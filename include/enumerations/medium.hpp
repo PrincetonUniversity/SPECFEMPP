@@ -100,7 +100,7 @@ public:
 
   constexpr static bool has_damping_force = false;
   inline constexpr static bool has_cosserat_stress = false;
-  inline constexpr static bool has_cosserat_couple = false;
+  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
@@ -113,7 +113,7 @@ public:
 
   inline constexpr static bool has_damping_force = false;
   inline constexpr static bool has_cosserat_stress = false;
-  inline constexpr static bool has_cosserat_couple = false;
+  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
@@ -126,7 +126,7 @@ public:
 
   inline constexpr static bool has_damping_force = false;
   inline constexpr static bool has_cosserat_stress = true;
-  inline constexpr static bool has_cosserat_couple = true;
+  inline constexpr static bool has_cosserat_couple_stress = true;
 };
 
 template <>
@@ -139,7 +139,7 @@ public:
 
   inline constexpr static bool has_damping_force = false;
   inline constexpr static bool has_cosserat_stress = false;
-  inline constexpr static bool has_cosserat_couple = false;
+  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
@@ -151,7 +151,7 @@ public:
 
   inline constexpr static bool has_damping_force = true;
   inline constexpr static bool has_cosserat_stress = false;
-  inline constexpr static bool has_cosserat_couple = false;
+  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
@@ -163,7 +163,7 @@ public:
 
   inline constexpr static bool has_damping_force = false;
   inline constexpr static bool has_cosserat_stress = false;
-  inline constexpr static bool has_cosserat_couple = false;
+  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 const std::string to_string(const medium_tag &medium,
