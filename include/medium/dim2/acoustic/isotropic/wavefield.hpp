@@ -67,26 +67,26 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     return;
   }
 
-  // specfem::algorithms::gradient(
-  //     team, iterator, assembly.partial_derivatives, quadrature.hprime_gll,
-  //     active_field,
-  //     [&](const typename IteratorType::index_type &iterator_index,
-  //         const FieldDerivativesType::ViewType &du) {
-  //       const auto &index = iterator_index.index;
-  //       PointPropertyType point_property;
+  specfem::algorithms::gradient(
+      team, iterator, assembly.partial_derivatives, quadrature.hprime_gll,
+      active_field,
+      [&](const typename IteratorType::index_type &iterator_index,
+          const FieldDerivativesType::ViewType &du) {
+        const auto &index = iterator_index.index;
+        PointPropertyType point_property;
 
-  //       specfem::compute::load_on_device(index, properties, point_property);
+        specfem::compute::load_on_device(index, properties, point_property);
 
-  //       FieldDerivativesType point_field_derivatives(du);
+        FieldDerivativesType point_field_derivatives(du);
 
-  //       const auto point_stress =
-  //           impl_compute_stress(point_property, point_field_derivatives);
+        const auto point_stress =
+            impl_compute_stress(point_property, point_field_derivatives);
 
-  //       wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
-  //           point_stress.T(0, 0);
-  //       wavefield(iterator_index.ielement, index.iz, index.ix, 1) =
-  //           point_stress.T(1, 0);
-  //     });
+        wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
+            point_stress.T(0, 0);
+        wavefield(iterator_index.ielement, index.iz, index.ix, 1) =
+            point_stress.T(1, 0);
+      });
 
   return;
 }
