@@ -27,12 +27,11 @@ namespace medium {
  * @param field_derivatives Field derivatives at the quadrature point
  * @return specfem::point::stress The stress tensor at the quadrature point
  */
-template <typename PointPropertiesType, typename PointFieldType,
-          typename PointFieldDerivativesType>
+template <typename PointPropertiesType, typename PointFieldDerivativesType>
 KOKKOS_INLINE_FUNCTION auto
-compute_stress(const PointPropertiesType &properties, const PointFieldType &u,
+compute_stress(const PointPropertiesType &properties,
                const PointFieldDerivativesType &field_derivatives)
-    -> decltype(specfem::medium::impl_compute_stress(properties, u,
+    -> decltype(specfem::medium::impl_compute_stress(properties,
                                                      field_derivatives)) {
 
   static_assert(PointPropertiesType::is_point_properties,
@@ -54,7 +53,7 @@ compute_stress(const PointPropertiesType &properties, const PointFieldType &u,
           PointFieldDerivativesType::simd::using_simd,
       "properties and field_derivatives have different SIMD settings");
 
-  return specfem::medium::impl_compute_stress(properties, u, field_derivatives);
+  return specfem::medium::impl_compute_stress(properties, field_derivatives);
 }
 
 } // namespace medium

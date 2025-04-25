@@ -18,9 +18,6 @@ KOKKOS_INLINE_FUNCTION
             specfem::dimension::type::dim2,
             specfem::element::medium_tag::poroelastic,
             specfem::element::property_tag::isotropic, UseSIMD> &properties,
-        const specfem::point::field<specfem::dimension::type::dim2,
-                                    specfem::element::medium_tag::poroelastic,
-                                    true, false, false, false, UseSIMD> &u,
         const specfem::point::field_derivatives<
             specfem::dimension::type::dim2,
             specfem::element::medium_tag::poroelastic, UseSIMD>

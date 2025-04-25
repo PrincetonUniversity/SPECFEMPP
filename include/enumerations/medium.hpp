@@ -99,6 +99,8 @@ public:
   inline static constexpr int components = 2;
 
   constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_cosserat_stress = false;
+  inline constexpr static bool has_cosserat_couple = false;
 };
 
 template <>
@@ -109,7 +111,9 @@ public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 1;
 
-  constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_cosserat_stress = false;
+  inline constexpr static bool has_cosserat_couple = false;
 };
 
 template <>
@@ -117,9 +121,12 @@ class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::elastic_psv_t> {
 
 public:
-  constexpr static int dimension() { return 2; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 3;
 
-  constexpr static int components() { return 3; }
+  inline constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_cosserat_stress = true;
+  inline constexpr static bool has_cosserat_couple = true;
 };
 
 template <>
@@ -130,7 +137,9 @@ public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 1;
 
-  constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_cosserat_stress = false;
+  inline constexpr static bool has_cosserat_couple = false;
 };
 
 template <>
@@ -140,7 +149,9 @@ public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 4;
 
-  constexpr static bool has_damping_force = true;
+  inline constexpr static bool has_damping_force = true;
+  inline constexpr static bool has_cosserat_stress = false;
+  inline constexpr static bool has_cosserat_couple = false;
 };
 
 template <>
@@ -150,7 +161,9 @@ public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 2;
 
-  constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_cosserat_stress = false;
+  inline constexpr static bool has_cosserat_couple = false;
 };
 
 const std::string to_string(const medium_tag &medium,

@@ -14,7 +14,7 @@
 #include "enumerations/wavefield.hpp"
 #include "medium/compute_stress.hpp"
 #include "medium/compute_damping_force.hpp"
-#include "medium/couple_stress.hpp"
+#include "medium/compute_cosserat_stress.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/boundary.hpp"
 #include "point/field.hpp"
@@ -198,8 +198,15 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
                   PointFieldDerivativesType field_derivatives(du);
 
-                  const auto point_stress = specfem::medium::compute_stress(
+                  PointDisplacementType point_displacement;
+                  specfem::compute::load_on_device(index, field,
+                                                   point_displacement);
+
+                  auto point_stress = specfem::medium::compute_stress(
                       point_property, field_derivatives);
+
+                  specfem::medium::compute_cosserat_stress(
+                      point_property, point_displacement, point_stress);
 
                   const auto F = point_stress * point_partial_derivatives;
 
@@ -257,15 +264,15 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   specfem::medium::compute_damping_force(
                       factor, point_property, velocity, acceleration);
 
-                  // Compute the couple stress from the stress integrand
-                  specfem::medium::compute_couple_stress(
-                    point_partial_derivatives,
-                    point_property,
-                    factor,
-                    Kokkos::subview(stress_integrand.F,
-                      ielement, index.iz, index.ix,
-                      Kokkos::ALL, Kokkos::ALL),
-                    acceleration);
+                //   // Compute the couple stress from the stress integrand
+                //   specfem::medium::compute_couple_stress(
+                //     point_partial_derivatives,
+                //     point_property,
+                //     factor,
+                //     Kokkos::subview(stress_integrand.F,
+                //       ielement, index.iz, index.ix,
+                //       Kokkos::ALL, Kokkos::ALL),
+                //     acceleration);
 
                   // Apply boundary conditions
                   specfem::boundary_conditions::apply_boundary_conditions(
