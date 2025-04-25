@@ -214,6 +214,7 @@ public:
     return static_cast<const base_type &>(*this);
   }
 
+  KOKKOS_INLINE_FUNCTION
   const mapping_type &get_mapping() const { return _mapping; }
 
 private:
