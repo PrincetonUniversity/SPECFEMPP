@@ -117,9 +117,9 @@ class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::elastic_psv_t> {
 
 public:
-  constexpr static int dimension() { return 2; }
-
-  constexpr static int components() { return 3; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 3;
+  constexpr static bool has_damping_force = false;
 };
 
 template <>
