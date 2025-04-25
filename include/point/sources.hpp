@@ -31,12 +31,12 @@ struct source {
 
   constexpr static int components =
       specfem::element::attributes<DimensionType,
-                                   MediumTag>::components(); ///< Number
-                                                             ///< of
-                                                             ///< components
-                                                             ///< in
-                                                             ///< the
-                                                             ///< medium
+                                   MediumTag>::components; ///< Number
+                                                           ///< of
+                                                           ///< components
+                                                           ///< in
+                                                           ///< the
+                                                           ///< medium
 
   using value_type =
       specfem::datatype::ScalarPointViewType<type_real, components,
