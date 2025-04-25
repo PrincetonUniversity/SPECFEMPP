@@ -34,12 +34,16 @@ struct partial_derivatives<specfem::dimension::type::dim2, false, UseSIMD> {
    *
    */
   ///@{
+  using PointPartialDerivativesType =
+      partial_derivatives<specfem::dimension::type::dim2, false,
+                          UseSIMD>; ///< Type of the point partial derivatives
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD data type
   using value_type =
       typename simd::datatype; ///< Datatype for storing values. Is a scalar if
                                ///< UseSIMD is false, otherwise is a SIMD
                                ///< vector.
   constexpr static bool store_jacobian = false;
+  constexpr static bool is_point_partial_derivative = true;
   constexpr static auto dimension = specfem::dimension::type::dim2;
   ///@}
 
@@ -89,6 +93,29 @@ struct partial_derivatives<specfem::dimension::type::dim2, false, UseSIMD> {
     this->xiz = 0.0;
     this->gammaz = 0.0;
     return;
+  }
+
+  // operator+
+  KOKKOS_FUNCTION PointPartialDerivativesType
+  operator+(const PointPartialDerivativesType &rhs) const {
+    return PointPartialDerivativesType(xix + rhs.xix, gammax + rhs.gammax,
+                                       xiz + rhs.xiz, gammaz + rhs.gammaz);
+  }
+
+  // operator+=
+  KOKKOS_FUNCTION PointPartialDerivativesType &
+  operator+=(const PointPartialDerivativesType &rhs) {
+    xix += rhs.xix;
+    gammax += rhs.gammax;
+    xiz += rhs.xiz;
+    gammaz += rhs.gammaz;
+    return *this;
+  }
+
+  // operator*
+  KOKKOS_FUNCTION PointPartialDerivativesType operator*(const type_real &rhs) {
+    return PointPartialDerivativesType(xix * rhs, gammax * rhs, xiz * rhs,
+                                       gammaz * rhs);
   }
 };
 
@@ -222,46 +249,13 @@ private:
   };
 };
 
-// operator+
-template <typename PointPartialDerivativesType,
-          typename std::enable_if_t<
-              !PointPartialDerivativesType::store_jacobian, int> = 0>
-KOKKOS_FUNCTION PointPartialDerivativesType
-operator+(const PointPartialDerivativesType &lhs,
-          const PointPartialDerivativesType &rhs) {
-  return PointPartialDerivativesType(lhs.xix + rhs.xix, lhs.gammax + rhs.gammax,
-                                     lhs.xiz + rhs.xiz,
-                                     lhs.gammaz + rhs.gammaz);
-}
-
-// operator+=
-template <typename PointPartialDerivativesType,
-          typename std::enable_if_t<
-              !PointPartialDerivativesType::store_jacobian, int> = 0>
-KOKKOS_FUNCTION PointPartialDerivativesType &
-operator+=(PointPartialDerivativesType &lhs,
-           const PointPartialDerivativesType &rhs) {
-  lhs.xix += rhs.xix;
-  lhs.gammax += rhs.gammax;
-  lhs.xiz += rhs.xiz;
-  lhs.gammaz += rhs.gammaz;
-  return lhs;
-}
-
 // operator*
 template <typename PointPartialDerivativesType,
-          typename std::enable_if_t<
-              !PointPartialDerivativesType::store_jacobian, int> = 0>
-KOKKOS_FUNCTION PointPartialDerivativesType
-operator*(const PointPartialDerivativesType &lhs, const type_real &rhs) {
-  return PointPartialDerivativesType(lhs.xix * rhs, lhs.gammax * rhs,
-                                     lhs.xiz * rhs, lhs.gammaz * rhs);
-}
-
-// operator*
-template <typename PointPartialDerivativesType,
-          typename std::enable_if_t<
-              !PointPartialDerivativesType::store_jacobian, int> = 0>
+          typename = std::enable_if_t<
+              !PointPartialDerivativesType::store_jacobian &&
+              PointPartialDerivativesType::dimension ==
+                  specfem::dimension::type::dim2 &&
+              PointPartialDerivativesType::is_point_partial_derivative> >
 KOKKOS_FUNCTION PointPartialDerivativesType
 operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
   return PointPartialDerivativesType(lhs * rhs.xix, lhs * rhs.gammax,
