@@ -27,46 +27,38 @@ void specfem::io::impl::write_container(
 
   int n_written = 0;
 
-#define WRITE_DATASET(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                 \
-  {                                                                            \
-    const std::string name =                                                   \
-        std::string("/") + specfem::element::to_string(GET_TAG(MEDIUM_TAG),    \
-                                                       GET_TAG(PROPERTY_TAG)); \
-    typename OutputLibrary::Group group = file.createGroup(name);              \
-    const auto element_indices = element_types.get_elements_on_host(           \
-        GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG));                           \
-    const int n_elements = element_indices.size();                             \
-    n_written += n_elements;                                                   \
-    DomainView x("xcoordinates", n_elements, ngllz, ngllx);                    \
-    DomainView z("zcoordinates", n_elements, ngllz, ngllx);                    \
-    for (int i = 0; i < n_elements; i++) {                                     \
-      const int ispec = element_indices(i);                                    \
-      for (int iz = 0; iz < ngllz; iz++) {                                     \
-        for (int ix = 0; ix < ngllx; ix++) {                                   \
-          x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);                \
-          z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);                \
-        }                                                                      \
-      }                                                                        \
-    }                                                                          \
-    group.createDataset("X", x).write();                                       \
-    group.createDataset("Z", z).write();                                       \
-    group                                                                      \
-        .createDataset("data",                                                 \
-                       container                                               \
-                           .template get_container<GET_TAG(MEDIUM_TAG),        \
-                                                   GET_TAG(PROPERTY_TAG)>()    \
-                           .h_data)                                            \
-        .write();                                                              \
-  }
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      WRITE_DATASET,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
-
-#undef WRITE_DATASET
-
+  FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+               MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                ACOUSTIC, POROELASTIC),
+               PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)), {
+               const std::string name =
+          std::string("/") +
+          specfem::element::to_string(_medium_tag_, _property_tag_);
+      typename OutputLibrary::Group group = file.createGroup(name);
+      const auto element_indices =
+          element_types.get_elements_on_host(_medium_tag_, _property_tag_);
+      const int n_elements = element_indices.size(); n_written += n_elements;
+      DomainView x("xcoordinates", n_elements, ngllz, ngllx);
+      DomainView z("zcoordinates", n_elements, ngllz, ngllx);
+      for (int i = 0; i < n_elements; i++) {
+        const int ispec = element_indices(i);
+        for (int iz = 0; iz < ngllz; iz++) {
+          for (int ix = 0; ix < ngllx; ix++) {
+            x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
+            z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+          }
+        }
+      } group.createDataset("X", x)
+          .write();
+      group.createDataset("Z", z).write();
+      group
+          .createDataset(
+              "data",
+              container.template get_container<_medium_tag_, _property_tag_>()
+                  .h_data)
+          .write();
+               })
   // int n_elastic_isotropic;
   // int n_elastic_anisotropic;
   // int n_acoustic;

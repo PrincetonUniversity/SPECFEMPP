@@ -247,14 +247,14 @@ struct FieldTraits
     : ImplFieldTraits<specfem::datatype::ScalarElementViewType<
                           type_real, NGLL,
                           specfem::element::attributes<DimensionType,
-                                                       MediumTag>::components(),
+                                                       MediumTag>::components,
                           MemorySpace, MemoryTraits, UseSIMD>,
                       StoreDisplacement, StoreVelocity, StoreAcceleration,
                       StoreMassMatrix> {
 public:
   using ViewType = specfem::datatype::ScalarElementViewType<
       type_real, NGLL,
-      specfem::element::attributes<DimensionType, MediumTag>::components(),
+      specfem::element::attributes<DimensionType, MediumTag>::components,
       MemorySpace, MemoryTraits, UseSIMD>;
 
   KOKKOS_FUNCTION FieldTraits() = default;

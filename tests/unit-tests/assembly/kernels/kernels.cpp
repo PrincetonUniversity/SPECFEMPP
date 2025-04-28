@@ -891,32 +891,28 @@ void test_kernels(specfem::compute::assembly &assembly) {
   auto &kernels = assembly.kernels;
 
   //
-  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_POROELASTIC ==========
+  // ==================== HACKATHON TODO: ADD POROELASTIC ==========
   //
 
   //
-  // == HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_TE
+  // == HACKATHON TODO: ADD ELECTROMAGNETIC_TE
   //                                           IFF EM KERNEL is implemented. ==
   //
 
-#define TEST_STORE_AND_ADD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)            \
-  check_store_and_add<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
-      kernels, element_types);                                                 \
-  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(     \
-      kernels, element_types);                                                 \
-  check_store_and_add<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(       \
-      kernels, element_types);                                                 \
-  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(      \
-      kernels, element_types);
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      TEST_STORE_AND_ADD,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef TEST_STORE_AND_ADD
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+      {
+        check_store_and_add<_medium_tag_, _property_tag_, false>(kernels,
+                                                                 element_types);
+        check_load_on_device<_medium_tag_, _property_tag_, false>(
+            kernels, element_types);
+        check_store_and_add<_medium_tag_, _property_tag_, true>(kernels,
+                                                                element_types);
+        check_load_on_device<_medium_tag_, _property_tag_, true>(kernels,
+                                                                 element_types);
+      })
 }
 
 TEST_F(ASSEMBLY, kernels_device_functions) {

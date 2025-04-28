@@ -6,37 +6,7 @@
 #include <variant>
 #include <vector>
 
-#define MEDIUM_TYPE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                   \
-  using CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG),                       \
-                             GET_NAME(PROPERTY_TAG)) =                         \
-      specfem::point::properties<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),  \
-                                 GET_TAG(PROPERTY_TAG), false>;
-
-CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-    MEDIUM_TYPE,
-    WHERE(DIMENSION_TAG_DIM2)
-        WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-              MEDIUM_TAG_ELECTROMAGNETIC_TE)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef MEDIUM_TYPE
-
-#define TYPE_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                     \
-  (CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)))
-
-#define MAKE_VARIANT_RETURN                                                    \
-  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(          \
-      TYPE_NAME,                                                               \
-      WHERE(DIMENSION_TAG_DIM2) WHERE(                                         \
-          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,  \
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)               \
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
-
-using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
-
-#undef MAKE_VARIANT_RETURN
-#undef TYPE_NAME
+using MaterialVectorType = std::vector<std::any>; /// NOLINT
 
 constexpr static auto dimension = specfem::dimension::type::dim2;
 
@@ -161,7 +131,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
         }) },
     };
 
-void check_test(
+void check_property(
     const specfem::mesh::materials<specfem::dimension::type::dim2> &computed,
     const MaterialVectorType &expected) {
 
@@ -180,44 +150,41 @@ void check_test(
   for (int ispec = 0; ispec < nspec; ispec++) {
     const auto material_specification = computed.material_index_mapping(ispec);
 
-    const auto type = material_specification.type;
-    const auto property = material_specification.property;
+    const auto medium_tag = material_specification.type;
+    const auto property_tag = material_specification.property;
     const int index = material_specification.index;
     const int imaterial = material_specification.database_index;
 
-#define CHECK_MATERIAL(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                \
-  if ((type == GET_TAG(MEDIUM_TAG)) && (property == GET_TAG(PROPERTY_TAG))) {  \
-    const auto icomputed = std::get<specfem::medium::material<                 \
-        GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)> >(computed[ispec])         \
-                               .get_properties();                              \
-    const auto iexpected =                                                     \
-        std::get<specfem::point::properties<dimension, GET_TAG(MEDIUM_TAG),    \
-                                            GET_TAG(PROPERTY_TAG), false> >(   \
-            expected[imaterial]);                                              \
-    if (icomputed != iexpected) {                                              \
-      std::ostringstream error_message;                                        \
-      error_message << "Material " << index << " is not the same ["            \
-                    << __FILE__ << ":" << __LINE__ << "]\n"                    \
-                    << "  imaterial: " << imaterial << "\n"                    \
-                    << "  index:     " << index << "\n"                        \
-                    << "  ispec:     " << ispec << "\n"                        \
-                    << "Computed: \n"                                          \
-                    << icomputed.print() << "\n"                               \
-                    << "Expected: \n"                                          \
-                    << iexpected.print() << "\n";                              \
-      throw std::runtime_error(error_message.str());                           \
-    }                                                                          \
-    return;                                                                    \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        CHECK_MATERIAL,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef CHECK_MATERIAL
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELECTROMAGNETIC_TE),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+        {
+          if ((medium_tag == _medium_tag_) &&
+              (property_tag == _property_tag_)) {
+            const auto icomputed =
+                computed.get_material<_medium_tag_, _property_tag_>(ispec)
+                    .get_properties();
+            const auto iexpected = std::any_cast<specfem::point::properties<
+                dimension, _medium_tag_, _property_tag_, false> >(
+                expected[imaterial]);
+            if (icomputed != iexpected) {
+              std::ostringstream error_message;
+              error_message << "Material " << index << " is not the same ["
+                            << __FILE__ << ":" << __LINE__ << "]\n"
+                            << "  imaterial: " << imaterial << "\n"
+                            << "  index:     " << index << "\n"
+                            << "  ispec:     " << ispec << "\n"
+                            << "Computed: \n"
+                            << icomputed.print() << "\n"
+                            << "Expected: \n"
+                            << iexpected.print() << "\n";
+              throw std::runtime_error(error_message.str());
+            }
+            return;
+          }
+        })
 
     // If we reach here, the material type is not supported
     std::ostringstream error_message;
@@ -242,7 +209,7 @@ TEST_F(MESH, derived_properties) {
       const auto computed = mesh.materials;
       const auto expected = ground_truth.at(Test.name);
 
-      check_test(computed, expected);
+      check_property(computed, expected);
 
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m Test " << Test.number << ": "

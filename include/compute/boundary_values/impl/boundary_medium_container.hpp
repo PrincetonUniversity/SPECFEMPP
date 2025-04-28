@@ -19,7 +19,7 @@ template <specfem::dimension::type DimensionType,
 class boundary_medium_container {
 private:
   constexpr static int components =
-      specfem::element::attributes<DimensionType, MediumTag>::components();
+      specfem::element::attributes<DimensionType, MediumTag>::components;
   constexpr static auto dimension = DimensionType;
 
 public:
