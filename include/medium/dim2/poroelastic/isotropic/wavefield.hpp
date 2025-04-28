@@ -68,7 +68,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
           wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
               -(point_property.C_Biot() * (du(0, 0) + du(1, 1)) +
-                point_property.M_Biot() * (du(0, 2) + du(1, 3)));
+                point_property.M_Biot() * (du(2, 0) + du(3, 1)));
         });
 
     return;

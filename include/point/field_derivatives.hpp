@@ -46,8 +46,8 @@ struct field_derivatives {
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
 
   using ViewType =
-      specfem::datatype::VectorPointViewType<type_real, num_dimensions,
-                                             components,
+      specfem::datatype::VectorPointViewType<type_real, components,
+                                             num_dimensions,
                                              UseSIMD>; ///< Underlying view type
                                                        ///< to store the field
                                                        ///< derivatives
