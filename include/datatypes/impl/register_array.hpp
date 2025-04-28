@@ -61,6 +61,7 @@ public:
     }
   }
 
+  KOKKOS_INLINE_FUNCTION
   RegisterArray(const T *values) {
     for (std::size_t i = 0; i < size; ++i) {
       m_value[i] = values[i];
