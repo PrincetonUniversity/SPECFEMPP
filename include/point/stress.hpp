@@ -24,9 +24,9 @@ struct stress {
    */
   ///@{
   constexpr static int dimension =
-      specfem::element::attributes<DimensionType, MediumTag>::dimension();
+      specfem::element::attributes<DimensionType, MediumTag>::dimension;
   constexpr static int components =
-      specfem::element::attributes<DimensionType, MediumTag>::components();
+      specfem::element::attributes<DimensionType, MediumTag>::components;
   ///@}
 
   /**
@@ -37,7 +37,7 @@ struct stress {
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
 
   using ViewType =
-      specfem::datatype::VectorPointViewType<type_real, dimension, components,
+      specfem::datatype::VectorPointViewType<type_real, components, dimension,
                                              UseSIMD>; ///< Underlying view type
                                                        ///< to store the stress
                                                        ///< tensor
@@ -80,10 +80,10 @@ struct stress {
     ViewType F;
 
     for (int icomponent = 0; icomponent < components; ++icomponent) {
-      F(0, icomponent) = T(0, icomponent) * partial_derivatives.xix +
-                         T(1, icomponent) * partial_derivatives.xiz;
-      F(1, icomponent) = T(0, icomponent) * partial_derivatives.gammax +
-                         T(1, icomponent) * partial_derivatives.gammaz;
+      F(icomponent, 0) = T(icomponent, 0) * partial_derivatives.xix +
+                         T(icomponent, 1) * partial_derivatives.xiz;
+      F(icomponent, 1) = T(icomponent, 0) * partial_derivatives.gammax +
+                         T(icomponent, 1) * partial_derivatives.gammaz;
     }
 
     return F;

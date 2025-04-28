@@ -261,14 +261,14 @@ struct FieldTraits
     : public ImplFieldTraits<specfem::datatype::ScalarPointViewType<
                                  type_real,
                                  specfem::element::attributes<
-                                     DimensionType, MediumTag>::components(),
+                                     DimensionType, MediumTag>::components,
                                  UseSIMD>,
                              StoreDisplacement, StoreVelocity,
                              StoreAcceleration, StoreMassMatrix> {
 
   using ViewType = specfem::datatype::ScalarPointViewType<
       type_real,
-      specfem::element::attributes<DimensionType, MediumTag>::components(),
+      specfem::element::attributes<DimensionType, MediumTag>::components,
       UseSIMD>;
 
 public:
