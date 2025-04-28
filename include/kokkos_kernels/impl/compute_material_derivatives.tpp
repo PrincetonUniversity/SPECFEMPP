@@ -32,7 +32,12 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
     return;
   }
 
-  constexpr static bool using_simd = true;
+#ifdef KOKKOS_ENABLE_CUDA
+  constexpr bool using_simd = false;
+#else
+  constexpr bool using_simd = true;
+#endif
+
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using ParallelConfig = specfem::parallel_config::default_chunk_config<
       DimensionType, simd, Kokkos::DefaultExecutionSpace>;
