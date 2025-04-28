@@ -55,7 +55,12 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   const auto boundary_values =
       assembly.boundary_values.get_container<boundary_tag>();
 
+#ifdef KOKKOS_ENABLE_CUDA
+  constexpr bool using_simd = false;
+#else
   constexpr bool using_simd = true;
+#endif
+
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using parallel_config = specfem::parallel_config::default_chunk_config<
       dimension, simd, Kokkos::DefaultExecutionSpace>;
