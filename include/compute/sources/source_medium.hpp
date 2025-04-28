@@ -37,11 +37,11 @@ private:
 
   constexpr static int components =
       specfem::element::attributes<Dimension,
-                                   Medium>::components(); ///< Number
-                                                          ///< of
-                                                          ///< components
-                                                          ///< in the
-                                                          ///< medium
+                                   Medium>::components; ///< Number
+                                                        ///< of
+                                                        ///< components
+                                                        ///< in the
+                                                        ///< medium
 
 public:
   /**

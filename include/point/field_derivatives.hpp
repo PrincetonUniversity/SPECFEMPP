@@ -31,11 +31,11 @@ struct field_derivatives {
   ///@{
   constexpr static bool is_point_field_derivatives = true;
   static constexpr int components =
-      specfem::element::attributes<DimensionType, MediumTag>::components();
+      specfem::element::attributes<DimensionType, MediumTag>::components;
   constexpr static auto medium_tag = MediumTag; ///< Medium tag for the element
   constexpr static auto dimension = DimensionType; ///< Dimension of the element
   constexpr static int num_dimensions =
-      specfem::element::attributes<DimensionType, MediumTag>::dimension();
+      specfem::element::attributes<DimensionType, MediumTag>::dimension;
   ///@}
 
   /**
@@ -46,8 +46,8 @@ struct field_derivatives {
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
 
   using ViewType =
-      specfem::datatype::VectorPointViewType<type_real, num_dimensions,
-                                             components,
+      specfem::datatype::VectorPointViewType<type_real, components,
+                                             num_dimensions,
                                              UseSIMD>; ///< Underlying view type
                                                        ///< to store the field
                                                        ///< derivatives

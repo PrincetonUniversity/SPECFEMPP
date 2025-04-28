@@ -240,13 +240,13 @@ struct FieldTraits
     : public ImplFieldTraits<specfem::datatype::ScalarChunkViewType<
                                  type_real, NumElements, NGLL,
                                  specfem::element::attributes<
-                                     DimensionType, MediumTag>::components(),
+                                     DimensionType, MediumTag>::components,
                                  MemorySpace, MemoryTraits, UseSIMD>,
                              StoreDisplacement, StoreVelocity,
                              StoreAcceleration, StoreMassMatrix> {
 
   constexpr static int components =
-      specfem::element::attributes<DimensionType, MediumTag>::components();
+      specfem::element::attributes<DimensionType, MediumTag>::components;
 
   using ViewType =
       specfem::datatype::ScalarChunkViewType<type_real, NumElements, NGLL,
