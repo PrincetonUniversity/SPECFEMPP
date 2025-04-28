@@ -13,6 +13,7 @@
 #include "compute/sources/sources.hpp"
 #include "enumerations/display.hpp"
 #include "enumerations/interface.hpp"
+#include "enumerations/wavefield.hpp"
 #include "io/reader.hpp"
 #include "mesh/mesh.hpp"
 #include "receiver/interface.hpp"
@@ -78,9 +79,9 @@ struct assembly {
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const std::vector<std::shared_ptr<specfem::receivers::receiver> >
           &receivers,
-      const std::vector<specfem::enums::seismogram::type> &stypes,
-      const type_real t0, const type_real dt, const int max_timesteps,
-      const int max_sig_step, const int nsteps_between_samples,
+      const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
+      const type_real dt, const int max_timesteps, const int max_sig_step,
+      const int nsteps_between_samples,
       const specfem::simulation::type simulation,
       const std::shared_ptr<specfem::io::reader> &property_reader);
 
@@ -104,6 +105,8 @@ struct assembly {
   int get_total_degrees_of_freedom() {
     return fields.buffer.get_total_degrees_of_freedom();
   }
+
+  std::string print() const;
 };
 
 } // namespace compute

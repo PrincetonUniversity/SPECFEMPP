@@ -126,9 +126,9 @@ find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor)
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd)
     set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
-                   Boost::algorithm Boost::tokenizer Boost::preprocessor)
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd)
     set(BOOST_ENABLE_CMAKE ON)
     set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
     set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
@@ -410,9 +410,14 @@ target_link_libraries(
         )
 
 add_library(
+        utilities
+        src/utilities/strings.cpp
+)
+
+add_library(
         reader
-        src/io/wavefield/reader.cpp
         src/io/property/reader.cpp
+        src/io/wavefield/reader.cpp
 )
 
 target_link_libraries(
@@ -420,6 +425,7 @@ target_link_libraries(
         compute
         io
         read_seismogram
+        utilities
 )
 
 add_library(
@@ -527,17 +533,6 @@ target_include_directories(
         ${HDF5_INCLUDE_DIRS}
 )
 
-add_library(
-        boundary_conditions
-        src/boundary_conditions/boundary_conditions.cpp
-)
-
-target_link_libraries(
-        boundary_conditions
-        Kokkos::kokkos
-        ${BOOST_LIBS}
-)
-
 add_library(coupled_interface
         src/coupled_interface/coupled_interface.cpp
 )
@@ -564,7 +559,6 @@ target_link_libraries(
         kokkos_kernels
         Kokkos::kokkos
         compute
-        boundary_conditions
 )
 
 add_library(
@@ -595,9 +589,9 @@ target_link_libraries(
 add_library(
         writer
         src/io/seismogram/writer.cpp
-        src/io/wavefield/writer.cpp
         src/io/kernel/writer.cpp
         src/io/property/writer.cpp
+        src/io/wavefield/writer.cpp
 )
 
 target_link_libraries(
@@ -605,12 +599,21 @@ target_link_libraries(
         compute
         receiver_class
         io
+        utilities
 )
 
 add_library(
         periodic_tasks
         src/periodic_tasks/plot_wavefield.cpp
         src/periodic_tasks/check_signal.cpp
+        src/periodic_tasks/wavefield_writer.cpp
+        src/periodic_tasks/wavefield_reader.cpp
+)
+
+target_link_libraries(
+        periodic_tasks
+        reader
+        writer
 )
 
 if (NOT VTK_CXX_BUILD)
@@ -661,6 +664,7 @@ target_link_libraries(
         timescheme
         receiver_class
         yaml-cpp
+        periodic_tasks
         writer
         reader
         kokkos_kernels

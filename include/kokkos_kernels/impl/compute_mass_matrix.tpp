@@ -3,6 +3,7 @@
 #include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
+#include "boundary_conditions/boundary_conditions.tpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
@@ -34,7 +35,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
       MediumTag, PropertyTag, BoundaryTag);
 
   constexpr int components =
-      specfem::element::attributes<dimension, medium_tag>::components();
+      specfem::element::attributes<dimension, medium_tag>::components;
 
   const int nelements = elements.extent(0);
 
