@@ -4,6 +4,7 @@
 #include "periodic_tasks/periodic_task.hpp"
 #include "solver/solver.hpp"
 #include "timescheme/newmark.hpp"
+#include "utilities/strings.hpp"
 #include <memory>
 #include <string>
 
@@ -56,9 +57,9 @@ public:
    * @return specfem::simulation::type Type of the simulation
    */
   inline specfem::simulation::type get_simulation_type() const {
-    if (this->simulation_type == "forward") {
+    if (specfem::utilities::is_forward_string(this->simulation_type)) {
       return specfem::simulation::type::forward;
-    } else if (this->simulation_type == "combined") {
+    } else if (specfem::utilities::is_combined_string(this->simulation_type)) {
       return specfem::simulation::type::combined;
     } else {
       throw std::runtime_error("Unknown simulation type");

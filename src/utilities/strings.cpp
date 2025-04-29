@@ -31,5 +31,15 @@ std::string snake_to_pascal(const std::string &str) {
   return result;
 }
 
+// convert string to lower case
+std::string to_lower(const std::string &str) {
+  std::string lower_str = str;
+  std::transform(lower_str.begin(), lower_str.end(), lower_str.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return lower_str;
+}
+
+BOOST_PP_SEQ_FOR_EACH(_DEFINE_CONFIG_STRING_FUNCTIONS, _, CONFIG_STRINGS)
+
 } // namespace utilities
 } // namespace specfem
