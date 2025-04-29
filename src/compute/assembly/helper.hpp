@@ -92,15 +92,13 @@ public:
 
           for (int tile = 0; tile < ChunkPolicyType::tile_size;
                tile += ChunkPolicyType::chunk_size) {
-            const int starting_element_index =
-                team.league_rank() * ChunkPolicyType::tile_size + tile;
+            const auto iterator =
+                chunk_policy.league_iterator(team.league_rank(), tile);
 
-            if (starting_element_index >= nelements) {
-              break;
+            if (iterator.is_end()) {
+              return; // No elements to process in this tile
             }
 
-            const auto iterator =
-                chunk_policy.league_iterator(starting_element_index);
             specfem::compute::load_on_device(team, iterator, buffer, field);
             team.team_barrier();
 

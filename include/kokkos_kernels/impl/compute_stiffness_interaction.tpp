@@ -123,16 +123,12 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
         KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
           for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
                tile += ChunkPolicyType::chunk_size * simd_size) {
-            const int starting_element_index =
-                team.league_rank() * ChunkPolicyType::tile_size * simd_size +
-                tile;
-
-            if (starting_element_index >= nelements) {
-              break;
-            }
-
             const auto iterator =
-                chunk_policy.league_iterator(starting_element_index);
+                chunk_policy.league_iterator(team.league_rank(), tile);
+
+            if (iterator.is_end()) {
+              return;
+            }
 
             Kokkos::parallel_for(
                 Kokkos::TeamThreadRange(team, iterator.chunk_size()),
@@ -161,22 +157,18 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
           specfem::compute::load_on_device(team, quadrature,
                                            element_quadrature);
+          // Load the first tile
+          auto iterator = chunk_policy.league_iterator(team.league_rank(), 0);
+          if (iterator.is_end()) {
+            return; // No elements to process in this tile
+          }
+          specfem::compute::load_on_device(team, iterator, field,
+                                           element_field);
+
+          team.team_barrier();
+
           for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
                tile += ChunkPolicyType::chunk_size * simd_size) {
-            const int starting_element_index =
-                team.league_rank() * ChunkPolicyType::tile_size * simd_size +
-                tile;
-
-            if (starting_element_index >= nelements) {
-              break;
-            }
-
-            const auto iterator =
-                chunk_policy.league_iterator(starting_element_index);
-            specfem::compute::load_on_device(team, iterator, field,
-                                             element_field);
-
-            team.team_barrier();
 
             specfem::algorithms::gradient(
                 team, iterator, partial_derivatives,
@@ -214,6 +206,15 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 });
 
             team.team_barrier();
+
+            // Prefetch next tile
+            const auto next_iterator = chunk_policy.league_iterator(
+                team.league_rank(),
+                tile + ChunkPolicyType::chunk_size * simd_size);
+            if (!next_iterator.is_end()) {
+              specfem::compute::load_on_device(team, next_iterator, field,
+                                               element_field);
+            }
 
             specfem::algorithms::divergence(
                 team, iterator, partial_derivatives, wgll,
@@ -273,6 +274,16 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   specfem::compute::atomic_add_on_device(index, acceleration,
                                                          field);
                 });
+
+            // Move to the next tile
+            iterator = next_iterator;
+
+            if (iterator.is_end()) {
+              return;
+            }
+
+            // Wait for prefetch to complete
+            team.team_barrier();
           }
         });
   }

@@ -1,20 +1,20 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
-#include "datatypes/simd.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "boundary_conditions/boundary_conditions.tpp"
+#include "compute/assembly/assembly.hpp"
+#include "datatypes/simd.hpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
+#include "medium/compute_mass_matrix.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/boundary.hpp"
 #include "point/field.hpp"
 #include "point/partial_derivatives.hpp"
 #include "point/properties.hpp"
 #include "policies/chunk.hpp"
-#include "medium/compute_mass_matrix.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionType,
@@ -69,7 +69,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   const auto &quadrature = assembly.mesh.quadratures;
   const auto &partial_derivatives = assembly.partial_derivatives;
   const auto &properties = assembly.properties;
-    const auto &boundaries = assembly.boundaries;
+  const auto &boundaries = assembly.boundaries;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
   const auto wgll = quadrature.gll.weights;
@@ -84,16 +84,11 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
       KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
         for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
              tile += ChunkPolicyType::chunk_size * simd_size) {
-          const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
-              tile;
-
-          if (starting_element_index >= nelements) {
-            break;
-          }
-
           const auto iterator =
-              chunk_policy.league_iterator(starting_element_index);
+              chunk_policy.league_iterator(team.league_rank(), tile);
+          if (iterator.is_end()) {
+            return; // No elements to process in this tile
+          }
 
           Kokkos::parallel_for(
               Kokkos::TeamThreadRange(team, iterator.chunk_size()),
@@ -131,9 +126,8 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
                 specfem::compute::load_on_device(index, boundaries,
                                                  point_boundary);
 
-                specfem::boundary_conditions::
-                    compute_mass_matrix_terms(dt, point_boundary,
-                                              point_property, mass_matrix);
+                specfem::boundary_conditions::compute_mass_matrix_terms(
+                    dt, point_boundary, point_property, mass_matrix);
 
                 specfem::compute::atomic_add_on_device(index, mass_matrix,
                                                        field);

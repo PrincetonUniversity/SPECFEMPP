@@ -9,7 +9,8 @@
 template <specfem::dimension::type DimensionType,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
-void specfem::kokkos_kernels::impl::divide_mass_matrix(const specfem::compute::assembly &assembly) {
+void specfem::kokkos_kernels::impl::divide_mass_matrix(
+    const specfem::compute::assembly &assembly) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto wavefield = WavefieldType;
@@ -35,13 +36,20 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(const specfem::compute::a
       "specfem::domain::domain::divide_mass_matrix",
       static_cast<typename RangePolicy::policy_type &>(range),
       KOKKOS_LAMBDA(const int iglob) {
-        const auto iterator = range.range_iterator(iglob);
-        const auto index = iterator(0);
+        for (int itile = 0; itile < RangePolicy::tile_size; ++itile) {
 
-        LoadFieldType load_field;
-        specfem::compute::load_on_device(index.index, field, load_field);
-        StoreFieldType store_field(load_field.divide_mass_matrix());
-        specfem::compute::store_on_device(index.index, store_field, field);
+          const auto iterator = range.range_iterator(iglob, itile);
+
+          if (iterator.is_end()) {
+            return; // Skip if the iterator is at the end
+          }
+          const auto index = iterator();
+
+          LoadFieldType load_field;
+          specfem::compute::load_on_device(index.index, field, load_field);
+          StoreFieldType store_field(load_field.divide_mass_matrix());
+          specfem::compute::store_on_device(index.index, store_field, field);
+        }
       });
 
   Kokkos::fence();
