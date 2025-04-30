@@ -11,11 +11,11 @@ namespace point {
 /**
  * @brief Stress tensor at a quadrature point
  *
- * @tparam DimensionType Dimension of the element (2D or 3D)
+ * @tparam DimensionTag Dimension of the element (2D or 3D)
  * @tparam MediumTag Medium tag for the element
  * @tparam UseSIMD Use SIMD instructions
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct stress {
   /**
@@ -24,9 +24,9 @@ struct stress {
    */
   ///@{
   constexpr static int dimension =
-      specfem::element::attributes<DimensionType, MediumTag>::dimension;
+      specfem::element::attributes<DimensionTag, MediumTag>::dimension;
   constexpr static int components =
-      specfem::element::attributes<DimensionType, MediumTag>::components;
+      specfem::element::attributes<DimensionTag, MediumTag>::components;
   ///@}
 
   /**

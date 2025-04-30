@@ -24,7 +24,7 @@
 #include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -37,7 +37,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   constexpr auto boundary_tag = BoundaryTag;
   constexpr int ngll = NGLL;
   constexpr auto wavefield = WavefieldType;
-  constexpr auto dimension = DimensionType;
+  constexpr auto dimension = DimensionTag;
 
   const auto elements = assembly.element_types.get_elements_on_device(
       MediumTag, PropertyTag, BoundaryTag);

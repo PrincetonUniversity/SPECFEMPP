@@ -239,22 +239,22 @@ public:
   }
 };
 
-template <int NGLL, specfem::dimension::type DimensionType,
+template <int NGLL, specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, typename MemorySpace,
           typename MemoryTraits, bool StoreDisplacement, bool StoreVelocity,
           bool StoreAcceleration, bool StoreMassMatrix, bool UseSIMD>
 struct FieldTraits
-    : ImplFieldTraits<specfem::datatype::ScalarElementViewType<
-                          type_real, NGLL,
-                          specfem::element::attributes<DimensionType,
-                                                       MediumTag>::components,
-                          MemorySpace, MemoryTraits, UseSIMD>,
-                      StoreDisplacement, StoreVelocity, StoreAcceleration,
-                      StoreMassMatrix> {
+    : ImplFieldTraits<
+          specfem::datatype::ScalarElementViewType<
+              type_real, NGLL,
+              specfem::element::attributes<DimensionTag, MediumTag>::components,
+              MemorySpace, MemoryTraits, UseSIMD>,
+          StoreDisplacement, StoreVelocity, StoreAcceleration,
+          StoreMassMatrix> {
 public:
   using ViewType = specfem::datatype::ScalarElementViewType<
       type_real, NGLL,
-      specfem::element::attributes<DimensionType, MediumTag>::components,
+      specfem::element::attributes<DimensionTag, MediumTag>::components,
       MemorySpace, MemoryTraits, UseSIMD>;
 
   KOKKOS_FUNCTION FieldTraits() = default;
@@ -281,15 +281,15 @@ public:
 
 } // namespace impl
 
-template <int NGLL, specfem::dimension::type DimensionType,
+template <int NGLL, specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, typename MemorySpace,
           typename MemoryTraits, bool StoreDisplacement, bool StoreVelocity,
           bool StoreAcceleration, bool StoreMassMatrix, bool UseSIMD = false>
-struct field : impl::FieldTraits<NGLL, DimensionType, MediumTag, MemorySpace,
+struct field : impl::FieldTraits<NGLL, DimensionTag, MediumTag, MemorySpace,
                                  MemoryTraits, StoreDisplacement, StoreVelocity,
                                  StoreAcceleration, StoreMassMatrix, UseSIMD> {
   using ViewType =
-      typename impl::FieldTraits<NGLL, DimensionType, MediumTag, MemorySpace,
+      typename impl::FieldTraits<NGLL, DimensionTag, MediumTag, MemorySpace,
                                  MemoryTraits, StoreDisplacement, StoreVelocity,
                                  StoreAcceleration, StoreMassMatrix,
                                  UseSIMD>::ViewType;
@@ -311,26 +311,26 @@ struct field : impl::FieldTraits<NGLL, DimensionType, MediumTag, MemorySpace,
   using memory_space = MemorySpace;
 
   KOKKOS_FUNCTION field(const ViewType &view)
-      : impl::FieldTraits<NGLL, DimensionType, MediumTag, MemorySpace,
+      : impl::FieldTraits<NGLL, DimensionTag, MediumTag, MemorySpace,
                           MemoryTraits, StoreDisplacement, StoreVelocity,
                           StoreAcceleration, StoreMassMatrix, UseSIMD>(view) {}
 
   KOKKOS_FUNCTION field(const ViewType &view1, const ViewType &view2)
-      : impl::FieldTraits<NGLL, DimensionType, MediumTag, MemorySpace,
+      : impl::FieldTraits<NGLL, DimensionTag, MediumTag, MemorySpace,
                           MemoryTraits, StoreDisplacement, StoreVelocity,
                           StoreAcceleration, StoreMassMatrix, UseSIMD>(view1,
                                                                        view2) {}
 
   KOKKOS_FUNCTION field(const ViewType &view1, const ViewType &view2,
                         const ViewType &view3)
-      : impl::FieldTraits<NGLL, DimensionType, MediumTag, MemorySpace,
+      : impl::FieldTraits<NGLL, DimensionTag, MediumTag, MemorySpace,
                           MemoryTraits, StoreDisplacement, StoreVelocity,
                           StoreAcceleration, StoreMassMatrix, UseSIMD>(
             view1, view2, view3) {}
 
   template <typename MemberType>
   KOKKOS_FUNCTION field(const MemberType &team)
-      : impl::FieldTraits<NGLL, DimensionType, MediumTag, MemorySpace,
+      : impl::FieldTraits<NGLL, DimensionTag, MediumTag, MemorySpace,
                           MemoryTraits, StoreDisplacement, StoreVelocity,
                           StoreAcceleration, StoreMassMatrix, UseSIMD>(team) {
     static_assert(

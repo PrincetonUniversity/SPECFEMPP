@@ -6,9 +6,9 @@
 #include "timescheme/newmark.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType, int NGLL>
+template <specfem::dimension::type DimensionTag, int NGLL>
 void specfem::solver::time_marching<specfem::simulation::type::forward,
-                                    DimensionType, NGLL>::run() {
+                                    DimensionTag, NGLL>::run() {
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic_psv = specfem::element::medium_tag::elastic_psv;
@@ -118,9 +118,9 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   return;
 }
 
-template <specfem::dimension::type DimensionType, int NGLL>
+template <specfem::dimension::type DimensionTag, int NGLL>
 void specfem::solver::time_marching<specfem::simulation::type::combined,
-                                    DimensionType, NGLL>::run() {
+                                    DimensionTag, NGLL>::run() {
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic_psv = specfem::element::medium_tag::elastic_psv;
