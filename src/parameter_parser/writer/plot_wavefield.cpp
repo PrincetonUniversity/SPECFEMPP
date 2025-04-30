@@ -92,6 +92,8 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
       return specfem::display::wavefield::acceleration;
     } else if (specfem::utilities::is_pressure_string(this->component)) {
       return specfem::display::wavefield::pressure;
+    } else if (specfem::utilities::is_rotation_string(this->component)) {
+      return specfem::display::wavefield::rotation;
     } else {
       throw std::runtime_error(
           "Unknown wavefield component in the display section");

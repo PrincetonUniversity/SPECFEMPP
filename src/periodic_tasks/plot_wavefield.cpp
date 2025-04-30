@@ -142,6 +142,8 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
       return specfem::wavefield::type::acceleration;
     } else if (display_component == specfem::display::wavefield::pressure) {
       return specfem::wavefield::type::pressure;
+    } else if (display_component == specfem::display::wavefield::rotation) {
+      return specfem::wavefield::type::rotation;
     } else {
       throw std::runtime_error("Unsupported component");
     }
@@ -188,6 +190,9 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
       if (component == specfem::wavefield::type::pressure) {
         scalars->InsertNextValue(
             std::abs(wavefield(icell, z_index[i], x_index[i], 0)));
+      } else if (component == specfem::wavefield::type::rotation) {
+        scalars->InsertNextValue(
+            std::abs(wavefield(icell, z_index[i], x_index[i], 2)));
       } else {
         scalars->InsertNextValue(
             std::sqrt((wavefield(icell, z_index[i], x_index[i], 0) *
