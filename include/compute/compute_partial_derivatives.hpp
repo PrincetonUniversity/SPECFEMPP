@@ -4,8 +4,8 @@
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
-#include "point.hpp"
 #include "quadrature/interface.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 

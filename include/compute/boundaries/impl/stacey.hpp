@@ -3,8 +3,8 @@
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
 #include "mesh/mesh.hpp"
-#include "point/boundary.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point/boundary.hpp"
+#include "specfem/point/coordinates.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
 #include <type_traits>

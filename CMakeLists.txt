@@ -290,12 +290,8 @@ else()
     )
 endif()
 
-
-add_library(
-        point
-        core/point/coordinates.cpp
-        core/point/partial_derivatives.cpp
-)
+file(GLOB POINT_SOURCES "core/specfem/point/*.cpp")
+add_library(point ${POINT_SOURCES})
 
 target_link_libraries(
         point

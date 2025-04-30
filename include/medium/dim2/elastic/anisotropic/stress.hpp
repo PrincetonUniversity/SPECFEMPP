@@ -1,9 +1,9 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/properties.hpp"
-#include "point/stress.hpp"
+#include "specfem/point/field_derivatives.hpp"
+#include "specfem/point/properties.hpp"
+#include "specfem/point/stress.hpp"
 
 namespace specfem {
 namespace medium {

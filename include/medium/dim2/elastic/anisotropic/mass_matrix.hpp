@@ -3,11 +3,11 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "globals.h"
-#include "point/field.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/partial_derivatives.hpp"
-#include "point/properties.hpp"
-#include "point/stress_integrand.hpp"
+#include "specfem/point/field.hpp"
+#include "specfem/point/field_derivatives.hpp"
+#include "specfem/point/partial_derivatives.hpp"
+#include "specfem/point/properties.hpp"
+#include "specfem/point/stress_integrand.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {

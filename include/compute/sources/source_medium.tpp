@@ -1,7 +1,7 @@
 #pragma once
 
 #include "algorithms/locate_point.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point/coordinates.hpp"
 #include "source_medium.hpp"
 #include <Kokkos_Core.hpp>
 

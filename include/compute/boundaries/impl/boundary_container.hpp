@@ -3,7 +3,7 @@
 
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
-#include "point/boundary.hpp"
+#include "specfem/point/boundary.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

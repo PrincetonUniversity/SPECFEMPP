@@ -8,9 +8,9 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "kokkos_abstractions.h"
-#include "point/sources.hpp"
 #include "source/source.hpp"
 #include "source_medium.hpp"
+#include "specfem/point/sources.hpp"
 
 namespace specfem {
 namespace compute {
