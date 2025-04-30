@@ -138,7 +138,7 @@ public:
   index_type operator()() const {
 #ifndef NDEBUG
     if (end_iterator) {
-      KOKKOS_ABORT("Range iterator is at the end, cannot access index.");
+      Kokkos::abort("Range iterator is at the end, cannot access index.");
     }
 #endif
     return operator()(std::integral_constant<bool, using_simd>());
