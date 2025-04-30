@@ -4,8 +4,8 @@
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/compute_stress.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/properties.hpp"
+#include "specfem/point/field_derivatives.hpp"
+#include "specfem/point/properties.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

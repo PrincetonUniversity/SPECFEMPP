@@ -2,7 +2,7 @@
 #define _ALGORITHMS_LOCATE_POINT_HPP
 
 #include "compute/compute_mesh.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point/coordinates.hpp"
 
 namespace specfem {
 namespace algorithms {

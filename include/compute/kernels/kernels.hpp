@@ -5,8 +5,8 @@
 #include "enumerations/medium.hpp"
 #include "medium/kernels_container.hpp"
 #include "mesh/mesh.hpp"
-#include "point/coordinates.hpp"
-#include "point/kernels.hpp"
+#include "specfem/point/coordinates.hpp"
+#include "specfem/point/kernels.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

@@ -1,4 +1,4 @@
-#include "point/properties.hpp"
+#include "specfem/point/properties.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "mesh/mesh.hpp"
 #include <cmath>

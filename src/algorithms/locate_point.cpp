@@ -1,7 +1,7 @@
 #include "algorithms/locate_point.hpp"
 #include "compute/compute_mesh.hpp"
 #include "jacobian/interface.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point/coordinates.hpp"
 
 namespace {
 

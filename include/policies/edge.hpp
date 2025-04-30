@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point/coordinates.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

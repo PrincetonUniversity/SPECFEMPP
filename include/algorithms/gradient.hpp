@@ -2,8 +2,8 @@
 #define _ALGORITHMS_GRADIENT_HPP
 
 #include "kokkos_abstractions.h"
-#include "point/field_derivatives.hpp"
-#include "point/partial_derivatives.hpp"
+#include "specfem/point/field_derivatives.hpp"
+#include "specfem/point/partial_derivatives.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

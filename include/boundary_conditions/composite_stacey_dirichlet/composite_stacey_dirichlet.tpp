@@ -5,7 +5,7 @@
 #include "boundary_conditions/dirichlet/dirichlet.hpp"
 #include "boundary_conditions/stacey/stacey.hpp"
 #include "enumerations/boundary.hpp"
-#include "point/boundary.hpp"
+#include "specfem/point/boundary.hpp"
 #include <Kokkos_Core.hpp>
 
 template <typename PointBoundaryType, typename PointPropertyType,

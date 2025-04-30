@@ -1,4 +1,4 @@
-#include "point/kernels.hpp"
+#include "specfem/point/kernels.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
