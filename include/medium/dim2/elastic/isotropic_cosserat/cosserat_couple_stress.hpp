@@ -74,8 +74,11 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   // const auto t_zz = F(1, 0) * zxi + F(1, 1) * zgamma;
 
   // Add to acceleration t_{zx} - t_{xz}
-  // Notes on spin
-  acceleration.acceleration(3) += factor * (t_zx - t_xz);
+  // Note that when nu is 0, this is equivalent to
+  //   t_{zx} - t_{xz} = 0
+  // Meaning the stress tensor is symmetric and the couple stress
+  //   contribution is zero.
+  acceleration.acceleration(2) += factor * (t_zx - t_xz);
 };
 
 } // namespace medium

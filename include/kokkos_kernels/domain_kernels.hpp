@@ -105,8 +105,8 @@ public:
         })
 
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
         {
           if constexpr (dimension == _dimension_tag_) {
             impl::invert_mass_matrix<dimension, wavefield, _medium_tag_>(

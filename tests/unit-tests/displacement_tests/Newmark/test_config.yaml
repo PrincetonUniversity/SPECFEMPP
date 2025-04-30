@@ -108,3 +108,12 @@ Tests:
   #   databases:
   #     specfem_config: "displacement_tests/Newmark/serial/test12/specfem_config.yaml"
   #     traces: "displacement_tests/Newmark/serial/test12/traces"
+
+  - name : "SerialTest13 : Homogeneous isotropic cosserat domain -- nu=0"
+    description: >
+      Testing the Isotropic cosserat setup with nu=0 so that propagation is elastic isotropic. Test is run on a single MPI process.
+    config:
+      nproc : 1
+    databases:
+      specfem_config: "displacement_tests/Newmark/serial/test13/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test13/traces"

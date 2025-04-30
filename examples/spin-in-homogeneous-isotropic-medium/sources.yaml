@@ -10,4 +10,4 @@ sources:
       Ricker:
         factor: 1e10
         tshift: 0.0
-        f0: 17.0
+        f0: 170000.0
