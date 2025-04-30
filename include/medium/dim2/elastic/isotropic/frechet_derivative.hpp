@@ -59,7 +59,7 @@ impl_compute_frechet_derivatives(
   // ad_dsxz = 0.5 * (ds#x/dz + ds#z/dx)
   const auto ad_dsxz =
       static_cast<type_real>(0.5) *
-      (adjoint_derivatives.du(0, 1) + adjoint_derivatives.du(1, 0));
+      (adjoint_derivatives.du(1, 0) + adjoint_derivatives.du(0, 1));
 
   // ad_dszz = 0.5 * (ds#z/dz + ds#z/dz) = ds#z/dz
   const auto ad_dszz = adjoint_derivatives.du(1, 1);
@@ -71,7 +71,7 @@ impl_compute_frechet_derivatives(
   // b_dsxz = 0.5 * (dsx/dz + dsz/dx)
   const auto b_dsxz =
       static_cast<type_real>(0.5) *
-      (backward_derivatives.du(0, 1) + backward_derivatives.du(1, 0));
+      (backward_derivatives.du(1, 0) + backward_derivatives.du(0, 1));
 
   // b_dszz = 0.5 * (dsz/dz + dsz/dz) = dsz/dz
   const auto b_dszz = backward_derivatives.du(1, 1);
@@ -182,7 +182,7 @@ impl_compute_frechet_derivatives(
       // du#y_dx * duy_dx +
       (adjoint_derivatives.du(0, 0) * backward_derivatives.du(0, 0) +
        // du#y_dz * duy_dz
-       adjoint_derivatives.du(1, 0) * backward_derivatives.du(1, 0));
+       adjoint_derivatives.du(0, 1) * backward_derivatives.du(0, 1));
   const auto rho_kl = static_cast<type_real>(-1.0) * properties.rho() * dt *
                       specfem::algorithms::dot(adjoint_field.acceleration,
                                                backward_field.displacement);
