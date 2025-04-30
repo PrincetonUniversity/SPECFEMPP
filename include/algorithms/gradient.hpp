@@ -45,11 +45,12 @@ gradient(const MemberType &team, const IteratorType &iterator,
          CallbackFunctor callback) {
   constexpr int components = ViewType::components;
   constexpr bool using_simd = ViewType::simd::using_simd;
+  constexpr int dimension = 2;
 
   constexpr int NGLL = ViewType::ngll;
 
   using VectorPointViewType =
-      specfem::datatype::VectorPointViewType<type_real, 2, components,
+      specfem::datatype::VectorPointViewType<type_real, components, dimension,
                                              using_simd>;
 
   using datatype = typename IteratorType::simd::datatype;
@@ -105,11 +106,11 @@ gradient(const MemberType &team, const IteratorType &iterator,
         VectorPointViewType df;
 
         for (int icomponent = 0; icomponent < components; ++icomponent) {
-          df(0, icomponent) =
+          df(icomponent, 0) =
               point_partial_derivatives.xix * df_dxi[icomponent] +
               point_partial_derivatives.gammax * df_dgamma[icomponent];
 
-          df(1, icomponent) =
+          df(icomponent, 1) =
               point_partial_derivatives.xiz * df_dxi[icomponent] +
               point_partial_derivatives.gammaz * df_dgamma[icomponent];
         }
@@ -154,11 +155,12 @@ gradient(const MemberType &team, const IteratorType &iterator,
          CallbackFunctor callback) {
   constexpr int components = ViewType::components;
   constexpr bool using_simd = ViewType::simd::using_simd;
+  constexpr int dimension = 2;
 
   constexpr int NGLL = ViewType::ngll;
 
   using VectorPointViewType =
-      specfem::datatype::VectorPointViewType<type_real, 2, components,
+      specfem::datatype::VectorPointViewType<type_real, components, dimension,
                                              using_simd>;
 
   static_assert(ViewType::isScalarViewType,
@@ -220,11 +222,11 @@ gradient(const MemberType &team, const IteratorType &iterator,
         VectorPointViewType df;
 
         for (int icomponent = 0; icomponent < components; ++icomponent) {
-          df(0, icomponent) =
+          df(icomponent, 0) =
               point_partial_derivatives.xix * df_dxi[icomponent] +
               point_partial_derivatives.gammax * df_dgamma[icomponent];
 
-          df(1, icomponent) =
+          df(icomponent, 1) =
               point_partial_derivatives.xiz * df_dxi[icomponent] +
               point_partial_derivatives.gammaz * df_dgamma[icomponent];
         }
@@ -246,11 +248,11 @@ gradient(const MemberType &team, const IteratorType &iterator,
         VectorPointViewType dg;
 
         for (int icomponent = 0; icomponent < components; ++icomponent) {
-          dg(0, icomponent) =
+          dg(icomponent, 0) =
               point_partial_derivatives.xix * df_dxi[icomponent] +
               point_partial_derivatives.gammax * df_dgamma[icomponent];
 
-          dg(1, icomponent) =
+          dg(icomponent, 1) =
               point_partial_derivatives.xiz * df_dxi[icomponent] +
               point_partial_derivatives.gammaz * df_dgamma[icomponent];
         }

@@ -8,6 +8,7 @@
 #include "quadrature/quadratures.hpp"
 #include "receiver/receiver.hpp"
 #include "source/source.hpp"
+#include "utilities/strings.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
@@ -57,18 +58,18 @@ public:
   int get_nproc() { return nproc; }
 
   specfem::enums::elastic_wave get_elastic_wave() {
-    if (elastic_wave == "P_SV")
+    if (specfem::utilities::is_psv_string(elastic_wave))
       return specfem::enums::elastic_wave::psv;
-    else if (elastic_wave == "SH")
+    else if (specfem::utilities::is_sh_string(elastic_wave))
       return specfem::enums::elastic_wave::sh;
     else
       throw std::runtime_error("Elastic wave type not supported");
   }
 
   specfem::enums::electromagnetic_wave get_electromagnetic_wave() {
-    if (electromagnetic_wave == "TE")
+    if (specfem::utilities::is_te_string(electromagnetic_wave))
       return specfem::enums::electromagnetic_wave::te;
-    else if (electromagnetic_wave == "TM")
+    else if (specfem::utilities::is_tm_string(electromagnetic_wave))
       return specfem::enums::electromagnetic_wave::tm;
     else
       throw std::runtime_error("Electromagnetic wave type not supported");
