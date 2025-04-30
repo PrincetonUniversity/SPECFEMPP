@@ -32,10 +32,10 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_stress(
       static_cast<type_real>(2.0) * properties.nu() * u(2);
 
   // sigma_xz = ... +  (2 \nu \phi_{y})
-  T(1, 0) += factor;
+  T(0, 1) += factor;
 
   // sigma_zx = ... +  (-2 \nu \phi_{y})
-  T(0, 1) -= factor;
+  T(1, 0) -= factor;
 
   return;
 };

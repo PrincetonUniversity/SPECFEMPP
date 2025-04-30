@@ -47,14 +47,14 @@ assert_types(const std::integral_constant<bool, true>) {
                 "PointStressIntegrandViewType must be a 2D view");
   static_assert(
       PointStressIntegrandViewType::static_extent(0) ==
-          specfem::element::attributes<DimensionTag, MediumTag>::dimension,
-      "PointStressIntegrandViewType must have the same number of "
-      "dimensions as the medium");
-  static_assert(
-      PointStressIntegrandViewType::static_extent(1) ==
           specfem::element::attributes<DimensionTag, MediumTag>::components,
       "PointStressIntegrandViewType must have the same number of "
       "components as the medium");
+  static_assert(
+      PointStressIntegrandViewType::static_extent(1) ==
+          specfem::element::attributes<DimensionTag, MediumTag>::dimension,
+      "PointStressIntegrandViewType must have the same number of "
+      "dimensions as the medium");
 
   return;
 }
