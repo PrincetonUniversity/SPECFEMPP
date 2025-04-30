@@ -4,6 +4,7 @@
 #include "io/reader.hpp"
 #include "periodic_tasks/wavefield_reader.hpp"
 #include "periodic_tasks/wavefield_writer.hpp"
+#include "utilities/strings.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::wavefield::wavefield(
@@ -83,11 +84,11 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
   const std::shared_ptr<specfem::periodic_tasks::periodic_task> writer =
       [&]() -> std::shared_ptr<specfem::periodic_tasks::periodic_task> {
     if (this->simulation_type == specfem::simulation::type::forward) {
-      if (this->output_format == "HDF5") {
+      if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<
             specfem::periodic_tasks::wavefield_writer<specfem::io::HDF5> >(
             this->output_folder, this->time_interval, this->include_last_step);
-      } else if (this->output_format == "ASCII") {
+      } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<
             specfem::periodic_tasks::wavefield_writer<specfem::io::ASCII> >(
             this->output_folder, this->time_interval, this->include_last_step);
@@ -109,11 +110,11 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
   const std::shared_ptr<specfem::periodic_tasks::periodic_task> reader =
       [&]() -> std::shared_ptr<specfem::periodic_tasks::periodic_task> {
     if (this->simulation_type == specfem::simulation::type::combined) {
-      if (this->output_format == "HDF5") {
+      if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<
             specfem::periodic_tasks::wavefield_reader<specfem::io::HDF5> >(
             this->output_folder, this->time_interval, this->include_last_step);
-      } else if (this->output_format == "ASCII") {
+      } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<
             specfem::periodic_tasks::wavefield_reader<specfem::io::ASCII> >(
             this->output_folder, this->time_interval, this->include_last_step);
