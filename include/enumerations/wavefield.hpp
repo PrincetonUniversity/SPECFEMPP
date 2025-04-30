@@ -19,10 +19,10 @@ enum class type { displacement, velocity, acceleration, pressure };
 /**
  * @brief Defines compile time constants for wavefield components
  *
- * @tparam DimensionType Dimension of the wavefield
+ * @tparam DimensionTag Dimension of the wavefield
  * @tparam Component Type of the wavefield component
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::type Component>
 class wavefield;
 

@@ -3,10 +3,10 @@
 
 #include "boundary_medium_container.hpp"
 
-template <specfem::dimension::type DimensionType,
-          specfem::element::medium_tag MediumType,
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag,
           specfem::element::boundary_tag BoundaryTag>
-specfem::compute::impl::boundary_medium_container<DimensionType, MediumType,
+specfem::compute::impl::boundary_medium_container<DimensionTag, MediumTag,
                                             BoundaryTag>::
     boundary_medium_container(
         const int nstep, const specfem::compute::mesh mesh,
@@ -20,7 +20,7 @@ specfem::compute::impl::boundary_medium_container<DimensionType, MediumType,
   const int nx = mesh.ngllx;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (element_types.get_medium_tag(ispec) == MediumType &&
+    if (element_types.get_medium_tag(ispec) == MediumTag &&
         element_types.get_boundary_tag(ispec) == BoundaryTag) {
       property_index_mapping(ispec) = nelements;
       nelements++;

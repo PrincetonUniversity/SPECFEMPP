@@ -7,14 +7,14 @@ namespace point {
 /**
  * @brief Store frechet kernels for a quadrature point
  *
- * @tparam DimensionType Dimension of the element where the quadrature point is
+ * @tparam DimensionTag Dimension of the element where the quadrature point is
  * located
  * @tparam MediumTag Medium of the element where the quadrature point is located
  * @tparam PropertyTag  Property of the element where the quadrature point is
  * located
  * @tparam UseSIMD  Use SIMD instructions
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>

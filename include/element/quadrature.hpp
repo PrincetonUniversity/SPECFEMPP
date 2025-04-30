@@ -140,8 +140,8 @@ public:
   }
 };
 
-template <int NGLL, specfem::dimension::type DimensionType,
-          typename MemorySpace, typename MemoryTraits, bool StoreHPrimeGLL,
+template <int NGLL, specfem::dimension::type DimensionTag, typename MemorySpace,
+          typename MemoryTraits, bool StoreHPrimeGLL,
           bool StoreWeightTimesHPrimeGLL>
 struct QuadratureTraits
     : public ImplQuadratureTraits<
@@ -151,7 +151,7 @@ struct QuadratureTraits
 
   constexpr static int ngll = NGLL;
   constexpr static int dimension =
-      specfem::dimension::dimension<DimensionType>::dim;
+      specfem::dimension::dimension<DimensionTag>::dim;
   using ViewType = Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight,
                                 MemorySpace, MemoryTraits>;
 
@@ -187,7 +187,7 @@ struct QuadratureTraits
  * compute forces.
  *
  * @tparam NGLL Number of Gauss-Lobatto-Legendre points
- * @tparam DimensionType Dimension of the element
+ * @tparam DimensionTag Dimension of the element
  * @tparam MemorySpace Memory space for the views
  * @tparam MemoryTraits Memory traits for the views
  * @tparam StoreHPrimeGLL Whether to store the derivatives of the Lagrange
@@ -195,11 +195,11 @@ struct QuadratureTraits
  * @tparam WeightTimesDerivatives Whether to store the weight times the
  * derivatives of the Lagrange polynomials
  */
-template <int NGLL, specfem::dimension::type DimensionType,
-          typename MemorySpace, typename MemoryTraits, bool StoreHPrimeGLL,
+template <int NGLL, specfem::dimension::type DimensionTag, typename MemorySpace,
+          typename MemoryTraits, bool StoreHPrimeGLL,
           bool StoreWeightTimesHPrimeGLL>
 struct quadrature
-    : public impl::QuadratureTraits<NGLL, DimensionType, MemorySpace,
+    : public impl::QuadratureTraits<NGLL, DimensionTag, MemorySpace,
                                     MemoryTraits, StoreHPrimeGLL,
                                     StoreWeightTimesHPrimeGLL> {
 
@@ -214,7 +214,7 @@ struct quadrature
    *
    */
   using ViewType =
-      typename impl::QuadratureTraits<NGLL, DimensionType, MemorySpace,
+      typename impl::QuadratureTraits<NGLL, DimensionTag, MemorySpace,
                                       MemoryTraits, StoreHPrimeGLL,
                                       StoreWeightTimesHPrimeGLL>::ViewType;
   ///@}
@@ -240,7 +240,7 @@ struct quadrature
    * hprime_gll or @c hprime_wgll.
    */
   KOKKOS_FUNCTION quadrature(const ViewType &view)
-      : impl::QuadratureTraits<NGLL, DimensionType, MemorySpace, MemoryTraits,
+      : impl::QuadratureTraits<NGLL, DimensionTag, MemorySpace, MemoryTraits,
                                StoreHPrimeGLL, StoreWeightTimesHPrimeGLL>(
             view) {}
 
@@ -255,7 +255,7 @@ struct quadrature
    * hprime_wgll.
    */
   KOKKOS_FUNCTION quadrature(const ViewType &view1, const ViewType &view2)
-      : impl::QuadratureTraits<NGLL, DimensionType, MemorySpace, MemoryTraits,
+      : impl::QuadratureTraits<NGLL, DimensionTag, MemorySpace, MemoryTraits,
                                StoreHPrimeGLL, StoreWeightTimesHPrimeGLL>(
             view1, view2) {}
 
@@ -267,7 +267,7 @@ struct quadrature
    */
   template <typename MemberType>
   KOKKOS_FUNCTION quadrature(const MemberType &team)
-      : impl::QuadratureTraits<NGLL, DimensionType, MemorySpace, MemoryTraits,
+      : impl::QuadratureTraits<NGLL, DimensionTag, MemorySpace, MemoryTraits,
                                StoreHPrimeGLL, StoreWeightTimesHPrimeGLL>(
             team) {
     static_assert(

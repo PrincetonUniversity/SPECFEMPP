@@ -20,25 +20,25 @@ namespace medium {
  * @brief Compute the contribution to mass matrix at a given quadrature point
  * within an element
  *
- * @tparam DimensionType Dimension of the element (2D or 3D)
+ * @tparam DimensionTag Dimension of the element (2D or 3D)
  * @tparam MediumTag Medium tag for the element
  * @tparam PropertyTag Property tag for the element
  * @tparam UseSIMD Use SIMD instructions
  * @param properties Material properties at the quadrature point
  * @param partial_derivatives Spatial derivatives of basis functions at the
  * quadrature point
- * @return specfem::point::field<DimensionType, MediumTag, false, false, false,
+ * @return specfem::point::field<DimensionTag, MediumTag, false, false, false,
  * true, UseSIMD> Contribution to mass matrix at the quadrature point
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
-KOKKOS_INLINE_FUNCTION specfem::point::field<DimensionType, MediumTag, false,
+KOKKOS_INLINE_FUNCTION specfem::point::field<DimensionTag, MediumTag, false,
                                              false, false, true, UseSIMD>
 mass_matrix_component(
-    const specfem::point::properties<DimensionType, MediumTag, PropertyTag,
+    const specfem::point::properties<DimensionTag, MediumTag, PropertyTag,
                                      UseSIMD> &properties,
-    const specfem::point::partial_derivatives<DimensionType, true, UseSIMD>
+    const specfem::point::partial_derivatives<DimensionTag, true, UseSIMD>
         &partial_derivatives) {
   return impl_mass_matrix_component(properties, partial_derivatives);
 }

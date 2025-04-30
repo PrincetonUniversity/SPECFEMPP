@@ -15,18 +15,18 @@ namespace impl {
  * policy.
  *
  * @tparam UseSIMD Indicates whether SIMD is used or not.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  */
-template <bool UseSIMD, specfem::dimension::type DimensionType>
+template <bool UseSIMD, specfem::dimension::type DimensionTag>
 struct chunk_index_type;
 
 /**
  * @brief Template specialization when using SIMD.
  *
  */
-template <specfem::dimension::type DimensionType>
-struct chunk_index_type<true, DimensionType> {
-  constexpr static auto dimension = DimensionType; ///< Dimension type
+template <specfem::dimension::type DimensionTag>
+struct chunk_index_type<true, DimensionTag> {
+  constexpr static auto dimension = DimensionTag; ///< Dimension type
   int ielement; ///< Element index within the iterator range
   specfem::point::simd_index<dimension> index; ///< SIMD index of the quadrature
                                                ///< point(s)
@@ -41,9 +41,9 @@ struct chunk_index_type<true, DimensionType> {
  * @brief Template specialization when not using SIMD.
  *
  */
-template <specfem::dimension::type DimensionType>
-struct chunk_index_type<false, DimensionType> {
-  constexpr static auto dimension = DimensionType; ///< Dimension type
+template <specfem::dimension::type DimensionTag>
+struct chunk_index_type<false, DimensionTag> {
+  constexpr static auto dimension = DimensionTag; ///< Dimension type
   int ielement; ///< Element index within the iterator range
   specfem::point::index<dimension> index; ///< Index of the quadrature point
 
@@ -58,17 +58,17 @@ struct chunk_index_type<false, DimensionType> {
  * policy.
  *
  * @tparam UseSIMD Indicates whether SIMD is used or not.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  */
-template <bool UseSIMD, specfem::dimension::type DimensionType>
+template <bool UseSIMD, specfem::dimension::type DimensionTag>
 struct mapped_chunk_index_type
-    : public chunk_index_type<UseSIMD, DimensionType> {
-  using base_type = chunk_index_type<UseSIMD, DimensionType>;
+    : public chunk_index_type<UseSIMD, DimensionTag> {
+  using base_type = chunk_index_type<UseSIMD, DimensionTag>;
   int imap; ///< Index of the mapped element
 
   KOKKOS_INLINE_FUNCTION
   mapped_chunk_index_type(const int ielement,
-                          const specfem::point::index<DimensionType> index,
+                          const specfem::point::index<DimensionTag> index,
                           const int imap)
       : base_type(ielement, index), imap(imap) {}
 };
@@ -80,10 +80,10 @@ struct mapped_chunk_index_type
  * iterator.
  *
  * @tparam ViewType View type for the indices of elements within this iterator.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  * @tparam SIMD SIMD type to use simd operations @ref specfem::datatypes::simd
  */
-template <typename ViewType, specfem::dimension::type DimensionType,
+template <typename ViewType, specfem::dimension::type DimensionTag,
           typename SIMD>
 class chunk;
 
@@ -245,7 +245,7 @@ public:
   }
 };
 
-template <typename ViewType, specfem::dimension::type DimensionType,
+template <typename ViewType, specfem::dimension::type DimensionTag,
           typename SIMD>
 class mapped_chunk;
 

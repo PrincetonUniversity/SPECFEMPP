@@ -11,21 +11,21 @@ namespace mesh {
 /**
  * @brief Boundary information
  *
- * @tparam DimensionType Dimension type for the mesh
+ * @tparam DimensionTag Dimension type for the mesh
  */
-template <specfem::dimension::type DimensionType> struct boundaries {
+template <specfem::dimension::type DimensionTag> struct boundaries {
 
-  constexpr static auto dimension = DimensionType; ///< Dimension type
+  constexpr static auto dimension = DimensionTag; ///< Dimension type
 
-  specfem::mesh::absorbing_boundary<DimensionType>
+  specfem::mesh::absorbing_boundary<DimensionTag>
       absorbing_boundary; ///< Absorbing boundary
-  specfem::mesh::acoustic_free_surface<DimensionType>
+  specfem::mesh::acoustic_free_surface<DimensionTag>
       acoustic_free_surface; ///< Acoustic free
                              ///< surface
-  specfem::mesh::forcing_boundary<DimensionType> forcing_boundary; ///< Forcing
-                                                                   ///< boundary
-                                                                   ///< (never
-                                                                   ///< used)
+  specfem::mesh::forcing_boundary<DimensionTag> forcing_boundary; ///< Forcing
+                                                                  ///< boundary
+                                                                  ///< (never
+                                                                  ///< used)
 
   /**
    * @name Constructors
@@ -46,11 +46,10 @@ template <specfem::dimension::type DimensionType> struct boundaries {
    * @param forcing_boundary forcing boundary
    */
   boundaries(
-      const specfem::mesh::absorbing_boundary<DimensionType>
-          &absorbing_boundary,
-      const specfem::mesh::acoustic_free_surface<DimensionType>
+      const specfem::mesh::absorbing_boundary<DimensionTag> &absorbing_boundary,
+      const specfem::mesh::acoustic_free_surface<DimensionTag>
           &acoustic_free_surface,
-      const specfem::mesh::forcing_boundary<DimensionType> &forcing_boundary)
+      const specfem::mesh::forcing_boundary<DimensionTag> &forcing_boundary)
       : absorbing_boundary(absorbing_boundary),
         acoustic_free_surface(acoustic_free_surface),
         forcing_boundary(forcing_boundary) {}
