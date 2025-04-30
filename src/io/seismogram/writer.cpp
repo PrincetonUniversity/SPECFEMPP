@@ -63,7 +63,8 @@ void specfem::io::seismogram_writer::write(
         filename = { this->output_folder + "/" + network_name + "." +
                      station_name + ".S2.BXT.semr" };
       } else if (this->elastic_wave == specfem::enums::elastic_wave::sh) {
-        // NEEDS TO BE UPDATED WHEN IMPLEMENTING SH_LV (what is L? what is V?)
+        // NEEDS TO BE UPDATED WHEN IMPLEMENTING SH_LV
+        // L should be rotation around x and v rotation around z
         filename = { this->output_folder + "/" + network_name + "." +
                          station_name + ".S2.BXV.semr",
                      this->output_folder + "/" + network_name + "." +

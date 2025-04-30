@@ -39,19 +39,27 @@ database_filename               = @CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/databa
 use_existing_STATIONS           = .false.
 
 # number of receiver sets (i.e. number of receiver lines to create below)
-nreceiversets                   = 1
+nreceiversets                   = 2
 
 # orientation
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
-nrec                            = 50             # number of receivers
-xdeb                            = 0.05           # first receiver x in meters
-zdeb                            = 0.2640         # first receiver z in meters
-xfin                            = 0.28           # last receiver x in meters (ignored if only one receiver)
-zfin                            = 0.2640         # last receiver z in meters (ignored if only one receiver)
-record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
+nrec                            = 3             # number of receivers
+xdeb                            = 2200.           # first receiver x in meters
+zdeb                            = 2200.          # first receiver z in meters
+xfin                            = 2800.          # last receiver x in meters (ignored if only one receiver)
+zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
+record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
+
+# second receiver set
+nrec                            = 3             # number of receivers
+xdeb                            = 2500.          # first receiver x in meters
+zdeb                            = 2500.          # first receiver z in meters
+xfin                            = 2500.          # last receiver x in meters (ignored if only one receiver)
+zfin                            = 1900.             # last receiver z in meters (ignored if only one receiver)
+record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
 # filename to store stations file
 stations_filename              = @CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/STATIONS
@@ -81,7 +89,8 @@ nbmodels                        = 1
 #       Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
 #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
 #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
-1 5 2700.d0 13.5d09 8.1d09 2.0d09 1.d04 1.d08 1.936d08 3.0464d09 0 0 0 0 0
+1 5 2700.d0 13.5d09 8.1d09 0.0d0 1.d0 0.d00 0.0d0 0.0d0 0 0 0 0 0
+# 1 5 2700.d0 13.5d09 8.1d09 2.0d09 1.d04 1.d08 1.936d08 3.0464d09 0 0 0 0 0
 
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz

@@ -36,7 +36,8 @@ specfem::compute::receivers::receivers(
     if (seis_type != specfem::wavefield::type::displacement &&
         seis_type != specfem::wavefield::type::velocity &&
         seis_type != specfem::wavefield::type::acceleration &&
-        seis_type != specfem::wavefield::type::pressure) {
+        seis_type != specfem::wavefield::type::pressure &&
+        seis_type != specfem::wavefield::type::rotation) {
       throw std::runtime_error("Invalid seismogram type");
     }
 

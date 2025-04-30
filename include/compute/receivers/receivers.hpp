@@ -303,7 +303,7 @@ public:
    * @param nsteps_between_samples Number of time steps between samples
    * @param receivers Vector of receivers
    * @param stypes Vector of seismogram types (displacement, velocity,
-   * acceleration or pressure)
+   * acceleration, pressure, or rotation)
    * @param mesh Mesh object
    * @param tags Tags for every element in the mesh
    * @param properties Properties object

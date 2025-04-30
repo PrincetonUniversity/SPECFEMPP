@@ -22,5 +22,6 @@
  ((velocity, vel, v, veloc)) \
  ((acceleration, acc, a, accel)) \
  ((pressure, p, pres)) \
+ ((rotation, r, rot)) \
  ((newmark)) \
  ((onscreen, on-screen, on_screen))
