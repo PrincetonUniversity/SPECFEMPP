@@ -188,8 +188,7 @@ constexpr auto medium_types() {
   constexpr int total_medium_types = BOOST_PP_SEQ_SIZE(MEDIUM_TAGS);
   constexpr std::array<std::tuple<specfem::dimension::type, medium_tag>,
                        total_medium_types>
-      medium_types{ _MAKE_CONSTEXPR_ARRAY(MEDIUM_TAGS,
-                                          _MAKE_ARRAY_ELEM_MEDIUM) };
+      medium_types{ _MAKE_CONSTEXPR_ARRAY(MEDIUM_TAGS) };
 
   return medium_types;
 }
@@ -211,8 +210,7 @@ constexpr auto material_systems() {
       std::tuple<specfem::dimension::type, specfem::element::medium_tag,
                  specfem::element::property_tag>,
       total_material_systems>
-      material_systems{ _MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS,
-                                              _MAKE_ARRAY_ELEM_MAT_SYS) };
+      material_systems{ _MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS) };
 
   return material_systems;
 }
@@ -235,8 +233,7 @@ constexpr auto element_types() {
                  specfem::element::property_tag,
                  specfem::element::boundary_tag>,
       total_element_types>
-      material_systems{ _MAKE_CONSTEXPR_ARRAY(ELEMENT_TYPES,
-                                              _MAKE_ARRAY_ELEM_ELEM) };
+      material_systems{ _MAKE_CONSTEXPR_ARRAY(ELEMENT_TYPES) };
 
   return material_systems;
 }

@@ -1,4 +1,5 @@
 #include "parameter_parser/setup.hpp"
+#include "utilities/strings.hpp"
 #include "yaml-cpp/yaml.h"
 #include <chrono>
 #include <ctime>
@@ -251,7 +252,8 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
 
         if (const YAML::Node &n_plotter = n_writer["display"]) {
           if (n_plotter["simulation-field"] &&
-              n_plotter["simulation-field"].as<std::string>() == "forward") {
+              specfem::utilities::is_forward_string(
+                  n_plotter["simulation-field"].as<std::string>())) {
             std::ostringstream message;
             message << "Error: Plotting a forward wavefield in combined "
                     << "simulation mode. \n";

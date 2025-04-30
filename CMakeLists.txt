@@ -410,6 +410,11 @@ target_link_libraries(
         )
 
 
+target_link_libraries(
+        utilities
+        ${BOOST_LIBS}
+)
+
 add_library(
         reader
         src/io/property/reader.cpp
@@ -450,6 +455,7 @@ target_link_libraries(
         read_seismogram
         Kokkos::kokkos
         point
+        utilities
 )
 
 add_library(utilities

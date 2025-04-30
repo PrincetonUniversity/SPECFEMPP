@@ -33,11 +33,6 @@ enum class elastic_spin_wave { psv_t, sh_vl };
 enum class axes { x, y, z };
 
 namespace seismogram {
-/**
- * @brief Seismogram type enumeration
- *
- */
-enum class type { displacement, velocity, acceleration, pressure, rotation };
 
 /**
  * @brief Output format of seismogram enumeration
