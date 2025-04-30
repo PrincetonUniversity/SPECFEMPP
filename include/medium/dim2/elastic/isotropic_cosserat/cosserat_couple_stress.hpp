@@ -68,9 +68,9 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
    *
    * Compute the components of the stress tensor from the integrand
    */
-  // const auto t_xx = F(0, 0) * xxi + F(0, 1) * xgamma;
-  const auto t_xz = F(0, 0) * zxi + F(1, 0) * zgamma;
-  const auto t_zx = F(0, 1) * xxi + F(1, 1) * xgamma;
+  // const auto t_xx = F(0, 0) * xxi + F(1, 0) * xgamma;
+  const auto t_xz = F(0, 0) * zxi + F(0, 1) * zgamma;
+  const auto t_zx = F(1, 0) * xxi + F(1, 1) * xgamma;
   // const auto t_zz = F(1, 0) * zxi + F(1, 1) * zgamma;
 
   // Add to acceleration t_{zx} - t_{xz}

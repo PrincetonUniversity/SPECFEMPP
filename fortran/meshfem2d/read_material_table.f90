@@ -283,7 +283,7 @@ subroutine read_material_table()
 
     else
       ! default
-      call stop_the_code('Unknown material code')
+      call stop_the_code('Unknown material code (reading material table)')
 
     endif
 
@@ -565,7 +565,7 @@ subroutine print_materials_info()
     else if (icodemat(i) <= 0) then
       write(IMAIN,*) 'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'
     else
-      call stop_the_code('Unknown material code')
+      call stop_the_code('Unknown material code (printing material table)')
     endif
     write(IMAIN,*) '--------'
   enddo

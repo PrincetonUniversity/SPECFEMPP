@@ -31,7 +31,7 @@ parameters:
             directory: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/results"
 
           wavefield:
-            directory: "@CMAKE_CURRENT_SOURCE_DIR@/wavefield"
+            directory: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/wavefield"
             format: HDF5
             time_interval: 200
 
