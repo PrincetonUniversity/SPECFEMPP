@@ -66,7 +66,7 @@ struct default_chunk_config;
 template <typename SIMD>
 struct default_chunk_config<specfem::dimension::type::dim2, SIMD, Kokkos::Cuda>
     : chunk_config<specfem::dimension::type::dim2, impl::cuda_chunk_size,
-                   impl::cuda_chunk_size, 160, 1, SIMD, Kokkos::Cuda> {};
+                   impl::cuda_chunk_size, 512, 1, SIMD, Kokkos::Cuda> {};
 #endif
 
 #ifdef KOKKOS_ENABLE_OPENMP

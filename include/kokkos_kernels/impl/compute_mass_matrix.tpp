@@ -42,7 +42,11 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   if (nelements == 0)
     return;
 
+#ifdef KOKKOS_ENABLE_CUDA
+  constexpr bool using_simd = false;
+#else
   constexpr bool using_simd = true;
+#endif
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using parallel_config = specfem::parallel_config::default_chunk_config<
       dimension, simd, Kokkos::DefaultExecutionSpace>;
