@@ -36,27 +36,29 @@ KOKKOS_INLINE_FUNCTION
 
   const auto twothirds =
       static_cast<type_real>(2.0) / static_cast<type_real>(3.0);
+
   // P_SV case
   // sigma_xx         [lambda = kappa - 2/3*mu]
   sigma_xx = (properties.kappa() - twothirds * properties.mu()) *
                  (du(0, 0) + du(1, 1)) +
-             properties.mu() * du(0, 0);
+             static_cast<type_real>(2.0) * properties.mu() * du(0, 0);
 
   sigma_zz = (properties.kappa() - twothirds * properties.mu()) *
                  (du(0, 0) + du(1, 1)) +
-             properties.mu() * du(1, 1);
-
-  /* \sigma_{zx} = \mu (\partial_z s_x + \partial_x s_z )
-                   - 2 \nu (\partial_z s_x - \partial_x s_z)
-                   [- 2 \nu \phi_y]
-  */
-  sigma_zx = properties.mu() * (du(1, 0) + du(0, 1)) +
-             properties.nu() * (du(1, 0) - du(0, 1));
+             static_cast<type_real>(2.0) * properties.mu() * du(1, 1);
 
   // \sigma_{xz} = \mu (\partial_x s_z + \partial_z s_x )
-  //               + 2 \nu ( phi_y - .5 * (\partial_x s_z - \partial_z s_x) )
-  sigma_xz = properties.mu() * (du(0, 1), du(1, 0)) -
-             properties.nu() * ((du(0, 1) - du(1, 0)));
+  //               + \nu (\partial_x s_z - \partial_z s_x)
+  //               [+ 2 \nu \phi_y] -> this term is in cosserat_stress.hpp
+  sigma_xz = properties.mu() * (du(1, 0) + du(0, 1)) +
+             properties.nu() * (du(1, 0) - du(0, 1));
+
+  // \sigma_{zx} = \mu (\partial_z s_x + \partial_x s_z )
+  //               + \nu (\partial_z s_x - \partial_x s_z)
+  //               [- 2 \nu \phi_y] -> this term is in cosserat_stress.hpp
+  //
+  sigma_zx = properties.mu() * (du(0, 1) + du(1, 0)) +
+             properties.nu() * (du(0, 1) - du(1, 0));
 
   // I'm pretty sure about the sign in this expression
   // in notes on spin equation (122) suggest +, but my derivation gets to
@@ -68,21 +70,21 @@ KOKKOS_INLINE_FUNCTION
   // or
   // t^c_{yx} = (\mu_c - \nu_c) * \partial_x \phi_y
   // but then below as well...
-  sigma_c_yx = (properties.mu_c() - properties.nu_c()) * du(0, 2);
+  sigma_c_yx = (properties.mu_c() - properties.nu_c()) * du(2, 0);
 
   // [t^c_{yz} = (\mu_c + \nu_c) * \partial_z \phi_y]
   // or
   // t^c_{yz} = (\mu_c - \nu_c) * \partial_z \phi_y
-  sigma_c_yz = (properties.mu_c() - properties.nu_c()) * du(1, 2);
+  sigma_c_yz = (properties.mu_c() - properties.nu_c()) * du(2, 1);
 
   specfem::datatype::VectorPointViewType<type_real, 2, 3, UseSIMD> T;
 
   T(0, 0) = sigma_xx;
-  T(0, 1) = sigma_xz;
-  T(1, 0) = sigma_zx;
+  T(1, 0) = sigma_xz;
+  T(0, 1) = sigma_zx;
   T(1, 1) = sigma_zz;
-  T(2, 0) = sigma_c_yx;
-  T(2, 1) = sigma_c_yz;
+  T(0, 2) = sigma_c_yx;
+  T(1, 2) = sigma_c_yz;
 
   return { T };
 }

@@ -203,7 +203,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   specfem::compute::load_on_device(index, field,
                                                    point_displacement);
 
-                  auto point_stress = specfem::medium::compute_stress(
+                auto point_stress = specfem::medium::compute_stress(
                       point_property, field_derivatives);
 
                   specfem::medium::compute_cosserat_stress(
@@ -258,6 +258,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   specfem::compute::load_on_device(index, partial_derivatives,
                                                     point_partial_derivatives);
 
+                  // Computing the integration factor
                   const auto factor = quadrature.gll.weights(index.iz) *
                                       quadrature.gll.weights(index.ix) *
                                       point_partial_derivatives.jacobian;

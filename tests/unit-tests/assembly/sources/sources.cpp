@@ -281,8 +281,8 @@ void test_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     specfem::compute::assembly &assembly) {
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       {
         check_assembly_source_construction<_dimension_tag_, _medium_tag_>(
             sources, assembly);
@@ -291,8 +291,8 @@ void test_assembly_source_construction(
 
 void test_sources(specfem::compute::assembly &assembly){ FOR_EACH_IN_PRODUCT(
     (DIMENSION_TAG(DIM2),
-     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
+     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
      BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                   COMPOSITE_STACEY_DIRICHLET)),
     {

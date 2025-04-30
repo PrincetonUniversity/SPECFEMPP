@@ -93,19 +93,21 @@ struct value_containers {
    *
    */
   void copy_to_host() {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                    POROELASTIC, ELASTIC_PSV_T),
-                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-                        CAPTURE(value) { _value_.copy_to_host(); })
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+        CAPTURE(value) { _value_.copy_to_host(); })
   }
 
   void copy_to_device() {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                    POROELASTIC, ELASTIC_PSV_T),
-                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-                        CAPTURE(value) { _value_.copy_to_device(); })
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+        CAPTURE(value) { _value_.copy_to_device(); })
   }
 };
 

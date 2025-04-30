@@ -25,18 +25,17 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_stress(
   using ViewType = typename PointStressType::ViewType;
 
   // Stress and diplacement alias
-  // auto &T = point_stress.T;
+  auto &T = point_stress.T;
   const auto &u = point_displacement.displacement;
 
-  const typename ViewType::value_type factor = properties.nu() * u(2);
+  const typename ViewType::value_type factor =
+      static_cast<type_real>(2.0) * properties.nu() * u(2);
 
-  // Component t_xz = ... +  (2 \nu \phi_{y})
-  point_stress.T(0, 1) +=
-      factor; // static_cast<type_real>(2.0) * properties.nu() * u(2);
+  // sigma_xz = ... +  (2 \nu \phi_{y})
+  T(1, 0) += factor;
 
-  // Component t_zx = ... +  (-2 \nu \phi_{y})
-  point_stress.T(1, 0) +=
-      factor; // static_cast<type_real>(-2.0) * properties.nu() * u(2);
+  // sigma_zx = ... +  (-2 \nu \phi_{y})
+  T(0, 1) -= factor;
 
   return;
 };

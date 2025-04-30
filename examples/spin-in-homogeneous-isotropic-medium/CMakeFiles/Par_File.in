@@ -71,7 +71,7 @@ nbmodels                        = 1
 #   anisotropic in AXISYM: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 QKappa Qmu
 #   poroelastic:           model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
 #   electromagnetic:       model_number 4 mu0 e0 e11(e0) e33(e0) sig11 sig33 Qe11 Qe33 Qs11 Qs33 0 0 0
-#   spin:                  model_number 5 rho kappa mu nu j kappa_c mu_c nu_c 0 0 0 0 0
+#   spin:                  model_number 5 rho kappa mu nu j lambda_c mu_c nu_c 0 0 0 0 0
 #   tomo:                  model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
 #
 # note: When viscoelasticity or viscoacousticity is turned on,
@@ -81,7 +81,7 @@ nbmodels                        = 1
 #       Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
 #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
 #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
-1 5 1.d05 22.667d09 4.0d09 2.0d09 1.d04 1.d08 1.936d08 3.0464d09 0 0 0 0 0
+1 5 2700.d0 13.5d09 8.1d09 2.0d09 1.d04 1.d08 1.936d08 3.0464d09 0 0 0 0 0
 
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz

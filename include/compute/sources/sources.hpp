@@ -455,8 +455,8 @@ void store_on_host(const IteratorIndexType iterator_index,
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
