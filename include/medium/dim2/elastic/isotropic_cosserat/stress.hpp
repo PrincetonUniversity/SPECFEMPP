@@ -50,15 +50,15 @@ KOKKOS_INLINE_FUNCTION
   // \sigma_{xz} = \mu (\partial_x s_z + \partial_z s_x )
   //               + \nu (\partial_x s_z - \partial_z s_x)
   //               [+ 2 \nu \phi_y] -> this term is in cosserat_stress.hpp
-  sigma_xz = properties.mu() * (du(1, 0) + du(0, 1)) +
-             properties.nu() * (du(1, 0) - du(0, 1));
+  sigma_xz = properties.mu() * (du(0, 1) + du(1, 0)) +
+             properties.nu() * (du(0, 1) - du(1, 0));
 
   // \sigma_{zx} = \mu (\partial_z s_x + \partial_x s_z )
   //               + \nu (\partial_z s_x - \partial_x s_z)
   //               [- 2 \nu \phi_y] -> this term is in cosserat_stress.hpp
   //
-  sigma_zx = properties.mu() * (du(0, 1) + du(1, 0)) +
-             properties.nu() * (du(0, 1) - du(1, 0));
+  sigma_zx = properties.mu() * (du(1, 0) + du(0, 1)) +
+             properties.nu() * (du(1, 0) - du(0, 1));
 
   // I'm pretty sure about the sign in this expression
   // in notes on spin equation (122) suggest +, but my derivation gets to
@@ -77,14 +77,14 @@ KOKKOS_INLINE_FUNCTION
   // t^c_{yz} = (\mu_c - \nu_c) * \partial_z \phi_y
   sigma_c_yz = (properties.mu_c() - properties.nu_c()) * du(2, 1);
 
-  specfem::datatype::VectorPointViewType<type_real, 2, 3, UseSIMD> T;
+  specfem::datatype::VectorPointViewType<type_real, 3, 2, UseSIMD> T;
 
   T(0, 0) = sigma_xx;
-  T(1, 0) = sigma_xz;
-  T(0, 1) = sigma_zx;
+  T(0, 1) = sigma_xz;
+  T(1, 0) = sigma_zx;
   T(1, 1) = sigma_zz;
-  T(0, 2) = sigma_c_yx;
-  T(1, 2) = sigma_c_yz;
+  T(2, 0) = sigma_c_yx;
+  T(2, 1) = sigma_c_yz;
 
   return { T };
 }

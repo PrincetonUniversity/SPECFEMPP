@@ -409,9 +409,14 @@ target_link_libraries(
         Kokkos::kokkos
         )
 
+add_library(utilities
+        src/utilities/utilities.cpp
+        src/utilities/strings.cpp
+)
 
 target_link_libraries(
         utilities
+        Kokkos::kokkos
         ${BOOST_LIBS}
 )
 
@@ -458,14 +463,7 @@ target_link_libraries(
         utilities
 )
 
-add_library(utilities
-        src/utilities/utilities.cpp
-        src/utilities/strings.cpp
-)
-target_link_libraries(
-        utilities
-        Kokkos::kokkos
-)
+
 
 add_library(
         source_class
