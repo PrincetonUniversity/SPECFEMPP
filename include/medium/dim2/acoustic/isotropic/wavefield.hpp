@@ -85,7 +85,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
             point_stress.T(0, 0);
         wavefield(iterator_index.ielement, index.iz, index.ix, 1) =
-            point_stress.T(1, 0);
+            point_stress.T(0, 1);
       });
 
   return;
