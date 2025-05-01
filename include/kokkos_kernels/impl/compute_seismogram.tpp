@@ -140,7 +140,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
           }
         });
 
-    Kokkos::fence();
+    // Kokkos::fence();
   }
 
   return;
