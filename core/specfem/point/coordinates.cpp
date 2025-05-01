@@ -1,2 +1,2 @@
-#include "specfem/point/coordinates.hpp"
-#include "specfem/point/coordinates.tpp"
+#include "coordinates.hpp"
+#include "coordinates.tpp"
