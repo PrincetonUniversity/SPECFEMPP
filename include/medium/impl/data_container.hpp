@@ -6,10 +6,22 @@
 #define _CREATE_NAMED_VARIABLE(prefix, postfix)                                \
   BOOST_PP_CAT(prefix, BOOST_PP_CAT(_, postfix))
 
+#define _ACCESS_ELEMENT_ON_DEVICE_CONST(elem, index)                           \
+  BOOST_PP_CAT(_, BOOST_PP_SEQ_ELEM(0, elem))(index)
+
 #define _ACCESS_ELEMENT_ON_DEVICE(elem, index) BOOST_PP_SEQ_ELEM(0, elem)[index]
 
 #define _ACCESS_ELEMENT_ON_HOST(elem, index)                                   \
   BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem))[index]
+
+#define _CALL_FUNCTOR_ON_DEVICE_CONST(r, data, elem)                           \
+  Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space, \
+               Kokkos::MemoryTraits<Kokkos::RandomAccess> >                    \
+      BOOST_PP_CAT(_, BOOST_PP_SEQ_ELEM(0, elem)) =                            \
+          BOOST_PP_SEQ_ELEM(0, elem).get_base_view();                          \
+  BOOST_PP_TUPLE_ELEM(0, data)                                                 \
+  (_ACCESS_ELEMENT_ON_DEVICE_CONST(elem, BOOST_PP_TUPLE_ELEM(1, data)),        \
+   static_cast<std::size_t>(BOOST_PP_SEQ_ELEM(1, elem)));
 
 #define _CALL_FUNCTOR_ON_DEVICE(r, data, elem)                                 \
   BOOST_PP_TUPLE_ELEM(0, data)                                                 \
@@ -22,6 +34,14 @@
    BOOST_PP_SEQ_ELEM(1, elem));
 
 #define _DATA_ACCESSOR(seq)                                                    \
+  template <typename FunctorType, typename IndexType>                          \
+  KOKKOS_INLINE_FUNCTION void for_each_on_device_const(const IndexType &index, \
+                                                       FunctorType f) const {  \
+    const auto &mapping =                                                      \
+        BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
+    const std::size_t _index = mapping(index.ispec, index.iz, index.ix);       \
+    BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_DEVICE_CONST, (f, _index), seq)     \
+  }                                                                            \
   template <typename FunctorType, typename IndexType>                          \
   KOKKOS_INLINE_FUNCTION void for_each_on_device(const IndexType &index,       \
                                                  FunctorType f) const {        \
