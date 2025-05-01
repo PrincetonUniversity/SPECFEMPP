@@ -226,6 +226,8 @@ add_subdirectory(fortran/meshfem3d)
 set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
+# Add module subdirectories
+add_subdirectory(core/specfem/point)
 
 # Build specfem2d libraries
 add_library(
@@ -289,14 +291,6 @@ else()
         ${HDF5_LIBRARIES}
     )
 endif()
-
-file(GLOB POINT_SOURCES "core/specfem/point/*.cpp")
-add_library(point ${POINT_SOURCES})
-
-target_link_libraries(
-        point
-        Kokkos::kokkos
-)
 
 add_library(
         enumerations

@@ -2,7 +2,7 @@
 #define _JACOBIAN_HPP
 
 #include "kokkos_abstractions.h"
-#include "specfem/point/partial_derivatives.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {
