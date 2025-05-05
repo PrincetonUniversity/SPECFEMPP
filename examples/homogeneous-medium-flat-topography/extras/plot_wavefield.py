@@ -7,7 +7,7 @@ from scipy.interpolate import griddata
 import yaml
 
 
-def plot_angle_points(coordinates, field, ax=None):
+def plot_wavefield(coordinates, field, ax=None):
     """
     Plot the angle points of a given field.
 
@@ -28,48 +28,6 @@ def plot_angle_points(coordinates, field, ax=None):
         The axes object.
     """
 
-    # Plot the angle points
-    # sc = ax.scatter(coordinates[:, 0], coordinates[:, 1], c= field[:, 0], cmap='seismic')
-
-    # Make manual cross for each point as line collection where each
-    # line is separated by a np.nan value
-    # ll = 10
-    # lw = 0.001
-    # x = coordinates[:, 0]
-    # y = coordinates[:, 1]
-    # angle = field[:, 2] * 1e4
-
-    # lxx___0 = ll * np.cos(angle)
-    # lxy___0 = ll * np.sin(angle)
-    # lyx___0 = -ll * np.sin(angle)
-    # lyy___0 = ll * np.cos(angle)
-    # lxx_180 = ll * np.cos(angle + np.pi)
-    # lxy_180 = ll * np.sin(angle + np.pi)
-    # lyx_180 = -ll * np.sin(angle + np.pi)
-    # lyy_180 = ll * np.cos(angle + np.pi)
-    # xp = np.column_stack(
-    #     (
-    #         x + lxx___0,
-    #         x + lxx_180,
-    #         np.nan * np.ones_like(x),
-    #         x + lyx___0,
-    #         x + lyx_180,
-    #         np.nan * np.ones_like(x),
-    #     )
-    # ).flatten()
-    # yp = np.column_stack(
-    #     (
-    #         y + lxy___0,
-    #         y + lxy_180,
-    #         np.nan * np.ones_like(y),
-    #         y + lyy___0,
-    #         y + lyy_180,
-    #         np.nan * np.ones_like(y),
-    #     )
-    # ).flatten()
-
-    # angle = field[:, 2]
-
     # Instead of using the ll value compute the line  coordinates as done above
     # from the angle
 
@@ -84,9 +42,6 @@ def plot_angle_points(coordinates, field, ax=None):
     Uz = griddata(
         (coordinates[:, 0], coordinates[:, 1]), field[:, 1], (X, Z), method="linear"
     )
-    Ur = griddata(
-        (coordinates[:, 0], coordinates[:, 1]), field[:, 2], (X, Z), method="linear"
-    )
 
     dx = X[0, 1] - X[0, 0]
     dz = Z[1, 0] - Z[0, 0]
@@ -97,17 +52,13 @@ def plot_angle_points(coordinates, field, ax=None):
     # Curl
     cU = 0.5 * (dUz_x - dUx_z)
 
-    diff = Ur - cU
-
     # print min max curl
     print(f"    Min curl: {np.min(cU)}")
     print(f"    Max curl: {np.max(cU)}")
-    print(f"    Min Ur: {np.min(Ur)}")
-    print(f"    Max Ur: {np.max(Ur)}")
 
-    fig = plt.figure(figsize=(30, 16))
+    fig = plt.figure(figsize=(30, 5.0))
 
-    ax_ux = fig.add_subplot(231)
+    ax_ux = fig.add_subplot(131)
 
     ax_ux.set_title("$U_x$")
     ax_ux.set_xlabel("x (m)")
@@ -125,7 +76,7 @@ def plot_angle_points(coordinates, field, ax=None):
     )
     plt.colorbar(sc_ux, ax=ax_ux)
 
-    ax_uz = fig.add_subplot(232)
+    ax_uz = fig.add_subplot(132)
     ax_uz.set_title("$U_z$")
     ax_uz.set_xlabel("x (m)")
     ax_uz.set_ylabel("z (m)")
@@ -142,25 +93,8 @@ def plot_angle_points(coordinates, field, ax=None):
     )
     plt.colorbar(sc_uz, ax=ax_uz)
 
-    ax_ur = fig.add_subplot(233)
-    ax_ur.set_title("$U_r$")
-    ax_ur.set_xlabel("x (m)")
-    ax_ur.set_ylabel("z (m)")
-    ax_ur.set_aspect("equal", adjustable="box")
-    ur_scale = np.max(np.abs(Ur))
-    sc_ur = ax_ur.contourf(
-        X,
-        Z,
-        Ur,
-        levels=np.linspace(-ur_scale, ur_scale, 20, endpoint=True),
-        cmap="seismic",
-        alpha=1.0,
-        antialiased=True,
-    )
-    plt.colorbar(sc_ur, ax=ax_ur)
-
     # Plot curl
-    ax_curl = fig.add_subplot(235)
+    ax_curl = fig.add_subplot(133)
     ax_curl.set_title(r"$\frac{1}{2}\mathbf{\nabla} \times \mathbf{s}$")
     ax_curl.set_xlabel("x (m)")
     ax_curl.set_ylabel("z (m)")
@@ -177,29 +111,10 @@ def plot_angle_points(coordinates, field, ax=None):
     )
     plt.colorbar(sc_curl, ax=ax_curl)
 
-    # Plot the difference
-    ax_diff = fig.add_subplot(236)
-    ax_diff.set_title(r"$U_r - \frac{1}{2}\mathbf{\nabla} \times \mathbf{s}$")
-    ax_diff.set_xlabel("x (m)")
-    ax_diff.set_ylabel("z (m)")
-    ax_diff.set_aspect("equal", adjustable="box")
-    diff_scale = np.max(np.abs(diff))
-    sc_diff = ax_diff.contourf(
-        X,
-        Z,
-        diff,
-        levels=np.linspace(-diff_scale, diff_scale, 20, endpoint=True),
-        cmap="seismic",
-        alpha=1.0,
-        antialiased=True,
-    )
-    plt.colorbar(sc_diff, ax=ax_diff)
-
-    return fig, ax
+    return fig
 
 
 # Get user and filename
-user = os.environ.get("USER")
 filename = "OUTPUT_FILES/wavefield/ForwardWavefield.h5"
 output_dir = "OUTPUT_FILES/wavefield/wavefield_plots"
 
@@ -217,8 +132,8 @@ for f in glob_files:
 
 # Read coordinates
 with h5py.File(filename, "r") as f:
-    x = f["/Coordinates/elastic_psv_t/X"][:].flatten()
-    z = f["/Coordinates/elastic_psv_t/Z"][:].flatten()
+    x = f["/Coordinates/elastic_psv/X"][:].flatten()
+    z = f["/Coordinates/elastic_psv/Z"][:].flatten()
 
     # Get steps from list of keys
     keys = list(f["/"].keys())
@@ -264,7 +179,7 @@ for it in range(it, ft, delta_timestep):
     print("  Reading ...")
 
     # Read displacement data
-    path = f"/Step{it:06d}/elastic_psv_t/Displacement"
+    path = f"/Step{it:06d}/elastic_psv/Displacement"
     with h5py.File(filename, "r") as f:
         u = f[path][:, :]
 
@@ -275,7 +190,6 @@ for it in range(it, ft, delta_timestep):
 
     ux = u[:, 0].flatten()
     uz = u[:, 1].flatten()
-    ur = u[:, 2].flatten()
 
     # Interpolate ux to grid
     # Ux = griddata((x, z), ux, (X, Z), method="linear")
@@ -284,25 +198,20 @@ for it in range(it, ft, delta_timestep):
 
     cx_scale = np.max(np.abs(ux))
     cz_scale = np.max(np.abs(uz))
-    cr_scale = np.max(np.abs(ur))
 
     print(f"    Max ux: {cx_scale}")
     print(f"    Max uz: {cz_scale}")
-    print(f"    Max ur: {cr_scale}")
 
     print("  Plotting ...")
 
-    plot_angle_points(
-        np.column_stack((x.flatten(), z.flatten())),
-        u,
-    )
+    plot_wavefield(np.column_stack((x.flatten(), z.flatten())), u)
     # plt.title(f"PSV-T Wavefield at t = {it * dt:.2f} s")
     plt.xlabel("x (m)")
     plt.ylabel("z (m)")
     plt.gca().set_aspect("equal", adjustable="box")
-    plt.suptitle(f"PSV-T Wavefield at t = {it * dt:.2f} s")
+    plt.suptitle(f"P-SV Wavefield at t = {it * dt:.2f} s")
     # Save figure
-    figname = f"OUTPUT_FILES/wavefield/wavefield_plots/psvt{it:06d}.pdf"
+    figname = f"OUTPUT_FILES/wavefield/wavefield_plots/psv{it:06d}.pdf"
     plt.savefig(figname, dpi=300)
     plt.close()
 
