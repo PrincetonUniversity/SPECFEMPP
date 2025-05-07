@@ -28,10 +28,10 @@ parameters:
         writer:
           seismogram:
             format: "ascii"
-            directory: "@CURRENT_EXAMPLE_INSTALL_DIR@/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/results"
+            directory: "@CURRENT_EXAMPLE_INSTALL_DIR@/OUTPUT_FILES/results"
 
   receivers:
-    stations: "@CURRENT_EXAMPLE_INSTALL_DIR@/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/STATIONS"
+    stations: "@CURRENT_EXAMPLE_INSTALL_DIR@/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - velocity
