@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.17.5)
 
+if (NOT DEFINED EXAMPLE_INSTALL_DIR)
+    set(EXAMPLE_INSTALL_DIR ./install)
+endif()
+
 # 2D
 add_subdirectory(anisotropic-crystal)
 add_subdirectory(homogeneous-medium-flat-topography)
