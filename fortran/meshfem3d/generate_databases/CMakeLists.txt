@@ -121,3 +121,9 @@ target_link_libraries(xgenerate_databases PRIVATE
   meshfem3D::version
   meshfem3D::generate_databases
 )
+
+install(TARGETS xgenerate_databases
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)

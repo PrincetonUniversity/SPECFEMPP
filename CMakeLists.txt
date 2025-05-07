@@ -7,11 +7,11 @@ option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
 option(VTK_CXX_BUILD "Build VTK C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
-option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+option(BUILD_EXAMPLES "Examples included" ON)
 
 # To fix the CMake policy warning for yaml-cpp and google test
 # This should be removed once both packages are updated (Today: April 4, 2025)
@@ -749,8 +749,17 @@ if (BUILD_TESTS)
 endif()
 
 if (BUILD_EXAMPLES)
-        message(STATUS "Including examples.")
-        add_subdirectory(examples)
+    # Define option with default value
+
+    if(DEFINED EXAMPLE_INSTALL_DIR)
+        message(STATUS "EXAMPLE_INSTALL_DIR was defined as: ${EXAMPLE_INSTALL_DIR}")
+    else()
+        set(EXAMPLE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/examples" CACHE STRING "Directory for building the examples")
+        message(STATUS "EXAMPLE_INSTALL_DIR was not defined, using default: ${EXAMPLE_INSTALL_DIR}")
+    endif()
+
+    message(STATUS "Configuring examples...")
+    add_subdirectory(examples)
 endif()
 
 # Doxygen
