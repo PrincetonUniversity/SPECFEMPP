@@ -74,9 +74,10 @@ endif()
 ## TODO: Add options for on utilizing in house builds
 include(FetchContent)
 FetchContent_Declare(
-  kokkos
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
+        kokkos
+        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
+        EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(kokkos)
 
@@ -85,6 +86,7 @@ FetchContent_Declare(
         yaml
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
         URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
+        EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(yaml)
 
@@ -148,6 +150,7 @@ if (NOT ${Boost_FOUND})
         GIT_PROGRESS TRUE
         DOWNLOAD_NO_EXTRACT FALSE
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+        EXCLUDE_FROM_ALL
     )
     FetchContent_MakeAvailable(Boost)
 
@@ -793,3 +796,17 @@ if (SPECFEMPP_BINDING_PYTHON)
     target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
     install(TARGETS _core DESTINATION specfempp_core)
 endif (SPECFEMPP_BINDING_PYTHON)
+
+
+install(
+        TARGETS specfem2d
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+)
+install(
+        TARGETS specfem3d
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+)
