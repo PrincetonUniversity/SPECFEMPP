@@ -7,6 +7,7 @@
       "binaryDir": "build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "install/release",
         "BUILD_TESTS": "ON",
         "ENABLE_SIMD": "ON",
         "Kokkos_ARCH_NATIVE": "ON",

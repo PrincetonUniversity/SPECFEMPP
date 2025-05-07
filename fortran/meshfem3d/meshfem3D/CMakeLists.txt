@@ -88,3 +88,9 @@ if (ADIOS)
     meshfem3D::shared_adios_module
   )
 endif(ADIOS)
+
+install(TARGETS xmeshfem3D
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
