@@ -106,6 +106,8 @@ struct assembly {
     return fields.buffer.get_total_degrees_of_freedom();
   }
 
+  void check_jacobian() const;
+
   std::string print() const;
 };
 

@@ -93,6 +93,9 @@ specfem::compute::assembly::assembly(
     std::cerr << msg.str();
   }
 
+  // Checking the Jacobian
+  this->check_jacobian();
+
   return;
 }
 
@@ -144,4 +147,53 @@ std::string specfem::compute::assembly::print() const {
   }
 
   return message.str();
+}
+
+void specfem::compute::assembly::check_jacobian() const {
+
+  type_real maxj = -1e10;
+  type_real minj = 1e10;
+
+  // Check if the mesh has small or negative jacobians
+  for (int ispec = 0; ispec < this->mesh.nspec; ++ispec) {
+    for (int iz = 0; iz < this->mesh.ngllz; ++iz) {
+      for (int ix = 0; ix < this->mesh.ngllx; ++ix) {
+
+        if (this->partial_derivatives.h_jacobian(ispec, iz, ix) > maxj) {
+          maxj = this->partial_derivatives.h_jacobian(ispec, iz, ix);
+        }
+        if (this->partial_derivatives.h_jacobian(ispec, iz, ix) < minj) {
+          minj = this->partial_derivatives.h_jacobian(ispec, iz, ix);
+        }
+
+        // check whether this loop is actually run
+        if (this->partial_derivatives.h_jacobian(ispec, iz, ix) < 1e7) {
+
+          std::ostringstream value_msg;
+          value_msg << " J: "
+                    << this->partial_derivatives.h_jacobian(ispec, iz, ix)
+                    << " at element " << ispec << ", at GLL (iz, ix) = (" << iz
+                    << ", " << ix << "), and coordinate (x,y) = ("
+                    << this->mesh.points.h_coord(0, ispec, iz, ix) << ", "
+                    << this->mesh.points.h_coord(1, ispec, iz, ix) << ")\n";
+
+          if (this->partial_derivatives.h_jacobian(ispec, iz, ix) < 0.0) {
+            std::ostringstream msg;
+            msg << "Error: Negative Jacobian encountered.";
+            msg << value_msg.str();
+            throw std::runtime_error(msg.str());
+          } else {
+            // Print a warning if the jacobian is small
+            // and not negative
+            std::ostringstream msg;
+            msg << "Warning: Small Jacobian. ";
+            msg << value_msg.str();
+            std::cout << msg.str();
+          }
+        }
+      }
+    }
+  }
+
+  std::cout << "Min/Max Jacobian: " << minj << "/" << maxj << "\n";
 }
