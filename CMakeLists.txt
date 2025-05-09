@@ -227,7 +227,7 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
 # Add module subdirectories
-add_subdirectory(core/specfem/point)
+add_subdirectory(core/specfem)
 
 # Build specfem2d libraries
 add_library(
