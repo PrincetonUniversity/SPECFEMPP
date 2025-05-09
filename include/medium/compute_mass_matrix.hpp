@@ -7,9 +7,7 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
-#include "specfem/point/field.hpp"
-#include "specfem/point/partial_derivatives.hpp"
-#include "specfem/point/properties.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 

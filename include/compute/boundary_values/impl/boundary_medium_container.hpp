@@ -6,7 +6,7 @@
 #include "compute/properties/properties.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "specfem/point/field.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

@@ -8,7 +8,7 @@
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
-#include "specfem/point/coordinates.hpp"
+#include "specfem/point.hpp"
 
 namespace {
 // Topological map ordering for coupled elements

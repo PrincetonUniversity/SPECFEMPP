@@ -5,7 +5,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "policies/chunk.hpp"
-#include "specfem/point/sources.hpp"
+#include "specfem/point.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 

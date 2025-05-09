@@ -10,7 +10,7 @@
 #include "kokkos_abstractions.h"
 #include "source/source.hpp"
 #include "source_medium.hpp"
-#include "specfem/point/sources.hpp"
+#include "specfem/point.hpp"
 
 namespace specfem {
 namespace compute {

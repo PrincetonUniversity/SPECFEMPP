@@ -6,8 +6,8 @@
 #include "compute_material_derivatives.hpp"
 #include "medium/compute_frechet_derivatives.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "specfem/point/field.hpp"
-#include "specfem/point/field_derivatives.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
 #include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 

@@ -8,8 +8,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem/point/assembly_index.hpp"
-#include "specfem/point/field.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 

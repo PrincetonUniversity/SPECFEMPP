@@ -1,10 +1,10 @@
-#include "specfem/point/kernels.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
 

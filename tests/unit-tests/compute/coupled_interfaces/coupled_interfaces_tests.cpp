@@ -6,7 +6,7 @@
 #include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
-#include "specfem/point/coordinates.hpp"
+#include "specfem/point.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>

@@ -2,7 +2,7 @@
 
 #include "compute/assembly/assembly.hpp"
 #include "parallel_configuration/range_config.hpp"
-#include "specfem/point/field.hpp"
+#include "specfem/point.hpp"
 #include "policies/range.hpp"
 #include <Kokkos_Core.hpp>
 
