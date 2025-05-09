@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-if (NOT DEFINED EXAMPLE_INSTALL_DIR)
-    set(EXAMPLE_INSTALL_DIR ./install)
+if (NOT EXAMPLE_BUILD_DIR)
+    set(EXAMPLE_BUILD_DIR ${CMAKE_SOURCE_DIR}/examples_build)
 endif()
 
 # 2D

@@ -23,6 +23,14 @@ set(NUM_CHUNKS 1)
 set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
 
+# Define the directory for the installation
+if (SPECFEM_PREFIX)
+    message(STATUS "SPECFEM_PREFIX was defined as: ${SPECFEM_PREFIX}")
+else()
+    set(SPECFEM_PREFIX "${CMAKE_SOURCE_DIR}/dist/" CACHE STRING "Directory for installing the SPECFEM binaries")
+    message(STATUS "SPECFEM_PREFIX was not defined, using default: ${SPECFEM_PREFIX}")
+endif()
+
 # Set binary output directories.
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/archive)
@@ -751,11 +759,11 @@ endif()
 if (BUILD_EXAMPLES)
     # Define option with default value
 
-    if(DEFINED EXAMPLE_INSTALL_DIR)
-        message(STATUS "EXAMPLE_INSTALL_DIR was defined as: ${EXAMPLE_INSTALL_DIR}")
+    if(DEFINED EXAMPLE_BUILD_DIR)
+        message(STATUS "EXAMPLE_BUILD_DIR was defined as: ${EXAMPLE_BUILD_DIR}")
     else()
-        set(EXAMPLE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/examples" CACHE STRING "Directory for building the examples")
-        message(STATUS "EXAMPLE_INSTALL_DIR was not defined, using default: ${EXAMPLE_INSTALL_DIR}")
+        set(EXAMPLE_BUILD_DIR "${SPECFEM_PREFIX}/examples" CACHE STRING "Directory for building the examples")
+        message(STATUS "EXAMPLE_BUILD_DIR was not defined, using default: ${EXAMPLE_BUILD_DIR}")
     endif()
 
     message(STATUS "Configuring examples...")
@@ -818,4 +826,14 @@ install(
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
+)
+
+
+# Create a custom target that will run after your main build
+add_custom_target(organize_output ALL
+    COMMAND ${CMAKE_COMMAND} --install . --prefix ${SPECFEM_PREFIX}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Organizing build outputs into: ${SPECFEM_PREFIX}"
+    # Make this run after your main targets
+    DEPENDS specfem2d specfem3d  # list all your targets here
 )

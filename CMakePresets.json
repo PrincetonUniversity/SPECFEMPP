@@ -7,12 +7,12 @@
       "binaryDir": "build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_INSTALL_PREFIX": "install/release",
         "BUILD_TESTS": "ON",
         "ENABLE_SIMD": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON"
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "SPECFEM_PREFIX": "${sourceDir}/dist/release"
       }
     },
     {
@@ -25,7 +25,8 @@
         "ENABLE_SIMD": "OFF",
         "Kokkos_ARCH_NATIVE": "OFF",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON"
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "SPECFEM_PREFIX": "${sourceDir}/dist/release-nosimd"
       }
     },
     {
@@ -39,7 +40,8 @@
         "Kokkos_ENABLE_CUDA": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF"
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_PREFIX": "${sourceDir}/dist/release-cuda"
       }
     },
     {
@@ -54,7 +56,8 @@
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ENABLE_DEBUG": "ON",
-        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON"
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
+        "SPECFEM_PREFIX": "${sourceDir}/dist/debug"
       }
     },
     {
@@ -71,7 +74,8 @@
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ENABLE_DEBUG": "ON",
-        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON"
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
+        "SPECFEM_PREFIX": "${sourceDir}/dist/debug-cuda"
       }
     },
     {
@@ -86,7 +90,8 @@
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ENABLE_DEBUG": "ON",
-        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON"
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
+        "SPECFEM_PREFIX": "${sourceDir}/dist/debug-nosimd"
       }
     }
   ],
