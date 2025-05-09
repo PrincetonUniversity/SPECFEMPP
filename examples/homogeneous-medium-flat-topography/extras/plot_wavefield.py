@@ -331,7 +331,7 @@ def plot_wavefield(
     output_dir=None,
     dpi=300,
     output_type="png",
-    edgecolors="k",
+    edgecolors="none",
     verbose=False,
 ):
     print("Processing Metadata")
@@ -489,9 +489,14 @@ if __name__ == "__main__":
     plotdict = get_plot_dict(wavefield_file, verbose=True)
 
     # Compute the
-    # fig, ax, polys = plot_wavefield(
-    #     plotdict, "Comboplot", combined=True, component=0,
-    #     cmap=None, field_type="Displacement",
-    #     output_dir=output_dir)
+    fig, ax, polys = plot_wavefield(
+        plotdict,
+        "Comboplot",
+        combined=True,
+        component=0,
+        cmap=None,
+        field_type="Displacement",
+        output_dir=output_dir,
+    )
 
-    # plt.show(block=True)
+    plt.show(block=True)
