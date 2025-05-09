@@ -22,6 +22,9 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
   using DomainView =
       Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>;
 
+  using MappingView =
+      Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+
   const int ngllz = mesh.points.ngllz;
   const int ngllx = mesh.points.ngllx;
 
@@ -44,12 +47,17 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
         DomainView x("xcoordinates", field.h_field.extent(0));
         DomainView z("zcoordinates", field.h_field.extent(0));
 
+        MappingView mapping("mapping", n_elements, ngllz, ngllx);
+
         for (int i = 0; i < n_elements; i++) {
           const int ispec = element_indices(i);
           for (int iz = 0; iz < ngllz; iz++) {
             for (int ix = 0; ix < ngllx; ix++) {
               const int iglob =
                   forward.template get_iglob<false>(i, iz, ix, _medium_tag_);
+
+              mapping(i, iz, ix) = iglob;
+
               x(iglob) = mesh.points.h_coord(0, ispec, iz, ix);
               z(iglob) = mesh.points.h_coord(1, ispec, iz, ix);
             }
@@ -58,6 +66,8 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
 
         group.createDataset("X", x).write();
         group.createDataset("Z", z).write();
+        group.createDataset("mapping", mapping).write();
+
       });
 
   file.flush();
