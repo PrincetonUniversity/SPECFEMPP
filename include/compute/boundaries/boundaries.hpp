@@ -7,7 +7,7 @@
 #include "impl/acoustic_free_surface.hpp"
 #include "impl/stacey.hpp"
 #include "macros.hpp"
-#include "specfem/point/boundary.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 

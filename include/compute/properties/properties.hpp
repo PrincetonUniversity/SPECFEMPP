@@ -8,7 +8,7 @@
 #include "macros.hpp"
 #include "medium/material.hpp"
 #include "medium/properties_container.hpp"
-#include "specfem/point/coordinates.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>

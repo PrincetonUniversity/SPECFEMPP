@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "specfem/point/field.hpp"
+#include "field.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

@@ -9,9 +9,7 @@
 #include "medium/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
-#include "specfem/point/field.hpp"
-#include "specfem/point/field_derivatives.hpp"
-#include "specfem/point/properties.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace impl {

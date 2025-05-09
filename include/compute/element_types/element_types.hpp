@@ -4,7 +4,7 @@
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem/point/coordinates.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

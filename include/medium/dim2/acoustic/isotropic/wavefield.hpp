@@ -5,9 +5,7 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/compute_stress.hpp"
-#include "specfem/point/field_derivatives.hpp"
-#include "specfem/point/properties.hpp"
-#include "specfem/point/stress.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
