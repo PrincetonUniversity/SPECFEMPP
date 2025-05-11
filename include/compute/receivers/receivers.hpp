@@ -313,7 +313,7 @@ public:
             const int nsteps_between_samples,
             const std::vector<std::shared_ptr<specfem::receivers::receiver> >
                 &receivers,
-            const std::vector<specfem::enums::seismogram::type> &stypes,
+            const std::vector<specfem::wavefield::type> &stypes,
             const specfem::compute::mesh &mesh,
             const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
             const specfem::compute::element_types &element_types);
@@ -373,27 +373,14 @@ private:
                               ///< stored on the host
   specfem::compute::element_types element_types; ///< Element types
 
-#define RECEIVER_INDICES_VARIABLE_NAME(DIMENSION_TAG, MEDIUM_TAG,              \
-                                       PROPERTY_TAG)                           \
-  IndexViewType CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),        \
-                                     GET_NAME(MEDIUM_TAG),                     \
-                                     GET_NAME(PROPERTY_TAG));                  \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),               \
-      GET_NAME(PROPERTY_TAG));                                                 \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      receiver_indices, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
-      GET_NAME(PROPERTY_TAG));                                                 \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_receiver_indices, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
-      GET_NAME(PROPERTY_TAG));
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RECEIVER_INDICES_VARIABLE_NAME,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef RECEIVER_INDICES_VARIABLE_NAME
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                      DECLARE((IndexViewType, receiver_indices),
+                              (IndexViewType::HostMirror, h_receiver_indices),
+                              (IndexViewType, elements),
+                              (IndexViewType::HostMirror, h_elements)))
 
   template <typename MemberType, typename IteratorType, typename ViewType>
   friend KOKKOS_FUNCTION void

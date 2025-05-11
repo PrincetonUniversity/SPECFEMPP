@@ -73,25 +73,31 @@ public:
     this->nglob = rhs.nglob;
     this->assembly_index_mapping = rhs.assembly_index_mapping;
     this->h_assembly_index_mapping = rhs.h_assembly_index_mapping;
-    this->elastic = rhs.elastic;
-    this->acoustic = rhs.acoustic;
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+        CAPTURE(field, (rhs_field, rhs.field)) { _field_ = _rhs_field_; })
   }
 
   /**
    * @brief Get the number of global degrees of freedom within a medium
    *
-   * @tparam MediumType Medium type
+   * @tparam MediumTag Medium type
    * @return int Number of global degrees of freedom
    */
-  template <specfem::element::medium_tag MediumType>
+  template <specfem::element::medium_tag MediumTag>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
-      return elastic.nglob;
-    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
-      return acoustic.nglob;
-    } else {
-      static_assert("medium type not supported");
-    }
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+        CAPTURE(field) {
+          if constexpr (MediumTag == _medium_tag_) {
+            return _field_.nglob;
+          }
+        })
+
+    Kokkos::abort("Medium type not supported");
+    return 0;
   }
 
   /**
@@ -102,12 +108,39 @@ public:
   KOKKOS_INLINE_FUNCTION constexpr specfem::compute::impl::field_impl<
       specfem::dimension::type::dim2, MediumTag> const &
   get_field() const {
-    if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
-      return elastic;
-    } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
-      return acoustic;
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+        CAPTURE(field) {
+          if constexpr (MediumTag == _medium_tag_) {
+            return _field_;
+          }
+        })
+
+    Kokkos::abort("Medium type not supported");
+    /// Code path should never be reached
+
+    auto return_value =
+        new specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                               MediumTag>();
+
+    return *return_value;
+  }
+
+  /**
+   * @brief Returns the assembled index given element index.
+   *
+   */
+  template <bool on_device>
+  KOKKOS_INLINE_FUNCTION constexpr int
+  get_iglob(const int &ispec, const int &iz, const int &ix,
+            const specfem::element::medium_tag MediumTag) const {
+    if constexpr (on_device) {
+      return assembly_index_mapping(index_mapping(ispec, iz, ix),
+                                    static_cast<int>(MediumTag));
     } else {
-      static_assert("medium type not supported");
+      return h_assembly_index_mapping(h_index_mapping(ispec, iz, ix),
+                                      static_cast<int>(MediumTag));
     }
   }
 
@@ -123,18 +156,24 @@ public:
   Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::HostMemSpace>
       h_assembly_index_mapping;
-  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic>
-      elastic; ///< Elastic field
-  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::acoustic>
-      acoustic; ///< Acoustic field
+
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                                                       ACOUSTIC, POROELASTIC)),
+                      DECLARE(((specfem::compute::impl::field_impl,
+                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
+                               field)))
+
+  int get_total_degrees_of_freedom();
 
 private:
   template <specfem::sync::kind sync> void sync_fields() {
-    elastic.sync_fields<sync>();
-    acoustic.sync_fields<sync>();
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+        CAPTURE(field) { _field_.template sync_fields<sync>(); })
   }
+
+  int total_degrees_of_freedom = 0; ///< Total number of degrees of freedom
 };
 
 template <specfem::wavefield::simulation_field WavefieldType1,
@@ -144,8 +183,12 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
   dst.nglob = src.nglob;
   Kokkos::deep_copy(dst.assembly_index_mapping, src.assembly_index_mapping);
   Kokkos::deep_copy(dst.h_assembly_index_mapping, src.h_assembly_index_mapping);
-  specfem::compute::deep_copy(dst.elastic, src.elastic);
-  specfem::compute::deep_copy(dst.acoustic, src.acoustic);
+
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                                                       ACOUSTIC, POROELASTIC)),
+                      CAPTURE((src_field, src.field), (dst_field, dst.field)) {
+                        specfem::compute::deep_copy(_dst_field_, _src_field_);
+                      })
 }
 
 /**
@@ -172,7 +215,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
                                                 const WavefieldContainer &field,
                                                 ViewType &point_field) {
-  impl_load_on_device(index, field, point_field);
+  impl_load<true>(index, field, point_field);
 }
 
 /**
@@ -195,7 +238,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 inline void load_on_host(const IndexType &index,
                          const WavefieldContainer &field,
                          ViewType &point_field) {
-  impl_load_on_host(index, field, point_field);
+  impl_load<false>(index, field, point_field);
 }
 
 /**
@@ -218,7 +261,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 KOKKOS_FORCEINLINE_FUNCTION void
 store_on_device(const IndexType &index, const ViewType &point_field,
                 const WavefieldContainer &field) {
-  impl_store_on_device(index, point_field, field);
+  impl_store<true>(index, point_field, field);
 }
 
 /**
@@ -240,7 +283,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
           typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
 inline void store_on_host(const IndexType &index, const ViewType &point_field,
                           const WavefieldContainer &field) {
-  impl_store_on_host(index, point_field, field);
+  impl_store<false>(index, point_field, field);
 }
 
 /**
@@ -263,7 +306,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 KOKKOS_FORCEINLINE_FUNCTION void
 add_on_device(const IndexType &index, const ViewType &point_field,
               const WavefieldContainer &field) {
-  impl_add_on_device(index, point_field, field);
+  impl_add<true>(index, point_field, field);
 }
 
 /**
@@ -285,7 +328,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
           typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
 inline void add_on_host(const IndexType &index, const ViewType &point_field,
                         const WavefieldContainer &field) {
-  impl_add_on_host(index, point_field, field);
+  impl_add<false>(index, point_field, field);
 }
 
 /**
@@ -308,7 +351,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 KOKKOS_FORCEINLINE_FUNCTION void
 atomic_add_on_device(const IndexType &index, const ViewType &point_field,
                      const WavefieldContainer &field) {
-  impl_atomic_add_on_device(index, point_field, field);
+  impl_atomic_add<true>(index, point_field, field);
 }
 
 /**
@@ -331,7 +374,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 inline void atomic_add_on_host(const IndexType &index,
                                const ViewType &point_field,
                                const WavefieldContainer &field) {
-  impl_atomic_add_on_host(index, point_field, field);
+  impl_atomic_add<false>(index, point_field, field);
 }
 
 /**
@@ -353,7 +396,7 @@ template <typename MemberType, typename WavefieldContainer, typename ViewType,
 KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const MemberType &member, const int &index,
                const WavefieldContainer &field, ViewType &element_field) {
-  impl_load_on_device(member, index, field, element_field);
+  impl_load<true>(member, index, field, element_field);
 }
 
 /**
@@ -375,7 +418,7 @@ template <typename MemberType, typename WavefieldContainer, typename ViewType,
 inline void load_on_host(const MemberType &member, const int &index,
                          const WavefieldContainer &field,
                          ViewType &element_field) {
-  impl_load_on_host(member, index, field, element_field);
+  impl_load<false>(member, index, field, element_field);
 }
 
 /**
@@ -400,7 +443,7 @@ template <typename MemberType, typename ChunkIteratorType,
 KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const MemberType &member, const ChunkIteratorType &iterator,
                const WavefieldContainer &field, ViewType &chunk_field) {
-  impl_load_on_device(member, iterator, field, chunk_field);
+  impl_load<true>(member, iterator, field, chunk_field);
 }
 
 /**
@@ -425,7 +468,7 @@ template <typename MemberType, typename ChunkIteratorType,
 inline void
 load_on_host(const MemberType &member, const ChunkIteratorType &iterator,
              const WavefieldContainer &field, ViewType &chunk_field) {
-  impl_load_on_host(member, iterator, field, chunk_field);
+  impl_load<false>(member, iterator, field, chunk_field);
 }
 
 } // namespace compute

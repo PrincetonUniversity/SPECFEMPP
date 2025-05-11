@@ -40,7 +40,7 @@ public:
    *
    * @param t0 Simulation start time
    */
-  virtual void update_t0(type_real t0){};
+  virtual void update_t0(type_real t0) {};
   /**
    * @brief Get the value of time increment
    *

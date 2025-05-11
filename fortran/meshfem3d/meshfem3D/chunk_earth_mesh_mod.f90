@@ -56,15 +56,19 @@ contains
 
     subroutine mesh_chunk_earth()
 
+      use meshfem_par, only: CHUNK_MESH_PAR_FILE
+
+      implicit none
+
       !! SB SB COMMENT THIS IERR (variable alreafy exist in module)
       !! this makes gfortran complins because the one in the ;odule header is unsed
       !! integer :: ierr
       !! SB SB
       character(len=MAX_STRING_LEN) :: keyw
 
-      open(27, file='DATA/meshfem3D_files/Mesh_Chunk_Par_file', action='read', iostat=ierr)
+      open(27, file=trim(CHUNK_MESH_PAR_FILE), action='read', iostat=ierr)
       if (ierr /= 0 ) then
-         write(*,*) " ERROR : file DATA/meshfem3D_files/Mesh_Chunk_Par_file not found "
+         write(*,*) " ERROR : file ", trim(CHUNK_MESH_PAR_FILE), " not found "
          stop
       endif
 
@@ -115,6 +119,10 @@ contains
 
     subroutine read_metric_params()
 
+      use meshfem_par, only: CHUNK_MESH_PAR_FILE
+
+      implicit none
+
       character(len=MAX_STRING_LEN) :: keyw
       integer :: ilayer, nx, ny, k, ntmp
       double precision :: dz
@@ -122,7 +130,7 @@ contains
       double precision :: vp, vs, rho, Q_Kappa, Q_mu, Aniso
       double precision :: x0, x1, y0, y1, z0, z1
 
-      open(27, file='DATA/meshfem3D_files/Mesh_Chunk_Par_file', action='read')
+      open(27, file=trim(CHUNK_MESH_PAR_FILE), action='read')
       do
           read(27,'(a)',end=99) line
 

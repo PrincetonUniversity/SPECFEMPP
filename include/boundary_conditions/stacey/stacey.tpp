@@ -9,13 +9,21 @@
 #include <type_traits>
 
 namespace {
-using elastic_type =
+using elastic_psv_type =
     std::integral_constant<specfem::element::medium_tag,
-                           specfem::element::medium_tag::elastic>;
+                           specfem::element::medium_tag::elastic_psv>;
+
+using elastic_sh_type =
+    std::integral_constant<specfem::element::medium_tag,
+                           specfem::element::medium_tag::elastic_sh>;
 
 using acoustic_type =
     std::integral_constant<specfem::element::medium_tag,
                            specfem::element::medium_tag::acoustic>;
+
+using poroelastic_type =
+    std::integral_constant<specfem::element::medium_tag,
+                           specfem::element::medium_tag::poroelastic>;
 
 using isotropic_type =
     std::integral_constant<specfem::element::property_tag,
@@ -25,7 +33,143 @@ using anisotropic_type =
     std::integral_constant<specfem::element::property_tag,
                            specfem::element::property_tag::anisotropic>;
 
-// Elastic Isotropic Stacey Boundary Conditions not using SIMD types
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_base_elastic_psv_traction(const PointBoundaryType &boundary,
+                              const PointPropertyType &property,
+                              const PointFieldType &field, ViewType &traction) {
+
+  constexpr static auto tag = PointBoundaryType::boundary_tag;
+
+  if (boundary.tag != tag)
+    return;
+
+  const auto vn =
+      specfem::algorithms::dot(field.velocity, boundary.edge_normal);
+  const auto &dn = boundary.edge_normal;
+
+  const auto jacobian1d = dn.l2_norm();
+
+  using datatype = std::remove_const_t<decltype(jacobian1d)>;
+
+  datatype factor[2];
+
+  for (int icomp = 0; icomp < 2; ++icomp) {
+    factor[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
+                     (property.rho_vp() - property.rho_vs())) +
+                    field.velocity(icomp) * property.rho_vs();
+  }
+
+  traction(0) += static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
+                 boundary.edge_weight;
+  traction(1) += static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
+                 boundary.edge_weight;
+
+  return;
+}
+
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_base_elastic_psv_traction(const PointBoundaryType &boundary,
+                              const PointPropertyType &property,
+                              const PointFieldType &field, ViewType &traction) {
+
+  constexpr int components = PointFieldType::components;
+  constexpr auto tag = PointBoundaryType::boundary_tag;
+
+  using mask_type = typename PointBoundaryType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return boundary.tag[lane] == tag; });
+
+  if (Kokkos::Experimental::none_of(mask))
+    return;
+
+  const auto vn =
+      specfem::algorithms::dot(field.velocity, boundary.edge_normal);
+  const auto &dn = boundary.edge_normal;
+
+  const auto jacobian1d = dn.l2_norm();
+
+  using datatype = std::remove_const_t<decltype(jacobian1d)>;
+
+  datatype factor[2];
+
+  for (int icomp = 0; icomp < 2; ++icomp) {
+    factor[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
+                     (property.rho_vp() - property.rho_vs())) +
+                    field.velocity(icomp) * property.rho_vs();
+  }
+
+  Kokkos::Experimental::where(mask, traction(0)) =
+      traction(0) + static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
+                        boundary.edge_weight;
+
+  Kokkos::Experimental::where(mask, traction(1)) =
+      traction(1) + static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
+                        boundary.edge_weight;
+
+  return;
+}
+
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_base_elastic_sh_traction(const PointBoundaryType &boundary,
+                              const PointPropertyType &property,
+                              const PointFieldType &field, ViewType &traction) {
+
+  constexpr static auto tag = PointBoundaryType::boundary_tag;
+
+  if (boundary.tag != tag)
+    return;
+
+  const auto factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
+
+  // Apply Stacey boundary condition
+  traction(0) += static_cast<type_real>(-1.0) * factor * property.rho_vs() *
+                 field.velocity(0);
+
+  return;
+}
+
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_base_elastic_sh_traction(const PointBoundaryType &boundary,
+                              const PointPropertyType &property,
+                              const PointFieldType &field, ViewType &traction) {
+
+  constexpr int components = PointFieldType::components;
+  constexpr auto tag = PointBoundaryType::boundary_tag;
+
+  using mask_type = typename PointBoundaryType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return boundary.tag[lane] == tag; });
+
+  if (Kokkos::Experimental::none_of(mask))
+    return;
+
+  const auto factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
+
+  // Apply Stacey boundary condition
+  Kokkos::Experimental::where(mask, traction(0)) =
+      traction(0) + static_cast<type_real>(-1.0) * factor * property.rho_vs() *
+                        field.velocity(0);
+
+  return;
+}
+
+// Acoustic Isotropic Stacey Boundary Conditions not using SIMD types
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
@@ -57,13 +201,13 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
 
   // Apply Stacey boundary condition
   traction(0) += static_cast<type_real>(-1.0) * factor *
-                 property.rho_vpinverse * field.velocity(0);
+                 property.rho_vpinverse() * field.velocity(0);
 
   // Do nothing
   return;
 }
 
-// Elastic Isotropic Stacey Boundary Conditions using SIMD types
+// Acoustic Isotropic Stacey Boundary Conditions using SIMD types
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
@@ -101,7 +245,155 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
   // Apply Stacey boundary condition
   Kokkos::Experimental::where(mask, traction(0)) =
       traction(0) + static_cast<type_real>(-1.0) * factor *
-                        property.rho_vpinverse * field.velocity(0);
+                        property.rho_vpinverse() * field.velocity(0);
+
+  return;
+}
+
+// Poroelastic Stacey Boundary Conditions not using SIMD types
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_enforce_traction(const poroelastic_type &, const isotropic_type &,
+                      const PointBoundaryType &boundary,
+                      const PointPropertyType &property,
+                      const PointFieldType &field, ViewType &traction) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::stacey,
+                "Boundary tag must be stacey");
+
+  static_assert(PointPropertyType::medium_tag ==
+                    specfem::element::medium_tag::poroelastic,
+                "Medium tag must be poroelastic");
+
+  static_assert(PointPropertyType::property_tag ==
+                    specfem::element::property_tag::isotropic,
+                "Property tag must be isotropic");
+
+  constexpr static auto tag = PointBoundaryType::boundary_tag;
+
+  if (boundary.tag != tag)
+    return;
+
+  const auto rho = (property.rho_bar() -
+                    property.phi() / property.tortuosity() * property.rho_f());
+  const auto rho_vpI = property.vpI() * rho;   // @f$ \rho v_{pI} @f$
+  const auto rho_vpII = property.vpII() * rho; // @f$ \rho v_{pII} @f$
+  const auto rho_vs = property.vs() * rho;     // @f$ \rho v_{s} @f$
+
+  const auto &dn = boundary.edge_normal;
+
+  const auto jacobian1d = dn.l2_norm();
+
+  const auto vn = field.velocity(0) * dn(0) + field.velocity(1) * dn(1);
+  const auto vnf = field.velocity(1) * dn(0) + field.velocity(2) * dn(1);
+
+  const auto tsx =
+      rho_vpI * vn * dn(0) +
+      rho_vs * (field.velocity(0) - vn * dn(0)); /// Solid traction X component
+  const auto tsz =
+      rho_vpI * vn * dn(1) +
+      rho_vs * (field.velocity(1) - vn * dn(1)); /// Solid traction Z component
+
+  const auto tfx =
+      rho_vpII * vnf * dn(0) -
+      rho_vs * (field.velocity(2) - vn * dn(0)); /// Fluid traction X component
+  const auto tfz =
+      rho_vpII * vnf * dn(1) -
+      rho_vs * (field.velocity(3) - vn * dn(1)); /// Fluid traction Z component
+
+  traction(0) +=
+      static_cast<type_real>(-1.0) * tsx * jacobian1d * boundary.edge_weight;
+  traction(1) +=
+      static_cast<type_real>(-1.0) * tsz * jacobian1d * boundary.edge_weight;
+
+  traction(2) +=
+      static_cast<type_real>(-1.0) * tfx * jacobian1d * boundary.edge_weight;
+  traction(3) +=
+      static_cast<type_real>(-1.0) * tfz * jacobian1d * boundary.edge_weight;
+
+  return;
+}
+
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_enforce_traction(const poroelastic_type &, const isotropic_type &,
+                      const PointBoundaryType &boundary,
+                      const PointPropertyType &property,
+                      const PointFieldType &field, ViewType &traction) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::stacey,
+                "Boundary tag must be stacey");
+
+  static_assert(PointPropertyType::medium_tag ==
+                    specfem::element::medium_tag::poroelastic,
+                "Medium tag must be poroelastic");
+
+  static_assert(PointPropertyType::property_tag ==
+                    specfem::element::property_tag::isotropic,
+                "Property tag must be isotropic");
+
+  constexpr static auto tag = PointBoundaryType::boundary_tag;
+
+  constexpr int components = PointFieldType::components;
+
+  using mask_type = typename PointBoundaryType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return boundary.tag[lane] == tag; });
+
+  if (Kokkos::Experimental::none_of(mask))
+    return;
+
+  const auto rho = (property.rho_bar() -
+                    property.phi() / property.tortuosity() * property.rho_f());
+  const auto rho_vpI = property.vpI() * rho;   // @f$ \rho v_{pI} @f$
+  const auto rho_vpII = property.vpII() * rho; // @f$ \rho v_{pII} @f$
+  const auto rho_vs = property.vs() * rho;     // @f$ \rho v_{s} @f$
+
+  const auto &dn = boundary.edge_normal;
+
+  const auto jacobian1d = dn.l2_norm();
+
+  const auto vn = field.velocity(0) * dn(0) + field.velocity(1) * dn(1);
+  const auto vnf = field.velocity(1) * dn(0) + field.velocity(2) * dn(1);
+
+  const auto tsx =
+      rho_vpI * vn * dn(0) +
+      rho_vs * (field.velocity(0) - vn * dn(0)); /// Solid traction X component
+  const auto tsz =
+      rho_vpI * vn * dn(1) +
+      rho_vs * (field.velocity(1) - vn * dn(1)); /// Solid traction Z component
+
+  const auto tfx =
+      rho_vpII * vnf * dn(0) -
+      rho_vs * (field.velocity(2) - vn * dn(0)); /// Fluid traction X component
+  const auto tfz =
+      rho_vpII * vnf * dn(1) -
+      rho_vs * (field.velocity(3) - vn * dn(1)); /// Fluid traction Z component
+
+  // Apply Stacey boundary condition
+  Kokkos::Experimental::where(mask, traction(0)) =
+      traction(0) +
+      static_cast<type_real>(-1.0) * tsx * jacobian1d * boundary.edge_weight;
+
+  Kokkos::Experimental::where(mask, traction(1)) =
+      traction(1) +
+      static_cast<type_real>(-1.0) * tsz * jacobian1d * boundary.edge_weight;
+
+  Kokkos::Experimental::where(mask, traction(2)) =
+      traction(2) +
+      static_cast<type_real>(-1.0) * tfx * jacobian1d * boundary.edge_weight;
+
+  Kokkos::Experimental::where(mask, traction(3)) =
+      traction(3) +
+      static_cast<type_real>(-1.0) * tfz * jacobian1d * boundary.edge_weight;
 
   return;
 }
@@ -112,7 +404,7 @@ template <
     typename PointFieldType, typename ViewType,
     typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_type &, const isotropic_type &,
+impl_enforce_traction(const elastic_psv_type &, const isotropic_type &,
                       const PointBoundaryType &boundary,
                       const PointPropertyType &property,
                       const PointFieldType &field, ViewType &traction) {
@@ -122,38 +414,14 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
                 "Boundary tag must be stacey");
 
   static_assert(PointPropertyType::medium_tag ==
-                    specfem::element::medium_tag::elastic,
+                    specfem::element::medium_tag::elastic_psv,
                 "Medium tag must be elastic");
 
   static_assert(PointPropertyType::property_tag ==
                     specfem::element::property_tag::isotropic,
                 "Property tag must be isotropic");
 
-  constexpr static auto tag = PointBoundaryType::boundary_tag;
-
-  if (boundary.tag != tag)
-    return;
-
-  const auto vn =
-      specfem::algorithms::dot(field.velocity, boundary.edge_normal);
-  const auto &dn = boundary.edge_normal;
-
-  const auto jacobian1d = dn.l2_norm();
-
-  using datatype = std::remove_const_t<decltype(jacobian1d)>;
-
-  datatype factor[2];
-
-  for (int icomp = 0; icomp < 2; ++icomp) {
-    factor[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
-                     (property.rho_vp - property.rho_vs)) +
-                    field.velocity(icomp) * property.rho_vs;
-  }
-
-  traction(0) += static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
-                 boundary.edge_weight;
-  traction(1) += static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
-                 boundary.edge_weight;
+  impl_base_elastic_psv_traction(boundary, property, field, traction);
 
   return;
 }
@@ -164,7 +432,7 @@ template <
     typename PointFieldType, typename ViewType,
     typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_type &, const isotropic_type &,
+impl_enforce_traction(const elastic_psv_type &, const isotropic_type &,
                       const PointBoundaryType &boundary,
                       const PointPropertyType &property,
                       const PointFieldType &field, ViewType &traction) {
@@ -174,46 +442,14 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
                 "Boundary tag must be stacey");
 
   static_assert(PointPropertyType::medium_tag ==
-                    specfem::element::medium_tag::elastic,
+                    specfem::element::medium_tag::elastic_psv,
                 "Medium tag must be elastic");
 
   static_assert(PointPropertyType::property_tag ==
                     specfem::element::property_tag::isotropic,
                 "Property tag must be isotropic");
 
-  constexpr int components = PointFieldType::components;
-  constexpr auto tag = PointBoundaryType::boundary_tag;
-
-  using mask_type = typename PointBoundaryType::simd::mask_type;
-
-  mask_type mask([&](std::size_t lane) { return boundary.tag[lane] == tag; });
-
-  if (Kokkos::Experimental::none_of(mask))
-    return;
-
-  const auto vn =
-      specfem::algorithms::dot(field.velocity, boundary.edge_normal);
-  const auto &dn = boundary.edge_normal;
-
-  const auto jacobian1d = dn.l2_norm();
-
-  using datatype = std::remove_const_t<decltype(jacobian1d)>;
-
-  datatype factor[2];
-
-  for (int icomp = 0; icomp < 2; ++icomp) {
-    factor[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
-                     (property.rho_vp - property.rho_vs)) +
-                    field.velocity(icomp) * property.rho_vs;
-  }
-
-  Kokkos::Experimental::where(mask, traction(0)) =
-      traction(0) + static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
-                        boundary.edge_weight;
-
-  Kokkos::Experimental::where(mask, traction(1)) =
-      traction(1) + static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
-                        boundary.edge_weight;
+  impl_base_elastic_psv_traction(boundary, property, field, traction);
 
   return;
 }
@@ -224,7 +460,7 @@ template <
     typename PointFieldType, typename ViewType,
     typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_type &, const anisotropic_type &,
+impl_enforce_traction(const elastic_psv_type &, const anisotropic_type &,
                       const PointBoundaryType &boundary,
                       const PointPropertyType &property,
                       const PointFieldType &field, ViewType &traction) {
@@ -234,39 +470,14 @@ impl_enforce_traction(const elastic_type &, const anisotropic_type &,
                 "Boundary tag must be stacey");
 
   static_assert(PointPropertyType::medium_tag ==
-                    specfem::element::medium_tag::elastic,
+                    specfem::element::medium_tag::elastic_psv,
                 "Medium tag must be elastic");
 
   static_assert(PointPropertyType::property_tag ==
                     specfem::element::property_tag::anisotropic,
                 "Property tag must be anisotropic");
 
-  constexpr static auto tag = PointBoundaryType::boundary_tag;
-
-  if (boundary.tag != tag)
-    return;
-
-  const auto vn =
-      specfem::algorithms::dot(field.velocity, boundary.edge_normal);
-
-  const auto &dn = boundary.edge_normal;
-
-  const auto jacobian1d = dn.l2_norm();
-
-  using datatype = std::remove_const_t<decltype(jacobian1d)>;
-
-  datatype factor[2];
-
-  for (int icomp = 0; icomp < 2; ++icomp) {
-    factor[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
-                     (property.rho_vp - property.rho_vs)) +
-                    field.velocity(icomp) * property.rho_vs;
-  }
-
-  traction(0) += static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
-                 boundary.edge_weight;
-  traction(1) += static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
-                 boundary.edge_weight;
+  impl_base_elastic_psv_traction(boundary, property, field, traction);
 
   return;
 }
@@ -277,7 +488,7 @@ template <
     typename PointFieldType, typename ViewType,
     typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_type &, const anisotropic_type &,
+impl_enforce_traction(const elastic_psv_type &, const anisotropic_type &,
                       const PointBoundaryType &boundary,
                       const PointPropertyType &property,
                       const PointFieldType &field, ViewType &traction) {
@@ -287,46 +498,122 @@ impl_enforce_traction(const elastic_type &, const anisotropic_type &,
                 "Boundary tag must be stacey");
 
   static_assert(PointPropertyType::medium_tag ==
-                    specfem::element::medium_tag::elastic,
+                    specfem::element::medium_tag::elastic_psv,
                 "Medium tag must be elastic");
 
   static_assert(PointPropertyType::property_tag ==
                     specfem::element::property_tag::anisotropic,
                 "Property tag must be anisotropic");
 
-  constexpr int components = PointFieldType::components;
-  constexpr auto tag = PointBoundaryType::boundary_tag;
+  impl_base_elastic_psv_traction(boundary, property, field, traction);
 
-  using mask_type = typename PointBoundaryType::simd::mask_type;
+  return;
+}
 
-  mask_type mask([&](std::size_t lane) { return boundary.tag[lane] == tag; });
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_enforce_traction(const elastic_sh_type &, const isotropic_type &,
+                      const PointBoundaryType &boundary,
+                      const PointPropertyType &property,
+                      const PointFieldType &field, ViewType &traction) {
 
-  if (Kokkos::Experimental::none_of(mask))
-    return;
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::stacey,
+                "Boundary tag must be stacey");
 
-  const auto vn =
-      specfem::algorithms::dot(field.velocity, boundary.edge_normal);
-  const auto &dn = boundary.edge_normal;
+  static_assert(PointPropertyType::medium_tag ==
+                    specfem::element::medium_tag::elastic_sh,
+                "Medium tag must be elastic");
 
-  const auto jacobian1d = dn.l2_norm();
+  static_assert(PointPropertyType::property_tag ==
+                    specfem::element::property_tag::isotropic,
+                "Property tag must be isotropic");
 
-  using datatype = std::remove_const_t<decltype(jacobian1d)>;
+  impl_base_elastic_sh_traction(boundary, property, field, traction);
 
-  datatype factor[2];
+  return;
+}
 
-  for (int icomp = 0; icomp < 2; ++icomp) {
-    factor[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
-                     (property.rho_vp - property.rho_vs)) +
-                    field.velocity(icomp) * property.rho_vs;
-  }
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_enforce_traction(const elastic_sh_type &, const isotropic_type &,
+                      const PointBoundaryType &boundary,
+                      const PointPropertyType &property,
+                      const PointFieldType &field, ViewType &traction) {
 
-  Kokkos::Experimental::where(mask, traction(0)) =
-      traction(0) + static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
-                        boundary.edge_weight;
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::stacey,
+                "Boundary tag must be stacey");
 
-  Kokkos::Experimental::where(mask, traction(1)) =
-      traction(1) + static_cast<type_real>(-1.0) * factor[1] * jacobian1d *
-                        boundary.edge_weight;
+  static_assert(PointPropertyType::medium_tag ==
+                    specfem::element::medium_tag::elastic_sh,
+                "Medium tag must be elastic");
+
+  static_assert(PointPropertyType::property_tag ==
+                    specfem::element::property_tag::isotropic,
+                "Property tag must be isotropic");
+
+  impl_base_elastic_sh_traction(boundary, property, field, traction);
+
+  return;
+}
+
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_enforce_traction(const elastic_sh_type &, const anisotropic_type &,
+                      const PointBoundaryType &boundary,
+                      const PointPropertyType &property,
+                      const PointFieldType &field, ViewType &traction) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::stacey,
+                "Boundary tag must be stacey");
+
+  static_assert(PointPropertyType::medium_tag ==
+                    specfem::element::medium_tag::elastic_sh,
+                "Medium tag must be elastic");
+
+  static_assert(PointPropertyType::property_tag ==
+                    specfem::element::property_tag::anisotropic,
+                "Property tag must be anisotropic");
+
+  impl_base_elastic_sh_traction(boundary, property, field, traction);
+
+  return;
+}
+
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_enforce_traction(const elastic_sh_type &, const anisotropic_type &,
+                      const PointBoundaryType &boundary,
+                      const PointPropertyType &property,
+                      const PointFieldType &field, ViewType &traction) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::stacey,
+                "Boundary tag must be stacey");
+
+  static_assert(PointPropertyType::medium_tag ==
+                    specfem::element::medium_tag::elastic_sh,
+                "Medium tag must be elastic");
+
+  static_assert(PointPropertyType::property_tag ==
+                    specfem::element::property_tag::anisotropic,
+                "Property tag must be anisotropic");
+
+  impl_base_elastic_sh_traction(boundary, property, field, traction);
 
   return;
 }

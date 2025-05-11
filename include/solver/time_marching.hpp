@@ -17,19 +17,19 @@ namespace solver {
  * @brief Time marching solver
  *
  * @tparam Simulation Type of the simulation (forward or combined)
- * @tparam DimensionType Dimension of the simulation (2D or 3D)
+ * @tparam DimensionTag Dimension of the simulation (2D or 3D)
  * @tparam qp_type Quadrature points type defining compile time or runtime
  * quadrature points
  */
 template <specfem::simulation::type Simulation,
-          specfem::dimension::type DimensionType, int NGLL>
+          specfem::dimension::type DimensionTag, int NGLL>
 class time_marching;
 
 /**
  * @brief Time marching solver for forward simulation
  */
-template <specfem::dimension::type DimensionType, int NGLL>
-class time_marching<specfem::simulation::type::forward, DimensionType, NGLL>
+template <specfem::dimension::type DimensionTag, int NGLL>
+class time_marching<specfem::simulation::type::forward, DimensionTag, NGLL>
     : public solver {
 public:
   /**
@@ -46,12 +46,14 @@ public:
    */
   time_marching(
       const specfem::kokkos_kernels::domain_kernels<
-          specfem::wavefield::simulation_field::forward, DimensionType, NGLL>
+          specfem::wavefield::simulation_field::forward, DimensionTag, NGLL>
           &kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<
-          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
-      : kernels(kernels), time_scheme(time_scheme), tasks(tasks) {}
+          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks,
+      specfem::compute::assembly assembly)
+      : kernels(kernels), time_scheme(time_scheme), tasks(tasks),
+        assembly(assembly) {}
 
   ///@}
 
@@ -62,21 +64,22 @@ public:
 
 private:
   specfem::kokkos_kernels::domain_kernels<
-      specfem::wavefield::simulation_field::forward, DimensionType,
+      specfem::wavefield::simulation_field::forward, DimensionTag,
       NGLL>
       kernels; ///< Computational kernels
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
   std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
       tasks; ///< Periodic tasks
-             ///< objects
+  ///< objects
+  specfem::compute::assembly assembly; ///< Spectral element assembly object
 };
 
 /**
  * @brief Time marching solver for combined adjoint and backward simulations
  */
-template <specfem::dimension::type DimensionType, int NGLL>
-class time_marching<specfem::simulation::type::combined, DimensionType, NGLL>
+template <specfem::dimension::type DimensionTag, int NGLL>
+class time_marching<specfem::simulation::type::combined, DimensionTag, NGLL>
     : public solver {
 public:
   /**
@@ -96,10 +99,10 @@ public:
   time_marching(
       const specfem::compute::assembly &assembly,
       const specfem::kokkos_kernels::domain_kernels<
-          specfem::wavefield::simulation_field::adjoint, DimensionType, NGLL>
+          specfem::wavefield::simulation_field::adjoint, DimensionTag, NGLL>
           &adjoint_kernels,
       const specfem::kokkos_kernels::domain_kernels<
-          specfem::wavefield::simulation_field::backward, DimensionType, NGLL>
+          specfem::wavefield::simulation_field::backward, DimensionTag, NGLL>
           &backward_kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<
@@ -117,14 +120,14 @@ public:
 
 private:
   specfem::kokkos_kernels::domain_kernels<
-      specfem::wavefield::simulation_field::adjoint, DimensionType,
+      specfem::wavefield::simulation_field::adjoint, DimensionTag,
       NGLL>
       adjoint_kernels; ///< Adjoint computational kernels
   specfem::kokkos_kernels::domain_kernels<
-      specfem::wavefield::simulation_field::backward, DimensionType,
+      specfem::wavefield::simulation_field::backward, DimensionTag,
       NGLL>
       backward_kernels; ///< Backward computational kernels
-  specfem::kokkos_kernels::frechet_kernels<DimensionType, NGLL>
+  specfem::kokkos_kernels::frechet_kernels<DimensionTag, NGLL>
       frechet_kernels;                 ///< Misfit kernels
   specfem::compute::assembly assembly; ///< Spectral element assembly object
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time

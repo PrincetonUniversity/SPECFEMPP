@@ -1,4 +1,4 @@
-.. _medium::
+.. _medium:
 
 Medium modules
 ==============

@@ -1,7 +1,8 @@
 #include "parameter_parser/writer/kernel.hpp"
-#include "IO/ASCII/ASCII.hpp"
-#include "IO/HDF5/HDF5.hpp"
-#include "IO/kernel/writer.hpp"
+#include "io/ASCII/ASCII.hpp"
+#include "io/HDF5/HDF5.hpp"
+#include "io/kernel/writer.hpp"
+#include "utilities/strings.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::kernel::kernel(
@@ -36,20 +37,18 @@ specfem::runtime_configuration::kernel::kernel(
   return;
 }
 
-std::shared_ptr<specfem::IO::writer>
+std::shared_ptr<specfem::io::writer>
 specfem::runtime_configuration::kernel::instantiate_kernel_writer() const {
 
-  const std::shared_ptr<specfem::IO::writer> writer =
-      [&]() -> std::shared_ptr<specfem::IO::writer> {
+  const std::shared_ptr<specfem::io::writer> writer =
+      [&]() -> std::shared_ptr<specfem::io::writer> {
     if (this->simulation_type == specfem::simulation::type::combined) {
-      if (this->output_format == "HDF5") {
-        return std::make_shared<
-            specfem::IO::kernel_writer<specfem::IO::HDF5<specfem::IO::write> > >(
-            this->output_folder);
-      } else if (this->output_format == "ASCII") {
-        return std::make_shared<
-            specfem::IO::kernel_writer<specfem::IO::ASCII<specfem::IO::write> > >(
-            this->output_folder);
+      if (specfem::utilities::is_hdf5_string(this->output_format)) {
+        return std::make_shared<specfem::io::kernel_writer<
+            specfem::io::HDF5<specfem::io::write> > >(this->output_folder);
+      } else if (specfem::utilities::is_ascii_string(this->output_format)) {
+        return std::make_shared<specfem::io::kernel_writer<
+            specfem::io::ASCII<specfem::io::write> > >(this->output_folder);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }

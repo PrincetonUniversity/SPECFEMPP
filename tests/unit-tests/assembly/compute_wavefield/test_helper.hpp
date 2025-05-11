@@ -22,11 +22,7 @@
 template <specfem::wavefield::type component,
           specfem::element::medium_tag medium,
           specfem::element::property_tag property>
-class test_helper;
-
-template <specfem::wavefield::type component>
-class test_helper<component, specfem::element::medium_tag::elastic,
-                  specfem::element::property_tag::isotropic> {
+class test_helper {
 
 public:
   test_helper(const int ispec,
@@ -74,10 +70,9 @@ private:
   specfem::compute::assembly &assembly;
 };
 
-template <>
-class test_helper<specfem::wavefield::type::pressure,
-                  specfem::element::medium_tag::elastic,
-                  specfem::element::property_tag::isotropic> {
+template <specfem::element::medium_tag medium,
+          specfem::element::property_tag property>
+class test_helper<specfem::wavefield::type::pressure, medium, property> {
 public:
   test_helper(const int ispec,
               const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
@@ -94,9 +89,11 @@ public:
     const int ngllz = assembly.mesh.ngllz;
     const int ngllx = assembly.mesh.ngllx;
 
-    using PointProperties = specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, false>;
+    using PointProperties =
+        specfem::point::properties<specfem::dimension::type::dim2,
+                                   specfem::element::medium_tag::elastic_psv,
+                                   specfem::element::property_tag::isotropic,
+                                   false>;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
@@ -111,7 +108,7 @@ public:
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed =
               wavefield(ispec, iz, ix, ic) /
-              ((point_properties.lambdaplus2mu + point_properties.lambda) /
+              ((point_properties.lambdaplus2mu() + point_properties.lambda()) /
                2.0);
           const auto expected = 0.0;
 
@@ -174,7 +171,7 @@ public:
 
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed =
-              wavefield(ispec, iz, ix, ic) / point_properties.rho_inverse;
+              wavefield(ispec, iz, ix, ic) / point_properties.rho_inverse();
           const auto expected = 0.0;
 
           if (std::abs(computed - expected) > 1.0e-4) {

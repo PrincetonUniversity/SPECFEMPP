@@ -16,7 +16,7 @@ specfem::runtime_configuration::solver::solver::instantiate(
     const std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
     const {
 
-  if (this->simulation_type == "forward") {
+  if (specfem::utilities::is_forward_string(this->simulation_type)) {
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
     const auto kernels =
@@ -26,8 +26,8 @@ specfem::runtime_configuration::solver::solver::instantiate(
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::forward,
                                        specfem::dimension::type::dim2, NGLL> >(
-        kernels, time_scheme, tasks);
-  } else if (this->simulation_type == "combined") {
+        kernels, time_scheme, tasks, assembly);
+  } else if (specfem::utilities::is_combined_string(this->simulation_type)) {
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
     const auto adjoint_kernels =

@@ -1,14 +1,13 @@
-#ifndef _COMPUTE_FIELDS_IMPL_FIELD_IMPL_TPP_
-#define _COMPUTE_FIELDS_IMPL_FIELD_IMPL_TPP_
+#pragma once
 
 #include "compute/fields/impl/field_impl.hpp"
 #include "compute/element_types/element_types.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
-specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
+specfem::compute::impl::field_impl<DimensionTag, MediumTag>::field_impl(
     const int nglob)
     : nglob(nglob), field("specfem::compute::fields::field", nglob, components),
       h_field(Kokkos::create_mirror_view(field)),
@@ -20,9 +19,9 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
       mass_inverse("specfem::compute::fields::mass_inverse", nglob, components),
       h_mass_inverse(Kokkos::create_mirror_view(mass_inverse)) {}
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
-specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
+specfem::compute::impl::field_impl<DimensionTag, MediumTag>::field_impl(
     const specfem::compute::mesh &mesh,
     const specfem::compute::element_types &element_types,
     Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
@@ -95,10 +94,10 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
   return;
 }
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 template <specfem::sync::kind sync>
-void specfem::compute::impl::field_impl<DimensionType, MediumTag>::sync_fields()
+void specfem::compute::impl::field_impl<DimensionTag, MediumTag>::sync_fields()
     const {
   if constexpr (sync == specfem::sync::kind::DeviceToHost) {
     Kokkos::deep_copy(h_field, field);
@@ -111,7 +110,6 @@ void specfem::compute::impl::field_impl<DimensionType, MediumTag>::sync_fields()
   }
 }
 
-#endif /* _COMPUTE_FIELDS_IMPL_FIELD_IMPL_TPP_ */
 
 // template <typename medium>
 //   KOKKOS_INLINE_FUNCTION type_real &specfem::compute::(const int &iglob,

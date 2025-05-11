@@ -1,8 +1,8 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
-#include "IO/interface.hpp"
 #include "compute/interface.hpp"
+#include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
@@ -71,8 +71,7 @@ TEST(COMPUTE_TESTS, compute_ibool) {
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  std::string config_filename =
-      "../../../tests/unit-tests/compute/index/test_config.yml";
+  std::string config_filename = "compute/index/test_config.yml";
   test_config test_config = get_test_config(config_filename, mpi);
 
   // Set up GLL quadrature points
@@ -81,8 +80,9 @@ TEST(COMPUTE_TESTS, compute_ibool) {
   specfem::quadrature::quadratures quadratures(gll);
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh =
-      specfem::IO::read_mesh(test_config.database_filename, mpi);
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
+      test_config.database_filename, specfem::enums::elastic_wave::psv,
+      specfem::enums::electromagnetic_wave::te, mpi);
 
   // Setup compute structs
   specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes,

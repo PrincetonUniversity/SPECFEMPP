@@ -1,7 +1,6 @@
 #ifndef _COMPUTE_ASSEMBLY_HPP
 #define _COMPUTE_ASSEMBLY_HPP
 
-#include "IO/reader.hpp"
 #include "compute/boundaries/boundaries.hpp"
 #include "compute/boundary_values/boundary_values.hpp"
 #include "compute/compute_mesh.hpp"
@@ -14,6 +13,8 @@
 #include "compute/sources/sources.hpp"
 #include "enumerations/display.hpp"
 #include "enumerations/interface.hpp"
+#include "enumerations/wavefield.hpp"
+#include "io/reader.hpp"
 #include "mesh/mesh.hpp"
 #include "receiver/interface.hpp"
 #include "source/interface.hpp"
@@ -78,11 +79,11 @@ struct assembly {
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const std::vector<std::shared_ptr<specfem::receivers::receiver> >
           &receivers,
-      const std::vector<specfem::enums::seismogram::type> &stypes,
-      const type_real t0, const type_real dt, const int max_timesteps,
-      const int max_sig_step, const int nsteps_between_samples,
+      const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
+      const type_real dt, const int max_timesteps, const int max_sig_step,
+      const int nsteps_between_samples,
       const specfem::simulation::type simulation,
-      const std::shared_ptr<specfem::IO::reader> &property_reader);
+      const std::shared_ptr<specfem::io::reader> &property_reader);
 
   /**
    * @brief Maps the component of wavefield on the entire spectral element grid
@@ -98,6 +99,14 @@ struct assembly {
   generate_wavefield_on_entire_grid(
       const specfem::wavefield::simulation_field wavefield,
       const specfem::wavefield::type component);
+
+  int get_total_number_of_elements() const { return mesh.nspec; }
+
+  int get_total_degrees_of_freedom() {
+    return fields.buffer.get_total_degrees_of_freedom();
+  }
+
+  std::string print() const;
 };
 
 } // namespace compute

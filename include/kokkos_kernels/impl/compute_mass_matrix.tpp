@@ -3,6 +3,7 @@
 #include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
+#include "boundary_conditions/boundary_conditions.tpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
@@ -16,7 +17,7 @@
 #include "medium/compute_mass_matrix.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -24,7 +25,7 @@ template <specfem::dimension::type DimensionType,
 void specfem::kokkos_kernels::impl::compute_mass_matrix(
     const type_real &dt, const specfem::compute::assembly &assembly) {
 
-  constexpr auto dimension = DimensionType;
+  constexpr auto dimension = DimensionTag;
   constexpr auto wavefield = WavefieldType;
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -34,7 +35,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
       MediumTag, PropertyTag, BoundaryTag);
 
   constexpr int components =
-      specfem::element::attributes<dimension, medium_tag>::components();
+      specfem::element::attributes<dimension, medium_tag>::components;
 
   const int nelements = elements.extent(0);
 

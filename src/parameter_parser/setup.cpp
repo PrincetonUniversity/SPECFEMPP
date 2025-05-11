@@ -1,4 +1,5 @@
 #include "parameter_parser/setup.hpp"
+#include "utilities/strings.hpp"
 #include "yaml-cpp/yaml.h"
 #include <chrono>
 #include <ctime>
@@ -51,6 +52,28 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
         std::make_unique<specfem::runtime_configuration::sources>(source_node);
   } else {
     throw std::runtime_error("Error reading specfem source configuration.");
+  }
+
+  // Get Elastic Wave type Default is P_SV
+  if (const YAML::Node &n_elastic_wave = simulation_setup["elastic-wave"]) {
+    this->elastic_wave =
+        std::make_unique<specfem::runtime_configuration::elastic_wave>(
+            n_elastic_wave);
+  } else {
+    this->elastic_wave =
+        std::make_unique<specfem::runtime_configuration::elastic_wave>("P_SV");
+  }
+
+  // Get Electromagnetic Wave type Default is TE
+  if (const YAML::Node &n_electromagnetic_wave =
+          simulation_setup["electromagnetic-wave"]) {
+    this->electromagnetic_wave =
+        std::make_unique<specfem::runtime_configuration::electromagnetic_wave>(
+            n_electromagnetic_wave);
+  } else {
+    this->electromagnetic_wave =
+        std::make_unique<specfem::runtime_configuration::electromagnetic_wave>(
+            "TE");
   }
 
   if (const YAML::Node &n_quadrature = simulation_setup["quadrature"]) {
@@ -236,7 +259,8 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
 
         if (const YAML::Node &n_plotter = n_writer["display"]) {
           if (n_plotter["simulation-field"] &&
-              n_plotter["simulation-field"].as<std::string>() == "forward") {
+              specfem::utilities::is_forward_string(
+                  n_plotter["simulation-field"].as<std::string>())) {
             std::ostringstream message;
             message << "Error: Plotting a forward wavefield in combined "
                     << "simulation mode. \n";

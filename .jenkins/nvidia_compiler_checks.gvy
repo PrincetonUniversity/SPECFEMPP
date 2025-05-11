@@ -5,19 +5,12 @@ pipeline{
         }
     }
     stages{
-        stage( ' Load git modules ' ){
-            steps {
-                echo ' Getting git submodules '
-                sh 'git submodule init'
-                sh 'git submodule update'
-            }
-        }
         stage(' NVIDIA Device Compiler Check '){
             matrix {
                 axes {
                     axis{
                         name 'CUDACompiler'
-                        values 'CUDA117;cudatoolkit/11.7', 'CUDA126;cudatoolkit/12.6'
+                        values 'CUDA117;cudatoolkit/11.8', 'CUDA126;cudatoolkit/12.8'
                     }
                     axis{
                         name 'HostSpace'

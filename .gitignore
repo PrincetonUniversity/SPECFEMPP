@@ -1,3 +1,4 @@
+CMakeUserPresets.json
 .vscode/
 .DS_Store
 build*/*
@@ -28,3 +29,6 @@ examples/*/Par_File
 autotuning/
 profiles
 .cache/
+test*.cpp
+test*.hpp
+include/specfem_setup.hpp

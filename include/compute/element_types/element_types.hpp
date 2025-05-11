@@ -3,7 +3,7 @@
 #include "compute/compute_mesh.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
-#include "mesh/materials/materials.hpp"
+#include "mesh/mesh.hpp"
 #include "point/coordinates.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -69,12 +69,22 @@ public:
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
   get_elements_on_host(const specfem::element::medium_tag tag) const;
 
+  int get_number_of_elements(const specfem::element::medium_tag tag) const {
+    return get_elements_on_host(tag).extent(0);
+  }
+
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
   get_elements_on_device(const specfem::element::medium_tag tag) const;
 
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
   get_elements_on_host(const specfem::element::medium_tag tag,
                        const specfem::element::property_tag property) const;
+
+  int get_number_of_elements(
+      const specfem::element::medium_tag tag,
+      const specfem::element::property_tag property) const {
+    return get_elements_on_host(tag, property).extent(0);
+  }
 
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
   get_elements_on_device(const specfem::element::medium_tag tag,
@@ -84,6 +94,13 @@ public:
   get_elements_on_host(const specfem::element::medium_tag tag,
                        const specfem::element::property_tag property,
                        const specfem::element::boundary_tag boundary) const;
+
+  int get_number_of_elements(
+      const specfem::element::medium_tag tag,
+      const specfem::element::property_tag property,
+      const specfem::element::boundary_tag boundary) const {
+    return get_elements_on_host(tag, property, boundary).extent(0);
+  }
 
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
   get_elements_on_device(const specfem::element::medium_tag tag,
@@ -103,53 +120,26 @@ public:
   }
 
 private:
-#define MEDIUM_TAG_VARIABLES(DIMENSION_TAG, MEDIUM_TAG)                        \
-  IndexViewType CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),        \
-                                     GET_NAME(MEDIUM_TAG));                    \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG));
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                                                       ACOUSTIC, POROELASTIC)),
+                      DECLARE((IndexViewType, elements),
+                              (IndexViewType::HostMirror, h_elements)))
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MEDIUM_TAG_VARIABLES,
-                                 WHERE(DIMENSION_TAG_DIM2)
-                                     WHERE(MEDIUM_TAG_ELASTIC,
-                                           MEDIUM_TAG_ACOUSTIC))
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                      DECLARE((IndexViewType, elements),
+                              (IndexViewType::HostMirror, h_elements)))
 
-#undef MEDIUM_TAG_VARIABLES
-
-#define MATERIAL_SYSTEMS_VARIABLE_NAMES(DIMENSION_TAG, MEDIUM_TAG,             \
-                                        PROPERTY_TAG)                          \
-  IndexViewType CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),        \
-                                     GET_NAME(MEDIUM_TAG),                     \
-                                     GET_NAME(PROPERTY_TAG));                  \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),               \
-      GET_NAME(PROPERTY_TAG));
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      MATERIAL_SYSTEMS_VARIABLE_NAMES,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef MATERIAL_SYSTEMS_VARIABLE_NAMES
-
-#define ELEMENT_TYPES_VARIABLE_NAMES(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,  \
-                                     BOUNDARY_TAG)                             \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),                 \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),               \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
-
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      ELEMENT_TYPES_VARIABLE_NAMES,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-              WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                    BOUNDARY_TAG_STACEY,
-                    BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef ELEMENT_TYPES_VARIABLE_NAMES
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                                    COMPOSITE_STACEY_DIRICHLET)),
+                      DECLARE((IndexViewType, elements),
+                              (IndexViewType::HostMirror, h_elements)))
 };
 
 } // namespace compute

@@ -15,18 +15,18 @@ namespace impl {
  * policy.
  *
  * @tparam UseSIMD Indicates whether SIMD is used or not.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  */
-template <bool UseSIMD, specfem::dimension::type DimensionType>
+template <bool UseSIMD, specfem::dimension::type DimensionTag>
 struct chunk_index_type;
 
 /**
  * @brief Template specialization when using SIMD.
  *
  */
-template <specfem::dimension::type DimensionType>
-struct chunk_index_type<true, DimensionType> {
-  constexpr static auto dimension = DimensionType; ///< Dimension type
+template <specfem::dimension::type DimensionTag>
+struct chunk_index_type<true, DimensionTag> {
+  constexpr static auto dimension = DimensionTag; ///< Dimension type
   int ielement; ///< Element index within the iterator range
   specfem::point::simd_index<dimension> index; ///< SIMD index of the quadrature
                                                ///< point(s)
@@ -41,16 +41,16 @@ struct chunk_index_type<true, DimensionType> {
  * @brief Template specialization when not using SIMD.
  *
  */
-template <specfem::dimension::type DimensionType>
-struct chunk_index_type<false, DimensionType> {
-  constexpr static auto dimension = DimensionType; ///< Dimension type
+template <specfem::dimension::type DimensionTag>
+struct chunk_index_type<false, DimensionTag> {
+  constexpr static auto dimension = DimensionTag; ///< Dimension type
   int ielement; ///< Element index within the iterator range
   specfem::point::index<dimension> index; ///< Index of the quadrature point
 
   KOKKOS_INLINE_FUNCTION
   chunk_index_type(const int ielement,
                    const specfem::point::index<dimension> index)
-      : ielement(ielement), index(index){};
+      : ielement(ielement), index(index) {};
 };
 
 /**
@@ -58,19 +58,19 @@ struct chunk_index_type<false, DimensionType> {
  * policy.
  *
  * @tparam UseSIMD Indicates whether SIMD is used or not.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  */
-template <bool UseSIMD, specfem::dimension::type DimensionType>
+template <bool UseSIMD, specfem::dimension::type DimensionTag>
 struct mapped_chunk_index_type
-    : public chunk_index_type<UseSIMD, DimensionType> {
-  using Base = chunk_index_type<UseSIMD, DimensionType>;
+    : public chunk_index_type<UseSIMD, DimensionTag> {
+  using base_type = chunk_index_type<UseSIMD, DimensionTag>;
   int imap; ///< Index of the mapped element
 
   KOKKOS_INLINE_FUNCTION
   mapped_chunk_index_type(const int ielement,
-                          const specfem::point::index<DimensionType> index,
+                          const specfem::point::index<DimensionTag> index,
                           const int imap)
-      : Base(ielement, index), imap(imap) {}
+      : base_type(ielement, index), imap(imap) {}
 };
 
 } // namespace impl
@@ -80,10 +80,10 @@ struct mapped_chunk_index_type
  * iterator.
  *
  * @tparam ViewType View type for the indices of elements within this iterator.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  * @tparam SIMD SIMD type to use simd operations @ref specfem::datatypes::simd
  */
-template <typename ViewType, specfem::dimension::type DimensionType,
+template <typename ViewType, specfem::dimension::type DimensionTag,
           typename SIMD>
 class chunk;
 
@@ -245,27 +245,27 @@ public:
   }
 };
 
-template <typename ViewType, specfem::dimension::type DimensionType,
+template <typename ViewType, specfem::dimension::type DimensionTag,
           typename SIMD>
 class mapped_chunk;
 
 template <typename ViewType, typename SIMD>
 class mapped_chunk<ViewType, specfem::dimension::type::dim2, SIMD>
     : public chunk<ViewType, specfem::dimension::type::dim2, SIMD> {
-  using Base = chunk<ViewType, specfem::dimension::type::dim2, SIMD>;
+  using base_type = chunk<ViewType, specfem::dimension::type::dim2, SIMD>;
   using mapped_index_type =
-      typename impl::mapped_chunk_index_type<Base::using_simd,
-                                             Base::dimension>; ///< Index
+      typename impl::mapped_chunk_index_type<base_type::using_simd,
+                                             base_type::dimension>; ///< Index
 
 public:
   KOKKOS_INLINE_FUNCTION
   mapped_chunk(const ViewType &indices, const ViewType &mapping,
                const int ngllz, const int ngllx)
-      : Base(indices, ngllz, ngllx), mapping(mapping) {}
+      : base_type(indices, ngllz, ngllx), mapping(mapping) {}
 
   KOKKOS_INLINE_FUNCTION
   mapped_index_type operator()(const int i) const {
-    const auto base_index = Base::operator()(i);
+    const auto base_index = base_type::operator()(i);
     return mapped_index_type(base_index.ielement, base_index.index,
                              mapping(base_index.ielement));
   }
@@ -405,8 +405,8 @@ protected:
 template <typename ParallelConfig>
 struct mapped_element_chunk : public element_chunk<ParallelConfig> {
   using simd = typename ParallelConfig::simd;
-  using Base = element_chunk<ParallelConfig>;
-  using IndexViewType = typename Base::IndexViewType;
+  using base_type = element_chunk<ParallelConfig>;
+  using IndexViewType = typename base_type::IndexViewType;
 
   using mapped_iterator_type =
       specfem::iterator::mapped_chunk<IndexViewType, ParallelConfig::dimension,
@@ -414,21 +414,21 @@ struct mapped_element_chunk : public element_chunk<ParallelConfig> {
 
   mapped_element_chunk(const IndexViewType &view, const IndexViewType &mapping,
                        int ngllz, int ngllx)
-      : Base(view, ngllz, ngllx), mapping(mapping) {}
+      : base_type(view, ngllz, ngllx), mapping(mapping) {}
 
   KOKKOS_INLINE_FUNCTION
   mapped_iterator_type mapped_league_iterator(const int start_index) const {
     const int start = start_index;
-    const int end =
-        (start + Base::chunk_size * Base::simd_size > Base::elements.extent(0))
-            ? Base::elements.extent(0)
-            : start + Base::chunk_size * Base::simd_size;
+    const int end = (start + base_type::chunk_size * base_type::simd_size >
+                     base_type::elements.extent(0))
+                        ? base_type::elements.extent(0)
+                        : start + base_type::chunk_size * base_type::simd_size;
     const auto elem_indices =
-        Kokkos::subview(Base::elements, Kokkos::make_pair(start, end));
+        Kokkos::subview(base_type::elements, Kokkos::make_pair(start, end));
     const auto map_indices =
         Kokkos::subview(mapping, Kokkos::make_pair(start, end));
-    return mapped_iterator_type(elem_indices, map_indices, Base::ngllz,
-                                Base::ngllx);
+    return mapped_iterator_type(elem_indices, map_indices, base_type::ngllz,
+                                base_type::ngllx);
   }
 
 protected:

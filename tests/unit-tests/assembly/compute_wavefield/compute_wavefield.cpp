@@ -23,10 +23,28 @@ void test_element_wavefield(
   const auto medium = element_types.get_medium_tag(ispec);
   const auto property = element_types.get_property_tag(ispec);
 
-  if ((medium == specfem::element::medium_tag::elastic) &&
+  if ((medium == specfem::element::medium_tag::elastic_psv) &&
       (property == specfem::element::property_tag::isotropic)) {
-    test_helper<component, specfem::element::medium_tag::elastic,
+    test_helper<component, specfem::element::medium_tag::elastic_psv,
                 specfem::element::property_tag::isotropic>
+        handle(ispec, wavefield, assembly);
+    handle.test();
+  } else if ((medium == specfem::element::medium_tag::elastic_psv) &&
+             (property == specfem::element::property_tag::anisotropic)) {
+    test_helper<component, specfem::element::medium_tag::elastic_psv,
+                specfem::element::property_tag::anisotropic>
+        handle(ispec, wavefield, assembly);
+    handle.test();
+  } else if ((medium == specfem::element::medium_tag::elastic_sh) &&
+             (property == specfem::element::property_tag::isotropic)) {
+    test_helper<component, specfem::element::medium_tag::elastic_sh,
+                specfem::element::property_tag::isotropic>
+        handle(ispec, wavefield, assembly);
+    handle.test();
+  } else if ((medium == specfem::element::medium_tag::elastic_sh) &&
+             (property == specfem::element::property_tag::anisotropic)) {
+    test_helper<component, specfem::element::medium_tag::elastic_sh,
+                specfem::element::property_tag::anisotropic>
         handle(ispec, wavefield, assembly);
     handle.test();
   } else if ((medium == specfem::element::medium_tag::acoustic) &&
@@ -45,6 +63,17 @@ template <specfem::wavefield::type component,
 void test_compute_wavefield(specfem::compute::assembly &assembly) {
 
   const auto ispecs = generate_data<component, type>(assembly);
+
+  /// You cannot generate a pressure field within an SH medium
+  /// ----------------------------------
+  const auto sh_ispec = assembly.element_types.get_elements_on_host(
+      specfem::element::medium_tag::elastic_sh);
+
+  if (component == specfem::wavefield::type::pressure &&
+      (sh_ispec.extent(0) != 0)) {
+    return;
+  }
+  /// ----------------------------------
 
   const auto wavefield =
       assembly.generate_wavefield_on_entire_grid(type, component);
@@ -100,7 +129,7 @@ void test_compute_wavefield(specfem::compute::assembly &assembly) {
 TEST_F(ASSEMBLY, compute_wavefield) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    specfem::compute::assembly assembly = std::get<4>(parameters);
+    specfem::compute::assembly assembly = std::get<5>(parameters);
 
     try {
       test_compute_wavefield(assembly);

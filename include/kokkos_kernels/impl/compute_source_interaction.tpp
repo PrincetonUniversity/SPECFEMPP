@@ -4,6 +4,7 @@
 #include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
+#include "boundary_conditions/boundary_conditions.tpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
@@ -16,7 +17,7 @@
 #include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -27,7 +28,7 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
 constexpr auto medium_tag = MediumTag;
 constexpr auto property_tag = PropertyTag;
 constexpr auto boundary_tag = BoundaryTag;
-constexpr auto dimension = DimensionType;
+constexpr auto dimension = DimensionTag;
 constexpr int ngll = NGLL;
 constexpr auto wavefield = WavefieldType;
 
@@ -69,7 +70,7 @@ constexpr int lane_size = 1;
 #endif
 
 using ParallelConfig =
-    specfem::parallel_config::chunk_config<DimensionType, 1, 1, nthreads,
+    specfem::parallel_config::chunk_config<DimensionTag, 1, 1, nthreads,
                                            lane_size, simd,
                                            Kokkos::DefaultExecutionSpace>;
 

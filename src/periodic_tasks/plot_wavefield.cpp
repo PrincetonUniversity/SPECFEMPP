@@ -2,6 +2,7 @@
 #include "periodic_tasks/plot_wavefield.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
+#include "utilities/strings.hpp"
 
 #ifdef NO_VTK
 
@@ -22,11 +23,6 @@
 #include <vtkJPEGWriter.h>
 #include <vtkLookupTable.h>
 #include <vtkNamedColors.h>
-#ifdef __APPLE__
-#include <vtkCocoaRenderWindow.h>
-#else
-#include <vtkOpenGLRenderWindow.h>
-#endif
 #include <vtkPNGWriter.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
@@ -45,7 +41,8 @@
 
 #ifdef NO_VTK
 
-void specfem::periodic_tasks::plot_wavefield::run() {
+void specfem::periodic_tasks::plot_wavefield::run(
+    specfem::compute::assembly &assembly, const int istep) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -58,15 +55,6 @@ void specfem::periodic_tasks::plot_wavefield::run() {
 
 namespace {
 
-// Convert integer to string with zero leading
-std::string to_zero_lead(const int value, const int n_zero) {
-  auto old_str = std::to_string(value);
-  int n_zero_fix =
-      n_zero - std::min(n_zero, static_cast<int>(old_str.length()));
-  auto new_str = std::string(n_zero_fix, '0') + old_str;
-  return new_str;
-}
-
 // Sigmoid function centered at 0.0
 double sigmoid(double x) { return (1 / (1 + std::exp(-100 * x)) - 0.5) * 1.5; }
 
@@ -78,10 +66,16 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
 
   const std::unordered_map<specfem::element::medium_tag, std::array<int, 3> >
       material_colors = {
-        { specfem::element::medium_tag::elastic, // sienna color
-          { 160, 82, 45 } },
         { specfem::element::medium_tag::acoustic, // aqua color
           { 0, 255, 255 } },
+        { specfem::element::medium_tag::elastic_psv, // sienna color
+          { 160, 82, 45 } },
+        { specfem::element::medium_tag::elastic_sh, // sienna color
+          { 160, 82, 45 } },
+        { specfem::element::medium_tag::poroelastic, // off navy color
+          { 40, 40, 128 } },
+        { specfem::element::medium_tag::electromagnetic_te, // dark gray color
+          { 169, 169, 169 } },
       };
 
   const auto &coordinates = assembly.mesh.points.h_coord;
@@ -218,7 +212,8 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
 }
 } // namespace
 
-void specfem::periodic_tasks::plot_wavefield::run() {
+void specfem::periodic_tasks::plot_wavefield::run(
+    specfem::compute::assembly &assembly, const int istep) {
 
   auto colors = vtkSmartPointer<vtkNamedColors>::New();
 
@@ -307,7 +302,7 @@ void specfem::periodic_tasks::plot_wavefield::run() {
     if (this->output_format == specfem::display::format::PNG) {
       const auto filename =
           this->output_folder /
-          ("wavefield" + to_zero_lead(this->m_istep, 6) + ".png");
+          ("wavefield" + specfem::utilities::to_zero_lead(istep, 6) + ".png");
       auto writer = vtkSmartPointer<vtkPNGWriter>::New();
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());
@@ -315,7 +310,7 @@ void specfem::periodic_tasks::plot_wavefield::run() {
     } else if (this->output_format == specfem::display::format::JPG) {
       const auto filename =
           this->output_folder /
-          ("wavefield" + std::to_string(this->m_istep) + ".jpg");
+          ("wavefield" + specfem::utilities::to_zero_lead(istep, 6) + ".jpg");
       auto writer = vtkSmartPointer<vtkJPEGWriter>::New();
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());
@@ -324,12 +319,8 @@ void specfem::periodic_tasks::plot_wavefield::run() {
       throw std::runtime_error("Unsupported output format");
     }
   } else {
-// Create a render window interactor
-#ifdef __APPLE__
-    auto render_window = vtkSmartPointer<vtkCocoaRenderWindow>::New();
-#else
-    auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
-#endif
+    // Create a render window interactor
+    auto render_window = vtkSmartPointer<vtkRenderWindow>::New();
     render_window->AddRenderer(renderer);
     render_window->SetSize(2560, 2560);
     render_window->SetWindowName("Wavefield");

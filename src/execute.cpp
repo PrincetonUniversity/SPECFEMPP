@@ -44,7 +44,9 @@ void execute(
   const auto quadrature = setup.instantiate_quadrature();
   const auto mesh_modifiers =
       setup.instantiate_mesh_modifiers<specfem::dimension::type::dim2>();
-  auto mesh = specfem::IO::read_mesh(database_filename, mpi);
+  const auto mesh = specfem::io::read_2d_mesh(
+      database_filename, setup.get_elastic_wave_type(),
+      setup.get_electromagnetic_wave_type(), mpi);
   mesh_modifiers->apply(mesh);
   // --------------------------------------------------------------
 
@@ -54,13 +56,13 @@ void execute(
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
   auto [sources, t0] =
-      specfem::IO::read_sources(setup.get_sources(), nsteps, setup.get_t0(),
+      specfem::io::read_sources(setup.get_sources(), nsteps, setup.get_t0(),
                                 setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_node = setup.get_stations();
   const auto angle = setup.get_receiver_angle();
-  auto receivers = specfem::IO::read_receivers(stations_node, angle);
+  auto receivers = specfem::io::read_receivers(stations_node, angle);
 
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");
@@ -100,8 +102,6 @@ void execute(
   // --------------------------------------------------------------
   //                   Generate Assembly
   // --------------------------------------------------------------
-  mpi->cout("Generating assembly:");
-  mpi->cout("-------------------------------");
   const type_real dt = setup.get_dt();
   specfem::compute::assembly assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
@@ -109,9 +109,14 @@ void execute(
       nstep_between_samples, setup.get_simulation_type(),
       setup.instantiate_property_reader());
   time_scheme->link_assembly(assembly);
+  // --------------------------------------------------------------
+
+  if (mpi->main_proc()) {
+    mpi->cout(assembly.print());
+  }
 
   // --------------------------------------------------------------
-  //                Read or Write properties
+  //               Write properties
   // --------------------------------------------------------------
   const auto property_writer = setup.instantiate_property_writer();
   if (property_writer) {
@@ -121,31 +126,31 @@ void execute(
     property_writer->write(assembly);
     return;
   }
-
-  // const auto property_reader = setup.instantiate_property_reader();
-  // if (property_reader) {
-  //   mpi->cout("Reading model files:");
-  //   mpi->cout("-------------------------------");
-
-  //   property_reader->read(assembly);
-  // }
-
-  // --------------------------------------------------------------
-
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Read wavefields
   // --------------------------------------------------------------
-
   const auto wavefield_reader = setup.instantiate_wavefield_reader();
-  if (wavefield_reader) {
-    mpi->cout("Reading wavefield files:");
-    mpi->cout("-------------------------------");
+  // if (wavefield_reader) {
+  //   mpi->cout("Reading wavefield files:");
+  //   mpi->cout("-------------------------------");
 
-    wavefield_reader->read(assembly);
-    // Transfer the buffer field to device
-    assembly.fields.buffer.copy_to_device();
+  //   wavefield_reader->read(assembly);
+  //   // Transfer the buffer field to device
+  //   assembly.fields.buffer.copy_to_device();
+  // }
+  if (wavefield_reader) {
+    tasks.push_back(wavefield_reader);
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                  Write Forward Wavefields
+  // --------------------------------------------------------------
+  const auto wavefield_writer = setup.instantiate_wavefield_writer();
+  if (wavefield_writer) {
+    tasks.push_back(wavefield_writer);
   }
   // --------------------------------------------------------------
 
@@ -153,8 +158,9 @@ void execute(
   //                   Instantiate plotter
   // --------------------------------------------------------------
   const auto wavefield_plotter = setup.instantiate_wavefield_plotter(assembly);
-  tasks.push_back(wavefield_plotter);
-
+  if (wavefield_plotter) {
+    tasks.push_back(wavefield_plotter);
+  }
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -191,17 +197,16 @@ void execute(
   }
   // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                  Write Forward Wavefields
-  // --------------------------------------------------------------
-  const auto wavefield_writer = setup.instantiate_wavefield_writer();
-  if (wavefield_writer) {
-    mpi->cout("Writing wavefield files:");
-    mpi->cout("-------------------------------");
+  // // --------------------------------------------------------------
+  // //                  Write Forward Wavefields
+  // // --------------------------------------------------------------
+  // if (wavefield_writer) {
+  //   mpi->cout("Writing wavefield files:");
+  //   mpi->cout("-------------------------------");
 
-    wavefield_writer->write(assembly);
-  }
-  // --------------------------------------------------------------
+  //   wavefield_writer->write(assembly);
+  // }
+  // // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                Write Kernels

@@ -1,0 +1,6 @@
+build/
+OUTPUT_FILES/
+DATA/meshfem3D_files/Mesh_Par_file
+DATA/meshfem3D_files/interfaces.txt
+Par_File
+specfem_config.yaml

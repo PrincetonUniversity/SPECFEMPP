@@ -1,10 +1,7 @@
 #pragma once
 
-#include "medium.hpp"
-#include <boost/preprocessor.hpp>
-
-namespace specfem {
-namespace element {
+#include "macros_impl/array.hpp"
+#include "macros_impl/utils.hpp"
 
 /**
  * @name Element Tag macros
@@ -15,9 +12,16 @@ namespace element {
 /// @{
 #define DIMENSION_TAG_DIM2 (0, specfem::dimension::type::dim2, dim2)
 
-#define MEDIUM_TAG_ELASTIC (0, specfem::element::medium_tag::elastic, elastic)
+#define MEDIUM_TAG_ELASTIC_PSV                                                 \
+  (0, specfem::element::medium_tag::elastic_psv, elastic_psv)
+#define MEDIUM_TAG_ELASTIC_SH                                                  \
+  (1, specfem::element::medium_tag::elastic_sh, elastic_sh)
 #define MEDIUM_TAG_ACOUSTIC                                                    \
-  (1, specfem::element::medium_tag::acoustic, acoustic)
+  (2, specfem::element::medium_tag::acoustic, acoustic)
+#define MEDIUM_TAG_POROELASTIC                                                 \
+  (3, specfem::element::medium_tag::poroelastic, poroelastic)
+#define MEDIUM_TAG_ELECTROMAGNETIC_TE                                          \
+  (4, specfem::element::medium_tag::electromagnetic_te, electromagnetic_te)
 
 #define PROPERTY_TAG_ISOTROPIC                                                 \
   (0, specfem::element::property_tag::isotropic, isotropic)
@@ -33,36 +37,138 @@ namespace element {
   (3, specfem::element::boundary_tag::composite_stacey_dirichlet,              \
    composite_stacey_dirichlet)
 
-#define GET_ID(elem) BOOST_PP_TUPLE_ELEM(0, elem)
-#define GET_TAG(elem) BOOST_PP_TUPLE_ELEM(1, elem)
-#define GET_NAME(elem) BOOST_PP_TUPLE_ELEM(2, elem)
-
-#define ADD_UNDERSCORE(s, data, elem) BOOST_PP_CAT(_, elem)
-
-#define CREATE_VARIABLE_NAME(prefix, ...)                                      \
-  BOOST_PP_SEQ_CAT((prefix)BOOST_PP_SEQ_TRANSFORM(                             \
-      ADD_UNDERSCORE, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)))
-
 /**
  * @brief Macro to generate a list of medium types
  *
  */
-#define MEDIUM_TYPES                                                           \
-  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC))(                                  \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))
+#define MEDIUM_TAGS                                                            \
+  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV))(                              \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH))(                            \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))(                              \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC))(                           \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE))
 
-#define MAKE_ARRAY_ELEM(s, data, elem)                                         \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)))
+/**
+ * @brief Macro to generate a list of material systems
+ *
+ */
+#define MATERIAL_SYSTEMS                                                       \
+  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC))(      \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ANISOTROPIC))( \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC))(    \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC))(  \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))(      \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC))(   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
+       PROPERTY_TAG_ISOTROPIC))
 
-#define MAKE_CONSTEXPR_ARRAY(seq)                                              \
-  BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(MAKE_ARRAY_ELEM, _, seq))
+/**
+ * @brief Macro to generate a list of element types
+ *
+ */
+#define ELEMENT_TYPES                                                          \
+  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC,        \
+    BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV,           \
+                         PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(        \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC,      \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH,         \
+                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,           \
+                            PROPERTY_TAG_ISOTROPIC,                            \
+                            BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE))(              \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
+       BOUNDARY_TAG_STACEY))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,         \
+                              PROPERTY_TAG_ISOTROPIC,                          \
+                              BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))(       \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ANISOTROPIC,   \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV,        \
+                            PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))(   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC,    \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH,         \
+                            PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))(   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC,     \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC,        \
+                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
+       PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
+
+/**
+ * @brief Tag getters. The macros are intended to be used only in @ref DECLARE
+ * and @ref INSTANTIATE.
+ */
+#define _DIMENSION_TAG_ BOOST_PP_SEQ_TO_LIST((0))
+#define _MEDIUM_TAG_ BOOST_PP_SEQ_TO_LIST((1))
+#define _PROPERTY_TAG_ BOOST_PP_SEQ_TO_LIST((2))
+#define _BOUNDARY_TAG_ BOOST_PP_SEQ_TO_LIST((3))
+
+/**
+ * @brief Declare for each tag.
+ *
+ * This macro is to be only used in conjunction with @ref FOR_EACH_IN_PRODUCT
+ *
+ */
+#define DECLARE(...) BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)
+/**
+ * @brief Instantiate templates for each tag.
+ *
+ * This macro is to be only used in conjunction with @ref FOR_EACH_IN_PRODUCT
+ *
+ */
+#define INSTANTIATE(...)                                                       \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_INSTANTIATE, _,                            \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+/**
+ * @brief Capture existing variables as reference in the code block.
+ */
+#define CAPTURE(...) BOOST_PP_VARIADIC_TO_TUPLE(BOOST_PP_EMPTY(), __VA_ARGS__),
+
+/**
+ * @brief Converts tag arguments to a sequence of tag tuples,
+ * e.g. DIMENSION_TAG(DIM2) expands to DIMENSION_TAG_DIM2
+ */
+#define DIMENSION_TAG(...)                                                     \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, DIMENSION_TAG_,                      \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define MEDIUM_TAG(...)                                                        \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, MEDIUM_TAG_,                         \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define PROPERTY_TAG(...)                                                      \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, PROPERTY_TAG_,                       \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define BOUNDARY_TAG(...)                                                      \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, BOUNDARY_TAG_,                       \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+/**
+ * @brief Declare variables or run code for all material systems
+ * listed in macro sequence @ref MATERIAL_SYSTEMS.
+ * @param seq A sequence filter for material systems.
+ * @param ... To declare variabled, use DECLARE() as the first argument,
+ * e.g. DECLARE((IndexViewType, elements),
+ *  (IndexViewType::HostMirror, h_elements),
+ *  ((properties)((_MEDIUM_TAG_, _PROPERTY_TAG_)), value))
+ * To capture existing variables as reference in the code block, add a tuple as
+ * argument, e.g. CAPTURE(value, elements, h_elements). The last argument is the
+ * code block to be executed.
+ */
+#define FOR_EACH_IN_PRODUCT(seq, ...)                                          \
+  BOOST_PP_SEQ_FOR_EACH(                                                       \
+      _FOR_ONE_TAG_SEQ, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
+      BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, BOOST_PP_TUPLE_TO_SEQ(seq)))
+
+namespace specfem {
+namespace element {
 
 /**
  * @brief A constexpr function to generate a list of medium types within the
  * simulation.
  *
- * This macro uses @ref MEDIUM_TYPES to generate a list of medium types
+ * This macro uses @ref MEDIUM_TAGS to generate a list of medium types
  * automatically.
  *
  * @return constexpr auto list of medium types
@@ -70,29 +176,13 @@ namespace element {
 constexpr auto medium_types() {
   // Use boost preprocessor library to generate a list of medium
   // types
-  constexpr int total_medium_types = BOOST_PP_SEQ_SIZE(MEDIUM_TYPES);
+  constexpr int total_medium_types = BOOST_PP_SEQ_SIZE(MEDIUM_TAGS);
   constexpr std::array<std::tuple<specfem::dimension::type, medium_tag>,
                        total_medium_types>
-      medium_types{ MAKE_CONSTEXPR_ARRAY(MEDIUM_TYPES) };
+      medium_types{ _MAKE_CONSTEXPR_ARRAY(MEDIUM_TAGS) };
 
   return medium_types;
 }
-
-#undef MAKE_ARRAY_ELEM
-
-/**
- * @brief Macro to generate a list of material systems
- *
- */
-#define MATERIAL_SYSTEMS                                                       \
-  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC))(          \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ANISOTROPIC))(     \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))
-
-#define MAKE_ARRAY_ELEM(s, data, elem)                                         \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)))
 
 /**
  * @brief A constexpr function to generate a list of material systems within the
@@ -111,38 +201,10 @@ constexpr auto material_systems() {
       std::tuple<specfem::dimension::type, specfem::element::medium_tag,
                  specfem::element::property_tag>,
       total_material_systems>
-      material_systems{ MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS) };
+      material_systems{ _MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS) };
 
   return material_systems;
 }
-
-#undef MAKE_ARRAY_ELEM
-
-/**
- * @brief Macro to generate a list of element types
- *
- */
-#define ELEMENT_TYPES                                                          \
-  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC,            \
-    BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC,               \
-                         PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(        \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
-       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,           \
-                            PROPERTY_TAG_ISOTROPIC,                            \
-                            BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE))(              \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
-       BOUNDARY_TAG_STACEY))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,         \
-                              PROPERTY_TAG_ISOTROPIC,                          \
-                              BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))(       \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ANISOTROPIC,       \
-       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC,            \
-                            PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))
-
-#define MAKE_ARRAY_ELEM(s, data, elem)                                         \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(3, elem)))
 
 /**
  * @brief A constexpr function to generate a list of element types within the
@@ -162,193 +224,10 @@ constexpr auto element_types() {
                  specfem::element::property_tag,
                  specfem::element::boundary_tag>,
       total_element_types>
-      material_systems{ MAKE_CONSTEXPR_ARRAY(ELEMENT_TYPES) };
+      material_systems{ _MAKE_CONSTEXPR_ARRAY(ELEMENT_TYPES) };
 
   return material_systems;
 }
-
-#undef MAKE_CONSTEXPR_ARRAY
-#undef MAKE_ARRAY_ELEM
-
-// Touch the following code at your own risk
-
-#define MEDIUM_IN_TUPLE(s, elem, tuple)                                        \
-  BOOST_PP_IF(                                                                 \
-      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 2),                           \
-      BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
-                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
-          BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),    \
-                                     GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),    \
-                      1, 0),                                                   \
-          0),                                                                  \
-      0)
-
-#define MAT_SYS_IN_TUPLE(s, elem, tuple)                                       \
-  BOOST_PP_IF(                                                                 \
-      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 3),                           \
-      BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
-                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
-          BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),    \
-                                     GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),    \
-                      BOOST_PP_IF(BOOST_PP_EQUAL(                              \
-                                      GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),   \
-                                      GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),   \
-                                  1, 0),                                       \
-                      0),                                                      \
-          0),                                                                  \
-      0)
-
-#define ELEM_IN_TUPLE(s, elem, tuple)                                          \
-  BOOST_PP_IF(                                                                 \
-      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 4),                           \
-      BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
-                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
-          BOOST_PP_IF(                                                         \
-              BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),            \
-                             GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),            \
-              BOOST_PP_IF(                                                     \
-                  BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),        \
-                                 GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),        \
-                  BOOST_PP_IF(                                                 \
-                      BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(3, tuple)),    \
-                                     GET_ID(BOOST_PP_TUPLE_ELEM(3, elem))),    \
-                      1, 0),                                                   \
-                  0),                                                          \
-              0),                                                              \
-          0),                                                                  \
-      0)
-
-#define OP_OR(s, state, elem) BOOST_PP_OR(state, elem)
-
-#define MEDIUM_IN_SEQUENCE(elem)                                               \
-  BOOST_PP_SEQ_FOLD_LEFT(                                                      \
-      OP_OR, 0, BOOST_PP_SEQ_TRANSFORM(MEDIUM_IN_TUPLE, elem, MEDIUM_TYPES))
-
-#define MAT_SYS_IN_SEQUENCE(elem)                                              \
-  BOOST_PP_SEQ_FOLD_LEFT(                                                      \
-      OP_OR, 0,                                                                \
-      BOOST_PP_SEQ_TRANSFORM(MAT_SYS_IN_TUPLE, elem, MATERIAL_SYSTEMS))
-
-#define ELEM_IN_SEQUENCE(elem)                                                 \
-  BOOST_PP_SEQ_FOLD_LEFT(                                                      \
-      OP_OR, 0, BOOST_PP_SEQ_TRANSFORM(ELEM_IN_TUPLE, elem, ELEMENT_TYPES))
-
-/**
- * @brief Filter sequence for different tags.
- *
- * This macro is to be only used in conjunction with @ref
- * CALL_MACRO_FOR_ALL_ELEMENT_TYPES or @ref CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS.
- *
- */
-#define WHERE(...) (BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
-
-#define CALL_FOR_ONE_MEDIUM_TYPE(s, MACRO, elem)                               \
-  BOOST_PP_IF(MEDIUM_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO,            \
-              EMPTY_MACRO)                                                     \
-  (BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))))
-
-#define CALL_FOR_ONE_MATERIAL_SYSTEM(s, MACRO, elem)                           \
-  BOOST_PP_IF(MAT_SYS_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO,           \
-              EMPTY_MACRO)                                                     \
-  (BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))))
-
-#define CALL_FOR_ONE_ELEMENT_TYPE(s, MACRO, elem)                              \
-  BOOST_PP_IF(ELEM_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO, EMPTY_MACRO) \
-  (BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(3, (BOOST_PP_SEQ_ENUM(elem))))
-
-#define EMPTY_MACRO(...)
-
-#define CREATE_SEQ(r, elem) (elem)
-
-/**
- * @brief Call a macro for all medium types
- *
- * Invoking CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MACRO, seq) will call MACRO for all
- * medium types listed in macro sequence @ref MEDIUM_TYPES.
- *
- * @param MACRO The macro to be called. MACRO must have the following signature:
- * MACRO(DIMENSION_TAG, MEDIUM_TAG)
- *
- * @param seq A sequence filter for medium types. Sequences can be generated
- * using the @ref WHERE macro.
- *
- * @code
- *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG)
- * \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG)>();
- *
- *   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
- * WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
- * @endcode
- *
- *
- */
-#define CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MACRO, seq)                             \
-  BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_MEDIUM_TYPE, MACRO,                       \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
-
-/**
- * @brief Call a macro for all element types
- *
- * Invoking CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(MACRO, seq) will call MACRO for
- * all element types listed in macro sequence @ref MATERIAL_SYSTEMS.
- *
- * @param MACRO The macro to be called. MACRO must have the following signature:
- * MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG)
- *
- * @param seq A sequence filter for element types. Sequences can be generated
- * using the @ref WHERE macro.
- *
- * @code
- *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)
- * \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>();
- *
- *   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
- * WHERE(MEDIUM_TAG_ELASTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
- * PROPERTY_TAG_ANISOTROPIC))
- * @endcode
- *
- *
- */
-#define CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(MACRO, seq)                        \
-  BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_MATERIAL_SYSTEM, MACRO,                   \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
-
-/**
- * @brief Call a macro for all element types
- *
- * Invoking CALL_MACRO_FOR_ALL_ELEMENT_TYPES(MACRO, seq) will call MACRO for all
- * element types listed in macro sequence @ref ELEMENT_TYPES.
- *
- * @param MACRO The macro to be called. MACRO must have the following signature:
- * MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG)
- *
- * @param seq A sequence filter for element types. Sequences can be generated
- * using the @ref WHERE macro.
- *
- * @code
- *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,
- * BOUNDARY_TAG) \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG),
- * GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>();
- *
- *   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
- * WHERE(MEDIUM_TAG_ELASTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
- * PROPERTY_TAG_ANISOTROPIC) WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_STACEY))
- * @endcode
- *
- *
- */
-#define CALL_MACRO_FOR_ALL_ELEMENT_TYPES(MACRO, seq)                           \
-  BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_ELEMENT_TYPE, MACRO,                      \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
 
 } // namespace element
 } // namespace specfem

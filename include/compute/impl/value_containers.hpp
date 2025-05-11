@@ -5,15 +5,14 @@
 
 namespace specfem {
 namespace compute {
-
 namespace impl {
 /**
  * @brief Values for every quadrature point in the finite element mesh
  *
  */
 template <
-    template <specfem::element::medium_tag, specfem::element::property_tag>
-    class containers_type>
+    template <specfem::element::medium_tag, specfem::element::property_tag,
+              typename Enable = void> class containers_type>
 struct value_containers {
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
@@ -28,17 +27,23 @@ struct value_containers {
                                                       ///< property index
                                                       ///< mapping
 
-  containers_type<specfem::element::medium_tag::elastic,
-                  specfem::element::property_tag::isotropic>
-      elastic_isotropic; ///< Elastic isotropic material values
+  template <bool on_device>
+  KOKKOS_INLINE_FUNCTION constexpr
+      typename std::conditional<on_device, IndexViewType,
+                                IndexViewType::HostMirror>::type
+      get_property_index_mapping() const {
+    if constexpr (on_device) {
+      return property_index_mapping;
+    } else {
+      return h_property_index_mapping;
+    }
+  }
 
-  containers_type<specfem::element::medium_tag::elastic,
-                  specfem::element::property_tag::anisotropic>
-      elastic_anisotropic; ///< Elastic isotropic material values
-
-  containers_type<specfem::element::medium_tag::acoustic,
-                  specfem::element::property_tag::isotropic>
-      acoustic_isotropic; ///< Acoustic isotropic material values
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+      DECLARE(((containers_type, (_MEDIUM_TAG_, _PROPERTY_TAG_)), value)))
 
   /**
    * @name Constructors
@@ -60,21 +65,25 @@ struct value_containers {
   KOKKOS_INLINE_FUNCTION
       constexpr containers_type<MediumTag, PropertyTag> const &
       get_container() const {
-    if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                  (PropertyTag == specfem::element::property_tag::isotropic)) {
-      return elastic_isotropic;
-    } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                         (PropertyTag ==
-                          specfem::element::property_tag::anisotropic)) {
-      return elastic_anisotropic;
-    } else if constexpr ((MediumTag ==
-                          specfem::element::medium_tag::acoustic) &&
-                         (PropertyTag ==
-                          specfem::element::property_tag::isotropic)) {
-      return acoustic_isotropic;
-    } else {
-      static_assert("Material type not implemented");
-    }
+
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+        CAPTURE(value) {
+          if constexpr (_medium_tag_ == MediumTag &&
+                        _property_tag_ == PropertyTag) {
+            return _value_;
+          }
+        })
+
+    Kokkos::abort("Invalid material type detected in value containers");
+
+    /// code path should never be reached
+
+    auto return_value = new containers_type<MediumTag, PropertyTag>();
+
+    return *return_value;
   }
 
   /**
@@ -82,15 +91,19 @@ struct value_containers {
    *
    */
   void copy_to_host() {
-    elastic_isotropic.copy_to_host();
-    elastic_anisotropic.copy_to_host();
-    acoustic_isotropic.copy_to_host();
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+        CAPTURE(value) { _value_.copy_to_host(); })
   }
 
   void copy_to_device() {
-    elastic_isotropic.copy_to_device();
-    elastic_anisotropic.copy_to_device();
-    acoustic_isotropic.copy_to_device();
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+        CAPTURE(value) { _value_.copy_to_device(); })
   }
 };
 

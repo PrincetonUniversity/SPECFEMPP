@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
   DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -17,6 +17,12 @@ FetchContent_MakeAvailable(googletest)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
 
 include_directories(.)
+
+set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Some of the writing test need to write somewhere and we don't want that
+# to be in the source directory
+set(TEST_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 enable_testing()
 
@@ -50,7 +56,7 @@ add_library(
 target_link_libraries(
   compare_arrays
   Kokkos::kokkos
-  IO
+  io
 )
 
 
@@ -58,6 +64,7 @@ add_executable(
   gll_tests
   gll/gll_tests.cpp
 )
+
 target_link_libraries(
   gll_tests
   gtest_main
@@ -89,7 +96,7 @@ target_link_libraries(
   fortranio_test
   gtest_main
   gmock_main
-  IO
+  io
   -lpthread -lm
 )
 
@@ -102,6 +109,7 @@ add_executable(
   mesh_tests
   mesh/test_fixture/test_fixture.cpp
   mesh/materials/materials.cpp
+  mesh/materials/properties.cpp
   mesh/runner.cpp
 )
 
@@ -112,7 +120,8 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   yaml-cpp
-  IO
+  io
+  utilities
   # material_class
   -lpthread -lm
 )
@@ -187,7 +196,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
-  IO
+  io
   Boost::filesystem
   # material_class
   -lpthread -lm
@@ -203,6 +212,7 @@ add_executable(
   assembly/sources/sources.cpp
 )
 
+target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
 
 target_link_libraries(
   assembly_tests
@@ -212,24 +222,26 @@ target_link_libraries(
   compute
   quadrature
   mpi_environment
-  IO
+  io
   kokkos_environment
   yaml-cpp
+  utilities
   Boost::filesystem
   -lpthread -lm
 )
 
 add_executable(
-  IO_tests
-  IO/sources/test_read_sources.cpp
+  io_tests
+  io/sources/test_read_sources.cpp
 )
 
 target_link_libraries(
-  IO_tests
-  IO
+  io_tests
+  io
   gtest_main
   kokkos_environment
   yaml-cpp
+  enumerations
   Boost::filesystem
 )
 
@@ -247,7 +259,7 @@ target_link_libraries(
   kokkos_environment
   algorithms
   point
-  IO
+  io
   Boost::filesystem
 )
 
@@ -264,7 +276,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   algorithms
-  IO
+  io
   Boost::filesystem
   point
 )
@@ -323,9 +335,8 @@ target_link_libraries(
   compare_arrays
   point
   algorithms
-  IO
+  io
   coupled_interface
-  periodic_tasks
   -lpthread -lm
 )
 
@@ -448,22 +459,22 @@ target_link_libraries(
 # Link to gtest only if MPI is enabled
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
-  gtest_discover_tests(gll_tests)
-  gtest_discover_tests(lagrange_tests)
-  gtest_discover_tests(fortranio_test)
-  gtest_discover_tests(IO_tests)
-  gtest_discover_tests(mesh_tests)
-  gtest_discover_tests(compute_partial_derivatives_tests)
-  # gtest_discover_tests(compute_elastic_tests)
-  # # gtest_discover_tests(compute_acoustic_tests)
-  # gtest_discover_tests(compute_coupled_interfaces_tests)
-  gtest_discover_tests(compute_tests)
-  gtest_discover_tests(assembly_tests)
-  gtest_discover_tests(policies)
-  gtest_discover_tests(locate_point)
-  gtest_discover_tests(interpolate_function)
-  gtest_discover_tests(rmass_inverse_tests)
-  gtest_discover_tests(displacement_newmark_tests)
+  gtest_discover_tests(gll_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(lagrange_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(fortranio_test WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(io_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(mesh_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(compute_partial_derivatives_tests WORKING_DIRECTORY ${TEST_DIR})
+  # gtest_discover_tests(compute_elastic_tests WORKING_DIRECTORY ${TEST_DIR})
+  # # gtest_discover_tests(compute_acoustic_tests WORKING_DIRECTORY ${TEST_DIR})
+  # gtest_discover_tests(compute_coupled_interfaces_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(compute_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(assembly_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(locate_point WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(interpolate_function WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(rmass_inverse_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(displacement_newmark_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
 endif(NOT MPI_PARALLEL)
