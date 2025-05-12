@@ -26,8 +26,8 @@ set(NUM_VECTOR_LANES 1)
 
 # Set my default CMAKE_INSTALL_PREFIX
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_SOURCE_DIR}/dist")
-  message(STATUS "CMAKE_INSTALL_PREFIX not set defaulting to ${CMAKE_INSTALL_PREFIX}")
+  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_SOURCE_DIR}/bin")
+  message(STATUS "CMAKE_INSTALL_PREFIX not set. Defaulting to ${CMAKE_INSTALL_PREFIX}")
 else()
   message(STATUS "User-defined CMAKE_INSTALL_PREFIX set to ${CMAKE_INSTALL_PREFIX}")
 endif()
@@ -818,17 +818,10 @@ endif (SPECFEMPP_BINDING_PYTHON)
 
 
 install(
-        TARGETS specfem2d
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
+        TARGETS specfem2d specfem3d
+        RUNTIME DESTINATION .
 )
-install(
-        TARGETS specfem3d
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-)
+
 
 
 # Create a custom target that will run after your main build
