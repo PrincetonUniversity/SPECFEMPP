@@ -10,7 +10,7 @@ title                           = Anisotropic Crystal
 NPROC                           = 1              # number of processes
 
 # Output folder to store mesh related files
-OUTPUT_FILES                   = @CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES
+OUTPUT_FILES                   = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
 
 #-----------------------------------------------------------
 #
@@ -25,7 +25,7 @@ PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (
 NGNOD                           = 9
 
 # location to store the mesh
-database_filename               = @CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/database.bin
+database_filename               = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/database.bin
 
 #-----------------------------------------------------------
 #
@@ -54,7 +54,7 @@ zfin                            = 0.2640         # last receiver z in meters (ig
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
 # filename to store stations file
-stations_filename              = @CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/STATIONS
+stations_filename              = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS
 
 #-----------------------------------------------------------
 #
@@ -103,7 +103,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = @CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/topoaniso.dat
+interfacesfile                  = @CURRENT_BENCHMARK_BUILD_DIR@/topography.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model

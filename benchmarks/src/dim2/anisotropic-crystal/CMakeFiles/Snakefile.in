@@ -1,5 +1,5 @@
-SPECFEM_BIN = "specfem2d"
-MESHFEM_BIN = "xmeshfem2D"
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem2d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
 
 
 rule all:
@@ -12,8 +12,8 @@ rule generate_mesh:
     input:
         "Par_File",
     output:
-        database="@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/database.bin",
-        stations="@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/STATIONS",
+        database="OUTPUT_FILES/database.bin",
+        stations="OUTPUT_FILES/STATIONS",
     localrule: True
     shell:
         """
@@ -24,8 +24,8 @@ rule generate_mesh:
 
 rule run_solver:
     input:
-        database="@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/database.bin",
-        stations="@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/STATIONS",
+        database="OUTPUT_FILES/database.bin",
+        stations="OUTPUT_FILES/STATIONS",
         source="sources.yaml",
         config="specfem_config.yaml",
     output:
