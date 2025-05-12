@@ -25,10 +25,10 @@ parameters:
       forward:
         writer:
           seismogram:
-            directory: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/results"
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
             format: ASCII
           wavefield:
-            directory: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES"
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
             format: HDF5
 
     solver:
@@ -44,10 +44,10 @@ parameters:
     nstep_between_samples: 1
     seismogram-type:
     - displacement
-    stations: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS"
 
 
   databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/database.bin"
 
-  sources: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/forward_source.yaml"
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/forward_source.yaml"
