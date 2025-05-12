@@ -123,16 +123,12 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
         KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
           for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
                tile += ChunkPolicyType::chunk_size * simd_size) {
-            const int starting_element_index =
-                team.league_rank() * ChunkPolicyType::tile_size * simd_size +
-                tile;
-
-            if (starting_element_index >= nelements) {
-              break;
-            }
-
             const auto iterator =
-                chunk_policy.league_iterator(starting_element_index);
+                chunk_policy.league_iterator(team.league_rank(), tile);
+
+            if (iterator.is_end()) {
+              return;
+            }
 
             Kokkos::parallel_for(
                 Kokkos::TeamThreadRange(team, iterator.chunk_size()),
@@ -161,18 +157,15 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
           specfem::compute::load_on_device(team, quadrature,
                                            element_quadrature);
+
           for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
                tile += ChunkPolicyType::chunk_size * simd_size) {
-            const int starting_element_index =
-                team.league_rank() * ChunkPolicyType::tile_size * simd_size +
-                tile;
-
-            if (starting_element_index >= nelements) {
-              break;
+            auto iterator =
+                chunk_policy.league_iterator(team.league_rank(), tile);
+            if (iterator.is_end()) {
+              return; // No elements to process in this tile
             }
-
-            const auto iterator =
-                chunk_policy.league_iterator(starting_element_index);
+            // Load the element field on the device
             specfem::compute::load_on_device(team, iterator, field,
                                              element_field);
 
