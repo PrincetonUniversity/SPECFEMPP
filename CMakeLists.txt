@@ -12,7 +12,7 @@ option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 # option(BUILD_EXAMPLES "Examples included" ON)
-option(BUILD_BENCHMARKS "Benchmarks included" OFF)
+option(BUILD_BENCHMARKS "Benchmarks included" ON)
 
 # To fix the CMake policy warning for yaml-cpp and google test
 # This should be removed once both packages are updated (Today: April 4, 2025)
@@ -763,8 +763,8 @@ if (BUILD_BENCHMARKS)
     if(DEFINED BENCHMARKS_BUILD_DIR)
         message(STATUS "BENCHMARKS_BUILD_DIR was defined as: ${BENCHMARKS_BUILD_DIR}")
     else()
-        # throw error if not defined
-        message(FATAL_ERROR "BENCHMARKS_BUILD_DIR was not defined. Please define it or set -DBUILD_BENCHMARKS=OFF")
+        set(BENCHMARKS_BUILD_DIR ${CMAKE_SOURCE_DIR}/benchmarks/build)
+        message(STATUS "BENCHMARKS_BUILD_DIR was not defined, using default: ${BENCHMARKS_BUILD_DIR}")
     endif()
 
     message(STATUS "Building benchmarks...")
