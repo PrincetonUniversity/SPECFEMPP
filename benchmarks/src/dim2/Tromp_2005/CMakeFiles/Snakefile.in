@@ -1,6 +1,6 @@
-SPECFEM_BIN = "specfem2d"
-MESHFEM_BIN = "xmeshfem2D"
-ADJ_SEISMOGRAM_BIN = "xadj_seismogram"
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem2d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
+ADJ_SEISMOGRAM_BIN = "@CMAKE_BINARY_DIR@/bin/xadj_seismogram"
 
 
 rule all:

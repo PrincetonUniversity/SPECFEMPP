@@ -14,7 +14,7 @@ parameters:
     title: Tromp-Tape-Liu (GJI 2005)
 
   receivers:
-    stations: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS"
     angle: 0.0
     nstep_between_samples: 1
     seismogram-type:
@@ -25,10 +25,10 @@ parameters:
     number-of-runs: 1
 
   databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/database.bin"
 
   ## sources
-  sources: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/adjoint_source.yaml"
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/adjoint_source.yaml"
 
   simulation-setup:
     quadrature:
@@ -39,12 +39,12 @@ parameters:
       combined:
         reader:
           wavefield:
-            directory: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES"
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
             format: HDF5
 
         writer:
           kernels:
-            directory: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES"
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
             format: ASCII
 
     solver:
