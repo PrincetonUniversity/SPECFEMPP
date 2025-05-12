@@ -8,10 +8,8 @@
 #include "enumerations/wavefield.hpp"
 #include "medium/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "point/field.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/properties.hpp"
 #include "policies/chunk.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace impl {
