@@ -24,12 +24,12 @@ set(NUM_CHUNKS 1)
 set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
 
-# Define the directory for the installation
-if (CMAKE_INSTALL_PREFIX)
-    message(STATUS "CMAKE_INSTALL_PREFIX was defined as: ${CMAKE_INSTALL_PREFIX}")
+# Set my default CMAKE_INSTALL_PREFIX
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_SOURCE_DIR}/dist")
+  message(STATUS "CMAKE_INSTALL_PREFIX not set defaulting to ${CMAKE_INSTALL_PREFIX}")
 else()
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/dist/" CACHE STRING "Directory for installing the SPECFEM binaries")
-    message(STATUS "CMAKE_INSTALL_PREFIX was not defined, using default: ${CMAKE_INSTALL_PREFIX}")
+  message(STATUS "User-defined CMAKE_INSTALL_PREFIX set to ${CMAKE_INSTALL_PREFIX}")
 endif()
 
 # Set binary output directories.
