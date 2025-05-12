@@ -1,6 +1,5 @@
-SPECFEM_BIN = "specfem2d"
-MESHFEM_BIN = "xmeshfem2D"
-
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem2d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
 
 rule all:
     input:
@@ -26,7 +25,7 @@ rule run_solver:
     input:
         database="OUTPUT_FILES/database.bin",
         stations="OUTPUT_FILES/STATIONS",
-        source="sources.yaml",
+        source="source.yaml",
         config="specfem_config.yaml",
     output:
         seismograms=expand(
