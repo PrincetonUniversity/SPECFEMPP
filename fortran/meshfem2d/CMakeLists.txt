@@ -219,7 +219,5 @@ add_executable(xadj_seismogram adj_seismogram.f90)
 
 
 install(TARGETS xadj_seismogram xmeshfem2D
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION .
 )

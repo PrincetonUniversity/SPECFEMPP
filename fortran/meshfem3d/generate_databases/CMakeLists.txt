@@ -123,7 +123,5 @@ target_link_libraries(xgenerate_databases PRIVATE
 )
 
 install(TARGETS xgenerate_databases
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION .
 )
