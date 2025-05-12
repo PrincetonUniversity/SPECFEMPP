@@ -2,9 +2,7 @@
 
 #include "algorithms/dot.hpp"
 #include "enumerations/medium.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/properties.hpp"
-#include "point/stress.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
