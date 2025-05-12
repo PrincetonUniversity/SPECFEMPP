@@ -222,5 +222,4 @@ install(TARGETS xadj_seismogram xmeshfem2D
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
-  DEPENDS xmeshfem2D xadj_seismogram
 )
