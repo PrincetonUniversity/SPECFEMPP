@@ -1,5 +1,5 @@
-SPECFEM_BIN = "specfem2d"
-MESHFEM_BIN = "xmeshfem2D"
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem2d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
 
 
 rule all:

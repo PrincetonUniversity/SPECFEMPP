@@ -1,5 +1,5 @@
-SPECFEM_BIN = "specfem2d"
-MESHFEM_BIN = "xmeshfem2D"
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem2d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
 
 
 rule all:
@@ -20,36 +20,36 @@ rule generate_mesh:
             {MESHFEM_BIN} -p {input}
         """
 
-rule generate_line_sources:
-    input:
-        jinja_file = "line_sources.yaml.j2",
-        jinja_variables = "jinja_variables.yaml",
-    output:
-        source_file = "line_sources.yaml",
-    localrule: True
-    run:
-        import jinja2
-        import yaml
-
-        def generate_sources():
-            # read jinja2 variables yaml file
-            with open(input.jinja_variables, 'r') as f:
-                jinja_vars = yaml.safe_load(f)
-
-            with open(input.jinja_file, 'r') as f:
-                template = jinja2.Template(f.read())
-
-            variables = jinja_vars['variables']
-            with open(output.source_file, 'w') as f:
-                f.write(template.render(variables))
-
-        generate_sources()
+#rule generate_line_source:
+#    input:
+#        jinja_file = "line_source.yaml.j2",
+#        jinja_variables = "jinja_variables.yaml",
+#    output:
+#        source_file = "line_source.yaml",
+#    localrule: True
+#    run:
+#        import jinja2
+#        import yaml
+#
+#        def generate_sources():
+#            # read jinja2 variables yaml file
+#            with open(input.jinja_variables, 'r') as f:
+#                jinja_vars = yaml.safe_load(f)
+#
+#            with open(input.jinja_file, 'r') as f:
+#                template = jinja2.Template(f.read())
+#
+#            variables = jinja_vars['variables']
+#            with open(output.source_file, 'w') as f:
+#                f.write(template.render(variables))
+#
+#        generate_sources()
 
 rule run_simulation:
     input:
         database="OUTPUT_FILES/database.bin",
         stations="OUTPUT_FILES/STATIONS",
-        line_sources="line_sources.yaml",
+        line_source="line_source.yaml",
         specfem_config="specfem_config.yaml",
     output:
         pressure_seismograms=expand(
@@ -134,5 +134,5 @@ rule clean:
     shell:
         """
             rm -rf OUTPUT_FILES
-            rm -f line_sources.yaml
+            rm -f line_source.yaml
         """
