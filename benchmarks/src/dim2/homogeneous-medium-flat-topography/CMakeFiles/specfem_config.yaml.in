@@ -28,10 +28,10 @@ parameters:
         writer:
           seismogram:
             format: "ascii"
-            directory: "@CURRENT_EXAMPLE_INSTALL_DIR@/OUTPUT_FILES/results"
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
 
   receivers:
-    stations: "@CURRENT_EXAMPLE_INSTALL_DIR@/OUTPUT_FILES/STATIONS"
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - velocity
@@ -44,7 +44,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CURRENT_EXAMPLE_INSTALL_DIR@/OUTPUT_FILES/database.bin"
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/database.bin"
 
   ## sources
-  sources: "@CURRENT_EXAMPLE_INSTALL_DIR@/source.yaml"
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml"
