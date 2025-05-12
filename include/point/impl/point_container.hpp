@@ -86,23 +86,23 @@
     message << "\n";                                                           \
   }
 
-// #define POINT_PRINT_VALUE_SIMD(r, data, elem)                                  \
-//   BOOST_PP_TUPLE_ELEM(0, data)                                                 \
-//       << "\n\t\t" BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)) << " = "                                                 \
-//                       << _point_data_container[BOOST_PP_SEQ_ELEM(1, elem)]     \
-//                                               [BOOST_PP_TUPLE_ELEM(1, data)];
+#define POINT_PRINT_VALUE_SIMD(r, data, elem)                                  \
+  BOOST_PP_TUPLE_ELEM(0, data)                                                 \
+      << "\n\t\t" BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)) << " = "                                                 \
+                      << _point_data_container[BOOST_PP_SEQ_ELEM(1, elem)]     \
+                                              [BOOST_PP_TUPLE_ELEM(1, data)];
 
-// #define POINT_PRINT_SIMD(seq)                                                  \
-//   template <typename U = simd>                                                 \
-//   typename std::enable_if_t<U::using_simd, void> print(                        \
-//       std::ostringstream &message) const {                                     \
-//     message << "\n\t Point data: ";                                            \
-//     for (std::size_t lane = 0; lane < simd::size(); ++lane) {                  \
-//       message << "\n\t Lane " << lane << ": ";                                 \
-//       BOOST_PP_SEQ_FOR_EACH(POINT_PRINT_VALUE_SIMD, (message, lane), seq)      \
-//     }                                                                          \
-//     message << "\n";                                                           \
-//   }
+#define POINT_PRINT_SIMD(seq)                                                  \
+  template <typename U = simd>                                                 \
+  typename std::enable_if_t<U::using_simd, void> print(                        \
+      std::ostringstream &message) const {                                     \
+    message << "\n\t Point data: ";                                            \
+    for (std::size_t lane = 0; lane < simd::size(); ++lane) {                  \
+      message << "\n\t Lane " << lane << ": ";                                 \
+      BOOST_PP_SEQ_FOR_EACH(POINT_PRINT_VALUE_SIMD, (message, lane), seq)      \
+    }                                                                          \
+    message << "\n";                                                           \
+  }
 
 #define POINT_DATA_CONTAINER_NUMBERED_SEQ(seq)                                 \
 public:                                                                        \
@@ -111,6 +111,7 @@ private:                                                                       \
   POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                       \
   POINT_BOOLEAN_OPERATOR_DEFINITION_SIMD(seq)                                  \
   POINT_PRINT(seq)                                                             \
+  POINT_PRINT_SIMD(seq)                                                        \
 public:                                                                        \
   POINT_CONSTRUCTOR(seq)                                                       \
   POINT_VALUE_ACCESSORS(seq)                                                   \
