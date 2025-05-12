@@ -6,18 +6,14 @@
 specfem::runtime_configuration::database_configuration::database_configuration(
     const YAML::Node &database_node) {
   try {
-    if (database_node.size() == 1) {
-      *this = specfem::runtime_configuration::database_configuration(
-          database_node["mesh-database"].as<std::string>());
-    } else if (database_node.size() == 2) {
+    if (database_node["mesh-parameters"]) {
       *this = specfem::runtime_configuration::database_configuration(
           database_node["mesh-database"].as<std::string>(),
           database_node["mesh-parameters"].as<std::string>());
 
     } else {
-      throw std::runtime_error(
-          "Error reading database configuration. Node size "
-          "is not 1 or 2");
+      *this = specfem::runtime_configuration::database_configuration(
+          database_node["mesh-database"].as<std::string>());
     }
 
   } catch (YAML::ParserException &e) {
