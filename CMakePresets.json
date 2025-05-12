@@ -12,7 +12,7 @@
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release",
         "BUILD_BENCHMARKS": "ON",
         "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release"
       }
@@ -28,7 +28,9 @@
         "Kokkos_ARCH_NATIVE": "OFF",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/release-nosimd"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-nosimd",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-nosimd"
       }
     },
     {
@@ -43,7 +45,9 @@
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/release-cuda"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-cuda",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-cuda"
       }
     },
     {
@@ -59,7 +63,9 @@
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ENABLE_DEBUG": "ON",
         "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/debug"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug"
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug"
       }
     },
     {
@@ -77,7 +83,9 @@
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ENABLE_DEBUG": "ON",
         "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/debug-cuda"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug-cuda",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-cuda"
       }
     },
     {
@@ -93,7 +101,9 @@
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ENABLE_DEBUG": "ON",
         "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
-        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/debug-nosimd"
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug-nosimd",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-nosimd"
       }
     }
   ],
