@@ -11,7 +11,8 @@ option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
-option(BUILD_EXAMPLES "Examples included" ON)
+# option(BUILD_EXAMPLES "Examples included" ON)
+option(BUILD_BENCHMARKS "Benchmarks included" OFF)
 
 # To fix the CMake policy warning for yaml-cpp and google test
 # This should be removed once both packages are updated (Today: April 4, 2025)
@@ -24,11 +25,11 @@ set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
 
 # Define the directory for the installation
-if (SPECFEM_PREFIX)
-    message(STATUS "SPECFEM_PREFIX was defined as: ${SPECFEM_PREFIX}")
+if (CMAKE_INSTALL_PREFIX)
+    message(STATUS "CMAKE_INSTALL_PREFIX was defined as: ${CMAKE_INSTALL_PREFIX}")
 else()
-    set(SPECFEM_PREFIX "${CMAKE_SOURCE_DIR}/dist/" CACHE STRING "Directory for installing the SPECFEM binaries")
-    message(STATUS "SPECFEM_PREFIX was not defined, using default: ${SPECFEM_PREFIX}")
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/dist/" CACHE STRING "Directory for installing the SPECFEM binaries")
+    message(STATUS "CMAKE_INSTALL_PREFIX was not defined, using default: ${CMAKE_INSTALL_PREFIX}")
 endif()
 
 # Set binary output directories.
@@ -756,18 +757,19 @@ if (BUILD_TESTS)
         add_subdirectory(tests/unit-tests)
 endif()
 
-if (BUILD_EXAMPLES)
+if (BUILD_BENCHMARKS)
     # Define option with default value
 
-    if(DEFINED EXAMPLE_BUILD_DIR)
-        message(STATUS "EXAMPLE_BUILD_DIR was defined as: ${EXAMPLE_BUILD_DIR}")
+    if(DEFINED BENCHMARKS_BUILD_DIR)
+        message(STATUS "BENCHMARKS_BUILD_DIR was defined as: ${BENCHMARKS_BUILD_DIR}")
     else()
-        set(EXAMPLE_BUILD_DIR "${SPECFEM_PREFIX}/examples" CACHE STRING "Directory for building the examples")
-        message(STATUS "EXAMPLE_BUILD_DIR was not defined, using default: ${EXAMPLE_BUILD_DIR}")
+        # throw error if not defined
+        message(FATAL_ERROR "BENCHMARKS_BUILD_DIR was not defined. Please define it or set -DBUILD_BENCHMARKS=OFF")
     endif()
 
-    message(STATUS "Configuring examples...")
-    add_subdirectory(examples)
+    message(STATUS "Building benchmarks...")
+    add_subdirectory(benchmarks/src)
+    message(STATUS "Benchmarks built.")
 endif()
 
 # Doxygen
@@ -831,9 +833,9 @@ install(
 
 # Create a custom target that will run after your main build
 add_custom_target(organize_output ALL
-    COMMAND ${CMAKE_COMMAND} --install . --prefix ${SPECFEM_PREFIX}
+    COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMENT "Organizing build outputs into: ${SPECFEM_PREFIX}"
+    COMMENT "Organizing build outputs into: ${CMAKE_INSTALL_PREFIX}"
     # Make this run after your main targets
     DEPENDS specfem2d specfem3d  # list all your targets here
 )
