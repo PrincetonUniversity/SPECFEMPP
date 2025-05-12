@@ -29,17 +29,17 @@ parameters:
         writer:
           seismogram:
             format: ascii
-            directory: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/results
+            directory: @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results
 
           display:
             format: PNG
-            directory: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/display
+            directory: @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/display
             field: displacement
             simulation-field: forward
-            time-interval: 100
+            time-interval: 500
 
   receivers:
-    stations: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/STATIONS
+    stations: @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS
     angle: 0.0
     seismogram-type:
       - pressure
@@ -52,7 +52,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/database.bin
+    mesh-database: @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/database.bin
 
   ## sources
-  sources: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/line_sources.yaml
+  sources: @CURRENT_BENCHMARK_BUILD_DIR@/line_source.yaml
