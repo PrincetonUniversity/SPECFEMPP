@@ -1,9 +1,12 @@
-.. _developer-documentation:
+.. _dependencies:
 
-Developer documentation
-============================
+Dependencies
+============
 
-SPECFEM++ tries to follow best practices to keep the code readable, maintainable and reproducable. This section outlines several best practices we follow in the development process. If you contribute to this project we expect you to follow these practices.
+SPECFEM++ tries to follow best practices to keep the code readable, maintainable
+and reproducable. This section outlines several best practices we follow in the
+development process. If you contribute to this project we expect you to follow
+these practices.
 
 .. toctree::
     :maxdepth: 1

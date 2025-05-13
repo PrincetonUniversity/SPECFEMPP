@@ -223,12 +223,13 @@ Contribution
     :maxdepth: 1
     :hidden:
 
+    sections/developer_documentation/dependencies/index
     sections/developer_documentation/style
     sections/developer_documentation/git_workflow
     sections/developer_documentation/build_requirements
     sections/developer_documentation/tests
-    sections/developer_documentation/tutorials/index
-    sections/developer_documentation/dependencies/index
+
+.. sections/developer_documentation/tutorials/index
 
 Community
 ---------

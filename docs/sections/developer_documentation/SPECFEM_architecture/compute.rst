@@ -37,8 +37,8 @@ Anatomically the view contains 2 elements:
 
 
 Adding new data to ``compute`` namespace
----------------------------------------
-ß
+----------------------------------------
+
 Idea behind ``compute`` namespace is to provide a data layer to access simulation data during or at the end of simulation. Thus it makes sense to extend the namespace with new data when implemeting new features. A few things to keep in mind while adding new data to ``compute`` namespace:
 
 1. Create a logical heirarchical structure for the data. For e.g. ``specfem::compute::receivers`` struct which contains all the data related to receivers. This grouping allows us to pass only the receiver data to a methods/objects which needs it.

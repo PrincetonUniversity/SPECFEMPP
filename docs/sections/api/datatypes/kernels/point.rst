@@ -17,7 +17,8 @@ Implementation Details
     :members:
     :private-members:
 
-.. doxygengroup:: specfem_point_kernels_dim2_elastic_iso
+
+.. doxygengroup:: specfem_point_kernels_dim2_elastic_isotropic
     :members:
     :private-members:
     :content-only:

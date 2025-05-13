@@ -1,4 +1,6 @@
-.. benchmarks::
+:orphan:
+
+.. _benchmarks:
 
 Performance Benchmarks
 ----------------------

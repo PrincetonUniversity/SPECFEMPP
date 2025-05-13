@@ -13,7 +13,7 @@ Implementation Details
 ----------------------
 
 .. doxygenstruct:: specfem::point::properties< specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, UseSIMD >
-        :members:
+    :members:
 
 .. doxygenstruct:: specfem::point::properties< specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::isotropic, UseSIMD >
     :members:
@@ -28,4 +28,4 @@ Implementation Details
     :members:
 
 .. doxygenstruct:: specfem::point::properties< specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic, UseSIMD >
-        :members:
+    :members:
