@@ -4,7 +4,7 @@
 Divergence operator
 -------------------
 
-:ref:`Divergence operator <operator_divergence>` computes the divergence of a given vector field :math:`F_{ik} = \sum T_{ij} \partial_j \xi_k` evaluated at quadrature points using the spectral element formulation given by:
+Divergence operator computes the divergence of a given vector field :math:`F_{ik} = \sum T_{ij} \partial_j \xi_k` evaluated at quadrature points using the spectral element formulation given by:
 
 .. math::
 

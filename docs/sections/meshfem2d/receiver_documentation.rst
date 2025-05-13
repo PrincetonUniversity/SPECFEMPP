@@ -2,33 +2,59 @@
 Receiver Parameters
 ====================
 
-**Parameter Name**: ``use_existing_STATIONS``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Define meta parameters
+----------------------
 
-**Description**: If set to ``.true.``, the receivers will be places based on an existing STATIONS file.
+``use_existing_STATIONS``
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Type**: ``logical``
+If set to ``.true.``, the receivers will be places based on an existing STATIONS file.
 
-**Paramter Name**: ``nreceiversets``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:Type: ``logical``
 
-**Description**: Number of receiver sets.
+.. code-block::
+    :caption: Example
 
-**Type**: ``int``
+    use_existing_STATIONS = .false.
 
-**Parameter Name**: ``anglerec``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Description**: Angle to rotate components at receivers
+``nreceiversets``
+~~~~~~~~~~~~~~~~~
 
-**Type**: ``real``
+Number of receiver sets.
 
-**Parameter Name**: ``rec_normal_to_surface``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:Type: ``int``
 
-**Description**: If set to ``.true.``, the receiver base angle will be set normal to the surface. Requires external mesh and tangential curve file.
+.. code-block::
+    :caption: Example
 
-**Type**: ``logical``
+    nreceiversets = 1
+
+
+``anglerec``
+~~~~~~~~~~~~
+
+Angle to rotate components at receivers
+
+:Type: ``real``
+
+.. code-block::
+    :caption: Example
+
+    anglerec = 0.0d0
+
+
+``rec_normal_to_surface``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set to ``.true.``, the receiver base angle will be set normal to the surface. Requires external mesh and tangential curve file.
+
+:Type: ``logical``
+
+.. code-block::
+    :caption: Example
+
+    rec_normal_to_surface = .false.
 
 .. note::
     This paramter is not supported yet in the solver.
@@ -38,51 +64,92 @@ Define receiver sets:
 
 Next we define each receiver sets using the following parameters:
 
-**Parameter Name**: ``nrec``
-****************************
+``nrec``
+~~~~~~~~
 
-**Description**: Number of receivers in this set. The receivers will be placed at equal distances.
+Number of receivers in this set. The receivers will be placed at equal distances.
 
-**Type**: ``int``
+Type
+    ``int``
 
-**Parameter Name**: ``xdeb``
-****************************
+.. code-block::
+    :caption: Example
 
-**Description**: X coordinate of the first receiver in this set.
+    nrec = 10
 
-**Type**: ``real``
 
-**Parameter Name**: ``zdeb``
-****************************
+``xdeb``
+~~~~~~~~
 
-**Description**: Y coordinate of the first receiver in this set.
+X coordinate of the first receiver in this set.
 
-**Type**: ``real``
+:Type: ``real``
 
-**Parameter Name**: ``xfin``
-****************************
+.. code-block::
+    :caption: Example
 
-**Description**: X coordinate of the last receiver in this set.
+    xdeb = 0.0d0
 
-**Type**: ``real``
 
-**Parameter Name**: ``zfin``
-****************************
+``zdeb``
+~~~~~~~~
 
-**Description**: Y coordinate of the last receiver in this set.
+Y coordinate of the first receiver in this set.
 
-**Type**: ``real``
+:Type: ``real``
 
-**Parameter Name**: ``record_at_surface_same_vertical``
-*******************************************************
+.. code-block::
+    :caption: Example
 
-**Description**: If set to ``.true.``, the receivers will be placed at the surface of the medium. The vertical position of the receivers will be replaces with topography height.
+    zdeb = 0.0d0
 
-**Type**: ``logical``
+``xfin``
+~~~~~~~~
 
-**Parameter Name**: ``stations_filename``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+X coordinate of the last receiver in this set.
 
-**Description**: Name of the STATIONS file to use. if ``use_existing_STATIONS`` is set to ``.true.``, this defines a file to read receiver locations from. If ``use_existing_STATIONS`` is set to ``.false.``, this defines a file to write receiver locations to.
+:Type: ``real``
 
-**Type**: ``string``
+.. code-block::
+    :caption: Example
+
+    xfin = 6400.0d0
+
+
+``zfin``
+~~~~~~~~
+
+Z coordinate of the last receiver in this set.
+
+:Type: ``real``
+
+.. code-block::
+    :caption: Example
+
+    zfin = 0.0d0
+
+
+``record_at_surface_same_vertical``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set to ``.true.``, the receivers will be placed at the surface of the medium. The vertical position of the receivers will be replaces with topography height.
+
+:Type: ``logical``
+
+.. code-block::
+    :caption: Example
+
+    record_at_surface_same_vertical = .false.
+
+
+``stations_filename``
+~~~~~~~~~~~~~~~~~~~~~
+
+Name of the STATIONS file to use. if ``use_existing_STATIONS`` is set to ``.true.``, this defines a file to read receiver locations from. If ``use_existing_STATIONS`` is set to ``.false.``, this defines a file to write receiver locations to.
+
+:Type: ``string``
+
+.. code-block::
+    :caption: Example
+
+    stations_filename = stations.dat

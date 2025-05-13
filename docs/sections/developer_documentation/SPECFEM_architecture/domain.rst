@@ -1,7 +1,7 @@
-.. domain_coupled_interface_dev_guide::
+.. _domain_coupled_interface_dev_guide:
 
 Domain and Coupled Interface Developer Guide
-===========================================
+============================================
 
 ``specfem::domain::domain`` is a templated C++ class. A templated domain class allows us to provide cookie-cutter parallelism frameworks while allowing developers to describe the physics at elemental level ``specfem::domain::impl::elements``. This developer guide provides an in-depth methodology for understanding and extending the domain class to implement new physics.
 
@@ -184,7 +184,7 @@ Now let us template the above code to make it dimension independent using a bit 
     }
 
 Kokkos parallelism
-...................
+..................
 
 The above code is a good starting point for parallelizing the code. A naive method of parallelizing the above section would be to distribute the 2 for loops among the available threads for example using OpenMP `collapse(2)` clause. However, since different elements could have different implementation (physics) for calculating the gradient, stresses, and acceleration contribution such a parallelization would result in poor performance on GPUs cause of warp divergence. Even on CPUs the performance would be poor since compiler could miss vectorization opportunities.
 
