@@ -14,6 +14,7 @@ option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 # option(BUILD_EXAMPLES "Examples included" ON)
 option(BUILD_BENCHMARKS "Benchmarks included" ON)
 
+
 # To fix the CMake policy warning for yaml-cpp and google test
 # This should be removed once both packages are updated (Today: April 4, 2025)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
