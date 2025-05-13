@@ -2,98 +2,170 @@
 Internal Meshing
 ================
 
-**Parameter Name**: ``interfacesfile``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``interfacesfile``
+~~~~~~~~~~~~~~~~~~
 
-**Description**: The file describing the topography of the simulation domain. For more information, see the :ref:`topography_file` section.
+The file describing the topography of the simulation domain. For more information, see the :ref:`topography_file` section.
 
-**Type**: ``path``
+Type
+    ``path`` as string
 
-**Parameter Name**: ``xmin``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block::
+    :caption: Example
 
-**Description**: The minimum x-coordinate of the simulation domain.
+    interfacesfile = "topography.dat"
 
-**Type**: ``real``
 
-**Parameter Name**: ``xmax``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``xmin``
+~~~~~~~~
 
-**Description**: The maximum x-coordinate of the simulation domain.
+The minimum x-coordinate of the simulation domain.
 
-**Type**: ``real``
+Type
+    ``real``
 
-**Parameter Name**: ``nx``
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block::
+    :caption: Example
 
-**Description**: The number of elements in the x-direction.
+    xmin = 0.0
 
-**Type**: ``int``
 
-**Parameter Name**: ``STACEY_ABSORBING_CONDITIONS``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``xmax``
+~~~~~~~~
 
-**Description**: If ``True``, Stacey absorbing boundary conditions are used.
+The maximum x-coordinate of the simulation domain.
 
-**Type**: ``logical``
+Type
+    ``real``
 
-**Parameter Name**: ``absorbbottom``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block::
+    :caption: Example
 
-.. note::
-    Only free surface boundary conditions are currently supported.
+    xmax = 6400.0
 
-**Description**: If ``True``, the bottom boundary is an absorbing boundary.
 
-**Type**: ``logical``
+``nx``
+~~~~~~
 
-**Parameter Name**: ``absorbtop``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The number of elements in the x-direction.
 
-.. note::
-    Only free surface boundary conditions are currently supported.
+:Type: ``int``
 
-**Description**: If ``True``, the top boundary is an absorbing boundary.
+.. code-block::
+    :caption: Example
 
-**Type**: ``logical``
+    nx = 64
 
-**Parameter Name**: ``absorbleft``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-    Only free surface boundary conditions are currently supported.
+``STACEY_ABSORBING_CONDITIONS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Description**: If ``True``, the left boundary is an absorbing boundary.
+If ``True``, Stacey absorbing boundary conditions are used.
 
-**Type**: ``logical``
+Type
+    ``logical``
 
-**Parameter Name**: ``absorbright``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block::
+    :caption: Example
 
-.. note::
-    Only free surface boundary conditions are currently supported.
+    STACEY_ABSORBING_CONDITIONS = .true.
 
-**Description**: If ``True``, the right boundary is an absorbing boundary.
 
-**Type**: ``logical``
+``absorbbottom``
+~~~~~~~~~~~~~~~~
 
-**Parameter Name**: ``nbregions``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Description**: The number of regions in the simulation domain.
+If ``True``, the bottom boundary is an absorbing boundary.
 
-**Type**: ``int``
+Type
+    ``logical``
+
+.. code-block::
+    :caption: Example
+
+    absorbbottom = .true.
+
+
+
+``absorbtop``
+~~~~~~~~~~~~~
+
+If ``True``, the top boundary is an absorbing boundary.
+
+:Type: ``logical``
+
+.. code-block::
+    :caption: Example
+
+    absorbtop = .true.
+
+
+``absorbleft``
+~~~~~~~~~~~~~~
+
+If ``True``, the left boundary is an absorbing boundary.
+
+:Type: ``logical``
+
+.. code-block::
+    :caption: Example
+
+    absorbleft = .true.
+
+
+``absorbright``
+~~~~~~~~~~~~~~~
+
+If ``True``, the right boundary is an absorbing boundary.
+
+:Type: ``logical``
+
+.. code-block::
+    :caption: Example
+
+    absorbright = .true.
+
+``nbregions``
+~~~~~~~~~~~~~
+
+The number of regions in the simulation domain.
+
+:Type: ``int``
+
+.. code-block::
+    :caption: Example
+
+    nbregions = 1
+
 
 Describing a region
 -------------------
 
-The region is described using a string.
+The region is described using a string. And has following parameters:
 
-**string value**: ``nxmin nxmax nzmin nzmax material_number``
+- ``nxmin``: Integer value describing the x-coordinate of the spectral element at the bottom left corner of the region.
+- ``nxmax``: Integer value describing the x-coordinate of the spectral element at the top right corner of the region.
+- ``nzmin``: Integer value describing the z-coordinate of the spectral element at the bottom left corner of the region.
+- ``nzmax``: Integer value describing the z-coordinate of the spectral element at the top right corner of the region.
+- ``material_number``: Integer value describing the type of material in the region. This value references the material number in the ``velocity_model``.
 
-**Description**:
-    - ``nxmin``: Integer value describing the x-coordinate of the spectral element at the bottom left corner of the region.
-    - ``nxmax``: Integer value describing the x-coordinate of the spectral element at the top right corner of the region.
-    - ``nzmin``: Integer value describing the z-coordinate of the spectral element at the bottom left corner of the region.
-    - ``nzmax``: Integer value describing the z-coordinate of the spectral element at the top right corner of the region.
-    - ``material_number``: Integer value describing the type of material in the region. This value references the material number in the ``velocity_model``.
+:Type: ``string``
+
+:Format: ``nxmin nxmax nzmin nzmax material_number``
+
+.. code-block::
+    :caption: Example
+
+    0 63 0 63 1
+
+.. note::
+
+    The region description(s) must be preceded by the number of regions in the
+    simulation domain. For example, if there are 2 regions, the file should look
+    like this if you remove comments:
+
+    .. code-block:: bash
+
+        nbregions = 2
+        0 63 0 30 1
+        0 63 31 63 2

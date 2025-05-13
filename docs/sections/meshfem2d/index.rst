@@ -28,7 +28,6 @@ Parameter Description
 
     header
     meshing_parameters
-    receivers
     velocity_models
     internal_mesher
     external_mesher
@@ -47,6 +46,7 @@ describes a simple 2 layer model with a flat surface and a flat interface
 between the two layers:
 
 .. code-block:: bash
+    :caption: Example ``topography.dat``
 
     #
     # number of interfaces

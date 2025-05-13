@@ -29,7 +29,3 @@ The code is divided into set of modules (classes and structs), the major of whic
    mesh
    compute
    domain
-
-
-
-CUSTOM_REAL

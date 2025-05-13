@@ -2,16 +2,27 @@
 Display parameters
 ==================
 
-**Parameter Name**: ``output_grid_Gnuplot``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``output_grid_Gnuplot``
+~~~~~~~~~~~~~~~~~~~~~~~
 
-**Description**: Output grid as a Gnuplot file
+Output grid as a Gnuplot file
 
-**Type**: ``logical``
+:Type: ``logical``
 
-**Parameter Name**: ``output_grid_ASCII``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block::
+    :caption: Example
 
-**Description**: Output grid as an ASCII file
+    output_grid_Gnuplot = .true.
 
-**Type**: ``logical``
+``output_grid_ASCII``
+~~~~~~~~~~~~~~~~~~~~~
+
+Output grid as an ASCII file
+
+Type
+    ``logical``
+
+.. code-block::
+    :caption: Example
+
+    output_grid_ASCII = .true.

@@ -1,6 +1,6 @@
 
 Setup class
-=================
+===========
 
 The ``setup`` class serves as the primary driver to parse the configuration file and instantiate the simulation.
 

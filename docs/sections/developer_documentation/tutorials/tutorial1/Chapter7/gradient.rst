@@ -4,7 +4,7 @@
 Gradient Operator
 =================
 
-:ref:`Gradient operator <operator_gradient>` computes the gradient of a given field :math:`f` evaluated at quadrature points using the spectral element formulation given by:
+Gradient operator computes the gradient of a given field :math:`f` evaluated at quadrature points using the spectral element formulation given by:
 
 .. math::
 
