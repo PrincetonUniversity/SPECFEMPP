@@ -121,6 +121,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   io
+  utilities
   # material_class
   -lpthread -lm
 )
@@ -224,6 +225,7 @@ target_link_libraries(
   io
   kokkos_environment
   yaml-cpp
+  utilities
   Boost::filesystem
   -lpthread -lm
 )
