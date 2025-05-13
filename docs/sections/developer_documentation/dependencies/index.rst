@@ -8,6 +8,6 @@ SPECFEM++ tries to follow best practices to keep the code readable, maintainable
 .. toctree::
     :maxdepth: 1
 
-    cmake_primer
-    kokkos_primer
-    doxygen_primer
+    cmake
+    kokkos
+    doxygen
