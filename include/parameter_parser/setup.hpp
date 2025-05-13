@@ -60,13 +60,13 @@ public:
   specfem::quadrature::quadratures instantiate_quadrature() const {
     return this->quadrature->instantiate();
   }
-  // /**
-  //  * @brief Instantiate the Timescheme
-  //  *
-  //  * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
-  //  object
-  //  * used in the solver algorithm
-  //  */
+  /**
+   * @brief Instantiate the Timescheme
+   *
+   * @return specfem::time_scheme::time_scheme* Pointer to the TimeScheme
+   object
+   * used in the solver algorithm
+   */
   std::shared_ptr<specfem::time_scheme::time_scheme>
   instantiate_timescheme() const {
     return this->time_scheme->instantiate(

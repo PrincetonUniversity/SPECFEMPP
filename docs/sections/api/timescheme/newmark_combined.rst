@@ -1,5 +1,5 @@
 
-.. _newmark_combined
+.. _newmark_combined:
 
 Newmark Combined Time Scheme
 ============================

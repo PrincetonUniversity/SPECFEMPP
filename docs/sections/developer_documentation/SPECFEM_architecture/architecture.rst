@@ -1,3 +1,5 @@
+:orphan:
+
 .. _architecture:
 
 SPECFEM++ Architecture

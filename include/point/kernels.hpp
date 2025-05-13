@@ -21,10 +21,14 @@ template <specfem::dimension::type DimensionTag,
 struct kernels;
 
 /**
- * @defgroup specfem_point_kernels_dim2_elastic_iso 2D Elastic Isotropic Kernels
- * @brief Point Kernels specialization for 2D elastic isotropic media
+ * @defgroup specfem_point_kernels_dim2_elastic_isotropic 2D Elastic Isotropic
+ * Kernels
  * @{
+ */
+
+/**
  *
+ * @brief Template specialization for 2D elastic isotropic kernels
  *
  * This specialization applies to elastic mediums in 2D space with isotropic
  * properties. It handles the computation of kernel matrices for isotropic
@@ -37,12 +41,6 @@ struct kernels;
  * @note This template automatically specializes for:
  *       - elastic_psv: Used for primary and in-plane shear wave calculations
  *       - elastic_sh: Used for off plane shear wave calculations
- *
- * @see specfem::element::is_elastic
- * @see specfem::dimension::type::dim2
- * @see specfem::element::property_tag::isotropic
- * @see impl::point_data
- * @anchor specfem_point_kernels_dim2_elastic_iso
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct kernels<

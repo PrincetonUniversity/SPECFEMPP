@@ -4,36 +4,29 @@
 Material Properties
 ===================
 
-.. doxygenclass:: specfem::medium::material
+.. doxygenstruct:: specfem::medium::material
    :members:
 
 
 Implementation Details
 ----------------------
 
-.. doxygenclass:: specfem::medium::material
-   :members:
-
 .. doxygenclass:: specfem::medium::material< specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic >
    :members:
    :private-members:
 
-.. doxygenclass:: specfem::medium::material< specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::isotropic >
-   :members:
-   :private-members:
 
-.. doxygenclass:: specfem::medium::material< specfem::element::medium_tag::elastic_sh, specfem::element::property_tag::isotropic >
-   :members:
-   :private-members:
+.. doxygengroup:: specfem_medium_material_dim2_elastic_isotropic
+    :members:
+    :private-members:
+    :content-only:
 
 
-.. doxygenclass:: specfem::medium::material< specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::anisotropic >
-   :members:
-   :private-members:
+.. doxygengroup:: specfem_medium_material_dim2_elastic_anisotropic
+    :members:
+    :private-members:
+    :content-only:
 
-.. doxygenclass:: specfem::medium::material< specfem::element::medium_tag::elastic_sh, specfem::element::property_tag::anisotropic >
-   :members:
-   :private-members:
 
 .. doxygenclass:: specfem::medium::material< specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic >
    :members:
