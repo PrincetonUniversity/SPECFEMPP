@@ -3,7 +3,7 @@
 #include "algorithms/dot.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "enumerations/medium.hpp"
-#include "point/field.hpp"
+#include "specfem/point.hpp"
 #include "stacey.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
