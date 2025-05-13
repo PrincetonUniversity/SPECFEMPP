@@ -2,6 +2,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "io/seismogram/reader.hpp"
 #include "kokkos_abstractions.h"
+#include "utilities/strings.hpp"
 #include <fstream>
 #include <tuple>
 #include <vector>
@@ -11,8 +12,8 @@ specfem::forcing_function::external::external(const YAML::Node &external,
                                               const type_real dt)
     : __nsteps(nsteps), __dt(dt) {
 
-  if ((external["format"].as<std::string>() == "ascii") ||
-      (external["format"].as<std::string>() == "ASCII") ||
+  if (specfem::utilities::is_ascii_string(
+          external["format"].as<std::string>()) ||
       !external["format"]) {
     this->type = specfem::enums::seismogram::format::ascii;
   } else {
