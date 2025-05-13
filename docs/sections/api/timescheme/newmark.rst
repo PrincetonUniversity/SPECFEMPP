@@ -10,8 +10,8 @@ Newmark Time Scheme
 Implementation Details
 ----------------------
 
-.. doxygenclass:: specfem::time_scheme::newmark< specfem::simulation::type::forward >
-    :members:
+.. toctree::
+    :maxdepth: 1
 
-.. doxygenclass:: specfem::time_scheme::newmark< specfem::simulation::type::combined >
-    :members:
+    newmark_forward
+    newmark_combined

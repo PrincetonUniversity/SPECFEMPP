@@ -11,6 +11,18 @@ option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(WITH_MPI "Build with MPI support" OFF)
 option(WITH_SCOTCH "Build with SCOTCH support" OFF)
 option(FORCE_VECTORIZATION "Force vectorization" OFF)
+option(SPECFEM_INSTALL "Install SPECFEM" ON)
+
+if (SPECFEM_INSTALL)
+    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_SOURCE_DIR}/bin")
+    message(STATUS "CMAKE_INSTALL_PREFIX not set. Defaulting to ${CMAKE_INSTALL_PREFIX}")
+    else()
+    message(STATUS "User-defined CMAKE_INSTALL_PREFIX set to ${CMAKE_INSTALL_PREFIX}")
+    endif()
+else(SPECFEM_INSTALL)
+    message(STATUS "SPECFEM_INSTALL is OFF. No executable directory will be created.")
+endif()
 
 # Print options to the screen
 
@@ -217,7 +229,8 @@ target_link_libraries(
 # Additional Executable
 add_executable(xadj_seismogram adj_seismogram.f90)
 
-
-install(TARGETS xadj_seismogram xmeshfem2D
-  RUNTIME DESTINATION .
-)
+if (SPECFEM_INSTALL)
+  install(TARGETS xadj_seismogram xmeshfem2D
+    RUNTIME DESTINATION .
+  )
+endif()
