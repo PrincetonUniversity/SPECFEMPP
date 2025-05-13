@@ -139,9 +139,9 @@ Below are the recommended build recipes for different architectures:
 Adding SPECFEM to PATH
 ----------------------
 
-Finally, once compiled you could run SPECFEM++ from inside the build directory,
-by running the executible ``./specfem2d``. However, we recommend you add
-SPECFEM++ build directory to your ``PATH`` using
+Finally, once compiled you could run SPECFEM++ from inside the executable
+directory ``./bin``, by running the executible ``./specfem2d``. However, we
+recommend you add SPECFEM++ build directory to your ``PATH`` using
 
 .. code-block:: bash
 
@@ -151,7 +151,7 @@ Running the solver
 ------------------
 
 Lets run a simple example to test the installation. We will use the
-``example\homogeneous-medium-flat-topography`` directory in the SPECFEM++
+``example/homogeneous-medium-flat-topography`` directory in the SPECFEM++
 repository. The example directory contains a mesh of a homogeneous half-space
 with a single source and neumann boundary conditions.
 

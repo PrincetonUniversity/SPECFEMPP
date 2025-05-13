@@ -1,7 +1,12 @@
 Wave propagration through fluid-solid interface
 ===============================================
 
-This `example <https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/fluid-solid-interface>`_ simulates the fluid-solid example with flat ocean bottom from `Komatitsch et. al. <https://doi.org/10.1190/1.1444758>`_. This example demonstrates the use of the ``xmeshfem2D`` mesher to generate interface between 2 conforming material systems and the setting up absorbing boundary conditions.
+This `example
+<https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/fluid-solid-interface>`_
+simulates the fluid-solid example with flat ocean bottom from `Komatitsch et.
+al. <https://doi.org/10.1190/1.1444758>`_. This example demonstrates the use of
+the ``xmeshfem2D`` mesher to generate interface between 2 conforming material
+systems and the setting up absorbing boundary conditions.
 
 Setting up the workspace
 ------------------------
@@ -13,23 +18,28 @@ Let's start by creating a workspace from where we can run this example.
     mkdir -p ~/specfempp-examples/fluid-solid-interface
     cd ~/specfempp-examples/fluid-solid-interface
 
-We also need to check that the SPECFEM++ build directory is added to the ``PATH``.
+We also need to check that the SPECFEM++ executable directory is added to the
+``PATH``.
 
 .. code:: bash
 
     which specfem2d
 
-If the above command returns a path to the ``specfem2d`` executable, then the build directory is added to the ``PATH``. If not, you need to add the build directory to the ``PATH`` using the following command.
+If the above command returns a path to the ``specfem2d`` executable, then the
+executable directory is added to the ``PATH``. If not, you need to add the
+executable directory to the ``PATH`` using the following command.
 
 .. code:: bash
 
-    export PATH=$PATH:<PATH TO SPECFEM++ BUILD DIRECTORY/bin>
+    export PATH=$PATH:<PATH TO SPECFEM++ DIRECTORY/bin>
 
 .. note::
 
-    Make sure to replace ``<PATH TO SPECFEM++ BUILD DIRECTORY/bin>`` with the actual path to the SPECFEM++ build directory on your system.
+    Make sure to replace ``<PATH TO SPECFEM++ DIRECTORY/bin>`` with the actual
+    path to the SPECFEM++ directory on your system.
 
-Now let's create the necessary directories to store the input files and output artifacts.
+Now let's create the necessary directories to store the input files and output
+artifacts.
 
 .. code:: bash
 
@@ -123,7 +133,7 @@ To execute the mesher run
 .. note::
 
     Make sure either your are in the build directory of SPECFEM2D kokkos or the
-    ``../path/to/build/bin`` directory is added to your ``PATH``.
+    ``../path/to/specfempp/bin`` directory is added to your ``PATH``.
 
 Note the path of the database file and a stations file generated after
 successfully running the mesher.

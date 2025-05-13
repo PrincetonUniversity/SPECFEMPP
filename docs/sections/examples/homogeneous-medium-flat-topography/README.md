@@ -13,7 +13,7 @@ To generate the mesh for the homogeneous media we need a parameter file, `Par_Fi
 To execute the mesher run
 
 ```
-    ./xmeshfem2D -p <PATH TO PAR_FILE>
+    xmeshfem2D -p <PATH TO PAR_FILE>
 ```
 
 > Make sure either your are in the build directory of SPECFEM2D kokkos or the build directory is added to your ``PATH``.
@@ -25,5 +25,5 @@ Note the path of the database file and :ref:`stations_file` generated after succ
 Finally, to run the SPECFEM2D kokkos solver
 
 ```
-    ./specfem2d -p <PATH TO specfem_config.yaml>
+    specfem2d -p <PATH TO specfem_config.yaml>
 ```
