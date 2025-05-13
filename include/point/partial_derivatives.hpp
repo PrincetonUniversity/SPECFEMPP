@@ -119,6 +119,19 @@ struct partial_derivatives<specfem::dimension::type::dim2, false, UseSIMD> {
   }
 };
 
+// operator*
+template <typename PointPartialDerivativesType,
+          typename = std::enable_if_t<
+              !PointPartialDerivativesType::store_jacobian &&
+              PointPartialDerivativesType::dimension ==
+                  specfem::dimension::type::dim2 &&
+              PointPartialDerivativesType::is_point_partial_derivative> >
+KOKKOS_FUNCTION PointPartialDerivativesType
+operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
+  return PointPartialDerivativesType(lhs * rhs.xix, lhs * rhs.gammax,
+                                     lhs * rhs.xiz, lhs * rhs.gammaz);
+}
+
 /**
  * @brief Template specialization for 2D spectral elements with storing the
  * Jacobian
@@ -249,17 +262,5 @@ private:
   };
 };
 
-// operator*
-template <typename PointPartialDerivativesType,
-          typename = std::enable_if_t<
-              !PointPartialDerivativesType::store_jacobian &&
-              PointPartialDerivativesType::dimension ==
-                  specfem::dimension::type::dim2 &&
-              PointPartialDerivativesType::is_point_partial_derivative> >
-KOKKOS_FUNCTION PointPartialDerivativesType
-operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
-  return PointPartialDerivativesType(lhs * rhs.xix, lhs * rhs.gammax,
-                                     lhs * rhs.xiz, lhs * rhs.gammaz);
-}
 } // namespace point
 } // namespace specfem
