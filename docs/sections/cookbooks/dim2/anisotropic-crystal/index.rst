@@ -15,24 +15,24 @@ Let's start by creating a workspace from where we can run this example.
     mkdir -p ~/specfempp-examples/anisotropic-crystal
     cd ~/specfempp-examples/anisotropic-crystal
 
-We also need to check that the SPECFEM++ build directory is added to the ``PATH``.
+We also need to check that the SPECFEM++ executable directory is added to the ``PATH``.
 
 .. code:: bash
 
     which specfem2d
 
 If the above command returns a path to the ``specfem2d`` executable, then the
-build directory is added to the ``PATH``. If not, you need to add the build
+build directory is added to the ``PATH``. If not, you need to add the executable
 directory to the ``PATH`` using the following command.
 
 .. code:: bash
 
-    export PATH=$PATH:<PATH TO SPECFEM++ BUILD DIRECTORY/bin>
+    export PATH=$PATH:<PATH TO SPECFEM++ DIRECTORY/bin>
 
 .. note::
 
-    Make sure to replace ``<PATH TO SPECFEM++ BUILD DIRECTORY/bin>`` with the
-    actual path to the SPECFEM++ build directory on your system.
+    Make sure to replace ``<PATH TO SPECFEM++ DIRECTORY/bin>`` with the
+    actual path to the SPECFEM++ directory on your system.
 
 Now let's create the necessary directories to store the input files and output
 artifacts.
@@ -115,7 +115,8 @@ To execute the mesher run
 
     xmeshfem2D -p Par_File
 
-Note the path of the database file and a stations file generated after successfully running the mesher.
+Note the path of the database file and a stations file generated after
+successfully running the mesher.
 
 Defining the source
 ~~~~~~~~~~~~~~~~~~~

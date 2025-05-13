@@ -42,12 +42,12 @@ directory to the ``PATH`` using the following command.
 
 .. code:: bash
 
-    export PATH=$PATH:<PATH TO SPECFEM++ BUILD DIRECTORY/bin>
+    export PATH=$PATH:<PATH TO SPECFEM++ DIRECTORY/bin>
 
 .. note::
 
-    Make sure to replace ``<PATH TO SPECFEM++ BUILD DIRECTORY/bin>`` with the
-    actual path to the SPECFEM++ build directory on your system.
+    Make sure to replace ``<PATH TO SPECFEM++ DIRECTORY/bin>`` with the
+    actual path to the SPECFEM++ directory on your system.
 
 Now let's create the necessary directories to store the input files and output
 artifacts.
@@ -175,8 +175,8 @@ To execute the mesher run
 
 .. note::
 
-    Make sure either your are in the build directory of SPECFEM2D kokkos or the
-    build directory is added to your ``PATH``.
+    Make sure either your are in the executable directory of SPECFEM2D kokkos or
+    the executable directory is added to your ``PATH``.
 
 Note the path of the database file and a stations file generated after
 successfully running the mesher.

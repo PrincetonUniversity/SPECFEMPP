@@ -15,7 +15,7 @@ Let's start by creating a workspace from where we can run this example.
     mkdir -p ~/specfempp-examples/homogeneous-medium-flat-topography
     cd ~/specfempp-examples/homogeneous-medium-flat-topography
 
-We also need to check that the SPECFEM++ build directory is added to the
+We also need to check that the SPECFEM++ executable directory is added to the
 ``PATH``.
 
 .. code:: bash
@@ -23,17 +23,17 @@ We also need to check that the SPECFEM++ build directory is added to the
     which specfem2d
 
 If the above command returns a path to the ``specfem2d`` executable, then the
-build directory is added to the ``PATH``. If not, you need to add the build
+executable directory is added to the ``PATH``. If not, you need to add the executable
 directory to the ``PATH`` using the following command.
 
 .. code:: bash
 
-    export PATH=$PATH:<PATH TO SPECFEM++ BUILD DIRECTORY/bin>
+    export PATH=$PATH:<PATH TO SPECFEM++ DIRECTORY/bin>
 
 .. note::
 
-    Make sure to replace ``<PATH TO SPECFEM++ BUILD DIRECTORY/bin>`` with the
-    actual path to the SPECFEM++ build directory on your system.
+    Make sure to replace ``<PATH TO SPECFEM++ DIRECTORY/bin>`` with the
+    actual path to the SPECFEM++ directory on your system.
 
 Now let's create the necessary directories to store the input files and output
 artifacts.
@@ -218,7 +218,8 @@ Finally, to run the SPECFEM++ solver
 
 .. note::
 
-    Make sure either your are in the build directory of SPECFEM++ or the build directory is added to your ``PATH``.
+    Make sure either your are in the executable directory of SPECFEM++ or the
+    executable directory is added to your ``PATH``.
 
 Visualizing seimograms
 ----------------------
