@@ -12,8 +12,8 @@ Datatype used to store spatial derivatives at GLL point.
 Implementation Details
 ----------------------
 
-.. doxygenstruct:: specfem::point::partial_derivatives< specfem::dimension::type::dim2, false, UseSIMD >
-    :members:
+.. toctree::
+   :maxdepth: 1
 
-.. doxygenstruct:: specfem::point::partial_derivatives< specfem::dimension::type::dim2, true, UseSIMD >
-    :members:
+   dim2/jacobianFalse
+   dim2/jacobianTrue
