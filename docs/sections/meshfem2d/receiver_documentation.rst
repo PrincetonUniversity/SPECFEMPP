@@ -39,42 +39,42 @@ Define receiver sets:
 Next we define each receiver sets using the following parameters:
 
 **Parameter Name**: ``nrec``
-*****************************
+****************************
 
 **Description**: Number of receivers in this set. The receivers will be placed at equal distances.
 
 **Type**: ``int``
 
 **Parameter Name**: ``xdeb``
-*****************************
+****************************
 
 **Description**: X coordinate of the first receiver in this set.
 
 **Type**: ``real``
 
 **Parameter Name**: ``zdeb``
-*****************************
+****************************
 
 **Description**: Y coordinate of the first receiver in this set.
 
 **Type**: ``real``
 
 **Parameter Name**: ``xfin``
-*****************************
+****************************
 
 **Description**: X coordinate of the last receiver in this set.
 
 **Type**: ``real``
 
 **Parameter Name**: ``zfin``
-*****************************
+****************************
 
 **Description**: Y coordinate of the last receiver in this set.
 
 **Type**: ``real``
 
 **Parameter Name**: ``record_at_surface_same_vertical``
-******************************************************
+*******************************************************
 
 **Description**: If set to ``.true.``, the receivers will be placed at the surface of the medium. The vertical position of the receivers will be replaces with topography height.
 

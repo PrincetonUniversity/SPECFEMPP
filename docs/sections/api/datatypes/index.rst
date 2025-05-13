@@ -27,3 +27,4 @@ SPECFEM++ datatypes
     boundary/point
     field_derivatives/point
     stress_integrand/index
+    kernels/point.rst

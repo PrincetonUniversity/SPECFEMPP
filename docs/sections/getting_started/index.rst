@@ -76,7 +76,7 @@ Dependencies
 
 .. note::
 
-    If any of the following dependencies are not found in your ``PATH``,
+    If any of the following required dependencies are not found in your ``PATH``,
     the build process will download and install them automatically. This will
     increase the build time and does require an active internet connection.
 
@@ -145,7 +145,7 @@ SPECFEM++ build directory to your ``PATH`` using
 
 .. code-block:: bash
 
-    export PATH=$(pwd)/build/bin:$PATH
+    export PATH=$(pwd)/bin:$PATH
 
 Running the solver
 ------------------

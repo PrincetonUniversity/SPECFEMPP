@@ -2,7 +2,7 @@
 .. _datatype_point_partial_derivatives:
 
 Point Spatial Derivatives
-==========================
+=========================
 
 Datatype used to store spatial derivatives at GLL point.
 

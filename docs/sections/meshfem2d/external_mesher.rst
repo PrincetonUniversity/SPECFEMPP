@@ -53,7 +53,7 @@ Parameters here describe the paths to different files generated when using an ex
 **Type**: ``path``
 
 **Parameter Name**: ``acoustic_forcing_surface_file``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
     This parameter is not supported in the solver.
@@ -73,7 +73,7 @@ Parameters here describe the paths to different files generated when using an ex
 **Type**: ``path``
 
 **Parameter Name**: ``tangential_detection_curve_file``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
     This parameter is not supported in the solver.
