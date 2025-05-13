@@ -21,7 +21,7 @@ SPECFEM++ datatypes
     index/index
     coordinates/index
     partial_derivatives/point
-    properties/point
+    properties/index
     quadrature/element
     field/index
     boundary/point
