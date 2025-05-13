@@ -25,9 +25,7 @@ struct data_container<specfem::dimension::type::dim2,
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
 
-  POINT_CONTAINER(rho_inverse,
-                  kappa) ///< Inverse density @f$ \rho^{-1} @f$ and bulk modulus
-  ///< @f$ \kappa @f$
+  POINT_CONTAINER(rho_inverse, kappa)
 
   KOKKOS_INLINE_FUNCTION const value_type kappa_inverse() const {
     return (static_cast<value_type>(1.0)) /
