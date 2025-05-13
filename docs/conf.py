@@ -69,6 +69,8 @@ extensions = [
 # Adding this to avoid the WARNING: duplicate label warning
 autosectionlabel_prefix_document = True
 
+suppress_warnings = ["autosectionlabel.*"]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -126,3 +128,4 @@ breathe_doxygen_config_options = {"PREDEFINED": "KOKKOS_INLINE_FUNCTION="}
 breathe_show_define_initializer = True
 breathe_show_include = True
 breathe_template_parameters = True
+breathe_separate_member_pages = True

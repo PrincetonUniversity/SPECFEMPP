@@ -10,6 +10,7 @@ option(BUILD_TESTS "Tests included" OFF)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
+option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 # option(BUILD_EXAMPLES "Examples included" ON)
 option(BUILD_BENCHMARKS "Benchmarks included" ON)
@@ -26,11 +27,16 @@ set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
 
 # Set my default CMAKE_INSTALL_PREFIX
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_SOURCE_DIR}/bin")
-  message(STATUS "CMAKE_INSTALL_PREFIX not set. Defaulting to ${CMAKE_INSTALL_PREFIX}")
-else()
-  message(STATUS "User-defined CMAKE_INSTALL_PREFIX set to ${CMAKE_INSTALL_PREFIX}")
+
+if (SPECFEM_INSTALL)
+    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_SOURCE_DIR}/bin")
+    message(STATUS "CMAKE_INSTALL_PREFIX not set. Defaulting to ${CMAKE_INSTALL_PREFIX}")
+    else()
+    message(STATUS "User-defined CMAKE_INSTALL_PREFIX set to ${CMAKE_INSTALL_PREFIX}")
+    endif()
+else(SPECFEM_INSTALL)
+    message(STATUS "SPECFEM_INSTALL is OFF. No executable directory will be created.")
 endif()
 
 # Set binary output directories.
@@ -79,25 +85,37 @@ if (DEFINED Kokkos_ENABLE_CUDA)
     endif()
 endif()
 
+# For the installation of dependencies
+include(FetchContent)
 
 # Install Kokkos as a dependency
-## TODO: Add options for on utilizing in house builds
-include(FetchContent)
+# Set Kokkos options before fetching
+set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
         kokkos
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
         URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
-        EXCLUDE_FROM_ALL
 )
-FetchContent_MakeAvailable(kokkos)
+
+# Using this instead of FetchContent_MakeAvailable to be backwards compatible
+# with older CMake versions
+FetchContent_GetProperties(kokkos)
+if(NOT kokkos_POPULATED)
+  FetchContent_Populate(kokkos)
+  add_subdirectory(${kokkos_SOURCE_DIR} ${kokkos_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
 # Install yaml content
 FetchContent_Declare(
         yaml
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
         URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
-        EXCLUDE_FROM_ALL
 )
+
+# Disable yaml-cpp installation
+set(YAML_CPP_BUILD_INSTALL OFF CACHE BOOL "Disable yaml-cpp installation" FORCE)
+
 FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
@@ -160,8 +178,13 @@ if (NOT ${Boost_FOUND})
         GIT_PROGRESS TRUE
         DOWNLOAD_NO_EXTRACT FALSE
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-        EXCLUDE_FROM_ALL
     )
+
+    # Disable Boost installation
+    set(BOOST_INSTALL OFF CACHE BOOL "Don't install Boost" FORCE)
+    set(BOOST_INSTALL_LIBRARIES OFF CACHE BOOL "Don't install Boost libraries" FORCE)
+    set(BOOST_SKIP_INSTALL_RULES ON CACHE BOOL "Skip Boost install rules" FORCE)
+
     FetchContent_MakeAvailable(Boost)
 
 else()

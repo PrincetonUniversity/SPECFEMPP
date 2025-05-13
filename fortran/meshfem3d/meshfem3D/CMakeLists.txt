@@ -89,6 +89,8 @@ if (ADIOS)
   )
 endif(ADIOS)
 
-install(TARGETS xmeshfem3D
-  RUNTIME DESTINATION .
-)
+if (SPECFEM_INSTALL)
+  install(TARGETS xmeshfem3D
+    RUNTIME DESTINATION .
+  )
+endif()

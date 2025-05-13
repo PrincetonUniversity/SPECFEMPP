@@ -122,6 +122,8 @@ target_link_libraries(xgenerate_databases PRIVATE
   meshfem3D::generate_databases
 )
 
-install(TARGETS xgenerate_databases
-  RUNTIME DESTINATION .
-)
+if (SPECFEM_INSTALL)
+  install(TARGETS xgenerate_databases
+    RUNTIME DESTINATION .
+    )
+endif(SPECFEM_INSTALL)
