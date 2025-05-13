@@ -20,7 +20,7 @@ SPECFEM++ datatypes
     base_datatypes/index
     index/index
     coordinates/index
-    partial_derivatives/point
+    partial_derivatives/index
     properties/index
     quadrature/element
     field/index
