@@ -8,8 +8,6 @@ SPECFEM++ tries to follow best practices to keep the code readable, maintainable
 .. toctree::
     :maxdepth: 1
 
-    git_workflow
-    build_requirements
-    style
-    tests
-    tutorials/index
+    cmake_primer
+    kokkos_primer
+    doxygen_primer
