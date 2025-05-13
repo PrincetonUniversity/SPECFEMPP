@@ -21,9 +21,6 @@
 #define POINT_VALUE_ACCESSORS(seq)                                             \
   BOOST_PP_SEQ_FOR_EACH(POINT_VALUE_ACCESSOR, _, seq)
 
-#define POINT_VALUE_DEFINITION(seq)                                            \
-  value_type _point_data_container[BOOST_PP_SEQ_SIZE(seq)] = { 0 };
-
 #define POINT_OPERATOR_DEFINITION(seq)                                         \
   KOKKOS_INLINE_FUNCTION const value_type operator[](const int i) const {      \
     return _point_data_container[i];                                           \
@@ -33,10 +30,13 @@
   }
 
 #define POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                 \
-  KOKKOS_INLINE_FUNCTION bool equal_operator_dispatch(                         \
-      const std::integral_constant<bool, false> &,                             \
+  template <typename U = simd>                                                 \
+  typename std::enable_if_t<!U::using_simd, bool> operator==(                  \
       const data_container &other) const {                                     \
-    for (int i = 0; i < BOOST_PP_SEQ_SIZE(seq); ++i) {                         \
+    if (nprops != other.nprops) {                                              \
+      return false;                                                            \
+    }                                                                          \
+    for (int i = 0; i < nprops; ++i) {                                         \
       if (std::abs(_point_data_container[i] -                                  \
                    other._point_data_container[i]) >                           \
           1e-6 * std::abs(_point_data_container[i])) {                         \
@@ -47,10 +47,14 @@
   }
 
 #define POINT_BOOLEAN_OPERATOR_DEFINITION_SIMD(seq)                            \
-  KOKKOS_INLINE_FUNCTION bool equal_operator_dispatch(                         \
-      const std::integral_constant<bool, true> &, const data_container &other) \
-      const {                                                                  \
-    for (int i = 0; i < BOOST_PP_SEQ_SIZE(seq); ++i) {                         \
+  template <bool OtherSIMD, typename U = simd>                                 \
+  typename std::enable_if_t<U::using_simd, bool> operator==(                   \
+      const data_container<base_type::dimension, base_type::medium_tag,        \
+                           base_type::property_tag, OtherSIMD> &other) const { \
+    if (nprops != other.nprops) {                                              \
+      return false;                                                            \
+    }                                                                          \
+    for (int i = 0; i < nprops; ++i) {                                         \
       if (!Kokkos::Experimental::all_of(                                       \
               Kokkos::abs(_point_data_container[i] -                           \
                           other._point_data_container[i]) <                    \
@@ -64,12 +68,11 @@
 #define POINT_CONSTRUCTOR(seq)                                                 \
   KOKKOS_INLINE_FUNCTION data_container() = default;                           \
   template <typename... Args,                                                  \
-            typename std::enable_if_t<                                         \
-                sizeof...(Args) == BOOST_PP_SEQ_SIZE(seq), int> = 0>           \
+            typename std::enable_if_t<sizeof...(Args) == nprops, int> = 0>     \
   KOKKOS_INLINE_FUNCTION data_container(Args... args)                          \
       : _point_data_container{ args... } {}                                    \
   KOKKOS_INLINE_FUNCTION data_container(const value_type *value) {             \
-    for (int i = 0; i < BOOST_PP_SEQ_SIZE(seq); ++i) {                         \
+    for (int i = 0; i < nprops; ++i) {                                         \
       _point_data_container[i] = value[i];                                     \
     }                                                                          \
   }
@@ -106,20 +109,18 @@
 
 #define POINT_DATA_CONTAINER_NUMBERED_SEQ(seq)                                 \
 public:                                                                        \
-  POINT_VALUE_DEFINITION(seq)                                                  \
+  constexpr static int nprops = BOOST_PP_SEQ_SIZE(seq);                        \
+  value_type _point_data_container[nprops] = { 0 };                            \
+                                                                               \
 private:                                                                       \
-  POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                       \
-  POINT_BOOLEAN_OPERATOR_DEFINITION_SIMD(seq)                                  \
   POINT_PRINT(seq)                                                             \
   POINT_PRINT_SIMD(seq)                                                        \
 public:                                                                        \
   POINT_CONSTRUCTOR(seq)                                                       \
+  POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                       \
+  POINT_BOOLEAN_OPERATOR_DEFINITION_SIMD(seq)                                  \
   POINT_VALUE_ACCESSORS(seq)                                                   \
   POINT_OPERATOR_DEFINITION(seq)                                               \
-  KOKKOS_INLINE_FUNCTION bool operator==(const data_container &other) const {  \
-    return equal_operator_dispatch(                                            \
-        std::integral_constant<bool, simd::using_simd>(), other);              \
-  }                                                                            \
   KOKKOS_INLINE_FUNCTION bool operator!=(const data_container &other) const {  \
     return !(*this == other);                                                  \
   }                                                                            \
