@@ -4,7 +4,7 @@
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
 #include "globals.h"
-#include "point/kernels.hpp"
+#include "specfem/point.hpp"
 
 namespace specfem {
 namespace medium {

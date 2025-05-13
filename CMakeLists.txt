@@ -200,6 +200,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in
 
 # Add the include directories so that the generated files can be found
 include_directories(include)
+include_directories(core)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
 # Set loglevel to STATUS if build type is debug
@@ -225,6 +226,8 @@ add_subdirectory(fortran/meshfem3d)
 set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
+# Add module subdirectories
+add_subdirectory(core/specfem)
 
 # Build specfem2d libraries
 add_library(
@@ -288,18 +291,6 @@ else()
         ${HDF5_LIBRARIES}
     )
 endif()
-
-
-add_library(
-        point
-        src/point/coordinates.cpp
-        src/point/partial_derivatives.cpp
-)
-
-target_link_libraries(
-        point
-        Kokkos::kokkos
-)
 
 add_library(
         enumerations
