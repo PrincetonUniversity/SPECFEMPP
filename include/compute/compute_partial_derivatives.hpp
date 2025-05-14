@@ -144,12 +144,28 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(
   const std::size_t _index = mapping(ispec, iz, ix);
 
   if constexpr (on_device) {
-    partial_derivatives.xix = derivatives.xix[_index];
-    partial_derivatives.gammax = derivatives.gammax[_index];
-    partial_derivatives.xiz = derivatives.xiz[_index];
-    partial_derivatives.gammaz = derivatives.gammaz[_index];
+    Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space,
+                 Kokkos::MemoryTraits<Kokkos::RandomAccess> >
+        xix = derivatives.xix.get_base_view();
+    Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space,
+                 Kokkos::MemoryTraits<Kokkos::RandomAccess> >
+        gammax = derivatives.gammax.get_base_view();
+    Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space,
+                 Kokkos::MemoryTraits<Kokkos::RandomAccess> >
+        xiz = derivatives.xiz.get_base_view();
+    Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space,
+                 Kokkos::MemoryTraits<Kokkos::RandomAccess> >
+        gammaz = derivatives.gammaz.get_base_view();
+    Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space,
+                 Kokkos::MemoryTraits<Kokkos::RandomAccess> >
+        jacobian = derivatives.jacobian.get_base_view();
+
+    partial_derivatives.xix = xix(_index);
+    partial_derivatives.gammax = gammax(_index);
+    partial_derivatives.xiz = xiz(_index);
+    partial_derivatives.gammaz = gammaz(_index);
     if constexpr (StoreJacobian) {
-      partial_derivatives.jacobian = derivatives.jacobian[_index];
+      partial_derivatives.jacobian = jacobian(_index);
     }
   } else {
     partial_derivatives.xix = derivatives.h_xix[_index];

@@ -133,5 +133,5 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
         }
       });
 
-  Kokkos::fence();
+  // Kokkos::fence();
 }

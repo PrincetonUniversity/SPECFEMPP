@@ -50,5 +50,5 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
         }
       });
 
-  Kokkos::fence();
+  // Kokkos::fence();
 }

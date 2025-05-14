@@ -52,7 +52,7 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
         }
       });
 
-  Kokkos::fence();
+  // Kokkos::fence();
 
   return;
 }
