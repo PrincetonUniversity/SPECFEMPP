@@ -10,7 +10,7 @@ Sources
 Source Medium Container
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::compute::source_medium
+.. doxygenstruct:: specfem::compute::impl::source_medium
     :members:
 
 Data Access Functions
