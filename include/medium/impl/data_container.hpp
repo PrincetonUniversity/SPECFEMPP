@@ -35,16 +35,20 @@
 
 #define _DATA_ACCESSOR(seq)                                                    \
   template <typename FunctorType, typename IndexType>                          \
-  KOKKOS_INLINE_FUNCTION void for_each_on_device_const(const IndexType &index, \
-                                                       FunctorType f) const {  \
+  KOKKOS_INLINE_FUNCTION std::enable_if_t<                                     \
+      std::is_invocable_v<FunctorType, const type_real &, std::size_t>, void>  \
+  for_each_on_device(const IndexType &index, FunctorType f) const {            \
     const auto &mapping =                                                      \
         BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
     const std::size_t _index = mapping(index.ispec, index.iz, index.ix);       \
     BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_DEVICE_CONST, (f, _index), seq)     \
   }                                                                            \
   template <typename FunctorType, typename IndexType>                          \
-  KOKKOS_INLINE_FUNCTION void for_each_on_device(const IndexType &index,       \
-                                                 FunctorType f) const {        \
+  KOKKOS_INLINE_FUNCTION std::enable_if_t<                                     \
+      (!std::is_invocable_v<FunctorType, const type_real &, std::size_t> &&    \
+       std::is_invocable_v<FunctorType, type_real &, std::size_t>),            \
+      void>                                                                    \
+  for_each_on_device(const IndexType &index, FunctorType f) const {            \
     const auto &mapping =                                                      \
         BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
     const std::size_t _index = mapping(index.ispec, index.iz, index.ix);       \
@@ -96,12 +100,13 @@
   void copy_to_host() { BOOST_PP_SEQ_FOR_EACH(_SYNC_HOST, _, seq) }
 
 #define _ACCESS_DEVICE_VIEW(r, data, elem)                                     \
-  BOOST_PP_TUPLE_ELEM(0, data)(BOOST_PP_SEQ_ELEM(0, elem),                     \
-                               BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)));
+  BOOST_PP_TUPLE_ELEM(0, data)                                                 \
+  (BOOST_PP_SEQ_ELEM(0, elem), BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)));
 
 #define _ACCESS_HOST_VIEW(r, data, elem)                                       \
-  BOOST_PP_TUPLE_ELEM(0, data)(BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem)),   \
-                               BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)));
+  BOOST_PP_TUPLE_ELEM(0, data)                                                 \
+  (BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem)),                               \
+   BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)));
 
 #define _VIEW_ACCESSOR(seq)                                                    \
   template <typename FunctorType>                                              \

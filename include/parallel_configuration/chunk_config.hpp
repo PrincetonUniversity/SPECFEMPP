@@ -1,6 +1,7 @@
 #pragma once
 
 #include "constants.hpp"
+#include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -84,5 +85,11 @@ struct default_chunk_config<specfem::dimension::type::dim2, SIMD,
     : chunk_config<specfem::dimension::type::dim2, impl::serial_chunk_size,
                    impl::serial_chunk_size, 1, 1, SIMD, Kokkos::Serial> {};
 #endif
+
+template <typename SIMD>
+struct default_chunk_config<specfem::dimension::type::dim2, SIMD,
+                            Kokkos::HostSpace>
+    : default_chunk_config<specfem::dimension::type::dim2, SIMD,
+                           Kokkos::Serial> {};
 } // namespace parallel_config
 } // namespace specfem
