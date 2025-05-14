@@ -841,10 +841,12 @@ if (SPECFEMPP_BINDING_PYTHON)
 endif (SPECFEMPP_BINDING_PYTHON)
 
 
-install(
+if (SPECFEM_INSTALL)    
+    install(
         TARGETS specfem2d specfem3d
         RUNTIME DESTINATION .
-)
+    )
+endif(SPECFEM_INSTALL)
 
 
 
