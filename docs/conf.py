@@ -69,8 +69,6 @@ extensions = [
 # Adding this to avoid the WARNING: duplicate label warning
 autosectionlabel_prefix_document = True
 
-suppress_warnings = ["autosectionlabel.*"]
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
