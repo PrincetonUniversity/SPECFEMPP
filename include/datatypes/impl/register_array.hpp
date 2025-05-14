@@ -23,6 +23,17 @@ KOKKOS_INLINE_FUNCTION constexpr bool check_bounds(const IndexType &...i) {
   return ((i >= 0 && i < Extents::static_extent(index++)) && ...);
 }
 
+/**
+ * @brief Class to represent a register array with a specified layout
+ *
+ * This class represents a register array with a specified layout. It is
+ * templated on the type of the elements, the extents of the array, and the
+ * layout.
+ *
+ * @tparam T Type of the elements in the array
+ * @tparam Extents Extents of the array
+ * @tparam Layout Layout of the array
+ */
 template <typename T, typename Extents, typename Layout> class RegisterArray {
 
 private:

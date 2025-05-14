@@ -19,7 +19,7 @@ API documentation
     IO/index
     operators/index
     medium/index
-    compute_kernels/index
+    kokkos_kernels/index
     coupling_physics/coupled_interface
     timescheme/index
     solver/index
