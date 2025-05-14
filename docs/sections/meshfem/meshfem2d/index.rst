@@ -20,19 +20,17 @@ parameters are defined in the following format:
 
     parameter_name = parameter_value
 
-Parameter Description
----------------------
-
 .. toctree::
     :maxdepth: 1
 
-    header
-    meshing_parameters
-    velocity_models
-    internal_mesher
-    external_mesher
-    display_parameter
-    receiver_documentation
+    par_file.rst
+
+.. .. toctree::
+..     :maxdepth: 1
+
+
+..     display_parameter
+..     receiver_documentation
 
 .. _topography_file:
 
