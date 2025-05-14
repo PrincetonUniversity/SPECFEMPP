@@ -846,15 +846,13 @@ if (SPECFEM_INSTALL)
         TARGETS specfem2d specfem3d
         RUNTIME DESTINATION .
     )
+
+    # Create a custom target that will run after your main build
+    add_custom_target(organize_output ALL
+        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Organizing build outputs into: ${CMAKE_INSTALL_PREFIX}"
+        # Make this run after your main targets
+        DEPENDS specfem2d specfem3d  # list all your targets here
+    )
 endif(SPECFEM_INSTALL)
-
-
-
-# Create a custom target that will run after your main build
-add_custom_target(organize_output ALL
-    COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX}
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMENT "Organizing build outputs into: ${CMAKE_INSTALL_PREFIX}"
-    # Make this run after your main targets
-    DEPENDS specfem2d specfem3d  # list all your targets here
-)
