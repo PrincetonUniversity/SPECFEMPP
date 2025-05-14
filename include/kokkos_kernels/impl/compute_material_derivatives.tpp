@@ -158,5 +158,5 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
         }
       });
 
-  Kokkos::fence();
+  // Kokkos::fence();
 }

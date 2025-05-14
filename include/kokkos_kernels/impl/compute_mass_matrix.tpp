@@ -135,5 +135,5 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
         }
       });
 
-  Kokkos::fence();
+  // Kokkos::fence();
 }
