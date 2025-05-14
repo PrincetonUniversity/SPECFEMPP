@@ -4,7 +4,7 @@
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
 #include "globals.h"
-#include "point/kernels.hpp"
+#include "specfem/point.hpp"
 
 #include <Kokkos_Core.hpp>
 
@@ -58,22 +58,22 @@ impl_compute_frechet_derivatives(
   // ad_dsxz = 0.5 * (ds#x/dz + ds#z/dx)
   const auto ad_dsxz =
       static_cast<type_real>(0.5) *
-      (adjoint_derivatives.du(0, 1) + adjoint_derivatives.du(1, 0));
+      (adjoint_derivatives.du(1, 0) + adjoint_derivatives.du(0, 1));
 
   // ad_dszz = 0.5 * (ds#z/dz + ds#z/dz) = ds#z/dz
   const auto ad_dszz = adjoint_derivatives.du(1, 1);
 
   // fluid phase
   // ad_dwxx = 0.5 * (dw#x/dx + dw#x/dx) = dw#x/dx
-  const auto ad_dwxx = adjoint_derivatives.du(0, 2);
+  const auto ad_dwxx = adjoint_derivatives.du(2, 0);
 
   // ad_dwxz = 0.5 * (dw#x/dz + dw#z/dx)
   const auto ad_dwxz =
       static_cast<type_real>(0.5) *
-      (adjoint_derivatives.du(1, 2) + adjoint_derivatives.du(0, 3));
+      (adjoint_derivatives.du(2, 1) + adjoint_derivatives.du(3, 0));
 
   // ad_dwzz = 0.5 * (dw#z/dz + dw#z/dz) = dw#z/dz
-  const auto ad_dwzz = adjoint_derivatives.du(1, 3);
+  const auto ad_dwzz = adjoint_derivatives.du(3, 1);
 
   // Compute the gradient of the backward field
   // solid phase
@@ -83,22 +83,22 @@ impl_compute_frechet_derivatives(
   // b_dsxz = 0.5 * (dsx/dz + dsz/dx)
   const auto b_dsxz =
       static_cast<type_real>(0.5) *
-      (backward_derivatives.du(0, 1) + backward_derivatives.du(1, 0));
+      (backward_derivatives.du(1, 0) + backward_derivatives.du(0, 1));
 
   // b_dszz = 0.5 * (dsz/dz + dsz/dz) = dsz/dz
   const auto b_dszz = backward_derivatives.du(1, 1);
 
   // fluid phase
   // b_dwxx = 0.5 * (dwx/dx + dwx/dx) = dwx/dx
-  const auto b_dwxx = backward_derivatives.du(0, 2);
+  const auto b_dwxx = backward_derivatives.du(2, 0);
 
   // b_dwxz = 0.5 * (dwx/dz + dwz/dx)
   const auto b_dwxz =
       static_cast<type_real>(0.5) *
-      (backward_derivatives.du(1, 2) + backward_derivatives.du(0, 3));
+      (backward_derivatives.du(2, 1) + backward_derivatives.du(3, 0));
 
   // b_dwzz = 0.5 * (dwz/dz + dwz/dz) = dwz/dz
-  const auto b_dwzz = backward_derivatives.du(1, 3);
+  const auto b_dwzz = backward_derivatives.du(3, 1);
 
   // what's this?
   // --------------------------------------

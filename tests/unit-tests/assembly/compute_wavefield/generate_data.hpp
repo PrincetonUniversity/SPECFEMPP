@@ -5,8 +5,7 @@
 #pragma once
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "point/coordinates.hpp"
-#include "point/field.hpp"
+#include "specfem/point.hpp"
 
 template <specfem::wavefield::type component,
           specfem::wavefield::simulation_field type,
@@ -25,7 +24,7 @@ void generate_data(specfem::compute::assembly &assembly,
 
   constexpr int num_components =
       specfem::element::attributes<specfem::dimension::type::dim2,
-                                   medium>::components();
+                                   medium>::components;
 
   using PointFieldType =
       specfem::point::field<specfem::dimension::type::dim2, medium, true, true,

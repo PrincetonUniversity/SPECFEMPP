@@ -2,9 +2,7 @@
 
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "point/field.hpp"
-#include "point/partial_derivatives.hpp"
-#include "point/properties.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {

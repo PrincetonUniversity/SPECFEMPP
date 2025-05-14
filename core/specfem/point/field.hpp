@@ -253,22 +253,22 @@ public:
   }
 };
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool StoreDisplacement,
           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix,
           bool UseSIMD>
 struct FieldTraits
-    : public ImplFieldTraits<specfem::datatype::ScalarPointViewType<
-                                 type_real,
-                                 specfem::element::attributes<
-                                     DimensionType, MediumTag>::components(),
-                                 UseSIMD>,
-                             StoreDisplacement, StoreVelocity,
-                             StoreAcceleration, StoreMassMatrix> {
+    : public ImplFieldTraits<
+          specfem::datatype::ScalarPointViewType<
+              type_real,
+              specfem::element::attributes<DimensionTag, MediumTag>::components,
+              UseSIMD>,
+          StoreDisplacement, StoreVelocity, StoreAcceleration,
+          StoreMassMatrix> {
 
   using ViewType = specfem::datatype::ScalarPointViewType<
       type_real,
-      specfem::element::attributes<DimensionType, MediumTag>::components(),
+      specfem::element::attributes<DimensionTag, MediumTag>::components,
       UseSIMD>;
 
 public:
@@ -305,9 +305,9 @@ public:
  mass
  * matrix at a quadrature point
  *
- * @tparam DimensionType Dimension of the element where the quadrature point is
+ * @tparam DimensionTag Dimension of the element where the quadrature point is
  * located
- * @tparam MediumType Medium type of the element where the quadrature point is
+ * @tparam MediumTag Medium type of the element where the quadrature point is
  * located
  * @tparam StoreDisplacement Store displacement at the quadrature point
  * @tparam StoreVelocity Store velocity at the quadrature point
@@ -316,12 +316,12 @@ public:
  * @tparam UseSIMD Boolean to enable SIMD operations
  *
  */
-template <specfem::dimension::type DimensionType,
-          specfem::element::medium_tag MediumType, bool StoreDisplacement,
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag, bool StoreDisplacement,
           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix,
           bool UseSIMD>
 struct field
-    : public impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
+    : public impl::FieldTraits<DimensionTag, MediumTag, StoreDisplacement,
                                StoreVelocity, StoreAcceleration,
                                StoreMassMatrix, UseSIMD> {
 
@@ -333,7 +333,7 @@ public:
   ///@{
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
   using ViewType = typename impl::FieldTraits<
-      DimensionType, MediumType, StoreDisplacement, StoreVelocity,
+      DimensionTag, MediumTag, StoreDisplacement, StoreVelocity,
       StoreAcceleration, StoreMassMatrix, UseSIMD>::ViewType; ///< Underlying
                                                               ///< datatype used
                                                               ///< to store the
@@ -347,12 +347,12 @@ public:
   ///@{
   constexpr static int components =
       ViewType::components; ///< Number of field components for specified medium
-  constexpr static auto dimension = DimensionType; ///< Dimension of the element
-                                                   ///< where the quadrature
-                                                   ///< point is located
+  constexpr static auto dimension = DimensionTag; ///< Dimension of the element
+                                                  ///< where the quadrature
+                                                  ///< point is located
   constexpr static auto medium_tag =
-      MediumType; ///< Medium type of the element where the quadrature point is
-                  ///< located
+      MediumTag; ///< Medium type of the element where the quadrature point is
+                 ///< located
 
   constexpr static bool store_displacement =
       StoreDisplacement; ///< Store displacement at the quadrature point
@@ -397,7 +397,7 @@ public:
    */
   KOKKOS_FUNCTION
   field(const ViewType view)
-      : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
+      : impl::FieldTraits<DimensionTag, MediumTag, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view) {}
 
@@ -422,7 +422,7 @@ public:
    */
   KOKKOS_FUNCTION
   field(const ViewType view1, const ViewType view2)
-      : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
+      : impl::FieldTraits<DimensionTag, MediumTag, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view1, view2) {}
 
@@ -437,13 +437,13 @@ public:
    */
   KOKKOS_FUNCTION
   field(const ViewType view1, const ViewType view2, const ViewType view3)
-      : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
+      : impl::FieldTraits<DimensionTag, MediumTag, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view1, view2, view3) {}
 
   template <typename... Args>
   KOKKOS_FUNCTION field(Args... args)
-      : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
+      : impl::FieldTraits<DimensionTag, MediumTag, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(ViewType(std::forward<Args>(args)...)) {}
   ///@}

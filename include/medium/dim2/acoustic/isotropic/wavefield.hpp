@@ -5,9 +5,7 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/compute_stress.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/properties.hpp"
-#include "point/stress.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -85,7 +83,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
             point_stress.T(0, 0);
         wavefield(iterator_index.ielement, index.iz, index.ix, 1) =
-            point_stress.T(1, 0);
+            point_stress.T(0, 1);
       });
 
   return;

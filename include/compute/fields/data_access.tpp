@@ -1,8 +1,7 @@
 #pragma once
 
-#include "point/assembly_index.hpp"
-#include "point/coordinates.hpp"
-#include <cstddef>
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
 
 namespace specfem {
 namespace compute {

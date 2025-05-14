@@ -17,10 +17,10 @@
 namespace specfem {
 namespace kokkos_kernels {
 template <specfem::wavefield::simulation_field WavefieldType,
-          specfem::dimension::type DimensionType, int NGLL>
+          specfem::dimension::type DimensionTag, int NGLL>
 class domain_kernels {
 public:
-  constexpr static auto dimension = DimensionType;
+  constexpr static auto dimension = DimensionTag;
   constexpr static auto wavefield = WavefieldType;
   constexpr static auto ngll = NGLL;
 

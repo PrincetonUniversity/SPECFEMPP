@@ -3,15 +3,15 @@
 #include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag medium1,
           specfem::element::medium_tag medium2>
-specfem::mesh::interface_container<DimensionType, medium1, medium2>
+specfem::mesh::interface_container<DimensionTag, medium1, medium2>
 specfem::io::mesh::impl::fortran::dim2::read_interfaces(
     const int num_interfaces, std::ifstream &stream,
     const specfem::MPI::MPI *mpi) {
 
-  specfem::mesh::interface_container<DimensionType, medium1, medium2> interface(
+  specfem::mesh::interface_container<DimensionTag, medium1, medium2> interface(
       num_interfaces);
 
   if (!num_interfaces)
