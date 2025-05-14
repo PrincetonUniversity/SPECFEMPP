@@ -28,11 +28,6 @@ enum class electromagnetic_wave { te, tm };
 enum class axes { x, y, z };
 
 namespace seismogram {
-/**
- * @brief Seismogram type enumeration
- *
- */
-enum class type { displacement, velocity, acceleration, pressure };
 
 /**
  * @brief Output format of seismogram enumeration

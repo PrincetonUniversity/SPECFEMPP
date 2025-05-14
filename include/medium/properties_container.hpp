@@ -6,7 +6,6 @@
 #include "dim2/poroelastic/isotropic/properties_container.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/accessor.hpp"
-#include "impl/data_container.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

@@ -14,7 +14,7 @@
 #include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
@@ -25,7 +25,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   constexpr auto property_tag = PropertyTag;
   constexpr auto wavefield_type = WavefieldType;
   constexpr int ngll = NGLL;
-  constexpr auto dimension = DimensionType;
+  constexpr auto dimension = DimensionTag;
 
   const auto [elements, receiver_indices] =
       assembly.receivers.get_indices_on_device(MediumTag, PropertyTag);
@@ -57,17 +57,17 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
 #endif
 
   using ParallelConfig =
-      specfem::parallel_config::chunk_config<DimensionType, 1, 1, nthreads,
+      specfem::parallel_config::chunk_config<DimensionTag, 1, 1, nthreads,
                                              lane_size, no_simd,
                                              Kokkos::DefaultExecutionSpace>;
 
   using ChunkPolicy = specfem::policy::mapped_element_chunk<ParallelConfig>;
   using ChunkElementFieldType = specfem::chunk_element::field<
-      ParallelConfig::chunk_size, ngll, DimensionType, MediumTag,
+      ParallelConfig::chunk_size, ngll, DimensionTag, MediumTag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
       true, true, true, false, using_simd>;
   using ElementQuadratureType = specfem::element::quadrature<
-      ngll, DimensionType, specfem::kokkos::DevScratchSpace,
+      ngll, DimensionTag, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
   using ViewType = specfem::datatype::ScalarChunkViewType<
       type_real, ParallelConfig::chunk_size, ngll, 2,

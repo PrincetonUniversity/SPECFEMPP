@@ -2,7 +2,6 @@
 
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
-#include "io/writer.hpp"
 
 namespace specfem {
 namespace io {
@@ -12,7 +11,7 @@ namespace io {
  *
  * @tparam OutputLibrary Library to use for output (HDF5, ASCII, etc.)
  */
-template <typename OutputLibrary> class wavefield_writer : public writer {
+template <typename OutputLibrary> class wavefield_writer {
 
 public:
   /**
@@ -36,14 +35,13 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void write(specfem::compute::assembly &assembly) override;
+  void write(specfem::compute::assembly &assembly);
 
-  void set_istep(int istep) { this->istep = istep; }
+  void write(specfem::compute::assembly &assembly, const int istep);
 
 private:
   std::string output_folder; ///< Path to output folder
-  int istep = -1; ///< Current time step for file name, if value is -1, the time
-                  ///< step will be be included in the output file name.
+  typename OutputLibrary::File file;
 };
 } // namespace io
 } // namespace specfem

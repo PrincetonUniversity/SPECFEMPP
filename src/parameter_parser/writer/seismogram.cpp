@@ -1,5 +1,6 @@
 #include "parameter_parser/writer/seismogram.hpp"
 #include "io/seismogram/writer.hpp"
+#include "utilities/strings.hpp"
 #include "yaml-cpp/yaml.h"
 #include <boost/filesystem.hpp>
 #include <string>
@@ -44,11 +45,10 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     const int nstep_between_samples) const {
 
   const auto type = [&]() {
-    if (this->output_format == "seismic_unix" || this->output_format == "su") {
+    if (specfem::utilities::is_su_string(this->output_format)) {
       throw std::runtime_error("Seismic Unix format not implemented yet");
       return specfem::enums::seismogram::format::seismic_unix;
-    } else if (this->output_format == "ASCII" ||
-               this->output_format == "ascii") {
+    } else if (specfem::utilities::is_ascii_string(this->output_format)) {
       return specfem::enums::seismogram::format::ascii;
     } else {
       throw std::runtime_error("Unknown seismogram format");

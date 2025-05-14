@@ -2,7 +2,7 @@
 
 #include "compute/compute_partial_derivatives.hpp"
 #include "datatypes/point_view.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -100,11 +100,11 @@ KOKKOS_FORCEINLINE_FUNCTION void divergence(
         for (int l = 0; l < NGLL; ++l) {
           for (int icomp = 0; icomp < components; ++icomp) {
             temp1l[icomp] +=
-                f(ielement, iz, l, 0, icomp) * hprimewgll(ix, l) * jacobian;
+                f(ielement, iz, l, icomp, 0) * hprimewgll(ix, l) * jacobian;
           }
           for (int icomp = 0; icomp < components; ++icomp) {
             temp2l[icomp] +=
-                f(ielement, l, ix, 1, icomp) * hprimewgll(iz, l) * jacobian;
+                f(ielement, l, ix, icomp, 1) * hprimewgll(iz, l) * jacobian;
           }
         }
 

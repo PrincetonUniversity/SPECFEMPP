@@ -27,14 +27,14 @@ constexpr int storage_chunk_size = impl::serial_chunk_size * simd_size;
 /**
  * @brief Parallel configuration for chunk policy.
  *
- * @tparam DimensionType Dimension type of the elements within a chunk.
+ * @tparam DimensionTag Dimension type of the elements within a chunk.
  * @tparam ChunkSize Number of elements within a chunk.
  * @tparam TileSize Tile size for chunk policy.
  * @tparam NumThreads Number of threads within a team.
  * @tparam VectorLanes Number of vector lanes.
  * @tparam SIMD SIMD type to use simd operations. @ref specfem::datatypes::simd
  */
-template <specfem::dimension::type DimensionType, int ChunkSize, int TileSize,
+template <specfem::dimension::type DimensionTag, int ChunkSize, int TileSize,
           int NumThreads, int VectorLanes, typename SIMD,
           typename ExecutionSpace>
 struct chunk_config {
@@ -45,7 +45,7 @@ struct chunk_config {
   using simd = SIMD;                               ///< SIMD type
   using execution_space = ExecutionSpace;          ///< Execution space
   constexpr static auto dimension =
-      DimensionType; ///< Dimension type of the elements within chunk.
+      DimensionTag; ///< Dimension type of the elements within chunk.
 };
 
 /**
@@ -55,11 +55,11 @@ struct chunk_config {
  * Defines chunk size, tile size, number of threads, number of vector lanes
  * defaults for @ref specfem::parallel_config::chunk_config
  *
- * @tparam DimensionType Dimension type of the elements within a chunk.
+ * @tparam DimensionTag Dimension type of the elements within a chunk.
  * @tparam SIMD SIMD type to use simd operations. @ref specfem::datatypes::simd
  * @tparam ExecutionSpace Execution space for the policy.
  */
-template <specfem::dimension::type DimensionType, typename SIMD,
+template <specfem::dimension::type DimensionTag, typename SIMD,
           typename ExecutionSpace>
 struct default_chunk_config;
 

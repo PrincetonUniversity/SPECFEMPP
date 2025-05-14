@@ -5,7 +5,7 @@
 #include "enumerations/medium.hpp"
 #include "io/property/reader.hpp"
 #include "kokkos_abstractions.h"
-#include "point/properties.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 template <typename InputLibrary>
