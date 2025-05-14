@@ -851,8 +851,8 @@ if (SPECFEM_INSTALL)
     add_custom_target(organize_output ALL
         COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Organizing build outputs into: ${CMAKE_INSTALL_PREFIX}"
+        COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
         # Make this run after your main targets
-        DEPENDS specfem2d specfem3d  # list all your targets here
+        DEPENDS specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram xgenerate_databases # list all your targets here
     )
 endif(SPECFEM_INSTALL)

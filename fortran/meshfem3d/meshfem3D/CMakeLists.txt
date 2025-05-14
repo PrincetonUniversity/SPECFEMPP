@@ -68,6 +68,7 @@ target_link_libraries(meshfem3D_mesh PRIVATE
   meshfem3D::mesh_module
   meshfem3D::shared_module
   meshfem3D::version
+  meshfem3D::shared_adios_module
 )
 
 add_executable(xmeshfem3D meshfem3D.F90)
