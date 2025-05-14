@@ -54,8 +54,8 @@ Point Assembly Index: Implementation details
     :members:
 
 
-Point SIMD Assembly Index
-=========================
+Point SIMD Assembly Index: Implementation details
+-------------------------------------------------
 
 Datatype used to store index of a quadrature point within a assembled mesh.
 Useful when operating on SIMD datatypes.
