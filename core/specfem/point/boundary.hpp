@@ -1,5 +1,4 @@
-#ifndef _POINT_BOUNDARY_HPP
-#define _POINT_BOUNDARY_HPP
+#pragma once
 
 #include "datatypes/point_view.hpp"
 #include "datatypes/simd.hpp"
@@ -289,4 +288,3 @@ KOKKOS_FUNCTION specfem::point::boundary<specfem::element::boundary_tag::stacey,
 
 } // namespace point
 } // namespace specfem
-#endif
