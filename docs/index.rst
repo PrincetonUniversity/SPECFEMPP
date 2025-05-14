@@ -208,10 +208,10 @@ User Documentation
 
 .. toctree::
     :caption: USER DOCUMENTATION
-    :maxdepth: 1
+    :maxdepth: 2
     :hidden:
 
-    sections/meshfem2d/index
+    sections/meshfem/index
     sections/parameter_documentation/index
     sections/source_description/index
 

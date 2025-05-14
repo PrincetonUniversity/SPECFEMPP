@@ -1,4 +1,4 @@
-
+.. _specfem_point_boundary:
 
 Point Boundary
 ==============
