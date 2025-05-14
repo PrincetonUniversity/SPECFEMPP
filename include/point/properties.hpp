@@ -28,7 +28,7 @@ struct data_container<specfem::dimension::type::dim2,
   POINT_CONTAINER(rho_inverse, kappa)
 
   KOKKOS_INLINE_FUNCTION const value_type kappa_inverse() const {
-    return (static_cast<value_type>(1.0)) /
+    return (static_cast<type_real>(1.0)) /
            kappa(); ///< @f$ \frac{1}{\lambda + 2\mu} @f$
   }
 
@@ -64,7 +64,7 @@ struct data_container<
   }
 
   KOKKOS_INLINE_FUNCTION const value_type lambda() const {
-    return lambdaplus2mu() - (static_cast<value_type>(2.0)) * mu();
+    return lambdaplus2mu() - (static_cast<type_real>(2.0)) * mu();
   }
 };
 
@@ -120,11 +120,11 @@ struct data_container<specfem::dimension::type::dim2,
    * @return Lame's parameter @f$ \lambda @f$
    */
   KOKKOS_INLINE_FUNCTION const value_type lambda_G() const {
-    return H_Biot() - (static_cast<value_type>(2.0)) * mu_G();
+    return H_Biot() - (static_cast<type_real>(2.0)) * mu_G();
   }
 
   KOKKOS_INLINE_FUNCTION const value_type lambdaplus2mu_G() const {
-    return lambda_G() + (static_cast<value_type>(2.0)) * mu_G();
+    return lambda_G() + (static_cast<type_real>(2.0)) * mu_G();
   }
 
   KOKKOS_INLINE_FUNCTION const value_type inverse_permxx() const {
@@ -138,7 +138,7 @@ struct data_container<specfem::dimension::type::dim2,
     const value_type determinant =
         permxx() * permzz() - permxz() * permxz(); ///< determinant of the
                                                    ///< permeability tensor
-    return static_cast<value_type>(-1.0) * permxz() /
+    return static_cast<type_real>(-1.0) * permxz() /
            determinant; ///< inverse of the permeability tensor
   }
 
@@ -160,7 +160,7 @@ struct data_container<specfem::dimension::type::dim2,
     const auto afactor = rho_bar() - phi_over_tort * rho_f();
     const auto bfactor =
         this->H_Biot() + phi_over_tort * rho_bar() / rho_f() * this->M_Biot() -
-        static_cast<value_type>(2.0) * phi_over_tort * this->C_Biot();
+        static_cast<type_real>(2.0) * phi_over_tort * this->C_Biot();
     const auto cfactor =
         phi_over_tort / rho_f() *
         (this->H_Biot() * this->M_Biot() - this->C_Biot() * this->C_Biot());
@@ -177,7 +177,7 @@ struct data_container<specfem::dimension::type::dim2,
     const auto afactor = rho_bar() - phi_over_tort * rho_f();
     const auto bfactor =
         this->H_Biot() + phi_over_tort * rho_bar() / rho_f() * this->M_Biot() -
-        static_cast<value_type>(2.0) * phi_over_tort * this->C_Biot();
+        static_cast<type_real>(2.0) * phi_over_tort * this->C_Biot();
     const auto cfactor =
         phi_over_tort / rho_f() *
         (this->H_Biot() * this->M_Biot() - this->C_Biot() * this->C_Biot());

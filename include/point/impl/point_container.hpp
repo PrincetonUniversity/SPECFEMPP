@@ -39,7 +39,7 @@
     for (int i = 0; i < nprops; ++i) {                                         \
       if (std::abs(_point_data_container[i] -                                  \
                    other._point_data_container[i]) >                           \
-          1e-6 * std::abs(_point_data_container[i])) {                         \
+          static_cast<type_real>(1e-6) * std::abs(_point_data_container[i])) { \
         return false;                                                          \
       }                                                                        \
     }                                                                          \
@@ -58,7 +58,8 @@
       if (!Kokkos::Experimental::all_of(                                       \
               Kokkos::abs(_point_data_container[i] -                           \
                           other._point_data_container[i]) <                    \
-              1e-6 * Kokkos::abs(_point_data_container[i]))) {                 \
+              static_cast<type_real>(1e-6) *                                   \
+                  Kokkos::abs(_point_data_container[i]))) {                    \
         return false;                                                          \
       }                                                                        \
     }                                                                          \
@@ -74,6 +75,11 @@
   KOKKOS_INLINE_FUNCTION data_container(const value_type *value) {             \
     for (int i = 0; i < nprops; ++i) {                                         \
       _point_data_container[i] = value[i];                                     \
+    }                                                                          \
+  }                                                                            \
+  KOKKOS_INLINE_FUNCTION data_container(const value_type &value) {             \
+    for (int i = 0; i < nprops; ++i) {                                         \
+      _point_data_container[i] = value;                                        \
     }                                                                          \
   }
 
