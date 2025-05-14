@@ -91,6 +91,7 @@ struct index;
 /**
  * @brief Template specialization for 2D elements
  *
+ * @specialization
  */
 template <> struct index<specfem::dimension::type::dim2, false> {
   int ispec; ///< Index of the spectral element
