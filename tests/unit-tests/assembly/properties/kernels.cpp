@@ -3,9 +3,6 @@
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
-#include "io/ASCII/ASCII.hpp"
-#include "io/property/reader.hpp"
-#include "io/property/writer.hpp"
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
 
@@ -17,11 +14,10 @@ std::enable_if_t<
 set_value(const ViewType elements, specfem::compute::assembly &assembly,
           const type_real offset) {
 
-  const auto &properties = assembly.properties;
+  const auto &kernels = assembly.kernels;
 
-  using PointType =
-      specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                 PropertyTag, using_simd>;
+  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
+                                            MediumTag, PropertyTag, using_simd>;
 
   // Iterate over the elements
   execution_pattern::forall<using_simd>(
@@ -29,7 +25,7 @@ set_value(const ViewType elements, specfem::compute::assembly &assembly,
       KOKKOS_LAMBDA(const auto &iterator_index) {
         const auto index = iterator_index.index;
         PointType point(static_cast<type_real>(index.ispec + offset));
-        specfem::compute::store_on_host(index, point, properties);
+        specfem::compute::store_on_host(index, point, kernels);
       });
 
   Kokkos::fence();
@@ -42,10 +38,9 @@ std::enable_if_t<
     std::is_same_v<typename ViewType::memory_space, Kokkos::HostSpace>, void>
 check_value(const ViewType elements, specfem::compute::assembly &assembly,
             const type_real offset) {
-  const auto &properties = assembly.properties;
-  using PointType =
-      specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                 PropertyTag, using_simd>;
+  const auto &kernels = assembly.kernels;
+  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
+                                            MediumTag, PropertyTag, using_simd>;
 
   // Iterate over the elements
   execution_pattern::forall<using_simd>(
@@ -54,7 +49,7 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
         const auto index = iterator_index.index;
         PointType expected(static_cast<type_real>(index.ispec + offset));
         PointType computed;
-        specfem::compute::load_on_host(index, properties, computed);
+        specfem::compute::load_on_host(index, kernels, computed);
 
         if (computed != expected) {
           std::ostringstream message;
@@ -75,6 +70,55 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
           typename ViewType>
+std::enable_if_t<
+    std::is_same_v<typename ViewType::memory_space, Kokkos::HostSpace>, void>
+add_value(const ViewType elements, specfem::compute::assembly &assembly,
+          const type_real offset) {
+  const auto &kernels = assembly.kernels;
+
+  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
+                                            MediumTag, PropertyTag, using_simd>;
+
+  // Iterate over the elements
+  execution_pattern::forall<using_simd>(
+      "add_to_value", elements, assembly.mesh.ngllx,
+      KOKKOS_LAMBDA(const auto &iterator_index) {
+        const auto index = iterator_index.index;
+        PointType point(static_cast<type_real>(offset));
+        specfem::compute::add_on_host(index, point, kernels);
+      });
+
+  Kokkos::fence();
+}
+
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, bool using_simd,
+          typename ViewType>
+std::enable_if_t<std::is_same_v<typename ViewType::memory_space,
+                                Kokkos::DefaultExecutionSpace>,
+                 void>
+set_value(const ViewType elements, specfem::compute::assembly &assembly,
+          const type_real offset) {
+  const auto &kernels = assembly.kernels;
+
+  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
+                                            MediumTag, PropertyTag, using_simd>;
+
+  // Iterate over the elements
+  execution_pattern::forall<using_simd>(
+      "set_to_value", elements, assembly.mesh.ngllx,
+      KOKKOS_LAMBDA(const auto &iterator_index) {
+        const auto index = iterator_index.index;
+        PointType point(static_cast<type_real>(index.ispec + offset));
+        specfem::compute::store_on_device(index, point, kernels);
+      });
+
+  Kokkos::fence();
+}
+
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, bool using_simd,
+          typename ViewType>
 std::enable_if_t<std::is_same_v<typename ViewType::memory_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
@@ -83,11 +127,10 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
 
   const int nspec = assembly.mesh.nspec;
   const int ngll = assembly.mesh.ngllx;
-  const auto &properties = assembly.properties;
+  const auto &kernels = assembly.kernels;
 
-  using PointType =
-      specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                 PropertyTag, using_simd>;
+  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
+                                            MediumTag, PropertyTag, using_simd>;
 
   Kokkos::View<PointType ***, Kokkos::DefaultExecutionSpace> point_view(
       "point_view", nspec, ngll, ngll);
@@ -98,7 +141,7 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
       KOKKOS_LAMBDA(const auto &iterator_index) {
         const auto index = iterator_index.index;
         PointType computed;
-        specfem::compute::load_on_device(index, properties, computed);
+        specfem::compute::load_on_device(index, kernels, computed);
 
         const int ispec = index.ispec;
         const int iz = index.iz;
@@ -137,12 +180,37 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
 }
 
 template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, bool using_simd,
+          typename ViewType>
+std::enable_if_t<std::is_same_v<typename ViewType::memory_space,
+                                Kokkos::DefaultExecutionSpace>,
+                 void>
+add_value(const ViewType elements, specfem::compute::assembly &assembly,
+          const type_real offset) {
+  const auto &kernels = assembly.kernels;
+
+  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
+                                            MediumTag, PropertyTag, using_simd>;
+
+  // Iterate over the elements
+  execution_pattern::forall<using_simd>(
+      "add_to_value", elements, assembly.mesh.ngllx,
+      KOKKOS_LAMBDA(const auto &iterator_index) {
+        const auto index = iterator_index.index;
+        PointType point(static_cast<type_real>(offset));
+        specfem::compute::add_on_device(index, point, kernels);
+      });
+
+  Kokkos::fence();
+}
+
+template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
 void check_access_functions(specfem::compute::assembly &assembly) {
 
   const int nspec = assembly.mesh.nspec;
   const int ngll = assembly.mesh.ngllx;
-  auto &properties = assembly.properties;
+  auto &kernels = assembly.kernels;
   const auto &element_types = assembly.element_types;
 
   type_real offset = 10.1; // Random offset to store in the properties
@@ -157,13 +225,30 @@ void check_access_functions(specfem::compute::assembly &assembly) {
   check_value<MediumTag, PropertyTag, using_simd>(host_elements, assembly,
                                                   offset);
 
-  properties.copy_to_device();
+  add_value<MediumTag, PropertyTag, using_simd>(host_elements, assembly,
+                                                offset);
+  check_value<MediumTag, PropertyTag, using_simd>(host_elements, assembly,
+                                                  2 * offset);
+
+  kernels.copy_to_device();
 
   const auto device_elements =
       element_types.get_elements_on_device(MediumTag, PropertyTag);
 
   check_value<MediumTag, PropertyTag, using_simd>(device_elements, assembly,
+                                                  2 * offset);
+
+  set_value<MediumTag, PropertyTag, using_simd>(device_elements, assembly,
+                                                offset);
+
+  check_value<MediumTag, PropertyTag, using_simd>(device_elements, assembly,
                                                   offset);
+
+  add_value<MediumTag, PropertyTag, using_simd>(device_elements, assembly,
+                                                offset);
+
+  check_value<MediumTag, PropertyTag, using_simd>(device_elements, assembly,
+                                                  2 * offset);
 }
 
 template <specfem::element::medium_tag MediumTag,
@@ -219,7 +304,7 @@ void check_compute_to_mesh(
       });
 }
 
-TEST_F(ASSEMBLY, properties_access_functions) {
+TEST_F(ASSEMBLY, kernels_access_functions) {
   for (auto parameters : *this) {
     auto Test = std::get<0>(parameters);
     auto mesh = std::get<1>(parameters);
@@ -255,7 +340,7 @@ TEST_F(ASSEMBLY, properties_access_functions) {
   }
 }
 
-TEST_F(ASSEMBLY, properties_construction) {
+TEST_F(ASSEMBLY, kernels_construction) {
   for (auto parameters : *this) {
     auto Test = std::get<0>(parameters);
     auto mesh = std::get<1>(parameters);
@@ -285,74 +370,5 @@ TEST_F(ASSEMBLY, properties_construction) {
                 << std::endl;
       ADD_FAILURE();
     }
-  }
-}
-
-TEST_F(ASSEMBLY, properties_io_routines) {
-  for (auto parameters : *this) {
-    auto Test = std::get<0>(parameters);
-    auto mesh = std::get<1>(parameters);
-    auto suffix = std::get<4>(parameters);
-    auto assembly = std::get<5>(parameters);
-
-    // get current working directory
-    std::string writer_directory =
-        boost::filesystem::current_path().string() + "/properties_test";
-    boost::filesystem::create_directory(writer_directory);
-
-    try {
-      // Set all properties to a random value
-      const type_real random_value = 10.1;
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-          {
-            const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            set_value<_medium_tag_, _property_tag_, false>(elements, assembly,
-                                                           random_value);
-          });
-
-      // Create a property writer
-      specfem::io::property_writer<specfem::io::ASCII<specfem::io::write> >
-          writer(writer_directory);
-
-      writer.write(assembly);
-
-      // Create a property reader
-      specfem::io::property_reader<specfem::io::ASCII<specfem::io::read> >
-          reader(writer_directory);
-      reader.read(assembly);
-
-      // Check that the properties are the same
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-          {
-            const auto elements = assembly.element_types.get_elements_on_host(
-                _medium_tag_, _property_tag_);
-            check_value<_medium_tag_, _property_tag_, false>(elements, assembly,
-                                                             random_value);
-          });
-
-      std::cout << "-------------------------------------------------------\n"
-                << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"
-                << "-------------------------------------------------------\n\n"
-                << std::endl;
-    } catch (std::exception &e) {
-      std::cout << "-------------------------------------------------------\n"
-                << "\033[0;31m[FAILED]\033[0m \n"
-                << "-------------------------------------------------------\n"
-                << "- Test: " << Test.name << "\n"
-                << "- Error: " << e.what() << "\n"
-                << "-------------------------------------------------------\n\n"
-                << std::endl;
-      ADD_FAILURE();
-    }
-
-    // Clean up the test file
-    boost::filesystem::remove_all(writer_directory);
   }
 }
