@@ -12,8 +12,6 @@ in sequential order and faciliate the reading of the mesh database.
 
 .. doxygenfunction:: specfem::io::mesh::impl::fortran::dim2::read_coorg_elements
 
-.. doxygenfunction:: specfem::io::mesh::impl::fortran::dim2::read_properties
-
 .. doxygenfunction:: specfem::io::mesh::impl::fortran::dim2::read_mesh_database_attenuation
 
 .. doxygenfunction:: specfem::io::mesh::impl::fortran::dim2::read_material_properties

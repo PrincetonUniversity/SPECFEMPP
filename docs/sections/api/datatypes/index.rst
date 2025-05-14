@@ -24,7 +24,7 @@ SPECFEM++ datatypes
     properties/index
     quadrature/element
     field/index
-    boundary/point
+    boundary/index
     field_derivatives/point
     stress_integrands/index
     kernels/index.rst
