@@ -804,8 +804,6 @@ Parameter definitions
                 mesh-database: /path/to/mesh_database.bin
 
 
-        .. _database-file-parameter:
-
         .. dropdown:: ``mesh-database``
             :open:
 
@@ -819,6 +817,25 @@ Parameter definitions
                 :caption: Example
 
                 mesh-database: /path/to/mesh_database.bin
+
+        .. dropdown:: ``mesh-parameters``
+
+            Location of the fortran binary database file defining the mesh
+            parameters.
+
+            .. note::
+
+                This parameter is only relevant for 3D simulations. For 2D,
+                the solver generates the databases in memory.
+
+            :default value: None
+
+            :possible values: [string]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                mesh-parameters: /path/to/mesh_parameters.bin
 
 
     .. dropdown:: ``sources``
