@@ -48,7 +48,7 @@ Point Data Types
 3. :ref:`Wavefield <point_field>`
 4. :ref:`Misfit Kernels <point_kernels>`
 5. :ref:`Derivatives of wavefield <point_field_derivatives>`
-6. :ref:`Boundary Conditions <point_boundary>`
+6. :ref:`Boundary Conditions <specfem_point_boundary>`
 7. :ref:`Global Coordinates <point_global_coordinates>`
 8. :ref:`Local Coordinates <point_local_coordinates>`
 9. :ref:`Stress Integrands <point_stress_integrands>`

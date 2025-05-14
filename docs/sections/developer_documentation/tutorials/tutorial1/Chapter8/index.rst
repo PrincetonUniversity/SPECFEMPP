@@ -226,4 +226,4 @@ Next, lets implement ``compute_stiffness_interaction`` kernel.
 Implemetation within SPECFEM++
 ------------------------------
 
-The implemetation of compute kernels within SPECFEM++ can be found :ref:`here <kernels_domain>`.
+The implemetation of compute kernels within SPECFEM++ can be found :ref:`here <domain_kernels>`.

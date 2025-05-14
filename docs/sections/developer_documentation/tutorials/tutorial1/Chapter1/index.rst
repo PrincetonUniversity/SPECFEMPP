@@ -17,7 +17,7 @@ Let us generate a Hex mesh for 2D elastic domain using the following parameter f
 
 .. note::
 
-    More details on Parameter file can be found in :ref:`MESHFEM_Parameter_documentation`
+    More details on Parameter file can be found in :ref:`meshfem2d_parameter_documentation`
 
 .. code:: bash
 
