@@ -38,7 +38,7 @@ parameters:
     stations: "@CMAKE_SOURCE_DIR@/examples/homogeneous-spin/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
-      - velocity
+      - displacement
     nstep_between_samples: 1
 
   ## Runtime setup
