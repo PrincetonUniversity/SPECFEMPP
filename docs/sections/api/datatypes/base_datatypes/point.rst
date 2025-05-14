@@ -17,5 +17,5 @@ Implementation Details
 
 Base type for point views.
 
-.. doxygenstruct:: specfem::datatype::impl::array1d
+.. doxygenclass:: specfem::datatype::impl::RegisterArray
     :members:
