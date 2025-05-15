@@ -166,6 +166,21 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
         }
 
         if (const YAML::Node &n_plotter = n_writer["display"]) {
+
+#ifdef NO_VTK
+          std::ostringstream message;
+          message
+              << "\nDisplay section is not enabled, since SPECFEM++ was built "
+                 "without VTK\n"
+              << "Please install VTK and rebuild SPECFEM++ with "
+                 "-DVTK_DIR=/path/to/vtk\n"
+              << "or\n"
+              << "Disable the display section in the specfem_config.yaml "
+                 "file\n";
+          ";
+              throw std::runtime_error(message.str());
+#endif
+
           if ((n_plotter["simulation-field"] &&
                n_plotter["simulation-field"].as<std::string>() != "forward")) {
             std::ostringstream message;

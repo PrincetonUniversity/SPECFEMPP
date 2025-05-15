@@ -4,6 +4,7 @@
 #include "enumerations/display.hpp"
 #include "enumerations/wavefield.hpp"
 #include "plotter.hpp"
+#include "specfem_mpi/interface.hpp"
 #include <boost/filesystem.hpp>
 #ifdef NO_VTK
 #include <sstream>
@@ -47,15 +48,31 @@ public:
                  const specfem::display::wavefield &component,
                  const specfem::wavefield::simulation_field &wavefield,
                  const int &time_interval,
-                 const boost::filesystem::path &output_folder);
+                 const boost::filesystem::path &output_folder,
+                 specfem::MPI::MPI *mpi);
 
   /**
-   * @brief Plot the wavefield
+   * @brief Updates the wavefield within open window
    *
    */
   void run(specfem::compute::assembly &assembly, const int istep) override;
 
+  /**
+   * @brief Wavefield plotter
+   *
+   * Opens a window, creates the grid and plots the materials.
+   *
+   * @param assembly SPECFFEM++ assembly object
+   */
   void initialize(specfem::compute::assembly &assembly) override;
+
+  /**
+   * @brief Finalize the plotter
+   *
+   * Closes the window and cleans up resources.
+   *
+   * @param assembly SPECFFEM++ assembly object
+   */
   void finalize(specfem::compute::assembly &assembly) override;
 
 private:
@@ -70,6 +87,9 @@ private:
   int nspec;
   int ngllx;
   int ngllz;
+
+  // MPI object
+  specfem::MPI::MPI *mpi;
 
 #ifndef NO_VTK
 

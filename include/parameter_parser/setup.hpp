@@ -199,10 +199,10 @@ public:
   }
 
   std::shared_ptr<specfem::periodic_tasks::periodic_task>
-  instantiate_wavefield_plotter(
-      const specfem::compute::assembly &assembly) const {
+  instantiate_wavefield_plotter(const specfem::compute::assembly &assembly,
+                                specfem::MPI::MPI *mpi) const {
     if (this->plot_wavefield) {
-      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly, mpi);
     } else {
       return nullptr;
     }

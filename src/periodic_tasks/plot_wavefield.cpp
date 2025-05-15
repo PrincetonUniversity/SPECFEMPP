@@ -41,6 +41,26 @@
 
 #ifdef NO_VTK
 
+// Add this constructor implementation for NO_VTK builds
+specfem::periodic_tasks::plot_wavefield::plot_wavefield(
+    const specfem::compute::assembly &assembly,
+    const specfem::display::format &output_format,
+    const specfem::display::wavefield &component,
+    const specfem::wavefield::simulation_field &wavefield,
+    const int &time_interval, const boost::filesystem::path &output_folder,
+    specfem::MPI::MPI *mpi)
+    : assembly(assembly), wavefield(wavefield), component(component),
+      plotter(time_interval), output_format(output_format),
+      output_folder(output_folder), nspec(assembly.mesh.nspec),
+      ngllx(assembly.mesh.ngllx), ngllz(assembly.mesh.ngllz), mpi(mpi) {
+  std::ostringstream message;
+  message
+      << "Display section is not enabled, since SPECFEM++ was built without "
+         "VTK\n"
+      << "Please install VTK and rebuild SPECFEM++ with -DVTK_DIR=/path/to/vtk";
+  throw std::runtime_error(message.str());
+}
+
 void specfem::periodic_tasks::plot_wavefield::run(
     specfem::compute::assembly &assembly, const int istep) {
   std::ostringstream message;
@@ -51,7 +71,8 @@ void specfem::periodic_tasks::plot_wavefield::run(
   throw std::runtime_error(message.str());
 }
 
-void specfem::periodic_tasks::plot_wavefield::initialize() {
+void specfem::periodic_tasks::plot_wavefield::initialize(
+    specfem::compute::assembly &assembly) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -60,12 +81,14 @@ void specfem::periodic_tasks::plot_wavefield::initialize() {
   throw std::runtime_error(message.str());
 }
 
-void specfem::periodic_tasks::plot_wavefield::run(const int istep) {
-  // Not implemented without VTK
-}
-
-void specfem::periodic_tasks::plot_wavefield::finalize() {
-  // Not implemented without VTK
+void specfem::periodic_tasks::plot_wavefield::finalize(
+    specfem::compute::assembly &assembly) {
+  std::ostringstream message;
+  message
+      << "Display section is not enabled, since SPECFEM++ was built without "
+         "VTK\n"
+      << "Please install VTK and rebuild SPECFEM++ with -DVTK_DIR=/path/to/vtk";
+  throw std::runtime_error(message.str());
 }
 
 #else
@@ -76,13 +99,12 @@ specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     const specfem::display::format &output_format,
     const specfem::display::wavefield &component,
     const specfem::wavefield::simulation_field &wavefield,
-    const int &time_interval, const boost::filesystem::path &output_folder)
+    const int &time_interval, const boost::filesystem::path &output_folder,
+    specfem::MPI::MPI *mpi)
     : assembly(assembly), wavefield(wavefield), component(component),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec),
-      ngllx(assembly.mesh.ngllx), ngllz(assembly.mesh.ngllz) {
-
-      };
+      ngllx(assembly.mesh.ngllx), ngllz(assembly.mesh.ngllz), mpi(mpi) {};
 
 // Sigmoid function centered at 0.0
 double specfem::periodic_tasks::plot_wavefield::sigmoid(double x) {
@@ -554,6 +576,8 @@ void specfem::periodic_tasks::plot_wavefield::run(
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());
       writer->Write();
+      std::string message = "Wrote wavefield image to " + filename.string();
+      mpi->cout(message);
     } else if (output_format == specfem::display::format::JPG) {
       const auto filename =
           output_folder /
@@ -562,6 +586,8 @@ void specfem::periodic_tasks::plot_wavefield::run(
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());
       writer->Write();
+      std::string message = "Wrote wavefield image to " + filename.string();
+      mpi->cout(message);
     } else {
       throw std::runtime_error("Unsupported output format");
     }
