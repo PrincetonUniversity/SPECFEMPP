@@ -573,7 +573,7 @@ subroutine save_databases_materials()
          !write(IOUT) i,icodemat(i),rho_s_read(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
       else
          ! case should not occur
-         call stop_the_code('Unknown material code')
+         call stop_the_code('Unknown material code (save_databases_materials)')
       endif
 
       ! check format with file src/specfem2D/read_materials.f90

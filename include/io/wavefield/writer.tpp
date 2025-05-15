@@ -30,7 +30,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
       {
         const auto &field = forward.get_field<_medium_tag_>();
 

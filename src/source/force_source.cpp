@@ -66,7 +66,7 @@ void specfem::sources::force::compute_source_array(
       } else if ((el_type == specfem::element::medium_tag::elastic_psv)) {
         if (ncomponents != 2) {
           throw std::runtime_error(
-              "Moment Tensor source requires 2 components for elastic, "
+              "Force source requires 2 components for elastic, "
               "poroelastic, or electromagnetic-sv media.");
         }
         source_array(0, iz, ix) =

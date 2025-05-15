@@ -28,7 +28,7 @@ class wavefield;
 
 // clang-format off
 /**
- * @fn static constexpr specfem::dimension::type specfem::wavefield::wavefield::dimension()
+ * @fn static constexpr specfem::dimension::type specfem::wavefield::wavefield::dimension
  * @brief Returns the dimension type of the wavefield
  *
  * @return constexpr specfem::dimension::type Dimension type of the wavefield
@@ -36,7 +36,7 @@ class wavefield;
  */
 
 /**
- * @fn static constexpr specfem::wavefield::type specfem::wavefield::wavefield::component()
+ * @fn static constexpr specfem::wavefield::type specfem::wavefield::wavefield::component
  *
  * @brief Returns the component type of the wavefield
  *

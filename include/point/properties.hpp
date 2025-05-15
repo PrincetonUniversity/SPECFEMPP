@@ -100,18 +100,27 @@ struct properties<
 
   // Normal elastic properties
   DEFINE_POINT_VALUE(rho, 0)   ///< density @f$ \rho @f$
-  DEFINE_POINT_VALUE(kappa, 1) ///< Bulk Modulus @f$ \lambda + 2\mu @f$
+  DEFINE_POINT_VALUE(kappa, 1) ///< Bulk Modulus @f$ \kappa @f$
   DEFINE_POINT_VALUE(mu, 2)    ///< shear modulus @f$ \mu @f$
   DEFINE_POINT_VALUE(nu, 3)    ///< symmetry breaking modulus @f$ \nu @f$
 
   // Additional elastic properties for spin media _c for _couple
   DEFINE_POINT_VALUE(j, 4)        ///< inertia density @f$ j @f$
-  DEFINE_POINT_VALUE(lambda_c, 5) ///< couple bulk modulus @f$ \kappa_c @f$
+  DEFINE_POINT_VALUE(lambda_c, 5) ///< couple bulk modulus @f$ \lambda_c @f$
   DEFINE_POINT_VALUE(mu_c, 6)     ///< couple shear modulus @f$ \mu_c @f$
   DEFINE_POINT_VALUE(nu_c, 7)     ///< symmetry breaking modulus @f$ \nu_c @f$
 
+  // lambda + 2 mu = kappa - 2/3*mu + 6/3 * mu =
   KOKKOS_INLINE_FUNCTION const value_type lambdaplus2mu() const {
-    return kappa() + mu(); ///< @f$ \lambda + 2\mu @f$
+    return kappa() + static_cast<value_type>(4.0) /
+                         static_cast<value_type>(3.0) *
+                         mu(); ///< @f$ \lambda + 2\mu @f$
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type lambda() const {
+    return kappa() - static_cast<value_type>(2.0) /
+                         static_cast<value_type>(3.0) *
+                         mu(); ///< @f$ \lambda + 2\mu @f$
   }
 
   KOKKOS_INLINE_FUNCTION const value_type rho_vp() const {

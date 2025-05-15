@@ -30,11 +30,19 @@ parameters:
             format: "ascii"
             directory: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/results"
 
+          wavefield:
+            directory: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/wavefield"
+            format: HDF5
+            time_interval: 200
+
   receivers:
-    stations: "@CMAKE_SOURCE_DIR@/OUTPUT_FILES/STATIONS"
+    stations: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
+      - displacement
       - velocity
+      - acceleration
+      - rotation
     nstep_between_samples: 1
 
   ## Runtime setup
@@ -44,7 +52,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/examples/OUTPUT_FILES/database.bin"
+    mesh-database: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/database.bin"
 
   ## sources
-  sources: "@CMAKE_SOURCE_DIR@/source.yaml"
+  sources: "@CMAKE_CURRENT_SOURCE_DIR@/sources.yaml"

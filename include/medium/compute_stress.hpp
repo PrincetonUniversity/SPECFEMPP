@@ -3,6 +3,7 @@
 #include "dim2/acoustic/isotropic/stress.hpp"
 #include "dim2/elastic/anisotropic/stress.hpp"
 #include "dim2/elastic/isotropic/stress.hpp"
+#include "dim2/elastic/isotropic_cosserat/stress.hpp"
 #include "dim2/poroelastic/isotropic/stress.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -35,6 +36,7 @@ compute_stress(const PointPropertiesType &properties,
 
   static_assert(PointPropertiesType::is_point_properties,
                 "properties is not a point properties type");
+
   static_assert(PointFieldDerivativesType::is_point_field_derivatives,
                 "field_derivatives is not a point field derivatives type");
 

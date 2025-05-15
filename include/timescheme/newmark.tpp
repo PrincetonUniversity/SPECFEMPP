@@ -14,7 +14,7 @@ int corrector_phase_impl(
 
   constexpr int components =
       specfem::element::attributes<specfem::dimension::type::dim2,
-                                   MediumTag>::components();
+                                   MediumTag>::components;
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using LoadFieldType =
@@ -52,7 +52,7 @@ int corrector_phase_impl(
       });
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
-                                              MediumTag>::components();
+                                              MediumTag>::components;
 }
 
 template <specfem::element::medium_tag MediumTag,
@@ -64,7 +64,7 @@ int predictor_phase_impl(
 
   constexpr int components =
       specfem::element::attributes<specfem::dimension::type::dim2,
-                                   MediumTag>::components();
+                                   MediumTag>::components;
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using LoadFieldType =
@@ -112,7 +112,7 @@ int predictor_phase_impl(
       });
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
-                                              MediumTag>::components();
+                                              MediumTag>::components;
 }
 } // namespace
 
@@ -123,7 +123,7 @@ int specfem::time_scheme::newmark<specfem::simulation::type::forward>::
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                       ACOUSTIC, POROELASTIC)),
+                       ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
            {
              if (tag == _medium_tag_) {
                return corrector_phase_impl<_medium_tag_, wavefield>(
@@ -144,7 +144,7 @@ int specfem::time_scheme::newmark<specfem::simulation::type::forward>::
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                       ACOUSTIC, POROELASTIC)),
+                       ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
            {
              if (tag == _medium_tag_) {
                return predictor_phase_impl<_medium_tag_, wavefield>(
@@ -165,7 +165,7 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                       ACOUSTIC, POROELASTIC)),
+                       ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
            {
              if (tag == _medium_tag_) {
                return corrector_phase_impl<_medium_tag_, wavefield>(
@@ -186,7 +186,7 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                       ACOUSTIC, POROELASTIC)),
+                       ACOUSTIC, ELASTIC_PSV_T, POROELASTIC)),
            {
              if (tag == _medium_tag_) {
                return corrector_phase_impl<_medium_tag_, wavefield>(
@@ -207,7 +207,7 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                       ACOUSTIC, POROELASTIC)),
+                       ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
            {
              if (tag == _medium_tag_) {
                return predictor_phase_impl<_medium_tag_, wavefield>(
@@ -228,7 +228,7 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                       ACOUSTIC, POROELASTIC)),
+                       ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
            {
              if (tag == _medium_tag_) {
                return predictor_phase_impl<_medium_tag_, wavefield>(

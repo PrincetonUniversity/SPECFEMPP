@@ -32,7 +32,7 @@ void check_store(specfem::compute::assembly &assembly) {
   const int nelements = element_indices.size();
 
   constexpr int num_components =
-      specfem::element::attributes<Dimension, MediumTag>::components();
+      specfem::element::attributes<Dimension, MediumTag>::components;
 
   if (nelements == 0) {
     return;
@@ -104,7 +104,7 @@ void check_load(specfem::compute::assembly &assembly) {
   const int nelements = element_indices.size();
 
   constexpr int num_components =
-      specfem::element::attributes<Dimension, MediumTag>::components();
+      specfem::element::attributes<Dimension, MediumTag>::components;
 
   Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace> values_to_store(
       "values_to_store", nelements);
@@ -201,7 +201,7 @@ void check_assembly_source_construction(
   const int ngllx = assembly.mesh.ngllx;
 
   constexpr auto components =
-      specfem::element::attributes<Dimension, MediumTag>::components();
+      specfem::element::attributes<Dimension, MediumTag>::components;
 
   using PointSourceType =
       specfem::point::source<Dimension, MediumTag,
@@ -281,8 +281,8 @@ void test_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     specfem::compute::assembly &assembly) {
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       {
         check_assembly_source_construction<_dimension_tag_, _medium_tag_>(
             sources, assembly);
@@ -291,8 +291,8 @@ void test_assembly_source_construction(
 
 void test_sources(specfem::compute::assembly &assembly){ FOR_EACH_IN_PRODUCT(
     (DIMENSION_TAG(DIM2),
-     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
+     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
      BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                   COMPOSITE_STACEY_DIRICHLET)),
     {

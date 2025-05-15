@@ -5,7 +5,7 @@
 #-----------------------------------------------------------
 
 # title of job
-title                           = Elastic Spin Simulation with point source
+title                           = Elastic Simulation with point source
 
 # parameters concerning partitioning
 NPROC                           = 1              # number of processes
@@ -39,19 +39,27 @@ database_filename               = @CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/databa
 use_existing_STATIONS           = .false.
 
 # number of receiver sets (i.e. number of receiver lines to create below)
-nreceiversets                   = 1
+nreceiversets                   = 2
 
 # orientation
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
-nrec                            = 50             # number of receivers
-xdeb                            = 0.05           # first receiver x in meters
-zdeb                            = 0.2640         # first receiver z in meters
-xfin                            = 0.28           # last receiver x in meters (ignored if only one receiver)
-zfin                            = 0.2640         # last receiver z in meters (ignored if only one receiver)
-record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
+nrec                            = 3             # number of receivers
+xdeb                            = 2200.           # first receiver x in meters
+zdeb                            = 2200.          # first receiver z in meters
+xfin                            = 2800.          # last receiver x in meters (ignored if only one receiver)
+zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
+record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
+
+# second receiver set
+nrec                            = 3             # number of receivers
+xdeb                            = 2500.          # first receiver x in meters
+zdeb                            = 2500.          # first receiver z in meters
+xfin                            = 2500.          # last receiver x in meters (ignored if only one receiver)
+zfin                            = 1900.             # last receiver z in meters (ignored if only one receiver)
+record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
 # filename to store stations file
 stations_filename              = @CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/STATIONS
@@ -70,8 +78,6 @@ nbmodels                        = 1
 #   anisotropic:           model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25   0 QKappa Qmu
 #   anisotropic in AXISYM: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 QKappa Qmu
 #   poroelastic:           model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
-#   electromagnetic:       model_number 4 mu0 e0 e11(e0) e33(e0) sig11 sig33 Qe11 Qe33 Qs11 Qs33 0 0 0
-#   spin:                  model_number 5 rho kappa mu nu j kappa_c mu_c nu_c 0 0 0 0 0
 #   tomo:                  model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
 #
 # note: When viscoelasticity or viscoacousticity is turned on,
@@ -81,7 +87,8 @@ nbmodels                        = 1
 #       Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
 #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
 #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
-1 5 1.d05 22.667d09 4.0d09 2.0d09 1.d04 1.d08 1.936d08 3.0464d09 0 0 0 0 0
+# 1 5 2700.d0 13.5d09 8.1d09 0.0d0 270.d0 0.d0 0.0d0 0.0d0 0 0 0 0 0
+1 5 2700.d0 13.5d09 8.1d09 10.05d08 2700.d0 7.75d08 1.5d08 3.0d08 0 0 0 0 0
 
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
