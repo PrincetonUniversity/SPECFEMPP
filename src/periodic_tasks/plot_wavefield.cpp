@@ -128,7 +128,36 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
   return mapper;
 }
 
-vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
+/**
+ * @brief Get the wavefield on vtkUnstructured grid object as biquadratic quads
+
+ * This function creates bilinear quadrilateral from the element corners,
+ * midpoints and center points of element sides.
+ *
+ * Graphical Explanation looking at a single element (see below), create:
+ *
+ *
+ *     3----•-----6-----•----2
+ *     |    |     |     |    |
+ *     •----•-----•-----•----•
+ *     |    |     |     |    |
+ *     7----•-----8-----•----5
+ *     |    |     |     |    |
+ *     •----•-----•-----•----•
+ *     |    |     |     |    |
+ *     0----•-----4-----•----1
+ *
+ * Where the above points (for GLL = 5) that are used to create the bilinear
+ * quad are indicated by numbers 0-8 in the order of the points in the quad.
+ * Each element has therefore 9 points, that are the used to return a
+ * vtkUnstructuredGrid object containing vtkBiQuadraticQuad cells.
+ *
+ * @param assembly
+ * @param type
+ * @param display_component
+ * @return vtkSmartPointer<vtkUnstructuredGrid>
+ */
+vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_biquad_grid(
     specfem::compute::assembly &assembly,
     const specfem::wavefield::simulation_field type,
     const specfem::display::wavefield &display_component) {
@@ -210,6 +239,141 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
 
   return unstructured_grid;
 }
+
+/**
+ * @brief Get the wavefield on vtkUnstructured grid object
+ *
+ *
+ * This function creates vertices for quadrilaterals from the coordinates x and
+ * z. and the element based field. The field is of shape (nspec, ngll, ngll), so
+ * are the coordinates. The functions creates quads of 4 GLL points. For ngll =
+ * 5 this means that we have 16 quads per element, and a total of nspec * 16
+ * quads.
+ *
+ * Graphical Explanation:
+ *
+ * Looking at a single element (see below), create quadrilateral for each
+ * subrectangle of the element. Starting with the ix=0, iz=0 corner moving
+ * counterclockwise for each subquad, indicated by the numbers coinciding with
+ * the GLL points. Then we move in ix direction for each quad indicated by the
+ * number on the face of each quad.
+ *
+ *     •----•-----•-----3----2
+ *     | 12 |  13 |  14 | 15 |
+ *     •----•-----•-----0----1
+ *     |  8 |   9 |  10 | 11 |
+ *     •----•-----•-----•----•
+ *     |  4 |   5 |   6 |  7 |
+ *     3----2-----•-----•----•
+ *     |  0 |   1 |   2 |  3 |
+ *     0----1-----•-----•----•
+ *
+ * So, for GLL = 5 each element each element has therefore 16 (as numbered 0-15)
+ * quads. For the first and last quad we indicate the order of the gll points
+ * used as vertices of the quad (0-3). Finally, the quads are the used to return
+ * a vtkUnstructuredGrid object containing vtkQuad cells.
+ *
+ * The wavefield is assigned to the points accordingly.
+ *
+ * @param assembly
+ * @param type
+ * @param display_component
+ * @return vtkSmartPointer<vtkUnstructuredGrid>
+ */
+vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_quad_grid(
+    specfem::compute::assembly &assembly,
+    const specfem::wavefield::simulation_field type,
+    const specfem::display::wavefield &display_component) {
+
+  const auto component = [&display_component]() {
+    if (display_component == specfem::display::wavefield::displacement) {
+      return specfem::wavefield::type::displacement;
+    } else if (display_component == specfem::display::wavefield::velocity) {
+      return specfem::wavefield::type::velocity;
+    } else if (display_component == specfem::display::wavefield::acceleration) {
+      return specfem::wavefield::type::acceleration;
+    } else if (display_component == specfem::display::wavefield::pressure) {
+      return specfem::wavefield::type::pressure;
+    } else {
+      throw std::runtime_error("Unsupported component");
+    }
+  }();
+
+  const auto &wavefield =
+      assembly.generate_wavefield_on_entire_grid(type, component);
+  const auto &coordinates = assembly.mesh.points.h_coord;
+
+  const int nspec = wavefield.extent(0);
+  const int ngllz = wavefield.extent(1);
+  const int ngllx = wavefield.extent(2);
+
+  // For ngll = 5, each spectral element has 16 cells
+  const int n_cells_per_spec = (ngllx - 1) * (ngllz - 1);
+  const int ncells = nspec * n_cells_per_spec;
+
+  const int n_cell_points = 4;
+
+  // The points of the cells are ordered as follows:
+  // 3--2
+  // |  |
+  // 0--1
+  const std::array<int, n_cell_points> z_index = { 0, 0, 1, 1 };
+  const std::array<int, n_cell_points> x_index = { 0, 1, 1, 0 };
+
+  auto points = vtkSmartPointer<vtkPoints>::New();
+  auto cells = vtkSmartPointer<vtkCellArray>::New();
+  auto scalars = vtkSmartPointer<vtkFloatArray>::New();
+
+  int point_counter = 0; // Keep track of the global point index
+
+  // Loop over the cells
+  for (int ispec = 0; ispec < nspec; ++ispec) {
+    for (int iz = 0; iz < ngllz - 1; ++iz) {
+      for (int ix = 0; ix < ngllx - 1; ++ix) {
+
+        const int face_index =
+            ispec * (ngllz - 1) * (ngllx - 1) + iz * (ngllx - 1) + ix;
+
+        auto quad = vtkSmartPointer<vtkQuad>::New();
+
+        for (int ipoint = 0; ipoint < n_cell_points; ++ipoint) {
+          int iz_pos = iz + z_index[ipoint];
+          int ix_pos = ix + x_index[ipoint];
+
+          // Insert the point
+          points->InsertNextPoint(coordinates(0, ispec, iz_pos, ix_pos),
+                                  coordinates(1, ispec, iz_pos, ix_pos), 0.0);
+
+          // Insert scalar value
+          if (component == specfem::wavefield::type::pressure) {
+            scalars->InsertNextValue(
+                std::abs(wavefield(ispec, iz_pos, ix_pos, 0)));
+          } else {
+            scalars->InsertNextValue(
+                std::sqrt((wavefield(ispec, iz_pos, ix_pos, 0) *
+                           wavefield(ispec, iz_pos, ix_pos, 0)) +
+                          (wavefield(ispec, iz_pos, ix_pos, 1) *
+                           wavefield(ispec, iz_pos, ix_pos, 1))));
+          }
+
+          // Set the point ID for this quad
+          quad->GetPointIds()->SetId(ipoint, point_counter);
+          point_counter++;
+        }
+
+        // Add the cell
+        cells->InsertNextCell(quad);
+      }
+    }
+  }
+
+  auto unstructured_grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+  unstructured_grid->SetPoints(points);
+  unstructured_grid->SetCells(VTK_QUAD, cells);
+  unstructured_grid->GetPointData()->SetScalars(scalars);
+
+  return unstructured_grid;
+}
 } // namespace
 
 void specfem::periodic_tasks::plot_wavefield::run(
@@ -229,7 +393,7 @@ void specfem::periodic_tasks::plot_wavefield::run(
   auto material_actor = vtkSmartPointer<vtkActor>::New();
   material_actor->SetMapper(material_mapper);
 
-  const auto unstructured_grid = get_wavefield_on_vtk_grid(
+  const auto unstructured_grid = get_wavefield_on_vtk_quad_grid(
       this->assembly, this->wavefield, this->component);
   const int ncell = unstructured_grid->GetNumberOfCells();
 
