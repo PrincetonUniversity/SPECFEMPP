@@ -51,7 +51,7 @@ xdeb                            = 2200.           # first receiver x in meters
 zdeb                            = 2200.          # first receiver z in meters
 xfin                            = 2800.          # last receiver x in meters (ignored if only one receiver)
 zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
-record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
+record_at_surface_same_vertical = .false.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
 # second receiver set
 nrec                            = 3             # number of receivers
