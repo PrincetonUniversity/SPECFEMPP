@@ -127,6 +127,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
       return field.velocity;
     } else if (wavefield_component == specfem::wavefield::type::acceleration) {
       return field.acceleration;
+    } else if (wavefield_component == specfem::wavefield::type::rotation) {
+      return field.displacement;
     } else {
       Kokkos::abort("component not supported");
     }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
+#include "utilities/errors.hpp"
 #include <array>
 #include <tuple>
 
@@ -67,18 +68,39 @@ enum class boundary_tag {
   composite_stacey_dirichlet
 };
 
+/*
+ * @brief Attributes class
+ *
+ * This class is used to define the attributes of the element. It is specialized
+ * for each combination of dimension and medium tag. The attributes are defined
+ * in the specialization of the class. The attributes are used to define the
+ * number of components, the dimension, and other extra physics, such as the
+ * damping force in poroelasticity.
+ *
+ * @tparam Dimension Dimension of the element
+ * @tparam MediumTag Medium tag of the element
+
+ *
+ */
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag>
-class attributes;
+class attributes {
+  static_assert(specfem::utilities::always_false<Dimension, MediumTag>,
+                "Unregistered attributes tag! Please add a specialization for "
+                "dimension/medium enum value.");
+};
 
 template <>
 class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::elastic_psv> {
 
 public:
-  constexpr static int dimension() { return 2; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 2;
 
-  constexpr static int components() { return 2; }
+  constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_cosserat_stress = false;
+  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
@@ -86,9 +108,12 @@ class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::elastic_sh> {
 
 public:
-  constexpr static int dimension() { return 2; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 1;
 
-  constexpr static int components() { return 1; }
+  inline constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_cosserat_stress = false;
+  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
@@ -96,9 +121,12 @@ class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::elastic_psv_t> {
 
 public:
-  constexpr static int dimension() { return 2; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 3;
 
-  constexpr static int components() { return 3; }
+  inline constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_cosserat_stress = true;
+  inline constexpr static bool has_cosserat_couple_stress = true;
 };
 
 template <>
@@ -106,28 +134,36 @@ class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::acoustic> {
 
 public:
-  constexpr static int dimension() { return 2; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 1;
 
-  constexpr static int components() { return 1; }
+  inline constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_cosserat_stress = false;
+  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-
                  specfem::element::medium_tag::poroelastic> {
 public:
-  constexpr static int dimension() { return 2; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 4;
 
-  constexpr static int components() { return 4; }
+  inline constexpr static bool has_damping_force = true;
+  inline constexpr static bool has_cosserat_stress = false;
+  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::electromagnetic_te> {
 public:
-  constexpr static int dimension() { return 2; }
+  inline static constexpr int dimension = 2;
+  inline static constexpr int components = 2;
 
-  constexpr static int components() { return 2; }
+  inline constexpr static bool has_damping_force = false;
+  inline constexpr static bool has_cosserat_stress = false;
+  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 const std::string to_string(const medium_tag &medium,

@@ -13,7 +13,9 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "medium/compute_stress.hpp"
-#include "medium/damping_force.hpp"
+#include "medium/compute_damping_force.hpp"
+#include "medium/compute_cosserat_stress.hpp"
+#include "medium/compute_cosserat_couple_stress.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/boundary.hpp"
 #include "point/field.hpp"
@@ -63,9 +65,9 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   constexpr int chunk_size = parallel_config::chunk_size;
 
   constexpr int components =
-      specfem::element::attributes<dimension, medium_tag>::components();
+      specfem::element::attributes<dimension, medium_tag>::components;
   constexpr int num_dimensions =
-      specfem::element::attributes<dimension, medium_tag>::dimension();
+      specfem::element::attributes<dimension, medium_tag>::dimension;
 
   using ChunkPolicyType = specfem::policy::element_chunk<parallel_config>;
   using ChunkElementFieldType = specfem::chunk_element::field<
@@ -82,6 +84,9 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
   using PointBoundaryType =
       specfem::point::boundary<boundary_tag, dimension, using_simd>;
+  using PointDisplacementType =
+      specfem::point::field<dimension, medium_tag, true, false, false, false,
+                            using_simd>;
   using PointVelocityType =
       specfem::point::field<dimension, medium_tag, false, true, false, false,
                             using_simd>;
@@ -95,6 +100,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                                  using_simd>;
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<dimension, medium_tag, using_simd>;
+
+
 
   const auto wgll = assembly.mesh.quadratures.gll.weights;
 
@@ -192,8 +199,15 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
                   PointFieldDerivativesType field_derivatives(du);
 
-                  const auto point_stress = specfem::medium::compute_stress(
+                  PointDisplacementType point_displacement;
+                  specfem::compute::load_on_device(index, field,
+                                                   point_displacement);
+
+                auto point_stress = specfem::medium::compute_stress(
                       point_property, field_derivatives);
+
+                  specfem::medium::compute_cosserat_stress(
+                      point_property, point_displacement, point_stress);
 
                   const auto F = point_stress * point_partial_derivatives;
 
@@ -202,8 +216,9 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   for (int icomponent = 0; icomponent < components;
                        ++icomponent) {
                     for (int idim = 0; idim < num_dimensions; ++idim) {
-                      stress_integrand.F(ielement, index.iz, index.ix, idim,
-                                         icomponent) = F(idim, icomponent);
+                      stress_integrand.F(ielement, index.iz, index.ix,
+                                         icomponent, idim) =
+                          F(icomponent, idim);
                     }
                   }
                 });
@@ -218,6 +233,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                         &iterator_index,
                     const typename PointAccelerationType::ViewType &result) {
                   const auto &index = iterator_index.index;
+                  const auto &ielement = iterator_index.ielement;
                   PointAccelerationType acceleration(result);
 
                   for (int icomponent = 0; icomponent < components;
@@ -237,24 +253,33 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   specfem::compute::load_on_device(index, boundaries,
                                                    point_boundary);
 
-                  const auto jacobian = [&]() {
-                    specfem::point::partial_derivatives<dimension, true,
-                                                        using_simd>
-                        point_partial_derivatives;
-                    specfem::compute::load_on_device(index, partial_derivatives,
-                                                     point_partial_derivatives);
-                    return point_partial_derivatives.jacobian;
-                  }();
+                  specfem::point::partial_derivatives<dimension, true, using_simd>
+                    point_partial_derivatives;
 
+                  specfem::compute::load_on_device(index, partial_derivatives,
+                                                    point_partial_derivatives);
+
+                  // Computing the integration factor
                   const auto factor = quadrature.gll.weights(index.iz) *
                                       quadrature.gll.weights(index.ix) *
-                                      jacobian;
+                                      point_partial_derivatives.jacobian;
 
                   specfem::medium::compute_damping_force(
                       factor, point_property, velocity, acceleration);
 
+                  // Compute the couple stress from the stress integrand
+                  specfem::medium::compute_couple_stress(
+                    point_partial_derivatives,
+                    point_property,
+                    factor,
+                    Kokkos::subview(stress_integrand.F,
+                      ielement, index.iz, index.ix,
+                      Kokkos::ALL, Kokkos::ALL),
+                    acceleration);
+
+                  // Apply boundary conditions
                   specfem::boundary_conditions::apply_boundary_conditions(
-                      point_boundary, point_property, velocity, acceleration);
+                    point_boundary, point_property, velocity, acceleration);
 
                   // Store forward boundary values for reconstruction during
                   // adjoint simulations. The function does nothing if the

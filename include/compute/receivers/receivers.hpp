@@ -303,7 +303,7 @@ public:
    * @param nsteps_between_samples Number of time steps between samples
    * @param receivers Vector of receivers
    * @param stypes Vector of seismogram types (displacement, velocity,
-   * acceleration or pressure)
+   * acceleration, pressure, or rotation)
    * @param mesh Mesh object
    * @param tags Tags for every element in the mesh
    * @param properties Properties object
@@ -313,7 +313,7 @@ public:
             const int nsteps_between_samples,
             const std::vector<std::shared_ptr<specfem::receivers::receiver> >
                 &receivers,
-            const std::vector<specfem::enums::seismogram::type> &stypes,
+            const std::vector<specfem::wavefield::type> &stypes,
             const specfem::compute::mesh &mesh,
             const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
             const specfem::compute::element_types &element_types);
