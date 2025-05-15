@@ -442,7 +442,9 @@ Parameter definitions
 
                         .. dropdown:: ``format`` [optional]
 
-                            Output format for resulting plots.
+                            Output format for resulting plots. The option
+                            ``on_screen`` is only available with a display of
+                            course.
 
                             :default value: PNG
 
