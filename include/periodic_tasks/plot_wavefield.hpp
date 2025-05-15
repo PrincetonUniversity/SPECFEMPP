@@ -7,6 +7,21 @@
 #include <boost/filesystem.hpp>
 #ifdef NO_VTK
 #include <sstream>
+
+#else
+// Forward declarations for VTK classes
+#include <vtkSmartPointer.h>
+class vtkRenderer;
+class vtkRenderWindow;
+class vtkRenderWindowInteractor;
+class vtkActor;
+class vtkDataSetMapper;
+class vtkUnstructuredGrid;
+class vtkLookupTable;
+class vtkNamedColors;
+class vtkPoints;
+class vtkCellArray;
+class vtkFloatArray;
 #endif
 
 namespace specfem {
@@ -32,25 +47,16 @@ public:
                  const specfem::display::wavefield &component,
                  const specfem::wavefield::simulation_field &wavefield,
                  const int &time_interval,
-                 const boost::filesystem::path &output_folder)
-      : plotter(time_interval), output_format(output_format),
-        component(component), output_folder(output_folder),
-        wavefield(wavefield), assembly(assembly) {
-#ifdef NO_VTK
-    std::ostringstream message;
-    message << "Display section is not enabled, since SPECFEM++ was built "
-               "without VTK\n"
-            << "Please install VTK and rebuild SPECFEM++ with "
-               "-DVTK_DIR=/path/to/vtk";
-    throw std::runtime_error(message.str());
-#endif
-  }
+                 const boost::filesystem::path &output_folder);
 
   /**
    * @brief Plot the wavefield
    *
    */
   void run(specfem::compute::assembly &assembly, const int istep) override;
+
+  void initialize(specfem::compute::assembly &assembly) override;
+  void finalize(specfem::compute::assembly &assembly) override;
 
 private:
   const specfem::display::format output_format; ///< Output format of the plot
@@ -59,6 +65,41 @@ private:
                                                         ///< to plot
   const boost::filesystem::path output_folder; ///< Path to output folder
   specfem::compute::assembly assembly;         ///< Assembly object
+
+  // Grid parameter members
+  int nspec;
+  int ngllx;
+  int ngllz;
+
+#ifndef NO_VTK
+
+  // VTK objects that need to persist between calls
+  vtkSmartPointer<vtkRenderer> renderer;
+  vtkSmartPointer<vtkRenderWindow> render_window;
+  vtkSmartPointer<vtkRenderWindowInteractor> render_window_interactor;
+  vtkSmartPointer<vtkActor> material_actor;
+  vtkSmartPointer<vtkActor> actor;
+  vtkSmartPointer<vtkActor> outlineActor;
+  vtkSmartPointer<vtkDataSetMapper> material_mapper;
+  vtkSmartPointer<vtkDataSetMapper> wavefield_mapper;
+  vtkSmartPointer<vtkUnstructuredGrid> unstructured_grid;
+  vtkSmartPointer<vtkLookupTable> lut;
+  vtkSmartPointer<vtkNamedColors> colors;
+
+  // Separated grid and wavefield functions
+  void create_quad_grid();
+  void create_biquad_grid();
+  vtkSmartPointer<vtkFloatArray>
+  compute_wavefield_scalars(specfem::compute::assembly &assembly);
+  vtkSmartPointer<vtkDataSetMapper> map_materials_with_color();
+  vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_biquad_grid();
+  vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_quad_grid();
+  double sigmoid(double x);
+
+  // Get wavefield component from display component
+  specfem::wavefield::type get_wavefield_component();
+
+#endif // NO_VTK
 };
 } // namespace periodic_tasks
 } // namespace specfem

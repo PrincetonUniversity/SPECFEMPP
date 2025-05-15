@@ -1,7 +1,7 @@
-
 #include "periodic_tasks/plot_wavefield.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
+#include "periodic_tasks/plotter.hpp"
 #include "utilities/strings.hpp"
 
 #ifdef NO_VTK
@@ -51,16 +51,63 @@ void specfem::periodic_tasks::plot_wavefield::run(
   throw std::runtime_error(message.str());
 }
 
+void specfem::periodic_tasks::plot_wavefield::initialize() {
+  std::ostringstream message;
+  message
+      << "Display section is not enabled, since SPECFEM++ was built without "
+         "VTK\n"
+      << "Please install VTK and rebuild SPECFEM++ with -DVTK_DIR=/path/to/vtk";
+  throw std::runtime_error(message.str());
+}
+
+void specfem::periodic_tasks::plot_wavefield::run(const int istep) {
+  // Not implemented without VTK
+}
+
+void specfem::periodic_tasks::plot_wavefield::finalize() {
+  // Not implemented without VTK
+}
+
 #else
 
-namespace {
+// Constructor
+specfem::periodic_tasks::plot_wavefield::plot_wavefield(
+    const specfem::compute::assembly &assembly,
+    const specfem::display::format &output_format,
+    const specfem::display::wavefield &component,
+    const specfem::wavefield::simulation_field &wavefield,
+    const int &time_interval, const boost::filesystem::path &output_folder)
+    : assembly(assembly), wavefield(wavefield), component(component),
+      plotter(time_interval), output_format(output_format),
+      output_folder(output_folder), nspec(assembly.mesh.nspec),
+      ngllx(assembly.mesh.ngllx), ngllz(assembly.mesh.ngllz) {
+
+      };
 
 // Sigmoid function centered at 0.0
-double sigmoid(double x) { return (1 / (1 + std::exp(-100 * x)) - 0.5) * 1.5; }
+double specfem::periodic_tasks::plot_wavefield::sigmoid(double x) {
+  return (1 / (1 + std::exp(-100 * x)) - 0.5) * 1.5;
+}
+
+// Get wavefield component type from display component
+specfem::wavefield::type
+specfem::periodic_tasks::plot_wavefield::get_wavefield_component() {
+  if (component == specfem::display::wavefield::displacement) {
+    return specfem::wavefield::type::displacement;
+  } else if (component == specfem::display::wavefield::velocity) {
+    return specfem::wavefield::type::velocity;
+  } else if (component == specfem::display::wavefield::acceleration) {
+    return specfem::wavefield::type::acceleration;
+  } else if (component == specfem::display::wavefield::pressure) {
+    return specfem::wavefield::type::pressure;
+  } else {
+    throw std::runtime_error("Unsupported component");
+  }
+}
 
 // Maps different materials to different colors
 vtkSmartPointer<vtkDataSetMapper>
-map_materials_with_color(const specfem::compute::assembly &assembly) {
+specfem::periodic_tasks::plot_wavefield::map_materials_with_color() {
 
   const auto &element_types = assembly.element_types;
 
@@ -157,33 +204,10 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
  * @param display_component
  * @return vtkSmartPointer<vtkUnstructuredGrid>
  */
-vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_biquad_grid(
-    specfem::compute::assembly &assembly,
-    const specfem::wavefield::simulation_field type,
-    const specfem::display::wavefield &display_component) {
-
-  const auto component = [&display_component]() {
-    if (display_component == specfem::display::wavefield::displacement) {
-      return specfem::wavefield::type::displacement;
-    } else if (display_component == specfem::display::wavefield::velocity) {
-      return specfem::wavefield::type::velocity;
-    } else if (display_component == specfem::display::wavefield::acceleration) {
-      return specfem::wavefield::type::acceleration;
-    } else if (display_component == specfem::display::wavefield::pressure) {
-      return specfem::wavefield::type::pressure;
-    } else {
-      throw std::runtime_error("Unsupported component");
-    }
-  }();
-
-  const auto &wavefield =
-      assembly.generate_wavefield_on_entire_grid(type, component);
+void specfem::periodic_tasks::plot_wavefield::create_biquad_grid() {
   const auto &coordinates = assembly.mesh.points.h_coord;
 
-  const int ncells = wavefield.extent(0);
-  const int ngllz = wavefield.extent(1);
-  const int ngllx = wavefield.extent(2);
-
+  const int ncells = nspec;
   const int cell_points = 9;
 
   const std::array<int, cell_points> z_index = { 0,
@@ -207,23 +231,12 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_biquad_grid(
 
   auto points = vtkSmartPointer<vtkPoints>::New();
   auto cells = vtkSmartPointer<vtkCellArray>::New();
-  auto scalars = vtkSmartPointer<vtkFloatArray>::New();
 
   for (int icell = 0; icell < ncells; ++icell) {
     for (int i = 0; i < cell_points; ++i) {
       points->InsertNextPoint(coordinates(0, icell, z_index[i], x_index[i]),
                               coordinates(1, icell, z_index[i], x_index[i]),
                               0.0);
-      if (component == specfem::wavefield::type::pressure) {
-        scalars->InsertNextValue(
-            std::abs(wavefield(icell, z_index[i], x_index[i], 0)));
-      } else {
-        scalars->InsertNextValue(
-            std::sqrt((wavefield(icell, z_index[i], x_index[i], 0) *
-                       wavefield(icell, z_index[i], x_index[i], 0)) +
-                      (wavefield(icell, z_index[i], x_index[i], 1) *
-                       wavefield(icell, z_index[i], x_index[i], 1))));
-      }
     }
     auto quad = vtkSmartPointer<vtkBiQuadraticQuad>::New();
     for (int i = 0; i < cell_points; ++i) {
@@ -232,12 +245,9 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_biquad_grid(
     cells->InsertNextCell(quad);
   }
 
-  auto unstructured_grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+  unstructured_grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
   unstructured_grid->SetPoints(points);
   unstructured_grid->SetCells(VTK_BIQUADRATIC_QUAD, cells);
-  unstructured_grid->GetPointData()->SetScalars(scalars);
-
-  return unstructured_grid;
 }
 
 /**
@@ -280,32 +290,8 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_biquad_grid(
  * @param display_component
  * @return vtkSmartPointer<vtkUnstructuredGrid>
  */
-vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_quad_grid(
-    specfem::compute::assembly &assembly,
-    const specfem::wavefield::simulation_field type,
-    const specfem::display::wavefield &display_component) {
-
-  const auto component = [&display_component]() {
-    if (display_component == specfem::display::wavefield::displacement) {
-      return specfem::wavefield::type::displacement;
-    } else if (display_component == specfem::display::wavefield::velocity) {
-      return specfem::wavefield::type::velocity;
-    } else if (display_component == specfem::display::wavefield::acceleration) {
-      return specfem::wavefield::type::acceleration;
-    } else if (display_component == specfem::display::wavefield::pressure) {
-      return specfem::wavefield::type::pressure;
-    } else {
-      throw std::runtime_error("Unsupported component");
-    }
-  }();
-
-  const auto &wavefield =
-      assembly.generate_wavefield_on_entire_grid(type, component);
+void specfem::periodic_tasks::plot_wavefield::create_quad_grid() {
   const auto &coordinates = assembly.mesh.points.h_coord;
-
-  const int nspec = wavefield.extent(0);
-  const int ngllz = wavefield.extent(1);
-  const int ngllx = wavefield.extent(2);
 
   // For ngll = 5, each spectral element has 16 cells
   const int n_cells_per_spec = (ngllx - 1) * (ngllz - 1);
@@ -322,7 +308,6 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_quad_grid(
 
   auto points = vtkSmartPointer<vtkPoints>::New();
   auto cells = vtkSmartPointer<vtkCellArray>::New();
-  auto scalars = vtkSmartPointer<vtkFloatArray>::New();
 
   int point_counter = 0; // Keep track of the global point index
 
@@ -330,10 +315,6 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_quad_grid(
   for (int ispec = 0; ispec < nspec; ++ispec) {
     for (int iz = 0; iz < ngllz - 1; ++iz) {
       for (int ix = 0; ix < ngllx - 1; ++ix) {
-
-        const int face_index =
-            ispec * (ngllz - 1) * (ngllx - 1) + iz * (ngllx - 1) + ix;
-
         auto quad = vtkSmartPointer<vtkQuad>::New();
 
         for (int ipoint = 0; ipoint < n_cell_points; ++ipoint) {
@@ -343,18 +324,6 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_quad_grid(
           // Insert the point
           points->InsertNextPoint(coordinates(0, ispec, iz_pos, ix_pos),
                                   coordinates(1, ispec, iz_pos, ix_pos), 0.0);
-
-          // Insert scalar value
-          if (component == specfem::wavefield::type::pressure) {
-            scalars->InsertNextValue(
-                std::abs(wavefield(ispec, iz_pos, ix_pos, 0)));
-          } else {
-            scalars->InsertNextValue(
-                std::sqrt((wavefield(ispec, iz_pos, ix_pos, 0) *
-                           wavefield(ispec, iz_pos, ix_pos, 0)) +
-                          (wavefield(ispec, iz_pos, ix_pos, 1) *
-                           wavefield(ispec, iz_pos, ix_pos, 1))));
-          }
 
           // Set the point ID for this quad
           quad->GetPointIds()->SetId(ipoint, point_counter);
@@ -367,46 +336,135 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_quad_grid(
     }
   }
 
-  auto unstructured_grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+  // Create the unstructured grid
+  unstructured_grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
   unstructured_grid->SetPoints(points);
   unstructured_grid->SetCells(VTK_QUAD, cells);
-  unstructured_grid->GetPointData()->SetScalars(scalars);
-
-  return unstructured_grid;
 }
-} // namespace
 
-void specfem::periodic_tasks::plot_wavefield::run(
-    specfem::compute::assembly &assembly, const int istep) {
+// Compute wavefield scalar values for the grid points
+vtkSmartPointer<vtkFloatArray>
+specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
+    specfem::compute::assembly &assembly) {
+  const auto component_type = get_wavefield_component();
+  const auto &wavefield_data =
+      assembly.generate_wavefield_on_entire_grid(wavefield, component_type);
 
-  auto colors = vtkSmartPointer<vtkNamedColors>::New();
+  auto scalars = vtkSmartPointer<vtkFloatArray>::New();
 
-  if (this->output_format != specfem::display::format::on_screen) {
+  // For quad grid
+  if (unstructured_grid->GetCellType(0) == VTK_QUAD) {
+    const int n_cell_points = 4;
+    const std::array<int, n_cell_points> z_index = { 0, 0, 1, 1 };
+    const std::array<int, n_cell_points> x_index = { 0, 1, 1, 0 };
+
+    // Loop over the cells
+    for (int ispec = 0; ispec < nspec; ++ispec) {
+      for (int iz = 0; iz < ngllz - 1; ++iz) {
+        for (int ix = 0; ix < ngllx - 1; ++ix) {
+          for (int ipoint = 0; ipoint < n_cell_points; ++ipoint) {
+            int iz_pos = iz + z_index[ipoint];
+            int ix_pos = ix + x_index[ipoint];
+
+            // Insert scalar value
+            if (component_type == specfem::wavefield::type::pressure) {
+              scalars->InsertNextValue(
+                  std::abs(wavefield_data(ispec, iz_pos, ix_pos, 0)));
+            } else {
+              scalars->InsertNextValue(
+                  std::sqrt((wavefield_data(ispec, iz_pos, ix_pos, 0) *
+                             wavefield_data(ispec, iz_pos, ix_pos, 0)) +
+                            (wavefield_data(ispec, iz_pos, ix_pos, 1) *
+                             wavefield_data(ispec, iz_pos, ix_pos, 1))));
+            }
+          }
+        }
+      }
+    }
+  }
+  // For biquadratic grid
+  else if (unstructured_grid->GetCellType(0) == VTK_BIQUADRATIC_QUAD) {
+    const int cell_points = 9;
+    const std::array<int, cell_points> z_index = { 0,
+                                                   0,
+                                                   ngllz - 1,
+                                                   ngllz - 1,
+                                                   0,
+                                                   (ngllz - 1) / 2,
+                                                   ngllz - 1,
+                                                   (ngllz - 1) / 2,
+                                                   (ngllz - 1) / 2 };
+    const std::array<int, cell_points> x_index = { 0,
+                                                   ngllx - 1,
+                                                   ngllx - 1,
+                                                   0,
+                                                   (ngllx - 1) / 2,
+                                                   ngllx - 1,
+                                                   (ngllx - 1) / 2,
+                                                   0,
+                                                   (ngllx - 1) / 2 };
+
+    for (int icell = 0; icell < nspec; ++icell) {
+      for (int i = 0; i < cell_points; ++i) {
+        if (component_type == specfem::wavefield::type::pressure) {
+          scalars->InsertNextValue(
+              std::abs(wavefield_data(icell, z_index[i], x_index[i], 0)));
+        } else {
+          scalars->InsertNextValue(
+              std::sqrt((wavefield_data(icell, z_index[i], x_index[i], 0) *
+                         wavefield_data(icell, z_index[i], x_index[i], 0)) +
+                        (wavefield_data(icell, z_index[i], x_index[i], 1) *
+                         wavefield_data(icell, z_index[i], x_index[i], 1))));
+        }
+      }
+    }
+  }
+
+  return scalars;
+}
+
+void specfem::periodic_tasks::plot_wavefield::initialize(
+    specfem::compute::assembly &assembly) {
+
+  // Create VTK objects that will persist between calls
+  colors = vtkSmartPointer<vtkNamedColors>::New();
+
+  if (output_format != specfem::display::format::on_screen) {
     vtkSmartPointer<vtkGraphicsFactory> graphics_factory;
     graphics_factory->SetOffScreenOnlyMode(1);
     graphics_factory->SetUseMesaClasses(1);
   }
 
-  auto material_mapper = map_materials_with_color(this->assembly);
-
-  // Create an actor
-  auto material_actor = vtkSmartPointer<vtkActor>::New();
+  // Create material mapper and actor
+  material_mapper = map_materials_with_color();
+  material_actor = vtkSmartPointer<vtkActor>::New();
   material_actor->SetMapper(material_mapper);
 
-  const auto unstructured_grid = get_wavefield_on_vtk_quad_grid(
-      this->assembly, this->wavefield, this->component);
-  const int ncell = unstructured_grid->GetNumberOfCells();
+  // Create the grid structure
+  create_quad_grid(); // or create_biquad_grid() based on preference
 
-  double range[2];
+  // Compute initial wavefield scalars and add to grid
+  auto scalars = compute_wavefield_scalars(assembly);
+  unstructured_grid->GetPointData()->SetScalars(scalars);
 
-  unstructured_grid->GetPointData()->GetScalars()->GetRange(range);
-
-  // create a lookup table to map cell data to colors. The range is from
-  // range[0] to range[1]
-  vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+  // Create lookup table
+  lut = vtkSmartPointer<vtkLookupTable>::New();
   lut->SetNumberOfTableValues(256);
-  lut->SetRange(range[0], range[1]);
   lut->Build();
+
+  // Create a mapper for the wavefield
+  wavefield_mapper = vtkSmartPointer<vtkDataSetMapper>::New();
+  wavefield_mapper->SetInputData(unstructured_grid);
+  wavefield_mapper->SetLookupTable(lut);
+  wavefield_mapper->SetScalarModeToUsePointData();
+  wavefield_mapper->SetColorModeToMapScalars();
+  wavefield_mapper->SetScalarVisibility(1);
+
+  // Set the range of the lookup table
+  double range[2];
+  scalars->GetRange(range);
+  wavefield_mapper->SetScalarRange(range[0], range[1]);
+  lut->SetRange(range[0], range[1]);
 
   // set color gradient from white to black
   for (int i = 0; i < 256; ++i) {
@@ -415,65 +473,90 @@ void specfem::periodic_tasks::plot_wavefield::run(
     lut->SetTableValue(i, 1.0 - t, 1.0 - t, 1.0 - t, transparency);
   }
 
-  // Create a mapper
-  auto mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-  mapper->SetInputData(unstructured_grid);
-  mapper->SetLookupTable(lut);
-  mapper->SetScalarRange(range[0], range[1]);
-  mapper->SetScalarModeToUsePointData();
-  mapper->SetColorModeToMapScalars();
-  mapper->SetScalarVisibility(1);
-
   // Create an actor
-  auto actor = vtkSmartPointer<vtkActor>::New();
-  actor->SetMapper(mapper);
+  auto wavefield_actor = vtkSmartPointer<vtkActor>::New();
+  wavefield_actor->SetMapper(wavefield_mapper);
 
-  vtkSmartPointer<vtkExtractEdges> edges =
-      vtkSmartPointer<vtkExtractEdges>::New();
-  edges->SetInputData(unstructured_grid);
-  edges->Update();
-
-  vtkSmartPointer<vtkPolyDataMapper> outlineMapper =
-      vtkSmartPointer<vtkPolyDataMapper>::New();
-  outlineMapper->SetInputConnection(edges->GetOutputPort());
-  outlineMapper->ScalarVisibilityOff();
-
-  vtkSmartPointer<vtkActor> outlineActor = vtkSmartPointer<vtkActor>::New();
-  outlineActor->SetMapper(outlineMapper);
-  outlineActor->GetProperty()->SetColor(colors->GetColor3d("Black").GetData());
-  outlineActor->GetProperty()->SetLineWidth(0.5);
-
-  // Create a renderer
-  auto renderer = vtkSmartPointer<vtkRenderer>::New();
+  // Create renderer
+  renderer = vtkSmartPointer<vtkRenderer>::New();
   renderer->AddActor(material_actor);
-  // renderer->AddActor(outlineActor);
-  renderer->AddActor(actor);
+  renderer->AddActor(wavefield_actor);
   renderer->SetBackground(colors->GetColor3d("White").GetData());
-  renderer->ResetCamera();
 
-  if (this->output_format != specfem::display::format::on_screen) {
-    // Create a render window
-    auto render_window = vtkSmartPointer<vtkRenderWindow>::New();
+  // Plot edges
+  if (false) {
+    // Create edges extractor and actors
+    vtkSmartPointer<vtkExtractEdges> edges =
+        vtkSmartPointer<vtkExtractEdges>::New();
+    edges->SetInputData(unstructured_grid);
+    edges->Update();
+
+    vtkSmartPointer<vtkPolyDataMapper> outlineMapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+    outlineMapper->SetInputConnection(edges->GetOutputPort());
+    outlineMapper->ScalarVisibilityOff();
+
+    outlineActor = vtkSmartPointer<vtkActor>::New();
+    outlineActor->SetMapper(outlineMapper);
+    outlineActor->GetProperty()->SetColor(
+        colors->GetColor3d("Black").GetData());
+    outlineActor->GetProperty()->SetLineWidth(0.5);
+
+    renderer->AddActor(outlineActor);
+  }
+
+  // Create render window
+  render_window = vtkSmartPointer<vtkRenderWindow>::New();
+  render_window->AddRenderer(renderer);
+  render_window->SetSize(2560, 2560);
+  render_window->SetWindowName("Wavefield");
+
+  // Create render window interactor if on-screen
+  if (output_format == specfem::display::format::on_screen) {
+    render_window_interactor =
+        vtkSmartPointer<vtkRenderWindowInteractor>::New();
+    render_window_interactor->SetRenderWindow(render_window);
+  } else {
     render_window->SetOffScreenRendering(1);
-    render_window->AddRenderer(renderer);
-    render_window->SetSize(2560, 2560);
-    render_window->SetWindowName("Wavefield");
+  }
+}
+
+void specfem::periodic_tasks::plot_wavefield::run(
+    specfem::compute::assembly &assembly, const int istep) {
+
+  // Update the wavefield scalars only
+  auto scalars = compute_wavefield_scalars(assembly);
+  unstructured_grid->GetPointData()->SetScalars(scalars);
+
+  // Get range of scalar values
+  double range[2];
+  scalars->GetRange(range);
+  wavefield_mapper->SetScalarRange(range[0], range[1]);
+
+  // Update lookup table range
+  lut->SetRange(range[0], range[1]);
+  lut->Build();
+
+  // Render
+  render_window->Render();
+
+  // Save image if not on-screen
+  if (output_format != specfem::display::format::on_screen) {
     auto image_filter = vtkSmartPointer<vtkWindowToImageFilter>::New();
     image_filter->SetInput(render_window);
     image_filter->Update();
 
-    // Save the plot
-    if (this->output_format == specfem::display::format::PNG) {
+    if (output_format == specfem::display::format::PNG) {
       const auto filename =
-          this->output_folder /
+          output_folder /
           ("wavefield" + specfem::utilities::to_zero_lead(istep, 6) + ".png");
       auto writer = vtkSmartPointer<vtkPNGWriter>::New();
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());
       writer->Write();
-    } else if (this->output_format == specfem::display::format::JPG) {
+    } else if (output_format == specfem::display::format::JPG) {
       const auto filename =
-          this->output_folder /
+          output_folder /
           ("wavefield" + specfem::utilities::to_zero_lead(istep, 6) + ".jpg");
       auto writer = vtkSmartPointer<vtkJPEGWriter>::New();
       writer->SetFileName(filename.string().c_str());
@@ -482,21 +565,30 @@ void specfem::periodic_tasks::plot_wavefield::run(
     } else {
       throw std::runtime_error("Unsupported output format");
     }
-  } else {
-    // Create a render window interactor
-    auto render_window = vtkSmartPointer<vtkRenderWindow>::New();
-    render_window->AddRenderer(renderer);
-    render_window->SetSize(2560, 2560);
-    render_window->SetWindowName("Wavefield");
+  }
+}
 
-    auto render_window_interactor =
-        vtkSmartPointer<vtkRenderWindowInteractor>::New();
-    render_window_interactor->SetRenderWindow(render_window);
-
-    // Start the event loop
-    render_window->Render();
+void specfem::periodic_tasks::plot_wavefield::finalize(
+    specfem::compute::assembly &assembly) {
+  // If interactive, start the event loop if it hasn't been started
+  if (output_format == specfem::display::format::on_screen &&
+      render_window_interactor) {
     render_window_interactor->Start();
   }
+
+  // Clean up VTK objects
+  // VTK smart pointers will handle most of the cleanup automatically
+  // But we can explicitly reset them here
+  renderer = nullptr;
+  render_window = nullptr;
+  render_window_interactor = nullptr;
+  material_actor = nullptr;
+  actor = nullptr;
+  outlineActor = nullptr;
+  material_mapper = nullptr;
+  unstructured_grid = nullptr;
+  lut = nullptr;
+  colors = nullptr;
 }
 
 #endif // NO_VTK
