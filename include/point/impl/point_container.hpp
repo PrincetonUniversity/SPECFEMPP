@@ -155,18 +155,37 @@ namespace point {
 namespace impl {
 namespace properties {
 
+/**
+ * @brief Compile time information associated with the properties of a
+ * quadrature point in a 2D
+ *
+ * @tparam Dimension The dimension of the medium
+ * @tparam MediumTag The type of the medium
+ * @tparam PropertyTag The type of the properties
+ * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
+ */
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
-struct point_traits {
+struct traits {
   using simd = typename specfem::datatype::simd<type_real, UseSIMD>;
-  constexpr static auto dimension = Dimension;
-  constexpr static auto medium_tag = MediumTag;
-  constexpr static auto property_tag = PropertyTag;
-  constexpr static bool is_point_properties = true;
-  using value_type = typename simd::datatype;
+  constexpr static auto dimension = Dimension;      ///< dimension of the medium
+  constexpr static auto medium_tag = MediumTag;     ///< type of the medium
+  constexpr static auto property_tag = PropertyTag; ///< type of the properties
+  constexpr static bool is_point_properties = true; ///< is point properties
+  using value_type = typename simd::datatype;       ///< type of the properties
 };
 
+/*
+ * @brief Data container to hold properties of 2D acoustic media at a quadrature
+ * point
+ *
+ * @tparam Dimension The dimension of the medium
+ * @tparam MediumTag The type of the medium
+ * @tparam PropertyTag The type of the properties
+ * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
+ *
+ */
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
@@ -175,16 +194,25 @@ struct data_container;
 } // namespace properties
 
 namespace kernels {
+/**
+ * @brief Compile time information associated with the kernels of a quadrature
+ * point in a 2D
+ *
+ * @tparam Dimension The dimension of the medium
+ * @tparam MediumTag The type of the medium
+ * @tparam PropertyTag The type of the properties
+ * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
+ */
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
-struct point_traits {
+struct traits {
   using simd = typename specfem::datatype::simd<type_real, UseSIMD>;
-  constexpr static auto dimension = Dimension;
-  constexpr static auto medium_tag = MediumTag;
-  constexpr static auto property_tag = PropertyTag;
-  constexpr static bool is_point_kernels = true;
-  using value_type = typename simd::datatype;
+  constexpr static auto dimension = Dimension;      ///< dimension of the medium
+  constexpr static auto medium_tag = MediumTag;     ///< type of the medium
+  constexpr static auto property_tag = PropertyTag; ///< type of the properties
+  constexpr static bool is_point_kernels = true;    ///< is point kernels
+  using value_type = typename simd::datatype;       ///< type of the properties
 };
 
 template <specfem::dimension::type Dimension,
