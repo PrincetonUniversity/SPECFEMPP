@@ -27,6 +27,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
 
   const int ngllz = mesh.points.ngllz;
   const int ngllx = mesh.points.ngllx;
+  // const int nspec = mesh.points.nspec;
 
   typename OutputLibrary::Group base_group =
       file.createGroup(std::string("/Coordinates"));
@@ -40,26 +41,42 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
         typename OutputLibrary::Group group = base_group.createGroup(
             specfem::element::to_string(_medium_tag_));
 
+        // Get the elements of the medium and their total
         const auto element_indices =
             element_types.get_elements_on_host(_medium_tag_);
         const int n_elements = element_indices.size();
 
-        DomainView x("xcoordinates", field.h_field.extent(0));
-        DomainView z("zcoordinates", field.h_field.extent(0));
+        // Get the number of GLL points in the medium
+        int nglob_medium = forward.get_nglob<_medium_tag_>();
 
+        // Initialize the views
+        DomainView x("xcoordinates", nglob_medium);
+        DomainView z("zcoordinates", nglob_medium);
         MappingView mapping("mapping", n_elements, ngllz, ngllx);
 
-        for (int i = 0; i < n_elements; i++) {
-          const int ispec = element_indices(i);
+        int ispec = 0;
+
+        // Loop over the elements of the medium
+        for (int iel = 0; iel < n_elements; iel++) {
+
+          // Get the global element index
+          ispec = element_indices(iel);
+
           for (int iz = 0; iz < ngllz; iz++) {
             for (int ix = 0; ix < ngllx; ix++) {
+
+              // This is the local medium iglob
+              // see: ``count`` in specfem::compute::simulation_field<dim2, medium>
               const int iglob =
-                  forward.template get_iglob<false>(i, iz, ix, _medium_tag_);
+                  forward.template get_iglob<false>(ispec, iz, ix, _medium_tag_);
 
-              mapping(i, iz, ix) = iglob;
+              // Set the mapping for the medium element
+              mapping(iel, iz, ix) = iglob;
 
+              // Assign the coordinates to the local iglob
               x(iglob) = mesh.points.h_coord(0, ispec, iz, ix);
               z(iglob) = mesh.points.h_coord(1, ispec, iz, ix);
+
             }
           }
         }

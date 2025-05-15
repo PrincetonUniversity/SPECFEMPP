@@ -225,7 +225,7 @@ def field_modifier(medium: str, field: np.ndarray, combined=True, component=0):
     """
 
     if medium == "acoustic":
-        return np.abs(field[:, 0])
+        return np.abs(field[:, 0]) / 1e5
 
     elif medium == "elastic_psv":
         if combined:

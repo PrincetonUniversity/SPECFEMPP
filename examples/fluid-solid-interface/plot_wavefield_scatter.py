@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 
-
 with h5py.File("OUTPUT_FILES/wavefield/ForwardWavefield.h5", "r") as f:
     acoustic_x = f["/Coordinates/acoustic/X"][:].flatten()
     acoustic_z = f["/Coordinates/acoustic/Z"][:].flatten()
