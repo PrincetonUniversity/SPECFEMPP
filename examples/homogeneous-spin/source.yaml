@@ -5,8 +5,8 @@ sources:
       z : 2000.0
       source_surf: false
       angle : 0.0
-      vx : 0.0
-      vz : 0.0
+      f : 1.0
+      fc : 0.0
       Ricker:
         factor: 1e10
         tshift: 0.0
