@@ -270,8 +270,11 @@ def compute_scaling(facefields):
     computed as the maximum absolute value of the field.
     """
 
-    fmin = 999999999
-    fmax = -999999999
+    _max = np.finfo(np.float64).max
+    _min = np.finfo(np.float64).min
+
+    fmin = _max
+    fmax = _min
 
     for medium, field in facefields.items():
         fmin = min(fmin, np.min(field))
@@ -286,11 +289,12 @@ def compute_extent(plotdict, verbose=False):
     This function computes the extent of the plot. The extent is computed
     as the minimum and maximum x and z coordinates of the vertices.
     """
-
-    x_min = 999999999
-    x_max = -999999999
-    z_min = 999999999
-    z_max = -999999999
+    _max = np.finfo(np.float64).max
+    _min = np.finfo(np.float64).min
+    x_min = _max
+    x_max = _min
+    z_min = _max
+    z_max = _min
 
     if verbose:
         print("Extent of the model")
