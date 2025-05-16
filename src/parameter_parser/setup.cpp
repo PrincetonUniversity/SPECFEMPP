@@ -177,8 +177,7 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
               << "or\n"
               << "Disable the display section in the specfem_config.yaml "
                  "file\n";
-          ";
-              throw std::runtime_error(message.str());
+          throw std::runtime_error(message.str());
 #endif
 
           if ((n_plotter["simulation-field"] &&
