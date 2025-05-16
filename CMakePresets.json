@@ -11,7 +11,11 @@
         "ENABLE_SIMD": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON"
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release"
       }
     },
     {
@@ -24,7 +28,11 @@
         "ENABLE_SIMD": "OFF",
         "Kokkos_ARCH_NATIVE": "OFF",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON"
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-nosimd",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-nosimd"
       }
     },
     {
@@ -38,7 +46,11 @@
         "Kokkos_ENABLE_CUDA": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF"
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-cuda",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-cuda"
       }
     },
     {
@@ -53,7 +65,11 @@
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ENABLE_DEBUG": "ON",
-        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON"
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug"
       }
     },
     {
@@ -70,7 +86,11 @@
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ENABLE_DEBUG": "ON",
-        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON"
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug-cuda",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-cuda"
       }
     },
     {
@@ -85,7 +105,11 @@
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ENABLE_DEBUG": "ON",
-        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON"
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug-nosimd",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-nosimd"
       }
     }
   ],

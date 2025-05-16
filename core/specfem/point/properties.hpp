@@ -20,9 +20,29 @@ template <specfem::dimension::type DimensionTag,
 struct properties;
 
 /**
+ * @defgroup specfem_point_properties_dim2_elastic_isotropic 2D Elastic
+ * Isotropic Properties
+ * @{
+ */
+
+/**
  * @brief Template specialization for 2D isotropic elastic media
  *
+ * This specialization applies to elastic mediums in 2D space with isotropic
+ * properties. It handles the points-wise storage of material properties.
+ *
+ * @tparam MediumTag Tag indicating the medium of the element
  * @tparam UseSIMD Boolean indicating whether to use SIMD
+ * @tparam Enable Enable if the medium is elastic
+ *
+ * @note This specialization is used for isotropic elastic media, which
+ * includes
+ *     - elastic_psv: Used for primary and in-plane shear wave calculations
+ *     - elastic_sh: Used for off-plane shear wave calculations
+ *
+ * @see specfem::element::is_elastic
+ * @see specfem::dimension::type::dim2
+ * @see specfem::point::properties
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct properties<
@@ -68,7 +88,34 @@ struct properties<
                                  mu(); ///< Lame's parameter @f$ \lambda @f$
   }
 };
+///@} end of group specfem_point_properties_dim2_elastic_isotropic
 
+/**
+ * @defgroup specfem_point_properties_dim2_elastic_anisotropic 2D Elastic
+ * Anisotropic Properties
+ * @{
+ */
+
+/**
+ * @brief   Template specialization for 2D elastic anisotropic media
+ *
+ * This specialization applies to elastic mediums in 2D space with anisotropic
+ * properties. It handles the points-wise storage of material properties.
+ *
+ * @tparam MediumTag
+ * @tparam UseSIMD
+ * @tparam Enable
+ *
+ * @note This specialization is used for anisotropic elastic media, which
+ * includes
+ *     - elastic_psv: Used for primary and in-plane shear wave calculations
+ *     - elastic_sh: Used for off-plane shear wave calculations
+ *
+ * @see specfem::element::is_elastic
+ * @see specfem::dimension::type::dim2
+ * @see specfem::point::properties
+ *
+ */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct properties<
     specfem::dimension::type::dim2, MediumTag,
@@ -119,6 +166,7 @@ struct properties<
     return Kokkos::sqrt(rho() * c55()); ///< S-wave velocity @f$ \rho v_s @f$
   }
 };
+///@} end of group specfem_point_properties_dim2_elastic_anisotropic
 
 /**
  * @brief Template specialization for 2D isotropic acoustic media
