@@ -114,6 +114,17 @@ target_link_libraries(
   gmock_main
 )
 
+add_executable(
+  point_index_tests
+  point/index_tests.cpp
+)
+target_link_libraries(
+  point_index_tests
+  point
+  gtest_main
+  gmock_main
+)
+
 # add_executable(
 #   mesh_tests
 #   mesh/mesh_tests.cpp
@@ -458,6 +469,7 @@ if (NOT MPI_PARALLEL)
   # # gtest_discover_tests(compute_acoustic_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(compute_coupled_interfaces_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(point_coordinates_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_index_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(compute_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(assembly_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})
