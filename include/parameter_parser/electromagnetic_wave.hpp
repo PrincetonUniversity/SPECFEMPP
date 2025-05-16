@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
+#include "utilities/strings.hpp"
 #include <string>
 #include <yaml-cpp/yaml.h>
 
@@ -31,7 +32,7 @@ public:
    */
   inline specfem::enums::electromagnetic_wave
   get_electromagnetic_wave_type() const {
-    if (this->electromagnetic_wave_type == "TE") {
+    if (specfem::utilities::is_te_string(this->electromagnetic_wave_type)) {
       return specfem::enums::electromagnetic_wave::te;
     } else {
       throw std::runtime_error("Invalid electromagnetic wave type: " +

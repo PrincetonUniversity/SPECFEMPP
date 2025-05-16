@@ -9,7 +9,7 @@ namespace specfem {
 namespace kokkos_kernels {
 namespace impl {
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
 void divide_mass_matrix(const specfem::compute::assembly &assembly);

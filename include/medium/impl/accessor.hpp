@@ -15,7 +15,7 @@ private:
   KOKKOS_INLINE_FUNCTION void
   get_data_on_device(const specfem::point::index<dimension> &index,
                      PointValues &values) const {
-    static_cast<const DataContainer *>(this)->for_each_on_device_const(
+    static_cast<const DataContainer *>(this)->for_each_on_device(
         index, [&](const type_real &value, const std::size_t i) mutable {
           values[i] = value;
         });
@@ -40,7 +40,7 @@ private:
     using tag_type = typename simd::tag_type;
 
     mask_type mask([&](std::size_t lane) { return index.mask(lane); });
-    static_cast<const DataContainer *>(this)->for_each_on_device_const(
+    static_cast<const DataContainer *>(this)->for_each_on_device(
         index, [&](const type_real &value, const std::size_t i) mutable {
           Kokkos::Experimental::where(mask, values[i])
               .copy_from(&value, tag_type());

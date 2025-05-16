@@ -6,9 +6,9 @@
 #include "timescheme/newmark.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType, int NGLL>
+template <specfem::dimension::type DimensionTag, int NGLL>
 void specfem::solver::time_marching<specfem::simulation::type::forward,
-                                    DimensionType, NGLL>::run() {
+                                    DimensionTag, NGLL>::run() {
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic_psv = specfem::element::medium_tag::elastic_psv;
@@ -24,6 +24,10 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
       2 * assembly.get_total_degrees_of_freedom();
 
   const int total_elements_to_be_updated = assembly.get_total_number_of_elements();
+
+  for (const auto &task : tasks) {
+    task->initialize(assembly);
+  }
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
     int dofs_updated = 0;
@@ -105,14 +109,18 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     }
   }
 
+  for (const auto &task : tasks) {
+    task->finalize(assembly);
+  }
+
   std::cout << std::endl;
 
   return;
 }
 
-template <specfem::dimension::type DimensionType, int NGLL>
+template <specfem::dimension::type DimensionTag, int NGLL>
 void specfem::solver::time_marching<specfem::simulation::type::combined,
-                                    DimensionType, NGLL>::run() {
+                                    DimensionTag, NGLL>::run() {
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic_psv = specfem::element::medium_tag::elastic_psv;
@@ -128,6 +136,10 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
       4 * assembly.get_total_degrees_of_freedom();
 
   const int total_elements_to_be_updated = 2 * assembly.get_total_number_of_elements();
+
+  for (const auto &task : tasks) {
+    task->initialize(assembly);
+  }
 
   for (const auto &task : tasks) {
     if (task && !task->should_run(nstep) && task->should_run(-1)) {
@@ -218,6 +230,10 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
       throw std::runtime_error(message.str());
     }
+  }
+
+  for (const auto &task : tasks) {
+    task->finalize(assembly);
   }
 
   std::cout << std::endl;

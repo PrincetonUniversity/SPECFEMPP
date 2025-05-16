@@ -57,7 +57,8 @@ examples = [
   "jinja2==3.1.6",
   "PyYAML==6.0.2",
   "numpy==2.2.4",
-  "scipy==1.15.2"
+  "scipy==1.15.2",
+  "h5py==3.13.0",
 ]
 
 [tool.scikit-build]

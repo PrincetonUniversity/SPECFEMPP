@@ -1,6 +1,6 @@
 
-#include "point/partial_derivatives.hpp"
-#include "point/partial_derivatives.tpp"
+#include "partial_derivatives.hpp"
+#include "partial_derivatives.tpp"
 // Explicit template instantiation
 
 template struct specfem::point::partial_derivatives<

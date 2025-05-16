@@ -12,11 +12,11 @@ namespace point {
 /**
  * @brief Store spatial derivatives of the basis functions at a quadrature point
  *
- * @tparam DimensionType Dimension of the spectral element
+ * @tparam DimensionTag Dimension of the spectral element
  * @tparam StoreJacobian Boolean indicating whether to store the Jacobian
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
-template <specfem::dimension::type DimensionType, bool StoreJacobian,
+template <specfem::dimension::type DimensionTag, bool StoreJacobian,
           bool UseSIMD>
 struct partial_derivatives;
 

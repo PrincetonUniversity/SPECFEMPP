@@ -121,6 +121,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   io
+  utilities
   # material_class
   -lpthread -lm
 )
@@ -205,8 +206,8 @@ add_executable(
   assembly_tests
   assembly/test_fixture/test_fixture.cpp
   assembly/runner.cpp
-  # assembly/kernels/kernels.cpp
-  # assembly/properties/properties.cpp
+  assembly/properties/kernels.cpp
+  assembly/properties/properties.cpp
   assembly/compute_wavefield/compute_wavefield.cpp
   assembly/sources/sources.cpp
 )
@@ -224,6 +225,7 @@ target_link_libraries(
   io
   kokkos_environment
   yaml-cpp
+  utilities
   Boost::filesystem
   -lpthread -lm
 )

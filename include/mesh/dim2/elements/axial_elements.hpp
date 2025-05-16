@@ -14,7 +14,7 @@ namespace elements {
  * @note Need to still document this section
  *
  */
-template <specfem::dimension::type DimensionType> struct axial_elements;
+template <specfem::dimension::type DimensionTag> struct axial_elements;
 
 template <> struct axial_elements<specfem::dimension::type::dim2> {
 

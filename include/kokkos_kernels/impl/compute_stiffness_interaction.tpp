@@ -13,18 +13,18 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "medium/compute_stress.hpp"
-#include "medium/damping_force.hpp"
+#include "medium/compute_damping_force.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "point/boundary.hpp"
-#include "point/field.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/partial_derivatives.hpp"
-#include "point/properties.hpp"
-#include "point/sources.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
 #include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -37,7 +37,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   constexpr auto boundary_tag = BoundaryTag;
   constexpr int ngll = NGLL;
   constexpr auto wavefield = WavefieldType;
-  constexpr auto dimension = DimensionType;
+  constexpr auto dimension = DimensionTag;
 
   const auto elements = assembly.element_types.get_elements_on_device(
       MediumTag, PropertyTag, BoundaryTag);
@@ -68,9 +68,9 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   constexpr int chunk_size = parallel_config::chunk_size;
 
   constexpr int components =
-      specfem::element::attributes<dimension, medium_tag>::components();
+      specfem::element::attributes<dimension, medium_tag>::components;
   constexpr int num_dimensions =
-      specfem::element::attributes<dimension, medium_tag>::dimension();
+      specfem::element::attributes<dimension, medium_tag>::dimension;
 
   using ChunkPolicyType = specfem::policy::element_chunk<parallel_config>;
   using ChunkElementFieldType = specfem::chunk_element::field<
@@ -200,8 +200,9 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   for (int icomponent = 0; icomponent < components;
                        ++icomponent) {
                     for (int idim = 0; idim < num_dimensions; ++idim) {
-                      stress_integrand.F(ielement, index.iz, index.ix, idim,
-                                         icomponent) = F(idim, icomponent);
+                      stress_integrand.F(ielement, index.iz, index.ix,
+                                         icomponent, idim) =
+                          F(icomponent, idim);
                     }
                   }
                 });
