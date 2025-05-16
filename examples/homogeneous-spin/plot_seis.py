@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
     plt.figure(figsize=(15, 12))
     for ifg, comp in enumerate(["x", "z"]):
-        trace_ref = np.load("reference/v" + comp + ".npy")
+        trace_ref = np.load("reference/traces_fd/v" + comp + ".npy")
         trace = np.zeros(trace_ref.shape)
         trace_r = np.zeros(trace_ref.shape)
 
