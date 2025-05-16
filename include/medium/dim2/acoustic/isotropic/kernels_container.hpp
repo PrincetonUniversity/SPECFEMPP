@@ -1,8 +1,6 @@
 #pragma once
 
 #include "medium/impl/data_container.hpp"
-#include "medium/properties_container.hpp"
-#include "point/interface.hpp"
 #include <Kokkos_SIMD.hpp>
 
 namespace specfem {

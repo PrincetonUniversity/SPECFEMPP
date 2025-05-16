@@ -10,14 +10,14 @@
 #include "enumerations/wavefield.hpp"
 #include "medium/compute_source.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "point/boundary.hpp"
-#include "point/field.hpp"
-#include "point/properties.hpp"
-#include "point/sources.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
 #include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -28,9 +28,10 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
   constexpr auto boundary_tag = BoundaryTag;
-  constexpr auto dimension = DimensionType;
+  constexpr auto dimension = DimensionTag;
   constexpr int ngll = NGLL;
   constexpr auto wavefield = WavefieldType;
+
 
   const auto [element_indices, source_indices] =
       assembly.sources.get_sources_on_device(MediumTag, PropertyTag,
@@ -71,9 +72,10 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
 #endif
 
   using ParallelConfig =
-      specfem::parallel_config::chunk_config<DimensionType, 1, 1, nthreads,
+      specfem::parallel_config::chunk_config<dimension, 1, 1, nthreads,
                                              lane_size, simd,
                                              Kokkos::DefaultExecutionSpace>;
+
 
   using ChunkPolicy = specfem::policy::mapped_element_chunk<ParallelConfig>;
 

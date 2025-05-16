@@ -1,9 +1,7 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/properties.hpp"
-#include "point/stress.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -76,12 +74,12 @@ impl_compute_stress(
                                          // CPU-version
 
   // sigma_xz
-  sigma_xz = properties.mu() * du(1, 0); // sigma_zy
+  sigma_xz = properties.mu() * du(0, 1); // sigma_zy
 
-  specfem::datatype::VectorPointViewType<type_real, 2, 1, UseSIMD> T;
+  specfem::datatype::VectorPointViewType<type_real, 1, 2, UseSIMD> T;
 
   T(0, 0) = sigma_xx;
-  T(1, 0) = sigma_xz;
+  T(0, 1) = sigma_xz;
 
   return { T };
 }

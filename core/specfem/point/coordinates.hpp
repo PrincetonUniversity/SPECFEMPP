@@ -11,10 +11,10 @@ namespace point {
 /**
  * @brief Struct to store local coordinates associated with a quadrature point
  *
- * @tparam DimensionType Dimension of the element where the quadrature point is
+ * @tparam DimensionTag Dimension of the element where the quadrature point is
  * located
  */
-template <specfem::dimension::type DimensionType> struct local_coordinates;
+template <specfem::dimension::type DimensionTag> struct local_coordinates;
 
 /**
  * @brief Template specialization for 2D elements
@@ -48,10 +48,10 @@ template <> struct local_coordinates<specfem::dimension::type::dim2> {
 /**
  * @brief Struct to store global coordinates associated with a quadrature point
  *
- * @tparam DimensionType Dimension of the element where the quadrature point is
+ * @tparam DimensionTag Dimension of the element where the quadrature point is
  * located
  */
-template <specfem::dimension::type DimensionType> struct global_coordinates;
+template <specfem::dimension::type DimensionTag> struct global_coordinates;
 
 /**
  * @brief Template specialization for 2D elements
@@ -81,11 +81,11 @@ template <> struct global_coordinates<specfem::dimension::type::dim2> {
 /**
  * @brief Struct to store the index associated with a quadrature point
  *
- * @tparam DimensionType Dimension of the element where the quadrature point is
+ * @tparam DimensionTag Dimension of the element where the quadrature point is
  * located
  * @tparam using_simd Flag to indicate if this is a simd index
  */
-template <specfem::dimension::type DimensionType, bool using_simd = false>
+template <specfem::dimension::type DimensionTag, bool using_simd = false>
 struct index;
 
 /**
@@ -185,25 +185,25 @@ template <> struct index<specfem::dimension::type::dim2, true> {
 /**
  * @brief Alias for the simd index
  *
- * @tparam DimensionType Dimension of the element where the quadrature point is
+ * @tparam DimensionTag Dimension of the element where the quadrature point is
  * located
  */
-template <specfem::dimension::type DimensionType>
-using simd_index = index<DimensionType, true>;
+template <specfem::dimension::type DimensionTag>
+using simd_index = index<DimensionTag, true>;
 
 /**
  * @brief Distance between two global coordinates
  *
- * @tparam DimensionType Dimension of the element where the quadrature point is
+ * @tparam DimensionTag Dimension of the element where the quadrature point is
  * located
  * @param p1 Coordinates of the first point
  * @param p2 Coordinates of the second point
  * @return type_real Distance between the two points
  */
-template <specfem::dimension::type DimensionType>
+template <specfem::dimension::type DimensionTag>
 KOKKOS_FUNCTION type_real
-distance(const specfem::point::global_coordinates<DimensionType> &p1,
-         const specfem::point::global_coordinates<DimensionType> &p2);
+distance(const specfem::point::global_coordinates<DimensionTag> &p1,
+         const specfem::point::global_coordinates<DimensionTag> &p2);
 
 } // namespace point
 } // namespace specfem

@@ -13,14 +13,13 @@ namespace kokkos_kernels {
 /**
  * @brief Compute kernels used to compute Frechet derivatives.
  *
- * @tparam DimensionType Dimension of the problem.
+ * @tparam DimensionTag Dimension of the problem.
  * @tparam NGLL Number of GLL points.
  */
-template <specfem::dimension::type DimensionType, int NGLL>
+template <specfem::dimension::type DimensionTag, int NGLL>
 class frechet_kernels {
 public:
-  constexpr static auto dimension =
-      DimensionType; ///< Dimension of the problem.
+  constexpr static auto dimension = DimensionTag; ///< Dimension of the problem.
 
   /**
    * @brief Constructor.

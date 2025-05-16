@@ -6,7 +6,6 @@ namespace specfem {
 namespace point {
 
 namespace impl {
-
 namespace properties {
 
 /**

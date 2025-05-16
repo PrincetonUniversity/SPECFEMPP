@@ -23,13 +23,13 @@ namespace chunk_element {
  *
  * @tparam NumberElements Number of elements in the chunk.
  * @tparam NGLL Number of Gauss-Lobatto-Legendre points.
- * @tparam DimensionType Dimension type for elements within the chunk.
+ * @tparam DimensionTag Dimension type for elements within the chunk.
  * @tparam MediumTag Medium tag for elements within the chunk.
  * @tparam MemorySpace Memory space for data storage.
  * @tparam MemoryTraits Memory traits for data storage.
  * @tparam UseSIMD Flag to indicate if SIMD should be used.
  */
-template <int NumberElements, int NGLL, specfem::dimension::type DimensionType,
+template <int NumberElements, int NGLL, specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, typename MemorySpace,
           typename MemoryTraits, bool UseSIMD>
 struct stress_integrand {
@@ -43,18 +43,18 @@ public:
   constexpr static int num_elements =
       NumberElements; ///< Number of elements in the chunk.
   constexpr static auto dimension =
-      DimensionType; ///< Dimension type for elements.
+      DimensionTag; ///< Dimension type for elements.
   ///@}
 
 private:
   constexpr static int num_dimensions =
-      specfem::element::attributes<DimensionType,
-                                   MediumTag>::dimension(); ///< Number of
+      specfem::element::attributes<DimensionTag,
+                                   MediumTag>::dimension; ///< Number of
   ///< dimensions.
   constexpr static int components =
-      specfem::element::attributes<DimensionType,
-                                   MediumTag>::components(); ///< Number of
-                                                             ///< components.
+      specfem::element::attributes<DimensionTag,
+                                   MediumTag>::components; ///< Number of
+                                                           ///< components.
 
 public:
   /**

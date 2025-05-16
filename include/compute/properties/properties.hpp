@@ -8,7 +8,7 @@
 #include "macros.hpp"
 #include "medium/material.hpp"
 #include "medium/properties_container.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
@@ -107,9 +107,9 @@ load_on_device(const IndexType &lcoord,
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
-  constexpr auto DimensionType = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension;
 
-  static_assert(DimensionType == specfem::dimension::type::dim2,
+  static_assert(DimensionTag == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
   properties.get_container<MediumTag, PropertyTag>().load_device_values(
@@ -147,9 +147,9 @@ void load_on_host(const IndexType &lcoord,
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
-  constexpr auto DimensionType = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension;
 
-  static_assert(DimensionType == specfem::dimension::type::dim2,
+  static_assert(DimensionTag == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
   properties.get_container<MediumTag, PropertyTag>().load_host_values(
@@ -174,8 +174,8 @@ template <typename PointPropertiesType, typename IndexType,
                                         PointPropertiesType::simd::using_simd,
                                     int> = 0>
 void store_on_host(const IndexType &lcoord,
-                   const specfem::compute::properties &properties,
-                   const PointPropertiesType &point_properties) {
+                   const PointPropertiesType &point_properties,
+                   const specfem::compute::properties &properties) {
   const int ispec = lcoord.ispec;
 
   const int index = properties.h_property_index_mapping(ispec);
@@ -186,9 +186,9 @@ void store_on_host(const IndexType &lcoord,
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
-  constexpr auto DimensionType = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension;
 
-  static_assert(DimensionType == specfem::dimension::type::dim2,
+  static_assert(DimensionTag == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
   properties.get_container<MediumTag, PropertyTag>().store_host_values(

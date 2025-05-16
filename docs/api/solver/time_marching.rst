@@ -12,8 +12,8 @@ Time marching explicit solver
 Implementation Details
 ----------------------
 
-.. doxygenclass:: specfem::solver::time_marching< specfem::simulation::type::forward, DimensionType, qp_type >
+.. doxygenclass:: specfem::solver::time_marching< specfem::simulation::type::forward, DimensionTag, qp_type >
     :members:
 
-.. doxygenclass:: specfem::solver::time_marching< specfem::simulation::type::combined, DimensionType, qp_type >
+.. doxygenclass:: specfem::solver::time_marching< specfem::simulation::type::combined, DimensionTag, qp_type >
     :members:

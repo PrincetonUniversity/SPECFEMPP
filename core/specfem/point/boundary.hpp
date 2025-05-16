@@ -1,5 +1,4 @@
-#ifndef _POINT_BOUNDARY_HPP
-#define _POINT_BOUNDARY_HPP
+#pragma once
 
 #include "datatypes/point_view.hpp"
 #include "datatypes/simd.hpp"
@@ -14,23 +13,23 @@ namespace point {
  * associated with a quadrature point
  *
  * @tparam BoundaryTag Tag indicating the type of boundary condition
- * @DimensionType Dimension of the spectral element where the quadrature point
+ * @DimensionTag Dimension of the spectral element where the quadrature point
  * is located
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
 template <specfem::element::boundary_tag BoundaryTag,
-          specfem::dimension::type DimensionType, bool UseSIMD>
+          specfem::dimension::type DimensionTag, bool UseSIMD>
 struct boundary;
 
 /**
  * @brief Template specialization for no boundary condition
  *
- * @tparam DimensionType Dimension of the spectral element where the quadrature
+ * @tparam DimensionTag Dimension of the spectral element where the quadrature
  * point is located
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
-template <specfem::dimension::type DimensionType, bool UseSIMD>
-struct boundary<specfem::element::boundary_tag::none, DimensionType, UseSIMD> {
+template <specfem::dimension::type DimensionTag, bool UseSIMD>
+struct boundary<specfem::element::boundary_tag::none, DimensionTag, UseSIMD> {
 private:
   // We use simd_like vector to store tags. Tags are stored as enums, so a simd
   // type is ill-defined for them. However, we use scalar array types of size
@@ -63,7 +62,7 @@ public:
   constexpr static bool isPointBoundaryType =
       true; ///< Flag indicating this is a point boundary type
   constexpr static auto dimension =
-      DimensionType; ///< Dimension of the spectral element
+      DimensionTag; ///< Dimension of the spectral element
   ///@}
 
   /**
@@ -86,14 +85,14 @@ public:
 /**
  * @brief Template specialization for acoustic free surface boundary condition
  *
- * @tparam DimensionType Dimension of the spectral element where the quadrature
+ * @tparam DimensionTag Dimension of the spectral element where the quadrature
  * point is located
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
-template <specfem::dimension::type DimensionType, bool UseSIMD>
+template <specfem::dimension::type DimensionTag, bool UseSIMD>
 struct boundary<specfem::element::boundary_tag::acoustic_free_surface,
-                DimensionType, UseSIMD>
-    : public boundary<specfem::element::boundary_tag::none, DimensionType,
+                DimensionTag, UseSIMD>
+    : public boundary<specfem::element::boundary_tag::none, DimensionTag,
                       UseSIMD> {
 public:
   /**
@@ -134,24 +133,24 @@ public:
   KOKKOS_FUNCTION
   boundary(const specfem::point::boundary<
            specfem::element::boundary_tag::composite_stacey_dirichlet,
-           DimensionType, UseSIMD> &boundary);
+           DimensionTag, UseSIMD> &boundary);
   ///@}
 };
 
 /**
  * @brief Template specialization for Stacey boundary condition
  *
- * @tparam DimensionType Dimension of the spectral element where the quadrature
+ * @tparam DimensionTag Dimension of the spectral element where the quadrature
  * point is located
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
-template <specfem::dimension::type DimensionType, bool UseSIMD>
-struct boundary<specfem::element::boundary_tag::stacey, DimensionType, UseSIMD>
+template <specfem::dimension::type DimensionTag, bool UseSIMD>
+struct boundary<specfem::element::boundary_tag::stacey, DimensionTag, UseSIMD>
     : public boundary<specfem::element::boundary_tag::acoustic_free_surface,
-                      DimensionType, UseSIMD> {
+                      DimensionTag, UseSIMD> {
 private:
   constexpr static int num_dimensions =
-      specfem::dimension::dimension<DimensionType>::dim;
+      specfem::dimension::dimension<DimensionTag>::dim;
   /**
    * @name Private Typedefs
    *
@@ -209,7 +208,7 @@ public:
   KOKKOS_FUNCTION
   boundary(const specfem::point::boundary<
            specfem::element::boundary_tag::composite_stacey_dirichlet,
-           DimensionType, UseSIMD> &boundary);
+           DimensionTag, UseSIMD> &boundary);
   ///@}
 
   datatype edge_weight =
@@ -225,14 +224,14 @@ public:
  * @brief Template specialization for composite Stacey Dirichlet boundary
  * condition
  *
- * @tparam DimensionType Dimension of the spectral element where the quadrature
+ * @tparam DimensionTag Dimension of the spectral element where the quadrature
  * point is located
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
-template <specfem::dimension::type DimensionType, bool UseSIMD>
+template <specfem::dimension::type DimensionTag, bool UseSIMD>
 struct boundary<specfem::element::boundary_tag::composite_stacey_dirichlet,
-                DimensionType, UseSIMD>
-    : public boundary<specfem::element::boundary_tag::stacey, DimensionType,
+                DimensionTag, UseSIMD>
+    : public boundary<specfem::element::boundary_tag::stacey, DimensionTag,
                       UseSIMD> {
 public:
   /**
@@ -266,22 +265,22 @@ public:
   ///@}
 };
 
-template <specfem::dimension::type DimensionType, bool UseSIMD>
+template <specfem::dimension::type DimensionTag, bool UseSIMD>
 KOKKOS_FUNCTION
 specfem::point::boundary<specfem::element::boundary_tag::acoustic_free_surface,
-                         DimensionType, UseSIMD>::
+                         DimensionTag, UseSIMD>::
     boundary(const specfem::point::boundary<
              specfem::element::boundary_tag::composite_stacey_dirichlet,
-             DimensionType, UseSIMD> &boundary) {
+             DimensionTag, UseSIMD> &boundary) {
   this->tag = boundary.tag;
 }
 
-template <specfem::dimension::type DimensionType, bool UseSIMD>
+template <specfem::dimension::type DimensionTag, bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::boundary<specfem::element::boundary_tag::stacey,
-                                         DimensionType, UseSIMD>::
+                                         DimensionTag, UseSIMD>::
     boundary(const specfem::point::boundary<
              specfem::element::boundary_tag::composite_stacey_dirichlet,
-             DimensionType, UseSIMD> &boundary) {
+             DimensionTag, UseSIMD> &boundary) {
   this->tag = boundary.tag;
   this->edge_weight = boundary.edge_weight;
   this->edge_normal = boundary.edge_normal;
@@ -289,4 +288,3 @@ KOKKOS_FUNCTION specfem::point::boundary<specfem::element::boundary_tag::stacey,
 
 } // namespace point
 } // namespace specfem
-#endif

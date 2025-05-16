@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <string>
 #include <type_traits>
@@ -15,18 +15,18 @@ namespace impl {
  * policy.
  *
  * @tparam UseSIMD Indicates whether SIMD is used or not.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  */
-template <bool UseSIMD, specfem::dimension::type DimensionType>
+template <bool UseSIMD, specfem::dimension::type DimensionTag>
 struct chunk_index_type;
 
 /**
  * @brief Template specialization when using SIMD.
  *
  */
-template <specfem::dimension::type DimensionType>
-struct chunk_index_type<true, DimensionType> {
-  constexpr static auto dimension = DimensionType; ///< Dimension type
+template <specfem::dimension::type DimensionTag>
+struct chunk_index_type<true, DimensionTag> {
+  constexpr static auto dimension = DimensionTag; ///< Dimension type
   int ielement; ///< Element index within the iterator range
   specfem::point::simd_index<dimension> index; ///< SIMD index of the quadrature
                                                ///< point(s)
@@ -41,9 +41,9 @@ struct chunk_index_type<true, DimensionType> {
  * @brief Template specialization when not using SIMD.
  *
  */
-template <specfem::dimension::type DimensionType>
-struct chunk_index_type<false, DimensionType> {
-  constexpr static auto dimension = DimensionType; ///< Dimension type
+template <specfem::dimension::type DimensionTag>
+struct chunk_index_type<false, DimensionTag> {
+  constexpr static auto dimension = DimensionTag; ///< Dimension type
   int ielement; ///< Element index within the iterator range
   specfem::point::index<dimension> index; ///< Index of the quadrature point
 
@@ -58,17 +58,17 @@ struct chunk_index_type<false, DimensionType> {
  * policy.
  *
  * @tparam UseSIMD Indicates whether SIMD is used or not.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  */
-template <bool UseSIMD, specfem::dimension::type DimensionType>
+template <bool UseSIMD, specfem::dimension::type DimensionTag>
 struct mapped_chunk_index_type
-    : public chunk_index_type<UseSIMD, DimensionType> {
-  using base_type = chunk_index_type<UseSIMD, DimensionType>;
+    : public chunk_index_type<UseSIMD, DimensionTag> {
+  using base_type = chunk_index_type<UseSIMD, DimensionTag>;
   int imap; ///< Index of the mapped element
 
   KOKKOS_INLINE_FUNCTION
   mapped_chunk_index_type(const int ielement,
-                          const specfem::point::index<DimensionType> index,
+                          const specfem::point::index<DimensionTag> index,
                           const int imap)
       : base_type(ielement, index), imap(imap) {}
 };
@@ -80,10 +80,10 @@ struct mapped_chunk_index_type
  * iterator.
  *
  * @tparam ViewType View type for the indices of elements within this iterator.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  * @tparam SIMD SIMD type to use simd operations @ref specfem::datatypes::simd
  */
-template <typename ViewType, specfem::dimension::type DimensionType,
+template <typename ViewType, specfem::dimension::type DimensionTag,
           typename SIMD>
 class chunk;
 
@@ -125,14 +125,14 @@ protected:
   int ngllx;                 ///< Number of GLL points in the x-direction
 
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, const int ngllz, const int ngllx,
+  chunk(const ViewType indices, const int ngllz, const int ngllx,
         std::true_type)
       : indices(indices), num_elements(indices.extent(0) / simd_size +
                                        (indices.extent(0) % simd_size != 0)),
         ngllz(ngllz), ngllx(ngllx) {}
 
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, const int ngllz, const int ngllx,
+  chunk(const ViewType indices, const int ngllz, const int ngllx,
         std::false_type)
       : indices(indices), num_elements(indices.extent(0)), ngllz(ngllz),
         ngllx(ngllx) {}
@@ -203,7 +203,7 @@ public:
    * @param ngllx Number of GLL points in the x-direction
    */
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, int ngllz, int ngllx)
+  chunk(const ViewType indices, int ngllz, int ngllx)
       : chunk(indices, ngllz, ngllx,
               std::integral_constant<bool, using_simd>()) {
 #if KOKKOS_VERSION < 40100
@@ -272,7 +272,7 @@ public:
   bool is_end() const { return end_iterator; }
 };
 
-template <typename ViewType, specfem::dimension::type DimensionType,
+template <typename ViewType, specfem::dimension::type DimensionTag,
           typename SIMD>
 class mapped_chunk;
 
@@ -286,8 +286,8 @@ class mapped_chunk<ViewType, specfem::dimension::type::dim2, SIMD>
 
 public:
   KOKKOS_INLINE_FUNCTION
-  mapped_chunk(const ViewType &indices, const ViewType &mapping,
-               const int ngllz, const int ngllx)
+  mapped_chunk(const ViewType indices, const ViewType mapping, const int ngllz,
+               const int ngllx)
       : base_type(indices, ngllz, ngllx), mapping(mapping) {}
 
   KOKKOS_INLINE_FUNCTION
@@ -388,7 +388,7 @@ public:
    * @param ngllz Number of GLL points in the z-direction
    * @param ngllx Number of GLL points in the x-direction
    */
-  element_chunk(const IndexViewType &view, int ngllz, int ngllx)
+  element_chunk(const IndexViewType view, int ngllz, int ngllx)
       : policy_type(view.extent(0) / (tile_size * simd_size) +
                         (view.extent(0) % (tile_size * simd_size) != 0),
                     Kokkos::AUTO, Kokkos::AUTO),
@@ -449,7 +449,7 @@ struct mapped_element_chunk : public element_chunk<ParallelConfig> {
       specfem::iterator::mapped_chunk<IndexViewType, ParallelConfig::dimension,
                                       simd>; ///< Iterator
 
-  mapped_element_chunk(const IndexViewType &view, const IndexViewType &mapping,
+  mapped_element_chunk(const IndexViewType view, const IndexViewType mapping,
                        int ngllz, int ngllx)
       : base_type(view, ngllz, ngllx), mapping(mapping) {}
 

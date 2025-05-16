@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "point/field.hpp"
+#include "field.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -10,17 +10,17 @@ namespace point {
 /**
  * @brief Store source information at a given quadrature point
  *
- * @tparam DimensionType Dimension of the spectral element
+ * @tparam DimensionTag Dimension of the spectral element
  * @tparam MediumTag Medium tag of the spectral element
  * @tparam WavefieldType Wavefield type on which the source is applied
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::wavefield::simulation_field WavefieldType>
 struct source {
 
-  constexpr static auto dimension = DimensionType; ///< Dimension of the
-                                                   ///< spectral element
+  constexpr static auto dimension = DimensionTag; ///< Dimension of the
+                                                  ///< spectral element
   constexpr static auto medium_tag = MediumTag; ///< Medium tag of the spectral
                                                 ///< element
   constexpr static auto wavefield_tag = WavefieldType; ///< Wavefield type on
@@ -30,13 +30,13 @@ struct source {
                                                 ///< the point type is a source
 
   constexpr static int components =
-      specfem::element::attributes<DimensionType,
-                                   MediumTag>::components(); ///< Number
-                                                             ///< of
-                                                             ///< components
-                                                             ///< in
-                                                             ///< the
-                                                             ///< medium
+      specfem::element::attributes<DimensionTag,
+                                   MediumTag>::components; ///< Number
+                                                           ///< of
+                                                           ///< components
+                                                           ///< in
+                                                           ///< the
+                                                           ///< medium
 
   using value_type =
       specfem::datatype::ScalarPointViewType<type_real, components,

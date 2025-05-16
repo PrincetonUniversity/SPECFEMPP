@@ -14,7 +14,7 @@ specfem::compute::receivers::receivers(
     const type_real dt, const type_real t0, const int nsteps_between_samples,
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >
         &receivers,
-    const std::vector<specfem::enums::seismogram::type> &stypes,
+    const std::vector<specfem::wavefield::type> &stypes,
     const specfem::compute::mesh &mesh,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
     const specfem::compute::element_types &element_types)
@@ -30,27 +30,18 @@ specfem::compute::receivers::receivers(
                                dt, t0, nsteps_between_samples) {
 
   for (int isies = 0; isies < stypes.size(); ++isies) {
+
     auto seis_type = stypes[isies];
-    switch (seis_type) {
-    case specfem::enums::seismogram::type::displacement:
-      seismogram_types[isies] = specfem::wavefield::type::displacement;
-      seismogram_type_map[specfem::wavefield::type::displacement] = isies;
-      break;
-    case specfem::enums::seismogram::type::velocity:
-      seismogram_types[isies] = specfem::wavefield::type::velocity;
-      seismogram_type_map[specfem::wavefield::type::velocity] = isies;
-      break;
-    case specfem::enums::seismogram::type::acceleration:
-      seismogram_types[isies] = specfem::wavefield::type::acceleration;
-      seismogram_type_map[specfem::wavefield::type::acceleration] = isies;
-      break;
-    case specfem::enums::seismogram::type::pressure:
-      seismogram_types[isies] = specfem::wavefield::type::pressure;
-      seismogram_type_map[specfem::wavefield::type::pressure] = isies;
-      break;
-    default:
+
+    if (seis_type != specfem::wavefield::type::displacement &&
+        seis_type != specfem::wavefield::type::velocity &&
+        seis_type != specfem::wavefield::type::acceleration &&
+        seis_type != specfem::wavefield::type::pressure) {
       throw std::runtime_error("Invalid seismogram type");
     }
+
+    seismogram_types[isies] = seis_type;
+    seismogram_type_map[seis_type] = isies;
   }
 
   for (int ireceiver = 0; ireceiver < receivers.size(); ++ireceiver) {
