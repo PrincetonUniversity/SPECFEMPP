@@ -58,8 +58,12 @@
       if (!Kokkos::Experimental::all_of(                                       \
               Kokkos::abs(_point_data_container[i] -                           \
                           other._point_data_container[i]) <                    \
-              static_cast<type_real>(1e-6) *                                   \
-                  Kokkos::abs(_point_data_container[i]))) {                    \
+                  static_cast<type_real>(1e-6) *                               \
+                      Kokkos::abs(_point_data_container[i]) ||                 \
+              (Kokkos::abs(_point_data_container[i]) <                         \
+                   static_cast<type_real>(1e-6) &&                             \
+               Kokkos::abs(other._point_data_container[i]) <                   \
+                   static_cast<type_real>(1e-6)))) {                           \
         return false;                                                          \
       }                                                                        \
     }                                                                          \
