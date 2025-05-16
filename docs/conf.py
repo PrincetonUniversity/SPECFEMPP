@@ -10,12 +10,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-import subprocess
-import sys
 import os
+import sys
+import subprocess
 
 # Doxygen
 doxygen_cmd = "doxygen Doxyfile.in"  # or Doxyfile.in if that's the correct filename
@@ -72,6 +69,8 @@ extensions = [
 # Adding this to avoid the WARNING: duplicate label warning
 autosectionlabel_prefix_document = True
 
+supress_warnings = ["*duplicate*"]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -110,7 +109,7 @@ html_baseurl = "https://specfem2d-kokkos.readthedocs.io/"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # These folders are copied to the documentation's HTML output
-html_static_path = ["_static"]
+html_static_path = ["sections/_static"]
 
 # These paths are either relative to html_static_path
 # or fully qualified paths (eg. https://...)
@@ -125,3 +124,8 @@ html_css_files = [
 breathe_projects = {"SPECFEM KOKKOS IMPLEMENTATION": "_build/doxygen/xml"}
 breathe_default_project = "SPECFEM KOKKOS IMPLEMENTATION"
 breathe_default_members = ()
+breathe_doxygen_config_options = {"PREDEFINED": "KOKKOS_INLINE_FUNCTION="}
+breathe_show_define_initializer = True
+breathe_show_include = True
+breathe_template_parameters = True
+breathe_separate_member_pages = True

@@ -21,10 +21,26 @@ template <specfem::dimension::type DimensionTag,
 struct kernels;
 
 /**
- * @brief Template specialization for the kernels struct for 2D elastic
- * isotropic elements
+ * @defgroup specfem_point_kernels_dim2_elastic_isotropic 2D Elastic Isotropic
+ * Kernels
+ * @{
+ */
+
+/**
  *
- * @tparam UseSIMD  Use SIMD instructions
+ * @brief Template specialization for 2D elastic isotropic kernels
+ *
+ * This specialization applies to elastic mediums in 2D space with isotropic
+ * properties. It handles the computation of kernel matrices for isotropic
+ * elastic elements, with an option to use SIMD instructions for performance
+ * optimization.
+ *
+ * @tparam MediumTag The medium tag that must satisfy elastic medium properties
+ * @tparam UseSIMD Boolean flag to enable/disable SIMD optimizations
+ *
+ * @note This template automatically specializes for:
+ *       - elastic_psv: Used for primary and in-plane shear wave calculations
+ *       - elastic_sh: Used for off plane shear wave calculations
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct kernels<
@@ -64,7 +80,7 @@ struct kernels<
   DEFINE_POINT_VALUE(beta, 5)  ///< \f$ K_{\beta} \f$
   ///@}
 };
-// end elastic isotropic
+/** @} */ // end of group
 
 /**
  * @brief Template specialization for the kernels struct for 2D elastic
