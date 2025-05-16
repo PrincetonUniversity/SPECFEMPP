@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "point/properties.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <exception>
 #include <iostream>
@@ -12,7 +12,26 @@ namespace specfem {
 namespace medium {
 
 /**
- * @brief Template specialization for elastic isotropic material properties
+ * @defgroup specfem_medium_material_dim2_elastic_isotropic 2D Elastic Isotropic
+ * Material
+ */
+
+/**
+ * @addtogroup specfem_medium_material_dim2_elastic_isotropic
+ * @brief Material specialization for 2D elastic isotropic media
+ * @{
+ *
+ * This struct holds the properties of an elastic isotropic material in 2D
+ * space. It includes the density, shear wave speed, compressional wave speed,
+ * attenuation factors, and compaction gradient. The struct also provides
+ *
+ * @tparam MediumTag The medium tag that must satisfy elastic medium properties
+ * @tparam PropertyTag The property tag that must be isotropic
+ * @tparam Enable The enable_if condition that must be satisfied
+ *
+ * @see specfem::element::is_elastic
+ * @see specfem::dimension::type::dim2
+ * @see specfem::medium::material
  *
  */
 template <specfem::element::medium_tag MediumTag>
@@ -140,6 +159,7 @@ protected:
   type_real young;           ///< Young's modulus
   type_real poisson;         ///< Poisson's ratio
 };
+/* @} */ // end of group specfem_medium_material_dim2_elastic_isotropic
 
 } // namespace medium
 } // namespace specfem

@@ -15,12 +15,12 @@
 #include "medium/compute_stress.hpp"
 #include "medium/compute_damping_force.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "point/boundary.hpp"
-#include "point/field.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/partial_derivatives.hpp"
-#include "point/properties.hpp"
-#include "point/sources.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
 #include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 

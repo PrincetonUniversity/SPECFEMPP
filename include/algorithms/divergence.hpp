@@ -2,7 +2,7 @@
 
 #include "compute/compute_partial_derivatives.hpp"
 #include "datatypes/point_view.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
