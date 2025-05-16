@@ -16,6 +16,19 @@
 
 namespace specfem {
 namespace kokkos_kernels {
+
+/**
+ * @brief Class to compute the domain kernels for the simulation
+ *
+ * This class computes the domain kernels for the simulation. It is a template
+ * class that takes the wavefield type, dimension tag, and number of GLL points
+ * as template parameters.
+ *
+ * @tparam WavefieldType Type of the wavefield (e.g., elastic, acoustic)
+ * @tparam DimensionTag Dimension tag (e.g., 2D, 3D)
+ * @tparam NGLL Number of GLL points
+ *
+ */
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionTag, int NGLL>
 class domain_kernels {
@@ -24,10 +37,34 @@ public:
   constexpr static auto wavefield = WavefieldType;
   constexpr static auto ngll = NGLL;
 
+  /**
+   * @brief Constructor for the domain_kernels class
+   *
+   * This constructor initializes the domain_kernels class with the given
+   * assembly object.
+   *
+   * @param assembly The assembly object containing the mesh and other
+   * information
+   *
+   * @note The constructor initializes the coupling interfaces for 2D elastic
+   * and acoustic media.
+   *
+   */
   domain_kernels(const specfem::compute::assembly &assembly)
       : assembly(assembly), coupling_interfaces_dim2_elastic_psv(assembly),
         coupling_interfaces_dim2_acoustic(assembly) {}
 
+  /**
+   * @brief Updates the wavefield for a given medium
+   *
+   * This function updates the wavefield for a given medium type. It computes
+   * the coupling, source interaction, stiffness interaction, and divides the
+   * mass matrix. The function is specialized for different medium types and
+   *
+   * @tparam medium Medium for which the wacefield is updated
+   * @param istep Time step for which the wavefield is updated
+   * @return int Number of elements updated
+   */
   template <specfem::element::medium_tag medium>
   inline int update_wavefields(const int istep) {
 
@@ -86,6 +123,14 @@ public:
     return elements_updated;
   }
 
+  /**
+   * @brief Initializes the mass matrix for the simulation
+   *
+   * This function initializes the mass matrix for the simulation. It computes
+   * the mass matrix and inverts it for different medium types.
+   *
+   * @param dt Time step for the simulation
+   */
   void initialize(const type_real &dt) {
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
@@ -114,6 +159,14 @@ public:
     return;
   }
 
+  /**
+   * @brief Computes the seismograms for the simulation
+   *
+   * This function computes the seismograms for the simulation. It is
+   * specialized for different medium types and properties.
+   *
+   * @param isig_step Time step for which the seismograms are computed
+   */
   inline void compute_seismograms(const int &isig_step) {
 
     FOR_EACH_IN_PRODUCT(

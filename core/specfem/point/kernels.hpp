@@ -9,6 +9,11 @@ namespace impl {
 namespace kernels {
 
 /**
+ * @defgroup specfem_point_kernels_dim2_elastic_isotropic 2D Elastic Isotropic
+ * Kernels
+ * @{
+ */
+/**
  * @brief Data container to hold misfit kernels of 2D elastic isotropic media at
  * a quadrature point
  *
@@ -50,6 +55,7 @@ struct data_container<
 
   POINT_CONTAINER(rho, mu, kappa, rhop, alpha, beta)
 };
+/** @} */ // end of group
 
 /**
  * @brief Data container to hold misfit kernels of 2D elastic anisotropic media
@@ -60,10 +66,7 @@ struct data_container<
  * @fn const value_type rho() const
  *   @brief Get @f$ K_{\rho} @f$
  *   @return The value of @f$ K_{\rho} @f$
- *
- * @fn const value_type c11() const
  *   @brief Get @f$ K_{c_{11}} @f$
- *   @return The value of @f$ K_{c_{11}} @f$
  *
  * @fn const value_type c13() const
  *   @brief Get @f$ K_{c_{13}} @f$

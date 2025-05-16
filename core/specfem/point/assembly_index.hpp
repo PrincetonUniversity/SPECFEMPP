@@ -93,5 +93,6 @@ template <> struct assembly_index<true> {
  *
  */
 using simd_assembly_index = assembly_index<true>;
+
 } // namespace point
 } // namespace specfem
