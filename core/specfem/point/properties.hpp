@@ -9,6 +9,12 @@ namespace impl {
 namespace properties {
 
 /**
+ * @defgroup specfem_point_properties_dim2_elastic_isotropic 2D Elastic
+ * Isotropic Properties
+ * @{
+ */
+
+/**
  * @brief Data container to hold properties of 2D acoustic media at a quadrature
  * point
  *
@@ -59,7 +65,13 @@ struct data_container<specfem::dimension::type::dim2,
                                                           ///< v_p} @f$
   }
 };
+///@} end of group specfem_point_properties_dim2_elastic_isotropic
 
+/**
+ * @defgroup specfem_point_properties_dim2_elastic_anisotropic 2D Elastic
+ * Anisotropic Properties
+ * @{
+ */
 /**
  * @brief Data container to hold properties of 2D elastic media at a quadrature
  * point
@@ -97,7 +109,6 @@ struct data_container<specfem::dimension::type::dim2,
  *   from @f$ \lambda + 2\mu @f$ and @f$ \mu @f$
  *   @return const value_type The value of @f$ \lambda =
  *   (\lambda + 2\mu) - 2\mu @f$
- *
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct data_container<
@@ -199,6 +210,7 @@ struct data_container<
     return Kokkos::sqrt(rho() * c55()); ///< S-wave velocity @f$ \rho v_s @f$
   }
 };
+///@} end of group specfem_point_properties_dim2_elastic_anisotropic
 
 /**
  * @brief Data container to hold properties of 2D poroelastic media at a
