@@ -408,9 +408,14 @@ private:
  * @tparam MemberType Kokkos team member type
  * @tparam IteratorType Chunk policy iterator type @ref
  * specfem::policy::element_chunk
- * @param receivers Receivers object containing the receiver information
  * @tparam ViewType Lagrange interpolant associated with the receivers in the
  * iterator
+ *
+ * @param team_member Kokkos team member
+ * @param iterator Iterator object containing the indices of the receivers
+ * @param receivers Receivers object containing the receiver information
+ * @param lagrange_interpolant Lagrange interpolant associated with the
+ * receivers in the iterator
  */
 template <typename MemberType, typename IteratorType, typename ViewType>
 KOKKOS_FUNCTION void
