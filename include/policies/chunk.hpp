@@ -125,14 +125,14 @@ protected:
   int ngllx;                 ///< Number of GLL points in the x-direction
 
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, const int ngllz, const int ngllx,
+  chunk(const ViewType indices, const int ngllz, const int ngllx,
         std::true_type)
       : indices(indices), num_elements(indices.extent(0) / simd_size +
                                        (indices.extent(0) % simd_size != 0)),
         ngllz(ngllz), ngllx(ngllx) {}
 
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, const int ngllz, const int ngllx,
+  chunk(const ViewType indices, const int ngllz, const int ngllx,
         std::false_type)
       : indices(indices), num_elements(indices.extent(0)), ngllz(ngllz),
         ngllx(ngllx) {}
@@ -203,7 +203,7 @@ public:
    * @param ngllx Number of GLL points in the x-direction
    */
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, int ngllz, int ngllx)
+  chunk(const ViewType indices, int ngllz, int ngllx)
       : chunk(indices, ngllz, ngllx,
               std::integral_constant<bool, using_simd>()) {
 #if KOKKOS_VERSION < 40100
@@ -286,8 +286,8 @@ class mapped_chunk<ViewType, specfem::dimension::type::dim2, SIMD>
 
 public:
   KOKKOS_INLINE_FUNCTION
-  mapped_chunk(const ViewType &indices, const ViewType &mapping,
-               const int ngllz, const int ngllx)
+  mapped_chunk(const ViewType indices, const ViewType mapping, const int ngllz,
+               const int ngllx)
       : base_type(indices, ngllz, ngllx), mapping(mapping) {}
 
   KOKKOS_INLINE_FUNCTION
@@ -388,7 +388,7 @@ public:
    * @param ngllz Number of GLL points in the z-direction
    * @param ngllx Number of GLL points in the x-direction
    */
-  element_chunk(const IndexViewType &view, int ngllz, int ngllx)
+  element_chunk(const IndexViewType view, int ngllz, int ngllx)
       : policy_type(view.extent(0) / (tile_size * simd_size) +
                         (view.extent(0) % (tile_size * simd_size) != 0),
                     Kokkos::AUTO, Kokkos::AUTO),
@@ -449,7 +449,7 @@ struct mapped_element_chunk : public element_chunk<ParallelConfig> {
       specfem::iterator::mapped_chunk<IndexViewType, ParallelConfig::dimension,
                                       simd>; ///< Iterator
 
-  mapped_element_chunk(const IndexViewType &view, const IndexViewType &mapping,
+  mapped_element_chunk(const IndexViewType view, const IndexViewType mapping,
                        int ngllz, int ngllx)
       : base_type(view, ngllz, ngllx), mapping(mapping) {}
 

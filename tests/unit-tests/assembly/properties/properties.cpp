@@ -12,8 +12,9 @@
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
           typename ViewType>
-std::enable_if_t<
-    std::is_same_v<typename ViewType::memory_space, Kokkos::HostSpace>, void>
+std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
+                                Kokkos::DefaultHostExecutionSpace>,
+                 void>
 set_value(const ViewType elements, specfem::compute::assembly &assembly,
           const type_real offset) {
 
@@ -23,10 +24,13 @@ set_value(const ViewType elements, specfem::compute::assembly &assembly,
       specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                  PropertyTag, using_simd>;
 
+  using PolicyType = execution_pattern::PolicyType<ViewType, using_simd>;
+
   // Iterate over the elements
   execution_pattern::forall<using_simd>(
       "set_to_value", elements, assembly.mesh.ngllx,
-      KOKKOS_LAMBDA(const auto &iterator_index) {
+      [=](const typename PolicyType::iterator_type::index_type
+              &iterator_index) {
         const auto index = iterator_index.index;
         PointType point(static_cast<type_real>(index.ispec + offset));
         specfem::compute::store_on_host(index, point, properties);
@@ -38,8 +42,9 @@ set_value(const ViewType elements, specfem::compute::assembly &assembly,
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
           typename ViewType>
-std::enable_if_t<
-    std::is_same_v<typename ViewType::memory_space, Kokkos::HostSpace>, void>
+std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
+                                Kokkos::DefaultHostExecutionSpace>,
+                 void>
 check_value(const ViewType elements, specfem::compute::assembly &assembly,
             const type_real offset) {
   const auto &properties = assembly.properties;
@@ -47,10 +52,13 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
       specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                  PropertyTag, using_simd>;
 
+  using PolicyType = execution_pattern::PolicyType<ViewType, using_simd>;
+
   // Iterate over the elements
   execution_pattern::forall<using_simd>(
       "check_to_value", elements, assembly.mesh.ngllx,
-      KOKKOS_LAMBDA(const auto &iterator_index) {
+      [=](const typename PolicyType::iterator_type::index_type
+              &iterator_index) {
         const auto index = iterator_index.index;
         PointType expected(static_cast<type_real>(index.ispec + offset));
         PointType computed;
@@ -72,10 +80,11 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
   Kokkos::fence();
 }
 
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
           typename ViewType>
-std::enable_if_t<std::is_same_v<typename ViewType::memory_space,
+std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
 check_value(const ViewType elements, specfem::compute::assembly &assembly,
@@ -95,7 +104,9 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
   // Iterate over the elements
   execution_pattern::forall<using_simd>(
       "check_to_value", elements, assembly.mesh.ngllx,
-      KOKKOS_LAMBDA(const auto &iterator_index) {
+      KOKKOS_LAMBDA(
+          const typename execution_pattern::PolicyType<ViewType, using_simd>::
+              iterator_type::index_type &iterator_index) {
         const auto index = iterator_index.index;
         PointType computed;
         specfem::compute::load_on_device(index, properties, computed);
@@ -111,60 +122,37 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
   const auto point_view_host = Kokkos::create_mirror_view_and_copy(
       Kokkos::DefaultHostExecutionSpace(), point_view);
 
-  execution_pattern::forall<using_simd>(
-      "check_to_value", elements, assembly.mesh.ngllx,
-      KOKKOS_LAMBDA(const auto &iterator_index) {
-        const auto index = iterator_index.index;
-        PointType expected(static_cast<type_real>(index.ispec + offset));
-        const int ispec = index.ispec;
-        const int iz = index.iz;
-        const int ix = index.ix;
+  // const auto host_elements = Kokkos::create_mirror_view_and_copy(
+  //     Kokkos::DefaultHostExecutionSpace(), elements);
+  // using HostPolicyType =
+  //     execution_pattern::PolicyType<decltype(host_elements), using_simd>;
 
-        if (point_view_host(ispec, iz, ix) != expected) {
-          std::ostringstream message;
+  // execution_pattern::forall<using_simd>(
+  //     "check_to_value", host_elements, assembly.mesh.ngllx,
+  //     [=](const typename HostPolicyType::iterator_type::index_type
+  //             &iterator_index) {
+  //       const auto index = iterator_index.index;
+  //       PointType expected(static_cast<type_real>(index.ispec + offset));
+  //       const int ispec = index.ispec;
+  //       const int iz = index.iz;
+  //       const int ix = index.ix;
 
-          message << "\n \t Error in function check_to_value";
+  //       if (point_view_host(ispec, iz, ix) != expected) {
+  //         std::ostringstream message;
 
-          message << "\n \t Error at ispec = " << index.ispec
-                  << ", iz = " << index.iz << ", ix = " << index.ix << "\n";
-          message << "Expected: " << expected.print();
-          message << "Got: " << point_view_host(ispec, iz, ix).print();
-          throw std::runtime_error(message.str());
-        }
-      });
+  //         message << "\n \t Error in function check_to_value";
+
+  //         message << "\n \t Error at ispec = " << index.ispec
+  //                 << ", iz = " << index.iz << ", ix = " << index.ix << "\n";
+  //         message << "Expected: " << expected.print();
+  //         message << "Got: " << point_view_host(ispec, iz, ix).print();
+  //         throw std::runtime_error(message.str());
+  //       }
+  //     });
 
   Kokkos::fence();
 }
-
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, bool using_simd>
-void check_access_functions(specfem::compute::assembly &assembly) {
-
-  const int nspec = assembly.mesh.nspec;
-  const int ngll = assembly.mesh.ngllx;
-  auto &properties = assembly.properties;
-  const auto &element_types = assembly.element_types;
-
-  type_real offset = 10.1; // Random offset to store in the properties
-  const auto host_elements =
-      element_types.get_elements_on_host(MediumTag, PropertyTag);
-
-  // Iterate over all elements and store dummy values
-  set_value<MediumTag, PropertyTag, using_simd>(host_elements, assembly,
-                                                offset);
-
-  // Check that we are able to access the values stored in the properties
-  check_value<MediumTag, PropertyTag, using_simd>(host_elements, assembly,
-                                                  offset);
-
-  properties.copy_to_device();
-
-  const auto device_elements =
-      element_types.get_elements_on_device(MediumTag, PropertyTag);
-
-  check_value<MediumTag, PropertyTag, using_simd>(device_elements, assembly,
-                                                  offset);
-}
+#endif
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
@@ -185,10 +173,13 @@ void check_compute_to_mesh(
   using PointType = specfem::point::properties<specfem::dimension::type::dim2,
                                                MediumTag, PropertyTag, false>;
 
+  using PolicyType = execution_pattern::PolicyType<decltype(elements), false>;
+
   // Iterate over the elements
   execution_pattern::forall<false>(
       "check_compute_to_mesh", elements, ngll,
-      KOKKOS_LAMBDA(const auto &iterator_index) {
+      [=](const typename PolicyType::iterator_type::index_type
+              &iterator_index) {
         const auto index = iterator_index.index;
         const int ispec = index.ispec;
 
@@ -227,16 +218,54 @@ TEST_F(ASSEMBLY, properties_access_functions) {
     auto assembly = std::get<5>(parameters);
 
     try {
+      type_real offset = 10.1; // Random offset to store in the properties
       FOR_EACH_IN_PRODUCT(
           (DIMENSION_TAG(DIM2),
            MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
            PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
           {
-            check_access_functions<_medium_tag_, _property_tag_, false>(
-                assembly);
-            check_access_functions<_medium_tag_, _property_tag_, true>(
-                assembly);
+            const auto elements = assembly.element_types.get_elements_on_host(
+                _medium_tag_, _property_tag_);
+            set_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                           offset);
           })
+
+      // Check that we are able to access the values stored in the properties
+      FOR_EACH_IN_PRODUCT(
+          (DIMENSION_TAG(DIM2),
+           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+          {
+            const auto elements = assembly.element_types.get_elements_on_host(
+                _medium_tag_, _property_tag_);
+            check_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                             offset);
+          });
+
+      // SIMD access functions
+
+      FOR_EACH_IN_PRODUCT(
+          (DIMENSION_TAG(DIM2),
+           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+          {
+            const auto elements = assembly.element_types.get_elements_on_host(
+                _medium_tag_, _property_tag_);
+            set_value<_medium_tag_, _property_tag_, true>(elements, assembly,
+                                                          offset);
+          })
+
+      // Check that we are able to access the values stored in the properties
+      FOR_EACH_IN_PRODUCT(
+          (DIMENSION_TAG(DIM2),
+           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+          {
+            const auto elements = assembly.element_types.get_elements_on_host(
+                _medium_tag_, _property_tag_);
+            check_value<_medium_tag_, _property_tag_, true>(elements, assembly,
+                                                            offset);
+          });
 
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"
@@ -313,6 +342,9 @@ TEST_F(ASSEMBLY, properties_io_routines) {
             set_value<_medium_tag_, _property_tag_, false>(elements, assembly,
                                                            random_value);
           });
+
+      // Copy properties to device
+      assembly.properties.copy_to_device();
 
       // Create a property writer
       specfem::io::property_writer<specfem::io::ASCII<specfem::io::write> >

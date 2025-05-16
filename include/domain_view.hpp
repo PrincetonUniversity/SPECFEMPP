@@ -234,7 +234,7 @@ template <typename ViewType>
 specfem::kokkos::View<typename ViewType::value_type,
                       typename ViewType::extents_type,
                       typename ViewType::layout_type, Kokkos::HostSpace>
-create_mirror_view(const ViewType &view) {
+create_mirror_view(const ViewType view) {
   if constexpr (std::is_same_v<typename ViewType::memory_space,
                                Kokkos::HostSpace>) {
     return view;
@@ -251,7 +251,7 @@ create_mirror_view(const ViewType &view) {
 }
 
 template <typename SrcViewType, typename DstViewType>
-void deep_copy(const DstViewType &dst, const SrcViewType &src) {
+void deep_copy(const DstViewType dst, const SrcViewType src) {
   Kokkos::deep_copy(dst.get_base_view(), src.get_base_view());
 }
 } // namespace kokkos
