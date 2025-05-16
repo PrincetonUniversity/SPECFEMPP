@@ -39,6 +39,7 @@ parameters:
     angle: 0.0
     seismogram-type:
       - displacement
+      - rotation
     nstep_between_samples: 1
 
   ## Runtime setup
