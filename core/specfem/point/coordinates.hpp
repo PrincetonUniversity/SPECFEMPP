@@ -17,6 +17,31 @@ namespace point {
 template <specfem::dimension::type DimensionTag> struct local_coordinates;
 
 /**
+ * @brief Struct to store global coordinates associated with a quadrature point
+ *
+ *
+ * @tparam DimensionTag Dimension of the element where the quadrature point is
+ * located
+ */
+template <specfem::dimension::type DimensionTag> struct global_coordinates;
+
+/**
+ * @brief Euclidean distance between two global coordinates
+ *
+ * @tparam DimensionTag Dimension of the element where the quadrature point is
+ * located
+ * @param p1 Coordinates of the first point
+ * @param p2 Coordinates of the second point
+ * @return type_real Distance between the two points
+ */
+template <specfem::dimension::type DimensionTag>
+KOKKOS_FUNCTION type_real
+distance(const specfem::point::global_coordinates<DimensionTag> &p1,
+         const specfem::point::global_coordinates<DimensionTag> &p2);
+
+//-------------------------- 2D Specializations ------------------------------//
+
+/**
  * @brief Template specialization for 2D elements
  *
  */
@@ -46,14 +71,6 @@ template <> struct local_coordinates<specfem::dimension::type::dim2> {
 };
 
 /**
- * @brief Struct to store global coordinates associated with a quadrature point
- *
- * @tparam DimensionTag Dimension of the element where the quadrature point is
- * located
- */
-template <specfem::dimension::type DimensionTag> struct global_coordinates;
-
-/**
  * @brief Template specialization for 2D elements
  *
  */
@@ -78,133 +95,66 @@ template <> struct global_coordinates<specfem::dimension::type::dim2> {
   global_coordinates(const type_real &x, const type_real &z) : x(x), z(z) {}
 };
 
-/**
- * @brief Struct to store the index associated with a quadrature point
- *
- * @tparam DimensionTag Dimension of the element where the quadrature point is
- * located
- * @tparam using_simd Flag to indicate if this is a simd index
- */
-template <specfem::dimension::type DimensionTag, bool using_simd = false>
-struct index;
+//-------------------------- 3D Specializations ------------------------------//
 
 /**
- * @brief Template specialization for 2D elements
+ * @brief Template specialization for 3D elements
  *
- * @specialization
  */
-template <> struct index<specfem::dimension::type::dim2, false> {
-  int ispec; ///< Index of the spectral element
-  int iz;    ///< Index of the quadrature point in the z direction within the
-             ///< spectral element
-  int ix;    ///< Index of the quadrature point in the x direction within the
-             ///< spectral element
-
-  constexpr static bool using_simd =
-      false; ///< Flag to indicate that SIMD is not being used'
-
-  constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension type
+template <> struct local_coordinates<specfem::dimension::type::dim3> {
+  int ispec;       ///< Index of the spectral element
+  type_real xi;    ///< Local coordinate \f$ \xi \f$
+  type_real eta;   ///< Local coordinate \f$ \eta \f$
+  type_real gamma; ///< Local coordinate \f$ \gamma \f$
 
   /**
    * @brief Default constructor
    *
    */
   KOKKOS_FUNCTION
-  index() = default;
+  local_coordinates() = default;
 
   /**
-   * @brief Construct a new index object
+   * @brief Construct a new local coordinates object
    *
    * @param ispec Index of the spectral element
-   * @param iz Index of the quadrature point in the z direction within the
-   * spectral element
-   * @param ix Index of the quadrature point in the x direction within the
-   * spectral element
+   * @param xi Local coordinate \f$ \xi \f$
+   * @param eta Local coordinate \f$ \eta \f$
+   * @param gamma Local coordinate \f$ \gamma \f$
    */
   KOKKOS_FUNCTION
-  index(const int &ispec, const int &iz, const int &ix)
-      : ispec(ispec), iz(iz), ix(ix) {}
+  local_coordinates(const int &ispec, const type_real &xi, const type_real &eta,
+                    const type_real &gamma)
+      : ispec(ispec), xi(xi), eta(eta), gamma(gamma) {}
 };
 
 /**
- * @brief Template specialization for 2D elements
- *
- * @copydoc simd_index
+ * @brief Template specialization for 3D elements
  *
  */
-template <> struct index<specfem::dimension::type::dim2, true> {
-  int ispec; ///< Index associated with the spectral element at the start
-             ///< of the SIMD vector
-  int number_elements; ///< Number of elements stored in the SIMD vector
-  int iz; ///< Index of the quadrature point in the z direction within
-          ///< the spectral element
-  int ix; ///< Index of the quadrature point in the x direction within
-          ///< the spectral element
-
-  constexpr static bool using_simd =
-      true; ///< Flag to indicate that SIMD is being used
-
-  constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension type
+template <> struct global_coordinates<specfem::dimension::type::dim3> {
+  type_real x; ///< Global coordinate \f$ x \f$
+  type_real y; ///< Global coordinate \f$ y \f$
+  type_real z; ///< Global coordinate \f$ z \f$
 
   /**
    * @brief Default constructor
    *
    */
   KOKKOS_FUNCTION
-  index() = default;
+  global_coordinates() = default;
 
   /**
-   * @brief Construct a new simd index object
+   * @brief Construct a new global coordinates object
    *
-   * @param ispec Index of the spectral element
-   * @param number_elements Number of elements
-   * @param iz Index of the quadrature point in the z direction within the
-   * spectral element
-   * @param ix Index of the quadrature point in the x direction within the
-   * spectral element
+   * @param x Global coordinate \f$ x \f$
+   * @param y Global coordinate \f$ y \f$
+   * @param z Global coordinate \f$ z \f$
    */
   KOKKOS_FUNCTION
-  index(const int &ispec, const int &number_elements, const int &iz,
-        const int &ix)
-      : ispec(ispec), number_elements(number_elements), iz(iz), ix(ix) {}
-
-  /**
-   * @brief Returns a boolean mask to check if the SIMD index is within the SIMD
-   * vector
-   *
-   * @param lane SIMD lane
-   * @return bool True if the SIMD index is within the SIMD vector
-   */
-  KOKKOS_INLINE_FUNCTION
-  bool mask(const std::size_t &lane) const {
-    return int(lane) < number_elements;
-  }
+  global_coordinates(const type_real &x, const type_real &y, const type_real &z)
+      : x(x), y(y), z(z) {}
 };
-
-/**
- * @brief Alias for the simd index
- *
- * @tparam DimensionTag Dimension of the element where the quadrature point is
- * located
- */
-template <specfem::dimension::type DimensionTag>
-using simd_index = index<DimensionTag, true>;
-
-/**
- * @brief Distance between two global coordinates
- *
- * @tparam DimensionTag Dimension of the element where the quadrature point is
- * located
- * @param p1 Coordinates of the first point
- * @param p2 Coordinates of the second point
- * @return type_real Distance between the two points
- */
-template <specfem::dimension::type DimensionTag>
-KOKKOS_FUNCTION type_real
-distance(const specfem::point::global_coordinates<DimensionTag> &p1,
-         const specfem::point::global_coordinates<DimensionTag> &p2);
 
 } // namespace point
 } // namespace specfem
