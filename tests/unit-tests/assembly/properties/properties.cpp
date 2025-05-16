@@ -60,7 +60,19 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
       [=](const typename PolicyType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.index;
-        PointType expected(static_cast<type_real>(index.ispec + offset));
+        using datatype = typename PointType::value_type;
+        datatype value(static_cast<datatype>(0.0));
+
+        if constexpr (using_simd) {
+          for (std::size_t i = 0; i < index.number_elements; ++i) {
+            value[i] = static_cast<type_real>(index.ispec + offset);
+          }
+        } else {
+          value = static_cast<type_real>(index.ispec + offset);
+        }
+
+        PointType expected(value);
+
         PointType computed;
         specfem::compute::load_on_host(index, properties, computed);
 
