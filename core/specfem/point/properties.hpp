@@ -9,12 +9,6 @@ namespace impl {
 namespace properties {
 
 /**
- * @defgroup specfem_point_properties_dim2_elastic_isotropic 2D Elastic
- * Isotropic Properties
- * @{
- */
-
-/**
  * @brief Data container to hold properties of 2D acoustic media at a quadrature
  * point
  *
@@ -65,13 +59,13 @@ struct data_container<specfem::dimension::type::dim2,
                                                           ///< v_p} @f$
   }
 };
-///@} end of group specfem_point_properties_dim2_elastic_isotropic
 
 /**
- * @defgroup specfem_point_properties_dim2_elastic_anisotropic 2D Elastic
- * Anisotropic Properties
+ * @defgroup specfem_point_properties_dim2_elastic_isotropic 2D Elastic
+ * Isotropic Properties
  * @{
  */
+
 /**
  * @brief Data container to hold properties of 2D elastic media at a quadrature
  * point
@@ -138,7 +132,13 @@ struct data_container<
     return lambdaplus2mu() - (static_cast<type_real>(2.0)) * mu();
   }
 };
+///@} end of group specfem_point_properties_dim2_elastic_isotropic
 
+/**
+ * @defgroup specfem_point_properties_dim2_elastic_anisotropic 2D Elastic
+ * Anisotropic Properties
+ * @{
+ */
 /**
  * @brief Data container to hold properties of 2D anisotropic elastic media at a
  * quadrature point

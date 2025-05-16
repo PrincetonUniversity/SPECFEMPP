@@ -3,6 +3,6 @@
 2D Acoustic Isotropic Point Kernels
 ===================================
 
-.. doxygenstruct:: specfem::point::kernels< specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, UseSIMD >
+.. doxygenstruct:: specfem::point::kernels::impl::data_container< specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, UseSIMD >
     :members:
     :private-members:
