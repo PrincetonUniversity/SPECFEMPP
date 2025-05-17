@@ -14,9 +14,9 @@ constexpr int openmp_chunk_size = 1;
 constexpr int serial_chunk_size = 1;
 } // namespace impl
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA)
 constexpr int storage_chunk_size = impl::cuda_chunk_size;
-#elif KOKKOS_ENABLE_OPENMP
+#elif defined(KOKKOS_ENABLE_OPENMP)
 constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
 constexpr int storage_chunk_size = impl::openmp_chunk_size * simd_size;
 #else
