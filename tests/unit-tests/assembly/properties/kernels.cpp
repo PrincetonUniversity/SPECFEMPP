@@ -194,6 +194,7 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
       [=](const typename HostPolicyType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.index;
+        using datatype = typename PointType::value_type;
         datatype value(static_cast<datatype>(0.0));
 
         if constexpr (using_simd) {
