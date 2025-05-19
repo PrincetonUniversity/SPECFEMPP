@@ -108,16 +108,12 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
 
           for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
                tile += ChunkPolicy::chunk_size * simd_size) {
-            const int starting_element_index =
-                team_member.league_rank() * ChunkPolicy::tile_size * simd_size +
-                tile;
-
-            if (starting_element_index >= nreceivers) {
-              break;
-            }
-
             const auto iterator =
-                policy.mapped_league_iterator(starting_element_index);
+                policy.mapped_league_iterator(team_member.league_rank(), tile);
+
+            if (iterator.is_end()) {
+              return;
+            }
 
             specfem::compute::load_on_device(team_member, iterator, field,
                                              element_field);
@@ -144,7 +140,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
           }
         });
 
-    Kokkos::fence();
+    // Kokkos::fence();
   }
 
   return;
