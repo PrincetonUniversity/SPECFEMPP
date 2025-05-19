@@ -3,6 +3,6 @@
 Point Properties (2D Poroelastic Isotropic)
 ===========================================
 
-.. doxygenstruct:: specfem::point::properties< specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic, UseSIMD >
+.. doxygenstruct:: specfem::point::impl::properties::data_container< specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic, UseSIMD >
     :members:
     :private-members:
