@@ -30,7 +30,7 @@ struct fields {
    * @brief Contruct fields from an assembled mesh
    *
    * @param mesh Assembled mesh
-   * @param properties Material properties
+   * @param element_types Element types
    * @param simulation Current simulation type
    */
   fields(const specfem::compute::mesh &mesh,
