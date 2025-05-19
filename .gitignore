@@ -2,6 +2,7 @@ CMakeUserPresets.json
 .vscode/
 .DS_Store
 build*/*
+build
 _build/
 _templates/
 public/

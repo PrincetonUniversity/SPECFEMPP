@@ -389,6 +389,7 @@ add_library(
         src/mesh/dim2/coupled_interfaces/interface_container.cpp
         src/mesh/dim2/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/dim2/tags/tags.cpp
+        src/mesh/dim2/adjacency_map/adjacency_map.cpp
         # 3-D
         src/mesh/dim3/mesh.cpp
         src/mesh/dim3/boundaries/absorbing_boundary.cpp

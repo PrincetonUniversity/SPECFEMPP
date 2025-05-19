@@ -129,6 +129,26 @@ target_link_libraries(
   -lpthread -lm
 )
 
+
+add_executable(
+  mortar_tests
+  mortar/adjacency_map/adjtest_2d.cpp
+  mortar/runner.cpp
+)
+
+target_link_libraries(
+  mortar_tests
+  gtest_main
+  mpi_environment
+  kokkos_environment
+  mesh
+  # yaml-cpp
+  io
+  # utilities
+  # material_class
+  -lpthread -lm
+)
+
 add_executable(
   compute_partial_derivatives_tests
   compute/partial_derivatives/compute_partial_derivatives_tests.cpp
@@ -442,6 +462,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(fortranio_test WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(io_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(mesh_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(mortar_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(compute_partial_derivatives_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(compute_elastic_tests WORKING_DIRECTORY ${TEST_DIR})
   # # gtest_discover_tests(compute_acoustic_tests WORKING_DIRECTORY ${TEST_DIR})
