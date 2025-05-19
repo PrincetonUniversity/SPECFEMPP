@@ -337,9 +337,13 @@ TEST_F(ASSEMBLY, properties_io_routines) {
     auto assembly = std::get<5>(parameters);
 
     // get current working directory
-    std::string writer_directory =
-        boost::filesystem::current_path().string() + "/properties_test";
-    boost::filesystem::create_directory(writer_directory);
+    // Access environment variable BUILD_DIR
+    std::string temp_io_directory =
+        (std::getenv("BUILD_DIR")
+             ? std::string(std::getenv("BUILD_DIR"))
+             : boost::filesystem::current_path().string()) +
+        +"/tests/unit-tests/" + "temp_properties_io";
+    boost::filesystem::create_directories(temp_io_directory);
 
     try {
       // Set all properties to a random value
@@ -360,13 +364,13 @@ TEST_F(ASSEMBLY, properties_io_routines) {
 
       // Create a property writer
       specfem::io::property_writer<specfem::io::ASCII<specfem::io::write> >
-          writer(writer_directory);
+          writer(temp_io_directory);
 
       writer.write(assembly);
 
       // Create a property reader
       specfem::io::property_reader<specfem::io::ASCII<specfem::io::read> >
-          reader(writer_directory);
+          reader(temp_io_directory);
       reader.read(assembly);
 
       // Check that the properties are the same
@@ -397,6 +401,6 @@ TEST_F(ASSEMBLY, properties_io_routines) {
     }
 
     // Clean up the test file
-    boost::filesystem::remove_all(writer_directory);
+    boost::filesystem::remove_all(temp_io_directory);
   }
 }
