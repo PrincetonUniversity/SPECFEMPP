@@ -8,6 +8,10 @@ namespace point {
 namespace impl {
 namespace properties {
 
+// ===========================================================================
+// 2D Point Properties
+// ===========================================================================
+
 /**
  * @brief Data container to hold properties of 2D acoustic media at a quadrature
  * point
@@ -469,6 +473,83 @@ struct properties : impl::properties::data_container<Dimension, MediumTag,
   using simd = typename base_type::simd;
 
   using base_type::base_type;
+};
+
+// ===========================================================================
+// 3D Point Properties
+// ===========================================================================
+
+/**
+ * @brief Data container to hold properties of 2D elastic media at a quadrature
+ * point
+ *
+ * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
+ *
+ * @fn const value_type kappa() const
+ *   @brief Get the bulk modulus @f$ \kappa @f$
+ *   @return const value_type @f$ \kappa @f$
+ *
+ * @fn const value_type mu() const
+ *   @brief Get shear modulus @f$ \mu @f$
+ *   @return const value_type @f$ \mu @f$
+ *
+ * @fn const value_type rho() const
+ *   @brief Get density @f$ \rho @f$
+ *   @return const value_type @f$ \rho @f$
+ *
+ * @fn const value_type rho_vp() const
+ *   @brief Compute the product of density and P-wave
+ *   velocity squared, i.e., @f$ \rho v_p^2 = \rho
+ *   (\lambda + 2\mu) @f$
+ *   @return const value_type The value of @f$ \rho
+ *   (\lambda + 2\mu) @f$
+ *
+ * @fn const value_type rho_vs() const
+ *   @brief Compute the product of density and S-wave
+ *   velocity squared, i.e., @f$ \rho v_s^2 = \rho \mu
+ *   @f$
+ *   @return const value_type The value of @f$ \rho \mu
+ *   @f$
+ *
+ * @fn const value_type lambda() const
+ *   @brief Get Lame's first parameter @f$ \lambda @f$
+ *   from @f$ \lambda + 2\mu @f$ and @f$ \mu @f$
+ *   @return const value_type The value of @f$ \lambda =
+ *   (\lambda + 2\mu) - 2\mu @f$
+ */
+template <bool UseSIMD>
+struct data_container<specfem::dimension::type::dim3,
+                      specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic, UseSIMD>
+    : public traits<specfem::dimension::type::dim3,
+                    specfem::element::medium_tag::elastic,
+                    specfem::element::property_tag::isotropic, UseSIMD> {
+
+  using base_type = traits<specfem::dimension::type::dim3,
+                           specfem::element::medium_tag::elastic,
+                           specfem::element::property_tag::isotropic, UseSIMD>;
+
+  using value_type = typename base_type::value_type;
+  using simd = typename base_type::simd;
+
+  POINT_CONTAINER(kappa, mu, rho)
+
+  KOKKOS_INLINE_FUNCTION const value_type rho_vs() const {
+    return Kokkos::sqrt(rho() * mu());
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type rho_vp() const {
+    return Kokkos::sqrt(rho() * lambdaplus2mu());
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type lambdaplus2mu() const {
+    return kappa() +
+           static_cast<type_real>(4.0) / static_cast<type_real>(3.0) * mu();
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type lambda() const {
+    return lambdaplus2mu() - (static_cast<type_real>(2.0)) * mu();
+  }
 };
 
 } // namespace point
