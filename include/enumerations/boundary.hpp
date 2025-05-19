@@ -143,6 +143,8 @@ public:
       Kokkos::abort("Invalid boundary tag");
       break;
     }
+
+    return false; // This line should never be reached
   }
 
   /**
