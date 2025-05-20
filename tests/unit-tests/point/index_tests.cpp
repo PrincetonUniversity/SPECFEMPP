@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 
 // Base test fixture for Kokkos initialization
-class IndexTest : public ::testing::Test {
+class PointIndexTest : public ::testing::Test {
 protected:
   void SetUp() override {
     // Initialize Kokkos
@@ -20,7 +20,7 @@ protected:
 // Tests for 2D index
 
 // Test 2D index default constructor
-TEST_F(IndexTest, DefaultConstructor2D) {
+TEST_F(PointIndexTest, DefaultConstructor2D) {
   // Default constructor
   specfem::point::index<specfem::dimension::type::dim2> idx;
 
@@ -30,7 +30,7 @@ TEST_F(IndexTest, DefaultConstructor2D) {
 }
 
 // Test 2D index parameterized constructor
-TEST_F(IndexTest, ParameterizedConstructor2D) {
+TEST_F(PointIndexTest, ParameterizedConstructor2D) {
   // Parameters
   const int ispec = 5;
   const int iz = 3;
@@ -52,7 +52,7 @@ TEST_F(IndexTest, ParameterizedConstructor2D) {
 // Tests for 2D SIMD index
 
 // Test 2D SIMD index default constructor
-TEST_F(IndexTest, DefaultConstructor2D_SIMD) {
+TEST_F(PointIndexTest, DefaultConstructor2D_SIMD) {
   // Default constructor
   specfem::point::simd_index<specfem::dimension::type::dim2> idx;
 
@@ -62,7 +62,7 @@ TEST_F(IndexTest, DefaultConstructor2D_SIMD) {
 }
 
 // Test 2D SIMD index parameterized constructor
-TEST_F(IndexTest, ParameterizedConstructor2D_SIMD) {
+TEST_F(PointIndexTest, ParameterizedConstructor2D_SIMD) {
   // Parameters
   const int ispec = 5;
   const int number_elements = 4;
@@ -85,7 +85,7 @@ TEST_F(IndexTest, ParameterizedConstructor2D_SIMD) {
 }
 
 // Test 2D SIMD index mask function
-TEST_F(IndexTest, MaskFunction2D_SIMD) {
+TEST_F(PointIndexTest, MaskFunction2D_SIMD) {
   // Parameters
   const int ispec = 5;
   const int number_elements = 4;
@@ -106,7 +106,7 @@ TEST_F(IndexTest, MaskFunction2D_SIMD) {
 // Tests for 3D index
 
 // Test 3D index default constructor
-TEST_F(IndexTest, DefaultConstructor3D) {
+TEST_F(PointIndexTest, DefaultConstructor3D) {
   // Default constructor
   specfem::point::index<specfem::dimension::type::dim3> idx;
 
@@ -116,7 +116,7 @@ TEST_F(IndexTest, DefaultConstructor3D) {
 }
 
 // Test 3D index parameterized constructor
-TEST_F(IndexTest, ParameterizedConstructor3D) {
+TEST_F(PointIndexTest, ParameterizedConstructor3D) {
   // Parameters
   const int ispec = 5;
   const int iz = 3;
@@ -140,7 +140,7 @@ TEST_F(IndexTest, ParameterizedConstructor3D) {
 // Tests for 3D SIMD index
 
 // Test 3D SIMD index default constructor
-TEST_F(IndexTest, DefaultConstructor3D_SIMD) {
+TEST_F(PointIndexTest, DefaultConstructor3D_SIMD) {
   // Default constructor
   specfem::point::simd_index<specfem::dimension::type::dim3> idx;
 
@@ -150,7 +150,7 @@ TEST_F(IndexTest, DefaultConstructor3D_SIMD) {
 }
 
 // Test 3D SIMD index parameterized constructor
-TEST_F(IndexTest, ParameterizedConstructor3D_SIMD) {
+TEST_F(PointIndexTest, ParameterizedConstructor3D_SIMD) {
   // Parameters
   const int ispec = 5;
   const int number_elements = 4;
@@ -175,7 +175,7 @@ TEST_F(IndexTest, ParameterizedConstructor3D_SIMD) {
 }
 
 // Test 3D SIMD index mask function
-TEST_F(IndexTest, MaskFunction3D_SIMD) {
+TEST_F(PointIndexTest, MaskFunction3D_SIMD) {
   // Parameters
   const int ispec = 5;
   const int number_elements = 4;
@@ -195,7 +195,7 @@ TEST_F(IndexTest, MaskFunction3D_SIMD) {
 }
 
 // Test negative indices 2D
-TEST_F(IndexTest, NegativeIndices2D) {
+TEST_F(PointIndexTest, NegativeIndices2D) {
   // Parameters with negative values
   const int ispec = -1;
   const int iz = -2;
@@ -210,7 +210,7 @@ TEST_F(IndexTest, NegativeIndices2D) {
   EXPECT_EQ(idx.ix, ix);
 }
 
-TEST_F(IndexTest, NegativeIndices3D) {
+TEST_F(PointIndexTest, NegativeIndices3D) {
   // Parameters with negative values
   const int ispec = -1;
   const int iz = -2;
@@ -228,7 +228,7 @@ TEST_F(IndexTest, NegativeIndices3D) {
 }
 
 // Test edge cases for SIMD number_elements
-TEST_F(IndexTest, ZeroElements2D_SIMD) {
+TEST_F(PointIndexTest, ZeroElements2D_SIMD) {
   // Parameters with zero elements
   const int ispec = 5;
   const int number_elements = 0;
@@ -247,7 +247,7 @@ TEST_F(IndexTest, ZeroElements2D_SIMD) {
                              // is 0
 }
 
-TEST_F(IndexTest, ZeroElements3D) {
+TEST_F(PointIndexTest, ZeroElements3D) {
   // Parameters with zero elements
   const int ispec = 5;
   const int number_elements = 0;
