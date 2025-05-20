@@ -329,11 +329,6 @@ struct data_container<specfem::dimension::type::dim2,
   POINT_CONTAINER(phi, rho_s, rho_f, tortuosity, mu_G, H_Biot, C_Biot, M_Biot,
                   permxx, permxz, permzz, eta_f)
 
-  /**
-   * @brief Compute Lame's parameter @f$ \lambda @f$
-   *
-   * @return Lame's parameter @f$ \lambda @f$
-   */
   KOKKOS_INLINE_FUNCTION const value_type lambda_G() const {
     return H_Biot() - (static_cast<type_real>(2.0)) * mu_G();
   }
@@ -459,6 +454,12 @@ struct data_container<
 // ===========================================================================
 
 /**
+ * @defgroup specfem_point_properties_dim3_elastic_isotropic 3D Elastic
+ * Isotropic Properties
+ * @{
+ */
+
+/**
  * @brief Data container to hold properties of 3D elastic isotropic media at a
  * quadrature point
  *
@@ -532,6 +533,7 @@ struct data_container<specfem::dimension::type::dim3,
     return lambdaplus2mu() - (static_cast<type_real>(2.0)) * mu();
   }
 };
+///@} end of group specfem_point_properties_dim3_elastic_isotropic
 
 } // namespace properties
 
