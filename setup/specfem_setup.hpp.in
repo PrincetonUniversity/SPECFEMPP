@@ -28,11 +28,3 @@ KOKKOS_INLINE_FUNCTION void sub2ind(const int xz, const int ngllx, int &iz,
   ix = xz - iz * ngllx;
   return;
 }
-
-// If type_real size is double us EXPECT_DOUBLE_EQ, else use EXPECT_FLOAT_EQ
-#define EXPECT_REAL_EQ(expected, actual) \
-  if (sizeof(type_real) == sizeof(double)) { \
-    EXPECT_DOUBLE_EQ(expected, actual); \
-  } else { \
-    EXPECT_FLOAT_EQ(expected, actual); \
-  }

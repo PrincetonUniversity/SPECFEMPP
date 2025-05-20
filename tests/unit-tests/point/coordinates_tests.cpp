@@ -1,5 +1,6 @@
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
+#include "test_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 #include <gtest/gtest.h>
