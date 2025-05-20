@@ -1,4 +1,5 @@
 #include "specfem/point.hpp"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 #include <gtest/gtest.h>
@@ -37,8 +38,8 @@ TEST_F(PointCoordinatesTest, LocalCoordinates2D) {
 
   // Check values
   EXPECT_EQ(local.ispec, ispec);
-  EXPECT_DOUBLE_EQ(local.xi, xi);
-  EXPECT_DOUBLE_EQ(local.gamma, gamma);
+  EXPECT_REAL_EQ(local.xi, xi);
+  EXPECT_REAL_EQ(local.gamma, gamma);
 }
 
 // Test 2D global coordinates
@@ -54,8 +55,8 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates2D) {
                                                                             z);
 
   // Check values
-  EXPECT_DOUBLE_EQ(global.x, x);
-  EXPECT_DOUBLE_EQ(global.z, z);
+  EXPECT_REAL_EQ(global.x, x);
+  EXPECT_REAL_EQ(global.z, z);
 }
 
 // Test 2D distance function
@@ -71,7 +72,7 @@ TEST_F(PointCoordinatesTest, Distance2D) {
       specfem::point::distance<specfem::dimension::type::dim2>(p1, p2);
 
   // Expected result is 5.0 (Pythagorean triangle 3-4-5)
-  EXPECT_DOUBLE_EQ(dist, 5.0);
+  EXPECT_REAL_EQ(dist, 5.0);
 }
 
 // Test 2D distance symmetry
@@ -89,7 +90,7 @@ TEST_F(PointCoordinatesTest, DistanceSymmetry2D) {
       specfem::point::distance<specfem::dimension::type::dim2>(p2, p1);
 
   // Check symmetry
-  EXPECT_DOUBLE_EQ(dist_forward, dist_backward);
+  EXPECT_REAL_EQ(dist_forward, dist_backward);
 }
 
 // Test 2D zero distance
@@ -103,7 +104,7 @@ TEST_F(PointCoordinatesTest, ZeroDistance2D) {
       specfem::point::distance<specfem::dimension::type::dim2>(p, p);
 
   // Expected result is 0.0
-  EXPECT_DOUBLE_EQ(dist, 0.0);
+  EXPECT_REAL_EQ(dist, 0.0);
 }
 
 // Test 2D non-integer coordinates
@@ -120,7 +121,7 @@ TEST_F(PointCoordinatesTest, NonIntegerCoordinates2D) {
 
   // Expected result
   type_real expected = std::sqrt(3.0 * 3.0 + 4.0 * 4.0);
-  EXPECT_DOUBLE_EQ(dist, expected);
+  EXPECT_REAL_EQ(dist, expected);
 }
 
 // Test 2D negative coordinates
@@ -137,7 +138,7 @@ TEST_F(PointCoordinatesTest, NegativeCoordinates2D) {
 
   // Expected result
   type_real expected = std::sqrt(3.0 * 3.0 + 3.0 * 3.0);
-  EXPECT_DOUBLE_EQ(dist, expected);
+  EXPECT_REAL_EQ(dist, expected);
 }
 
 // Tests for 3D coordinates
@@ -158,9 +159,9 @@ TEST_F(PointCoordinatesTest, LocalCoordinates3D) {
 
   // Check values
   EXPECT_EQ(local.ispec, ispec);
-  EXPECT_DOUBLE_EQ(local.xi, xi);
-  EXPECT_DOUBLE_EQ(local.eta, eta);
-  EXPECT_DOUBLE_EQ(local.gamma, gamma);
+  EXPECT_REAL_EQ(local.xi, xi);
+  EXPECT_REAL_EQ(local.eta, eta);
+  EXPECT_REAL_EQ(local.gamma, gamma);
 }
 
 // Test 3D global coordinates
@@ -177,9 +178,9 @@ TEST_F(PointCoordinatesTest, GlobalCoordinates3D) {
       x, y, z);
 
   // Check values
-  EXPECT_DOUBLE_EQ(global.x, x);
-  EXPECT_DOUBLE_EQ(global.y, y);
-  EXPECT_DOUBLE_EQ(global.z, z);
+  EXPECT_REAL_EQ(global.x, x);
+  EXPECT_REAL_EQ(global.y, y);
+  EXPECT_REAL_EQ(global.z, z);
 }
 
 // Test 3D distance function
@@ -195,7 +196,7 @@ TEST_F(PointCoordinatesTest, Distance3D) {
       specfem::point::distance<specfem::dimension::type::dim3>(p1, p2);
 
   // Expected result is 13.0 (3D extension of the Pythagorean theorem)
-  EXPECT_DOUBLE_EQ(dist, 13.0);
+  EXPECT_REAL_EQ(dist, 13.0);
 }
 
 // Test 3D distance symmetry
@@ -213,7 +214,7 @@ TEST_F(PointCoordinatesTest, DistanceSymmetry3D) {
       specfem::point::distance<specfem::dimension::type::dim3>(p2, p1);
 
   // Check symmetry
-  EXPECT_DOUBLE_EQ(dist_forward, dist_backward);
+  EXPECT_REAL_EQ(dist_forward, dist_backward);
 }
 
 // Test 3D zero distance
@@ -227,7 +228,7 @@ TEST_F(PointCoordinatesTest, ZeroDistance3D) {
       specfem::point::distance<specfem::dimension::type::dim3>(p, p);
 
   // Expected result is 0.0
-  EXPECT_DOUBLE_EQ(dist, 0.0);
+  EXPECT_REAL_EQ(dist, 0.0);
 }
 
 // Test 3D non-integer coordinates
@@ -244,7 +245,7 @@ TEST_F(PointCoordinatesTest, NonIntegerCoordinates3D) {
 
   // Expected result
   type_real expected = std::sqrt(3.0 * 3.0 + 4.0 * 4.0 + 4.0 * 4.0);
-  EXPECT_DOUBLE_EQ(dist, expected);
+  EXPECT_REAL_EQ(dist, expected);
 }
 
 // Test 3D negative coordinates
@@ -261,7 +262,7 @@ TEST_F(PointCoordinatesTest, NegativeCoordinates3D) {
 
   // Expected result
   type_real expected = std::sqrt(3.0 * 3.0 + 3.0 * 3.0 + 3.0 * 3.0);
-  EXPECT_DOUBLE_EQ(dist, expected);
+  EXPECT_REAL_EQ(dist, expected);
 }
 
 // Main function
