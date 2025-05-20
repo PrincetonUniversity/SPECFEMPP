@@ -18,15 +18,12 @@ protected:
 };
 
 // Test fixture for 2D coordinates tests
-class PointCoordinates2DTest : public CoordinatesTest {};
-
-// Test fixture for 3D coordinates tests
-class PointCoordinates3DTest : public CoordinatesTest {};
+class PointCoordinatesTest : public CoordinatesTest {};
 
 // Tests for 2D coordinates
 
 // Test 2D local coordinates
-TEST_F(PointCoordinates2DTest, LocalCoordinates) {
+TEST_F(PointCoordinatesTest, LocalCoordinates2D) {
   // Default constructor
   specfem::point::local_coordinates<specfem::dimension::type::dim2>
       local_default;
@@ -45,7 +42,7 @@ TEST_F(PointCoordinates2DTest, LocalCoordinates) {
 }
 
 // Test 2D global coordinates
-TEST_F(PointCoordinates2DTest, GlobalCoordinates) {
+TEST_F(PointCoordinatesTest, GlobalCoordinates2D) {
   // Default constructor
   specfem::point::global_coordinates<specfem::dimension::type::dim2>
       global_default;
@@ -62,7 +59,7 @@ TEST_F(PointCoordinates2DTest, GlobalCoordinates) {
 }
 
 // Test 2D distance function
-TEST_F(PointCoordinates2DTest, Distance) {
+TEST_F(PointCoordinatesTest, Distance2D) {
   // Create two points
   specfem::point::global_coordinates<specfem::dimension::type::dim2> p1(0.0,
                                                                         0.0);
@@ -78,7 +75,7 @@ TEST_F(PointCoordinates2DTest, Distance) {
 }
 
 // Test 2D distance symmetry
-TEST_F(PointCoordinates2DTest, DistanceSymmetry) {
+TEST_F(PointCoordinatesTest, DistanceSymmetry2D) {
   // Create two points
   specfem::point::global_coordinates<specfem::dimension::type::dim2> p1(1.0,
                                                                         2.0);
@@ -96,7 +93,7 @@ TEST_F(PointCoordinates2DTest, DistanceSymmetry) {
 }
 
 // Test 2D zero distance
-TEST_F(PointCoordinates2DTest, ZeroDistance) {
+TEST_F(PointCoordinatesTest, ZeroDistance2D) {
   // Create a point
   specfem::point::global_coordinates<specfem::dimension::type::dim2> p(2.5,
                                                                        3.5);
@@ -110,7 +107,7 @@ TEST_F(PointCoordinates2DTest, ZeroDistance) {
 }
 
 // Test 2D non-integer coordinates
-TEST_F(PointCoordinates2DTest, NonIntegerCoordinates) {
+TEST_F(PointCoordinatesTest, NonIntegerCoordinates2D) {
   // Create two points with non-integer coordinates
   specfem::point::global_coordinates<specfem::dimension::type::dim2> p1(1.5,
                                                                         2.5);
@@ -127,7 +124,7 @@ TEST_F(PointCoordinates2DTest, NonIntegerCoordinates) {
 }
 
 // Test 2D negative coordinates
-TEST_F(PointCoordinates2DTest, NegativeCoordinates) {
+TEST_F(PointCoordinatesTest, NegativeCoordinates2D) {
   // Create two points with negative coordinates
   specfem::point::global_coordinates<specfem::dimension::type::dim2> p1(-1.0,
                                                                         -2.0);
@@ -146,7 +143,7 @@ TEST_F(PointCoordinates2DTest, NegativeCoordinates) {
 // Tests for 3D coordinates
 
 // Test 3D local coordinates
-TEST_F(PointCoordinates3DTest, LocalCoordinates) {
+TEST_F(PointCoordinatesTest, LocalCoordinates3D) {
   // Default constructor
   specfem::point::local_coordinates<specfem::dimension::type::dim3>
       local_default;
@@ -167,7 +164,7 @@ TEST_F(PointCoordinates3DTest, LocalCoordinates) {
 }
 
 // Test 3D global coordinates
-TEST_F(PointCoordinates3DTest, GlobalCoordinates) {
+TEST_F(PointCoordinatesTest, GlobalCoordinates3D) {
   // Default constructor
   specfem::point::global_coordinates<specfem::dimension::type::dim3>
       global_default;
@@ -186,7 +183,7 @@ TEST_F(PointCoordinates3DTest, GlobalCoordinates) {
 }
 
 // Test 3D distance function
-TEST_F(PointCoordinates3DTest, Distance) {
+TEST_F(PointCoordinatesTest, Distance3D) {
   // Create two points
   specfem::point::global_coordinates<specfem::dimension::type::dim3> p1(
       0.0, 0.0, 0.0);
@@ -202,7 +199,7 @@ TEST_F(PointCoordinates3DTest, Distance) {
 }
 
 // Test 3D distance symmetry
-TEST_F(PointCoordinates3DTest, DistanceSymmetry) {
+TEST_F(PointCoordinatesTest, DistanceSymmetry3D) {
   // Create two points
   specfem::point::global_coordinates<specfem::dimension::type::dim3> p1(
       1.0, 2.0, 3.0);
@@ -220,7 +217,7 @@ TEST_F(PointCoordinates3DTest, DistanceSymmetry) {
 }
 
 // Test 3D zero distance
-TEST_F(PointCoordinates3DTest, ZeroDistance) {
+TEST_F(PointCoordinatesTest, ZeroDistance3D) {
   // Create a point
   specfem::point::global_coordinates<specfem::dimension::type::dim3> p(2.5, 3.5,
                                                                        4.5);
@@ -234,7 +231,7 @@ TEST_F(PointCoordinates3DTest, ZeroDistance) {
 }
 
 // Test 3D non-integer coordinates
-TEST_F(PointCoordinates3DTest, NonIntegerCoordinates) {
+TEST_F(PointCoordinatesTest, NonIntegerCoordinates3D) {
   // Create two points with non-integer coordinates
   specfem::point::global_coordinates<specfem::dimension::type::dim3> p1(
       1.5, 2.5, 3.5);
@@ -251,7 +248,7 @@ TEST_F(PointCoordinates3DTest, NonIntegerCoordinates) {
 }
 
 // Test 3D negative coordinates
-TEST_F(PointCoordinates3DTest, NegativeCoordinates) {
+TEST_F(PointCoordinatesTest, NegativeCoordinates3D) {
   // Create two points with negative coordinates
   specfem::point::global_coordinates<specfem::dimension::type::dim3> p1(
       -1.0, -2.0, -3.0);
