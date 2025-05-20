@@ -17,22 +17,10 @@ protected:
   }
 };
 
-// Test fixture for 2D index tests
-class Index2DTest : public IndexTest {};
-
-// Test fixture for 2D SIMD index tests
-class SIMDIndex2DTest : public IndexTest {};
-
-// Test fixture for 3D index tests
-class Index3DTest : public IndexTest {};
-
-// Test fixture for 3D SIMD index tests
-class SIMDIndex3DTest : public IndexTest {};
-
 // Tests for 2D index
 
 // Test 2D index default constructor
-TEST_F(Index2DTest, DefaultConstructor) {
+TEST_F(IndexTest, DefaultConstructor2D) {
   // Default constructor
   specfem::point::index<specfem::dimension::type::dim2> idx;
 
@@ -42,7 +30,7 @@ TEST_F(Index2DTest, DefaultConstructor) {
 }
 
 // Test 2D index parameterized constructor
-TEST_F(Index2DTest, ParameterizedConstructor) {
+TEST_F(IndexTest, ParameterizedConstructor2D) {
   // Parameters
   const int ispec = 5;
   const int iz = 3;
@@ -64,7 +52,7 @@ TEST_F(Index2DTest, ParameterizedConstructor) {
 // Tests for 2D SIMD index
 
 // Test 2D SIMD index default constructor
-TEST_F(SIMDIndex2DTest, DefaultConstructor) {
+TEST_F(IndexTest, DefaultConstructor2D_SIMD) {
   // Default constructor
   specfem::point::simd_index<specfem::dimension::type::dim2> idx;
 
@@ -74,7 +62,7 @@ TEST_F(SIMDIndex2DTest, DefaultConstructor) {
 }
 
 // Test 2D SIMD index parameterized constructor
-TEST_F(SIMDIndex2DTest, ParameterizedConstructor) {
+TEST_F(IndexTest, ParameterizedConstructor2D_SIMD) {
   // Parameters
   const int ispec = 5;
   const int number_elements = 4;
@@ -97,7 +85,7 @@ TEST_F(SIMDIndex2DTest, ParameterizedConstructor) {
 }
 
 // Test 2D SIMD index mask function
-TEST_F(SIMDIndex2DTest, MaskFunction) {
+TEST_F(IndexTest, MaskFunction2D_SIMD) {
   // Parameters
   const int ispec = 5;
   const int number_elements = 4;
@@ -118,7 +106,7 @@ TEST_F(SIMDIndex2DTest, MaskFunction) {
 // Tests for 3D index
 
 // Test 3D index default constructor
-TEST_F(Index3DTest, DefaultConstructor) {
+TEST_F(IndexTest, DefaultConstructor3D) {
   // Default constructor
   specfem::point::index<specfem::dimension::type::dim3> idx;
 
@@ -128,7 +116,7 @@ TEST_F(Index3DTest, DefaultConstructor) {
 }
 
 // Test 3D index parameterized constructor
-TEST_F(Index3DTest, ParameterizedConstructor) {
+TEST_F(IndexTest, ParameterizedConstructor3D) {
   // Parameters
   const int ispec = 5;
   const int iz = 3;
@@ -152,7 +140,7 @@ TEST_F(Index3DTest, ParameterizedConstructor) {
 // Tests for 3D SIMD index
 
 // Test 3D SIMD index default constructor
-TEST_F(SIMDIndex3DTest, DefaultConstructor) {
+TEST_F(IndexTest, DefaultConstructor3D_SIMD) {
   // Default constructor
   specfem::point::simd_index<specfem::dimension::type::dim3> idx;
 
@@ -162,7 +150,7 @@ TEST_F(SIMDIndex3DTest, DefaultConstructor) {
 }
 
 // Test 3D SIMD index parameterized constructor
-TEST_F(SIMDIndex3DTest, ParameterizedConstructor) {
+TEST_F(IndexTest, ParameterizedConstructor3D_SIMD) {
   // Parameters
   const int ispec = 5;
   const int number_elements = 4;
@@ -187,7 +175,7 @@ TEST_F(SIMDIndex3DTest, ParameterizedConstructor) {
 }
 
 // Test 3D SIMD index mask function
-TEST_F(SIMDIndex3DTest, MaskFunction) {
+TEST_F(IndexTest, MaskFunction3D_SIMD) {
   // Parameters
   const int ispec = 5;
   const int number_elements = 4;
@@ -206,8 +194,8 @@ TEST_F(SIMDIndex3DTest, MaskFunction) {
   EXPECT_FALSE(idx.mask(10)); // Lane 10 is outside the number_elements
 }
 
-// Test negative indices
-TEST_F(Index2DTest, NegativeIndices) {
+// Test negative indices 2D
+TEST_F(IndexTest, NegativeIndices2D) {
   // Parameters with negative values
   const int ispec = -1;
   const int iz = -2;
@@ -222,7 +210,7 @@ TEST_F(Index2DTest, NegativeIndices) {
   EXPECT_EQ(idx.ix, ix);
 }
 
-TEST_F(Index3DTest, NegativeIndices) {
+TEST_F(IndexTest, NegativeIndices3D) {
   // Parameters with negative values
   const int ispec = -1;
   const int iz = -2;
@@ -240,7 +228,7 @@ TEST_F(Index3DTest, NegativeIndices) {
 }
 
 // Test edge cases for SIMD number_elements
-TEST_F(SIMDIndex2DTest, ZeroElements) {
+TEST_F(IndexTest, ZeroElements2D_SIMD) {
   // Parameters with zero elements
   const int ispec = 5;
   const int number_elements = 0;
@@ -259,7 +247,7 @@ TEST_F(SIMDIndex2DTest, ZeroElements) {
                              // is 0
 }
 
-TEST_F(SIMDIndex3DTest, ZeroElements) {
+TEST_F(IndexTest, ZeroElements3D) {
   // Parameters with zero elements
   const int ispec = 5;
   const int number_elements = 0;
