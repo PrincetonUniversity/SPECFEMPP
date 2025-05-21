@@ -73,7 +73,7 @@ template <bool on_device, typename PointPartialDerivativesType,
           typename std::enable_if_t<
               PointPartialDerivativesType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void impl_load(
-    const specfem::point::simd_index<PointPartialDerivativesType::dimension>
+    const specfem::point::simd_index<PointPartialDerivativesType::dimension_tag>
         &index,
     const specfem::compute::partial_derivatives &derivatives,
     PointPartialDerivativesType &partial_derivatives) {
@@ -128,7 +128,8 @@ template <bool on_device, typename PointPartialDerivativesType,
           typename std::enable_if_t<
               !PointPartialDerivativesType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void impl_load(
-    const specfem::point::index<PointPartialDerivativesType::dimension> &index,
+    const specfem::point::index<PointPartialDerivativesType::dimension_tag>
+        &index,
     const specfem::compute::partial_derivatives &derivatives,
     PointPartialDerivativesType &partial_derivatives) {
 
@@ -181,7 +182,7 @@ template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               PointPartialDerivativesType::simd::using_simd, int> = 0>
 inline void impl_store_on_host(
-    const specfem::point::simd_index<PointPartialDerivativesType::dimension>
+    const specfem::point::simd_index<PointPartialDerivativesType::dimension_tag>
         &index,
     const specfem::compute::partial_derivatives &derivatives,
     const PointPartialDerivativesType &partial_derivatives) {
@@ -221,7 +222,8 @@ template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               !PointPartialDerivativesType::simd::using_simd, int> = 0>
 inline void impl_store_on_host(
-    const specfem::point::index<PointPartialDerivativesType::dimension> &index,
+    const specfem::point::index<PointPartialDerivativesType::dimension_tag>
+        &index,
     const specfem::compute::partial_derivatives &derivatives,
     const PointPartialDerivativesType &partial_derivatives) {
 
