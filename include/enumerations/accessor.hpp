@@ -1,4 +1,7 @@
+#pragma once
+
 #include "data_class.hpp"
+#include "datatypes/point_view.hpp"
 #include "dimension.hpp"
 
 namespace specfem::accessor {
@@ -33,15 +36,15 @@ struct Accessor {
 
   template <typename T>
   using scalar_type = typename impl::AccessorValueType<
-      AccessorType>::template scalar_type<type_real, UseSIMD>;
+      AccessorType>::template scalar_type<T, UseSIMD>;
 
   template <typename T, int dimension>
   using vector_type = typename impl::AccessorValueType<
-      AccessorType>::template vector_type<type_real, dimension, UseSIMD>;
+      AccessorType>::template vector_type<T, dimension, UseSIMD>;
 
   template <typename T, int dimension, int components>
   using tensor_type = typename impl::AccessorValueType<
-      AccessorType>::template tensor_type<type_real, dimension, 3, UseSIMD>;
+      AccessorType>::template tensor_type<T, dimension, components, UseSIMD>;
 };
 
 } // namespace specfem::accessor
