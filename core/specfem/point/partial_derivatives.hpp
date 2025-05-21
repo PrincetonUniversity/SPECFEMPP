@@ -1,9 +1,6 @@
 #pragma once
 
-#include "datatypes/point_view.hpp"
-#include "enumerations/accessor.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 

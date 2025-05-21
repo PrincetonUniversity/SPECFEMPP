@@ -2,7 +2,7 @@
 #define _COMPUTE_PARTIAL_DERIVATIVES_HPP
 
 #include "domain_view.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "quadrature/interface.hpp"
@@ -16,27 +16,38 @@ namespace compute {
  * @brief Partial derivatives of the basis functions at every quadrature point
  *
  */
-struct partial_derivatives {
+struct partial_derivatives : public specfem::container::Container<
+                                 specfem::container::type::domain,
+                                 specfem::data_class::type::partial_derivatives,
+                                 specfem::dimension::type::dim2> {
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using base_type = specfem::container::Container<
+      specfem::container::type::domain,
+      specfem::data_class::type::partial_derivatives,
+      specfem::dimension::type::dim2>; ///< Base type of the point partial
+                                       ///< derivatives
+  using view_type = typename base_type::scalar_type<
+      type_real, Kokkos::DefaultExecutionSpace::memory_space>;
+  ///@}
 
-private:
-  using ViewType = specfem::kokkos::DomainView2d<
-      type_real, 3, Kokkos::DefaultExecutionSpace::memory_space>;
-
-public:
   int nspec; ///< Number of spectral elements
   int ngllz; ///< Number of quadrature points in z direction
   int ngllx; ///< Number of quadrature points in x direction
 
-  ViewType xix;                    ///< @xix
-  ViewType::HostMirror h_xix;      ///< Host mirror of @xix
-  ViewType xiz;                    ///< @xiz
-  ViewType::HostMirror h_xiz;      ///< Host mirror of @xiz
-  ViewType gammax;                 ///< @gammax
-  ViewType::HostMirror h_gammax;   ///< Host mirror of @gammax
-  ViewType gammaz;                 ///< @gammaz
-  ViewType::HostMirror h_gammaz;   ///< Host mirror of @gammaz
-  ViewType jacobian;               ///< Jacobian
-  ViewType::HostMirror h_jacobian; ///< Host mirror of Jacobian
+  view_type xix;                    ///< @xix
+  view_type::HostMirror h_xix;      ///< Host mirror of @xix
+  view_type xiz;                    ///< @xiz
+  view_type::HostMirror h_xiz;      ///< Host mirror of @xiz
+  view_type gammax;                 ///< @gammax
+  view_type::HostMirror h_gammax;   ///< Host mirror of @gammax
+  view_type gammaz;                 ///< @gammaz
+  view_type::HostMirror h_gammaz;   ///< Host mirror of @gammaz
+  view_type jacobian;               ///< Jacobian
+  view_type::HostMirror h_jacobian; ///< Host mirror of Jacobian
 
   /**
    * @name Constructors
