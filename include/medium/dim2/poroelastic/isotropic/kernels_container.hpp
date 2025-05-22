@@ -1,48 +1,24 @@
 #pragma once
 
-#include "medium/properties_container.hpp"
-#include "specfem/point.hpp"
+#include "medium/impl/data_container.hpp"
 #include <Kokkos_SIMD.hpp>
 
 namespace specfem {
 namespace medium {
 
+namespace kernels {
 template <>
-struct kernels_container<specfem::element::medium_tag::poroelastic,
-                         specfem::element::property_tag::isotropic>
-    : public impl_kernels_container<specfem::element::medium_tag::poroelastic,
-                                    specfem::element::property_tag::isotropic,
-                                    19> {
-  using base_type =
-      impl_kernels_container<specfem::element::medium_tag::poroelastic,
-                             specfem::element::property_tag::isotropic, 19>;
-  using base_type::base_type;
+struct data_container<specfem::element::medium_tag::poroelastic,
+                      specfem::element::property_tag::isotropic> {
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = specfem::element::medium_tag::poroelastic;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
 
-  DEFINE_MEDIUM_VIEW(rhot, 0)
-  DEFINE_MEDIUM_VIEW(rhof, 1)
-  DEFINE_MEDIUM_VIEW(eta, 2)
-  DEFINE_MEDIUM_VIEW(sm, 3)
-  DEFINE_MEDIUM_VIEW(mu_fr, 4)
-  DEFINE_MEDIUM_VIEW(B, 5)
-  DEFINE_MEDIUM_VIEW(C, 6)
-  DEFINE_MEDIUM_VIEW(M, 7)
-
-  /// Density Normalized Kernels
-  DEFINE_MEDIUM_VIEW(mu_frb, 8)
-  DEFINE_MEDIUM_VIEW(rhob, 9)
-  DEFINE_MEDIUM_VIEW(rhofb, 10)
-  DEFINE_MEDIUM_VIEW(phi, 11)
-
-  /// wavespeed kernels
-  DEFINE_MEDIUM_VIEW(cpI, 12)
-  DEFINE_MEDIUM_VIEW(cpII, 13)
-  DEFINE_MEDIUM_VIEW(cs, 14)
-  DEFINE_MEDIUM_VIEW(rhobb, 15)
-  DEFINE_MEDIUM_VIEW(rhofbb, 16)
-  DEFINE_MEDIUM_VIEW(ratio, 17)
-  DEFINE_MEDIUM_VIEW(phib, 18)
-  ///@}
+  DATA_CONTAINER(rhot, rhof, eta, sm, mu_fr, B, C, M, mu_frb, rhob, rhofb, phi,
+                 cpI, cpII, cs, rhobb, rhofbb, ratio, phib);
 };
+} // namespace kernels
 
 } // namespace medium
 } // namespace specfem
