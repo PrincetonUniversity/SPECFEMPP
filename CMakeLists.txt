@@ -15,11 +15,6 @@ option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 # option(BUILD_EXAMPLES "Examples included" ON)
 option(BUILD_BENCHMARKS "Benchmarks included" ON)
 
-
-# To fix the CMake policy warning for yaml-cpp and google test
-# This should be removed once both packages are updated (Today: April 4, 2025)
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
-
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
@@ -109,8 +104,8 @@ endif()
 # Install yaml content
 FetchContent_Declare(
         yaml
-        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
+        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+        GIT_TAG 2f86d13775d119edbb69af52e5f566fd65c6953b
 )
 
 # Disable yaml-cpp installation
@@ -832,7 +827,7 @@ if (SPECFEMPP_BINDING_PYTHON)
 endif (SPECFEMPP_BINDING_PYTHON)
 
 
-if (SPECFEM_INSTALL)    
+if (SPECFEM_INSTALL)
     install(
         TARGETS specfem2d specfem3d
         RUNTIME DESTINATION .
