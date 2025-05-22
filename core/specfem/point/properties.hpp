@@ -462,6 +462,7 @@ template <specfem::dimension::type Dimension,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct properties : impl::properties::data_container<Dimension, MediumTag,
                                                      PropertyTag, UseSIMD> {
+
   using base_type = impl::properties::data_container<Dimension, MediumTag,
                                                      PropertyTag, UseSIMD>;
 
