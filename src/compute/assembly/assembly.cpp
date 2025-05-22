@@ -71,6 +71,8 @@ specfem::compute::assembly::assembly(
     throw std::runtime_error(msg.str());
   }
 
+  this->check_small_jacobian();
+
   // const auto pe_stacey_elements = this->element_types.get_elements_on_device(
   //     specfem::element::medium_tag::poroelastic,
   //     specfem::element::property_tag::isotropic,
