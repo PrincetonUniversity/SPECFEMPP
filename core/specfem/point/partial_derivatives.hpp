@@ -124,6 +124,8 @@ template <
     std::enable_if_t<!PointPartialDerivativesType::store_jacobian &&
                          PointPartialDerivativesType::dimension_tag ==
                              specfem::dimension::type::dim2 &&
+                         PointPartialDerivativesType::accessor_type ==
+                             specfem::accessor::type::point &&
                          PointPartialDerivativesType::data_class ==
                              specfem::data_class::type::partial_derivatives,
                      int> = 0>
