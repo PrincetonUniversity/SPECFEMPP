@@ -1,31 +1,26 @@
 #pragma once
 
-#include "medium/properties_container.hpp"
-#include "specfem/point.hpp"
+#include "medium/impl/data_container.hpp"
 #include <Kokkos_SIMD.hpp>
 
 namespace specfem {
 namespace medium {
 
-template <specfem::element::medium_tag MediumTag>
-struct kernels_container<
-    MediumTag, specfem::element::property_tag::anisotropic,
-    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : public impl_kernels_container<
-          MediumTag, specfem::element::property_tag::anisotropic, 7> {
-  using base_type =
-      impl_kernels_container<MediumTag,
-                             specfem::element::property_tag::anisotropic, 7>;
-  using base_type::base_type;
+namespace kernels {
 
-  DEFINE_MEDIUM_VIEW(rho, 0)
-  DEFINE_MEDIUM_VIEW(c11, 1)
-  DEFINE_MEDIUM_VIEW(c13, 2)
-  DEFINE_MEDIUM_VIEW(c15, 3)
-  DEFINE_MEDIUM_VIEW(c33, 4)
-  DEFINE_MEDIUM_VIEW(c35, 5)
-  DEFINE_MEDIUM_VIEW(c55, 6)
+template <specfem::element::medium_tag MediumTag>
+struct data_container<
+    MediumTag, specfem::element::property_tag::anisotropic,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::anisotropic;
+
+  DATA_CONTAINER(rho, c11, c13, c15, c33, c35, c55)
 };
+
+} // namespace kernels
 
 } // namespace medium
 } // namespace specfem

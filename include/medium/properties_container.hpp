@@ -1,25 +1,35 @@
 #pragma once
 
-#include "impl/medium_data.hpp"
+#include "dim2/acoustic/isotropic/properties_container.hpp"
+#include "dim2/elastic/anisotropic/properties_container.hpp"
+#include "dim2/elastic/isotropic/properties_container.hpp"
+#include "dim2/poroelastic/isotropic/properties_container.hpp"
+#include "enumerations/medium.hpp"
+#include "impl/accessor.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace medium {
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, int N>
-struct impl_properties_container
-    : public impl::medium_data<MediumTag, PropertyTag, N> {
-  using base_type = impl::medium_data<MediumTag, PropertyTag, N>;
+          specfem::element::property_tag PropertyTag>
+struct properties_container
+    : public properties::data_container<MediumTag, PropertyTag>,
+      public impl::Accessor<properties_container<MediumTag, PropertyTag> > {
+
+  using base_type = properties::data_container<MediumTag, PropertyTag>;
   using base_type::base_type;
 
-  impl_properties_container(
+  properties_container() = default;
+
+  properties_container(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const specfem::compute::mesh_to_compute_mapping &mapping, const int ngllz,
       const int ngllx,
       const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
       const bool has_gll_model,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
-      : impl_properties_container(elements.extent(0), ngllz, ngllx) {
+      : base_type(elements.extent(0), ngllz, ngllx) {
 
     const int nelement = elements.extent(0);
     int count = 0;
@@ -62,18 +72,5 @@ struct impl_properties_container
   add_host_values(const IndexType &index, PointValues &values) const = delete;
 };
 
-template <specfem::element::medium_tag type,
-          specfem::element::property_tag property, typename Enable = void>
-struct properties_container {
-  static_assert("Material type not implemented");
-};
-
 } // namespace medium
 } // namespace specfem
-
-// Including the template specializations here so that properties_container is
-// an interface to the compute module
-#include "dim2/acoustic/isotropic/properties_container.hpp"
-#include "dim2/elastic/anisotropic/properties_container.hpp"
-#include "dim2/elastic/isotropic/properties_container.hpp"
-#include "dim2/poroelastic/isotropic/properties_container.hpp"
