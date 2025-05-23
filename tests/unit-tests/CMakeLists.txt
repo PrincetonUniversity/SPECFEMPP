@@ -301,6 +301,21 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  mass_matrix_tests
+  mass_matrix/main.cpp
+  mass_matrix/elastic_isotropic.cpp
+  mass_matrix/elastic_anisotropic.cpp
+  mass_matrix/acoustic.cpp
+  mass_matrix/poroelastic.cpp
+)
+
+target_link_libraries(
+  mass_matrix_tests
+  point
+  gtest_main
+)
+
 
 # # add_executable(
 # #   source_location_tests
@@ -451,6 +466,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(locate_point WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(interpolate_function WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(mass_matrix_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(rmass_inverse_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(displacement_newmark_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(seismogram_elastic_tests)
