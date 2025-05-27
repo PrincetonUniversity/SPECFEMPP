@@ -10,11 +10,8 @@
 #include "enumerations/wavefield.hpp"
 #include "medium/compute_mass_matrix.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "specfem/point.hpp"
-#include "specfem/point.hpp"
-#include "specfem/point.hpp"
-#include "specfem/point.hpp"
 #include "policies/chunk.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionTag,
@@ -106,20 +103,19 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
                   return point_property;
                 }();
 
-                const auto point_partial_derivatives =
-                    [&]() -> PointPartialDerivativesType {
+                const auto jacobian = [&]() {
                   PointPartialDerivativesType point_partial_derivatives;
                   specfem::compute::load_on_device(index, partial_derivatives,
                                                    point_partial_derivatives);
-                  return point_partial_derivatives;
+                  return point_partial_derivatives.jacobian;
                 }();
 
                 PointMassType mass_matrix =
-                    specfem::medium::mass_matrix_component(
-                        point_property, point_partial_derivatives);
+                    specfem::medium::mass_matrix_component(point_property);
 
                 for (int icomp = 0; icomp < components; icomp++) {
-                  mass_matrix.mass_matrix(icomp) *= wgll(ix) * wgll(iz);
+                  mass_matrix.mass_matrix(icomp) *=
+                      wgll(ix) * wgll(iz) * jacobian;
                 }
 
                 PointBoundaryType point_boundary;
