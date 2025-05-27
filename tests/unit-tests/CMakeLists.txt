@@ -225,6 +225,7 @@ add_executable(
   assembly/properties/properties.cpp
   assembly/compute_wavefield/compute_wavefield.cpp
   assembly/sources/sources.cpp
+  assembly/check_jacobian/check_jacobian.cpp
   assembly/locate/locate_point.cpp
 )
 

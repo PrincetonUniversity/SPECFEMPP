@@ -537,6 +537,7 @@ add_library(
         src/compute/boundaries/boundaries.cpp
         src/compute/fields/fields.cpp
         src/compute/compute_boundary_values.cpp
+        src/compute/assembly/check_jacobian.cpp
         src/compute/assembly/assembly.cpp
         src/compute/assembly/compute_wavefield.cpp
 )
@@ -554,6 +555,23 @@ target_link_libraries(
         receiver_class
         Kokkos::kokkos
 )
+
+if (NOT VTK_CXX_BUILD)
+        target_compile_definitions(
+                compute
+                PUBLIC -DNO_VTK
+        )
+else ()
+        target_link_libraries(
+                compute
+                ${VTK_LIBRARIES}
+                )
+
+        # Only define the __APPLE__ compile definition if it is defined
+        if (__APPLE__)
+        target_compile_definitions(compute PRIVATE __APPLE__)
+        endif(__APPLE__)
+endif()
 
 target_include_directories(
         compute

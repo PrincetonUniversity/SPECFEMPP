@@ -59,6 +59,16 @@ public:
   ///@}
 
   void sync_views();
+
+  /**
+   * @brief Check if the Jacobian is a small value
+   *
+   * @return std::tuple<bool, Kokkos::View> Tuple containing a boolean
+   * indicating whether a small Jacobian was found and a view containing the
+   * indices of the spectral elements with small Jacobian
+   */
+  std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
+  check_small_jacobian() const;
 };
 
 /**
