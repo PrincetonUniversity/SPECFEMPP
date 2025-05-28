@@ -34,7 +34,7 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_stress(
   // sigma_xz = ... +  (2 \nu \phi_{y})
   T(0, 1) += factor;
 
-  // sigma_zx = ... +  (-2 \nu \phi_{y})
+  // sigma_zx = ... +  (+2 \nu \phi_{y})
   T(1, 0) -= factor;
 
   return;
