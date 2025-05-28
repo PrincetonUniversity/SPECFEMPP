@@ -18,9 +18,9 @@ template <> struct AccessorValueType<specfem::accessor::type::point> {
   using vector_type =
       typename specfem::datatype::ScalarPointViewType<T, dimension, UseSIMD>;
 
-  template <typename T, int components, int dimension, bool UseSIMD>
+  template <typename T, int dimension, int components, bool UseSIMD>
   using tensor_type =
-      typename specfem::datatype::VectorPointViewType<T, components, dimension,
+      typename specfem::datatype::VectorPointViewType<T, dimension, components,
                                                       UseSIMD>;
 };
 } // namespace impl
@@ -42,9 +42,9 @@ struct Accessor {
   using vector_type = typename impl::AccessorValueType<
       AccessorType>::template vector_type<T, dimension, UseSIMD>;
 
-  template <typename T, int components, int dimension>
+  template <typename T, int dimension, int components>
   using tensor_type = typename impl::AccessorValueType<
-      AccessorType>::template tensor_type<T, components, dimension, UseSIMD>;
+      AccessorType>::template tensor_type<T, dimension, components, UseSIMD>;
 };
 
 } // namespace specfem::accessor

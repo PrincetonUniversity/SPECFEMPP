@@ -10,12 +10,7 @@ namespace specfem {
 namespace medium {
 
 template <typename PointPropertiesType, typename AdjointPointFieldType,
-          typename BackwardPointFieldType, typename PointFieldDerivativesType,
-          std::enable_if_t<PointFieldDerivativesType::accessor_type ==
-                                   specfem::accessor::type::point &&
-                               PointFieldDerivativesType::data_class ==
-                                   specfem::data_class::field_derivatives,
-                           int> = 0>
+          typename BackwardPointFieldType, typename PointFieldDerivativesType>
 KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
     const PointPropertiesType &properties,
     const AdjointPointFieldType &adjoint_field,
@@ -26,8 +21,8 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
 
   static_assert(PointPropertiesType::is_point_properties,
                 "properties is not a point properties type");
-  //   static_assert(PointFieldDerivativesType::is_point_field_derivatives,
-  //                 "field_derivatives is not a point field derivatives type");
+  static_assert(PointFieldDerivativesType::is_point_field_derivatives,
+                "field_derivatives is not a point field derivatives type");
 
   static_assert(AdjointPointFieldType::isPointFieldType,
                 "adjoint_field is not a point field type");
@@ -46,7 +41,7 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
   static_assert(
       (dimension == AdjointPointFieldType::dimension &&
        dimension == BackwardPointFieldType::dimension &&
-       dimension == PointFieldDerivativesType::dimension_tag),
+       dimension == PointFieldDerivativesType::dimension),
       "Dimension inconsistency between properties, fields, and derivatives");
 
   constexpr auto using_simd = PointPropertiesType::simd::using_simd;
