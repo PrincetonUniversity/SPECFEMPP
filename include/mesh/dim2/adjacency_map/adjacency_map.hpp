@@ -2,8 +2,10 @@
 
 #include "Kokkos_Macros.hpp"
 #include "enumerations/dimension.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "mesh/dim2/mesh.hpp"
 #include <Kokkos_Core.hpp>
+#include <set>
 
 namespace specfem {
 namespace mesh {
@@ -24,8 +26,7 @@ struct nonconforming_edge {
 template <specfem::dimension::type DimensionTag> struct adjacency_map;
 
 template <> struct adjacency_map<specfem::dimension::type::dim2> {
-  static KOKKOS_INLINE_FUNCTION int
-  edge_to_index(const specfem::enums::edge::type edge) {
+  static constexpr int edge_to_index(const specfem::enums::edge::type edge) {
     switch (edge) {
     case specfem::enums::edge::RIGHT:
       return 0;
@@ -39,8 +40,7 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
       return 0; // this should never be called
     }
   }
-  static KOKKOS_INLINE_FUNCTION specfem::enums::edge::type
-  edge_from_index(const int edge) {
+  static constexpr specfem::enums::edge::type edge_from_index(const int edge) {
     switch (edge) {
     case 0:
       return specfem::enums::edge::RIGHT;
@@ -63,8 +63,11 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
 
   bool has_conforming_adjacency(const int ispec, const int edge);
 
-  std::pair<int,specfem::enums::edge::type> get_conforming_adjacency(const int ispec, const specfem::enums::edge::type edge);
-  std::pair<int,specfem::enums::edge::type> get_conforming_adjacency(const int ispec, const int edge);
+  std::pair<int, specfem::enums::edge::type>
+  get_conforming_adjacency(const int ispec,
+                           const specfem::enums::edge::type edge);
+  std::pair<int, specfem::enums::edge::type>
+  get_conforming_adjacency(const int ispec, const int edge);
 
   bool has_boundary(const int ispec, const specfem::enums::edge::type edge);
 
@@ -87,6 +90,12 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
       type_real tolerance);
 
   const int &nspec;
+
+  std::pair<specfem::kokkos::HostView3d<int>, int>
+  generate_assembly_mapping(const int ngll);
+  std::set<std::pair<int, specfem::enums::boundaries::type> >
+  get_all_conforming_adjacencies(const int ispec,
+                                 const specfem::enums::boundaries::type bdry);
 
 private:
   const specfem::mesh::mesh<specfem::dimension::type::dim2> &parent;

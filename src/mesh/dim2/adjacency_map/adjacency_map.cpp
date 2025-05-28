@@ -1,6 +1,9 @@
 #include "mesh/dim2/adjacency_map/adjacency_map.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include <sstream>
+
+#include "index_mapping_from_adjacencies.cpp"
+#include <list>
+#include <utility>
 
 static inline specfem::enums::edge::type
 bdtype_to_edge(const specfem::enums::boundaries::type &bd) {
@@ -15,6 +18,45 @@ bdtype_to_edge(const specfem::enums::boundaries::type &bd) {
     return specfem::enums::edge::type::BOTTOM;
   default:
     return specfem::enums::edge::type::NONE;
+  }
+}
+static inline specfem::enums::boundaries::type
+edge_to_bdtype(const specfem::enums::edge::type &bd) {
+  switch (bd) {
+  case specfem::enums::edge::TOP:
+    return specfem::enums::boundaries::type::TOP;
+  case specfem::enums::edge::BOTTOM:
+    return specfem::enums::boundaries::type::BOTTOM;
+  case specfem::enums::edge::LEFT:
+    return specfem::enums::boundaries::type::LEFT;
+  case specfem::enums::edge::RIGHT:
+    return specfem::enums::boundaries::type::RIGHT;
+    break;
+  default:
+    // this should never be called
+    return specfem::enums::boundaries::type::RIGHT;
+  }
+}
+static inline specfem::enums::boundaries::type
+edge_and_polarity_to_corner(const specfem::enums::edge::type &bd,
+                            const bool counterclockwise) {
+  switch (bd) {
+  case specfem::enums::edge::TOP:
+    return counterclockwise ? specfem::enums::boundaries::type::TOP_LEFT
+                            : specfem::enums::boundaries::type::TOP_RIGHT;
+  case specfem::enums::edge::BOTTOM:
+    return counterclockwise ? specfem::enums::boundaries::type::BOTTOM_RIGHT
+                            : specfem::enums::boundaries::type::BOTTOM_LEFT;
+  case specfem::enums::edge::LEFT:
+    return counterclockwise ? specfem::enums::boundaries::type::BOTTOM_LEFT
+                            : specfem::enums::boundaries::type::TOP_LEFT;
+  case specfem::enums::edge::RIGHT:
+    return counterclockwise ? specfem::enums::boundaries::type::TOP_RIGHT
+                            : specfem::enums::boundaries::type::BOTTOM_RIGHT;
+    break;
+  default:
+    // this should never be called
+    return specfem::enums::boundaries::type::RIGHT;
   }
 }
 
@@ -84,16 +126,16 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
                  specfem::enums::edge::type::LEFT,
                  specfem::enums::edge::type::BOTTOM,
              }) {
-          //did we find the candidate to this edge?
+          // did we find the candidate to this edge?
           bool matching = false;
           // populate nodes_edge according to which edge this is
-          for (int i = 0; i < 3; i++){
+          for (int i = 0; i < 3; i++) {
             nodes_edge[i] =
                 parent.control_nodes.knods(node_edge(edge, i), ispec);
           }
           // candidates share the middle node
           for (int ispec_o : node_to_ispecs[nodes_edge[1]]) {
-            
+
             for (auto edge_o : {
                      specfem::enums::edge::type::RIGHT,
                      specfem::enums::edge::type::TOP,
@@ -190,4 +232,80 @@ void specfem::mesh::adjacency_map::
 
   adjacent_indices(ispec2, edgeind2) = ispec1;
   adjacent_edges(ispec2, edgeind2) = edge1;
+}
+
+std::set<std::pair<int, specfem::enums::boundaries::type> >
+specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
+    get_all_conforming_adjacencies(
+        const int ispec_start,
+        const specfem::enums::boundaries::type bdry_start) {
+  std::set<std::pair<int, specfem::enums::boundaries::type> > adj;
+  auto bd = std::make_pair(ispec_start, bdry_start);
+  adj.insert(bd);
+
+  // expand region by taking corner/edge adjacencies
+  std::list<std::pair<int, specfem::enums::boundaries::type> > search;
+  search.push_back(bd);
+
+  while (!search.empty()) {
+    bd = search.front();
+    search.pop_front();
+#define TRY_APPEND(x)                                                          \
+  {                                                                            \
+    if (adj.find(x) == adj.end()) {                                            \
+      adj.insert(x);                                                           \
+      search.push_back(x);                                                     \
+    }                                                                          \
+  }
+    switch (bd.second) {
+    case enums::boundaries::type::TOP_LEFT:
+#define TEST_CORNER(edge_, ccw_)                                               \
+  {                                                                            \
+    if (has_conforming_adjacency(                                              \
+            bd.first, edge_to_index(specfem::enums::edge::type::edge_))) {     \
+      const auto other = get_conforming_adjacency(                             \
+          bd.first, edge_to_index(specfem::enums::edge::type::edge_));         \
+      TRY_APPEND(std::make_pair(                                               \
+          other.first, edge_and_polarity_to_corner(other.second, !ccw_)));     \
+    }                                                                          \
+  }
+      TEST_CORNER(TOP, true);
+      TEST_CORNER(LEFT, false);
+      break;
+    case enums::boundaries::type::BOTTOM_LEFT:
+      TEST_CORNER(LEFT, true);
+      TEST_CORNER(BOTTOM, false);
+      break;
+    case enums::boundaries::type::BOTTOM_RIGHT:
+      TEST_CORNER(BOTTOM, true);
+      TEST_CORNER(RIGHT, false);
+      break;
+    case enums::boundaries::type::TOP_RIGHT:
+      TEST_CORNER(RIGHT, true);
+      TEST_CORNER(TOP, false);
+      break;
+    case enums::boundaries::type::TOP:
+#define TEST_EDGE(edge_)                                                       \
+  {                                                                            \
+    if (has_conforming_adjacency(                                              \
+            bd.first, edge_to_index(specfem::enums::edge::type::edge_))) {     \
+      const auto other = get_conforming_adjacency(                             \
+          bd.first, edge_to_index(specfem::enums::edge::type::edge_));         \
+      TRY_APPEND(std::make_pair(other.first, edge_to_bdtype(other.second)));   \
+    }                                                                          \
+  }
+      TEST_EDGE(TOP);
+      break;
+    case enums::boundaries::type::LEFT:
+      TEST_EDGE(LEFT);
+      break;
+    case enums::boundaries::type::RIGHT:
+      TEST_EDGE(RIGHT);
+      break;
+    case enums::boundaries::type::BOTTOM:
+      TEST_EDGE(BOTTOM);
+      break;
+    }
+  }
+  return adj;
 }
