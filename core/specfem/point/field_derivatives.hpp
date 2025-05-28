@@ -1,7 +1,8 @@
 #pragma once
 
 #include "datatypes/point_view.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -21,27 +22,18 @@ namespace point {
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct field_derivatives
-    : public specfem::accessor::Accessor<
-          specfem::accessor::type::point,
-          specfem::data_class::type::field_derivatives, DimensionTag, UseSIMD> {
+struct field_derivatives {
 
-private:
-  using base_type =
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::field_derivatives,
-                                  DimensionTag, UseSIMD>; ///< Base type of the
-                                                          ///< point field
-                                                          ///< derivatives
-public:
   /**
    * @name Compile time constants
    *
    */
   ///@{
+  constexpr static bool is_point_field_derivatives = true;
   static constexpr int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
   constexpr static auto medium_tag = MediumTag; ///< Medium tag for the element
+  constexpr static auto dimension = DimensionTag; ///< Dimension of the element
   constexpr static int num_dimensions =
       specfem::element::attributes<DimensionTag, MediumTag>::dimension;
   ///@}
@@ -51,13 +43,17 @@ public:
    *
    */
   ///@{
-  using simd = typename base_type::simd; ///< SIMD data type
-  using value_type =
-      typename base_type::template tensor_type<type_real, components,
-                                               num_dimensions>;
+  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+
+  using ViewType =
+      specfem::datatype::VectorPointViewType<type_real, components,
+                                             num_dimensions,
+                                             UseSIMD>; ///< Underlying view type
+                                                       ///< to store the field
+                                                       ///< derivatives
   ///@}
 
-  value_type du; ///< View to store the field derivatives.
+  ViewType du; ///< View to store the field derivatives.
 
   /**
    * @name Constructors
@@ -75,7 +71,7 @@ public:
    *
    * @param du Field derivatives
    */
-  KOKKOS_FUNCTION field_derivatives(const value_type &du) : du(du) {}
+  KOKKOS_FUNCTION field_derivatives(const ViewType &du) : du(du) {}
   ///@}
 };
 

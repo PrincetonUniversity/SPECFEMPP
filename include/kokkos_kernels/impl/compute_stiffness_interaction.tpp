@@ -177,7 +177,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 // Compute stresses using the gradients
                 [&](const typename ChunkPolicyType::iterator_type::index_type
                         &iterator_index,
-                    const typename PointFieldDerivativesType::value_type &du) {
+                    const typename PointFieldDerivativesType::ViewType &du) {
                   const auto &index = iterator_index.index;
 
                   PointPartialDerivativesType point_partial_derivatives;

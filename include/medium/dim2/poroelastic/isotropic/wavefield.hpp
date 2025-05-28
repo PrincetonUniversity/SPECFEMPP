@@ -55,7 +55,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         team, iterator, assembly.partial_derivatives, quadrature.hprime_gll,
         active_field,
         [&](const typename IteratorType::index_type &iterator_index,
-            const FieldDerivativesType::value_type &du) {
+            const FieldDerivativesType::ViewType &du) {
           const auto &index = iterator_index.index;
           PointPropertyType point_property;
 
