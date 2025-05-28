@@ -174,8 +174,8 @@ template <typename PointPropertiesType, typename IndexType,
                                         PointPropertiesType::simd::using_simd,
                                     int> = 0>
 void store_on_host(const IndexType &lcoord,
-                   const specfem::compute::properties &properties,
-                   const PointPropertiesType &point_properties) {
+                   const PointPropertiesType &point_properties,
+                   const specfem::compute::properties &properties) {
   const int ispec = lcoord.ispec;
 
   const int index = properties.h_property_index_mapping(ispec);

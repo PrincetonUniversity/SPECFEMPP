@@ -32,7 +32,12 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
     return;
   }
 
-  constexpr static bool using_simd = true;
+#ifdef KOKKOS_ENABLE_CUDA
+  constexpr bool using_simd = false;
+#else
+  constexpr bool using_simd = true;
+#endif
+
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using ParallelConfig = specfem::parallel_config::default_chunk_config<
       DimensionTag, simd, Kokkos::DefaultExecutionSpace>;
@@ -83,15 +88,12 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
 
         for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
              tile += ChunkPolicy::chunk_size * simd_size) {
-          const int starting_element_index =
-              team.league_rank() * ChunkPolicy::tile_size * simd_size + tile;
-
-          if (starting_element_index >= nelements) {
-            break;
-          }
-
           const auto iterator =
-              chunk_policy.league_iterator(starting_element_index);
+              chunk_policy.league_iterator(team.league_rank(), tile);
+
+          if (iterator.is_end()) {
+            return; // No elements to process in this tile
+          }
 
           // Populate Scratch Views
           specfem::compute::load_on_device(team, iterator, adjoint_field,
@@ -156,5 +158,5 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
         }
       });
 
-  Kokkos::fence();
+  // Kokkos::fence();
 }

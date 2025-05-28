@@ -1,10 +1,11 @@
 #pragma once
 
-#include "io/impl/medium_writer.hpp"
 #include "compute/assembly/assembly.hpp"
+#include "domain_view.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
+#include "io/impl/medium_writer.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
@@ -15,7 +16,7 @@ void specfem::io::impl::write_container(
     const specfem::compute::element_types &element_types,
     ContainerType &container) {
   using DomainView =
-      Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+      specfem::kokkos::DomainView2d<type_real, 3, Kokkos::HostSpace>;
 
   container.copy_to_host();
 
@@ -28,128 +29,39 @@ void specfem::io::impl::write_container(
   int n_written = 0;
 
   FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-               MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                ACOUSTIC, POROELASTIC),
-               PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)), {
-               const std::string name =
-          std::string("/") +
-          specfem::element::to_string(_medium_tag_, _property_tag_);
-      typename OutputLibrary::Group group = file.createGroup(name);
-      const auto element_indices =
-          element_types.get_elements_on_host(_medium_tag_, _property_tag_);
-      const int n_elements = element_indices.size(); n_written += n_elements;
-      DomainView x("xcoordinates", n_elements, ngllz, ngllx);
-      DomainView z("zcoordinates", n_elements, ngllz, ngllx);
-      for (int i = 0; i < n_elements; i++) {
-        const int ispec = element_indices(i);
-        for (int iz = 0; iz < ngllz; iz++) {
-          for (int ix = 0; ix < ngllx; ix++) {
-            x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
-            z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+      {
+        const std::string name =
+            std::string("/") +
+            specfem::element::to_string(_medium_tag_, _property_tag_);
+        typename OutputLibrary::Group group = file.createGroup(name);
+        const auto element_indices =
+            element_types.get_elements_on_host(_medium_tag_, _property_tag_);
+        const int n_elements = element_indices.size();
+        n_written += n_elements;
+        DomainView x("xcoordinates", n_elements, ngllz, ngllx);
+        DomainView z("zcoordinates", n_elements, ngllz, ngllx);
+        for (int i = 0; i < n_elements; i++) {
+          const int ispec = element_indices(i);
+          for (int iz = 0; iz < ngllz; iz++) {
+            for (int ix = 0; ix < ngllx; ix++) {
+              x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
+              z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+            }
           }
         }
-      } group.createDataset("X", x)
-          .write();
-      group.createDataset("Z", z).write();
-      group
-          .createDataset(
-              "data",
-              container.template get_container<_medium_tag_, _property_tag_>()
-                  .h_data)
-          .write();
-               })
-  // int n_elastic_isotropic;
-  // int n_elastic_anisotropic;
-  // int n_acoustic;
+        group.createDataset("X", x).write();
+        group.createDataset("Z", z).write();
+        auto data_container =
+            container.template get_container<_medium_tag_, _property_tag_>();
 
-  // {
-  //   typename OutputLibrary::Group elastic =
-  //       file.createGroup("/ElasticIsotropic");
-
-  //   const auto element_indices = element_types.get_elements_on_host(
-  //       specfem::element::medium_tag::elastic,
-  //       specfem::element::property_tag::isotropic);
-  //   n_elastic_isotropic = element_indices.size();
-
-  //   DomainView x("xcoordinates_elastic_isotropic", n_elastic_isotropic,
-  //   ngllz,
-  //                ngllx);
-  //   DomainView z("zcoordinates_elastic_isotropic", n_elastic_isotropic,
-  //   ngllz,
-  //                ngllx);
-
-  //   for (int i = 0; i < n_elastic_isotropic; i++) {
-  //     const int ispec = element_indices(i);
-  //     for (int iz = 0; iz < ngllz; iz++) {
-  //       for (int ix = 0; ix < ngllx; ix++) {
-  //         x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
-  //         z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-  //       }
-  //     }
-  //   }
-
-  //   elastic.createDataset("X", x).write();
-  //   elastic.createDataset("Z", z).write();
-  //   elastic.createDataset("data",
-  //   container.elastic_isotropic.h_data).write();
-  // }
-
-  // {
-  //   typename OutputLibrary::Group elastic =
-  //       file.createGroup("/ElasticAnisotropic");
-
-  //   const auto element_indices = element_types.get_elements_on_host(
-  //       specfem::element::medium_tag::elastic,
-  //       specfem::element::property_tag::anisotropic);
-  //   n_elastic_anisotropic = element_indices.size();
-
-  //   DomainView x("xcoordinates_elastic_anisotropic", n_elastic_anisotropic,
-  //                ngllz, ngllx);
-  //   DomainView z("zcoordinates_elastic_anisotropic", n_elastic_anisotropic,
-  //                ngllz, ngllx);
-
-  //   for (int i = 0; i < n_elastic_anisotropic; i++) {
-  //     const int ispec = element_indices(i);
-  //     for (int iz = 0; iz < ngllz; iz++) {
-  //       for (int ix = 0; ix < ngllx; ix++) {
-  //         x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
-  //         z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-  //       }
-  //     }
-  //   }
-
-  //   elastic.createDataset("X", x).write();
-  //   elastic.createDataset("Z", z).write();
-  //   elastic.createDataset("data",
-  //   container.elastic_anisotropic.h_data).write();
-  // }
-
-  // {
-  //   typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
-
-  //   const auto element_indices = element_types.get_elements_on_host(
-  //       specfem::element::medium_tag::acoustic);
-  //   n_acoustic = element_indices.size();
-
-  //   DomainView x("xcoordinates_acoustic", n_acoustic, ngllz, ngllx);
-  //   DomainView z("zcoordinates_acoustic", n_acoustic, ngllz, ngllx);
-
-  //   for (int i = 0; i < n_acoustic; i++) {
-  //     const int ispec = element_indices(i);
-  //     for (int iz = 0; iz < ngllz; iz++) {
-  //       for (int ix = 0; ix < ngllx; ix++) {
-  //         x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
-  //         z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-  //       }
-  //     }
-  //   }
-
-  //   acoustic.createDataset("X", x).write();
-  //   acoustic.createDataset("Z", z).write();
-  //   acoustic.createDataset("data",
-  //   container.acoustic_isotropic.h_data).write();
-  // }
+        data_container.for_each_host_view(
+            [&](const auto view, const std::string name) mutable {
+              group.createDataset(name, view).write();
+            });
+      })
 
   assert(n_written == nspec);
 

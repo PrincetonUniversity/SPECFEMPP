@@ -1,20 +1,17 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
-#include "datatypes/simd.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "boundary_conditions/boundary_conditions.tpp"
+#include "compute/assembly/assembly.hpp"
+#include "datatypes/simd.hpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "parallel_configuration/chunk_config.hpp"
-#include "specfem/point.hpp"
-#include "specfem/point.hpp"
-#include "specfem/point.hpp"
-#include "specfem/point.hpp"
-#include "policies/chunk.hpp"
 #include "medium/compute_mass_matrix.hpp"
+#include "parallel_configuration/chunk_config.hpp"
+#include "policies/chunk.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionTag,
@@ -42,7 +39,11 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   if (nelements == 0)
     return;
 
+#ifdef KOKKOS_ENABLE_CUDA
+  constexpr bool using_simd = false;
+#else
   constexpr bool using_simd = true;
+#endif
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using parallel_config = specfem::parallel_config::default_chunk_config<
       dimension, simd, Kokkos::DefaultExecutionSpace>;
@@ -65,7 +66,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   const auto &quadrature = assembly.mesh.quadratures;
   const auto &partial_derivatives = assembly.partial_derivatives;
   const auto &properties = assembly.properties;
-    const auto &boundaries = assembly.boundaries;
+  const auto &boundaries = assembly.boundaries;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
   const auto wgll = quadrature.gll.weights;
@@ -80,16 +81,11 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
       KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
         for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
              tile += ChunkPolicyType::chunk_size * simd_size) {
-          const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
-              tile;
-
-          if (starting_element_index >= nelements) {
-            break;
-          }
-
           const auto iterator =
-              chunk_policy.league_iterator(starting_element_index);
+              chunk_policy.league_iterator(team.league_rank(), tile);
+          if (iterator.is_end()) {
+            return; // No elements to process in this tile
+          }
 
           Kokkos::parallel_for(
               Kokkos::TeamThreadRange(team, iterator.chunk_size()),
@@ -107,29 +103,27 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
                   return point_property;
                 }();
 
-                const auto point_partial_derivatives =
-                    [&]() -> PointPartialDerivativesType {
+                const auto jacobian = [&]() {
                   PointPartialDerivativesType point_partial_derivatives;
                   specfem::compute::load_on_device(index, partial_derivatives,
                                                    point_partial_derivatives);
-                  return point_partial_derivatives;
+                  return point_partial_derivatives.jacobian;
                 }();
 
                 PointMassType mass_matrix =
-                    specfem::medium::mass_matrix_component(
-                        point_property, point_partial_derivatives);
+                    specfem::medium::mass_matrix_component(point_property);
 
                 for (int icomp = 0; icomp < components; icomp++) {
-                  mass_matrix.mass_matrix(icomp) *= wgll(ix) * wgll(iz);
+                  mass_matrix.mass_matrix(icomp) *=
+                      wgll(ix) * wgll(iz) * jacobian;
                 }
 
                 PointBoundaryType point_boundary;
                 specfem::compute::load_on_device(index, boundaries,
                                                  point_boundary);
 
-                specfem::boundary_conditions::
-                    compute_mass_matrix_terms(dt, point_boundary,
-                                              point_property, mass_matrix);
+                specfem::boundary_conditions::compute_mass_matrix_terms(
+                    dt, point_boundary, point_property, mass_matrix);
 
                 specfem::compute::atomic_add_on_device(index, mass_matrix,
                                                        field);
@@ -137,5 +131,5 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
         }
       });
 
-  Kokkos::fence();
+  // Kokkos::fence();
 }

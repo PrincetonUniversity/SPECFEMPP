@@ -7,16 +7,13 @@ from scipy.interpolate import griddata
 def load_data(directory):
     X = np.loadtxt(directory + "/elastic_psv_isotropic/X.txt")
     Z = np.loadtxt(directory + "/elastic_psv_isotropic/Z.txt")
-    data = np.loadtxt(directory + "/elastic_psv_isotropic/data.txt").reshape(
-        6, X.shape[0]
-    )
 
-    rho = data[0, :]
-    mu = data[1, :]
-    kappa = data[2, :]
-    rhop = data[3, :]
-    alpha = data[4, :]
-    beta = data[5, :]
+    rho = np.loadtxt(directory + "/elastic_psv_isotropic/rho.txt")
+    mu = np.loadtxt(directory + "/elastic_psv_isotropic/mu.txt")
+    kappa = np.loadtxt(directory + "/elastic_psv_isotropic/kappa.txt")
+    rhop = np.loadtxt(directory + "/elastic_psv_isotropic/rhop.txt")
+    alpha = np.loadtxt(directory + "/elastic_psv_isotropic/alpha.txt")
+    beta = np.loadtxt(directory + "/elastic_psv_isotropic/beta.txt")
 
     return X, Z, rho, kappa, mu, rhop, alpha, beta
 

@@ -1,6 +1,7 @@
 #include "parameter_parser/writer/plot_wavefield.hpp"
 #include "periodic_tasks/plot_wavefield.hpp"
 #include "periodic_tasks/plotter.hpp"
+#include "specfem_mpi/interface.hpp"
 #include "utilities/strings.hpp"
 #include <boost/filesystem.hpp>
 
@@ -14,10 +15,6 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
       return "PNG";
     }
   }();
-
-  if (specfem::utilities::is_onscreen_string(output_format)) {
-    throw std::runtime_error("On screen plotting not supported");
-  }
 
   const std::string output_folder = [&]() -> std::string {
     if (Node["directory"]) {
@@ -69,7 +66,7 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
 
 std::shared_ptr<specfem::periodic_tasks::periodic_task>
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
-    const specfem::compute::assembly &assembly) const {
+    const specfem::compute::assembly &assembly, specfem::MPI::MPI *mpi) const {
 
   const auto output_format = [&]() {
     if (specfem::utilities::is_png_string(this->output_format)) {
@@ -112,5 +109,5 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   return std::make_shared<specfem::periodic_tasks::plot_wavefield>(
       assembly, output_format, component, wavefield, time_interval,
-      this->output_folder);
+      this->output_folder, mpi);
 }

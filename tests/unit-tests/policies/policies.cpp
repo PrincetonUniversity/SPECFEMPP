@@ -95,27 +95,33 @@ execute_range_policy(const int nglob) {
       "execute_range_policy",
       static_cast<typename PolicyType::policy_type>(policy),
       KOKKOS_LAMBDA(const int iglob) {
-        const auto iterator = policy.range_iterator(iglob);
-        const auto index = iterator(0);
+        for (std::size_t itile = 0; itile < PolicyType::tile_size; ++itile) {
 
-        constexpr bool using_simd = PolicyType::simd::using_simd;
-        const auto l_test_view = test_view;
+          const auto iterator = policy.range_iterator(iglob, itile);
+          if (iterator.is_end()) {
+            return; // Skip if the iterator is at the end
+          }
+          const auto index = iterator();
 
-        if constexpr (using_simd) {
-          using mask_type = typename PolicyType::simd::mask_type;
-          mask_type mask(
-              [&](std::size_t lane) { return index.index.mask(lane); });
-          using tag_type = typename PolicyType::simd::tag_type;
-          using datatype = typename PolicyType::simd::datatype;
-          datatype data;
-          Kokkos::Experimental::where(mask, data)
-              .copy_from(&l_test_view(index.index.iglob), tag_type());
+          constexpr bool using_simd = PolicyType::simd::using_simd;
+          const auto l_test_view = test_view;
 
-          data += static_cast<type_real>(1);
-          Kokkos::Experimental::where(mask, data)
-              .copy_to(&l_test_view(index.index.iglob), tag_type());
-        } else if constexpr (!using_simd) {
-          l_test_view(index.index.iglob) += 1;
+          if constexpr (using_simd) {
+            using mask_type = typename PolicyType::simd::mask_type;
+            mask_type mask(
+                [&](std::size_t lane) { return index.index.mask(lane); });
+            using tag_type = typename PolicyType::simd::tag_type;
+            using datatype = typename PolicyType::simd::datatype;
+            datatype data;
+            Kokkos::Experimental::where(mask, data)
+                .copy_from(&l_test_view(index.index.iglob), tag_type());
+
+            data += static_cast<type_real>(1);
+            Kokkos::Experimental::where(mask, data)
+                .copy_to(&l_test_view(index.index.iglob), tag_type());
+          } else if constexpr (!using_simd) {
+            l_test_view(index.index.iglob) += 1;
+          }
         }
       });
 
@@ -170,14 +176,11 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
       KOKKOS_LAMBDA(const typename PolicyType::member_type &team) {
         for (int tile = 0; tile < PolicyType::tile_size * simd_size;
              tile += PolicyType::chunk_size * simd_size) {
-          const int starting_element_index =
-              team.league_rank() * PolicyType::tile_size * simd_size + tile;
-
-          if (starting_element_index >= nspec) {
-            break;
+          const auto iterator =
+              policy.league_iterator(team.league_rank(), tile);
+          if (iterator.is_end()) {
+            return; // No elements to process in this tile
           }
-
-          const auto iterator = policy.league_iterator(starting_element_index);
 
           Kokkos::parallel_for(
               Kokkos::TeamThreadRange(team, iterator.chunk_size()),

@@ -10,9 +10,8 @@ namespace impl {
  * @brief Values for every quadrature point in the finite element mesh
  *
  */
-template <
-    template <specfem::element::medium_tag, specfem::element::property_tag,
-              typename Enable = void> class containers_type>
+template <template <specfem::element::medium_tag,
+                    specfem::element::property_tag> class containers_type>
 struct value_containers {
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
@@ -91,6 +90,7 @@ struct value_containers {
    *
    */
   void copy_to_host() {
+    Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
@@ -99,6 +99,7 @@ struct value_containers {
   }
 
   void copy_to_device() {
+    Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
