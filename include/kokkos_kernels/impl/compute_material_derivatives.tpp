@@ -114,8 +114,8 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
               backward_element_field.displacement,
               [&](const typename ChunkPolicy::iterator_type::index_type
                       &iterator_index,
-                  const typename PointFieldDerivativesType::ViewType &df,
-                  const typename PointFieldDerivativesType::ViewType &dg) {
+                  const typename PointFieldDerivativesType::value_type &df,
+                  const typename PointFieldDerivativesType::value_type &dg) {
                 const auto index = iterator_index.index;
                 // Load properties, adjoint field, and backward field
                 // for the point
