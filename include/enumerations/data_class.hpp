@@ -9,6 +9,7 @@ enum type {
   field_derivatives,
   field,
   source,
-  stress
+  stress,
+  stress_integrand
 };
 } // namespace specfem::data_class

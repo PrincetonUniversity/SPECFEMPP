@@ -1,8 +1,7 @@
 #pragma once
 
 #include "datatypes/point_view.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -28,7 +27,17 @@ namespace point {
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct stress_integrand {
+struct stress_integrand
+    : public specfem::accessor::Accessor<
+          specfem::accessor::type::point,
+          specfem::data_class::type::stress_integrand, DimensionTag, UseSIMD> {
+private:
+  using base_type =
+      specfem::accessor::Accessor<specfem::accessor::type::point,
+                                  specfem::data_class::type::stress_integrand,
+                                  DimensionTag, UseSIMD>; ///< Base accessor
+                                                          ///< type
+public:
   /**
    * @name Compile time constants
    *
@@ -45,16 +54,16 @@ struct stress_integrand {
    *
    */
   ///@{
-  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-
-  using ViewType =
-      specfem::datatype::VectorPointViewType<type_real, dimension, components,
-                                             UseSIMD>; ///< Underlying view type
-                                                       ///< to store the stress
-                                                       ///< integrand
+  using simd = typename base_type::template simd<type_real>; ///< SIMD type
+  using value_type =
+      typename base_type::template tensor_type<type_real, components,
+                                               dimension>; ///< Underlying view
+                                                           ///< type to store
+                                                           ///< the stress
+                                                           ///< integrand
   ///@}
 
-  ViewType F; ///< View to store the stress integrand
+  value_type F; ///< View to store the stress integrand
 
   /**
    * @name Constructors
@@ -73,7 +82,7 @@ struct stress_integrand {
    *
    * @param F Stress integrands
    */
-  KOKKOS_FUNCTION stress_integrand(const ViewType &F) : F(F) {}
+  KOKKOS_FUNCTION stress_integrand(const value_type &F) : F(F) {}
   ///@}
 };
 
