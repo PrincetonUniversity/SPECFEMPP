@@ -2,7 +2,8 @@
 #define _SPECFEM_TIMESCHEME_NEWMARK_TPP_
 
 #include "parallel_configuration/range_config.hpp"
-#include "policies/range_iterator.hpp"
+#include "execution/range_iterator.hpp"
+#include "execution/for_all.hpp"
 #include "timescheme/newmark.hpp"
 
 namespace {
@@ -24,13 +25,11 @@ int corrector_phase_impl(
       specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             true, false, false, using_simd>;
 
-  using ParallelConfig = specfem::parallel_config::default_range_config<
+  using parallel_config = specfem::parallel_config::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,
       Kokkos::DefaultExecutionSpace>;
 
-  using RangeIterator = specfem::policy::RangeIterator<ParallelConfig>;
-
-  RangeIterator range(nglob);
+  specfem::execution::RangeIterator range(parallel_config(), nglob);
 
   using IndexType = specfem::point::assembly_index<using_simd>;
 
@@ -75,13 +74,11 @@ int predictor_phase_impl(
       specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             false, true, false, using_simd>;
 
-  using ParallelConfig = specfem::parallel_config::default_range_config<
+  using parallel_config = specfem::parallel_config::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,
       Kokkos::DefaultExecutionSpace>;
 
-  using RangeIterator = specfem::policy::RangeIterator<ParallelConfig>;
-
-  RangeIterator range(nglob);
+  specfem::execution::RangeIterator range(parallel_config(), nglob);
 
   using IndexType = specfem::point::assembly_index<using_simd>;
 
@@ -95,9 +92,8 @@ int predictor_phase_impl(
         specfem::compute::load_on_device(index, field, load);
 
         for (int idim = 0; idim < components; ++idim) {
-          add.displacement(idim) +=
-              deltat * load.velocity(idim) +
-              deltasquareover2 * load.acceleration(idim);
+          add.displacement(idim) += deltat * load.velocity(idim) +
+                                    deltasquareover2 * load.acceleration(idim);
 
           add.velocity(idim) += deltatover2 * load.acceleration(idim);
 
