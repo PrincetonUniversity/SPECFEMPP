@@ -296,9 +296,9 @@ struct field : public impl::FieldAccessor<DimensionTag, MediumTag, UseSIMD>,
                    StoreDisplacement, StoreVelocity, StoreAcceleration,
                    StoreMassMatrix> {
 private:
-  using accessor_type = impl::FieldAccessor<DimensionTag, MediumTag, UseSIMD>;
-  using traits_type =
-      impl::FieldTraits<typename accessor_type::value_type, StoreDisplacement,
+  using base_accessor = impl::FieldAccessor<DimensionTag, MediumTag, UseSIMD>;
+  using base_traits =
+      impl::FieldTraits<typename base_accessor::value_type, StoreDisplacement,
                         StoreVelocity, StoreAcceleration, StoreMassMatrix>;
 
 public:
@@ -307,8 +307,8 @@ public:
    *
    */
   ///@{
-  using simd = typename accessor_type::simd;             ///< SIMD type
-  using value_type = typename accessor_type::value_type; ///< Underlying
+  using simd = typename base_accessor::simd;             ///< SIMD type
+  using value_type = typename base_accessor::value_type; ///< Underlying
                                                          ///< datatype used
                                                          ///< to store the
                                                          ///< field
@@ -351,7 +351,7 @@ public:
    *
    */
   ///@{
-  using traits_type::traits_type; ///< Inherit constructors from traits type
+  using base_traits::base_traits; ///< Inherit constructors from traits type
   ///@}
 };
 
