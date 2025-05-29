@@ -17,7 +17,17 @@ namespace point {
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct stress {
+struct stress
+    : public specfem::accessor::Accessor<specfem::accessor::type::point,
+                                         specfem::data_class::type::stress,
+                                         DimensionTag, UseSIMD> {
+private:
+  using base_type =
+      specfem::accessor::Accessor<specfem::accessor::type::point,
+                                  specfem::data_class::type::stress,
+                                  DimensionTag,
+                                  UseSIMD>; ///< Base accessor type
+public:
   /**
    * @name Compile time constants
    *
@@ -34,16 +44,16 @@ struct stress {
    *
    */
   ///@{
-  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-
-  using ViewType =
-      specfem::datatype::VectorPointViewType<type_real, components, dimension,
-                                             UseSIMD>; ///< Underlying view type
-                                                       ///< to store the stress
-                                                       ///< tensor
+  using simd = typename base_type::template simd<type_real>; ///< SIMD type
+  using value_type =
+      typename base_type::template tensor_type<type_real, components,
+                                               dimension>; ///< Underlying view
+                                                           ///< type to store
+                                                           ///< the stress
+                                                           ///< tensor
   ///@}
 
-  ViewType T; ///< View to store the stress tensor
+  value_type T; ///< View to store the stress tensor
 
   /**
    * @name Constructors
@@ -62,7 +72,7 @@ struct stress {
    *
    * @param T stress tensor
    */
-  KOKKOS_FUNCTION stress(const ViewType &T) : T(T) {}
+  KOKKOS_FUNCTION stress(const value_type &T) : T(T) {}
   ///@}
 
   /**
@@ -71,13 +81,13 @@ struct stress {
    * /f$ F_{ij} = \sum_{k=1}^{N} T_{ik} \partial_k xi_j /f$
    *
    * @param partial_derivatives Spatial derivatives
-   * @return ViewType Result of the product
+   * @return value_type Result of the product
    */
   KOKKOS_INLINE_FUNCTION
-  ViewType operator*(const specfem::point::partial_derivatives<
-                     specfem::dimension::type::dim2, false, UseSIMD>
-                         &partial_derivatives) const {
-    ViewType F;
+  value_type operator*(const specfem::point::partial_derivatives<
+                       specfem::dimension::type::dim2, false, UseSIMD>
+                           &partial_derivatives) const {
+    value_type F;
 
     for (int icomponent = 0; icomponent < components; ++icomponent) {
       F(icomponent, 0) = T(icomponent, 0) * partial_derivatives.xix +
