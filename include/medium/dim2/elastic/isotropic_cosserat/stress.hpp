@@ -32,20 +32,20 @@ KOKKOS_INLINE_FUNCTION
   const auto twothirds =
       static_cast<type_real>(2.0) / static_cast<type_real>(3.0);
 
-  sigma_xx = (properties.kappa() - twothirds * properties.mu()) *
-                 (du(0, 0) + du(1, 1)) +
+  sigma_xx = properties.lambda() * (du(0, 0) + du(1, 1)) +
              static_cast<type_real>(2.0) * properties.mu() * du(0, 0);
 
-  sigma_zz = (properties.kappa() - twothirds * properties.mu()) *
-                 (du(0, 0) + du(1, 1)) +
+  sigma_zz = properties.lambda() * (du(0, 0) + du(1, 1)) +
              static_cast<type_real>(2.0) * properties.mu() * du(1, 1);
 
   // From Jeroen's spin notes:
-  sigma_xz = properties.mu() * (du(0, 1) + du(1, 0)) +
-             properties.nu() * (du(0, 1) - du(1, 0));
-
-  sigma_zx = properties.mu() * (du(1, 0) + du(0, 1)) +
+  // note that du(0, 1) is the $\partial u_x / \partial z$
+  // and du(1, 0) is the $\partial u_z / \partial x$, etc.
+  sigma_xz = properties.mu() * (du(1, 0) + du(0, 1)) +
              properties.nu() * (du(1, 0) - du(0, 1));
+
+  sigma_zx = properties.mu() * (du(0, 1) + du(1, 0)) +
+             properties.nu() * (du(0, 1) - du(1, 0));
 
   // Couple stress components for psv propagation
   sigma_c_xy = (properties.mu_c() + properties.nu_c()) * du(2, 0);
