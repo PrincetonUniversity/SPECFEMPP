@@ -41,25 +41,5 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
         specfem::compute::store_on_device(index, store_field, field);
       });
 
-  // Kokkos::parallel_for(
-  //     "specfem::domain::domain::divide_mass_matrix",
-  //     static_cast<typename RangePolicy::policy_type &>(range),
-  //     KOKKOS_LAMBDA(const int iglob) {
-  //       for (int itile = 0; itile < RangePolicy::tile_size; ++itile) {
-
-  //         const auto iterator = range.range_iterator(iglob, itile);
-
-  //         if (iterator.is_end()) {
-  //           return; // Skip if the iterator is at the end
-  //         }
-  //         const auto index = iterator();
-
-  //         PointFieldType load_field;
-  //         specfem::compute::load_on_device(index.index, field, load_field);
-  //         PointFieldType store_field(load_field.invert_mass_matrix());
-  //         specfem::compute::store_on_device(index.index, store_field, field);
-  //       }
-  //     });
-
   // Kokkos::fence();
 }
