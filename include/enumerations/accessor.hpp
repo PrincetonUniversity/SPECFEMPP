@@ -87,4 +87,13 @@ struct is_point_source<
                         T::data_class == specfem::data_class::type::source> >
     : std::true_type {};
 
+template <typename T, typename = void>
+struct is_point_boundary : std::false_type {};
+
+template <typename T>
+struct is_point_boundary<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class == specfem::data_class::type::boundary> >
+    : std::true_type {};
+
 } // namespace specfem::accessor

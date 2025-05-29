@@ -17,7 +17,7 @@ KOKKOS_FORCEINLINE_FUNCTION void apply_boundary_conditions(
     const PointBoundaryType &boundary, const PointPropertyType &property,
     const PointFieldType &field, PointAccelerationType &acceleration) {
 
-  static_assert(PointBoundaryType::isPointBoundaryType,
+  static_assert(specfem::accessor::is_point_boundary<PointBoundaryType>::value,
                 "PointBoundaryType must be a PointBoundaryType");
 
   static_assert(specfem::accessor::is_point_field<PointFieldType>::value,
@@ -57,7 +57,7 @@ compute_mass_matrix_terms(const type_real dt, const PointBoundaryType &boundary,
                           const PointPropertyType &property,
                           PointMassMatrixType &mass_matrix) {
 
-  static_assert(PointBoundaryType::isPointBoundaryType,
+  static_assert(specfem::accessor::is_point_boundary<PointBoundaryType>::value,
                 "PointBoundaryType must be a PointBoundaryType");
 
   static_assert(specfem::accessor::is_point_field<PointMassMatrixType>::value,
