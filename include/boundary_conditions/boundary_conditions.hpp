@@ -2,7 +2,7 @@
 
 #include "composite_stacey_dirichlet/composite_stacey_dirichlet.hpp"
 #include "dirichlet/dirichlet.hpp"
-#include "enumerations/boundary.hpp"
+#include "enumerations/interface.hpp"
 #include "none/none.hpp"
 #include "stacey/stacey.hpp"
 #include <Kokkos_Core.hpp>
@@ -20,13 +20,13 @@ KOKKOS_FORCEINLINE_FUNCTION void apply_boundary_conditions(
   static_assert(PointBoundaryType::isPointBoundaryType,
                 "PointBoundaryType must be a PointBoundaryType");
 
-  static_assert(PointFieldType::isPointFieldType,
+  static_assert(specfem::accessor::is_point_field<PointFieldType>::value,
                 "PointFieldType must be a PointFieldType");
 
   static_assert(PointFieldType::store_velocity,
                 "PointFieldType must store velocity");
 
-  static_assert(PointAccelerationType::isPointFieldType,
+  static_assert(specfem::accessor::is_point_field<PointAccelerationType>::value,
                 "PointAccelerationType must be a PointFieldType");
 
   static_assert(PointAccelerationType::store_acceleration,
@@ -60,7 +60,7 @@ compute_mass_matrix_terms(const type_real dt, const PointBoundaryType &boundary,
   static_assert(PointBoundaryType::isPointBoundaryType,
                 "PointBoundaryType must be a PointBoundaryType");
 
-  static_assert(PointMassMatrixType::isPointFieldType,
+  static_assert(specfem::accessor::is_point_field<PointMassMatrixType>::value,
                 "PointMassMatrixType must be a PointFieldType");
 
   static_assert(PointMassMatrixType::store_mass_matrix,

@@ -125,7 +125,7 @@ KOKKOS_FUNCTION
                          PointPartialDerivativesType::dimension_tag ==
                              specfem::dimension::type::dim2 &&
                          specfem::accessor::is_point_partial_derivatives<
-                             PointPartialDerivativesType>,
+                             PointPartialDerivativesType>::value,
                      PointPartialDerivativesType>
     operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
   return PointPartialDerivativesType(rhs.xix * lhs, rhs.gammax * lhs,

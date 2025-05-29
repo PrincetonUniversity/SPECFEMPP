@@ -22,15 +22,16 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
   static_assert(PointPropertiesType::is_point_properties,
                 "properties is not a point properties type");
 
-  static_assert(
-      specfem::accessor::is_point_field_derivatives<PointFieldDerivativesType>,
-      "field_derivatives is not a point field derivatives type");
+  static_assert(specfem::accessor::is_point_field_derivatives<
+                    PointFieldDerivativesType>::value,
+                "field_derivatives is not a point field derivatives type");
 
-  static_assert(AdjointPointFieldType::isPointFieldType,
+  static_assert(specfem::accessor::is_point_field<AdjointPointFieldType>::value,
                 "adjoint_field is not a point field type");
 
-  static_assert(BackwardPointFieldType::isPointFieldType,
-                "backward_field is not a point field type");
+  static_assert(
+      specfem::accessor::is_point_field<BackwardPointFieldType>::value,
+      "backward_field is not a point field type");
 
   static_assert(AdjointPointFieldType::store_acceleration,
                 "adjoint_field does not store acceleration");
