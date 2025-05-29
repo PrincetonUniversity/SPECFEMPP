@@ -42,7 +42,7 @@ public:
    *
    */
   ///@{
-  using simd = typename base_type::simd; ///< SIMD data type
+  using simd = typename base_type::template simd<type_real>; ///< SIMD data type
   using value_type = typename base_type::template scalar_type<type_real>;
   constexpr static bool store_jacobian = false;
   ///@}
@@ -159,7 +159,7 @@ public:
    *
    */
   ///@{
-  using simd = typename base_type::simd; ///< SIMD data type
+  using simd = typename base_type::template simd<type_real>; ///< SIMD data type
   using value_type = typename base_type::template scalar_type<type_real>;
   constexpr static bool store_jacobian = false;
   ///@}

@@ -175,7 +175,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_load(const specfem::point::index<ViewType::dimension> &index,
+impl_load(const specfem::point::index<ViewType::dimension_tag> &index,
           const WavefieldType &field, ViewType &point_field) {
   constexpr static auto MediumTag = ViewType::medium_tag;
   impl_load<on_device>(field.template get_iglob<on_device>(
@@ -200,7 +200,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_load(const specfem::point::simd_index<ViewType::dimension> &index,
+impl_load(const specfem::point::simd_index<ViewType::dimension_tag> &index,
           const WavefieldType &field, ViewType &point_field) {
   constexpr static auto MediumTag = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
@@ -378,7 +378,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_store(const specfem::point::index<ViewType::dimension> &index,
+impl_store(const specfem::point::index<ViewType::dimension_tag> &index,
            const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumTag = ViewType::medium_tag;
@@ -408,7 +408,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_store(const specfem::point::simd_index<ViewType::dimension> &index,
+impl_store(const specfem::point::simd_index<ViewType::dimension_tag> &index,
            const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumTag = ViewType::medium_tag;
@@ -607,7 +607,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_add(const specfem::point::index<ViewType::dimension> &index,
+impl_add(const specfem::point::index<ViewType::dimension_tag> &index,
          const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumTag = ViewType::medium_tag;
@@ -636,7 +636,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_add(const specfem::point::simd_index<ViewType::dimension> &index,
+impl_add(const specfem::point::simd_index<ViewType::dimension_tag> &index,
          const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumTag = ViewType::medium_tag;
@@ -762,7 +762,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_atomic_add(const specfem::point::index<ViewType::dimension> &index,
+impl_atomic_add(const specfem::point::index<ViewType::dimension_tag> &index,
                 const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumTag = ViewType::medium_tag;
@@ -777,7 +777,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_atomic_add(const specfem::point::simd_index<ViewType::dimension> &index,
+impl_atomic_add(const specfem::point::simd_index<ViewType::dimension_tag> &index,
                 const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumTag = ViewType::medium_tag;
