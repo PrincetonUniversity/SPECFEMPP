@@ -44,8 +44,8 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
   constexpr auto dimension = PointPropertiesType::dimension;
 
   static_assert(
-      (dimension == AdjointPointFieldType::dimension &&
-       dimension == BackwardPointFieldType::dimension &&
+      (dimension == AdjointPointFieldType::dimension_tag &&
+       dimension == BackwardPointFieldType::dimension_tag &&
        dimension == PointFieldDerivativesType::dimension_tag),
       "Dimension inconsistency between properties, fields, and derivatives");
 

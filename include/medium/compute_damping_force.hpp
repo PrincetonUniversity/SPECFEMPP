@@ -33,11 +33,12 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
   static_assert(PointAccelerationType::store_acceleration,
                 "acceleration must store acceleration");
 
-  static_assert(PointPropertiesType::dimension == PointVelocityType::dimension,
+  static_assert(PointPropertiesType::dimension ==
+                    PointVelocityType::dimension_tag,
                 "point_properties and velocity have different dimensions");
 
   static_assert(PointPropertiesType::dimension ==
-                    PointAccelerationType::dimension,
+                    PointAccelerationType::dimension_tag,
                 "point_properties and acceleration have different dimensions");
 
   static_assert(PointPropertiesType::medium_tag ==

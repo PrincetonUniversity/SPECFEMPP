@@ -215,7 +215,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 [&, istep = istep](
                     const typename ChunkPolicyType::iterator_type::index_type
                         &iterator_index,
-                    const typename PointAccelerationType::ViewType &result) {
+                    const typename PointAccelerationType::value_type &result) {
                   const auto &index = iterator_index.index;
                   PointAccelerationType acceleration(result);
 
