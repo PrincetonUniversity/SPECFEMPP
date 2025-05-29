@@ -49,4 +49,19 @@ struct Accessor {
       AccessorType>::template tensor_type<T, components, dimension, UseSIMD>;
 };
 
+template <typename T>
+constexpr bool is_point_partial_derivatives =
+    T::accessor_type == specfem::accessor::type::point &&
+    T::data_class == specfem::data_class::type::partial_derivatives;
+
+template <typename T>
+constexpr bool is_point_field =
+    T::accessor_type == specfem::accessor::type::point &&
+    T::data_class == specfem::data_class::type::field;
+
+template <typename T>
+constexpr bool is_point_field_derivatives =
+    T::accessor_type == specfem::accessor::type::point &&
+    T::data_class == specfem::data_class::type::field_derivatives;
+
 } // namespace specfem::accessor
