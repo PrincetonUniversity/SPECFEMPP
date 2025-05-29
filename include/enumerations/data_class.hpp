@@ -10,6 +10,7 @@ enum type {
   field,
   source,
   stress,
-  stress_integrand
+  stress_integrand,
+  boundary
 };
 } // namespace specfem::data_class
