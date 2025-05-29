@@ -2,8 +2,8 @@
 
 #include "compute/assembly/assembly.hpp"
 #include "parallel_configuration/range_config.hpp"
+#include "policies/range_iterator.hpp"
 #include "specfem/point.hpp"
-#include "policies/range.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionTag,
@@ -26,29 +26,40 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
       specfem::datatype::simd<type_real, using_simd>,
       Kokkos::DefaultExecutionSpace>;
 
-  using RangePolicy = specfem::policy::range<ParallelConfig>;
+  using RangeIterator = specfem::policy::RangeIterator<ParallelConfig>;
 
-  RangePolicy range(nglob);
+  using IndexType = specfem::point::assembly_index<using_simd>;
 
-  Kokkos::parallel_for(
-      "specfem::domain::domain::divide_mass_matrix",
-      static_cast<typename RangePolicy::policy_type &>(range),
-      KOKKOS_LAMBDA(const int iglob) {
-        for (int itile = 0; itile < RangePolicy::tile_size; ++itile) {
+  RangeIterator range(nglob);
 
-          const auto iterator = range.range_iterator(iglob, itile);
-
-          if (iterator.is_end()) {
-            return; // Skip if the iterator is at the end
-          }
-          const auto index = iterator();
-
-          PointFieldType load_field;
-          specfem::compute::load_on_device(index.index, field, load_field);
-          PointFieldType store_field(load_field.invert_mass_matrix());
-          specfem::compute::store_on_device(index.index, store_field, field);
-        }
+  specfem::execution::for_all(
+      "specfem::domain::domain::divide_mass_matrix", range,
+      KOKKOS_LAMBDA(const IndexType &index) {
+        PointFieldType load_field;
+        specfem::compute::load_on_device(index, field, load_field);
+        PointFieldType store_field(load_field.invert_mass_matrix());
+        specfem::compute::store_on_device(index, store_field, field);
       });
+
+  // Kokkos::parallel_for(
+  //     "specfem::domain::domain::divide_mass_matrix",
+  //     static_cast<typename RangePolicy::policy_type &>(range),
+  //     KOKKOS_LAMBDA(const int iglob) {
+  //       for (int itile = 0; itile < RangePolicy::tile_size; ++itile) {
+
+  //         const auto iterator = range.range_iterator(iglob, itile);
+
+  //         if (iterator.is_end()) {
+  //           return; // Skip if the iterator is at the end
+  //         }
+  //         const auto index = iterator();
+
+  //         PointFieldType load_field;
+  //         specfem::compute::load_on_device(index.index, field, load_field);
+  //         PointFieldType store_field(load_field.invert_mass_matrix());
+  //         specfem::compute::store_on_device(index.index, store_field, field);
+  //       }
+  //     });
 
   // Kokkos::fence();
 }

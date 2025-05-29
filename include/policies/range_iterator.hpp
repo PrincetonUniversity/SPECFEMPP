@@ -1,26 +1,30 @@
 #pragma once
 
 #include "policy.hpp"
+#include "specfem/point.hpp"
+#include <Kokkos_Core.hpp>
+#include <type_traits>
 
 namespace specfem {
 namespace policy {
 namespace impl {
 
 // forward declaration
-template <std::size_t TileSize, typename Simd> class RangeTileIterator;
+template <std::size_t TileSize, typename SIMD> class RangeTileIterator;
 
 template <typename PolicyIndexType, bool UseSIMD> class RangeIndex {
 public:
   using iterator_type = VoidIterator;
 
-  const PolicyIndexType get_policy_index() const {
-    return this->index.policy_index;
-  }
+  KOKKOS_FORCEINLINE_FUNCTION
+  PolicyIndexType get_policy_index() const { return this->index.policy_index; }
 
-  const specfem::point::assembly_index<UseSIMD> get_index() const {
+  KOKKOS_FORCEINLINE_FUNCTION
+  specfem::point::assembly_index<UseSIMD> get_index() const {
     return this->index;
   }
 
+  KOKKOS_FORCEINLINE_FUNCTION
   constexpr iterator_type get_iterator() const { return VoidIterator(); };
 
   template <bool U = UseSIMD, typename std::enable_if<!U, int>::type = 0>
@@ -49,12 +53,12 @@ private:
   bool end_iterator = false; ///< Indicates if the iterator is at the end
 };
 
-template <std::size_t TileSize, typename Simd>
+template <std::size_t TileSize, typename SIMD>
 class RangeTileIterator : public RangeTilePolicy<TileSize> {
 private:
   using base_type = RangeTilePolicy<TileSize>;
-  constexpr static bool use_simd = Simd::using_simd;
-  constexpr static std::size_t simd_size = Simd::size();
+  constexpr static bool use_simd = SIMD::using_simd;
+  constexpr static std::size_t simd_size = SIMD::size();
 
   int tile_starting_index;
   int starting_index;
@@ -67,7 +71,7 @@ public:
   using policy_index_type = typename base_type::policy_index_type;
 
   template <bool U = use_simd>
-  KOKKOS_FORCEINLINE_FUNCTION typename std::enable_if_t<U, index_type>
+  KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<U, index_type>
   operator()(const policy_index_type &i) const {
     const int starting_index = tile_starting_index + i * simd_size;
 
@@ -84,7 +88,7 @@ public:
   }
 
   template <bool U = use_simd>
-  KOKKOS_FORCEINLINE_FUNCTION typename std::enable_if_t<!U, index_type>
+  KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<!U, index_type>
   operator()(const policy_index_type &i) const {
     const int starting_index =
         tile_starting_index + i * RangeTilePolicy<TileSize>::tile_size;
@@ -102,21 +106,25 @@ public:
         tile_starting_index(tile_starting_index), range_size(range_size) {}
 };
 
-template <std::size_t TileSize, typename Simd> class RangeTileIndex {
+template <std::size_t TileSize, typename SIMD> class RangeTileIndex {
 public:
-  using iterator_type = RangeTileIterator<TileSize, Simd>;
+  using iterator_type = RangeTileIterator<TileSize, SIMD>;
 
-  const int get_policy_index() const { return this->policy_index; }
+  KOKKOS_FORCEINLINE_FUNCTION
+  int get_policy_index() const { return this->policy_index; }
 
+  KOKKOS_FORCEINLINE_FUNCTION
   const RangeTileIndex &get_index() const {
     return *this; ///< Returns itself as the index
   }
 
-  const iterator_type get_iterator() const {
+  KOKKOS_FORCEINLINE_FUNCTION
+  iterator_type get_iterator() const {
     return iterator_type(this->tile_starting_index, this->policy_index,
                          this->range_size);
   }
 
+  KOKKOS_FORCEINLINE_FUNCTION
   RangeTileIndex(const int &tile_starting_index, const int &policy_index,
                  const int &range_size)
       : tile_starting_index(tile_starting_index), policy_index(policy_index),

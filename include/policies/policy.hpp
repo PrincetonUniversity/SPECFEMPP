@@ -2,6 +2,7 @@
 
 #include <Kokkos_Core.hpp>
 #include <cstddef>
+#include <type_traits>
 
 namespace specfem {
 namespace policy {
@@ -30,6 +31,8 @@ public:
   using base_policy_type =
       Kokkos::TeamPolicy<typename ParallelConfig::execution_space>;
   using policy_index_type = typename base_policy_type::member_type;
+
+  using base_policy_type::base_policy_type;
 };
 
 template <typename TeamMemberType, typename IndexType>
@@ -41,6 +44,9 @@ public:
   using base_policy_type = decltype(Kokkos::TeamThreadRange(
       std::declval<TeamMemberType>(), std::declval<IndexType>()));
   using policy_index_type = IndexType;
+
+  TeamThreadRangePolicy(const TeamMemberType &team, const IndexType &range)
+      : base_policy_type(Kokkos::TeamThreadRange(team, range)) {}
 };
 
 template <std::size_t TileSize> class TeamTilePolicy {
@@ -110,11 +116,11 @@ inline void for_each(const std::string &name, const Iterator &iterator,
 }
 
 template <typename Iterator, typename ClosureType>
-std::enable_if_t<Iterator::policy_type ==
-                     specfem::policy::impl::PolicyType::KokkosPolicy,
-                 void>
-    KOKKOS_FORCEINLINE_FUNCTION for_each(const Iterator &iterator,
-                                         const ClosureType &closure) {
+KOKKOS_FORCEINLINE_FUNCTION
+    std::enable_if_t<Iterator::policy_type ==
+                         specfem::policy::impl::PolicyType::KokkosPolicy,
+                     void>
+    for_each(const Iterator &iterator, const ClosureType &closure) {
 
   static_assert(
       std::is_invocable_v<ClosureType, typename Iterator::index_type>,
@@ -137,11 +143,11 @@ std::enable_if_t<Iterator::policy_type ==
 }
 
 template <typename Iterator, typename ClosureType>
-std::enable_if_t<Iterator::policy_type ==
-                     specfem::policy::impl::PolicyType::TilePolicy,
-                 void>
-    KOKKOS_FORCEINLINE_FUNCTION for_each(const Iterator &iterator,
-                                         const ClosureType &closure) {
+KOKKOS_FORCEINLINE_FUNCTION
+    std::enable_if_t<Iterator::policy_type ==
+                         specfem::policy::impl::PolicyType::TilePolicy,
+                     void>
+    for_each(const Iterator &iterator, const ClosureType &closure) {
 
   constexpr std::size_t tile_size = Iterator::tile_size;
 
@@ -171,32 +177,32 @@ std::enable_if_t<Iterator::policy_type ==
 }
 
 template <typename Iterator, typename ClosureType>
-std::enable_if_t<Iterator::policy_type ==
-                     specfem::policy::impl::PolicyType::VoidPolicy,
-                 void>
-    KOKKOS_FORCEINLINE_FUNCTION for_each(const Iterator &iterator,
-                                         const ClosureType &closure) {
+KOKKOS_FORCEINLINE_FUNCTION
+    std::enable_if_t<Iterator::policy_type ==
+                         specfem::policy::impl::PolicyType::VoidPolicy,
+                     void>
+    for_each(const Iterator &iterator, const ClosureType &closure) {
   static_assert(Iterator::policy_type ==
                     specfem::policy::impl::PolicyType::VoidPolicy,
                 "Calling for_each on a VoidPolicy is not allowed");
 }
 
 template <typename IndexType, typename ClosureType>
-std::enable_if_t<IndexType::iterator_type::policy_type ==
-                     specfem::policy::impl::PolicyType::VoidPolicy,
-                 void>
-    KOKKOS_FORCEINLINE_FUNCTION for_all(const IndexType &index,
-                                        const ClosureType &closure) {
+KOKKOS_FORCEINLINE_FUNCTION
+    std::enable_if_t<IndexType::iterator_type::policy_type ==
+                         specfem::policy::impl::PolicyType::VoidPolicy,
+                     void>
+    for_all(const IndexType &index, const ClosureType &closure) {
   const auto i = index.get_index();
   closure(i);
 }
 
 template <typename IndexType, typename ClosureType>
-std::enable_if_t<IndexType::iterator_type::policy_type !=
-                     specfem::policy::impl::PolicyType::VoidPolicy,
-                 void>
-    KOKKOS_FORCEINLINE_FUNCTION for_all(const IndexType &index,
-                                        const ClosureType &closure) {
+KOKKOS_FORCEINLINE_FUNCTION
+    std::enable_if_t<IndexType::iterator_type::policy_type !=
+                         specfem::policy::impl::PolicyType::VoidPolicy,
+                     void>
+    for_all(const IndexType &index, const ClosureType &closure) {
 
   const auto iterator = index.get_iterator();
 
@@ -207,12 +213,11 @@ std::enable_if_t<IndexType::iterator_type::policy_type !=
 }
 
 template <typename Iterator, typename ClosureType>
-std::enable_if_t<Iterator::policy_type ==
-                     specfem::policy::impl::PolicyType::KokkosPolicy,
-                 void>
-    KOKKOS_FORCEINLINE_FUNCTION for_all(const std::string &name,
-                                        const Iterator &iterator,
-                                        const ClosureType &closure) {
+inline std::enable_if_t<Iterator::policy_type ==
+                            specfem::policy::impl::PolicyType::KokkosPolicy,
+                        void>
+for_all(const std::string &name, const Iterator &iterator,
+        const ClosureType &closure) {
 
   for_each(
       name, iterator,
