@@ -7,6 +7,7 @@ enum type {
   kernels,
   partial_derivatives,
   field_derivatives,
-  field
+  field,
+  source
 };
 } // namespace specfem::data_class
