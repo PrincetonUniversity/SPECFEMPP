@@ -8,6 +8,7 @@ enum type {
   partial_derivatives,
   field_derivatives,
   field,
-  source
+  source,
+  stress
 };
 } // namespace specfem::data_class
