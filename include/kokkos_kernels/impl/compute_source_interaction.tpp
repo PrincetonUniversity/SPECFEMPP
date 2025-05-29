@@ -51,7 +51,7 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
 
   sources.update_timestep(timestep);
 
-  using PointSourcesType =
+  using PointSourceType =
       specfem::point::source<dimension, medium_tag, wavefield>;
   using PointPropertiesType =
       specfem::point::properties<dimension, medium_tag, property_tag, false>;
@@ -104,7 +104,7 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
                 const auto element_index = mapped_iterator_index.index;
 
                 // need mapped_chunk_index here to get the imap=isource
-                PointSourcesType point_source;
+                PointSourceType point_source;
                 specfem::compute::load_on_device(mapped_iterator_index, sources,
                                                  point_source);
 

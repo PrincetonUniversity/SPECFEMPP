@@ -78,4 +78,13 @@ struct is_point_field_derivatives<
                             specfem::data_class::type::field_derivatives> >
     : std::true_type {};
 
+template <typename T, typename = void>
+struct is_point_source : std::false_type {};
+
+template <typename T>
+struct is_point_source<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class == specfem::data_class::type::source> >
+    : std::true_type {};
+
 } // namespace specfem::accessor
