@@ -338,9 +338,6 @@ public:
   constexpr static bool isChunkFieldType =
       value_type::isChunkViewType; ///< Check if the field is a chunk field type
                                    ///< (false)
-  constexpr static bool isPointFieldType =
-      value_type::isPointViewType; ///< Check if the field is a point field type
-                                   ///< (true)
   constexpr static bool isElementFieldType =
       value_type::isElementViewType; ///< Check if the field is an element field
                                      ///< type (false)

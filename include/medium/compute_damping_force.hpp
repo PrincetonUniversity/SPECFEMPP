@@ -21,10 +21,10 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
   static_assert(PointPropertiesType::is_point_properties,
                 "point_properties is not a point properties type");
 
-  static_assert(PointVelocityType::isPointFieldType,
+  static_assert(specfem::accessor::is_point_field<PointVelocityType>::value,
                 "velocity is not a point field type");
 
-  static_assert(PointAccelerationType::isPointFieldType,
+  static_assert(specfem::accessor::is_point_field<PointAccelerationType>::value,
                 "acceleration is not a point field type");
 
   static_assert(PointVelocityType::store_velocity,

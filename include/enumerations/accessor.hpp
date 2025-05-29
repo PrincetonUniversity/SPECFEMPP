@@ -49,19 +49,33 @@ struct Accessor {
       AccessorType>::template tensor_type<T, components, dimension, UseSIMD>;
 };
 
-template <typename T>
-constexpr bool is_point_partial_derivatives =
-    T::accessor_type == specfem::accessor::type::point &&
-    T::data_class == specfem::data_class::type::partial_derivatives;
+template <typename T, typename = void>
+struct is_point_partial_derivatives : std::false_type {};
 
 template <typename T>
-constexpr bool is_point_field =
-    T::accessor_type == specfem::accessor::type::point &&
-    T::data_class == specfem::data_class::type::field;
+struct is_point_partial_derivatives<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class ==
+                            specfem::data_class::type::partial_derivatives> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_point_field : std::false_type {};
 
 template <typename T>
-constexpr bool is_point_field_derivatives =
-    T::accessor_type == specfem::accessor::type::point &&
-    T::data_class == specfem::data_class::type::field_derivatives;
+struct is_point_field<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class == specfem::data_class::type::field> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_point_field_derivatives : std::false_type {};
+
+template <typename T>
+struct is_point_field_derivatives<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class ==
+                            specfem::data_class::type::field_derivatives> >
+    : std::true_type {};
 
 } // namespace specfem::accessor

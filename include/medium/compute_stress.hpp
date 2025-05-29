@@ -36,9 +36,9 @@ compute_stress(const PointPropertiesType &properties,
   static_assert(PointPropertiesType::is_point_properties,
                 "properties is not a point properties type");
 
-  static_assert(
-      specfem::accessor::is_point_field_derivatives<PointFieldDerivativesType>,
-      "field_derivatives is not a point field derivatives type");
+  static_assert(specfem::accessor::is_point_field_derivatives<
+                    PointFieldDerivativesType>::value,
+                "field_derivatives is not a point field derivatives type");
 
   static_assert(PointPropertiesType::dimension ==
                     PointFieldDerivativesType::dimension_tag,
