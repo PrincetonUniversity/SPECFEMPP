@@ -2,7 +2,8 @@
 
 #include "compute/assembly/assembly.hpp"
 #include "parallel_configuration/range_config.hpp"
-#include "policies/range_iterator.hpp"
+#include "execution/range_iterator.hpp"
+#include "execution/for_all.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -24,15 +25,13 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
   using StoreFieldType = specfem::point::field<DimensionTag, MediumTag, false,
                                                false, true, false, using_simd>;
 
-  using ParallelConfig = specfem::parallel_config::default_range_config<
+  using parallel_config = specfem::parallel_config::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,
       Kokkos::DefaultExecutionSpace>;
 
-  using RangePolicy = specfem::policy::RangeIterator<ParallelConfig>;
-
   using IndexType = specfem::point::assembly_index<using_simd>;
 
-  RangePolicy range(nglob);
+  specfem::execution::RangeIterator range(parallel_config(), nglob);
 
   specfem::execution::for_all(
       "specfem::domain::domain::divide_mass_matrix", range,

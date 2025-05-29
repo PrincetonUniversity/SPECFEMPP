@@ -1,10 +1,11 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "datatypes/simd.hpp"
+#include "execution/for_all.hpp"
+#include "execution/range_iterator.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "parallel_configuration/range_config.hpp"
 #include "policies/chunk.hpp"
-#include "policies/range_iterator.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <fstream>
@@ -76,8 +77,7 @@ void parse_test_config(const YAML::Node &yaml,
 template <typename ParallelConfig>
 typename Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>::HostMirror
 execute_range_policy(const int nglob) {
-  using PolicyType = specfem::policy::RangeIterator<ParallelConfig>;
-  PolicyType iterator(nglob);
+  specfem::execution::RangeIterator iterator(ParallelConfig(), nglob);
   using TestViewType = Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>;
   TestViewType test_view("test_view", nglob);
   TestViewType::HostMirror test_view_host =
@@ -98,8 +98,8 @@ execute_range_policy(const int nglob) {
   specfem::execution::for_all(
       "execute_range_policy", iterator, KOKKOS_LAMBDA(const PointIndex &index) {
         const auto l_test_view = test_view;
-
-        if constexpr (using_simd) {
+        constexpr bool is_simd = using_simd;
+        if constexpr (is_simd) {
           using tag_type = typename ParallelConfig::simd::tag_type;
           using datatype = typename ParallelConfig::simd::datatype;
           using mask_type = typename ParallelConfig::simd::mask_type;
@@ -111,7 +111,7 @@ execute_range_policy(const int nglob) {
           data += static_cast<type_real>(1);
           Kokkos::Experimental::where(mask, data)
               .copy_to(&l_test_view(index.iglob), tag_type());
-        } else if constexpr (!using_simd) {
+        } else {
           l_test_view(index.iglob) += 1;
         }
       });
