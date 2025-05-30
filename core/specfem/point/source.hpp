@@ -21,6 +21,13 @@ struct source
     : public specfem::accessor::Accessor<specfem::accessor::type::point,
                                          specfem::data_class::type::source,
                                          DimensionTag, false> {
+private:
+  using base_type =
+      specfem::accessor::Accessor<specfem::accessor::type::point,
+                                  specfem::data_class::type::source,
+                                  DimensionTag, false>; ///< Base type for the
+                                                        ///< source
+public:
   constexpr static auto medium_tag = MediumTag; ///< Medium tag of the spectral
                                                 ///< element
   constexpr static auto wavefield_tag = WavefieldType; ///< Wavefield type on
@@ -36,16 +43,15 @@ struct source
                                                            ///< the
                                                            ///< medium
 
-  using value_type = typename specfem::accessor::Accessor<
-      specfem::accessor::type::point, specfem::data_class::type::source,
-      DimensionTag,
-      false>::template vector_type<type_real, components>; ///<
-                                                           ///< Value
-                                                           ///< type
-                                                           ///< to
-                                                           ///< store
-                                                           ///< source
-                                                           ///< information
+  using value_type =
+      typename base_type::template vector_type<type_real,
+                                               components>; ///<
+                                                            ///< Value
+                                                            ///< type
+                                                            ///< to
+                                                            ///< store
+                                                            ///< source
+                                                            ///< information
 
   value_type stf;                  ///< Source time function
   value_type lagrange_interpolant; ///< Lagrange interpolant
