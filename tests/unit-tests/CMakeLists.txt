@@ -303,11 +303,11 @@ target_link_libraries(
 
 add_executable(
   mass_matrix_tests
-  mass_matrix/main.cpp
-  mass_matrix/elastic_isotropic.cpp
-  mass_matrix/elastic_anisotropic.cpp
-  mass_matrix/acoustic.cpp
-  mass_matrix/poroelastic.cpp
+  dim2/mass_matrix/main.cpp
+  dim2/mass_matrix/elastic_isotropic.cpp
+  dim2/mass_matrix/elastic_anisotropic.cpp
+  dim2/mass_matrix/acoustic.cpp
+  dim2/mass_matrix/poroelastic.cpp
 )
 
 target_link_libraries(
