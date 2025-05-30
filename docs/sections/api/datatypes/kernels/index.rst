@@ -18,3 +18,4 @@ Implementation Details
 
     dim2/elastic_isotropic.rst
     dim2/acoustic_isotropic.rst
+    dim3/elastic_isotropic.rst
