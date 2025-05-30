@@ -96,11 +96,12 @@ struct data_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::anisotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : public traits<specfem::dimension::type::dim2, MediumTag,
-                    specfem::element::property_tag::anisotropic, UseSIMD> {
+    : public KernelsAccessor<specfem::dimension::type::dim2, MediumTag,
+                             specfem::element::property_tag::anisotropic,
+                             UseSIMD> {
   using base_type =
-      traits<specfem::dimension::type::dim2, MediumTag,
-             specfem::element::property_tag::anisotropic, UseSIMD>;
+      KernelsAccessor<specfem::dimension::type::dim2, MediumTag,
+                      specfem::element::property_tag::anisotropic, UseSIMD>;
 
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
@@ -160,10 +161,13 @@ struct data_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> >
-    : public traits<specfem::dimension::type::dim2, MediumTag,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
-  using base_type = traits<specfem::dimension::type::dim2, MediumTag,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
+    : public KernelsAccessor<specfem::dimension::type::dim2, MediumTag,
+                             specfem::element::property_tag::isotropic,
+                             UseSIMD> {
+  using base_type =
+      KernelsAccessor<specfem::dimension::type::dim2, MediumTag,
+                      specfem::element::property_tag::isotropic, UseSIMD>;
+
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
 
