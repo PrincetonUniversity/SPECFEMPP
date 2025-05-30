@@ -50,8 +50,7 @@ struct data_container<specfem::dimension::type::dim2,
       specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
                                                            ///< point properties
 
-  using value_type = typename base_type::base_type::template scalar_type<
-      type_real>; ///< Type of the properties
+  using value_type = typename base_type::value_type; ///< Type of the properties
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(rho_inverse, kappa)
@@ -121,10 +120,9 @@ struct data_container<
                               UseSIMD> {
   using base_type = PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
                                      specfem::element::property_tag::isotropic,
-                                     UseSIMD>; ///< Base type of the
-                                               ///< point properties
-  using value_type = typename base_type::base_type::template scalar_type<
-      type_real>; ///< Type of the properties
+                                     UseSIMD>;       ///< Base type of the
+                                                     ///< point properties
+  using value_type = typename base_type::value_type; ///< Type of the properties
 
   using simd = typename base_type::simd;
 
@@ -214,8 +212,7 @@ struct data_container<
                        UseSIMD>; ///< Base type of the
                                  ///< point properties
 
-  using value_type = typename base_type::base_type::template scalar_type<
-      type_real>; ///< Type of the properties
+  using value_type = typename base_type::value_type; ///< Type of the properties
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho)
@@ -333,8 +330,7 @@ struct data_container<specfem::dimension::type::dim2,
       specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
       specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
                                                            ///< point properties
-  using value_type = typename base_type::base_type::template scalar_type<
-      type_real>; ///< Type of the properties
+  using value_type = typename base_type::value_type; ///< Type of the properties
 
   using simd = typename base_type::simd;
 
@@ -458,8 +454,7 @@ struct data_container<
                                      UseSIMD>; ///< Base type of the
                                                ///< point properties
 
-  using value_type = typename base_type::base_type::template scalar_type<
-      type_real>; ///< Type of the properties
+  using value_type = typename base_type::value_type; ///< Type of the properties
 
   using simd = typename base_type::simd;
 
@@ -525,8 +520,7 @@ struct data_container<specfem::dimension::type::dim3,
       specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
                                                            ///< point properties
 
-  using value_type = typename base_type::base_type::template scalar_type<
-      type_real>; ///< Type of the properties
+  using value_type = typename base_type::value_type; ///< Type of the properties
 
   using simd = typename base_type::simd;
 

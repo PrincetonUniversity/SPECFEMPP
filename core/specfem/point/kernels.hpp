@@ -45,10 +45,13 @@ struct data_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : public traits<specfem::dimension::type::dim2, MediumTag,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
-  using base_type = traits<specfem::dimension::type::dim2, MediumTag,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
+    : public KernelsAccessor<specfem::dimension::type::dim2, MediumTag,
+                             specfem::element::property_tag::isotropic,
+                             UseSIMD> {
+
+  using base_type =
+      KernelsAccessor<specfem::dimension::type::dim2, MediumTag,
+                      specfem::element::property_tag::isotropic, UseSIMD>;
 
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
@@ -131,12 +134,15 @@ template <bool UseSIMD>
 struct data_container<specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic,
                       specfem::element::property_tag::isotropic, UseSIMD>
-    : public traits<specfem::dimension::type::dim2,
-                    specfem::element::medium_tag::acoustic,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
-  using base_type = traits<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::acoustic,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
+    : public KernelsAccessor<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::acoustic,
+                             specfem::element::property_tag::isotropic,
+                             UseSIMD> {
+
+  using base_type =
+      KernelsAccessor<specfem::dimension::type::dim2,
+                      specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic, UseSIMD>;
 
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
@@ -253,13 +259,15 @@ template <bool UseSIMD>
 struct data_container<specfem::dimension::type::dim2,
                       specfem::element::medium_tag::poroelastic,
                       specfem::element::property_tag::isotropic, UseSIMD>
-    : public traits<specfem::dimension::type::dim2,
-                    specfem::element::medium_tag::poroelastic,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
-  using base_type = traits<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::poroelastic,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
+    : public KernelsAccessor<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::poroelastic,
+                             specfem::element::property_tag::isotropic,
+                             UseSIMD> {
 
+  using base_type =
+      KernelsAccessor<specfem::dimension::type::dim2,
+                      specfem::element::medium_tag::poroelastic,
+                      specfem::element::property_tag::isotropic, UseSIMD>;
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
 
