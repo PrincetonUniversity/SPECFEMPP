@@ -72,6 +72,9 @@ class attributes {
                 "dimension/medium enum value.");
 };
 
+// ===========================================================================
+// @brief 2D attributes specialization
+// ===========================================================================
 template <>
 class attributes<specfem::dimension::type::dim2,
                  specfem::element::medium_tag::elastic_psv> {
@@ -121,6 +124,20 @@ class attributes<specfem::dimension::type::dim2,
 public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 2;
+
+  constexpr static bool has_damping_force = false;
+};
+
+// ===========================================================================
+// @brief 3D attributes specialization
+// ===========================================================================
+
+template <>
+class attributes<specfem::dimension::type::dim3,
+                 specfem::element::medium_tag::elastic> {
+public:
+  inline static constexpr int dimension = 3;
+  inline static constexpr int components = 3;
 
   constexpr static bool has_damping_force = false;
 };
