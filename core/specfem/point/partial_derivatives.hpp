@@ -119,16 +119,13 @@ public:
 };
 
 // operator*
-template <
-    typename PointPartialDerivativesType,
-    std::enable_if_t<!PointPartialDerivativesType::store_jacobian &&
-                         PointPartialDerivativesType::dimension_tag ==
-                             specfem::dimension::type::dim2 &&
-                         PointPartialDerivativesType::accessor_type ==
-                             specfem::accessor::type::point &&
-                         PointPartialDerivativesType::data_class ==
-                             specfem::data_class::type::partial_derivatives,
-                     int> = 0>
+template <typename PointPartialDerivativesType,
+          std::enable_if_t<!PointPartialDerivativesType::store_jacobian &&
+                               PointPartialDerivativesType::dimension_tag ==
+                                   specfem::dimension::type::dim2 &&
+                               specfem::accessor::is_point_partial_derivatives<
+                                   PointPartialDerivativesType>::value,
+                           int> = 0>
 KOKKOS_FUNCTION PointPartialDerivativesType
 operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
   return PointPartialDerivativesType(rhs.xix * lhs, rhs.gammax * lhs,
@@ -246,14 +243,13 @@ public:
 };
 
 // operator*
-template <
-    typename PointPartialDerivativesType,
-    std::enable_if_t<!PointPartialDerivativesType::store_jacobian &&
-                         PointPartialDerivativesType::dimension_tag ==
-                             specfem::dimension::type::dim3 &&
-                         PointPartialDerivativesType::data_class ==
-                             specfem::data_class::type::partial_derivatives,
-                     int> = 0>
+template <typename PointPartialDerivativesType,
+          std::enable_if_t<!PointPartialDerivativesType::store_jacobian &&
+                               PointPartialDerivativesType::dimension_tag ==
+                                   specfem::dimension::type::dim3 &&
+                               specfem::accessor::is_point_partial_derivatives<
+                                   PointPartialDerivativesType>::value,
+                           int> = 0>
 KOKKOS_FUNCTION PointPartialDerivativesType
 operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
   return PointPartialDerivativesType(rhs.xix * lhs, rhs.gammax * lhs,
