@@ -75,8 +75,9 @@
   template <typename... Args,                                                  \
             typename std::enable_if_t<sizeof...(Args) == nprops, int> = 0>     \
   KOKKOS_INLINE_FUNCTION data_container(Args... args)                          \
-      : _point_data_container{ args... } {}                                    \
-  KOKKOS_INLINE_FUNCTION data_container(const value_type *value) {             \
+      : _point_data_container{ static_cast<value_type>(args)... } {}           \
+  KOKKOS_INLINE_FUNCTION                                                       \
+  data_container(const value_type *value) {                                    \
     for (int i = 0; i < nprops; ++i) {                                         \
       _point_data_container[i] = value[i];                                     \
     }                                                                          \
