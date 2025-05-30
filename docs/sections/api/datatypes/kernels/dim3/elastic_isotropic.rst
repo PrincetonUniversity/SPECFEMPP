@@ -6,4 +6,4 @@
 .. doxygengroup:: specfem_point_kernels_dim3_elastic_isotropic
     :members:
     :private-members:
-    :inner:
+    :content-only:
