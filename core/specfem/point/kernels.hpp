@@ -284,19 +284,23 @@ struct data_container<specfem::dimension::type::dim2,
 
 } // namespace impl
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>
-struct kernels : public impl::kernels::data_container<DimensionType, MediumTag,
+struct kernels : public impl::kernels::data_container<DimensionTag, MediumTag,
                                                       PropertyTag, UseSIMD> {
-  using base_type = impl::kernels::data_container<DimensionType, MediumTag,
+  using base_type = impl::kernels::data_container<DimensionTag, MediumTag,
                                                   PropertyTag, UseSIMD>;
 
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
 
   using base_type::base_type;
+  constexpr static auto dimension_tag =
+      DimensionTag;                                 ///< dimension of the medium
+  constexpr static auto medium_tag = MediumTag;     ///< type of the medium
+  constexpr static auto property_tag = PropertyTag; ///< type of the properties
 };
 
 } // namespace point

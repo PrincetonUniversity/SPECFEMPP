@@ -4,8 +4,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace medium {
+namespace specfem::medium {
 
 template <typename PointSourcesType, typename PointPropertiesType>
 KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
@@ -19,7 +18,7 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
     const PointPropertiesType &point_properties) {
 
   using PointAccelerationType =
-      specfem::point::field<PointPropertiesType::dimension,
+      specfem::point::field<PointPropertiesType::dimension_tag,
                             PointPropertiesType::medium_tag, false, false, true,
                             false, PointPropertiesType::simd::using_simd>;
 
@@ -41,5 +40,4 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
   return result;
 }
 
-} // namespace medium
-} // namespace specfem
+} // namespace specfem::medium
