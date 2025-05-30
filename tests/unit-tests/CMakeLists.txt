@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-# GoogleTest requires at least C++11
+# GoogleTest requires at least C++17
 set(CMAKE_CXX_STANDARD 17)
 
 # Make sure that GTEST is not installed later in the process
@@ -10,7 +10,7 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+  URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.tar.gz
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -87,6 +87,18 @@ target_link_libraries(
   gtest_main
   quadrature
   kokkos_environment
+  -lpthread -lm
+)
+
+add_executable(
+  jacobian_tests
+  jacobian/shape_functions.cpp
+)
+
+target_link_libraries(
+  jacobian_tests
+  jacobian
+  gtest_main
   -lpthread -lm
 )
 
@@ -246,6 +258,8 @@ add_executable(
   assembly/properties/properties.cpp
   assembly/compute_wavefield/compute_wavefield.cpp
   assembly/sources/sources.cpp
+  assembly/check_jacobian/check_jacobian.cpp
+  assembly/locate/locate_point.cpp
 )
 
 target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
@@ -278,24 +292,6 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   enumerations
-  Boost::filesystem
-)
-
-add_executable(
-  locate_point
-  algorithms/locate.cpp
-)
-
-target_link_libraries(
-  locate_point
-  mesh
-  compute
-  quadrature
-  mpi_environment
-  kokkos_environment
-  algorithms
-  point
-  io
   Boost::filesystem
 )
 
@@ -472,6 +468,7 @@ if (NOT MPI_PARALLEL)
   include(GoogleTest)
   gtest_discover_tests(gll_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(lagrange_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(jacobian_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(fortranio_test WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(io_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(mesh_tests WORKING_DIRECTORY ${TEST_DIR})
@@ -485,7 +482,6 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(compute_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(assembly_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(locate_point WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(interpolate_function WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(rmass_inverse_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(displacement_newmark_tests WORKING_DIRECTORY ${TEST_DIR})

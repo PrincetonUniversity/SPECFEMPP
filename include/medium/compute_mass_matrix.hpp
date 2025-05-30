@@ -35,10 +35,8 @@ KOKKOS_INLINE_FUNCTION specfem::point::field<DimensionTag, MediumTag, false,
                                              false, false, true, UseSIMD>
 mass_matrix_component(
     const specfem::point::properties<DimensionTag, MediumTag, PropertyTag,
-                                     UseSIMD> &properties,
-    const specfem::point::partial_derivatives<DimensionTag, true, UseSIMD>
-        &partial_derivatives) {
-  return impl_mass_matrix_component(properties, partial_derivatives);
+                                     UseSIMD> &properties) {
+  return impl_mass_matrix_component(properties);
 }
 
 } // namespace medium

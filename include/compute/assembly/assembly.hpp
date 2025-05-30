@@ -107,6 +107,17 @@ struct assembly {
   }
 
   std::string print() const;
+
+  /**
+   * @brief Check if Jacobian for any spectral element in the mesh is smaller
+   * than some threshold
+   *
+   * This function throws a runtime error if the Jacobian is smaller than 1e-10
+   * If VTK is enabled, it also generates a plot of the spectral elements with
+   * small Jacobian
+   *
+   */
+  void check_small_jacobian() const;
 };
 
 } // namespace compute
