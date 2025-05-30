@@ -47,4 +47,14 @@ struct Accessor {
       AccessorType>::template tensor_type<T, components, dimension, UseSIMD>;
 };
 
+template <typename T, typename = void>
+struct is_point_properties : std::false_type {};
+
+template <typename T>
+struct is_point_properties<
+    T,
+    std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                     T::data_class == specfem::data_class::type::properties> >
+    : std::true_type {};
+
 } // namespace specfem::accessor

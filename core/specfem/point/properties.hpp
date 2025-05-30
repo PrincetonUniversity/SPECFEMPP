@@ -41,15 +41,17 @@ template <bool UseSIMD>
 struct data_container<specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic,
                       specfem::element::property_tag::isotropic, UseSIMD>
-    : traits<specfem::dimension::type::dim2,
-             specfem::element::medium_tag::acoustic,
-             specfem::element::property_tag::isotropic, UseSIMD> {
+    : PropertyAccessor<specfem::dimension::type::dim2,
+                       specfem::element::medium_tag::acoustic,
+                       specfem::element::property_tag::isotropic, UseSIMD> {
 
-  using base_type = traits<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::acoustic,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
+  using base_type = PropertyAccessor<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+      specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
+                                                           ///< point properties
 
-  using value_type = typename base_type::value_type;
+  using value_type = typename base_type::base_type::template scalar_type<
+      type_real>; ///< Type of the properties
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(rho_inverse, kappa)
@@ -114,13 +116,16 @@ struct data_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : public traits<specfem::dimension::type::dim2, MediumTag,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
+    : public PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                              specfem::element::property_tag::isotropic,
+                              UseSIMD> {
+  using base_type = PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                                     specfem::element::property_tag::isotropic,
+                                     UseSIMD>; ///< Base type of the
+                                               ///< point properties
+  using value_type = typename base_type::base_type::template scalar_type<
+      type_real>; ///< Type of the properties
 
-  using base_type = traits<specfem::dimension::type::dim2, MediumTag,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
-
-  using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(lambdaplus2mu, mu, rho)
@@ -199,14 +204,18 @@ struct data_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::anisotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : public traits<specfem::dimension::type::dim2, MediumTag,
-                    specfem::element::property_tag::anisotropic, UseSIMD> {
+    : public PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                              specfem::element::property_tag::anisotropic,
+                              UseSIMD> {
 
   using base_type =
-      traits<specfem::dimension::type::dim2, MediumTag,
-             specfem::element::property_tag::anisotropic, UseSIMD>;
+      PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                       specfem::element::property_tag::anisotropic,
+                       UseSIMD>; ///< Base type of the
+                                 ///< point properties
 
-  using value_type = typename base_type::value_type;
+  using value_type = typename base_type::base_type::template scalar_type<
+      type_real>; ///< Type of the properties
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho)
@@ -315,15 +324,18 @@ template <bool UseSIMD>
 struct data_container<specfem::dimension::type::dim2,
                       specfem::element::medium_tag::poroelastic,
                       specfem::element::property_tag::isotropic, UseSIMD>
-    : public traits<specfem::dimension::type::dim2,
-                    specfem::element::medium_tag::poroelastic,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
+    : public PropertyAccessor<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::poroelastic,
+                              specfem::element::property_tag::isotropic,
+                              UseSIMD> {
 
-  using base_type = traits<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::poroelastic,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
+  using base_type = PropertyAccessor<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
+      specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
+                                                           ///< point properties
+  using value_type = typename base_type::base_type::template scalar_type<
+      type_real>; ///< Type of the properties
 
-  using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(phi, rho_s, rho_f, tortuosity, mu_G, H_Biot, C_Biot, M_Biot,
@@ -437,13 +449,18 @@ struct data_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> >
-    : public traits<specfem::dimension::type::dim2, MediumTag,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
+    : public PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                              specfem::element::property_tag::isotropic,
+                              UseSIMD> {
 
-  using base_type = traits<specfem::dimension::type::dim2, MediumTag,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
+  using base_type = PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                                     specfem::element::property_tag::isotropic,
+                                     UseSIMD>; ///< Base type of the
+                                               ///< point properties
 
-  using value_type = typename base_type::value_type;
+  using value_type = typename base_type::base_type::template scalar_type<
+      type_real>; ///< Type of the properties
+
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(mu0_inv, eps11, eps33, sig11, sig33)
@@ -499,15 +516,18 @@ template <bool UseSIMD>
 struct data_container<specfem::dimension::type::dim3,
                       specfem::element::medium_tag::elastic,
                       specfem::element::property_tag::isotropic, UseSIMD>
-    : public traits<specfem::dimension::type::dim3,
-                    specfem::element::medium_tag::elastic,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
+    : public PropertyAccessor<
+          specfem::dimension::type::dim3, specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::isotropic, UseSIMD> {
 
-  using base_type = traits<specfem::dimension::type::dim3,
-                           specfem::element::medium_tag::elastic,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
+  using base_type = PropertyAccessor<
+      specfem::dimension::type::dim3, specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
+                                                           ///< point properties
 
-  using value_type = typename base_type::value_type;
+  using value_type = typename base_type::base_type::template scalar_type<
+      type_real>; ///< Type of the properties
+
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(kappa, mu, rho)
