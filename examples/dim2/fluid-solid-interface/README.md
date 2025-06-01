@@ -1,4 +1,4 @@
-# Wave propagration through fluid-solid interface
+# Wave propagation through fluid-solid interface
 
 This example creates the fluid-solid example with flat ocean bottom from
 [Komatitsch et. al.](https://doi.org/10.1190/1.1444758). For a step-by-step
