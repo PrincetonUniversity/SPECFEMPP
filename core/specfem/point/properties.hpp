@@ -320,11 +320,6 @@ struct data_container<specfem::dimension::type::dim2,
   POINT_CONTAINER(phi, rho_s, rho_f, tortuosity, mu_G, H_Biot, C_Biot, M_Biot,
                   permxx, permxz, permzz, eta_f)
 
-  /**
-   * @brief Compute Lame's parameter @f$ \lambda @f$
-   *
-   * @return Lame's parameter @f$ \lambda @f$
-   */
   KOKKOS_INLINE_FUNCTION const value_type lambda_G() const {
     return H_Biot() - (static_cast<type_real>(2.0)) * mu_G();
   }

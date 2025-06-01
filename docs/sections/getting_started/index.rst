@@ -71,20 +71,29 @@ The following table lists the versions of compilers that are supported by SPECFE
       * Not Tested
       * 20.1
 
+
 Dependencies
 ~~~~~~~~~~~~
 
-.. note::
 
-    If any of the following required dependencies are not found in your ``PATH``,
-    the build process will download and install them automatically. This will
-    increase the build time and does require an active internet connection.
+Required (automatically installed if not found)
++++++++++++++++++++++++++++++++++++++++++++++++
 
-* Kokkos: required
-* Boost >= ``1.85.0``: required
-* YAML-CPP: required
-* HDF5: optional
-* VTK: optional
+If any of the following required dependencies are not found in
+your ``PATH``, the build process will download and install them automatically.
+This will increase the build time and does require an active internet
+connection.
+
+* Kokkos
+* Boost >= ``1.85.0``
+* YAML-CPP
+
+Optional
+++++++++
+
+* HDF5
+* VTK
+
 
 Download SPECFEM++
 ------------------
