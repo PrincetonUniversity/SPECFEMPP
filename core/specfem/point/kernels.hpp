@@ -307,8 +307,8 @@ struct data_container<specfem::dimension::type::dim2,
  *   @code KOKKOS_INLINE_FUNCTION const value_type mu() const @endcode
  * - Get @f$ K_{\kappa} @f$
  *   @code KOKKOS_INLINE_FUNCTION const value_type kappa() const @endcode
- * - Get @f$ K_{\rho^\prime} @f$
- *   @code KOKKOS_INLINE_FUNCTION const value_type rhop() const @endcode
+ * - Get @f$ K_{\rho^\prime}
+ *   @f$ @code KOKKOS_INLINE_FUNCTION const value_typesaf rhop() const @endcode
  * - Get @f$ K_{\alpha} @f$
  *   @code KOKKOS_INLINE_FUNCTION const value_type alpha() const @endcode
  * - Get @f$ K_{\beta} @f$
