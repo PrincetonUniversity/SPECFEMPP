@@ -1,4 +1,4 @@
-# Wave propagration through homogeneous elastic medium
+# Wave propagation through homogeneous elastic medium
 
 In this example we simulate wave propagation through a 2-dimensional homogeneous medium. For a step-by-step guide on this example, please refer to the [documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/dim2/homogeneous-medium/index.html).
 
