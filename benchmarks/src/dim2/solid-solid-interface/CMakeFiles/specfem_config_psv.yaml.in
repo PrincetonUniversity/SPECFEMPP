@@ -16,6 +16,9 @@ parameters:
                           The orientation of the interface is horizontal with elastic domain on top.
 
   simulation-setup:
+    # Wave propagation type
+    elastic-wave: "P_SV"
+
     ## quadrature setup
     quadrature:
       quadrature-type: GLL4
@@ -34,7 +37,7 @@ parameters:
         writer:
           seismogram:
             format: ascii
-            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results_psv"
 
   receivers:
     stations: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS"
