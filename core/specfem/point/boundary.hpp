@@ -2,8 +2,7 @@
 
 #include "datatypes/point_view.hpp"
 #include "datatypes/simd.hpp"
-#include "enumerations/boundary.hpp"
-#include "enumerations/dimension.hpp"
+#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -29,7 +28,10 @@ struct boundary;
  * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
  */
 template <specfem::dimension::type DimensionTag, bool UseSIMD>
-struct boundary<specfem::element::boundary_tag::none, DimensionTag, UseSIMD> {
+struct boundary<specfem::element::boundary_tag::none, DimensionTag, UseSIMD>
+    : public specfem::accessor::Accessor<specfem::accessor::type::point,
+                                         specfem::data_class::type::boundary,
+                                         DimensionTag, UseSIMD> {
 private:
   // We use simd_like vector to store tags. Tags are stored as enums, so a simd
   // type is ill-defined for them. However, we use scalar array types of size
@@ -59,10 +61,6 @@ public:
   constexpr static auto boundary_tag =
       specfem::element::boundary_tag::none; ///< Tag indicating no boundary
                                             ///< condition
-  constexpr static bool isPointBoundaryType =
-      true; ///< Flag indicating this is a point boundary type
-  constexpr static auto dimension =
-      DimensionTag; ///< Dimension of the spectral element
   ///@}
 
   /**

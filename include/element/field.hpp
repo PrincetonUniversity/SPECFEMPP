@@ -303,7 +303,6 @@ struct field : impl::FieldTraits<NGLL, DimensionTag, MediumTag, MemorySpace,
   constexpr static bool store_mass_matrix = StoreMassMatrix;
   constexpr static auto medium_tag = MediumTag;
 
-  constexpr static bool isPointFieldType = false;
   constexpr static bool isElementFieldType = true;
   constexpr static bool isChunkFieldType = false;
 
