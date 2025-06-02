@@ -1,12 +1,17 @@
 #pragma once
 
 #include "impl/point_container.hpp"
+#include "specfem_setup.hpp"
 
 namespace specfem {
 namespace point {
 
 namespace impl {
 namespace properties {
+
+// ===========================================================================
+// 2D Point Properties
+// ===========================================================================
 
 /**
  * @brief Data container to hold properties of 2D acoustic media at a quadrature
@@ -36,15 +41,17 @@ template <bool UseSIMD>
 struct data_container<specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic,
                       specfem::element::property_tag::isotropic, UseSIMD>
-    : traits<specfem::dimension::type::dim2,
-             specfem::element::medium_tag::acoustic,
-             specfem::element::property_tag::isotropic, UseSIMD> {
+    : PropertyAccessor<specfem::dimension::type::dim2,
+                       specfem::element::medium_tag::acoustic,
+                       specfem::element::property_tag::isotropic, UseSIMD> {
 
-  using base_type = traits<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::acoustic,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
-
-  using value_type = typename base_type::value_type;
+private:
+  using base_type = PropertyAccessor<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+      specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
+                                                           ///< point properties
+public:
+  using value_type = typename base_type::value_type; ///< Type of the properties
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(rho_inverse, kappa)
@@ -109,19 +116,27 @@ struct data_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : public traits<specfem::dimension::type::dim2, MediumTag,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
+    : public PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                              specfem::element::property_tag::isotropic,
+                              UseSIMD> {
+private:
+  using base_type = PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                                     specfem::element::property_tag::isotropic,
+                                     UseSIMD>; ///< Base type of the
+                                               ///< point properties
+public:
+  using value_type = typename base_type::value_type; ///< Type of the properties
 
-  using base_type = traits<specfem::dimension::type::dim2, MediumTag,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
-
-  using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(lambdaplus2mu, mu, rho)
 
   KOKKOS_INLINE_FUNCTION const value_type rho_vp() const {
-    return Kokkos::sqrt(rho() * lambdaplus2mu());
+    // we could compute this as sqrt((lambda + 2*mu) * rho())
+    // but we prefer to use the definition
+    // rho_vp = sqrt((lambda + 2*mu)/rho)) * rho
+    // for better precision
+    return Kokkos::sqrt(lambdaplus2mu() / rho()) * rho();
   }
 
   KOKKOS_INLINE_FUNCTION const value_type rho_vs() const {
@@ -190,14 +205,19 @@ struct data_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::anisotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : public traits<specfem::dimension::type::dim2, MediumTag,
-                    specfem::element::property_tag::anisotropic, UseSIMD> {
+    : public PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                              specfem::element::property_tag::anisotropic,
+                              UseSIMD> {
 
+private:
   using base_type =
-      traits<specfem::dimension::type::dim2, MediumTag,
-             specfem::element::property_tag::anisotropic, UseSIMD>;
+      PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                       specfem::element::property_tag::anisotropic,
+                       UseSIMD>; ///< Base type of the
+                                 ///< point properties
 
-  using value_type = typename base_type::value_type;
+public:
+  using value_type = typename base_type::value_type; ///< Type of the properties
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho)
@@ -306,25 +326,25 @@ template <bool UseSIMD>
 struct data_container<specfem::dimension::type::dim2,
                       specfem::element::medium_tag::poroelastic,
                       specfem::element::property_tag::isotropic, UseSIMD>
-    : public traits<specfem::dimension::type::dim2,
-                    specfem::element::medium_tag::poroelastic,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
+    : public PropertyAccessor<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::poroelastic,
+                              specfem::element::property_tag::isotropic,
+                              UseSIMD> {
 
-  using base_type = traits<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::poroelastic,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
+private:
+  using base_type = PropertyAccessor<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
+      specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
+                                                           ///< point properties
 
-  using value_type = typename base_type::value_type;
+public:
+  using value_type = typename base_type::value_type; ///< Type of the properties
+
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(phi, rho_s, rho_f, tortuosity, mu_G, H_Biot, C_Biot, M_Biot,
                   permxx, permxz, permzz, eta_f)
 
-  /**
-   * @brief Compute Lame's parameter @f$ \lambda @f$
-   *
-   * @return Lame's parameter @f$ \lambda @f$
-   */
   KOKKOS_INLINE_FUNCTION const value_type lambda_G() const {
     return H_Biot() - (static_cast<type_real>(2.0)) * mu_G();
   }
@@ -433,17 +453,111 @@ struct data_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> >
-    : public traits<specfem::dimension::type::dim2, MediumTag,
-                    specfem::element::property_tag::isotropic, UseSIMD> {
+    : public PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                              specfem::element::property_tag::isotropic,
+                              UseSIMD> {
 
-  using base_type = traits<specfem::dimension::type::dim2, MediumTag,
-                           specfem::element::property_tag::isotropic, UseSIMD>;
+private:
+  using base_type = PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+                                     specfem::element::property_tag::isotropic,
+                                     UseSIMD>; ///< Base type of the
+                                               ///< point properties
 
-  using value_type = typename base_type::value_type;
+public:
+  using value_type = typename base_type::value_type; ///< Type of the properties
+
   using simd = typename base_type::simd;
 
   POINT_CONTAINER(mu0_inv, eps11, eps33, sig11, sig33)
 };
+
+// ===========================================================================
+// 3D Point Properties
+// ===========================================================================
+
+/**
+ * @defgroup specfem_point_properties_dim3_elastic_isotropic 3D Elastic
+ * Isotropic Properties
+ * @{
+ */
+
+/**
+ * @brief Data container to hold properties of 3D elastic isotropic media at a
+ * quadrature point
+ *
+ * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
+ *
+ * @fn const value_type kappa() const
+ *   @brief Get the bulk modulus @f$ \kappa @f$
+ *   @return const value_type @f$ \kappa @f$
+ *
+ * @fn const value_type mu() const
+ *   @brief Get shear modulus @f$ \mu @f$
+ *   @return const value_type @f$ \mu @f$
+ *
+ * @fn const value_type rho() const
+ *   @brief Get density @f$ \rho @f$
+ *   @return const value_type @f$ \rho @f$
+ *
+ * @fn const value_type rho_vp() const
+ *   @brief Compute the product of density and P-wave velocity squared, i.e.,
+ *   @f$ \rho v_p^2 = \rho (\lambda + 2\mu) @f$
+ *   @return const value_type The value of @f$ \rho (\lambda + 2\mu) @f$
+ *
+ * @fn const value_type rho_vs() const
+ *   @brief Compute the product of density and S-wave velocity squared, i.e.,
+ *   @f$ \rho v_s^2 = \rho \mu
+ *   @f$
+ *   @return const value_type The value of @f$ \rho \mu
+ *   @f$
+ *
+ * @fn const value_type lambda() const
+ *   @brief Get Lame's first parameter @f$ \lambda @f$ from @f$ \lambda + 2\mu
+ *   @f$ and @f$ \mu @f$
+ *   @return const value_type The value of @f$ \lambda = (\lambda + 2\mu) - 2\mu
+ *   @f$
+ */
+template <bool UseSIMD>
+struct data_container<specfem::dimension::type::dim3,
+                      specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic, UseSIMD>
+    : public PropertyAccessor<
+          specfem::dimension::type::dim3, specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::isotropic, UseSIMD> {
+
+  using base_type = PropertyAccessor<
+      specfem::dimension::type::dim3, specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
+                                                           ///< point properties
+
+  using value_type = typename base_type::value_type; ///< Type of the properties
+
+  using simd = typename base_type::simd;
+
+  POINT_CONTAINER(kappa, mu, rho)
+
+  KOKKOS_INLINE_FUNCTION const value_type rho_vs() const {
+    return Kokkos::sqrt(rho() * mu());
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type rho_vp() const {
+    // we could compute this as sqrt((lambda + 2*mu) * rho())
+    // but we prefer to use the definition
+    // rho_vp = sqrt((lambda + 2*mu)/rho)) * rho
+    // for better precision)
+    return Kokkos::sqrt(lambdaplus2mu() / rho()) * rho();
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type lambdaplus2mu() const {
+    return kappa() +
+           static_cast<type_real>(4.0) / static_cast<type_real>(3.0) * mu();
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type lambda() const {
+    return lambdaplus2mu() - (static_cast<type_real>(2.0)) * mu();
+  }
+};
+///@} end of group specfem_point_properties_dim3_elastic_isotropic
 
 } // namespace properties
 

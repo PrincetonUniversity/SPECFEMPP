@@ -4,6 +4,7 @@
 #include "dim2/elastic/anisotropic/stress.hpp"
 #include "dim2/elastic/isotropic/stress.hpp"
 #include "dim2/poroelastic/isotropic/stress.hpp"
+#include "enumerations/accessor.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -33,14 +34,16 @@ compute_stress(const PointPropertiesType &properties,
     -> decltype(specfem::medium::impl_compute_stress(properties,
                                                      field_derivatives)) {
 
-  static_assert(PointPropertiesType::is_point_properties,
-                "properties is not a point properties type");
+  // Check whether the point is of properties type
+  static_assert(
+      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      "properties is not a point properties type");
 
   static_assert(specfem::accessor::is_point_field_derivatives<
                     PointFieldDerivativesType>::value,
                 "field_derivatives is not a point field derivatives type");
 
-  static_assert(PointPropertiesType::dimension ==
+  static_assert(PointPropertiesType::dimension_tag ==
                     PointFieldDerivativesType::dimension_tag,
                 "properties and field_derivatives have different dimensions");
 
