@@ -6,6 +6,11 @@ enum type {
   properties,
   kernels,
   partial_derivatives,
-  field_derivatives
+  field_derivatives,
+  field,
+  source,
+  stress,
+  stress_integrand,
+  boundary
 };
 } // namespace specfem::data_class

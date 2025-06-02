@@ -10,12 +10,7 @@ namespace specfem {
 namespace medium {
 
 template <typename PointPropertiesType, typename AdjointPointFieldType,
-          typename BackwardPointFieldType, typename PointFieldDerivativesType,
-          std::enable_if_t<PointFieldDerivativesType::accessor_type ==
-                                   specfem::accessor::type::point &&
-                               PointFieldDerivativesType::data_class ==
-                                   specfem::data_class::field_derivatives,
-                           int> = 0>
+          typename BackwardPointFieldType, typename PointFieldDerivativesType>
 KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
     const PointPropertiesType &properties,
     const AdjointPointFieldType &adjoint_field,
@@ -26,14 +21,17 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
 
   static_assert(PointPropertiesType::is_point_properties,
                 "properties is not a point properties type");
-  //   static_assert(PointFieldDerivativesType::is_point_field_derivatives,
-  //                 "field_derivatives is not a point field derivatives type");
 
-  static_assert(AdjointPointFieldType::isPointFieldType,
+  static_assert(specfem::accessor::is_point_field_derivatives<
+                    PointFieldDerivativesType>::value,
+                "field_derivatives is not a point field derivatives type");
+
+  static_assert(specfem::accessor::is_point_field<AdjointPointFieldType>::value,
                 "adjoint_field is not a point field type");
 
-  static_assert(BackwardPointFieldType::isPointFieldType,
-                "backward_field is not a point field type");
+  static_assert(
+      specfem::accessor::is_point_field<BackwardPointFieldType>::value,
+      "backward_field is not a point field type");
 
   static_assert(AdjointPointFieldType::store_acceleration,
                 "adjoint_field does not store acceleration");
@@ -44,8 +42,8 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
   constexpr auto dimension = PointPropertiesType::dimension;
 
   static_assert(
-      (dimension == AdjointPointFieldType::dimension &&
-       dimension == BackwardPointFieldType::dimension &&
+      (dimension == AdjointPointFieldType::dimension_tag &&
+       dimension == BackwardPointFieldType::dimension_tag &&
        dimension == PointFieldDerivativesType::dimension_tag),
       "Dimension inconsistency between properties, fields, and derivatives");
 
