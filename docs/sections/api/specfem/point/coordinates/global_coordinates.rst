@@ -1,7 +1,7 @@
+.. _specfem_point_coordinates_global_coordinates:
 
-
-Point Global Coordinates
-~~~~~~~~~~~~~~~~~~~~~~~~
+Global Coordinates
+~~~~~~~~~~~~~~~~~~
 
 Datatype used to store the global coordinates of a point within the mesh.
 

@@ -1,8 +1,8 @@
 
-.. _point_stress_integrands:
+.. _specfem_point_stress_integrands:
 
-Point Stress Integrands
-=======================
+Stress Integrands
+=================
 
 Datatype to store the stress integrands at a quadrature point.
 

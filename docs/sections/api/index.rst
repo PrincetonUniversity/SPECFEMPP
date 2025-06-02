@@ -3,6 +3,22 @@
 API documentation
 =================
 
+The documentation is under development while we are restructuring the codebase.
+Parts the are being moved to the new structure are directly below this line.
+
+New structure
+-------------
+
+.. toctree::
+    :maxdepth: 2
+    :glob:
+
+    specfem/point/index
+
+
+Old structure
+-------------
+
 .. toctree::
     :maxdepth: 2
     :glob:

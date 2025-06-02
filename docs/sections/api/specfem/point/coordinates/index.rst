@@ -1,8 +1,8 @@
 
-.. _datatypes_coordinates_index:
+.. _specfem_point_coordinates:
 
-Point Coordinates
-=================
+Coordinates
+===========
 
 Point coordinates are used to store the coordinates of a point within the mesh.
 The coordinates have three components:

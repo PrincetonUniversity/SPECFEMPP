@@ -1,14 +1,13 @@
 
-.. _point_kernels:
+.. _specfem_point_properties:
 
-Point Misfit Kernels
-=====================
+Properties
+==========
 
-Datatype to store the misfit kernels at a quadrature point.
+Datatype used to store properties at quadrature point.
 
-.. doxygenstruct:: specfem::point::kernels
+.. doxygenstruct:: specfem::point::properties
     :members:
-    :private-members:
 
 Implementation Details
 ----------------------
@@ -18,5 +17,6 @@ Implementation Details
 
     dim2/acoustic_isotropic.rst
     dim2/elastic_isotropic.rst
+    dim2/elastic_anisotropic.rst
     dim2/poroelastic_isotropic.rst
     dim3/elastic_isotropic.rst
