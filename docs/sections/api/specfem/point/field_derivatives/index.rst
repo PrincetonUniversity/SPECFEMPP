@@ -1,8 +1,8 @@
 
-.. _point_field_derivatives:
+.. _specfem_point_field_derivatives:
 
-Point Field Derivatives
-=======================
+Field Derivatives
+=================
 
 Datatype to store the derivatives of a field at a quadrature point.
 

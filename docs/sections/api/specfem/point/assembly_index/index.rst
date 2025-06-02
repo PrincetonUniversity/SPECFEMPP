@@ -1,23 +1,23 @@
 
 .. _point_assembly_index:
 
-Point Assembly Index
-====================
+Assembly Index
+==============
 
 Datatype used to store index of a quadrature point within an assembled mesh.
 
 .. doxygenstruct:: specfem::point::assembly_index
    :members:
 
-Point Assembly Index: Implementation details
---------------------------------------------
+Assembly Index: Implementation details
+--------------------------------------
 
 .. doxygenstruct:: specfem::point::assembly_index< false >
     :members:
 
 
-Point SIMD Assembly Index: Implementation details
--------------------------------------------------
+SIMD Assembly Index: Implementation details
+-------------------------------------------
 
 Datatype used to store index of a quadrature point within a assembled mesh.
 Useful when operating on SIMD datatypes.

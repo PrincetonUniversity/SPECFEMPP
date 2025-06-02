@@ -1,5 +1,7 @@
-Point Index
-===========
+.. _specfem_point_index:
+
+Index
+=====
 
 Datatype used to store the global coordinates of a point within the mesh.
 
@@ -13,7 +15,7 @@ Datatype used to store the global coordinates of a point within the mesh.
 2D Specialization
 -----------------
 
-.. _point_index_2d_non_simd:
+.. _specfem_point_index_2d_non_simd:
 
 Non-SIMD
 ~~~~~~~~
@@ -22,7 +24,7 @@ Non-SIMD
    :members:
    :private-members:
 
-.. _point_index_2d_simd:
+.. _specfem_point_index_2d_simd:
 
 SIMD
 ~~~~
@@ -35,7 +37,7 @@ SIMD
 3D Specialization
 -----------------
 
-.. _point_index_3d_non_simd:
+.. _specfem_point_index_3d_non_simd:
 
 Non-SIMD
 ~~~~~~~~
@@ -44,7 +46,7 @@ Non-SIMD
    :members:
    :private-members:
 
-.. _point_index_3d_simd:
+.. _specfem_point_index_3d_simd:
 
 SIMD
 ~~~~

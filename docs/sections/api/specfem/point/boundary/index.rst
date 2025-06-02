@@ -1,7 +1,7 @@
 .. _specfem_point_boundary:
 
-Point Boundary
-==============
+Boundary
+========
 
 Datatype used to store boundary conditions at a quadrature point.
 

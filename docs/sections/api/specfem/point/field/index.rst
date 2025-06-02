@@ -1,8 +1,8 @@
 
-.. _point_field:
+.. _specfem_point_field:
 
-Point Field
-===========
+Field
+=====
 
 Datatype used to store field values at a quadrature point.
 

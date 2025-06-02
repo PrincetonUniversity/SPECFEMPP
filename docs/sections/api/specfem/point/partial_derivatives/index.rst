@@ -1,10 +1,10 @@
 
-.. _datatype_point_partial_derivatives:
+.. _specfem_point_partial_derivatives:
 
-Point Spatial Derivatives
-=========================
+Partial Derivatives
+===================
 
-Datatype used to store spatial derivatives at GLL point.
+Datatype used to store Partial derivatives at GLL point.
 
 .. doxygenstruct:: specfem::point::partial_derivatives
     :members:
