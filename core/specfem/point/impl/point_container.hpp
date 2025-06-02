@@ -178,7 +178,8 @@ struct PropertyAccessor
                                          specfem::data_class::type::properties,
                                          DimensionTag, UseSIMD> {
 
-  using base_type =
+public:
+  using base_accessor =
       specfem::accessor::Accessor<specfem::accessor::type::point,
                                   specfem::data_class::type::properties,
                                   DimensionTag, UseSIMD>; ///< Base type of
@@ -188,8 +189,8 @@ struct PropertyAccessor
   using simd =
       typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD data type
   using value_type =
-      typename base_type::template scalar_type<type_real>; ///< Type of the
-                                                           ///< properties
+      typename base_accessor::template scalar_type<type_real>; ///< Type of the
+                                                               ///< properties
 
   constexpr static auto dimension_tag =
       DimensionTag;                                 ///< dimension of the medium
