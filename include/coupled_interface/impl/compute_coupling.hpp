@@ -87,10 +87,10 @@ compute_coupling(const type_real &factor, const NormalViewType &normal,
   static_assert(NormalViewType::components == 2,
                 "NormalViewType must have dimension 2");
 
-  static_assert(SelfFieldType::isPointFieldType,
+  static_assert(specfem::accessor::is_point_field<SelfFieldType>::value,
                 "SelfFieldType must be a point field");
 
-  static_assert(CoupledFieldType::isPointFieldType,
+  static_assert(specfem::accessor::is_point_field<CoupledFieldType>::value,
                 "CoupledFieldType must be a point field");
 
   impl_compute_coupling(self_type(), coupled_type(), factor, normal,

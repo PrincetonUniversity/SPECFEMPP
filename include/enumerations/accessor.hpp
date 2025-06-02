@@ -32,7 +32,9 @@ struct Accessor {
   constexpr static auto accessor_type = AccessorType;
   constexpr static auto data_class = DataClass;
   constexpr static auto dimension_tag = DimensionTag;
-  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD data type
+
+  template <typename T>
+  using simd = specfem::datatype::simd<T, UseSIMD>; ///< SIMD data type
 
   template <typename T>
   using scalar_type = typename impl::AccessorValueType<
@@ -46,5 +48,52 @@ struct Accessor {
   using tensor_type = typename impl::AccessorValueType<
       AccessorType>::template tensor_type<T, components, dimension, UseSIMD>;
 };
+
+template <typename T, typename = void>
+struct is_point_partial_derivatives : std::false_type {};
+
+template <typename T>
+struct is_point_partial_derivatives<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class ==
+                            specfem::data_class::type::partial_derivatives> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_point_field : std::false_type {};
+
+template <typename T>
+struct is_point_field<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class == specfem::data_class::type::field> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_point_field_derivatives : std::false_type {};
+
+template <typename T>
+struct is_point_field_derivatives<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class ==
+                            specfem::data_class::type::field_derivatives> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_point_source : std::false_type {};
+
+template <typename T>
+struct is_point_source<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class == specfem::data_class::type::source> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_point_boundary : std::false_type {};
+
+template <typename T>
+struct is_point_boundary<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class == specfem::data_class::type::boundary> >
+    : std::true_type {};
 
 } // namespace specfem::accessor
