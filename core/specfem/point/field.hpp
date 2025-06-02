@@ -230,6 +230,10 @@ public:
                     std::integral_constant<bool, StoreAcceleration>{},
                     std::integral_constant<bool, StoreMassMatrix>{}) {}
 
+  template <typename... Args>
+  KOKKOS_FUNCTION FieldTraits(Args... args)
+      : FieldTraits(ViewType(std::forward<Args>(args)...)) {}
+
   KOKKOS_FUNCTION typename ViewType::value_type &operator()(const int i) {
     return operator()(i, std::integral_constant<bool, StoreDisplacement>{},
                       std::integral_constant<bool, StoreVelocity>{},
