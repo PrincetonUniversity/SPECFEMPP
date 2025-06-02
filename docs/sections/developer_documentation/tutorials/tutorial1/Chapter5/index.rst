@@ -11,10 +11,10 @@ Index Types
 
 Indices are used to reference a quadrature point within the mesh. Naturally, a quadrature point can be referenced in 2 ways - 1. by referencing its through its element ``(ispec, iz, ix)`` or 2. by referencing it directly within an assembled mesh ``(iglob)``. For each of these cases, we also define their SIMD (single instructions multiple data) counterparts that refer to multiple quadrature points at once - 1. SIMD index and 2. SIMD assembly index. SIMD indices enable us to perform vectorized operations on multiple quadrature points at once.
 
-1. :ref:`Index <point_index>`
-2. :ref:`SIMD index <point_simd_index>`
-3. :ref:`Assembly index <point_assembly_index>`
-4. :ref:`SIMD assembly index <point_simd_assembly_index>`
+1. Index :cpp:class:`specfem::point::index`
+2. SIMD index :cpp:type:`specfem::point::simd_index`
+3. Assembly index :cpp:class:`specfem::point::assembly_index`
+4. SIMD assembly index :cpp:type:`specfem::point::simd_assembly_index`
 
 Elementary Data Types
 ---------------------
@@ -49,8 +49,8 @@ Point Data Types
 4. :ref:`Misfit Kernels <point_kernels>`
 5. :ref:`Derivatives of wavefield <point_field_derivatives>`
 6. :ref:`Boundary Conditions <specfem_point_boundary>`
-7. :ref:`Global Coordinates <point_global_coordinates>`
-8. :ref:`Local Coordinates <point_local_coordinates>`
+7. Global Coordinates :cpp:class:`specfem::point::global_coordinates`
+8. Local Coordinates :cpp:class:`specfem::point::local_coordinates`
 9. :ref:`Stress Integrands <point_stress_integrands>`
 
 Element Data Types

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enumerations/accessor.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/dim2/poroelastic/isotropic/damping.hpp"
 #include "utilities/errors.hpp"
@@ -10,16 +11,17 @@ template <typename T, typename PointPropertiesType, typename PointVelocityType,
           typename PointAccelerationType>
 KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
 
-  constexpr auto DimensionTag = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
+
+  static_assert(
+      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      "point_properties is not a point properties type");
 
   // Check that the types are compatible
   static_assert(std::is_same_v<T, typename PointPropertiesType::simd::datatype>,
                 "factor must have the same SIMD type as point_properties");
-
-  static_assert(PointPropertiesType::is_point_properties,
-                "point_properties is not a point properties type");
 
   static_assert(specfem::accessor::is_point_field<PointVelocityType>::value,
                 "velocity is not a point field type");
@@ -33,11 +35,12 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
   static_assert(PointAccelerationType::store_acceleration,
                 "acceleration must store acceleration");
 
-  static_assert(PointPropertiesType::dimension ==
+  static_assert(PointPropertiesType::dimension_tag ==
+
                     PointVelocityType::dimension_tag,
                 "point_properties and velocity have different dimensions");
 
-  static_assert(PointPropertiesType::dimension ==
+  static_assert(PointPropertiesType::dimension_tag ==
                     PointAccelerationType::dimension_tag,
                 "point_properties and acceleration have different dimensions");
 
@@ -137,7 +140,7 @@ KOKKOS_INLINE_FUNCTION void compute_damping_force(
     const T factor, const PointPropertiesType &point_properties,
     const PointVelocityType &velocity, PointAccelerationType &acceleration) {
 
-  constexpr auto DimensionTag = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
   constexpr bool has_damping_force =

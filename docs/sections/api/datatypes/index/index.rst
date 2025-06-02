@@ -1,70 +1,54 @@
-
-.. _point_index:
-
 Point Index
 ===========
 
-Datatype used to store index of a quadrature point within the mesh.
+Datatype used to store the global coordinates of a point within the mesh.
 
 .. doxygenstruct:: specfem::point::index
    :members:
 
-Point Index: Implementation details
------------------------------------
-
-.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim2, false >
-    :members:
-
-
-.. _point_simd_index:
-
-Point SIMD Index
-================
-
-Datatype used to store index of a quadrature point within the mesh when using SIMD (Single Instruction, Multiple Data) operations.
-
-.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim2, true >
-    :members:
-
-
-Point SIMD Index: Implementation details
-----------------------------------------
 
 .. doxygentypedef:: specfem::point::simd_index
 
 
-.. _point_simd_assembly_index:
+2D Specialization
+-----------------
 
+.. _point_index_2d_non_simd:
 
-.. _point_assembly_index:
+Non-SIMD
+~~~~~~~~
 
-
-Point Assembly Index
-====================
-
-Datatype used to store index of a quadrature point within an assembled mesh.
-
-.. doxygenstruct:: specfem::point::assembly_index
+.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim2, false >
    :members:
+   :private-members:
 
-Point Assembly Index: Implementation details
---------------------------------------------
+.. _point_index_2d_simd:
 
-.. doxygenstruct:: specfem::point::assembly_index< false >
-    :members:
+SIMD
+~~~~
 
-
-Point SIMD Assembly Index: Implementation details
--------------------------------------------------
-
-Datatype used to store index of a quadrature point within a assembled mesh.
-Useful when operating on SIMD datatypes.
+.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim2, true >
+   :members:
+   :private-members:
 
 
-.. doxygenstruct:: specfem::point::assembly_index< true >
-    :members:
+3D Specialization
+-----------------
 
+.. _point_index_3d_non_simd:
 
-And note that the SIMD assembly index has the alias:
+Non-SIMD
+~~~~~~~~
 
-.. doxygentypedef:: specfem::point::simd_assembly_index
+.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim3, false >
+   :members:
+   :private-members:
+
+.. _point_index_3d_simd:
+
+SIMD
+~~~~
+
+.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim3, true >
+   :members:
+   :private-members:

@@ -4,6 +4,7 @@
 #include "dim2/elastic/anisotropic/source.hpp"
 #include "dim2/elastic/isotropic/source.hpp"
 #include "dim2/poroelastic/isotropic/source.hpp"
+#include "enumerations/accessor.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -17,11 +18,13 @@ compute_source_contribution(const PointSourceType &point_source,
   static_assert(specfem::accessor::is_point_source<PointSourceType>::value,
                 "point_source is not a point source type");
 
-  static_assert(PointPropertiesType::is_point_properties,
-                "point_properties is not a point properties type");
+  static_assert(
+      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      "point_properties is not a point properties type");
 
   static_assert(PointSourceType::dimension_tag ==
-                    PointPropertiesType::dimension,
+
+                    PointPropertiesType::dimension_tag,
                 "point_source and point_properties have different dimensions");
 
   static_assert(PointSourceType::medium_tag == PointPropertiesType::medium_tag,

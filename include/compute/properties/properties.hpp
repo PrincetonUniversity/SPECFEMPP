@@ -107,7 +107,7 @@ load_on_device(const IndexType &lcoord,
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
-  constexpr auto DimensionTag = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
 
   static_assert(DimensionTag == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
@@ -147,7 +147,7 @@ void load_on_host(const IndexType &lcoord,
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
-  constexpr auto DimensionTag = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
 
   static_assert(DimensionTag == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
@@ -186,7 +186,7 @@ void store_on_host(const IndexType &lcoord,
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
-  constexpr auto DimensionTag = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
 
   static_assert(DimensionTag == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
@@ -207,7 +207,7 @@ void max(const IndexViewType &ispecs,
       std::is_same<typename IndexViewType::execution_space,
                    Kokkos::DefaultExecutionSpace>::value;
 
-  static_assert(PointPropertiesType::dimension ==
+  static_assert(PointPropertiesType::dimension_tag ==
                     specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
