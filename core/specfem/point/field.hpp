@@ -173,6 +173,12 @@ private:
     return this->acceleration(i);
   }
 
+  KOKKOS_FUNCTION typename ViewType::value_type &
+  operator()(const int i, std::false_type, std::false_type, std::false_type,
+             std::true_type) {
+    return this->mass_matrix(i);
+  }
+
   KOKKOS_FUNCTION const typename ViewType::value_type &
   operator()(const int i, std::true_type, std::false_type, std::false_type,
              std::false_type) const {
@@ -189,6 +195,12 @@ private:
   operator()(const int i, std::false_type, std::false_type, std::true_type,
              std::false_type) const {
     return this->acceleration(i);
+  }
+
+  KOKKOS_FUNCTION const typename ViewType::value_type &
+  operator()(const int i, std::false_type, std::false_type, std::false_type,
+             std::true_type) const {
+    return this->mass_matrix(i);
   }
 
 public:
@@ -246,6 +258,26 @@ public:
     return divide_mass_matrix(std::integral_constant<bool, StoreAcceleration>{},
                               std::integral_constant<bool, StoreMassMatrix>{});
   }
+
+  KOKKOS_FUNCTION bool operator==(const FieldTraits &other) const {
+    bool result = true;
+    if constexpr (StoreDisplacement) {
+      result = result && (this->displacement == other.displacement);
+    }
+    if constexpr (StoreVelocity) {
+      result = result && (this->velocity == other.velocity);
+    }
+    if constexpr (StoreAcceleration) {
+      result = result && (this->acceleration == other.acceleration);
+    }
+    if constexpr (StoreMassMatrix) {
+      result = result && (this->mass_matrix == other.mass_matrix);
+    }
+    return result;
+  }
+
+  KOKKOS_FUNCTION
+  bool operator!=(const FieldTraits &other) const { return !(*this == other); }
 };
 
 template <specfem::dimension::type DimensionTag,
