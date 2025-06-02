@@ -54,11 +54,12 @@ struct data_container<specfem::dimension::type::dim2,
                        specfem::element::medium_tag::acoustic,
                        specfem::element::property_tag::isotropic, UseSIMD> {
 
+private:
   using base_type = PropertyAccessor<
       specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
       specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
                                                            ///< point properties
-
+public:
   using value_type = typename base_type::value_type; ///< Type of the properties
   using simd = typename base_type::simd;
 
@@ -124,10 +125,12 @@ struct data_container<
     : public PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
                               specfem::element::property_tag::isotropic,
                               UseSIMD> {
+private:
   using base_type = PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
                                      specfem::element::property_tag::isotropic,
-                                     UseSIMD>;       ///< Base type of the
-                                                     ///< point properties
+                                     UseSIMD>; ///< Base type of the
+                                               ///< point properties
+public:
   using value_type = typename base_type::value_type; ///< Type of the properties
 
   using simd = typename base_type::simd;
@@ -216,12 +219,14 @@ struct data_container<
                               specfem::element::property_tag::anisotropic,
                               UseSIMD> {
 
+private:
   using base_type =
       PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
                        specfem::element::property_tag::anisotropic,
                        UseSIMD>; ///< Base type of the
                                  ///< point properties
 
+public:
   using value_type = typename base_type::value_type; ///< Type of the properties
   using simd = typename base_type::simd;
 
@@ -330,10 +335,13 @@ struct data_container<specfem::dimension::type::dim2,
                               specfem::element::property_tag::isotropic,
                               UseSIMD> {
 
+private:
   using base_type = PropertyAccessor<
       specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
       specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
                                                            ///< point properties
+
+public:
   using value_type = typename base_type::value_type; ///< Type of the properties
 
   using simd = typename base_type::simd;
@@ -457,11 +465,13 @@ struct data_container<
                               specfem::element::property_tag::isotropic,
                               UseSIMD> {
 
+private:
   using base_type = PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
                                      specfem::element::property_tag::isotropic,
                                      UseSIMD>; ///< Base type of the
                                                ///< point properties
 
+public:
   using value_type = typename base_type::value_type; ///< Type of the properties
 
   using simd = typename base_type::simd;

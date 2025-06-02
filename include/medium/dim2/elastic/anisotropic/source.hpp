@@ -7,7 +7,7 @@
 namespace specfem {
 namespace medium {
 
-template <typename PointSourcesType, typename PointPropertiesType>
+template <typename PointSourceType, typename PointPropertiesType>
 KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
     const std::integral_constant<specfem::dimension::type,
                                  specfem::dimension::type::dim2>,
@@ -15,7 +15,7 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
                                  specfem::element::medium_tag::elastic_psv>,
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::anisotropic>,
-    const PointSourcesType &point_source,
+    const PointSourceType &point_source,
     const PointPropertiesType &point_properties) {
 
   using PointAccelerationType =
@@ -31,7 +31,7 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
   return result;
 }
 
-template <typename PointSourcesType, typename PointPropertiesType>
+template <typename PointSourceType, typename PointPropertiesType>
 KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
     const std::integral_constant<specfem::dimension::type,
                                  specfem::dimension::type::dim2>,
@@ -39,7 +39,7 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
                                  specfem::element::medium_tag::elastic_sh>,
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::anisotropic>,
-    const PointSourcesType &point_source,
+    const PointSourceType &point_source,
     const PointPropertiesType &point_properties) {
 
   using PointAccelerationType =
