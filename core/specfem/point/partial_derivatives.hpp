@@ -42,7 +42,7 @@ public:
    *
    */
   ///@{
-  using simd = typename base_type::simd; ///< SIMD data type
+  using simd = typename base_type::template simd<type_real>; ///< SIMD data type
   using value_type = typename base_type::template scalar_type<type_real>;
   constexpr static bool store_jacobian = false;
   ///@}
@@ -119,18 +119,15 @@ public:
 };
 
 // operator*
-template <
-    typename PointPartialDerivativesType,
+template <typename PointPartialDerivativesType>
+KOKKOS_FUNCTION
     std::enable_if_t<!PointPartialDerivativesType::store_jacobian &&
                          PointPartialDerivativesType::dimension_tag ==
                              specfem::dimension::type::dim2 &&
-                         PointPartialDerivativesType::accessor_type ==
-                             specfem::accessor::type::point &&
-                         PointPartialDerivativesType::data_class ==
-                             specfem::data_class::type::partial_derivatives,
-                     int> = 0>
-KOKKOS_FUNCTION PointPartialDerivativesType
-operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
+                         specfem::accessor::is_point_partial_derivatives<
+                             PointPartialDerivativesType>::value,
+                     PointPartialDerivativesType>
+    operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
   return PointPartialDerivativesType(rhs.xix * lhs, rhs.gammax * lhs,
                                      rhs.xiz * lhs, rhs.gammaz * lhs);
 }
@@ -159,7 +156,7 @@ public:
    *
    */
   ///@{
-  using simd = typename base_type::simd; ///< SIMD data type
+  using simd = typename base_type::template simd<type_real>; ///< SIMD data type
   using value_type = typename base_type::template scalar_type<type_real>;
   constexpr static bool store_jacobian = false;
   ///@}

@@ -83,9 +83,9 @@ store_on_device(const int istep, const IndexType index,
 
   constexpr static auto MediumTag = AccelerationType::medium_tag;
 
-  static_assert(
-      (BoundaryValueContainerType::dimension == AccelerationType::dimension),
-      "DimensionTag must match AccelerationType::dimension_type");
+  static_assert((BoundaryValueContainerType::dimension ==
+                 AccelerationType::dimension_tag),
+                "DimensionTag must match AccelerationType::dimension_type");
 
   IndexType l_index = index;
   l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
@@ -121,9 +121,9 @@ load_on_device(const int istep, const IndexType index,
 
   IndexType l_index = index;
 
-  static_assert(
-      (BoundaryValueContainerType::dimension == AccelerationType::dimension),
-      "Number of dimensions must match");
+  static_assert((BoundaryValueContainerType::dimension ==
+                 AccelerationType::dimension_tag),
+                "Number of dimensions must match");
 
   l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
 
