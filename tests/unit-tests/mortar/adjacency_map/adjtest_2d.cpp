@@ -13,22 +13,24 @@
 void test_assembly_mapping(
     specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
         &adjacencies,
-    const int ngll = 5);
+    const int nspec, const int ngll = 5);
 
-TEST(adjacency_map2d, conforming) {
+void run_test_conforming(std::string databasename) {
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  const auto mesh = specfem::io::read_2d_mesh(
-      "mortar/test_meshes/conforming_squarering/square_ring.bin",
-      specfem::enums::elastic_wave::psv,
-      specfem::enums::electromagnetic_wave::te, mpi);
+  auto mesh =
+      specfem::io::read_2d_mesh(databasename, specfem::enums::elastic_wave::psv,
+                                specfem::enums::electromagnetic_wave::te, mpi);
 
   mpi->cout("Mesh read. Forming adjacency map.");
   specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
-      adjacencies(mesh);
+      &adjacencies = mesh.adjacency_map;
+  if (!adjacencies.was_initialized()) {
+    adjacencies = specfem::mesh::adjacency_map::adjacency_map<
+        specfem::dimension::type::dim2>(mesh);
+  }
   std::ostringstream msg;
-  msg << "Adjacency map formed (nspec = " << adjacencies.nspec
-      << "). Comparing results...";
+  msg << "Adjacency map formed. Comparing results...";
   mpi->cout(msg.str());
 
   // print out adjacencies
@@ -88,7 +90,7 @@ TEST(adjacency_map2d, conforming) {
   print_entry();
   std::sprintf(entry, "BOTTOM");
   print_entry(true);
-  for (int i = 0; i < adjacencies.nspec; i++) {
+  for (int i = 0; i < mesh.nspec; i++) {
     std::sprintf(entry, "%d", i);
     print_entry();
     set_entry_from_adj(i, specfem::enums::edge::type::RIGHT);
@@ -102,13 +104,13 @@ TEST(adjacency_map2d, conforming) {
   }
   mpi->cout(msg.str());
 
-  test_assembly_mapping(adjacencies);
+  test_assembly_mapping(adjacencies, mesh.nspec);
 }
 
 void test_assembly_mapping(
     specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
         &adjacencies,
-    const int ngll) {
+    const int nspec, const int ngll) {
   /*
    * To test adjacency_map::generate_assembly_mapping, we want to verify that
    * the mapping is valid. We will enforce these rules:
@@ -129,7 +131,7 @@ void test_assembly_mapping(
   // preimage of index_mapping.
   std::vector<std::vector<std::tuple<int, int, int> > > ind_to_nodes(
       nglob, std::vector<std::tuple<int, int, int> >());
-  for (int ispec = 0; ispec < adjacencies.nspec; ispec++) {
+  for (int ispec = 0; ispec < nspec; ispec++) {
     for (int ix = 0; ix < ngll; ix++) {
       for (int iz = 0; iz < ngll; iz++) {
         int ind = index_mapping(ispec, iz, ix);
@@ -290,4 +292,12 @@ void test_assembly_mapping(
   }
 
   // (2) passed!
+}
+
+TEST(adjacency_map2d, conforming) {
+  // with footer adjacency map
+  run_test_conforming("mortar/test_meshes/conforming_squarering/database.bin");
+  // without footer
+  run_test_conforming(
+      "mortar/test_meshes/conforming_squarering/square_ring.bin");
 }

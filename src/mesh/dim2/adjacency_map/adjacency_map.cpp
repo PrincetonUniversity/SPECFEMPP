@@ -1,5 +1,6 @@
-#include "mesh/dim2/adjacency_map/adjacency_map.hpp"
+#include "enumerations/dimension.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "mesh/dim2/mesh.hpp"
 
 #include "index_mapping_from_adjacencies.cpp"
 #include <list>
@@ -60,54 +61,35 @@ edge_and_polarity_to_corner(const specfem::enums::edge::type &bd,
   }
 }
 
-specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
-    adjacency_map(
-        const specfem::mesh::mesh<specfem::dimension::type::dim2> &parent)
-    : parent(parent), nspec(parent.nspec),
-      adjacent_indices("specfem::compute::adjacency_map::adjacent_indices",
-                       nspec),
-      adjacent_edges("specfem::compute::adjacency_map::adjacent_edges", nspec) {
-  // null value: no adjacency
-  for (int i = 0; i < nspec; i++) {
-    for (int j = 0; j < 4; j++) {
-      adjacent_edges(i, j) = specfem::enums::edge::type::NONE;
+static inline void boundarymark(
+    specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
+        &adjmap,
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &parent) {
+  for (int i = 0; i < parent.boundaries.absorbing_boundary.nelements; i++) {
+    const auto edgetype =
+        bdtype_to_edge(parent.boundaries.absorbing_boundary.type(i));
+    if (edgetype != specfem::enums::edge::type::NONE) {
+      adjmap.set_as_boundary(
+          parent.boundaries.absorbing_boundary.index_mapping(i), edgetype);
     }
   }
-
-  // mark boundaries
-  {
-    for (int i = 0; i < parent.boundaries.absorbing_boundary.nelements; i++) {
-      const auto edgetype =
-          bdtype_to_edge(parent.boundaries.absorbing_boundary.type(i));
-      if (edgetype != specfem::enums::edge::type::NONE) {
-        set_as_boundary(parent.boundaries.absorbing_boundary.index_mapping(i),
-                        edgetype);
-      }
+  for (int i = 0;
+       i < parent.boundaries.acoustic_free_surface.nelem_acoustic_surface;
+       i++) {
+    const auto edgetype =
+        bdtype_to_edge(parent.boundaries.acoustic_free_surface.type(i));
+    if (edgetype != specfem::enums::edge::type::NONE) {
+      adjmap.set_as_boundary(
+          parent.boundaries.acoustic_free_surface.index_mapping(i), edgetype);
     }
-    for (int i = 0;
-         i < parent.boundaries.acoustic_free_surface.nelem_acoustic_surface;
-         i++) {
-      const auto edgetype =
-          bdtype_to_edge(parent.boundaries.acoustic_free_surface.type(i));
-      if (edgetype != specfem::enums::edge::type::NONE) {
-        set_as_boundary(
-            parent.boundaries.acoustic_free_surface.index_mapping(i), edgetype);
-      }
-    }
-    // forcing boundary is never used, so skip it.
   }
+  // forcing boundary is never used, so skip it.
+}
 
-  //===================[ FIRST PASS ]===================
-  // get conforming adjacencies from shared node indices
+specfem::mesh::adjacency_map::adjacency_map<
+    specfem::dimension::type::dim2>::adjacency_map()
+    : nspec(-1) {}
 
-  {
-    std::vector<std::vector<int> > node_to_ispecs(
-        parent.control_nodes.coord.extent(1));
-    for (int ispec = 0; ispec < nspec; ispec++) {
-      // check for edge adjacencies
-      {
-        int nodes_edge[3]; // store nodes along edge, in counterclockwise
-                           // direction
 #define node_bottom(ind) (ind == 0 ? 0 : (ind == 2 ? 1 : 4))
 #define node_right(ind) (ind == 0 ? 1 : (ind == 2 ? 2 : 5))
 #define node_top(ind) (ind == 0 ? 2 : (ind == 2 ? 3 : 6))
@@ -120,6 +102,112 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
               : (edgetype == specfem::enums::edge::type::LEFT                  \
                      ? node_left(ind)                                          \
                      : node_bottom(ind))))
+
+specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
+    adjacency_map(
+        const specfem::mesh::mesh<specfem::dimension::type::dim2> &parent,
+        const std::vector<std::vector<int> > &elements_with_shared_nodes)
+    : nspec(parent.nspec),
+      adjacent_indices("specfem::compute::adjacency_map::adjacent_indices",
+                       nspec),
+      adjacent_edges("specfem::compute::adjacency_map::adjacent_indices",
+                     nspec) {
+
+  // null value: no adjacency
+  for (int i = 0; i < nspec; i++) {
+    for (int j = 0; j < 4; j++) {
+      adjacent_edges(i, j) = specfem::enums::edge::type::NONE;
+    }
+  }
+  // mark boundaries
+  boundarymark(*this, parent);
+
+  //===================[ FIRST PASS ]===================
+  // get conforming adjacencies from shared node indices
+
+  {
+    for (int ispec = 0; ispec < nspec; ispec++) {
+
+      int nodes_edge[3]; // store nodes along edge, in counterclockwise
+                         // direction
+      for (auto edge : {
+               specfem::enums::edge::type::RIGHT,
+               specfem::enums::edge::type::TOP,
+               specfem::enums::edge::type::LEFT,
+               specfem::enums::edge::type::BOTTOM,
+           }) {
+        // did we find the candidate to this edge?
+        bool matching = false;
+        // populate nodes_edge according to which edge this is
+        for (int i = 0; i < 3; i++) {
+          nodes_edge[i] = parent.control_nodes.knods(node_edge(edge, i), ispec);
+        }
+
+        // iterate over candidates found by meshfem
+        for (int ispec_o : elements_with_shared_nodes[ispec]) {
+          if (ispec_o > ispec) {
+            // we we only need to iterate adjacencies once.
+            continue;
+          }
+
+          for (auto edge_o : {
+                   specfem::enums::edge::type::RIGHT,
+                   specfem::enums::edge::type::TOP,
+                   specfem::enums::edge::type::LEFT,
+                   specfem::enums::edge::type::BOTTOM,
+               }) {
+            matching = true;
+            // adjacent element has same nodes, but in clockwise direction
+            for (int i = 0; i < 3; i++) {
+              if (nodes_edge[i] != parent.control_nodes.knods(
+                                       node_edge(edge_o, 2 - i), ispec_o)) {
+                matching = false;
+                break;
+              }
+            }
+            if (matching) {
+              create_conforming_adjacency(ispec, edge, ispec_o, edge_o);
+              break;
+            }
+          }
+          if (matching) {
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
+specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
+    adjacency_map(
+        const specfem::mesh::mesh<specfem::dimension::type::dim2> &parent)
+    : nspec(parent.nspec),
+      adjacent_indices("specfem::compute::adjacency_map::adjacent_indices",
+                       nspec),
+      adjacent_edges("specfem::compute::adjacency_map::adjacent_indices",
+                     nspec) {
+  // null value: no adjacency
+  for (int i = 0; i < nspec; i++) {
+    for (int j = 0; j < 4; j++) {
+      adjacent_edges(i, j) = specfem::enums::edge::type::NONE;
+    }
+  }
+
+  // mark boundaries
+  boundarymark(*this, parent);
+
+  //===================[ FIRST PASS ]===================
+  // get conforming adjacencies from shared node indices
+
+  {
+    std::vector<std::vector<int> > node_to_ispecs(
+        parent.control_nodes.coord.extent(1));
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      // check for edge adjacencies
+      {
+        int nodes_edge[3]; // store nodes along edge, in counterclockwise
+                           // direction
         for (auto edge : {
                  specfem::enums::edge::type::RIGHT,
                  specfem::enums::edge::type::TOP,

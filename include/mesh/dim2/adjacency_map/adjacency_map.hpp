@@ -3,12 +3,12 @@
 #include "Kokkos_Macros.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "mesh/dim2/mesh.hpp"
 #include <Kokkos_Core.hpp>
 #include <set>
 
 namespace specfem {
 namespace mesh {
+template <specfem::dimension::type dimtype> struct mesh;
 namespace adjacency_map {
 
 struct nonconforming_edge {
@@ -23,8 +23,7 @@ struct nonconforming_edge {
  * @brief Stores the adjacencies between elements.
  *
  */
-template <specfem::dimension::type DimensionTag> struct adjacency_map;
-
+template <specfem::dimension::type dimtype> struct adjacency_map;
 template <> struct adjacency_map<specfem::dimension::type::dim2> {
   static constexpr int edge_to_index(const specfem::enums::edge::type edge) {
     switch (edge) {
@@ -55,8 +54,11 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
     }
   }
 
+  adjacency_map();
+  adjacency_map(const specfem::mesh::mesh<dimension::type::dim2> &mesh);
   adjacency_map(
-      const specfem::mesh::mesh<specfem::dimension::type::dim2> &parent);
+      const specfem::mesh::mesh<dimension::type::dim2> &mesh,
+      const std::vector<std::vector<int> > &elements_with_shared_nodes);
 
   bool has_conforming_adjacency(const int ispec,
                                 const specfem::enums::edge::type edge);
@@ -89,17 +91,16 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
       const int ispec2, const specfem::enums::edge::type edge2,
       type_real tolerance);
 
-  const int &nspec;
-
   std::pair<specfem::kokkos::HostView3d<int>, int>
   generate_assembly_mapping(const int ngll);
   std::set<std::pair<int, specfem::enums::boundaries::type> >
   get_all_conforming_adjacencies(const int ispec,
                                  const specfem::enums::boundaries::type bdry);
 
-private:
-  const specfem::mesh::mesh<specfem::dimension::type::dim2> &parent;
+  bool was_initialized() { return nspec >= 0; }
 
+private:
+  int nspec;
   struct nonconforming_element_anchor {
     // element identifier
     int ispec;
