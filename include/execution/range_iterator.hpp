@@ -13,15 +13,17 @@ public:
   using iterator_type = VoidIterator;
 
   KOKKOS_FORCEINLINE_FUNCTION
-  PolicyIndexType get_policy_index() const { return this->index.policy_index; }
+  const PolicyIndexType get_policy_index() const {
+    return this->index.policy_index;
+  }
 
   KOKKOS_FORCEINLINE_FUNCTION
-  specfem::point::assembly_index<UseSIMD> get_index() const {
+  const specfem::point::assembly_index<UseSIMD> get_index() const {
     return this->index;
   }
 
   KOKKOS_FORCEINLINE_FUNCTION
-  constexpr iterator_type get_iterator() const { return VoidIterator(); };
+  constexpr const iterator_type get_iterator() const { return VoidIterator{}; }
 
   template <bool U = UseSIMD, typename std::enable_if<!U, int>::type = 0>
   KOKKOS_FORCEINLINE_FUNCTION RangeIndex(const PolicyIndexType i,
@@ -76,17 +78,17 @@ public:
       : RangeIterator(range_size) {}
 
   template <bool UseSIMD = ParallelConfig::simd::using_simd>
-  KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<UseSIMD, index_type>
+  KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<UseSIMD, const index_type>
   operator()(const policy_index_type &i) const {
     const int starting_index = i * simd_size;
-    const int number_elements = (starting_index + simd_size < range_size)
-                                    ? simd_size
-                                    : range_size - starting_index;
-    return index_type(i, starting_index, number_elements);
+    const int number_points = (starting_index + simd_size < range_size)
+                                  ? simd_size
+                                  : range_size - starting_index;
+    return index_type(i, starting_index, number_points);
   }
 
   template <bool UseSIMD = ParallelConfig::simd::using_simd>
-  KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<!UseSIMD, index_type>
+  KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<!UseSIMD, const index_type>
   operator()(const policy_index_type &i) const {
     const int starting_index = i;
     return index_type(i, starting_index);
