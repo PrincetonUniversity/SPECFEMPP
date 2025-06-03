@@ -10,7 +10,7 @@ namespace parallel_config {
 
 namespace impl {
 constexpr int cuda_chunk_size = 32;
-constexpr int hip_chunk_size = 32;
+constexpr int hip_chunk_size = 64;
 constexpr int openmp_chunk_size = 1;
 constexpr int serial_chunk_size = 1;
 } // namespace impl
