@@ -71,20 +71,51 @@ The following table lists the versions of compilers that are supported by SPECFE
       * Not Tested
       * 20.1
 
+
 Dependencies
 ~~~~~~~~~~~~
 
+
+Required (automatically installed if not found)
++++++++++++++++++++++++++++++++++++++++++++++++
+
+If any of the following required dependencies are not found in
+your ``PATH``, the build process will download and install them automatically.
+This will increase the build time and does require an active internet
+connection.
+
+* **Kokkos** -- a C++ library for performance portability across many-core
+  architectures. It is used for parallel programming in SPECFEM++.
+* **Boost** >= ``1.85.0`` -- a collection of C++ libraries that provide support for
+  file I/O.
+* **YAML-CPP** -- a YAML parser and emitter in C++. It is used for reading writing
+  configuration files in SPECFEM++.
+
+Optional
+++++++++
+
+* **HDF5** can be used for reading and writing wavefield data. Specify custom
+  ``hdf5`` builds using ``-D HDF5_DIR=/path/to/hdf5`` and add the libary path to
+  the ``LD_LIBRARY_PATH`` environment variable:
+
+  .. code-block:: bash
+
+      export LD_LIBRARY_PATH=/path/to/hdf5/lib[64]:$LD_LIBRARY_PATH
+
+* **VTK** can be used visualization of the wavefield in 2D. Specify a custom
+  ``vtk`` build using ``-D VTK_DIR=/path/to/vtk`` and add the libary path to
+  the ``LD_LIBRARY_PATH`` environment variable:
+
+  .. code-block:: bash
+
+      export LD_LIBRARY_PATH=/path/to/vtk/lib[64]:$LD_LIBRARY_PATH
+
 .. note::
 
-    If any of the following required dependencies are not found in your ``PATH``,
-    the build process will download and install them automatically. This will
-    increase the build time and does require an active internet connection.
+    If you are using ``module load`` to load the dependencies, the
+    ``LD_LIBRARY_PATH`` and root directories of the optional build are often
+    automatically set.
 
-* Kokkos: required
-* Boost >= ``1.85.0``: required
-* YAML-CPP: required
-* HDF5: optional
-* VTK: optional
 
 Download SPECFEM++
 ------------------
