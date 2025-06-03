@@ -20,7 +20,9 @@ dot(const ScalarPointViewType &a, const ScalarPointViewType &b) {
   constexpr int N = ScalarPointViewType::components;
   value_type result{ 0.0 };
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA)
+#pragma unroll
+#elif defined(KOKKOS_ENABLE_HIP)
 #pragma unroll
 #endif
   for (int i = 0; i < N; ++i) {

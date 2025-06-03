@@ -19,7 +19,16 @@
 #endif
 
 #ifndef NDEBUG
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA)
+#define DEVICE_ASSERT(condition, message)                                      \
+  do {                                                                         \
+    if (!(condition)) {                                                        \
+      printf("Assertion `%s` failed in %s line %d: %s\n", #condition,          \
+             __FILE__, __LINE__, message);                                     \
+      assert(false);                                                           \
+    }                                                                          \
+  } while (false)
+#elif defined(KOKKOS_ENABLE_HIP)
 #define DEVICE_ASSERT(condition, message)                                      \
   do {                                                                         \
     if (!(condition)) {                                                        \
@@ -51,6 +60,8 @@
 #elif __GNUC__
 #define NOINLINE __attribute__((noinline))
 #elif __CUDA__
+#define NOINLINE __noinline__
+#elif __HIP__
 #define NOINLINE __noinline__
 #endif
 #else
