@@ -54,6 +54,25 @@
       }
     },
     {
+      "name": "release-frontier",
+      "displayName": "Release Frontier -- HIP enabled",
+      "binaryDir": "build/release-frontier",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_EXAMPLES": "ON",
+        "BUILD_TESTS": "ON",
+        "Kokkos_ENABLE_HIP": "ON",
+        "Kokkos_ARCH_ZEN3": "ON",
+        "Kokkos_ARCH_VEGA90A": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-frontier",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-frontier"
+      }
+    },
+    {
       "name": "debug",
       "displayName": "Default Debug -- SIMD enabled",
       "binaryDir": "build/debug",
@@ -131,6 +150,13 @@
     {
       "name": "release-cuda",
       "configurePreset": "release-cuda",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-frontier",
+      "configurePreset": "release-frontier",
       "targets": [
         "all"
       ]

@@ -39,7 +39,9 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   if (nelements == 0)
     return;
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA)
+  constexpr bool using_simd = false;
+#elif defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
 #else
   constexpr bool using_simd = true;
