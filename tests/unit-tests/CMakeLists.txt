@@ -148,6 +148,61 @@ target_link_libraries(
   gmock_main
 )
 
+add_executable(
+  point_partial_derivatives_tests
+  point/partial_derivatives_tests.cpp
+)
+target_link_libraries(
+  point_partial_derivatives_tests
+  point
+  gtest_main
+  gmock_main
+)
+
+add_executable(
+  point_source_tests
+  point/source_tests.cpp
+)
+target_link_libraries(
+  point_source_tests
+  point
+  gtest_main
+  gmock_main
+)
+
+add_executable(
+  point_stress_integrand_tests
+  point/stress_integrand_tests.cpp
+)
+target_link_libraries(
+  point_stress_integrand_tests
+  point
+  gtest_main
+  gmock_main
+)
+
+add_executable(
+  point_stress_tests
+  point/stress_tests.cpp
+)
+target_link_libraries(
+  point_stress_tests
+  point
+  gtest_main
+  gmock_main
+)
+
+add_executable(
+  point_boundary_tests
+  point/boundary_tests.cpp
+)
+target_link_libraries(
+  point_boundary_tests
+  point
+  gtest_main
+  gmock_main
+)
+
 # add_executable(
 #   mesh_tests
 #   mesh/mesh_tests.cpp
@@ -494,6 +549,11 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(point_coordinates_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(point_index_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(point_properties_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_partial_derivatives_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_source_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_stress_integrand_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_stress_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_boundary_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(compute_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(assembly_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})
