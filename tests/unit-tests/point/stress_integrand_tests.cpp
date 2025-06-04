@@ -298,8 +298,3 @@ TEST_F(PointStressIntegrandTest, AccessorBaseType) {
 
   EXPECT_TRUE(is_accessor);
 }
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
