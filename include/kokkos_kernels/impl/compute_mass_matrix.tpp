@@ -77,10 +77,10 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
 
   constexpr int simd_size = simd::size();
 
-  specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements, ngllx, ngllz);
+  specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements, ngllz, ngllx);
 
   specfem::execution::for_all(
-      "specfem::domain::impl::kernels::elements::compute_mass_matrix", chunk,
+      "specfem::kokkos_kernels::compute_mass_matrix", chunk,
       KOKKOS_LAMBDA(const PointIndex &index) {
         const int ix = index.ix;
         const int iz = index.iz;

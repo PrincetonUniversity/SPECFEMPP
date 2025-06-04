@@ -32,7 +32,7 @@ public:
   }
 
   KOKKOS_INLINE_FUNCTION
-  constexpr const specfem::point::index<specfem::dimension::type::dim2, UseSIMD>
+  constexpr const specfem::point::index<DimensionTag, UseSIMD>
   get_index() const {
     return this->index; ///< Returns the point index
   }
@@ -60,9 +60,8 @@ public:
   }
 
 private:
-  specfem::point::index<specfem::dimension::type::dim2, UseSIMD>
-      index;                    ///< Point
-  KokkosIndexType kokkos_index; ///< Kokkos index type
+  specfem::point::index<DimensionTag, UseSIMD> index; ///< Point
+  KokkosIndexType kokkos_index;                       ///< Kokkos index type
 };
 
 template <specfem::dimension::type DimensionTag, typename SIMD,
@@ -170,6 +169,14 @@ public:
         kokkos_index(kokkos_index),
         iterator(kokkos_index, indices, ngllz, ngllx) {}
 
+  KOKKOS_INLINE_FUNCTION
+  Kokkos::pair<typename ViewType::value_type, typename ViewType::value_type>
+  get_range() const {
+    return Kokkos::make_pair(indices(0),
+                             indices(indices.extent(0) - 1) +
+                                 1); ///< Returns the range of indices
+  }
+
 private:
   ViewType indices;            ///< View of indices
   int ngllz;                   ///< Number of GLL points in the z-direction
@@ -222,7 +229,7 @@ public:
     return *this; ///< Returns itself for method chaining
   }
 
-private:
+protected:
   ViewType indices; ///< View of indices of elements within this iterator
   int ngllz;        ///< Number of GLL points in the z-direction
   int ngllx;        ///< Number of GLL points in the x-direction
