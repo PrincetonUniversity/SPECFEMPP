@@ -22,6 +22,7 @@ protected:
 // ===============================
 TEST_F(PointPartialDerivativesTest, PartialDerivatives2D_DefaultConstructor) {
   point::partial_derivatives<dimension::type::dim2, false, false> pd;
+  pd.init();
   EXPECT_REAL_EQ(pd.xix, 0.0);
   EXPECT_REAL_EQ(pd.gammax, 0.0);
   EXPECT_REAL_EQ(pd.xiz, 0.0);
@@ -88,6 +89,7 @@ TEST_F(PointPartialDerivativesTest, PartialDerivatives2D_Arithmetic) {
 // ===============================
 TEST_F(PointPartialDerivativesTest, PartialDerivatives3D_DefaultConstructor) {
   point::partial_derivatives<dimension::type::dim3, false, false> pd;
+  pd.init();
   EXPECT_REAL_EQ(pd.xix, 0.0);
   EXPECT_REAL_EQ(pd.gammax, 0.0);
   EXPECT_REAL_EQ(pd.xiy, 0.0);
