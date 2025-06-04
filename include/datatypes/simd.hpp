@@ -141,5 +141,34 @@ template <typename T, typename simd_type, bool UseSIMD> struct simd_like {
    */
   constexpr static int size() { return datatype::size(); }
 };
+
+template <typename mask_type, bool UseSIMD>
+KOKKOS_INLINE_FUNCTION bool all_of(const mask_type &mask) {
+  if constexpr (UseSIMD) {
+    return Kokkos::Experimental::all_of(mask);
+  } else {
+    return mask;
+  }
+};
+
+// First, add the detail::is_close helper function if you haven't already
+namespace detail {
+// Helper function for floating-point comparisons with tolerance
+template <typename T>
+KOKKOS_FUNCTION inline bool is_close(const T &a, const T &b,
+                                     const T rel_tol = static_cast<T>(1e-5),
+                                     const T abs_tol = static_cast<T>(1e-8)) {
+  // Check if the numbers are really close -- needed when comparing numbers near
+  // zero
+  if (Kokkos::abs(a - b) <= abs_tol) {
+    return true;
+  }
+
+  // Compare relative difference
+  return Kokkos::abs(a - b) <=
+         rel_tol * Kokkos::max(Kokkos::abs(a), Kokkos::abs(b));
+}
+} // namespace detail
+
 } // namespace datatype
 } // namespace specfem
