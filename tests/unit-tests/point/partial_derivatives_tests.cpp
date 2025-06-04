@@ -174,6 +174,7 @@ TEST_F(PointPartialDerivativesTest,
        PartialDerivatives2D_WithJacobian_Constructors) {
   using PD = point::partial_derivatives<dimension::type::dim2, true, false>;
   PD pd1;
+  pd1.init();
   EXPECT_REAL_EQ(pd1.xix, 0.0);
   EXPECT_REAL_EQ(pd1.gammax, 0.0);
   EXPECT_REAL_EQ(pd1.xiz, 0.0);
@@ -234,6 +235,7 @@ TEST_F(PointPartialDerivativesTest,
        PartialDerivatives3D_WithJacobian_Constructors) {
   using PD = point::partial_derivatives<dimension::type::dim3, true, false>;
   PD pd1;
+  pd1.init();
   EXPECT_REAL_EQ(pd1.xix, 0.0);
   EXPECT_REAL_EQ(pd1.gammax, 0.0);
   EXPECT_REAL_EQ(pd1.xiy, 0.0);
