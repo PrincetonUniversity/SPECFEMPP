@@ -3,13 +3,6 @@
 #include "test_setup.hpp"
 #include <gtest/gtest.h>
 
-#define EXPECT_ALL_TRUE(mask, use_simd)                                        \
-  if constexpr (use_simd) {                                                    \
-    EXPECT_TRUE(Kokkos::Experimental::all_of(mask));                           \
-  } else {                                                                     \
-    EXPECT_TRUE(mask);                                                         \
-  }
-
 // Test fixture for basic SIMD functionality
 template <bool UseSIMD> class Datatype_SIMD_Test : public ::testing::Test {
 protected:
@@ -144,19 +137,19 @@ TYPED_TEST(Datatype_SIMD_Test_Typed, ComparisonOperations) {
 
   // Equal
   auto mask_eq = (a == b);
-  EXPECT_ALL_TRUE(mask_eq, using_simd);
+  EXPECT_TRUE(specfem::datatype::all_of(mask_eq));
 
   // Not equal
   auto mask_neq = (a != c);
-  EXPECT_ALL_TRUE(mask_neq, using_simd);
+  EXPECT_TRUE(specfem::datatype::all_of(mask_neq));
 
   // Greater than
   auto mask_gt = (a > c);
-  EXPECT_ALL_TRUE(mask_gt, using_simd);
+  EXPECT_TRUE(specfem::datatype::all_of(mask_gt));
 
   // Less than
   auto mask_lt = (c < a);
-  EXPECT_ALL_TRUE(mask_lt, using_simd);
+  EXPECT_TRUE(specfem::datatype::all_of(mask_lt));
 }
 
 // Test with integer types
@@ -240,8 +233,6 @@ TEST(Datatype_SIMD_Test, CrossTypeComparison) {
   // If we tried: scalar_val == simd_val, it would be a compilation error
   // which is the behavior we want
 }
-
-#undef EXPECT_ALL_TRUE
 
 // Test basic functionality with comparison masks
 TYPED_TEST(Datatype_SIMD_Test_Typed, AllOfBasicComparison) {
