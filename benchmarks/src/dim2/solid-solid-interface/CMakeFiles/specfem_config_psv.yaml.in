@@ -1,5 +1,5 @@
 ## Coupling interfaces have code flow that is dependent on orientation of the interface.
-## This test is to check the code flow for horizontal acoustic-elastic interface with acoustic domain on top.
+## This test is to check the code flow for horizontal elastic-elastic interface.
 
 parameters:
 
