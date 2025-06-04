@@ -1,10 +1,11 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "datatypes/simd.hpp"
+#include "execution/for_all.hpp"
+#include "execution/range_iterator.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "parallel_configuration/range_config.hpp"
 #include "policies/chunk.hpp"
-#include "policies/range.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <fstream>
@@ -76,12 +77,15 @@ void parse_test_config(const YAML::Node &yaml,
 template <typename ParallelConfig>
 typename Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>::HostMirror
 execute_range_policy(const int nglob) {
-  using PolicyType = specfem::policy::range<ParallelConfig>;
-  PolicyType policy(nglob);
+  specfem::execution::RangeIterator iterator(ParallelConfig(), nglob);
   using TestViewType = Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>;
   TestViewType test_view("test_view", nglob);
   TestViewType::HostMirror test_view_host =
       Kokkos::create_mirror_view(test_view);
+
+  constexpr bool using_simd = ParallelConfig::simd::using_simd;
+
+  using PointIndex = specfem::point::assembly_index<using_simd>;
 
   // initialize test_view
   Kokkos::parallel_for(
@@ -91,37 +95,24 @@ execute_range_policy(const int nglob) {
 
   Kokkos::fence();
 
-  Kokkos::parallel_for(
-      "execute_range_policy",
-      static_cast<typename PolicyType::policy_type>(policy),
-      KOKKOS_LAMBDA(const int iglob) {
-        for (std::size_t itile = 0; itile < PolicyType::tile_size; ++itile) {
+  specfem::execution::for_all(
+      "execute_range_policy", iterator, KOKKOS_LAMBDA(const PointIndex &index) {
+        const auto l_test_view = test_view;
+        constexpr bool is_simd = using_simd;
+        if constexpr (is_simd) {
+          using tag_type = typename ParallelConfig::simd::tag_type;
+          using datatype = typename ParallelConfig::simd::datatype;
+          using mask_type = typename ParallelConfig::simd::mask_type;
+          mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+          datatype data;
+          Kokkos::Experimental::where(mask, data)
+              .copy_from(&l_test_view(index.iglob), tag_type());
 
-          const auto iterator = policy.range_iterator(iglob, itile);
-          if (iterator.is_end()) {
-            return; // Skip if the iterator is at the end
-          }
-          const auto index = iterator();
-
-          constexpr bool using_simd = PolicyType::simd::using_simd;
-          const auto l_test_view = test_view;
-
-          if constexpr (using_simd) {
-            using mask_type = typename PolicyType::simd::mask_type;
-            mask_type mask(
-                [&](std::size_t lane) { return index.index.mask(lane); });
-            using tag_type = typename PolicyType::simd::tag_type;
-            using datatype = typename PolicyType::simd::datatype;
-            datatype data;
-            Kokkos::Experimental::where(mask, data)
-                .copy_from(&l_test_view(index.index.iglob), tag_type());
-
-            data += static_cast<type_real>(1);
-            Kokkos::Experimental::where(mask, data)
-                .copy_to(&l_test_view(index.index.iglob), tag_type());
-          } else if constexpr (!using_simd) {
-            l_test_view(index.index.iglob) += 1;
-          }
+          data += static_cast<type_real>(1);
+          Kokkos::Experimental::where(mask, data)
+              .copy_to(&l_test_view(index.iglob), tag_type());
+        } else {
+          l_test_view(index.iglob) += 1;
         }
       });
 
