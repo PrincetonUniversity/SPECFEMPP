@@ -41,7 +41,6 @@
       "binaryDir": "build/release-cuda",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_BUILD_EXAMPLES": "ON",
         "BUILD_TESTS": "ON",
         "Kokkos_ENABLE_CUDA": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
@@ -54,12 +53,28 @@
       }
     },
     {
+      "name": "release-hip",
+      "displayName": "Release -- HIP enabled",
+      "binaryDir": "build/release-hip",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "ON",
+        "Kokkos_ENABLE_HIP": "ON",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-hip",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-hip"
+      }
+    },
+    {
       "name": "release-frontier",
       "displayName": "Release Frontier -- HIP enabled",
       "binaryDir": "build/release-frontier",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_BUILD_EXAMPLES": "ON",
         "BUILD_TESTS": "ON",
         "Kokkos_ENABLE_HIP": "ON",
         "Kokkos_ARCH_ZEN3": "ON",
@@ -97,7 +112,6 @@
       "binaryDir": "build/debug-cuda",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_BUILD_EXAMPLES": "ON",
         "BUILD_TESTS": "ON",
         "ENABLE_SIMD": "ON",
         "Kokkos_ENABLE_CUDA": "ON",
@@ -150,6 +164,13 @@
     {
       "name": "release-cuda",
       "configurePreset": "release-cuda",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-hip",
+      "configurePreset": "release-hip",
       "targets": [
         "all"
       ]
