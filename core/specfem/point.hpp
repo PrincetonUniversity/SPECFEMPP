@@ -6,6 +6,7 @@
 #include "point/field_derivatives.hpp"
 #include "point/index.hpp"
 #include "point/kernels.hpp"
+#include "point/mapped_index.hpp"
 #include "point/partial_derivatives.hpp"
 #include "point/properties.hpp"
 #include "point/source.hpp"
