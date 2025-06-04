@@ -291,6 +291,7 @@ TEST(Datatype_SIMD_Test, AllOfSIMDMixedLanes) {
     return;
   }
 }
+
 // Test with floating-point tolerance comparison
 TYPED_TEST(Datatype_SIMD_Test_Typed, AllOfToleranceComparison) {
   auto val1 = this->create_value(1.0);
