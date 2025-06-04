@@ -204,7 +204,7 @@ Running the P-SV simulation
 ---------------------------
 
 To run the solver, we first need to define a configuration file
-``specfem_config_psv.yaml``. The ``_psv`` just to distuinguish this
+``specfem_config_psv.yaml``. The ``_psv`` just to distinguish this
 configuration to solve for the P-SV polarized elastic wave propagation from later on
 solved SH polarized elastic wave propagation.
 
