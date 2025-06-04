@@ -265,9 +265,3 @@ TEST_F(PointCoordinatesTest, NegativeCoordinates3D) {
   type_real expected = std::sqrt(3.0 * 3.0 + 3.0 * 3.0 + 3.0 * 3.0);
   EXPECT_REAL_EQ(dist, expected);
 }
-
-// Main function
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

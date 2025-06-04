@@ -266,9 +266,3 @@ TEST_F(PointIndexTest, ZeroElements3D) {
   EXPECT_FALSE(idx.mask(0)); // All lanes should be outside when number_elements
                              // is 0
 }
-
-// Main function
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
