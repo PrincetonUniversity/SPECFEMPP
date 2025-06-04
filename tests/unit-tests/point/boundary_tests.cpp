@@ -424,8 +424,3 @@ TEST_F(PointBoundaryTest, BoundaryTagContainerOperators) {
   EXPECT_FALSE(boundary.tag != element::boundary_tag::stacey);
   EXPECT_TRUE(boundary.tag != element::boundary_tag::none);
 }
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
