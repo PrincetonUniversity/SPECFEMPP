@@ -478,5 +478,23 @@ load_on_host(const MemberType &member, const ChunkIteratorType &iterator,
   impl_load<false>(member, iterator, field, chunk_field);
 }
 
+template <typename ChunkIndexType, typename WavefieldContainer,
+          typename ViewType,
+          typename std::enable_if_t<ViewType::isChunkFieldType, int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const ChunkIndexType &index,
+                                                const WavefieldContainer &field,
+                                                ViewType &chunk_field) {
+  impl_load<true>(index, field, chunk_field);
+}
+
+template <typename ChunkIndexType, typename WavefieldContainer,
+          typename ViewType,
+          typename std::enable_if_t<ViewType::isChunkFieldType, int> = 0>
+inline void load_on_host(const ChunkIndexType &index,
+                         const WavefieldContainer &field,
+                         ViewType &chunk_field) {
+  impl_load<false>(index, field, chunk_field);
+}
+
 } // namespace compute
 } // namespace specfem
