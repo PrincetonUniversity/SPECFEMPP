@@ -303,6 +303,24 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
                              station_name + ".S2.PRE.semp");
         }
         break;
+      // case specfem::wavefield::type::rotation:
+      //   if (elastic_wave == specfem::enums::elastic_wave::sh) {
+      //     FAIL() << "--------------------------------------------------\n"
+      //            << "\033[0;31m[FAILED]\033[0m Test failed\n"
+      //            << " - Test name: " << Test.name << "\n"
+      //            << " - Error: Rotation seismograms are not supported for SH
+      //            "
+      //               "waves\n"
+      //            << " - Network: " << network_name << "\n"
+      //            << " - Station: " << station_name << "\n"
+      //            << "--------------------------------------------------\n\n"
+      //            << std::endl;
+      //   } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+      //     filename.push_back(Test.database.traces + "/" + network_name + "."
+      //     +
+      //                        station_name + ".S2.BXT.semr");
+      //   }
+      //   break;
       default:
         FAIL() << "--------------------------------------------------\n"
                << "\033[0;31m[FAILED]\033[0m Test failed\n"
