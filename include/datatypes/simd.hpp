@@ -142,9 +142,15 @@ template <typename T, typename simd_type, bool UseSIMD> struct simd_like {
   constexpr static int size() { return datatype::size(); }
 };
 
-template <typename mask_type, bool UseSIMD>
+template <typename T> struct is_simd_mask : std::false_type {};
+
+template <typename T, typename ABI>
+struct is_simd_mask<Kokkos::Experimental::simd_mask<T, ABI> > : std::true_type {
+};
+
+template <typename mask_type>
 KOKKOS_INLINE_FUNCTION bool all_of(const mask_type &mask) {
-  if constexpr (UseSIMD) {
+  if constexpr (is_simd_mask<mask_type>::value) {
     return Kokkos::Experimental::all_of(mask);
   } else {
     return mask;

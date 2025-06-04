@@ -233,7 +233,7 @@ TEST(Datatype_SIMD_Test, CrossTypeComparison) {
     simd_type::datatype b(1.0);
 
     auto result = (a == b);
-    EXPECT_TRUE((specfem::datatype::all_of<decltype(result), true>(result)));
+    EXPECT_TRUE((specfem::datatype::all_of(result)));
   }
 
   // We don't test cross-type comparison because it's not supported
@@ -251,15 +251,11 @@ TYPED_TEST(Datatype_SIMD_Test_Typed, AllOfBasicComparison) {
 
   // Test all true
   auto mask_true = (val1 == val2);
-  EXPECT_TRUE((specfem::datatype::all_of<
-               typename Datatype_SIMD_Test_Typed<TypeParam>::mask_type,
-               TypeParam::value>(mask_true)));
+  EXPECT_TRUE((specfem::datatype::all_of(mask_true)));
 
   // Test all false
   auto mask_false = (val1 == val3);
-  EXPECT_FALSE((specfem::datatype::all_of<
-                typename Datatype_SIMD_Test_Typed<TypeParam>::mask_type,
-                TypeParam::value>(mask_false)));
+  EXPECT_FALSE((specfem::datatype::all_of(mask_false)));
 }
 
 // SIMD-specific test: mixed values in different lanes
@@ -278,7 +274,7 @@ TEST(Datatype_SIMD_Test, AllOfSIMDMixedLanes) {
     auto mask_mixed = (val1 == val2);
 
     // Should be false because not all lanes are equal
-    EXPECT_FALSE((specfem::datatype::all_of<mask_type, use_simd>(mask_mixed)));
+    EXPECT_FALSE((specfem::datatype::all_of(mask_mixed)));
   } else {
     GTEST_SKIP() << "SIMD tests skipped because simd_size <= 1";
     return;
@@ -300,16 +296,12 @@ TYPED_TEST(Datatype_SIMD_Test_Typed, AllOfToleranceComparison) {
 
   // Check that the difference is larger than the small tolerance
   auto mask_greater_than_small = (val2 - val1) > diff_small;
-  EXPECT_TRUE((specfem::datatype::all_of<
-               typename Datatype_SIMD_Test_Typed<TypeParam>::mask_type,
-               TypeParam::value>(mask_greater_than_small)))
+  EXPECT_TRUE((specfem::datatype::all_of(mask_greater_than_small)))
       << "Difference should be detected as larger than small tolerance";
 
   // Check that the difference is smaller than the large tolerance
   auto mask_less_than_large = (val2 - val1) < diff_large;
-  EXPECT_TRUE((specfem::datatype::all_of<
-               typename Datatype_SIMD_Test_Typed<TypeParam>::mask_type,
-               TypeParam::value>(mask_less_than_large)))
+  EXPECT_TRUE((specfem::datatype::all_of(mask_less_than_large)))
       << "Difference should be detected as smaller than large tolerance";
 }
 
@@ -326,9 +318,7 @@ TYPED_TEST(Datatype_SIMD_Test_Typed, AllOfDirectFloatingPointComparison) {
 
   // This direct comparison should definitely fail
   auto mask_exact = (val1 == val2);
-  EXPECT_FALSE((specfem::datatype::all_of<
-                typename Datatype_SIMD_Test_Typed<TypeParam>::mask_type,
-                TypeParam::value>(mask_exact)))
+  EXPECT_FALSE((specfem::datatype::all_of(mask_exact)))
       << "Direct comparison of distinguishable values should fail";
 }
 
