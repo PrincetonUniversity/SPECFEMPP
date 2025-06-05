@@ -230,7 +230,7 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
                     specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
 #ifndef NDEBUG
@@ -297,7 +297,7 @@ void load_on_host(const IndexType index,
                     specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
 #ifndef NDEBUG
@@ -361,7 +361,7 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
                     specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
 #ifndef NDEBUG
@@ -423,7 +423,7 @@ void store_on_host(const IndexType index, const PointSourceType &point_source,
                     specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
 #ifndef NDEBUG

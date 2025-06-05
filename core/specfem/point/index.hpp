@@ -31,18 +31,16 @@ using simd_index = index<DimensionTag, true>;
  * @brief 2D specialization of the index struct for the non-SIMD case
  *
  */
-template <> struct index<specfem::dimension::type::dim2, false> {
+template <>
+struct index<specfem::dimension::type::dim2, false>
+    : public specfem::accessor::Accessor<
+          specfem::accessor::type::point, specfem::data_class::type::index,
+          specfem::dimension::type::dim2, false> {
   int ispec; ///< Index of the spectral element
   int iz;    ///< Index of the quadrature point in the z direction within the
              ///< spectral element
   int ix;    ///< Index of the quadrature point in the x direction within the
              ///< spectral element
-
-  constexpr static bool using_simd =
-      false; ///< Flag to indicate that SIMD is not being used'
-
-  constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension type
 
   /**
    * @brief Default constructor
@@ -71,7 +69,11 @@ template <> struct index<specfem::dimension::type::dim2, false> {
  * @copydoc simd_index
  *
  */
-template <> struct index<specfem::dimension::type::dim2, true> {
+template <>
+struct index<specfem::dimension::type::dim2, true>
+    : public specfem::accessor::Accessor<specfem::accessor::type::point,
+                                         specfem::data_class::type::index,
+                                         specfem::dimension::type::dim2, true> {
   int ispec; ///< Index associated with the spectral element at the start
              ///< of the SIMD vector
   int number_elements; ///< Number of elements stored in the SIMD vector
@@ -79,12 +81,6 @@ template <> struct index<specfem::dimension::type::dim2, true> {
           ///< the spectral element
   int ix; ///< Index of the quadrature point in the x direction within
           ///< the spectral element
-
-  constexpr static bool using_simd =
-      true; ///< Flag to indicate that SIMD is being used
-
-  constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension type
 
   /**
    * @brief Default constructor
@@ -128,7 +124,11 @@ template <> struct index<specfem::dimension::type::dim2, true> {
  *        implementation.
  *
  */
-template <> struct index<specfem::dimension::type::dim3, false> {
+template <>
+struct index<specfem::dimension::type::dim3, false>
+    : public specfem::accessor::Accessor<
+          specfem::accessor::type::point, specfem::data_class::type::index,
+          specfem::dimension::type::dim3, false> {
   int ispec; ///< Index of the spectral element
   int iz;    ///< Index of the quadrature point in the z direction within the
              ///< spectral element
@@ -136,12 +136,6 @@ template <> struct index<specfem::dimension::type::dim3, false> {
              ///< spectral element
   int ix;    ///< Index of the quadrature point in the x direction within the
              ///< spectral element
-
-  constexpr static bool using_simd =
-      false; ///< Flag to indicate that SIMD is not being used'
-
-  constexpr static auto dimension =
-      specfem::dimension::type::dim3; ///< Dimension type
 
   /**
    * @brief Default constructor
@@ -173,7 +167,11 @@ template <> struct index<specfem::dimension::type::dim3, false> {
  * @copydoc simd_index
  *
  */
-template <> struct index<specfem::dimension::type::dim3, true> {
+template <>
+struct index<specfem::dimension::type::dim3, true>
+    : public specfem::accessor::Accessor<specfem::accessor::type::point,
+                                         specfem::data_class::type::index,
+                                         specfem::dimension::type::dim3, true> {
   int ispec; ///< Index associated with the spectral element at the start
              ///< of the SIMD vector
   int number_elements; ///< Number of elements stored in the SIMD vector
@@ -183,12 +181,6 @@ template <> struct index<specfem::dimension::type::dim3, true> {
           ///< spectral element
   int ix; ///< Index of the quadrature point in the x direction within
           ///< the spectral element
-
-  constexpr static bool using_simd =
-      true; ///< Flag to indicate that SIMD is being used
-
-  constexpr static auto dimension =
-      specfem::dimension::type::dim3; ///< Dimension type
 
   /**
    * @brief Default constructor

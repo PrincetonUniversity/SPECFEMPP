@@ -1,6 +1,21 @@
 #pragma once
 
 #include "chunked_domain_iterator.hpp"
+#include "policy.hpp"
+#include "specfem/point.hpp"
+#include "void_iterator.hpp"
+#include <Kokkos_Core.hpp>
+#include <type_traits>
+
+namespace specfem {
+namespace chunk_element {
+
+// Forward declaration for PointIndex
+template <specfem::dimension::type DimensionTag, typename SIMD,
+          typename ViewType, typename TeamMemberType>
+class MappedIndex;
+} // namespace chunk_element
+} // namespace specfem
 
 namespace specfem {
 namespace execution {
@@ -31,8 +46,8 @@ public:
   }
 
   KOKKOS_INLINE_FUNCTION
-  MappedPointIndex(const index_type &index, const int &imap,
-                   const KokkosIndexType &kokkos_index)
+  MappedPointIndex(const specfem::point::index<DimensionTag, UseSIMD> &index,
+                   const int &imap, const KokkosIndexType &kokkos_index)
       : index(index, imap), kokkos_index(kokkos_index) {}
 
   KOKKOS_INLINE_FUNCTION
@@ -165,3 +180,5 @@ private:
 
 } // namespace execution
 } // namespace specfem
+
+#include "chunk_element/mapped_index.hpp"
