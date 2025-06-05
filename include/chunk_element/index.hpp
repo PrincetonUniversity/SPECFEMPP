@@ -10,20 +10,21 @@ template <specfem::dimension::type DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
 class Index
     : public specfem::execution::ChunkElementIndex<DimensionTag, SIMD, ViewType,
-                                                   TeamMemberType> {
+                                                   TeamMemberType>,
+      public specfem::accessor::Accessor<specfem::accessor::type::chunk_element,
+                                         specfem::data_class::type::index,
+                                         DimensionTag, SIMD::value> {
 private:
   using base_type =
       specfem::execution::ChunkElementIndex<DimensionTag, SIMD, ViewType,
                                             TeamMemberType>; ///< Base type of
                                                              ///< the chunk
                                                              ///< element index
+  using accessor_type =
+      specfem::accessor::Accessor<specfem::accessor::type::chunk_element,
+                                  specfem::data_class::type::index,
+                                  DimensionTag, SIMD::value>; ///< Accessor type
 public:
-  constexpr static auto dimension = DimensionTag; ///< Dimension of the elements
-  constexpr static auto accessor_type =
-      specfem::accessor::type::chunk_element; ///< Accessor type for chunk
-                                              ///< elements
-  constexpr static auto data_class =
-      specfem::data_class::type::index; ///< Data class for chunk element index
   using iterator_type = typename base_type::iterator_type;
 
   KOKKOS_INLINE_FUNCTION
