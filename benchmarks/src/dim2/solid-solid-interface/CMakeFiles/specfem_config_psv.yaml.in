@@ -1,0 +1,67 @@
+## Coupling interfaces have code flow that is dependent on orientation of the interface.
+## This test is to check the code flow for horizontal elastic-elastic interface.
+
+parameters:
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Heterogeneous elastic-elastic medium with 1 elastic-elastic interface (orientation horizontal)  # name for your simulation
+    # A detailed description for your simulation
+    description: |
+      Material systems : Elastic domain (1), Elastic domain (1)
+      Interfaces : Elastic-elastic interface (1) (orientation horizontal slower medium on top)
+      Sources : Force source (1)
+      Boundary conditions : Neumann BCs on all edges
+      Debugging comments: This tests checks coupling elastic-elastic interface implementation.
+                          The orientation of the interface is horizontal with elastic domain on top.
+
+  simulation-setup:
+    # Wave propagation type
+    elastic-wave: "P_SV"
+
+    ## quadrature setup
+    quadrature:
+      quadrature-type: GLL4
+
+    ## Solver setup
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 9.0e-3
+          nstep: 5000
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results_psv"
+
+          ## Uncomment to enable the storing of snapshots
+          # display:
+          #   format: PNG
+          #   directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results_psv"
+          #   field: velocity
+          #   simulation-field: forward
+          #   time-interval: 500
+
+  receivers:
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 1
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/database.bin"
+
+  ## sources
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml"
