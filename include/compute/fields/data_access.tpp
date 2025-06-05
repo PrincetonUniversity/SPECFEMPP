@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/point.hpp"
+#include "execution/for_each_level.hpp"
 
 namespace specfem {
 namespace compute {
@@ -998,6 +999,122 @@ impl_load(const MemberType &team, const IteratorType &iterator,
 
         for (std::size_t lane = 0; lane < IteratorType::simd::size(); ++lane) {
           if (!iterator_index.index.mask(lane)) {
+            continue;
+          }
+
+          const int iglob = field.template get_iglob<on_device>(
+              ispec + lane, iz, ix, MediumTag);
+
+          for (std::size_t icomp = 0; icomp < components; ++icomp) {
+
+            if constexpr (StoreDisplacement) {
+              chunk_field.displacement(ielement, iz, ix, icomp)[lane] =
+                  curr_field.template get_field<on_device>(iglob, icomp);
+            }
+            if constexpr (StoreVelocity) {
+              chunk_field.velocity(ielement, iz, ix, icomp)[lane] =
+                  curr_field.template get_field_dot<on_device>(iglob, icomp);
+            }
+            if constexpr (StoreAcceleration) {
+              chunk_field.acceleration(ielement, iz, ix, icomp)[lane] =
+                  curr_field.template get_field_dot_dot<on_device>(iglob,
+                                                                   icomp);
+            }
+            if constexpr (StoreMassMatrix) {
+              chunk_field.mass_matrix(ielement, iz, ix, icomp)[lane] =
+                  curr_field.template get_mass_inverse<on_device>(iglob, icomp);
+            }
+          }
+        }
+      });
+
+  return;
+}
+
+template <
+    bool on_device, typename ChunkIndexType, typename WavefieldType,
+    typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isChunkFieldType && !ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void impl_load(const ChunkIndexType &index,
+                                           const WavefieldType &field,
+                                           ViewType &chunk_field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumTag = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  constexpr static int NGLL = ViewType::ngll;
+  constexpr static bool using_simd = ViewType::simd::using_simd;
+  const auto &curr_field = field.template get_field<MediumTag>();
+
+  specfem::execution::for_each_level(
+      index.get_iterator(),
+      [&](const typename ChunkIndexType::iterator_type::index_type &iterator_index) {
+        const auto ielement = iterator_index.get_policy_index();
+        const auto point_index = iterator_index.get_index();
+        const int ispec = point_index.ispec;
+        const int iz = point_index.iz;
+        const int ix = point_index.ix;
+        const int iglob =
+            field.template get_iglob<on_device>(ispec, iz, ix, MediumTag);
+        for (int icomp = 0; icomp < components; ++icomp) {
+          if constexpr (StoreDisplacement) {
+            chunk_field.displacement(ielement, iz, ix, icomp) =
+                curr_field.template get_field<on_device>(iglob, icomp);
+          }
+          if constexpr (StoreVelocity) {
+            chunk_field.velocity(ielement, iz, ix, icomp) =
+                curr_field.template get_field_dot<on_device>(iglob, icomp);
+          }
+          if constexpr (StoreAcceleration) {
+            chunk_field.acceleration(ielement, iz, ix, icomp) =
+                curr_field.template get_field_dot_dot<on_device>(iglob, icomp);
+          }
+          if constexpr (StoreMassMatrix) {
+            chunk_field.mass_matrix(ielement, iz, ix, icomp) =
+                curr_field.template get_mass_inverse<on_device>(iglob, icomp);
+          }
+        }
+      });
+
+  return;
+}
+
+template <
+    bool on_device, typename ChunkIndexType, typename WavefieldType,
+    typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isChunkFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void impl_load(const ChunkIndexType &index,
+                                        const WavefieldType &field,
+                                        ViewType &chunk_field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumTag = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  constexpr static int NGLL = ViewType::ngll;
+
+  const auto &curr_field = field.template get_field<MediumTag>();
+
+  specfem::execution::for_each_level(
+      index.get_iterator(),
+      [&](const typename ChunkIndexType::iterator_type::index_type &iterator_index) {
+        const auto ielement = iterator_index.get_policy_index();
+        const auto point_index = iterator_index.get_index();
+        const int ispec = point_index.ispec;
+        const int iz = point_index.iz;
+        const int ix = point_index.ix;
+
+        for (std::size_t lane = 0; lane < ViewType::simd::size(); ++lane) {
+          if (!point_index.mask(lane)) {
             continue;
           }
 
