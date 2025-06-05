@@ -114,7 +114,6 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements,
                                                ngllz, ngllx);
 
-  constexpr int simd_size = simd::size();
 
   if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey &&
                 WavefieldType ==
