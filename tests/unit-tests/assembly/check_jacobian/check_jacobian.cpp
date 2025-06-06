@@ -26,7 +26,13 @@ TEST_F(ASSEMBLY, CheckJacobian) {
     const auto Test = std::get<0>(parameters);
     specfem::compute::assembly assembly = std::get<5>(parameters);
 
-    // Expect runtime error
-    EXPECT_THROW(test_check_jacobian(assembly), std::runtime_error);
+    // Break down the expectation
+    bool threw_exception = false;
+    try {
+        test_check_jacobian(assembly);
+    } catch (const std::runtime_error&) {
+        threw_exception = true;
+    }
+    EXPECT_TRUE(threw_exception);
   }
 }
