@@ -32,7 +32,9 @@ constexpr void check_compatibility() {
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
     ((Iterator::is_top_level_policy) &&
-     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy)),
+     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy) &&
+     (std::is_same_v<typename Iterator::base_policy_type::execution_space,
+                     Kokkos::DefaultExecutionSpace>)),
     void>
 for_each_level(const std::string &name, const Iterator &iterator,
                const ClosureType &closure) {
@@ -50,7 +52,29 @@ for_each_level(const std::string &name, const Iterator &iterator,
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
     ((Iterator::is_top_level_policy) &&
-     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy)),
+     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy) &&
+     (std::is_same_v<typename Iterator::base_policy_type::execution_space,
+                     Kokkos::DefaultHostExecutionSpace>)),
+    void>
+for_each_level(const std::string &name, const Iterator &iterator,
+               const ClosureType &closure) {
+
+  impl::check_compatibility<Iterator, ClosureType>();
+
+  Kokkos::parallel_for(
+      name, static_cast<const typename Iterator::base_policy_type &>(iterator),
+      [&](const typename Iterator::policy_index_type &i) {
+        const typename Iterator::index_type index = iterator(i);
+        closure(index);
+      });
+}
+
+template <typename Iterator, typename ClosureType>
+constexpr inline std::enable_if_t<
+    ((Iterator::is_top_level_policy) &&
+     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy) &&
+     (std::is_same_v<typename Iterator::base_policy_type::execution_space,
+                     Kokkos::DefaultExecutionSpace>)),
     void>
 for_each_level(const Iterator &iterator, const ClosureType &closure) {
 
@@ -59,6 +83,25 @@ for_each_level(const Iterator &iterator, const ClosureType &closure) {
   Kokkos::parallel_for(
       static_cast<const typename Iterator::base_policy_type &>(iterator),
       KOKKOS_LAMBDA(const typename Iterator::policy_index_type &i) {
+        const typename Iterator::index_type index = iterator(i);
+        closure(index);
+      });
+}
+
+template <typename Iterator, typename ClosureType>
+constexpr inline std::enable_if_t<
+    ((Iterator::is_top_level_policy) &&
+     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy) &&
+     (std::is_same_v<typename Iterator::base_policy_type::execution_space,
+                     Kokkos::DefaultHostExecutionSpace>)),
+    void>
+for_each_level(const Iterator &iterator, const ClosureType &closure) {
+
+  impl::check_compatibility<Iterator, ClosureType>();
+
+  Kokkos::parallel_for(
+      static_cast<const typename Iterator::base_policy_type &>(iterator),
+      [&](const typename Iterator::policy_index_type &i) {
         const typename Iterator::index_type index = iterator(i);
         closure(index);
       });

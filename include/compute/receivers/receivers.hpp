@@ -404,9 +404,8 @@ private:
  *
  * @ingroup ComputeReceiversDataAccess
  *
- * @tparam MemberType Kokkos team member type
- * @tparam IteratorType Chunk policy iterator type @ref
- * specfem::policy::element_chunk
+ * @tparam ChunkIndexType Chunk index type @ref
+ * specfem::execution::ChunkElementIndex
  * @tparam ViewType Lagrange interpolant associated with the receivers in the
  * iterator
  *
