@@ -68,6 +68,7 @@ target_link_libraries(meshfem3D_mesh PRIVATE
   meshfem3D::mesh_module
   meshfem3D::shared_module
   meshfem3D::version
+  meshfem3D::shared_adios_module
 )
 
 add_executable(xmeshfem3D meshfem3D.F90)
@@ -88,3 +89,9 @@ if (ADIOS)
     meshfem3D::shared_adios_module
   )
 endif(ADIOS)
+
+if (SPECFEM_INSTALL)
+  install(TARGETS xmeshfem3D
+    RUNTIME DESTINATION .
+  )
+endif()

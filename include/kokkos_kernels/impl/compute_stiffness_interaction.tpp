@@ -17,16 +17,16 @@
 #include "medium/compute_cosserat_stress.hpp"
 #include "medium/compute_cosserat_couple_stress.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "point/boundary.hpp"
-#include "point/field.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/partial_derivatives.hpp"
-#include "point/properties.hpp"
-#include "point/sources.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
 #include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -39,7 +39,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   constexpr auto boundary_tag = BoundaryTag;
   constexpr int ngll = NGLL;
   constexpr auto wavefield = WavefieldType;
-  constexpr auto dimension = DimensionType;
+  constexpr auto dimension = DimensionTag;
 
   const auto elements = assembly.element_types.get_elements_on_device(
       MediumTag, PropertyTag, BoundaryTag);
@@ -57,7 +57,12 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   const auto boundary_values =
       assembly.boundary_values.get_container<boundary_tag>();
 
+#ifdef KOKKOS_ENABLE_CUDA
+  constexpr bool using_simd = false;
+#else
   constexpr bool using_simd = true;
+#endif
+
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using parallel_config = specfem::parallel_config::default_chunk_config<
       dimension, simd, Kokkos::DefaultExecutionSpace>;
@@ -125,16 +130,12 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
         KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
           for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
                tile += ChunkPolicyType::chunk_size * simd_size) {
-            const int starting_element_index =
-                team.league_rank() * ChunkPolicyType::tile_size * simd_size +
-                tile;
-
-            if (starting_element_index >= nelements) {
-              break;
-            }
-
             const auto iterator =
-                chunk_policy.league_iterator(starting_element_index);
+                chunk_policy.league_iterator(team.league_rank(), tile);
+
+            if (iterator.is_end()) {
+              return;
+            }
 
             Kokkos::parallel_for(
                 Kokkos::TeamThreadRange(team, iterator.chunk_size()),
@@ -163,18 +164,15 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
           specfem::compute::load_on_device(team, quadrature,
                                            element_quadrature);
+
           for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
                tile += ChunkPolicyType::chunk_size * simd_size) {
-            const int starting_element_index =
-                team.league_rank() * ChunkPolicyType::tile_size * simd_size +
-                tile;
-
-            if (starting_element_index >= nelements) {
-              break;
+            auto iterator =
+                chunk_policy.league_iterator(team.league_rank(), tile);
+            if (iterator.is_end()) {
+              return; // No elements to process in this tile
             }
-
-            const auto iterator =
-                chunk_policy.league_iterator(starting_element_index);
+            // Load the element field on the device
             specfem::compute::load_on_device(team, iterator, field,
                                              element_field);
 
@@ -186,7 +184,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 // Compute stresses using the gradients
                 [&](const typename ChunkPolicyType::iterator_type::index_type
                         &iterator_index,
-                    const typename PointFieldDerivativesType::ViewType &du) {
+                    const typename PointFieldDerivativesType::value_type &du) {
                   const auto &index = iterator_index.index;
 
                   PointPartialDerivativesType point_partial_derivatives;
@@ -231,7 +229,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 [&, istep = istep](
                     const typename ChunkPolicyType::iterator_type::index_type
                         &iterator_index,
-                    const typename PointAccelerationType::ViewType &result) {
+                    const typename PointAccelerationType::value_type &result) {
                   const auto &index = iterator_index.index;
                   const auto &ielement = iterator_index.ielement;
                   PointAccelerationType acceleration(result);

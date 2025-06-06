@@ -8,8 +8,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
 #include "kokkos_abstractions.h"
-#include "point/assembly_index.hpp"
-#include "point/field.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -82,16 +81,16 @@ public:
   /**
    * @brief Get the number of global degrees of freedom within a medium
    *
-   * @tparam MediumType Medium type
+   * @tparam MediumTag Medium type
    * @return int Number of global degrees of freedom
    */
-  template <specfem::element::medium_tag MediumType>
+  template <specfem::element::medium_tag MediumTag>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                          POROELASTIC, ELASTIC_PSV_T)),
         CAPTURE(field) {
-          if constexpr (MediumType == _medium_tag_) {
+          if constexpr (MediumTag == _medium_tag_) {
             return _field_.nglob;
           }
         })
@@ -213,7 +212,8 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
  * @param point_field Point field to store the field values (output)
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType,
-          typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+          typename std::enable_if_t<
+              specfem::accessor::is_point_field<ViewType>::value, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
                                                 const WavefieldContainer &field,
                                                 ViewType &point_field) {
@@ -236,7 +236,8 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
  * @param point_field Point field to store the field values (output)
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType,
-          typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+          typename std::enable_if_t<
+              specfem::accessor::is_point_field<ViewType>::value, int> = 0>
 inline void load_on_host(const IndexType &index,
                          const WavefieldContainer &field,
                          ViewType &point_field) {
@@ -259,7 +260,8 @@ inline void load_on_host(const IndexType &index,
  * @param field Wavefield container
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType,
-          typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+          typename std::enable_if_t<
+              specfem::accessor::is_point_field<ViewType>::value, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 store_on_device(const IndexType &index, const ViewType &point_field,
                 const WavefieldContainer &field) {
@@ -282,7 +284,8 @@ store_on_device(const IndexType &index, const ViewType &point_field,
  * @param field Wavefield container
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType,
-          typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+          typename std::enable_if_t<
+              specfem::accessor::is_point_field<ViewType>::value, int> = 0>
 inline void store_on_host(const IndexType &index, const ViewType &point_field,
                           const WavefieldContainer &field) {
   impl_store<false>(index, point_field, field);
@@ -304,7 +307,8 @@ inline void store_on_host(const IndexType &index, const ViewType &point_field,
  * @param field Wavefield container
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType,
-          typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+          typename std::enable_if_t<
+              specfem::accessor::is_point_field<ViewType>::value, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 add_on_device(const IndexType &index, const ViewType &point_field,
               const WavefieldContainer &field) {
@@ -327,7 +331,8 @@ add_on_device(const IndexType &index, const ViewType &point_field,
  * @param field Wavefield container
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType,
-          typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+          typename std::enable_if_t<
+              specfem::accessor::is_point_field<ViewType>::value, int> = 0>
 inline void add_on_host(const IndexType &index, const ViewType &point_field,
                         const WavefieldContainer &field) {
   impl_add<false>(index, point_field, field);
@@ -349,7 +354,8 @@ inline void add_on_host(const IndexType &index, const ViewType &point_field,
  * @param field Wavefield container
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType,
-          typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+          typename std::enable_if_t<
+              specfem::accessor::is_point_field<ViewType>::value, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 atomic_add_on_device(const IndexType &index, const ViewType &point_field,
                      const WavefieldContainer &field) {
@@ -372,7 +378,8 @@ atomic_add_on_device(const IndexType &index, const ViewType &point_field,
  * @param field Wavefield container
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType,
-          typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+          typename std::enable_if_t<
+              specfem::accessor::is_point_field<ViewType>::value, int> = 0>
 inline void atomic_add_on_host(const IndexType &index,
                                const ViewType &point_field,
                                const WavefieldContainer &field) {

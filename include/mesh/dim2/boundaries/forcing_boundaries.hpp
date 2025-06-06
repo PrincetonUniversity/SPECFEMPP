@@ -10,9 +10,9 @@ namespace mesh {
 /**
  * @brief Forcing boundary information
  *
- * @tparam DimensionType Dimension type for the mesh
+ * @tparam DimensionTag Dimension type for the mesh
  */
-template <specfem::dimension::type DimensionType> struct forcing_boundary;
+template <specfem::dimension::type DimensionTag> struct forcing_boundary;
 
 /**
  * @brief Forcing boundary information

@@ -8,10 +8,8 @@
 #include "enumerations/wavefield.hpp"
 #include "medium/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "point/field.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/properties.hpp"
 #include "policies/chunk.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace impl {
@@ -92,25 +90,23 @@ public:
 
           for (int tile = 0; tile < ChunkPolicyType::tile_size;
                tile += ChunkPolicyType::chunk_size) {
-            const int starting_element_index =
-                team.league_rank() * ChunkPolicyType::tile_size + tile;
+            const auto iterator =
+                chunk_policy.league_iterator(team.league_rank(), tile);
 
-            if (starting_element_index >= nelements) {
-              break;
+            if (iterator.is_end()) {
+              return; // No elements to process in this tile
             }
 
-            const auto iterator =
-                chunk_policy.league_iterator(starting_element_index);
             specfem::compute::load_on_device(team, iterator, buffer, field);
             team.team_barrier();
 
-            const auto psv_wavefield =
+            const auto wavefield =
                 Kokkos::subview(wavefield_on_entire_grid, iterator.get_range(),
                                 Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
 
             specfem::medium::compute_wavefield<MediumTag, PropertyTag>(
                 team, iterator, assembly, quadrature, field, wavefield_type,
-                psv_wavefield);
+                wavefield);
           }
         });
 

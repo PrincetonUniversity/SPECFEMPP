@@ -1,6 +1,10 @@
 #pragma once
 
+#include "enumerations/accessor.hpp"
+#include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 #include "medium/dim2/elastic/isotropic_cosserat/cosserat_couple_stress.hpp"
+#include "specfem/point.hpp"
 #include "utilities/errors.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -10,25 +14,29 @@ template <typename T, typename PointPartialDerivativesType,
 KOKKOS_INLINE_FUNCTION void
 assert_types(const std::integral_constant<bool, true>) {
 
-  constexpr auto DimensionTag = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
 
-  static_assert(PointAccelerationType::isPointFieldType,
-                "acceleration is not a point field type");
+  static_assert(
+      specfem::accessor::is_point_partial_derivatives<
+          PointPartialDerivativesType>::value,
+      "point_partial_derivatives is not a point partial derivatives type");
 
-  static_assert(PointAccelerationType::store_acceleration,
-                "acceleration must store acceleration");
+  static_assert(
+      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      "point_properties is not a point properties type");
+
+  static_assert(specfem::accessor::is_point_field<PointAccelerationType>::value,
+                "point_acceleration is not a point field type");
 
   static_assert(
       PointPartialDerivativesType::simd::using_simd ==
           PointAccelerationType::simd::using_simd,
       "point_properties and acceleration have different SIMD settings");
 
-  static_assert(PointPropertiesType::is_point_properties,
-                "point_properties is not a point properties type");
-  static_assert(PointPropertiesType::dimension ==
-                    PointPartialDerivativesType::dimension,
+  static_assert(PointPropertiesType::dimension_tag ==
+                    PointPartialDerivativesType::dimension_tag,
                 "point_properties and point_partial_derivatives have different "
                 "dimensions");
 
@@ -140,7 +148,7 @@ KOKKOS_INLINE_FUNCTION void compute_couple_stress(
     const PointStressIntegrandViewType &F,
     PointAccelerationType &acceleration) {
 
-  constexpr auto DimensionTag = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
   constexpr bool has_cosserat_couple_stress =

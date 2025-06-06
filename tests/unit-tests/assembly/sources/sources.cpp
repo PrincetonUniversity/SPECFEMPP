@@ -4,8 +4,8 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "point/sources.hpp"
 #include "policies/chunk.hpp"
+#include "specfem/point.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 

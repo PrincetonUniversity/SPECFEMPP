@@ -111,7 +111,6 @@ void execute(
   if (mpi->main_proc()) {
     mpi->cout(assembly.print());
   }
-  
 
   // --------------------------------------------------------------
   //               Write properties
@@ -155,7 +154,8 @@ void execute(
   // --------------------------------------------------------------
   //                   Instantiate plotter
   // --------------------------------------------------------------
-  const auto wavefield_plotter = setup.instantiate_wavefield_plotter(assembly);
+  const auto wavefield_plotter =
+      setup.instantiate_wavefield_plotter(assembly, mpi);
   if (wavefield_plotter) {
     tasks.push_back(wavefield_plotter);
   }

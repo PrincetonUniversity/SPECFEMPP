@@ -10,9 +10,9 @@ namespace mesh {
 /**
  * @brief Mesh parameters
  *
- * @tparam DimensionType Dimension type for the mesh (2D or 3D)
+ * @tparam DimensionTag Dimension type for the mesh (2D or 3D)
  */
-template <specfem::dimension::type DimensionType> struct parameters;
+template <specfem::dimension::type DimensionTag> struct parameters;
 
 /**
  * @brief Template specialization for 2D mesh parameters

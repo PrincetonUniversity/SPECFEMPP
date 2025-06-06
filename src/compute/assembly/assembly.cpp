@@ -71,27 +71,31 @@ specfem::compute::assembly::assembly(
     throw std::runtime_error(msg.str());
   }
 
-  const auto pe_stacey_elements = this->element_types.get_elements_on_device(
-      specfem::element::medium_tag::poroelastic,
-      specfem::element::property_tag::isotropic,
-      specfem::element::boundary_tag::stacey);
+  this->check_small_jacobian();
 
-  specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::poroelastic,
-                             specfem::element::property_tag::isotropic, false>
-      point_values;
+  // const auto pe_stacey_elements = this->element_types.get_elements_on_device(
+  //     specfem::element::medium_tag::poroelastic,
+  //     specfem::element::property_tag::isotropic,
+  //     specfem::element::boundary_tag::stacey);
 
-  specfem::compute::max(pe_stacey_elements, this->properties, point_values);
+  // specfem::point::properties<specfem::dimension::type::dim2,
+  //                            specfem::element::medium_tag::poroelastic,
+  //                            specfem::element::property_tag::isotropic,
+  //                            false>
+  //     point_values;
 
-  if ((pe_stacey_elements.extent(0) > 0) &&
-      std::abs(point_values.eta_f()) > 1e-6) {
-    std::ostringstream msg;
-    msg << "Warning: The poroelastic model with Stacey BCs can be numerically "
-           "error prone. Please make sure there are no spurious reflections "
-           "off the boundary";
+  // specfem::compute::max(pe_stacey_elements, this->properties, point_values);
 
-    std::cerr << msg.str();
-  }
+  // if ((pe_stacey_elements.extent(0) > 0) &&
+  //     std::abs(point_values.eta_f()) > 1e-6) {
+  //   std::ostringstream msg;
+  //   msg << "Warning: The poroelastic model with Stacey BCs can be numerically
+  //   "
+  //          "error prone. Please make sure there are no spurious reflections "
+  //          "off the boundary";
+
+  //   std::cerr << msg.str();
+  // }
 
   return;
 }

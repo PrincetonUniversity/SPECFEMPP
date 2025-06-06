@@ -6,10 +6,10 @@
 #include <Kokkos_Core.hpp>
 
 template <specfem::wavefield::simulation_field WavefieldType,
-          specfem::dimension::type DimensionType,
+          specfem::dimension::type DimensionTag,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
-specfem::coupled_interface::coupled_interface<WavefieldType, DimensionType,
+specfem::coupled_interface::coupled_interface<WavefieldType, DimensionTag,
                                               SelfMedium, CoupledMedium>::
     coupled_interface(const specfem::compute::assembly &assembly) {
 
@@ -25,18 +25,18 @@ specfem::coupled_interface::coupled_interface<WavefieldType, DimensionType,
 }
 
 template <specfem::wavefield::simulation_field WavefieldType,
-          specfem::dimension::type DimensionType,
+          specfem::dimension::type DimensionTag,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
 void specfem::coupled_interface::coupled_interface<
-    WavefieldType, DimensionType, SelfMedium,
+    WavefieldType, DimensionTag, SelfMedium,
     CoupledMedium>::compute_coupling() {
 
   if (this->nedges == 0)
     return;
 
   using ParallelConfig = specfem::parallel_config::default_edge_config<
-      DimensionType, Kokkos::DefaultExecutionSpace>;
+      DimensionTag, Kokkos::DefaultExecutionSpace>;
 
   using EdgePolicyType = specfem::policy::element_edge<ParallelConfig>;
 

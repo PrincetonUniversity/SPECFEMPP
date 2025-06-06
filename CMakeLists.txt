@@ -7,21 +7,32 @@ option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
 option(VTK_CXX_BUILD "Build VTK C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
-option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
+option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
-
-# To fix the CMake policy warning for yaml-cpp and google test
-# This should be removed once both packages are updated (Today: April 4, 2025)
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+# option(BUILD_EXAMPLES "Examples included" ON)
+option(BUILD_BENCHMARKS "Benchmarks included" ON)
 
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
 set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
+
+# Set my default CMAKE_INSTALL_PREFIX
+
+if (SPECFEM_INSTALL)
+    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_SOURCE_DIR}/bin")
+    message(STATUS "CMAKE_INSTALL_PREFIX not set. Defaulting to ${CMAKE_INSTALL_PREFIX}")
+    else()
+    message(STATUS "User-defined CMAKE_INSTALL_PREFIX set to ${CMAKE_INSTALL_PREFIX}")
+    endif()
+else(SPECFEM_INSTALL)
+    message(STATUS "SPECFEM_INSTALL is OFF. No executable directory will be created.")
+endif()
 
 # Set binary output directories.
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -69,23 +80,37 @@ if (DEFINED Kokkos_ENABLE_CUDA)
     endif()
 endif()
 
+# For the installation of dependencies
+include(FetchContent)
 
 # Install Kokkos as a dependency
-## TODO: Add options for on utilizing in house builds
-include(FetchContent)
+# Set Kokkos options before fetching
+set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
-  kokkos
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
+        kokkos
+        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
 )
-FetchContent_MakeAvailable(kokkos)
+
+# Using this instead of FetchContent_MakeAvailable to be backwards compatible
+# with older CMake versions
+FetchContent_GetProperties(kokkos)
+if(NOT kokkos_POPULATED)
+  FetchContent_Populate(kokkos)
+  add_subdirectory(${kokkos_SOURCE_DIR} ${kokkos_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
 # Install yaml content
 FetchContent_Declare(
         yaml
-        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
+        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+        GIT_TAG 2f86d13775d119edbb69af52e5f566fd65c6953b
 )
+
+# Disable yaml-cpp installation
+set(YAML_CPP_BUILD_INSTALL OFF CACHE BOOL "Disable yaml-cpp installation" FORCE)
+
 FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
@@ -149,6 +174,12 @@ if (NOT ${Boost_FOUND})
         DOWNLOAD_NO_EXTRACT FALSE
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
     )
+
+    # Disable Boost installation
+    set(BOOST_INSTALL OFF CACHE BOOL "Don't install Boost" FORCE)
+    set(BOOST_INSTALL_LIBRARIES OFF CACHE BOOL "Don't install Boost libraries" FORCE)
+    set(BOOST_SKIP_INSTALL_RULES ON CACHE BOOL "Skip Boost install rules" FORCE)
+
     FetchContent_MakeAvailable(Boost)
 
 else()
@@ -200,6 +231,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in
 
 # Add the include directories so that the generated files can be found
 include_directories(include)
+include_directories(core)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
 # Set loglevel to STATUS if build type is debug
@@ -225,6 +257,8 @@ add_subdirectory(fortran/meshfem3d)
 set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
+# Add module subdirectories
+add_subdirectory(core/specfem)
 
 # Build specfem2d libraries
 add_library(
@@ -288,18 +322,6 @@ else()
         ${HDF5_LIBRARIES}
     )
 endif()
-
-
-add_library(
-        point
-        src/point/coordinates.cpp
-        src/point/partial_derivatives.cpp
-)
-
-target_link_libraries(
-        point
-        Kokkos::kokkos
-)
 
 add_library(
         enumerations
@@ -519,6 +541,7 @@ add_library(
         src/compute/boundaries/boundaries.cpp
         src/compute/fields/fields.cpp
         src/compute/compute_boundary_values.cpp
+        src/compute/assembly/check_jacobian.cpp
         src/compute/assembly/assembly.cpp
         src/compute/assembly/compute_wavefield.cpp
 )
@@ -536,6 +559,23 @@ target_link_libraries(
         receiver_class
         Kokkos::kokkos
 )
+
+if (NOT VTK_CXX_BUILD)
+        target_compile_definitions(
+                compute
+                PUBLIC -DNO_VTK
+        )
+else ()
+        target_link_libraries(
+                compute
+                ${VTK_LIBRARIES}
+                )
+
+        # Only define the __APPLE__ compile definition if it is defined
+        if (__APPLE__)
+        target_compile_definitions(compute PRIVATE __APPLE__)
+        endif(__APPLE__)
+endif()
 
 target_include_directories(
         compute
@@ -749,9 +789,19 @@ if (BUILD_TESTS)
         add_subdirectory(tests/unit-tests)
 endif()
 
-if (BUILD_EXAMPLES)
-        message(STATUS "Including examples.")
-        add_subdirectory(examples)
+if (BUILD_BENCHMARKS)
+    # Define option with default value
+
+    if(DEFINED BENCHMARKS_BUILD_DIR)
+        message(STATUS "BENCHMARKS_BUILD_DIR was defined as: ${BENCHMARKS_BUILD_DIR}")
+    else()
+        set(BENCHMARKS_BUILD_DIR ${CMAKE_SOURCE_DIR}/benchmarks/build)
+        message(STATUS "BENCHMARKS_BUILD_DIR was not defined, using default: ${BENCHMARKS_BUILD_DIR}")
+    endif()
+
+    message(STATUS "Building benchmarks...")
+    add_subdirectory(benchmarks/src)
+    message(STATUS "Benchmarks built.")
 endif()
 
 # Doxygen
@@ -797,3 +847,20 @@ if (SPECFEMPP_BINDING_PYTHON)
     target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
     install(TARGETS _core DESTINATION specfempp_core)
 endif (SPECFEMPP_BINDING_PYTHON)
+
+
+if (SPECFEM_INSTALL)
+    install(
+        TARGETS specfem2d specfem3d
+        RUNTIME DESTINATION .
+    )
+
+    # Create a custom target that will run after your main build
+    add_custom_target(organize_output ALL
+        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
+        # Make this run after your main targets
+        DEPENDS specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram xgenerate_databases # list all your targets here
+    )
+endif(SPECFEM_INSTALL)

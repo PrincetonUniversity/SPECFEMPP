@@ -1,8 +1,10 @@
 #pragma once
 
 #include <Kokkos_Core.hpp>
+#include <Kokkos_SIMD.hpp>
 #include <mdspan/mdspan.hpp>
 #include <sstream>
+#include <type_traits>
 
 namespace specfem {
 namespace datatype {
@@ -23,6 +25,17 @@ KOKKOS_INLINE_FUNCTION constexpr bool check_bounds(const IndexType &...i) {
   return ((i >= 0 && i < Extents::static_extent(index++)) && ...);
 }
 
+/**
+ * @brief Class to represent a register array with a specified layout
+ *
+ * This class represents a register array with a specified layout. It is
+ * templated on the type of the elements, the extents of the array, and the
+ * layout.
+ *
+ * @tparam T Type of the elements in the array
+ * @tparam Extents Extents of the array
+ * @tparam Layout Layout of the array
+ */
 template <typename T, typename Extents, typename Layout> class RegisterArray {
 
 private:
@@ -44,7 +57,7 @@ public:
   template <typename... Args,
             typename std::enable_if<sizeof...(Args) == size, bool>::type = true>
   KOKKOS_INLINE_FUNCTION RegisterArray(const Args &...args)
-      : m_value{ args... } {}
+      : m_value{ static_cast<value_type>(args)... } {}
 
   KOKKOS_INLINE_FUNCTION
   RegisterArray(const RegisterArray &other) {
@@ -97,6 +110,59 @@ public:
   KOKKOS_INLINE_FUNCTION
   T l2_norm() const {
     return l2_norm(std::integral_constant<bool, rank == 1>());
+  }
+
+  template <typename U = T,
+            std::enable_if_t<std::is_integral<U>::value, int> = 0>
+  KOKKOS_INLINE_FUNCTION bool operator==(const RegisterArray &other) const {
+    for (std::size_t i = 0; i < size; ++i) {
+      if (m_value[i] != other.m_value[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename U = T,
+            std::enable_if_t<std::is_floating_point<U>::value, int> = 0>
+  KOKKOS_INLINE_FUNCTION bool operator==(const RegisterArray &other) const {
+    for (std::size_t i = 0; i < size; ++i) {
+      if (Kokkos::abs(m_value[i] - other.m_value[i]) >
+          1e-6 * Kokkos::abs(m_value[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename U = T,
+            std::enable_if_t<std::is_integral<typename U::value_type>::value,
+                             int> = 0>
+  KOKKOS_INLINE_FUNCTION bool operator==(const RegisterArray &other) const {
+    for (std::size_t i = 0; i < size; ++i) {
+      if (Kokkos::Experimental::any_of(m_value[i] != other.m_value[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <typename U = T,
+            std::enable_if_t<
+                std::is_floating_point<typename U::value_type>::value, int> = 0>
+  KOKKOS_INLINE_FUNCTION bool operator==(const RegisterArray &other) const {
+    for (std::size_t i = 0; i < size; ++i) {
+      if (Kokkos::Experimental::any_of(
+              Kokkos::abs(m_value[i] - other.m_value[i]) >
+              1e-6 * Kokkos::abs(m_value[i]))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  KOKKOS_INLINE_FUNCTION bool operator!=(const RegisterArray &other) const {
+    return !(*this == other);
   }
 
 private:

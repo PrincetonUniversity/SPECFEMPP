@@ -6,12 +6,12 @@
 #include "compute_material_derivatives.hpp"
 #include "medium/compute_frechet_derivatives.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "point/field.hpp"
-#include "point/field_derivatives.hpp"
+#include "specfem/point.hpp"
+#include "specfem/point.hpp"
 #include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType, int NGLL,
+template <specfem::dimension::type DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void specfem::kokkos_kernels::impl::compute_material_derivatives(
@@ -32,33 +32,38 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
     return;
   }
 
-  constexpr static bool using_simd = true;
+#ifdef KOKKOS_ENABLE_CUDA
+  constexpr bool using_simd = false;
+#else
+  constexpr bool using_simd = true;
+#endif
+
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using ParallelConfig = specfem::parallel_config::default_chunk_config<
-      DimensionType, simd, Kokkos::DefaultExecutionSpace>;
+      DimensionTag, simd, Kokkos::DefaultExecutionSpace>;
 
   using ChunkElementFieldType = specfem::chunk_element::field<
-      ParallelConfig::chunk_size, NGLL, DimensionType, MediumTag,
+      ParallelConfig::chunk_size, NGLL, DimensionTag, MediumTag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
       true, false, false, false, using_simd>;
 
   using ElementQuadratureType = specfem::element::quadrature<
-      NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
+      NGLL, DimensionTag, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
 
   using AdjointPointFieldType =
-      specfem::point::field<DimensionType, MediumTag, false, true, true, false,
+      specfem::point::field<DimensionTag, MediumTag, false, true, true, false,
                             using_simd>;
 
   using BackwardPointFieldType =
-      specfem::point::field<DimensionType, MediumTag, true, false, false, false,
+      specfem::point::field<DimensionTag, MediumTag, true, false, false, false,
                             using_simd>;
 
   using PointFieldDerivativesType =
-      specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;
+      specfem::point::field_derivatives<DimensionTag, MediumTag, using_simd>;
 
   using PointPropertiesType =
-      specfem::point::properties<DimensionType, MediumTag, PropertyTag,
+      specfem::point::properties<DimensionTag, MediumTag, PropertyTag,
                                  using_simd>;
 
   using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
@@ -83,15 +88,12 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
 
         for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
              tile += ChunkPolicy::chunk_size * simd_size) {
-          const int starting_element_index =
-              team.league_rank() * ChunkPolicy::tile_size * simd_size + tile;
-
-          if (starting_element_index >= nelements) {
-            break;
-          }
-
           const auto iterator =
-              chunk_policy.league_iterator(starting_element_index);
+              chunk_policy.league_iterator(team.league_rank(), tile);
+
+          if (iterator.is_end()) {
+            return; // No elements to process in this tile
+          }
 
           // Populate Scratch Views
           specfem::compute::load_on_device(team, iterator, adjoint_field,
@@ -112,8 +114,8 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
               backward_element_field.displacement,
               [&](const typename ChunkPolicy::iterator_type::index_type
                       &iterator_index,
-                  const typename PointFieldDerivativesType::ViewType &df,
-                  const typename PointFieldDerivativesType::ViewType &dg) {
+                  const typename PointFieldDerivativesType::value_type &df,
+                  const typename PointFieldDerivativesType::value_type &dg) {
                 const auto index = iterator_index.index;
                 // Load properties, adjoint field, and backward field
                 // for the point
@@ -156,5 +158,5 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
         }
       });
 
-  Kokkos::fence();
+  // Kokkos::fence();
 }

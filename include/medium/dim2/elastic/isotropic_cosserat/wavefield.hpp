@@ -4,8 +4,7 @@
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/compute_stress.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/properties.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -60,7 +59,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         team, iterator, assembly.partial_derivatives, quadrature.hprime_gll,
         active_field,
         [&](const typename IteratorType::index_type &iterator_index,
-            const FieldDerivativesType::ViewType &du) {
+            const FieldDerivativesType::value_type &du) {
           const auto &index = iterator_index.index;
           PointPropertyType point_property;
 

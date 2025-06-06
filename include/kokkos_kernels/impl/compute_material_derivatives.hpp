@@ -17,7 +17,7 @@ namespace impl {
  * @tparam PropertyTag Property tag.
  * @param dt Time interval.
  */
-template <specfem::dimension::type DimensionType, int NGLL,
+template <specfem::dimension::type DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void compute_material_derivatives(const specfem::compute::assembly &assembly,

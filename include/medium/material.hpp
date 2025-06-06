@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
-#include "point/properties.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <ostream>
 #include <tuple>
@@ -9,6 +9,12 @@
 namespace specfem {
 namespace medium {
 
+/**
+ * @brief Material properties for a given medium and property
+ *
+ * @tparam MediumTag Medium tag for the material
+ * @tparam PropertyTag Property tag for the material
+ */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename Enable = void>
 struct material;

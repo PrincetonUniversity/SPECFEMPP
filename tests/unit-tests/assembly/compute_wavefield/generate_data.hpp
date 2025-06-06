@@ -5,8 +5,7 @@
 #pragma once
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "point/coordinates.hpp"
-#include "point/field.hpp"
+#include "specfem/point.hpp"
 
 template <specfem::wavefield::type component,
           specfem::wavefield::simulation_field type,

@@ -17,8 +17,6 @@ set(MESHFEM3D_GENERATE_DATABASES_MODULE
   create_regions_mesh.f90
   fault_generate_databases.f90
   finalize_databases.f90
-  # generate_databases_par.F90
-  generate_databases.f90
   command_line_arguments.f90
   get_absorbing_boundary.F90
   get_coupling_surfaces.f90
@@ -121,3 +119,9 @@ target_link_libraries(xgenerate_databases PRIVATE
   meshfem3D::version
   meshfem3D::generate_databases
 )
+
+if (SPECFEM_INSTALL)
+  install(TARGETS xgenerate_databases
+    RUNTIME DESTINATION .
+    )
+endif(SPECFEM_INSTALL)

@@ -3,7 +3,7 @@
 #include "algorithms/dot.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "enumerations/medium.hpp"
-#include "point/field.hpp"
+#include "specfem/point.hpp"
 #include "stacey.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -661,7 +661,7 @@ specfem::boundary_conditions::impl_compute_mass_matrix_terms(
       specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             false, true, false, using_simd>;
 
-  using ViewType = typename PointVelocityType::ViewType;
+  using ViewType = typename PointVelocityType::value_type;
 
   using datatype = typename ViewType::value_type;
 

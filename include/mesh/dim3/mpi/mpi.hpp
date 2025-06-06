@@ -11,7 +11,7 @@ namespace mesh {
 /**
  * @brief Struct to store communication information between different MPI slices
  *
- * @tparam DimensionType Dimension type
+ * @tparam DimensionTag Dimension type
  */
 template <> struct mpi<specfem::dimension::type::dim3> {
 

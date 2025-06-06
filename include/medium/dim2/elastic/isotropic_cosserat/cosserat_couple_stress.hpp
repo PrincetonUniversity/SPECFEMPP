@@ -2,7 +2,7 @@
 
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "point/partial_derivatives.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

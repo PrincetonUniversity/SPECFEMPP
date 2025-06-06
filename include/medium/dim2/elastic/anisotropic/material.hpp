@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
-#include "point/properties.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <exception>
 #include <iostream>
@@ -12,8 +12,26 @@ namespace specfem {
 namespace medium {
 
 /**
+ * @defgroup specfem_medium_material_dim2_elastic_anisotropic 2D Elastic
+ * Anisotropic
+ */
+
+/**
+ * @addtogroup specfem_medium_material_dim2_elastic_anisotropic
  * @brief Template specialization for elastic anisotropic material properties
+ * @{
+ * This struct holds the properties of an elastic anisotropic material in 2D
+ * space. It includes the density, elastic constants, and attenuation factors.
+ * The struct also provides constructors, comparison operators, and a method to
+ * retrieve the material properties.
  *
+ * @tparam MediumTag The medium tag that must satisfy elastic medium properties
+ * @tparam PropertyTag The property tag that must be anisotropic
+ * @tparam Enable The enable_if condition that must be satisfied
+ *
+ * @see specfem::element::is_elastic
+ * @see specfem::dimension::type::dim2
+ * @see specfem::medium::material
  */
 template <specfem::element::medium_tag MediumTag>
 struct material<MediumTag, specfem::element::property_tag::anisotropic>
@@ -147,6 +165,7 @@ protected:
   type_real Qkappa;  ///< Attenuation factor for bulk modulus
   type_real Qmu;     ///< Attenuation factor for shear modulus
 };
+/** @} */ // end of group specfem_medium_material_dim2_elastic_anisotropic
 
 } // namespace medium
 } // namespace specfem

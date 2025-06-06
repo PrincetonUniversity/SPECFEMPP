@@ -60,13 +60,13 @@ public:
   specfem::quadrature::quadratures instantiate_quadrature() const {
     return this->quadrature->instantiate();
   }
-  // /**
-  //  * @brief Instantiate the Timescheme
-  //  *
-  //  * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
-  //  object
-  //  * used in the solver algorithm
-  //  */
+  /**
+   * @brief Instantiate the Timescheme
+   *
+   * @return specfem::time_scheme::time_scheme* Pointer to the TimeScheme
+   object
+   * used in the solver algorithm
+   */
   std::shared_ptr<specfem::time_scheme::time_scheme>
   instantiate_timescheme() const {
     return this->time_scheme->instantiate(
@@ -199,10 +199,10 @@ public:
   }
 
   std::shared_ptr<specfem::periodic_tasks::periodic_task>
-  instantiate_wavefield_plotter(
-      const specfem::compute::assembly &assembly) const {
+  instantiate_wavefield_plotter(const specfem::compute::assembly &assembly,
+                                specfem::MPI::MPI *mpi) const {
     if (this->plot_wavefield) {
-      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly, mpi);
     } else {
       return nullptr;
     }
