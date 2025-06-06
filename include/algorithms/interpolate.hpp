@@ -173,14 +173,14 @@ KOKKOS_FUNCTION void interpolate_function(const MemberType &team_member,
       });
 }
 
-template <typename ChunkIndex, typename PolynomialViewTye,
+template <typename ChunkIndex, typename PolynomialViewType,
           typename FunctionViewType, typename ResultType>
 KOKKOS_FUNCTION void interpolate_function(const ChunkIndex &chunk_index,
-                                          const PolynomialViewTye &polynomial,
+                                          const PolynomialViewType &polynomial,
                                           const FunctionViewType &function,
                                           ResultType &result) {
 
-  static_assert(PolynomialViewTye::rank() == 4, "Polynomial must be a 4D view");
+  static_assert(PolynomialViewType::rank() == 4, "Polynomial must be a 4D view");
   static_assert(FunctionViewType::rank() == 4, "Function must be a 4D view");
 
   static_assert(ResultType::rank() == 2, "Result must be 2D views");
