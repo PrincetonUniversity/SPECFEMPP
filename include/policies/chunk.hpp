@@ -140,13 +140,7 @@ protected:
   KOKKOS_INLINE_FUNCTION
   impl::chunk_index_type<false, dimension> operator()(const int i,
                                                       std::false_type) const {
-#if defined(KOKKOS_ENABLE_CUDA)
-    int ielement = i % num_elements;
-    int ispec = indices(ielement);
-    int xz = i / num_elements;
-    const int iz = xz / ngllz;
-    const int ix = xz % ngllz;
-#elif defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     int ielement = i % num_elements;
     int ispec = indices(ielement);
     int xz = i / num_elements;
@@ -165,16 +159,7 @@ protected:
   KOKKOS_INLINE_FUNCTION
   impl::chunk_index_type<true, dimension> operator()(const int i,
                                                      std::true_type) const {
-#if defined(KOKKOS_ENABLE_CUDA)
-    int ielement = i % num_elements;
-    int simd_elements = (simd_size + ielement > indices.extent(0))
-                            ? indices.extent(0) - ielement
-                            : simd_size;
-    int ispec = indices(ielement);
-    int xz = i / num_elements;
-    const int iz = xz / ngllz;
-    const int ix = xz % ngllz;
-#elif defined(KOKKOS_ENABLE_HIP)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     int ielement = i % num_elements;
     int simd_elements = (simd_size + ielement > indices.extent(0))
                             ? indices.extent(0) - ielement
