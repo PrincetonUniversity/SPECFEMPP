@@ -20,7 +20,7 @@ set_value(const ViewType elements, specfem::compute::assembly &assembly,
 
   const auto &properties = assembly.properties;
 
-  using PointType =
+  using PointPropertiesType =
       specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                  PropertyTag, using_simd>;
 
@@ -32,8 +32,9 @@ set_value(const ViewType elements, specfem::compute::assembly &assembly,
       [=](const typename PolicyType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.index;
-        PointType point(static_cast<type_real>(index.ispec + offset));
-        specfem::compute::store_on_host(index, point, properties);
+        PointPropertiesType point_properties(
+            static_cast<type_real>(index.ispec + offset));
+        specfem::compute::store_on_host(index, point_properties, properties);
       });
 
   Kokkos::fence();
@@ -48,7 +49,7 @@ std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
 check_value(const ViewType elements, specfem::compute::assembly &assembly,
             const type_real offset) {
   const auto &properties = assembly.properties;
-  using PointType =
+  using PointPropertiesType =
       specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                  PropertyTag, using_simd>;
 
@@ -60,7 +61,7 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
       [=](const typename PolicyType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.index;
-        using datatype = typename PointType::value_type;
+        using datatype = typename PointPropertiesType::value_type;
         datatype value(static_cast<datatype>(0.0));
 
         if constexpr (using_simd) {
@@ -71,20 +72,21 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
           value = static_cast<type_real>(index.ispec + offset);
         }
 
-        PointType expected(value);
+        PointPropertiesType point_properties_expected(value);
 
-        PointType computed;
-        specfem::compute::load_on_host(index, properties, computed);
+        PointPropertiesType point_poperties_computed;
+        specfem::compute::load_on_host(index, properties,
+                                       point_poperties_computed);
 
-        if (computed != expected) {
+        if (point_poperties_computed != point_properties_expected) {
           std::ostringstream message;
 
           message << "\n \t Error in function check_to_value";
 
           message << "\n \t Error at ispec = " << index.ispec
                   << ", iz = " << index.iz << ", ix = " << index.ix << "\n";
-          message << "Expected: " << expected.print();
-          message << "Got: " << computed.print();
+          message << "Expected: " << point_properties_expected.print();
+          message << "Got: " << point_poperties_computed.print();
           throw std::runtime_error(message.str());
         }
       });
