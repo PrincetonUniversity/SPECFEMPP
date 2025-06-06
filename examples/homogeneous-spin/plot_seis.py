@@ -8,7 +8,7 @@ if __name__ == "__main__":
     plt.title("Displacement field, no spin (orange: specfem, blue: finite difference)")
 
     for ifg, comp in enumerate(["x", "z"]):
-        trace_ref = np.load("reference/traces_fd/u" + comp + "_no_spin.npy")
+        trace_ref = np.load("reference/traces_fd/u" + comp + "_no_spin.npy")[:, ::5]
         trace = np.zeros(trace_ref.shape)
 
         for i in range(trace_ref.shape[0]):
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     )
 
     for ifg, comp in enumerate(["x", "z"]):
-        trace_ref = np.load("reference/traces_fd/u" + comp + ".npy")
+        trace_ref = np.load("reference/traces_fd/u" + comp + ".npy")[:, ::5]
         trace = np.zeros(trace_ref.shape)
 
         for i in range(trace_ref.shape[0]):
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     plt.figure(figsize=(8, 12))
     plt.title("Spin field (orange: specfem, blue: finite difference)")
 
-    trace_ref = np.load("reference/traces_fd/ry.npy")
+    trace_ref = np.load("reference/traces_fd/ry.npy")[:, ::5]
     trace = np.zeros(trace_ref.shape)
 
     for i in range(trace_ref.shape[0]):
