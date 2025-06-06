@@ -27,7 +27,6 @@ constexpr void check_compatibility() {
               std::declval<typename Iterator::policy_index_type>()))>,
       "Iterator must have a function call operator that returns index_type");
 }
-} // namespace impl
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
 
@@ -38,8 +37,8 @@ constexpr inline std::enable_if_t<
      (std::is_same_v<typename Iterator::base_policy_type::execution_space,
                      Kokkos::DefaultExecutionSpace>)),
     void>
-for_each_level(const std::string &name, const Iterator &iterator,
-               const ClosureType &closure) {
+impl_for_each_level(const std::string &name, const Iterator &iterator,
+                    const ClosureType &closure) {
 
   impl::check_compatibility<Iterator, ClosureType>();
 
@@ -60,8 +59,8 @@ constexpr inline std::enable_if_t<
      (std::is_same_v<typename Iterator::base_policy_type::execution_space,
                      Kokkos::DefaultHostExecutionSpace>)),
     void>
-for_each_level(const std::string &name, const Iterator &iterator,
-               const ClosureType &closure) {
+impl_for_each_level(const std::string &name, const Iterator &iterator,
+                    const ClosureType &closure) {
 
   impl::check_compatibility<Iterator, ClosureType>();
 
@@ -82,7 +81,7 @@ constexpr inline std::enable_if_t<
      (std::is_same_v<typename Iterator::base_policy_type::execution_space,
                      Kokkos::DefaultExecutionSpace>)),
     void>
-for_each_level(const Iterator &iterator, const ClosureType &closure) {
+impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
 
   impl::check_compatibility<Iterator, ClosureType>();
 
@@ -103,7 +102,7 @@ constexpr inline std::enable_if_t<
      (std::is_same_v<typename Iterator::base_policy_type::execution_space,
                      Kokkos::DefaultHostExecutionSpace>)),
     void>
-for_each_level(const Iterator &iterator, const ClosureType &closure) {
+impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
 
   impl::check_compatibility<Iterator, ClosureType>();
 
@@ -120,7 +119,7 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<
     ((!Iterator::is_top_level_policy) &&
      (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy)),
     void>
-for_each_level(const Iterator &iterator, const ClosureType &closure) {
+impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
 
   impl::check_compatibility<Iterator, ClosureType>();
 
@@ -135,7 +134,7 @@ for_each_level(const Iterator &iterator, const ClosureType &closure) {
 template <typename Iterator, typename ClosureType>
 constexpr KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<
     Iterator::policy_type == specfem::execution::PolicyType::TilePolicy, void>
-for_each_level(const Iterator &iterator, const ClosureType &closure) {
+impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
 
   constexpr std::size_t tile_size = Iterator::tile_size;
 
@@ -157,10 +156,49 @@ for_each_level(const Iterator &iterator, const ClosureType &closure) {
 template <typename Iterator, typename ClosureType>
 constexpr KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<
     Iterator::policy_type == specfem::execution::PolicyType::VoidPolicy, void>
-for_each_level(const Iterator &iterator, const ClosureType &closure) {
+impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
   static_assert(Iterator::policy_type ==
                     specfem::execution::PolicyType::VoidPolicy,
                 "Calling for_each on a VoidPolicy is not allowed");
+}
+
+} // namespace impl
+
+/**
+ * @brief This function applies a closure to each index in the given iterator.
+ *
+ * The closure passes the closure function to the underlying `base_policy_type`.
+ * If the `base_policy_type` is a Kokkos policy, it will use the Kokkos
+ * parallel_for to execute the closure in parallel.
+ *
+ * @param name A name for the parallel operation.
+ * @param iterator An iterator that provides access to indices. Must be a
+ * top-level kokkos policy.
+ * @param closure A closure that takes an index and performs some operation. The
+ * closure must be invocable with the index type of the iterator.
+ */
+template <typename IteratorType, typename ClosureType>
+inline void for_each_level(const std::string &name,
+                           const IteratorType &iterator,
+                           const ClosureType &closure) {
+  impl::impl_for_each_level(name, iterator, closure);
+}
+
+/**
+ * @brief This function applies a closure to each index in the given iterator.
+ *
+ * The closure passes the closure function to the underlying `base_policy_type`.
+ * If the `base_policy_type` is a Kokkos policy, it will use the Kokkos
+ * parallel_for to execute the closure in parallel.
+ *
+ * @param iterator An iterator that provides access to indices.
+ * @param closure A closure that takes an index and performs some operation. The
+ * closure must be invocable with the index type of the iterator.
+ */
+template <typename IteratorType, typename ClosureType>
+inline void for_each_level(const IteratorType &iterator,
+                           const ClosureType &closure) {
+  impl::impl_for_each_level(iterator, closure);
 }
 
 } // namespace execution
