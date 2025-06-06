@@ -1,8 +1,8 @@
-#ifndef _SPECFEM_TIMESCHEME_NEWMARK_TPP_
-#define _SPECFEM_TIMESCHEME_NEWMARK_TPP_
+#pragma once
 
 #include "parallel_configuration/range_config.hpp"
-#include "policies/range.hpp"
+#include "execution/range_iterator.hpp"
+#include "execution/for_all.hpp"
 #include "timescheme/newmark.hpp"
 
 namespace {
@@ -24,31 +24,27 @@ int corrector_phase_impl(
       specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             true, false, false, using_simd>;
 
-  using ParallelConfig = specfem::parallel_config::default_range_config<
+  using parallel_config = specfem::parallel_config::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,
       Kokkos::DefaultExecutionSpace>;
 
-  using RangePolicyType = specfem::policy::range<ParallelConfig>;
+  specfem::execution::RangeIterator range(parallel_config(), nglob);
 
-  RangePolicyType range_policy(nglob);
+  using IndexType = specfem::point::assembly_index<using_simd>;
 
-  Kokkos::parallel_for(
-      "specfem::TimeScheme::Newmark::corrector_phase_impl",
-      static_cast<typename RangePolicyType::policy_type &>(range_policy),
-      KOKKOS_LAMBDA(const int iglob) {
-        const auto iterator = range_policy.range_iterator(iglob);
-        const auto index = iterator(0);
-
+  specfem::execution::for_all(
+      "specfem::TimeScheme::Newmark::corrector_phase_impl", range,
+      KOKKOS_LAMBDA(const IndexType &index) {
         LoadFieldType load;
         AddFieldType add;
 
-        specfem::compute::load_on_device(index.index, field, load);
+        specfem::compute::load_on_device(index, field, load);
 
         for (int idim = 0; idim < components; ++idim) {
           add.velocity(idim) += deltatover2 * load.acceleration(idim);
         }
 
-        specfem::compute::add_on_device(index.index, add, field);
+        specfem::compute::add_on_device(index, add, field);
       });
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
@@ -77,26 +73,22 @@ int predictor_phase_impl(
       specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             false, true, false, using_simd>;
 
-  using ParallelConfig = specfem::parallel_config::default_range_config<
+  using parallel_config = specfem::parallel_config::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,
       Kokkos::DefaultExecutionSpace>;
 
-  using RangePolicyType = specfem::policy::range<ParallelConfig>;
+  specfem::execution::RangeIterator range(parallel_config(), nglob);
 
-  RangePolicyType range_policy(nglob);
+  using IndexType = specfem::point::assembly_index<using_simd>;
 
-  Kokkos::parallel_for(
-      "specfem::TimeScheme::Newmark::predictor_phase_impl",
-      static_cast<typename RangePolicyType::policy_type &>(range_policy),
-      KOKKOS_LAMBDA(const int iglob) {
-        const auto iterator = range_policy.range_iterator(iglob);
-        const auto index = iterator(0);
-
+  specfem::execution::for_all(
+      "specfem::TimeScheme::Newmark::corrector_phase_impl", range,
+      KOKKOS_LAMBDA(const IndexType &index) {
         LoadFieldType load;
         AddFieldType add;
         StoreFieldType store;
 
-        specfem::compute::load_on_device(index.index, field, load);
+        specfem::compute::load_on_device(index, field, load);
 
         for (int idim = 0; idim < components; ++idim) {
           add.displacement(idim) += deltat * load.velocity(idim) +
@@ -107,8 +99,8 @@ int predictor_phase_impl(
           store.acceleration(idim) = 0;
         }
 
-        specfem::compute::add_on_device(index.index, add, field);
-        specfem::compute::store_on_device(index.index, store, field);
+        specfem::compute::add_on_device(index, add, field);
+        specfem::compute::store_on_device(index, store, field);
       });
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
@@ -264,5 +256,3 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::print(
           // << "    number of time steps = " << this->nstep << "\n"
           << "    Start time = " << this->t0 << "\n";
 }
-
-#endif

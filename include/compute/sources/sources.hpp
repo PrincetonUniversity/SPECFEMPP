@@ -8,9 +8,9 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "kokkos_abstractions.h"
-#include "point/sources.hpp"
 #include "source/source.hpp"
 #include "source_medium.hpp"
+#include "specfem/point.hpp"
 
 namespace specfem {
 namespace compute {
@@ -229,10 +229,11 @@ load_on_device(const IteratorIndexType iterator_index,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
-      PointSourceType::is_point_source,
+      specfem::accessor::is_point_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
-  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+  static_assert(PointSourceType::dimension_tag ==
+                    specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
   static_assert(index.dimension == specfem::dimension::type::dim2,
@@ -297,10 +298,11 @@ void load_on_host(const IteratorIndexType iterator_index,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
-      PointSourceType::is_point_source,
+      specfem::accessor::is_point_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
-  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+  static_assert(PointSourceType::dimension_tag ==
+                    specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
   static_assert(index.dimension == specfem::dimension::type::dim2,
@@ -364,10 +366,11 @@ store_on_device(const IteratorIndexType iterator_index,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
-      PointSourceType::is_point_source,
+      specfem::accessor::is_point_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
-  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+  static_assert(PointSourceType::dimension_tag ==
+                    specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
   static_assert(index.dimension == specfem::dimension::type::dim2,
@@ -429,10 +432,11 @@ void store_on_host(const IteratorIndexType iterator_index,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
-      PointSourceType::is_point_source,
+      specfem::accessor::is_point_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
-  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+  static_assert(PointSourceType::dimension_tag ==
+                    specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
   static_assert(index.dimension == specfem::dimension::type::dim2,

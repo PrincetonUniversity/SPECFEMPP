@@ -2,8 +2,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "generate_data.hpp"
-#include "point/coordinates.hpp"
-#include "point/field.hpp"
+#include "specfem/point.hpp"
 #include "test_helper.hpp"
 #include <gtest/gtest.h>
 #include <iostream>

@@ -10,9 +10,9 @@ namespace mesh {
 /**
  * @brief Absorbing boundary information
  *
- * @tparam DimensionType Dimension type for the mesh
+ * @tparam DimensionTag Dimension type for the mesh
  */
-template <specfem::dimension::type DimensionType> struct absorbing_boundary;
+template <specfem::dimension::type DimensionTag> struct absorbing_boundary;
 
 /**
  * @brief Absorbing boundary information

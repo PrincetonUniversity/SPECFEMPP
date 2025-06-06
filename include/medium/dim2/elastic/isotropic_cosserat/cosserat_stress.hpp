@@ -22,13 +22,13 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_stress(
     const PointDisplacementType &point_displacement,
     PointStressType &point_stress) {
 
-  using ViewType = typename PointStressType::ViewType;
+  using value_type = typename PointStressType::simd::datatype;
 
   // Stress and diplacement alias
   auto &T = point_stress.T;
   const auto &u = point_displacement.displacement;
 
-  const typename ViewType::value_type factor =
+  const value_type factor =
       static_cast<type_real>(2.0) * properties.nu() * u(2);
 
   // Here we also have to remember that we are getting the stress transposed

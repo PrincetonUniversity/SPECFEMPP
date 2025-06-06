@@ -1,10 +1,11 @@
-#ifndef _ENUMERATIONS_INTERFACE_HPP_
-#define _ENUMERATIONS_INTERFACE_HPP_
+#pragma once
 
 // #include "boundary_conditions/interface.hpp"
+#include "boundary.hpp"
 #include "dimension.hpp"
 #include "medium.hpp"
 // #include "properties.hpp"
+#include "accessor.hpp"
+#include "container.hpp"
 #include "specfem_enums.hpp"
-
-#endif /* _ENUMERATIONS_INTERFACE_HPP_ */
+#include "wavefield.hpp"

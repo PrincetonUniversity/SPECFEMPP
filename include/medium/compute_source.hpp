@@ -5,26 +5,30 @@
 #include "dim2/elastic/isotropic/source.hpp"
 #include "dim2/elastic/isotropic_cosserat/source.hpp"
 #include "dim2/poroelastic/isotropic/source.hpp"
+#include "enumerations/accessor.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace medium {
 
-template <typename PointSourcesType, typename PointPropertiesType>
+template <typename PointSourceType, typename PointPropertiesType>
 KOKKOS_INLINE_FUNCTION auto
-compute_source_contribution(const PointSourcesType &point_source,
+compute_source_contribution(const PointSourceType &point_source,
                             const PointPropertiesType &point_properties) {
 
-  static_assert(PointSourcesType::is_point_source,
+  static_assert(specfem::accessor::is_point_source<PointSourceType>::value,
                 "point_source is not a point source type");
 
-  static_assert(PointPropertiesType::is_point_properties,
-                "point_properties is not a point properties type");
+  static_assert(
+      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      "point_properties is not a point properties type");
 
-  static_assert(PointSourcesType::dimension == PointPropertiesType::dimension,
+  static_assert(PointSourceType::dimension_tag ==
+
+                    PointPropertiesType::dimension_tag,
                 "point_source and point_properties have different dimensions");
 
-  static_assert(PointSourcesType::medium_tag == PointPropertiesType::medium_tag,
+  static_assert(PointSourceType::medium_tag == PointPropertiesType::medium_tag,
                 "point_source and point_properties have different medium tags");
 
   static_assert(!PointPropertiesType::simd::using_simd,
@@ -32,10 +36,10 @@ compute_source_contribution(const PointSourcesType &point_source,
 
   using dimension_dispatch =
       std::integral_constant<specfem::dimension::type,
-                             PointSourcesType::dimension>;
+                             PointSourceType::dimension_tag>;
 
   using medium_dispatch = std::integral_constant<specfem::element::medium_tag,
-                                                 PointSourcesType::medium_tag>;
+                                                 PointSourceType::medium_tag>;
 
   using property_dispatch =
       std::integral_constant<specfem::element::property_tag,

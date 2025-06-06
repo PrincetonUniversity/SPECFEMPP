@@ -4,9 +4,9 @@
 #include "boundary_values_container.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::boundary_tag BoundaryTag>
-specfem::compute::boundary_value_container<DimensionType, BoundaryTag>::
+specfem::compute::boundary_value_container<DimensionTag, BoundaryTag>::
     boundary_value_container(const int nstep, const specfem::compute::mesh mesh,
                              const specfem::compute::element_types element_types,
                              const specfem::compute::boundaries boundaries)
@@ -23,15 +23,15 @@ specfem::compute::boundary_value_container<DimensionType, BoundaryTag>::
   Kokkos::fence();
 
   acoustic = specfem::compute::impl::boundary_medium_container<
-      DimensionType, specfem::element::medium_tag::acoustic, BoundaryTag>(
+      DimensionTag, specfem::element::medium_tag::acoustic, BoundaryTag>(
       nstep, mesh, element_types, boundaries, h_property_index_mapping);
 
   elastic = specfem::compute::impl::boundary_medium_container<
-      DimensionType, specfem::element::medium_tag::elastic_psv, BoundaryTag>(
+      DimensionTag, specfem::element::medium_tag::elastic_psv, BoundaryTag>(
       nstep, mesh, element_types, boundaries, h_property_index_mapping);
 
   poroelastic = specfem::compute::impl::boundary_medium_container<
-      DimensionType, specfem::element::medium_tag::poroelastic, BoundaryTag>(
+      DimensionTag, specfem::element::medium_tag::poroelastic, BoundaryTag>(
       nstep, mesh, element_types, boundaries, h_property_index_mapping);
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);

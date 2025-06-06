@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <string>
 #include <type_traits>
@@ -15,18 +15,18 @@ namespace impl {
  * policy.
  *
  * @tparam UseSIMD Indicates whether SIMD is used or not.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  */
-template <bool UseSIMD, specfem::dimension::type DimensionType>
+template <bool UseSIMD, specfem::dimension::type DimensionTag>
 struct chunk_index_type;
 
 /**
  * @brief Template specialization when using SIMD.
  *
  */
-template <specfem::dimension::type DimensionType>
-struct chunk_index_type<true, DimensionType> {
-  constexpr static auto dimension = DimensionType; ///< Dimension type
+template <specfem::dimension::type DimensionTag>
+struct chunk_index_type<true, DimensionTag> {
+  constexpr static auto dimension = DimensionTag; ///< Dimension type
   int ielement; ///< Element index within the iterator range
   specfem::point::simd_index<dimension> index; ///< SIMD index of the quadrature
                                                ///< point(s)
@@ -41,9 +41,9 @@ struct chunk_index_type<true, DimensionType> {
  * @brief Template specialization when not using SIMD.
  *
  */
-template <specfem::dimension::type DimensionType>
-struct chunk_index_type<false, DimensionType> {
-  constexpr static auto dimension = DimensionType; ///< Dimension type
+template <specfem::dimension::type DimensionTag>
+struct chunk_index_type<false, DimensionTag> {
+  constexpr static auto dimension = DimensionTag; ///< Dimension type
   int ielement; ///< Element index within the iterator range
   specfem::point::index<dimension> index; ///< Index of the quadrature point
 
@@ -58,17 +58,17 @@ struct chunk_index_type<false, DimensionType> {
  * policy.
  *
  * @tparam UseSIMD Indicates whether SIMD is used or not.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  */
-template <bool UseSIMD, specfem::dimension::type DimensionType>
+template <bool UseSIMD, specfem::dimension::type DimensionTag>
 struct mapped_chunk_index_type
-    : public chunk_index_type<UseSIMD, DimensionType> {
-  using base_type = chunk_index_type<UseSIMD, DimensionType>;
+    : public chunk_index_type<UseSIMD, DimensionTag> {
+  using base_type = chunk_index_type<UseSIMD, DimensionTag>;
   int imap; ///< Index of the mapped element
 
   KOKKOS_INLINE_FUNCTION
   mapped_chunk_index_type(const int ielement,
-                          const specfem::point::index<DimensionType> index,
+                          const specfem::point::index<DimensionTag> index,
                           const int imap)
       : base_type(ielement, index), imap(imap) {}
 };
@@ -80,10 +80,10 @@ struct mapped_chunk_index_type
  * iterator.
  *
  * @tparam ViewType View type for the indices of elements within this iterator.
- * @tparam DimensionType Dimension type of the elements within this iterator.
+ * @tparam DimensionTag Dimension type of the elements within this iterator.
  * @tparam SIMD SIMD type to use simd operations @ref specfem::datatypes::simd
  */
-template <typename ViewType, specfem::dimension::type DimensionType,
+template <typename ViewType, specfem::dimension::type DimensionTag,
           typename SIMD>
 class chunk;
 
@@ -119,19 +119,20 @@ protected:
   constexpr static int simd_size = simd::size();
 
   ViewType indices; ///< View of indices of elements within this iterator
-  int num_elements; ///< Number of elements within this iterator
-  int ngllz;        ///< Number of GLL points in the z-direction
-  int ngllx;        ///< Number of GLL points in the x-direction
+  bool end_iterator = false; ///< Flag to indicate if the iterator is at the end
+  int num_elements;          ///< Number of elements within this iterator
+  int ngllz;                 ///< Number of GLL points in the z-direction
+  int ngllx;                 ///< Number of GLL points in the x-direction
 
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, const int ngllz, const int ngllx,
+  chunk(const ViewType indices, const int ngllz, const int ngllx,
         std::true_type)
       : indices(indices), num_elements(indices.extent(0) / simd_size +
                                        (indices.extent(0) % simd_size != 0)),
         ngllz(ngllz), ngllx(ngllx) {}
 
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, const int ngllz, const int ngllx,
+  chunk(const ViewType indices, const int ngllz, const int ngllx,
         std::false_type)
       : indices(indices), num_elements(indices.extent(0)), ngllz(ngllz),
         ngllx(ngllx) {}
@@ -188,6 +189,13 @@ public:
    */
   ///@{
   /**
+   * @brief Construct a new chunk iterator with a given end iterator flag.
+   *
+   * @param end_iterator Flag to indicate if the iterator is at the end
+   */
+  KOKKOS_INLINE_FUNCTION
+  chunk(const bool end_iterator) : end_iterator(end_iterator) {}
+  /**
    * @brief Construct a new chunk iterator with a given view of indices.
    *
    * @param indices View of indices of elements within this iterator
@@ -195,7 +203,7 @@ public:
    * @param ngllx Number of GLL points in the x-direction
    */
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, int ngllz, int ngllx)
+  chunk(const ViewType indices, int ngllz, int ngllx)
       : chunk(indices, ngllz, ngllx,
               std::integral_constant<bool, using_simd>()) {
 #if KOKKOS_VERSION < 40100
@@ -230,6 +238,11 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   index_type operator()(const int i) const {
+#ifndef NDEBUG
+    if (end_iterator) {
+      Kokkos::abort("Chunk iterator is at the end, cannot access index.");
+    }
+#endif
     return operator()(i, std::integral_constant<bool, using_simd>());
   }
 
@@ -241,11 +254,25 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   Kokkos::pair<int, int> get_range() const {
+#ifndef NDEBUG
+    if (end_iterator) {
+      Kokkos::abort("Chunk iterator is at the end, cannot access index.");
+    }
+#endif
     return Kokkos::make_pair(indices(0), indices(num_elements - 1) + 1);
   }
+
+  /**
+   * @brief Check if the iterator is at the end.
+   *
+   * @return true If the iterator is at the end.
+   * @return false If the iterator is not at the end.
+   */
+  KOKKOS_INLINE_FUNCTION
+  bool is_end() const { return end_iterator; }
 };
 
-template <typename ViewType, specfem::dimension::type DimensionType,
+template <typename ViewType, specfem::dimension::type DimensionTag,
           typename SIMD>
 class mapped_chunk;
 
@@ -259,9 +286,12 @@ class mapped_chunk<ViewType, specfem::dimension::type::dim2, SIMD>
 
 public:
   KOKKOS_INLINE_FUNCTION
-  mapped_chunk(const ViewType &indices, const ViewType &mapping,
-               const int ngllz, const int ngllx)
+  mapped_chunk(const ViewType indices, const ViewType mapping, const int ngllz,
+               const int ngllx)
       : base_type(indices, ngllz, ngllx), mapping(mapping) {}
+
+  KOKKOS_INLINE_FUNCTION
+  mapped_chunk(const bool end_iterator) : base_type(end_iterator) {}
 
   KOKKOS_INLINE_FUNCTION
   mapped_index_type operator()(const int i) const {
@@ -358,10 +388,10 @@ public:
    * @param ngllz Number of GLL points in the z-direction
    * @param ngllx Number of GLL points in the x-direction
    */
-  element_chunk(const IndexViewType &view, int ngllz, int ngllx)
+  element_chunk(const IndexViewType view, int ngllz, int ngllx)
       : policy_type(view.extent(0) / (tile_size * simd_size) +
                         (view.extent(0) % (tile_size * simd_size) != 0),
-                    num_threads, vector_lanes),
+                    Kokkos::AUTO, Kokkos::AUTO),
         elements(view), ngllz(ngllz), ngllx(ngllx) {
 #if KOKKOS_VERSION < 40100
     static_assert(IndexViewType::Rank == 1, "View must be rank 1");
@@ -382,12 +412,19 @@ public:
    * @brief Get iterator to iterator over chunk of elements associated with
    * Kokkos team
    *
-   * @param start_index Starting index for the element within the team
+   * @param league_index Index of the league (team) within the Kokkos team
+   * @param tile_index Index of the tile within the league
    * @return iterator_type Iterator for the team
    */
   KOKKOS_INLINE_FUNCTION
-  iterator_type league_iterator(const int start_index) const {
-    const int start = start_index;
+  iterator_type league_iterator(const std::size_t league_index,
+                                const std::size_t tile_index) const {
+    const int start = league_index * tile_size * simd_size + tile_index;
+    if (start >= elements.extent(0)) {
+      return iterator_type(true); // Return an empty iterator if the start
+                                  // index is out of bounds
+    }
+
     const int end = (start + chunk_size * simd_size > elements.extent(0))
                         ? elements.extent(0)
                         : start + chunk_size * simd_size;
@@ -412,13 +449,20 @@ struct mapped_element_chunk : public element_chunk<ParallelConfig> {
       specfem::iterator::mapped_chunk<IndexViewType, ParallelConfig::dimension,
                                       simd>; ///< Iterator
 
-  mapped_element_chunk(const IndexViewType &view, const IndexViewType &mapping,
+  mapped_element_chunk(const IndexViewType view, const IndexViewType mapping,
                        int ngllz, int ngllx)
       : base_type(view, ngllz, ngllx), mapping(mapping) {}
 
   KOKKOS_INLINE_FUNCTION
-  mapped_iterator_type mapped_league_iterator(const int start_index) const {
-    const int start = start_index;
+  mapped_iterator_type
+  mapped_league_iterator(const std::size_t league_index,
+                         const std::size_t tile_index) const {
+    const int start =
+        league_index * base_type::tile_size * base_type::simd_size + tile_index;
+    if (start >= base_type::elements.extent(0)) {
+      mapped_iterator_type(true); // Return an empty iterator if the start
+                                  // index is out of bounds
+    }
     const int end = (start + base_type::chunk_size * base_type::simd_size >
                      base_type::elements.extent(0))
                         ? base_type::elements.extent(0)

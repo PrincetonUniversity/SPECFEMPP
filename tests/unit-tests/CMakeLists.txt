@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-# GoogleTest requires at least C++11
+# GoogleTest requires at least C++17
 set(CMAKE_CXX_STANDARD 17)
+
+# Make sure that GTEST is not installed later in the process
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 
 include(FetchContent)
 FetchContent_Declare(
   googletest
   DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+  URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.tar.gz
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -88,6 +91,18 @@ target_link_libraries(
 )
 
 add_executable(
+  jacobian_tests
+  jacobian/shape_functions.cpp
+)
+
+target_link_libraries(
+  jacobian_tests
+  jacobian
+  gtest_main
+  -lpthread -lm
+)
+
+add_executable(
   fortranio_test
   fortran_io/fortranio_tests.cpp
 )
@@ -98,6 +113,39 @@ target_link_libraries(
   gmock_main
   io
   -lpthread -lm
+)
+
+add_executable(
+  point_coordinates_tests
+  point/coordinates_tests.cpp
+)
+target_link_libraries(
+  point_coordinates_tests
+  point
+  gtest_main
+  gmock_main
+)
+
+add_executable(
+  point_index_tests
+  point/index_tests.cpp
+)
+target_link_libraries(
+  point_index_tests
+  point
+  gtest_main
+  gmock_main
+)
+
+add_executable(
+  point_properties_tests
+  point/properties_tests.cpp
+)
+target_link_libraries(
+  point_properties_tests
+  point
+  gtest_main
+  gmock_main
 )
 
 # add_executable(
@@ -210,6 +258,8 @@ add_executable(
   assembly/properties/properties.cpp
   assembly/compute_wavefield/compute_wavefield.cpp
   assembly/sources/sources.cpp
+  assembly/check_jacobian/check_jacobian.cpp
+  assembly/locate/locate_point.cpp
 )
 
 target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
@@ -246,24 +296,6 @@ target_link_libraries(
 )
 
 add_executable(
-  locate_point
-  algorithms/locate.cpp
-)
-
-target_link_libraries(
-  locate_point
-  mesh
-  compute
-  quadrature
-  mpi_environment
-  kokkos_environment
-  algorithms
-  point
-  io
-  Boost::filesystem
-)
-
-add_executable(
   interpolate_function
   algorithms/interpolate_function.cpp
 )
@@ -296,6 +328,21 @@ target_link_libraries(
   yaml-cpp
   Boost::filesystem
   -lpthread -lm
+)
+
+add_executable(
+  mass_matrix_tests
+  mass_matrix/dim2/main.cpp
+  mass_matrix/dim2/elastic_isotropic.cpp
+  mass_matrix/dim2/elastic_anisotropic.cpp
+  mass_matrix/dim2/acoustic.cpp
+  mass_matrix/dim2/poroelastic.cpp
+)
+
+target_link_libraries(
+  mass_matrix_tests
+  point
+  gtest_main
 )
 
 
@@ -436,6 +483,7 @@ if (NOT MPI_PARALLEL)
   include(GoogleTest)
   gtest_discover_tests(gll_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(lagrange_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(jacobian_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(fortranio_test WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(io_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(mesh_tests WORKING_DIRECTORY ${TEST_DIR})
@@ -443,11 +491,14 @@ if (NOT MPI_PARALLEL)
   # gtest_discover_tests(compute_elastic_tests WORKING_DIRECTORY ${TEST_DIR})
   # # gtest_discover_tests(compute_acoustic_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(compute_coupled_interfaces_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_coordinates_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_index_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_properties_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(compute_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(assembly_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(locate_point WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(interpolate_function WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(mass_matrix_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(rmass_inverse_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(displacement_newmark_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(seismogram_elastic_tests)

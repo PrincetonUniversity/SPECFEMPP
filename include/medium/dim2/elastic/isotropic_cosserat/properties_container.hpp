@@ -1,34 +1,44 @@
 #pragma once
 
-#include "medium/properties_container.hpp"
-#include "point/interface.hpp"
+#include "medium/impl/data_container.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_SIMD.hpp>
 
-namespace specfem {
-namespace medium {
-
+namespace specfem::medium::properties {
+/**
+ * @group specfem_medium_properties_dim2_elastic_isotropic_cosserat Specfem
+ * Medium Properties for 2D Elastic Isotropic Cosserat Media
+ *
+ * @brief Data container to hold properties of 2D elastic isotropic Cosserat
+ * media at a quadrature point
+ *
+ * @tparam MediumTag The type of the medium
+ * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
+ * @tparam Enable SFINAE type to enable this specialization only for elastic
+ * media
+ *
+ * Parameters:
+ * - `rho`: Density @f$ \rho @f$
+ * - `kappa`: Bulk modulus @f$ \kappa @f$
+ * - `mu`: Shear modulus @f$ \mu @f$
+ * - `nu`: Symmetry breaking coupling modulus @f$ \nu @f$
+ * - `j`: Inertia density @f$ j @f$
+ * - `lambda_c`: Coupling bulk modulus @f$ \lambda_c @f$
+ * - `mu_c`: Coupling shear modulus @f$ \mu_c @f$
+ * - `nu_c`: Coupling symmetry breaking modulus @f$ \nu_c @f$
+ */
 template <specfem::element::medium_tag MediumTag>
-struct properties_container<
+struct data_container<
     MediumTag, specfem::element::property_tag::isotropic_cosserat,
-    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : public impl_properties_container<
-          MediumTag, specfem::element::property_tag::isotropic_cosserat, 8> {
-  using base_type = impl_properties_container<
-      MediumTag, specfem::element::property_tag::isotropic_cosserat, 8>;
-  using base_type::base_type;
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
 
-  // Normal elastic properties
-  DEFINE_MEDIUM_VIEW(rho, 0)   ///< density @f$ \rho @f$
-  DEFINE_MEDIUM_VIEW(kappa, 1) ///< Bulk Modulus @f$ \lambda + 2\mu @f$
-  DEFINE_MEDIUM_VIEW(mu, 2)    ///< shear modulus @f$ \mu @f$
-  DEFINE_MEDIUM_VIEW(nu, 3)    ///< symmetry breaking modulus @f$ \nu @f$
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2;           ///< Dimension of the material
+  constexpr static auto medium_tag = MediumTag; ///< Medium tag
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic_cosserat; ///< Property tag
 
-  // Additional elastic properties for spin media _c for _couple
-  DEFINE_MEDIUM_VIEW(j, 4)        ///< inertia density @f$ j @f$
-  DEFINE_MEDIUM_VIEW(lambda_c, 5) ///< couple bulk modulus @f$ \kappa_c @f$
-  DEFINE_MEDIUM_VIEW(mu_c, 6)     ///< couple shear modulus @f$ \mu_c @f$
-  DEFINE_MEDIUM_VIEW(nu_c, 7)     ///< symmetry breaking modulus @f$ \nu_c @f$
+  DATA_CONTAINER(rho, kappa, mu, nu, j, lambda_c, mu_c, nu_c)
 };
 
-} // namespace medium
-} // namespace specfem
+} // namespace specfem::medium::properties

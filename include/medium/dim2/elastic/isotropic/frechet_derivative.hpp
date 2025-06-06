@@ -4,7 +4,7 @@
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
 #include "globals.h"
-#include "point/kernels.hpp"
+#include "specfem/point.hpp"
 
 #include <Kokkos_Core.hpp>
 
@@ -14,7 +14,7 @@ namespace medium {
 template <typename PointPropertiesType, typename AdjointPointFieldType,
           typename BackwardPointFieldType, typename PointFieldDerivativesType>
 KOKKOS_FUNCTION specfem::point::kernels<
-    PointPropertiesType::dimension, PointPropertiesType::medium_tag,
+    PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
     PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
 impl_compute_frechet_derivatives(
     const std::integral_constant<specfem::dimension::type,
@@ -140,7 +140,7 @@ impl_compute_frechet_derivatives(
 template <typename PointPropertiesType, typename AdjointPointFieldType,
           typename BackwardPointFieldType, typename PointFieldDerivativesType>
 KOKKOS_FUNCTION specfem::point::kernels<
-    PointPropertiesType::dimension, PointPropertiesType::medium_tag,
+    PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
     PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
 impl_compute_frechet_derivatives(
     const std::integral_constant<specfem::dimension::type,

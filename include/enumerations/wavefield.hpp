@@ -19,28 +19,28 @@ enum class type { displacement, velocity, acceleration, pressure, rotation };
 /**
  * @brief Defines compile time constants for wavefield components
  *
- * @tparam DimensionType Dimension of the wavefield
+ * @tparam DimensionTag Dimension of the wavefield
  * @tparam Component Type of the wavefield component
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::wavefield::type Component>
 class wavefield;
 
 // clang-format off
 /**
- * @fn static constexpr specfem::dimension::type specfem::wavefield::wavefield::dimension
+ * @fn static constexpr specfem::dimension::type specfem::wavefield::wavefield::dimension()
  * @brief Returns the dimension type of the wavefield
  *
- * @return constexpr specfem::dimension::type Dimension type of the wavefield
+ * @return specfem::dimension::type Dimension type of the wavefield
  * @memberof specfem::wavefield::wavefield
  */
 
 /**
- * @fn static constexpr specfem::wavefield::type specfem::wavefield::wavefield::component
+ * @fn static constexpr specfem::wavefield::type specfem::wavefield::wavefield::component()
  *
  * @brief Returns the component type of the wavefield
  *
- * @return constexpr specfem::wavefield::type Component type of the wavefield
+ * @return specfem::wavefield::type Component type of the wavefield
  * @memberof specfem::wavefield::wavefield
  */
 
@@ -48,7 +48,7 @@ class wavefield;
  * @fn static constexpr int specfem::wavefield::wavefield::num_components()
  * @brief Returns the number of components of the wavefield
  *
- * @return constexpr int Number of components of the wavefield
+ * @return int Number of components of the wavefield
  * @memberof specfem::wavefield::wavefield
  */
 // clang-format on

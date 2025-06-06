@@ -41,6 +41,8 @@ subroutine save_parameters()
   filename = LOCAL_PATH(1:len_trim(LOCAL_PATH)) // '/mesh_parameters.bin'
 
   if (myrank == 0) then
+
+
     open(unit=IOUT,file=trim(filename),status='unknown',action='write',form='unformatted',iostat=ier)
     if (ier /= 0) stop 'error opening database mesh_parameters.bin'
 

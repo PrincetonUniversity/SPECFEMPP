@@ -12,7 +12,7 @@ namespace mesh {
  * @brief Control node information
  *
  */
-template <specfem::dimension::type DimensionType> struct control_nodes;
+template <specfem::dimension::type DimensionTag> struct control_nodes;
 
 template <> struct control_nodes<specfem::dimension::type::dim2> {
 

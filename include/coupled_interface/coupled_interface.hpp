@@ -9,36 +9,35 @@ namespace coupled_interface {
 
 namespace impl {
 
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
 class coupled_interface;
 
-template <specfem::dimension::type DimensionType>
-class coupled_interface<DimensionType, specfem::element::medium_tag::acoustic,
+template <specfem::dimension::type DimensionTag>
+class coupled_interface<DimensionTag, specfem::element::medium_tag::acoustic,
                         specfem::element::medium_tag::elastic_psv> {
 public:
   using CoupledPointFieldType =
-      specfem::point::field<DimensionType,
+      specfem::point::field<DimensionTag,
                             specfem::element::medium_tag::elastic_psv, true,
                             false, false, false, false>;
   using SelfPointFieldType =
-      specfem::point::field<DimensionType,
+      specfem::point::field<DimensionTag,
                             specfem::element::medium_tag::acoustic, false,
                             false, true, false, false>;
 };
 
-template <specfem::dimension::type DimensionType>
-class coupled_interface<DimensionType,
-                        specfem::element::medium_tag::elastic_psv,
+template <specfem::dimension::type DimensionTag>
+class coupled_interface<DimensionTag, specfem::element::medium_tag::elastic_psv,
                         specfem::element::medium_tag::acoustic> {
 public:
   using CoupledPointFieldType =
-      specfem::point::field<DimensionType,
+      specfem::point::field<DimensionTag,
                             specfem::element::medium_tag::acoustic, false,
                             false, true, false, false>;
   using SelfPointFieldType =
-      specfem::point::field<DimensionType,
+      specfem::point::field<DimensionTag,
                             specfem::element::medium_tag::elastic_psv, false,
                             false, true, false, false>;
 };
@@ -49,24 +48,24 @@ public:
  * @brief Compute kernels to compute the coupling terms between two domains.
  *
  * @tparam WavefieldType Wavefield type on which the coupling is computed.
- * @tparam DimensionType Dimension of the element on which the coupling is
+ * @tparam DimensionTag Dimension of the element on which the coupling is
  * computed.
  * @tparam SelfMedium Medium type of the primary domain.
  * @tparam CoupledMedium Medium type of the coupled domain.
  */
 template <specfem::wavefield::simulation_field WavefieldType,
-          specfem::dimension::type DimensionType,
+          specfem::dimension::type DimensionTag,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
 class coupled_interface {
 private:
   using CoupledPointFieldType = typename impl::coupled_interface<
-      DimensionType, SelfMedium,
+      DimensionTag, SelfMedium,
       CoupledMedium>::CoupledPointFieldType; ///< Point field type of the
                                              ///< coupled domain.
 
   using SelfPointFieldType = typename impl::coupled_interface<
-      DimensionType, SelfMedium,
+      DimensionTag, SelfMedium,
       CoupledMedium>::SelfPointFieldType; ///< Point field type of the primary
                                           ///< domain.
 
@@ -75,8 +74,7 @@ public:
       SelfMedium; ///< Medium of the primary domain.
   constexpr static auto coupled_medium =
       CoupledMedium; ///< Medium of the coupled domain.
-  constexpr static auto dimension =
-      DimensionType; ///< Dimension of the element.
+  constexpr static auto dimension = DimensionTag; ///< Dimension of the element.
   constexpr static auto wavefield = WavefieldType; ///< Wavefield type.
 
   static_assert(SelfMedium != CoupledMedium,

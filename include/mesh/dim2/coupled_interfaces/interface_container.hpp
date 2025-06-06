@@ -12,7 +12,7 @@ namespace mesh {
  * @tparam Medium1 Medium type 1
  * @tparam Medium2 Medium type 2
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag Medium1,
           specfem::element::medium_tag Medium2>
 struct interface_container;

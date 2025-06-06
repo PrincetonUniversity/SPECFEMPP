@@ -1,7 +1,9 @@
 #pragma once
 
+#include "enumerations/accessor.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/dim2/elastic/isotropic_cosserat/cosserat_stress.hpp"
+#include "specfem/point.hpp"
 #include "utilities/errors.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -10,21 +12,22 @@ template <typename PointPropertiesType, typename PointDisplacementType,
           typename PointStressType>
 KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
 
-  constexpr auto DimensionTag = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
 
-  static_assert(PointPropertiesType::is_point_properties,
-                "point_properties is not a point properties type");
+  static_assert(
+      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      "point_properties is not a point properties type");
 
-  static_assert(PointDisplacementType::isPointFieldType,
-                "displacement is not a point field type");
+  static_assert(specfem::accessor::is_point_stress<PointStressType>::value,
+                "point_stress is not a point stress type");
 
-  static_assert(PointDisplacementType::store_displacement,
-                "displacement must store displacement");
+  static_assert(specfem::accessor::is_point_field<PointDisplacementType>::value,
+                "point_displacement is not a point field type");
 
-  static_assert(PointPropertiesType::dimension ==
-                    PointDisplacementType::dimension,
+  static_assert(PointPropertiesType::dimension_tag ==
+                    PointDisplacementType::dimension_tag,
                 "point_properties and velocity have different dimensions");
 
   static_assert(PointPropertiesType::medium_tag ==
@@ -35,7 +38,8 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
                     PointDisplacementType::simd::using_simd,
                 "point_properties and velocity have different SIMD settings");
 
-  static_assert(PointStressType::dimension == PointDisplacementType::dimension,
+  static_assert(PointStressType::dimension_tag ==
+                    PointDisplacementType::dimension_tag,
                 "point_stress and displacement have different dimensions");
 
   static_assert(PointStressType::medium_tag ==
@@ -129,7 +133,7 @@ compute_cosserat_stress(const PointPropertiesType &point_properties,
                         const PointDisplacementType &point_displacement,
                         PointStressType &point_stress) {
 
-  constexpr auto DimensionTag = PointPropertiesType::dimension;
+  constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
   constexpr bool has_cosserat_stress =
