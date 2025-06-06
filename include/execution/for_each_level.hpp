@@ -29,6 +29,8 @@ constexpr void check_compatibility() {
 }
 } // namespace impl
 
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
     ((Iterator::is_top_level_policy) &&
@@ -48,6 +50,8 @@ for_each_level(const std::string &name, const Iterator &iterator,
         closure(index);
       });
 }
+
+#endif
 
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
@@ -69,6 +73,8 @@ for_each_level(const std::string &name, const Iterator &iterator,
       });
 }
 
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
     ((Iterator::is_top_level_policy) &&
@@ -87,6 +93,8 @@ for_each_level(const Iterator &iterator, const ClosureType &closure) {
         closure(index);
       });
 }
+
+#endif
 
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<

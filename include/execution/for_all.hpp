@@ -31,6 +31,8 @@ KOKKOS_FORCEINLINE_FUNCTION
       });
 }
 
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+
 template <typename IndexType, typename ClosureType>
 inline std::enable_if_t<
     ((IndexType::iterator_type::is_top_level_policy) &&
@@ -50,6 +52,8 @@ for_all(const IndexType &index, const ClosureType &closure) {
       });
 }
 
+#endif
+
 template <typename IndexType, typename ClosureType>
 inline std::enable_if_t<
     ((IndexType::iterator_type::is_top_level_policy) &&
@@ -68,6 +72,8 @@ for_all(const IndexType &index, const ClosureType &closure) {
       });
 }
 
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+
 template <typename Iterator, typename ClosureType>
 inline std::enable_if_t<
     ((Iterator::is_top_level_policy) &&
@@ -84,6 +90,8 @@ for_all(const std::string &name, const Iterator &iterator,
         for_all(iter_index, closure);
       });
 }
+
+#endif
 
 template <typename Iterator, typename ClosureType>
 inline std::enable_if_t<
