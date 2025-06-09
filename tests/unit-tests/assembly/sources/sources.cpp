@@ -327,4 +327,4 @@ TEST_F(ASSEMBLY, sources) {
       ADD_FAILURE();
     }
   }
-}
+};

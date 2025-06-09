@@ -1,5 +1,4 @@
-#ifndef MACROS_HPP
-#define MACROS_HPP
+#pragma once
 
 #include <iostream>
 
@@ -57,4 +56,3 @@
 #define NOINLINE
 #endif
 
-#endif /* MACROS_HPP */

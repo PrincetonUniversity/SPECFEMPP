@@ -3,7 +3,8 @@ MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
 
 rule all:
     input:
-        plot="OUTPUT_FILES/results/plot.png",
+        plot_psv="OUTPUT_FILES/results_psv/plot.png",
+        plot_sh="OUTPUT_FILES/results_sh/plot.png",
     localrule: True
 
 
@@ -21,15 +22,15 @@ rule generate_mesh:
         """
 
 
-rule run_solver:
+rule run_solver_psv:
     input:
         database="OUTPUT_FILES/database.bin",
         stations="OUTPUT_FILES/STATIONS",
         source="source.yaml",
-        config="specfem_config.yaml",
+        config="specfem_config_psv.yaml",
     output:
         seismograms=expand(
-            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
+            "OUTPUT_FILES/results_psv/{network_name}.{station_name}.S2.{component}.semd",
             station_name=[
                 "S0001",
             ],
@@ -45,16 +46,16 @@ rule run_solver:
         """
             # module purge
             # module load boost/1.73.0
-            mkdir -p OUTPUT_FILES/results
+            mkdir -p OUTPUT_FILES/results_psv
             echo "Hostname: $(hostname)" > output.log
             {SPECFEM_BIN} -p {input.config} >> output.log
         """
 
 
-rule plot_seismogram:
+rule plot_seismogram_psv:
     input:
         trace_files=expand(
-            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
+            "OUTPUT_FILES/results_psv/{network_name}.{station_name}.S2.{component}.semd",
             station_name=[
                 "S0001",
             ],
@@ -62,7 +63,95 @@ rule plot_seismogram:
             component=["BXX", "BXZ"],
         ),
     output:
-        traces="OUTPUT_FILES/results/plot.png",
+        traces="OUTPUT_FILES/results_psv/plot.png",
+    localrule: True
+    run:
+        import glob
+        import os
+        import numpy as np
+        import obspy
+
+        # Set matplotlib gui off
+        import matplotlib
+        matplotlib.use("Agg")
+
+        def get_traces(directory):
+            traces = []
+            files = glob.glob(directory + "/*.sem*")
+
+            # iterate over all seismograms
+
+            for filename in files:
+                station_name = os.path.splitext(filename)[0]
+                network, station, location, channel = station_name.split("/")[-1].split(".")
+                trace = np.loadtxt(filename, delimiter=" ")
+                starttime = trace[0, 0]
+                dt = trace[1, 0] - trace[0, 0]
+                traces.append(
+                    obspy.Trace(
+                        trace[:, 1],
+                        dict(network=network,
+                            station=station,
+                            location=location,
+                            channel=channel,
+                            starttime=starttime,
+                            delta=dt)
+                    )
+                )
+
+            stream = obspy.Stream(traces)
+
+            return stream
+
+        # Get traces from the specified directory
+        directory_name = "OUTPUT_FILES/results_psv"
+        stream = get_traces(directory_name)
+
+        stream.plot(size=(1000, 600)).savefig(output.traces)
+
+
+
+rule run_solver_sh:
+    input:
+        database="OUTPUT_FILES/database.bin",
+        stations="OUTPUT_FILES/STATIONS",
+        source="source.yaml",
+        config="specfem_config_sh.yaml",
+    output:
+        seismograms=expand(
+            "OUTPUT_FILES/results_sh/{network_name}.{station_name}.S2.{component}.semd",
+            station_name=[
+                "S0001",
+            ],
+            network_name=["AA"],
+            component=["BXY"],
+        ),
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=10,
+    shell:
+        """
+            # module purge
+            # module load boost/1.73.0
+            mkdir -p OUTPUT_FILES/results_sh
+            echo "Hostname: $(hostname)" > output.log
+            {SPECFEM_BIN} -p {input.config} >> output.log
+        """
+
+rule plot_seismogram_sh:
+    input:
+        trace_files=expand(
+            "OUTPUT_FILES/results_sh/{network_name}.{station_name}.S2.{component}.semd",
+            station_name=[
+                "S0001",
+            ],
+            network_name=["AA"],
+            component=["BXY"],
+        ),
+    output:
+        traces="OUTPUT_FILES/results_sh/plot.png",
     localrule: True
     run:
         import glob
@@ -78,7 +167,7 @@ rule plot_seismogram:
         def get_traces(directory):
             traces = []
             files = glob.glob(directory + "/*.sem*")
-            ## iterate over all seismograms
+            # iterate over all seismograms
             for filename in files:
                 station_name = os.path.splitext(filename)[0]
                 network, station, location, channel = station_name.split("/")[-1].split(".")
@@ -88,11 +177,12 @@ rule plot_seismogram:
                 traces.append(
                     obspy.Trace(
                         trace[:, 1],
-                        {"network": network,
-                         "station": station,
-                         "location": location,
-                         "channel": channel,
-                         "starttime": starttime, "delta": dt},
+                        dict(network=network,
+                            station=station,
+                            location=location,
+                            channel=channel,
+                            starttime=starttime,
+                            delta=dt)
                     )
                 )
 
@@ -100,9 +190,12 @@ rule plot_seismogram:
 
             return stream
 
+        directory_name = "OUTPUT_FILES/results_sh"
+        stream = get_traces(directory_name)
+        stream.plot(size=(1000, 400)).savefig(output.traces)
 
-        stream = get_traces("OUTPUT_FILES/results")
-        stream.plot(size=(800, 1000)).savefig(output.traces)
+
+
 
 
 rule clean:

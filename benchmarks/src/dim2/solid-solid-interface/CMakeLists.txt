@@ -13,7 +13,8 @@ set(CURRENT_BENCHMARK_BUILD_DIR "${BENCHMARKS_BUILD_DIR}/dim2/${CURRENT_DIR_NAME
 
 # Configure files directly into the cmake benchmarks_build!
 configure_file(CMakeFiles/Par_File.in ${CURRENT_BENCHMARK_BUILD_DIR}/Par_File)
-configure_file(CMakeFiles/specfem_config.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/specfem_config.yaml)
+configure_file(CMakeFiles/specfem_config_psv.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/specfem_config_psv.yaml)
+configure_file(CMakeFiles/specfem_config_sh.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/specfem_config_sh.yaml)
 configure_file(CMakeFiles/Snakefile.in ${CURRENT_BENCHMARK_BUILD_DIR}/Snakefile)
 
 # Copy static files into the benchmarks.
