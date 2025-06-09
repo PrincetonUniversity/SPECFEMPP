@@ -1,5 +1,4 @@
-#ifndef _SOURCE_HPP
-#define _SOURCE_HPP
+#pragma once
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -130,4 +129,3 @@ protected:
 } // namespace sources
 
 } // namespace specfem
-#endif

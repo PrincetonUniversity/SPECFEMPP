@@ -2,6 +2,7 @@
 
 #include "domain_view.hpp"
 #include "enumerations/medium.hpp"
+#include <boost/preprocessor.hpp>
 
 #define _CREATE_NAMED_VARIABLE(prefix, postfix)                                \
   BOOST_PP_CAT(prefix, BOOST_PP_CAT(_, postfix))
