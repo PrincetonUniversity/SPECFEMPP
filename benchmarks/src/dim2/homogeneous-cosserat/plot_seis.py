@@ -8,7 +8,7 @@ if __name__ == "__main__":
     plt.title("Displacement field, no spin (orange: specfem, blue: finite difference)")
 
     for ifg, comp in enumerate(["x", "z"]):
-        trace_ref = np.load("reference/traces_fd/u" + comp + "_no_spin.npy")
+        trace_ref = np.load("reference/traces_fd/u" + comp + "_no_spin.npy")[:, ::5]
         trace = np.zeros(trace_ref.shape)
 
         for i in range(trace_ref.shape[0]):
@@ -23,7 +23,7 @@ if __name__ == "__main__":
             plt.subplot(trace_ref.shape[0], 2, i * 2 + 1 + ifg)
             plt.ylim(-1.1, 1.1)
             plt.plot(trace_ref[i, :] / max1)
-            plt.plot(trace[i, :] / max2)
+            plt.plot(trace[i, :] / max2, "--")
 
             plt.gca().get_xaxis().set_visible(False)
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     )
 
     for ifg, comp in enumerate(["x", "z"]):
-        trace_ref = np.load("reference/traces_fd/u" + comp + ".npy")
+        trace_ref = np.load("reference/traces_fd/u" + comp + ".npy")[:, ::5]
         trace = np.zeros(trace_ref.shape)
 
         for i in range(trace_ref.shape[0]):
@@ -51,7 +51,7 @@ if __name__ == "__main__":
             plt.subplot(trace_ref.shape[0], 2, i * 2 + 1 + ifg)
             plt.ylim(-1.1, 1.1)
             plt.plot(trace_ref[i, :] / max1)
-            plt.plot(trace[i, :] / max2)
+            plt.plot(trace[i, :] / max2, "--")
 
             plt.gca().get_xaxis().set_visible(False)
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     plt.figure(figsize=(8, 12))
     plt.title("Spin field (orange: specfem, blue: finite difference)")
 
-    trace_ref = np.load("reference/traces_fd/ry.npy")
+    trace_ref = np.load("reference/traces_fd/ry.npy")[:, ::5]
     trace = np.zeros(trace_ref.shape)
 
     for i in range(trace_ref.shape[0]):
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         plt.subplot(trace_ref.shape[0], 1, i + 1)
         plt.ylim(-1.1, 1.1)
         plt.plot(trace_ref[i, :] / max1)
-        plt.plot(trace[i, :] / max2)
+        plt.plot(trace[i, :] / max2, "--")
 
         plt.gca().get_xaxis().set_visible(False)
 
