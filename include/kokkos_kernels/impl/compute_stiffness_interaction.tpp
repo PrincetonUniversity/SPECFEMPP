@@ -114,15 +114,13 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements,
                                                ngllz, ngllx);
 
-  constexpr int simd_size = simd::size();
 
   if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey &&
                 WavefieldType ==
                     specfem::wavefield::simulation_field::backward) {
 
     specfem::execution::for_all(
-        "specfem::domain::impl::kernels::elements::compute_stiffness_"
-        "interaction",
+        "specfem::kokkos_kernels::compute_stiffness_interaction",
         chunk,
         KOKKOS_LAMBDA(
             const specfem::point::index<dimension, using_simd> &index) {
@@ -135,8 +133,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   } else {
 
     specfem::execution::for_each_level(
-        "specfem::domain::impl::kernels::elements::compute_stiffness_"
-        "interaction",
+        "specfem::kokkos_kernels::compute_stiffness_interaction",
         chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
         KOKKOS_LAMBDA(const typename decltype(chunk)::index_type &chunk_index) {
           const auto team = chunk_index.get_policy_index();
