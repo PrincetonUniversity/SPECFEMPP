@@ -34,7 +34,7 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
   specfem::execution::RangeIterator range(parallel_config(), nglob);
 
   specfem::execution::for_all(
-      "specfem::domain::domain::divide_mass_matrix", range,
+      "specfem::kokkos_kernels::divide_mass_matrix", range,
       KOKKOS_LAMBDA(const IndexType &index) {
         LoadFieldType load_field;
         specfem::compute::load_on_device(index, field, load_field);
