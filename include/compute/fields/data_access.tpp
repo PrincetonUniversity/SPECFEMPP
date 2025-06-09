@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/point.hpp"
+#include "macros.hpp"
 
 namespace specfem {
 namespace compute {

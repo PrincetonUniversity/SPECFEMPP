@@ -1,11 +1,11 @@
 #pragma once
 
-#include "compute/fields/impl/field_impl.hpp"
+#include "compute/compute_mesh.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "compute/fields/impl/field_impl.tpp"
 #include "compute/fields/simulation_field.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace {
@@ -93,4 +93,4 @@ int specfem::compute::simulation_field<
       })
 
   return total_degrees_of_freedom;
-} // namespace specfem::compute::simulation_field
+}

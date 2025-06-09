@@ -2,15 +2,9 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
-#include "compute/properties/properties.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/material_definitions.hpp"
-#include "enumerations/medium.hpp"
-#include "enumerations/wavefield.hpp"
-#include "kokkos_abstractions.h"
+#include "enumerations/interface.hpp"
 #include "source/source.hpp"
 #include "source_medium.hpp"
-#include "specfem/point.hpp"
 
 namespace specfem {
 namespace compute {

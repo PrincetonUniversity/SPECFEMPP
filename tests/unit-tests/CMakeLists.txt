@@ -10,7 +10,7 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.tar.gz
+  URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -278,6 +278,7 @@ target_link_libraries(
   utilities
   Boost::filesystem
   -lpthread -lm
+  gtest_main
 )
 
 add_executable(
