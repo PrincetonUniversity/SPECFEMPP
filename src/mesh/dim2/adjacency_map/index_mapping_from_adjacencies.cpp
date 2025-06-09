@@ -67,8 +67,8 @@ static inline void generate_assembly_mapping__push_adjacencies_to_edge(
 }
 
 std::pair<specfem::kokkos::HostView3d<int>, int>
-specfem::mesh::adjacency_map::adjacency_map<
-    specfem::dimension::type::dim2>::generate_assembly_mapping(const int ngll) {
+specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
+    generate_assembly_mapping(const int ngll) const {
   kokkos::HostMirror3d<int> inds(
       "specfem::mesh::adjacency_map -- assembly_index_mapping", nspec, ngll,
       ngll);

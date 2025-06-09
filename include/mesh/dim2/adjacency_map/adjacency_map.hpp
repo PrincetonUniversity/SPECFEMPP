@@ -76,12 +76,12 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
   void set_as_boundary(const int ispec, const specfem::enums::edge::type edge);
 
   std::pair<specfem::kokkos::HostView3d<int>, int>
-  generate_assembly_mapping(const int ngll);
+  generate_assembly_mapping(const int ngll) const;
   std::set<std::pair<int, specfem::enums::boundaries::type> >
   get_all_conforming_adjacencies(
       const int ispec, const specfem::enums::boundaries::type bdry) const;
 
-  bool was_initialized() { return nspec >= 0; }
+  bool was_initialized() const { return nspec >= 0; }
 
 private:
   int nspec;

@@ -43,15 +43,17 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
 }
 
 specfem::compute::points
-assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
+assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
+                 const specfem::mesh::adjacency_map::adjacency_map<
+                     specfem::dimension::type::dim2> &adjacency_map) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
+  int nglob;
+  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
   int ngllxz = ngll * ngll;
 
   std::vector<qp> cart_cord(nspec * ngllxz);
-
-  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
 
   int nchunks = nspec / chunk_size;
   int iloc = 0;
@@ -70,31 +72,51 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
       }
     }
   }
-
-  // Sort cartesian coordinates in ascending order i.e.
-  // cart_cord = [{0,0}, {0, 25}, {0, 50}, ..., {50, 0}, {50, 25}, {50, 50}]
-  std::sort(cart_cord.begin(), cart_cord.end(),
-            [&](const qp qp1, const qp qp2) {
-              if (qp1.x != qp2.x) {
-                return qp1.x < qp2.x;
-              }
-
-              return qp1.z < qp2.z;
-            });
-
-  // Setup numbering
-  int ig = 0;
-  cart_cord[0].iglob = ig;
-
-  type_real xtol = get_tolerance(cart_cord, nspec, ngllxz);
-
-  for (int iloc = 1; iloc < cart_cord.size(); iloc++) {
-    // check if the previous point is same as current
-    if ((std::abs(cart_cord[iloc].x - cart_cord[iloc - 1].x) > xtol) ||
-        (std::abs(cart_cord[iloc].z - cart_cord[iloc - 1].z) > xtol)) {
-      ig++;
+  if (adjacency_map.was_initialized()) {
+    const auto adj_assem = adjacency_map.generate_assembly_mapping(ngll);
+    const specfem::kokkos::HostView3d<int> adjmap_index_mapping =
+        adj_assem.first;
+    nglob = adj_assem.second;
+    for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
+      for (int iz = 0; iz < ngll; iz++) {
+        for (int ix = 0; ix < ngll; ix++) {
+          for (int ielement = 0; ielement < chunk_size; ielement++) {
+            int ispec = ichunk + ielement;
+            if (ispec >= nspec)
+              break;
+            cart_cord[iloc].iglob = adjmap_index_mapping(ispec, iz, ix);
+          }
+        }
+      }
     }
-    cart_cord[iloc].iglob = ig;
+  } else {
+
+    // Sort cartesian coordinates in ascending order i.e.
+    // cart_cord = [{0,0}, {0, 25}, {0, 50}, ..., {50, 0}, {50, 25}, {50, 50}]
+    std::sort(cart_cord.begin(), cart_cord.end(),
+              [&](const qp qp1, const qp qp2) {
+                if (qp1.x != qp2.x) {
+                  return qp1.x < qp2.x;
+                }
+
+                return qp1.z < qp2.z;
+              });
+
+    // Setup numbering
+    int ig = 0;
+    cart_cord[0].iglob = ig;
+
+    type_real xtol = get_tolerance(cart_cord, nspec, ngllxz);
+
+    for (int iloc = 1; iloc < cart_cord.size(); iloc++) {
+      // check if the previous point is same as current
+      if ((std::abs(cart_cord[iloc].x - cart_cord[iloc - 1].x) > xtol) ||
+          (std::abs(cart_cord[iloc].z - cart_cord[iloc - 1].z) > xtol)) {
+        ig++;
+      }
+      cart_cord[iloc].iglob = ig;
+    }
+    nglob = ig + 1;
   }
 
   std::vector<qp> copy_cart_cord(nspec * ngllxz);
@@ -104,8 +126,6 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
     int iloc = cart_cord[i].iloc;
     copy_cart_cord[iloc] = cart_cord[i];
   }
-
-  int nglob = ig + 1;
 
   specfem::compute::points points(nspec, ngll, ngll);
 
@@ -283,7 +303,9 @@ specfem::compute::mesh::mesh(
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
     const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
         &m_control_nodes,
-    const specfem::quadrature::quadratures &m_quadratures) {
+    const specfem::quadrature::quadratures &m_quadratures,
+    const specfem::mesh::adjacency_map::adjacency_map<
+        specfem::dimension::type::dim2> &adjacency_map) {
 
   this->mapping = specfem::compute::mesh_to_compute_mapping(tags);
   this->control_nodes =
@@ -294,10 +316,12 @@ specfem::compute::mesh::mesh(
   this->ngllx = this->quadratures.gll.N;
   this->ngllz = this->quadratures.gll.N;
 
-  this->points = this->assemble();
+  this->points = this->assemble(adjacency_map);
 }
 
-specfem::compute::points specfem::compute::mesh::assemble() {
+specfem::compute::points specfem::compute::mesh::assemble(
+    const specfem::mesh::adjacency_map::adjacency_map<
+        specfem::dimension::type::dim2> &adjacency_map) {
 
   const int ngnod = control_nodes.ngnod;
   const int nspec = control_nodes.nspec;
@@ -375,7 +399,7 @@ specfem::compute::points specfem::compute::mesh::assemble() {
 
   // Kokkos::fence();
 
-  return assign_numbering(global_coordinates);
+  return assign_numbering(global_coordinates, adjacency_map);
 }
 
 // specfem::compute::compute::compute(

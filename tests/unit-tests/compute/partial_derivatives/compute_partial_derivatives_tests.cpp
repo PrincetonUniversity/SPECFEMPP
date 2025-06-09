@@ -78,7 +78,7 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
       specfem::enums::electromagnetic_wave::te, mpi);
 
   specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
-                                      quadratures);
+                                      quadratures, mesh.adjacency_map);
   specfem::compute::partial_derivatives partial_derivatives(compute_mesh);
 
   const int nspec = compute_mesh.control_nodes.nspec;

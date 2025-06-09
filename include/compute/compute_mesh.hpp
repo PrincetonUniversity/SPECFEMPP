@@ -3,6 +3,7 @@
 // #include "compute/compute_quadrature.hpp"
 #include "element/quadrature.hpp"
 #include "kokkos_abstractions.h"
+#include "mesh/dim2/adjacency_map/adjacency_map.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem/point.hpp"
@@ -194,9 +195,13 @@ struct mesh {
   mesh(const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
        const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
            &control_nodes,
-       const specfem::quadrature::quadratures &quadratures);
+       const specfem::quadrature::quadratures &quadratures,
+       const specfem::mesh::adjacency_map::adjacency_map<
+           specfem::dimension::type::dim2> &adjacency_map);
 
-  specfem::compute::points assemble();
+  specfem::compute::points
+  assemble(const specfem::mesh::adjacency_map::adjacency_map<
+           specfem::dimension::type::dim2> &adjacency_map);
 
   /**
    * @brief Compute the global coordinates for a point given its local
