@@ -190,6 +190,7 @@ target_link_libraries(
 add_executable(
   mortar_tests
   mortar/adjacency_map/adjtest_2d.cpp
+  mortar/fixture/mortar_fixtures.cpp
   mortar/runner.cpp
 )
 
@@ -199,7 +200,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   mesh
-  # yaml-cpp
+  yaml-cpp
   io
   # utilities
   # material_class

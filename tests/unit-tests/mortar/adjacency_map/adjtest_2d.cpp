@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <sstream>
+#include <stdexcept>
+#include <streambuf>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -9,6 +11,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "io/interface.hpp"
 #include "mesh/dim2/adjacency_map/adjacency_map.hpp"
+#include "mortar/fixture/mortar_fixtures.hpp"
 
 void test_assembly_mapping(
     specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
@@ -26,8 +29,8 @@ void run_test_conforming(std::string databasename) {
   specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
       &adjacencies = mesh.adjacency_map;
   if (!adjacencies.was_initialized()) {
-    adjacencies = specfem::mesh::adjacency_map::adjacency_map<
-        specfem::dimension::type::dim2>(mesh);
+    throw std::runtime_error("Test database does not have adjacencies in "
+                             "footer -- adjacency map not built.");
   }
   std::ostringstream msg;
   msg << "Adjacency map formed. Comparing results...";
@@ -294,10 +297,23 @@ void test_assembly_mapping(
   // (2) passed!
 }
 
-TEST(adjacency_map2d, conforming) {
-  // with footer adjacency map
-  run_test_conforming("mortar/test_meshes/conforming_squarering/database.bin");
-  // without footer
-  run_test_conforming(
-      "mortar/test_meshes/conforming_squarering/square_ring.bin");
+TEST_F(MESHES, conforming) {
+  for (auto mesh : *this) {
+    try {
+      run_test_conforming(mesh.database);
+      std::cout << "-------------------------------------------------------\n"
+                << "\033[0;32m[PASSED]\033[0m " << mesh.name << "\n"
+                << "-------------------------------------------------------\n\n"
+                << std::endl;
+    } catch (std::exception &e) {
+      std::cout << "-------------------------------------------------------\n"
+                << "\033[0;31m[FAILED]\033[0m \n"
+                << "-------------------------------------------------------\n"
+                << "- Test: " << mesh.name << "\n"
+                << "- Error: " << e.what() << "\n"
+                << "-------------------------------------------------------\n\n"
+                << std::endl;
+      ADD_FAILURE();
+    }
+  }
 }

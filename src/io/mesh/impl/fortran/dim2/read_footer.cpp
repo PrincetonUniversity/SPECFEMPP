@@ -11,20 +11,20 @@ read_footer_v0(std::ifstream &stream, const int *version,
                specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
                const specfem::MPI::MPI *mpi);
 
-#define UNSUPPORTED_MESHFEM_FOOTER_ERROR                                       \
-  {                                                                            \
-    throw std::runtime_error(                                                  \
-        std::string("Unsupported meshfem footer version: ") +                  \
-        std::to_string(version[0]) + "." + std::to_string(version[1]) + "." +  \
-        std::to_string(version[2]));                                           \
-  }
-#define MESHFEM_FOOTER_READ_ERROR(msg)                                         \
-  {                                                                            \
-    throw std::runtime_error(std::string("Error reading meshfem footer(v") +   \
-                             std::to_string(version[0]) + "." +                \
-                             std::to_string(version[1]) + "." +                \
-                             std::to_string(version[2]) + "): " + msg);        \
-  }
+static inline void throw_unsupported_meshfem_footer_error(const int *version) {
+  throw std::runtime_error(std::string("Unsupported meshfem footer version: ") +
+                           std::to_string(version[0]) + "." +
+                           std::to_string(version[1]) + "." +
+                           std::to_string(version[2]));
+}
+static inline void throw_meshfem_footer_read_error(const int *version,
+                                                   const std::string &message) {
+  throw std::runtime_error(std::string("Error reading meshfem footer(v") +
+                           std::to_string(version[0]) + "." +
+                           std::to_string(version[1]) + "." +
+                           std::to_string(version[2]) + "): " + message);
+}
+
 void specfem::io::mesh::impl::fortran::dim2::read_footer(
     std::ifstream &stream,
     specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
@@ -44,7 +44,7 @@ void specfem::io::mesh::impl::fortran::dim2::read_footer(
     read_footer_v0(stream, version, mesh, mpi);
     break;
   default:
-    UNSUPPORTED_MESHFEM_FOOTER_ERROR;
+    throw_unsupported_meshfem_footer_error(version);
   }
 }
 #define V0_SECTIONCODE_BREAK (0)
@@ -65,15 +65,12 @@ read_footer_v0(std::ifstream &stream, const int *version,
       case V0_SECTIONCODE_BREAK:
         return;
       default:
-        MESHFEM_FOOTER_READ_ERROR("Unknown footer code " +
-                                  std::to_string(sectioncode));
+        throw_meshfem_footer_read_error(
+            version, "Unknown footer code " + std::to_string(sectioncode));
       }
     }
 
   } else {
-    UNSUPPORTED_MESHFEM_FOOTER_ERROR;
+    throw_unsupported_meshfem_footer_error(version);
   }
 }
-
-#undef UNSUPPORTED_MESHFEM_FOOTER_ERROR
-#undef MESHFEM_FOOTER_READ_ERROR

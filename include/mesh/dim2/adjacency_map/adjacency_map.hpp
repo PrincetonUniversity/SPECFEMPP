@@ -11,14 +11,6 @@ namespace mesh {
 template <specfem::dimension::type dimtype> struct mesh;
 namespace adjacency_map {
 
-struct nonconforming_edge {
-  int edgeL, edgeR;
-  type_real param_startL, param_startR;
-  type_real param_endL, param_endR;
-
-  nonconforming_edge() = default;
-};
-
 /**
  * @brief Stores the adjacencies between elements.
  *
@@ -61,19 +53,20 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
       const std::vector<std::vector<int> > &elements_with_shared_nodes);
 
   bool has_conforming_adjacency(const int ispec,
-                                const specfem::enums::edge::type edge);
+                                const specfem::enums::edge::type edge) const;
 
-  bool has_conforming_adjacency(const int ispec, const int edge);
+  bool has_conforming_adjacency(const int ispec, const int edge) const;
 
   std::pair<int, specfem::enums::edge::type>
   get_conforming_adjacency(const int ispec,
-                           const specfem::enums::edge::type edge);
+                           const specfem::enums::edge::type edge) const;
   std::pair<int, specfem::enums::edge::type>
-  get_conforming_adjacency(const int ispec, const int edge);
+  get_conforming_adjacency(const int ispec, const int edge) const;
 
-  bool has_boundary(const int ispec, const specfem::enums::edge::type edge);
+  bool has_boundary(const int ispec,
+                    const specfem::enums::edge::type edge) const;
 
-  bool has_boundary(const int ispec, const int edge);
+  bool has_boundary(const int ispec, const int edge) const;
 
   void create_conforming_adjacency(const int ispec1,
                                    const specfem::enums::edge::type edge1,
@@ -82,50 +75,20 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
 
   void set_as_boundary(const int ispec, const specfem::enums::edge::type edge);
 
-  void fill_nonconforming_adjacencies(
-      const specfem::kokkos::HostView4d<double> &global_coordinates);
-
-  static inline bool are_elements_conforming(
-      const specfem::kokkos::HostView4d<double> &global_coordinates,
-      const int ispec1, const specfem::enums::edge::type edge1,
-      const int ispec2, const specfem::enums::edge::type edge2,
-      type_real tolerance);
-
   std::pair<specfem::kokkos::HostView3d<int>, int>
   generate_assembly_mapping(const int ngll);
   std::set<std::pair<int, specfem::enums::boundaries::type> >
-  get_all_conforming_adjacencies(const int ispec,
-                                 const specfem::enums::boundaries::type bdry);
+  get_all_conforming_adjacencies(
+      const int ispec, const specfem::enums::boundaries::type bdry) const;
 
   bool was_initialized() { return nspec >= 0; }
 
 private:
   int nspec;
-  struct nonconforming_element_anchor {
-    // element identifier
-    int ispec;
-    specfem::enums::edge::type edge;
-
-    // nonconforming edge identifiers
-    int edge_plus;  // edge at +1 local coordinate
-    int edge_minus; // edge at -1 local coordinate
-
-    bool side_plus;  // true if left side of edge at +1 local coordinate
-    bool side_minus; // true if left side of edge at -1 local coordinate
-
-    nonconforming_element_anchor()
-        : ispec(-1), edge(specfem::enums::edge::type::NONE), edge_plus(-1),
-          edge_minus(-1) {}
-  };
   using IspecViewType =
       Kokkos::View<int *[4], Kokkos::LayoutLeft, Kokkos::HostSpace>;
   using EdgeViewType = Kokkos::View<specfem::enums::edge::type *[4],
                                     Kokkos::LayoutLeft, Kokkos::HostSpace>;
-  using NonconformingElementAnchorViewType =
-      Kokkos::View<nonconforming_element_anchor *, Kokkos::LayoutLeft,
-                   Kokkos::HostSpace>;
-  using NonconformingEdgeViewType =
-      Kokkos::View<nonconforming_edge *, Kokkos::LayoutLeft, Kokkos::HostSpace>;
   /* ---- adjacency storage ----
    * Each pair `(ispec, edge)` follows the following rule:
    * - If `adjacent_edges(ispec,edge)` is an edge (not NONE), then
@@ -142,9 +105,6 @@ private:
    */
   IspecViewType adjacent_indices;
   EdgeViewType adjacent_edges;
-
-  NonconformingElementAnchorViewType::HostMirror
-      h_nonconforming_element_anchors;
 };
 
 } // namespace adjacency_map
