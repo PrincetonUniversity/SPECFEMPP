@@ -11,7 +11,8 @@ namespace kokkos {
 
 namespace impl {
 template <int ElementChunkSize, typename Extents>
-constexpr std::size_t chunk_size(const Extents &extents) {
+KOKKOS_INLINE_FUNCTION constexpr std::size_t
+chunk_size(const Extents &extents) {
   std::size_t size = ElementChunkSize;
   for (std::size_t i = 1; i < Extents::rank(); ++i) {
     size *= extents.extent(i);
@@ -69,13 +70,18 @@ public:
     using size_type = typename extents_type::size_type;
     using layout_type = mapping;
 
+    KOKKOS_INLINE_FUNCTION
     mapping() noexcept = default;
+
+    KOKKOS_INLINE_FUNCTION
     mapping &operator=(const mapping &) noexcept = default;
 
+    KOKKOS_INLINE_FUNCTION
     mapping(const mapping &other) noexcept
         : extents_(other.extents_),
           chunk_size(impl::chunk_size<ElementChunkSize>(other.extents_)) {}
 
+    KOKKOS_INLINE_FUNCTION
     mapping(const extents_type &extents) noexcept
         : extents_(extents),
           chunk_size(impl::chunk_size<ElementChunkSize>(extents)) {}
@@ -181,8 +187,10 @@ public:
   View(const std::string &label, const IndexType &...indices)
       : View(label, mapping_type(Extents{ indices... })) {}
 
+  KOKKOS_INLINE_FUNCTION
   View(const View &other) : base_type(other), _mapping(other._mapping) {}
 
+  KOKKOS_INLINE_FUNCTION
   View() = default;
 
   using HostMirror =

@@ -10,7 +10,8 @@
 #include "enumerations/wavefield.hpp"
 #include "medium/compute_mass_matrix.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "policies/chunk.hpp"
+#include "execution/chunked_domain_iterator.hpp"
+#include "execution/for_all.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -34,6 +35,9 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   constexpr int components =
       specfem::element::attributes<dimension, medium_tag>::components;
 
+  const int ngllz = assembly.mesh.ngllz;
+  const int ngllx = assembly.mesh.ngllx;
+
   const int nelements = elements.extent(0);
 
   if (nelements == 0)
@@ -48,8 +52,6 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   using parallel_config = specfem::parallel_config::default_chunk_config<
       dimension, simd, Kokkos::DefaultExecutionSpace>;
 
-  using ChunkPolicyType = specfem::policy::element_chunk<parallel_config>;
-
   using PointMassType = specfem::point::field<dimension, medium_tag, false,
                                               false, false, true, using_simd>;
 
@@ -63,6 +65,8 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   using PointBoundaryType =
       specfem::point::boundary<boundary_tag, dimension, using_simd>;
 
+  using PointIndex = specfem::point::index<dimension, using_simd>;
+
   const auto &quadrature = assembly.mesh.quadratures;
   const auto &partial_derivatives = assembly.partial_derivatives;
   const auto &properties = assembly.properties;
@@ -73,63 +77,41 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
 
   constexpr int simd_size = simd::size();
 
-  ChunkPolicyType chunk_policy(elements, NGLL, NGLL);
+  specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements, ngllz, ngllx);
 
-  Kokkos::parallel_for(
-      "specfem::domain::impl::kernels::elements::compute_mass_matrix",
-      static_cast<const typename ChunkPolicyType::policy_type &>(chunk_policy),
-      KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
-        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
-             tile += ChunkPolicyType::chunk_size * simd_size) {
-          const auto iterator =
-              chunk_policy.league_iterator(team.league_rank(), tile);
-          if (iterator.is_end()) {
-            return; // No elements to process in this tile
-          }
+  specfem::execution::for_all(
+      "specfem::kokkos_kernels::compute_mass_matrix", chunk,
+      KOKKOS_LAMBDA(const PointIndex &index) {
+        const int ix = index.ix;
+        const int iz = index.iz;
 
-          Kokkos::parallel_for(
-              Kokkos::TeamThreadRange(team, iterator.chunk_size()),
-              [&](const int i) {
-                const auto iterator_index = iterator(i);
-                const auto index = iterator_index.index;
-                const int ix = iterator_index.index.ix;
-                const int iz = iterator_index.index.iz;
+        const auto point_property = [&]() -> PointPropertyType {
+          PointPropertyType point_property;
 
-                const auto point_property = [&]() -> PointPropertyType {
-                  PointPropertyType point_property;
+          specfem::compute::load_on_device(index, properties, point_property);
+          return point_property;
+        }();
 
-                  specfem::compute::load_on_device(index, properties,
-                                                   point_property);
-                  return point_property;
-                }();
+        const auto jacobian = [&]() {
+          PointPartialDerivativesType point_partial_derivatives;
+          specfem::compute::load_on_device(index, partial_derivatives,
+                                           point_partial_derivatives);
+          return point_partial_derivatives.jacobian;
+        }();
 
-                const auto jacobian = [&]() {
-                  PointPartialDerivativesType point_partial_derivatives;
-                  specfem::compute::load_on_device(index, partial_derivatives,
-                                                   point_partial_derivatives);
-                  return point_partial_derivatives.jacobian;
-                }();
+        PointMassType mass_matrix =
+            specfem::medium::mass_matrix_component(point_property);
 
-                PointMassType mass_matrix =
-                    specfem::medium::mass_matrix_component(point_property);
-
-                for (int icomp = 0; icomp < components; icomp++) {
-                  mass_matrix.mass_matrix(icomp) *=
-                      wgll(ix) * wgll(iz) * jacobian;
-                }
-
-                PointBoundaryType point_boundary;
-                specfem::compute::load_on_device(index, boundaries,
-                                                 point_boundary);
-
-                specfem::boundary_conditions::compute_mass_matrix_terms(
-                    dt, point_boundary, point_property, mass_matrix);
-
-                specfem::compute::atomic_add_on_device(index, mass_matrix,
-                                                       field);
-              });
+        for (int icomp = 0; icomp < components; icomp++) {
+          mass_matrix.mass_matrix(icomp) *= wgll(ix) * wgll(iz) * jacobian;
         }
-      });
 
-  // Kokkos::fence();
+        PointBoundaryType point_boundary;
+        specfem::compute::load_on_device(index, boundaries, point_boundary);
+
+        specfem::boundary_conditions::compute_mass_matrix_terms(
+            dt, point_boundary, point_property, mass_matrix);
+
+        specfem::compute::atomic_add_on_device(index, mass_matrix, field);
+      });
 }
