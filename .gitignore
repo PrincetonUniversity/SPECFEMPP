@@ -17,6 +17,7 @@ examples/*/*_config.yaml
 tests/regression-tests/*.yaml
 tests/regression-tests/*/cpu/*.yaml
 tests/regression-tests/*/gpu/*.yaml
+tests/unit-tests/error_jacobian/small_jacobian.png
 *.mod
 *.o
 */OUTPUT_FILES/*

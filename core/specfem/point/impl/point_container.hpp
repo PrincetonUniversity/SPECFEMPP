@@ -1,8 +1,10 @@
 #pragma once
 
 #include "datatypes/simd.hpp"
+#include "enumerations/accessor.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
+#include "specfem_setup.hpp"
 #include <Kokkos_SIMD.hpp>
 #include <boost/preprocessor.hpp>
 #include <iostream>
@@ -49,7 +51,7 @@
 #define POINT_BOOLEAN_OPERATOR_DEFINITION_SIMD(seq)                            \
   template <bool OtherSIMD, typename U = simd>                                 \
   typename std::enable_if_t<U::using_simd, bool> operator==(                   \
-      const data_container<base_type::dimension, base_type::medium_tag,        \
+      const data_container<base_type::dimension_tag, base_type::medium_tag,    \
                            base_type::property_tag, OtherSIMD> &other) const { \
     if (nprops != other.nprops) {                                              \
       return false;                                                            \
@@ -75,8 +77,9 @@
   template <typename... Args,                                                  \
             typename std::enable_if_t<sizeof...(Args) == nprops, int> = 0>     \
   KOKKOS_INLINE_FUNCTION data_container(Args... args)                          \
-      : _point_data_container{ args... } {}                                    \
-  KOKKOS_INLINE_FUNCTION data_container(const value_type *value) {             \
+      : _point_data_container{ static_cast<value_type>(args)... } {}           \
+  KOKKOS_INLINE_FUNCTION                                                       \
+  data_container(const value_type *value) {                                    \
     for (int i = 0; i < nprops; ++i) {                                         \
       _point_data_container[i] = value[i];                                     \
     }                                                                          \
@@ -168,16 +171,33 @@ namespace properties {
  * @tparam PropertyTag The type of the properties
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  */
-template <specfem::dimension::type Dimension,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
-struct traits {
-  using simd = typename specfem::datatype::simd<type_real, UseSIMD>;
-  constexpr static auto dimension = Dimension;      ///< dimension of the medium
+struct PropertyAccessor
+    : public specfem::accessor::Accessor<specfem::accessor::type::point,
+                                         specfem::data_class::type::properties,
+                                         DimensionTag, UseSIMD> {
+
+public:
+  using base_accessor =
+      specfem::accessor::Accessor<specfem::accessor::type::point,
+                                  specfem::data_class::type::properties,
+                                  DimensionTag, UseSIMD>; ///< Base type of
+                                                          ///< the point
+                                                          ///< properties
+
+  using simd =
+      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD data type
+  using value_type =
+      typename base_accessor::template scalar_type<type_real>; ///< Type of the
+                                                               ///< properties
+
+  constexpr static auto dimension_tag =
+      DimensionTag;                                 ///< dimension of the medium
   constexpr static auto medium_tag = MediumTag;     ///< type of the medium
   constexpr static auto property_tag = PropertyTag; ///< type of the properties
   constexpr static bool is_point_properties = true; ///< is point properties
-  using value_type = typename simd::datatype;       ///< type of the properties
 };
 
 /*
@@ -190,7 +210,7 @@ struct traits {
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  *
  */
-template <specfem::dimension::type Dimension,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>
@@ -207,19 +227,20 @@ namespace kernels {
  * @tparam PropertyTag The type of the properties
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  */
-template <specfem::dimension::type Dimension,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct traits {
   using simd = typename specfem::datatype::simd<type_real, UseSIMD>;
-  constexpr static auto dimension = Dimension;      ///< dimension of the medium
+  constexpr static auto dimension_tag =
+      DimensionTag;                                 ///< dimension of the medium
   constexpr static auto medium_tag = MediumTag;     ///< type of the medium
   constexpr static auto property_tag = PropertyTag; ///< type of the properties
   constexpr static bool is_point_kernels = true;    ///< is point kernels
   using value_type = typename simd::datatype;       ///< type of the properties
 };
 
-template <specfem::dimension::type Dimension,
+template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>

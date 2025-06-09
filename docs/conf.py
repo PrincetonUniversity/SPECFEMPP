@@ -53,7 +53,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
-    "sphinx.ext.autosectionlabel",
+    # "sphinx.ext.autosectionlabel",
     "sphinx.ext.todo",
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
@@ -67,7 +67,7 @@ extensions = [
 ]
 
 # Adding this to avoid the WARNING: duplicate label warning
-autosectionlabel_prefix_document = True
+# autosectionlabel_prefix_document = True
 
 supress_warnings = ["*duplicate*"]
 

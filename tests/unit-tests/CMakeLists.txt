@@ -103,6 +103,18 @@ target_link_libraries(
 )
 
 add_executable(
+  simd_tests
+  datatypes/simd_tests.cpp
+)
+target_link_libraries(
+  simd_tests
+  gtest_main
+  gmock_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+add_executable(
   fortranio_test
   fortran_io/fortranio_tests.cpp
 )
@@ -113,6 +125,39 @@ target_link_libraries(
   gmock_main
   io
   -lpthread -lm
+)
+
+add_executable(
+  point_coordinates_tests
+  point/coordinates_tests.cpp
+)
+target_link_libraries(
+  point_coordinates_tests
+  point
+  gtest_main
+  gmock_main
+)
+
+add_executable(
+  point_index_tests
+  point/index_tests.cpp
+)
+target_link_libraries(
+  point_index_tests
+  point
+  gtest_main
+  gmock_main
+)
+
+add_executable(
+  point_properties_tests
+  point/properties_tests.cpp
+)
+target_link_libraries(
+  point_properties_tests
+  point
+  gtest_main
+  gmock_main
 )
 
 # add_executable(
@@ -317,6 +362,21 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  mass_matrix_tests
+  mass_matrix/dim2/main.cpp
+  mass_matrix/dim2/elastic_isotropic.cpp
+  mass_matrix/dim2/elastic_anisotropic.cpp
+  mass_matrix/dim2/acoustic.cpp
+  mass_matrix/dim2/poroelastic.cpp
+)
+
+target_link_libraries(
+  mass_matrix_tests
+  point
+  gtest_main
+)
+
 
 # # add_executable(
 # #   source_location_tests
@@ -464,11 +524,16 @@ if (NOT MPI_PARALLEL)
   # gtest_discover_tests(compute_elastic_tests WORKING_DIRECTORY ${TEST_DIR})
   # # gtest_discover_tests(compute_acoustic_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(compute_coupled_interfaces_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_coordinates_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_index_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_properties_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(compute_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(assembly_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(interpolate_function WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(mass_matrix_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(rmass_inverse_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(simd_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(displacement_newmark_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)

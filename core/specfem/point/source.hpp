@@ -17,17 +17,22 @@ namespace point {
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::wavefield::simulation_field WavefieldType>
-struct source {
-
-  constexpr static auto dimension = DimensionTag; ///< Dimension of the
-                                                  ///< spectral element
+struct source
+    : public specfem::accessor::Accessor<specfem::accessor::type::point,
+                                         specfem::data_class::type::source,
+                                         DimensionTag, false> {
+private:
+  using base_type =
+      specfem::accessor::Accessor<specfem::accessor::type::point,
+                                  specfem::data_class::type::source,
+                                  DimensionTag, false>; ///< Base type for the
+                                                        ///< source
+public:
   constexpr static auto medium_tag = MediumTag; ///< Medium tag of the spectral
                                                 ///< element
   constexpr static auto wavefield_tag = WavefieldType; ///< Wavefield type on
                                                        ///< which the source is
                                                        ///< applied
-  constexpr static bool is_point_source = true; ///< Boolean indicating whether
-                                                ///< the point type is a source
 
   constexpr static int components =
       specfem::element::attributes<DimensionTag,
@@ -39,14 +44,14 @@ struct source {
                                                            ///< medium
 
   using value_type =
-      specfem::datatype::ScalarPointViewType<type_real, components,
-                                             false>; ///<
-                                                     ///< Value
-                                                     ///< type
-                                                     ///< to
-                                                     ///< store
-                                                     ///< source
-                                                     ///< information
+      typename base_type::template vector_type<type_real,
+                                               components>; ///<
+                                                            ///< Value
+                                                            ///< type
+                                                            ///< to
+                                                            ///< store
+                                                            ///< source
+                                                            ///< information
 
   value_type stf;                  ///< Source time function
   value_type lagrange_interpolant; ///< Lagrange interpolant

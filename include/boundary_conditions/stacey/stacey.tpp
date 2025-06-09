@@ -661,7 +661,7 @@ specfem::boundary_conditions::impl_compute_mass_matrix_terms(
       specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             false, true, false, using_simd>;
 
-  using ViewType = typename PointVelocityType::ViewType;
+  using ViewType = typename PointVelocityType::value_type;
 
   using datatype = typename ViewType::value_type;
 
