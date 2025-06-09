@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @brief Macro to create a constexpr array from a sequence
  * Used by medium_types(), material_systems() and element_types()

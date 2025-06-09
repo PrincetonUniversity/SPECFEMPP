@@ -7,6 +7,7 @@
 #include "enumerations/simulation.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
+#include "enumerations/material_definitions.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"

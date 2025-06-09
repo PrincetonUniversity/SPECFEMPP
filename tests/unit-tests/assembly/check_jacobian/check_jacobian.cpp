@@ -1,5 +1,4 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "algorithms/locate_point.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
@@ -26,7 +25,13 @@ TEST_F(ASSEMBLY, CheckJacobian) {
     const auto Test = std::get<0>(parameters);
     specfem::compute::assembly assembly = std::get<5>(parameters);
 
-    // Expect runtime error
-    EXPECT_THROW(test_check_jacobian(assembly), std::runtime_error);
+    bool caught_exception = false;
+    try {
+      test_check_jacobian(assembly);
+    } catch (const std::runtime_error &e) {
+      caught_exception = true;
+      std::cout << "Caught expected runtime error: " << e.what() << std::endl;
+    };
+    EXPECT_TRUE(caught_exception);
   }
 }
