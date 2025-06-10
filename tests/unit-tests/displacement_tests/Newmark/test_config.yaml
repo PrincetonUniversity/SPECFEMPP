@@ -117,3 +117,12 @@ Tests:
     databases:
       specfem_config: "displacement_tests/Newmark/serial/test13/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test13/traces"
+
+  - name : "SerialTest14 : Homogeneous elastic psv domain with spin"
+    description: >
+      Testing newmark time-marching solver on a homogeneous elastic psv domain with spin and no interfaces. Test is run on a single MPI process.
+    config:
+      nproc : 1
+    databases:
+      specfem_config: "displacement_tests/Newmark/serial/test14/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test14/traces"
