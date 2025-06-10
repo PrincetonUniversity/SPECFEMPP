@@ -10,7 +10,7 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.tar.gz
+  URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -99,6 +99,18 @@ target_link_libraries(
   jacobian_tests
   jacobian
   gtest_main
+  -lpthread -lm
+)
+
+add_executable(
+  simd_tests
+  datatypes/simd_tests.cpp
+)
+target_link_libraries(
+  simd_tests
+  gtest_main
+  gmock_main
+  Kokkos::kokkos
   -lpthread -lm
 )
 
@@ -278,6 +290,7 @@ target_link_libraries(
   utilities
   Boost::filesystem
   -lpthread -lm
+  gtest_main
 )
 
 add_executable(
@@ -500,6 +513,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(interpolate_function WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(mass_matrix_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(rmass_inverse_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(simd_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(displacement_newmark_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)

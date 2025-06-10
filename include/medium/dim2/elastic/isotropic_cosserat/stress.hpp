@@ -46,9 +46,9 @@ KOKKOS_INLINE_FUNCTION
              properties.nu() * (du(0, 1) - du(1, 0));
 
   // Couple stress components for psv propagation
-  sigma_c_xy = (properties.mu_c() + properties.nu_c()) * du(2, 0);
+  sigma_c_xy = (properties.mu_c() - properties.nu_c()) * du(2, 0);
 
-  sigma_c_zy = (properties.mu_c() + properties.nu_c()) * du(2, 1);
+  sigma_c_zy = (properties.mu_c() - properties.nu_c()) * du(2, 1);
 
   specfem::datatype::VectorPointViewType<type_real, 3, 2, UseSIMD> T;
 
