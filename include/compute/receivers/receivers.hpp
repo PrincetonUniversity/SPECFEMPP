@@ -1,7 +1,10 @@
 #pragma once
 
+#include "compute/compute_mesh.hpp"
+#include "mesh/mesh.hpp"
 #include "compute/element_types/element_types.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "receiver/interface.hpp"
+#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <receiver/receiver.hpp>

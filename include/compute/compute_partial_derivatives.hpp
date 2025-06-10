@@ -6,6 +6,7 @@
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "quadrature/interface.hpp"
+#include "compute/compute_mesh.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

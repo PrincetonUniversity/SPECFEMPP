@@ -2,7 +2,7 @@
 
 #include "../../MPI_environment.hpp"
 #include "compute/assembly/assembly.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/quadratures.hpp"
