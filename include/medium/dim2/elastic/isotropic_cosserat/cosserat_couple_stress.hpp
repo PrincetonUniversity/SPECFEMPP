@@ -40,13 +40,16 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   // Compute transformed stresses
   // F(i, k) = F_{x_i, \xi_k} and x_i = [x,z], \xi_k = [\xi, \gamma]
   // t_{ij} = F_{i,k} * \partial x_j / \partial \xi_k
-  const auto t_xx = F(0, 0) * xxi + F(0, 1) * xgamma;
-  const auto t_zx = F(1, 0) * xxi + F(1, 1) * xgamma;
-  const auto t_xz = F(0, 0) * zxi + F(0, 1) * zgamma;
-  const auto t_zz = F(1, 0) * zxi + F(1, 1) * zgamma;
+  const auto t_00 = F(0, 0) * xxi + F(0, 1) * xgamma;
+  const auto t_10 = F(1, 0) * xxi + F(1, 1) * xgamma;
+  const auto t_01 = F(0, 0) * zxi + F(0, 1) * zgamma;
+  const auto t_11 = F(1, 0) * zxi + F(1, 1) * zgamma;
+
+  const auto sigma_xz = t_10;
+  const auto sigma_zx = t_01;
 
   // Add to acceleration
-  acceleration.acceleration(2) += (t_zx - t_xz) * factor;
+  acceleration.acceleration(2) -= (sigma_xz - sigma_zx) * factor;
 };
 
 } // namespace medium
