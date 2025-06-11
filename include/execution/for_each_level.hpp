@@ -196,8 +196,8 @@ inline void for_each_level(const std::string &name,
  * closure must be invocable with the index type of the iterator.
  */
 template <typename IteratorType, typename ClosureType>
-inline void for_each_level(const IteratorType &iterator,
-                           const ClosureType &closure) {
+KOKKOS_FORCEINLINE_FUNCTION void for_each_level(const IteratorType &iterator,
+                                                const ClosureType &closure) {
   impl::impl_for_each_level(iterator, closure);
 }
 
