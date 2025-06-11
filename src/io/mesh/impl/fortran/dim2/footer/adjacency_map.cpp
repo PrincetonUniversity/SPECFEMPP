@@ -6,9 +6,9 @@
 #include <vector>
 
 static void
-footer_0_0_adjmap(std::ifstream &stream,
-                  specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-                  const specfem::MPI::MPI *mpi) {
+footer_read_adjmap(std::ifstream &stream,
+                   specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+                   const specfem::MPI::MPI *mpi) {
 
   int n_neighbors;
   std::vector<std::vector<int> > neighbormap(mesh.nspec);

@@ -73,10 +73,12 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
     }
   }
   if (adjacency_map.was_initialized()) {
-    const auto adj_assem = adjacency_map.generate_assembly_mapping(ngll);
-    const specfem::kokkos::HostView3d<int> adjmap_index_mapping =
-        adj_assem.first;
-    nglob = adj_assem.second;
+    specfem::kokkos::HostView3d<int> adjmap_index_mapping;
+    std::tie(adjmap_index_mapping, nglob) =
+        adjacency_map.generate_assembly_mapping(ngll);
+    // const auto [adjmap_index_mapping, nglob_] =
+    //     adjacency_map.generate_assembly_mapping(ngll);
+    // nglob = nglob_;
     for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
       for (int iz = 0; iz < ngll; iz++) {
         for (int ix = 0; ix < ngll; ix++) {

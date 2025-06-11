@@ -8,6 +8,10 @@ namespace specfem {
 namespace io {
 namespace mesh {
 namespace impl {
+
+constexpr int FOOTERCODE_END = 0;
+constexpr int FOOTERCODE_ADJACENCYMAP = 1;
+
 namespace fortran {
 namespace dim2 {
 void read_footer(std::ifstream &stream,
