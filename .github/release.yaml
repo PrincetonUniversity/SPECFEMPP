@@ -8,13 +8,18 @@ changelog:
     - title: 🚨 Breaking Changes
       labels:
         - breaking-change
-    - title: 🚀 New Features
+    - title: 🎉 New Feature
       labels:
-        - enhancement
         - feature
     - title: 👨‍🔬 New physics 
       labels:
         - new physics
+    - title: 🚀 Performance enhancement
+      labels:
+        - performance enhancement
+    - title: ✚ Enhancement
+      labels:
+        - enhancement
     - title: 📚 Documentation
       labels:
         - documentation
