@@ -27,7 +27,6 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
   constexpr auto property_tag = PropertyTag;
   constexpr auto boundary_tag = BoundaryTag;
   constexpr auto dimension = DimensionTag;
-  constexpr int ngll = NGLL;
   constexpr auto wavefield = WavefieldType;
 
   const auto [element_indices, source_indices] =
@@ -46,7 +45,6 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
 
   // Some aliases
   const auto &properties = assembly.properties;
-  const auto &boundaries = assembly.boundaries;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
   sources.update_timestep(timestep);
@@ -62,7 +60,6 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
   using PointIndexType = specfem::point::mapped_index<dimension, false>;
 
       using simd = specfem::datatype::simd<type_real, false>;
-  constexpr int simd_size = simd::size();
 
 #ifdef KOKKOS_ENABLE_CUDA
   constexpr int nthreads = 32;

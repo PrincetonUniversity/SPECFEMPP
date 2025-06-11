@@ -70,8 +70,6 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   using parallel_config = specfem::parallel_config::default_chunk_config<
       dimension, simd, Kokkos::DefaultExecutionSpace>;
 
-  constexpr int chunk_size = parallel_config::chunk_size;
-
   constexpr int components =
       specfem::element::attributes<dimension, medium_tag>::components;
   constexpr int num_dimensions =

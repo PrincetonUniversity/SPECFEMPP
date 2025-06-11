@@ -77,6 +77,7 @@ if (DEFINED Kokkos_ENABLE_CUDA)
         # message(STATUS "Setting CUDA variables")
         set(Kokkos_ENABLE_CUDA_LAMBDA ON CACHE BOOL "Using CUDA Lambda by default")
         set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON CACHE BOOL "Using CUDA Relocatable device by default")
+        set(Kokkos_ENABLE_CUDA_CONSTEXPR ON CACHE BOOL "Using CUDA Constexpr by default")
     endif()
 endif()
 

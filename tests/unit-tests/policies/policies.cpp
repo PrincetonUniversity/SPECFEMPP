@@ -260,8 +260,6 @@ TEST_F(POLICIES, RangePolicy) {
     const auto Test = std::get<0>(parameters);
     const auto nglob = std::get<1>(parameters);
     const auto nspec = std::get<2>(parameters);
-    const int ngllz = 5;
-    const int ngllx = 5;
 
     using ParallelConfig = specfem::parallel_config::default_range_config<
         specfem::datatype::simd<type_real, false>,

@@ -129,7 +129,6 @@ TYPED_TEST(Datatype_SIMD_Test_Typed, ArithmeticOperations) {
 TYPED_TEST(Datatype_SIMD_Test_Typed, ComparisonOperations) {
   using value_type = typename Datatype_SIMD_Test_Typed<TypeParam>::value_type;
   using mask_type = typename Datatype_SIMD_Test_Typed<TypeParam>::mask_type;
-  constexpr bool using_simd = TypeParam::value;
 
   value_type a(static_cast<type_real>(5.0));
   value_type b(static_cast<type_real>(5.0));

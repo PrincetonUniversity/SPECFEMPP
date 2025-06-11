@@ -21,14 +21,15 @@ namespace specfem {
 namespace execution {
 
 template <specfem::dimension::type DimensionTag, typename KokkosIndexType,
-          bool UseSIMD>
+          bool UseSIMD, typename ExecutionSpace>
 class MappedPointIndex {
 private:
   using index_type =
       specfem::point::mapped_index<DimensionTag,
                                    UseSIMD>; ///< Mapped index type
 public:
-  using iterator_type = VoidIterator; ///< Iterator type for this index
+  using iterator_type =
+      VoidIterator<ExecutionSpace>; ///< Iterator type for this index
 
   KOKKOS_INLINE_FUNCTION
   constexpr const index_type get_index() const {
@@ -42,7 +43,7 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   constexpr const iterator_type get_iterator() const {
-    return VoidIterator{}; ///< Returns a VoidIterator
+    return iterator_type{}; ///< Returns an empty iterator
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -74,8 +75,10 @@ private:
 public:
   using base_policy_type = typename base_type::base_policy_type;
   using policy_index_type = typename base_type::policy_index_type;
-  using index_type =
-      MappedPointIndex<DimensionTag, policy_index_type, using_simd>;
+  using execution_space =
+      typename base_type::execution_space; ///< Execution space type
+  using index_type = MappedPointIndex<DimensionTag, policy_index_type,
+                                      using_simd, execution_space>;
 
   KOKKOS_INLINE_FUNCTION const index_type
   operator()(const policy_index_type &i) const {
@@ -143,6 +146,8 @@ public:
       decltype(Kokkos::subview(std::declval<ViewType>(),
                                std::declval<Kokkos::pair<int, int> >())),
       policy_index_type>;
+  using execution_space =
+      typename base_type::execution_space; ///< Execution space type
 
   MappedChunkedDomainIterator(const ViewType indices, const ViewType mapping,
                               int ngllz, int ngllx)

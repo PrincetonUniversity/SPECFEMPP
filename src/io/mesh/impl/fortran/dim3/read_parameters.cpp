@@ -188,13 +188,6 @@ specfem::io::mesh::impl::fortran::dim3::read_mesh_parameters(
   try_read_line("mesh.parameters.nspec_outer_poroelastic", stream,
                 &parameters.nspec_outer_poroelastic);
 
-  int nspec_inner_acoustic;
-  int nspec_outer_acoustic;
-  int nspec_inner_elastic;
-  int nspec_outer_elastic;
-  int nspec_inner_poroelastic;
-  int nspec_outer_poroelastic;
-
 #ifndef NDEBUG
   std::cout << "nspec_inner_acoustic:..." << parameters.nspec_inner_acoustic
             << std::endl;
