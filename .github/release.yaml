@@ -3,6 +3,7 @@ changelog:
     labels:
       - ignore-for-release
       - dependencies
+      - dependency
   categories:
     - title: 🚨 Breaking Changes
       labels:
@@ -11,18 +12,23 @@ changelog:
       labels:
         - enhancement
         - feature
-    - title: 🐛 Bug Fixes
+    - title: 👨‍🔬 New physics 
       labels:
-        - bug
-        - fix
+        - new physics
     - title: 📚 Documentation
       labels:
         - documentation
         - docs
+    - title: Refactor 
+      labels:
+        - refactor
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+        - fix
     - title: 🔧 Maintenance
       labels:
         - maintenance
-        - refactor
     - title: Other Changes
       labels:
         - "*"
