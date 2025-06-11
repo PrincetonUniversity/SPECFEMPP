@@ -29,6 +29,9 @@ changelog:
     - title: 🔧 Maintenance
       labels:
         - maintenance
+    - title: 🧾 New tests
+      labels:
+        - tests
     - title: Other Changes
       labels:
         - "*"
