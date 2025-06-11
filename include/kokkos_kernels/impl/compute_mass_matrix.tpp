@@ -75,8 +75,6 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
 
   const auto wgll = quadrature.gll.weights;
 
-  constexpr int simd_size = simd::size();
-
   specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements, ngllz, ngllx);
 
   specfem::execution::for_all(

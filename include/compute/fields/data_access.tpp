@@ -1047,8 +1047,6 @@ KOKKOS_FUNCTION void impl_load(const ChunkIndexType &index,
   constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
-  constexpr static int NGLL = ViewType::ngll;
-  constexpr static bool using_simd = ViewType::simd::using_simd;
   const auto &curr_field = field.template get_field<MediumTag>();
 
   specfem::execution::for_each_level(

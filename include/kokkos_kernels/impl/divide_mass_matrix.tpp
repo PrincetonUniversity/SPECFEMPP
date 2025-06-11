@@ -18,11 +18,11 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
   constexpr auto dimension = DimensionTag;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
-  const int nglob = field.template get_nglob<MediumTag>();
+  const int nglob = field.template get_nglob<medium_tag>();
   constexpr bool using_simd = true;
-  using LoadFieldType = specfem::point::field<DimensionTag, MediumTag, false,
+  using LoadFieldType = specfem::point::field<dimension, medium_tag, false,
                                               false, true, true, using_simd>;
-  using StoreFieldType = specfem::point::field<DimensionTag, MediumTag, false,
+  using StoreFieldType = specfem::point::field<dimension, medium_tag, false,
                                                false, true, false, using_simd>;
 
   using parallel_config = specfem::parallel_config::default_range_config<

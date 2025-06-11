@@ -100,7 +100,6 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(
     PointPartialDerivativesType &partial_derivatives) {
 
   const int ispec = index.ispec;
-  const int nspec = derivatives.nspec;
   const int iz = index.iz;
   const int ix = index.ix;
 

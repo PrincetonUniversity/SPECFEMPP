@@ -22,7 +22,6 @@ TEST(IO_TESTS, read_sources) {
   type_real dt = 0.01;
   type_real f0 = 1.0;
   type_real tshift = 30.0;
-  type_real factor = 1.0e10;
   // This is from the definition of the STF such that it is zero at t=0
   type_real hdur = 1.0 / f0;
   type_real t0_final = -1.2 * hdur + tshift;

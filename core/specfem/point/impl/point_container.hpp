@@ -33,7 +33,7 @@
 
 #define POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                 \
   template <typename U = simd>                                                 \
-  typename std::enable_if_t<!U::using_simd, bool> operator==(                  \
+  KOKKOS_FUNCTION typename std::enable_if_t<!U::using_simd, bool> operator==(  \
       const data_container &other) const {                                     \
     if (nprops != other.nprops) {                                              \
       return false;                                                            \
@@ -50,7 +50,7 @@
 
 #define POINT_BOOLEAN_OPERATOR_DEFINITION_SIMD(seq)                            \
   template <bool OtherSIMD, typename U = simd>                                 \
-  typename std::enable_if_t<U::using_simd, bool> operator==(                   \
+  KOKKOS_FUNCTION typename std::enable_if_t<U::using_simd, bool> operator==(   \
       const data_container<base_type::dimension_tag, base_type::medium_tag,    \
                            base_type::property_tag, OtherSIMD> &other) const { \
     if (nprops != other.nprops) {                                              \

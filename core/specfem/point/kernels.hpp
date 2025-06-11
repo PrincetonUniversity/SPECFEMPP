@@ -161,6 +161,7 @@ struct data_container<
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
 
+  KOKKOS_FUNCTION
   data_container() {
     Kokkos::abort("Kernels container for electromagnetic media is not "
                   "implemented for this dimension");
