@@ -19,6 +19,9 @@ changelog:
       labels:
         - documentation
         - docs
+    - title: Code Style Updates
+      labels:
+        - style
     - title: Fortran Meshfem2D/3D updates
       labels:
         - fortran
