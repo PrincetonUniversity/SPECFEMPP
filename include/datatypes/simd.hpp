@@ -157,5 +157,46 @@ KOKKOS_INLINE_FUNCTION bool all_of(const mask_type &mask) {
   }
 };
 
+// // Create print function for simd types
+// template <typename T, bool UseSIMD>
+// KOKKOS_INLINE_FUNCTION void print(const simd<T, UseSIMD> &value) {
+//   if constexpr (UseSIMD) {
+//     for (int i = 0; i < simd<T, UseSIMD>::size(); ++i) {
+//       printf("%f ", value[i]);
+//     }
+//   } else {
+//     printf("%f", value);
+//   }
+// }
+
+// // Create string return function for simd types
+// template <typename T, bool UseSIMD>
+// KOKKOS_INLINE_FUNCTION std::string to_string(
+//     const simd<T, UseSIMD> &value) {
+//   std::ostringstream oss;
+//   if constexpr (UseSIMD) {
+//     for (int i = 0; i < simd<T, UseSIMD>::size(); ++i) {
+//       oss << value[i] << " ";
+//     }
+//   } else {
+//     oss << value;
+//   }
+//   return oss.str();
+// }
+
 } // namespace datatype
 } // namespace specfem
+
+// Create << operator for native Kokkos SIMD types in global namespace for ADL
+template <typename T, typename Abi>
+std::ostream &operator<<(std::ostream &os,
+                         const Kokkos::Experimental::simd<T, Abi> &value) {
+  os << "[";
+  for (int i = 0; i < value.size(); ++i) {
+    if (i > 0)
+      os << ", ";
+    os << value[i];
+  }
+  os << "]";
+  return os;
+}

@@ -135,20 +135,20 @@ add_executable(
   # Kernels
   # Dim 2
   point/kernels/dim2/acoustic_isotropic.cpp
-  # point/kernels/dim2/elastic_isotropic.cpp
-  # point/kernels/dim2/elastic_anisotropic.cpp
-  # point/kernels/dim2/poroelastic_isotropic.cpp
+  point/kernels/dim2/elastic_isotropic.cpp
+  point/kernels/dim2/elastic_anisotropic.cpp
+  point/kernels/dim2/poroelastic_isotropic.cpp
   # Dim 3
   point/kernels/dim3/elastic_isotropic.cpp
   # Properties
   # Dim 2
   point/properties/dim2/elastic_isotropic.cpp
-  point/properties/dim2/elastic_anisotropic.cpp
+  # point/properties/dim2/elastic_anisotropic.cpp
   point/properties/dim2/acoustic_isotropic.cpp
-  point/properties/dim2/electromagnetic_isotropic.cpp
-  point/properties/dim2/poroelastic_isotropic.cpp
+  # point/properties/dim2/electromagnetic_isotropic.cpp
+  # point/properties/dim2/poroelastic_isotropic.cpp
   # Dim 3
-  point/properties/dim3/elastic_isotropic.cpp
+  # point/properties/dim3/elastic_isotropic.cpp
 
 )
 
