@@ -110,6 +110,9 @@ absorbright                     = .true.
 absorbtop                       = .false.
 absorbleft                      = .true.
 
+
+write_adjacency_map = .true.
+
 #-----------------------------------------------------------
 #
 # DISPLAY PARAMETERS
