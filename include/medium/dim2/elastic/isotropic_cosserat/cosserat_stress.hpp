@@ -35,12 +35,12 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_stress(
   // T(0, 1) = sigma_xz, but the spin notes have the divergence act on the first
   // component. So, sigma_xz is actually sigma_zx. And we have to add the
   // spin contribution from the notes
-  // sigma_xz = ... + 2 \nu \phi_{y}
-  T(0, 1) += factor;
+  // sigma_zx = ... - 2 \nu \phi_{y}
+  T(0, 1) -= factor;
 
   // The converse is true for the second component
-  // sigma_zx = ... - 2 \nu \phi_{y}
-  T(1, 0) -= factor;
+  // sigma_xz = ... + 2 \nu \phi_{y}
+  T(1, 0) += factor;
 
   return;
 };

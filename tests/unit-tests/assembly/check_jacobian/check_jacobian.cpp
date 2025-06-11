@@ -25,13 +25,14 @@ TEST_F(ASSEMBLY, CheckJacobian) {
     const auto Test = std::get<0>(parameters);
     specfem::compute::assembly assembly = std::get<5>(parameters);
 
-    bool caught_exception = false;
+    bool exception_thrown = false;
     try {
       test_check_jacobian(assembly);
-    } catch (const std::runtime_error &e) {
-      caught_exception = true;
-      std::cout << "Caught expected runtime error: " << e.what() << std::endl;
-    };
-    EXPECT_TRUE(caught_exception);
+    } catch (const std::exception &e) {
+      exception_thrown = true;
+    }
+    EXPECT_TRUE(exception_thrown)
+        << "Expected an exception to be thrown for test in check_jacobian.cpp"
+        << " but none was thrown for test: " << Test.name;
   }
 }
