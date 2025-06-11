@@ -135,57 +135,6 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
           specfem::compute::store_on_device(chunk_index, seismogram_components,
                                             receivers);
         });
-
-    // Kokkos::parallel_for(
-    //     "specfem::kernels::impl::domain_kernels::compute_seismograms",
-    //     policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-    //     KOKKOS_LAMBDA(const typename ChunkPolicy::member_type &team_member) {
-    //       // Instantiate shared views
-    //       // ----------------------------------------------------------------
-    //       ChunkElementFieldType element_field(team_member);
-    //       ElementQuadratureType element_quadrature(team_member);
-    //       ViewType wavefield(team_member.team_scratch(0));
-    //       ViewType lagrange_interpolant(team_member.team_scratch(0));
-    //       ResultsViewType seismogram_components(team_member.team_scratch(0));
-
-    //       specfem::compute::load_on_device(team_member, quadrature,
-    //                                        element_quadrature);
-
-    //       for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
-    //            tile += ChunkPolicy::chunk_size * simd_size) {
-    //         const auto iterator =
-    //             policy.mapped_league_iterator(team_member.league_rank(), tile);
-
-    //         if (iterator.is_end()) {
-    //           return;
-    //         }
-
-    //         specfem::compute::load_on_device(team_member, iterator, field,
-    //                                          element_field);
-
-    //         team_member.team_barrier();
-
-    //         specfem::medium::compute_wavefield<MediumTag, PropertyTag>(
-    //             team_member, iterator, assembly, element_quadrature,
-    //             element_field, wavefield_component, wavefield);
-
-    //         specfem::compute::load_on_device(team_member, iterator, receivers,
-    //                                          lagrange_interpolant);
-
-    //         team_member.team_barrier();
-
-    //         specfem::algorithms::interpolate_function(
-    //             team_member, iterator, lagrange_interpolant, wavefield,
-    //             seismogram_components);
-
-    //         team_member.team_barrier();
-
-    //         specfem::compute::store_on_device(team_member, iterator,
-    //                                           seismogram_components, receivers);
-    //       }
-    //     });
-
-    // Kokkos::fence();
   }
 
   return;
