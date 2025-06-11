@@ -25,6 +25,14 @@ TEST_F(ASSEMBLY, CheckJacobian) {
     const auto Test = std::get<0>(parameters);
     specfem::compute::assembly assembly = std::get<5>(parameters);
 
-    EXPECT_THROW(test_check_jacobian(assembly), std::runtime_error);
+    bool exception_thrown = false;
+    try {
+      test_check_jacobian(assembly);
+    } catch (const std::exception &e) {
+      exception_thrown = true;
+    }
+    EXPECT_TRUE(exception_thrown)
+        << "Expected an exception to be thrown for test in check_jacobian.cpp"
+        << " but none was thrown for test: " << Test.name;
   }
 }
