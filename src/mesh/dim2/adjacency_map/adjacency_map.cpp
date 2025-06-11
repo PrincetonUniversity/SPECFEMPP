@@ -153,6 +153,10 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
         bool matching = false;
         // populate nodes_edge according to which edge this is
         for (int i = 0; i < 3; i++) {
+          if (i == 1 && parent.control_nodes.ngnod == 4) {
+            // no middle node for ngnod = 4
+            continue;
+          }
           nodes_edge[i] = parent.control_nodes.knods(node_edge(edge, i), ispec);
         }
 
@@ -172,6 +176,10 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
             matching = true;
             // adjacent element has same nodes, but in clockwise direction
             for (int i = 0; i < 3; i++) {
+              if (i == 1 && parent.control_nodes.ngnod == 4) {
+                // no middle node for ngnod = 4
+                continue;
+              }
               if (nodes_edge[i] != parent.control_nodes.knods(
                                        node_edge(edge_o, 2 - i), ispec_o)) {
                 matching = false;
