@@ -19,6 +19,9 @@ changelog:
       labels:
         - documentation
         - docs
+    - title: Fortran Meshfem2D/3D updates
+      labels:
+        - fortran
     - title: Refactor 
       labels:
         - refactor
@@ -26,6 +29,9 @@ changelog:
       labels:
         - bug
         - fix
+    - title: Configuration/CMake
+      labels:
+        - configuration
     - title: 🔧 Maintenance
       labels:
         - maintenance
