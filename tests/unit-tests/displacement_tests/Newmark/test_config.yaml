@@ -108,3 +108,11 @@ Tests:
   #   databases:
   #     specfem_config: "displacement_tests/Newmark/serial/test12/specfem_config.yaml"
   #     traces: "displacement_tests/Newmark/serial/test12/traces"
+  - name : "SerialTest1_ADJMAP : Homogeneous elastic domain"
+    description: >
+      Test 1, using adjacency_map -generated assembly.
+    config:
+      nproc : 1
+    databases:
+      specfem_config: "displacement_tests/Newmark/serial/test1/specfem_config_adjmap.yaml"
+      traces: "displacement_tests/Newmark/serial/test1/traces"

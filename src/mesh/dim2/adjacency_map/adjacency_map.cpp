@@ -299,6 +299,8 @@ static inline void get_all_conforming_adjacencies__test_corner(
             specfem::dimension::type::dim2>::edge_to_index(edgetype));
     get_all_conforming_adjacencies__try_append(
         adj, search, other.first,
+        // edge is CCW from corner -> corner is not CCW side of edge
+        // double negative from the polarity flip
         edge_and_polarity_to_corner(other.second, is_ccw_from_corner));
   }
 }
@@ -345,27 +347,27 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
     switch (bd.second) {
     case enums::boundaries::type::TOP_LEFT:
       get_all_conforming_adjacencies__test_corner<
-          specfem::enums::edge::type::TOP, true>(*this, adj, search, bd);
+          specfem::enums::edge::type::TOP, false>(*this, adj, search, bd);
       get_all_conforming_adjacencies__test_corner<
-          specfem::enums::edge::type::LEFT, false>(*this, adj, search, bd);
+          specfem::enums::edge::type::LEFT, true>(*this, adj, search, bd);
       break;
     case enums::boundaries::type::BOTTOM_LEFT:
       get_all_conforming_adjacencies__test_corner<
-          specfem::enums::edge::type::LEFT, true>(*this, adj, search, bd);
+          specfem::enums::edge::type::LEFT, false>(*this, adj, search, bd);
       get_all_conforming_adjacencies__test_corner<
-          specfem::enums::edge::type::BOTTOM, false>(*this, adj, search, bd);
+          specfem::enums::edge::type::BOTTOM, true>(*this, adj, search, bd);
       break;
     case enums::boundaries::type::BOTTOM_RIGHT:
       get_all_conforming_adjacencies__test_corner<
-          specfem::enums::edge::type::BOTTOM, true>(*this, adj, search, bd);
+          specfem::enums::edge::type::BOTTOM, false>(*this, adj, search, bd);
       get_all_conforming_adjacencies__test_corner<
-          specfem::enums::edge::type::RIGHT, false>(*this, adj, search, bd);
+          specfem::enums::edge::type::RIGHT, true>(*this, adj, search, bd);
       break;
     case enums::boundaries::type::TOP_RIGHT:
       get_all_conforming_adjacencies__test_corner<
-          specfem::enums::edge::type::RIGHT, true>(*this, adj, search, bd);
+          specfem::enums::edge::type::RIGHT, false>(*this, adj, search, bd);
       get_all_conforming_adjacencies__test_corner<
-          specfem::enums::edge::type::TOP, false>(*this, adj, search, bd);
+          specfem::enums::edge::type::TOP, true>(*this, adj, search, bd);
       break;
     case enums::boundaries::type::TOP:
       get_all_conforming_adjacencies__test_edge<

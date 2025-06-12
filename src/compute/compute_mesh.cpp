@@ -45,7 +45,8 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
 specfem::compute::points
 assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
                  const specfem::mesh::adjacency_map::adjacency_map<
-                     specfem::dimension::type::dim2> &adjacency_map) {
+                     specfem::dimension::type::dim2> &adjacency_map,
+                 specfem::compute::mesh_to_compute_mapping &mapping) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
@@ -73,6 +74,7 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
     }
   }
   if (adjacency_map.was_initialized()) {
+    iloc = 0;
     specfem::kokkos::HostView3d<int> adjmap_index_mapping;
     std::tie(adjmap_index_mapping, nglob) =
         adjacency_map.generate_assembly_mapping(ngll);
@@ -86,7 +88,9 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
             int ispec = ichunk + ielement;
             if (ispec >= nspec)
               break;
-            cart_cord[iloc].iglob = adjmap_index_mapping(ispec, iz, ix);
+            const int ispec_mesh = mapping.compute_to_mesh(ispec);
+            cart_cord[iloc].iglob = adjmap_index_mapping(ispec_mesh, iz, ix);
+            iloc++;
           }
         }
       }
@@ -318,12 +322,13 @@ specfem::compute::mesh::mesh(
   this->ngllx = this->quadratures.gll.N;
   this->ngllz = this->quadratures.gll.N;
 
-  this->points = this->assemble(adjacency_map);
+  this->points = this->assemble(adjacency_map, this->mapping);
 }
 
 specfem::compute::points specfem::compute::mesh::assemble(
     const specfem::mesh::adjacency_map::adjacency_map<
-        specfem::dimension::type::dim2> &adjacency_map) {
+        specfem::dimension::type::dim2> &adjacency_map,
+    specfem::compute::mesh_to_compute_mapping &mapping) {
 
   const int ngnod = control_nodes.ngnod;
   const int nspec = control_nodes.nspec;
@@ -401,7 +406,7 @@ specfem::compute::points specfem::compute::mesh::assemble(
 
   // Kokkos::fence();
 
-  return assign_numbering(global_coordinates, adjacency_map);
+  return assign_numbering(global_coordinates, adjacency_map, mapping);
 }
 
 // specfem::compute::compute::compute(

@@ -201,7 +201,8 @@ struct mesh {
 
   specfem::compute::points
   assemble(const specfem::mesh::adjacency_map::adjacency_map<
-           specfem::dimension::type::dim2> &adjacency_map);
+               specfem::dimension::type::dim2> &adjacency_map,
+           specfem::compute::mesh_to_compute_mapping &mapping);
 
   /**
    * @brief Compute the global coordinates for a point given its local
