@@ -1,4 +1,5 @@
 #include "../properties_tests.hpp"
+#include "datatypes/simd.hpp"
 #include "specfem/point/properties.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
@@ -10,12 +11,14 @@ const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
 // ============================================================================
 // 2D Electromagnetic Tests
 // ============================================================================
-TEST_F(PointPropertiesTest, ElectromagneticIsotropic2D) {
+TYPED_TEST(PointPropertiesTest, ElectromagneticIsotropic2D) {
+  constexpr bool using_simd = TypeParam::value; ///< Use SIMD if true
+
   // Get the SIMD size from the implementation
-  using simd_type = typename specfem::datatype::simd<type_real, true>::datatype;
-  constexpr bool using_simd =
-      specfem::datatype::simd<type_real, true>::using_simd;
-  constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
+  using simd_type =
+      typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  constexpr int simd_size =
+      specfem::datatype::simd<type_real, using_simd>::size();
 
   // Declare variables for properties
   simd_type mu0_inv;
@@ -24,7 +27,7 @@ TEST_F(PointPropertiesTest, ElectromagneticIsotropic2D) {
   simd_type sig11;
   simd_type sig33;
 
-  if (using_simd) {
+  if constexpr (using_simd) {
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
       mu0_inv[i] = 7.957747e5 + i * 1.0e4; // 1/μ₀ (1/H/m)
@@ -49,15 +52,19 @@ TEST_F(PointPropertiesTest, ElectromagneticIsotropic2D) {
                              using_simd>
       props(mu0_inv, eps11, eps33, sig11, sig33);
 
-  // Test accessors with tolerance-based comparisons
   EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.mu0_inv() - mu0_inv) < tol));
+      specfem::datatype::all_of(Kokkos::abs(props.mu0_inv() - mu0_inv) < tol))
+      << ExpectedGot(mu0_inv, props.mu0_inv());
   EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.eps11() - eps11) < tol));
+      specfem::datatype::all_of(Kokkos::abs(props.eps11() - eps11) < tol))
+      << ExpectedGot(eps11, props.eps11());
   EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.eps33() - eps33) < tol));
+      specfem::datatype::all_of(Kokkos::abs(props.eps33() - eps33) < tol))
+      << ExpectedGot(eps33, props.eps33());
   EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.sig11() - sig11) < tol));
+      specfem::datatype::all_of(Kokkos::abs(props.sig11() - sig11) < tol))
+      << ExpectedGot(sig11, props.sig11());
   EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.sig33() - sig33) < tol));
+      specfem::datatype::all_of(Kokkos::abs(props.sig33() - sig33) < tol))
+      << ExpectedGot(sig33, props.sig33());
 }

@@ -1,7 +1,8 @@
 #include "../properties_tests.hpp"
+#include "datatypes/simd.hpp"
 #include "specfem/point/properties.hpp"
 #include "specfem_setup.hpp"
-#include "test_setup.hpp"
+#include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -10,12 +11,15 @@ const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
 // ============================================================================
 // 2D Elastic Anisotropic Tests
 // ============================================================================
-TEST_F(PointPropertiesTest, ElasticAnisotropic2D) {
+TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
+
+  constexpr bool using_simd = TypeParam::value; ///< Use SIMD if true
+
   // Get the SIMD size from the implementation
-  using simd_type = typename specfem::datatype::simd<type_real, true>::datatype;
-  constexpr bool using_simd =
-      specfem::datatype::simd<type_real, true>::using_simd;
-  constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
+  using simd_type =
+      typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  constexpr int simd_size =
+      specfem::datatype::simd<type_real, using_simd>::size();
 
   // Declare variables for properties
   simd_type c11;
@@ -31,7 +35,7 @@ TEST_F(PointPropertiesTest, ElasticAnisotropic2D) {
   simd_type rho_vp_val;
   simd_type rho_vs_val;
 
-  if (using_simd) {
+  if constexpr (using_simd) {
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
       rho[i] = 2500.0 + i * 50.0;  // kg/m³
@@ -87,21 +91,31 @@ TEST_F(PointPropertiesTest, ElasticAnisotropic2D) {
       specfem::element::property_tag::anisotropic, using_simd>
       props(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho);
 
-  // Test accessors with tolerance-based comparisons
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c11() - c11) < tol));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c13() - c13) < tol));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c15() - c15) < tol));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c33() - c33) < tol));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c35() - c35) < tol));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c55() - c55) < tol));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c12() - c12) < tol));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c23() - c23) < tol));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c25() - c25) < tol));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.rho() - rho) < tol));
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c11() - c11) < tol))
+      << ExpectedGot(c11, props.c11());
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c13() - c13) < tol))
+      << ExpectedGot(c13, props.c13());
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c15() - c15) < tol))
+      << ExpectedGot(c15, props.c15());
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c33() - c33) < tol))
+      << ExpectedGot(c33, props.c33());
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c35() - c35) < tol))
+      << ExpectedGot(c35, props.c35());
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c55() - c55) < tol))
+      << ExpectedGot(c55, props.c55());
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c12() - c12) < tol))
+      << ExpectedGot(c12, props.c12());
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c23() - c23) < tol))
+      << ExpectedGot(c23, props.c23());
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c25() - c25) < tol))
+      << ExpectedGot(c25, props.c25());
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.rho() - rho) < tol))
+      << ExpectedGot(rho, props.rho());
 
-  // Test computed properties
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.rho_vp() - rho_vp_val) < tol));
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.rho_vs() - rho_vs_val) < tol));
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(props.rho_vp() - rho_vp_val) < tol))
+      << ExpectedGot(rho_vp_val, props.rho_vp());
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(props.rho_vs() - rho_vs_val) < tol))
+      << ExpectedGot(rho_vs_val, props.rho_vs());
 }
