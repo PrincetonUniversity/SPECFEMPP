@@ -62,18 +62,13 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
       Kokkos::abs(props.rho_inverse() - rho_inv) < tol))
       << ExpectedGot(kappa, props.rho_inverse());
 
-  // EXPECT_SIMD_REAL_EQ(
-  //     props.rho(), rho, using_simd, simd_size); // Check density
-  // EXPECT_SIMD_REAL_EQ(props.vp(), vp, using_simd, simd_size); // Check P-wave
-  // velocity EXPECT_SIMD_REAL_EQ(
-  //     props.rho_inverse(), rho_inv, using_simd, simd_size); // Check inverse
-  //     density
-  // EXPECT_SIMD_REAL_EQ(
-  //     props.kappa(), kappa, using_simd, simd_size); // Check bulk modulus
-  // EXPECT_SIMD_REAL_EQ(
-  //     props.kappa_inverse(), kappa_inv, using_simd, simd_size); // Check
-  //     inverse bulk modulus
-  // EXPECT_SIMD_REAL_EQ(
-  //     props.rho_vpinverse(), rho_vpinv, using_simd, simd_size); // Check
-  //     inverse density times P-wave velocity
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(props.kappa() - kappa) < tol))
+      << ExpectedGot(kappa, props.kappa());
+  EXPECT_TRUE(specfem::datatype::all_of(
+      Kokkos::abs(props.kappa_inverse() - kappa_inv) < tol))
+      << ExpectedGot(kappa_inv, props.kappa_inverse());
+  EXPECT_TRUE(specfem::datatype::all_of(
+      Kokkos::abs(props.rho_vpinverse() - rho_vpinv) < tol))
+      << ExpectedGot(rho_vpinv, props.rho_vpinverse());
 }
