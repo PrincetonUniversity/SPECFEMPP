@@ -66,25 +66,25 @@ Table below shows various features available and tested in this package on vario
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
     * - Elastic Domains
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
     * - Acoustic Domains
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
     * - Acoustic-Elastic coupling
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
     * - **Boundary Conditions**
       -
@@ -114,13 +114,13 @@ Table below shows various features available and tested in this package on vario
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
     * - Adjoint Simulations
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
     * - **Time Schemes**
       -
@@ -132,7 +132,7 @@ Table below shows various features available and tested in this package on vario
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
     * - **Seismograms**
       -
@@ -144,19 +144,19 @@ Table below shows various features available and tested in this package on vario
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
     * - Velocity
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
     * - Acceleration
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
     * - **Seimogram Formats**
       -
@@ -168,7 +168,7 @@ Table below shows various features available and tested in this package on vario
       - ✔
       - ✔
       - ✔
-      -
+      - ✔
 
 .. note::
     While we work towards building this package and making the
