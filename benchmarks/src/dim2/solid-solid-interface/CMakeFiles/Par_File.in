@@ -113,7 +113,7 @@ interfacesfile                  = @CURRENT_BENCHMARK_BUILD_DIR@/topography.dat
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0          # abscissa of left side of the model
 xmax                            = 200000.d0     # abscissa of right side of the model
-nx                              = 188           # number of elements along X
+nx                              = 300           # number of elements along X
 
 STACEY_ABSORBING_CONDITIONS    = .true.
 
@@ -125,8 +125,8 @@ absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 2              # then set below the different regions and model number for each region
-1 188 1   38 1
-1 188 39  76 2
+1 300 1   60 1
+1 300 61  120 2
 
 #-----------------------------------------------------------
 #

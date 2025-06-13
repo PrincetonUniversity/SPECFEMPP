@@ -1,4 +1,5 @@
 #include "parameter_parser/elastic_wave.hpp"
+#include "utilities/strings.hpp"
 
 specfem::runtime_configuration::elastic_wave::elastic_wave(
     const YAML::Node &Node) {
@@ -9,7 +10,8 @@ specfem::runtime_configuration::elastic_wave::elastic_wave(
                              std::string(e.what()));
   }
 
-  if (this->elastic_wave_type != "P_SV" && this->elastic_wave_type != "SH") {
+  if (!specfem::utilities::is_psv_string(this->elastic_wave_type) &&
+      !specfem::utilities::is_sh_string(this->elastic_wave_type)) {
     throw std::runtime_error("Invalid elastic wave type: " +
                              this->elastic_wave_type);
   }
