@@ -10,4 +10,4 @@ sources:
       dGaussian:
         factor: 1e10
         tshift: 0.0
-        f0: 2.0
+        f0: 1.5

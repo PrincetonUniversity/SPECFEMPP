@@ -38,5 +38,5 @@ def get_traces(directory):
     return stream
 
 
-stream = get_traces("OUTPUT_FILES/seismograms")
-stream.plot(size=(1000, 750)).savefig("OUTPUT_FILES/seismograms.png", dpi=300)
+stream = get_traces("OUTPUT_FILES/results_sh")
+stream.plot(size=(1000, 400)).savefig("OUTPUT_FILES/seismograms_sh.png", dpi=300)
