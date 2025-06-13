@@ -229,6 +229,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in
                ${CMAKE_BINARY_DIR}/include/constants.hpp)
 
+# Add the configure files to the clean target
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp
+    ${CMAKE_BINARY_DIR}/include/constants.hpp
+)
+
 # Add the include directories so that the generated files can be found
 include_directories(include)
 include_directories(core)
@@ -795,6 +801,7 @@ if (BUILD_BENCHMARKS)
         message(STATUS "BENCHMARKS_BUILD_DIR was not defined, using default: ${BENCHMARKS_BUILD_DIR}")
     endif()
 
+    # Create the benchmarks build directory if it does not exist
     message(STATUS "Building benchmarks...")
     add_subdirectory(benchmarks/src)
     message(STATUS "Benchmarks built.")
@@ -813,6 +820,9 @@ if (DOXYGEN_FOUND)
     # request to configure the file
     configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
     message(STATUS "Doxygen build started")
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+        ${DOXYGEN_OUT}
+    )
 
     # Note: do not put "ALL" - this builds docs together with application EVERY TIME!
     add_custom_target( docs
@@ -859,4 +869,10 @@ if (SPECFEM_INSTALL)
         # Make this run after your main targets
         DEPENDS specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram xgenerate_databases # list all your targets here
     )
+
+    # Add the prefix directory to the clean target
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+        ${CMAKE_INSTALL_PREFIX}
+    )
+
 endif(SPECFEM_INSTALL)
