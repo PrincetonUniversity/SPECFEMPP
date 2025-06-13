@@ -34,18 +34,23 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
   if constexpr (using_simd) {
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
-      rho[i] = 2700.0 + i * 50.0; // kg/m³
-      vp[i] = 6000.0 + i * 100.0; // m/s
-      vs[i] = 3500.0 + i * 50.0;  // m/s
+      rho[i] =
+          static_cast<type_real>(2700.0) +
+          static_cast<type_real>(i) * static_cast<type_real>(50.0); // kg/m³
+      vp[i] = static_cast<type_real>(6000.0) +
+              static_cast<type_real>(i) * static_cast<type_real>(100.0); // m/s
+      vs[i] = static_cast<type_real>(3500.0) +
+              static_cast<type_real>(i) * static_cast<type_real>(50.0); // m/s
 
       mu[i] = static_cast<type_real>(rho[i]) * static_cast<type_real>(vs[i]) *
               static_cast<type_real>(vs[i]);
       lambda[i] = static_cast<type_real>(rho[i]) *
                       static_cast<type_real>(vp[i]) *
                       static_cast<type_real>(vp[i]) -
-                  2.0 * static_cast<type_real>(mu[i]);
-      lambdaplus2mu[i] = static_cast<type_real>(lambda[i]) +
-                         2.0 * static_cast<type_real>(mu[i]);
+                  static_cast<type_real>(2.0) * static_cast<type_real>(mu[i]);
+      lambdaplus2mu[i] =
+          static_cast<type_real>(lambda[i]) +
+          static_cast<type_real>(2.0) * static_cast<type_real>(mu[i]);
       rho_vp[i] =
           static_cast<type_real>(rho[i]) * static_cast<type_real>(vp[i]);
       rho_vs[i] =
@@ -98,8 +103,7 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
    * @endcode
    */
   // EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.lambda() - lambda)
-  // < tol))
-  //     << ExpectedGot(lambda, props.lambda());
+  // < tol)) << ExpectedGot(lambda, props.lambda());
   EXPECT_TRUE(specfem::datatype::all_of(
       Kokkos::abs(props.lambda() -
                   (lambdaplus2mu - static_cast<type_real>(2.0) * mu)) < tol))
