@@ -188,7 +188,8 @@ public:
                                                           ///< properties
 
   using simd =
-      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD data type
+      typename base_accessor::template simd<type_real>; ///< SIMD data type
+
   using value_type =
       typename base_accessor::template scalar_type<type_real>; ///< Type of the
                                                                ///< properties
@@ -228,11 +229,10 @@ struct KernelsAccessor
   using base_type =
       specfem::accessor::Accessor<specfem::accessor::type::point,
                                   specfem::data_class::type::kernels,
-                                  DimensionTag, UseSIMD>; ///< Base type of
-                                                          ///< the point
-                                                          ///< kernels
-  using simd =
-      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD data type
+                                  DimensionTag, UseSIMD>;    ///< Base type of
+                                                             ///< the point
+                                                             ///< kernels
+  using simd = typename base_type::template simd<type_real>; ///< SIMD data type
   using value_type =
       typename base_type::template scalar_type<type_real>; ///< Type of the
                                                            ///< properties
