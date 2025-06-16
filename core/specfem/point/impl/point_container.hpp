@@ -194,8 +194,6 @@ public:
       typename base_accessor::template scalar_type<type_real>; ///< Type of the
                                                                ///< properties
 
-  constexpr static auto dimension_tag =
-      DimensionTag;                                 ///< dimension of the medium
   constexpr static auto medium_tag = MediumTag;     ///< type of the medium
   constexpr static auto property_tag = PropertyTag; ///< type of the properties
 };
@@ -236,8 +234,7 @@ struct KernelsAccessor
   using value_type =
       typename base_type::template scalar_type<type_real>; ///< Type of the
                                                            ///< properties
-  constexpr static auto dimension_tag =
-      DimensionTag;                                 ///< dimension of the medium
+
   constexpr static auto medium_tag = MediumTag;     ///< type of the medium
   constexpr static auto property_tag = PropertyTag; ///< type of the properties
 };
