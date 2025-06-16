@@ -148,6 +148,17 @@ template <typename T, typename ABI>
 struct is_simd_mask<Kokkos::Experimental::simd_mask<T, ABI> > : std::true_type {
 };
 
+/**
+ * @brief Checks if all elements in the mask are true.
+ *
+ * This function is specialized for SIMD masks and uses
+ * Kokkos::Experimental::all_of for efficient evaluation. For non-SIMD masks, it
+ * simply checks the boolean value.
+ *
+ * @tparam mask_type The type of the mask.
+ * @param mask The mask to check.
+ * @return true if all elements in the mask are true, false otherwise.
+ */
 template <typename mask_type>
 KOKKOS_INLINE_FUNCTION bool all_of(const mask_type &mask) {
   if constexpr (is_simd_mask<mask_type>::value) {
@@ -159,3 +170,22 @@ KOKKOS_INLINE_FUNCTION bool all_of(const mask_type &mask) {
 
 } // namespace datatype
 } // namespace specfem
+
+/**
+ * @brief Overloaded operator<< for printing simd values.
+ * @param os The output stream.
+ * @param value The simd value to print.
+ * @return The output stream after printing the simd value.
+ */
+template <typename T, typename Abi>
+std::ostream &operator<<(std::ostream &os,
+                         const Kokkos::Experimental::simd<T, Abi> &value) {
+  os << "[";
+  for (int i = 0; i < value.size(); ++i) {
+    if (i > 0)
+      os << ", ";
+    os << value[i];
+  }
+  os << "]";
+  return os;
+}
