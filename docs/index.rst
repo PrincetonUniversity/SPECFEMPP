@@ -46,7 +46,8 @@ Current capabilities
 
 Table below shows various features available and tested in this package on various architectures:
 
-.. list-table::
+
+.. list-table:: Feature Support Matrix
     :widths: 36 16 16 16 16
     :header-rows: 1
 
@@ -56,53 +57,89 @@ Table below shows various features available and tested in this package on vario
       - **CUDA**
       - **HIP**
 
-    * - **Physics**
+    * - **2-D Physics (Forward / Misfit Kernels)**
       -
       -
       -
       -
 
-    * - P-SV waves
-      - ✔
-      - ✔
-      - ✔
-      -
+    * - Acoustic Isotropic
+      - ✔ / ✔
+      - ✔ / ✔
+      - ✔ / ✔
+      - ✔* / ✔*
 
-    * - Elastic Domains
-      - ✔
-      - ✔
-      - ✔
-      -
+    * - Elastic Isotropic P-SV
+      - ✔ / ✔
+      - ✔ / ✔
+      - ✔ / ✔
+      - ✔* / ✔*
 
-    * - Acoustic Domains
-      - ✔
-      - ✔
-      - ✔
+    * - Elastic Isotropic SH
+      - ✔ / ✔*
+      - ✔ / ✔*
+      - ✔ / ✔*
+      - ✔* / ✔*
+
+    * - Elastic Anisotropic P-SV
+      - ✔ / ✔
+      - ✔ / ✔
+      - ✔ / ✔
+      - ✔* / ✔*
+
+    * - Elastic Anisotropic SH
+      - ✔ / ✘
+      - ✔ / ✘
+      - ✔ / ✘
+      - ✔* / ✘
+
+    * - Poroelastic Isotropic (P-SV only)
+      - ✔ /  ✘
+      - ✔ /  ✘
+      - ✔ /  ✘
+      - ✔* / ✘
+
+    * - **2-D Medium Coupling**
+      -
+      -
+      -
       -
 
     * - Acoustic-Elastic coupling
       - ✔
       - ✔
       - ✔
+      - ✔*
+
+    * - Acoustic-Poroelastic coupling
+      - ✘
+      - ✘
+      - ✘
+      - ✘
+
+    * - Elastic-Poroelastic coupling
+      - ✘
+      - ✘
+      - ✘
+      - ✘
+
+    * - **Boundary Conditions (BC)**
+      -
+      -
+      -
       -
 
-    * - **Boundary Conditions**
-      -
-      -
-      -
-      -
+    * - Absorbing BC (Stacey)
+      - ✔
+      - ✔
+      - ✔
+      - ✔*
 
-    * - Absorbing Boundary Conditions (Stacey)
+    * - Free Surface BC
       - ✔
       - ✔
       - ✔
-      -
-
-    * - Free Surface Boundary Conditions
-      - ✔
-      - ✔
-      - ✔
-      -
+      - ✔*
 
     * - **Simulation Setup**
       -
@@ -114,13 +151,13 @@ Table below shows various features available and tested in this package on vario
       - ✔
       - ✔
       - ✔
-      -
+      - ✔*
 
     * - Adjoint Simulations
       - ✔
       - ✔
       - ✔
-      -
+      - ✔*
 
     * - **Time Schemes**
       -
@@ -132,7 +169,7 @@ Table below shows various features available and tested in this package on vario
       - ✔
       - ✔
       - ✔
-      -
+      - ✔*
 
     * - **Seismograms**
       -
@@ -144,21 +181,21 @@ Table below shows various features available and tested in this package on vario
       - ✔
       - ✔
       - ✔
-      -
+      - ✔*
 
     * - Velocity
       - ✔
       - ✔
       - ✔
-      -
+      - ✔*
 
     * - Acceleration
       - ✔
       - ✔
       - ✔
-      -
+      - ✔*
 
-    * - **Seimogram Formats**
+    * - **Seismogram Formats**
       -
       -
       -
@@ -168,9 +205,16 @@ Table below shows various features available and tested in this package on vario
       - ✔
       - ✔
       - ✔
-      -
+      - ✔*
+
+\* Not tested. This, in general means that the feature is not tested in
+continuous integration if the entire column has a star, and if the row has a
+star, it means that the feature is not tested/does not match the `Fortran`
+version of `specfem2d`. In the former case, see `HIP` column, and for the latter
+case, see the Poroelastic Isotropic row.
 
 .. note::
+
     While we work towards building this package and making the
     code/documentation more complete, please refer relevant SPECFEM package
     documentations for technical details on SPECFEM theory.
