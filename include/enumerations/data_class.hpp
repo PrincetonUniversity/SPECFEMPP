@@ -3,6 +3,7 @@
 namespace specfem::data_class {
 enum type {
   index,
+  mapped_index,
   properties,
   kernels,
   partial_derivatives,

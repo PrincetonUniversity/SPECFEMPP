@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/point.hpp"
+#include "execution/for_each_level.hpp"
 
 namespace specfem {
 namespace compute {
@@ -819,72 +820,13 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add(
 }
 
 template <
-    bool on_device, typename MemberType, typename WavefieldType,
+    bool on_device, typename ChunkIndexType, typename WavefieldType,
     typename ViewType,
     typename std::enable_if_t<
-        ViewType::isElementFieldType && !ViewType::simd::using_simd, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
-impl_load(const MemberType &team, const int ispec, const WavefieldType &field,
-          ViewType &element_field) {
-
-  constexpr static bool StoreDisplacement = ViewType::store_displacement;
-  constexpr static bool StoreVelocity = ViewType::store_velocity;
-  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
-  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumTag = ViewType::medium_tag;
-  constexpr static int components = ViewType::components;
-
-  constexpr static int NGLL = ViewType::ngll;
-
-  if constexpr (on_device) {
-    static_assert(std::is_same_v<typename MemberType::execution_space,
-                                 Kokkos::DefaultExecutionSpace>,
-                  "Calling team must have a device execution space");
-  } else {
-    static_assert(
-        std::is_same_v<typename MemberType::execution_space, Kokkos::HostSpace>,
-        "Calling team must have a device execution space");
-  }
-
-  const auto &curr_field = field.template get_field<MediumTag>();
-  Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, NGLL * NGLL), [&](const int &xz) {
-        int iz, ix;
-        sub2ind(xz, NGLL, iz, ix);
-        const int iglob =
-            field.template get_iglob<on_device>(ispec, iz, ix, MediumTag);
-
-        for (int icomp = 0; icomp < components; ++icomp) {
-          if constexpr (StoreDisplacement) {
-            element_field.displacement(iz, ix, icomp) =
-                curr_field.template get_field<on_device>(iglob, icomp);
-          }
-          if constexpr (StoreVelocity) {
-            element_field.velocity(iz, ix, icomp) =
-                curr_field.template get_field_dot<on_device>(iglob, icomp);
-          }
-          if constexpr (StoreAcceleration) {
-            element_field.acceleration(iz, ix, icomp) =
-                curr_field.template get_field_dot_dot<on_device>(iglob, icomp);
-          }
-          if constexpr (StoreMassMatrix) {
-            element_field.mass_matrix(iz, ix, icomp) =
-                curr_field.template get_mass_inverse<on_device>(iglob, icomp);
-          }
-        }
-      });
-
-  return;
-}
-
-template <
-    bool on_device, typename MemberType, typename WavefieldType,
-    typename IteratorType, typename ViewType,
-    typename std::enable_if_t<
         ViewType::isChunkFieldType && !ViewType::simd::using_simd, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
-impl_load(const MemberType &team, const IteratorType &iterator,
-          const WavefieldType &field, ViewType &chunk_field) {
+KOKKOS_FUNCTION void impl_load(const ChunkIndexType &index,
+                                           const WavefieldType &field,
+                                           ViewType &chunk_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
   constexpr static bool StoreVelocity = ViewType::store_velocity;
@@ -895,38 +837,18 @@ impl_load(const MemberType &team, const IteratorType &iterator,
 
   constexpr static int NGLL = ViewType::ngll;
   constexpr static bool using_simd = ViewType::simd::using_simd;
-
-  static_assert(
-      std::is_same_v<typename IteratorType::simd, typename ViewType::simd>,
-      "Iterator and View must have the same simd type");
-
-  if constexpr (on_device) {
-    static_assert(std::is_same_v<typename MemberType::execution_space,
-                                 Kokkos::DefaultExecutionSpace>,
-                  "Calling team must have a device execution space");
-  } else {
-    static_assert(
-        std::is_same_v<typename MemberType::execution_space, Kokkos::HostSpace>,
-        "Calling team must have a device execution space");
-  }
-
-  static_assert(
-      Kokkos::SpaceAccessibility<typename MemberType::execution_space,
-                                 typename ViewType::memory_space>::accessible,
-      "Calling team must have access to the memory space of the view");
-
   const auto &curr_field = field.template get_field<MediumTag>();
-  Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
-        const auto iterator_index = iterator(i);
-        const int ielement = iterator_index.ielement;
-        const int ispec = iterator_index.index.ispec;
-        const int iz = iterator_index.index.iz;
-        const int ix = iterator_index.index.ix;
 
+  specfem::execution::for_each_level(
+      index.get_iterator(),
+      [&](const typename ChunkIndexType::iterator_type::index_type &iterator_index) {
+        const auto ielement = iterator_index.get_policy_index();
+        const auto point_index = iterator_index.get_index();
+        const int ispec = point_index.ispec;
+        const int iz = point_index.iz;
+        const int ix = point_index.ix;
         const int iglob =
             field.template get_iglob<on_device>(ispec, iz, ix, MediumTag);
-
         for (int icomp = 0; icomp < components; ++icomp) {
           if constexpr (StoreDisplacement) {
             chunk_field.displacement(ielement, iz, ix, icomp) =
@@ -951,13 +873,13 @@ impl_load(const MemberType &team, const IteratorType &iterator,
 }
 
 template <
-    bool on_device, typename MemberType, typename WavefieldType,
-    typename IteratorType, typename ViewType,
+    bool on_device, typename ChunkIndexType, typename WavefieldType,
+    typename ViewType,
     typename std::enable_if_t<
         ViewType::isChunkFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
-impl_load(const MemberType &team, const IteratorType &iterator,
-          const WavefieldType &field, ViewType &chunk_field) {
+KOKKOS_FUNCTION void impl_load(const ChunkIndexType &index,
+                                        const WavefieldType &field,
+                                        ViewType &chunk_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
   constexpr static bool StoreVelocity = ViewType::store_velocity;
@@ -968,36 +890,19 @@ impl_load(const MemberType &team, const IteratorType &iterator,
 
   constexpr static int NGLL = ViewType::ngll;
 
-  static_assert(
-      std::is_same_v<typename IteratorType::simd, typename ViewType::simd>,
-      "Iterator and View must have the same simd type");
-
-  static_assert(
-      Kokkos::SpaceAccessibility<typename MemberType::execution_space,
-                                 typename ViewType::memory_space>::accessible,
-      "Calling team must have access to the memory space of the view");
-
-  if constexpr (on_device) {
-    static_assert(std::is_same_v<typename MemberType::execution_space,
-                                 Kokkos::DefaultExecutionSpace>,
-                  "Calling team must have a device execution space");
-  } else {
-    static_assert(
-        std::is_same_v<typename MemberType::execution_space, Kokkos::HostSpace>,
-        "Calling team must have a device execution space");
-  }
-
   const auto &curr_field = field.template get_field<MediumTag>();
-  Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
-        const auto iterator_index = iterator(i);
-        const int ielement = iterator_index.ielement;
-        const int ispec = iterator_index.index.ispec;
-        const int iz = iterator_index.index.iz;
-        const int ix = iterator_index.index.ix;
 
-        for (std::size_t lane = 0; lane < IteratorType::simd::size(); ++lane) {
-          if (!iterator_index.index.mask(lane)) {
+  specfem::execution::for_each_level(
+      index.get_iterator(),
+      [&](const typename ChunkIndexType::iterator_type::index_type &iterator_index) {
+        const auto ielement = iterator_index.get_policy_index();
+        const auto point_index = iterator_index.get_index();
+        const int ispec = point_index.ispec;
+        const int iz = point_index.iz;
+        const int ix = point_index.ix;
+
+        for (std::size_t lane = 0; lane < ViewType::simd::size(); ++lane) {
+          if (!point_index.mask(lane)) {
             continue;
           }
 
