@@ -47,42 +47,35 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
       const type_real i_real = 1.0;
-      phi[i] =
-          static_cast<type_real>(0.2) +
-          i_real * static_cast<type_real>(0.01); // porosity
+      phi[i] = static_cast<type_real>(0.2) +
+               i_real * static_cast<type_real>(0.01); // porosity
       rho_s[i] = static_cast<type_real>(2650.0) +
-                 i_real *
-                     static_cast<type_real>(10.0); // solid density (kg/m³)
+                 i_real * static_cast<type_real>(10.0); // solid density (kg/m³)
       rho_f[i] = static_cast<type_real>(1000.0) +
-                 i_real *
-                     static_cast<type_real>(5.0); // fluid density (kg/m³)
-      tortuosity[i] =
-          static_cast<type_real>(2.0) +
-          i_real * static_cast<type_real>(0.1); // tortuosity
+                 i_real * static_cast<type_real>(5.0); // fluid density (kg/m³)
+      tortuosity[i] = static_cast<type_real>(2.0) +
+                      i_real * static_cast<type_real>(0.1); // tortuosity
       mu_G[i] = static_cast<type_real>(10.0e9) +
-                i_real *
-                    static_cast<type_real>(1.0e8); // shear modulus (Pa)
-      H_Biot[i] = static_cast<type_real>(25.0e9) +
-                  i_real *
-                      static_cast<type_real>(1.0e8); // Biot's H modulus (Pa)
-      C_Biot[i] = static_cast<type_real>(10.0e9) +
-                  i_real *
-                      static_cast<type_real>(1.0e7); // Biot's C modulus (Pa)
-      M_Biot[i] = static_cast<type_real>(15.0e9) +
-                  i_real *
-                      static_cast<type_real>(1.0e7); // Biot's M modulus (Pa)
+                i_real * static_cast<type_real>(1.0e8); // shear modulus (Pa)
+      H_Biot[i] =
+          static_cast<type_real>(25.0e9) +
+          i_real * static_cast<type_real>(1.0e8); // Biot's H modulus (Pa)
+      C_Biot[i] =
+          static_cast<type_real>(10.0e9) +
+          i_real * static_cast<type_real>(1.0e7); // Biot's C modulus (Pa)
+      M_Biot[i] =
+          static_cast<type_real>(15.0e9) +
+          i_real * static_cast<type_real>(1.0e7); // Biot's M modulus (Pa)
       permxx[i] =
           static_cast<type_real>(1.0e-12) +
-          i_real *
-              static_cast<type_real>(1.0e-14); // permeability in xx (m²)
-      permxz[i] = static_cast<type_real>(0.0); // permeability in xz (m²)
+          i_real * static_cast<type_real>(1.0e-14); // permeability in xx (m²)
+      permxz[i] = static_cast<type_real>(0.0);      // permeability in xz (m²)
       permzz[i] =
           static_cast<type_real>(1.0e-12) +
-          i_real *
-              static_cast<type_real>(1.0e-14); // permeability in zz (m²)
-      eta_f[i] = static_cast<type_real>(1.0e-3) +
-                 i_real *
-                     static_cast<type_real>(1.0e-5); // fluid viscosity (Pa·s)
+          i_real * static_cast<type_real>(1.0e-14); // permeability in zz (m²)
+      eta_f[i] =
+          static_cast<type_real>(1.0e-3) +
+          i_real * static_cast<type_real>(1.0e-5); // fluid viscosity (Pa·s)
 
       // Compute expected properties for verification
       lambda_G_val[i] =
@@ -201,19 +194,17 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
 
   // Wave velocities are complex calculations, so we just check they return
   // reasonable values
-  simd_type zero {static_cast<type_real>(0.0)};
-  EXPECT_TRUE(specfem::datatype::all_of(props.vpI() > zero)) << ExpectedGot(
-      zero, props.vpI());
-  EXPECT_TRUE(specfem::datatype::all_of(props.vpII() > zero)) << ExpectedGot(
-      zero, props.vpII());
-  EXPECT_TRUE(specfem::datatype::all_of(props.vs() > zero)) << ExpectedGot(
-      zero, props.vs());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      props.vpII() < props.vpI())) << "vpII is typically slower than vpI\n" << ExpectedGot(
-      props.vpII(), props.vpI())
-      ; // 
+  simd_type zero{ static_cast<type_real>(0.0) };
+  EXPECT_TRUE(specfem::datatype::all_of(props.vpI() > zero))
+      << ExpectedGot(zero, props.vpI());
+  EXPECT_TRUE(specfem::datatype::all_of(props.vpII() > zero))
+      << ExpectedGot(zero, props.vpII());
+  EXPECT_TRUE(specfem::datatype::all_of(props.vs() > zero))
+      << ExpectedGot(zero, props.vs());
+  EXPECT_TRUE(specfem::datatype::all_of(props.vpII() < props.vpI()))
+      << "vpII is typically slower than vpI\n"
+      << ExpectedGot(props.vpII(), props.vpI()); //
   EXPECT_TRUE(
       specfem::datatype::all_of(Kokkos::abs(props.vs() - vs_expected) < tol))
       << ExpectedGot(vs_expected, props.vs());
-      
 }
