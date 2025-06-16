@@ -32,6 +32,7 @@ struct Accessor {
   constexpr static auto accessor_type = AccessorType;
   constexpr static auto data_class = DataClass;
   constexpr static auto dimension_tag = DimensionTag;
+  constexpr static bool using_simd = UseSIMD;
 
   template <typename T>
   using simd = specfem::datatype::simd<T, UseSIMD>; ///< SIMD data type
