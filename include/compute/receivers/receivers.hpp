@@ -382,15 +382,14 @@ private:
                               (IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))
 
-  template <typename MemberType, typename IteratorType, typename ViewType>
-  friend KOKKOS_FUNCTION void
-  load_on_device(const MemberType &team_member, const IteratorType &iterator,
-                 const receivers &receivers, ViewType &lagrange_interpolant);
+  template <typename ChunkIndexType, typename ViewType>
+  friend KOKKOS_FUNCTION void load_on_device(const ChunkIndexType &chunk_index,
+                                             const receivers &receivers,
+                                             ViewType &lagrange_interpolant);
 
-  template <typename MemberType, typename IteratorType,
-            typename SiesmogramViewType>
+  template <typename ChunkIndexType, typename SiesmogramViewType>
   friend KOKKOS_FUNCTION void
-  store_on_device(const MemberType &team_member, const IteratorType &iterator,
+  store_on_device(const ChunkIndexType &chunk_index,
                   const SiesmogramViewType &seismogram_components,
                   const receivers &receivers);
 };
@@ -405,28 +404,29 @@ private:
  *
  * @ingroup ComputeReceiversDataAccess
  *
- * @tparam MemberType Kokkos team member type
- * @tparam IteratorType Chunk policy iterator type @ref
- * specfem::policy::element_chunk
+ * @tparam ChunkIndexType Chunk index type @ref
+ * specfem::execution::ChunkElementIndex
  * @tparam ViewType Lagrange interpolant associated with the receivers in the
  * iterator
  *
  * @param team_member Kokkos team member
- * @param iterator Iterator object containing the indices of the receivers
+ * @param chunk_index Chunk index
  * @param receivers Receivers object containing the receiver information
  * @param lagrange_interpolant Lagrange interpolant associated with the
  * receivers in the iterator
  */
-template <typename MemberType, typename IteratorType, typename ViewType>
-KOKKOS_FUNCTION void
-load_on_device(const MemberType &team_member, const IteratorType &iterator,
-               const receivers &receivers, ViewType &lagrange_interpolant) {
+template <typename ChunkIndexType, typename ViewType>
+KOKKOS_FUNCTION void load_on_device(const ChunkIndexType &chunk_index,
+                                    const receivers &receivers,
+                                    ViewType &lagrange_interpolant) {
 
-  Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team_member, iterator.chunk_size()),
-      [&](const int i) {
-        const auto iterator_index = iterator(i);
-        const auto index = iterator_index.index;
+  specfem::execution::for_each_level(
+      chunk_index.get_iterator(),
+      [&](const typename ChunkIndexType::iterator_type::index_type
+              &iterator_index) {
+        const auto index = iterator_index.get_index();
+        const int ielement = iterator_index.get_policy_index();
+        const int irec = index.imap;
 
 #ifndef NDEBUG
 
@@ -439,11 +439,9 @@ load_on_device(const MemberType &team_member, const IteratorType &iterator,
 
 #endif
 
-        const int irec = iterator_index.imap;
-
-        lagrange_interpolant(iterator_index.ielement, index.iz, index.ix, 0) =
+        lagrange_interpolant(ielement, index.iz, index.ix, 0) =
             receivers.lagrange_interpolant(irec, index.iz, index.ix, 0);
-        lagrange_interpolant(iterator_index.ielement, index.iz, index.ix, 1) =
+        lagrange_interpolant(ielement, index.iz, index.ix, 1) =
             receivers.lagrange_interpolant(irec, index.iz, index.ix, 1);
       });
 
@@ -460,48 +458,43 @@ load_on_device(const MemberType &team_member, const IteratorType &iterator,
  * @c receivers.set_seismogram_type(iseis);
  *
  * @ingroup ComputeReceiversDataAccess
- * @tparam MemberType Kokkos team member type
- * @tparam IteratorType Chunk policy iterator type @ref
- * specfem::policy::element_chunk
+ * @tparam ChunkIndexType Chunk index type
  * @tparam SeismogramViewType View of the seismogram components
  * @param receivers Receivers object containing the receiver information
  */
-template <typename MemberType, typename IteratorType,
-          typename SeismogramViewType>
+template <typename ChunkIndexType, typename SeismogramViewType>
 KOKKOS_FUNCTION void
-store_on_device(const MemberType &team_member, const IteratorType &iterator,
+store_on_device(const ChunkIndexType &chunk_index,
                 const SeismogramViewType &seismogram_components,
                 const receivers &receivers) {
 
   const int isig_step = receivers.get_seismogram_step();
   const int iseis = receivers.get_seis_type();
 
-  Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team_member, iterator.chunk_size()),
-      [&](const int i) {
-        const auto iterator_index = iterator(i);
-        const auto index = iterator_index.index;
+  specfem::execution::for_each_level(
+      chunk_index.get_iterator(),
+      [&](const typename ChunkIndexType::iterator_type::index_type
+              &iterator_index) {
+        const auto index = iterator_index.get_index();
+        const int ielement = iterator_index.get_policy_index();
+        const int irec = index.imap;
 
 #ifndef NDEBUG
 
         if (index.ispec >= receivers.nspec) {
           std::string message = "Invalid element detected in kernel at " +
-                                std::string(__FILE__) +
+                                std::string(__FILE__) + ":" +
                                 std::to_string(__LINE__);
           Kokkos::abort(message.c_str());
         }
 
 #endif
 
-        const int irec = iterator_index.imap;
-
         receivers.seismogram_components(isig_step, iseis, irec, 0) =
-            seismogram_components(iterator_index.ielement, 0);
-
+            seismogram_components(ielement, 0);
         receivers.seismogram_components(isig_step, iseis, irec, 1) =
-            seismogram_components(iterator_index.ielement, 1);
+            seismogram_components(ielement, 1);
       });
-
   return;
 }
 
