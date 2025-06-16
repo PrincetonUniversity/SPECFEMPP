@@ -54,7 +54,7 @@ public:
     const int iz = index.iz;
     const int ix = index.ix;
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
 #pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {
@@ -76,7 +76,8 @@ public:
     const int iz = index.iz;
     const int ix = index.ix;
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#pragma unroll
 #pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {

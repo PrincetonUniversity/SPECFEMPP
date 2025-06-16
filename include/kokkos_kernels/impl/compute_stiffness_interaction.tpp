@@ -55,7 +55,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   const auto boundary_values =
       assembly.boundary_values.get_container<boundary_tag>();
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
 #else
   constexpr bool using_simd = true;
