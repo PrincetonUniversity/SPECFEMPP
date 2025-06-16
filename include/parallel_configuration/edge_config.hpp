@@ -34,19 +34,25 @@ struct edge_config {
 template <specfem::dimension::type DimensionTag, typename ExecutionSpace>
 struct default_edge_config;
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA)
 template <>
 struct default_edge_config<specfem::dimension::type::dim2, Kokkos::Cuda>
     : edge_config<specfem::dimension::type::dim2, 32, 1, Kokkos::Cuda> {};
 #endif
 
-#ifdef KOKKOS_ENABLE_OPENMP
+#if defined(KOKKOS_ENABLE_HIP)
+template <>
+struct default_edge_config<specfem::dimension::type::dim2, Kokkos::HIP>
+    : edge_config<specfem::dimension::type::dim2, 32, 1, Kokkos::HIP> {};
+#endif
+
+#if defined(KOKKOS_ENABLE_OPENMP)
 template <>
 struct default_edge_config<specfem::dimension::type::dim2, Kokkos::OpenMP>
     : edge_config<specfem::dimension::type::dim2, 1, 1, Kokkos::OpenMP> {};
 #endif
 
-#ifdef KOKKOS_ENABLE_SERIAL
+#if defined(KOKKOS_ENABLE_SERIAL)
 template <>
 struct default_edge_config<specfem::dimension::type::dim2, Kokkos::Serial>
     : edge_config<specfem::dimension::type::dim2, 1, 1, Kokkos::Serial> {};

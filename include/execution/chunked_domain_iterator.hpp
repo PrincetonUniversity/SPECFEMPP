@@ -155,7 +155,7 @@ public:
   template <bool U = using_simd>
   KOKKOS_INLINE_FUNCTION std::enable_if_t<U, const index_type>
   operator()(const policy_index_type &i) const {
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     int ielement = i % num_elements;
     int simd_elements = (simd_size + ielement > indices.extent(0))
                             ? indices.extent(0) - ielement
@@ -180,7 +180,7 @@ public:
   template <bool U = using_simd>
   KOKKOS_INLINE_FUNCTION std::enable_if_t<!U, const index_type>
   operator()(const policy_index_type &i) const {
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     int ielement = i % num_elements;
     int ispec = indices(ielement);
     int xz = i / num_elements;
