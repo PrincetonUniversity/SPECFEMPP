@@ -215,4 +215,5 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
   EXPECT_TRUE(
       specfem::datatype::all_of(Kokkos::abs(props.vs() - vs_expected) < tol))
       << ExpectedGot(vs_expected, props.vs());
+      
 }
