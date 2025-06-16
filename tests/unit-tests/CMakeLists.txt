@@ -103,6 +103,18 @@ target_link_libraries(
 )
 
 add_executable(
+  simd_tests
+  datatypes/simd_tests.cpp
+)
+target_link_libraries(
+  simd_tests
+  gtest_main
+  gmock_main
+  Kokkos::kokkos
+  -lpthread -lm
+)
+
+add_executable(
   fortranio_test
   fortran_io/fortranio_tests.cpp
 )
@@ -500,6 +512,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(interpolate_function WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(mass_matrix_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(rmass_inverse_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(simd_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(displacement_newmark_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
