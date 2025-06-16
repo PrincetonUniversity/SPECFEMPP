@@ -91,13 +91,13 @@ Table below shows various features available and tested in this package on vario
       - ✔ / ✘
       - ✔ / ✘
       - ✔ / ✘
-      - ✔* / ✘*
+      - ✔* / ✘
 
     * - Poroelastic Isotropic (P-SV only)
-      - ✔ / ✔*
-      - ✔ / ✔*
-      - ✔ / ✔*
-      - ✔* / ✔*
+      - ✔ /  ✘
+      - ✔ /  ✘
+      - ✔ /  ✘
+      - ✔* / ✘
 
     * - **2-D Medium Coupling**
       -
@@ -115,13 +115,13 @@ Table below shows various features available and tested in this package on vario
       - ✘
       - ✘
       - ✘
-      - ✘*
+      - ✘
 
     * - Elastic-Poroelastic coupling
       - ✘
       - ✘
       - ✘
-      - ✘*
+      - ✘
 
     * - **Boundary Conditions (BC)**
       -
