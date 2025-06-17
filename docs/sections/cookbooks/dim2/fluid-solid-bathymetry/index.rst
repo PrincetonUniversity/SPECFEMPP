@@ -168,12 +168,14 @@ The plane wave is created by distributing sources in both horizontal and vertica
 arrays, with carefully calculated timing and amplitudes:
 
 **Horizontal source array (197 sources)**:
+
 - Located at depth z=720m in the elastic domain
 - Spaced every 100m horizontally from x=200m to x=19800m
 - Time shifts increment by 5.309 ms between adjacent sources
 - Moment tensor factor: 9.836e-10
 
 **Vertical source array (37 sources)**:
+
 - Located at x=200m in the elastic domain
 - Spaced every 100m vertically from z=820m to z=4420m
 - Time shifts calculated to maintain plane wave coherence
@@ -263,6 +265,7 @@ The implementation uses 28930 μs, which closely matches our calculation.
 Therefore: **tshift = i × 28930 μs** for vertical sources.
 
 **Final implementation values**:
+
 - **Horizontal sources**: tshift = i × 5309 μs
 - **Vertical sources**: tshift = i × 28930 μs
 
@@ -306,6 +309,7 @@ To run the solver, we first need to define a configuration file ``specfem_config
     :caption: specfem_config.yaml
 
 Key configuration features:
+
 - Forward simulation using Newmark time scheme
 - Time step dt = 1.0e-3 s with 32,500 time steps
 - Wavefield snapshots saved every 500 time steps for visualization
