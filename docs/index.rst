@@ -228,6 +228,7 @@ Contribution
     sections/developer_documentation/git_workflow
     sections/developer_documentation/build_requirements
     sections/developer_documentation/tests
+    sections/developer_documentation/special_machines
 
 .. sections/developer_documentation/tutorials/index
 
