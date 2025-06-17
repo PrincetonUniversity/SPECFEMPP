@@ -43,6 +43,8 @@ using TestTypes = ::testing::Types<Serial, SIMD>;
 template <typename T>
 class PointBoundaryTest : public PointBoundaryTestUntyped<T::value> {};
 
+using PointBoundaryTestSerial = PointBoundaryTest<Serial>;
+
 TYPED_TEST_SUITE(PointBoundaryTest, TestTypes);
 
 // Test none boundary type in 2D
@@ -187,15 +189,7 @@ TYPED_TEST(PointBoundaryTest, CompositeStaceyDirichletBoundary2D) {
 }
 
 // Test a composite boundary - adding stacey to acoustic free surface
-TYPED_TEST(PointBoundaryTest, CompositeBoundaryCreation) {
-  constexpr bool using_simd = TypeParam::value;
-
-  // Skip this test for SIMD case as it may not be applicable
-  if constexpr (using_simd) {
-    GTEST_SKIP() << "Composite boundary creation test not applicable for SIMD";
-    return;
-  }
-
+TEST_F(PointBoundaryTestSerial, CompositeBoundaryCreation) {
   // Start with acoustic free surface
   using boundary_type =
       point::boundary<element::boundary_tag::acoustic_free_surface,
@@ -217,15 +211,7 @@ TYPED_TEST(PointBoundaryTest, CompositeBoundaryCreation) {
 }
 
 // Test conversion from composite stacey dirichlet to acoustic free surface
-TYPED_TEST(PointBoundaryTest, ConversionCompositeToAcousticFreeSurface) {
-  constexpr bool using_simd = TypeParam::value;
-
-  // Skip this test for SIMD case as it may not be applicable
-  if constexpr (using_simd) {
-    GTEST_SKIP() << "Conversion test not applicable for SIMD";
-    return;
-  }
-
+TEST_F(PointBoundaryTestSerial, ConversionCompositeToAcousticFreeSurface) {
   // Define the boundary types
   using composite_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
@@ -250,15 +236,7 @@ TYPED_TEST(PointBoundaryTest, ConversionCompositeToAcousticFreeSurface) {
 }
 
 // Test conversion from composite stacey dirichlet to stacey
-TYPED_TEST(PointBoundaryTest, ConversionCompositeToStacey) {
-  constexpr bool using_simd = TypeParam::value;
-
-  // Skip this test for SIMD case as it may not be applicable
-  if constexpr (using_simd) {
-    GTEST_SKIP() << "Conversion test not applicable for SIMD";
-    return;
-  }
-
+TEST_F(PointBoundaryTestSerial, ConversionCompositeToStacey) {
   // Define the boundary types
   using composite_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
@@ -290,15 +268,7 @@ TYPED_TEST(PointBoundaryTest, ConversionCompositeToStacey) {
 }
 
 // Test default constructors and default tag initialization
-TYPED_TEST(PointBoundaryTest, DefaultConstructorsAndTagInitialization) {
-  constexpr bool using_simd = TypeParam::value;
-
-  // Skip this test for SIMD case as it requires special handling
-  if constexpr (using_simd) {
-    GTEST_SKIP() << "Default constructor test not applicable for SIMD";
-    return;
-  }
-
+TEST_F(PointBoundaryTestSerial, DefaultConstructorsAndTagInitialization) {
   // Test default constructor for none boundary
   using none_type = point::boundary<element::boundary_tag::none,
                                     dimension::type::dim2, false>;
@@ -380,15 +350,7 @@ TYPED_TEST(PointBoundaryTest, InheritanceRelationships) {
 }
 
 // Test boundary tag container's operators with boundary tags
-TYPED_TEST(PointBoundaryTest, BoundaryTagContainerOperators) {
-  constexpr bool using_simd = TypeParam::value;
-
-  // Skip this test for SIMD case as it requires special handling
-  if constexpr (using_simd) {
-    GTEST_SKIP() << "Tag container operators test not applicable for SIMD";
-    return;
-  }
-
+TEST_F(PointBoundaryTestSerial, BoundaryTagContainerOperators) {
   // Create boundary object
   using boundary_type = point::boundary<element::boundary_tag::none,
                                         dimension::type::dim2, false>;
