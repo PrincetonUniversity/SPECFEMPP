@@ -346,17 +346,7 @@ To create an animated gif of the wavefield evolution, you can use ImageMagick
 
 .. code:: bash
 
-    # Create directory for cropped images
-    mkdir output_cropped
-
-    # Crop images to remove white borders
-    for file in $(ls OUTPUT_FILES/display/wavefield*.png); do
-        bname=$(basename $file)
-        magick $file -crop 2260x1110+150+725 output_cropped/$bname
-    done
-
-    # Create animated gif
-    magick convert -coalesce -delay 1 -loop 0 output_cropped/wavefield*.png fluid-solid-bathymetry.gif
+    magick OUTPUT_FILES/display/wavefield*.png -trim +repage -delay 10 -loop 0 fluid-solid-bathymetry.gif
 
 The output animated gif will show the wavefield evolution over time, illustrating
 the interaction of seismic waves with the complex bathymetry and fluid-solid
