@@ -21,6 +21,7 @@ functions used to represent and manipulate points in the SPECFEM++ framework.
     field_derivatives/index
     index/index
     kernels/index
+    mapped_index/index
     partial_derivatives/index
     properties/index
     source/index
