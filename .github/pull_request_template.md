@@ -12,6 +12,7 @@ Please make sure to check developer documentation on specfem docs.
 
 - [ ] I ran the code through pre-commit to check style
 - [ ] **THE DOCUMENTATION BUILDS WITHOUT WARNINGS/ERRORS**
+- [ ] I have added labels to the PR (see right hand side of the PR page)
 - [ ] My code passes all the integration tests
 - [ ] I have added sufficient unittests to test my changes
 - [ ] I have added/updated documentation for the changes I am proposing
