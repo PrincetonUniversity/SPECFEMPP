@@ -2,16 +2,25 @@
 #include "enumerations/interface.hpp"
 #include "specfem/point/boundary.hpp"
 #include "specfem_setup.hpp"
-#include "test_setup.hpp"
+#include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <type_traits>
 
 using namespace specfem;
 
-// Test fixture for boundary tests
-class PointBoundaryTest : public ::testing::Test {
+// Define tolerance for floating point comparisons
+const type_real tol = 1e-6;
+
+// Base test fixture for boundary tests with template parameter for SIMD
+template <bool UseSIMD>
+class PointBoundaryTestUntyped : public ::testing::Test {
 protected:
+  // Define SIMD-related types for convenience
+  using simd_type = specfem::datatype::simd<type_real, UseSIMD>;
+  using value_type = typename simd_type::datatype;
+  using mask_type = typename simd_type::mask_type;
+
   void SetUp() override {
     // Initialize Kokkos if needed for tests
     if (!Kokkos::is_initialized())
@@ -25,117 +34,172 @@ protected:
   }
 };
 
-// Test none boundary type in 2D
-TEST_F(PointBoundaryTest, NoneBoundary2D) {
-  // Define the boundary type with none boundary tag in 2D
-  using boundary_type =
-      point::boundary<element::boundary_tag::none, dimension::type::dim2,
-                      false>; // UseSIMD
+// For better naming
+struct Serial : std::integral_constant<bool, false> {};
+struct SIMD : std::integral_constant<bool, true> {};
 
-  // Verify static properties - Use proper enum class
+using TestTypes = ::testing::Types<Serial, SIMD>;
+
+template <typename T>
+class PointBoundaryTest : public PointBoundaryTestUntyped<T::value> {};
+
+TYPED_TEST_SUITE(PointBoundaryTest, TestTypes);
+
+// Test none boundary type in 2D
+TYPED_TEST(PointBoundaryTest, NoneBoundary2D) {
+  constexpr bool using_simd = TypeParam::value;
+
+  // Define the boundary type with none boundary tag in 2D
+  using boundary_type = point::boundary<element::boundary_tag::none,
+                                        dimension::type::dim2, using_simd>;
+
+  // Verify static properties
   EXPECT_EQ(boundary_type::boundary_tag, element::boundary_tag::none);
 
   // Create a boundary object
   boundary_type boundary;
 
-  // Check if tag is already initialized to the expected value
-  EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
+  if constexpr (!using_simd) {
+    // Non-SIMD specific checks - we can use direct comparison with boundary
+    // tags
+    EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
 
-  // Add tag using the += operator with proper enum class
-  boundary.tag += element::boundary_tag::none;
+    // Add tag using the += operator
+    boundary.tag += element::boundary_tag::none;
+    EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
+  } else {
+    // SIMD specific checks - verify types
+    using simd_type = typename boundary_type::simd;
+    EXPECT_TRUE(
+        (std::is_same<simd_type,
+                      specfem::datatype::simd<type_real, true> >::value));
 
-  // Check the value
-  EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
+    // Verify the value_type for tag is a simd_like container
+    using tag_type = typename std::decay<decltype(boundary.tag)>::type;
+    bool is_simd_like =
+        std::is_same<tag_type, typename specfem::datatype::simd_like<
+                                   specfem::element::boundary_tag_container,
+                                   type_real, true>::datatype>::value;
+    EXPECT_TRUE(is_simd_like);
+  }
 }
 
 // Test acoustic free surface boundary type in 2D
-TEST_F(PointBoundaryTest, AcousticFreeSurfaceBoundary2D) {
+TYPED_TEST(PointBoundaryTest, AcousticFreeSurfaceBoundary2D) {
+  constexpr bool using_simd = TypeParam::value;
+
   // Define the boundary type with acoustic free surface boundary tag in 2D
   using boundary_type =
       point::boundary<element::boundary_tag::acoustic_free_surface,
-                      dimension::type::dim2,
-                      false>; // UseSIMD
+                      dimension::type::dim2, using_simd>;
 
-  // Verify static properties - Use proper enum class
+  // Verify static properties
   EXPECT_EQ(boundary_type::boundary_tag,
             element::boundary_tag::acoustic_free_surface);
 
   // Create a boundary object
   boundary_type boundary;
 
-  // Check initial value
-  EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
+  if constexpr (!using_simd) {
+    // Check initial value
+    EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
 
-  // Adding acoustic free surface tag to itself should not change anything
-  boundary.tag += element::boundary_tag::acoustic_free_surface;
-  EXPECT_TRUE(boundary.tag == element::boundary_tag::acoustic_free_surface);
+    // Adding acoustic free surface tag
+    boundary.tag += element::boundary_tag::acoustic_free_surface;
+    EXPECT_TRUE(boundary.tag == element::boundary_tag::acoustic_free_surface);
+  }
 }
 
 // Test stacey boundary type in 2D
-TEST_F(PointBoundaryTest, StaceyBoundary2D) {
-  // Define the boundary type with stacey boundary tag in 2D
-  using boundary_type =
-      point::boundary<element::boundary_tag::stacey, dimension::type::dim2,
-                      false>; // UseSIMD
+TYPED_TEST(PointBoundaryTest, StaceyBoundary2D) {
+  constexpr bool using_simd = TypeParam::value;
 
-  // Verify static properties - Use proper enum class
+  // Define the boundary type with stacey boundary tag in 2D
+  using boundary_type = point::boundary<element::boundary_tag::stacey,
+                                        dimension::type::dim2, using_simd>;
+
+  // Verify static properties
   EXPECT_EQ(boundary_type::boundary_tag, element::boundary_tag::stacey);
 
   // Create a boundary object
   boundary_type boundary;
 
-  // Check initial value
-  EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
+  if constexpr (!using_simd) {
+    // Check initial value
+    EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
 
-  // Set edge weight and normal
-  boundary.edge_weight = 2.5;
-  boundary.edge_normal(0) = 0.8;
-  boundary.edge_normal(1) = 0.6;
+    // Set edge weight and normal
+    boundary.edge_weight = 2.5;
+    boundary.edge_normal(0) = 0.8;
+    boundary.edge_normal(1) = 0.6;
 
-  // Verify values - Use proper enum class for tag comparison
-  EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
-  EXPECT_REAL_EQ(boundary.edge_weight, 2.5);
-  EXPECT_REAL_EQ(boundary.edge_normal(0), 0.8);
-  EXPECT_REAL_EQ(boundary.edge_normal(1), 0.6);
+    // Verify values
+    EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
+    EXPECT_TRUE(specfem::datatype::all_of(
+        Kokkos::abs(boundary.edge_weight - 2.5) < tol))
+        << ExpectedGot(2.5, boundary.edge_weight);
+    EXPECT_TRUE(specfem::datatype::all_of(
+        Kokkos::abs(boundary.edge_normal(0) - 0.8) < tol))
+        << ExpectedGot(0.8, boundary.edge_normal(0));
+    EXPECT_TRUE(specfem::datatype::all_of(
+        Kokkos::abs(boundary.edge_normal(1) - 0.6) < tol))
+        << ExpectedGot(0.6, boundary.edge_normal(1));
+  }
 }
 
 // Test composite stacey dirichlet boundary type in 2D
-TEST_F(PointBoundaryTest, CompositeStaceyDirichletBoundary2D) {
+TYPED_TEST(PointBoundaryTest, CompositeStaceyDirichletBoundary2D) {
+  constexpr bool using_simd = TypeParam::value;
+
   // Define the boundary type with composite stacey dirichlet boundary tag in 2D
   using boundary_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
-                      dimension::type::dim2,
-                      false>; // UseSIMD
+                      dimension::type::dim2, using_simd>;
 
-  // Verify static properties - Use proper enum class
+  // Verify static properties
   EXPECT_EQ(boundary_type::boundary_tag,
             element::boundary_tag::composite_stacey_dirichlet);
 
   // Create a boundary object
   boundary_type boundary;
 
-  // Check initial value
-  EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
+  if constexpr (!using_simd) {
+    // Check initial value
+    EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
 
-  // Set edge weight and normal
-  boundary.edge_weight = 3.5;
-  boundary.edge_normal(0) = 0.6;
-  boundary.edge_normal(1) = 0.8;
+    // Set edge weight and normal
+    boundary.edge_weight = 3.5;
+    boundary.edge_normal(0) = 0.6;
+    boundary.edge_normal(1) = 0.8;
 
-  // Verify values - Use proper enum class for tag comparison
-  EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
-  EXPECT_REAL_EQ(boundary.edge_weight, 3.5);
-  EXPECT_REAL_EQ(boundary.edge_normal(0), 0.6);
-  EXPECT_REAL_EQ(boundary.edge_normal(1), 0.8);
+    // Verify values
+    EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
+    EXPECT_TRUE(specfem::datatype::all_of(
+        Kokkos::abs(boundary.edge_weight - 3.5) < tol))
+        << ExpectedGot(3.5, boundary.edge_weight);
+    EXPECT_TRUE(specfem::datatype::all_of(
+        Kokkos::abs(boundary.edge_normal(0) - 0.6) < tol))
+        << ExpectedGot(0.6, boundary.edge_normal(0));
+    EXPECT_TRUE(specfem::datatype::all_of(
+        Kokkos::abs(boundary.edge_normal(1) - 0.8) < tol))
+        << ExpectedGot(0.8, boundary.edge_normal(1));
+  }
 }
 
 // Test a composite boundary - adding stacey to acoustic free surface
-TEST_F(PointBoundaryTest, CompositeBoundaryCreation) {
+TYPED_TEST(PointBoundaryTest, CompositeBoundaryCreation) {
+  constexpr bool using_simd = TypeParam::value;
+
+  // Skip this test for SIMD case as it may not be applicable
+  if constexpr (using_simd) {
+    GTEST_SKIP() << "Composite boundary creation test not applicable for SIMD";
+    return;
+  }
+
   // Start with acoustic free surface
   using boundary_type =
       point::boundary<element::boundary_tag::acoustic_free_surface,
-                      dimension::type::dim2,
-                      false>; // UseSIMD
+                      dimension::type::dim2, false>;
 
   // Create a boundary object
   boundary_type boundary;
@@ -152,66 +216,23 @@ TEST_F(PointBoundaryTest, CompositeBoundaryCreation) {
               element::boundary_tag::composite_stacey_dirichlet);
 }
 
-// Test SIMD version of boundary type
-TEST_F(PointBoundaryTest, NoneBoundary_SIMD) {
-  // Define the SIMD boundary type with none boundary tag
-  using boundary_type =
-      point::boundary<element::boundary_tag::none, dimension::type::dim2,
-                      true>; // UseSIMD
-
-  // Verify static properties - Use proper enum class
-  EXPECT_EQ(boundary_type::boundary_tag, element::boundary_tag::none);
-
-  // Create a boundary object
-  boundary_type boundary;
-
-  // For SIMD mode, we need to handle the simd_like container differently
-  // The tag is stored as an array with multiple lanes
-
-  // Get the SIMD size
-  constexpr int simd_size = datatype::simd<type_real, true>::size();
-
-  // We can't use the += operator directly on the tag for SIMD case
-  // Instead, we would need to either:
-  // 1. Use a SIMD-aware API if the boundary_tag_container provides one, or
-  // 2. Access each lane individually if the implementation allows
-
-  // Since we don't have access to modify individual lanes through the public
-  // interface, we should test what we can verify: that the object was
-  // constructed with the correct default values and SIMD traits
-
-  // Verify the SIMD type is defined
-  using simd_type = typename boundary_type::simd;
-  EXPECT_TRUE((std::is_same<simd_type,
-                            specfem::datatype::simd<type_real, true> >::value));
-
-  // Verify the value_type for tag is a simd_like container
-  using tag_type = std::decay<decltype(boundary.tag)>::type;
-  bool is_simd_like =
-      std::is_same<tag_type, typename specfem::datatype::simd_like<
-                                 specfem::element::boundary_tag_container,
-                                 type_real, true>::datatype>::value;
-  EXPECT_TRUE(is_simd_like);
-
-  // Note: Using += on SIMD version might not be supported or might apply to all
-  // lanes For now, we'll just indicate this limitation boundary.tag +=
-  // element::boundary_tag::none; // This may not work for SIMD version
-
-  // Instead, we'll verify the object was created successfully
-  SUCCEED();
-}
-
 // Test conversion from composite stacey dirichlet to acoustic free surface
-TEST_F(PointBoundaryTest, ConversionCompositeToAcousticFreeSurface) {
+TYPED_TEST(PointBoundaryTest, ConversionCompositeToAcousticFreeSurface) {
+  constexpr bool using_simd = TypeParam::value;
+
+  // Skip this test for SIMD case as it may not be applicable
+  if constexpr (using_simd) {
+    GTEST_SKIP() << "Conversion test not applicable for SIMD";
+    return;
+  }
+
   // Define the boundary types
   using composite_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
-                      dimension::type::dim2,
-                      false>; // UseSIMD
+                      dimension::type::dim2, false>;
   using acoustic_fs_type =
       point::boundary<element::boundary_tag::acoustic_free_surface,
-                      dimension::type::dim2,
-                      false>; // UseSIMD
+                      dimension::type::dim2, false>;
 
   // Create a composite boundary object and set values
   composite_type composite;
@@ -223,21 +244,27 @@ TEST_F(PointBoundaryTest, ConversionCompositeToAcousticFreeSurface) {
   // Convert to acoustic free surface boundary type
   acoustic_fs_type acoustic_fs(composite);
 
-  // Verify tag was copied during conversion - use enum class
+  // Verify tag was copied during conversion
   EXPECT_TRUE(acoustic_fs.tag ==
               element::boundary_tag::composite_stacey_dirichlet);
 }
 
 // Test conversion from composite stacey dirichlet to stacey
-TEST_F(PointBoundaryTest, ConversionCompositeToStacey) {
+TYPED_TEST(PointBoundaryTest, ConversionCompositeToStacey) {
+  constexpr bool using_simd = TypeParam::value;
+
+  // Skip this test for SIMD case as it may not be applicable
+  if constexpr (using_simd) {
+    GTEST_SKIP() << "Conversion test not applicable for SIMD";
+    return;
+  }
+
   // Define the boundary types
   using composite_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
-                      dimension::type::dim2,
-                      false>; // UseSIMD
-  using stacey_type =
-      point::boundary<element::boundary_tag::stacey, dimension::type::dim2,
-                      false>; // UseSIMD
+                      dimension::type::dim2, false>;
+  using stacey_type = point::boundary<element::boundary_tag::stacey,
+                                      dimension::type::dim2, false>;
 
   // Create a composite boundary object and set values
   composite_type composite;
@@ -249,62 +276,29 @@ TEST_F(PointBoundaryTest, ConversionCompositeToStacey) {
   // Convert to stacey boundary type
   stacey_type stacey(composite);
 
-  // Verify that all values were copied - use enum class for tag comparison
+  // Verify that all values were copied
   EXPECT_TRUE(stacey.tag == element::boundary_tag::composite_stacey_dirichlet);
-  EXPECT_REAL_EQ(stacey.edge_weight, 5.5);
-  EXPECT_REAL_EQ(stacey.edge_normal(0), 0.3);
-  EXPECT_REAL_EQ(stacey.edge_normal(1), 0.9);
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(stacey.edge_weight - 5.5) < tol))
+      << ExpectedGot(5.5, stacey.edge_weight);
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(stacey.edge_normal(0) - 0.3) < tol))
+      << ExpectedGot(0.3, stacey.edge_normal(0));
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(stacey.edge_normal(1) - 0.9) < tol))
+      << ExpectedGot(0.9, stacey.edge_normal(1));
 }
 
-// // Test none boundary type in 3D
-// TEST_F(PointBoundaryTest, NoneBoundary3D) {
-//   // Define the boundary type with none boundary tag in 3D
-//   using boundary_type = point::boundary<element::boundary_tag::none,
-//                                       dimension::type::dim3,
-//                                       false>; // UseSIMD
-
-//   // Verify static properties - Use proper enum class
-//   EXPECT_EQ(boundary_type::boundary_tag, element::boundary_tag::none);
-
-//   // Create a boundary object
-//   boundary_type boundary;
-
-//   // Check initial value
-//   EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
-// }
-
-// // Test stacey boundary type in 3D
-// TEST_F(PointBoundaryTest, StaceyBoundary3D) {
-//   // Define the boundary type with stacey boundary tag in 3D
-//   using boundary_type = point::boundary<element::boundary_tag::stacey,
-//                                       dimension::type::dim3,
-//                                       false>; // UseSIMD
-
-//   // Verify static properties - Use proper enum class
-//   EXPECT_EQ(boundary_type::boundary_tag, element::boundary_tag::stacey);
-
-//   // Create a boundary object
-//   boundary_type boundary;
-
-//   // Check initial value
-//   EXPECT_TRUE(boundary.tag == element::boundary_tag::stacey);
-
-//   // Set edge weight and normal values
-//   boundary.edge_weight = 2.5;
-//   boundary.edge_normal(0) = 0.6;
-//   boundary.edge_normal(1) = 0.7;
-//   boundary.edge_normal(2) = 0.8;
-
-//   // Verify values - Use proper enum class for tag comparison
-//   EXPECT_TRUE(boundary.tag == element::boundary_tag::stacey);
-//   EXPECT_REAL_EQ(boundary.edge_weight, 2.5);
-//   EXPECT_REAL_EQ(boundary.edge_normal(0), 0.6);
-//   EXPECT_REAL_EQ(boundary.edge_normal(1), 0.7);
-//   EXPECT_REAL_EQ(boundary.edge_normal(2), 0.8);
-// }
-
 // Test default constructors and default tag initialization
-TEST_F(PointBoundaryTest, DefaultConstructorsAndTagInitialization) {
+TYPED_TEST(PointBoundaryTest, DefaultConstructorsAndTagInitialization) {
+  constexpr bool using_simd = TypeParam::value;
+
+  // Skip this test for SIMD case as it requires special handling
+  if constexpr (using_simd) {
+    GTEST_SKIP() << "Default constructor test not applicable for SIMD";
+    return;
+  }
+
   // Test default constructor for none boundary
   using none_type = point::boundary<element::boundary_tag::none,
                                     dimension::type::dim2, false>;
@@ -350,20 +344,22 @@ TEST_F(PointBoundaryTest, DefaultConstructorsAndTagInitialization) {
 }
 
 // Test inheritance relationships
-TEST_F(PointBoundaryTest, InheritanceRelationships) {
+TYPED_TEST(PointBoundaryTest, InheritanceRelationships) {
+  constexpr bool using_simd = TypeParam::value;
+
   // Test inheritance for acoustic_free_surface boundary from none boundary
   using none_type = point::boundary<element::boundary_tag::none,
-                                    dimension::type::dim2, false>;
+                                    dimension::type::dim2, using_simd>;
   using acoustic_fs_type =
       point::boundary<element::boundary_tag::acoustic_free_surface,
-                      dimension::type::dim2, false>;
+                      dimension::type::dim2, using_simd>;
   bool acoustic_inherits_none =
       std::is_base_of<none_type, acoustic_fs_type>::value;
   EXPECT_TRUE(acoustic_inherits_none);
 
   // Test inheritance for stacey boundary from acoustic_free_surface boundary
   using stacey_type = point::boundary<element::boundary_tag::stacey,
-                                      dimension::type::dim2, false>;
+                                      dimension::type::dim2, using_simd>;
   bool stacey_inherits_acoustic =
       std::is_base_of<acoustic_fs_type, stacey_type>::value;
   EXPECT_TRUE(stacey_inherits_acoustic);
@@ -372,7 +368,7 @@ TEST_F(PointBoundaryTest, InheritanceRelationships) {
   // boundary
   using composite_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
-                      dimension::type::dim2, false>;
+                      dimension::type::dim2, using_simd>;
   bool composite_inherits_stacey =
       std::is_base_of<stacey_type, composite_type>::value;
   EXPECT_TRUE(composite_inherits_stacey);
@@ -384,7 +380,15 @@ TEST_F(PointBoundaryTest, InheritanceRelationships) {
 }
 
 // Test boundary tag container's operators with boundary tags
-TEST_F(PointBoundaryTest, BoundaryTagContainerOperators) {
+TYPED_TEST(PointBoundaryTest, BoundaryTagContainerOperators) {
+  constexpr bool using_simd = TypeParam::value;
+
+  // Skip this test for SIMD case as it requires special handling
+  if constexpr (using_simd) {
+    GTEST_SKIP() << "Tag container operators test not applicable for SIMD";
+    return;
+  }
+
   // Create boundary object
   using boundary_type = point::boundary<element::boundary_tag::none,
                                         dimension::type::dim2, false>;
@@ -410,17 +414,66 @@ TEST_F(PointBoundaryTest, BoundaryTagContainerOperators) {
   EXPECT_TRUE(boundary.tag ==
               element::boundary_tag::composite_stacey_dirichlet);
 
-  // Test equality operators - using enum class
+  // Test equality operators
   EXPECT_TRUE(boundary.tag ==
               element::boundary_tag::composite_stacey_dirichlet);
   EXPECT_TRUE(boundary.tag == element::boundary_tag::acoustic_free_surface);
   EXPECT_TRUE(boundary.tag == element::boundary_tag::stacey);
   EXPECT_FALSE(boundary.tag == element::boundary_tag::none);
 
-  // Test inequality operators - using enum class
+  // Test inequality operators
   EXPECT_FALSE(boundary.tag !=
                element::boundary_tag::composite_stacey_dirichlet);
   EXPECT_FALSE(boundary.tag != element::boundary_tag::acoustic_free_surface);
   EXPECT_FALSE(boundary.tag != element::boundary_tag::stacey);
   EXPECT_TRUE(boundary.tag != element::boundary_tag::none);
 }
+
+// // Test for 3D edge_normal initialization
+// TYPED_TEST(PointBoundaryTest, Boundary3D_EdgeNormalInitialization) {
+//   constexpr bool using_simd = TypeParam::value;
+
+//   // Skip this test for SIMD case as it may not be applicable
+//   if constexpr (using_simd) {
+//     GTEST_SKIP() << "3D edge_normal initialization test not applicable for
+//     SIMD"; return;
+//   }
+
+//   // Define the boundary types
+//   using boundary3d_type =
+//       point::boundary<element::boundary_tag::stacey, dimension::type::dim3,
+//                       false>;
+
+//   // Create boundary object
+//   boundary3d_type boundary;
+
+//   // Check edge_normal dimensions
+//   EXPECT_EQ(boundary.edge_normal.extent(0), 3);  // 3D has 3 components
+
+//   // Check initialization values
+//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(0))
+//   < tol))
+//       << ExpectedGot(0.0, boundary.edge_normal(0));
+//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(1))
+//   < tol))
+//       << ExpectedGot(0.0, boundary.edge_normal(1));
+//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(2))
+//   < tol))
+//       << ExpectedGot(0.0, boundary.edge_normal(2));
+
+//   // Set edge normal values
+//   boundary.edge_normal(0) = 0.1;
+//   boundary.edge_normal(1) = 0.2;
+//   boundary.edge_normal(2) = 0.3;
+
+//   // Verify values
+//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(0) -
+//   0.1) < tol))
+//       << ExpectedGot(0.1, boundary.edge_normal(0));
+//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(1) -
+//   0.2) < tol))
+//       << ExpectedGot(0.2, boundary.edge_normal(1));
+//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(2) -
+//   0.3) < tol))
+//       << ExpectedGot(0.3, boundary.edge_normal(2));
+// }
