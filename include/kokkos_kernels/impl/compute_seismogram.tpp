@@ -57,7 +57,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
 
   using no_simd = specfem::datatype::simd<type_real, using_simd>;
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr int nthreads = 32;
   constexpr int lane_size = 1;
 #else

@@ -21,15 +21,13 @@ namespace algorithms {
  * @ingroup AlgorithmsDivergence
  *
  *
- * @tparam MemberType Kokkos team member type
- * @tparam IteratorType Iterator type (Chunk iterator)
+ * @tparam ChunkIndexType Chunk index type
  * @tparam MemberType Kokkos team member type
  * @tparam IteratorType Iterator type (Chunk iterator)
  * @tparam VectorFieldType Vector field view type (Chunk view)
  * @tparam QuadratureType Quadrature view type
  * @tparam CallableType Callback functor type
- * @param team Kokkos team member
- * @param iterator Chunk iterator
+ * @param chunk_index Chunk index specifying the elements within this chunk
  * @param partial_derivatives Partial derivatives of basis functions
  * @param weights Weights for the quadrature
  * @param hprimewgll Integration quadrature
@@ -39,89 +37,6 @@ namespace algorithms {
  * specfem::datatype::ScalarPointViewType<type_real, ViewType::components>)
  * @endcode
  */
-template <typename MemberType, typename IteratorType, typename VectorFieldType,
-          typename QuadratureType, typename CallableType,
-          std::enable_if_t<(VectorFieldType::isChunkViewType), int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void divergence(
-    const MemberType &team, const IteratorType &iterator,
-    const specfem::compute::partial_derivatives &partial_derivatives,
-    const Kokkos::View<type_real *,
-                       typename MemberType::execution_space::memory_space>
-        &weights,
-    const QuadratureType &hprimewgll, const VectorFieldType &f,
-    CallableType callback) {
-
-  constexpr int components = VectorFieldType::components;
-  constexpr int NGLL = VectorFieldType::ngll;
-  constexpr static bool using_simd = VectorFieldType::simd::using_simd;
-
-  constexpr bool is_host_space =
-      std::is_same<typename MemberType::execution_space::memory_space,
-                   Kokkos::HostSpace>::value;
-
-  using ScalarPointViewType =
-      specfem::datatype::ScalarPointViewType<type_real, components, using_simd>;
-
-  static_assert(VectorFieldType::isVectorViewType,
-                "ViewType must be a vector field view type");
-
-  static_assert(
-      std::is_invocable_v<CallableType, typename IteratorType::index_type,
-                          ScalarPointViewType>,
-      "CallableType must be invocable with arguments (int, "
-      "specfem::point::index, "
-      "specfem::datatype::ScalarPointViewType<type_real, components>)");
-
-  using simd = typename IteratorType::simd;
-  using datatype = typename IteratorType::simd::datatype;
-  using PointPartialDerivativesType =
-      specfem::point::partial_derivatives<specfem::dimension::type::dim2, true,
-                                          using_simd>;
-
-  // Compute the integral
-  Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int i) {
-        const auto iterator_index = iterator(i);
-        const int ielement = iterator_index.ielement;
-        const int ispec = iterator_index.index.ispec;
-        const int iz = iterator_index.index.iz;
-        const int ix = iterator_index.index.ix;
-
-        const auto jacobian = [&]() {
-          PointPartialDerivativesType point_partial_derivatives;
-          specfem::compute::load_on_device(iterator_index.index,
-                                           partial_derivatives,
-                                           point_partial_derivatives);
-          return point_partial_derivatives.jacobian;
-        }();
-
-        datatype temp1l[components] = { 0.0 };
-        datatype temp2l[components] = { 0.0 };
-
-        for (int l = 0; l < NGLL; ++l) {
-          for (int icomp = 0; icomp < components; ++icomp) {
-            temp1l[icomp] +=
-                f(ielement, iz, l, icomp, 0) * hprimewgll(ix, l) * jacobian;
-          }
-          for (int icomp = 0; icomp < components; ++icomp) {
-            temp2l[icomp] +=
-                f(ielement, l, ix, icomp, 1) * hprimewgll(iz, l) * jacobian;
-          }
-        }
-
-        ScalarPointViewType result;
-
-        for (int icomp = 0; icomp < components; ++icomp) {
-          result(icomp) =
-              weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
-        }
-
-        callback(iterator_index, result);
-      });
-
-  return;
-}
-
 template <typename ChunkIndexType, typename VectorFieldType,
           typename WeightsType, typename QuadratureType, typename CallableType,
           std::enable_if_t<(VectorFieldType::isChunkViewType), int> = 0>
