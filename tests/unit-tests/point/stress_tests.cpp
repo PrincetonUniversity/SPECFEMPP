@@ -41,6 +41,8 @@ using TestTypes = ::testing::Types<Serial, SIMD>;
 template <typename T>
 class PointStressTest : public PointStressTestUntyped<T::value> {};
 
+using PointStressTestSerial = PointStressTest<Serial>;
+
 TYPED_TEST_SUITE(PointStressTest, TestTypes);
 
 // Test stress tensor for 2D acoustic medium
@@ -379,17 +381,8 @@ TYPED_TEST(PointStressTest, DefaultConstructor) {
 }
 
 // Test stress operator* with partial derivatives in 2D
-TYPED_TEST(PointStressTest, StressOperatorMultiply2D) {
-  constexpr bool using_simd = TypeParam::value;
-  constexpr int simd_size =
-      specfem::datatype::simd<type_real, using_simd>::size();
-
-  // Skip the test for SIMD as it requires more complex implementation of
-  // operator*
-  if constexpr (using_simd) {
-    GTEST_SKIP() << "Operator* test not implemented for SIMD yet";
-    return;
-  }
+TEST_F(PointStressTestSerial, StressOperatorMultiply2D) {
+  constexpr bool using_simd = false;
 
   // Define the stress type for 2D elastic medium
   using stress_type =
@@ -448,15 +441,8 @@ TYPED_TEST(PointStressTest, StressOperatorMultiply2D) {
 }
 
 // Test stress for acoustic medium with operator* in 2D
-TYPED_TEST(PointStressTest, StressOperatorMultiply2DAcoustic) {
-  constexpr bool using_simd = TypeParam::value;
-
-  // Skip the test for SIMD as it requires more complex implementation of
-  // operator*
-  if constexpr (using_simd) {
-    GTEST_SKIP() << "Operator* test not implemented for SIMD yet";
-    return;
-  }
+TEST_F(PointStressTestSerial, StressOperatorMultiply2DAcoustic) {
+  constexpr bool using_simd = false;
 
   // Define the stress type for 2D acoustic medium
   using stress_type = point::stress<dimension::type::dim2,
