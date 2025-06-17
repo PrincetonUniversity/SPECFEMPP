@@ -88,23 +88,27 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
       specfem::element::property_tag::isotropic, using_simd>
       props(kappa, mu, rho);
 
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.kappa() - kappa) < tol))
+  EXPECT_TRUE(specfem::datatype::all_of(
+      Kokkos::abs(props.kappa() - kappa) / kappa < tol))
       << ExpectedGot(kappa, props.kappa());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.mu() - mu) < tol))
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(props.mu() - mu) / mu < tol))
       << ExpectedGot(mu, props.mu());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.rho() - rho) < tol))
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(props.rho() - rho) / rho < tol))
       << ExpectedGot(rho, props.rho());
   EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.lambdaplus2mu() - lambdaplus2mu_val) < tol))
+      Kokkos::abs(props.lambdaplus2mu() - lambdaplus2mu_val) /
+          lambdaplus2mu_val <
+      tol))
       << ExpectedGot(lambdaplus2mu_val, props.lambdaplus2mu());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.rho_vp() - rho_vp_val) < tol))
+  EXPECT_TRUE(specfem::datatype::all_of(
+      Kokkos::abs(props.rho_vp() - rho_vp_val) / rho_vp_val < tol))
       << ExpectedGot(rho_vp_val, props.rho_vp());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.rho_vs() - rho_vs_val) < tol))
+  EXPECT_TRUE(specfem::datatype::all_of(
+      Kokkos::abs(props.rho_vs() - rho_vs_val) / rho_vs_val < tol))
       << ExpectedGot(rho_vs_val, props.rho_vs());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.lambda() - lambda_val) < tol))
+  EXPECT_TRUE(specfem::datatype::all_of(
+      Kokkos::abs(props.lambda() - lambda_val) / lambda_val < tol))
       << ExpectedGot(lambda_val, props.lambda());
 }
