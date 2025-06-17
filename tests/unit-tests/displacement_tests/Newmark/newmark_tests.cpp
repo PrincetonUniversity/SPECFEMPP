@@ -37,14 +37,23 @@ public:
   configuration() : number_of_processors(0) {};
   configuration(const YAML::Node &Node) {
     number_of_processors = Node["nproc"].as<int>();
+    if (Node["tolerance"]) {
+      tolerance = Node["tolerance"].as<type_real>();
+    } else {
+      throw std::runtime_error("Tolerance not found in test configuration");
+    }
   }
   int number_of_processors;
+  type_real tolerance; // Default tolerance for tests
 };
 
 struct Test {
 public:
-  Test(const YAML::Node &Node) {
-    name = Node["name"].as<std::string>();
+  Test(const YAML::Node &Node, int number) {
+
+    this->number = number;
+    this->name = Node["name"].as<std::string>();
+
     description = Node["description"].as<std::string>();
     YAML::Node config = Node["config"];
     configuration = test_config::configuration(config);
@@ -61,6 +70,7 @@ public:
 
   std::string name;
   std::string description;
+  int number;
   test_config::database database;
   test_config::configuration configuration;
 };
@@ -78,8 +88,9 @@ std::vector<test_config::Test> parse_test_config(std::string test_config_file,
   assert(tests.IsSequence());
 
   std::vector<test_config::Test> test_configurations;
+  int counter = 0;
   for (auto N : tests)
-    test_configurations.push_back(test_config::Test(N));
+    test_configurations.push_back(test_config::Test(N, counter++));
 
   return test_configurations;
 }
@@ -159,7 +170,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   for (auto &Test : Tests) {
     std::cout << "-------------------------------------------------------\n"
-              << "\033[0;32m[RUNNING]\033[0m Test: " << Test.name << "\n"
+              << "\033[0;32m[RUNNING]\033[0m Test " << Test.number << ": "
+              << Test.name << "\n"
               << "-------------------------------------------------------\n\n"
               << std::endl;
 
@@ -216,7 +228,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     if (receivers.size() == 0) {
       FAIL() << "--------------------------------------------------\n"
              << "\033[0;31m[FAILED]\033[0m Test failed\n"
-             << " - Test name: " << Test.name << "\n"
+             << " - Test " << Test.number << ": " << Test.name << "\n"
              << " - Error: Stations file does not contain any receivers\n"
              << "--------------------------------------------------\n\n"
              << std::endl;
