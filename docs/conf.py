@@ -59,6 +59,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
+    "sphinx.ext.extlinks",
     "sphinx_sitemap",
     "sphinx.ext.inheritance_diagram",
     "sphinx_design",
@@ -104,6 +105,11 @@ html_theme = "furo"
 # html_logo = ''
 github_url = "https://github.com/PrincetonUniversity/SPECFEMPP"
 html_baseurl = "https://specfem2d-kokkos.readthedocs.io/"
+
+# External links configuration
+extlinks = {
+    "issue": (f"{github_url}/issues/%s", "Issue #%s"),
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
