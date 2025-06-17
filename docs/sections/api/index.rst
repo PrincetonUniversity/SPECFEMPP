@@ -31,7 +31,7 @@ Old structure
     receivers/index
     datatypes/index
     assembly/index
-    policies/index
+    execution/index
     IO/index
     operators/index
     medium/index

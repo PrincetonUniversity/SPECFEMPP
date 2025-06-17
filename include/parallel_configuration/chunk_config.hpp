@@ -10,12 +10,15 @@ namespace parallel_config {
 
 namespace impl {
 constexpr int cuda_chunk_size = 32;
+constexpr int hip_chunk_size = 64;
 constexpr int openmp_chunk_size = 1;
 constexpr int serial_chunk_size = 1;
 } // namespace impl
 
 #if defined(KOKKOS_ENABLE_CUDA)
 constexpr int storage_chunk_size = impl::cuda_chunk_size;
+#elif defined(KOKKOS_ENABLE_HIP)
+constexpr int storage_chunk_size = impl::hip_chunk_size;
 #elif defined(KOKKOS_ENABLE_OPENMP)
 constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
 constexpr int storage_chunk_size = impl::openmp_chunk_size * simd_size;
@@ -63,14 +66,21 @@ template <specfem::dimension::type DimensionTag, typename SIMD,
           typename ExecutionSpace>
 struct default_chunk_config;
 
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA)
 template <typename SIMD>
 struct default_chunk_config<specfem::dimension::type::dim2, SIMD, Kokkos::Cuda>
     : chunk_config<specfem::dimension::type::dim2, impl::cuda_chunk_size,
                    impl::cuda_chunk_size, 512, 1, SIMD, Kokkos::Cuda> {};
 #endif
 
-#ifdef KOKKOS_ENABLE_OPENMP
+#if defined(KOKKOS_ENABLE_HIP)
+template <typename SIMD>
+struct default_chunk_config<specfem::dimension::type::dim2, SIMD, Kokkos::HIP>
+    : chunk_config<specfem::dimension::type::dim2, impl::cuda_chunk_size,
+                   impl::hip_chunk_size, 512, 1, SIMD, Kokkos::HIP> {};
+#endif
+
+#if defined(KOKKOS_ENABLE_OPENMP)
 template <typename SIMD>
 struct default_chunk_config<specfem::dimension::type::dim2, SIMD,
                             Kokkos::OpenMP>
@@ -84,7 +94,7 @@ struct default_chunk_config<specfem::dimension::type::dim2, SIMD,
                            Kokkos::OpenMP> {};
 #endif
 
-#ifdef KOKKOS_ENABLE_SERIAL
+#if defined(KOKKOS_ENABLE_SERIAL)
 template <typename SIMD>
 struct default_chunk_config<specfem::dimension::type::dim2, SIMD,
                             Kokkos::Serial>
