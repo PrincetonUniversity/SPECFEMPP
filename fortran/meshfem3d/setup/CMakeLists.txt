@@ -150,7 +150,9 @@ message(STATUS "Generated FC_FUNC_(name,NAME) ${FC_FUNC_}")
 # Generate config.h file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.h @ONLY)
-
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/config.h
+)
 # ===================== config.h.in END =====================
 
 # ===================== config.fh.in START ==================
@@ -159,23 +161,35 @@ set(CONFIGURE_FLAGS "FC=${CMAKE_Fortran_COMPILER_ID} FCFLAGS=${CMAKE_Fortran_FLA
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.fh.in
                ${CMAKE_CURRENT_BINARY_DIR}/config.fh @ONLY)
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/config.fh
+)
 # ===================== config.fh.in END ====================
 
 
 # ===================== constants.h.in START ================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/constants.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/constants.h @ONLY)
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/constants.h
+)
 # ===================== constants.h.in END ==================
 
 # ===================== precision.h.in START ================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/precision.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/precision.h @ONLY)
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/precision.h
+)
 # ===================== precision.h.in END ==================
 
 
 # ===================== version.fh.in START ================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.fh.in
                ${CMAKE_CURRENT_BINARY_DIR}/version.fh @ONLY)
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/version.fh
+)
 # ===================== version.h.in START ================
 
 add_library(meshfem3D_config INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/config.h)
