@@ -15,42 +15,20 @@ Datatype used to store the global coordinates of a point within the mesh.
 2D Specialization
 -----------------
 
-.. _specfem_point_index_2d_non_simd:
 
-Non-SIMD
-~~~~~~~~
+.. toctree::
+   :maxdepth: 1
 
-.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim2, false >
-   :members:
-   :private-members:
-
-.. _specfem_point_index_2d_simd:
-
-SIMD
-~~~~
-
-.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim2, true >
-   :members:
-   :private-members:
+   dim2/nonsimd/index
+   dim2/simd/index
 
 
 3D Specialization
 -----------------
 
-.. _specfem_point_index_3d_non_simd:
 
-Non-SIMD
-~~~~~~~~
+.. toctree::
+   :maxdepth: 1
 
-.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim3, false >
-   :members:
-   :private-members:
-
-.. _specfem_point_index_3d_simd:
-
-SIMD
-~~~~
-
-.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim3, true >
-   :members:
-   :private-members:
+   dim3/nonsimd/index
+   dim3/simd/index
