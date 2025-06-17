@@ -79,14 +79,14 @@ public:
 ///@} end of group specfem_point_properties_dim2_acoustic_isotropic
 
 /**
- * @defgroup specfem_point_properties_dim2_elastic_isotropic 2D Elastic
+ * @defgroup specfem_point_properties_elastic_isotropic Elastic
  * Isotropic Properties
  * @{
  */
 
 /**
- * @ingroup specfem_point_properties_dim2_elastic_isotropic
- * @brief Data container to hold properties of 2D elastic media at a quadrature
+ * @ingroup specfem_point_properties_elastic_isotropic
+ * @brief Data container to hold properties of elastic media at a quadrature
  * point
  *
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
@@ -160,7 +160,7 @@ public:
     return lambdaplus2mu() - (static_cast<type_real>(2.0)) * mu();
   }
 };
-///@} end of group specfem_point_properties_dim2_elastic_isotropic
+///@} end of group specfem_point_properties_elastic_isotropic
 
 /**
  * @defgroup specfem_point_properties_dim2_elastic_anisotropic 2D Elastic
