@@ -12,7 +12,6 @@ option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
-# option(BUILD_EXAMPLES "Examples included" ON)
 option(BUILD_BENCHMARKS "Benchmarks included" ON)
 
 # set(CMAKE_BUILD_TYPE Release)
