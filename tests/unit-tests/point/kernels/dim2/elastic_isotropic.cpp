@@ -53,11 +53,11 @@ TYPED_TEST(PointKernelsTest, ElasticIsotropic2D) {
                     static_cast<type_real>(i) * static_cast<type_real>(0.1);
     }
     rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    mu.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    kappa.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    rhop.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    alpha.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    beta.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
+    mu.copy_from(mu_arr, Kokkos::Experimental::simd_flag_default);
+    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
+    rhop.copy_from(rhop_arr, Kokkos::Experimental::simd_flag_default);
+    alpha.copy_from(alpha_arr, Kokkos::Experimental::simd_flag_default);
+    beta.copy_from(beta_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     rho = static_cast<type_real>(2.5);
