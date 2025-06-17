@@ -18,6 +18,7 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
   // Get the SIMD size from the implementation
   using simd_type =
       typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  using T = typename specfem::datatype::simd<type_real, using_simd>::base_type;
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
@@ -36,25 +37,52 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
   simd_type rho_vs_val;
 
   if constexpr (using_simd) {
+    T rho_arr[simd_size];
+    T c11_arr[simd_size];
+    T c13_arr[simd_size];
+    T c15_arr[simd_size];
+    T c33_arr[simd_size];
+    T c35_arr[simd_size];
+    T c55_arr[simd_size];
+    T c12_arr[simd_size];
+    T c23_arr[simd_size];
+    T c25_arr[simd_size];
+    T rho_vp_val_arr[simd_size];
+    T rho_vs_val_arr[simd_size];
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
-      rho[i] = 2500.0 + i * 50.0;  // kg/m³
-      c11[i] = 75.0e9 + i * 1.0e9; // Pa
-      c13[i] = 15.0e9 + i * 0.5e9; // Pa
-      c15[i] = i * 0.0;            // Pa (zero for simplicity)
-      c33[i] = 55.0e9 + i * 1.0e9; // Pa
-      c35[i] = i * 0.0;            // Pa (zero for simplicity)
-      c55[i] = 20.0e9 + i * 0.5e9; // Pa
-      c12[i] = 15.0e9 + i * 0.5e9; // Pa
-      c23[i] = 10.0e9 + i * 0.5e9; // Pa
-      c25[i] = i * 0.0;            // Pa (zero for simplicity)
+      rho_arr[i] = 2500.0 + i * 50.0;  // kg/m³
+      c11_arr[i] = 75.0e9 + i * 1.0e9; // Pa
+      c13_arr[i] = 15.0e9 + i * 0.5e9; // Pa
+      c15_arr[i] = i * 0.0;            // Pa (zero for simplicity)
+      c33_arr[i] = 55.0e9 + i * 1.0e9; // Pa
+      c35_arr[i] = i * 0.0;            // Pa (zero for simplicity)
+      c55_arr[i] = 20.0e9 + i * 0.5e9; // Pa
+      c12_arr[i] = 15.0e9 + i * 0.5e9; // Pa
+      c23_arr[i] = 10.0e9 + i * 0.5e9; // Pa
+      c25_arr[i] = i * 0.0;            // Pa (zero for simplicity)
 
       // Computed values for verification
-      rho_vp_val[i] = std::sqrt(static_cast<type_real>(rho[i]) *
-                                static_cast<type_real>(c33[i]));
-      rho_vs_val[i] = std::sqrt(static_cast<type_real>(rho[i]) *
-                                static_cast<type_real>(c55[i]));
+      rho_vp_val_arr[i] = std::sqrt(static_cast<type_real>(rho_arr[i]) *
+                                    static_cast<type_real>(c33_arr[i]));
+      rho_vs_val_arr[i] = std::sqrt(static_cast<type_real>(rho_arr[i]) *
+                                    static_cast<type_real>(c55_arr[i]));
     }
+    // Copy to SIMD types
+    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
+    c11.copy_from(c11_arr, Kokkos::Experimental::simd_flag_default);
+    c13.copy_from(c13_arr, Kokkos::Experimental::simd_flag_default);
+    c15.copy_from(c15_arr, Kokkos::Experimental::simd_flag_default);
+    c33.copy_from(c33_arr, Kokkos::Experimental::simd_flag_default);
+    c35.copy_from(c35_arr, Kokkos::Experimental::simd_flag_default);
+    c55.copy_from(c55_arr, Kokkos::Experimental::simd_flag_default);
+    c12.copy_from(c12_arr, Kokkos::Experimental::simd_flag_default);
+    c23.copy_from(c23_arr, Kokkos::Experimental::simd_flag_default);
+    c25.copy_from(c25_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vp_val.copy_from(rho_vp_val_arr,
+                         Kokkos::Experimental::simd_flag_default);
+    rho_vs_val.copy_from(rho_vs_val_arr,
+                         Kokkos::Experimental::simd_flag_default);
   } else {
     // Anisotropic material values (e.g., shale-like)
     constexpr type_real rho_val = 2500.0; // kg/m³

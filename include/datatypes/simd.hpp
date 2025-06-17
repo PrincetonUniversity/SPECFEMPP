@@ -38,10 +38,10 @@ template <typename T> struct simd<T, false> {
 template <typename T> struct simd<T, true> {
   using base_type = T; ///< The base type of the SIMD vector.
 #ifdef ENABLE_SIMD
-  using datatype = Kokkos::Experimental::native_simd<T>; ///< The type of the
-                                                         ///< SIMD vector.
+  using datatype = Kokkos::Experimental::simd<T>; ///< The type of the
+                                                  ///< SIMD vector.
 #else
-  using datatype = Kokkos::Experimental::simd<
+  using datatype = Kokkos::Experimental::basic_simd<
       T, Kokkos::Experimental::simd_abi::scalar>; ///< The type of the SIMD
                                                   ///< vector.
 #endif
@@ -56,7 +56,7 @@ template <typename T> struct simd<T, true> {
 #ifdef ENABLE_SIMD
     return Kokkos::Experimental::native_simd<T>::size();
 #else
-    return Kokkos::Experimental::simd<
+    return Kokkos::Experimental::basic_simd<
         T, Kokkos::Experimental::simd_abi::scalar>::size();
 #endif
   }
@@ -145,8 +145,8 @@ template <typename T, typename simd_type, bool UseSIMD> struct simd_like {
 template <typename T> struct is_simd_mask : std::false_type {};
 
 template <typename T, typename ABI>
-struct is_simd_mask<Kokkos::Experimental::simd_mask<T, ABI> > : std::true_type {
-};
+struct is_simd_mask<Kokkos::Experimental::basic_simd_mask<T, ABI> >
+    : std::true_type {};
 
 /**
  * @brief Checks if all elements in the mask are true.
@@ -178,8 +178,9 @@ KOKKOS_INLINE_FUNCTION bool all_of(const mask_type &mask) {
  * @return The output stream after printing the simd value.
  */
 template <typename T, typename Abi>
-std::ostream &operator<<(std::ostream &os,
-                         const Kokkos::Experimental::simd<T, Abi> &value) {
+std::ostream &
+operator<<(std::ostream &os,
+           const Kokkos::Experimental::basic_simd<T, Abi> &value) {
   os << "[";
   for (int i = 0; i < value.size(); ++i) {
     if (i > 0)

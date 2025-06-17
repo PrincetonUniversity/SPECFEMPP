@@ -18,6 +18,7 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
   // Get the SIMD size from the implementation
   using simd_type =
       typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  using T = typename specfem::datatype::simd<type_real, using_simd>::base_type;
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
@@ -31,16 +32,29 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
 
   if constexpr (using_simd) {
     // For SIMD case, we can use array indexing syntax
+    T rho_arr[simd_size];
+    T vp_arr[simd_size];
+    T kappa_arr[simd_size];
+    T rho_inv_arr[simd_size];
+    T kappa_inv_arr[simd_size];
+    T rho_vpinv_arr[simd_size];
     for (int i = 0; i < simd_size; ++i) {
-      rho[i] = 1000.0 + i * 20.0; // kg/m³
-      vp[i] = 1500.0 + i * 50.0;  // m/s
-      kappa[i] = static_cast<type_real>(rho[i]) *
-                 static_cast<type_real>(vp[i]) * static_cast<type_real>(vp[i]);
-      rho_inv[i] = 1.0 / static_cast<type_real>(rho[i]);
-      kappa_inv[i] = 1.0 / static_cast<type_real>(kappa[i]);
-      rho_vpinv[i] = 1.0 / (static_cast<type_real>(rho[i]) *
-                            static_cast<type_real>(vp[i]));
+      rho_arr[i] = 1000.0 + i * 20.0; // kg/m³
+      vp_arr[i] = 1500.0 + i * 50.0;  // m/s
+      kappa_arr[i] = static_cast<type_real>(rho_arr[i]) *
+                     static_cast<type_real>(vp_arr[i]) *
+                     static_cast<type_real>(vp_arr[i]);
+      rho_inv_arr[i] = 1.0 / static_cast<type_real>(rho_arr[i]);
+      kappa_inv_arr[i] = 1.0 / static_cast<type_real>(kappa_arr[i]);
+      rho_vpinv_arr[i] = 1.0 / (static_cast<type_real>(rho_arr[i]) *
+                                static_cast<type_real>(vp_arr[i]));
     }
+    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
+    vp.copy_from(vp_arr, Kokkos::Experimental::simd_flag_default);
+    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
+    rho_inv.copy_from(rho_inv_arr, Kokkos::Experimental::simd_flag_default);
+    kappa_inv.copy_from(kappa_inv_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vpinv.copy_from(rho_vpinv_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     // Water-like material

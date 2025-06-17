@@ -17,6 +17,7 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
   // Get the SIMD size from the implementation
   using simd_type =
       typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  using T = typename specfem::datatype::simd<type_real, using_simd>::base_type;
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
@@ -32,30 +33,53 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
   simd_type wrong_value;
 
   if constexpr (using_simd) {
+    T rho_arr[simd_size];
+    T vp_arr[simd_size];
+    T vs_arr[simd_size];
+    T mu_arr[simd_size];
+    T lambda_arr[simd_size];
+    T lambdaplus2mu_arr[simd_size];
+    T rho_vp_arr[simd_size];
+    T rho_vs_arr[simd_size];
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
-      rho[i] =
+      rho_arr[i] =
           static_cast<type_real>(2700.0) +
           static_cast<type_real>(i) * static_cast<type_real>(50.0); // kg/m³
-      vp[i] = static_cast<type_real>(6000.0) +
-              static_cast<type_real>(i) * static_cast<type_real>(100.0); // m/s
-      vs[i] = static_cast<type_real>(3500.0) +
-              static_cast<type_real>(i) * static_cast<type_real>(50.0); // m/s
+      vp_arr[i] =
+          static_cast<type_real>(6000.0) +
+          static_cast<type_real>(i) * static_cast<type_real>(100.0); // m/s
+      vs_arr[i] =
+          static_cast<type_real>(3500.0) +
+          static_cast<type_real>(i) * static_cast<type_real>(50.0); // m/s
 
-      mu[i] = static_cast<type_real>(rho[i]) * static_cast<type_real>(vs[i]) *
-              static_cast<type_real>(vs[i]);
-      lambda[i] = static_cast<type_real>(rho[i]) *
-                      static_cast<type_real>(vp[i]) *
-                      static_cast<type_real>(vp[i]) -
-                  static_cast<type_real>(2.0) * static_cast<type_real>(mu[i]);
-      lambdaplus2mu[i] =
-          static_cast<type_real>(lambda[i]) +
-          static_cast<type_real>(2.0) * static_cast<type_real>(mu[i]);
-      rho_vp[i] =
-          static_cast<type_real>(rho[i]) * static_cast<type_real>(vp[i]);
-      rho_vs[i] =
-          static_cast<type_real>(rho[i]) * static_cast<type_real>(vs[i]);
+      mu_arr[i] = static_cast<type_real>(rho_arr[i]) *
+                  static_cast<type_real>(vs_arr[i]) *
+                  static_cast<type_real>(vs_arr[i]);
+      lambda_arr[i] =
+          static_cast<type_real>(rho_arr[i]) *
+              static_cast<type_real>(vp_arr[i]) *
+              static_cast<type_real>(vp_arr[i]) -
+          static_cast<type_real>(2.0) * static_cast<type_real>(mu_arr[i]);
+      lambdaplus2mu_arr[i] =
+          static_cast<type_real>(lambda_arr[i]) +
+          static_cast<type_real>(2.0) * static_cast<type_real>(mu_arr[i]);
+      rho_vp_arr[i] = static_cast<type_real>(rho_arr[i]) *
+                      static_cast<type_real>(vp_arr[i]);
+      rho_vs_arr[i] = static_cast<type_real>(rho_arr[i]) *
+                      static_cast<type_real>(vs_arr[i]);
     }
+
+    // Copy to SIMD types
+    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
+    vp.copy_from(vp_arr, Kokkos::Experimental::simd_flag_default);
+    vs.copy_from(vs_arr, Kokkos::Experimental::simd_flag_default);
+    mu.copy_from(mu_arr, Kokkos::Experimental::simd_flag_default);
+    lambda.copy_from(lambda_arr, Kokkos::Experimental::simd_flag_default);
+    lambdaplus2mu.copy_from(lambdaplus2mu_arr,
+                            Kokkos::Experimental::simd_flag_default);
+    rho_vp.copy_from(rho_vp_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vs.copy_from(rho_vs_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Granite-like material for scalar test
     rho = 2700.0;                    // kg/m³
