@@ -18,6 +18,7 @@ TYPED_TEST(PointKernelsTest, AcousticIsotropic2D) {
   // Get the SIMD size from the implementation
   using simd_type =
       typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  using T = typename specfem::datatype::simd<type_real, using_simd>::base_type;
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
@@ -28,17 +29,27 @@ TYPED_TEST(PointKernelsTest, AcousticIsotropic2D) {
   simd_type expected_alpha;
 
   if constexpr (using_simd) {
+    T rho_arr[simd_size];
+    T kappa_arr[simd_size];
+    T expected_rhop_arr[simd_size];
+    T expected_alpha_arr[simd_size];
     // For SIMD case, we can use array indexing syntax
     for (int i = 0; i < simd_size; ++i) {
-      rho[i] = static_cast<type_real>(2.5) +
-               static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      kappa[i] = static_cast<type_real>(3.0) +
-                 static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      expected_rhop[i] =
-          static_cast<type_real>(rho[i]) * static_cast<type_real>(kappa[i]);
-      expected_alpha[i] =
-          static_cast<type_real>(2.0) * static_cast<type_real>(kappa[i]);
+      rho_arr[i] = static_cast<type_real>(2.5) +
+                   static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      kappa_arr[i] = static_cast<type_real>(3.0) +
+                     static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      expected_rhop_arr[i] = static_cast<type_real>(rho_arr[i]) *
+                             static_cast<type_real>(kappa_arr[i]);
+      expected_alpha_arr[i] =
+          static_cast<type_real>(2.0) * static_cast<type_real>(kappa_arr[i]);
     }
+    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
+    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
+    expected_rhop.copy_from(expected_rhop_arr,
+                            Kokkos::Experimental::simd_flag_default);
+    expected_alpha.copy_from(expected_alpha_arr,
+                             Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     rho = static_cast<type_real>(2.5);
