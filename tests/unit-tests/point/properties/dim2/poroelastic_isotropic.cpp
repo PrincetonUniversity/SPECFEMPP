@@ -80,7 +80,7 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
                           i_real * static_cast<type_real>(0.1); // tortuosity
       mu_G_arr[i] =
           static_cast<type_real>(10.0e9) +
-          i_real * static_cast<type_real>(1.0e8); // shear modulus (Pa)ßßßß
+          i_real * static_cast<type_real>(1.0e8); // shear modulus (Pa)
       H_Biot_arr[i] =
           static_cast<type_real>(25.0e9) +
           i_real * static_cast<type_real>(1.0e8); // Biot's H modulus (Pa)
