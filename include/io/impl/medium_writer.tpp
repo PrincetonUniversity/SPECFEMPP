@@ -22,6 +22,7 @@ void specfem::io::impl::write_container(
 
   typename OutputLibrary::File file(output_folder + "/" + output_namespace);
 
+  const int nspec = mesh.points.nspec;
   const int ngllz = mesh.points.ngllz;
   const int ngllx = mesh.points.ngllx;
 
