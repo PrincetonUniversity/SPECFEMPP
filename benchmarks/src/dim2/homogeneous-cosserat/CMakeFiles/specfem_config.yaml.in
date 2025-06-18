@@ -35,7 +35,7 @@ parameters:
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
 
   receivers:
-    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/STATIONS"
+    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
