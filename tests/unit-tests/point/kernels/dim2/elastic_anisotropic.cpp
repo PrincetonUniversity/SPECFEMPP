@@ -58,10 +58,26 @@ TYPED_TEST(PointKernelsTest, ElasticAnisotropic2D) {
   }
 
   // Create the kernels object
-  specfem::point::kernels<
+  using PointKernelType = specfem::point::kernels<
       specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic, using_simd>
-      kernels(rho, c11, c13, c15, c33, c35, c55);
+      specfem::element::property_tag::anisotropic, using_simd>;
+  PointKernelType kernels(rho, c11, c13, c15, c33, c35, c55);
+
+  // Additional constructors and assignment tests
+  simd_type data[] = { rho, c11, c13, c15, c33, c35, c55 };
+
+  PointKernelType kernels2;
+  kernels2.rho() = rho;
+  kernels2.c11() = c11;
+  kernels2.c13() = c13;
+  kernels2.c15() = c15;
+  kernels2.c33() = c33;
+  kernels2.c35() = c35;
+  kernels2.c55() = c55;
+
+  PointKernelType kernels3(data);
+
+  PointKernelType kernels4(rho);
 
   EXPECT_TRUE(specfem::utilities::is_close(kernels.rho(), rho))
       << ExpectedGot(rho, kernels.rho());
@@ -77,4 +93,29 @@ TYPED_TEST(PointKernelsTest, ElasticAnisotropic2D) {
       << ExpectedGot(c35, kernels.c35());
   EXPECT_TRUE(specfem::utilities::is_close(kernels.c55(), c55))
       << ExpectedGot(c55, kernels.c55());
+
+  EXPECT_TRUE(kernels == kernels2)
+      << ExpectedGot(kernels2.rho(), kernels.rho())
+      << ExpectedGot(kernels2.c11(), kernels.c11())
+      << ExpectedGot(kernels2.c13(), kernels.c13())
+      << ExpectedGot(kernels2.c15(), kernels.c15())
+      << ExpectedGot(kernels2.c33(), kernels.c33())
+      << ExpectedGot(kernels2.c35(), kernels.c35())
+      << ExpectedGot(kernels2.c55(), kernels.c55());
+  EXPECT_TRUE(kernels2 == kernels3)
+      << ExpectedGot(kernels3.rho(), kernels2.rho())
+      << ExpectedGot(kernels3.c11(), kernels2.c11())
+      << ExpectedGot(kernels3.c13(), kernels2.c13())
+      << ExpectedGot(kernels3.c15(), kernels2.c15())
+      << ExpectedGot(kernels3.c33(), kernels2.c33())
+      << ExpectedGot(kernels3.c35(), kernels2.c35())
+      << ExpectedGot(kernels3.c55(), kernels2.c55());
+
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.rho(), rho));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.c11(), rho));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.c13(), rho));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.c15(), rho));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.c33(), rho));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.c35(), rho));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.c55(), rho));
 }
