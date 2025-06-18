@@ -20,6 +20,9 @@ with a faster velocity. The model is divided by a horizontal interface. The
 source and the receiver are both indicated in the figure and located at the
 surface of the model.
 
+We will model wave propagation for both P-SV and SH polarized elastic waves in
+the above model.
+
 Setting up the workspace
 ------------------------
 
@@ -55,9 +58,11 @@ artifacts.
 .. code:: bash
 
     mkdir -p OUTPUT_FILES
-    mkdir -p OUTPUT_FILES/seismograms
+    mkdir -p OUTPUT_FILES/results_psv
+    mkdir -p OUTPUT_FILES/results_sh
 
-    touch specfem_config.yaml
+    touch specfem_config_psv.yaml
+    touch specfem_config_sh.yaml
     touch sources.yaml
     touch topography_file.dat
     touch Par_File
@@ -193,37 +198,39 @@ We define the source location and the source time function in the source file.
 
 We define the source at the surface of the model at :math:`x=50\mathrm{km}`
 and :math:`z=80\mathrm{km}`, with a first derivative of a Gaussian source time
-function with a dominant frequency of 2 Hz.
+function with a dominant frequency of 1.5 Hz.
 
-Running the simulation
-----------------------
+Running the P-SV simulation
+---------------------------
 
 To run the solver, we first need to define a configuration file
-``specfem_config.yaml``.
+``specfem_config_psv.yaml``. The ``_psv`` just to distinguish this
+configuration to solve for the P-SV polarized elastic wave propagation from later on
+solved SH polarized elastic wave propagation.
 
-.. literalinclude:: specfem_config.yaml
+.. literalinclude:: specfem_config_psv.yaml
     :language: yaml
-    :caption: specfem_config.yaml
-    :emphasize-lines: 27-36,38-43
+    :caption: specfem_config_psv.yaml
+    :emphasize-lines: 30-39,41-46
 
 
-For the ``specfem_config.yaml`` file, nothing has changed compared to the
+For the ``specfem_config_psv.yaml`` file, nothing has changed compared to the
 previous example, :ref:`homogeneous_example`. With the configuration file in
 place, we can run the solver using the following command
 
 .. code:: bash
 
-    specfem2d -p specfem_config.yaml
+    specfem2d -p specfem_config_psv.yaml
 
 
-A snapshot of the wavefield at timestep 2000 (:math:`t=10\mathrm{s}`) is shown
+A snapshot of the wavefield at timestep 1100 (:math:`t=9.9\mathrm{s}`) is shown
 below.
 
-.. figure:: wavefield2000.png
+.. figure:: wavefield001100_psv.png
     :width: 800
     :alt: wavefield
 
-    Snapshot of the wavefield at timestep 2000 (:math:`t=10\mathrm{s}`).
+    Snapshot of the wavefield at timestep 1100 (:math:`t=9.9\mathrm{s}`).
 
 .. note::
 
@@ -235,7 +242,7 @@ in the upper half of the model is almost :math:`6\mathrm{km}/\mathrm{s}`.
 
 The seismograms recorded at the receiver location are shown below.
 
-.. figure:: seismograms.png
+.. figure:: seismograms_psv.png
     :width: 800
     :alt: seismograms
 
@@ -244,6 +251,73 @@ The seismograms recorded at the receiver location are shown below.
 
 And the plot can be reproduced using the following python script
 
-.. literalinclude:: plot.py
+.. literalinclude:: plot_psv.py
     :language: python
-    :caption: plot.py
+    :caption: plot_psv.py
+
+
+Running the SH simulation
+-------------------------
+
+To run the solver, we first need to define a configuration file
+``specfem_config_sh.yaml``.
+
+.. literalinclude:: specfem_config_sh.yaml
+    :language: yaml
+    :caption: specfem_config_sh.yaml
+    :emphasize-lines: 30-39,41-46
+
+
+For the ``specfem_config_sh.yaml`` file, nothing has changed compared to the
+previous example, :ref:`homogeneous_example`. With the configuration file in
+place, we can run the solver using the following command
+
+.. code:: bash
+
+    specfem2d -p specfem_config_sh.yaml
+
+
+A snapshot of the wavefield at timestep 1100 (:math:`t=9.9\mathrm{s}`) is shown
+below.
+
+.. figure:: wavefield001100_sh.png
+    :width: 800
+    :alt: wavefield
+
+    Snapshot of the wavefield at timestep 1100 (:math:`t=9.9\mathrm{s}`).
+
+.. note::
+
+    The wavefield snapshots are currently not being generated with this setup.
+
+The SH wave has still not reach the vertical center of the model after 9.9 seconds,
+which is intuitive since the SH-wave velocity in the upper half of the model is
+:math:`\sim3.2\mathrm{km}/\mathrm{s}`.
+
+To see the SH interacting with the solid-solid interface, we need to run the
+simulation for a longer time. Here, another snapshot of the wavefield at
+timestep 2200 (:math:`t=19.8\mathrm{s}`) is shown below.
+
+.. figure:: wavefield002200_sh.png
+    :width: 800
+    :alt: wavefield
+
+    Snapshot of the wavefield at timestep 2200 (:math:`t=19.8\mathrm{s}`).
+    The SH wave has now reached the solid-solid interface and is propagating
+    through the model.
+
+
+The seismograms recorded at the receiver location are shown below.
+
+.. figure:: seismograms_sh.png
+    :width: 800
+    :alt: seismograms
+
+    Seismograms recorded at the receiver location.
+
+
+And the plot can be reproduced using the following python script
+
+.. literalinclude:: plot_sh.py
+    :language: python
+    :caption: plot_sh.py
