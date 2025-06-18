@@ -18,7 +18,7 @@
 #endif
 
 #ifndef NDEBUG
-#ifdef KOKKOS_ENABLE_CUDA
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
 #define DEVICE_ASSERT(condition, message)                                      \
   do {                                                                         \
     if (!(condition)) {                                                        \
@@ -51,8 +51,9 @@
 #define NOINLINE __attribute__((noinline))
 #elif __CUDA__
 #define NOINLINE __noinline__
+#elif __HIP__
+#define NOINLINE __noinline__
 #endif
 #else
 #define NOINLINE
 #endif
-

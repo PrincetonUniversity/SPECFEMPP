@@ -26,7 +26,7 @@ TEST_F(PointIndexTest, DefaultConstructor2D) {
 
   // Verify static members
   EXPECT_FALSE(idx.using_simd);
-  EXPECT_EQ(idx.dimension, specfem::dimension::type::dim2);
+  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim2);
 }
 
 // Test 2D index parameterized constructor
@@ -46,7 +46,7 @@ TEST_F(PointIndexTest, ParameterizedConstructor2D) {
 
   // Verify static members
   EXPECT_FALSE(idx.using_simd);
-  EXPECT_EQ(idx.dimension, specfem::dimension::type::dim2);
+  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim2);
 }
 
 // Tests for 2D SIMD index
@@ -58,7 +58,7 @@ TEST_F(PointIndexTest, DefaultConstructor2D_SIMD) {
 
   // Verify static members
   EXPECT_TRUE(idx.using_simd);
-  EXPECT_EQ(idx.dimension, specfem::dimension::type::dim2);
+  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim2);
 }
 
 // Test 2D SIMD index parameterized constructor
@@ -81,7 +81,7 @@ TEST_F(PointIndexTest, ParameterizedConstructor2D_SIMD) {
 
   // Verify static members
   EXPECT_TRUE(idx.using_simd);
-  EXPECT_EQ(idx.dimension, specfem::dimension::type::dim2);
+  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim2);
 }
 
 // Test 2D SIMD index mask function
@@ -112,7 +112,7 @@ TEST_F(PointIndexTest, DefaultConstructor3D) {
 
   // Verify static members
   EXPECT_FALSE(idx.using_simd);
-  EXPECT_EQ(idx.dimension, specfem::dimension::type::dim3);
+  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim3);
 }
 
 // Test 3D index parameterized constructor
@@ -134,7 +134,7 @@ TEST_F(PointIndexTest, ParameterizedConstructor3D) {
 
   // Verify static members
   EXPECT_FALSE(idx.using_simd);
-  EXPECT_EQ(idx.dimension, specfem::dimension::type::dim3);
+  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim3);
 }
 
 // Tests for 3D SIMD index
@@ -146,7 +146,7 @@ TEST_F(PointIndexTest, DefaultConstructor3D_SIMD) {
 
   // Verify static members
   EXPECT_TRUE(idx.using_simd);
-  EXPECT_EQ(idx.dimension, specfem::dimension::type::dim3);
+  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim3);
 }
 
 // Test 3D SIMD index parameterized constructor
@@ -171,7 +171,7 @@ TEST_F(PointIndexTest, ParameterizedConstructor3D_SIMD) {
 
   // Verify static members
   EXPECT_TRUE(idx.using_simd);
-  EXPECT_EQ(idx.dimension, specfem::dimension::type::dim3);
+  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim3);
 }
 
 // Test 3D SIMD index mask function
@@ -265,10 +265,4 @@ TEST_F(PointIndexTest, ZeroElements3D) {
   // Test mask function with zero elements
   EXPECT_FALSE(idx.mask(0)); // All lanes should be outside when number_elements
                              // is 0
-}
-
-// Main function
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }
