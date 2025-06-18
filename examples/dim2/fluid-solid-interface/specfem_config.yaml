@@ -5,15 +5,15 @@ parameters:
 
   header:
     ## Header information is used for logging. It is good practice to give your simulations explicit names
-    title: Heterogeneous elastic-elastic medium with 1 elastic-elastic interface (orientation horizontal)  # name for your simulation
+    title: Heterogeneous acoustic-elastic medium with 1 acoustic-elastic interface (orientation horizontal)  # name for your simulation
     # A detailed description for your simulation
     description: |
-      Material systems : Elastic domain (1), Elastic domain (1)
-      Interfaces : Elastic-elastic interface (1) (orientation horizontal slower medium on top)
+      Material systems : Elastic domain (1), Acoustic domain (1)
+      Interfaces : Acoustic-elastic interface (1) (orientation horizontal with acoustic domain on top)
       Sources : Force source (1)
       Boundary conditions : Neumann BCs on all edges
-      Debugging comments: This tests checks coupling elastic-elastic interface implementation.
-                          The orientation of the interface is horizontal with elastic domain on top.
+      Debugging comments: This tests checks coupling acoustic-elastic interface implementation.
+                          The orientation of the interface is horizontal with acoustic domain on top.
 
   simulation-setup:
     ## quadrature setup
@@ -26,18 +26,25 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 5.0e-3
-          nstep: 10000
+          dt: 0.85e-3
+          nstep: 1200
 
     simulation-mode:
       forward:
         writer:
           seismogram:
             format: ascii
-            directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
+            directory: "OUTPUT_FILES/results"
+
+          # Uncomment the following lines to enable display output if VTK is installed
+          # display:
+          #   format: on_screen
+          #   field: displacement
+          #   simulation-field: forward
+          #   time-interval: 10
 
   receivers:
-    stations: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS"
+    stations: "OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -50,7 +57,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/database.bin"
+    mesh-database: "OUTPUT_FILES/database.bin"
 
   ## sources
-  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml"
+  sources: "sources.yaml"
