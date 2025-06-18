@@ -11,7 +11,7 @@
 namespace specfem {
 namespace medium {
 
-template <typename MemberType, typename IteratorType, typename ChunkFieldType,
+template <typename ChunkIndexType, typename ChunkFieldType,
           typename QuadratureType, typename WavefieldViewType>
 KOKKOS_FUNCTION void impl_compute_wavefield(
     const std::integral_constant<specfem::dimension::type,
@@ -20,7 +20,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
                                  specfem::element::medium_tag::acoustic>,
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::isotropic>,
-    const MemberType &team, const IteratorType &iterator,
+    const ChunkIndexType &chunk_index,
     const specfem::compute::assembly &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
     const specfem::wavefield::type wavefield_component,
@@ -52,25 +52,27 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   }();
 
   if (wavefield_component == specfem::wavefield::type::pressure) {
-    Kokkos::parallel_for(Kokkos::TeamThreadRange(team, iterator.chunk_size()),
-                         [&](const int &i) {
-                           const auto iterator_index = iterator(i);
-                           const auto index = iterator_index.index;
-                           wavefield(iterator_index.ielement, index.iz,
-                                     index.ix, 0) =
-                               -1.0 * active_field(iterator_index.ielement,
-                                                   index.iz, index.ix, 0);
-                         });
+    specfem::execution::for_each_level(
+        chunk_index.get_iterator(),
+        [&](const typename ChunkIndexType::iterator_type::index_type
+                &iterator_index) {
+          const auto index = iterator_index.get_index();
+          const int ielement = iterator_index.get_policy_index();
+          wavefield(ielement, index.iz, index.ix, 0) =
+              -1.0 * active_field(ielement, index.iz, index.ix, 0);
+        });
 
     return;
   }
 
   specfem::algorithms::gradient(
-      team, iterator, assembly.partial_derivatives, quadrature.hprime_gll,
+      chunk_index, assembly.partial_derivatives, quadrature.hprime_gll,
       active_field,
-      [&](const typename IteratorType::index_type &iterator_index,
+      [&](const typename ChunkIndexType::iterator_type::index_type
+              &iterator_index,
           const FieldDerivativesType::value_type &du) {
-        const auto &index = iterator_index.index;
+        const auto index = iterator_index.get_index();
+        const int ielement = iterator_index.get_policy_index();
         PointPropertyType point_property;
 
         specfem::compute::load_on_device(index, properties, point_property);
@@ -80,10 +82,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         const auto point_stress =
             impl_compute_stress(point_property, point_field_derivatives);
 
-        wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
-            point_stress.T(0, 0);
-        wavefield(iterator_index.ielement, index.iz, index.ix, 1) =
-            point_stress.T(0, 1);
+        wavefield(ielement, index.iz, index.ix, 0) = point_stress.T(0, 0);
+        wavefield(ielement, index.iz, index.ix, 1) = point_stress.T(0, 1);
       });
 
   return;

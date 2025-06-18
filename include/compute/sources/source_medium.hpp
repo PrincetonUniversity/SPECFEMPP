@@ -95,9 +95,9 @@ public:
   SourceArrayView source_array; ///< Lagrange interpolants for every source
   SourceArrayView::HostMirror h_source_array; ///< Host mirror of source_array
 
-  template <typename IteratorIndexType, typename PointSourceType>
+  template <typename IndexType, typename PointSourceType>
   KOKKOS_INLINE_FUNCTION void
-  load_on_device(const int timestep, const IteratorIndexType &iterator_index,
+  load_on_device(const int timestep, const IndexType &index,
                  PointSourceType &point_source) const {
     /* For the source it is important to remember that we are using the
      * mapped index to access the element and source indices
@@ -105,8 +105,7 @@ public:
      * and we need to use index.ispec to access the element index
      * and index.imap to access the source index
      */
-    const auto index = iterator_index.index;
-    const auto isource = iterator_index.imap;
+    const auto isource = index.imap;
     for (int component = 0; component < components; component++) {
       point_source.stf(component) =
           source_time_function(timestep, isource, component);
@@ -115,9 +114,9 @@ public:
     }
   }
 
-  template <typename IteratorIndexType, typename PointSourceType>
+  template <typename IndexType, typename PointSourceType>
   KOKKOS_INLINE_FUNCTION void
-  store_on_device(const int timestep, const IteratorIndexType iterator_index,
+  store_on_device(const int timestep, const IndexType index,
                   const PointSourceType &point_source) const {
     /* For the source it is important to remember that we are using the
      * mapped index to access the element and source indices
@@ -125,8 +124,7 @@ public:
      * and we need to use index.ispec to access the element index
      * and index.imap to access the source index
      */
-    const auto index = iterator_index.index;
-    const auto isource = iterator_index.imap;
+    const auto isource = index.imap;
     for (int component = 0; component < components; component++) {
       source_time_function(timestep, isource, component) =
           point_source.stf(component);
@@ -135,11 +133,10 @@ public:
     }
   }
 
-  template <typename IteratorIndexType, typename PointSourceType>
-  void load_on_host(const int timestep, const IteratorIndexType iterator_index,
+  template <typename IndexType, typename PointSourceType>
+  void load_on_host(const int timestep, const IndexType index,
                     PointSourceType &point_source) const {
-    const auto index = iterator_index.index;
-    const auto isource = iterator_index.imap;
+    const auto isource = index.imap;
     for (int component = 0; component < components; component++) {
       point_source.stf(component) =
           h_source_time_function(timestep, isource, component);
@@ -148,11 +145,10 @@ public:
     }
   }
 
-  template <typename IteratorIndexType, typename PointSourceType>
-  void store_on_host(const int timestep, const IteratorIndexType iterator_index,
+  template <typename IndexType, typename PointSourceType>
+  void store_on_host(const int timestep, const IndexType index,
                      const PointSourceType &point_source) const {
-    const auto index = iterator_index.index;
-    const auto isource = iterator_index.imap;
+    const auto isource = index.imap;
     for (int component = 0; component < components; component++) {
       h_source_time_function(timestep, isource, component) =
           point_source.stf(component);
