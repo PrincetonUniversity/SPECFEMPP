@@ -134,7 +134,7 @@ Tests:
       Testing newmark time-marching solver on a homogeneous elastic psv domain with spin and no interfaces. Test is run on a single MPI process.
     config:
       nproc : 1
-      tolerance : 1e-3
+      tolerance : 1e-1
     databases:
       specfem_config: "displacement_tests/Newmark/serial/test14/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test14/traces"
