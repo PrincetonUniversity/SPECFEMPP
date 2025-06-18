@@ -25,12 +25,12 @@ specfem::compute::receivers::receivers(
       elements("specfem::compute::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
       element_types(element_types),
-      impl::StationIterator(receivers.size(), stypes.size()),
+      impl::StationIterator(receivers.size(), stypes),
       impl::SeismogramIterator(receivers.size(), stypes.size(), max_sig_step,
                                dt, t0, nsteps_between_samples) {
 
+  // Validate and populate seismogram type mapping
   for (int isies = 0; isies < stypes.size(); ++isies) {
-
     auto seis_type = stypes[isies];
 
     if (seis_type != specfem::wavefield::type::displacement &&
@@ -41,7 +41,6 @@ specfem::compute::receivers::receivers(
       throw std::runtime_error("Invalid seismogram type");
     }
 
-    seismogram_types[isies] = seis_type;
     seismogram_type_map[seis_type] = isies;
   }
 
@@ -50,8 +49,8 @@ specfem::compute::receivers::receivers(
     std::string station_name = receiver->get_station_name();
     std::string network_name = receiver->get_network_name();
 
-    station_names[ireceiver] = station_name;
-    network_names[ireceiver] = network_name;
+    station_names_.push_back(station_name);
+    network_names_.push_back(network_name);
     station_network_map[station_name][network_name] = ireceiver;
     const auto gcoord =
         specfem::point::global_coordinates<specfem::dimension::type::dim2>{
