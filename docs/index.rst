@@ -202,6 +202,7 @@ Getting Started
 
     sections/getting_started/index
     sections/cookbooks/index
+    sections/getting_started/presets
 
 User Documentation
 ------------------
