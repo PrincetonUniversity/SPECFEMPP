@@ -4,6 +4,11 @@ if (NOT DEFINED BENCHMARKS_BUILD_DIR)
     set(BENCHMARKS_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../build)
 endif()
 
+# Add the benchmarks build dir to the clean target
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${BENCHMARKS_BUILD_DIR}
+)
+
 # 2D
 add_subdirectory(dim2/anisotropic-crystal)
 add_subdirectory(dim2/homogeneous-medium-flat-topography)

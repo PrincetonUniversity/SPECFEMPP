@@ -78,7 +78,6 @@ public:
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
 #pragma unroll
-#pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {
       values(ispec, iz, ix, istep, icomp) = acceleration.acceleration(icomp);

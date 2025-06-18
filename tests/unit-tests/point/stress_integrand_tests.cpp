@@ -1,35 +1,59 @@
+#include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/point/stress_integrand.hpp"
 #include "specfem_setup.hpp"
-#include "test_setup.hpp"
+#include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <type_traits>
 
 using namespace specfem;
 
-// Test fixture for stress integrand tests
-class PointStressIntegrandTest : public ::testing::Test {
+// Define tolerance for floating point comparisons
+const type_real tol = 1e-6;
+
+// Base test fixture for stress integrand tests with template parameter for SIMD
+template <bool UseSIMD>
+class PointStressIntegrandTestUntyped : public ::testing::Test {
 protected:
+  // Define SIMD-related types for convenience
+  using simd_type = specfem::datatype::simd<type_real, UseSIMD>;
+  using value_type = typename simd_type::datatype;
+  using mask_type = typename simd_type::mask_type;
+
   void SetUp() override {
-    // Initialize Kokkos if needed for tests
     if (!Kokkos::is_initialized())
       Kokkos::initialize();
   }
 
   void TearDown() override {
-    // Finalize Kokkos if needed
     if (Kokkos::is_initialized())
       Kokkos::finalize();
   }
 };
 
+// For better naming
+struct Serial : std::integral_constant<bool, false> {};
+struct SIMD : std::integral_constant<bool, true> {};
+
+using TestTypes = ::testing::Types<Serial, SIMD>;
+
+template <typename T>
+class PointStressIntegrandTest
+    : public PointStressIntegrandTestUntyped<T::value> {};
+
+TYPED_TEST_SUITE(PointStressIntegrandTest, TestTypes);
+
 // Test stress_integrand for 2D acoustic medium
-TEST_F(PointStressIntegrandTest, StressIntegrand2DAcoustic) {
+TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DAcoustic) {
+  constexpr bool using_simd = TypeParam::value;
+  constexpr int simd_size =
+      specfem::datatype::simd<type_real, using_simd>::size();
+
   // Define the stress_integrand type for 2D acoustic medium
   using stress_integrand_type =
       point::stress_integrand<dimension::type::dim2,
-                              element::medium_tag::acoustic, false>;
+                              element::medium_tag::acoustic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
@@ -44,28 +68,45 @@ TEST_F(PointStressIntegrandTest, StressIntegrand2DAcoustic) {
   EXPECT_EQ(stress_integrand_type::dimension, 2);
   EXPECT_EQ(stress_integrand_type::components, 1);
 
+  // Create test values for the tensor
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val1;
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val2;
+
+  // Initialize values
+  if constexpr (using_simd) {
+    for (int i = 0; i < simd_size; ++i) {
+      val1[i] = 1.5;
+      val2[i] = 2.5;
+    }
+  } else {
+    val1 = 1.5;
+    val2 = 2.5;
+  }
+
   // Create a stress integrand tensor for acoustic medium
   // For acoustic medium in 2D, it's a 1x2 tensor (component x dimension)
-  // With transposed indexing, we need to be careful about the order of
-  // initialization
-
-  // APPROACH 1: Initialize with individual values in column-major order
-  typename stress_integrand_type::value_type F(1.5, 2.5);
+  typename stress_integrand_type::value_type F(val1, val2);
 
   // Construct stress_integrand object
   stress_integrand_type si(F);
 
-  // Verify values - if transposed, we might be accessing them differently
-  EXPECT_REAL_EQ(si.F(0, 0), 1.5);
-  EXPECT_REAL_EQ(si.F(0, 1), 2.5);
+  // Verify values with all_of pattern
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 0) - val1) < tol))
+      << ExpectedGot(val1, si.F(0, 0));
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 1) - val2) < tol))
+      << ExpectedGot(val2, si.F(0, 1));
 }
 
 // Test stress_integrand for 2D elastic medium
-TEST_F(PointStressIntegrandTest, StressIntegrand2DElastic) {
+TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DElastic) {
+  constexpr bool using_simd = TypeParam::value;
+  constexpr int simd_size =
+      specfem::datatype::simd<type_real, using_simd>::size();
+
   // Define the stress_integrand type for 2D elastic medium
   using stress_integrand_type =
       point::stress_integrand<dimension::type::dim2,
-                              element::medium_tag::elastic_psv, false>;
+                              element::medium_tag::elastic_psv, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
@@ -80,28 +121,55 @@ TEST_F(PointStressIntegrandTest, StressIntegrand2DElastic) {
   EXPECT_EQ(stress_integrand_type::dimension, 2);
   EXPECT_EQ(stress_integrand_type::components, 2);
 
+  // Create test values for the tensor
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val11;
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val21;
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val12;
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val22;
+
+  // Initialize values
+  if constexpr (using_simd) {
+    for (int i = 0; i < simd_size; ++i) {
+      val11[i] = 1.1;
+      val21[i] = 2.1;
+      val12[i] = 1.2;
+      val22[i] = 2.2;
+    }
+  } else {
+    val11 = 1.1;
+    val21 = 2.1;
+    val12 = 1.2;
+    val22 = 2.2;
+  }
+
   // Create a stress integrand tensor for elastic medium
   // For elastic medium in 2D, it's a 2x2 tensor (component x dimension)
-  // If indices are transposed, we initialize in column-major order: (0,0),
-  // (1,0), (0,1), (1,1)
-  typename stress_integrand_type::value_type F(1.1, 2.1, 1.2, 2.2);
+  typename stress_integrand_type::value_type F(val11, val21, val12, val22);
 
   // Construct stress_integrand object
   stress_integrand_type si(F);
 
-  // Verify values - if transposed, the indices would be different
-  EXPECT_REAL_EQ(si.F(0, 0), 1.1);
-  EXPECT_REAL_EQ(si.F(1, 0), 2.1);
-  EXPECT_REAL_EQ(si.F(0, 1), 1.2);
-  EXPECT_REAL_EQ(si.F(1, 1), 2.2);
+  // Verify values using all_of pattern
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 0) - val11) < tol))
+      << ExpectedGot(val11, si.F(0, 0));
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(1, 0) - val21) < tol))
+      << ExpectedGot(val21, si.F(1, 0));
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 1) - val12) < tol))
+      << ExpectedGot(val12, si.F(0, 1));
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(1, 1) - val22) < tol))
+      << ExpectedGot(val22, si.F(1, 1));
 }
 
 // Test stress_integrand for 2D poroelastic medium
-TEST_F(PointStressIntegrandTest, StressIntegrand2DPoroelastic) {
+TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DPoroelastic) {
+  constexpr bool using_simd = TypeParam::value;
+  constexpr int simd_size =
+      specfem::datatype::simd<type_real, using_simd>::size();
+
   // Define the stress_integrand type for 2D poroelastic medium
   using stress_integrand_type =
       point::stress_integrand<dimension::type::dim2,
-                              element::medium_tag::poroelastic, false>;
+                              element::medium_tag::poroelastic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
@@ -116,35 +184,54 @@ TEST_F(PointStressIntegrandTest, StressIntegrand2DPoroelastic) {
   EXPECT_EQ(stress_integrand_type::dimension, 2);
   EXPECT_EQ(stress_integrand_type::components, 4);
 
-  // Create a stress integrand tensor for poroelastic medium
-  // For poroelastic medium in 2D, it's a 4x2 tensor (component x dimension)
-  // With transposed indexing, use column-major order:
-  // (0,0), (1,0), (2,0), (3,0), (0,1), (1,1), (2,1), (3,1)
+  // Create test values for tensor elements
+  typename specfem::datatype::simd<type_real, using_simd>::datatype
+      vals[8]; // 4 components × 2 dimensions
+
+  // Initialize values
+  if constexpr (using_simd) {
+    for (int i = 0; i < simd_size; ++i) {
+      for (int j = 0; j < 8; ++j) {
+        vals[j][i] = 1.0 + j * 0.1 + (j / 4) * 0.1; // systematic values
+      }
+    }
+  } else {
+    for (int j = 0; j < 8; ++j) {
+      vals[j] = 1.0 + j * 0.1 + (j / 4) * 0.1;
+    }
+  }
+
+  // Create tensor for poroelastic medium (4x2)
   typename stress_integrand_type::value_type F(
-      1.1, 2.1, 3.1, 4.1, // first dimension (column 0)
-      1.2, 2.2, 3.2, 4.2  // second dimension (column 1)
+      vals[0], vals[1], vals[2], vals[3], // first dimension (column 0)
+      vals[4], vals[5], vals[6], vals[7]  // second dimension (column 1)
   );
 
   // Construct stress_integrand object
   stress_integrand_type si(F);
 
-  // Verify values with transposed indexing
-  EXPECT_REAL_EQ(si.F(0, 0), 1.1);
-  EXPECT_REAL_EQ(si.F(1, 0), 2.1);
-  EXPECT_REAL_EQ(si.F(2, 0), 3.1);
-  EXPECT_REAL_EQ(si.F(3, 0), 4.1);
-  EXPECT_REAL_EQ(si.F(0, 1), 1.2);
-  EXPECT_REAL_EQ(si.F(1, 1), 2.2);
-  EXPECT_REAL_EQ(si.F(2, 1), 3.2);
-  EXPECT_REAL_EQ(si.F(3, 1), 4.2);
+  // Verify values
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 2; ++j) {
+      int idx = i + j * 4;
+      EXPECT_TRUE(
+          specfem::datatype::all_of(Kokkos::abs(si.F(i, j) - vals[idx]) < tol))
+          << ExpectedGot(vals[idx], si.F(i, j)) << " at index (" << i << ","
+          << j << ")";
+    }
+  }
 }
 
 // Test stress_integrand for 3D acoustic medium
-TEST_F(PointStressIntegrandTest, StressIntegrand3DAcoustic) {
+TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DAcoustic) {
+  constexpr bool using_simd = TypeParam::value;
+  constexpr int simd_size =
+      specfem::datatype::simd<type_real, using_simd>::size();
+
   // Define the stress_integrand type for 3D acoustic medium
   using stress_integrand_type =
       point::stress_integrand<dimension::type::dim3,
-                              element::medium_tag::acoustic, false>;
+                              element::medium_tag::acoustic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
@@ -159,27 +246,49 @@ TEST_F(PointStressIntegrandTest, StressIntegrand3DAcoustic) {
   EXPECT_EQ(stress_integrand_type::dimension, 3);
   EXPECT_EQ(stress_integrand_type::components, 1);
 
-  // Create a stress integrand tensor for acoustic medium
-  // For acoustic medium in 3D, it's a 1x3 tensor (component x dimension)
-  // With transposed indexing, column-major order still works the same for 1
-  // component
-  typename stress_integrand_type::value_type F(1.5, 2.5, 3.5);
+  // Create test values
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val1;
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val2;
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val3;
+
+  // Initialize values
+  if constexpr (using_simd) {
+    for (int i = 0; i < simd_size; ++i) {
+      val1[i] = 1.5;
+      val2[i] = 2.5;
+      val3[i] = 3.5;
+    }
+  } else {
+    val1 = 1.5;
+    val2 = 2.5;
+    val3 = 3.5;
+  }
+
+  // Create tensor for acoustic medium in 3D (1x3)
+  typename stress_integrand_type::value_type F(val1, val2, val3);
 
   // Construct stress_integrand object
   stress_integrand_type si(F);
 
   // Verify values
-  EXPECT_REAL_EQ(si.F(0, 0), 1.5);
-  EXPECT_REAL_EQ(si.F(0, 1), 2.5);
-  EXPECT_REAL_EQ(si.F(0, 2), 3.5);
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 0) - val1) < tol))
+      << ExpectedGot(val1, si.F(0, 0));
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 1) - val2) < tol))
+      << ExpectedGot(val2, si.F(0, 1));
+  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 2) - val3) < tol))
+      << ExpectedGot(val3, si.F(0, 2));
 }
 
 // Test stress_integrand for 3D elastic medium
-TEST_F(PointStressIntegrandTest, StressIntegrand3DElastic) {
+TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DElastic) {
+  constexpr bool using_simd = TypeParam::value;
+  constexpr int simd_size =
+      specfem::datatype::simd<type_real, using_simd>::size();
+
   // Define the stress_integrand type for 3D elastic medium
   using stress_integrand_type =
       point::stress_integrand<dimension::type::dim3,
-                              element::medium_tag::elastic, false>;
+                              element::medium_tag::elastic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
@@ -194,107 +303,194 @@ TEST_F(PointStressIntegrandTest, StressIntegrand3DElastic) {
   EXPECT_EQ(stress_integrand_type::dimension, 3);
   EXPECT_EQ(stress_integrand_type::components, 3);
 
-  // Create a stress integrand tensor for elastic medium
-  // For elastic medium in 3D, it's a 3x3 tensor (component x dimension)
-  // With transposed indexing (column-major), we initialize as:
-  // (0,0), (1,0), (2,0), (0,1), (1,1), (2,1), (0,2), (1,2), (2,2)
+  // Create test values for 3×3 tensor
+  typename specfem::datatype::simd<type_real, using_simd>::datatype vals[9];
+
+  // Initialize values
+  if constexpr (using_simd) {
+    for (int i = 0; i < simd_size; ++i) {
+      for (int j = 0; j < 9; ++j) {
+        vals[j][i] = 1.0 + (j % 3) * 0.1 + (j / 3) * 0.1;
+      }
+    }
+  } else {
+    for (int j = 0; j < 9; ++j) {
+      vals[j] = 1.0 + (j % 3) * 0.1 + (j / 3) * 0.1;
+    }
+  }
+
+  // Create tensor for elastic medium in 3D (3×3)
   typename stress_integrand_type::value_type F(
-      1.1, 2.1, 3.1, // first dimension (column 0)
-      1.2, 2.2, 3.2, // second dimension (column 1)
-      1.3, 2.3, 3.3  // third dimension (column 2)
+      vals[0], vals[1], vals[2], // first column
+      vals[3], vals[4], vals[5], // second column
+      vals[6], vals[7], vals[8]  // third column
   );
 
   // Construct stress_integrand object
   stress_integrand_type si(F);
 
-  // Verify values with transposed indexing
-  EXPECT_REAL_EQ(si.F(0, 0), 1.1);
-  EXPECT_REAL_EQ(si.F(1, 0), 2.1);
-  EXPECT_REAL_EQ(si.F(2, 0), 3.1);
-  EXPECT_REAL_EQ(si.F(0, 1), 1.2);
-  EXPECT_REAL_EQ(si.F(1, 1), 2.2);
-  EXPECT_REAL_EQ(si.F(2, 1), 3.2);
-  EXPECT_REAL_EQ(si.F(0, 2), 1.3);
-  EXPECT_REAL_EQ(si.F(1, 2), 2.3);
-  EXPECT_REAL_EQ(si.F(2, 2), 3.3);
+  // Verify values
+  for (int i = 0; i < 3; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      int idx = i + j * 3;
+      EXPECT_TRUE(
+          specfem::datatype::all_of(Kokkos::abs(si.F(i, j) - vals[idx]) < tol))
+          << ExpectedGot(vals[idx], si.F(i, j)) << " at index (" << i << ","
+          << j << ")";
+    }
+  }
 }
 
 // Test default constructor
-TEST_F(PointStressIntegrandTest, DefaultConstructor) {
+TYPED_TEST(PointStressIntegrandTest, DefaultConstructor) {
+  constexpr bool using_simd = TypeParam::value;
+
   // Define the stress_integrand type for 2D acoustic medium
   using stress_integrand_type =
       point::stress_integrand<dimension::type::dim2,
-                              element::medium_tag::acoustic, false>;
+                              element::medium_tag::acoustic, using_simd>;
 
   // Create stress_integrand with default constructor
   stress_integrand_type si;
 
-  // The values should be default initialized (to zero based on RegisterArray
-  // implementation)
-  EXPECT_REAL_EQ(si.F(0, 0), 0.0);
-  EXPECT_REAL_EQ(si.F(0, 1), 0.0);
+  // Get a zero value in appropriate type
+  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val;
+  if constexpr (using_simd) {
+    for (int i = 0; i < specfem::datatype::simd<type_real, using_simd>::size();
+         ++i) {
+      zero_val[i] = 0.0;
+    }
+  } else {
+    zero_val = 0.0;
+  }
+
+  // The values should be default initialized (to zero)
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(si.F(0, 0) - zero_val) < tol))
+      << ExpectedGot(zero_val, si.F(0, 0));
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(si.F(0, 1) - zero_val) < tol))
+      << ExpectedGot(zero_val, si.F(0, 1));
 }
 
 // Test constructor with uniform value
-TEST_F(PointStressIntegrandTest, ConstantConstructor) {
+TYPED_TEST(PointStressIntegrandTest, ConstantConstructor) {
+  constexpr bool using_simd = TypeParam::value;
+  constexpr int simd_size =
+      specfem::datatype::simd<type_real, using_simd>::size();
+
   // Define the stress_integrand type for 2D elastic medium
   using stress_integrand_type =
       point::stress_integrand<dimension::type::dim2,
-                              element::medium_tag::elastic_psv, false>;
+                              element::medium_tag::elastic_psv, using_simd>;
+
+  // Create a constant value
+  typename specfem::datatype::simd<type_real, using_simd>::datatype const_val;
+  if constexpr (using_simd) {
+    for (int i = 0; i < simd_size; ++i) {
+      const_val[i] = 3.14;
+    }
+  } else {
+    const_val = 3.14;
+  }
 
   // Create a stress integrand tensor initialized with a constant value
-  typename stress_integrand_type::value_type F(3.14);
+  typename stress_integrand_type::value_type F(const_val);
 
   // Construct stress_integrand object
   stress_integrand_type si(F);
 
   // Verify all values are set to the constant
-  EXPECT_REAL_EQ(si.F(0, 0), 3.14);
-  EXPECT_REAL_EQ(si.F(0, 1), 3.14);
-  EXPECT_REAL_EQ(si.F(1, 0), 3.14);
-  EXPECT_REAL_EQ(si.F(1, 1), 3.14);
-}
-
-// Test SIMD version of stress_integrand
-TEST_F(PointStressIntegrandTest, StressIntegrand2DAcoustic_SIMD) {
-  // Define the SIMD stress_integrand type for 2D acoustic medium
-  using stress_integrand_type =
-      point::stress_integrand<dimension::type::dim2,
-                              element::medium_tag::acoustic, true>;
-
-  // Verify SIMD flag is propagated to the base class
-  using base_type =
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::stress_integrand,
-                                  dimension::type::dim2, true>;
-
-  bool is_simd_accessor =
-      std::is_base_of<base_type, stress_integrand_type>::value;
-  EXPECT_TRUE(is_simd_accessor);
-
-  // Verify static properties for SIMD version
-  EXPECT_EQ(stress_integrand_type::dimension, 2);
-  EXPECT_EQ(stress_integrand_type::components, 1);
-
-  // Create a stress integrand object (default initialized)
-  stress_integrand_type si;
-
-  // Just verify the type can be instantiated
-  SUCCEED();
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(si.F(0, 0) - const_val) < tol))
+      << ExpectedGot(const_val, si.F(0, 0));
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(si.F(0, 1) - const_val) < tol))
+      << ExpectedGot(const_val, si.F(0, 1));
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(si.F(1, 0) - const_val) < tol))
+      << ExpectedGot(const_val, si.F(1, 0));
+  EXPECT_TRUE(
+      specfem::datatype::all_of(Kokkos::abs(si.F(1, 1) - const_val) < tol))
+      << ExpectedGot(const_val, si.F(1, 1));
 }
 
 // Test accessor base type inheritance
-TEST_F(PointStressIntegrandTest, AccessorBaseType) {
+TYPED_TEST(PointStressIntegrandTest, AccessorBaseType) {
+  constexpr bool using_simd = TypeParam::value;
+
   using stress_integrand_type =
       point::stress_integrand<dimension::type::dim2,
-                              element::medium_tag::acoustic, false>;
+                              element::medium_tag::acoustic, using_simd>;
 
   // Check if stress_integrand_type is derived from the correct base class
   bool is_accessor = std::is_base_of<
       specfem::accessor::Accessor<specfem::accessor::type::point,
                                   specfem::data_class::type::stress_integrand,
-                                  dimension::type::dim2, false>,
+                                  dimension::type::dim2, using_simd>,
       stress_integrand_type>::value;
 
   EXPECT_TRUE(is_accessor);
+}
+
+// Test tensor shape and dimensions
+TYPED_TEST(PointStressIntegrandTest, TensorShape) {
+  constexpr bool using_simd = TypeParam::value;
+
+  // Test various element types and dimensions
+  using acoustic_2d =
+      point::stress_integrand<dimension::type::dim2,
+                              element::medium_tag::acoustic, using_simd>;
+  using elastic_2d =
+      point::stress_integrand<dimension::type::dim2,
+                              element::medium_tag::elastic_psv, using_simd>;
+  using acoustic_3d =
+      point::stress_integrand<dimension::type::dim3,
+                              element::medium_tag::acoustic, using_simd>;
+  using elastic_3d =
+      point::stress_integrand<dimension::type::dim3,
+                              element::medium_tag::elastic, using_simd>;
+  using poro_2d =
+      point::stress_integrand<dimension::type::dim2,
+                              element::medium_tag::poroelastic, using_simd>;
+
+  // Verify tensor shapes
+  EXPECT_EQ(acoustic_2d::dimension, 2);
+  EXPECT_EQ(acoustic_2d::components, 1);
+
+  EXPECT_EQ(elastic_2d::dimension, 2);
+  EXPECT_EQ(elastic_2d::components, 2);
+
+  EXPECT_EQ(acoustic_3d::dimension, 3);
+  EXPECT_EQ(acoustic_3d::components, 1);
+
+  EXPECT_EQ(elastic_3d::dimension, 3);
+  EXPECT_EQ(elastic_3d::components, 3);
+
+  EXPECT_EQ(poro_2d::dimension, 2);
+  EXPECT_EQ(poro_2d::components, 4);
+}
+
+// Test SIMD type propagation
+TYPED_TEST(PointStressIntegrandTest, SIMDTypePropagation) {
+  constexpr bool using_simd = TypeParam::value;
+
+  using stress_integrand_type =
+      point::stress_integrand<dimension::type::dim2,
+                              element::medium_tag::acoustic, using_simd>;
+
+  using expected_simd_type = specfem::datatype::simd<type_real, using_simd>;
+  using actual_simd_type = typename stress_integrand_type::simd;
+
+  bool is_correct_simd_type =
+      std::is_same<actual_simd_type, expected_simd_type>::value;
+  EXPECT_TRUE(is_correct_simd_type);
+
+  // Also verify the datatype matches
+  using expected_datatype = typename expected_simd_type::datatype;
+  using actual_datatype = typename actual_simd_type::datatype;
+
+  bool is_correct_datatype =
+      std::is_same<actual_datatype, expected_datatype>::value;
+  EXPECT_TRUE(is_correct_datatype);
 }
