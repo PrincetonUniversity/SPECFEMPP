@@ -25,15 +25,14 @@ namespace medium {
  *
  * @tparam MediumTag The medium tag of the element
  * @tparam PropertyTag The property tag of the element
- * @tparam MemberType The kokkos team policy member type
- * @tparam IteratorType The iterator type specfem::iterator::chunk
+ * @tparam ChunkIndexType Chunk index type that stores the indices and iterator
+ * for elements in the chunk
  * @tparam ChunkFieldType Chunk field type that stores the intrinsic field
  * values specfem::chunk_element::field
  * @tparam QuadratureType The quadrature type that stores the lagrange
  * polynomial values specfem::element::quadrature
  * @tparam WavefieldViewType 4 dimensional Kokkos view (output)
- * @param team The kokkos team policy member
- * @param iterator The iterator to iterate over all the GLL points
+ * @param chunk_index The chunk index that contains the spectral element indices
  * @param assembly SPECFEM++ assembly object
  * @param quadrature The quadrature object containing lagrange polynomial values
  * @param field Instrinsic field values
@@ -42,11 +41,11 @@ namespace medium {
  * values
  */
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, typename MemberType,
-          typename IteratorType, typename ChunkFieldType,
-          typename QuadratureType, typename WavefieldViewType>
+          specfem::element::property_tag PropertyTag, typename ChunkIndexType,
+          typename ChunkFieldType, typename QuadratureType,
+          typename WavefieldViewType>
 KOKKOS_INLINE_FUNCTION auto
-compute_wavefield(const MemberType &team, const IteratorType &iterator,
+compute_wavefield(const ChunkIndexType &chunk_index,
                   const specfem::compute::assembly &assembly,
                   const QuadratureType &quadrature, const ChunkFieldType &field,
                   const specfem::wavefield::type &wavefield_component,
@@ -75,12 +74,10 @@ compute_wavefield(const MemberType &team, const IteratorType &iterator,
       std::integral_constant<specfem::element::property_tag, PropertyTag>;
 
   impl_compute_wavefield(dimension_dispatch(), medium_dispatch(),
-                         property_dispatch(), team, iterator, assembly,
-                         quadrature, field, wavefield_component,
-                         wavefield_on_entire_grid);
-
+                         property_dispatch(), chunk_index, assembly, quadrature,
+                         field, wavefield_component, wavefield_on_entire_grid);
   return;
-}
+} // compute_wavefield
 
 } // namespace medium
 } // namespace specfem

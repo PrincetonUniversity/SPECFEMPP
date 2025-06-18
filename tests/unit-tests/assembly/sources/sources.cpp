@@ -4,7 +4,6 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "policies/chunk.hpp"
 #include "specfem/point.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
@@ -52,8 +51,7 @@ void check_store(specfem::compute::assembly &assembly) {
   using PointSourceType =
       specfem::point::source<Dimension, MediumTag, WavefieldType>;
   using mapped_chunk_index_type =
-      specfem::iterator::impl::mapped_chunk_index_type<
-          false, specfem::dimension::type::dim2>;
+      specfem::point::mapped_index<Dimension, false>;
   Kokkos::parallel_for(
       "check_store_on_device",
       Kokkos::MDRangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Rank<3> >(
@@ -66,7 +64,7 @@ void check_store(specfem::compute::assembly &assembly) {
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
         const auto mapped_iterator_index =
-            mapped_chunk_index_type(ielement, index, isource);
+            mapped_chunk_index_type(index, isource);
         specfem::datatype::ScalarPointViewType<type_real, num_components, false>
             stf;
         specfem::datatype::ScalarPointViewType<type_real, num_components, false>
@@ -121,8 +119,7 @@ void check_load(specfem::compute::assembly &assembly) {
       specfem::point::source<Dimension, MediumTag, WavefieldType>;
 
   using mapped_chunk_index_type =
-      specfem::iterator::impl::mapped_chunk_index_type<
-          false, specfem::dimension::type::dim2>;
+      specfem::point::mapped_index<Dimension, false>;
 
   Kokkos::View<PointSourceType ***, Kokkos::DefaultExecutionSpace>
       point_sources("point_sources", ngllz, ngllx, nelements);
@@ -142,7 +139,7 @@ void check_load(specfem::compute::assembly &assembly) {
             specfem::point::index<Dimension, false>(ielement, iz, ix);
 
         const auto mapped_iterator_index =
-            mapped_chunk_index_type(ielement, index, isource);
+            mapped_chunk_index_type(index, isource);
 
         PointSourceType point;
         specfem::compute::load_on_device(mapped_iterator_index, sources, point);
@@ -229,14 +226,13 @@ void check_assembly_source_construction(
 
     source->compute_source_time_function(1.0, 0.0, 1, stf);
     using mapped_chunk_index_type =
-        specfem::iterator::impl::mapped_chunk_index_type<
-            false, specfem::dimension::type::dim2>;
+        specfem::point::mapped_index<Dimension, false>;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
         specfem::point::index<Dimension, false> index(lcoord.ispec, iz, ix);
         const auto mapped_iterator_index =
-            mapped_chunk_index_type(lcoord.ispec, index, isource);
+            mapped_chunk_index_type(index, isource);
         PointSourceType point;
         specfem::compute::load_on_host(mapped_iterator_index, assembly.sources,
                                        point);

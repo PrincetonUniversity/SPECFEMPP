@@ -3,11 +3,11 @@
 #include "compute/fields/impl/field_impl.hpp"
 #include "data_access.tpp"
 #include "element/field.hpp"
+#include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
-#include "enumerations/material_definitions.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
@@ -479,6 +479,24 @@ inline void
 load_on_host(const MemberType &member, const ChunkIteratorType &iterator,
              const WavefieldContainer &field, ViewType &chunk_field) {
   impl_load<false>(member, iterator, field, chunk_field);
+}
+
+template <typename ChunkIndexType, typename WavefieldContainer,
+          typename ViewType,
+          typename std::enable_if_t<ViewType::isChunkFieldType, int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const ChunkIndexType &index,
+                                                const WavefieldContainer &field,
+                                                ViewType &chunk_field) {
+  impl_load<true>(index, field, chunk_field);
+}
+
+template <typename ChunkIndexType, typename WavefieldContainer,
+          typename ViewType,
+          typename std::enable_if_t<ViewType::isChunkFieldType, int> = 0>
+inline void load_on_host(const ChunkIndexType &index,
+                         const WavefieldContainer &field,
+                         ViewType &chunk_field) {
+  impl_load<false>(index, field, chunk_field);
 }
 
 } // namespace compute

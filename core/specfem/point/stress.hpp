@@ -2,6 +2,7 @@
 
 #include "datatypes/point_view.hpp"
 #include "enumerations/interface.hpp"
+#include "partial_derivatives.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

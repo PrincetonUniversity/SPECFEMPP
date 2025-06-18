@@ -174,25 +174,24 @@ private:
               (IndexViewType, source_indices_adjoint),
               (IndexViewType::HostMirror, h_source_indices_adjoint)))
 
-  template <typename IteratorIndexType, typename PointSourceType>
+  template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
-  load_on_device(const IteratorIndexType iterator_index,
+  load_on_device(const IndexType index,
                  const specfem::compute::sources &sources,
                  PointSourceType &point_source);
 
-  template <typename IteratorIndexType, typename PointSourceType>
-  friend void load_on_host(const IteratorIndexType iterator_index,
+  template <typename IndexType, typename PointSourceType>
+  friend void load_on_host(const IndexType index,
                            const specfem::compute::sources &sources,
                            PointSourceType &point_source);
 
-  template <typename IteratorIndexType, typename PointSourceType>
+  template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
-  store_on_device(const IteratorIndexType iterator_index,
-                  const PointSourceType &point_source,
+  store_on_device(const IndexType index, const PointSourceType &point_source,
                   const specfem::compute::sources &sources);
 
-  template <typename IteratorIndexType, typename PointSourceType>
-  friend void store_on_host(const IteratorIndexType iterator_index,
+  template <typename IndexType, typename PointSourceType>
+  friend void store_on_host(const IndexType index,
                             const PointSourceType &point_source,
                             const specfem::compute::sources &sources);
 }; // namespace compute
@@ -211,15 +210,12 @@ private:
  * @param sources Source information for the domain
  * @param point_source Point source object to load source information into
  */
-template <typename IteratorIndexType, typename PointSourceType>
+template <typename IndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
-load_on_device(const IteratorIndexType iterator_index,
-               const specfem::compute::sources &sources,
+load_on_device(const IndexType index, const specfem::compute::sources &sources,
                PointSourceType &point_source) {
 
-  const auto index = iterator_index.index;
-
-  static_assert(index.using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
@@ -230,12 +226,12 @@ load_on_device(const IteratorIndexType iterator_index,
                     specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(index.dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
 #ifndef NDEBUG
 
-  const int isource = iterator_index.imap;
+  const int isource = index.imap;
 
   // Checks if the spectral element index is out of bounds
 
@@ -257,8 +253,7 @@ load_on_device(const IteratorIndexType iterator_index,
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
-            _source_.load_on_device(sources.timestep, iterator_index,
-                                    point_source);
+            _source_.load_on_device(sources.timestep, index, point_source);
           }
         }
       })
@@ -280,15 +275,14 @@ load_on_device(const IteratorIndexType iterator_index,
  * @param sources Source information for the domain
  * @param point_source Point source object to load source information into
  */
-template <typename IteratorIndexType, typename PointSourceType>
-void load_on_host(const IteratorIndexType iterator_index,
+template <typename IndexType, typename PointSourceType>
+void load_on_host(const IndexType index,
                   const specfem::compute::sources &sources,
                   PointSourceType &point_source) {
 
   // Get the mapping from the iterator index
-  const auto index = iterator_index.index;
 
-  static_assert(index.using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
@@ -299,11 +293,11 @@ void load_on_host(const IteratorIndexType iterator_index,
                     specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(index.dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
 #ifndef NDEBUG
-  const int isource = iterator_index.imap;
+  const int isource = index.imap;
 
   // Checks if the spectral element index is out of bounds
   if ((index.ispec < 0) || (sources.nspec <= index.ispec)) {
@@ -325,8 +319,7 @@ void load_on_host(const IteratorIndexType iterator_index,
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
-            _source_.load_on_host(sources.timestep, iterator_index,
-                                  point_source);
+            _source_.load_on_host(sources.timestep, index, point_source);
           }
         }
       })
@@ -348,15 +341,12 @@ void load_on_host(const IteratorIndexType iterator_index,
  * @param point_source Point source object to load source information into
  * @param sources Source information for the domain
  */
-template <typename IteratorIndexType, typename PointSourceType>
+template <typename IndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
-store_on_device(const IteratorIndexType iterator_index,
-                const PointSourceType &point_source,
+store_on_device(const IndexType index, const PointSourceType &point_source,
                 const specfem::compute::sources &sources) {
 
-  const auto index = iterator_index.index;
-
-  static_assert(index.using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
@@ -367,11 +357,11 @@ store_on_device(const IteratorIndexType iterator_index,
                     specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(index.dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
 #ifndef NDEBUG
-  const int isource = iterator_index.imap;
+  const int isource = index.imap;
 
   if ((index.ispec < 0) || (sources.nspec <= index.ispec)) {
     Kokkos::abort("Invalid spectral element index detected in source");
@@ -392,8 +382,7 @@ store_on_device(const IteratorIndexType iterator_index,
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
-            _source_.store_on_device(sources.timestep, iterator_index,
-                                     point_source);
+            _source_.store_on_device(sources.timestep, index, point_source);
           }
         }
       })
@@ -415,14 +404,11 @@ store_on_device(const IteratorIndexType iterator_index,
  * @param point_source Point source object to load source information into
  * @param sources Source information for the domain
  */
-template <typename IteratorIndexType, typename PointSourceType>
-void store_on_host(const IteratorIndexType iterator_index,
-                   const PointSourceType &point_source,
+template <typename IndexType, typename PointSourceType>
+void store_on_host(const IndexType index, const PointSourceType &point_source,
                    const specfem::compute::sources &sources) {
 
-  const auto index = iterator_index.index;
-
-  static_assert(index.using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
@@ -433,11 +419,11 @@ void store_on_host(const IteratorIndexType iterator_index,
                     specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(index.dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
 #ifndef NDEBUG
-  const int isource = iterator_index.imap;
+  const int isource = index.imap;
 
   if ((index.ispec < 0) || (sources.nspec <= index.ispec)) {
     Kokkos::abort("Invalid spectral element index detected in source");
@@ -458,8 +444,7 @@ void store_on_host(const IteratorIndexType iterator_index,
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
-            _source_.store_on_host(sources.timestep, iterator_index,
-                                   point_source);
+            _source_.store_on_host(sources.timestep, index, point_source);
           }
         }
       })

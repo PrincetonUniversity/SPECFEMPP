@@ -175,8 +175,7 @@ public:
   }
 
   template <typename PointValues, typename IndexType>
-  KOKKOS_INLINE_FUNCTION void load_host_values(const IndexType &index,
-                                               PointValues &values) const {
+  void load_host_values(const IndexType &index, PointValues &values) const {
     get_data_on_host(index, values);
   }
 
@@ -187,8 +186,8 @@ public:
   }
 
   template <typename PointValues, typename IndexType>
-  KOKKOS_INLINE_FUNCTION void
-  store_host_values(const IndexType &index, const PointValues &values) const {
+  void store_host_values(const IndexType &index,
+                         const PointValues &values) const {
     set_data_on_host(index, values);
   }
 
@@ -200,8 +199,8 @@ public:
   }
 
   template <typename PointValues, typename IndexType>
-  KOKKOS_INLINE_FUNCTION void add_host_values(const IndexType &index,
-                                              const PointValues &values) const {
+  void add_host_values(const IndexType &index,
+                       const PointValues &values) const {
     add_data_on_host(index, values);
   }
 };
