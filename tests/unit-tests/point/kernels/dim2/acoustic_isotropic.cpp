@@ -46,10 +46,21 @@ TYPED_TEST(PointKernelsTest, AcousticIsotropic2D) {
   }
 
   // Create the kernels object
-  specfem::point::kernels<specfem::dimension::type::dim2,
-                          specfem::element::medium_tag::acoustic,
-                          specfem::element::property_tag::isotropic, using_simd>
-      kernels(rho, kappa);
+  using PointKernelType = specfem::point::kernels<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+      specfem::element::property_tag::isotropic, using_simd>;
+  PointKernelType kernels(rho, kappa);
+  PointKernelType kernels2;
+
+  kernels2.rho() = rho;
+  kernels2.kappa() = kappa;
+  kernels2.rhop() = expected_rhop;
+  kernels2.alpha() = expected_alpha;
+
+  simd_type data[] = { rho, kappa, expected_rhop, expected_alpha };
+
+  PointKernelType kernels3(data);
+  PointKernelType kernels4(rho);
 
   EXPECT_TRUE(specfem::utilities::is_close(kernels.rho(), rho))
       << ExpectedGot(rho, kernels.rho());
@@ -59,4 +70,14 @@ TYPED_TEST(PointKernelsTest, AcousticIsotropic2D) {
       << ExpectedGot(expected_rhop, kernels.rhop());
   EXPECT_TRUE(specfem::utilities::is_close(kernels.alpha(), expected_alpha))
       << ExpectedGot(expected_alpha, kernels.alpha());
+  EXPECT_TRUE(kernels == kernels2)
+      << ExpectedGot(kernels2.rho(), kernels.rho())
+      << ExpectedGot(kernels2.kappa(), kernels.kappa());
+  EXPECT_TRUE(kernels2 == kernels3)
+      << ExpectedGot(kernels3.rho(), kernels2.rho())
+      << ExpectedGot(kernels3.kappa(), kernels2.kappa());
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.rho(), rho))
+      << ExpectedGot(rho, kernels4.rho());
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.kappa(), rho))
+      << ExpectedGot(rho, kernels4.kappa());
 }

@@ -1,9 +1,7 @@
 #pragma once
 
 #include "datatypes/simd.hpp"
-#include "enumerations/accessor.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_SIMD.hpp>
 #include <boost/preprocessor.hpp>
@@ -42,6 +40,13 @@
       if (std::abs(_point_data_container[i] -                                  \
                    other._point_data_container[i]) >                           \
           static_cast<type_real>(1e-6) * std::abs(_point_data_container[i])) { \
+        std::cout << "Point data mismatch at index " << i << ": "              \
+                  << _point_data_container[i]                                  \
+                  << " != " << other._point_data_container[i] << std::endl;    \
+        std::cout << "Difference: "                                            \
+                  << std::abs(_point_data_container[i] -                       \
+                              other._point_data_container[i])                  \
+                  << std::endl;                                                \
         return false;                                                          \
       }                                                                        \
     }                                                                          \
