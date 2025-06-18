@@ -69,19 +69,8 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DAcoustic) {
   EXPECT_EQ(stress_integrand_type::components, 1);
 
   // Create test values for the tensor
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val1;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val2;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      val1[i] = 1.5;
-      val2[i] = 2.5;
-    }
-  } else {
-    val1 = 1.5;
-    val2 = 2.5;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val1{ 1.5 };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val2{ 2.5 };
 
   // Create a stress integrand tensor for acoustic medium
   // For acoustic medium in 2D, it's a 1x2 tensor (component x dimension)
@@ -122,25 +111,18 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DElastic) {
   EXPECT_EQ(stress_integrand_type::components, 2);
 
   // Create test values for the tensor
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val11;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val21;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val12;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val22;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      val11[i] = 1.1;
-      val21[i] = 2.1;
-      val12[i] = 1.2;
-      val22[i] = 2.2;
-    }
-  } else {
-    val11 = 1.1;
-    val21 = 2.1;
-    val12 = 1.2;
-    val22 = 2.2;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val11{
+    1.1
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val21{
+    2.1
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val12{
+    1.2
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val22{
+    2.2
+  };
 
   // Create a stress integrand tensor for elastic medium
   // For elastic medium in 2D, it's a 2x2 tensor (component x dimension)
@@ -189,16 +171,9 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DPoroelastic) {
       vals[8]; // 4 components × 2 dimensions
 
   // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      for (int j = 0; j < 8; ++j) {
-        vals[j][i] = 1.0 + j * 0.1 + (j / 4) * 0.1; // systematic values
-      }
-    }
-  } else {
-    for (int j = 0; j < 8; ++j) {
-      vals[j] = 1.0 + j * 0.1 + (j / 4) * 0.1;
-    }
+  for (int j = 0; j < 8; ++j) {
+    vals[j] = { static_cast<type_real>(1.0) + j * static_cast<type_real>(0.1) +
+                (j / 4) * static_cast<type_real>(0.1) };
   }
 
   // Create tensor for poroelastic medium (4x2)
@@ -247,22 +222,9 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DAcoustic) {
   EXPECT_EQ(stress_integrand_type::components, 1);
 
   // Create test values
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val1;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val2;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val3;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      val1[i] = 1.5;
-      val2[i] = 2.5;
-      val3[i] = 3.5;
-    }
-  } else {
-    val1 = 1.5;
-    val2 = 2.5;
-    val3 = 3.5;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val1{ 1.5 };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val2{ 2.5 };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val3{ 3.5 };
 
   // Create tensor for acoustic medium in 3D (1x3)
   typename stress_integrand_type::value_type F(val1, val2, val3);
@@ -307,16 +269,10 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DElastic) {
   typename specfem::datatype::simd<type_real, using_simd>::datatype vals[9];
 
   // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      for (int j = 0; j < 9; ++j) {
-        vals[j][i] = 1.0 + (j % 3) * 0.1 + (j / 3) * 0.1;
-      }
-    }
-  } else {
-    for (int j = 0; j < 9; ++j) {
-      vals[j] = 1.0 + (j % 3) * 0.1 + (j / 3) * 0.1;
-    }
+  for (int j = 0; j < 9; ++j) {
+    vals[j] = { static_cast<type_real>(1.0) +
+                (j % 3) * static_cast<type_real>(0.1) +
+                (j / 3) * static_cast<type_real>(0.1) };
   }
 
   // Create tensor for elastic medium in 3D (3×3)
@@ -354,15 +310,9 @@ TYPED_TEST(PointStressIntegrandTest, DefaultConstructor) {
   stress_integrand_type si;
 
   // Get a zero value in appropriate type
-  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val;
-  if constexpr (using_simd) {
-    for (int i = 0; i < specfem::datatype::simd<type_real, using_simd>::size();
-         ++i) {
-      zero_val[i] = 0.0;
-    }
-  } else {
-    zero_val = 0.0;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val{
+    0.0
+  };
 
   // The values should be default initialized (to zero)
   EXPECT_TRUE(
@@ -385,14 +335,9 @@ TYPED_TEST(PointStressIntegrandTest, ConstantConstructor) {
                               element::medium_tag::elastic_psv, using_simd>;
 
   // Create a constant value
-  typename specfem::datatype::simd<type_real, using_simd>::datatype const_val;
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      const_val[i] = 3.14;
-    }
-  } else {
-    const_val = 3.14;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype const_val{
+    3.14
+  };
 
   // Create a stress integrand tensor initialized with a constant value
   typename stress_integrand_type::value_type F(const_val);

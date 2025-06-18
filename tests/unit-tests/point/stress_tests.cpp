@@ -69,19 +69,8 @@ TYPED_TEST(PointStressTest, Stress2DAcoustic) {
   EXPECT_EQ(stress_type::components, 1);
 
   // Create test values
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val1;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val2;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      val1[i] = 1.5;
-      val2[i] = 2.5;
-    }
-  } else {
-    val1 = 1.5;
-    val2 = 2.5;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val1{ 1.5 };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val2{ 2.5 };
 
   // Create a stress tensor for acoustic medium
   // For acoustic medium in 2D, it's a 1x2 tensor (component x dimension)
@@ -124,25 +113,18 @@ TYPED_TEST(PointStressTest, Stress2DElastic) {
   EXPECT_EQ(stress_type::components, 2);
 
   // Create test values
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val11;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val21;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val12;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val22;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      val11[i] = 1.1;
-      val21[i] = 2.1;
-      val12[i] = 1.2;
-      val22[i] = 2.2;
-    }
-  } else {
-    val11 = 1.1;
-    val21 = 2.1;
-    val12 = 1.2;
-    val22 = 2.2;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val11{
+    1.1
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val21{
+    2.1
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val12{
+    1.2
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val22{
+    2.2
+  };
 
   // Create a stress tensor for elastic medium
   // For elastic medium in 2D, it's a 2x2 tensor (component x dimension)
@@ -194,16 +176,10 @@ TYPED_TEST(PointStressTest, Stress2DPoroelastic) {
   typename specfem::datatype::simd<type_real, using_simd>::datatype vals[8];
 
   // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      for (int j = 0; j < 8; ++j) {
-        vals[j][i] = 1.1 + (j % 4) * 0.1 + (j / 4) * 0.1;
-      }
-    }
-  } else {
-    for (int j = 0; j < 8; ++j) {
-      vals[j] = 1.1 + (j % 4) * 0.1 + (j / 4) * 0.1;
-    }
+  for (int j = 0; j < 8; ++j) {
+    vals[j] = { static_cast<type_real>(1.1) +
+                (j % 4) * static_cast<type_real>(0.1) +
+                (j / 4) * static_cast<type_real>(0.1) };
   }
 
   // Create a stress tensor for poroelastic medium
@@ -252,22 +228,9 @@ TYPED_TEST(PointStressTest, Stress3DAcoustic) {
   EXPECT_EQ(stress_type::components, 1);
 
   // Create test values
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val1;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val2;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype val3;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      val1[i] = 1.5;
-      val2[i] = 2.5;
-      val3[i] = 3.5;
-    }
-  } else {
-    val1 = 1.5;
-    val2 = 2.5;
-    val3 = 3.5;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val1{ 1.5 };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val2{ 2.5 };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype val3{ 3.5 };
 
   // Create a stress tensor for acoustic medium
   // For acoustic medium in 3D, it's a 1x3 tensor (component x dimension)
@@ -315,16 +278,10 @@ TYPED_TEST(PointStressTest, Stress3DElastic) {
   typename specfem::datatype::simd<type_real, using_simd>::datatype vals[9];
 
   // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      for (int j = 0; j < 9; ++j) {
-        vals[j][i] = 1.1 + (j % 3) * 0.1 + (j / 3) * 0.1;
-      }
-    }
-  } else {
-    for (int j = 0; j < 9; ++j) {
-      vals[j] = 1.1 + (j % 3) * 0.1 + (j / 3) * 0.1;
-    }
+  for (int j = 0; j < 9; ++j) {
+    vals[j] = { static_cast<type_real>(1.1) +
+                (j % 3) * static_cast<type_real>(0.1) +
+                (j / 3) * static_cast<type_real>(0.1) };
   }
 
   // Create a stress tensor for elastic medium in 3D (3x3)
@@ -359,14 +316,9 @@ TYPED_TEST(PointStressTest, DefaultConstructor) {
                                     element::medium_tag::acoustic, using_simd>;
 
   // Create a zero value for comparison
-  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val;
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      zero_val[i] = 0.0;
-    }
-  } else {
-    zero_val = 0.0;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val{
+    0.0
+  };
 
   // Create stress with default constructor
   stress_type stress;
