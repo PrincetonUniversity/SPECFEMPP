@@ -84,10 +84,61 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
   }
 
   // Create the properties object
-  specfem::point::properties<
+  using PointPropertiesType = specfem::point::properties<
       specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic, using_simd>
-      props(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho);
+      specfem::element::property_tag::anisotropic, using_simd>;
+  PointPropertiesType props(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho);
+
+  // Additional constructors and assignment tests
+  PointPropertiesType props2;
+  props2.c11() = c11;
+  props2.c13() = c13;
+  props2.c15() = c15;
+  props2.c33() = c33;
+  props2.c35() = c35;
+  props2.c55() = c55;
+  props2.c12() = c12;
+  props2.c23() = c23;
+  props2.c25() = c25;
+  props2.rho() = rho;
+
+  simd_type data[] = { c11, c13, c15, c33, c35, c55, c12, c23, c25, rho };
+  PointPropertiesType props3(data);
+
+  PointPropertiesType props4(c11);
+
+  EXPECT_TRUE(props2 == props) << ExpectedGot(props2.c11(), props.c11())
+                               << ExpectedGot(props2.c13(), props.c13())
+                               << ExpectedGot(props2.c15(), props.c15())
+                               << ExpectedGot(props2.c33(), props.c33())
+                               << ExpectedGot(props2.c35(), props.c35())
+                               << ExpectedGot(props2.c55(), props.c55())
+                               << ExpectedGot(props2.c12(), props.c12())
+                               << ExpectedGot(props2.c23(), props.c23())
+                               << ExpectedGot(props2.c25(), props.c25())
+                               << ExpectedGot(props2.rho(), props.rho());
+
+  EXPECT_TRUE(props2 == props3) << ExpectedGot(props3.c11(), props2.c11())
+                                << ExpectedGot(props3.c13(), props2.c13())
+                                << ExpectedGot(props3.c15(), props2.c15())
+                                << ExpectedGot(props3.c33(), props2.c33())
+                                << ExpectedGot(props3.c35(), props2.c35())
+                                << ExpectedGot(props3.c55(), props2.c55())
+                                << ExpectedGot(props3.c12(), props2.c12())
+                                << ExpectedGot(props3.c23(), props2.c23())
+                                << ExpectedGot(props3.c25(), props2.c25())
+                                << ExpectedGot(props3.rho(), props2.rho());
+
+  EXPECT_TRUE(specfem::utilities::is_close(props4.c11(), c11));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.c13(), c11));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.c15(), c11));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.c33(), c11));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.c35(), c11));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.c55(), c11));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.c12(), c11));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.c23(), c11));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.c25(), c11));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.rho(), c11));
 
   EXPECT_TRUE(specfem::utilities::is_close(props.c11(), c11))
       << ExpectedGot(c11, props.c11());
