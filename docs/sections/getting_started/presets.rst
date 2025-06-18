@@ -75,6 +75,6 @@ Instead, create a ``CMakeUserPresets.json`` file in the root directory to add or
 For more details on CMake presets and user presets, see the `CMake documentation <https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html>`_.
 
 **Summary:**
-* Use CMake presets to easily switch between build configurations.
-* Choose the correct path for your builds (e.g., ``bin/release`` for CPU, ``bin/release-cuda`` for CUDA).
-* Always create or modify ``CMakeUserPresets.json`` for your custom settings.
+ * Use CMake presets to easily switch between build configurations.
+ * Choose the correct path for your builds (e.g., ``bin/release`` for CPU, ``bin/release-cuda`` for CUDA).
+ * Always create or modify ``CMakeUserPresets.json`` for your custom settings.
