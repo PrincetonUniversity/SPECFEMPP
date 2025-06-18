@@ -78,25 +78,18 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_ValueConstructor) {
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Values to use in constructor
-  typename specfem::datatype::simd<type_real, using_simd>::datatype xix_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype gammax_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype xiz_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype gammaz_val;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      xix_val[i] = 1.1;
-      gammax_val[i] = 2.2;
-      xiz_val[i] = 3.3;
-      gammaz_val[i] = 4.4;
-    }
-  } else {
-    xix_val = 1.1;
-    gammax_val = 2.2;
-    xiz_val = 3.3;
-    gammaz_val = 4.4;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype xix_val{
+    1.1
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype gammax_val{
+    2.2
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype xiz_val{
+    3.3
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype gammaz_val{
+    4.4
+  };
 
   point::partial_derivatives<dimension::type::dim2, false, using_simd> pd(
       xix_val, gammax_val, xiz_val, gammaz_val);
@@ -123,16 +116,9 @@ TYPED_TEST(PointPartialDerivativesTest,
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Value to use in constructor
-  typename specfem::datatype::simd<type_real, using_simd>::datatype const_val;
-
-  // Initialize value
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      const_val[i] = 7.7;
-    }
-  } else {
-    const_val = 7.7;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype const_val{
+    7.7
+  };
 
   point::partial_derivatives<dimension::type::dim2, false, using_simd> pd(
       const_val);
@@ -158,25 +144,18 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Init) {
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Values to use in constructor
-  typename specfem::datatype::simd<type_real, using_simd>::datatype xix_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype gammax_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype xiz_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype gammaz_val;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      xix_val[i] = 1.0;
-      gammax_val[i] = 2.0;
-      xiz_val[i] = 3.0;
-      gammaz_val[i] = 4.0;
-    }
-  } else {
-    xix_val = 1.0;
-    gammax_val = 2.0;
-    xiz_val = 3.0;
-    gammaz_val = 4.0;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype xix_val{
+    1.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype gammax_val{
+    2.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype xiz_val{
+    3.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype gammaz_val{
+    4.0
+  };
 
   point::partial_derivatives<dimension::type::dim2, false, using_simd> pd(
       xix_val, gammax_val, xiz_val, gammaz_val);
@@ -201,44 +180,27 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Arithmetic) {
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Values to use for constructors
-  typename specfem::datatype::simd<type_real, using_simd>::datatype a_xix_val;
+  typename specfem::datatype::simd<type_real, using_simd>::datatype a_xix_val{
+    1.0
+  };
   typename specfem::datatype::simd<type_real, using_simd>::datatype
-      a_gammax_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype a_xiz_val;
+      a_gammax_val{ 2.0 };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype a_xiz_val{
+    3.0
+  };
   typename specfem::datatype::simd<type_real, using_simd>::datatype
-      a_gammaz_val;
+      a_gammaz_val{ 4.0 };
 
-  typename specfem::datatype::simd<type_real, using_simd>::datatype b_xix_val;
+  typename specfem::datatype::simd<type_real, using_simd>::datatype b_xix_val{
+    10.0
+  };
   typename specfem::datatype::simd<type_real, using_simd>::datatype
-      b_gammax_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype b_xiz_val;
+      b_gammax_val{ 20.0 };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype b_xiz_val{
+    30.0
+  };
   typename specfem::datatype::simd<type_real, using_simd>::datatype
-      b_gammaz_val;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      a_xix_val[i] = 1.0;
-      a_gammax_val[i] = 2.0;
-      a_xiz_val[i] = 3.0;
-      a_gammaz_val[i] = 4.0;
-
-      b_xix_val[i] = 10.0;
-      b_gammax_val[i] = 20.0;
-      b_xiz_val[i] = 30.0;
-      b_gammaz_val[i] = 40.0;
-    }
-  } else {
-    a_xix_val = 1.0;
-    a_gammax_val = 2.0;
-    a_xiz_val = 3.0;
-    a_gammaz_val = 4.0;
-
-    b_xix_val = 10.0;
-    b_gammax_val = 20.0;
-    b_xiz_val = 30.0;
-    b_gammaz_val = 40.0;
-  }
+      b_gammaz_val{ 40.0 };
 
   using PD =
       point::partial_derivatives<dimension::type::dim2, false, using_simd>;
@@ -294,14 +256,9 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Arithmetic) {
         << ExpectedGot(b_gammaz_val * scalar_2, d.gammaz);
 
     // Scalar multiplication (scalar * object)
-    typename specfem::datatype::simd<type_real, using_simd>::datatype scalar_3;
-    if constexpr (using_simd) {
-      for (int i = 0; i < simd_size; ++i) {
-        scalar_3[i] = 3.0;
-      }
-    } else {
-      scalar_3 = 3.0;
-    }
+    typename specfem::datatype::simd<type_real, using_simd>::datatype scalar_3{
+      3.0
+    };
 
     PD e = scalar_3 * b;
     EXPECT_TRUE(specfem::datatype::all_of(
@@ -331,34 +288,27 @@ TYPED_TEST(PointPartialDerivativesTest,
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Values to use in constructor
-  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype one_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype two_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype three_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype four_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype five_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype const_val;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      zero_val[i] = 0.0;
-      one_val[i] = 1.0;
-      two_val[i] = 2.0;
-      three_val[i] = 3.0;
-      four_val[i] = 4.0;
-      five_val[i] = 5.0;
-      const_val[i] = 7.7;
-    }
-  } else {
-    zero_val = 0.0;
-    one_val = 1.0;
-    two_val = 2.0;
-    three_val = 3.0;
-    four_val = 4.0;
-    five_val = 5.0;
-    const_val = 7.7;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val{
+    0.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype one_val{
+    1.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype two_val{
+    2.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype three_val{
+    3.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype four_val{
+    4.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype five_val{
+    5.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype const_val{
+    7.7
+  };
 
   using PD =
       point::partial_derivatives<dimension::type::dim2, true, using_simd>;
@@ -425,31 +375,24 @@ TYPED_TEST(PointPartialDerivativesTest,
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Values to use in constructor
-  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype one_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype two_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype three_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype four_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype five_val;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      zero_val[i] = 0.0;
-      one_val[i] = 1.0;
-      two_val[i] = 2.0;
-      three_val[i] = 3.0;
-      four_val[i] = 4.0;
-      five_val[i] = 5.0;
-    }
-  } else {
-    zero_val = 0.0;
-    one_val = 1.0;
-    two_val = 2.0;
-    three_val = 3.0;
-    four_val = 4.0;
-    five_val = 5.0;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val{
+    0.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype one_val{
+    1.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype two_val{
+    2.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype three_val{
+    3.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype four_val{
+    4.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype five_val{
+    5.0
+  };
 
   using PD =
       point::partial_derivatives<dimension::type::dim2, true, using_simd>;
@@ -483,40 +426,33 @@ TYPED_TEST(PointPartialDerivativesTest,
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Values to use in constructor
-  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype one_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype two_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype three_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype four_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype five_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype six_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype seven_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype const_val;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      zero_val[i] = 0.0;
-      one_val[i] = 1.0;
-      two_val[i] = 2.0;
-      three_val[i] = 3.0;
-      four_val[i] = 4.0;
-      five_val[i] = 5.0;
-      six_val[i] = 6.0;
-      seven_val[i] = 7.0;
-      const_val[i] = 8.8;
-    }
-  } else {
-    zero_val = 0.0;
-    one_val = 1.0;
-    two_val = 2.0;
-    three_val = 3.0;
-    four_val = 4.0;
-    five_val = 5.0;
-    six_val = 6.0;
-    seven_val = 7.0;
-    const_val = 8.8;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val{
+    0.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype one_val{
+    1.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype two_val{
+    2.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype three_val{
+    3.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype four_val{
+    4.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype five_val{
+    5.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype six_val{
+    6.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype seven_val{
+    7.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype const_val{
+    8.8
+  };
 
   using PD =
       point::partial_derivatives<dimension::type::dim3, true, using_simd>;
@@ -598,37 +534,30 @@ TYPED_TEST(PointPartialDerivativesTest,
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Values to use in constructor
-  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype one_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype two_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype three_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype four_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype five_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype six_val;
-  typename specfem::datatype::simd<type_real, using_simd>::datatype seven_val;
-
-  // Initialize values
-  if constexpr (using_simd) {
-    for (int i = 0; i < simd_size; ++i) {
-      zero_val[i] = 0.0;
-      one_val[i] = 1.0;
-      two_val[i] = 2.0;
-      three_val[i] = 3.0;
-      four_val[i] = 4.0;
-      five_val[i] = 5.0;
-      six_val[i] = 6.0;
-      seven_val[i] = 7.0;
-    }
-  } else {
-    zero_val = 0.0;
-    one_val = 1.0;
-    two_val = 2.0;
-    three_val = 3.0;
-    four_val = 4.0;
-    five_val = 5.0;
-    six_val = 6.0;
-    seven_val = 7.0;
-  }
+  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val{
+    0.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype one_val{
+    1.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype two_val{
+    2.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype three_val{
+    3.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype four_val{
+    4.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype five_val{
+    5.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype six_val{
+    6.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype seven_val{
+    7.0
+  };
 
   using PD =
       point::partial_derivatives<dimension::type::dim3, true, using_simd>;
