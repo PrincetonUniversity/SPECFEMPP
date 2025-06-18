@@ -387,10 +387,11 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         count++;
       }
 
-      if (error / computed_norm > 1e-3 || std::isnan(error / computed_norm)) {
+      if (error / computed_norm > Test.configuration.tolerance ||
+          std::isnan(error / computed_norm)) {
         FAIL() << "--------------------------------------------------\n"
                << "\033[0;31m[FAILED]\033[0m Test failed\n"
-               << " - Test name: " << Test.name << "\n"
+               << " - Test " << Test.number << ": " << Test.name << "\n"
                << " - Error: Norm of the error is greater than 1e-3\n"
                << " - Station: " << station_name << "\n"
                << " - Network: " << network_name << "\n"
