@@ -1,10 +1,10 @@
 #pragma once
 
 #include "compute/compute_mesh.hpp"
-#include "mesh/mesh.hpp"
 #include "compute/element_types/element_types.hpp"
-#include "receiver/interface.hpp"
 #include "enumerations/interface.hpp"
+#include "mesh/mesh.hpp"
+#include "receiver/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <receiver/receiver.hpp>
@@ -14,85 +14,94 @@ namespace specfem {
 namespace compute {
 
 namespace impl {
+
+// Simple seismogram type iterator - just wraps a vector of seismogram types
+class SeismogramTypeIterator {
+public:
+  using iterator = std::vector<specfem::wavefield::type>::const_iterator;
+
+  SeismogramTypeIterator() = default;
+
+  explicit SeismogramTypeIterator(
+      const std::vector<specfem::wavefield::type> &types)
+      : seismogram_types_(types) {}
+
+  iterator begin() const { return seismogram_types_.begin(); }
+  iterator end() const { return seismogram_types_.end(); }
+
+  size_t size() const { return seismogram_types_.size(); }
+  bool empty() const { return seismogram_types_.empty(); }
+
+private:
+  std::vector<specfem::wavefield::type> seismogram_types_;
+};
+
+// StationInfo that contains station data and can provide seismogram types
+struct StationInfo {
+  std::string network_name;
+  std::string station_name;
+
+  StationInfo(std::string network, std::string station,
+              const std::vector<specfem::wavefield::type> &types)
+      : network_name(std::move(network)), station_name(std::move(station)),
+        seismo_types_(types) {}
+
+  // Method to get seismogram types associated with this station
+  SeismogramTypeIterator get_seismogram_types() const {
+    return SeismogramTypeIterator(seismo_types_);
+  }
+
+private:
+  std::vector<specfem::wavefield::type> seismo_types_;
+};
+
+// Station iterator that outputs StationInfo objects
 class StationIterator {
 private:
   class Iterator {
-
   public:
-    Iterator(const int irec, const int iseis, const int nreceivers,
-             const int nseismograms, std::vector<std::string> &station_names,
-             std::vector<std::string> &network_names,
-             std::vector<specfem::wavefield::type> &seismogram_types)
-        : index(irec * nseismograms + iseis), nreceivers(nreceivers),
-          nseismograms(nseismograms), station_names(station_names),
-          network_names(network_names), seismogram_types(seismogram_types) {}
+    Iterator(const StationIterator *container, size_t index)
+        : container_(container), index_(index) {}
 
-    std::tuple<std::string, std::string, specfem::wavefield::type> operator*() {
-      int irec = index / nseismograms;
-      int iseis = index % nseismograms;
-      return std::make_tuple(station_names[irec], network_names[irec],
-                             seismogram_types[iseis]);
+    StationInfo operator*() const {
+      return StationInfo(container_->network_names_[index_],
+                         container_->station_names_[index_],
+                         container_->seismogram_types_);
     }
 
     Iterator &operator++() {
-      ++index;
+      ++index_;
       return *this;
     }
 
     bool operator!=(const Iterator &other) const {
-      return index != other.index;
+      return index_ != other.index_;
     }
 
   private:
-    int index;
-    int nreceivers;
-    int nseismograms;
-    std::vector<std::string> &station_names;
-    std::vector<std::string> &network_names;
-    std::vector<specfem::wavefield::type> &seismogram_types;
+    const StationIterator *container_;
+    size_t index_;
   };
 
 public:
   StationIterator() = default;
 
-  StationIterator(const int nreceivers, const int nseismograms)
-      : nreceivers(nreceivers), nseismograms(nseismograms),
-        station_names(nreceivers), network_names(nreceivers),
-        seismogram_types(nseismograms) {}
-
-  Iterator begin() {
-    return Iterator(0, 0, nreceivers, nseismograms, station_names,
-                    network_names, seismogram_types);
+  StationIterator(size_t nreceivers,
+                  const std::vector<specfem::wavefield::type> &seismo_types)
+      : seismogram_types_(seismo_types) {
+    station_names_.reserve(nreceivers);
+    network_names_.reserve(nreceivers);
   }
 
-  Iterator end() {
-    return Iterator(nreceivers - 1, nseismograms, nreceivers, nseismograms,
-                    station_names, network_names, seismogram_types);
-  }
+  Iterator begin() const { return Iterator(this, 0); }
+  Iterator end() const { return Iterator(this, station_names_.size()); }
 
-  /** @brief Get the station iterator object
-   *
-   * The iterator object can be used to iterate over the stations. See example
-   * below:
-   * @code
-   * // Iterator over all the stations
-   * for (auto [station_name, network_name, type] :
-   * this->get_stations()) {
-   * // Use get_seismogram(station_name, network_name, type) to get the traces
-   * }
-   * @endcode
-   * @return StationIterator Iterator over the stations
-   */
-  StationIterator &get_stations() { return *this; }
-
-private:
-  int nreceivers;
-  int nseismograms;
+  size_t size() const { return station_names_.size(); }
 
 protected:
-  std::vector<std::string> station_names;                 ///< Station names
-  std::vector<std::string> network_names;                 ///< Network names
-  std::vector<specfem::wavefield::type> seismogram_types; ///< Seismogram types
+  std::vector<std::string> station_names_;
+  std::vector<std::string> network_names_;
+  std::vector<specfem::wavefield::type> seismogram_types_;
 };
 
 class SeismogramIterator {
@@ -359,7 +368,16 @@ public:
    * @return std::vector<specfem::wavefield::type> Vector of seismogram types
    */
   std::vector<specfem::wavefield::type> get_seismogram_types() const {
-    return seismogram_types;
+    return seismogram_types_;
+  }
+
+  /**
+   * @brief Get the station iterator
+   *
+   * @return const StationIterator& Iterator over stations
+   */
+  const impl::StationIterator &stations() const {
+    return static_cast<const impl::StationIterator &>(*this);
   }
 
 private:

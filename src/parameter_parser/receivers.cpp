@@ -41,7 +41,7 @@ specfem::runtime_configuration::receivers::get_seismogram_types() const {
       message << "Unknown seismogram type: "
               << seismogram_type.as<std::string>() << "\n";
 
-      std::runtime_error(message.str());
+      throw std::runtime_error(message.str());
     }
   }
   return stypes;
