@@ -1,8 +1,8 @@
 #pragma once
 
-#include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_SIMD.hpp>
 #include <boost/preprocessor.hpp>
 #include <iostream>
@@ -30,47 +30,13 @@
   }
 
 #define POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                 \
-  template <typename U = simd>                                                 \
-  typename std::enable_if_t<!U::using_simd, bool> operator==(                  \
-      const data_container &other) const {                                     \
+  bool operator==(const data_container &other) const {                         \
     if (nprops != other.nprops) {                                              \
       return false;                                                            \
     }                                                                          \
     for (int i = 0; i < nprops; ++i) {                                         \
-      if (std::abs(_point_data_container[i] -                                  \
-                   other._point_data_container[i]) >                           \
-          static_cast<type_real>(1e-6) * std::abs(_point_data_container[i])) { \
-        std::cout << "Point data mismatch at index " << i << ": "              \
-                  << _point_data_container[i]                                  \
-                  << " != " << other._point_data_container[i] << std::endl;    \
-        std::cout << "Difference: "                                            \
-                  << std::abs(_point_data_container[i] -                       \
-                              other._point_data_container[i])                  \
-                  << std::endl;                                                \
-        return false;                                                          \
-      }                                                                        \
-    }                                                                          \
-    return true;                                                               \
-  }
-
-#define POINT_BOOLEAN_OPERATOR_DEFINITION_SIMD(seq)                            \
-  template <bool OtherSIMD, typename U = simd>                                 \
-  typename std::enable_if_t<U::using_simd, bool> operator==(                   \
-      const data_container<base_type::dimension_tag, base_type::medium_tag,    \
-                           base_type::property_tag, OtherSIMD> &other) const { \
-    if (nprops != other.nprops) {                                              \
-      return false;                                                            \
-    }                                                                          \
-    for (int i = 0; i < nprops; ++i) {                                         \
-      if (!Kokkos::Experimental::all_of(                                       \
-              Kokkos::abs(_point_data_container[i] -                           \
-                          other._point_data_container[i]) <                    \
-                  static_cast<type_real>(1e-6) *                               \
-                      Kokkos::abs(_point_data_container[i]) ||                 \
-              (Kokkos::abs(_point_data_container[i]) <                         \
-                   static_cast<type_real>(1e-6) &&                             \
-               Kokkos::abs(other._point_data_container[i]) <                   \
-                   static_cast<type_real>(1e-6)))) {                           \
+      if (!specfem::utilities::is_close(_point_data_container[i],              \
+                                        other._point_data_container[i])) {     \
         return false;                                                          \
       }                                                                        \
     }                                                                          \
@@ -136,7 +102,6 @@ private:                                                                       \
 public:                                                                        \
   POINT_CONSTRUCTOR(seq)                                                       \
   POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                       \
-  POINT_BOOLEAN_OPERATOR_DEFINITION_SIMD(seq)                                  \
   POINT_VALUE_ACCESSORS(seq)                                                   \
   POINT_OPERATOR_DEFINITION(seq)                                               \
   KOKKOS_INLINE_FUNCTION bool operator!=(const data_container &other) const {  \
