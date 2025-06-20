@@ -37,6 +37,15 @@ specfem2d -p specfem_config.yaml
 
 The output wavefield will be stored in the `OUTPUT_FILES/display` directory.
 
+
+## Visualizing the results
+
+To create an animated gif of the wavefield evolution, you can use ImageMagick (if available):
+
+```bash
+magick OUTPUT_FILES/display/wavefield*.png -trim +repage -delay 10 -loop 0 wavefield.gif
+```
+
 ## Cleaning up
 
 To clean up this example directory, you can run the following command in the
