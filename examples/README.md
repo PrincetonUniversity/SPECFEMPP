@@ -15,3 +15,4 @@ The examples are as follows:
     flat topography.
   - `fluid-solid`: An example that demonstrates how to use the package to solve
     wave propagation with fluid-solid coupling.
+  - `poroelastic-semi-infinite` An example that simulates wave propagation through a 2-dimensional poroelastic medium.

@@ -4,7 +4,7 @@
 Chunk Element Policy
 --------------------
 
-:ref:`Chunk Element Policy <policy_chunk_element_index>` is used to iterate over the elements of the mesh. Chunk element policy implements a heirarchical parallelism scheme based on ``Kokkos::TeamPolicy``. The following code snippet demonstrates how to use the chunk element policy to compute the mass matrix inside the acoustic medium. We first divide the mesh into chunks and assign each chunk to a team of threads (Kokkos team). Each team then computes the mass matrix for all the quadrature points within that chunk. A key thing to note here is that the quadrature points that are shared between elements are visited more than once, and in a parallel scheme could lead to race conditions. To avoid this, we use atomic operations to update the mass matrix.
+Chunk Element Policy is used to iterate over the elements of the mesh. Chunk element policy implements a heirarchical parallelism scheme based on ``Kokkos::TeamPolicy``. The following code snippet demonstrates how to use the chunk element policy to compute the mass matrix inside the acoustic medium. We first divide the mesh into chunks and assign each chunk to a team of threads (Kokkos team). Each team then computes the mass matrix for all the quadrature points within that chunk. A key thing to note here is that the quadrature points that are shared between elements are visited more than once, and in a parallel scheme could lead to race conditions. To avoid this, we use atomic operations to update the mass matrix.
 
 .. code:: cpp
 

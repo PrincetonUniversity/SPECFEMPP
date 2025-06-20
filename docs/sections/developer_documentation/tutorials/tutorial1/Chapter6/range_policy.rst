@@ -4,7 +4,7 @@
 Range Policy
 ------------
 
-:ref:`Range policy <policy_range_index>` is used to iterator over the entire range of quadrature points in the mesh, where every quadrature point is visited exactly once. The following code snippet demonstrates how to use the range policy to divide the acceleration by mass matrix inside acoustic medium - an operation that is common in the time-stepping loop of the spectral element solver.
+Range policy is used to iterator over the entire range of quadrature points in the mesh, where every quadrature point is visited exactly once. The following code snippet demonstrates how to use the range policy to divide the acceleration by mass matrix inside acoustic medium - an operation that is common in the time-stepping loop of the spectral element solver.
 
 .. code:: cpp
 

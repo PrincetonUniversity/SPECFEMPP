@@ -29,6 +29,7 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   const auto &xiz = point_partial_derivatives.xiz;
   const auto &gammax = point_partial_derivatives.gammax;
   const auto &gammaz = point_partial_derivatives.gammaz;
+  const auto &jacobian = point_partial_derivatives.jacobian;
 
   // Compute inverse Jacobian elements
   const auto invD = static_cast<T>(1.0) / (xix * gammaz - xiz * gammax);
@@ -40,10 +41,10 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   // Compute transformed stresses
   // F(i, k) = F_{x_i, \xi_k} and x_i = [x,z], \xi_k = [\xi, \gamma]
   // t_{ij} = F_{i,k} * \partial x_j / \partial \xi_k
-  const auto t_00 = F(0, 0) * xxi + F(0, 1) * xgamma;
-  const auto t_10 = F(1, 0) * xxi + F(1, 1) * xgamma;
-  const auto t_01 = F(0, 0) * zxi + F(0, 1) * zgamma;
-  const auto t_11 = F(1, 0) * zxi + F(1, 1) * zgamma;
+  const auto t_00 = (F(0, 0) * xxi + F(0, 1) * xgamma) / jacobian;
+  const auto t_10 = (F(1, 0) * xxi + F(1, 1) * xgamma) / jacobian;
+  const auto t_01 = (F(0, 0) * zxi + F(0, 1) * zgamma) / jacobian;
+  const auto t_11 = (F(1, 0) * zxi + F(1, 1) * zgamma) / jacobian;
 
   const auto sigma_xz = t_10;
   const auto sigma_zx = t_01;
