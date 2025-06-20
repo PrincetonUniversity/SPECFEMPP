@@ -3,6 +3,10 @@
 This example demonstrates how to use the CUBIT mesh generator with SPECFEMPP. For a step-by-step guide on this example, please refer to the [documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/dim2/CUBIT/index.html).
 
 
+> **Note:** This example requires the CUBIT mesh generator to be installed on your system. If you do not have CUBIT installed, you can download it from [here](https://cubit.sandia.gov/).
+
+> **Note:** This example requires that SPECFEM++ is isntalled with VTK support. Please see the [installation guide](https://specfem2d-kokkos.readthedocs.io/en/latest/sections/getting_started/index.html#optional)
+
 ## Running the examples
 
 Add path/to/SPECFEMPP/bin to your PATH environment variable, so that you can
