@@ -35,8 +35,9 @@ When running SPECFEM++, make sure you are using the correct binary for your chos
 Customizing Presets
 -------------------
 
-**Do not modify the provided ``CMakePresets.json`` file directly.**
-Instead, create a ``CMakeUserPresets.json`` file in the root directory to add or override presets with your own custom configurations. This approach keeps your changes separate and avoids conflicts when updating the repository.
+.. warning::
+
+  Do not modify the provided ``CMakePresets.json`` file directly. Instead, create a ``CMakeUserPresets.json`` file in the root directory to add or override presets with your own custom configurations. This approach keeps your changes separate and avoids conflicts when updating the repository.
 
 **Example: Creating a custom user preset**
 
