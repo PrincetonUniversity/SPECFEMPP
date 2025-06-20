@@ -1,12 +1,10 @@
 #include "../kernels_tests.hpp"
-#include "datatypes/simd.hpp"
 #include "specfem/point/kernels.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
-
-const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
 
 // ============================================================================
 // 2D Poroelastic Tests
@@ -118,55 +116,43 @@ TYPED_TEST(PointKernelsTest, PoroelasticIsotropic2D) {
       kernels(rhot, rhof, eta, sm, mu_fr, B, C, M, cpI, cpII, cs, rhobb, rhofbb,
               ratio, phib);
 
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.rhot() - rhot) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rhot(), rhot))
       << ExpectedGot(rhot, kernels.rhot());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.rhof() - rhof) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rhof(), rhof))
       << ExpectedGot(rhof, kernels.rhof());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.eta() - eta) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.eta(), eta))
       << ExpectedGot(eta, kernels.eta());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.sm() - sm) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.sm(), sm))
       << ExpectedGot(sm, kernels.sm());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.mu_fr() - mu_fr) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.mu_fr(), mu_fr))
       << ExpectedGot(mu_fr, kernels.mu_fr());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.B() - B) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.B(), B))
       << ExpectedGot(B, kernels.B());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.C() - C) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.C(), C))
       << ExpectedGot(C, kernels.C());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.M() - M) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.M(), M))
       << ExpectedGot(M, kernels.M());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.cpI() - cpI) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.cpI(), cpI))
       << ExpectedGot(cpI, kernels.cpI());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.cpII() - cpII) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.cpII(), cpII))
       << ExpectedGot(cpII, kernels.cpII());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.cs() - cs) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.cs(), cs))
       << ExpectedGot(cs, kernels.cs());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.rhobb() - rhobb) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rhobb(), rhobb))
       << ExpectedGot(rhobb, kernels.rhobb());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.rhofbb() - rhofbb) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rhofbb(), rhofbb))
       << ExpectedGot(rhofbb, kernels.rhofbb());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.ratio() - ratio) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.ratio(), ratio))
       << ExpectedGot(ratio, kernels.ratio());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.phib() - phib) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.phib(), phib))
       << ExpectedGot(phib, kernels.phib());
 
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(kernels.mu_frb() - expected_mu_frb) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.mu_frb(), expected_mu_frb))
       << ExpectedGot(expected_mu_frb, kernels.mu_frb());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(kernels.rhob() - expected_rhob) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rhob(), expected_rhob))
       << ExpectedGot(expected_rhob, kernels.rhob());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(kernels.rhofb() - expected_rhofb) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rhofb(), expected_rhofb))
       << ExpectedGot(expected_rhofb, kernels.rhofb());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(kernels.phi() - expected_phi) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.phi(), expected_phi))
       << ExpectedGot(expected_phi, kernels.phi());
 }

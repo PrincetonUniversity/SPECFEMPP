@@ -1,12 +1,10 @@
 #include "../properties_tests.hpp"
-#include "datatypes/simd.hpp"
 #include "specfem/point/properties.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
-
-const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
 
 // ============================================================================
 // 2D Acoustic Tests
@@ -58,17 +56,13 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
       specfem::element::property_tag::isotropic, using_simd>
       props(rho_inv, kappa);
 
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.rho_inverse() - rho_inv) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho_inverse(), rho_inv))
       << ExpectedGot(kappa, props.rho_inverse());
 
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.kappa() - kappa) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.kappa(), kappa))
       << ExpectedGot(kappa, props.kappa());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.kappa_inverse() - kappa_inv) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.kappa_inverse(), kappa_inv))
       << ExpectedGot(kappa_inv, props.kappa_inverse());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.rho_vpinverse() - rho_vpinv) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho_vpinverse(), rho_vpinv))
       << ExpectedGot(rho_vpinv, props.rho_vpinverse());
 }

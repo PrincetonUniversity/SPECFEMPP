@@ -132,6 +132,11 @@ add_executable(
   point_tests
   point/index_tests.cpp
   point/coordinates_tests.cpp
+  point/boundary_tests.cpp
+  point/partial_derivatives_tests.cpp
+  point/source_tests.cpp
+  point/stress_integrand_tests.cpp
+  point/stress_tests.cpp
   # Kernels
   # Dim 2
   point/kernels/dim2/acoustic_isotropic.cpp
