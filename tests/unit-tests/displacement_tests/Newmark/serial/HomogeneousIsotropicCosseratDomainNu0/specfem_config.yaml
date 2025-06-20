@@ -2,17 +2,16 @@ parameters:
 
   header:
     ## Header information is used for logging. It is good practice to give your simulations explicit names
-    title: Poroelastic simulation (P-SV Waves) # name for your simulation
+    title: Isotropic Elastic simulation # name for your simulation
     # A detailed description for your simulation
     description: |
-      Material systems : Poroelastic domain (1)
+      Material systems : Elastic domain (1)
       Interfaces : None
       Sources : Force source (1)
       Boundary conditions : Neumann BCs on all edges
       Debugging comment : This test tests elastic compute_forces routine
 
   simulation-setup:
-    elastic-wave: "P_SV"
     ## quadrature setup
     quadrature:
       quadrature-type: GLL4
@@ -23,8 +22,8 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 1.0e-4
-          nstep: 1000
+          dt: 1.1e-3
+          nstep: 300
 
     simulation-mode:
       forward:
@@ -34,12 +33,13 @@ parameters:
             directory: "."
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/test11/STATIONS"
+    stations: "displacement_tests/Newmark/serial/HomogeneousIsotropicCosseratDomainNu0/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
       - velocity
       - acceleration
+      - pressure
     nstep_between_samples: 1
 
   ## Runtime setup
@@ -49,6 +49,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/test11/database.bin"
+    mesh-database: "displacement_tests/Newmark/serial/HomogeneousIsotropicCosseratDomainNu0/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/test11/sources.yaml"
+  sources: "displacement_tests/Newmark/serial/HomogeneousIsotropicCosseratDomainNu0/sources.yaml"
