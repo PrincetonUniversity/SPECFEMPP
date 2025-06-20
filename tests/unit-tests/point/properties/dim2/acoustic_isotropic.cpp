@@ -65,10 +65,10 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
   }
 
   // Create the properties object
-  specfem::point::properties<
+  using PointPropertiesType = specfem::point::properties<
       specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic, using_simd>
-      props(rho_inv, kappa);
+      specfem::element::property_tag::isotropic, using_simd>;
+  PointPropertiesType props(rho_inv, kappa);
 
   EXPECT_TRUE(specfem::utilities::is_close(props.rho_inverse(), rho_inv))
       << ExpectedGot(kappa, props.rho_inverse());
@@ -79,4 +79,24 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
       << ExpectedGot(kappa_inv, props.kappa_inverse());
   EXPECT_TRUE(specfem::utilities::is_close(props.rho_vpinverse(), rho_vpinv))
       << ExpectedGot(rho_vpinv, props.rho_vpinverse());
+
+  PointPropertiesType props2;
+  props2.rho_inverse() = rho_inv;
+  props2.kappa() = kappa;
+
+  simd_type data[] = { rho_inv, kappa };
+  PointPropertiesType props3(data);
+
+  PointPropertiesType props4(rho_inv);
+
+  EXPECT_TRUE(props2 == props)
+      << ExpectedGot(props2.rho_inverse(), props.rho_inverse())
+      << ExpectedGot(props2.kappa(), props.kappa());
+
+  EXPECT_TRUE(props2 == props3)
+      << ExpectedGot(props3.rho_inverse(), props2.rho_inverse())
+      << ExpectedGot(props3.kappa(), props2.kappa());
+
+  EXPECT_TRUE(specfem::utilities::is_close(props4.rho_inverse(), rho_inv));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.kappa(), rho_inv));
 }

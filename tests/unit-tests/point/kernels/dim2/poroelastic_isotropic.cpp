@@ -110,11 +110,11 @@ TYPED_TEST(PointKernelsTest, PoroelasticIsotropic2D) {
   }
 
   // Create the kernels object
-  specfem::point::kernels<specfem::dimension::type::dim2,
-                          specfem::element::medium_tag::poroelastic,
-                          specfem::element::property_tag::isotropic, using_simd>
-      kernels(rhot, rhof, eta, sm, mu_fr, B, C, M, cpI, cpII, cs, rhobb, rhofbb,
-              ratio, phib);
+  using PointKernelType = specfem::point::kernels<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
+      specfem::element::property_tag::isotropic, using_simd>;
+  PointKernelType kernels(rhot, rhof, eta, sm, mu_fr, B, C, M, cpI, cpII, cs,
+                          rhobb, rhofbb, ratio, phib);
 
   EXPECT_TRUE(specfem::utilities::is_close(kernels.rhot(), rhot))
       << ExpectedGot(rhot, kernels.rhot());
@@ -155,4 +155,98 @@ TYPED_TEST(PointKernelsTest, PoroelasticIsotropic2D) {
       << ExpectedGot(expected_rhofb, kernels.rhofb());
   EXPECT_TRUE(specfem::utilities::is_close(kernels.phi(), expected_phi))
       << ExpectedGot(expected_phi, kernels.phi());
+
+  PointKernelType kernels2;
+  kernels2.rhot() = rhot;
+  kernels2.rhof() = rhof;
+  kernels2.eta() = eta;
+  kernels2.sm() = sm;
+  kernels2.mu_fr() = mu_fr;
+  kernels2.B() = B;
+  kernels2.C() = C;
+  kernels2.M() = M;
+  kernels2.cpI() = cpI;
+  kernels2.cpII() = cpII;
+  kernels2.cs() = cs;
+  kernels2.rhobb() = rhobb;
+  kernels2.rhofbb() = rhofbb;
+  kernels2.ratio() = ratio;
+  kernels2.phib() = phib;
+  kernels2.mu_frb() = expected_mu_frb;
+  kernels2.rhob() = expected_rhob;
+  kernels2.rhofb() = expected_rhofb;
+  kernels2.phi() = expected_phi;
+
+  simd_type data[] = { rhot,
+                       rhof,
+                       eta,
+                       sm,
+                       mu_fr,
+                       B,
+                       C,
+                       M,
+                       mu_fr,
+                       expected_rhob,
+                       expected_rhofb,
+                       expected_phi,
+                       cpI,
+                       cpII,
+                       cs,
+                       rhobb,
+                       rhofbb,
+                       ratio,
+                       phib };
+  PointKernelType kernels3(data);
+
+  PointKernelType kernels4(rhot);
+
+  EXPECT_TRUE(kernels == kernels2)
+      << ExpectedGot(kernels2.rhot(), kernels.rhot())
+      << ExpectedGot(kernels2.rhof(), kernels.rhof())
+      << ExpectedGot(kernels2.eta(), kernels.eta())
+      << ExpectedGot(kernels2.sm(), kernels.sm())
+      << ExpectedGot(kernels2.mu_fr(), kernels.mu_fr())
+      << ExpectedGot(kernels2.B(), kernels.B())
+      << ExpectedGot(kernels2.C(), kernels.C())
+      << ExpectedGot(kernels2.M(), kernels.M())
+      << ExpectedGot(kernels2.cpI(), kernels.cpI())
+      << ExpectedGot(kernels2.cpII(), kernels.cpII())
+      << ExpectedGot(kernels2.cs(), kernels.cs())
+      << ExpectedGot(kernels2.rhobb(), kernels.rhobb())
+      << ExpectedGot(kernels2.rhofbb(), kernels.rhofbb())
+      << ExpectedGot(kernels2.ratio(), kernels.ratio())
+      << ExpectedGot(kernels2.phib(), kernels.phib());
+
+  EXPECT_TRUE(kernels2 == kernels3)
+      << ExpectedGot(kernels3.rhot(), kernels2.rhot())
+      << ExpectedGot(kernels3.rhof(), kernels2.rhof())
+      << ExpectedGot(kernels3.eta(), kernels2.eta())
+      << ExpectedGot(kernels3.sm(), kernels2.sm())
+      << ExpectedGot(kernels3.mu_fr(), kernels2.mu_fr())
+      << ExpectedGot(kernels3.B(), kernels2.B())
+      << ExpectedGot(kernels3.C(), kernels2.C())
+      << ExpectedGot(kernels3.M(), kernels2.M())
+      << ExpectedGot(kernels3.cpI(), kernels2.cpI())
+      << ExpectedGot(kernels3.cpII(), kernels2.cpII())
+      << ExpectedGot(kernels3.cs(), kernels2.cs())
+      << ExpectedGot(kernels3.rhobb(), kernels2.rhobb())
+      << ExpectedGot(kernels3.rhofbb(), kernels2.rhofbb())
+      << ExpectedGot(kernels3.ratio(), kernels2.ratio())
+      << ExpectedGot(kernels3.phib(), kernels2.phib());
+
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.rhot(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.rhof(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.eta(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.sm(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.mu_fr(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.B(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.C(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.M(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.cpI(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.cpII(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.cs(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.rhobb(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.rhofbb(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.ratio(), rhot));
+  EXPECT_TRUE(specfem::utilities::is_close(kernels4.phib(), rhot));
 }
