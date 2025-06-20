@@ -91,7 +91,7 @@ public:
 
     // The correct expression for F does not include Jacobian factor here.
     // However, for non regular meshes, the expression A5 in (Komatitsch et. al.
-    // 2005) results in numerical instabilities. This is because spacial
+    // 2005) results in numerical instabilities. This is because spatial
     // derivatives can be small leading to precision errors. Multiplying by the
     // Jacobian factor helps normalize the result. We then avoid the jacobian
     // factor when computing the divergence in equation (A6).
