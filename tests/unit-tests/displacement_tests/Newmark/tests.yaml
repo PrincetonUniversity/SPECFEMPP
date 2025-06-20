@@ -1,5 +1,5 @@
 - "displacement_tests/Newmark/serial/HomogeneousElasticDomain"
-# - "displacement_tests/Newmark/serial/HomogeneousAcousticDomain"
+- "displacement_tests/Newmark/serial/HomogeneousAcousticDomain"
 # - "displacement_tests/Newmark/serial/AcousticElasticCoupledDomain"
 # # - "displacement_tests/Newmark/serial/AcousticElasticCoupledDomainVariant2"
 # - "displacement_tests/Newmark/serial/HomogeneousAcousticDomainDirichletBC"

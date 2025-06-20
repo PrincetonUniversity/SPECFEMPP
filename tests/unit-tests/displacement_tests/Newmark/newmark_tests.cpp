@@ -12,6 +12,7 @@
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 #include <algorithm>
+#include <boost/filesystem.hpp>
 
 // ------------------------------------- //
 // ------- Test configuration ----------- //
@@ -423,13 +424,10 @@ std::vector<std::string> GetTestDirectories() {
 INSTANTIATE_TEST_SUITE_P(DisplacementTests, Newmark,
                          ::testing::ValuesIn(GetTestDirectories()),
                          [](const ::testing::TestParamInfo<std::string> &info) {
-                           // Extract test name from path (last directory
-                           // component)
-                           std::string path = info.param;
-                           size_t last_slash = path.find_last_of('/');
-                           return (last_slash != std::string::npos)
-                                      ? path.substr(last_slash + 1)
-                                      : path;
+                           // Extract last directory component using boost
+                           // filesystem
+                           boost::filesystem::path p(info.param);
+                           return p.filename().string();
                          });
 
 int main(int argc, char *argv[]) {
