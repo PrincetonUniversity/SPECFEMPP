@@ -87,8 +87,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     return;
   }
 
-specfem:;
-  execution::for_each_level(
+  specfem::execution::for_each_level(
       chunk_index.get_iterator(),
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {

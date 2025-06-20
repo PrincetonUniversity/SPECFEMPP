@@ -54,7 +54,7 @@ template <typename T> struct simd<T, true> {
    */
   KOKKOS_FUNCTION constexpr static int size() {
 #ifdef ENABLE_SIMD
-    return Kokkos::Experimental::native_simd<T>::size();
+    return Kokkos::Experimental::simd<T>::size();
 #else
     return Kokkos::Experimental::basic_simd<
         T, Kokkos::Experimental::simd_abi::scalar>::size();
