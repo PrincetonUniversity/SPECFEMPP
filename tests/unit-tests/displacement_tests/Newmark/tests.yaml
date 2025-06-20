@@ -4,7 +4,7 @@
 # - "displacement_tests/Newmark/serial/AcousticElasticCoupledDomainVariant2"
 - "displacement_tests/Newmark/serial/HomogeneousAcousticDomainDirichletBC"
 - "displacement_tests/Newmark/serial/HomogeneousElasticDomainStaceyBC"
-# - "displacement_tests/Newmark/serial/HomogeneousElasticDomainStaceyDirichletBC"
+- "displacement_tests/Newmark/serial/HomogeneousElasticDomainStaceyDirichletBC"
 # - "displacement_tests/Newmark/serial/HomogeneousAcousticDomainCompositeStaceyDirichletBC"
 # - "displacement_tests/Newmark/serial/HomogeneousElasticAnisotropicDomain"
 # - "displacement_tests/Newmark/serial/HomogeneousElasticIsotropicDomainSH"
