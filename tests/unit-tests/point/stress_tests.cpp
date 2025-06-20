@@ -358,12 +358,13 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2D) {
 
   // Create partial derivatives
   using pd_type =
-      point::partial_derivatives<dimension::type::dim2, false, using_simd>;
+      point::partial_derivatives<dimension::type::dim2, true, using_simd>;
   pd_type pd;
-  pd.xix = 0.5;    // dx/dxi
-  pd.xiz = 0.6;    // dz/dxi
-  pd.gammax = 0.7; // dx/dgamma
-  pd.gammaz = 0.8; // dz/dgamma
+  pd.xix = 0.5;      // dx/dxi
+  pd.xiz = 0.6;      // dz/dxi
+  pd.gammax = 0.7;   // dx/dgamma
+  pd.gammaz = 0.8;   // dz/dgamma
+  pd.jacobian = 0.5; // Jacobian factor
 
   // Construct stress object
   stress_type stress(T);
@@ -372,10 +373,10 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2D) {
   auto F = stress * pd;
 
   // Expected values for F
-  type_real expected_F00 = 1.7; // 1.0*0.5 + 2.0*0.6
-  type_real expected_F01 = 2.3; // 1.0*0.7 + 2.0*0.8
-  type_real expected_F10 = 3.9; // 3.0*0.5 + 4.0*0.6
-  type_real expected_F11 = 5.3; // 3.0*0.7 + 4.0*0.8
+  type_real expected_F00 = 0.85; // (1.0*0.5 + 2.0*0.6) * 0.5
+  type_real expected_F01 = 1.15; // ((1.0*0.7 + 2.0*0.8) * 0.5) * 0.5
+  type_real expected_F10 = 1.95; // ((3.0*0.5 + 4.0*0.6) * 0.5) * 0.5
+  type_real expected_F11 = 2.65; // ((3.0*0.7 + 4.0*0.8) * 0.5) * 0.5
 
   // Verify the calculation with transposed indexing
   EXPECT_TRUE(
@@ -405,12 +406,13 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2DAcoustic) {
 
   // Create partial derivatives
   using pd_type =
-      point::partial_derivatives<dimension::type::dim2, false, using_simd>;
+      point::partial_derivatives<dimension::type::dim2, true, using_simd>;
   pd_type pd;
-  pd.xix = 0.5;    // dx/dxi
-  pd.xiz = 0.6;    // dz/dxi
-  pd.gammax = 0.7; // dx/dgamma
-  pd.gammaz = 0.8; // dz/dgamma
+  pd.xix = 0.5;      // dx/dxi
+  pd.xiz = 0.6;      // dz/dxi
+  pd.gammax = 0.7;   // dx/dgamma
+  pd.gammaz = 0.8;   // dz/dgamma
+  pd.jacobian = 0.5; // Jacobian factor
 
   // Construct stress object
   stress_type stress(T);
@@ -419,8 +421,8 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2DAcoustic) {
   auto F = stress * pd;
 
   // Expected values for F
-  type_real expected_F00 = 6.1; // 5.0*0.5 + 6.0*0.6
-  type_real expected_F01 = 8.3; // 5.0*0.7 + 6.0*0.8
+  type_real expected_F00 = 3.05; // (5.0*0.5 + 6.0*0.6) * 0.5
+  type_real expected_F01 = 4.15; // (5.0*0.7 + 6.0*0.8) * 0.5
 
   // Verify the calculation with transposed indexing
   EXPECT_TRUE(
