@@ -23,6 +23,8 @@ repos:
       - id: ruff
         types_or: [ python, pyi ]
         args: [ --fix ]
+        exclude: ^scripts/.*\.py
       # Run the formatter.
       - id: ruff-format
         types_or: [ python, pyi ]
+        exclude: ^scripts/.*\.py
