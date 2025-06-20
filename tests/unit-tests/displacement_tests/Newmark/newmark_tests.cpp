@@ -27,8 +27,11 @@ struct TestConfig {
   std::string specfem_config;
   std::string traces;
 
-  static TestConfig load_from_directory(const std::string &test_path) {
+  static TestConfig load_from_directory(const std::string &test_name) {
     TestConfig config;
+
+    // Create the test path by concatenating the base path with the test name
+    std::string test_path = "displacement_tests/Newmark/serial/" + test_name;
 
     // Load config.yaml from the test directory
     std::string config_file = test_path + "/config.yaml";
@@ -67,14 +70,14 @@ struct TestConfig {
 std::vector<std::string> parse_test_directories(const std::string &tests_file) {
   YAML::Node yaml = YAML::LoadFile(tests_file);
 
-  std::vector<std::string> test_paths;
+  std::vector<std::string> test_names;
 
   for (const auto &test_node : yaml) {
     std::string path = test_node.as<std::string>();
-    test_paths.push_back(path);
+    test_names.push_back(path);
   }
 
-  return test_paths;
+  return test_names;
 }
 
 // ------------------------------------- //
@@ -422,13 +425,7 @@ std::vector<std::string> GetTestDirectories() {
 
 // Instantiate the parameterized test with all configurations
 INSTANTIATE_TEST_SUITE_P(DisplacementTests, Newmark,
-                         ::testing::ValuesIn(GetTestDirectories()),
-                         [](const ::testing::TestParamInfo<std::string> &info) {
-                           // Extract last directory component using boost
-                           // filesystem
-                           boost::filesystem::path p(info.param);
-                           return p.filename().string();
-                         });
+                         ::testing::ValuesIn(GetTestDirectories()));
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
