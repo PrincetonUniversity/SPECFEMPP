@@ -5,7 +5,7 @@ This example demonstrates how to use the CUBIT mesh generator with SPECFEMPP. Fo
 
 > **Note:** This example requires the CUBIT mesh generator to be installed on your system. If you do not have CUBIT installed, you can download it from [here](https://cubit.sandia.gov/).
 
-> **Note:** This example requires that SPECFEM++ is isntalled with VTK support. Please see the [installation guide](https://specfem2d-kokkos.readthedocs.io/en/latest/sections/getting_started/index.html#optional)
+> **Note:** This example requires that SPECFEM++ is installed with VTK support. Please see the [installation guide](https://specfem2d-kokkos.readthedocs.io/en/latest/sections/getting_started/index.html#optional)
 
 ## Running the examples
 
