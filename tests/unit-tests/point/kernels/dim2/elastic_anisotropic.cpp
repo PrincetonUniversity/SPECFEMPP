@@ -1,12 +1,10 @@
 #include "../kernels_tests.hpp"
-#include "datatypes/simd.hpp"
 #include "specfem/point/kernels.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
-
-const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
 
 // ============================================================================
 // 2D Elastic Anisotropic Tests
@@ -65,18 +63,18 @@ TYPED_TEST(PointKernelsTest, ElasticAnisotropic2D) {
       specfem::element::property_tag::anisotropic, using_simd>
       kernels(rho, c11, c13, c15, c33, c35, c55);
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.rho() - rho) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rho(), rho))
       << ExpectedGot(rho, kernels.rho());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c11() - c11) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c11(), c11))
       << ExpectedGot(c11, kernels.c11());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c13() - c13) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c13(), c13))
       << ExpectedGot(c13, kernels.c13());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c15() - c15) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c15(), c15))
       << ExpectedGot(c15, kernels.c15());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c33() - c33) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c33(), c33))
       << ExpectedGot(c33, kernels.c33());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c35() - c35) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c35(), c35))
       << ExpectedGot(c35, kernels.c35());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c55() - c55) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c55(), c55))
       << ExpectedGot(c55, kernels.c55());
 }

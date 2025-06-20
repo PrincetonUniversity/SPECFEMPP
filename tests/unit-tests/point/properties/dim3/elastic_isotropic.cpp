@@ -1,8 +1,8 @@
 #include "../properties_tests.hpp"
-#include "datatypes/simd.hpp"
 #include "specfem/point/properties.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -72,24 +72,20 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
       specfem::element::property_tag::isotropic, using_simd>
       props(kappa, mu, rho);
 
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.kappa() - kappa) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.kappa(), kappa))
       << ExpectedGot(kappa, props.kappa());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.mu() - mu) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.mu(), mu))
       << ExpectedGot(mu, props.mu());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.rho() - rho) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho(), rho))
       << ExpectedGot(rho, props.rho());
 
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.lambdaplus2mu() - lambdaplus2mu_val) < tol))
+  EXPECT_TRUE(
+      specfem::utilities::is_close(props.lambdaplus2mu(), lambdaplus2mu_val))
       << ExpectedGot(lambdaplus2mu_val, props.lambdaplus2mu());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.lambda() - lambda_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.lambda(), lambda_val))
       << ExpectedGot(lambda_val, props.lambda());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.rho_vp() - rho_vp_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho_vp(), rho_vp_val))
       << ExpectedGot(rho_vp_val, props.rho_vp());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.rho_vs() - rho_vs_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho_vs(), rho_vs_val))
       << ExpectedGot(rho_vs_val, props.rho_vs());
 }

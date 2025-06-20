@@ -1,12 +1,10 @@
 #include "../properties_tests.hpp"
-#include "datatypes/simd.hpp"
 #include "specfem/point/properties.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
-
-const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
 
 // ============================================================================
 // 2D Electromagnetic Tests
@@ -52,19 +50,14 @@ TYPED_TEST(PointPropertiesTest, ElectromagneticIsotropic2D) {
                              using_simd>
       props(mu0_inv, eps11, eps33, sig11, sig33);
 
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.mu0_inv() - mu0_inv) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.mu0_inv(), mu0_inv))
       << ExpectedGot(mu0_inv, props.mu0_inv());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.eps11() - eps11) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.eps11(), eps11))
       << ExpectedGot(eps11, props.eps11());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.eps33() - eps33) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.eps33(), eps33))
       << ExpectedGot(eps33, props.eps33());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.sig11() - sig11) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.sig11(), sig11))
       << ExpectedGot(sig11, props.sig11());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.sig33() - sig33) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.sig33(), sig33))
       << ExpectedGot(sig33, props.sig33());
 }

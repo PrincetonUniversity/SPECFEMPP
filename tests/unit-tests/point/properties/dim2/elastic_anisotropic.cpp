@@ -1,12 +1,10 @@
 #include "../properties_tests.hpp"
-#include "datatypes/simd.hpp"
 #include "specfem/point/properties.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
-
-const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
 
 // ============================================================================
 // 2D Elastic Anisotropic Tests
@@ -91,31 +89,29 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
       specfem::element::property_tag::anisotropic, using_simd>
       props(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho);
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c11() - c11) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.c11(), c11))
       << ExpectedGot(c11, props.c11());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c13() - c13) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.c13(), c13))
       << ExpectedGot(c13, props.c13());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c15() - c15) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.c15(), c15))
       << ExpectedGot(c15, props.c15());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c33() - c33) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.c33(), c33))
       << ExpectedGot(c33, props.c33());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c35() - c35) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.c35(), c35))
       << ExpectedGot(c35, props.c35());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c55() - c55) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.c55(), c55))
       << ExpectedGot(c55, props.c55());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c12() - c12) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.c12(), c12))
       << ExpectedGot(c12, props.c12());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c23() - c23) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.c23(), c23))
       << ExpectedGot(c23, props.c23());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.c25() - c25) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.c25(), c25))
       << ExpectedGot(c25, props.c25());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.rho() - rho) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho(), rho))
       << ExpectedGot(rho, props.rho());
 
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.rho_vp() - rho_vp_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho_vp(), rho_vp_val))
       << ExpectedGot(rho_vp_val, props.rho_vp());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.rho_vs() - rho_vs_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho_vs(), rho_vs_val))
       << ExpectedGot(rho_vs_val, props.rho_vs());
 }
