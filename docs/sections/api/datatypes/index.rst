@@ -18,14 +18,6 @@ SPECFEM++ datatypes
     :maxdepth: 1
 
     base_datatypes/index
-    coordinates/index
-    assembly_index/index
-    index/index
-    partial_derivatives/index
-    properties/index
     quadrature/element
     field/index
-    boundary/index
-    field_derivatives/point
     stress_integrands/index
-    kernels/index.rst

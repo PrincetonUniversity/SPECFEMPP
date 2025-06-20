@@ -134,6 +134,16 @@ public:
 
 template <>
 class attributes<specfem::dimension::type::dim3,
+                 specfem::element::medium_tag::acoustic> {
+public:
+  inline static constexpr int dimension = 3;
+  inline static constexpr int components = 1;
+
+  constexpr static bool has_damping_force = false;
+};
+
+template <>
+class attributes<specfem::dimension::type::dim3,
                  specfem::element::medium_tag::elastic> {
 public:
   inline static constexpr int dimension = 3;

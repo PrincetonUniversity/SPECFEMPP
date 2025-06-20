@@ -167,6 +167,31 @@ Below are the recommended build recipes for different architectures:
     `Kokkos documentation <https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#gpu-architectures>`_
     for more information.
 
+.. note::
+    To speedup compilation, you can enable parallel compilation by adding the
+    ``-j <number_of_jobs>`` flag to the ``cmake --build build`` command. For
+    example, to use 4 parallel jobs, you can run:
+
+    .. code-block:: bash
+
+        cmake --build build -j 4
+
+.. note::
+    When you have the need to switch between different build configurations
+    (e.g., from CPU to CUDA), it is recommended to use CMake presets to
+    manage the build configurations. Default presets are provided in
+    the ``CMakePresets.json`` file in the root directory of the SPECFEM++
+    repository. To customize the presets, you can create a new file
+    called ``CMakeUserPresets.json`` in the same directory and add your
+    custom configurations there. More information on CMake presets can be
+    found in the `CMake documentation <https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html>`_.
+    To compile using the default release preset, you can run:
+
+    .. code-block:: bash
+
+        cmake --preset release
+        cmake --build --preset release
+
 Adding SPECFEM to PATH
 ----------------------
 
