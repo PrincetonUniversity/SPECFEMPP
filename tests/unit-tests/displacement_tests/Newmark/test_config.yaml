@@ -1,5 +1,5 @@
 Tests:
-  - id : "HomogeneousElasticDomain"
+  - 1id : "HomogeneousElasticDomain"
     name : "Homogeneous elastic domain"
     description: >
       Testing newmark time-marching solver on a homogeneous elastic domain with no interfaces. Test is run on a single MPI process.
@@ -10,7 +10,7 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test1/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test1/traces"
 
-  - id : "HomogeneousAcousticDomain"
+  - 2id : "HomogeneousAcousticDomain"
     name : "Homogeneous acoustic domain"
     description: >
       Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process.
@@ -21,7 +21,7 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test2/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test2/traces"
 
-  - id : "AcousticElasticCoupledDomain"
+  - 3id : "AcousticElasticCoupledDomain"
     name : "Acoustic-Elastic coupled domain (Test 1/2)"
     description: >
       Testing newmark time-marching solver on a coupled acoustic-elastic domain with 1 elastic-acoustic interface. The orientation of the interface is horizontal with acoustic domain on top. Test is run on a single MPI process.
@@ -32,7 +32,7 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test3/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test3/traces"
 
-  # - name : "SerialTest4 : Acoustic-Elastic coupled domain (Test 2/2)"
+  # - 4name : "SerialTest4 : Acoustic-Elastic coupled domain (Test 2/2)"
   #   description: >
   #     Testing newmark time-marching solver on a coupled acoustic-elastic domain with 1 elastic-acoustic interface. The orientation of the interface is horizontal with acoustic domain on bottom. Test is run on a single MPI process.
   #   config:
@@ -42,7 +42,7 @@ Tests:
   #     traces: "displacement_tests/Newmark/serial/test4/traces"
 
 
-  - id : "HomogeneousAcousticDomainDirichletBC"
+  - 5id : "HomogeneousAcousticDomainDirichletBC"
     name : "Homogeneous acoustic domain (dirichlet BC)"
     description: >
       Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Dirichlet boundary conditions are applied on all boundaries.
@@ -53,7 +53,7 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test5/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test5/traces"
 
-  - id : "HomogeneousElasticDomainStaceyBC"
+  - 6id : "HomogeneousElasticDomainStaceyBC"
     name : "Homogeneous acoustic domain (stacey BC)"
     description: >
       Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on top/right/left/bottom boundaries.
@@ -64,7 +64,7 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test6/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test6/traces"
 
-  - id : "HomogeneousElasticDomainStaceyDirichletBC"
+  - 7id : "HomogeneousElasticDomainStaceyDirichletBC"
     name : "Homogeneous elastic domain (stacey BC)"
     description: >
       Testing newmark time-marching solver on a homogeneous elastic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on top/right/left/bottom boundaries.
@@ -75,7 +75,7 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test7/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test7/traces"
 
-  - id : "HomogeneousAcousticDomainCompositeStaceyDirichletBC"
+  - 8id : "HomogeneousAcousticDomainCompositeStaceyDirichletBC"
     name : "Homogeneous acoustic domain (composite stacey dirichlet BC)"
     description: >
       Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on (bottom, left, right) and Dirichlet BC are applied on tops.
@@ -87,7 +87,7 @@ Tests:
       traces: "displacement_tests/Newmark/serial/test8/traces"
 
 
-  - id : "HomogeneousElasticAnisotropicDomain"
+  - 9id : "HomogeneousElasticAnisotropicDomain"
     name : "Homogeneous elastic anisotropic domain"
     description: >
       Testing newmark time-marching solver on a homogeneous elastic anisotropic domain with no interfaces. Test is run on a single MPI process.
@@ -98,7 +98,7 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test9/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test9/traces"
 
-  - id : "HomogeneousElasticIsotropicDomainSH"
+  - 10id : "HomogeneousElasticIsotropicDomainSH"
     name : "Homogeneous elastic isotropic domain (SH-waves)"
     description: >
       Testing newmark time-marching solver on a homogeneous elastic isotropic domain with no interfaces. Test is run on a single MPI process.
@@ -109,7 +109,7 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test10/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test10/traces"
 
-  - id : "PoroelasticCoupledDomainPSV"
+  - 11id : "PoroelasticCoupledDomainPSV"
     name : "Poroelastic coupled domain (P-SV waves)"
     description: >
       Testing newmark time-marching solver on a poroelastic coupled domain. Test is run on a single MPI process.
@@ -120,7 +120,7 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test11/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test11/traces"
 
-  # - name : "SerialTest12 : Two-layer electromagnetic domain (P-SV waves)"
+  # - 12name : "SerialTest12 : Two-layer electromagnetic domain (P-SV waves)"
   #   description: >
   #     Testing newmark time-marching solver on a two-layer electromagnetic domain. Test is run on a single MPI process.
   #   config:
@@ -129,7 +129,7 @@ Tests:
   #     specfem_config: "displacement_tests/Newmark/serial/test12/specfem_config.yaml"
   #     traces: "displacement_tests/Newmark/serial/test12/traces"
 
-  - id : "HomogeneousIsotropicCosseratDomainNu0"
+  - 13id : "HomogeneousIsotropicCosseratDomainNu0"
     name : "Homogeneous isotropic cosserat domain -- nu=0"
     description: >
       Testing the Isotropic cosserat setup with nu=0 so that propagation is elastic isotropic. Test is run on a single MPI process.
@@ -140,7 +140,7 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test13/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test13/traces"
 
-  - id : "HomogeneousIsotropicCosseratDomain"
+  - 14id : "HomogeneousIsotropicCosseratDomain"
     name : "Homogeneous Isotropic Cosserat domain"
     description: >
       Testing newmark time-marching solver on a homogeneous elastic psv domain with spin and no interfaces. Test is run on a single MPI process.
