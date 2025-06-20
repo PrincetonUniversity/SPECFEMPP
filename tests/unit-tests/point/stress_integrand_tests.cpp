@@ -1,16 +1,13 @@
-#include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/point/stress_integrand.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <type_traits>
 
 using namespace specfem;
-
-// Define tolerance for floating point comparisons
-const type_real tol = 1e-6;
 
 // Base test fixture for stress integrand tests with template parameter for SIMD
 template <bool UseSIMD>
@@ -79,10 +76,10 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DAcoustic) {
   // Construct stress_integrand object
   stress_integrand_type si(F);
 
-  // Verify values with all_of pattern
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 0) - val1) < tol))
+  // Verify values with is_close
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 0), val1))
       << ExpectedGot(val1, si.F(0, 0));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 1) - val2) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 1), val2))
       << ExpectedGot(val2, si.F(0, 1));
 }
 
@@ -131,14 +128,14 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DElastic) {
   // Construct stress_integrand object
   stress_integrand_type si(F);
 
-  // Verify values using all_of pattern
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 0) - val11) < tol))
+  // Verify values using is_close
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 0), val11))
       << ExpectedGot(val11, si.F(0, 0));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(1, 0) - val21) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(1, 0), val21))
       << ExpectedGot(val21, si.F(1, 0));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 1) - val12) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 1), val12))
       << ExpectedGot(val12, si.F(0, 1));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(1, 1) - val22) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(1, 1), val22))
       << ExpectedGot(val22, si.F(1, 1));
 }
 
@@ -189,8 +186,7 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DPoroelastic) {
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 2; ++j) {
       int idx = i + j * 4;
-      EXPECT_TRUE(
-          specfem::datatype::all_of(Kokkos::abs(si.F(i, j) - vals[idx]) < tol))
+      EXPECT_TRUE(specfem::utilities::is_close(si.F(i, j), vals[idx]))
           << ExpectedGot(vals[idx], si.F(i, j)) << " at index (" << i << ","
           << j << ")";
     }
@@ -233,11 +229,11 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DAcoustic) {
   stress_integrand_type si(F);
 
   // Verify values
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 0) - val1) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 0), val1))
       << ExpectedGot(val1, si.F(0, 0));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 1) - val2) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 1), val2))
       << ExpectedGot(val2, si.F(0, 1));
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(si.F(0, 2) - val3) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 2), val3))
       << ExpectedGot(val3, si.F(0, 2));
 }
 
@@ -289,8 +285,7 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DElastic) {
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       int idx = i + j * 3;
-      EXPECT_TRUE(
-          specfem::datatype::all_of(Kokkos::abs(si.F(i, j) - vals[idx]) < tol))
+      EXPECT_TRUE(specfem::utilities::is_close(si.F(i, j), vals[idx]))
           << ExpectedGot(vals[idx], si.F(i, j)) << " at index (" << i << ","
           << j << ")";
     }
@@ -315,11 +310,9 @@ TYPED_TEST(PointStressIntegrandTest, DefaultConstructor) {
   };
 
   // The values should be default initialized (to zero)
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(si.F(0, 0) - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 0), zero_val))
       << ExpectedGot(zero_val, si.F(0, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(si.F(0, 1) - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 1), zero_val))
       << ExpectedGot(zero_val, si.F(0, 1));
 }
 
@@ -346,17 +339,13 @@ TYPED_TEST(PointStressIntegrandTest, ConstantConstructor) {
   stress_integrand_type si(F);
 
   // Verify all values are set to the constant
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(si.F(0, 0) - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 0), const_val))
       << ExpectedGot(const_val, si.F(0, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(si.F(0, 1) - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(0, 1), const_val))
       << ExpectedGot(const_val, si.F(0, 1));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(si.F(1, 0) - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(1, 0), const_val))
       << ExpectedGot(const_val, si.F(1, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(si.F(1, 1) - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(si.F(1, 1), const_val))
       << ExpectedGot(const_val, si.F(1, 1));
 }
 

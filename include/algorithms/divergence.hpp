@@ -78,23 +78,17 @@ divergence(const ChunkIndexType &chunk_index,
         const auto index = iterator_index.get_index();
         const int iz = index.iz;
         const int ix = index.ix;
-        const auto jacobian = [&]() {
-          PointPartialDerivativesType point_partial_derivatives;
-          specfem::compute::load_on_device(index, partial_derivatives,
-                                           point_partial_derivatives);
-          return point_partial_derivatives.jacobian;
-        }();
 
         datatype temp1l[components] = { 0.0 };
         datatype temp2l[components] = { 0.0 };
+
+        /// We omit the divergence here since we multiplied it when computing F.
         for (int l = 0; l < NGLL; ++l) {
           for (int icomp = 0; icomp < components; ++icomp) {
-            temp1l[icomp] +=
-                f(ielement, iz, l, icomp, 0) * hprimewgll(ix, l) * jacobian;
+            temp1l[icomp] += f(ielement, iz, l, icomp, 0) * hprimewgll(ix, l);
           }
           for (int icomp = 0; icomp < components; ++icomp) {
-            temp2l[icomp] +=
-                f(ielement, l, ix, icomp, 1) * hprimewgll(iz, l) * jacobian;
+            temp2l[icomp] += f(ielement, l, ix, icomp, 1) * hprimewgll(iz, l);
           }
         }
         ScalarPointViewType result;

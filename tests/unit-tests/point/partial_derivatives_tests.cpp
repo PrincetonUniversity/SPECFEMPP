@@ -5,14 +5,12 @@
 #include "specfem/point/partial_derivatives.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <type_traits>
 
 using namespace specfem;
-
-// Define tolerance for floating point comparisons
-const type_real tol = 1e-6;
 
 // Base test fixture for partial derivatives tests with template parameter for
 // SIMD
@@ -57,16 +55,17 @@ TYPED_TEST(PointPartialDerivativesTest,
   using pd_type =
       point::partial_derivatives<dimension::type::dim2, false, using_simd>;
   pd_type pd;
+  typename pd_type::value_type zero_val{ 0.0 };
   pd.init();
 
-  // Use all_of to check values for both SIMD and non-SIMD cases
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xix) < tol))
+  // Use is_close to check values for both SIMD and non-SIMD cases
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xix, zero_val))
       << ExpectedGot(0.0, pd.xix);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.gammax) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammax, zero_val))
       << ExpectedGot(0.0, pd.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xiz) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xiz, zero_val))
       << ExpectedGot(0.0, pd.xiz);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.gammaz) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammaz, zero_val))
       << ExpectedGot(0.0, pd.gammaz);
 }
 
@@ -94,16 +93,14 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_ValueConstructor) {
   point::partial_derivatives<dimension::type::dim2, false, using_simd> pd(
       xix_val, gammax_val, xiz_val, gammaz_val);
 
-  // Check values using all_of
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xix - xix_val) < tol))
+  // Check values using is_close
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xix, xix_val))
       << ExpectedGot(xix_val, pd.xix);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.gammax - gammax_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammax, gammax_val))
       << ExpectedGot(gammax_val, pd.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xiz - xiz_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xiz, xiz_val))
       << ExpectedGot(xiz_val, pd.xiz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.gammaz - gammaz_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammaz, gammaz_val))
       << ExpectedGot(gammaz_val, pd.gammaz);
 }
 
@@ -123,16 +120,14 @@ TYPED_TEST(PointPartialDerivativesTest,
   point::partial_derivatives<dimension::type::dim2, false, using_simd> pd(
       const_val);
 
-  // Check values using all_of
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xix - const_val) < tol))
+  // Check values using is_close
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xix, const_val))
       << ExpectedGot(const_val, pd.xix);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.gammax - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammax, const_val))
       << ExpectedGot(const_val, pd.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xiz - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xiz, const_val))
       << ExpectedGot(const_val, pd.xiz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.gammaz - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammaz, const_val))
       << ExpectedGot(const_val, pd.gammaz);
 }
 
@@ -157,18 +152,20 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Init) {
     4.0
   };
 
-  point::partial_derivatives<dimension::type::dim2, false, using_simd> pd(
-      xix_val, gammax_val, xiz_val, gammaz_val);
+  using pd_type =
+      point::partial_derivatives<dimension::type::dim2, false, using_simd>;
+  pd_type pd(xix_val, gammax_val, xiz_val, gammaz_val);
+  typename pd_type::value_type zero_val{ 0.0 };
   pd.init();
 
   // Check values after init
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xix) < tol))
-      << ExpectedGot(0.0, pd.xix);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.gammax) < tol))
-      << ExpectedGot(0.0, pd.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xiz) < tol))
-      << ExpectedGot(0.0, pd.xiz);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.gammaz) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xix, zero_val))
+      << ExpectedGot(zero_val, pd.xix);
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammax, zero_val))
+      << ExpectedGot(zero_val, pd.gammax);
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xiz, zero_val))
+      << ExpectedGot(zero_val, pd.xiz);
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammaz, zero_val))
       << ExpectedGot(0.0, pd.gammaz);
 }
 
@@ -209,32 +206,28 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Arithmetic) {
 
   // Addition
   PD c = a + b;
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(c.xix - (a_xix_val + b_xix_val)) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(c.xix, a_xix_val + b_xix_val))
       << ExpectedGot(a_xix_val + b_xix_val, c.xix);
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(c.gammax - (a_gammax_val + b_gammax_val)) < tol))
+  EXPECT_TRUE(
+      specfem::utilities::is_close(c.gammax, a_gammax_val + b_gammax_val))
       << ExpectedGot(a_gammax_val + b_gammax_val, c.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(c.xiz - (a_xiz_val + b_xiz_val)) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(c.xiz, a_xiz_val + b_xiz_val))
       << ExpectedGot(a_xiz_val + b_xiz_val, c.xiz);
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(c.gammaz - (a_gammaz_val + b_gammaz_val)) < tol))
+  EXPECT_TRUE(
+      specfem::utilities::is_close(c.gammaz, a_gammaz_val + b_gammaz_val))
       << ExpectedGot(a_gammaz_val + b_gammaz_val, c.gammaz);
 
   // Addition assignment
   a += b;
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(a.xix - (a_xix_val + b_xix_val)) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(a.xix, a_xix_val + b_xix_val))
       << ExpectedGot(a_xix_val + b_xix_val, a.xix);
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(a.gammax - (a_gammax_val + b_gammax_val)) < tol))
+  EXPECT_TRUE(
+      specfem::utilities::is_close(a.gammax, a_gammax_val + b_gammax_val))
       << ExpectedGot(a_gammax_val + b_gammax_val, a.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(a.xiz - (a_xiz_val + b_xiz_val)) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(a.xiz, a_xiz_val + b_xiz_val))
       << ExpectedGot(a_xiz_val + b_xiz_val, a.xiz);
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(a.gammaz - (a_gammaz_val + b_gammaz_val)) < tol))
+  EXPECT_TRUE(
+      specfem::utilities::is_close(a.gammaz, a_gammaz_val + b_gammaz_val))
       << ExpectedGot(a_gammaz_val + b_gammaz_val, a.gammaz);
 
   // Scalar multiplication (object * scalar)
@@ -242,17 +235,13 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Arithmetic) {
     type_real scalar_2 = 2.0;
 
     PD d = b * scalar_2;
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(d.xix - (b_xix_val * scalar_2)) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(d.xix, b_xix_val * scalar_2))
         << ExpectedGot(b_xix_val * scalar_2, d.xix);
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(d.gammax - (b_gammax_val * scalar_2)) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(d.gammax, b_gammax_val * scalar_2))
         << ExpectedGot(b_gammax_val * scalar_2, d.gammax);
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(d.xiz - (b_xiz_val * scalar_2)) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(d.xiz, b_xiz_val * scalar_2))
         << ExpectedGot(b_xiz_val * scalar_2, d.xiz);
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(d.gammaz - (b_gammaz_val * scalar_2)) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(d.gammaz, b_gammaz_val * scalar_2))
         << ExpectedGot(b_gammaz_val * scalar_2, d.gammaz);
 
     // Scalar multiplication (scalar * object)
@@ -261,17 +250,13 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Arithmetic) {
     };
 
     PD e = scalar_3 * b;
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(e.xix - (scalar_3 * b_xix_val)) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(e.xix, scalar_3 * b_xix_val))
         << ExpectedGot(scalar_3 * b_xix_val, e.xix);
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(e.gammax - (scalar_3 * b_gammax_val)) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(e.gammax, scalar_3 * b_gammax_val))
         << ExpectedGot(scalar_3 * b_gammax_val, e.gammax);
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(e.xiz - (scalar_3 * b_xiz_val)) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(e.xiz, scalar_3 * b_xiz_val))
         << ExpectedGot(scalar_3 * b_xiz_val, e.xiz);
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(e.gammaz - (scalar_3 * b_gammaz_val)) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(e.gammaz, scalar_3 * b_gammaz_val))
         << ExpectedGot(scalar_3 * b_gammaz_val, e.gammaz);
   }
 }
@@ -317,52 +302,43 @@ TYPED_TEST(PointPartialDerivativesTest,
   PD pd1;
   pd1.init();
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd1.xix - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.xix, zero_val))
       << ExpectedGot(zero_val, pd1.xix);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd1.gammax - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.gammax, zero_val))
       << ExpectedGot(zero_val, pd1.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd1.xiz - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.xiz, zero_val))
       << ExpectedGot(zero_val, pd1.xiz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd1.gammaz - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.gammaz, zero_val))
       << ExpectedGot(zero_val, pd1.gammaz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd1.jacobian - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.jacobian, zero_val))
       << ExpectedGot(zero_val, pd1.jacobian);
 
   // Value constructor
   PD pd2(one_val, two_val, three_val, four_val, five_val);
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd2.xix - one_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.xix, one_val))
       << ExpectedGot(one_val, pd2.xix);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd2.gammax - two_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammax, two_val))
       << ExpectedGot(two_val, pd2.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd2.xiz - three_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.xiz, three_val))
       << ExpectedGot(three_val, pd2.xiz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd2.gammaz - four_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammaz, four_val))
       << ExpectedGot(four_val, pd2.gammaz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd2.jacobian - five_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.jacobian, five_val))
       << ExpectedGot(five_val, pd2.jacobian);
 
   // Constant constructor
   PD pd3(const_val);
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd3.xix - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.xix, const_val))
       << ExpectedGot(const_val, pd3.xix);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd3.gammax - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.gammax, const_val))
       << ExpectedGot(const_val, pd3.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd3.xiz - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.xiz, const_val))
       << ExpectedGot(const_val, pd3.xiz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd3.gammaz - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.gammaz, const_val))
       << ExpectedGot(const_val, pd3.gammaz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd3.jacobian - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.jacobian, const_val))
       << ExpectedGot(const_val, pd3.jacobian);
 }
 
@@ -399,18 +375,15 @@ TYPED_TEST(PointPartialDerivativesTest,
   PD pd(one_val, two_val, three_val, four_val, five_val);
   pd.init();
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xix - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xix, zero_val))
       << ExpectedGot(zero_val, pd.xix);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.gammax - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammax, zero_val))
       << ExpectedGot(zero_val, pd.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xiz - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xiz, zero_val))
       << ExpectedGot(zero_val, pd.xiz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.gammaz - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammaz, zero_val))
       << ExpectedGot(zero_val, pd.gammaz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.jacobian - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.jacobian, zero_val))
       << ExpectedGot(zero_val, pd.jacobian);
 }
 
@@ -461,67 +434,55 @@ TYPED_TEST(PointPartialDerivativesTest,
   PD pd1;
   pd1.init();
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd1.xix - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.xix, zero_val))
       << ExpectedGot(zero_val, pd1.xix);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd1.gammax - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.gammax, zero_val))
       << ExpectedGot(zero_val, pd1.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd1.xiy - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.xiy, zero_val))
       << ExpectedGot(zero_val, pd1.xiy);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd1.gammay - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.gammay, zero_val))
       << ExpectedGot(zero_val, pd1.gammay);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd1.xiz - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.xiz, zero_val))
       << ExpectedGot(zero_val, pd1.xiz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd1.gammaz - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.gammaz, zero_val))
       << ExpectedGot(zero_val, pd1.gammaz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd1.jacobian - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.jacobian, zero_val))
       << ExpectedGot(zero_val, pd1.jacobian);
 
   // Value constructor
   PD pd2(one_val, two_val, three_val, four_val, five_val, six_val, seven_val);
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd2.xix - one_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.xix, one_val))
       << ExpectedGot(one_val, pd2.xix);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd2.gammax - two_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammax, two_val))
       << ExpectedGot(two_val, pd2.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd2.xiy - three_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.xiy, three_val))
       << ExpectedGot(three_val, pd2.xiy);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd2.gammay - four_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammay, four_val))
       << ExpectedGot(four_val, pd2.gammay);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd2.xiz - five_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.xiz, five_val))
       << ExpectedGot(five_val, pd2.xiz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd2.gammaz - six_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammaz, six_val))
       << ExpectedGot(six_val, pd2.gammaz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd2.jacobian - seven_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.jacobian, seven_val))
       << ExpectedGot(seven_val, pd2.jacobian);
 
   // Constant constructor
   PD pd3(const_val);
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd3.xix - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.xix, const_val))
       << ExpectedGot(const_val, pd3.xix);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd3.gammax - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.gammax, const_val))
       << ExpectedGot(const_val, pd3.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd3.xiy - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.xiy, const_val))
       << ExpectedGot(const_val, pd3.xiy);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd3.gammay - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.gammay, const_val))
       << ExpectedGot(const_val, pd3.gammay);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd3.xiz - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.xiz, const_val))
       << ExpectedGot(const_val, pd3.xiz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd3.gammaz - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.gammaz, const_val))
       << ExpectedGot(const_val, pd3.gammaz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd3.jacobian - const_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.jacobian, const_val))
       << ExpectedGot(const_val, pd3.jacobian);
 }
 
@@ -564,23 +525,19 @@ TYPED_TEST(PointPartialDerivativesTest,
   PD pd(one_val, two_val, three_val, four_val, five_val, six_val, seven_val);
   pd.init();
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xix - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xix, zero_val))
       << ExpectedGot(zero_val, pd.xix);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.gammax - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammax, zero_val))
       << ExpectedGot(zero_val, pd.gammax);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xiy - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xiy, zero_val))
       << ExpectedGot(zero_val, pd.xiy);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.gammay - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammay, zero_val))
       << ExpectedGot(zero_val, pd.gammay);
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(pd.xiz - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.xiz, zero_val))
       << ExpectedGot(zero_val, pd.xiz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.gammaz - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.gammaz, zero_val))
       << ExpectedGot(zero_val, pd.gammaz);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(pd.jacobian - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(pd.jacobian, zero_val))
       << ExpectedGot(zero_val, pd.jacobian);
 }
 

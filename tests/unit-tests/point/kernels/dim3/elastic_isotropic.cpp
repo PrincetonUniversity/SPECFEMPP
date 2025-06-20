@@ -1,8 +1,8 @@
 #include "../kernels_tests.hpp"
-#include "datatypes/simd.hpp"
 #include "specfem/point/kernels.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -18,6 +18,7 @@ TYPED_TEST(PointKernelsTest, ElasticIsotropic3D) {
   // Get the SIMD size from the implementation
   using simd_type =
       typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  using T = typename specfem::datatype::simd<type_real, using_simd>::base_type;
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
@@ -30,21 +31,33 @@ TYPED_TEST(PointKernelsTest, ElasticIsotropic3D) {
   simd_type beta;
 
   if constexpr (using_simd) {
+    T rho_arr[simd_size];
+    T mu_arr[simd_size];
+    T kappa_arr[simd_size];
+    T rhop_arr[simd_size];
+    T alpha_arr[simd_size];
+    T beta_arr[simd_size];
     // For SIMD case, we can use array indexing syntax
     for (int i = 0; i < simd_size; ++i) {
-      rho[i] = static_cast<type_real>(2.7) +
-               static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      mu[i] = static_cast<type_real>(30.0) +
-              static_cast<type_real>(i) * static_cast<type_real>(0.5);
-      kappa[i] = static_cast<type_real>(40.0) +
-                 static_cast<type_real>(i) * static_cast<type_real>(0.5);
-      rhop[i] = static_cast<type_real>(50.0) +
-                static_cast<type_real>(i) * static_cast<type_real>(1.0);
-      alpha[i] = static_cast<type_real>(60.0) +
-                 static_cast<type_real>(i) * static_cast<type_real>(1.0);
-      beta[i] = static_cast<type_real>(70.0) +
-                static_cast<type_real>(i) * static_cast<type_real>(1.0);
+      rho_arr[i] = static_cast<type_real>(2.7) +
+                   static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      mu_arr[i] = static_cast<type_real>(30.0) +
+                  static_cast<type_real>(i) * static_cast<type_real>(0.5);
+      kappa_arr[i] = static_cast<type_real>(40.0) +
+                     static_cast<type_real>(i) * static_cast<type_real>(0.5);
+      rhop_arr[i] = static_cast<type_real>(50.0) +
+                    static_cast<type_real>(i) * static_cast<type_real>(1.0);
+      alpha_arr[i] = static_cast<type_real>(60.0) +
+                     static_cast<type_real>(i) * static_cast<type_real>(1.0);
+      beta_arr[i] = static_cast<type_real>(70.0) +
+                    static_cast<type_real>(i) * static_cast<type_real>(1.0);
     }
+    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
+    mu.copy_from(mu_arr, Kokkos::Experimental::simd_flag_default);
+    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
+    rhop.copy_from(rhop_arr, Kokkos::Experimental::simd_flag_default);
+    alpha.copy_from(alpha_arr, Kokkos::Experimental::simd_flag_default);
+    beta.copy_from(beta_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     rho = static_cast<type_real>(2.7);
@@ -61,20 +74,16 @@ TYPED_TEST(PointKernelsTest, ElasticIsotropic3D) {
                           specfem::element::property_tag::isotropic, using_simd>
       kernels(rho, mu, kappa, rhop, alpha, beta);
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.rho() - rho) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rho(), rho))
       << ExpectedGot(rho, kernels.rho());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.mu() - mu) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.mu(), mu))
       << ExpectedGot(mu, kernels.mu());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.kappa() - kappa) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.kappa(), kappa))
       << ExpectedGot(kappa, kernels.kappa());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.rhop() - rhop) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rhop(), rhop))
       << ExpectedGot(rhop, kernels.rhop());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.alpha() - alpha) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.alpha(), alpha))
       << ExpectedGot(alpha, kernels.alpha());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.beta() - beta) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.beta(), beta))
       << ExpectedGot(beta, kernels.beta());
 }

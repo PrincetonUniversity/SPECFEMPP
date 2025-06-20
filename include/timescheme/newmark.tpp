@@ -1,8 +1,8 @@
 #pragma once
 
-#include "parallel_configuration/range_config.hpp"
-#include "execution/range_iterator.hpp"
 #include "execution/for_all.hpp"
+#include "execution/range_iterator.hpp"
+#include "parallel_configuration/range_config.hpp"
 #include "timescheme/newmark.hpp"
 
 namespace {
@@ -16,7 +16,11 @@ int corrector_phase_impl(
       specfem::element::attributes<specfem::dimension::type::dim2,
                                    MediumTag>::components;
   const int nglob = field.template get_nglob<MediumTag>();
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+  constexpr bool using_simd = false;
+#else
   constexpr bool using_simd = true;
+#endif
   using LoadFieldType =
       specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             false, true, false, using_simd>;
@@ -62,7 +66,11 @@ int predictor_phase_impl(
       specfem::element::attributes<specfem::dimension::type::dim2,
                                    MediumTag>::components;
   const int nglob = field.template get_nglob<MediumTag>();
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+  constexpr bool using_simd = false;
+#else
   constexpr bool using_simd = true;
+#endif
   using LoadFieldType =
       specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             true, true, false, using_simd>;

@@ -116,16 +116,23 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   value_type operator*(const specfem::point::partial_derivatives<
-                       specfem::dimension::type::dim2, false, UseSIMD>
+                       specfem::dimension::type::dim2, true, UseSIMD>
                            &partial_derivatives) const {
     value_type F;
 
+    // The correct expression for F does not include Jacobian factor here.
+    // However, for non regular meshes, the expression A5 in (Komatitsch et. al.
+    // 2005) results in numerical instabilities. This is because spatial
+    // derivatives can be small leading to precision errors. Multiplying by the
+    // Jacobian factor helps normalize the result. We then avoid the jacobian
+    // factor when computing the divergence in equation (A6).
     for (int icomponent = 0; icomponent < components; ++icomponent) {
-
-      F(icomponent, 0) = T(icomponent, 0) * partial_derivatives.xix +
-                         T(icomponent, 1) * partial_derivatives.xiz;
-      F(icomponent, 1) = T(icomponent, 0) * partial_derivatives.gammax +
-                         T(icomponent, 1) * partial_derivatives.gammaz;
+      F(icomponent, 0) = partial_derivatives.jacobian *
+                         (T(icomponent, 0) * partial_derivatives.xix +
+                          T(icomponent, 1) * partial_derivatives.xiz);
+      F(icomponent, 1) = partial_derivatives.jacobian *
+                         (T(icomponent, 0) * partial_derivatives.gammax +
+                          T(icomponent, 1) * partial_derivatives.gammaz);
     }
 
     return F;

@@ -58,7 +58,7 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
 
   constexpr auto dimension = specfem::dimension::type::dim2;
   const auto &properties = assembly.properties;
-  using PointPropertiesType =
+  using PointType =
       specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                  PropertyTag, using_simd>;
 
@@ -69,31 +69,34 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
   specfem::execution::for_all(
       "set_to_value", policy,
       [=](const specfem::point::index<dimension, using_simd> &index) {
-        using datatype = typename PointPropertiesType::value_type;
-        datatype value(static_cast<datatype>(0.0));
+        using datatype = typename PointType::value_type;
+
+        PointType expected;
 
         if constexpr (using_simd) {
-          for (std::size_t i = 0; i < index.number_elements; ++i) {
-            value[i] = static_cast<type_real>(index.ispec + offset);
-          }
+          datatype value([&](const std::size_t lane) {
+            return (lane < index.number_elements)
+                       ? static_cast<type_real>(index.ispec + offset)
+                       : static_cast<type_real>(0.0);
+          });
+          expected = value;
         } else {
-          value = static_cast<type_real>(index.ispec + offset);
+          datatype value = static_cast<type_real>(index.ispec + offset);
+          expected = value;
         }
 
-        PointPropertiesType point_properties_expected(value);
-
-        PointPropertiesType point_poperties_computed;
+        PointType point_poperties_computed;
         specfem::compute::load_on_host(index, properties,
                                        point_poperties_computed);
 
-        if (point_poperties_computed != point_properties_expected) {
+        if (point_poperties_computed != expected) {
           std::ostringstream message;
 
           message << "\n \t Error in function check_to_value";
 
           message << "\n \t Error at ispec = " << index.ispec
                   << ", iz = " << index.iz << ", ix = " << index.ix << "\n";
-          message << "Expected: " << point_properties_expected.print();
+          message << "Expected: " << expected.print();
           message << "Got: " << point_poperties_computed.print();
           throw std::runtime_error(message.str());
         }

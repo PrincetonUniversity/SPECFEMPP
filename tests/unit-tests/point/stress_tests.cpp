@@ -1,17 +1,14 @@
-#include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/point/partial_derivatives.hpp"
 #include "specfem/point/stress.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <type_traits>
 
 using namespace specfem;
-
-// Define tolerance for floating point comparisons
-const type_real tol = 1e-6;
 
 // Base test fixture for stress tests with template parameter for SIMD
 template <bool UseSIMD> class PointStressTestUntyped : public ::testing::Test {
@@ -80,11 +77,9 @@ TYPED_TEST(PointStressTest, Stress2DAcoustic) {
   stress_type stress(T);
 
   // Verify values with transposed indexing
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(0, 0) - val1) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, 0), val1))
       << ExpectedGot(val1, stress.T(0, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(0, 1) - val2) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, 1), val2))
       << ExpectedGot(val2, stress.T(0, 1));
 }
 
@@ -134,17 +129,13 @@ TYPED_TEST(PointStressTest, Stress2DElastic) {
   stress_type stress(T);
 
   // Verify values with transposed indexing
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(0, 0) - val11) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, 0), val11))
       << ExpectedGot(val11, stress.T(0, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(1, 0) - val21) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(1, 0), val21))
       << ExpectedGot(val21, stress.T(1, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(0, 1) - val12) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, 1), val12))
       << ExpectedGot(val12, stress.T(0, 1));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(1, 1) - val22) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(1, 1), val22))
       << ExpectedGot(val22, stress.T(1, 1));
 }
 
@@ -196,8 +187,7 @@ TYPED_TEST(PointStressTest, Stress2DPoroelastic) {
   for (int i = 0; i < 4; ++i) {
     for (int j = 0; j < 2; ++j) {
       int idx = i + j * 4;
-      EXPECT_TRUE(specfem::datatype::all_of(
-          Kokkos::abs(stress.T(i, j) - vals[idx]) < tol))
+      EXPECT_TRUE(specfem::utilities::is_close(stress.T(i, j), vals[idx]))
           << ExpectedGot(vals[idx], stress.T(i, j)) << " at index (" << i << ","
           << j << ")";
     }
@@ -240,14 +230,11 @@ TYPED_TEST(PointStressTest, Stress3DAcoustic) {
   stress_type stress(T);
 
   // Verify values with transposed indexing
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(0, 0) - val1) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, 0), val1))
       << ExpectedGot(val1, stress.T(0, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(0, 1) - val2) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, 1), val2))
       << ExpectedGot(val2, stress.T(0, 1));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(0, 2) - val3) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, 2), val3))
       << ExpectedGot(val3, stress.T(0, 2));
 }
 
@@ -297,8 +284,7 @@ TYPED_TEST(PointStressTest, Stress3DElastic) {
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       int idx = i + j * 3;
-      EXPECT_TRUE(specfem::datatype::all_of(
-          Kokkos::abs(stress.T(i, j) - vals[idx]) < tol))
+      EXPECT_TRUE(specfem::utilities::is_close(stress.T(i, j), vals[idx]))
           << ExpectedGot(vals[idx], stress.T(i, j)) << " at index (" << i << ","
           << j << ")";
     }
@@ -324,11 +310,9 @@ TYPED_TEST(PointStressTest, DefaultConstructor) {
   stress_type stress;
 
   // The values should be default initialized (to zero)
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(0, 0) - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, 0), zero_val))
       << ExpectedGot(zero_val, stress.T(0, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stress.T(0, 1) - zero_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stress.T(0, 1), zero_val))
       << ExpectedGot(zero_val, stress.T(0, 1));
 }
 
@@ -358,12 +342,13 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2D) {
 
   // Create partial derivatives
   using pd_type =
-      point::partial_derivatives<dimension::type::dim2, false, using_simd>;
+      point::partial_derivatives<dimension::type::dim2, true, using_simd>;
   pd_type pd;
-  pd.xix = 0.5;    // dx/dxi
-  pd.xiz = 0.6;    // dz/dxi
-  pd.gammax = 0.7; // dx/dgamma
-  pd.gammaz = 0.8; // dz/dgamma
+  pd.xix = 0.5;      // dx/dxi
+  pd.xiz = 0.6;      // dz/dxi
+  pd.gammax = 0.7;   // dx/dgamma
+  pd.gammaz = 0.8;   // dz/dgamma
+  pd.jacobian = 0.5; // Jacobian factor
 
   // Construct stress object
   stress_type stress(T);
@@ -372,23 +357,19 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2D) {
   auto F = stress * pd;
 
   // Expected values for F
-  type_real expected_F00 = 1.7; // 1.0*0.5 + 2.0*0.6
-  type_real expected_F01 = 2.3; // 1.0*0.7 + 2.0*0.8
-  type_real expected_F10 = 3.9; // 3.0*0.5 + 4.0*0.6
-  type_real expected_F11 = 5.3; // 3.0*0.7 + 4.0*0.8
+  type_real expected_F00 = 0.85; // (1.0*0.5 + 2.0*0.6) * 0.5
+  type_real expected_F01 = 1.15; // ((1.0*0.7 + 2.0*0.8) * 0.5) * 0.5
+  type_real expected_F10 = 1.95; // ((3.0*0.5 + 4.0*0.6) * 0.5) * 0.5
+  type_real expected_F11 = 2.65; // ((3.0*0.7 + 4.0*0.8) * 0.5) * 0.5
 
   // Verify the calculation with transposed indexing
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(F(0, 0) - expected_F00) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(F(0, 0), expected_F00))
       << ExpectedGot(expected_F00, F(0, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(F(0, 1) - expected_F01) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(F(0, 1), expected_F01))
       << ExpectedGot(expected_F01, F(0, 1));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(F(1, 0) - expected_F10) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(F(1, 0), expected_F10))
       << ExpectedGot(expected_F10, F(1, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(F(1, 1) - expected_F11) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(F(1, 1), expected_F11))
       << ExpectedGot(expected_F11, F(1, 1));
 }
 
@@ -405,12 +386,13 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2DAcoustic) {
 
   // Create partial derivatives
   using pd_type =
-      point::partial_derivatives<dimension::type::dim2, false, using_simd>;
+      point::partial_derivatives<dimension::type::dim2, true, using_simd>;
   pd_type pd;
-  pd.xix = 0.5;    // dx/dxi
-  pd.xiz = 0.6;    // dz/dxi
-  pd.gammax = 0.7; // dx/dgamma
-  pd.gammaz = 0.8; // dz/dgamma
+  pd.xix = 0.5;      // dx/dxi
+  pd.xiz = 0.6;      // dz/dxi
+  pd.gammax = 0.7;   // dx/dgamma
+  pd.gammaz = 0.8;   // dz/dgamma
+  pd.jacobian = 0.5; // Jacobian factor
 
   // Construct stress object
   stress_type stress(T);
@@ -419,15 +401,13 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2DAcoustic) {
   auto F = stress * pd;
 
   // Expected values for F
-  type_real expected_F00 = 6.1; // 5.0*0.5 + 6.0*0.6
-  type_real expected_F01 = 8.3; // 5.0*0.7 + 6.0*0.8
+  type_real expected_F00 = 3.05; // (5.0*0.5 + 6.0*0.6) * 0.5
+  type_real expected_F01 = 4.15; // (5.0*0.7 + 6.0*0.8) * 0.5
 
   // Verify the calculation with transposed indexing
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(F(0, 0) - expected_F00) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(F(0, 0), expected_F00))
       << ExpectedGot(expected_F00, F(0, 0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(F(0, 1) - expected_F01) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(F(0, 1), expected_F01))
       << ExpectedGot(expected_F01, F(0, 1));
 }
 

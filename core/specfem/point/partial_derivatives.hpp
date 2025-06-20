@@ -105,10 +105,10 @@ public:
   // operator+=
   KOKKOS_FUNCTION partial_derivatives &
   operator+=(const partial_derivatives &rhs) {
-    xix += rhs.xix;
-    gammax += rhs.gammax;
-    xiz += rhs.xiz;
-    gammaz += rhs.gammaz;
+    this->xix = this->xix + rhs.xix;
+    this->gammax = this->gammax + rhs.gammax;
+    this->xiz = this->xiz + rhs.xiz;
+    this->gammaz = this->gammaz + rhs.gammaz;
     return *this;
   }
 
@@ -226,12 +226,12 @@ public:
   // operator+=
   KOKKOS_FUNCTION partial_derivatives &
   operator+=(const partial_derivatives &rhs) {
-    xix += rhs.xix;
-    gammax += rhs.gammax;
-    xiy += rhs.xiy;
-    gammay += rhs.gammay;
-    xiz += rhs.xiz;
-    gammaz += rhs.gammaz;
+    this->xix = this->xix + rhs.xix;
+    this->gammax = this->gammax + rhs.gammax;
+    this->xiy = this->xiy + rhs.xiy;
+    this->gammay = this->gammay + rhs.gammay;
+    this->xiz = this->xiz + rhs.xiz;
+    this->gammaz = this->gammaz + rhs.gammaz;
     return *this;
   }
 

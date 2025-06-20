@@ -1,12 +1,10 @@
 #include "../kernels_tests.hpp"
-#include "datatypes/simd.hpp"
 #include "specfem/point/kernels.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
-
-const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
 
 // ============================================================================
 // 2D Elastic Anisotropic Tests
@@ -18,6 +16,7 @@ TYPED_TEST(PointKernelsTest, ElasticAnisotropic2D) {
   // Get the SIMD size from the implementation
   using simd_type =
       typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  using T = typename specfem::datatype::simd<type_real, using_simd>::base_type;
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
@@ -31,23 +30,37 @@ TYPED_TEST(PointKernelsTest, ElasticAnisotropic2D) {
   simd_type c55;
 
   if constexpr (using_simd) {
+    T rho_arr[simd_size];
+    T c11_arr[simd_size];
+    T c13_arr[simd_size];
+    T c15_arr[simd_size];
+    T c33_arr[simd_size];
+    T c35_arr[simd_size];
+    T c55_arr[simd_size];
     // For SIMD case, we can use array indexing syntax
     for (int i = 0; i < simd_size; ++i) {
-      rho[i] = static_cast<type_real>(2.5) +
-               static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      c11[i] = static_cast<type_real>(10.0) +
-               static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      c13[i] = static_cast<type_real>(11.0) +
-               static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      c15[i] = static_cast<type_real>(12.0) +
-               static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      c33[i] = static_cast<type_real>(13.0) +
-               static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      c35[i] = static_cast<type_real>(14.0) +
-               static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      c55[i] = static_cast<type_real>(15.0) +
-               static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      rho_arr[i] = static_cast<type_real>(2.5) +
+                   static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      c11_arr[i] = static_cast<type_real>(10.0) +
+                   static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      c13_arr[i] = static_cast<type_real>(11.0) +
+                   static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      c15_arr[i] = static_cast<type_real>(12.0) +
+                   static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      c33_arr[i] = static_cast<type_real>(13.0) +
+                   static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      c35_arr[i] = static_cast<type_real>(14.0) +
+                   static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      c55_arr[i] = static_cast<type_real>(15.0) +
+                   static_cast<type_real>(i) * static_cast<type_real>(0.1);
     }
+    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
+    c11.copy_from(c11_arr, Kokkos::Experimental::simd_flag_default);
+    c13.copy_from(c13_arr, Kokkos::Experimental::simd_flag_default);
+    c15.copy_from(c15_arr, Kokkos::Experimental::simd_flag_default);
+    c33.copy_from(c33_arr, Kokkos::Experimental::simd_flag_default);
+    c35.copy_from(c35_arr, Kokkos::Experimental::simd_flag_default);
+    c55.copy_from(c55_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     rho = static_cast<type_real>(2.5);
@@ -65,18 +78,18 @@ TYPED_TEST(PointKernelsTest, ElasticAnisotropic2D) {
       specfem::element::property_tag::anisotropic, using_simd>
       kernels(rho, c11, c13, c15, c33, c35, c55);
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.rho() - rho) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rho(), rho))
       << ExpectedGot(rho, kernels.rho());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c11() - c11) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c11(), c11))
       << ExpectedGot(c11, kernels.c11());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c13() - c13) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c13(), c13))
       << ExpectedGot(c13, kernels.c13());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c15() - c15) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c15(), c15))
       << ExpectedGot(c15, kernels.c15());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c33() - c33) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c33(), c33))
       << ExpectedGot(c33, kernels.c33());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c35() - c35) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c35(), c35))
       << ExpectedGot(c35, kernels.c35());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.c55() - c55) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.c55(), c55))
       << ExpectedGot(c55, kernels.c55());
 }

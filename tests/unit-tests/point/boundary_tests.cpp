@@ -1,16 +1,13 @@
-#include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/point/boundary.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <type_traits>
 
 using namespace specfem;
-
-// Define tolerance for floating point comparisons
-const type_real tol = 1e-6;
 
 // Base test fixture for boundary tests with template parameter for SIMD
 template <bool UseSIMD>
@@ -137,14 +134,14 @@ TYPED_TEST(PointBoundaryTest, StaceyBoundary2D) {
 
     // Verify values
     EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(boundary.edge_weight - 2.5) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_weight,
+                                             static_cast<type_real>(2.5)))
         << ExpectedGot(2.5, boundary.edge_weight);
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(boundary.edge_normal(0) - 0.8) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_normal(0),
+                                             static_cast<type_real>(0.8)))
         << ExpectedGot(0.8, boundary.edge_normal(0));
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(boundary.edge_normal(1) - 0.6) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_normal(1),
+                                             static_cast<type_real>(0.6)))
         << ExpectedGot(0.6, boundary.edge_normal(1));
   }
 }
@@ -176,14 +173,14 @@ TYPED_TEST(PointBoundaryTest, CompositeStaceyDirichletBoundary2D) {
 
     // Verify values
     EXPECT_TRUE(boundary.tag == element::boundary_tag::none);
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(boundary.edge_weight - 3.5) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_weight,
+                                             static_cast<type_real>(3.5)))
         << ExpectedGot(3.5, boundary.edge_weight);
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(boundary.edge_normal(0) - 0.6) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_normal(0),
+                                             static_cast<type_real>(0.6)))
         << ExpectedGot(0.6, boundary.edge_normal(0));
-    EXPECT_TRUE(specfem::datatype::all_of(
-        Kokkos::abs(boundary.edge_normal(1) - 0.8) < tol))
+    EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_normal(1),
+                                             static_cast<type_real>(0.8)))
         << ExpectedGot(0.8, boundary.edge_normal(1));
   }
 }
@@ -256,14 +253,14 @@ TEST_F(PointBoundaryTestSerial, ConversionCompositeToStacey) {
 
   // Verify that all values were copied
   EXPECT_TRUE(stacey.tag == element::boundary_tag::composite_stacey_dirichlet);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stacey.edge_weight - 5.5) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stacey.edge_weight,
+                                           static_cast<type_real>(5.5)))
       << ExpectedGot(5.5, stacey.edge_weight);
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stacey.edge_normal(0) - 0.3) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stacey.edge_normal(0),
+                                           static_cast<type_real>(0.3)))
       << ExpectedGot(0.3, stacey.edge_normal(0));
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(stacey.edge_normal(1) - 0.9) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(stacey.edge_normal(1),
+                                           static_cast<type_real>(0.9)))
       << ExpectedGot(0.9, stacey.edge_normal(1));
 }
 
@@ -413,14 +410,11 @@ TEST_F(PointBoundaryTestSerial, BoundaryTagContainerOperators) {
 //   EXPECT_EQ(boundary.edge_normal.extent(0), 3);  // 3D has 3 components
 
 //   // Check initialization values
-//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(0))
-//   < tol))
+//   EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_normal(0), 0.0))
 //       << ExpectedGot(0.0, boundary.edge_normal(0));
-//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(1))
-//   < tol))
+//   EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_normal(1), 0.0))
 //       << ExpectedGot(0.0, boundary.edge_normal(1));
-//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(2))
-//   < tol))
+//   EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_normal(2), 0.0))
 //       << ExpectedGot(0.0, boundary.edge_normal(2));
 
 //   // Set edge normal values
@@ -429,13 +423,10 @@ TEST_F(PointBoundaryTestSerial, BoundaryTagContainerOperators) {
 //   boundary.edge_normal(2) = 0.3;
 
 //   // Verify values
-//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(0) -
-//   0.1) < tol))
+//   EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_normal(0), 0.1))
 //       << ExpectedGot(0.1, boundary.edge_normal(0));
-//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(1) -
-//   0.2) < tol))
+//   EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_normal(1), 0.2))
 //       << ExpectedGot(0.2, boundary.edge_normal(1));
-//   EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(boundary.edge_normal(2) -
-//   0.3) < tol))
+//   EXPECT_TRUE(specfem::utilities::is_close(boundary.edge_normal(2), 0.3))
 //       << ExpectedGot(0.3, boundary.edge_normal(2));
 // }
