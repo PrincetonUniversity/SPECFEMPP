@@ -201,7 +201,7 @@ Finally, we can run the solver using the following command.
 
 To create an animated gif of the wavefield evolution, you can use ImageMagick (if available):
 
-.. code:: bash
+.. code-block:: bash
     magick OUTPUT_FILES/display/wavefield*.png -trim +repage -delay 10 -loop 0 wavefield.gif
 
 The output animated gif will show the wavefield evolution over time. We can see that the P-wave is impinging on the cavity diffracting/reflecting along the edge, and a little later the S-wave doing the same with the addition of S-to-P reflections.
