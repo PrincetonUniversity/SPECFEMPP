@@ -24,7 +24,6 @@ The following script performs the above steps in CUBIT. You can copy and paste t
 
 .. code-block:: bash
     :caption: cubit_script.jou
-    :emphasize
 
     create surface rectangle width 200 height 80 yplane
     move Surface 1 x 100 y 0 z 40 include_merged
