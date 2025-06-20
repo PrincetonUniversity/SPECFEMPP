@@ -16,91 +16,64 @@
 // ------------------------------------- //
 // ------- Test configuration ----------- //
 
-namespace test_config {
-struct database {
-public:
-  database() : specfem_config(""), traces("") {};
-  database(const YAML::Node &Node) {
-    specfem_config = Node["specfem_config"].as<std::string>();
-    // check if node elastic_domain_field exists
-    if (Node["traces"]) {
-      traces = Node["traces"].as<std::string>();
-    } else {
-      throw std::runtime_error("Traces not found for the test");
-    }
-  }
-  std::string specfem_config;
-  std::string traces;
-};
-
-struct configuration {
-public:
-  configuration() : number_of_processors(0) {};
-  configuration(const YAML::Node &Node) {
-    number_of_processors = Node["nproc"].as<int>();
-    if (Node["tolerance"]) {
-      tolerance = Node["tolerance"].as<type_real>();
-    } else {
-      throw std::runtime_error("Tolerance not found in test configuration");
-    }
-  }
-  int number_of_processors;
-  type_real tolerance; // Default tolerance for tests
-};
-
-struct Test {
-public:
-  Test(const YAML::Node &Node, int number) {
-
-    this->number = number;
-    this->name = Node["name"].as<std::string>();
-    this->id = Node["id"].as<std::string>();
-    description = Node["description"].as<std::string>();
-    YAML::Node config = Node["config"];
-    configuration = test_config::configuration(config);
-
-    YAML::Node database_node = Node["databases"];
-    try {
-      database = test_config::database(database_node);
-    } catch (std::runtime_error &e) {
-      throw std::runtime_error("Error in test configuration: " + name + "\n" +
-                               e.what());
-    }
-    return;
-  }
-
+// Helper function to load test configuration from directory
+struct TestConfig {
   std::string name;
   std::string id;
   std::string description;
-  int number;
-  test_config::database database;
-  test_config::configuration configuration;
+  int number_of_processors;
+  type_real tolerance;
+  std::string specfem_config;
+  std::string traces;
+
+  static TestConfig load_from_directory(const std::string &test_path) {
+    TestConfig config;
+
+    // Load config.yaml from the test directory
+    std::string config_file = test_path + "/config.yaml";
+
+    YAML::Node config_node;
+    try {
+      config_node = YAML::LoadFile(config_file);
+    } catch (const std::exception &e) {
+      throw std::runtime_error("Failed to load config file: " + config_file +
+                               " - " + e.what());
+    }
+
+    config.id = config_node["id"].as<std::string>();
+    config.name = config_node["name"].as<std::string>();
+    config.description = config_node["description"].as<std::string>();
+
+    // Load configuration
+    YAML::Node config_section = config_node["config"];
+    config.number_of_processors = config_section["nproc"].as<int>();
+    config.tolerance = config_section["tolerance"].as<type_real>();
+
+    // Load database paths and concatenate with test directory path
+    YAML::Node databases = config_node["databases"];
+    config.specfem_config =
+        test_path + "/" + databases["specfem_config"].as<std::string>();
+    config.traces = test_path + "/" + databases["traces"].as<std::string>();
+
+    return config;
+  }
 };
-
-// Minimal output stream operator to avoid binary dump in test output
-std::ostream &operator<<(std::ostream &os, const Test &test) {
-  return os << test.id;
-}
-
-} // namespace test_config
 
 // ------------------------------------- //
 
-// ----- Parse test config ------------- //
+// ----- Parse test directories ------------- //
 
-std::vector<test_config::Test> parse_test_config(std::string test_config_file,
-                                                 specfem::MPI::MPI *mpi) {
-  YAML::Node yaml = YAML::LoadFile(test_config_file);
-  const YAML::Node &tests = yaml["Tests"];
+std::vector<std::string> parse_test_directories(const std::string &tests_file) {
+  YAML::Node yaml = YAML::LoadFile(tests_file);
 
-  assert(tests.IsSequence());
+  std::vector<std::string> test_paths;
 
-  std::vector<test_config::Test> test_configurations;
-  int counter = 0;
-  for (auto N : tests)
-    test_configurations.push_back(test_config::Test(N, counter++));
+  for (const auto &test_node : yaml) {
+    std::string path = test_node.as<std::string>();
+    test_paths.push_back(path);
+  }
 
-  return test_configurations;
+  return test_paths;
 }
 
 // ------------------------------------- //
@@ -169,7 +142,7 @@ specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
 }
 
 // Parameterized test fixture for Newmark tests
-class Newmark : public ::testing::TestWithParam<test_config::Test> {
+class Newmark : public ::testing::TestWithParam<std::string> {
 protected:
   void SetUp() override {
     // Any setup needed for each test
@@ -181,17 +154,19 @@ protected:
 };
 
 TEST_P(Newmark, Test) {
-  const auto &Test = GetParam();
+  const std::string &test_path = GetParam();
+
+  // Load the test configuration from the directory
+  TestConfig Test = TestConfig::load_from_directory(test_path);
 
   std::cout << "-------------------------------------------------------\n"
-            << "\033[0;32m[RUNNING]\033[0m Test " << Test.number << ": "
-            << Test.name << "\n"
+            << "\033[0;32m[RUNNING]\033[0m Test: " << Test.name << "\n"
             << "-------------------------------------------------------\n\n"
             << std::endl;
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  const auto parameter_file = Test.database.specfem_config;
+  const auto parameter_file = Test.specfem_config;
 
   specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
 
@@ -243,7 +218,7 @@ TEST_P(Newmark, Test) {
   if (receivers.size() == 0) {
     FAIL() << "--------------------------------------------------\n"
            << "\033[0;31m[FAILED]\033[0m Test failed\n"
-           << " - Test " << Test.number << ": " << Test.name << "\n"
+           << " - Test: " << Test.name << "\n"
            << " - Error: Stations file does not contain any receivers\n"
            << "--------------------------------------------------\n\n"
            << std::endl;
@@ -298,34 +273,34 @@ TEST_P(Newmark, Test) {
       switch (seismogram_type) {
       case specfem::wavefield::type::displacement:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXY.semd");
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXX.semd");
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXZ.semd");
         }
         break;
       case specfem::wavefield::type::velocity:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXY.semv");
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXX.semv");
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXZ.semv");
         }
         break;
       case specfem::wavefield::type::acceleration:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXY.sema");
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXX.sema");
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXZ.sema");
         }
         break;
@@ -341,7 +316,7 @@ TEST_P(Newmark, Test) {
                  << "--------------------------------------------------\n\n"
                  << std::endl;
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.PRE.semp");
         }
         break;
@@ -357,7 +332,7 @@ TEST_P(Newmark, Test) {
                  << "--------------------------------------------------\n\n"
                  << std::endl;
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+          filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXT.semr");
         }
         break;
@@ -417,11 +392,11 @@ TEST_P(Newmark, Test) {
       }
     }
 
-    if (error / computed_norm > Test.configuration.tolerance ||
+    if (error / computed_norm > Test.tolerance ||
         std::isnan(error / computed_norm)) {
       FAIL() << "--------------------------------------------------\n"
              << "\033[0;31m[FAILED]\033[0m Test failed\n"
-             << " - Test " << Test.number << ": " << Test.name << "\n"
+             << " - Test: " << Test.name << "\n"
              << " - Error: Norm of the error is greater than 1e-3\n"
              << " - Station: " << station_name << "\n"
              << " - Network: " << network_name << "\n"
@@ -438,20 +413,24 @@ TEST_P(Newmark, Test) {
             << std::endl;
 }
 
-// Load test configurations and create parameterized test instances
-std::vector<test_config::Test> GetTestConfigurations() {
-  std::string config_filename = "displacement_tests/Newmark/test_config.yaml";
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
-  return parse_test_config(config_filename, mpi);
+// Load test directories and create parameterized test instances
+std::vector<std::string> GetTestDirectories() {
+  std::string tests_filename = "displacement_tests/Newmark/tests.yaml";
+  return parse_test_directories(tests_filename);
 }
 
 // Instantiate the parameterized test with all configurations
-INSTANTIATE_TEST_SUITE_P(
-    DisplacementTests, Newmark, ::testing::ValuesIn(GetTestConfigurations()),
-    [](const ::testing::TestParamInfo<Newmark::ParamType> &info) {
-      // use the test number as the test name
-      return std::to_string(info.param.number);
-    });
+INSTANTIATE_TEST_SUITE_P(DisplacementTests, Newmark,
+                         ::testing::ValuesIn(GetTestDirectories()),
+                         [](const ::testing::TestParamInfo<std::string> &info) {
+                           // Extract test name from path (last directory
+                           // component)
+                           std::string path = info.param;
+                           size_t last_slash = path.find_last_of('/');
+                           return (last_slash != std::string::npos)
+                                      ? path.substr(last_slash + 1)
+                                      : path;
+                         });
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
