@@ -6,7 +6,7 @@
 - "displacement_tests/Newmark/serial/HomogeneousElasticDomainStaceyBC"
 - "displacement_tests/Newmark/serial/HomogeneousElasticDomainStaceyDirichletBC"
 - "displacement_tests/Newmark/serial/HomogeneousAcousticDomainCompositeStaceyDirichletBC"
-# - "displacement_tests/Newmark/serial/HomogeneousElasticAnisotropicDomain"
+- "displacement_tests/Newmark/serial/HomogeneousElasticAnisotropicDomain"
 # - "displacement_tests/Newmark/serial/HomogeneousElasticIsotropicDomainSH"
 # - "displacement_tests/Newmark/serial/PoroelasticCoupledDomainPSV"
 # # - "displacement_tests/Newmark/serial/TwoLayerElectromagneticDomain"
