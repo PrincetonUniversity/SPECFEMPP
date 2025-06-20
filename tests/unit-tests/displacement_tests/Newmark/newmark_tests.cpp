@@ -11,6 +11,7 @@
 #include "solver/solver.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
+#include <algorithm>
 
 // ------------------------------------- //
 // ------- Test configuration ----------- //
@@ -53,7 +54,7 @@ public:
 
     this->number = number;
     this->name = Node["name"].as<std::string>();
-
+    this->id = Node["id"].as<std::string>();
     description = Node["description"].as<std::string>();
     YAML::Node config = Node["config"];
     configuration = test_config::configuration(config);
@@ -69,11 +70,18 @@ public:
   }
 
   std::string name;
+  std::string id;
   std::string description;
   int number;
   test_config::database database;
   test_config::configuration configuration;
 };
+
+// Minimal output stream operator to avoid binary dump in test output
+std::ostream &operator<<(std::ostream &os, const Test &test) {
+  return os << test.id;
+}
+
 } // namespace test_config
 
 // ------------------------------------- //
@@ -160,270 +168,290 @@ specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
   return local_array;
 }
 
-TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
-  std::string config_filename = "displacement_tests/"
-                                "Newmark/test_config.yaml";
+// Parameterized test fixture for Newmark tests
+class Newmark : public ::testing::TestWithParam<test_config::Test> {
+protected:
+  void SetUp() override {
+    // Any setup needed for each test
+  }
+
+  void TearDown() override {
+    // Any cleanup needed for each test
+  }
+};
+
+TEST_P(Newmark, Test) {
+  const auto &Test = GetParam();
+
+  std::cout << "-------------------------------------------------------\n"
+            << "\033[0;32m[RUNNING]\033[0m Test " << Test.number << ": "
+            << Test.name << "\n"
+            << "-------------------------------------------------------\n\n"
+            << std::endl;
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  auto Tests = parse_test_config(config_filename, mpi);
+  const auto parameter_file = Test.database.specfem_config;
 
-  for (auto &Test : Tests) {
-    std::cout << "-------------------------------------------------------\n"
-              << "\033[0;32m[RUNNING]\033[0m Test " << Test.number << ": "
-              << Test.name << "\n"
-              << "-------------------------------------------------------\n\n"
-              << std::endl;
+  specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
 
-    const auto parameter_file = Test.database.specfem_config;
+  const auto database_file = setup.get_databases();
+  const auto source_node = setup.get_sources();
+  const auto elastic_wave = setup.get_elastic_wave_type();
+  const auto electromagnetic_wave = setup.get_electromagnetic_wave_type();
 
-    specfem::runtime_configuration::setup setup(parameter_file,
-                                                __default_file__);
+  // Set up GLL quadrature points
+  const auto quadratures = setup.instantiate_quadrature();
 
-    const auto database_file = setup.get_databases();
-    const auto source_node = setup.get_sources();
-    const auto elastic_wave = setup.get_elastic_wave_type();
-    const auto electromagnetic_wave = setup.get_electromagnetic_wave_type();
+  // Read mesh generated MESHFEM
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
+      database_file, elastic_wave, electromagnetic_wave, mpi);
+  const type_real dt = setup.get_dt();
+  const int nsteps = setup.get_nsteps();
 
-    // Set up GLL quadrature points
-    const auto quadratures = setup.instantiate_quadrature();
+  // Read sources
+  //    if start time is not explicitly specified then t0 is determined using
+  //    source frequencies and time shift
+  auto [sources, t0] = specfem::io::read_sources(
+      source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
-    // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-        database_file, elastic_wave, electromagnetic_wave, mpi);
-    const type_real dt = setup.get_dt();
-    const int nsteps = setup.get_nsteps();
-
-    // Read sources
-    //    if start time is not explicitly specified then t0 is determined using
-    //    source frequencies and time shift
-    auto [sources, t0] = specfem::io::read_sources(
-        source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
-
-    for (auto &source : sources) {
-      if (mpi->main_proc())
-        std::cout << source->print() << std::endl;
-    }
-
-    setup.update_t0(t0);
-
-    // Instantiate the solver and timescheme
-    auto it = setup.instantiate_timescheme();
-
-    const auto stations_node = setup.get_stations();
-    const auto angle = setup.get_receiver_angle();
-    auto receivers = specfem::io::read_receivers(stations_node, angle);
-
-    std::cout << "  Receiver information\n";
-    std::cout << "------------------------------" << std::endl;
-    for (auto &receiver : receivers) {
-      if (mpi->main_proc())
-        std::cout << receiver->print() << std::endl;
-    }
-
-    const auto seismogram_types = setup.get_seismogram_types();
-
-    // Check only displacement seismogram types are being computed
-
-    if (receivers.size() == 0) {
-      FAIL() << "--------------------------------------------------\n"
-             << "\033[0;31m[FAILED]\033[0m Test failed\n"
-             << " - Test " << Test.number << ": " << Test.name << "\n"
-             << " - Error: Stations file does not contain any receivers\n"
-             << "--------------------------------------------------\n\n"
-             << std::endl;
-    }
-
-    const int max_sig_step = it->get_max_seismogram_step();
-
-    specfem::compute::assembly assembly(
-        mesh, quadratures, sources, receivers, seismogram_types, t0,
-        setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
-        setup.get_simulation_type(), nullptr);
-
-    it->link_assembly(assembly);
-
-    // User output
+  for (auto &source : sources) {
     if (mpi->main_proc())
-      std::cout << *it << std::endl;
+      std::cout << source->print() << std::endl;
+  }
 
-    std::shared_ptr<specfem::solver::solver> solver =
-        setup.instantiate_solver<5>(setup.get_dt(), assembly, it, {});
+  setup.update_t0(t0);
 
-    solver->run();
+  // Instantiate the solver and timescheme
+  auto it = setup.instantiate_timescheme();
 
-    // --------------------------------------------------------------
-    //                   Write Seismograms
-    // --------------------------------------------------------------
+  const auto stations_node = setup.get_stations();
+  const auto angle = setup.get_receiver_angle();
+  auto receivers = specfem::io::read_receivers(stations_node, angle);
 
-    auto seismograms = assembly.receivers;
+  std::cout << "  Receiver information\n";
+  std::cout << "------------------------------" << std::endl;
+  for (auto &receiver : receivers) {
+    if (mpi->main_proc())
+      std::cout << receiver->print() << std::endl;
+  }
 
-    seismograms.sync_seismograms();
+  const auto seismogram_types = setup.get_seismogram_types();
 
-    // --------------------------------------------------------------
+  // Check only displacement seismogram types are being computed
 
-    for (auto station_info : seismograms.stations()) {
+  if (receivers.size() == 0) {
+    FAIL() << "--------------------------------------------------\n"
+           << "\033[0;31m[FAILED]\033[0m Test failed\n"
+           << " - Test " << Test.number << ": " << Test.name << "\n"
+           << " - Error: Stations file does not contain any receivers\n"
+           << "--------------------------------------------------\n\n"
+           << std::endl;
+  }
 
-      // Get station and network names
-      std::string network_name = station_info.network_name;
-      std::string station_name = station_info.station_name;
+  const int max_sig_step = it->get_max_seismogram_step();
 
-      // Initialize error and computed norm for each all seismogram types
-      // that is each station
-      type_real error = 0.0;
-      type_real computed_norm = 0.0;
+  specfem::compute::assembly assembly(
+      mesh, quadratures, sources, receivers, seismogram_types, t0,
+      setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
+      setup.get_simulation_type(), nullptr);
 
-      // Loop over all seismogram types for this station to compute the
-      // total error and computed norm for a single station
-      for (auto seismogram_type : station_info.get_seismogram_types()) {
+  it->link_assembly(assembly);
 
-        // Initialize filenames vector to hold the seismogram filenames
-        std::vector<std::string> filenames;
+  // User output
+  if (mpi->main_proc())
+    std::cout << *it << std::endl;
 
-        switch (seismogram_type) {
-        case specfem::wavefield::type::displacement:
-          if (elastic_wave == specfem::enums::elastic_wave::sh) {
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.BXY.semd");
-          } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.BXX.semd");
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.BXZ.semd");
-          }
-          break;
-        case specfem::wavefield::type::velocity:
-          if (elastic_wave == specfem::enums::elastic_wave::sh) {
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.BXY.semv");
-          } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.BXX.semv");
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.BXZ.semv");
-          }
-          break;
-        case specfem::wavefield::type::acceleration:
-          if (elastic_wave == specfem::enums::elastic_wave::sh) {
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.BXY.sema");
-          } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.BXX.sema");
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.BXZ.sema");
-          }
-          break;
-        case specfem::wavefield::type::pressure:
-          if (elastic_wave == specfem::enums::elastic_wave::sh) {
-            FAIL() << "--------------------------------------------------\n"
-                   << "\033[0;31m[FAILED]\033[0m Test failed\n"
-                   << " - Test name: " << Test.name << "\n"
-                   << " - Error: Pressure seismograms are not supported for SH "
-                      "waves\n"
-                   << " - Network: " << network_name << "\n"
-                   << " - Station: " << station_name << "\n"
-                   << "--------------------------------------------------\n\n"
-                   << std::endl;
-          } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.PRE.semp");
-          }
-          break;
-        case specfem::wavefield::type::rotation:
-          if (elastic_wave == specfem::enums::elastic_wave::sh) {
-            FAIL() << "--------------------------------------------------\n"
-                   << "\033[0;31m[FAILED]\033[0m Test failed\n"
-                   << " - Test name: " << Test.name << "\n"
-                   << " - Error: Rotation seismograms are not supported for SH"
-                      "waves\n"
-                   << " - Network: " << network_name << "\n"
-                   << " - Station: " << station_name << "\n"
-                   << "--------------------------------------------------\n\n"
-                   << std::endl;
-          } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-            filenames.push_back(Test.database.traces + "/" + network_name +
-                                "." + station_name + ".S2.BXT.semr");
-          }
-          break;
-        default:
+  std::shared_ptr<specfem::solver::solver> solver =
+      setup.instantiate_solver<5>(setup.get_dt(), assembly, it, {});
+
+  solver->run();
+
+  // --------------------------------------------------------------
+  //                   Write Seismograms
+  // --------------------------------------------------------------
+
+  auto seismograms = assembly.receivers;
+
+  seismograms.sync_seismograms();
+
+  // --------------------------------------------------------------
+
+  for (auto station_info : seismograms.stations()) {
+
+    // Get station and network names
+    std::string network_name = station_info.network_name;
+    std::string station_name = station_info.station_name;
+
+    // Initialize error and computed norm for each all seismogram types
+    // that is each station
+    type_real error = 0.0;
+    type_real computed_norm = 0.0;
+
+    // Loop over all seismogram types for this station to compute the
+    // total error and computed norm for a single station
+    for (auto seismogram_type : station_info.get_seismogram_types()) {
+
+      // Initialize filenames vector to hold the seismogram filenames
+      std::vector<std::string> filenames;
+
+      switch (seismogram_type) {
+      case specfem::wavefield::type::displacement:
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.semd");
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXX.semd");
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXZ.semd");
+        }
+        break;
+      case specfem::wavefield::type::velocity:
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.semv");
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXX.semv");
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXZ.semv");
+        }
+        break;
+      case specfem::wavefield::type::acceleration:
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.sema");
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXX.sema");
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXZ.sema");
+        }
+        break;
+      case specfem::wavefield::type::pressure:
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
           FAIL() << "--------------------------------------------------\n"
                  << "\033[0;31m[FAILED]\033[0m Test failed\n"
                  << " - Test name: " << Test.name << "\n"
-                 << " - Error: Unknown seismogram type\n"
+                 << " - Error: Pressure seismograms are not supported for SH "
+                    "waves\n"
                  << " - Network: " << network_name << "\n"
                  << " - Station: " << station_name << "\n"
                  << "--------------------------------------------------\n\n"
                  << std::endl;
-          break;
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.PRE.semp");
         }
-
-        // Get the number of components for this seismogram type
-        const int ncomponents = filenames.size();
-
-        Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
-            traces("traces", ncomponents, max_sig_step, 2);
-
-        for (int icomp = 0; icomp < ncomponents; icomp++) {
-          const auto trace =
-              Kokkos::subview(traces, icomp, Kokkos::ALL, Kokkos::ALL);
-          specfem::io::seismogram_reader reader(
-              filenames[icomp], specfem::enums::seismogram::format::ascii,
-              trace);
-          reader.read();
+        break;
+      case specfem::wavefield::type::rotation:
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          FAIL() << "--------------------------------------------------\n"
+                 << "\033[0;31m[FAILED]\033[0m Test failed\n"
+                 << " - Test name: " << Test.name << "\n"
+                 << " - Error: Rotation seismograms are not supported for SH"
+                    "waves\n"
+                 << " - Network: " << network_name << "\n"
+                 << " - Station: " << station_name << "\n"
+                 << "--------------------------------------------------\n\n"
+                 << std::endl;
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          filenames.push_back(Test.database.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXT.semr");
         }
-
-        int count = 0;
-        for (auto [time, value] : seismograms.get_seismogram(
-                 station_name, network_name, seismogram_type)) {
-          for (int icomp = 0; icomp < ncomponents; icomp++) {
-            const auto computed_time = traces(icomp, count, 0);
-
-            if (std::abs(time - computed_time) > 1e-3) {
-              FAIL() << "--------------------------------------------------\n"
-                     << "\033[0;31m[FAILED]\033[0m Test failed\n"
-                     << " - Test name: " << Test.name << "\n"
-                     << " - Error: Times do not match\n"
-                     << " - Network: " << network_name << "\n"
-                     << " - Station: " << station_name << "\n"
-                     << " - Component: " << icomp << "\n"
-                     << " - Expected: " << time << "\n"
-                     << " - Computed: " << computed_time << "\n"
-                     << "--------------------------------------------------\n\n"
-                     << std::endl;
-            }
-
-            const auto computed_value = traces(icomp, count, 1);
-            error += std::sqrt((value[icomp] - computed_value) *
-                               (value[icomp] - computed_value));
-            computed_norm += std::sqrt(computed_value * computed_value);
-          }
-
-          count++;
-        }
-      }
-
-      if (error / computed_norm > Test.configuration.tolerance ||
-          std::isnan(error / computed_norm)) {
+        break;
+      default:
         FAIL() << "--------------------------------------------------\n"
                << "\033[0;31m[FAILED]\033[0m Test failed\n"
-               << " - Test " << Test.number << ": " << Test.name << "\n"
-               << " - Error: Norm of the error is greater than 1e-3\n"
-               << " - Station: " << station_name << "\n"
+               << " - Test name: " << Test.name << "\n"
+               << " - Error: Unknown seismogram type\n"
                << " - Network: " << network_name << "\n"
-               << " - Error: " << error << "\n"
-               << " - Norm: " << computed_norm << "\n"
+               << " - Station: " << station_name << "\n"
                << "--------------------------------------------------\n\n"
                << std::endl;
+        break;
+      }
+
+      // Get the number of components for this seismogram type
+      const int ncomponents = filenames.size();
+
+      Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+          traces("traces", ncomponents, max_sig_step, 2);
+
+      for (int icomp = 0; icomp < ncomponents; icomp++) {
+        const auto trace =
+            Kokkos::subview(traces, icomp, Kokkos::ALL, Kokkos::ALL);
+        specfem::io::seismogram_reader reader(
+            filenames[icomp], specfem::enums::seismogram::format::ascii, trace);
+        reader.read();
+      }
+
+      int count = 0;
+      for (auto [time, value] : seismograms.get_seismogram(
+               station_name, network_name, seismogram_type)) {
+        for (int icomp = 0; icomp < ncomponents; icomp++) {
+          const auto computed_time = traces(icomp, count, 0);
+
+          if (std::abs(time - computed_time) > 1e-3) {
+            FAIL() << "--------------------------------------------------\n"
+                   << "\033[0;31m[FAILED]\033[0m Test failed\n"
+                   << " - Test name: " << Test.name << "\n"
+                   << " - Error: Times do not match\n"
+                   << " - Network: " << network_name << "\n"
+                   << " - Station: " << station_name << "\n"
+                   << " - Component: " << icomp << "\n"
+                   << " - Expected: " << time << "\n"
+                   << " - Computed: " << computed_time << "\n"
+                   << "--------------------------------------------------\n\n"
+                   << std::endl;
+          }
+
+          const auto computed_value = traces(icomp, count, 1);
+          error += std::sqrt((value[icomp] - computed_value) *
+                             (value[icomp] - computed_value));
+          computed_norm += std::sqrt(computed_value * computed_value);
+        }
+
+        count++;
       }
     }
 
-    std::cout << "--------------------------------------------------\n"
-              << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"
-              << "--------------------------------------------------\n\n"
-              << std::endl;
+    if (error / computed_norm > Test.configuration.tolerance ||
+        std::isnan(error / computed_norm)) {
+      FAIL() << "--------------------------------------------------\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " - Test " << Test.number << ": " << Test.name << "\n"
+             << " - Error: Norm of the error is greater than 1e-3\n"
+             << " - Station: " << station_name << "\n"
+             << " - Network: " << network_name << "\n"
+             << " - Error: " << error << "\n"
+             << " - Norm: " << computed_norm << "\n"
+             << "--------------------------------------------------\n\n"
+             << std::endl;
+    }
   }
+
+  std::cout << "--------------------------------------------------\n"
+            << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"
+            << "--------------------------------------------------\n\n"
+            << std::endl;
 }
+
+// Load test configurations and create parameterized test instances
+std::vector<test_config::Test> GetTestConfigurations() {
+  std::string config_filename = "displacement_tests/Newmark/test_config.yaml";
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  return parse_test_config(config_filename, mpi);
+}
+
+// Instantiate the parameterized test with all configurations
+INSTANTIATE_TEST_SUITE_P(
+    DisplacementTests, Newmark, ::testing::ValuesIn(GetTestConfigurations()),
+    [](const ::testing::TestParamInfo<Newmark::ParamType> &info) {
+      // use the test number as the test name
+      return std::to_string(info.param.number);
+    });
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
