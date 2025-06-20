@@ -30,7 +30,6 @@ public:
   iterator end() const { return seismogram_types_.end(); }
 
   size_t size() const { return seismogram_types_.size(); }
-  bool empty() const { return seismogram_types_.empty(); }
 
 private:
   std::vector<specfem::wavefield::type> seismogram_types_;
