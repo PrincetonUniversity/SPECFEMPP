@@ -56,11 +56,12 @@ TYPED_TEST(PointPropertiesTest, ElectromagneticIsotropic2D) {
   }
 
   // Create the properties object
-  specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::electromagnetic,
-                             specfem::element::property_tag::isotropic,
-                             using_simd>
-      props(mu0_inv, eps11, eps33, sig11, sig33);
+  using PointPropertiesType =
+      specfem::point::properties<specfem::dimension::type::dim2,
+                                 specfem::element::medium_tag::electromagnetic,
+                                 specfem::element::property_tag::isotropic,
+                                 using_simd>;
+  PointPropertiesType props(mu0_inv, eps11, eps33, sig11, sig33);
 
   EXPECT_TRUE(specfem::utilities::is_close(props.mu0_inv(), mu0_inv))
       << ExpectedGot(mu0_inv, props.mu0_inv());
@@ -72,4 +73,36 @@ TYPED_TEST(PointPropertiesTest, ElectromagneticIsotropic2D) {
       << ExpectedGot(sig11, props.sig11());
   EXPECT_TRUE(specfem::utilities::is_close(props.sig33(), sig33))
       << ExpectedGot(sig33, props.sig33());
+
+  // Additional constructors and assignment tests
+  PointPropertiesType props2;
+  props2.mu0_inv() = mu0_inv;
+  props2.eps11() = eps11;
+  props2.eps33() = eps33;
+  props2.sig11() = sig11;
+  props2.sig33() = sig33;
+
+  simd_type data[] = { mu0_inv, eps11, eps33, sig11, sig33 };
+  PointPropertiesType props3(data);
+
+  PointPropertiesType props4(mu0_inv);
+
+  EXPECT_TRUE(props2 == props) << ExpectedGot(props2.mu0_inv(), props.mu0_inv())
+                               << ExpectedGot(props2.eps11(), props.eps11())
+                               << ExpectedGot(props2.eps33(), props.eps33())
+                               << ExpectedGot(props2.sig11(), props.sig11())
+                               << ExpectedGot(props2.sig33(), props.sig33());
+
+  EXPECT_TRUE(props2 == props3)
+      << ExpectedGot(props3.mu0_inv(), props2.mu0_inv())
+      << ExpectedGot(props3.eps11(), props2.eps11())
+      << ExpectedGot(props3.eps33(), props2.eps33())
+      << ExpectedGot(props3.sig11(), props2.sig11())
+      << ExpectedGot(props3.sig33(), props2.sig33());
+
+  EXPECT_TRUE(specfem::utilities::is_close(props4.mu0_inv(), mu0_inv));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.eps11(), mu0_inv));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.eps33(), mu0_inv));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.sig11(), mu0_inv));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.sig33(), mu0_inv));
 }

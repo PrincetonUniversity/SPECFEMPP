@@ -169,11 +169,11 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
   }
 
   // Create the properties object
-  specfem::point::properties<
+  using PointPropertiesType = specfem::point::properties<
       specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
-      specfem::element::property_tag::isotropic, using_simd>
-      props(phi, rho_s, rho_f, tortuosity, mu_G, H_Biot, C_Biot, M_Biot, permxx,
-            permxz, permzz, eta_f);
+      specfem::element::property_tag::isotropic, using_simd>;
+  PointPropertiesType props(phi, rho_s, rho_f, tortuosity, mu_G, H_Biot, C_Biot,
+                            M_Biot, permxx, permxz, permzz, eta_f);
 
   EXPECT_TRUE(specfem::utilities::is_close(props.phi(), phi))
       << ExpectedGot(phi, props.phi());
@@ -232,4 +232,66 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
       << ExpectedGot(props.vpII(), props.vpI());
   EXPECT_TRUE(specfem::utilities::is_close(props.vs(), vs_expected))
       << ExpectedGot(vs_expected, props.vs());
+
+  // Additional constructors and assignment tests
+  PointPropertiesType props2;
+  props2.phi() = phi;
+  props2.rho_s() = rho_s;
+  props2.rho_f() = rho_f;
+  props2.tortuosity() = tortuosity;
+  props2.mu_G() = mu_G;
+  props2.H_Biot() = H_Biot;
+  props2.C_Biot() = C_Biot;
+  props2.M_Biot() = M_Biot;
+  props2.permxx() = permxx;
+  props2.permxz() = permxz;
+  props2.permzz() = permzz;
+  props2.eta_f() = eta_f;
+
+  simd_type data[] = { phi,    rho_s,  rho_f,  tortuosity, mu_G,   H_Biot,
+                       C_Biot, M_Biot, permxx, permxz,     permzz, eta_f };
+  PointPropertiesType props3(data);
+
+  PointPropertiesType props4(phi);
+
+  EXPECT_TRUE(props2 == props)
+      << ExpectedGot(props2.phi(), props.phi())
+      << ExpectedGot(props2.rho_s(), props.rho_s())
+      << ExpectedGot(props2.rho_f(), props.rho_f())
+      << ExpectedGot(props2.tortuosity(), props.tortuosity())
+      << ExpectedGot(props2.mu_G(), props.mu_G())
+      << ExpectedGot(props2.H_Biot(), props.H_Biot())
+      << ExpectedGot(props2.C_Biot(), props.C_Biot())
+      << ExpectedGot(props2.M_Biot(), props.M_Biot())
+      << ExpectedGot(props2.permxx(), props.permxx())
+      << ExpectedGot(props2.permxz(), props.permxz())
+      << ExpectedGot(props2.permzz(), props.permzz())
+      << ExpectedGot(props2.eta_f(), props.eta_f());
+
+  EXPECT_TRUE(props2 == props3)
+      << ExpectedGot(props3.phi(), props2.phi())
+      << ExpectedGot(props3.rho_s(), props2.rho_s())
+      << ExpectedGot(props3.rho_f(), props2.rho_f())
+      << ExpectedGot(props3.tortuosity(), props2.tortuosity())
+      << ExpectedGot(props3.mu_G(), props2.mu_G())
+      << ExpectedGot(props3.H_Biot(), props2.H_Biot())
+      << ExpectedGot(props3.C_Biot(), props2.C_Biot())
+      << ExpectedGot(props3.M_Biot(), props2.M_Biot())
+      << ExpectedGot(props3.permxx(), props2.permxx())
+      << ExpectedGot(props3.permxz(), props2.permxz())
+      << ExpectedGot(props3.permzz(), props2.permzz())
+      << ExpectedGot(props3.eta_f(), props2.eta_f());
+
+  EXPECT_TRUE(specfem::utilities::is_close(props4.phi(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.rho_s(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.rho_f(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.tortuosity(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.mu_G(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.H_Biot(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.C_Biot(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.M_Biot(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.permxx(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.permxz(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.permzz(), phi));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.eta_f(), phi));
 }

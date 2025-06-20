@@ -67,10 +67,10 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
   }
 
   // Create the properties object
-  specfem::point::properties<
+  using PointPropertiesType = specfem::point::properties<
       specfem::dimension::type::dim3, specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic, using_simd>
-      props(kappa, mu, rho);
+      specfem::element::property_tag::isotropic, using_simd>;
+  PointPropertiesType props(kappa, mu, rho);
 
   EXPECT_TRUE(specfem::utilities::is_close(props.kappa(), kappa))
       << ExpectedGot(kappa, props.kappa());
@@ -88,4 +88,27 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
       << ExpectedGot(rho_vp_val, props.rho_vp());
   EXPECT_TRUE(specfem::utilities::is_close(props.rho_vs(), rho_vs_val))
       << ExpectedGot(rho_vs_val, props.rho_vs());
+
+  // Additional constructors and assignment tests
+  PointPropertiesType props2;
+  props2.kappa() = kappa;
+  props2.mu() = mu;
+  props2.rho() = rho;
+
+  simd_type data[] = { kappa, mu, rho };
+  PointPropertiesType props3(data);
+
+  PointPropertiesType props4(kappa);
+
+  EXPECT_TRUE(props2 == props) << ExpectedGot(props2.kappa(), props.kappa())
+                               << ExpectedGot(props2.mu(), props.mu())
+                               << ExpectedGot(props2.rho(), props.rho());
+
+  EXPECT_TRUE(props2 == props3) << ExpectedGot(props3.kappa(), props2.kappa())
+                                << ExpectedGot(props3.mu(), props2.mu())
+                                << ExpectedGot(props3.rho(), props2.rho());
+
+  EXPECT_TRUE(specfem::utilities::is_close(props4.kappa(), kappa));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.mu(), kappa));
+  EXPECT_TRUE(specfem::utilities::is_close(props4.rho(), kappa));
 }
