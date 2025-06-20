@@ -19,7 +19,13 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
   const int nglob = field.template get_nglob<MediumTag>();
+
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+  constexpr bool using_simd = false;
+#else
   constexpr bool using_simd = true;
+#endif
+
   using LoadFieldType = specfem::point::field<DimensionTag, MediumTag, false,
                                               false, true, true, using_simd>;
   using StoreFieldType = specfem::point::field<DimensionTag, MediumTag, false,

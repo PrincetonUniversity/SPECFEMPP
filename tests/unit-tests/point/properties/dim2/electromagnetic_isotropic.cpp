@@ -15,6 +15,7 @@ TYPED_TEST(PointPropertiesTest, ElectromagneticIsotropic2D) {
   // Get the SIMD size from the implementation
   using simd_type =
       typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  using T = typename specfem::datatype::simd<type_real, using_simd>::base_type;
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
@@ -26,14 +27,25 @@ TYPED_TEST(PointPropertiesTest, ElectromagneticIsotropic2D) {
   simd_type sig33;
 
   if constexpr (using_simd) {
+    T mu0_inv_arr[simd_size];
+    T eps11_arr[simd_size];
+    T eps33_arr[simd_size];
+    T sig11_arr[simd_size];
+    T sig33_arr[simd_size];
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
-      mu0_inv[i] = 7.957747e5 + i * 1.0e4; // 1/μ₀ (1/H/m)
-      eps11[i] = 8.85e-12 + i * 1.0e-13;   // permittivity in xx (F/m)
-      eps33[i] = 8.85e-12 + i * 1.0e-13;   // permittivity in zz (F/m)
-      sig11[i] = 1.0e-2 + i * 1.0e-3;      // conductivity in xx (S/m)
-      sig33[i] = 1.0e-2 + i * 1.0e-3;      // conductivity in zz (S/m)
+      mu0_inv_arr[i] = 7.957747e5 + i * 1.0e4; // 1/μ₀ (1/H/m)
+      eps11_arr[i] = 8.85e-12 + i * 1.0e-13;   // permittivity in xx (F/m)
+      eps33_arr[i] = 8.85e-12 + i * 1.0e-13;   // permittivity in zz (F/m)
+      sig11_arr[i] = 1.0e-2 + i * 1.0e-3;      // conductivity in xx (S/m)
+      sig33_arr[i] = 1.0e-2 + i * 1.0e-3;      // conductivity in zz (S/m)
     }
+    // Copy to SIMD types
+    mu0_inv.copy_from(mu0_inv_arr, Kokkos::Experimental::simd_flag_default);
+    eps11.copy_from(eps11_arr, Kokkos::Experimental::simd_flag_default);
+    eps33.copy_from(eps33_arr, Kokkos::Experimental::simd_flag_default);
+    sig11.copy_from(sig11_arr, Kokkos::Experimental::simd_flag_default);
+    sig33.copy_from(sig33_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Electromagnetic medium properties for scalar case
     mu0_inv = 7.957747e5; // 1/μ₀ (1/H/m)
