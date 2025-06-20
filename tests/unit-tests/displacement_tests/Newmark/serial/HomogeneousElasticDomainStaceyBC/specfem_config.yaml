@@ -33,7 +33,7 @@ parameters:
             output-folder: "."
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/test6/STATIONS"
+    stations: "displacement_tests/Newmark/serial/HomogeneousElasticDomainStaceyBC/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -46,6 +46,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/test6/database.bin"
+    mesh-database: "displacement_tests/Newmark/serial/HomogeneousElasticDomainStaceyBC/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/test6/sources.yaml"
+  sources: "displacement_tests/Newmark/serial/HomogeneousElasticDomainStaceyBC/sources.yaml"
