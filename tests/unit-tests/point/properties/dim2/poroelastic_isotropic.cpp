@@ -1,12 +1,10 @@
 #include "../properties_tests.hpp"
-#include "datatypes/simd.hpp"
 #include "specfem/point/properties.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
-
-const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
 
 // ============================================================================
 // 2D Poroelastic Tests
@@ -136,75 +134,61 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
       props(phi, rho_s, rho_f, tortuosity, mu_G, H_Biot, C_Biot, M_Biot, permxx,
             permxz, permzz, eta_f);
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.phi() - phi) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.phi(), phi))
       << ExpectedGot(phi, props.phi());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.rho_s() - rho_s) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho_s(), rho_s))
       << ExpectedGot(rho_s, props.rho_s());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.rho_f() - rho_f) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho_f(), rho_f))
       << ExpectedGot(rho_f, props.rho_f());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.tortuosity() - tortuosity) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.tortuosity(), tortuosity))
       << ExpectedGot(tortuosity, props.tortuosity());
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(props.mu_G() - mu_G) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.mu_G(), mu_G))
       << ExpectedGot(mu_G, props.mu_G());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.H_Biot() - H_Biot) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.H_Biot(), H_Biot))
       << ExpectedGot(H_Biot, props.H_Biot());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.C_Biot() - C_Biot) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.C_Biot(), C_Biot))
       << ExpectedGot(C_Biot, props.C_Biot());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.M_Biot() - M_Biot) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.M_Biot(), M_Biot))
       << ExpectedGot(M_Biot, props.M_Biot());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.permxx() - permxx) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.permxx(), permxx))
       << ExpectedGot(permxx, props.permxx());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.permxz() - permxz) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.permxz(), permxz))
       << ExpectedGot(permxz, props.permxz());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.permzz() - permzz) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.permzz(), permzz))
       << ExpectedGot(permzz, props.permzz());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.eta_f() - eta_f) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.eta_f(), eta_f))
       << ExpectedGot(eta_f, props.eta_f());
 
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.lambda_G() - lambda_G_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.lambda_G(), lambda_G_val))
       << ExpectedGot(lambda_G_val, props.lambda_G());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.lambdaplus2mu_G() - H_Biot) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.lambdaplus2mu_G(), H_Biot))
       << ExpectedGot(H_Biot, props.lambdaplus2mu_G());
 
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.inverse_permxx() - inverse_permxx_val) < tol))
+  EXPECT_TRUE(
+      specfem::utilities::is_close(props.inverse_permxx(), inverse_permxx_val))
       << ExpectedGot(inverse_permxx_val, props.inverse_permxx());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.inverse_permxz() - inverse_permxz_val) < tol))
+  EXPECT_TRUE(
+      specfem::utilities::is_close(props.inverse_permxz(), inverse_permxz_val))
       << ExpectedGot(inverse_permxz_val, props.inverse_permxz());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.inverse_permzz() - inverse_permzz_val) < tol))
+  EXPECT_TRUE(
+      specfem::utilities::is_close(props.inverse_permzz(), inverse_permzz_val))
       << ExpectedGot(inverse_permzz_val, props.inverse_permzz());
 
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(props.rho_bar() - rho_bar_val) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho_bar(), rho_bar_val))
       << ExpectedGot(rho_bar_val, props.rho_bar());
 
   // Wave velocities are complex calculations, so we just check they return
   // reasonable values
   simd_type zero{ static_cast<type_real>(0.0) };
-  EXPECT_TRUE(specfem::datatype::all_of(props.vpI() > zero))
+  EXPECT_TRUE(specfem::utilities::is_close(props.vpI(), zero) == false)
       << ExpectedGot(zero, props.vpI());
-  EXPECT_TRUE(specfem::datatype::all_of(props.vpII() > zero))
+  EXPECT_TRUE(specfem::utilities::is_close(props.vpII(), zero) == false)
       << ExpectedGot(zero, props.vpII());
-  EXPECT_TRUE(specfem::datatype::all_of(props.vs() > zero))
+  EXPECT_TRUE(specfem::utilities::is_close(props.vs(), zero) == false)
       << ExpectedGot(zero, props.vs());
-  EXPECT_TRUE(specfem::datatype::all_of(props.vpII() < props.vpI()))
+  EXPECT_TRUE(specfem::utilities::is_close(props.vpII(), props.vpI()) == false)
       << "vpII is typically slower than vpI\n"
-      << ExpectedGot(props.vpII(), props.vpI()); //
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(props.vs() - vs_expected) < tol))
+      << ExpectedGot(props.vpII(), props.vpI());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vs(), vs_expected))
       << ExpectedGot(vs_expected, props.vs());
 }

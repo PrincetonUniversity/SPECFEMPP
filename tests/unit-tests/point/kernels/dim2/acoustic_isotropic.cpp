@@ -1,12 +1,10 @@
 #include "../kernels_tests.hpp"
-#include "datatypes/simd.hpp"
 #include "specfem/point/kernels.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
-
-const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
 
 // ============================================================================
 // 2D Acoustic Tests
@@ -53,15 +51,12 @@ TYPED_TEST(PointKernelsTest, AcousticIsotropic2D) {
                           specfem::element::property_tag::isotropic, using_simd>
       kernels(rho, kappa);
 
-  EXPECT_TRUE(specfem::datatype::all_of(Kokkos::abs(kernels.rho() - rho) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rho(), rho))
       << ExpectedGot(rho, kernels.rho());
-  EXPECT_TRUE(
-      specfem::datatype::all_of(Kokkos::abs(kernels.kappa() - kappa) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.kappa(), kappa))
       << ExpectedGot(kappa, kernels.kappa());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(kernels.rhop() - expected_rhop) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.rhop(), expected_rhop))
       << ExpectedGot(expected_rhop, kernels.rhop());
-  EXPECT_TRUE(specfem::datatype::all_of(
-      Kokkos::abs(kernels.alpha() - expected_alpha) < tol))
+  EXPECT_TRUE(specfem::utilities::is_close(kernels.alpha(), expected_alpha))
       << ExpectedGot(expected_alpha, kernels.alpha());
 }
