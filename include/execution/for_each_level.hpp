@@ -14,7 +14,7 @@ namespace execution {
 namespace impl {
 
 template <typename Iterator, typename ClosureType>
-constexpr void check_compatibility() {
+constexpr KOKKOS_INLINE_FUNCTION void check_compatibility() {
   static_assert(
       std::is_invocable_v<ClosureType, typename Iterator::index_type>,
       "Closure must be invocable with the index_type of the iterator");

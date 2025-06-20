@@ -16,6 +16,7 @@ TYPED_TEST(PointKernelsTest, ElasticIsotropic2D) {
   // Get the SIMD size from the implementation
   using simd_type =
       typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  using T = typename specfem::datatype::simd<type_real, using_simd>::base_type;
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
@@ -28,21 +29,33 @@ TYPED_TEST(PointKernelsTest, ElasticIsotropic2D) {
   simd_type beta;
 
   if constexpr (using_simd) {
+    T rho_arr[simd_size];
+    T mu_arr[simd_size];
+    T kappa_arr[simd_size];
+    T rhop_arr[simd_size];
+    T alpha_arr[simd_size];
+    T beta_arr[simd_size];
     // For SIMD case, we can use array indexing syntax
     for (int i = 0; i < simd_size; ++i) {
-      rho[i] = static_cast<type_real>(2.5) +
-               static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      mu[i] = static_cast<type_real>(3.0) +
-              static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      kappa[i] = static_cast<type_real>(4.0) +
-                 static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      rhop[i] = static_cast<type_real>(5.0) +
-                static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      alpha[i] = static_cast<type_real>(6.0) +
-                 static_cast<type_real>(i) * static_cast<type_real>(0.1);
-      beta[i] = static_cast<type_real>(7.0) +
-                static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      rho_arr[i] = static_cast<type_real>(2.5) +
+                   static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      mu_arr[i] = static_cast<type_real>(3.0) +
+                  static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      kappa_arr[i] = static_cast<type_real>(4.0) +
+                     static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      rhop_arr[i] = static_cast<type_real>(5.0) +
+                    static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      alpha_arr[i] = static_cast<type_real>(6.0) +
+                     static_cast<type_real>(i) * static_cast<type_real>(0.1);
+      beta_arr[i] = static_cast<type_real>(7.0) +
+                    static_cast<type_real>(i) * static_cast<type_real>(0.1);
     }
+    rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
+    mu.copy_from(mu_arr, Kokkos::Experimental::simd_flag_default);
+    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
+    rhop.copy_from(rhop_arr, Kokkos::Experimental::simd_flag_default);
+    alpha.copy_from(alpha_arr, Kokkos::Experimental::simd_flag_default);
+    beta.copy_from(beta_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // For scalar case, we need direct assignment
     rho = static_cast<type_real>(2.5);

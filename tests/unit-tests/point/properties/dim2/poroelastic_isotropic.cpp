@@ -15,6 +15,7 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
   // Get the SIMD size from the implementation
   using simd_type =
       typename specfem::datatype::simd<type_real, using_simd>::datatype;
+  using T = typename specfem::datatype::simd<type_real, using_simd>::base_type;
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
@@ -42,63 +43,103 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
   simd_type vs_expected;
 
   if constexpr (using_simd) {
+    T phi_arr[simd_size];
+    T rho_s_arr[simd_size];
+    T rho_f_arr[simd_size];
+    T tortuosity_arr[simd_size];
+    T mu_G_arr[simd_size];
+    T H_Biot_arr[simd_size];
+    T C_Biot_arr[simd_size];
+    T M_Biot_arr[simd_size];
+    T permxx_arr[simd_size];
+    T permxz_arr[simd_size];
+    T permzz_arr[simd_size];
+    T eta_f_arr[simd_size];
+
+    T lambda_G_arr[simd_size];
+    T rho_bar_arr[simd_size];
+    T perm_det_arr[simd_size];
+    T inverse_permxx_arr[simd_size];
+    T inverse_permxz_arr[simd_size];
+    T inverse_permzz_arr[simd_size];
+    T vs_expected_arr[simd_size];
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
       const type_real i_real = 1.0;
-      phi[i] = static_cast<type_real>(0.2) +
-               i_real * static_cast<type_real>(0.01); // porosity
-      rho_s[i] = static_cast<type_real>(2650.0) +
-                 i_real * static_cast<type_real>(10.0); // solid density (kg/m³)
-      rho_f[i] = static_cast<type_real>(1000.0) +
-                 i_real * static_cast<type_real>(5.0); // fluid density (kg/m³)
-      tortuosity[i] = static_cast<type_real>(2.0) +
-                      i_real * static_cast<type_real>(0.1); // tortuosity
-      mu_G[i] = static_cast<type_real>(10.0e9) +
-                i_real * static_cast<type_real>(1.0e8); // shear modulus (Pa)
-      H_Biot[i] =
+      phi_arr[i] = static_cast<type_real>(0.2) +
+                   i_real * static_cast<type_real>(0.01); // porosity
+      rho_s_arr[i] =
+          static_cast<type_real>(2650.0) +
+          i_real * static_cast<type_real>(10.0); // solid density (kg/m³)
+      rho_f_arr[i] =
+          static_cast<type_real>(1000.0) +
+          i_real * static_cast<type_real>(5.0); // fluid density (kg/m³)
+      tortuosity_arr[i] = static_cast<type_real>(2.0) +
+                          i_real * static_cast<type_real>(0.1); // tortuosity
+      mu_G_arr[i] =
+          static_cast<type_real>(10.0e9) +
+          i_real * static_cast<type_real>(1.0e8); // shear modulus (Pa)
+      H_Biot_arr[i] =
           static_cast<type_real>(25.0e9) +
           i_real * static_cast<type_real>(1.0e8); // Biot's H modulus (Pa)
-      C_Biot[i] =
+      C_Biot_arr[i] =
           static_cast<type_real>(10.0e9) +
           i_real * static_cast<type_real>(1.0e7); // Biot's C modulus (Pa)
-      M_Biot[i] =
+      M_Biot_arr[i] =
           static_cast<type_real>(15.0e9) +
           i_real * static_cast<type_real>(1.0e7); // Biot's M modulus (Pa)
-      permxx[i] =
+      permxx_arr[i] =
           static_cast<type_real>(1.0e-12) +
           i_real * static_cast<type_real>(1.0e-14); // permeability in xx (m²)
-      permxz[i] = static_cast<type_real>(0.0);      // permeability in xz (m²)
-      permzz[i] =
+      permxz_arr[i] = static_cast<type_real>(0.0);  // permeability in xz (m²)
+      permzz_arr[i] =
           static_cast<type_real>(1.0e-12) +
           i_real * static_cast<type_real>(1.0e-14); // permeability in zz (m²)
-      eta_f[i] =
+      eta_f_arr[i] =
           static_cast<type_real>(1.0e-3) +
           i_real * static_cast<type_real>(1.0e-5); // fluid viscosity (Pa·s)
 
       // Compute expected properties for verification
-      lambda_G_val[i] =
-          static_cast<type_real>(H_Biot[i]) -
-          static_cast<type_real>(2.0) * static_cast<type_real>(mu_G[i]);
-      rho_bar_val[i] =
-          (static_cast<type_real>(1.0) - static_cast<type_real>(phi[i])) *
-              static_cast<type_real>(rho_s[i]) +
-          static_cast<type_real>(phi[i]) * static_cast<type_real>(rho_f[i]);
-      perm_det[i] =
-          static_cast<type_real>(permxx[i]) *
-              static_cast<type_real>(permzz[i]) -
-          static_cast<type_real>(permxz[i]) * static_cast<type_real>(permxz[i]);
-      inverse_permxx_val[i] = static_cast<type_real>(permzz[i]) /
-                              static_cast<type_real>(perm_det[i]);
-      inverse_permxz_val[i] = -static_cast<type_real>(permxz[i]) /
-                              static_cast<type_real>(perm_det[i]);
-      inverse_permzz_val[i] = static_cast<type_real>(permxx[i]) /
-                              static_cast<type_real>(perm_det[i]);
-      auto phi_over_tort = static_cast<type_real>(phi[i]) /
-                           static_cast<type_real>(tortuosity[i]);
-      auto afactor =
-          rho_bar_val[i] - phi_over_tort * static_cast<type_real>(rho_f[i]);
-      vs_expected[i] = Kokkos::sqrt(static_cast<type_real>(mu_G[i]) / afactor);
+      lambda_G_arr[i] = H_Biot_arr[i] - 2.0 * mu_G_arr[i];
+      rho_bar_arr[i] =
+          (1.0 - phi_arr[i]) * rho_s_arr[i] + phi_arr[i] * rho_f_arr[i];
+      perm_det_arr[i] =
+          permxx_arr[i] * permzz_arr[i] - permxz_arr[i] * permxz_arr[i];
+      inverse_permxx_arr[i] = permzz_arr[i] / perm_det_arr[i];
+      inverse_permxz_arr[i] = -permxz_arr[i] / perm_det_arr[i];
+      inverse_permzz_arr[i] = permxx_arr[i] / perm_det_arr[i];
+
+      auto phi_over_tort = phi_arr[i] / tortuosity_arr[i];
+      auto afactor = rho_bar_arr[i] - phi_over_tort * rho_f_arr[i];
+      vs_expected_arr[i] = Kokkos::sqrt(mu_G_arr[i] / afactor);
     }
+    // Copy to SIMD types
+    phi.copy_from(phi_arr, Kokkos::Experimental::simd_flag_default);
+    rho_s.copy_from(rho_s_arr, Kokkos::Experimental::simd_flag_default);
+    rho_f.copy_from(rho_f_arr, Kokkos::Experimental::simd_flag_default);
+    tortuosity.copy_from(tortuosity_arr,
+                         Kokkos::Experimental::simd_flag_default);
+    mu_G.copy_from(mu_G_arr, Kokkos::Experimental::simd_flag_default);
+    H_Biot.copy_from(H_Biot_arr, Kokkos::Experimental::simd_flag_default);
+    C_Biot.copy_from(C_Biot_arr, Kokkos::Experimental::simd_flag_default);
+    M_Biot.copy_from(M_Biot_arr, Kokkos::Experimental::simd_flag_default);
+    permxx.copy_from(permxx_arr, Kokkos::Experimental::simd_flag_default);
+    permxz.copy_from(permxz_arr, Kokkos::Experimental::simd_flag_default);
+    permzz.copy_from(permzz_arr, Kokkos::Experimental::simd_flag_default);
+    eta_f.copy_from(eta_f_arr, Kokkos::Experimental::simd_flag_default);
+
+    lambda_G_val.copy_from(lambda_G_arr,
+                           Kokkos::Experimental::simd_flag_default);
+    rho_bar_val.copy_from(rho_bar_arr, Kokkos::Experimental::simd_flag_default);
+    perm_det.copy_from(perm_det_arr, Kokkos::Experimental::simd_flag_default);
+    inverse_permxx_val.copy_from(inverse_permxx_arr,
+                                 Kokkos::Experimental::simd_flag_default);
+    inverse_permxz_val.copy_from(inverse_permxz_arr,
+                                 Kokkos::Experimental::simd_flag_default);
+    inverse_permzz_val.copy_from(inverse_permzz_arr,
+                                 Kokkos::Experimental::simd_flag_default);
+    vs_expected.copy_from(vs_expected_arr,
+                          Kokkos::Experimental::simd_flag_default);
   } else {
     // Sandstone-like poroelastic material for scalar case
     phi = 0.2;        // porosity
