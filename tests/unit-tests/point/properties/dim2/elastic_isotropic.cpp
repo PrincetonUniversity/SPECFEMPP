@@ -30,6 +30,7 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
 
   if constexpr (using_simd) {
     T rho_arr[simd_size];
+    T kappa_arr[simd_size];
     T vp_arr[simd_size];
     T vs_arr[simd_size];
     T mu_arr[simd_size];
@@ -37,6 +38,7 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
     T lambdaplus2mu_arr[simd_size];
     T rho_vp_arr[simd_size];
     T rho_vs_arr[simd_size];
+
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
       rho_arr[i] =
@@ -52,6 +54,15 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
       mu_arr[i] = static_cast<type_real>(rho_arr[i]) *
                   static_cast<type_real>(vs_arr[i]) *
                   static_cast<type_real>(vs_arr[i]);
+
+        kappa_arr[i] =
+            static_cast<type_real>(rho_arr[i]) *
+                static_cast<type_real>(vp_arr[i]) *
+                static_cast<type_real>(vp_arr[i]) -
+            static_cast<type_real>(4.0) / static_cast<type_real>(3.0) *
+                static_cast<type_real>(mu_arr[i]);
+
+        
       lambda_arr[i] =
           static_cast<type_real>(rho_arr[i]) *
               static_cast<type_real>(vp_arr[i]) *
@@ -68,14 +79,13 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
 
     // Copy to SIMD types
     rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
-    vp.copy_from(vp_arr, Kokkos::Experimental::simd_flag_default);
-    vs.copy_from(vs_arr, Kokkos::Experimental::simd_flag_default);
+    kappa.copy_from(kappa_arr, Kokkos::Experimental::simd_flag_default);
     mu.copy_from(mu_arr, Kokkos::Experimental::simd_flag_default);
-    lambda.copy_from(lambda_arr, Kokkos::Experimental::simd_flag_default);
-    lambdaplus2mu.copy_from(lambdaplus2mu_arr,
+    lambda_val.copy_from(lambda_arr, Kokkos::Experimental::simd_flag_default);
+    lambdaplus2mu_val.copy_from(lambdaplus2mu_arr,
                             Kokkos::Experimental::simd_flag_default);
-    rho_vp.copy_from(rho_vp_arr, Kokkos::Experimental::simd_flag_default);
-    rho_vs.copy_from(rho_vs_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vp_val.copy_from(rho_vp_arr, Kokkos::Experimental::simd_flag_default);
+    rho_vs_val.copy_from(rho_vs_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Granite-like material for scalar test
     constexpr type_real rho_val = 2700.0;           // kg/m³
@@ -102,8 +112,8 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
   // Create the properties object
   using PointPropertiesType = specfem::point::properties<
       specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic, using_simd>
-      props(kappa, mu, rho);
+      specfem::element::property_tag::isotropic, using_simd>;
+  PointPropertiesType props(kappa, mu, rho);
 
   EXPECT_TRUE(specfem::utilities::is_close(props.kappa(), kappa))
       << ExpectedGot(kappa, props.kappa());
@@ -120,9 +130,15 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
       << ExpectedGot(rho_vs_val, props.rho_vs());
 
   // See note in original code about lambda precision
+  std::cout << "lambdaplus2mu: " << std::endl;
+  std::cout << props.lambdaplus2mu() << std::endl;
+  std::cout << "lambdaplus2mu_val: " << std::endl;
+  std::cout << lambdaplus2mu_val << std::endl;
+  std::cout << "lambda: " << std::endl;
+  std::cout << props.lambda() << std::endl;
   EXPECT_TRUE(specfem::utilities::is_close(
-      props.lambda(), lambdaplus2mu - static_cast<type_real>(2.0) * mu))
-      << ExpectedGot(lambda, props.lambda());
+      props.lambda(), lambdaplus2mu_val - (static_cast<type_real>(2.0)) * mu))
+      << ExpectedGot(lambda_val, props.lambda());
 
   // Additional constructors and assignment tests
   PointPropertiesType props2;
