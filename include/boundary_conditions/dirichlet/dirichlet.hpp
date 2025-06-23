@@ -56,12 +56,16 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_apply_boundary_conditions(
 
   using mask_type = typename PointAccelerationType::simd::mask_type;
 
-  for (int lane = 0; lane < mask_type::size(); ++lane) {
-    if (boundary.tag[lane] != tag)
-      continue;
+  using simd_type = typename PointAccelerationType::simd::datatype;
 
-    for (int icomp = 0; icomp < components; ++icomp)
-      acceleration.acceleration(icomp)[lane] = 0.0;
+  for (std::size_t icomp = 0; icomp < components; ++icomp) {
+    simd_type result([&](std::size_t lane) {
+      return (boundary.tag[lane] == tag)
+                 ? 0.0
+                 : acceleration.acceleration(icomp)[lane];
+    });
+
+    acceleration.acceleration(icomp) = result;
   }
 
   return;

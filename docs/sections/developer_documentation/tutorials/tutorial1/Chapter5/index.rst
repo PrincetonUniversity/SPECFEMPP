@@ -43,15 +43,16 @@ In addition to the elementary data types, we define derived data types that are 
 Point Data Types
 ^^^^^^^^^^^^^^^^
 
-1. :ref:`Spatial Derivatives <datatype_point_partial_derivatives>`
-2. :ref:`Material Properties <datatype_point_material_properties>`
-3. :ref:`Wavefield <point_field>`
-4. :ref:`Misfit Kernels <point_kernels>`
-5. :ref:`Derivatives of wavefield <point_field_derivatives>`
-6. :ref:`Boundary Conditions <specfem_point_boundary>`
+1. Partial Derivatives :cpp:class:`specfem::point::partial_derivatives`
+2. Properties :cpp:class:`specfem::point::properties`
+3. Wavefield :cpp:class:`specfem::point::field`
+4. Kernels :cpp:class:`specfem::point::kernels`
+5. Field Derivatives :cpp:class:`specfem::point::field_derivatives`
+6. Boundary Conditions :cpp:class:`specfem::point::boundary`
 7. Global Coordinates :cpp:class:`specfem::point::global_coordinates`
 8. Local Coordinates :cpp:class:`specfem::point::local_coordinates`
-9. :ref:`Stress Integrands <point_stress_integrands>`
+9. Stress :cpp:class:`specfem::point::stress`
+10. Stress Integrands :cpp:class:`specfem::point::stress_integrands`
 
 Element Data Types
 ^^^^^^^^^^^^^^^^^^

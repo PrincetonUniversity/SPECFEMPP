@@ -2,15 +2,9 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
-#include "compute/properties/properties.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/material_definitions.hpp"
-#include "enumerations/medium.hpp"
-#include "enumerations/wavefield.hpp"
-#include "kokkos_abstractions.h"
+#include "enumerations/interface.hpp"
 #include "source/source.hpp"
 #include "source_medium.hpp"
-#include "specfem/point.hpp"
 
 namespace specfem {
 namespace compute {
@@ -151,8 +145,9 @@ private:
   PropertyTagViewType::HostMirror h_property_types; ///< Host mirror of
                                                     ///< property_types
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                                                       ACOUSTIC, POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELASTIC_PSV_T)),
                       DECLARE(((specfem::compute::impl::source_medium,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                source)))
@@ -161,8 +156,9 @@ private:
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                     COMPOSITE_STACEY_DIRICHLET)),
       DECLARE((IndexViewType, element_indices_forward),
@@ -252,8 +248,8 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -318,8 +314,8 @@ void load_on_host(const IndexType index,
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -381,8 +377,8 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -443,8 +439,8 @@ void store_on_host(const IndexType index, const PointSourceType &point_source,
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {

@@ -541,6 +541,22 @@ using DeviceTeam = Kokkos::TeamPolicy<DevExecSpace>;
 ///@}
 
 /**
+ * @brief Enable SIMD intrinsics using SIMD variables.
+ *
+ * @tparam T type T of variable
+ * @tparam simd_abi simd_abi value can either be native or scalar. These values
+ * determine if the Kokkos enables SIMD vectorization or reverts to scalar
+ * operator implementations
+ *
+ * @note Currently there is a bug in Kokkos SIMD implemtation when compiling
+ * with GCC or clang. If using SIMD vectorization pass the @code -fpermissive
+ * @endcode flag to CXX compiler
+ */
+template <typename T = type_real,
+          typename simd_abi = Kokkos::Experimental::simd_abi::scalar>
+using simd_type = Kokkos::Experimental::basic_simd<T, simd_abi>;
+
+/**
  * @name Custom reductions for Kokkos TeamThreadRange policies.
  *
  * These reductions are used in Kokkos nested policies. Kokkos required

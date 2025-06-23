@@ -108,7 +108,7 @@ execute_range_policy(const int nglob) {
           Kokkos::Experimental::where(mask, data)
               .copy_from(&l_test_view(index.iglob), tag_type());
 
-          data += static_cast<type_real>(1);
+          data = data + static_cast<type_real>(1);
           Kokkos::Experimental::where(mask, data)
               .copy_to(&l_test_view(index.iglob), tag_type());
         } else {

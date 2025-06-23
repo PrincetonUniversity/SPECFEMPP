@@ -202,6 +202,7 @@ Getting Started
 
     sections/getting_started/index
     sections/cookbooks/index
+    sections/getting_started/presets
 
 User Documentation
 ------------------
@@ -223,11 +224,10 @@ Contribution
     :maxdepth: 1
     :hidden:
 
-    sections/developer_documentation/dependencies/index
     sections/developer_documentation/style
     sections/developer_documentation/git_workflow
     sections/developer_documentation/build_requirements
-    sections/developer_documentation/tests
+    sections/developer_documentation/continuous_integration
     sections/developer_documentation/special_machines
 
 .. sections/developer_documentation/tutorials/index
