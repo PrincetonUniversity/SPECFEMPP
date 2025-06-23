@@ -120,22 +120,24 @@ public:
   }
 
 private:
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                                                       ACOUSTIC, POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELASTIC_PSV_T)),
                       DECLARE((IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                                  POROELASTIC, ELASTIC_PSV_T),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
+                                    ISOTROPIC_COSSERAT)),
                       DECLARE((IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+                                  POROELASTIC, ELASTIC_PSV_T),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
                        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                                     COMPOSITE_STACEY_DIRICHLET)),
                       DECLARE((IndexViewType, elements),

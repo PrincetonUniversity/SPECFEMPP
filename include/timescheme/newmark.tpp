@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_TIMESCHEME_NEWMARK_TPP_
-#define _SPECFEM_TIMESCHEME_NEWMARK_TPP_
+#pragma once
 
 #include "execution/for_all.hpp"
 #include "execution/range_iterator.hpp"
@@ -122,14 +121,15 @@ int specfem::time_scheme::newmark<specfem::simulation::type::forward>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                                                       ACOUSTIC, POROELASTIC)),
-                      {
-                        if (tag == _medium_tag_) {
-                          return corrector_phase_impl<_medium_tag_, wavefield>(
-                              field, deltatover2);
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+           {
+             if (tag == _medium_tag_) {
+               return corrector_phase_impl<_medium_tag_, wavefield>(
+                   field, deltatover2);
+             }
+           })
 
   Kokkos::abort("Medium type not supported.");
 
@@ -142,14 +142,15 @@ int specfem::time_scheme::newmark<specfem::simulation::type::forward>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                                                       ACOUSTIC, POROELASTIC)),
-                      {
-                        if (tag == _medium_tag_) {
-                          return predictor_phase_impl<_medium_tag_, wavefield>(
-                              field, deltat, deltatover2, deltasquareover2);
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+           {
+             if (tag == _medium_tag_) {
+               return predictor_phase_impl<_medium_tag_, wavefield>(
+                   field, deltat, deltatover2, deltasquareover2);
+             }
+           })
 
   Kokkos::abort("Medium type not supported.");
 
@@ -162,14 +163,15 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                                                       ACOUSTIC, POROELASTIC)),
-                      {
-                        if (tag == _medium_tag_) {
-                          return corrector_phase_impl<_medium_tag_, wavefield>(
-                              adjoint_field, deltatover2);
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+           {
+             if (tag == _medium_tag_) {
+               return corrector_phase_impl<_medium_tag_, wavefield>(
+                   adjoint_field, deltatover2);
+             }
+           })
 
   Kokkos::abort("Medium type not supported.");
 
@@ -182,14 +184,15 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                                                       ACOUSTIC, POROELASTIC)),
-                      {
-                        if (tag == _medium_tag_) {
-                          return corrector_phase_impl<_medium_tag_, wavefield>(
-                              backward_field, -1.0 * deltatover2);
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, ELASTIC_PSV_T, POROELASTIC)),
+           {
+             if (tag == _medium_tag_) {
+               return corrector_phase_impl<_medium_tag_, wavefield>(
+                   backward_field, -1.0 * deltatover2);
+             }
+           })
 
   Kokkos::abort("Medium type not supported.");
 
@@ -202,15 +205,15 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
-      {
-        if (tag == _medium_tag_) {
-          return predictor_phase_impl<_medium_tag_, wavefield>(
-              adjoint_field, deltat, deltatover2, deltasquareover2);
-        }
-      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+           {
+             if (tag == _medium_tag_) {
+               return predictor_phase_impl<_medium_tag_, wavefield>(
+                   adjoint_field, deltat, deltatover2, deltasquareover2);
+             }
+           })
 
   Kokkos::abort("Medium type not supported.");
 
@@ -223,15 +226,15 @@ int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                                                       ACOUSTIC, POROELASTIC)),
-                      {
-                        if (tag == _medium_tag_) {
-                          return predictor_phase_impl<_medium_tag_, wavefield>(
-                              backward_field, -1.0 * deltat, -1.0 * deltatover2,
-                              deltasquareover2);
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                       ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+           {
+             if (tag == _medium_tag_) {
+               return predictor_phase_impl<_medium_tag_, wavefield>(
+                   backward_field, -1.0 * deltat, -1.0 * deltatover2, deltasquareover2);
+             }
+           })
 
   Kokkos::abort("Medium type not supported.");
   /// Code path should never be reached
@@ -261,5 +264,3 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::print(
           // << "    number of time steps = " << this->nstep << "\n"
           << "    Start time = " << this->t0 << "\n";
 }
-
-#endif

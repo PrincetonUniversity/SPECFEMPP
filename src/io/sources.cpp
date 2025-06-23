@@ -77,6 +77,10 @@ specfem::io::read_sources(const YAML::Node source_node, const int nsteps,
       sources.push_back(std::make_shared<specfem::sources::force>(
           force_source, nsteps, dt, source_wavefield_type));
       number_of_sources++;
+    } else if (YAML::Node cosserat_force = N["cosserat-force"]) {
+      sources.push_back(std::make_shared<specfem::sources::cosserat_force>(
+          cosserat_force, nsteps, dt, source_wavefield_type));
+      number_of_sources++;
     } else if (YAML::Node moment_tensor_source = N["moment-tensor"]) {
       sources.push_back(std::make_shared<specfem::sources::moment_tensor>(
           moment_tensor_source, nsteps, dt, source_wavefield_type));

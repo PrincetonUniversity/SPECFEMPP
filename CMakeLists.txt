@@ -436,13 +436,14 @@ target_link_libraries(
         Kokkos::kokkos
         )
 
-add_library(
-        utilities
+add_library(utilities
+        src/utilities/utilities.cpp
         src/utilities/strings.cpp
 )
 
 target_link_libraries(
         utilities
+        Kokkos::kokkos
         ${BOOST_LIBS}
 )
 
@@ -489,10 +490,13 @@ target_link_libraries(
         utilities
 )
 
+
+
 add_library(
         source_class
         src/source/source.cpp
         src/source/force_source.cpp
+        src/source/cosserat_force_source.cpp
         src/source/moment_tensor_source.cpp
         src/source/adjoint_source.cpp
         src/source/external.cpp
@@ -502,7 +506,7 @@ target_link_libraries(
         source_class
         Kokkos::kokkos
         specfem_mpi
-        # utilities
+        utilities
         quadrature
         source_time_function
         yaml-cpp
