@@ -185,7 +185,7 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
           Kokkos::Experimental::where(mask, data)
               .copy_from(&l_test_view(ispec, iz, ix), tag_type());
 
-          data += static_cast<type_real>(1);
+          data = data + static_cast<type_real>(1);
           Kokkos::Experimental::where(mask, data)
               .copy_to(&l_test_view(ispec, iz, ix), tag_type());
         } else {
