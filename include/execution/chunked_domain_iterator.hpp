@@ -28,15 +28,18 @@ namespace execution {
  * @tparam KokkosIndexType The type of the Kokkos index, must be convertible to
  * an integral type.
  * @tparam UseSIMD Indicates whether SIMD is used for the index.
+ * @tparam ExecutionSpace The execution space type where the index will be
+ * executed.
  */
 template <specfem::dimension::type DimensionTag, typename KokkosIndexType,
-          bool UseSIMD>
+          bool UseSIMD, typename ExecutionSpace>
 class PointIndex {
 public:
-  using iterator_type = VoidIterator; ///< Iterator type used to iterate over
-                                      ///< GLL points within this index.
-                                      ///< @c VoidIterator is used when the
-                                      ///< index refers to a single GLL point.
+  using iterator_type =
+      VoidIterator<ExecutionSpace>; ///< Iterator type used to iterate over
+                                    ///< GLL points within this index.
+                                    ///< @c VoidIterator is used when the
+                                    ///< index refers to a single GLL point.
 
   /**
    * @brief Get the policy index that defined this point index.
@@ -67,9 +70,7 @@ public:
    * @return const iterator_type The iterator for this index.
    */
   KOKKOS_INLINE_FUNCTION
-  constexpr const iterator_type get_iterator() const {
-    return VoidIterator{}; ///< Returns a VoidIterator
-  }
+  constexpr const iterator_type get_iterator() const { return iterator_type{}; }
 
   /**
    * @brief Constructor for PointIndex when SIMD is used.
@@ -140,11 +141,15 @@ public:
       typename base_type::policy_index_type; /// Policy index type. Must be
                                              ///< convertible to integral type.
   using index_type =
-      PointIndex<DimensionTag, policy_index_type,
-                 using_simd>; ///< Underlying index type. This index
-                              ///< will be passed to the closure when
-                              ///< calling @ref
-                              ///< specfem::execution::for_each_level
+      PointIndex<DimensionTag, policy_index_type, using_simd,
+                 typename base_type::
+                     execution_space>; ///< Underlying index type. This index
+                                       ///< will be passed to the closure when
+                                       ///< calling @ref
+                                       ///< specfem::execution::for_each_level
+
+  using execution_space =
+      typename base_type::execution_space; ///< Execution space type.
 
   /**
    * @brief Operator to get the index for a given policy index.
@@ -351,6 +356,8 @@ public:
                           ///< will be passed to the closure when
                           ///< calling @ref
                           ///< specfem::execution::for_each_level
+  using execution_space =
+      typename base_type::execution_space; ///< Execution space type.
 
   /**
    * @brief Construct a new Chunked Domain Iterator object

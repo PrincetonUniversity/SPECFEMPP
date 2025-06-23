@@ -29,7 +29,9 @@ public:
                                                  ///< Kokkos::RangePolicy
   using policy_index_type =
       typename base_policy_type::index_type; ///< Policy index type. Must be
-                                             ///< convertible to integral type.
+  ///< convertible to integral type.
+  using execution_space =
+      typename base_policy_type::execution_space; ///< Execution space type.
 
   using base_policy_type::base_policy_type;
   constexpr static bool is_top_level_policy =
@@ -54,6 +56,8 @@ public:
                                                  ///< Kokkos::TeamPolicy
   using policy_index_type =
       typename base_policy_type::member_type; ///< Policy index type.
+  using execution_space =
+      typename base_policy_type::execution_space; ///< Execution space type.
 
   using base_policy_type::base_policy_type;
   constexpr static bool is_top_level_policy =
@@ -81,6 +85,8 @@ public:
       std::declval<TeamMemberType>(), std::declval<IndexType>()));
   using policy_index_type =
       IndexType; ///< Policy index type. Must be convertible to integral type.
+  using execution_space =
+      typename TeamMemberType::execution_space; ///< Execution space type.
 
   /**
    * @brief Constructs a TeamThreadRangePolicy for a given team member and
@@ -97,23 +103,29 @@ public:
       false; ///< Indicates this is not a top-level policy
 };
 
-template <std::size_t TileSize> class TeamTilePolicy {
+template <std::size_t TileSize, typename ExecutionSpace> class TeamTilePolicy {
 public:
   constexpr static PolicyType policy_type = PolicyType::TilePolicy;
-  using base_policy_type = TeamTilePolicy<TileSize>;
+  using base_policy_type = TeamTilePolicy;
   using policy_index_type = std::size_t;
   constexpr static std::size_t tile_size = TileSize;
+  using execution_space = ExecutionSpace;
+  constexpr static bool is_top_level_policy =
+      false; ///< Indicates this is not a top-level policy
 };
 
-template <std::size_t TileSize> class RangeTilePolicy {
+template <std::size_t TileSize, typename ExecutionSpace> class RangeTilePolicy {
 public:
   constexpr static PolicyType policy_type = PolicyType::TilePolicy;
-  using base_policy_type = RangeTilePolicy<TileSize>;
+  using base_policy_type = RangeTilePolicy;
   using policy_index_type = std::size_t;
   constexpr static std::size_t tile_size = TileSize;
 
   constexpr static bool is_top_level_policy =
       false; ///< Indicates this is a top-level policy
+
+  using execution_space =
+      ExecutionSpace; ///< Execution space type for the tile policy
 };
 
 /**
@@ -121,12 +133,14 @@ public:
  *
  * This policy is used as a placeholder when no iteration is needed.
  */
-class VoidPolicy {
+template <typename ExecutionSpace> class VoidPolicy {
 public:
   constexpr static PolicyType policy_type =
-      PolicyType::VoidPolicy;         ///< Indicates this is a void policy
-  using base_policyType = VoidPolicy; ///< Base policy type, which is itself
-  using policy_index_type = void;     ///< No index type for void policy
+      PolicyType::VoidPolicy;          ///< Indicates this is a void policy
+  using base_policy_type = VoidPolicy; ///< Base policy type, which is itself
+  using policy_index_type = void;      ///< No index type for void policy
+  using execution_space =
+      ExecutionSpace; ///< Execution space type for the void policy
 
   constexpr bool static is_top_level_policy =
       false; ///< Indicates this is not a top-level policy

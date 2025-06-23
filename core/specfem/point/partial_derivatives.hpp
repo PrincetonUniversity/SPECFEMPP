@@ -362,12 +362,11 @@ public:
    * @return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
    * Normal vector
    */
-  KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
+  specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
   compute_normal(const specfem::enums::edge::type &type) const;
   ///@}
 
 private:
-  KOKKOS_INLINE_FUNCTION
   specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
   impl_compute_normal_bottom() const {
     return { static_cast<value_type>(static_cast<type_real>(-1.0) *
@@ -376,14 +375,12 @@ private:
                                      this->gammaz * this->jacobian) };
   };
 
-  KOKKOS_INLINE_FUNCTION
   specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
   impl_compute_normal_top() const {
     return { static_cast<value_type>(this->gammax * this->jacobian),
              static_cast<value_type>(this->gammaz * this->jacobian) };
   };
 
-  KOKKOS_INLINE_FUNCTION
   specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
   impl_compute_normal_left() const {
     return { static_cast<value_type>(static_cast<type_real>(-1.0) * this->xix *
@@ -392,7 +389,6 @@ private:
                                      this->jacobian) };
   };
 
-  KOKKOS_INLINE_FUNCTION
   specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
   impl_compute_normal_right() const {
     return { static_cast<value_type>(this->xix * this->jacobian),

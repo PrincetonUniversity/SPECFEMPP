@@ -53,7 +53,6 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
   constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
 
-  int nchunks = nspec / chunk_size;
   int iloc = 0;
   for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
     for (int iz = 0; iz < ngll; iz++) {
@@ -303,7 +302,6 @@ specfem::compute::points specfem::compute::mesh::assemble() {
   const int nspec = control_nodes.nspec;
 
   const int ngll = quadratures.gll.N;
-  const int ngllxz = ngll * ngll;
 
   const auto xi = quadratures.gll.h_xi;
   const auto gamma = quadratures.gll.h_xi;

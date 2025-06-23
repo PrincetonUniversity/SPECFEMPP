@@ -30,7 +30,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   constexpr auto dimension = DimensionTag;
 
   const auto [elements, receiver_indices] =
-      assembly.receivers.get_indices_on_device(MediumTag, PropertyTag);
+      assembly.receivers.get_indices_on_device(medium_tag, property_tag);
 
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
@@ -44,7 +44,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   const auto seismogram_types = receivers.get_seismogram_types();
 
   const int nseismograms = seismogram_types.size();
-  const auto field = assembly.fields.get_simulation_field<WavefieldType>();
+  const auto field = assembly.fields.get_simulation_field<wavefield_type>();
   const auto &quadrature = assembly.mesh.quadratures;
 
 
@@ -57,8 +57,6 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
 
   using no_simd = specfem::datatype::simd<type_real, using_simd>;
 
-  constexpr int simd_size = no_simd::size();
-
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr int nthreads = 32;
   constexpr int lane_size = 1;
@@ -68,16 +66,16 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
 #endif
 
   using ParallelConfig =
-      specfem::parallel_config::chunk_config<DimensionTag, 1, 1, nthreads,
+      specfem::parallel_config::chunk_config<dimension, 1, 1, nthreads,
                                              lane_size, no_simd,
                                              Kokkos::DefaultExecutionSpace>;
 
   using ChunkElementFieldType = specfem::chunk_element::field<
-      ParallelConfig::chunk_size, ngll, DimensionTag, MediumTag,
+      ParallelConfig::chunk_size, ngll, dimension, medium_tag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
       true, true, true, false, using_simd>;
   using ElementQuadratureType = specfem::element::quadrature<
-      ngll, DimensionTag, specfem::kokkos::DevScratchSpace,
+      ngll, dimension, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
   using ViewType = specfem::datatype::ScalarChunkViewType<
       type_real, ParallelConfig::chunk_size, ngll, 2,
@@ -119,7 +117,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
           specfem::compute::load_on_device(chunk_index, field, element_field);
           team.team_barrier();
 
-          specfem::medium::compute_wavefield<MediumTag, PropertyTag>(
+          specfem::medium::compute_wavefield<medium_tag, property_tag>(
               chunk_index, assembly, element_quadrature, element_field,
               wavefield_component, wavefield);
 

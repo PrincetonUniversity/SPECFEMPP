@@ -1,4 +1,4 @@
-#pragma
+#pragma once
 
 #include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
