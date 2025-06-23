@@ -651,7 +651,7 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
   if (mesh.parameters.acoustic_simulation) {
     int nspec_inner, nspec_outer, num_phase_ispec;
 
-    try_read_line("nspec_inner_acoustic", stream, &nspec_inner, &nspec);
+    try_read_line("nspec_inner_acoustic", stream, &nspec_inner, &nspec_outer);
     try_read_line("num_phase_ispec_acoustic", stream, &num_phase_ispec);
 
     // Initialize the inner outer elements

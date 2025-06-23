@@ -48,6 +48,8 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
       return 2;
     } else if (component == specfem::wavefield::type::pressure) {
       return 1;
+    } else if (component == specfem::wavefield::type::rotation) {
+      return 1;
     } else {
       throw std::runtime_error("Wavefield component not supported");
     }
@@ -76,8 +78,9 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           get_wavefield_on_entire_grid<_medium_tag_, _property_tag_>(

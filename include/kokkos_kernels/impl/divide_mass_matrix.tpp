@@ -18,11 +18,17 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
   constexpr auto dimension = DimensionTag;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
-  const int nglob = field.template get_nglob<MediumTag>();
+  const int nglob = field.template get_nglob<medium_tag>();
+
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+  constexpr bool using_simd = false;
+#else
   constexpr bool using_simd = true;
-  using LoadFieldType = specfem::point::field<DimensionTag, MediumTag, false,
+#endif
+
+  using LoadFieldType = specfem::point::field<dimension, medium_tag, false,
                                               false, true, true, using_simd>;
-  using StoreFieldType = specfem::point::field<DimensionTag, MediumTag, false,
+  using StoreFieldType = specfem::point::field<dimension, medium_tag, false,
                                                false, true, false, using_simd>;
 
   using parallel_config = specfem::parallel_config::default_range_config<
@@ -34,7 +40,7 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
   specfem::execution::RangeIterator range(parallel_config(), nglob);
 
   specfem::execution::for_all(
-      "specfem::domain::domain::divide_mass_matrix", range,
+      "specfem::kokkos_kernels::divide_mass_matrix", range,
       KOKKOS_LAMBDA(const IndexType &index) {
         LoadFieldType load_field;
         specfem::compute::load_on_device(index, field, load_field);

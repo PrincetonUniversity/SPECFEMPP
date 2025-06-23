@@ -3,6 +3,7 @@
 #include "compute/fields/impl/field_impl.hpp"
 #include "data_access.tpp"
 #include "element/field.hpp"
+#include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/specfem_enums.hpp"
@@ -73,8 +74,8 @@ public:
     this->assembly_index_mapping = rhs.assembly_index_mapping;
     this->h_assembly_index_mapping = rhs.h_assembly_index_mapping;
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
         CAPTURE(field, (rhs_field, rhs.field)) { _field_ = _rhs_field_; })
   }
 
@@ -87,8 +88,8 @@ public:
   template <specfem::element::medium_tag MediumTag>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
         CAPTURE(field) {
           if constexpr (MediumTag == _medium_tag_) {
             return _field_.nglob;
@@ -108,8 +109,8 @@ public:
       specfem::dimension::type::dim2, MediumTag> const &
   get_field() const {
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
         CAPTURE(field) {
           if constexpr (MediumTag == _medium_tag_) {
             return _field_;
@@ -156,8 +157,9 @@ public:
                specfem::kokkos::HostMemSpace>
       h_assembly_index_mapping;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                                                       ACOUSTIC, POROELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELASTIC_PSV_T)),
                       DECLARE(((specfem::compute::impl::field_impl,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                field)))
@@ -167,8 +169,8 @@ public:
 private:
   template <specfem::sync::kind sync> void sync_fields() {
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
         CAPTURE(field) { _field_.template sync_fields<sync>(); })
   }
 
@@ -183,11 +185,12 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
   Kokkos::deep_copy(dst.assembly_index_mapping, src.assembly_index_mapping);
   Kokkos::deep_copy(dst.h_assembly_index_mapping, src.h_assembly_index_mapping);
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                                                       ACOUSTIC, POROELASTIC)),
-                      CAPTURE((src_field, src.field), (dst_field, dst.field)) {
-                        specfem::compute::deep_copy(_dst_field_, _src_field_);
-                      })
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE((src_field, src.field), (dst_field, dst.field)) {
+        specfem::compute::deep_copy(_dst_field_, _src_field_);
+      })
 }
 
 /**
@@ -476,6 +479,24 @@ inline void
 load_on_host(const MemberType &member, const ChunkIteratorType &iterator,
              const WavefieldContainer &field, ViewType &chunk_field) {
   impl_load<false>(member, iterator, field, chunk_field);
+}
+
+template <typename ChunkIndexType, typename WavefieldContainer,
+          typename ViewType,
+          typename std::enable_if_t<ViewType::isChunkFieldType, int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const ChunkIndexType &index,
+                                                const WavefieldContainer &field,
+                                                ViewType &chunk_field) {
+  impl_load<true>(index, field, chunk_field);
+}
+
+template <typename ChunkIndexType, typename WavefieldContainer,
+          typename ViewType,
+          typename std::enable_if_t<ViewType::isChunkFieldType, int> = 0>
+inline void load_on_host(const ChunkIndexType &index,
+                         const WavefieldContainer &field,
+                         ViewType &chunk_field) {
+  impl_load<false>(index, field, chunk_field);
 }
 
 } // namespace compute

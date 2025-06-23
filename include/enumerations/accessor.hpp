@@ -32,6 +32,7 @@ struct Accessor {
   constexpr static auto accessor_type = AccessorType;
   constexpr static auto data_class = DataClass;
   constexpr static auto dimension_tag = DimensionTag;
+  constexpr static bool using_simd = UseSIMD;
 
   template <typename T>
   using simd = specfem::datatype::simd<T, UseSIMD>; ///< SIMD data type
@@ -104,6 +105,15 @@ struct is_point_properties<
     T,
     std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
                      T::data_class == specfem::data_class::type::properties> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_point_stress : std::false_type {};
+
+template <typename T>
+struct is_point_stress<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class == specfem::data_class::type::stress> >
     : std::true_type {};
 
 } // namespace specfem::accessor

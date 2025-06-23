@@ -151,7 +151,7 @@ public:
   type_real get_receiver_angle() const { return this->receivers->get_angle(); }
 
   /**
-   * @brief Get the types of siesmograms to be calculated
+   * @brief Get the types of seismograms to be calculated
    *
    * @return std::vector<specfem::seismogram::type> Types of seismograms to be
    * calculated

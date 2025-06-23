@@ -4,7 +4,6 @@
 #include "compute/impl/value_containers.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/kernels_container.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 

@@ -1,0 +1,51 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - dependencies
+      - dependency
+  categories:
+    - title: 🚨 Breaking Changes
+      labels:
+        - breaking-change
+    - title: 🎉 New Feature
+      labels:
+        - feature
+    - title: 👨‍🔬 New physics 
+      labels:
+        - new physics
+    - title: 🚀 Performance enhancement
+      labels:
+        - performance enhancement
+    - title: ✚ Enhancement
+      labels:
+        - enhancement
+    - title: 📚 Documentation
+      labels:
+        - documentation
+        - docs
+    - title: Code Style Updates
+      labels:
+        - style
+    - title: Fortran Meshfem2D/3D updates
+      labels:
+        - fortran
+    - title: Refactor 
+      labels:
+        - refactor
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+        - fix
+    - title: Configuration/CMake
+      labels:
+        - configuration
+    - title: 🔧 Maintenance
+      labels:
+        - maintenance
+    - title: 🧾 New tests
+      labels:
+        - tests
+    - title: Other Changes
+      labels:
+        - "*"

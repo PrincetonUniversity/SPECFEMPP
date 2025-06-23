@@ -12,7 +12,6 @@ option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
-# option(BUILD_EXAMPLES "Examples included" ON)
 option(BUILD_BENCHMARKS "Benchmarks included" ON)
 
 # set(CMAKE_BUILD_TYPE Release)
@@ -77,6 +76,7 @@ if (DEFINED Kokkos_ENABLE_CUDA)
         # message(STATUS "Setting CUDA variables")
         set(Kokkos_ENABLE_CUDA_LAMBDA ON CACHE BOOL "Using CUDA Lambda by default")
         set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON CACHE BOOL "Using CUDA Relocatable device by default")
+        set(Kokkos_ENABLE_CUDA_CONSTEXPR ON CACHE BOOL "Using CUDA Constexpr by default")
     endif()
 endif()
 
@@ -90,7 +90,7 @@ set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
         kokkos
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
+        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.6.01.zip
 )
 
 # Using this instead of FetchContent_MakeAvailable to be backwards compatible
@@ -228,6 +228,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
                ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in
                ${CMAKE_BINARY_DIR}/include/constants.hpp)
+
+# Add the configure files to the clean target
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp
+    ${CMAKE_BINARY_DIR}/include/constants.hpp
+)
 
 # Add the include directories so that the generated files can be found
 include_directories(include)
@@ -433,13 +439,14 @@ target_link_libraries(
         Kokkos::kokkos
         )
 
-add_library(
-        utilities
+add_library(utilities
+        src/utilities/utilities.cpp
         src/utilities/strings.cpp
 )
 
 target_link_libraries(
         utilities
+        Kokkos::kokkos
         ${BOOST_LIBS}
 )
 
@@ -486,10 +493,13 @@ target_link_libraries(
         utilities
 )
 
+
+
 add_library(
         source_class
         src/source/source.cpp
         src/source/force_source.cpp
+        src/source/cosserat_force_source.cpp
         src/source/moment_tensor_source.cpp
         src/source/adjoint_source.cpp
         src/source/external.cpp
@@ -499,7 +509,7 @@ target_link_libraries(
         source_class
         Kokkos::kokkos
         specfem_mpi
-        # utilities
+        utilities
         quadrature
         source_time_function
         yaml-cpp
@@ -797,6 +807,7 @@ if (BUILD_BENCHMARKS)
         message(STATUS "BENCHMARKS_BUILD_DIR was not defined, using default: ${BENCHMARKS_BUILD_DIR}")
     endif()
 
+    # Create the benchmarks build directory if it does not exist
     message(STATUS "Building benchmarks...")
     add_subdirectory(benchmarks/src)
     message(STATUS "Benchmarks built.")
@@ -815,6 +826,9 @@ if (DOXYGEN_FOUND)
     # request to configure the file
     configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
     message(STATUS "Doxygen build started")
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+        ${DOXYGEN_OUT}
+    )
 
     # Note: do not put "ALL" - this builds docs together with application EVERY TIME!
     add_custom_target( docs
@@ -861,4 +875,10 @@ if (SPECFEM_INSTALL)
         # Make this run after your main targets
         DEPENDS specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram xgenerate_databases # list all your targets here
     )
+
+    # Add the prefix directory to the clean target
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+        ${CMAKE_INSTALL_PREFIX}
+    )
+
 endif(SPECFEM_INSTALL)

@@ -16,21 +16,21 @@ const static std::unordered_map<std::string, MaterialVectorType>
         MaterialVectorType({ specfem::point::properties<
             dimension, specfem::element::medium_tag::elastic_psv,
             specfem::element::property_tag::isotropic, false>(
-            static_cast<type_real>(24300000000.0),
+            static_cast<type_real>(13499997600.24),
             static_cast<type_real>(8100001799.82),
             static_cast<type_real>(2700.0)) }) },
       { "Simple mesh with flat topography (SH wave)",
         MaterialVectorType({ specfem::point::properties<
             dimension, specfem::element::medium_tag::elastic_sh,
             specfem::element::property_tag::isotropic, false>(
-            static_cast<type_real>(24300000000.0),
+            static_cast<type_real>(13499997600.24),
             static_cast<type_real>(8100001799.82),
             static_cast<type_real>(2700.0)) }) },
       { "Simple mesh with curved topography",
         MaterialVectorType({ specfem::point::properties<
             dimension, specfem::element::medium_tag::elastic_psv,
             specfem::element::property_tag::isotropic, false>(
-            static_cast<type_real>(24300000000.0),
+            static_cast<type_real>(13499997600.24),
             static_cast<type_real>(8100001799.82),
             static_cast<type_real>(2700.0)) }) },
       { "Simple mesh with flat ocean bottom",
@@ -38,7 +38,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
             { specfem::point::properties<
                   dimension, specfem::element::medium_tag::elastic_psv,
                   specfem::element::property_tag::isotropic, false>(
-                  static_cast<type_real>(28900000000.0),
+                  static_cast<type_real>(16055436666.666668),
                   static_cast<type_real>(9633422500.0),
                   static_cast<type_real>(2500.0)),
               specfem::point::properties<
@@ -53,7 +53,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
             { specfem::point::properties<
                   dimension, specfem::element::medium_tag::elastic_psv,
                   specfem::element::property_tag::isotropic, false>(
-                  static_cast<type_real>(28900000000.0),
+                  static_cast<type_real>(16055436666.666668),
                   static_cast<type_real>(9633422500.0),
                   static_cast<type_real>(2500.0)),
               specfem::point::properties<
@@ -129,6 +129,15 @@ const static std::unordered_map<std::string, MaterialVectorType>
                 static_cast<type_real>(0.0 * 1e-3),            // sig11
                 static_cast<type_real>(0.0 * 1e-3))            // sig33
         }) },
+      { "Elastic Isotropic Cosserat Medium - Homogeneous",
+        MaterialVectorType({ specfem::point::properties<
+            dimension, specfem::element::medium_tag::elastic_psv_t,
+            specfem::element::property_tag::isotropic_cosserat, false>(
+            static_cast<type_real>(1e5), static_cast<type_real>(22.667 * 1e9),
+            static_cast<type_real>(4.0e9), static_cast<type_real>(2.0e9),
+            static_cast<type_real>(1e4), static_cast<type_real>(1e8),
+            static_cast<type_real>(1.936 * 1e8),
+            static_cast<type_real>(3.0464 * 1e9)) }) }
     };
 
 void check_property(
@@ -158,8 +167,8 @@ void check_property(
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
         {
           if ((medium_tag == _medium_tag_) &&
               (property_tag == _property_tag_)) {

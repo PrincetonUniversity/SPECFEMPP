@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @brief Call a macro for each element in the sequence.
  *  Built-in macros like BOOST_PP_SEQ_FOR_EACH_R cannot be used here because

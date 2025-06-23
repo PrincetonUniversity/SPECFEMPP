@@ -445,7 +445,9 @@ end subroutine save_databases_attenuation
 
 subroutine save_databases_materials()
 
-   use constants, only: IOUT,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,ELECTROMAGNETIC_MATERIAL
+   use constants, only: IOUT,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL, &
+                        POROELASTIC_MATERIAL,ELECTROMAGNETIC_MATERIAL, &
+                        ISOTROPIC_COSSERAT_MATERIAL
    use part_unstruct_par
    use shared_parameters
 
@@ -460,6 +462,7 @@ subroutine save_databases_materials()
    !               (num 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 Qkappa Qmu) anisotropic
    !               (num 3 rhos rhof phi c k_xx k_xz k_zz Ks Kf Kfr etaf mufr Qmu) poroelastic
    !               (num 4 mu0 e0 e11(e0) e33(e0) sig11 sig33 Qe11 Qe33 Qs11 Qs33 0 0 0) electromagnetic
+   !               (num 5 rho_s kappa_s mu_s nu_s j_sc lambda_sc mu_sc nu_sc 0 0 0 0 0 0) isotropic cosserat
    do i = 1,nbmodels
       ! material type
       indic = icodemat(i)
@@ -522,6 +525,22 @@ subroutine save_databases_materials()
          !            permxx_read(i),permxz_read(i),permzz_read(i),kappa_s_read(i), &
          !            kappa_f_read(i),kappa_fr_read(i),eta_f_read(i),mu_fr_read(i),Qmu(i)
 
+      else if (indic == ISOTROPIC_COSSERAT_MATERIAL) then
+         ! isotropic elastic/acoustic with spin
+         val0 = rho_s(i)
+         val1 = kappa_s(i)
+         val2 = mu_s(i)
+         val3 = nu_s(i)
+         val4 = j_sc(i)
+         val5 = lambda_sc(i)
+         val6 = mu_sc(i)
+         val7 = nu_sc(i)
+         val8 = 0.d0
+         val9 = 0.d0
+         val10 = 0.d0
+         val11 = 0.d0
+         val12 = 0.d0
+
       else if (indic == ELECTROMAGNETIC_MATERIAL) then
          ! electromagnetic
          val0 = mu0_read(i)
@@ -558,7 +577,7 @@ subroutine save_databases_materials()
          !write(IOUT) i,icodemat(i),rho_s_read(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
       else
          ! case should not occur
-         call stop_the_code('Unknown material code')
+         call stop_the_code('Unknown material code (save_databases_materials)')
       endif
 
       ! check format with file src/specfem2D/read_materials.f90

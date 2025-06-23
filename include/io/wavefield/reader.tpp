@@ -23,7 +23,7 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
       {
         typename IOLibrary::Group group =
             base_group.openGroup(specfem::element::to_string(_medium_tag_));

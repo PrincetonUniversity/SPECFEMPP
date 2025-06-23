@@ -3,7 +3,7 @@
 #include "partial_derivatives.hpp"
 
 template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
+specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
 specfem::point::partial_derivatives<
     specfem::dimension::type::dim2, true,
     UseSIMD>::compute_normal(const specfem::enums::edge::type &type) const {

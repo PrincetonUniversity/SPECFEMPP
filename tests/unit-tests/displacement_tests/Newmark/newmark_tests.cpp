@@ -11,280 +11,236 @@
 #include "solver/solver.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
+#include <algorithm>
+#include <boost/filesystem.hpp>
 
 // ------------------------------------- //
 // ------- Test configuration ----------- //
 
-namespace test_config {
-struct database {
-public:
-  database() : specfem_config(""), traces("") {};
-  database(const YAML::Node &Node) {
-    specfem_config = Node["specfem_config"].as<std::string>();
-    // check if node elastic_domain_field exists
-    if (Node["traces"]) {
-      traces = Node["traces"].as<std::string>();
-    } else {
-      throw std::runtime_error("Traces not found for the test");
-    }
-  }
+// Helper function to load test configuration from directory
+struct TestConfig {
+  std::string name;
+  std::string id;
+  std::string description;
+  int number_of_processors;
+  type_real tolerance;
   std::string specfem_config;
   std::string traces;
-};
 
-struct configuration {
-public:
-  configuration() : number_of_processors(0) {};
-  configuration(const YAML::Node &Node) {
-    number_of_processors = Node["nproc"].as<int>();
-  }
-  int number_of_processors;
-};
+  static TestConfig load_from_directory(const std::string &test_name) {
+    TestConfig config;
 
-struct Test {
-public:
-  Test(const YAML::Node &Node) {
-    name = Node["name"].as<std::string>();
-    description = Node["description"].as<std::string>();
-    YAML::Node config = Node["config"];
-    configuration = test_config::configuration(config);
+    // Create the test path by concatenating the base path with the test name
+    std::string test_path = "displacement_tests/Newmark/serial/" + test_name;
 
-    YAML::Node database_node = Node["databases"];
+    // Load config.yaml from the test directory
+    std::string config_file = test_path + "/config.yaml";
+
+    YAML::Node config_node;
     try {
-      database = test_config::database(database_node);
-    } catch (std::runtime_error &e) {
-      throw std::runtime_error("Error in test configuration: " + name + "\n" +
-                               e.what());
+      config_node = YAML::LoadFile(config_file);
+    } catch (const std::exception &e) {
+      throw std::runtime_error("Failed to load config file: " + config_file +
+                               " - " + e.what());
     }
-    return;
-  }
 
-  std::string name;
-  std::string description;
-  test_config::database database;
-  test_config::configuration configuration;
+    config.id = config_node["id"].as<std::string>();
+    config.name = config_node["name"].as<std::string>();
+    config.description = config_node["description"].as<std::string>();
+
+    // Load configuration
+    YAML::Node config_section = config_node["config"];
+    config.number_of_processors = config_section["nproc"].as<int>();
+    config.tolerance = config_section["tolerance"].as<type_real>();
+
+    // Load database paths and concatenate with test directory path
+    YAML::Node databases = config_node["databases"];
+    config.specfem_config =
+        test_path + "/" + databases["specfem_config"].as<std::string>();
+    config.traces = test_path + "/" + databases["traces"].as<std::string>();
+
+    return config;
+  }
 };
-} // namespace test_config
 
 // ------------------------------------- //
 
-// ----- Parse test config ------------- //
+// ----- Parse test directories ------------- //
 
-std::vector<test_config::Test> parse_test_config(std::string test_config_file,
-                                                 specfem::MPI::MPI *mpi) {
-  YAML::Node yaml = YAML::LoadFile(test_config_file);
-  const YAML::Node &tests = yaml["Tests"];
+std::vector<std::string> parse_test_directories(const std::string &tests_file) {
+  YAML::Node yaml = YAML::LoadFile(tests_file);
 
-  assert(tests.IsSequence());
+  std::vector<std::string> test_names;
 
-  std::vector<test_config::Test> test_configurations;
-  for (auto N : tests)
-    test_configurations.push_back(test_config::Test(N));
+  for (const auto &test_node : yaml) {
+    std::string path = test_node.as<std::string>();
+    test_names.push_back(path);
+  }
 
-  return test_configurations;
+  return test_names;
 }
 
-// ------------------------------------- //
-
-template <specfem::element::medium_tag medium>
-specfem::testing::array1d<type_real, Kokkos::LayoutLeft> compact_array(
-    const specfem::testing::array1d<type_real, Kokkos::LayoutLeft> global,
-    const specfem::kokkos::HostView1d<int, Kokkos::LayoutLeft> index_mapping) {
-
-  const int nglob = index_mapping.extent(0);
-  const int n1 = global.n1;
-
-  assert(n1 == nglob);
-
-  int max_global_index = std::numeric_limits<int>::min();
-
-  for (int i = 0; i < nglob; ++i) {
-    if (index_mapping(i) != -1) {
-      max_global_index = std::max(max_global_index, index_mapping(i));
-    }
+// Parameterized test fixture for Newmark tests
+class Newmark : public ::testing::TestWithParam<std::string> {
+protected:
+  void SetUp() override {
+    // Any setup needed for each test
   }
 
-  specfem::testing::array1d<type_real, Kokkos::LayoutLeft> local_array(
-      max_global_index + 1);
-
-  for (int i = 0; i < nglob; ++i) {
-    if (index_mapping(i) != -1) {
-      local_array.data(index_mapping(i)) = global.data(i);
-    }
+  void TearDown() override {
+    // Any cleanup needed for each test
   }
+};
 
-  return local_array;
-}
+TEST_P(Newmark, Test) {
+  const std::string &test_path = GetParam();
 
-template <specfem::element::medium_tag medium>
-specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
-    const specfem::testing::array2d<type_real, Kokkos::LayoutLeft> global,
-    const specfem::kokkos::HostView1d<int, Kokkos::LayoutLeft> index_mapping) {
+  // Load the test configuration from the directory
+  TestConfig Test = TestConfig::load_from_directory(test_path);
 
-  const int nglob = index_mapping.extent(0);
-  const int n1 = global.n1;
-  const int n2 = global.n2;
-
-  assert(n1 == nglob);
-
-  int max_global_index = std::numeric_limits<int>::min();
-
-  for (int i = 0; i < nglob; ++i) {
-    if (index_mapping(i) != -1) {
-      max_global_index = std::max(max_global_index, index_mapping(i));
-    }
-  }
-
-  specfem::testing::array2d<type_real, Kokkos::LayoutLeft> local_array(
-      max_global_index + 1, n2);
-
-  for (int i = 0; i < nglob; ++i) {
-    if (index_mapping(i) != -1) {
-      for (int j = 0; j < n2; ++j) {
-        local_array.data(index_mapping(i), j) = global.data(i, j);
-      }
-    }
-  }
-
-  return local_array;
-}
-
-TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
-  std::string config_filename = "displacement_tests/"
-                                "Newmark/test_config.yaml";
+  std::cout << "-------------------------------------------------------\n"
+            << "\033[0;32m[RUNNING]\033[0m Test: " << Test.name << "\n"
+            << "-------------------------------------------------------\n\n"
+            << std::endl;
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  auto Tests = parse_test_config(config_filename, mpi);
+  const auto parameter_file = Test.specfem_config;
 
-  for (auto &Test : Tests) {
-    std::cout << "-------------------------------------------------------\n"
-              << "\033[0;32m[RUNNING]\033[0m Test: " << Test.name << "\n"
-              << "-------------------------------------------------------\n\n"
-              << std::endl;
+  specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
 
-    const auto parameter_file = Test.database.specfem_config;
+  const auto database_file = setup.get_databases();
+  const auto source_node = setup.get_sources();
+  const auto elastic_wave = setup.get_elastic_wave_type();
+  const auto electromagnetic_wave = setup.get_electromagnetic_wave_type();
 
-    specfem::runtime_configuration::setup setup(parameter_file,
-                                                __default_file__);
+  // Set up GLL quadrature points
+  const auto quadratures = setup.instantiate_quadrature();
 
-    const auto database_file = setup.get_databases();
-    const auto source_node = setup.get_sources();
-    const auto elastic_wave = setup.get_elastic_wave_type();
-    const auto electromagnetic_wave = setup.get_electromagnetic_wave_type();
+  // Read mesh generated MESHFEM
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
+      database_file, elastic_wave, electromagnetic_wave, mpi);
+  const type_real dt = setup.get_dt();
+  const int nsteps = setup.get_nsteps();
 
-    // Set up GLL quadrature points
-    const auto quadratures = setup.instantiate_quadrature();
+  // Read sources
+  //    if start time is not explicitly specified then t0 is determined using
+  //    source frequencies and time shift
+  auto [sources, t0] = specfem::io::read_sources(
+      source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
-    // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-        database_file, elastic_wave, electromagnetic_wave, mpi);
-    const type_real dt = setup.get_dt();
-    const int nsteps = setup.get_nsteps();
-
-    // Read sources
-    //    if start time is not explicitly specified then t0 is determined using
-    //    source frequencies and time shift
-    auto [sources, t0] = specfem::io::read_sources(
-        source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
-
-    for (auto &source : sources) {
-      if (mpi->main_proc())
-        std::cout << source->print() << std::endl;
-    }
-
-    setup.update_t0(t0);
-
-    // Instantiate the solver and timescheme
-    auto it = setup.instantiate_timescheme();
-
-    const auto stations_node = setup.get_stations();
-    const auto angle = setup.get_receiver_angle();
-    auto receivers = specfem::io::read_receivers(stations_node, angle);
-
-    std::cout << "  Receiver information\n";
-    std::cout << "------------------------------" << std::endl;
-    for (auto &receiver : receivers) {
-      if (mpi->main_proc())
-        std::cout << receiver->print() << std::endl;
-    }
-
-    const auto seismogram_types = setup.get_seismogram_types();
-
-    // Check only displacement seismogram types are being computed
-
-    if (receivers.size() == 0) {
-      FAIL() << "--------------------------------------------------\n"
-             << "\033[0;31m[FAILED]\033[0m Test failed\n"
-             << " - Test name: " << Test.name << "\n"
-             << " - Error: Stations file does not contain any receivers\n"
-             << "--------------------------------------------------\n\n"
-             << std::endl;
-    }
-
-    const int max_sig_step = it->get_max_seismogram_step();
-
-    specfem::compute::assembly assembly(
-        mesh, quadratures, sources, receivers, seismogram_types, t0,
-        setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
-        setup.get_simulation_type(), nullptr);
-
-    it->link_assembly(assembly);
-
-    // User output
+  for (auto &source : sources) {
     if (mpi->main_proc())
-      std::cout << *it << std::endl;
+      std::cout << source->print() << std::endl;
+  }
 
-    std::shared_ptr<specfem::solver::solver> solver =
-        setup.instantiate_solver<5>(setup.get_dt(), assembly, it, {});
+  setup.update_t0(t0);
 
-    solver->run();
+  // Instantiate the solver and timescheme
+  auto it = setup.instantiate_timescheme();
 
-    // --------------------------------------------------------------
-    //                   Write Seismograms
-    // --------------------------------------------------------------
+  const auto stations_node = setup.get_stations();
+  const auto angle = setup.get_receiver_angle();
+  auto receivers = specfem::io::read_receivers(stations_node, angle);
 
-    auto seismograms = assembly.receivers;
+  std::cout << "  Receiver information\n";
+  std::cout << "------------------------------" << std::endl;
+  for (auto &receiver : receivers) {
+    if (mpi->main_proc())
+      std::cout << receiver->print() << std::endl;
+  }
 
-    seismograms.sync_seismograms();
+  const auto seismogram_types = setup.get_seismogram_types();
 
-    // --------------------------------------------------------------
+  // Check only displacement seismogram types are being computed
 
-    for (auto [station_name, network_name, seismogram_type] :
-         seismograms.get_stations()) {
-      std::vector<std::string> filename;
+  if (receivers.size() == 0) {
+    FAIL() << "--------------------------------------------------\n"
+           << "\033[0;31m[FAILED]\033[0m Test failed\n"
+           << " - Test: " << Test.name << "\n"
+           << " - Error: Stations file does not contain any receivers\n"
+           << "--------------------------------------------------\n\n"
+           << std::endl;
+  }
+
+  const int max_sig_step = it->get_max_seismogram_step();
+
+  specfem::compute::assembly assembly(
+      mesh, quadratures, sources, receivers, seismogram_types, t0,
+      setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
+      setup.get_simulation_type(), nullptr);
+
+  it->link_assembly(assembly);
+
+  // User output
+  if (mpi->main_proc())
+    std::cout << *it << std::endl;
+
+  std::shared_ptr<specfem::solver::solver> solver =
+      setup.instantiate_solver<5>(setup.get_dt(), assembly, it, {});
+
+  solver->run();
+
+  // --------------------------------------------------------------
+  //                   Write Seismograms
+  // --------------------------------------------------------------
+
+  auto seismograms = assembly.receivers;
+
+  seismograms.sync_seismograms();
+
+  // --------------------------------------------------------------
+
+  for (auto station_info : seismograms.stations()) {
+
+    // Get station and network names
+    std::string network_name = station_info.network_name;
+    std::string station_name = station_info.station_name;
+
+    // Initialize error and computed norm for each all seismogram types
+    // that is each station
+    type_real error = 0.0;
+    type_real computed_norm = 0.0;
+
+    // Loop over all seismogram types for this station to compute the
+    // total error and computed norm for a single station
+    for (auto seismogram_type : station_info.get_seismogram_types()) {
+
+      // Initialize filenames vector to hold the seismogram filenames
+      std::vector<std::string> filenames;
+
       switch (seismogram_type) {
       case specfem::wavefield::type::displacement:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
-          filename.push_back(Test.database.traces + "/" + network_name + "." +
-                             station_name + ".S2.BXY.semd");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.semd");
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-          filename.push_back(Test.database.traces + "/" + network_name + "." +
-                             station_name + ".S2.BXX.semd");
-          filename.push_back(Test.database.traces + "/" + network_name + "." +
-                             station_name + ".S2.BXZ.semd");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXX.semd");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXZ.semd");
         }
         break;
       case specfem::wavefield::type::velocity:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
-          filename.push_back(Test.database.traces + "/" + network_name + "." +
-                             station_name + ".S2.BXY.semv");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.semv");
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-          filename.push_back(Test.database.traces + "/" + network_name + "." +
-                             station_name + ".S2.BXX.semv");
-          filename.push_back(Test.database.traces + "/" + network_name + "." +
-                             station_name + ".S2.BXZ.semv");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXX.semv");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXZ.semv");
         }
         break;
       case specfem::wavefield::type::acceleration:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
-          filename.push_back(Test.database.traces + "/" + network_name + "." +
-                             station_name + ".S2.BXY.sema");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.sema");
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-          filename.push_back(Test.database.traces + "/" + network_name + "." +
-                             station_name + ".S2.BXX.sema");
-          filename.push_back(Test.database.traces + "/" + network_name + "." +
-                             station_name + ".S2.BXZ.sema");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXX.sema");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXZ.sema");
         }
         break;
       case specfem::wavefield::type::pressure:
@@ -299,8 +255,24 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
                  << "--------------------------------------------------\n\n"
                  << std::endl;
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
-          filename.push_back(Test.database.traces + "/" + network_name + "." +
-                             station_name + ".S2.PRE.semp");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.PRE.semp");
+        }
+        break;
+      case specfem::wavefield::type::rotation:
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          FAIL() << "--------------------------------------------------\n"
+                 << "\033[0;31m[FAILED]\033[0m Test failed\n"
+                 << " - Test name: " << Test.name << "\n"
+                 << " - Error: Rotation seismograms are not supported for SH"
+                    "waves\n"
+                 << " - Network: " << network_name << "\n"
+                 << " - Station: " << station_name << "\n"
+                 << "--------------------------------------------------\n\n"
+                 << std::endl;
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXT.semr");
         }
         break;
       default:
@@ -315,7 +287,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         break;
       }
 
-      const int ncomponents = filename.size();
+      // Get the number of components for this seismogram type
+      const int ncomponents = filenames.size();
 
       Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
           traces("traces", ncomponents, max_sig_step, 2);
@@ -324,13 +297,11 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         const auto trace =
             Kokkos::subview(traces, icomp, Kokkos::ALL, Kokkos::ALL);
         specfem::io::seismogram_reader reader(
-            filename[icomp], specfem::enums::seismogram::format::ascii, trace);
+            filenames[icomp], specfem::enums::seismogram::format::ascii, trace);
         reader.read();
       }
 
       int count = 0;
-      type_real error = 0.0;
-      type_real computed_norm = 0.0;
       for (auto [time, value] : seismograms.get_seismogram(
                station_name, network_name, seismogram_type)) {
         for (int icomp = 0; icomp < ncomponents; icomp++) {
@@ -358,27 +329,38 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
         count++;
       }
-
-      if (error / computed_norm > 1e-3 || std::isnan(error / computed_norm)) {
-        FAIL() << "--------------------------------------------------\n"
-               << "\033[0;31m[FAILED]\033[0m Test failed\n"
-               << " - Test name: " << Test.name << "\n"
-               << " - Error: Norm of the error is greater than 1e-3\n"
-               << " - Station: " << station_name << "\n"
-               << " - Network: " << network_name << "\n"
-               << " - Error: " << error << "\n"
-               << " - Norm: " << computed_norm << "\n"
-               << "--------------------------------------------------\n\n"
-               << std::endl;
-      }
     }
 
-    std::cout << "--------------------------------------------------\n"
-              << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"
-              << "--------------------------------------------------\n\n"
-              << std::endl;
+    if (error / computed_norm > Test.tolerance ||
+        std::isnan(error / computed_norm)) {
+      FAIL() << "--------------------------------------------------\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " - Test: " << Test.name << "\n"
+             << " - Error: Norm of the error is greater than 1e-3\n"
+             << " - Station: " << station_name << "\n"
+             << " - Network: " << network_name << "\n"
+             << " - Error: " << error << "\n"
+             << " - Norm: " << computed_norm << "\n"
+             << "--------------------------------------------------\n\n"
+             << std::endl;
+    }
   }
+
+  std::cout << "--------------------------------------------------\n"
+            << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"
+            << "--------------------------------------------------\n\n"
+            << std::endl;
 }
+
+// Load test directories and create parameterized test instances
+std::vector<std::string> GetTestDirectories() {
+  std::string tests_filename = "displacement_tests/Newmark/tests.yaml";
+  return parse_test_directories(tests_filename);
+}
+
+// Instantiate the parameterized test with all configurations
+INSTANTIATE_TEST_SUITE_P(DisplacementTests, Newmark,
+                         ::testing::ValuesIn(GetTestDirectories()));
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

@@ -30,8 +30,9 @@ void specfem::io::impl::write_container(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       {
         const std::string name =
             std::string("/") +
@@ -63,7 +64,14 @@ void specfem::io::impl::write_container(
             });
       })
 
-  assert(n_written == nspec);
+  if (n_written != nspec) {
+    std::ostringstream message;
+    message << "Error while writing output container at" << __FILE__ << ":"
+            << __LINE__ << "\n"
+            << "Error writing output: expected to write " << nspec
+            << " elements, but wrote " << n_written << " elements.";
+    throw std::runtime_error(message.str());
+  }
 
   std::cout << output_namespace << " written to " << output_folder << "/"
             << output_namespace << std::endl;

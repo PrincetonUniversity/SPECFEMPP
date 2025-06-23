@@ -31,6 +31,9 @@ specfem::runtime_configuration::receivers::get_seismogram_types() const {
     } else if (specfem::utilities::is_pressure_string(
                    seismogram_type.as<std::string>())) {
       stypes.push_back(specfem::wavefield::type::pressure);
+    } else if (specfem::utilities::is_rotation_string(
+                   seismogram_type.as<std::string>())) {
+      stypes.push_back(specfem::wavefield::type::rotation);
     } else {
       std::ostringstream message;
 
@@ -38,7 +41,7 @@ specfem::runtime_configuration::receivers::get_seismogram_types() const {
       message << "Unknown seismogram type: "
               << seismogram_type.as<std::string>() << "\n";
 
-      std::runtime_error(message.str());
+      throw std::runtime_error(message.str());
     }
   }
   return stypes;

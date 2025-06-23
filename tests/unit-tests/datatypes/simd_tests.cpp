@@ -1,6 +1,6 @@
 #include "datatypes/simd.hpp"
 #include "specfem_setup.hpp"
-#include "test_setup.hpp"
+#include "test_macros.hpp"
 #include <gtest/gtest.h>
 
 // Test fixture for basic SIMD functionality
@@ -13,7 +13,7 @@ protected:
   static constexpr int expected_size =
       UseSIMD ?
 #ifdef ENABLE_SIMD
-              Kokkos::Experimental::native_simd<type_real>::size()
+              Kokkos::Experimental::simd<type_real>::size()
 #else
               1
 #endif
@@ -129,7 +129,6 @@ TYPED_TEST(Datatype_SIMD_Test_Typed, ArithmeticOperations) {
 TYPED_TEST(Datatype_SIMD_Test_Typed, ComparisonOperations) {
   using value_type = typename Datatype_SIMD_Test_Typed<TypeParam>::value_type;
   using mask_type = typename Datatype_SIMD_Test_Typed<TypeParam>::mask_type;
-  constexpr bool using_simd = TypeParam::value;
 
   value_type a(static_cast<type_real>(5.0));
   value_type b(static_cast<type_real>(5.0));
@@ -185,12 +184,9 @@ TEST(Datatype_SIMD_Test, LaneManipulation) {
   using value_type = typename simd_type::datatype;
 
   if (simd_type::size() > 1) {
-    value_type vec(0.0);
-
-    // Set different values in different lanes
-    for (int i = 0; i < simd_type::size(); ++i) {
-      vec[i] = static_cast<type_real>(i);
-    }
+    value_type vec([](std::size_t lane) -> type_real {
+      return static_cast<type_real>(lane);
+    });
 
     // Verify each lane
     for (int i = 0; i < simd_type::size(); ++i) {
@@ -258,10 +254,9 @@ TEST(Datatype_SIMD_Test, AllOfSIMDMixedLanes) {
 
   if (simd_type::size() > 1) {
     value_type val1(5.0);
-    value_type val2(5.0);
-
-    // Modify one lane to create mixed mask
-    val2[0] = 3.0;
+    value_type val2([](std::size_t lane) -> type_real {
+      return (lane % 2 == 0) ? 5.0 : 3.0; // Mixed values
+    });
     auto mask_mixed = (val1 == val2);
 
     // Should be false because not all lanes are equal

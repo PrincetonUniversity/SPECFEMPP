@@ -51,11 +51,11 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
   int nglob;
-  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
   int ngllxz = ngll * ngll;
 
   std::vector<qp> cart_cord(nspec * ngllxz);
 
+  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
   int nchunks = nspec / chunk_size;
   int iloc = 0;
   for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
@@ -334,7 +334,6 @@ specfem::compute::points specfem::compute::mesh::assemble(
   const int nspec = control_nodes.nspec;
 
   const int ngll = quadratures.gll.N;
-  const int ngllxz = ngll * ngll;
 
   const auto xi = quadratures.gll.h_xi;
   const auto gamma = quadratures.gll.h_xi;
