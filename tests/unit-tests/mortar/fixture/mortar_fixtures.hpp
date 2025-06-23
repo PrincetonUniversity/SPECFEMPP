@@ -4,8 +4,11 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
-// Test configuration
 namespace test_configuration {
+/**
+ * @brief contains the data of a mesh that any test may wish to use.
+ *
+ */
 struct mesh {
 public:
   mesh() {};

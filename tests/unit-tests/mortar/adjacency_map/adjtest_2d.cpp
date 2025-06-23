@@ -13,6 +13,8 @@
 #include "mesh/dim2/adjacency_map/adjacency_map.hpp"
 #include "mortar/fixture/mortar_fixtures.hpp"
 
+// TODO: we may want to generalize this test -- it may be useful for a wider
+// range
 void test_assembly_mapping(
     specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
         &adjacencies,

@@ -5,6 +5,10 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief reads the adjacency map from the database stream and builds the
+ * adjacency map struct.
+ */
 static void
 footer_read_adjmap(std::ifstream &stream,
                    specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,

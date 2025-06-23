@@ -17,6 +17,12 @@ namespace adjacency_map {
  */
 template <specfem::dimension::type dimtype> struct adjacency_map;
 template <> struct adjacency_map<specfem::dimension::type::dim2> {
+
+  /**
+   * @brief an enumeration of the edges used by adjacency_map. Recovers the
+   * index from an edge::type -- this is set explicitly since it must not
+   * change, and some logic is simplified with this counter-clockwise ordering.
+   */
   static constexpr int edge_to_index(const specfem::enums::edge::type edge) {
     switch (edge) {
     case specfem::enums::edge::RIGHT:
@@ -31,6 +37,12 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
       return 0; // this should never be called
     }
   }
+
+  /**
+   * @brief an enumeration of the edges used by adjacency_map. Recovers the
+   * index from an edge::type -- this is set explicitly since it must not
+   * change, and some logic is simplified with this counter-clockwise ordering.
+   */
   static constexpr specfem::enums::edge::type edge_from_index(const int edge) {
     switch (edge) {
     case 0:
@@ -47,40 +59,129 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
   }
 
   adjacency_map();
-  adjacency_map(const specfem::mesh::mesh<dimension::type::dim2> &mesh);
+
+  /**
+   * @brief Construct a new adjacency map object from the mesh and the adjacency
+   * structure built by meshfem.
+   *
+   * @param mesh - the mesh object parent
+   * @param elements_with_shared_nodes - for each element, a list of elements
+   * that are adjacent. This is generated from meshfem.
+   */
   adjacency_map(
       const specfem::mesh::mesh<dimension::type::dim2> &mesh,
       const std::vector<std::vector<int> > &elements_with_shared_nodes);
 
+  /**
+   * @brief Checks if an edge of an element has a conforming adjacency (shared
+   * node with respect to assembly).
+   *
+   * @param ispec - index of the element
+   * @param edge - edge to check
+   */
   bool has_conforming_adjacency(const int ispec,
                                 const specfem::enums::edge::type edge) const;
 
+  /**
+   * @brief Checks if an edge of an element has a conforming adjacency (shared
+   * node with respect to assembly).
+   *
+   * @param ispec - index of the element
+   * @param edge - edge to check
+   */
   bool has_conforming_adjacency(const int ispec, const int edge) const;
 
+  /**
+   * @brief For a conforming edge, returns its adjacenct edge. If the edge is
+   * nonconforming, the behavior is undefined.
+   *
+   * @param ispec - index of the element
+   * @param edge - edge to check
+   * @return the pair (ispec, edge) of the mating edge.
+   */
   std::pair<int, specfem::enums::edge::type>
   get_conforming_adjacency(const int ispec,
                            const specfem::enums::edge::type edge) const;
+  /**
+   * @brief For a conforming edge, returns its adjacenct edge. If the edge is
+   * nonconforming, the behavior is undefined.
+   *
+   * @param ispec - index of the element
+   * @param edge - edge to check
+   * @return the pair (ispec, edge) of the mating edge.
+   */
   std::pair<int, specfem::enums::edge::type>
   get_conforming_adjacency(const int ispec, const int edge) const;
 
+  /**
+   * @brief Returns whether or not the edge has a boundary. This will determine
+   * if the edge will have a boundary tag. Due to how Neumann boundaries are
+   * implemented, this will return false for them.
+   *
+   * @param ispec - index of the element
+   * @param edge - edge to check
+   */
   bool has_boundary(const int ispec,
                     const specfem::enums::edge::type edge) const;
 
+  /**
+   * @brief Returns whether or not the edge has a boundary. This will determine
+   * if the edge will have a boundary tag. Due to how Neumann boundaries are
+   * implemented, this will return false for them.
+   *
+   * @param ispec - index of the element
+   * @param edge - edge to check
+   */
   bool has_boundary(const int ispec, const int edge) const;
 
+  /**
+   * @brief Create a conforming adjacency between the to provided edges.
+   *
+   *
+   * @param ispec1 - index of the first element
+   * @param edge1 - edge of the first element
+   * @param ispec2 - index of the second element
+   * @param edge2 - edge of the second element
+   */
   void create_conforming_adjacency(const int ispec1,
                                    const specfem::enums::edge::type edge1,
                                    const int ispec2,
                                    const specfem::enums::edge::type edge2);
-
+  /**
+   * @brief Marks this edge as a boundary edge. Boundary edges should not have
+   * any adjacencies.
+   *
+   * @param ispec - index of the element
+   * @param edge - edge to check
+   */
   void set_as_boundary(const int ispec, const specfem::enums::edge::type edge);
 
+  /**
+   * @brief Builds a local to global index mapping that respects this adjacency
+   * map.
+   *
+   * @param ngll - the number of quadrature points along an axis.
+   * @return the pair (index_mapping, nglob) of the mapping and the number of
+   * global degrees of freedom, respectively.
+   */
   std::pair<specfem::kokkos::HostView3d<int>, int>
   generate_assembly_mapping(const int ngll) const;
+  /**
+   * @brief Recovers all of the conforming adjacencies to the given corner or
+   * edge. When assembling, nodes corresponding to these adjacencies will share
+   * global indices.
+   *
+   * @param ispec - index of the element
+   * @param bdry - edge or corner of the element to check
+   */
   std::set<std::pair<int, specfem::enums::boundaries::type> >
   get_all_conforming_adjacencies(
       const int ispec, const specfem::enums::boundaries::type bdry) const;
 
+  /**
+   * @brief Returns whether or not this adjacency map was built. If adjacency
+   * data was not stored in the database, this will be false.
+   */
   bool was_initialized() const { return nspec >= 0; }
 
 private:

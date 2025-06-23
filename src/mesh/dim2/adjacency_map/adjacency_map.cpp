@@ -6,6 +6,9 @@
 #include <list>
 #include <utility>
 
+// ====================================================================
+// conversions between edge and boundary enums.
+
 static inline specfem::enums::edge::type
 bdtype_to_edge(const specfem::enums::boundaries::type &bd) {
   switch (bd) {
@@ -38,6 +41,9 @@ edge_to_bdtype(const specfem::enums::edge::type &bd) {
     return specfem::enums::boundaries::type::RIGHT;
   }
 }
+// ====================================================================
+// helper: given an edge, returns either the clockwise or counterclockwise
+// corner.
 static inline specfem::enums::boundaries::type
 edge_and_polarity_to_corner(const specfem::enums::edge::type &bd,
                             const bool counterclockwise) {
@@ -61,6 +67,10 @@ edge_and_polarity_to_corner(const specfem::enums::edge::type &bd,
   }
 }
 
+/**
+ * @brief calls set_as_boundary() for all boundary edges tagged by the
+ * mesh::mesh.
+ */
 static inline void boundarymark(
     specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
         &adjmap,
