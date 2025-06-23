@@ -17,7 +17,7 @@ struct data_container<
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  DATA_CONTAINER(lambdaplus2mu, mu, rho)
+  DATA_CONTAINER(kappa, mu, rho)
 };
 
 } // namespace properties
