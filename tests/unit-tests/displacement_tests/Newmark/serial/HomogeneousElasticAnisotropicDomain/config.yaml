@@ -1,0 +1,10 @@
+id: "HomogeneousElasticAnisotropicDomain"
+name: "Homogeneous elastic anisotropic domain"
+description: >
+  Testing newmark time-marching solver on a homogeneous elastic anisotropic domain with no interfaces. Test is run on a single MPI process.
+config:
+  nproc: 1
+  tolerance: 1e-3
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"

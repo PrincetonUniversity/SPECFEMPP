@@ -424,6 +424,7 @@ target_link_libraries(
   kokkos_kernels
   solver
   periodic_tasks
+  Boost::filesystem
   -lpthread -lm
 )
 

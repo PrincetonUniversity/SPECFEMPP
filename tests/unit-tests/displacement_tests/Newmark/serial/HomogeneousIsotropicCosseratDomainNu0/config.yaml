@@ -1,0 +1,10 @@
+id: "HomogeneousIsotropicCosseratDomainNu0"
+name: "Homogeneous isotropic Cosserat domain (nu=0)"
+description: >
+  Testing newmark time-marching solver on a homogeneous isotropic Cosserat domain with nu=0. Test is run on a single MPI process.
+config:
+  nproc: 1
+  tolerance: 1e-3
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"
