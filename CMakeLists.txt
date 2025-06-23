@@ -89,7 +89,7 @@ set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
         kokkos
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
+        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.6.01.zip
 )
 
 # Using this instead of FetchContent_MakeAvailable to be backwards compatible
