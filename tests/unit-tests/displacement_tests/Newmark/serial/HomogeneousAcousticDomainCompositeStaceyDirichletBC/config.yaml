@@ -1,0 +1,10 @@
+id: "HomogeneousAcousticDomainCompositeStaceyDirichletBC"
+name: "Homogeneous acoustic domain (composite stacey dirichlet BC)"
+description: >
+  Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on (bottom, left, right) and Dirichlet BC are applied on tops.
+config:
+  nproc: 1
+  tolerance: 1e-3
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"
