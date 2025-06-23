@@ -104,11 +104,11 @@ execute_range_policy(const int nglob) {
           using datatype = typename ParallelConfig::simd::datatype;
           using mask_type = typename ParallelConfig::simd::mask_type;
           mask_type mask([&](std::size_t lane) { return index.mask(lane); });
-          datatype data;
+          datatype data(0);
           Kokkos::Experimental::where(mask, data)
               .copy_from(&l_test_view(index.iglob), tag_type());
 
-          data = data + static_cast<type_real>(1);
+          data = data + datatype(1);
           Kokkos::Experimental::where(mask, data)
               .copy_to(&l_test_view(index.iglob), tag_type());
         } else {
@@ -181,11 +181,11 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
               [&](std::size_t lane) { return point_index.mask(lane); });
           using tag_type = typename ParallelConfig::simd::tag_type;
           using datatype = typename ParallelConfig::simd::datatype;
-          datatype data;
+          datatype data(0);
           Kokkos::Experimental::where(mask, data)
               .copy_from(&l_test_view(ispec, iz, ix), tag_type());
 
-          data = data + static_cast<type_real>(1);
+          data = data + datatype(1);
           Kokkos::Experimental::where(mask, data)
               .copy_to(&l_test_view(ispec, iz, ix), tag_type());
         } else {
