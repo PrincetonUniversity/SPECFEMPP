@@ -44,8 +44,6 @@ specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>::print(
 
   std::ostringstream message;
 
-  int iglob;
-
   // Create array pointer to coordinates.x y or z depending on the partial_name
   const Kokkos::View<type_real ****, Kokkos::HostSpace> &array = [&]() {
     if (partial_name == "xix") {

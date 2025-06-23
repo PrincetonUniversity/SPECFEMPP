@@ -30,7 +30,7 @@
   }
 
 #define POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                 \
-  bool operator==(const data_container &other) const {                         \
+  KOKKOS_INLINE_FUNCTION bool operator==(const data_container &other) const {  \
     if (nprops != other.nprops) {                                              \
       return false;                                                            \
     }                                                                          \

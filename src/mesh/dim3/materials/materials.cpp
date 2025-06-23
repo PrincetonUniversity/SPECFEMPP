@@ -32,7 +32,7 @@ std::string specfem::mesh::materials<specfem::dimension::type::dim3>::print() {
   Kokkos::parallel_reduce(
       "kappa_min_max",
       specfem::kokkos::HostRange(0, nspec * ngllx * nglly * ngllz),
-      KOKKOS_LAMBDA(const int &i, type_real &lmin, type_real &lmax) {
+      KOKKOS_CLASS_LAMBDA(const int &i, type_real &lmin, type_real &lmax) {
         // Compute 3D indices from 1D index i
         const int ispec = i / (ngllx * nglly * ngllz);
         const int j = (i / (ngllx * ngllz)) % nglly;
@@ -56,7 +56,7 @@ std::string specfem::mesh::materials<specfem::dimension::type::dim3>::print() {
   Kokkos::parallel_reduce(
       "mu_min_max",
       specfem::kokkos::HostRange(0, nspec * ngllx * nglly * ngllz),
-      KOKKOS_LAMBDA(const int &i, type_real &lmin, type_real &lmax) {
+      KOKKOS_CLASS_LAMBDA(const int &i, type_real &lmin, type_real &lmax) {
         // Compute 3D indices from 1D index i
         const int ispec = i / (ngllx * nglly * ngllz);
         const int j = (i / (ngllx * ngllz)) % nglly;

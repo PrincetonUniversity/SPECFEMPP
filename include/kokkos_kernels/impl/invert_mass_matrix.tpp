@@ -18,7 +18,7 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
   constexpr auto dimension = DimensionTag;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
-  const int nglob = field.template get_nglob<MediumTag>();
+  const int nglob = field.template get_nglob<medium_tag>();
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
@@ -26,7 +26,7 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
   constexpr bool using_simd = true;
 #endif
 
-  using PointFieldType = specfem::point::field<DimensionTag, MediumTag, false,
+  using PointFieldType = specfem::point::field<dimension, medium_tag, false,
                                                false, false, true, using_simd>;
 
   using parallel_config = specfem::parallel_config::default_range_config<

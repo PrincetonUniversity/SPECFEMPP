@@ -10,7 +10,6 @@
 #include <vector>
 
 // Define some constants for the material properties
-constexpr auto elastic = specfem::element::medium_tag::elastic;
 constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 constexpr auto elastic_psv = specfem::element::medium_tag::elastic_psv;
 constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;

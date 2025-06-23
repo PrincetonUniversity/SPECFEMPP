@@ -128,7 +128,7 @@ specfem::compute::partial_derivatives::check_small_jacobian() const {
   Kokkos::parallel_reduce(
       "specfem::compute::partial_derivatives::check_small_jacobian",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nspec),
-      KOKKOS_LAMBDA(const int &ispec, bool &l_found) {
+      [=, *this](const int &ispec, bool &l_found) {
         for (int iz = 0; iz < ngllz; ++iz) {
           for (int ix = 0; ix < ngllx; ++ix) {
             const specfem::point::index<dimension, false> index(ispec, iz, ix);

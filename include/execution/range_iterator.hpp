@@ -16,12 +16,14 @@ namespace execution {
  * integral type.
  * @tparam UseSIMD Indicates whether SIMD is used for the index.
  */
-template <typename PolicyIndexType, bool UseSIMD> class RangeIndex {
+template <typename PolicyIndexType, bool UseSIMD, typename ExecutionSpace>
+class RangeIndex {
 public:
   using iterator_type =
-      VoidIterator; ///< Iterator used to iterate over GLL points within this
-                    ///< index. @c VoidIterator is used when the index refers to
-                    ///< a single GLL point.
+      VoidIterator<ExecutionSpace>; ///< Iterator used to iterate over GLL
+                                    ///< points within this index. @c
+                                    ///< VoidIterator is used when the index
+                                    ///< refers to a single GLL point.
 
   /**
    * @brief Get the policy index that defined this range index. See @ref
@@ -52,7 +54,7 @@ public:
    * @return const iterator_type The iterator for this index.
    */
   KOKKOS_FORCEINLINE_FUNCTION
-  constexpr const iterator_type get_iterator() const { return VoidIterator{}; }
+  constexpr const iterator_type get_iterator() const { return iterator_type{}; }
 
   /**
    * @brief Constructor for RangeIndex when SIMD is not used.
@@ -120,12 +122,16 @@ public:
       policy_index_type; ///< Policy index type. Must be
                          ///< convertible to intergral type.
                          ///< Evaluates to @c Kokkos::RangePolicy::index_type
-  using index_type = RangeIndex<
-      policy_index_type,
-      ParallelConfig::simd::using_simd>; ///< Underlying index type. This index
-                                         ///< will be passed to the closure when
-                                         ///< calling @ref
-                                         ///< specfem::execution::for_each_level
+  using index_type =
+      RangeIndex<policy_index_type, ParallelConfig::simd::using_simd,
+                 typename base_type::
+                     execution_space>; ///< Underlying index type. This index
+                                       ///< will be passed to the closure when
+                                       ///< calling @ref
+                                       ///< specfem::execution::for_each_level
+
+  using execution_space =
+      typename base_type::execution_space; ///< Execution space type.
 
   RangeIterator() = default;
 

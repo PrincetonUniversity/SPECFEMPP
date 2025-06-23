@@ -27,9 +27,6 @@ KOKKOS_INLINE_FUNCTION
 
   datatype sigma_xx, sigma_xz, sigma_zx, sigma_zz, sigma_c_xy, sigma_c_zy;
 
-  const auto twothirds =
-      static_cast<type_real>(2.0) / static_cast<type_real>(3.0);
-
   sigma_xx = properties.lambda() * (du(0, 0) + du(1, 1)) +
              static_cast<type_real>(2.0) * properties.mu() * du(0, 0);
 

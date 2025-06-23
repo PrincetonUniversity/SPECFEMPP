@@ -188,7 +188,6 @@ void check_compute_to_mesh(
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
-  const int ngll = assembly.mesh.ngllx;
   const auto &properties = assembly.properties;
   const auto &element_types = assembly.element_types;
   const auto &mapping = assembly.mesh.mapping;

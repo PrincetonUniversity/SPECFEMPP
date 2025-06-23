@@ -36,7 +36,6 @@ public:
   void operator()(const specfem::wavefield::type wavefield_type) {
     const auto buffer = assembly.fields.buffer;
 
-    const int nspec = assembly.mesh.nspec;
     const int ngllz = assembly.mesh.ngllz;
     const int ngllx = assembly.mesh.ngllx;
 
