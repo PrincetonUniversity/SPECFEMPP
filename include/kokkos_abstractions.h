@@ -554,7 +554,7 @@ using DeviceTeam = Kokkos::TeamPolicy<DevExecSpace>;
  */
 template <typename T = type_real,
           typename simd_abi = Kokkos::Experimental::simd_abi::scalar>
-using simd_type = Kokkos::Experimental::simd<T, simd_abi>;
+using simd_type = Kokkos::Experimental::basic_simd<T, simd_abi>;
 
 /**
  * @name Custom reductions for Kokkos TeamThreadRange policies.

@@ -69,17 +69,20 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
       "set_to_value", policy,
       [=](const specfem::point::index<dimension, using_simd> &index) {
         using datatype = typename PointType::value_type;
-        datatype value(static_cast<datatype>(0.0));
+
+        PointType expected;
 
         if constexpr (using_simd) {
-          for (std::size_t i = 0; i < index.number_elements; ++i) {
-            value[i] = static_cast<type_real>(index.ispec + offset);
-          }
+          datatype value([&](const std::size_t lane) {
+            return (lane < index.number_elements)
+                       ? static_cast<type_real>(index.ispec + offset)
+                       : static_cast<type_real>(0.0);
+          });
+          expected = value;
         } else {
-          value = static_cast<type_real>(index.ispec + offset);
+          datatype value = static_cast<type_real>(index.ispec + offset);
+          expected = value;
         }
-
-        PointType expected(value);
 
         PointType computed;
         specfem::compute::load_on_host(index, properties, computed);
