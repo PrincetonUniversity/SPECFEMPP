@@ -1,0 +1,10 @@
+id: "HomogeneousElasticAnisotropicDomainAdjmapAssembly"
+name: "Homogeneous elastic anisotropic domain with assembly done by the adjacency map"
+description: >
+  Equivalent to HomogeneousElasticAnisotropicDomain, but run with adjacency_map generate_index_mapping. Test is run on a single MPI process.
+config:
+  nproc: 1
+  tolerance: 1e-3
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"
