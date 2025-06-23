@@ -1,11 +1,11 @@
 #pragma once
 
-#include "compute/fields/impl/field_impl.hpp"
+#include "compute/compute_mesh.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "compute/fields/impl/field_impl.tpp"
 #include "compute/fields/simulation_field.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace {
@@ -60,7 +60,7 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
                  MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                  ACOUSTIC, POROELASTIC)),
+                  ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE(field) {
         auto index = Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
                                      static_cast<int>(_medium_tag_));
@@ -84,7 +84,7 @@ int specfem::compute::simulation_field<
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
                  MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                  ACOUSTIC, POROELASTIC)),
+                  ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE(field) {
         total_degrees_of_freedom +=
             this->get_nglob<_medium_tag_>() *
@@ -93,4 +93,4 @@ int specfem::compute::simulation_field<
       })
 
   return total_degrees_of_freedom;
-} // namespace specfem::compute::simulation_field
+}

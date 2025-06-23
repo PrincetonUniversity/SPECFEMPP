@@ -25,22 +25,22 @@ specfem::compute::receivers::receivers(
       elements("specfem::compute::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
       element_types(element_types),
-      impl::StationIterator(receivers.size(), stypes.size()),
+      impl::StationIterator(receivers.size(), stypes),
       impl::SeismogramIterator(receivers.size(), stypes.size(), max_sig_step,
                                dt, t0, nsteps_between_samples) {
 
+  // Validate and populate seismogram type mapping
   for (int isies = 0; isies < stypes.size(); ++isies) {
-
     auto seis_type = stypes[isies];
 
     if (seis_type != specfem::wavefield::type::displacement &&
         seis_type != specfem::wavefield::type::velocity &&
         seis_type != specfem::wavefield::type::acceleration &&
-        seis_type != specfem::wavefield::type::pressure) {
+        seis_type != specfem::wavefield::type::pressure &&
+        seis_type != specfem::wavefield::type::rotation) {
       throw std::runtime_error("Invalid seismogram type");
     }
 
-    seismogram_types[isies] = seis_type;
     seismogram_type_map[seis_type] = isies;
   }
 
@@ -49,8 +49,8 @@ specfem::compute::receivers::receivers(
     std::string station_name = receiver->get_station_name();
     std::string network_name = receiver->get_network_name();
 
-    station_names[ireceiver] = station_name;
-    network_names[ireceiver] = network_name;
+    station_names_.push_back(station_name);
+    network_names_.push_back(network_name);
     station_network_map[station_name][network_name] = ireceiver;
     const auto gcoord =
         specfem::point::global_coordinates<specfem::dimension::type::dim2>{
@@ -89,8 +89,9 @@ specfem::compute::receivers::receivers(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       CAPTURE(elements, h_elements, receiver_indices, h_receiver_indices) {
         int count = 0;
         int index = 0;
@@ -138,8 +139,9 @@ specfem::compute::receivers::get_indices_on_host(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       CAPTURE(h_elements, h_receiver_indices) {
         if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
           return std::make_tuple(_h_elements_, _h_receiver_indices_);
@@ -161,8 +163,9 @@ specfem::compute::receivers::get_indices_on_device(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       CAPTURE(elements, receiver_indices) {
         if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
           return std::make_tuple(_elements_, _receiver_indices_);

@@ -28,9 +28,10 @@ set_value(const ViewType elements, specfem::compute::assembly &assembly,
 
   const auto &properties = assembly.properties;
 
-  using PointType =
+  using PointPropertiesType =
       specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                  PropertyTag, using_simd>;
+  using PointType = typename PointPropertiesType::value_type;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -39,7 +40,7 @@ set_value(const ViewType elements, specfem::compute::assembly &assembly,
   specfem::execution::for_all(
       "set_to_value", policy,
       [=](const specfem::point::index<dimension, using_simd> &index) {
-        PointType point(static_cast<type_real>(index.ispec + offset));
+        PointPropertiesType point(static_cast<type_real>(index.ispec + offset));
         specfem::compute::store_on_host(index, point, properties);
       });
 
@@ -84,10 +85,11 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
           expected = value;
         }
 
-        PointType computed;
-        specfem::compute::load_on_host(index, properties, computed);
+        PointType point_poperties_computed;
+        specfem::compute::load_on_host(index, properties,
+                                       point_poperties_computed);
 
-        if (computed != expected) {
+        if (point_poperties_computed != expected) {
           std::ostringstream message;
 
           message << "\n \t Error in function check_to_value";
@@ -95,7 +97,7 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
           message << "\n \t Error at ispec = " << index.ispec
                   << ", iz = " << index.iz << ", ix = " << index.ix << "\n";
           message << "Expected: " << expected.print();
-          message << "Got: " << computed.print();
+          message << "Got: " << point_poperties_computed.print();
           throw std::runtime_error(message.str());
         }
       });
@@ -246,8 +248,9 @@ TEST_F(ASSEMBLY, properties_access_functions) {
       type_real offset = 10.1; // Random offset to store in the properties
       FOR_EACH_IN_PRODUCT(
           (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                      ELASTIC_PSV_T),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
@@ -258,8 +261,9 @@ TEST_F(ASSEMBLY, properties_access_functions) {
       // Check that we are able to access the values stored in the properties
       FOR_EACH_IN_PRODUCT(
           (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                      ELASTIC_PSV_T),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
@@ -271,8 +275,9 @@ TEST_F(ASSEMBLY, properties_access_functions) {
 
       FOR_EACH_IN_PRODUCT(
           (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                      ELASTIC_PSV_T),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
@@ -283,8 +288,9 @@ TEST_F(ASSEMBLY, properties_access_functions) {
       // Check that we are able to access the values stored in the properties
       FOR_EACH_IN_PRODUCT(
           (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                      ELASTIC_PSV_T),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
@@ -319,8 +325,9 @@ TEST_F(ASSEMBLY, properties_construction) {
     try {
       FOR_EACH_IN_PRODUCT(
           (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                      ELASTIC_PSV_T),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
           {
             check_compute_to_mesh<_medium_tag_, _property_tag_>(assembly, mesh);
           })
@@ -363,8 +370,9 @@ TEST_F(ASSEMBLY, properties_io_routines) {
       const type_real random_value = 10.1;
       FOR_EACH_IN_PRODUCT(
           (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                      ELASTIC_PSV_T),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
@@ -389,8 +397,9 @@ TEST_F(ASSEMBLY, properties_io_routines) {
       // Check that the properties are the same
       FOR_EACH_IN_PRODUCT(
           (DIMENSION_TAG(DIM2),
-           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+           MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                      ELASTIC_PSV_T),
+           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);

@@ -90,7 +90,13 @@ const static std::unordered_map<std::string, MaterialVectorType>
                   specfem::element::property_tag::isotropic>(
                   12.566 * std::pow(10, -7), 8.85 * std::pow(10, -12), 1.0, 1.0,
                   0.0 * std::pow(10, -3), 0.0 * std::pow(10, -3), 90.0, 90.0,
-                  90.0, 90.0) }) }
+                  90.0, 90.0) }) },
+      { "Elastic Isotropic Cosserat Medium - Homogeneous",
+        MaterialVectorType({ specfem::medium::material<
+            specfem::element::medium_tag::elastic_psv_t,
+            specfem::element::property_tag::isotropic_cosserat>(
+            1.0e5, 22.667 * 1e9, 4e9, 2e9, 1e4, 1e8, 1.936 * 1e8,
+            3.0464 * 1e9) }) }
     };
 
 void check_material(
@@ -120,8 +126,8 @@ void check_material(
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
         {
           if ((medium_tag == _medium_tag_) &&
               (property_tag == _property_tag_)) {

@@ -21,6 +21,11 @@ enum class elastic_wave { psv, sh };
 // TM: Transverse Magnetic mode
 enum class electromagnetic_wave { te, tm };
 
+// Two types of elastic spin systems are possible in 2-D: PSV-T and SH-VL
+// PSV-T: P-SV wave with transverse spin vector
+// SH-VL: SH wave with vertical and longitudinal spin vectors
+enum class elastic_spin_wave { psv_t, sh_vl };
+
 /**
  * @brief Cartesian axes enumeration
  *

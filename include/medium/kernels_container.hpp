@@ -3,6 +3,7 @@
 #include "dim2/acoustic/isotropic/kernels_container.hpp"
 #include "dim2/elastic/anisotropic/kernels_container.hpp"
 #include "dim2/elastic/isotropic/kernels_container.hpp"
+#include "dim2/elastic/isotropic_cosserat/kernels_container.hpp"
 #include "dim2/poroelastic/isotropic/kernels_container.hpp"
 #include "impl/accessor.hpp"
 #include "impl/data_container.hpp"
@@ -36,3 +37,6 @@ struct kernels_container
 };
 } // namespace medium
 } // namespace specfem
+
+// Including the template specializations here so that kernels_container is
+// an interface to the compute/kernels module

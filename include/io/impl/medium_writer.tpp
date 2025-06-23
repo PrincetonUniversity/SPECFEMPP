@@ -30,8 +30,8 @@ void specfem::io::impl::write_container(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       {
         const std::string name =
             std::string("/") +

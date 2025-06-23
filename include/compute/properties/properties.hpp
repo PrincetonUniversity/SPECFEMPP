@@ -1,11 +1,10 @@
 #pragma once
 
+#include "compute/compute_mesh.hpp"
 #include "compute/element_types/element_types.hpp"
 #include "compute/impl/value_containers.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "macros.hpp"
 #include "medium/material.hpp"
 #include "medium/properties_container.hpp"
 #include "specfem/point.hpp"
