@@ -122,6 +122,8 @@ specfem::periodic_tasks::plot_wavefield::get_wavefield_component() {
     return specfem::wavefield::type::acceleration;
   } else if (component == specfem::display::wavefield::pressure) {
     return specfem::wavefield::type::pressure;
+  } else if (component == specfem::display::wavefield::rotation) {
+    return specfem::wavefield::type::rotation;
   } else {
     throw std::runtime_error("Unsupported component");
   }
@@ -140,6 +142,8 @@ specfem::periodic_tasks::plot_wavefield::map_materials_with_color() {
         { specfem::element::medium_tag::elastic_psv, // sienna color
           { 160, 82, 45 } },
         { specfem::element::medium_tag::elastic_sh, // sienna color
+          { 160, 82, 45 } },
+        { specfem::element::medium_tag::elastic_psv_t, // sienna color
           { 160, 82, 45 } },
         { specfem::element::medium_tag::poroelastic, // off navy color
           { 40, 40, 128 } },
@@ -389,7 +393,8 @@ specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
             int ix_pos = ix + x_index[ipoint];
 
             // Insert scalar value
-            if (component_type == specfem::wavefield::type::pressure) {
+            if (component_type == specfem::wavefield::type::pressure ||
+                component_type == specfem::wavefield::type::rotation) {
               scalars->InsertNextValue(
                   std::abs(wavefield_data(ispec, iz_pos, ix_pos, 0)));
             } else {
@@ -428,7 +433,8 @@ specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
 
     for (int icell = 0; icell < nspec; ++icell) {
       for (int i = 0; i < cell_points; ++i) {
-        if (component_type == specfem::wavefield::type::pressure) {
+        if (component_type == specfem::wavefield::type::pressure ||
+            component_type == specfem::wavefield::type::rotation) {
           scalars->InsertNextValue(
               std::abs(wavefield_data(icell, z_index[i], x_index[i], 0)));
         } else {

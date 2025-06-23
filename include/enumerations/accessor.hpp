@@ -107,4 +107,13 @@ struct is_point_properties<
                      T::data_class == specfem::data_class::type::properties> >
     : std::true_type {};
 
+template <typename T, typename = void>
+struct is_point_stress : std::false_type {};
+
+template <typename T>
+struct is_point_stress<
+    T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
+                        T::data_class == specfem::data_class::type::stress> >
+    : std::true_type {};
+
 } // namespace specfem::accessor

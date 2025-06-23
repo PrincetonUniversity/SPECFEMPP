@@ -68,6 +68,10 @@ template class specfem::compute::impl::source_medium<
 template class specfem::compute::impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic>;
 
+template class specfem::compute::impl::source_medium<
+    specfem::dimension::type::dim2,
+    specfem::element::medium_tag::elastic_psv_t>;
+
 specfem::compute::sources::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::compute::mesh &mesh,
@@ -100,8 +104,8 @@ specfem::compute::sources::sources(
   int nsource_indices = 0;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE(source) {
         auto [sorted_sources, source_indices] =
             sort_sources_per_medium<_dimension_tag_, _medium_tag_>(
@@ -155,8 +159,9 @@ specfem::compute::sources::sources(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                     COMPOSITE_STACEY_DIRICHLET)),
       CAPTURE(element_indices_forward, element_indices_backward,
@@ -294,8 +299,9 @@ specfem::compute::sources::get_sources_on_host(
     const specfem::wavefield::simulation_field wavefield) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                     COMPOSITE_STACEY_DIRICHLET)),
       CAPTURE(h_element_indices_forward, h_element_indices_backward,
@@ -340,8 +346,9 @@ specfem::compute::sources::get_sources_on_device(
     const specfem::wavefield::simulation_field wavefield) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                     COMPOSITE_STACEY_DIRICHLET)),
       CAPTURE(element_indices_forward, element_indices_backward,

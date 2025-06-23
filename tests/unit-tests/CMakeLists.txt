@@ -10,7 +10,7 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.tar.gz
+  URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -127,43 +127,43 @@ target_link_libraries(
   -lpthread -lm
 )
 
-add_executable(
-  point_coordinates_tests
-  point/coordinates_tests.cpp
-)
-target_link_libraries(
-  point_coordinates_tests
-  point
-  gtest_main
-  gmock_main
-)
 
 add_executable(
-  point_index_tests
+  point_tests
   point/index_tests.cpp
+  point/coordinates_tests.cpp
+  point/boundary_tests.cpp
+  point/partial_derivatives_tests.cpp
+  point/source_tests.cpp
+  point/stress_integrand_tests.cpp
+  point/stress_tests.cpp
+  # Kernels
+  # Dim 2
+  point/kernels/dim2/acoustic_isotropic.cpp
+  point/kernels/dim2/elastic_isotropic.cpp
+  point/kernels/dim2/elastic_anisotropic.cpp
+  # point/kernels/dim2/poroelastic_isotropic.cpp
+  # Dim 3
+  point/kernels/dim3/elastic_isotropic.cpp
+  # Properties
+  # Dim 2
+  point/properties/dim2/elastic_isotropic.cpp
+  point/properties/dim2/elastic_anisotropic.cpp
+  point/properties/dim2/acoustic_isotropic.cpp
+  point/properties/dim2/electromagnetic_isotropic.cpp
+  point/properties/dim2/poroelastic_isotropic.cpp
+  # Dim 3
+  # point/properties/dim3/elastic_isotropic.cpp
+
 )
+
 target_link_libraries(
-  point_index_tests
+  point_tests
   point
   gtest_main
   gmock_main
 )
 
-add_executable(
-  point_properties_tests
-  point/properties_tests.cpp
-)
-target_link_libraries(
-  point_properties_tests
-  point
-  gtest_main
-  gmock_main
-)
-
-# add_executable(
-#   mesh_tests
-#   mesh/mesh_tests.cpp
-# )
 
 add_executable(
   mesh_tests
@@ -290,6 +290,7 @@ target_link_libraries(
   utilities
   Boost::filesystem
   -lpthread -lm
+  gtest_main
 )
 
 add_executable(
@@ -503,9 +504,7 @@ if (NOT MPI_PARALLEL)
   # gtest_discover_tests(compute_elastic_tests WORKING_DIRECTORY ${TEST_DIR})
   # # gtest_discover_tests(compute_acoustic_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(compute_coupled_interfaces_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(point_coordinates_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(point_index_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(point_properties_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(point_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(compute_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(assembly_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})

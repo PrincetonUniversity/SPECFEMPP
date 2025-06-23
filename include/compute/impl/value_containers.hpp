@@ -40,8 +40,9 @@ struct value_containers {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       DECLARE(((containers_type, (_MEDIUM_TAG_, _PROPERTY_TAG_)), value)))
 
   /**
@@ -67,8 +68,9 @@ struct value_containers {
 
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
         CAPTURE(value) {
           if constexpr (_medium_tag_ == MediumTag &&
                         _property_tag_ == PropertyTag) {
@@ -93,8 +95,9 @@ struct value_containers {
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
         CAPTURE(value) { _value_.copy_to_host(); })
   }
 
@@ -102,8 +105,9 @@ struct value_containers {
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
         CAPTURE(value) { _value_.copy_to_device(); })
   }
 };

@@ -1,8 +1,10 @@
 #include "source_time_function/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities.cpp"
+#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
+#include <iostream>
 
 specfem::forcing_function::Ricker::Ricker(const int nsteps, const type_real dt,
                                           const type_real f0,
@@ -71,4 +73,31 @@ std::string specfem::forcing_function::Ricker::print() const {
      << this->__use_trick_for_better_pressure << "\n";
 
   return ss.str();
+}
+
+bool specfem::forcing_function::Ricker::operator==(
+    const specfem::forcing_function::stf &other) const {
+
+  std::cout << "Ricker::operator==\n";
+  // Then check if the other object is a dGaussian
+  auto other_ricker =
+      dynamic_cast<const specfem::forcing_function::Ricker *>(&other);
+
+  if (!other_ricker)
+    return false;
+
+  std::cout << "checking vals\n";
+  return (
+      specfem::utilities::almost_equal(this->__f0, other_ricker->get_f0()) &&
+      specfem::utilities::almost_equal(this->__tshift,
+                                       other_ricker->get_tshift()) &&
+      specfem::utilities::almost_equal(this->__factor,
+                                       other_ricker->get_factor()) &&
+      this->__use_trick_for_better_pressure ==
+          other_ricker->get_use_trick_for_better_pressure());
+};
+
+bool specfem::forcing_function::Ricker::operator!=(
+    const specfem::forcing_function::stf &other) const {
+  return !(*this == other);
 }

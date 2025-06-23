@@ -1,7 +1,7 @@
 #pragma once
 
-#include "compute/element_types/element_types.hpp"
 #include "compute/fields/impl/field_impl.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "kokkos_abstractions.h"
 #include "parallel_configuration/chunk_config.hpp"
 #include <Kokkos_Core.hpp>

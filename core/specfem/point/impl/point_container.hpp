@@ -1,10 +1,8 @@
 #pragma once
 
-#include "datatypes/simd.hpp"
-#include "enumerations/accessor.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
+#include "utilities/simd.hpp"
 #include <Kokkos_SIMD.hpp>
 #include <boost/preprocessor.hpp>
 #include <iostream>
@@ -32,40 +30,13 @@
   }
 
 #define POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                 \
-  template <typename U = simd>                                                 \
-  KOKKOS_FUNCTION typename std::enable_if_t<!U::using_simd, bool> operator==(  \
-      const data_container &other) const {                                     \
+  KOKKOS_INLINE_FUNCTION bool operator==(const data_container &other) const {  \
     if (nprops != other.nprops) {                                              \
       return false;                                                            \
     }                                                                          \
     for (int i = 0; i < nprops; ++i) {                                         \
-      if (std::abs(_point_data_container[i] -                                  \
-                   other._point_data_container[i]) >                           \
-          static_cast<type_real>(1e-6) * std::abs(_point_data_container[i])) { \
-        return false;                                                          \
-      }                                                                        \
-    }                                                                          \
-    return true;                                                               \
-  }
-
-#define POINT_BOOLEAN_OPERATOR_DEFINITION_SIMD(seq)                            \
-  template <bool OtherSIMD, typename U = simd>                                 \
-  KOKKOS_FUNCTION typename std::enable_if_t<U::using_simd, bool> operator==(   \
-      const data_container<base_type::dimension_tag, base_type::medium_tag,    \
-                           base_type::property_tag, OtherSIMD> &other) const { \
-    if (nprops != other.nprops) {                                              \
-      return false;                                                            \
-    }                                                                          \
-    for (int i = 0; i < nprops; ++i) {                                         \
-      if (!Kokkos::Experimental::all_of(                                       \
-              Kokkos::abs(_point_data_container[i] -                           \
-                          other._point_data_container[i]) <                    \
-                  static_cast<type_real>(1e-6) *                               \
-                      Kokkos::abs(_point_data_container[i]) ||                 \
-              (Kokkos::abs(_point_data_container[i]) <                         \
-                   static_cast<type_real>(1e-6) &&                             \
-               Kokkos::abs(other._point_data_container[i]) <                   \
-                   static_cast<type_real>(1e-6)))) {                           \
+      if (!specfem::utilities::is_close(_point_data_container[i],              \
+                                        other._point_data_container[i])) {     \
         return false;                                                          \
       }                                                                        \
     }                                                                          \
@@ -131,7 +102,6 @@ private:                                                                       \
 public:                                                                        \
   POINT_CONSTRUCTOR(seq)                                                       \
   POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                       \
-  POINT_BOOLEAN_OPERATOR_DEFINITION_SIMD(seq)                                  \
   POINT_VALUE_ACCESSORS(seq)                                                   \
   POINT_OPERATOR_DEFINITION(seq)                                               \
   KOKKOS_INLINE_FUNCTION bool operator!=(const data_container &other) const {  \
@@ -188,16 +158,14 @@ public:
                                                           ///< properties
 
   using simd =
-      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD data type
+      typename base_accessor::template simd<type_real>; ///< SIMD data type
+
   using value_type =
       typename base_accessor::template scalar_type<type_real>; ///< Type of the
                                                                ///< properties
 
-  constexpr static auto dimension_tag =
-      DimensionTag;                                 ///< dimension of the medium
   constexpr static auto medium_tag = MediumTag;     ///< type of the medium
   constexpr static auto property_tag = PropertyTag; ///< type of the properties
-  constexpr static bool is_point_properties = true; ///< is point properties
 };
 
 /*
@@ -218,26 +186,27 @@ struct data_container;
 } // namespace properties
 
 namespace kernels {
-/**
- * @brief Compile time information associated with the kernels of a quadrature
- * point in a 2D
- *
- * @tparam Dimension The dimension of the medium
- * @tparam MediumTag The type of the medium
- * @tparam PropertyTag The type of the properties
- * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
- */
+
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
-struct traits {
-  using simd = typename specfem::datatype::simd<type_real, UseSIMD>;
-  constexpr static auto dimension_tag =
-      DimensionTag;                                 ///< dimension of the medium
+struct KernelsAccessor
+    : public specfem::accessor::Accessor<specfem::accessor::type::point,
+                                         specfem::data_class::type::kernels,
+                                         DimensionTag, UseSIMD> {
+  using base_type =
+      specfem::accessor::Accessor<specfem::accessor::type::point,
+                                  specfem::data_class::type::kernels,
+                                  DimensionTag, UseSIMD>;    ///< Base type of
+                                                             ///< the point
+                                                             ///< kernels
+  using simd = typename base_type::template simd<type_real>; ///< SIMD data type
+  using value_type =
+      typename base_type::template scalar_type<type_real>; ///< Type of the
+                                                           ///< properties
+
   constexpr static auto medium_tag = MediumTag;     ///< type of the medium
   constexpr static auto property_tag = PropertyTag; ///< type of the properties
-  constexpr static bool is_point_kernels = true;    ///< is point kernels
-  using value_type = typename simd::datatype;       ///< type of the properties
 };
 
 template <specfem::dimension::type DimensionTag,
