@@ -65,7 +65,9 @@ public:
       : density(density), cs(cs), cp(cp), Qkappa(Qkappa), Qmu(Qmu),
         compaction_grad(compaction_grad), lambdaplus2mu(density * cp * cp),
         mu(density * cs * cs), lambda(lambdaplus2mu - 2.0 * mu),
-        kappa(lambda + mu), young(9.0 * kappa * mu / (3.0 * kappa + mu)),
+
+        kappa(density * (cp * cp - (4.0 / 3.0) * cs * cs)),
+        young(9.0 * kappa * mu / (3.0 * kappa + mu)),
         poisson(0.5 * (cp * cp - 2.0 * cs * cs) / (cp * cp - cs * cs)) {
     if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
       std::runtime_error(
@@ -122,7 +124,7 @@ public:
    */
   inline specfem::point::properties<dimension, medium_tag, property_tag, false>
   get_properties() const {
-    return { this->lambdaplus2mu, this->mu, this->density };
+    return { this->kappa, this->mu, this->density };
   }
 
   inline std::string print() const {
@@ -152,7 +154,7 @@ protected:
   type_real Qkappa;          ///< Attenuation factor for bulk modulus
   type_real Qmu;             ///< Attenuation factor for shear modulus
   type_real compaction_grad; ///< Compaction gradient
-  type_real lambdaplus2mu;   ///< Lame parameter
+  type_real lambdaplus2mu;   ///< Lambda plus 2*mu (P-wave modulus)
   type_real mu;              ///< Lame parameter
   type_real lambda;          ///< Lame parameter
   type_real kappa;           ///< Bulk modulus
