@@ -1,0 +1,10 @@
+id: "HomogeneousElasticIsotropicDomainSH"
+name: "Homogeneous elastic isotropic domain (SH-waves)"
+description: >
+  Testing newmark time-marching solver on a homogeneous elastic isotropic domain with no interfaces. Test is run on a single MPI process.
+config:
+  nproc: 1
+  tolerance: 1e-3
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"
