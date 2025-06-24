@@ -33,7 +33,7 @@ parameters:
             directory: "."
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/test1/STATIONS"
+    stations: "displacement_tests/Newmark/serial/HomogeneousElasticAnisotropicDomainAdjmapAssembly/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -49,6 +49,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/test1/database_adjmap.bin"
+    mesh-database: "displacement_tests/Newmark/serial/HomogeneousElasticAnisotropicDomainAdjmapAssembly/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/test1/sources.yaml"
+  sources: "displacement_tests/Newmark/serial/HomogeneousElasticAnisotropicDomainAdjmapAssembly/sources.yaml"
