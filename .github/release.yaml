@@ -11,7 +11,7 @@ changelog:
     - title: 🎉 New Feature
       labels:
         - feature
-    - title: 👨‍🔬 New physics 
+    - title: 👨‍🔬 New physics
       labels:
         - new physics
     - title: 🚀 Performance enhancement
@@ -30,7 +30,7 @@ changelog:
     - title: Fortran Meshfem2D/3D updates
       labels:
         - fortran
-    - title: Refactor 
+    - title: Refactor
       labels:
         - refactor
     - title: 🐛 Bug Fixes

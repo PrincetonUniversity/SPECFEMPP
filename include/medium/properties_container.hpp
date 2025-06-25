@@ -1,5 +1,6 @@
 #pragma once
 
+#include "compute/compute_mesh.hpp"
 #include "dim2/acoustic/isotropic/properties_container.hpp"
 #include "dim2/elastic/anisotropic/properties_container.hpp"
 #include "dim2/elastic/isotropic/properties_container.hpp"
@@ -7,7 +8,6 @@
 #include "dim2/poroelastic/isotropic/properties_container.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/accessor.hpp"
-#include "compute/compute_mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
