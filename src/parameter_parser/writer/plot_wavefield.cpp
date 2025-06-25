@@ -1,6 +1,8 @@
 #include "parameter_parser/writer/plot_wavefield.hpp"
 #include "periodic_tasks/plot_wavefield.hpp"
 #include "periodic_tasks/plotter.hpp"
+#include "specfem_mpi/interface.hpp"
+#include "utilities/strings.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::plot_wavefield::plot_wavefield(
@@ -13,10 +15,6 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
       return "PNG";
     }
   }();
-
-  if (output_format == "on_screen") {
-    throw std::runtime_error("On screen plotting not supported");
-  }
 
   const std::string output_folder = [&]() -> std::string {
     if (Node["directory"]) {
@@ -68,14 +66,14 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
 
 std::shared_ptr<specfem::periodic_tasks::periodic_task>
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
-    const specfem::compute::assembly &assembly) const {
+    const specfem::compute::assembly &assembly, specfem::MPI::MPI *mpi) const {
 
   const auto output_format = [&]() {
-    if (this->output_format == "PNG") {
+    if (specfem::utilities::is_png_string(this->output_format)) {
       return specfem::display::format::PNG;
-    } else if (this->output_format == "JPG") {
+    } else if (specfem::utilities::is_jpg_string(this->output_format)) {
       return specfem::display::format::JPG;
-    } else if (this->output_format == "on_screen") {
+    } else if (specfem::utilities::is_onscreen_string(this->output_format)) {
       return specfem::display::format::on_screen;
     } else {
       throw std::runtime_error("Unknown plotter format");
@@ -83,14 +81,16 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
   }();
 
   const auto component = [&]() {
-    if (this->component == "displacement") {
+    if (specfem::utilities::is_displacement_string(this->component)) {
       return specfem::display::wavefield::displacement;
-    } else if (this->component == "velocity") {
+    } else if (specfem::utilities::is_velocity_string(this->component)) {
       return specfem::display::wavefield::velocity;
-    } else if (this->component == "acceleration") {
+    } else if (specfem::utilities::is_acceleration_string(this->component)) {
       return specfem::display::wavefield::acceleration;
-    } else if (this->component == "pressure") {
+    } else if (specfem::utilities::is_pressure_string(this->component)) {
       return specfem::display::wavefield::pressure;
+    } else if (specfem::utilities::is_rotation_string(this->component)) {
+      return specfem::display::wavefield::rotation;
     } else {
       throw std::runtime_error(
           "Unknown wavefield component in the display section");
@@ -98,11 +98,11 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
   }();
 
   const auto wavefield = [&]() {
-    if (this->wavefield_type == "forward") {
+    if (specfem::utilities::is_forward_string(this->wavefield_type)) {
       return specfem::wavefield::simulation_field::forward;
-    } else if (this->wavefield_type == "adjoint") {
+    } else if (specfem::utilities::is_adjoint_string(this->wavefield_type)) {
       return specfem::wavefield::simulation_field::adjoint;
-    } else if (this->wavefield_type == "backward") {
+    } else if (specfem::utilities::is_backward_string(this->wavefield_type)) {
       return specfem::wavefield::simulation_field::backward;
     } else {
       throw std::runtime_error("Unknown wavefield type in the display section");
@@ -111,5 +111,5 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   return std::make_shared<specfem::periodic_tasks::plot_wavefield>(
       assembly, output_format, component, wavefield, time_interval,
-      this->output_folder);
+      this->output_folder, mpi);
 }

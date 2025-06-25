@@ -1,9 +1,11 @@
 #ifndef _PARAMETER_SETUP_HPP
 #define _PARAMETER_SETUP_HPP
 
-#include "IO/reader.hpp"
 #include "database_configuration.hpp"
+#include "elastic_wave.hpp"
+#include "electromagnetic_wave.hpp"
 #include "header.hpp"
+#include "io/reader.hpp"
 #include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
 #include "receivers.hpp"
@@ -58,13 +60,13 @@ public:
   specfem::quadrature::quadratures instantiate_quadrature() const {
     return this->quadrature->instantiate();
   }
-  // /**
-  //  * @brief Instantiate the Timescheme
-  //  *
-  //  * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
-  //  object
-  //  * used in the solver algorithm
-  //  */
+  /**
+   * @brief Instantiate the Timescheme
+   *
+   * @return specfem::time_scheme::time_scheme* Pointer to the TimeScheme
+   object
+   * used in the solver algorithm
+   */
   std::shared_ptr<specfem::time_scheme::time_scheme>
   instantiate_timescheme() const {
     return this->time_scheme->instantiate(
@@ -90,6 +92,26 @@ public:
   print_header(const std::chrono::time_point<std::chrono::system_clock> now);
 
   /**
+   * @brief Get the type of the elastic wave
+   *
+   * @return specfem::enums::elastic_wave Type of the elastic wave
+   */
+  inline specfem::enums::elastic_wave get_elastic_wave_type() const {
+    return this->elastic_wave->get_elastic_wave_type();
+  }
+
+  /**
+   * @brief Get the type of the electromagnetic wave
+   *
+   * @return specfem::enums::electromagnetic_wave Type of the electromagnetic
+   * wave
+   */
+  inline specfem::enums::electromagnetic_wave
+  get_electromagnetic_wave_type() const {
+    return this->electromagnetic_wave->get_electromagnetic_wave_type();
+  }
+
+  /**
    * @brief Get delta time value
    *
    * @return type_real
@@ -103,6 +125,9 @@ public:
    * to mesh database and source yaml file
    */
   std::string get_databases() const { return databases->get_databases(); }
+  std::string get_mesh_parameters() const {
+    return databases->get_mesh_parameters();
+  }
 
   /**
    * @brief Get the sources YAML object
@@ -126,12 +151,12 @@ public:
   type_real get_receiver_angle() const { return this->receivers->get_angle(); }
 
   /**
-   * @brief Get the types of siesmograms to be calculated
+   * @brief Get the types of seismograms to be calculated
    *
    * @return std::vector<specfem::seismogram::type> Types of seismograms to be
    * calculated
    */
-  std::vector<specfem::enums::seismogram::type> get_seismogram_types() const {
+  std::vector<specfem::wavefield::type> get_seismogram_types() const {
     return this->receivers->get_seismogram_types();
   }
 
@@ -141,12 +166,13 @@ public:
    * @param receivers Pointer to specfem::compute::receivers struct
    used
    * to instantiate the writer
-   * @return specfem::IO::writer* Pointer to an instantiated writer
+   * @return specfem::io::writer* Pointer to an instantiated writer
    object
    */
-  std::shared_ptr<specfem::IO::writer> instantiate_seismogram_writer() const {
+  std::shared_ptr<specfem::io::writer> instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
+          this->get_elastic_wave_type(), this->get_electromagnetic_wave_type(),
           this->time_scheme->get_dt(), this->time_scheme->get_t0(),
           this->receivers->get_nstep_between_samples());
     } else {
@@ -154,7 +180,8 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::writer> instantiate_wavefield_writer() const {
+  std::shared_ptr<specfem::periodic_tasks::periodic_task>
+  instantiate_wavefield_writer() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_writer();
     } else {
@@ -162,7 +189,8 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::reader> instantiate_wavefield_reader() const {
+  std::shared_ptr<specfem::periodic_tasks::periodic_task>
+  instantiate_wavefield_reader() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_reader();
     } else {
@@ -171,16 +199,16 @@ public:
   }
 
   std::shared_ptr<specfem::periodic_tasks::periodic_task>
-  instantiate_wavefield_plotter(
-      const specfem::compute::assembly &assembly) const {
+  instantiate_wavefield_plotter(const specfem::compute::assembly &assembly,
+                                specfem::MPI::MPI *mpi) const {
     if (this->plot_wavefield) {
-      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly, mpi);
     } else {
       return nullptr;
     }
   }
 
-  std::shared_ptr<specfem::IO::reader> instantiate_property_reader() const {
+  std::shared_ptr<specfem::io::reader> instantiate_property_reader() const {
     if (this->property) {
       return this->property->instantiate_property_reader();
     } else {
@@ -188,7 +216,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::writer> instantiate_property_writer() const {
+  std::shared_ptr<specfem::io::writer> instantiate_property_writer() const {
     if (this->property) {
       return this->property->instantiate_property_writer();
     } else {
@@ -196,7 +224,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::writer> instantiate_kernel_writer() const {
+  std::shared_ptr<specfem::io::writer> instantiate_kernel_writer() const {
     if (this->kernel) {
       return this->kernel->instantiate_kernel_writer();
     } else {
@@ -224,6 +252,10 @@ private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
                                                                   ///< to header
                                                                   ///< object
+  std::unique_ptr<specfem::runtime_configuration::elastic_wave>
+      elastic_wave; ///< Pointer to elastic wave object
+  std::unique_ptr<specfem::runtime_configuration::electromagnetic_wave>
+      electromagnetic_wave; ///< Pointer to electromagnetic wave object
   std::unique_ptr<specfem::runtime_configuration::time_scheme::time_scheme>
       time_scheme; ///< Pointer to solver
                    ///< object

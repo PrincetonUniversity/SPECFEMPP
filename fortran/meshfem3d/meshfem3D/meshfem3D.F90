@@ -60,6 +60,8 @@
   double precision :: time_start,tCPU
   character(len=3) :: str_unit
 
+  call parse_command_line_arguments()
+
   ! MPI initialization
   call init_mpi()
 
@@ -95,15 +97,23 @@
     call flush_IMAIN()
   endif
 
-  if (myrank == 0) then
-    write(IMAIN,*) 'Reading parameters from ',IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'Par_file'
-    write(IMAIN,*)
-    call flush_IMAIN()
-  endif
+  ! no longer needed, we use mesh_par_file to read parameters
+  ! if (myrank == 0) then
+  !   write(IMAIN,*) 'Reading parameters from ',trim(MESH_PAR_FILE)
+  !   write(IMAIN,*)
+  !   call flush_IMAIN()
+  ! endif
 
   ! read the parameter file (DATA/Par_file)
-  BROADCAST_AFTER_READ = .true.
-  call read_parameter_file(BROADCAST_AFTER_READ)
+  ! BROADCAST_AFTER_READ = .true.
+  ! call read_parameter_file(BROADCAST_AFTER_READ)
+
+  ! open parameter file Mesh_Par_file
+  call open_parameter_file_mesh(MESH_PAR_FILE)
+
+  call read_value_logical_mesh(IIN,IGNORE_JUNK,MESH_A_CHUNK_OF_THE_EARTH, 'MESH_A_CHUNK_OF_THE_EARTH', ier)
+
+  call close_parameter_file_mesh()
 
   ! make sure everybody is synchronized
   call synchronize_all()

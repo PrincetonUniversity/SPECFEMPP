@@ -1,5 +1,4 @@
-#ifndef _SOURCE_HPP
-#define _SOURCE_HPP
+#pragma once
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -29,8 +28,27 @@ public:
    * @brief Default source constructor
    *
    */
-  source(){};
+  source() {};
 
+  /**
+   * @brief Construct a new source object using the forcing function
+   *
+   * @param x x-coordinate of source
+   * @param y z-coordinate of source
+   * @param forcing_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  source(type_real x, type_real y,
+         std::unique_ptr<specfem::forcing_function::stf> forcing_function)
+      : x(x), z(y), forcing_function(std::move(forcing_function)) {};
+
+  /**
+   * @brief Construct a new source object from a YAML node and time steps
+   *
+   * @param Node
+   * @param nsteps
+   * @param dt
+   */
   source(YAML::Node &Node, const int nsteps, const type_real dt);
   /**
    * @brief Get the x coordinate of the source
@@ -83,6 +101,23 @@ public:
 
   virtual specfem::wavefield::simulation_field get_wavefield_type() const = 0;
 
+  virtual bool operator==(const source &other) const {
+    // Base implementation might just check type identity
+    return typeid(*this) == typeid(other);
+  }
+  virtual bool operator!=(const source &other) const {
+    return !(*this == other);
+  }
+
+  /**
+   * @brief Get the forcing function object
+   *
+   * @return std::unique_ptr<specfem::forcing_function::stf>&
+   */
+  std::unique_ptr<specfem::forcing_function::stf> &get_forcing_function() {
+    return forcing_function;
+  }
+
 protected:
   type_real x; ///< x-coordinate of source
   type_real z; ///< z-coordinate of source
@@ -94,4 +129,3 @@ protected:
 } // namespace sources
 
 } // namespace specfem
-#endif

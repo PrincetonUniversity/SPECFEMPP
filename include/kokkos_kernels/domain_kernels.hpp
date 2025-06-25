@@ -16,151 +16,182 @@
 
 namespace specfem {
 namespace kokkos_kernels {
+
+/**
+ * @brief Class to compute the domain kernels for the simulation
+ *
+ * This class computes the domain kernels for the simulation. It is a template
+ * class that takes the wavefield type, dimension tag, and number of GLL points
+ * as template parameters.
+ *
+ * @tparam WavefieldType Type of the wavefield (e.g., elastic, acoustic)
+ * @tparam DimensionTag Dimension tag (e.g., 2D, 3D)
+ * @tparam NGLL Number of GLL points
+ *
+ */
 template <specfem::wavefield::simulation_field WavefieldType,
-          specfem::dimension::type DimensionType, int NGLL>
+          specfem::dimension::type DimensionTag, int NGLL>
 class domain_kernels {
 public:
-  constexpr static auto dimension = DimensionType;
+  constexpr static auto dimension = DimensionTag;
   constexpr static auto wavefield = WavefieldType;
   constexpr static auto ngll = NGLL;
 
+  /**
+   * @brief Constructor for the domain_kernels class
+   *
+   * This constructor initializes the domain_kernels class with the given
+   * assembly object.
+   *
+   * @param assembly The assembly object containing the mesh and other
+   * information
+   *
+   * @note The constructor initializes the coupling interfaces for 2D elastic
+   * and acoustic media.
+   *
+   */
   domain_kernels(const specfem::compute::assembly &assembly)
-      : assembly(assembly), coupling_interfaces_elastic(assembly),
-        coupling_interfaces_acoustic(assembly) {}
+      : assembly(assembly), coupling_interfaces_dim2_elastic_psv(assembly),
+        coupling_interfaces_dim2_acoustic(assembly) {}
 
+  /**
+   * @brief Updates the wavefield for a given medium
+   *
+   * This function updates the wavefield for a given medium type. It computes
+   * the coupling, source interaction, stiffness interaction, and divides the
+   * mass matrix. The function is specialized for different medium types and
+   *
+   * @tparam medium Medium for which the wacefield is updated
+   * @param istep Time step for which the wavefield is updated
+   * @return int Number of elements updated
+   */
   template <specfem::element::medium_tag medium>
-  inline void update_wavefields(const int istep) {
+  inline int update_wavefields(const int istep) {
 
-#define CALL_COUPLING_INTERFACES_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)           \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
-                medium == GET_TAG(MEDIUM_TAG)) {                               \
-    CREATE_VARIABLE_NAME(coupling_interfaces, GET_NAME(MEDIUM_TAG))            \
-        .compute_coupling();                                                   \
+    int elements_updated = 0;
+
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ACOUSTIC)),
+        CAPTURE(coupling_interfaces) {
+          if constexpr (dimension == _dimension_tag_ &&
+                        medium == _medium_tag_) {
+            _coupling_interfaces_.compute_coupling();
+          }
+        })
+
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                      COMPOSITE_STACEY_DIRICHLET)),
+        {
+          if constexpr (dimension == _dimension_tag_ &&
+                        medium == _medium_tag_) {
+            impl::compute_source_interaction<dimension, wavefield, ngll,
+                                             _medium_tag_, _property_tag_,
+                                             _boundary_tag_>(assembly, istep);
+          }
+        })
+
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                      COMPOSITE_STACEY_DIRICHLET)),
+        {
+          if constexpr (dimension == _dimension_tag_ &&
+                        medium == _medium_tag_) {
+            elements_updated += impl::compute_stiffness_interaction<
+                dimension, wavefield, ngll, _medium_tag_, _property_tag_,
+                _boundary_tag_>(assembly, istep);
+          }
+        })
+
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
+        {
+          if constexpr (dimension == _dimension_tag_ &&
+                        medium == _medium_tag_) {
+            impl::divide_mass_matrix<dimension, wavefield, _medium_tag_>(
+                assembly);
+          }
+        })
+
+    return elements_updated;
   }
 
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(CALL_COUPLING_INTERFACES_FUNCTION,
-                                   WHERE(DIMENSION_TAG_DIM2) WHERE(
-                                       MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
-
-#undef CALL_COUPLING_INTERFACES_FUNCTION
-
-#define CALL_SOURCE_FORCE_UPDATE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,      \
-                                 BOUNDARY_TAG)                                 \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
-                medium == GET_TAG(MEDIUM_TAG)) {                               \
-    impl::compute_source_interaction<                                          \
-        dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG),                       \
-        GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(assembly, istep);        \
-  }
-
-    CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-        CALL_SOURCE_FORCE_UPDATE,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
-                      BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                      BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef CALL_SOURCE_FORCE_UPDATE
-
-#define CALL_STIFFNESS_FORCE_UPDATE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,   \
-                                    BOUNDARY_TAG)                              \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
-                medium == GET_TAG(MEDIUM_TAG)) {                               \
-    impl::compute_stiffness_interaction<                                       \
-        dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG),                       \
-        GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(assembly, istep);        \
-  }
-
-    CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-        CALL_STIFFNESS_FORCE_UPDATE,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
-                      BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                      BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef CALL_STIFFNESS_FORCE_UPDATE
-
-#define CALL_DIVIDE_MASS_MATRIX_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)            \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
-                medium == GET_TAG(MEDIUM_TAG)) {                               \
-    impl::divide_mass_matrix<dimension, wavefield, GET_TAG(MEDIUM_TAG)>(       \
-        assembly);                                                             \
-  }
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(CALL_DIVIDE_MASS_MATRIX_FUNCTION,
-                                   WHERE(DIMENSION_TAG_DIM2) WHERE(
-                                       MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
-
-#undef CALL_DIVIDE_MASS_MATRIX_FUNCTION
-  }
-
+  /**
+   * @brief Initializes the mass matrix for the simulation
+   *
+   * This function initializes the mass matrix for the simulation. It computes
+   * the mass matrix and inverts it for different medium types.
+   *
+   * @param dt Time step for the simulation
+   */
   void initialize(const type_real &dt) {
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                      COMPOSITE_STACEY_DIRICHLET)),
+        {
+          if constexpr (dimension == _dimension_tag_) {
+            impl::compute_mass_matrix<dimension, wavefield, ngll, _medium_tag_,
+                                      _property_tag_, _boundary_tag_>(dt,
+                                                                      assembly);
+          }
+        })
 
-#define CALL_COMPUTE_MASS_MATRIX_FUNCTION(DIMENSION_TAG, MEDIUM_TAG,           \
-                                          PROPERTY_TAG, BOUNDARY_TAG)          \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    impl::compute_mass_matrix<dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG), \
-                              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
-        dt, assembly);                                                         \
-  }
-
-    CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-        CALL_COMPUTE_MASS_MATRIX_FUNCTION,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
-                      BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                      BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef CALL_COMPUTE_MASS_MATRIX_FUNCTION
-
-#define CALL_INITIALIZE_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)                    \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    impl::invert_mass_matrix<dimension, wavefield, GET_TAG(MEDIUM_TAG)>(       \
-        assembly);                                                             \
-  }
-
-    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(CALL_INITIALIZE_FUNCTION,
-                                   WHERE(DIMENSION_TAG_DIM2) WHERE(
-                                       MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
-
-#undef CALL_INITIALIZE_FUNCTION
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
+        {
+          if constexpr (dimension == _dimension_tag_) {
+            impl::invert_mass_matrix<dimension, wavefield, _medium_tag_>(
+                assembly);
+          }
+        })
 
     return;
   }
 
+  /**
+   * @brief Computes the seismograms for the simulation
+   *
+   * This function computes the seismograms for the simulation. It is
+   * specialized for different medium types and properties.
+   *
+   * @param isig_step Time step for which the seismograms are computed
+   */
   inline void compute_seismograms(const int &isig_step) {
 
-#define CALL_COMPUTE_SEISMOGRAMS_FUNCTION(DIMENSION_TAG, MEDIUM_TAG,           \
-                                          PROPERTY_TAG)                        \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    impl::compute_seismograms<dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG), \
-                              GET_TAG(PROPERTY_TAG)>(assembly, isig_step);     \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        CALL_COMPUTE_SEISMOGRAMS_FUNCTION,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef CALL_COMPUTE_SEISMOGRAMS_FUNCTION
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+        {
+          if constexpr (dimension == _dimension_tag_) {
+            impl::compute_seismograms<dimension, wavefield, ngll, _medium_tag_,
+                                      _property_tag_>(assembly, isig_step);
+          }
+        })
   }
 
 private:
   specfem::compute::assembly assembly;
-#define COUPLING_INTERFACES_DECLARATION(DIMENSION_TAG, MEDIUM_TAG)             \
-  impl::interface_kernels<WavefieldType, GET_TAG(DIMENSION_TAG),               \
-                          GET_TAG(MEDIUM_TAG)>                                 \
-      CREATE_VARIABLE_NAME(coupling_interfaces, GET_NAME(MEDIUM_TAG));
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(COUPLING_INTERFACES_DECLARATION,
-                                 WHERE(DIMENSION_TAG_DIM2)
-                                     WHERE(MEDIUM_TAG_ELASTIC,
-                                           MEDIUM_TAG_ACOUSTIC))
-
-#undef COUPLING_INTERFACES_DECLARATION
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ACOUSTIC)),
+                      DECLARE(((impl::interface_kernels,
+                                (WavefieldType, _DIMENSION_TAG_, _MEDIUM_TAG_)),
+                               coupling_interfaces)))
 };
 
 } // namespace kokkos_kernels

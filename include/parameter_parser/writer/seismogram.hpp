@@ -1,7 +1,7 @@
 #ifndef _PARAMETER_SEISMOGRAM_HPP
 #define _PARAMETER_SEISMOGRAM_HPP
 
-#include "IO/seismogram/writer.hpp"
+#include "io/seismogram/writer.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
@@ -26,7 +26,7 @@ public:
    * stored
    */
   seismogram(const std::string output_format, const std::string output_folder)
-      : output_format(output_format), output_folder(output_folder){};
+      : output_format(output_format), output_folder(output_folder) {};
   /**
    * @brief Construct a new seismogram object
    *
@@ -37,17 +37,20 @@ public:
   /**
    * @brief Instantiate a seismogram writer object
    *
-   * @param receivers Vector of pointers to receiver objects used to instantiate
-   * the writer
-   * @param compute_receivers Pointer to specfem::compute::receivers struct used
-   * to instantiate the writer
-   * @param dt Time interval between timesteps
-   * @param t0 Starting time of simulation
-   * @return specfem::IO::writer* Pointer to an instantiated writer object
+   * @param wave_type Type of wavefield (Writes .BXY for SH waves and .BXX, .BXZ
+   * for P-SV waves)
+   * @param dt Time interval between subsequent timesteps
+   * @param t0 Solver start time
+   * @param nsteps_between_samples number of timesteps between seismogram
+   * sampling (seismogram sampling frequency)
+   * @return std::shared_ptr<specfem::io::writer> Pointer to an instantiated
+   * writer object
    */
-  std::shared_ptr<specfem::IO::writer>
-  instantiate_seismogram_writer(const type_real dt, const type_real t0,
-                                const int nsteps_between_samples) const;
+  std::shared_ptr<specfem::io::writer> instantiate_seismogram_writer(
+      const specfem::enums::elastic_wave wave_type,
+      const specfem::enums::electromagnetic_wave electromagnetic_wave,
+      const type_real dt, const type_real t0,
+      const int nsteps_between_samples) const;
 
 private:
   std::string output_format; ///< format of output file

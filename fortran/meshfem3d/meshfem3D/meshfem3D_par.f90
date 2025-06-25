@@ -86,6 +86,9 @@ module meshfem_par
   ! for Cubit postprocessing
   logical :: SAVE_MESH_AS_CUBIT = .false.
 
+  logical :: MESH_A_CHUNK_OF_THE_EARTH
+  character(len=MAX_STRING_LEN) :: CHUNK_MESH_PAR_FILE
+
   ! CPML
   double precision :: THICKNESS_OF_X_PML,THICKNESS_OF_Y_PML,THICKNESS_OF_Z_PML
   logical, dimension(:), allocatable :: is_CPML

@@ -30,7 +30,23 @@
 
 ! mesh creation for solver
 
-  use generate_databases_par
+  use generate_databases_par, only: NSPEC_AB, NGLLX, NGLLY, NGLLZ, NGNOD2D, &
+                                    ibool, xstore, ystore, zstore, &
+                                    ispec_is_surface_external_mesh, &
+                                    iglob_is_surface_external_mesh, &
+                                    neighbors_xadj, neighbors_adjncy, &
+                                    HUGEVAL, IMAIN, max_elevation, &
+                                    max_elevation_all, min_elevation, &
+                                    min_elevation_all, max_interface_size_ext_mesh, &
+                                    nspec2D_xmin, nspec2D_xmax, nspec2D_ymin, &
+                                    nspec2D_ymax, nspec2D_bottom, nspec2D_top, &
+                                    max_memory_size, max_memory_size_request, &
+                                    myrank, nelmnts_ext_mesh, nmat_ext_mesh,num_interfaces_ext_mesh, &
+                                    nnodes_ext_mesh, npointot, nspec2D_top_ext, &
+                                    nodes_ibelm_top, nodes_coords_ext_mesh
+
+
+
 
   implicit none
 

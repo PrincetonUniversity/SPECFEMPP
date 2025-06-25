@@ -33,13 +33,8 @@ void specfem::receivers::receiver::compute_receiver_array(
     for (int ix = 0; ix < N; ++ix) {
       type_real hlagrange = hxi_receiver(ix) * hgamma_receiver(iz);
 
-      if (specfem::globals::simulation_wave == specfem::wave::sh) {
-        receiver_array(0, iz, ix) = hlagrange;
-        receiver_array(1, iz, ix) = 0.0;
-      } else if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-        receiver_array(0, iz, ix) = hlagrange;
-        receiver_array(1, iz, ix) = hlagrange;
-      }
+      receiver_array(0, iz, ix) = hlagrange;
+      receiver_array(1, iz, ix) = hlagrange;
     }
   }
 

@@ -1,6 +1,14 @@
 name: Unittests
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+      - devel
+  pull_request:
+    branches:
+      - '*' # All branches should run on PRs
+
 
 jobs:
   build-and-test:
@@ -10,9 +18,6 @@ jobs:
         run: gcc --version && cmake --version
       - name: Checkout repository
         uses: actions/checkout@v1
-      - name: Get submodules
-        run: git submodule init
-          &&  git submodule update
       - name: Configure
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON
       - name: Build

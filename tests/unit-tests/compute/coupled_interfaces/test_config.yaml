@@ -6,10 +6,10 @@ Tests:
       nproc: 1
     databases:
       mesh:
-        database: "../../../tests/unit-tests/compute/coupled_interfaces/serial/test1/mesh/database.bin"
+        database: "compute/coupled_interfaces/serial/test1/mesh/database.bin"
       elastic_acoustic:
-        elastic_ispec: "../../../tests/unit-tests/compute/coupled_interfaces/serial/test1/elastic_acoustic/elastic_ispec.bin"
-        acoustic_ispec: "../../../tests/unit-tests/compute/coupled_interfaces/serial/test1/elastic_acoustic/acoustic_ispec.bin"
+        elastic_ispec: "compute/coupled_interfaces/serial/test1/elastic_acoustic/elastic_ispec.bin"
+        acoustic_ispec: "compute/coupled_interfaces/serial/test1/elastic_acoustic/acoustic_ispec.bin"
       elastic_poroelastic:
         elastic_ispec: "NULL"
         poroelastic_ispec: "NULL"

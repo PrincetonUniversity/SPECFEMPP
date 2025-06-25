@@ -2,13 +2,7 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
-#include "compute/properties/properties.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/material_definitions.hpp"
-#include "enumerations/medium.hpp"
-#include "enumerations/wavefield.hpp"
-#include "kokkos_abstractions.h"
-#include "point/sources.hpp"
+#include "enumerations/interface.hpp"
 #include "source/source.hpp"
 #include "source_medium.hpp"
 
@@ -151,89 +145,53 @@ private:
   PropertyTagViewType::HostMirror h_property_types; ///< Host mirror of
                                                     ///< property_types
 
-#define SOURCE_MEDIUM_DECLARATION(DIMENSION_TAG, MEDIUM_TAG)                   \
-  specfem::compute::impl::source_medium<GET_TAG(DIMENSION_TAG),                \
-                                        GET_TAG(MEDIUM_TAG)>                   \
-      CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),                    \
-                           GET_NAME(MEDIUM_TAG));
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(SOURCE_MEDIUM_DECLARATION,
-                                 WHERE(DIMENSION_TAG_DIM2)
-                                     WHERE(MEDIUM_TAG_ELASTIC,
-                                           MEDIUM_TAG_ACOUSTIC))
-
-#undef SOURCE_MEDIUM_DECLARATION
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELASTIC_PSV_T)),
+                      DECLARE(((specfem::compute::impl::source_medium,
+                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
+                               source)))
 
   int timestep; ///< Current time step
 
-#define SOURCE_INDICES_VARIABLES_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, \
-                                      BOUNDARY_TAG)                            \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      element_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      element_indices_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      element_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_element_indices_forward, GET_NAME(DIMENSION_TAG),                      \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_element_indices_backward, GET_NAME(DIMENSION_TAG),                     \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_element_indices_adjoint, GET_NAME(DIMENSION_TAG),                      \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      source_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      source_indices_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      source_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_source_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_source_indices_backward, GET_NAME(DIMENSION_TAG),                      \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_source_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET)),
+      DECLARE((IndexViewType, element_indices_forward),
+              (IndexViewType::HostMirror, h_element_indices_forward),
+              (IndexViewType, element_indices_backward),
+              (IndexViewType::HostMirror, h_element_indices_backward),
+              (IndexViewType, element_indices_adjoint),
+              (IndexViewType::HostMirror, h_element_indices_adjoint),
+              (IndexViewType, source_indices_forward),
+              (IndexViewType::HostMirror, h_source_indices_forward),
+              (IndexViewType, source_indices_backward),
+              (IndexViewType::HostMirror, h_source_indices_backward),
+              (IndexViewType, source_indices_adjoint),
+              (IndexViewType::HostMirror, h_source_indices_adjoint)))
 
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      SOURCE_INDICES_VARIABLES_NAME,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-              WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                    BOUNDARY_TAG_STACEY,
-                    BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef SOURCE_INDICES_VARIABLES_NAME
-
-  template <typename IteratorIndexType, typename PointSourceType>
+  template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
-  load_on_device(const IteratorIndexType iterator_index,
+  load_on_device(const IndexType index,
                  const specfem::compute::sources &sources,
                  PointSourceType &point_source);
 
-  template <typename IteratorIndexType, typename PointSourceType>
-  friend void load_on_host(const IteratorIndexType iterator_index,
+  template <typename IndexType, typename PointSourceType>
+  friend void load_on_host(const IndexType index,
                            const specfem::compute::sources &sources,
                            PointSourceType &point_source);
 
-  template <typename IteratorIndexType, typename PointSourceType>
+  template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
-  store_on_device(const IteratorIndexType iterator_index,
-                  const PointSourceType &point_source,
+  store_on_device(const IndexType index, const PointSourceType &point_source,
                   const specfem::compute::sources &sources);
 
-  template <typename IteratorIndexType, typename PointSourceType>
-  friend void store_on_host(const IteratorIndexType iterator_index,
+  template <typename IndexType, typename PointSourceType>
+  friend void store_on_host(const IndexType index,
                             const PointSourceType &point_source,
                             const specfem::compute::sources &sources);
 }; // namespace compute
@@ -252,36 +210,28 @@ private:
  * @param sources Source information for the domain
  * @param point_source Point source object to load source information into
  */
-template <typename IteratorIndexType, typename PointSourceType>
+template <typename IndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
-load_on_device(const IteratorIndexType iterator_index,
-               const specfem::compute::sources &sources,
+load_on_device(const IndexType index, const specfem::compute::sources &sources,
                PointSourceType &point_source) {
 
-  const auto index = iterator_index.index;
-
-  static_assert(index.using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
-      PointSourceType::is_point_source,
+      specfem::accessor::is_point_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
-  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+  static_assert(PointSourceType::dimension_tag ==
+                    specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(index.dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
-
-  static_assert(
-      ((PointSourceType::medium_tag ==
-        specfem::element::medium_tag::acoustic) ||
-       (PointSourceType::medium_tag == specfem::element::medium_tag::elastic)),
-      "PointSourceType must be an acoustic or elastic point source");
 
 #ifndef NDEBUG
 
-  const int isource = iterator_index.imap;
+  const int isource = index.imap;
 
   // Checks if the spectral element index is out of bounds
 
@@ -297,21 +247,16 @@ load_on_device(const IteratorIndexType iterator_index,
   }
 #endif
 
-#define SOURCE_MEDIUM_LOAD_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG)                \
-  if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
-    if constexpr (GET_TAG(MEDIUM_TAG) == PointSourceType::medium_tag) {        \
-      sources                                                                  \
-          .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
-                                GET_NAME(MEDIUM_TAG))                          \
-          .load_on_device(sources.timestep, iterator_index, point_source);     \
-    }                                                                          \
-  }
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      SOURCE_MEDIUM_LOAD_ON_DEVICE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
-
-#undef SOURCE_MEDIUM_LOAD_ON_DEVICE
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE((source, sources.source)) {
+        if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
+          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
+            _source_.load_on_device(sources.timestep, index, point_source);
+          }
+        }
+      })
 
   return;
 }
@@ -330,35 +275,29 @@ load_on_device(const IteratorIndexType iterator_index,
  * @param sources Source information for the domain
  * @param point_source Point source object to load source information into
  */
-template <typename IteratorIndexType, typename PointSourceType>
-void load_on_host(const IteratorIndexType iterator_index,
+template <typename IndexType, typename PointSourceType>
+void load_on_host(const IndexType index,
                   const specfem::compute::sources &sources,
                   PointSourceType &point_source) {
 
   // Get the mapping from the iterator index
-  const auto index = iterator_index.index;
 
-  static_assert(index.using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
-      PointSourceType::is_point_source,
+      specfem::accessor::is_point_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
-  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+  static_assert(PointSourceType::dimension_tag ==
+                    specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(index.dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
-  static_assert(
-      ((PointSourceType::medium_tag ==
-        specfem::element::medium_tag::acoustic) ||
-       (PointSourceType::medium_tag == specfem::element::medium_tag::elastic)),
-      "PointSourceType must be an acoustic or elastic point source");
-
 #ifndef NDEBUG
-  const int isource = iterator_index.imap;
+  const int isource = index.imap;
 
   // Checks if the spectral element index is out of bounds
   if ((index.ispec < 0) || (sources.nspec <= index.ispec)) {
@@ -374,21 +313,16 @@ void load_on_host(const IteratorIndexType iterator_index,
   }
 #endif
 
-#define SOURCE_MEDIUM_LOAD_ON_HOST(DIMENSION_TAG, MEDIUM_TAG)                  \
-  if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
-    if constexpr (GET_TAG(MEDIUM_TAG) == PointSourceType::medium_tag) {        \
-      sources                                                                  \
-          .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
-                                GET_NAME(MEDIUM_TAG))                          \
-          .load_on_host(sources.timestep, iterator_index, point_source);       \
-    }                                                                          \
-  }
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      SOURCE_MEDIUM_LOAD_ON_HOST,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
-
-#undef SOURCE_MEDIUM_LOAD_ON_HOST
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE((source, sources.source)) {
+        if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
+          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
+            _source_.load_on_host(sources.timestep, index, point_source);
+          }
+        }
+      })
 
   return;
 }
@@ -407,35 +341,27 @@ void load_on_host(const IteratorIndexType iterator_index,
  * @param point_source Point source object to load source information into
  * @param sources Source information for the domain
  */
-template <typename IteratorIndexType, typename PointSourceType>
+template <typename IndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
-store_on_device(const IteratorIndexType iterator_index,
-                const PointSourceType &point_source,
+store_on_device(const IndexType index, const PointSourceType &point_source,
                 const specfem::compute::sources &sources) {
 
-  const auto index = iterator_index.index;
-
-  static_assert(index.using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
-      PointSourceType::is_point_source,
+      specfem::accessor::is_point_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
-  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+  static_assert(PointSourceType::dimension_tag ==
+                    specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(index.dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
-  static_assert(
-      ((PointSourceType::medium_tag ==
-        specfem::element::medium_tag::acoustic) ||
-       (PointSourceType::medium_tag == specfem::element::medium_tag::elastic)),
-      "PointSourceType must be an acoustic or elastic point source");
-
 #ifndef NDEBUG
-  const int isource = iterator_index.imap;
+  const int isource = index.imap;
 
   if ((index.ispec < 0) || (sources.nspec <= index.ispec)) {
     Kokkos::abort("Invalid spectral element index detected in source");
@@ -450,21 +376,16 @@ store_on_device(const IteratorIndexType iterator_index,
   }
 #endif
 
-#define SOURCE_MEDIUM_STORE_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG)               \
-  if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
-    if constexpr (GET_TAG(MEDIUM_TAG) == PointSourceType::medium_tag) {        \
-      sources                                                                  \
-          .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
-                                GET_NAME(MEDIUM_TAG))                          \
-          .store_on_device(sources.timestep, iterator_index, point_source);    \
-    }                                                                          \
-  }
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      SOURCE_MEDIUM_STORE_ON_DEVICE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
-
-#undef SOURCE_MEDIUM_STORE_ON_DEVICE
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE((source, sources.source)) {
+        if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
+          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
+            _source_.store_on_device(sources.timestep, index, point_source);
+          }
+        }
+      })
 
   return;
 }
@@ -483,34 +404,26 @@ store_on_device(const IteratorIndexType iterator_index,
  * @param point_source Point source object to load source information into
  * @param sources Source information for the domain
  */
-template <typename IteratorIndexType, typename PointSourceType>
-void store_on_host(const IteratorIndexType iterator_index,
-                   const PointSourceType &point_source,
+template <typename IndexType, typename PointSourceType>
+void store_on_host(const IndexType index, const PointSourceType &point_source,
                    const specfem::compute::sources &sources) {
 
-  const auto index = iterator_index.index;
-
-  static_assert(index.using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
-      PointSourceType::is_point_source,
+      specfem::accessor::is_point_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
-  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+  static_assert(PointSourceType::dimension_tag ==
+                    specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(index.dimension == specfem::dimension::type::dim2,
+  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
-  static_assert(
-      ((PointSourceType::medium_tag ==
-        specfem::element::medium_tag::acoustic) ||
-       (PointSourceType::medium_tag == specfem::element::medium_tag::elastic)),
-      "PointSourceType must be an acoustic or elastic point source");
-
 #ifndef NDEBUG
-  const int isource = iterator_index.imap;
+  const int isource = index.imap;
 
   if ((index.ispec < 0) || (sources.nspec <= index.ispec)) {
     Kokkos::abort("Invalid spectral element index detected in source");
@@ -525,21 +438,16 @@ void store_on_host(const IteratorIndexType iterator_index,
   }
 #endif
 
-#define SOURCE_MEDIUM_STORE_ON_HOST(DIMENSION_TAG, MEDIUM_TAG)                 \
-  if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
-    if constexpr (GET_TAG(MEDIUM_TAG) == PointSourceType::medium_tag) {        \
-      sources                                                                  \
-          .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
-                                GET_NAME(MEDIUM_TAG))                          \
-          .store_on_host(sources.timestep, iterator_index, point_source);      \
-    }                                                                          \
-  }
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      SOURCE_MEDIUM_STORE_ON_HOST,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
-
-#undef SOURCE_MEDIUM_STORE_ON_HOST
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE((source, sources.source)) {
+        if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
+          if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
+            _source_.store_on_host(sources.timestep, index, point_source);
+          }
+        }
+      })
 
   return;
 }

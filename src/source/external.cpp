@@ -5,10 +5,10 @@
 #include "enumerations/specfem_enums.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
-#include "point/coordinates.hpp"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/point.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 // #include "utilities.cpp"
@@ -42,29 +42,66 @@ void specfem::sources::external::compute_source_array(
 
   type_real hlagrange;
 
+  // Source array computation
   for (int iz = 0; iz < N; ++iz) {
     for (int ix = 0; ix < N; ++ix) {
       hlagrange = hxi_source(ix) * hgamma_source(iz);
 
+      // Acoustic
       if (el_type == specfem::element::medium_tag::acoustic) {
         if (ncomponents != 1) {
           throw std::runtime_error(
-              "Force source requires 1 component for acoustic medium");
+              "External source requires 1 component for acoustic medium");
         }
         source_array(0, iz, ix) = hlagrange;
-      } else if ((el_type == specfem::element::medium_tag::elastic) ||
-                 (el_type == specfem::element::medium_tag::poroelastic)) {
+      }
+      // Elastic SH
+      else if (el_type == specfem::element::medium_tag::elastic_sh) {
+        if (ncomponents != 1) {
+          throw std::runtime_error(
+              "External source requires 1 component for elastic SH medium");
+        }
+        source_array(0, iz, ix) = hlagrange;
+      } else if ((el_type == specfem::element::medium_tag::elastic_psv)) {
+        if (ncomponents != 2) {
+          throw std::runtime_error("External source for elastic PSV, "
+                                   "poroelastic, or electromagnetic TE"
+                                   "SV requires 2 components");
+        }
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+      } else if ((el_type == specfem::element::medium_tag::poroelastic)) {
+        if (ncomponents != 4) {
+          throw std::runtime_error(
+              "Force source requires 4 components for poroelastic medium");
+        }
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+        source_array(2, iz, ix) = hlagrange;
+        source_array(3, iz, ix) = hlagrange;
+      } else if (el_type == specfem::element::medium_tag::electromagnetic_te) {
         if (ncomponents != 2) {
           throw std::runtime_error(
-              "Force source requires 2 components for elastic medium");
+              "External source requires 2 components for electromagnetic "
+              "TE medium");
         }
-        if (specfem::globals::simulation_wave == specfem::wave::sh) {
-          source_array(0, iz, ix) = hlagrange;
-          source_array(1, iz, ix) = 0;
-        } else {
-          source_array(0, iz, ix) = hlagrange;
-          source_array(1, iz, ix) = hlagrange;
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+      } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
+        if (ncomponents != 3) {
+          throw std::runtime_error(
+              "External source requires 3 components for elastic psv_t medium");
         }
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+        source_array(2, iz, ix) = hlagrange;
+      } else {
+        std::ostringstream message;
+        message << "Source array computation not implemented for element type: "
+                << specfem::element::to_string(el_type) << " [" << __FILE__
+                << ":" << __LINE__ << "]";
+        auto message_str = message.str();
+        Kokkos::abort(message_str.c_str());
       }
     }
   }

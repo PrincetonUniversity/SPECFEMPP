@@ -36,7 +36,7 @@
     number_of_layers,ner_layer,iproc_xi_current,iproc_eta_current,NPROC_XI,NPROC_ETA, &
     xgrid,ygrid,zgrid
 
-  use constants, only: IMAIN,IIN,MF_IN_DATA_FILES,DONT_IGNORE_JUNK,IUTM2LONGLAT,MAX_STRING_LEN,HUGEVAL
+  use constants, only: IMAIN,IIN,DONT_IGNORE_JUNK,IUTM2LONGLAT,MAX_STRING_LEN,HUGEVAL
 
   implicit none
 
@@ -95,13 +95,16 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) 'Reading interface data from file ',trim(MF_IN_DATA_FILES)//trim(INTERFACES_FILE)
+    write(IMAIN,*) 'Reading interface data from file ',trim(INTERFACES_FILE)
     write(IMAIN,*)
     call flush_IMAIN()
   endif
 
-  open(unit=IIN,file=trim(MF_IN_DATA_FILES)//trim(INTERFACES_FILE),status='old',iostat=ier)
-  if (ier /= 0) stop 'Error opening interfaces file'
+  open(unit=IIN,file=trim(INTERFACES_FILE),status='old',iostat=ier)
+  if (ier /= 0) then
+    print *,'Error opening interface file: ',trim(INTERFACES_FILE)
+    stop 'Error opening interface file'
+  endif
 
   ! allocates interface arrays
   allocate(interface_bottom(max_npx_interface,max_npy_interface),stat=ier)
@@ -203,9 +206,9 @@
     endif
 
     ! loop on all the points describing this interface
-    open(unit=45,file=trim(MF_IN_DATA_FILES)//trim(interface_top_file),status='old',iostat=ier)
+    open(unit=45,file=trim(interface_top_file),status='old',iostat=ier)
     if (ier /= 0) then
-      print *,'Error opening file: ',trim(MF_IN_DATA_FILES)//trim(interface_top_file)
+      print *,'Error opening file: ',trim(interface_top_file)
       stop 'Error opening interface file'
     endif
 
@@ -232,7 +235,7 @@
     ! checks number of points npoints_interface_top = npx_interface_top * npy_interface
     if (icount /= npx_interface_top * npy_interface_top) then
       print *,'Error number of interface points ',icount,' should be ',npx_interface_top * npy_interface_top
-      print *,'Please check interface definition in file: ',trim(MF_IN_DATA_FILES)//trim(interface_top_file)
+      print *,'Please check interface definition in file: ',trim(interface_top_file)
       stop 'Error invalid number of interface file points'
     endif
 
@@ -460,7 +463,7 @@
     number_of_interfaces,max_npx_interface,max_npy_interface, &
     number_of_layers,ner_layer
 
-  use constants, only: IMAIN,IIN,MF_IN_DATA_FILES,DONT_IGNORE_JUNK,MAX_STRING_LEN,myrank
+  use constants, only: IMAIN,IIN,DONT_IGNORE_JUNK,MAX_STRING_LEN,myrank
 
   implicit none
 
@@ -478,14 +481,14 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Reading interface data from file ',trim(MF_IN_DATA_FILES)//trim(INTERFACES_FILE)
+    write(IMAIN,*) 'Reading interface data from file ',trim(INTERFACES_FILE)
     call flush_IMAIN()
   endif
 
   ! opens interfaces file
-  open(unit=IIN,file=trim(MF_IN_DATA_FILES)//trim(INTERFACES_FILE),status='old',iostat=ier)
+  open(unit=IIN,file=trim(INTERFACES_FILE),status='old',iostat=ier)
   if (ier /= 0) then
-    print *,'Error opening interface file: ',trim(MF_IN_DATA_FILES)//trim(INTERFACES_FILE)
+    print *,'Error opening interface file: ',trim(INTERFACES_FILE)
     stop 'Error opening interface file'
   endif
 

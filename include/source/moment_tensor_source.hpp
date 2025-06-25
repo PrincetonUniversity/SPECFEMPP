@@ -1,5 +1,4 @@
-#ifndef _MOMENT_TENSOR_SOURCE_HPP
-#define _MOMENT_TENSOR_SOURCE_HPP
+#pragma once
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -29,7 +28,7 @@ public:
    * @brief Default source constructor
    *
    */
-  moment_tensor(){};
+  moment_tensor() {};
 
   /**
    * @brief Get the Mxx component of the moment tensor
@@ -59,9 +58,29 @@ public:
   moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
                 const specfem::wavefield::simulation_field wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
-        Mxz(Node["Mxz"].as<type_real>()),
-        wavefield_type(wavefield_type), specfem::sources::source(Node, nsteps,
-                                                                 dt){};
+        Mxz(Node["Mxz"].as<type_real>()), wavefield_type(wavefield_type),
+        specfem::sources::source(Node, nsteps, dt) {};
+
+  /**
+   * @brief Costruct new moment tensor source using forcing function
+   *
+   * @param x x-coordinate of source
+   * @param z z-coordinate of source
+   * @param Mxx Mxx component of moment tensor
+   * @param Mzz Mzz component of moment tensor
+   * @param Mxz Mxz component of moment tensor
+   * @param forcing_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   *
+   */
+  moment_tensor(
+      type_real x, type_real z, const type_real Mxx, const type_real Mzz,
+      const type_real Mxz,
+      std::unique_ptr<specfem::forcing_function::stf> forcing_function,
+      const specfem::wavefield::simulation_field wavefield_type)
+      : Mxx(Mxx), Mzz(Mzz), Mxz(Mxz), wavefield_type(wavefield_type),
+        specfem::sources::source(x, z, std::move(forcing_function)) {};
+
   /**
    * @brief User output
    *
@@ -78,6 +97,9 @@ public:
     return wavefield_type;
   }
 
+  bool operator==(const specfem::sources::source &other) const override;
+  bool operator!=(const specfem::sources::source &other) const override;
+
 private:
   type_real Mxx;                                       ///< Mxx for the source
   type_real Mxz;                                       ///< Mxz for the source
@@ -88,5 +110,3 @@ private:
 };
 } // namespace sources
 } // namespace specfem
-
-#endif

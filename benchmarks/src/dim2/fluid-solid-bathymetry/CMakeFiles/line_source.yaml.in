@@ -1,0 +1,3 @@
+number-of-sources: @TOTAL_SOURCES@
+sources:
+@SOURCE_ENTRIES@

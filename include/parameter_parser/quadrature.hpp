@@ -25,7 +25,7 @@ public:
    * @param ngllx number of quadrature points
    */
   quadrature(type_real alpha, type_real beta, int ngll)
-      : alpha(alpha), beta(beta), ngll(ngll){};
+      : alpha(alpha), beta(beta), ngll(ngll) {};
   /**
    * @brief Construct a new quadrature object
    *

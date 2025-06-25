@@ -18,7 +18,7 @@ public:
    * @brief Construct a quadrature object with default values
    *
    */
-  quadrature(){};
+  quadrature() {};
   /**
    * @brief Construct a new quadrature object
    *

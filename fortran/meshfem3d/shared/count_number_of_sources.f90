@@ -30,12 +30,12 @@
 ! determines number of sources depending on number of lines in source file
 ! (only executed by main process)
 
-  use constants, only: IIN,IIN_PAR,MAX_STRING_LEN,IN_DATA_FILES, &
+  use constants, only: IIN,IIN_PAR,MAX_STRING_LEN, &
     NLINES_PER_FORCESOLUTION_SOURCE,NLINES_PER_CMTSOLUTION_SOURCE, &
     mygroup
 
   use shared_parameters, only: USE_FORCE_POINT_SOURCE,USE_EXTERNAL_SOURCE_FILE, &
-    HAS_FINITE_FAULT_SOURCE,NUMBER_OF_SIMULTANEOUS_RUNS
+    HAS_FINITE_FAULT_SOURCE,NUMBER_OF_SIMULTANEOUS_RUNS, FAULT_PAR_FILE
 
   use shared_parameters, only: IS_WAVEFIELD_DISCONTINUITY
 
@@ -47,31 +47,19 @@
   ! local variables
   integer :: icounter,ier
   integer :: nlines_per_source
-  character(len=MAX_STRING_LEN) :: fault_filename
   character(len=MAX_STRING_LEN) :: path_to_add
   character(len=MAX_STRING_LEN) :: dummystring
 
   ! initializes
   NSOURCES = 0
 
-  ! checks if finite fault source defined
-  fault_filename = IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'Par_file_faults'
-  ! see if we are running several independent runs in parallel
-  ! if so, add the right directory for that run
-  ! (group numbers start at zero, but directory names start at run0001, thus we add one)
-  ! a negative value for "mygroup" is a convention that indicates that groups (i.e. sub-communicators, one per run) are off
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    fault_filename = path_to_add(1:len_trim(path_to_add))//fault_filename(1:len_trim(fault_filename))
-  endif
-
-  open(unit=IIN_PAR,file=trim(fault_filename),status='old',iostat=ier)
-  if (ier == 0) then
-    HAS_FINITE_FAULT_SOURCE = .true.
-    !write(IMAIN,*) 'provides finite faults'
+  if (HAS_FINITE_FAULT_SOURCE) then
+    open(unit=IIN_PAR,file=trim(FAULT_PAR_FILE),status='old',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening fault file: ',trim(FAULT_PAR_FILE)
+      stop 'Error opening fault file'
+    endif
     close(IIN_PAR)
-  else
-    HAS_FINITE_FAULT_SOURCE = .false.
   endif
 
   ! checks if anything to do, finite fault simulations ignore CMT and force sources

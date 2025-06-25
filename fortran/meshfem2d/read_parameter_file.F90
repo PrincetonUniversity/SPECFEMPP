@@ -304,6 +304,13 @@ subroutine read_parameter_file_only()
       write(*,*)
    endif
 
+   call read_value_logical_p(STACEY_ABSORBING_CONDITIONS, 'STACEY_ABSORBING_CONDITIONS')
+   if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'STACEY_ABSORBING_CONDITIONS     = .true.'
+      write(*,*)
+   endif
+
    !--------------------------------------------------------------------
    !
    ! receivers
@@ -488,13 +495,6 @@ subroutine read_parameter_file_only()
          write(*,*)
       endif
 
-      call read_value_logical_p(STACEY_ABSORBING_CONDITIONS, 'STACEY_ABSORBING_CONDITIONS')
-      if (err_occurred() /= 0) then
-         some_parameters_missing_from_Par_file = .true.
-         write(*,'(a)') 'STACEY_ABSORBING_CONDITIONS     = .true.'
-         write(*,*)
-      endif
-
       ! read absorbing boundary parameters
       call read_value_logical_p(absorbbottom, 'absorbbottom')
       if (err_occurred() /= 0) then
@@ -603,8 +603,8 @@ subroutine check_parameters()
       call stop_the_code('Error invalid partitioning method')
    endif
 
-   if ( NGNOD /= 9) &
-      call stop_the_code('NGNOD should be 9!')
+   ! if ( NGNOD /= 9) &
+   !    call stop_the_code('NGNOD should be 9!')
 
    ! reads in material definitions
    if (nbmodels <= 0) &

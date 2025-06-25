@@ -1,11 +1,11 @@
 #pragma once
 
-#include "compute/fields/impl/field_impl.hpp"
+#include "compute/compute_mesh.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "compute/fields/impl/field_impl.tpp"
 #include "compute/fields/simulation_field.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace {
@@ -57,24 +57,40 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
     }
   }
 
-  auto acoustic_index =
-      Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                      static_cast<int>(specfem::element::medium_tag::acoustic));
-
-  auto elastic_index =
-      Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                      static_cast<int>(specfem::element::medium_tag::elastic));
-
-  elastic =
-      specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                         specfem::element::medium_tag::elastic>(
-          mesh, element_types, elastic_index);
-
-  acoustic = specfem::compute::impl::field_impl<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>(
-      mesh, element_types, acoustic_index);
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+                 MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                  ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE(field) {
+        auto index = Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
+                                     static_cast<int>(_medium_tag_));
+        _field_ =
+            specfem::compute::impl::field_impl<_dimension_tag_, _medium_tag_>(
+                mesh, element_types, index);
+      })
 
   Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
 
   return;
+}
+
+template <specfem::wavefield::simulation_field WavefieldType>
+int specfem::compute::simulation_field<
+    WavefieldType>::get_total_degrees_of_freedom() {
+  if (total_degrees_of_freedom != 0) {
+    return total_degrees_of_freedom;
+  }
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+                 MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
+                  ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE(field) {
+        total_degrees_of_freedom +=
+            this->get_nglob<_medium_tag_>() *
+            specfem::element::attributes<_dimension_tag_,
+                                         _medium_tag_>::components;
+      })
+
+  return total_degrees_of_freedom;
 }

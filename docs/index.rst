@@ -200,20 +200,21 @@ Getting Started
     :maxdepth: 1
     :hidden:
 
-    getting_started/index
-    cookbooks/index
+    sections/getting_started/index
+    sections/cookbooks/index
+    sections/getting_started/presets
 
 User Documentation
 ------------------
 
 .. toctree::
     :caption: USER DOCUMENTATION
-    :maxdepth: 1
+    :maxdepth: 2
     :hidden:
 
-    meshfem2d/index
-    parameter_documentation/index
-    source_description/index
+    sections/meshfem/index
+    sections/parameter_documentation/index
+    sections/source_description/index
 
 Contribution
 ------------
@@ -223,11 +224,13 @@ Contribution
     :maxdepth: 1
     :hidden:
 
-    developer_documentation/style
-    developer_documentation/git_workflow
-    developer_documentation/build_requirements
-    developer_documentation/tests
-    developer_documentation/tutorials/index
+    sections/developer_documentation/style
+    sections/developer_documentation/git_workflow
+    sections/developer_documentation/build_requirements
+    sections/developer_documentation/continuous_integration
+    sections/developer_documentation/special_machines
+
+.. sections/developer_documentation/tutorials/index
 
 Community
 ---------
@@ -259,4 +262,4 @@ API Documentation
     :maxdepth: 1
     :hidden:
 
-    api/index
+    sections/api/index

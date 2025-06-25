@@ -4,8 +4,8 @@
 #include "element/quadrature.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
-#include "point/interface.hpp"
 #include "quadrature/interface.hpp"
+#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
@@ -229,7 +229,7 @@ struct mesh {
  */
 
 /**
- * @brief Load quadrature data for a spectral element on the device
+ * @brief Load quadrature data for a spectral element on host or device
  *
  * @ingroup QuadratureDataAccess
  *
@@ -239,11 +239,11 @@ struct mesh {
  * @param quadrature Quadrature data
  * @param element_quadrature Quadrature data for the element (output)
  */
-template <typename MemberType, typename ViewType>
-KOKKOS_FUNCTION void
-load_on_device(const MemberType &team,
-               const specfem::compute::quadrature &quadrature,
-               ViewType &element_quadrature) {
+template <bool on_device, typename MemberType, typename ViewType>
+KOKKOS_INLINE_FUNCTION void
+impl_load(const MemberType &team,
+          const specfem::compute::quadrature &quadrature,
+          ViewType &element_quadrature) {
 
   constexpr bool store_hprime_gll = ViewType::store_hprime_gll;
 
@@ -260,13 +260,49 @@ load_on_device(const MemberType &team,
         int ix, iz;
         sub2ind(xz, NGLL, iz, ix);
         if constexpr (store_hprime_gll) {
-          element_quadrature.hprime_gll(iz, ix) = quadrature.gll.hprime(iz, ix);
+          if constexpr (on_device) {
+            element_quadrature.hprime_gll(iz, ix) =
+                quadrature.gll.hprime(iz, ix);
+          } else {
+            element_quadrature.hprime_gll(iz, ix) =
+                quadrature.gll.h_hprime(iz, ix);
+          }
         }
         if constexpr (store_weight_times_hprime_gll) {
-          element_quadrature.hprime_wgll(ix, iz) =
-              quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
+          if constexpr (on_device) {
+            element_quadrature.hprime_wgll(ix, iz) =
+                quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
+          } else {
+            element_quadrature.hprime_wgll(ix, iz) =
+                quadrature.gll.h_hprime(iz, ix) * quadrature.gll.h_weights(iz);
+          }
         }
       });
+}
+
+/**
+ * @defgroup QuadratureDataAccess
+ *
+ */
+
+/**
+ * @brief Load quadrature data for a spectral element on the device
+ *
+ * @ingroup QuadratureDataAccess
+ *
+ * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
+ * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
+ * @param team Team member
+ * @param quadrature Quadrature data
+ * @param element_quadrature Quadrature data for the element (output)
+ */
+template <typename MemberType, typename ViewType>
+KOKKOS_FUNCTION void
+load_on_device(const MemberType &team,
+               const specfem::compute::quadrature &quadrature,
+               ViewType &element_quadrature) {
+
+  impl_load<true>(team, quadrature, element_quadrature);
 }
 
 /**
@@ -284,27 +320,7 @@ template <typename MemberType, typename ViewType>
 void load_on_host(const MemberType &team,
                   const specfem::compute::quadrature &quadrature,
                   ViewType &element_quadrature) {
-
-  constexpr bool store_hprime_gll = ViewType::store_hprime_gll;
-  constexpr bool store_weight_times_hprime_gll =
-      ViewType::store_weight_times_hprime_gll;
-  constexpr int NGLL = ViewType::ngll;
-
-  Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
-        int ix, iz;
-        sub2ind(xz, NGLL, iz, ix);
-        if constexpr (store_hprime_gll) {
-          element_quadrature.hprime_gll(iz, ix) =
-              quadrature.gll.h_hprime(iz, ix);
-        }
-        if constexpr (store_weight_times_hprime_gll) {
-          element_quadrature.hprime_wgll(ix, iz) =
-              quadrature.gll.h_hprime(iz, ix) * quadrature.gll.h_weights(iz);
-        }
-      });
-
-  return;
+  impl_load<false>(team, quadrature, element_quadrature);
 }
 
 } // namespace compute

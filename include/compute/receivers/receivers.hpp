@@ -1,7 +1,10 @@
 #pragma once
 
+#include "compute/compute_mesh.hpp"
 #include "compute/element_types/element_types.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
+#include "mesh/mesh.hpp"
+#include "receiver/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <receiver/receiver.hpp>
@@ -11,85 +14,93 @@ namespace specfem {
 namespace compute {
 
 namespace impl {
+
+// Simple seismogram type iterator - just wraps a vector of seismogram types
+class SeismogramTypeIterator {
+public:
+  using iterator = std::vector<specfem::wavefield::type>::const_iterator;
+
+  SeismogramTypeIterator() = default;
+
+  explicit SeismogramTypeIterator(
+      const std::vector<specfem::wavefield::type> &types)
+      : seismogram_types_(types) {}
+
+  iterator begin() const { return seismogram_types_.begin(); }
+  iterator end() const { return seismogram_types_.end(); }
+
+  size_t size() const { return seismogram_types_.size(); }
+
+private:
+  std::vector<specfem::wavefield::type> seismogram_types_;
+};
+
+// StationInfo that contains station data and can provide seismogram types
+struct StationInfo {
+  std::string network_name;
+  std::string station_name;
+
+  StationInfo(std::string network, std::string station,
+              const std::vector<specfem::wavefield::type> &types)
+      : network_name(std::move(network)), station_name(std::move(station)),
+        seismo_types_(types) {}
+
+  // Method to get seismogram types associated with this station
+  SeismogramTypeIterator get_seismogram_types() const {
+    return SeismogramTypeIterator(seismo_types_);
+  }
+
+private:
+  std::vector<specfem::wavefield::type> seismo_types_;
+};
+
+// Station iterator that outputs StationInfo objects
 class StationIterator {
 private:
   class Iterator {
-
   public:
-    Iterator(const int irec, const int iseis, const int nreceivers,
-             const int nseismograms, std::vector<std::string> &station_names,
-             std::vector<std::string> &network_names,
-             std::vector<specfem::wavefield::type> &seismogram_types)
-        : index(irec * nseismograms + iseis), nreceivers(nreceivers),
-          nseismograms(nseismograms), station_names(station_names),
-          network_names(network_names), seismogram_types(seismogram_types) {}
+    Iterator(const StationIterator *container, size_t index)
+        : container_(container), index_(index) {}
 
-    std::tuple<std::string, std::string, specfem::wavefield::type> operator*() {
-      int irec = index / nseismograms;
-      int iseis = index % nseismograms;
-      return std::make_tuple(station_names[irec], network_names[irec],
-                             seismogram_types[iseis]);
+    StationInfo operator*() const {
+      return StationInfo(container_->network_names_[index_],
+                         container_->station_names_[index_],
+                         container_->seismogram_types_);
     }
 
     Iterator &operator++() {
-      ++index;
+      ++index_;
       return *this;
     }
 
     bool operator!=(const Iterator &other) const {
-      return index != other.index;
+      return index_ != other.index_;
     }
 
   private:
-    int index;
-    int nreceivers;
-    int nseismograms;
-    std::vector<std::string> &station_names;
-    std::vector<std::string> &network_names;
-    std::vector<specfem::wavefield::type> &seismogram_types;
+    const StationIterator *container_;
+    size_t index_;
   };
 
 public:
   StationIterator() = default;
 
-  StationIterator(const int nreceivers, const int nseismograms)
-      : nreceivers(nreceivers), nseismograms(nseismograms),
-        station_names(nreceivers), network_names(nreceivers),
-        seismogram_types(nseismograms) {}
-
-  Iterator begin() {
-    return Iterator(0, 0, nreceivers, nseismograms, station_names,
-                    network_names, seismogram_types);
+  StationIterator(size_t nreceivers,
+                  const std::vector<specfem::wavefield::type> &seismo_types)
+      : seismogram_types_(seismo_types) {
+    station_names_.reserve(nreceivers);
+    network_names_.reserve(nreceivers);
   }
 
-  Iterator end() {
-    return Iterator(nreceivers - 1, nseismograms, nreceivers, nseismograms,
-                    station_names, network_names, seismogram_types);
-  }
+  Iterator begin() const { return Iterator(this, 0); }
+  Iterator end() const { return Iterator(this, station_names_.size()); }
 
-  /** @brief Get the station iterator object
-   *
-   * The iterator object can be used to iterate over the stations. See example
-   * below:
-   * @code
-   * // Iterator over all the stations
-   * for (auto [station_name, network_name, type] :
-   * this->get_stations()) {
-   * // Use get_seismogram(station_name, network_name, type) to get the traces
-   * }
-   * @endcode
-   * @return StationIterator Iterator over the stations
-   */
-  StationIterator &get_stations() { return *this; }
-
-private:
-  int nreceivers;
-  int nseismograms;
+  size_t size() const { return station_names_.size(); }
 
 protected:
-  std::vector<std::string> station_names;                 ///< Station names
-  std::vector<std::string> network_names;                 ///< Network names
-  std::vector<specfem::wavefield::type> seismogram_types; ///< Seismogram types
+  std::vector<std::string> station_names_;
+  std::vector<std::string> network_names_;
+  std::vector<specfem::wavefield::type> seismogram_types_;
 };
 
 class SeismogramIterator {
@@ -163,10 +174,10 @@ private:
 public:
   SeismogramIterator() = default;
 
-  SeismogramIterator(const int nreceivers, const int nsiesmograms,
+  SeismogramIterator(const int nreceivers, const int nseismograms,
                      const int max_sig_step, type_real dt, type_real t0,
                      int nstep_between_samples)
-      : nreceivers(nreceivers), nsiesmograms(nsiesmograms), dt(dt), t0(t0),
+      : nreceivers(nreceivers), nseismograms(nseismograms), dt(dt), t0(t0),
         nstep_between_samples(nstep_between_samples),
         max_sig_step(max_sig_step),
         h_sine_receiver_angle(
@@ -175,7 +186,7 @@ public:
             "specfem::compute::receivers::cosine_receiver_angle", nreceivers),
         seismogram_components(
             "specfem::compute::receivers::seismogram_components", max_sig_step,
-            nsiesmograms, nreceivers, 2),
+            nseismograms, nreceivers, 2),
         h_seismogram_components(
             Kokkos::create_mirror_view(seismogram_components)) {}
 
@@ -245,7 +256,7 @@ public:
 
 private:
   int nreceivers;
-  int nsiesmograms;
+  int nseismograms;
   int irec;
   int iseis;
   int nstep_between_samples;
@@ -303,7 +314,7 @@ public:
    * @param nsteps_between_samples Number of time steps between samples
    * @param receivers Vector of receivers
    * @param stypes Vector of seismogram types (displacement, velocity,
-   * acceleration or pressure)
+   * acceleration, pressure, or rotation)
    * @param mesh Mesh object
    * @param tags Tags for every element in the mesh
    * @param properties Properties object
@@ -313,7 +324,7 @@ public:
             const int nsteps_between_samples,
             const std::vector<std::shared_ptr<specfem::receivers::receiver> >
                 &receivers,
-            const std::vector<specfem::enums::seismogram::type> &stypes,
+            const std::vector<specfem::wavefield::type> &stypes,
             const specfem::compute::mesh &mesh,
             const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
             const specfem::compute::element_types &element_types);
@@ -356,7 +367,16 @@ public:
    * @return std::vector<specfem::wavefield::type> Vector of seismogram types
    */
   std::vector<specfem::wavefield::type> get_seismogram_types() const {
-    return seismogram_types;
+    return seismogram_types_;
+  }
+
+  /**
+   * @brief Get the station iterator
+   *
+   * @return const StationIterator& Iterator over stations
+   */
+  const impl::StationIterator &stations() const {
+    return static_cast<const impl::StationIterator &>(*this);
   }
 
 private:
@@ -373,37 +393,24 @@ private:
                               ///< stored on the host
   specfem::compute::element_types element_types; ///< Element types
 
-#define RECEIVER_INDICES_VARIABLE_NAME(DIMENSION_TAG, MEDIUM_TAG,              \
-                                       PROPERTY_TAG)                           \
-  IndexViewType CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),        \
-                                     GET_NAME(MEDIUM_TAG),                     \
-                                     GET_NAME(PROPERTY_TAG));                  \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),               \
-      GET_NAME(PROPERTY_TAG));                                                 \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      receiver_indices, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
-      GET_NAME(PROPERTY_TAG));                                                 \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_receiver_indices, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
-      GET_NAME(PROPERTY_TAG));
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELASTIC_PSV_T),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
+                                    ISOTROPIC_COSSERAT)),
+                      DECLARE((IndexViewType, receiver_indices),
+                              (IndexViewType::HostMirror, h_receiver_indices),
+                              (IndexViewType, elements),
+                              (IndexViewType::HostMirror, h_elements)))
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RECEIVER_INDICES_VARIABLE_NAME,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+  template <typename ChunkIndexType, typename ViewType>
+  friend KOKKOS_FUNCTION void load_on_device(const ChunkIndexType &chunk_index,
+                                             const receivers &receivers,
+                                             ViewType &lagrange_interpolant);
 
-#undef RECEIVER_INDICES_VARIABLE_NAME
-
-  template <typename MemberType, typename IteratorType, typename ViewType>
+  template <typename ChunkIndexType, typename SiesmogramViewType>
   friend KOKKOS_FUNCTION void
-  load_on_device(const MemberType &team_member, const IteratorType &iterator,
-                 const receivers &receivers, ViewType &lagrange_interpolant);
-
-  template <typename MemberType, typename IteratorType,
-            typename SiesmogramViewType>
-  friend KOKKOS_FUNCTION void
-  store_on_device(const MemberType &team_member, const IteratorType &iterator,
+  store_on_device(const ChunkIndexType &chunk_index,
                   const SiesmogramViewType &seismogram_components,
                   const receivers &receivers);
 };
@@ -418,23 +425,29 @@ private:
  *
  * @ingroup ComputeReceiversDataAccess
  *
- * @tparam MemberType Kokkos team member type
- * @tparam IteratorType Chunk policy iterator type @ref
- * specfem::policy::element_chunk
- * @param receivers Receivers object containing the receiver information
+ * @tparam ChunkIndexType Chunk index type @ref
+ * specfem::execution::ChunkElementIndex
  * @tparam ViewType Lagrange interpolant associated with the receivers in the
  * iterator
+ *
+ * @param team_member Kokkos team member
+ * @param chunk_index Chunk index
+ * @param receivers Receivers object containing the receiver information
+ * @param lagrange_interpolant Lagrange interpolant associated with the
+ * receivers in the iterator
  */
-template <typename MemberType, typename IteratorType, typename ViewType>
-KOKKOS_FUNCTION void
-load_on_device(const MemberType &team_member, const IteratorType &iterator,
-               const receivers &receivers, ViewType &lagrange_interpolant) {
+template <typename ChunkIndexType, typename ViewType>
+KOKKOS_FUNCTION void load_on_device(const ChunkIndexType &chunk_index,
+                                    const receivers &receivers,
+                                    ViewType &lagrange_interpolant) {
 
-  Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team_member, iterator.chunk_size()),
-      [&](const int i) {
-        const auto iterator_index = iterator(i);
-        const auto index = iterator_index.index;
+  specfem::execution::for_each_level(
+      chunk_index.get_iterator(),
+      [&](const typename ChunkIndexType::iterator_type::index_type
+              &iterator_index) {
+        const auto index = iterator_index.get_index();
+        const int ielement = iterator_index.get_policy_index();
+        const int irec = index.imap;
 
 #ifndef NDEBUG
 
@@ -447,11 +460,9 @@ load_on_device(const MemberType &team_member, const IteratorType &iterator,
 
 #endif
 
-        const int irec = iterator_index.imap;
-
-        lagrange_interpolant(iterator_index.ielement, index.iz, index.ix, 0) =
+        lagrange_interpolant(ielement, index.iz, index.ix, 0) =
             receivers.lagrange_interpolant(irec, index.iz, index.ix, 0);
-        lagrange_interpolant(iterator_index.ielement, index.iz, index.ix, 1) =
+        lagrange_interpolant(ielement, index.iz, index.ix, 1) =
             receivers.lagrange_interpolant(irec, index.iz, index.ix, 1);
       });
 
@@ -468,48 +479,43 @@ load_on_device(const MemberType &team_member, const IteratorType &iterator,
  * @c receivers.set_seismogram_type(iseis);
  *
  * @ingroup ComputeReceiversDataAccess
- * @tparam MemberType Kokkos team member type
- * @tparam IteratorType Chunk policy iterator type @ref
- * specfem::policy::element_chunk
+ * @tparam ChunkIndexType Chunk index type
  * @tparam SeismogramViewType View of the seismogram components
  * @param receivers Receivers object containing the receiver information
  */
-template <typename MemberType, typename IteratorType,
-          typename SeismogramViewType>
+template <typename ChunkIndexType, typename SeismogramViewType>
 KOKKOS_FUNCTION void
-store_on_device(const MemberType &team_member, const IteratorType &iterator,
+store_on_device(const ChunkIndexType &chunk_index,
                 const SeismogramViewType &seismogram_components,
                 const receivers &receivers) {
 
   const int isig_step = receivers.get_seismogram_step();
   const int iseis = receivers.get_seis_type();
 
-  Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team_member, iterator.chunk_size()),
-      [&](const int i) {
-        const auto iterator_index = iterator(i);
-        const auto index = iterator_index.index;
+  specfem::execution::for_each_level(
+      chunk_index.get_iterator(),
+      [&](const typename ChunkIndexType::iterator_type::index_type
+              &iterator_index) {
+        const auto index = iterator_index.get_index();
+        const int ielement = iterator_index.get_policy_index();
+        const int irec = index.imap;
 
 #ifndef NDEBUG
 
         if (index.ispec >= receivers.nspec) {
           std::string message = "Invalid element detected in kernel at " +
-                                std::string(__FILE__) +
+                                std::string(__FILE__) + ":" +
                                 std::to_string(__LINE__);
           Kokkos::abort(message.c_str());
         }
 
 #endif
 
-        const int irec = iterator_index.imap;
-
         receivers.seismogram_components(isig_step, iseis, irec, 0) =
-            seismogram_components(iterator_index.ielement, 0);
-
+            seismogram_components(ielement, 0);
         receivers.seismogram_components(isig_step, iseis, irec, 1) =
-            seismogram_components(iterator_index.ielement, 1);
+            seismogram_components(ielement, 1);
       });
-
   return;
 }
 

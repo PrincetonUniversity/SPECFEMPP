@@ -40,6 +40,6 @@ parameters:
     number-of-runs: 1
 
   databases:
-    mesh-database: "../../../tests/unit-tests/domain/serial/test2/database.bin"
+    mesh-database: "domain/serial/test2/database.bin"
 
-  sources: "../../../tests/unit-tests/domain/serial/test2/source.yaml"
+  sources: "domain/serial/test2/source.yaml"

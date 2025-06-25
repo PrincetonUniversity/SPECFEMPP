@@ -13,14 +13,13 @@ namespace kokkos_kernels {
 /**
  * @brief Compute kernels used to compute Frechet derivatives.
  *
- * @tparam DimensionType Dimension of the problem.
+ * @tparam DimensionTag Dimension of the problem.
  * @tparam NGLL Number of GLL points.
  */
-template <specfem::dimension::type DimensionType, int NGLL>
+template <specfem::dimension::type DimensionTag, int NGLL>
 class frechet_kernels {
 public:
-  constexpr static auto dimension =
-      DimensionType; ///< Dimension of the problem.
+  constexpr static auto dimension = DimensionTag; ///< Dimension of the problem.
 
   /**
    * @brief Constructor.
@@ -36,20 +35,17 @@ public:
    * @param dt Time interval.
    */
   inline void compute_derivatives(const type_real &dt) {
-#define CALL_COMPUTE_MATERIAL_DERIVATIVES(DIMENSION_TAG, MEDIUM_TAG,           \
-                                          PROPERTY_TAG)                        \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    impl::compute_material_derivatives<                                        \
-        DimensionType, NGLL, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(      \
-        this->assembly, dt);                                                   \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        CALL_COMPUTE_MATERIAL_DERIVATIVES,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef CALL_COMPUTE_MATERIAL_DERIVATIVES
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+        {
+          if constexpr (dimension == _dimension_tag_) {
+            impl::compute_material_derivatives<dimension, NGLL, _medium_tag_,
+                                               _property_tag_>(this->assembly,
+                                                               dt);
+          }
+        })
   }
 
 private:

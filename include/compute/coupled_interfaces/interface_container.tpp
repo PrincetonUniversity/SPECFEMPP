@@ -7,9 +7,8 @@
 #include "edge/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "mesh/coupled_interfaces/coupled_interfaces.hpp"
-#include "mesh/coupled_interfaces/interface_container.hpp"
-#include "point/coordinates.hpp"
+#include "mesh/mesh.hpp"
+#include "specfem/point.hpp"
 
 namespace {
 // Topological map ordering for coupled elements
