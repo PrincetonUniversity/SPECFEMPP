@@ -65,9 +65,9 @@ void check_store(specfem::compute::assembly &assembly) {
             specfem::point::index<Dimension, false>(ielement, iz, ix);
         const auto mapped_iterator_index =
             mapped_chunk_index_type(index, isource);
-        specfem::datatype::ScalarPointViewType<type_real, num_components, false>
+        specfem::datatype::VectorPointViewType<type_real, num_components, false>
             stf;
-        specfem::datatype::ScalarPointViewType<type_real, num_components, false>
+        specfem::datatype::VectorPointViewType<type_real, num_components, false>
             lagrange_interpolant;
         for (int ic = 0; ic < num_components; ic++) {
           stf(ic) = values_to_store(i);

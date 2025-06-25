@@ -3,7 +3,7 @@
 #include "jacobian_matrix.hpp"
 
 template <bool UseSIMD>
-specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
+specfem::datatype::VectorPointViewType<type_real, 2, UseSIMD>
 specfem::point::jacobian_matrix<
     specfem::dimension::type::dim2, true,
     UseSIMD>::compute_normal(const specfem::enums::edge::type &type) const {

@@ -34,7 +34,7 @@ namespace algorithms {
  * @param f Field to compute the divergence of
  * @param callback Callback functor. Callback signature must be:
  * @code void(const typename IteratorType::index_type, const
- * specfem::datatype::ScalarPointViewType<type_real, ViewType::components>)
+ * specfem::datatype::VectorPointViewType<type_real, ViewType::components>)
  * @endcode
  */
 template <typename ChunkIndexType, typename VectorFieldType,
@@ -50,8 +50,8 @@ divergence(const ChunkIndexType &chunk_index,
   constexpr int NGLL = VectorFieldType::ngll;
   constexpr static bool using_simd = VectorFieldType::simd::using_simd;
 
-  using ScalarPointViewType =
-      specfem::datatype::ScalarPointViewType<type_real, components, using_simd>;
+  using VectorPointViewType =
+      specfem::datatype::VectorPointViewType<type_real, components, using_simd>;
 
   static_assert(VectorFieldType::isVectorViewType,
                 "ViewType must be a vector field view type");
@@ -59,10 +59,10 @@ divergence(const ChunkIndexType &chunk_index,
   static_assert(
       std::is_invocable_v<CallableType,
                           typename ChunkIndexType::iterator_type::index_type,
-                          ScalarPointViewType>,
+                          VectorPointViewType>,
       "CallableType must be invocable with arguments (int, "
       "specfem::point::index, "
-      "specfem::datatype::ScalarPointViewType<type_real, components>)");
+      "specfem::datatype::VectorPointViewType<type_real, components>)");
 
   using simd = typename VectorFieldType::simd;
   using datatype = typename VectorFieldType::simd::datatype;
@@ -91,7 +91,7 @@ divergence(const ChunkIndexType &chunk_index,
             temp2l[icomp] += f(ielement, l, ix, icomp, 1) * hprimewgll(iz, l);
           }
         }
-        ScalarPointViewType result;
+        VectorPointViewType result;
         for (int icomp = 0; icomp < components; ++icomp) {
           result(icomp) =
               weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
