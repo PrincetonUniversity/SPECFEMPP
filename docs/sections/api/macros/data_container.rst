@@ -121,11 +121,11 @@ Use Cases
 
 The ``DATA_CONTAINER`` macro is extensively used throughout SPECFEMPP for various medium types:
 
-- Acoustic media (rho_inverse, kappa)
-- Elastic isotropic media (kappa, mu, rho)
-- Elastic anisotropic media (c11, c13, c15, c33, c35, c55, c12, c23, c25, rho)
-- Elastic isotropic Cosserat media (rho, kappa, mu, nu, j, lambda_c, mu_c, nu_c)
-- Poroelastic media (phi, rho_s, rho_f, tortuosity, mu_G, H_Biot, C_Biot, M_Biot, etc.)
+- Acoustic media (``rho_inverse``, ``kappa``)
+- Elastic isotropic media (``kappa``, ``mu, rho``)
+- Elastic anisotropic media (``c11``, ``c13``, ``c15``, ``c33``, ``c35``, ``c55``, ``c12``, ``c23``, ``c25``, ``rho``)
+- Elastic isotropic Cosserat media (``rho``, ``kappa``, ``mu``, ``nu``, ``j``, ``lambda_c``, ``mu_c``, ``nu_c``)
+- Poroelastic media (``phi``, ``rho_s``, ``rho_f``, ``tortuosity``, ``mu_G``, ``H_Biot``, ``C_Biot``, ``M_Biot``, etc.)
 
 Technical Implementation
 ------------------------
