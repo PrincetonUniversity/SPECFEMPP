@@ -3,7 +3,7 @@
 Macros
 ======
 
-This section provides an overview of the macros used in SPECFEMPP, which are designed to simplify the creation and management of data structures within the codebase. The macros are primarily used to define containers for physical properties, iterate over products, and manage configuration strings.
+This section provides an overview of the macros used in SPECFEMPP, which are designed to simplify the creation and management of data structures within the codebase. The macros are primarily used to define containers for physical properties, iterate over medium type combinations, and manage configuration strings.
 
 .. toctree::
     :maxdepth: 1
