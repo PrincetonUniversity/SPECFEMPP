@@ -3,10 +3,10 @@
 #include "compute/compute_mesh.hpp"
 #include "compute/element_types/element_types.hpp"
 #include "enumerations/interface.hpp"
-#include "simulation_field.hpp"
-#include "simulation_field.tpp"
 #include "impl/field_impl.hpp"
 #include "impl/field_impl.tpp"
+#include "simulation_field.hpp"
+#include "simulation_field.tpp"
 
 namespace specfem {
 namespace compute {
