@@ -1,10 +1,11 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "datatypes/simd.hpp"
+#include "execution/chunked_domain_iterator.hpp"
+#include "execution/for_all.hpp"
+#include "execution/range_iterator.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "parallel_configuration/range_config.hpp"
-#include "policies/chunk.hpp"
-#include "policies/range.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <fstream>
@@ -76,12 +77,15 @@ void parse_test_config(const YAML::Node &yaml,
 template <typename ParallelConfig>
 typename Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>::HostMirror
 execute_range_policy(const int nglob) {
-  using PolicyType = specfem::policy::range<ParallelConfig>;
-  PolicyType policy(nglob);
+  specfem::execution::RangeIterator iterator(ParallelConfig(), nglob);
   using TestViewType = Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>;
   TestViewType test_view("test_view", nglob);
   TestViewType::HostMirror test_view_host =
       Kokkos::create_mirror_view(test_view);
+
+  constexpr bool using_simd = ParallelConfig::simd::using_simd;
+
+  using PointIndex = specfem::point::assembly_index<using_simd>;
 
   // initialize test_view
   Kokkos::parallel_for(
@@ -91,31 +95,24 @@ execute_range_policy(const int nglob) {
 
   Kokkos::fence();
 
-  Kokkos::parallel_for(
-      "execute_range_policy",
-      static_cast<typename PolicyType::policy_type>(policy),
-      KOKKOS_LAMBDA(const int iglob) {
-        const auto iterator = policy.range_iterator(iglob);
-        const auto index = iterator(0);
-
-        constexpr bool using_simd = PolicyType::simd::using_simd;
+  specfem::execution::for_all(
+      "execute_range_policy", iterator, KOKKOS_LAMBDA(const PointIndex &index) {
         const auto l_test_view = test_view;
-
-        if constexpr (using_simd) {
-          using mask_type = typename PolicyType::simd::mask_type;
-          mask_type mask(
-              [&](std::size_t lane) { return index.index.mask(lane); });
-          using tag_type = typename PolicyType::simd::tag_type;
-          using datatype = typename PolicyType::simd::datatype;
-          datatype data;
+        constexpr bool is_simd = using_simd;
+        if constexpr (is_simd) {
+          using tag_type = typename ParallelConfig::simd::tag_type;
+          using datatype = typename ParallelConfig::simd::datatype;
+          using mask_type = typename ParallelConfig::simd::mask_type;
+          mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+          datatype data(0);
           Kokkos::Experimental::where(mask, data)
-              .copy_from(&l_test_view(index.index.iglob), tag_type());
+              .copy_from(&l_test_view(index.iglob), tag_type());
 
-          data += static_cast<type_real>(1);
+          data = data + datatype(1);
           Kokkos::Experimental::where(mask, data)
-              .copy_to(&l_test_view(index.index.iglob), tag_type());
-        } else if constexpr (!using_simd) {
-          l_test_view(index.index.iglob) += 1;
+              .copy_to(&l_test_view(index.iglob), tag_type());
+        } else {
+          l_test_view(index.iglob) += 1;
         }
       });
 
@@ -130,6 +127,11 @@ typename Kokkos::View<type_real ***, Kokkos::LayoutLeft,
                       Kokkos::DefaultExecutionSpace>::HostMirror
 execute_chunk_element_policy(const int nspec, const int ngllz,
                              const int ngllx) {
+
+  constexpr bool using_simd = ParallelConfig::simd::using_simd;
+
+  constexpr auto dimension = specfem::dimension::type::dim2;
+
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace> elements("elements",
                                                               nspec);
 
@@ -141,8 +143,8 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
 
   Kokkos::fence();
 
-  using PolicyType = specfem::policy::element_chunk<ParallelConfig>;
-  PolicyType policy(elements, ngllz, ngllx);
+  specfem::execution::ChunkedDomainIterator policy(ParallelConfig(), elements,
+                                                   ngllz, ngllx);
 
   using TestViewType = Kokkos::View<type_real ***, Kokkos::LayoutLeft,
                                     Kokkos::DefaultExecutionSpace>;
@@ -162,51 +164,32 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
 
   Kokkos::fence();
 
-  constexpr int simd_size = PolicyType::simd::size();
+  using PointIndex = specfem::point::index<dimension, using_simd>;
 
-  Kokkos::parallel_for(
-      "specfem::domain::impl::kernels::elements::compute_mass_matrix",
-      static_cast<const typename PolicyType::policy_type &>(policy),
-      KOKKOS_LAMBDA(const typename PolicyType::member_type &team) {
-        for (int tile = 0; tile < PolicyType::tile_size * simd_size;
-             tile += PolicyType::chunk_size * simd_size) {
-          const int starting_element_index =
-              team.league_rank() * PolicyType::tile_size * simd_size + tile;
+  specfem::execution::for_all(
+      "specfem::tests::execution::chunked_domain", policy,
+      KOKKOS_LAMBDA(const PointIndex &point_index) {
+        const int ispec = point_index.ispec;
+        const int iz = point_index.iz;
+        const int ix = point_index.ix;
+        constexpr bool is_simd = using_simd;
+        const auto l_test_view = test_view;
 
-          if (starting_element_index >= nspec) {
-            break;
-          }
+        if constexpr (is_simd) {
+          using mask_type = typename ParallelConfig::simd::mask_type;
+          mask_type mask(
+              [&](std::size_t lane) { return point_index.mask(lane); });
+          using tag_type = typename ParallelConfig::simd::tag_type;
+          using datatype = typename ParallelConfig::simd::datatype;
+          datatype data(0);
+          Kokkos::Experimental::where(mask, data)
+              .copy_from(&l_test_view(ispec, iz, ix), tag_type());
 
-          const auto iterator = policy.league_iterator(starting_element_index);
-
-          Kokkos::parallel_for(
-              Kokkos::TeamThreadRange(team, iterator.chunk_size()),
-              [&](const int i) {
-                const auto iterator_index = iterator(i);
-                const auto ispec = iterator_index.index.ispec;
-                const int ix = iterator_index.index.ix;
-                const int iz = iterator_index.index.iz;
-                constexpr bool using_simd = PolicyType::simd::using_simd;
-                const auto l_test_view = test_view;
-
-                if constexpr (using_simd) {
-                  using mask_type = typename PolicyType::simd::mask_type;
-                  mask_type mask([&](std::size_t lane) {
-                    return iterator_index.index.mask(lane);
-                  });
-                  using tag_type = typename PolicyType::simd::tag_type;
-                  using datatype = typename PolicyType::simd::datatype;
-                  datatype data;
-                  Kokkos::Experimental::where(mask, data)
-                      .copy_from(&l_test_view(ispec, iz, ix), tag_type());
-
-                  data += static_cast<type_real>(1);
-                  Kokkos::Experimental::where(mask, data)
-                      .copy_to(&l_test_view(ispec, iz, ix), tag_type());
-                } else if constexpr (!using_simd) {
-                  l_test_view(ispec, iz, ix) += 1;
-                }
-              });
+          data = data + datatype(1);
+          Kokkos::Experimental::where(mask, data)
+              .copy_to(&l_test_view(ispec, iz, ix), tag_type());
+        } else {
+          l_test_view(ispec, iz, ix) += 1;
         }
       });
 
@@ -250,8 +233,7 @@ protected:
 
   POLICIES() {
 
-    std::string config_filename =
-        "../../../tests/unit-tests/policies/test_config.yaml";
+    std::string config_filename = "policies/test_config.yaml";
     parse_test_config(YAML::LoadFile(config_filename), Tests);
 
     for (auto &Test : Tests) {
@@ -278,8 +260,6 @@ TEST_F(POLICIES, RangePolicy) {
     const auto Test = std::get<0>(parameters);
     const auto nglob = std::get<1>(parameters);
     const auto nspec = std::get<2>(parameters);
-    const int ngllz = 5;
-    const int ngllx = 5;
 
     using ParallelConfig = specfem::parallel_config::default_range_config<
         specfem::datatype::simd<type_real, false>,
@@ -385,7 +365,7 @@ TEST_F(POLICIES, ChunkElementPolicy) {
 // TEST(POLICIES, RangePolicy) {
 //   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 //   std::string config_filename =
-//       "../../../tests/unit-tests/policies/test_config.yaml";
+//       "policies/test_config.yaml";
 //   std::vector<test_configuration::Test> Tests;
 //   parse_test_config(YAML::LoadFile(config_filename), Tests);
 

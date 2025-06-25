@@ -1,20 +1,21 @@
-#include "IO/interface.hpp"
 #include "Kokkos_Environment.hpp"
 #include "MPI_environment.hpp"
 #include "algorithms/locate_point.hpp"
 #include "compute/compute_mesh.hpp"
+#include "io/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 TEST(ALGORITHMS, locate_point) {
 
-  std::string database_file =
-      "../../../tests/unit-tests/algorithms/serial/database.bin";
+  std::string database_file = "algorithms/serial/database.bin";
 
   // Read Mesh database
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
-  specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
+      database_file, specfem::enums::elastic_wave::psv,
+      specfem::enums::electromagnetic_wave::te, mpi);
 
   // Quadratures
   specfem::quadrature::gll::gll gll(0.0, 0.0, 5);

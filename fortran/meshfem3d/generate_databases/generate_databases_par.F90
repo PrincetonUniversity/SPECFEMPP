@@ -158,6 +158,8 @@
   logical,dimension(:),allocatable :: ispec_is_surface_external_mesh,iglob_is_surface_external_mesh
   integer :: nfaces_surface,nfaces_surface_glob_ext_mesh
 
+  logical :: MESH_A_CHUNK_OF_THE_EARTH
+
   ! adjacency arrays
   integer,dimension(:),allocatable :: neighbors_xadj   ! adjacency indexing
   integer,dimension(:),allocatable :: neighbors_adjncy ! adjacency

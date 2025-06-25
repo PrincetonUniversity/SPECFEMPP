@@ -64,7 +64,8 @@
 
   use constants
 
-  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,MESH_A_CHUNK_OF_THE_EARTH
+  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE
+  use generate_databases_par, only: MESH_A_CHUNK_OF_THE_EARTH
 
   implicit none
 
@@ -84,7 +85,8 @@
 
   subroutine read_model_for_coupling_or_chunk()
 
-  use constants, only: IMAIN,IN_DATA_FILES,myrank
+  use constants, only: IMAIN,myrank
+  use shared_input_parameters, only: COUPLED_MODEL_DIRECTORY
 
   use model_coupled_par !! VM VM custom subroutine for coupling with DSM
 
@@ -103,7 +105,7 @@
     call flush_IMAIN()
   endif
 
-  filename = IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'/coeff_poly_deg12'
+  filename = COUPLED_MODEL_DIRECTORY(1:len_trim(COUPLED_MODEL_DIRECTORY))//'/coeff_poly_deg12'
   open(27,file=trim(filename),iostat=ier)
   if (ier /= 0) then
     print *,'Error opening file: ',filename
@@ -123,7 +125,7 @@
 
   !write(*,*) " Reading 1D model "
 
-  filename = IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'/model_1D.in'
+  filename = COUPLED_MODEL_DIRECTORY(1:len_trim(COUPLED_MODEL_DIRECTORY))//'/model_1D.in'
   open(27,file=trim(filename),iostat=ier)
   if (ier /= 0) then
     print *,'Error opening file: ',filename
@@ -184,7 +186,8 @@
 
   use constants, only: CUSTOM_REAL
 
-  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,MESH_A_CHUNK_OF_THE_EARTH
+  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE
+  use generate_databases_par, only: MESH_A_CHUNK_OF_THE_EARTH
 
   implicit none
 

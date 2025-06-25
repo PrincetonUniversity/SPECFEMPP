@@ -1,7 +1,7 @@
 #include "compute/interface.hpp"
 // #include "coupled_interface/interface.hpp"
 // #include "domain/interface.hpp"
-#include "IO/interface.hpp"
+#include "io/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"

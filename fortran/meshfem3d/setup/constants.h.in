@@ -117,8 +117,6 @@
 !!-----------------------------------------------------------
 
 ! paths for inputs and outputs files
-  character(len=*), parameter :: IN_DATA_FILES = './DATA/'
-  character(len=*), parameter :: MF_IN_DATA_FILES = './DATA/meshfem3D_files/'
   character(len=*), parameter :: OUTPUT_FILES_BASE = './OUTPUT_FILES/'
 
 !!-----------------------------------------------------------

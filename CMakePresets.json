@@ -1,0 +1,207 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "release",
+      "displayName": "Default Release -- SIMD enabled",
+      "binaryDir": "build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "ON",
+        "ENABLE_SIMD": "ON",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release"
+      }
+    },
+    {
+      "name": "release-nosimd",
+      "displayName": "Release -- SIMD disabled",
+      "binaryDir": "build/release-nosimd",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "ON",
+        "ENABLE_SIMD": "OFF",
+        "Kokkos_ARCH_NATIVE": "OFF",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-nosimd",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-nosimd"
+      }
+    },
+    {
+      "name": "release-cuda",
+      "displayName": "Release -- CUDA enabled",
+      "binaryDir": "build/release-cuda",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "ON",
+        "Kokkos_ENABLE_CUDA": "ON",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-cuda",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-cuda"
+      }
+    },
+    {
+      "name": "release-hip",
+      "displayName": "Release -- HIP enabled",
+      "binaryDir": "build/release-hip",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "ON",
+        "Kokkos_ENABLE_HIP": "ON",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-hip",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-hip"
+      }
+    },
+    {
+      "name": "release-frontier",
+      "displayName": "Release Frontier -- HIP enabled",
+      "binaryDir": "build/release-frontier",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "ON",
+        "Kokkos_ENABLE_HIP": "ON",
+        "Kokkos_ARCH_ZEN3": "ON",
+        "Kokkos_ARCH_VEGA90A": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-frontier",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-frontier"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Default Debug -- SIMD enabled",
+      "binaryDir": "build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTS": "ON",
+        "ENABLE_SIMD": "OFF",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "Kokkos_ENABLE_DEBUG": "ON",
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug"
+      }
+    },
+    {
+      "name": "debug-cuda",
+      "displayName": "Debug -- CUDA enabled",
+      "binaryDir": "build/debug-cuda",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTS": "ON",
+        "ENABLE_SIMD": "ON",
+        "Kokkos_ENABLE_CUDA": "ON",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "Kokkos_ENABLE_DEBUG": "ON",
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug-cuda",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-cuda"
+      }
+    },
+    {
+      "name": "debug-nosimd",
+      "displayName": "Debug -- SIMD disabled",
+      "binaryDir": "build/debug-nosimd",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTS": "ON",
+        "ENABLE_SIMD": "OFF",
+        "Kokkos_ARCH_NATIVE": "OFF",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "Kokkos_ENABLE_DEBUG": "ON",
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug-nosimd",
+        "BUILD_BENCHMARKS": "ON",
+        "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-nosimd"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-cuda",
+      "configurePreset": "release-cuda",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-hip",
+      "configurePreset": "release-hip",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-frontier",
+      "configurePreset": "release-frontier",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "debug-cuda",
+      "configurePreset": "debug-cuda",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-nosimd",
+      "configurePreset": "release-nosimd",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "debug-nosimd",
+      "configurePreset": "debug-nosimd",
+      "targets": [
+        "all"
+      ]
+    }
+  ]
+}

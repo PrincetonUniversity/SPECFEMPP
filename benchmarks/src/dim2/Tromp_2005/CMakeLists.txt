@@ -1,0 +1,30 @@
+
+CMAKE_MINIMUM_REQUIRED(VERSION 3.17.5)
+
+# This basically just gets the example name
+get_filename_component(CURRENT_DIR_NAME "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
+
+
+if (NOT DEFINED BENCHMARKS_BUILD_DIR)
+    set(BENCHMARKS_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../build)
+endif()
+
+set(CURRENT_BENCHMARK_BUILD_DIR "${BENCHMARKS_BUILD_DIR}/dim2/${CURRENT_DIR_NAME}")
+
+# Configure files directly into the cmake benchmarks_build!
+configure_file(CMakeFiles/Par_File.in ${CURRENT_BENCHMARK_BUILD_DIR}/Par_File)
+configure_file(CMakeFiles/forward_config.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/forward_config.yaml)
+configure_file(CMakeFiles/adjoint_config.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/adjoint_config.yaml)
+configure_file(CMakeFiles/Snakefile.in ${CURRENT_BENCHMARK_BUILD_DIR}/Snakefile)
+
+# Copy static files into the benchmarks.
+file(
+  COPY
+    ${CMAKE_CURRENT_SOURCE_DIR}/adjoint_source.yaml
+    ${CMAKE_CURRENT_SOURCE_DIR}/forward_source.yaml
+    ${CMAKE_CURRENT_SOURCE_DIR}/topography.dat
+    ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+    ${CMAKE_CURRENT_SOURCE_DIR}/Reference_Kernels
+    ${CMAKE_CURRENT_SOURCE_DIR}/plot.py
+  DESTINATION ${CURRENT_BENCHMARK_BUILD_DIR}
+)

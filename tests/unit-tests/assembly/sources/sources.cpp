@@ -4,8 +4,7 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "point/sources.hpp"
-#include "policies/chunk.hpp"
+#include "specfem/point.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 
@@ -22,14 +21,17 @@ void check_store(specfem::compute::assembly &assembly) {
 
   // the structured binding ([element_indices, source_indices]) is not
   // supported by the intel compiler
-  auto elements_and_sources = assembly.sources.get_sources_on_device(
+  const auto elements_and_sources = sources.get_sources_on_device(
       MediumTag, PropertyTag, BoundaryTag, WavefieldType);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &element_indices =
+      std::get<0>(elements_and_sources);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &source_indices =
+      std::get<1>(elements_and_sources);
 
-  const auto &element_indices = std::get<0>(elements_and_sources);
   const int nelements = element_indices.size();
 
   constexpr int num_components =
-      specfem::element::attributes<Dimension, MediumTag>::components();
+      specfem::element::attributes<Dimension, MediumTag>::components;
 
   if (nelements == 0) {
     return;
@@ -49,23 +51,20 @@ void check_store(specfem::compute::assembly &assembly) {
   using PointSourceType =
       specfem::point::source<Dimension, MediumTag, WavefieldType>;
   using mapped_chunk_index_type =
-      specfem::iterator::impl::mapped_chunk_index_type<
-          false, specfem::dimension::type::dim2>;
+      specfem::point::mapped_index<Dimension, false>;
   Kokkos::parallel_for(
       "check_store_on_device",
       Kokkos::MDRangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Rank<3> >(
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
         // element indices and source indices from elements_and_sources
-        auto const &[element_indices, source_indices] = elements_and_sources;
-
         const int ielement = element_indices(i);
         const int isource = source_indices(i);
 
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
         const auto mapped_iterator_index =
-            mapped_chunk_index_type(ielement, index, isource);
+            mapped_chunk_index_type(index, isource);
         specfem::datatype::ScalarPointViewType<type_real, num_components, false>
             stf;
         specfem::datatype::ScalarPointViewType<type_real, num_components, false>
@@ -95,12 +94,15 @@ void check_load(specfem::compute::assembly &assembly) {
 
   const auto elements_and_sources = sources.get_sources_on_device(
       MediumTag, PropertyTag, BoundaryTag, WavefieldType);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &element_indices =
+      std::get<0>(elements_and_sources);
+  const Kokkos::View<int *, Kokkos::DefaultExecutionSpace> &source_indices =
+      std::get<1>(elements_and_sources);
 
-  const auto &element_indices = std::get<0>(elements_and_sources);
   const int nelements = element_indices.size();
 
   constexpr int num_components =
-      specfem::element::attributes<Dimension, MediumTag>::components();
+      specfem::element::attributes<Dimension, MediumTag>::components;
 
   Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace> values_to_store(
       "values_to_store", nelements);
@@ -113,10 +115,14 @@ void check_load(specfem::compute::assembly &assembly) {
 
   Kokkos::deep_copy(values_to_store, h_values_to_store);
 
-  using PointType = specfem::point::source<Dimension, MediumTag, WavefieldType>;
+  using PointSourceType =
+      specfem::point::source<Dimension, MediumTag, WavefieldType>;
 
-  Kokkos::View<PointType ***, Kokkos::DefaultExecutionSpace> point_sources(
-      "point_sources", ngllz, ngllx, nelements);
+  using mapped_chunk_index_type =
+      specfem::point::mapped_index<Dimension, false>;
+
+  Kokkos::View<PointSourceType ***, Kokkos::DefaultExecutionSpace>
+      point_sources("point_sources", ngllz, ngllx, nelements);
 
   auto h_point_sources = Kokkos::create_mirror_view(point_sources);
 
@@ -126,14 +132,17 @@ void check_load(specfem::compute::assembly &assembly) {
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
         // element indices and source indices from elements_and_sources
-        auto const &[element_indices, source_indices] = elements_and_sources;
         const int ielement = element_indices(i);
+        const int isource = source_indices(i);
 
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
 
-        PointType point;
-        specfem::compute::load_on_device(index, sources, point);
+        const auto mapped_iterator_index =
+            mapped_chunk_index_type(index, isource);
+
+        PointSourceType point;
+        specfem::compute::load_on_device(mapped_iterator_index, sources, point);
 
         point_sources(iz, ix, i) = point;
       });
@@ -144,9 +153,9 @@ void check_load(specfem::compute::assembly &assembly) {
   for (int i = 0; i < nelements; i++) {
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
-        const auto &point_kernel = h_point_sources(iz, ix, i);
+        const auto &point_source = h_point_sources(iz, ix, i);
         for (int ic = 0; ic < num_components; ic++) {
-          const auto stf = point_kernel.stf(ic);
+          const auto stf = point_source.stf(ic);
           const auto expected = h_values_to_store(i);
           if (expected != stf) {
             std::ostringstream message;
@@ -161,7 +170,7 @@ void check_load(specfem::compute::assembly &assembly) {
           }
 
           const auto lagrange_interpolant =
-              point_kernel.lagrange_interpolant(ic);
+              point_source.lagrange_interpolant(ic);
           if (expected != lagrange_interpolant) {
             std::ostringstream message;
             message << "Error in source computation: \n"
@@ -189,7 +198,7 @@ void check_assembly_source_construction(
   const int ngllx = assembly.mesh.ngllx;
 
   constexpr auto components =
-      specfem::element::attributes<Dimension, MediumTag>::components();
+      specfem::element::attributes<Dimension, MediumTag>::components;
 
   using PointSourceType =
       specfem::point::source<Dimension, MediumTag,
@@ -217,14 +226,13 @@ void check_assembly_source_construction(
 
     source->compute_source_time_function(1.0, 0.0, 1, stf);
     using mapped_chunk_index_type =
-        specfem::iterator::impl::mapped_chunk_index_type<
-            false, specfem::dimension::type::dim2>;
+        specfem::point::mapped_index<Dimension, false>;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
         specfem::point::index<Dimension, false> index(lcoord.ispec, iz, ix);
         const auto mapped_iterator_index =
-            mapped_chunk_index_type(lcoord.ispec, index, isource);
+            mapped_chunk_index_type(index, isource);
         PointSourceType point;
         specfem::compute::load_on_host(mapped_iterator_index, assembly.sources,
                                        point);
@@ -268,43 +276,33 @@ void check_assembly_source_construction(
 void test_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     specfem::compute::assembly &assembly) {
-
-#define TEST_ASSEMBLY_SOURCE_CONSTRUCTION(Dimension, MediumTag)                \
-  check_assembly_source_construction<GET_TAG(Dimension), GET_TAG(MediumTag)>(  \
-      sources, assembly);
-
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      TEST_ASSEMBLY_SOURCE_CONSTRUCTION,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
-
-#undef TEST_ASSEMBLY_SOURCE_CONSTRUCTION
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      {
+        check_assembly_source_construction<_dimension_tag_, _medium_tag_>(
+            sources, assembly);
+      })
 }
 
-void test_sources(specfem::compute::assembly &assembly) {
-
-#define TEST_STORE_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG) \
-  check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
-              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
-              specfem::wavefield::simulation_field::forward>(assembly);        \
-  check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
-              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
-              specfem::wavefield::simulation_field::forward>(assembly);
-
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      TEST_STORE_LOAD,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-              BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-              BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef TEST_STORE_LOAD
-}
+void test_sources(specfem::compute::assembly &assembly){ FOR_EACH_IN_PRODUCT(
+    (DIMENSION_TAG(DIM2),
+     MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
+     PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+     BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                  COMPOSITE_STACEY_DIRICHLET)),
+    {
+      check_store<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
+                  specfem::wavefield::simulation_field::forward>(assembly);
+      check_load<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
+                 specfem::wavefield::simulation_field::forward>(assembly);
+    }) }
 
 TEST_F(ASSEMBLY, sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     auto sources = std::get<2>(parameters);
-    specfem::compute::assembly assembly = std::get<4>(parameters);
+    specfem::compute::assembly assembly = std::get<5>(parameters);
 
     try {
       test_assembly_source_construction(sources, assembly);
@@ -325,4 +323,4 @@ TEST_F(ASSEMBLY, sources) {
       ADD_FAILURE();
     }
   }
-}
+};

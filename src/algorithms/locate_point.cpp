@@ -1,7 +1,7 @@
 #include "algorithms/locate_point.hpp"
 #include "compute/compute_mesh.hpp"
 #include "jacobian/interface.hpp"
-#include "point/coordinates.hpp"
+#include "specfem/point.hpp"
 
 namespace {
 
@@ -91,7 +91,7 @@ std::tuple<type_real, type_real> get_best_location(
   for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
     auto [x, z] =
         specfem::jacobian::compute_locations(s_coord, ngnod, xi, gamma);
-    auto [xix, xiz, gammax, gammaz] =
+    auto [xix, gammax, xiz, gammaz] =
         specfem::jacobian::compute_inverted_derivatives(s_coord, ngnod, xi,
                                                         gamma);
 

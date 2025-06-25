@@ -3,6 +3,7 @@
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
 #include "periodic_tasks/periodic_task.hpp"
+#include "specfem_mpi/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <string>
 
@@ -47,12 +48,12 @@ public:
    * @brief Instantiate a wavefield plotter object
    *
    * @param assembly SPECFEM++ assembly object
-   * @return std::shared_ptr<specfem::IO::writer> Pointer to an instantiated
+   * @return std::shared_ptr<specfem::io::writer> Pointer to an instantiated
    * plotter object
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task>
-  instantiate_wavefield_plotter(
-      const specfem::compute::assembly &assembly) const;
+  instantiate_wavefield_plotter(const specfem::compute::assembly &assembly,
+                                specfem::MPI::MPI *mpi) const;
 
 private:
   std::string output_format;  ///< format of output file

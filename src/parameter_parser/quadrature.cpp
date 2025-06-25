@@ -1,5 +1,6 @@
 #include "parameter_parser/quadrature.hpp"
 #include "quadrature/interface.hpp"
+#include "utilities/strings.hpp"
 #include "yaml-cpp/yaml.h"
 #include <iostream>
 #include <ostream>
@@ -23,9 +24,9 @@ specfem::runtime_configuration::quadrature::instantiate() {
 specfem::runtime_configuration::quadrature::quadrature(
     const std::string quadrature) {
 
-  if (quadrature == "GLL4") {
+  if (specfem::utilities::is_gll4_string(quadrature)) {
     *this = specfem::runtime_configuration::quadrature(0.0, 0.0, 5);
-  } else if (quadrature == "GLL7") {
+  } else if (specfem::utilities::is_gll7_string(quadrature)) {
     *this = specfem::runtime_configuration::quadrature(0.0, 0.0, 8);
   } else {
     std::ostringstream message;

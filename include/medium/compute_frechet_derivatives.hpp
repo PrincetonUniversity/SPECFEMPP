@@ -3,6 +3,8 @@
 #include "dim2/acoustic/isotropic/frechet_derivative.hpp"
 #include "dim2/elastic/anisotropic/frechet_derivative.hpp"
 #include "dim2/elastic/isotropic/frechet_derivative.hpp"
+#include "dim2/poroelastic/isotropic/frechet_derivative.hpp"
+#include "enumerations/accessor.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -18,16 +20,20 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
     const PointFieldDerivativesType &backward_derivatives,
     const type_real &dt) {
 
-  static_assert(PointPropertiesType::is_point_properties,
-                "properties is not a point properties type");
-  static_assert(PointFieldDerivativesType::is_point_field_derivatives,
+  static_assert(
+      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      "properties is not a point properties type");
+
+  static_assert(specfem::accessor::is_point_field_derivatives<
+                    PointFieldDerivativesType>::value,
                 "field_derivatives is not a point field derivatives type");
 
-  static_assert(AdjointPointFieldType::isPointFieldType,
+  static_assert(specfem::accessor::is_point_field<AdjointPointFieldType>::value,
                 "adjoint_field is not a point field type");
 
-  static_assert(BackwardPointFieldType::isPointFieldType,
-                "backward_field is not a point field type");
+  static_assert(
+      specfem::accessor::is_point_field<BackwardPointFieldType>::value,
+      "backward_field is not a point field type");
 
   static_assert(AdjointPointFieldType::store_acceleration,
                 "adjoint_field does not store acceleration");
@@ -35,12 +41,12 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
   static_assert(BackwardPointFieldType::store_displacement,
                 "backward_field does not store displacement");
 
-  constexpr auto dimension = PointPropertiesType::dimension;
+  constexpr auto dimension = PointPropertiesType::dimension_tag;
 
   static_assert(
-      (dimension == AdjointPointFieldType::dimension &&
-       dimension == BackwardPointFieldType::dimension &&
-       dimension == PointFieldDerivativesType::dimension),
+      (dimension == AdjointPointFieldType::dimension_tag &&
+       dimension == BackwardPointFieldType::dimension_tag &&
+       dimension == PointFieldDerivativesType::dimension_tag),
       "Dimension inconsistency between properties, fields, and derivatives");
 
   constexpr auto using_simd = PointPropertiesType::simd::using_simd;

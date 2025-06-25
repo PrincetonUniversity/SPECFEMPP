@@ -24,7 +24,7 @@ public:
    * @param nproc Number of processors used in the simulation
    * @param nruns Number of simulation runs
    */
-  run_setup(int nproc, int nruns) : nproc(nproc), nruns(nruns){};
+  run_setup(int nproc, int nruns) : nproc(nproc), nruns(nruns) {};
   /**
    * @brief Construct a new run setup object
    *

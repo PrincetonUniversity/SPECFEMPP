@@ -5,19 +5,12 @@ pipeline{
         }
     }
     stages{
-        stage( ' Load git modules ' ){
-            steps {
-                echo ' Getting git submodules '
-                sh 'git submodule init'
-                sh 'git submodule update'
-            }
-        }
         stage(' Intel Host Compiler Check '){
             matrix {
                 axes {
                     axis{
                         name 'IntelCompiler'
-                        values 'ICC2022;intel/2022.2.0', 'ICC2024;intel/2024.0.2'
+                        values 'ICC2024;intel/2024.2'
                     }
                     axis{
                         name 'HostSpace'
@@ -69,7 +62,7 @@ pipeline{
                                         module load ${INTEL_MODULE}
                                         export CC=icx
                                         export CXX=icpx
-                                        cmake3 -S . -B build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} -D BUILD_TESTS=ON -D BUILD_EXAMPLES=OFF
+                                        cmake3 -S . -B build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} -D BUILD_TESTS=ON -D BUILD_BENCHMARKS=OFF
                                         cmake3 --build build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                     """
                                     echo ' Build completed '
@@ -82,7 +75,8 @@ pipeline{
                                         module load boost/1.85.0
                                         module load ${INTEL_MODULE}
                                         cd build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/tests/unit-tests
-                                        srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} --constraint=skylake bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest --verbose;'
+                                        export BUILD_DIR=build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
+                                        srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} --constraint="intel|cascade" bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest --verbose;'
                                     """
                                     echo ' Testing completed '
                                 }

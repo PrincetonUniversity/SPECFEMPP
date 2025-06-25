@@ -1,21 +1,37 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(SPECFEMPP VERSION 0.1.0)
+project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
 option(VTK_CXX_BUILD "Build VTK C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
-option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
+option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
+option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+option(BUILD_BENCHMARKS "Benchmarks included" ON)
+
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
 set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
+
+# Set my default CMAKE_INSTALL_PREFIX
+
+if (SPECFEM_INSTALL)
+    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_SOURCE_DIR}/bin")
+    message(STATUS "CMAKE_INSTALL_PREFIX not set. Defaulting to ${CMAKE_INSTALL_PREFIX}")
+    else()
+    message(STATUS "User-defined CMAKE_INSTALL_PREFIX set to ${CMAKE_INSTALL_PREFIX}")
+    endif()
+else(SPECFEM_INSTALL)
+    message(STATUS "SPECFEM_INSTALL is OFF. No executable directory will be created.")
+endif()
 
 # Set binary output directories.
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -26,12 +42,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(FETCHCONTENT_QUIET TRUE)
 
 if (SPECFEMPP_BINDING_PYTHON)
-    message("-- Adding -fPIC flag for Python binding.")
+    message(STATUS "Adding -fPIC flag for Python binding.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             set(CMAKE_CXX_FLAGS "-fp-model=precise -fPIC")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-            message("-- Detected Intel classic compiler which will be deprecated soon.")
-            message("-- It is recommended you use IntelLLVM compiler.")
+            message(STATUS "Detected Intel classic compiler which will be deprecated soon.")
+            message(STATUS "It is recommended you use IntelLLVM compiler.")
             set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise -fPIC")
     else()
             set(CMAKE_CXX_FLAGS "-fPIC")
@@ -40,8 +56,8 @@ else (SPECFEMPP_BINDING_PYTHON)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             set(CMAKE_CXX_FLAGS "-fp-model=precise")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-            message("-- Detected Intel classic compiler which will be deprecated soon.")
-            message("-- It is recommended you use IntelLLVM compiler.")
+            message(STATUS "Detected Intel classic compiler which will be deprecated soon.")
+            message(STATUS "It is recommended you use IntelLLVM compiler.")
             set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
     endif()
 endif (SPECFEMPP_BINDING_PYTHON)
@@ -49,58 +65,83 @@ endif (SPECFEMPP_BINDING_PYTHON)
 # Check if MacOS
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(__APPLE__ TRUE)
-    message("-- macOS detected -- setting __APPLE__ TRUE")
+    message(STATUS "macOS detected -- setting __APPLE__ TRUE")
 else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(__APPLE__ FALSE)
-    message("-- macOS not detected -- setting __APPLE__ FALSE")
+    message(STATUS "macOS not detected -- setting __APPLE__ FALSE")
 endif()
 
 if (DEFINED Kokkos_ENABLE_CUDA)
     if (Kokkos_ENABLE_CUDA)
-        # message("Setting CUDA variables")
+        # message(STATUS "Setting CUDA variables")
         set(Kokkos_ENABLE_CUDA_LAMBDA ON CACHE BOOL "Using CUDA Lambda by default")
         set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON CACHE BOOL "Using CUDA Relocatable device by default")
+        set(Kokkos_ENABLE_CUDA_CONSTEXPR ON CACHE BOOL "Using CUDA Constexpr by default")
     endif()
 endif()
 
+# For the installation of dependencies
+include(FetchContent)
 
 # Install Kokkos as a dependency
-## TODO: Add options for on utilizing in house builds
-include(FetchContent)
-FetchContent_Declare(
-  kokkos
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-)
-FetchContent_MakeAvailable(kokkos)
+# Set Kokkos options before fetching
+set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
-        yaml
-        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
+        kokkos
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.6.01.zip
 )
+
+# Using this instead of FetchContent_MakeAvailable to be backwards compatible
+# with older CMake versions
+FetchContent_GetProperties(kokkos)
+if(NOT kokkos_POPULATED)
+  FetchContent_Populate(kokkos)
+  add_subdirectory(${kokkos_SOURCE_DIR} ${kokkos_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+# Install yaml content
+FetchContent_Declare(
+        yaml
+        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+        GIT_TAG 2f86d13775d119edbb69af52e5f566fd65c6953b
+)
+
+# Disable yaml-cpp installation
+set(YAML_CPP_BUILD_INSTALL OFF CACHE BOOL "Disable yaml-cpp installation" FORCE)
+
 FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
 
-find_package(VTK COMPONENTS
-  CommonColor
-  CommonCore
-  FiltersSources
-  InteractionStyle
-  RenderingContextOpenGL2
-  RenderingCore
-  RenderingFreeType
-  RenderingGL2PSOpenGL2
-  RenderingOpenGL2
-)
 
+if (VTK_CXX_BUILD)
 
-if (NOT VTK_FOUND)
-  message("VTK not found: ${VTK_NOT_FOUND_MESSAGE}")
-  set(VTK_CXX_BUILD OFF)
+    find_package(VTK COMPONENTS
+        CommonColor
+        CommonCore
+        FiltersSources
+        InteractionStyle
+        RenderingContextOpenGL2
+        RenderingCore
+        RenderingFreeType
+        RenderingGL2PSOpenGL2
+        RenderingOpenGL2
+    )
+
+    if (VTK_FOUND)
+        message(STATUS "VTK libs/ and incs/:")
+        message(STATUS "    LIB:   ${VTK_LIBRARY_DIRS}")
+        message(STATUS "    INC:   ${VTK_INCLUDE_DIRS}")
+        message(STATUS "    LIBSO: ${VTK_LIBRARIES}")
+    else(NOT VTK_FOUND)
+        message(STATUS "VTK not found. Building without VTK.")
+        set(VTK_CXX_BUILD OFF)
+    endif()
 else ()
-  message(STATUS "    VTK:   ${VTK_LIBRARIES}")
+    set(VTK_FOUND OFF)
+    message(STATUS "Building without VTK.")
 endif()
 
 
@@ -110,9 +151,9 @@ find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor)
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd)
     set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
-                   Boost::algorithm Boost::tokenizer Boost::preprocessor)
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd)
     set(BOOST_ENABLE_CMAKE ON)
     set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
     set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
@@ -133,6 +174,12 @@ if (NOT ${Boost_FOUND})
         DOWNLOAD_NO_EXTRACT FALSE
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
     )
+
+    # Disable Boost installation
+    set(BOOST_INSTALL OFF CACHE BOOL "Don't install Boost" FORCE)
+    set(BOOST_INSTALL_LIBRARIES OFF CACHE BOOL "Don't install Boost libraries" FORCE)
+    set(BOOST_SKIP_INSTALL_RULES ON CACHE BOOL "Skip Boost install rules" FORCE)
+
     FetchContent_MakeAvailable(Boost)
 
 else()
@@ -148,33 +195,76 @@ endif()
 find_package(HDF5 COMPONENTS CXX)
 
 if (NOT ${HDF5_FOUND})
-    message("-- HDF5 not found. Building without HDF5.")
+    message(STATUS "HDF5 not found. Building without HDF5.")
     set(HDF5_CXX_BUILD OFF)
 else()
-    message("HDF5 libs/ and incs/:.")
+    message(STATUS "HDF5 libs/ and incs/:.")
     message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
     message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
     message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
 endif()
 
 
-configure_file(constants.hpp.in constants.hpp)
-
-include_directories(include)
-include_directories(${CMAKE_BINARY_DIR})
-
-add_subdirectory(fortran/meshfem2d)
-add_subdirectory(fortran/meshfem3d)
-
 if (ENABLE_SIMD)
-    message("-- Enabling SIMD")
+    message(STATUS "Enabling SIMD")
     add_definitions(-DENABLE_SIMD)
 endif()
 
 if (ENABLE_PROFILING)
-    message("-- Enabling profiling")
+    message(STATUS "Enabling profiling")
     add_definitions(-DENABLE_PROFILING)
 endif()
+
+if (ENABLE_DOUBLE_PRECISION)
+    message(STATUS "Enabling double precision")
+    set(TYPE_REAL "double")
+else(ENABLE_DOUBLE_PRECISION)
+    message(STATUS "Enabling single precision")
+    set(TYPE_REAL "float")
+endif(ENABLE_DOUBLE_PRECISION)
+
+# Configure the setup headers
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
+               ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in
+               ${CMAKE_BINARY_DIR}/include/constants.hpp)
+
+# Add the configure files to the clean target
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp
+    ${CMAKE_BINARY_DIR}/include/constants.hpp
+)
+
+# Add the include directories so that the generated files can be found
+include_directories(include)
+include_directories(core)
+include_directories(${CMAKE_BINARY_DIR}/include)
+
+# Set loglevel to STATUS if build type is debug
+if (CMAKE_BUILD_TYPE MATCHES Release)
+  set(SUBDIR_LOG_LEVEL NOTICE)
+else()
+  set(SUBDIR_LOG_LEVEL STATUS)
+endif()
+
+# ========== MESHFEM2D ==============
+message(STATUS "Configuring meshfem2D")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/meshfem2d)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+# =================================
+
+# ========== MESHFEM3D ==============
+message(STATUS "Configuring xmeshfem3D & xgenerate_databases")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/meshfem3d)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+# =================================
+
+# Add module subdirectories
+add_subdirectory(core/specfem)
 
 # Build specfem2d libraries
 add_library(
@@ -192,27 +282,34 @@ target_link_libraries(
 )
 
 add_library(
-        IO
-        src/IO/fortranio/fortran_io.cpp
-        src/IO/sources.cpp
-        src/IO/receivers.cpp
-        src/IO/mesh.cpp
-        src/IO/mesh/impl/fortran/read_boundaries.cpp
-        src/IO/mesh/impl/fortran/read_elements.cpp
-        src/IO/mesh/impl/fortran/read_material_properties.cpp
-        src/IO/mesh/impl/fortran/read_mesh_database.cpp
-        src/IO/mesh/impl/fortran/read_interfaces.cpp
-        src/IO/mesh/impl/fortran/read_parameters.cpp
+        io
+        src/io/fortranio/fortran_io.cpp
+        src/io/sources.cpp
+        src/io/receivers.cpp
+        # Fortran 2D part
+        src/io/mesh/impl/fortran/dim2/mesh.cpp
+        src/io/mesh/impl/fortran/dim2/read_boundaries.cpp
+        src/io/mesh/impl/fortran/dim2/read_elements.cpp
+        src/io/mesh/impl/fortran/dim2/read_material_properties.cpp
+        src/io/mesh/impl/fortran/dim2/read_mesh_database.cpp
+        src/io/mesh/impl/fortran/dim2/read_interfaces.cpp
+        src/io/mesh/impl/fortran/dim2/read_parameters.cpp
+        # Fortran 3D part
+        src/io/mesh/impl/fortran/dim3/mesh.cpp
+        src/io/mesh/impl/fortran/dim3/read_parameters.cpp
+        src/io/mesh/impl/fortran/dim3/read_coordinates.cpp
+        src/io/mesh/impl/fortran/dim3/read_partial_derivatives.cpp
+        src/io/mesh/impl/fortran/dim3/utilities.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
     target_compile_definitions(
-        IO
+        io
         PUBLIC -DNO_HDF5
     )
 
     target_link_libraries(
-        IO
+        io
         mesh
         source_class
         receiver_class
@@ -221,7 +318,7 @@ if (NOT HDF5_CXX_BUILD)
         Kokkos::kokkos)
 else()
     target_link_libraries(
-        IO
+        io
         mesh
         source_class
         receiver_class
@@ -231,18 +328,6 @@ else()
         ${HDF5_LIBRARIES}
     )
 endif()
-
-
-add_library(
-        point
-        src/point/coordinates.cpp
-        src/point/partial_derivatives.cpp
-)
-
-target_link_libraries(
-        point
-        Kokkos::kokkos
-)
 
 add_library(
         enumerations
@@ -275,9 +360,9 @@ if (MPI_PARALLEL)
                 specfem_mpi
                 PUBLIC -DMPI_PARALLEL
         )
-        message("-- Compiling SPECFEM with MPI")
+        message(STATUS "Compiling SPECFEM with MPI")
 else()
-        message("-- Compiling SPECFEM without MPI")
+        message(STATUS "Compiling SPECFEM without MPI")
 endif(MPI_PARALLEL)
 
 # add_library(
@@ -294,25 +379,40 @@ endif(MPI_PARALLEL)
 
 add_library(
         mesh
-        src/mesh/boundaries/forcing_boundaries.cpp
-        src/mesh/boundaries/absorbing_boundaries.cpp
-        src/mesh/boundaries/acoustic_free_surface.cpp
-        src/mesh/elements/tangential_elements.cpp
-        src/mesh/elements/axial_elements.cpp
+        # 2-D
+        src/mesh/dim2/mesh.cpp
+        src/mesh/dim2/boundaries/forcing_boundaries.cpp
+        src/mesh/dim2/boundaries/absorbing_boundaries.cpp
+        src/mesh/dim2/boundaries/acoustic_free_surface.cpp
+        src/mesh/dim2/elements/tangential_elements.cpp
+        src/mesh/dim2/elements/axial_elements.cpp
         # src/mesh/mpi_interfaces/mpi_interfaces.cpp
-        src/mesh/materials/materials.cpp
-        src/mesh/coupled_interfaces/interface_container.cpp
-        src/mesh/coupled_interfaces/coupled_interfaces.cpp
-        src/mesh/tags/tags.cpp
-        src/mesh/mesh.cpp
+        src/mesh/dim2/coupled_interfaces/interface_container.cpp
+        src/mesh/dim2/coupled_interfaces/coupled_interfaces.cpp
+        src/mesh/dim2/tags/tags.cpp
+        # 3-D
+        src/mesh/dim3/mesh.cpp
+        src/mesh/dim3/boundaries/absorbing_boundary.cpp
+        src/mesh/dim3/boundaries/free_surface.cpp
+        src/mesh/dim3/coupled_interfaces/coupled_interfaces.cpp
+        src/mesh/dim3/element_types/element_types.cpp
+        src/mesh/dim3/parameters/parameters.cpp
+        src/mesh/dim3/parameters/parameters.cpp
+        src/mesh/dim3/mapping/mapping.cpp
+        src/mesh/dim3/materials/materials.cpp
+        src/mesh/dim3/coordinates/coordinates.cpp
+        src/mesh/dim3/partial_derivatives/partial_derivatives.cpp
+
 )
 
 target_link_libraries(
         mesh
+        enumerations
         Kokkos::kokkos
         specfem_mpi
         # material_class
         yaml-cpp
+        ${BOOST_LIBS}
 )
 
 add_library(
@@ -329,7 +429,7 @@ target_link_libraries(
 
 add_library(
         read_seismogram
-        src/IO/seismogram/reader.cpp
+        src/io/seismogram/reader.cpp
 )
 
 target_link_libraries(
@@ -337,17 +437,29 @@ target_link_libraries(
         Kokkos::kokkos
         )
 
+add_library(utilities
+        src/utilities/utilities.cpp
+        src/utilities/strings.cpp
+)
+
+target_link_libraries(
+        utilities
+        Kokkos::kokkos
+        ${BOOST_LIBS}
+)
+
 add_library(
         reader
-        src/IO/wavefield/reader.cpp
-        src/IO/property/reader.cpp
+        src/io/property/reader.cpp
+        src/io/wavefield/reader.cpp
 )
 
 target_link_libraries(
         reader
         compute
-        IO
+        io
         read_seismogram
+        utilities
 )
 
 add_library(
@@ -360,6 +472,7 @@ target_link_libraries(
         Kokkos::kokkos
         jacobian
         point
+        ${BOOST_LIBS}
 )
 
 add_library(
@@ -375,12 +488,16 @@ target_link_libraries(
         read_seismogram
         Kokkos::kokkos
         point
+        utilities
 )
+
+
 
 add_library(
         source_class
         src/source/source.cpp
         src/source/force_source.cpp
+        src/source/cosserat_force_source.cpp
         src/source/moment_tensor_source.cpp
         src/source/adjoint_source.cpp
         src/source/external.cpp
@@ -390,11 +507,12 @@ target_link_libraries(
         source_class
         Kokkos::kokkos
         specfem_mpi
-        # utilities
+        utilities
         quadrature
         source_time_function
         yaml-cpp
         point
+        enumerations
         algorithms
         ${BOOST_LIBS}
 )
@@ -429,6 +547,7 @@ add_library(
         src/compute/boundaries/boundaries.cpp
         src/compute/fields/fields.cpp
         src/compute/compute_boundary_values.cpp
+        src/compute/assembly/check_jacobian.cpp
         src/compute/assembly/assembly.cpp
         src/compute/assembly/compute_wavefield.cpp
 )
@@ -447,29 +566,27 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
-add_library(
-        boundary_conditions
-        src/boundary_conditions/boundary_conditions.cpp
-)
+if (NOT VTK_CXX_BUILD)
+        target_compile_definitions(
+                compute
+                PUBLIC -DNO_VTK
+        )
+else ()
+        target_link_libraries(
+                compute
+                ${VTK_LIBRARIES}
+                )
 
-target_link_libraries(
-        boundary_conditions
-        Kokkos::kokkos
-        ${BOOST_LIBS}
-)
+        # Only define the __APPLE__ compile definition if it is defined
+        if (__APPLE__)
+        target_compile_definitions(compute PRIVATE __APPLE__)
+        endif(__APPLE__)
+endif()
 
-add_library(
-        medium
-        src/medium/compute_mass_matrix.cpp
-        src/medium/compute_stress_integrand.cpp
-)
-
-target_link_libraries(
-        medium
-        Kokkos::kokkos
+target_include_directories(
         compute
-        boundary_conditions
-        enumerations
+        INTERFACE
+        ${HDF5_INCLUDE_DIRS}
 )
 
 add_library(coupled_interface
@@ -498,7 +615,6 @@ target_link_libraries(
         kokkos_kernels
         Kokkos::kokkos
         compute
-        boundary_conditions
 )
 
 add_library(
@@ -524,27 +640,36 @@ target_link_libraries(
         Kokkos::kokkos
         timescheme
         kokkos_kernels
-        medium
 )
 
 add_library(
         writer
-        src/IO/seismogram/writer.cpp
-        src/IO/wavefield/writer.cpp
-        src/IO/kernel/writer.cpp
-        src/IO/property/writer.cpp
+        src/io/seismogram/writer.cpp
+        src/io/kernel/writer.cpp
+        src/io/property/writer.cpp
+        src/io/wavefield/writer.cpp
 )
 
 target_link_libraries(
         writer
         compute
         receiver_class
-        IO
+        io
+        utilities
 )
 
 add_library(
         periodic_tasks
         src/periodic_tasks/plot_wavefield.cpp
+        src/periodic_tasks/check_signal.cpp
+        src/periodic_tasks/wavefield_writer.cpp
+        src/periodic_tasks/wavefield_reader.cpp
+)
+
+target_link_libraries(
+        periodic_tasks
+        reader
+        writer
 )
 
 if (NOT VTK_CXX_BUILD)
@@ -578,6 +703,8 @@ add_library(
         src/parameter_parser/database_configuration.cpp
         src/parameter_parser/header.cpp
         src/parameter_parser/quadrature.cpp
+        src/parameter_parser/elastic_wave.cpp
+        src/parameter_parser/electromagnetic_wave.cpp
         src/parameter_parser/receivers.cpp
         src/parameter_parser/writer/seismogram.cpp
         src/parameter_parser/setup.cpp
@@ -593,10 +720,10 @@ target_link_libraries(
         timescheme
         receiver_class
         yaml-cpp
+        periodic_tasks
         writer
         reader
         kokkos_kernels
-        medium
         solver
         ${BOOST_LIBS}
 )
@@ -619,7 +746,6 @@ target_link_libraries(
         writer
         periodic_tasks
         reader
-        medium
         coupled_interface
         kokkos_kernels
         solver
@@ -631,22 +757,58 @@ add_executable(
         src/specfem2d.cpp
 )
 
-
-
 target_link_libraries(
         specfem2d
         execute
 )
 
+add_executable(
+        specfem3d
+        src/specfem3d.cpp
+)
+
+target_link_libraries(
+        specfem3d
+        specfem_mpi
+        io
+        Kokkos::kokkos
+        mesh
+        quadrature
+        compute
+        source_class
+        parameter_reader
+        receiver_class
+        writer
+        periodic_tasks
+        reader
+        coupled_interface
+        kokkos_kernels
+        solver
+        ${BOOST_LIBS}
+        yaml-cpp
+)
+
+
 # Include tests
 if (BUILD_TESTS)
-        message("-- Including tests.")
+        message(STATUS "Including tests.")
         add_subdirectory(tests/unit-tests)
 endif()
 
-if (BUILD_EXAMPLES)
-        message("-- Including examples.")
-        add_subdirectory(examples)
+if (BUILD_BENCHMARKS)
+    # Define option with default value
+
+    if(DEFINED BENCHMARKS_BUILD_DIR)
+        message(STATUS "BENCHMARKS_BUILD_DIR was defined as: ${BENCHMARKS_BUILD_DIR}")
+    else()
+        set(BENCHMARKS_BUILD_DIR ${CMAKE_SOURCE_DIR}/benchmarks/build)
+        message(STATUS "BENCHMARKS_BUILD_DIR was not defined, using default: ${BENCHMARKS_BUILD_DIR}")
+    endif()
+
+    # Create the benchmarks build directory if it does not exist
+    message(STATUS "Building benchmarks...")
+    add_subdirectory(benchmarks/src)
+    message(STATUS "Benchmarks built.")
 endif()
 
 # Doxygen
@@ -661,7 +823,10 @@ if (DOXYGEN_FOUND)
 
     # request to configure the file
     configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-    message("Doxygen build started")
+    message(STATUS "Doxygen build started")
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+        ${DOXYGEN_OUT}
+    )
 
     # Note: do not put "ALL" - this builds docs together with application EVERY TIME!
     add_custom_target( docs
@@ -670,7 +835,7 @@ if (DOXYGEN_FOUND)
         COMMENT "Generating API documentation with Doxygen"
         VERBATIM )
 else (DOXYGEN_FOUND)
-  message("Doxygen need to be installed to generate the doxygen documentation")
+  message(STATUS "Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
 
 if (SPECFEMPP_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})
@@ -685,9 +850,33 @@ if (SPECFEMPP_BINDING_PYTHON)
     target_link_libraries(
         _core PRIVATE
         execute
+        periodic_tasks
         ${BOOST_LIBS}
         pybind11::headers
     )
     target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
     install(TARGETS _core DESTINATION specfempp_core)
 endif (SPECFEMPP_BINDING_PYTHON)
+
+
+if (SPECFEM_INSTALL)
+    install(
+        TARGETS specfem2d specfem3d
+        RUNTIME DESTINATION .
+    )
+
+    # Create a custom target that will run after your main build
+    add_custom_target(organize_output ALL
+        COMMAND ${CMAKE_COMMAND} --install . --prefix ${CMAKE_INSTALL_PREFIX}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
+        # Make this run after your main targets
+        DEPENDS specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram xgenerate_databases # list all your targets here
+    )
+
+    # Add the prefix directory to the clean target
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+        ${CMAKE_INSTALL_PREFIX}
+    )
+
+endif(SPECFEM_INSTALL)

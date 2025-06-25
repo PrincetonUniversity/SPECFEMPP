@@ -2,9 +2,8 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/properties/properties.hpp"
-#include "mesh/boundaries/acoustic_free_surface.hpp"
-#include "point/boundary.hpp"
-#include "point/coordinates.hpp"
+#include "mesh/mesh.hpp"
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
 #include <type_traits>

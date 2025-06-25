@@ -1,142 +1,106 @@
-/* setup/config.h.in.  Generated from configure.ac by autoheader.  */
+/* config.h.in - Template for config.h, configured by CMake */
+
 
 /* Define to dummy 'main' function (if any) required to link to the Fortran
-   libraries. */
-#undef FC_DUMMY_MAIN
+  libraries. */
+#cmakedefine FC_DUMMY_MAIN
 
 /* Define if F77 and FC dummy 'main' functions are identical. */
-#undef FC_DUMMY_MAIN_EQ_F77
+#cmakedefine FC_DUMMY_MAIN_EQ_F77
 
 /* Define to a macro mangling the given C identifier (in lower and upper
-   case), which must not contain underscores, for linking with Fortran. */
-#undef FC_FUNC
+  case), which must not contain underscores, for linking with Fortran. */
+#cmakedefine FC_FUNC(name,Name) @FC_FUNC@
 
 /* As FC_FUNC, but for C identifiers containing underscores. */
-#undef FC_FUNC_
+#cmakedefine FC_FUNC_(name,Name) @FC_FUNC_@
 
-/* Define if emmintrin.h */
-#undef HAVE_EMMINTRIN
+/* Define to 1 if emmintrin.h is available. */
+#cmakedefine01 HAVE_EMMINTRIN
 
-/* Define if err.h */
-#undef HAVE_ERR
+/* Define to 1 if the <err.h> header file is available. */
+#cmakedefine01 HAVE_ERR
 
-/* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
+/* Define to 1 if the <inttypes.h> header file is available. */
+#cmakedefine01 HAVE_INTTYPES_H
 
-/* Define to 1 if you have the 'vtkCommon' library (-lvtkCommon). */
-#undef HAVE_LIBVTKCOMMON
+/* Define to 1 if the following VTK libraries are available. */
+#cmakedefine01 HAVE_LIBVTKCOMMON
+#cmakedefine01 HAVE_LIBVTKDICOMPARSER
+#cmakedefine01 HAVE_LIBVTKEXPAT
+#cmakedefine01 HAVE_LIBVTKFILTERING
+#cmakedefine01 HAVE_LIBVTKGENERICFILTERING
+#cmakedefine01 HAVE_LIBVTKGRAPHICS
+#cmakedefine01 HAVE_LIBVTKRENDERING
+#cmakedefine01 HAVE_LIBVTKSYS
+#cmakedefine01 HAVE_LIBVTKZLIB
 
-/* Define to 1 if you have the 'vtkDICOMParser' library (-lvtkDICOMParser). */
-#undef HAVE_LIBVTKDICOMPARSER
-
-/* Define to 1 if you have the 'vtkexpat' library (-lvtkexpat). */
-#undef HAVE_LIBVTKEXPAT
-
-/* Define to 1 if you have the 'vtkFiltering' library (-lvtkFiltering). */
-#undef HAVE_LIBVTKFILTERING
-
-/* Define to 1 if you have the 'vtkGenericFiltering' library
-   (-lvtkGenericFiltering). */
-#undef HAVE_LIBVTKGENERICFILTERING
-
-/* Define to 1 if you have the 'vtkGraphics' library (-lvtkGraphics). */
-#undef HAVE_LIBVTKGRAPHICS
-
-/* Define to 1 if you have the 'vtkRendering' library (-lvtkRendering). */
-#undef HAVE_LIBVTKRENDERING
-
-/* Define to 1 if you have the 'vtksys' library (-lvtksys). */
-#undef HAVE_LIBVTKSYS
-
-/* Define to 1 if you have the 'vtkzlib' library (-lvtkzlib). */
-#undef HAVE_LIBVTKZLIB
-
-/* Define if you have POSIX threads libraries and header files. */
-#undef HAVE_PTHREAD
+/* Define if POSIX threads are available. */
+#cmakedefine01 HAVE_PTHREAD
 
 /* defined if Scotch is installed */
-#undef HAVE_SCOTCH
+#cmakedefine HAVE_SCOTCH
 
-/* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
+/* Define to 1 if the <stdint.h> header file is available. */
+#cmakedefine01 HAVE_STDINT_H
 
-/* Define to 1 if you have the <stdio.h> header file. */
-#undef HAVE_STDIO_H
+/* Define to 1 if the <stdio.h> header file is available. */
+#cmakedefine01 HAVE_STDIO_H
 
-/* Define to 1 if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
+/* Define to 1 if the <stdlib.h> header file is available. */
+#cmakedefine01 HAVE_STDLIB_H
 
-/* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
+/* Define to 1 if the <strings.h> header file is available. */
+#cmakedefine01 HAVE_STRINGS_H
 
-/* Define to 1 if you have the <string.h> header file. */
-#undef HAVE_STRING_H
+/* Define to 1 if the <string.h> header file is available. */
+#cmakedefine01 HAVE_STRING_H
 
-/* Define to 1 if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
+/* Define to 1 if the <sys/stat.h> header file is available. */
+#cmakedefine01 HAVE_SYS_STAT_H
 
-/* Define to 1 if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
+/* Define to 1 if the <sys/types.h> header file is available. */
+#cmakedefine01 HAVE_SYS_TYPES_H
 
-/* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
+/* Define to 1 if the <unistd.h> header file is available. */
+#cmakedefine01 HAVE_UNISTD_H
 
-/* define if the VTK library is available */
-#undef HAVE_VTK
+/* Define if VTK is available */
+#cmakedefine HAVE_VTK
 
-/* Define if xmmintrin.h */
-#undef HAVE_XMMINTRIN
+/* Define to 1 if xmmintrin.h is available. */
+#cmakedefine01 HAVE_XMMINTRIN
 
-/* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
-
-/* Define to the full name of this package. */
-#undef PACKAGE_NAME
-
-/* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
-
-/* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
-
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
-
-/* Define to the version of this package. */
-#undef PACKAGE_VERSION
+/* Define package information */
+#cmakedefine PACKAGE_BUGREPORT "@PACKAGE_BUGREPORT@"
+#cmakedefine PACKAGE_NAME "@PACKAGE_NAME@"
+#cmakedefine PACKAGE_STRING "@PACKAGE_STRING@"
+#cmakedefine PACKAGE_TARNAME "@PACKAGE_TARNAME@"
+#cmakedefine PACKAGE_URL "@PACKAGE_URL@"
+#cmakedefine PACKAGE_VERSION "@PACKAGE_VERSION@"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
-   your system. */
-#undef PTHREAD_CREATE_JOINABLE
+   your system. I did not know how to check for that. */
+#cmakedefine PTHREAD_CREATE_JOINABLE @PTHREAD_CREATE_JOINABLE@
 
-/* Define GIT branch for package source. */
-#undef SPECFEM3D_GIT_BRANCH
+/* Define Git information */
+#cmakedefine SPECFEM3D_GIT_BRANCH "@SPECFEM3D_GIT_BRANCH@"
+#cmakedefine SPECFEM3D_GIT_DATE "@SPECFEM3D_GIT_DATE@"
+#cmakedefine SPECFEM3D_GIT_HASH "@SPECFEM3D_GIT_HASH@"
+#cmakedefine SPECFEM3D_GIT_REVISION "@SPECFEM3D_GIT_REVISION@"
+#cmakedefine SPECFEM3D_RELEASE_VERSION @SPECFEM3D_RELEASE_VERSION@
+#cmakedefine SPECFEM3D_VERSION "@SPECFEM3D_VERSION@"
 
-/* Define date of GIT commit for package source. */
-#undef SPECFEM3D_GIT_DATE
-
-/* Define GIT hash for package source. */
-#undef SPECFEM3D_GIT_HASH
-
-/* Define git revision commit for package source. */
-#undef SPECFEM3D_GIT_REVISION
-
-/* Set to 0 if source is from GIT, 1 otherwise. */
-#undef SPECFEM3D_RELEASE_VERSION
-
-/* Define SPECFEM3D version */
-#undef SPECFEM3D_VERSION
 
 /* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
-#undef STDC_HEADERS
+#define STDC_HEADERS 1
 
 /* Define to 1 if 'lex' declares 'yytext' as a 'char *' by default, not a
-   'char[]'. */
-#undef YYTEXT_POINTER
+  'char[]'. */
+/* #undef YYTEXT_POINTER */
 
 
-/* Define to select optimized file i/o for regional simulations */
-/* map fails when output files are > 4GB, which is often the case for GPU simulations */
-#undef USE_MAP_FUNCTION
+/* Define if using optimized file I/O for regional simulations. */
+#cmakedefine01 USE_MAP_FUNCTION

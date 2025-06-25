@@ -10,13 +10,32 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
 import subprocess
 
 # Doxygen
-subprocess.call("doxygen Doxyfile.in", shell=True)
+doxygen_cmd = "doxygen Doxyfile.in"  # or Doxyfile.in if that's the correct filename
+
+# Create the doxygen subdirectory if it doesn't exist
+if os.path.exists("_build/doxygen") is False:
+    os.makedirs("_build/doxygen")
+
+if os.environ.get("NODOXYGEN") is not None:
+    print("Skipping Doxygen build as NODOXYGEN environment variable is set")
+    result = 0
+else:
+    result = subprocess.call(doxygen_cmd, shell=True)
+
+if result != 0:
+    print(f"Error: Doxygen command '{doxygen_cmd}' failed with code {result}")
+    sys.exit(1)
+
+# Check if output directory exists
+if not os.path.exists("_build/doxygen/xml"):
+    print("Error: Doxygen XML output directory '_build/doxygen/xml' not found")
+    print("Please check Doxygen configuration and make sure it runs correctly")
+    sys.exit(1)
 
 # -- Project information -----------------------------------------------------
 
@@ -34,17 +53,24 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
-    "sphinx.ext.autosectionlabel",
+    # "sphinx.ext.autosectionlabel",
     "sphinx.ext.todo",
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
+    "sphinx.ext.extlinks",
     "sphinx_sitemap",
     "sphinx.ext.inheritance_diagram",
+    "sphinx_design",
     "breathe",
     "sphinx_copybutton",
 ]
+
+# Adding this to avoid the WARNING: duplicate label warning
+# autosectionlabel_prefix_document = True
+
+supress_warnings = ["*duplicate*"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -78,13 +104,18 @@ html_theme = "furo"
 # }
 # html_logo = ''
 github_url = "https://github.com/PrincetonUniversity/SPECFEMPP"
-# html_baseurl = ''
+html_baseurl = "https://specfem2d-kokkos.readthedocs.io/"
+
+# External links configuration
+extlinks = {
+    "issue": (f"{github_url}/issues/%s", "Issue #%s"),
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # These folders are copied to the documentation's HTML output
-html_static_path = ["_static"]
+html_static_path = ["sections/_static"]
 
 # These paths are either relative to html_static_path
 # or fully qualified paths (eg. https://...)
@@ -96,6 +127,11 @@ html_css_files = [
 
 # -- Breathe configuration -------------------------------------------------
 
-breathe_projects = {"SPECFEM KOKKOS IMPLEMENTATION": "_build/xml"}
+breathe_projects = {"SPECFEM KOKKOS IMPLEMENTATION": "_build/doxygen/xml"}
 breathe_default_project = "SPECFEM KOKKOS IMPLEMENTATION"
 breathe_default_members = ()
+breathe_doxygen_config_options = {"PREDEFINED": "KOKKOS_INLINE_FUNCTION="}
+breathe_show_define_initializer = True
+breathe_show_include = True
+breathe_template_parameters = True
+breathe_separate_member_pages = True

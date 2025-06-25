@@ -5,11 +5,10 @@
 #include "globals.h"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "point/coordinates.hpp"
-#include "point/partial_derivatives.hpp"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/point.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 // #include "utilities.cpp"
@@ -33,10 +32,34 @@ void specfem::sources::moment_tensor::compute_source_array(
         "Moment tensor source not implemented for acoustic medium");
   }
 
-  const int ncomponents = source_array.extent(0);
-  if (ncomponents != 2) {
+  if (el_type == specfem::element::medium_tag::elastic_sh) {
     throw std::runtime_error(
-        "Moment tensor source requires 2 components for elastic medium");
+        "Moment tensor source not implemented for elastic SH medium");
+  }
+
+  const int ncomponents = source_array.extent(0);
+  if ((el_type == specfem::element::medium_tag::elastic_psv) ||
+      (el_type == specfem::element::medium_tag::electromagnetic_te)) {
+    if (ncomponents != 2) {
+      throw std::runtime_error(
+          "Moment tensor source requires 2 components for elastic medium");
+    }
+  } else if (el_type == specfem::element::medium_tag::poroelastic) {
+    if (ncomponents != 4) {
+      throw std::runtime_error(
+          "Moment tensor source requires 4 components for poroelastic medium");
+    }
+  } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
+    if (ncomponents != 3) {
+      throw std::runtime_error("Moment tensor source requires 3 components for "
+                               "elastic psv_t medium");
+    }
+  } else {
+    std::ostringstream message;
+    message << "Moment tensor source not implemented for element type: "
+            << specfem::element::to_string(el_type);
+    auto message_str = message.str();
+    Kokkos::abort(message_str.c_str());
   }
 
   const auto xi = mesh.quadratures.gll.h_xi;
@@ -107,12 +130,14 @@ void specfem::sources::moment_tensor::compute_source_array(
       type_real dsrc_dz =
           (hpxi_source(ix) * derivatives_source.xiz) * hgamma_source(iz) +
           hxi_source(ix) * (hpgamma_source(iz) * derivatives_source.gammaz);
-      if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-        source_array(0, iz, ix) += Mxx * dsrc_dx + Mxz * dsrc_dz;
-        source_array(1, iz, ix) += Mxz * dsrc_dx + Mzz * dsrc_dz;
-      } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-        source_array(0, iz, ix) += Mxx * dsrc_dx + Mxz * dsrc_dz;
-        source_array(1, iz, ix) += 0;
+      source_array(0, iz, ix) = Mxx * dsrc_dx + Mxz * dsrc_dz;
+      source_array(1, iz, ix) = Mxz * dsrc_dx + Mzz * dsrc_dz;
+
+      if (el_type == specfem::element::medium_tag::poroelastic) {
+        source_array(2, iz, ix) = source_array(0, iz, ix);
+        source_array(3, iz, ix) = source_array(1, iz, ix);
+      } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
+        source_array(2, iz, ix) = static_cast<type_real>(0.0);
       }
     }
   }
@@ -124,9 +149,43 @@ std::string specfem::sources::moment_tensor::print() const {
           << "    Source Location: \n"
           << "      x = " << this->x << "\n"
           << "      z = " << this->z << "\n"
+          << "    Moment Tensor: \n"
+          << "      Mxx, Mzz, Mxz = " << this->Mxx << ", " << this->Mzz << ", "
+          << this->Mxz << "\n"
           << "    Source Time Function: \n"
           << this->forcing_function->print() << "\n";
-  // out << *(this->forcing_function);
 
   return message.str();
+}
+
+bool specfem::sources::moment_tensor::operator==(
+    const specfem::sources::source &other) const {
+
+  // Try casting the other source to a moment tensor source
+  const auto *other_source =
+      dynamic_cast<const specfem::sources::moment_tensor *>(&other);
+
+  // Check if cast was successful
+  if (other_source == nullptr) {
+    std::cout << "Other source is not a moment tensor object" << std::endl;
+    return false;
+  }
+
+  bool internal =
+      specfem::utilities::almost_equal(this->Mxx, other_source->Mxx) &&
+      specfem::utilities::almost_equal(this->Mxz, other_source->Mxz) &&
+      specfem::utilities::almost_equal(this->Mzz, other_source->Mzz) &&
+      specfem::utilities::almost_equal(this->x, other_source->x) &&
+      specfem::utilities::almost_equal(this->z, other_source->z);
+
+  if (!internal) {
+    std::cout << "Moment tensor source not equal" << std::endl;
+  }
+
+  return internal &&
+         (*(this->forcing_function) == *(other_source->forcing_function));
+}
+bool specfem::sources::moment_tensor::operator!=(
+    const specfem::sources::source &other) const {
+  return !(*this == other);
 }

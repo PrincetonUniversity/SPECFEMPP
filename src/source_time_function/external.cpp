@@ -1,7 +1,8 @@
 #include "source_time_function/external.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "io/seismogram/reader.hpp"
 #include "kokkos_abstractions.h"
-#include "IO/seismogram/reader.hpp"
+#include "utilities/strings.hpp"
 #include <fstream>
 #include <tuple>
 #include <vector>
@@ -11,8 +12,8 @@ specfem::forcing_function::external::external(const YAML::Node &external,
                                               const type_real dt)
     : __nsteps(nsteps), __dt(dt) {
 
-  if ((external["format"].as<std::string>() == "ascii") ||
-      (external["format"].as<std::string>() == "ASCII") ||
+  if (specfem::utilities::is_ascii_string(
+          external["format"].as<std::string>()) ||
       !external["format"]) {
     this->type = specfem::enums::seismogram::format::ascii;
   } else {
@@ -132,7 +133,7 @@ void specfem::forcing_function::external::compute_source_time_function(
       continue;
 
     specfem::kokkos::HostView2d<type_real> data("external", nsteps, 2);
-    specfem::IO::seismogram_reader reader(
+    specfem::io::seismogram_reader reader(
         filename[icomp], specfem::enums::seismogram::format::ascii, data);
     reader.read();
     for (int i = 0; i < nsteps; i++) {
@@ -140,4 +141,31 @@ void specfem::forcing_function::external::compute_source_time_function(
     }
   }
   return;
+}
+
+bool specfem::forcing_function::external::operator==(
+    const specfem::forcing_function::stf &other) const {
+  // First check base class equality
+  if (!specfem::forcing_function::stf::operator==(other))
+    return false;
+
+  // Then check if the other object is a dGaussian
+  auto other_external =
+      dynamic_cast<const specfem::forcing_function::external *>(&other);
+  if (!other_external)
+    return false;
+
+  return (this->x_component == other_external->x_component &&
+          this->y_component == other_external->y_component &&
+          this->z_component == other_external->z_component &&
+          this->__t0 == other_external->__t0 &&
+          this->__dt == other_external->__dt &&
+          this->type == other_external->type &&
+          this->ncomponents == other_external->ncomponents &&
+          this->__nsteps == other_external->__nsteps);
+};
+
+bool specfem::forcing_function::external::operator!=(
+    const specfem::forcing_function::stf &other) const {
+  return !(*this == other);
 }

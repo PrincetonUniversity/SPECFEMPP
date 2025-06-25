@@ -1,5 +1,6 @@
 #include "parameter_parser/time_scheme/time_scheme.hpp"
 #include "timescheme/newmark.hpp"
+#include "utilities/strings.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
 #include <ostream>
@@ -9,7 +10,7 @@ specfem::runtime_configuration::time_scheme::time_scheme::instantiate(
     const int nstep_between_samples) {
 
   std::shared_ptr<specfem::time_scheme::time_scheme> it;
-  if (this->timescheme == "Newmark") {
+  if (specfem::utilities::is_newmark_string(this->timescheme)) {
     if (this->type == specfem::simulation::type::forward) {
 
       it = std::make_shared<

@@ -1,45 +1,18 @@
-
-
 # Examples
 
-The examples use [snakemake](https://snakemake.readthedocs.io/en/stable/) to run the simulation workflow. Snakemake is a workflow management system that allows you to define the rules of your workflow in a Snakefile. Every example has its own Snakefile that defines the steps involved in running that example.
+This directory contains a couple of minimal examples of how to use the
+`specfem++` package. The examples are designed to be simple and easy to
+they demonstrate the basic usage of the package. They are not intended to be
+comprehensive or exhaustive. For more detailed examples, please refer to the
+[cookbooks in the documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/index.html).
 
-**Make sure you've installed SPECFEM++ with examples enabled (-D ENABLE_EXAMPLES=ON) and add the build directory to your `PATH`**
+The examples are organized into subdirectories, each containing a single example.
 
-## Running the examples
-
-To run the examples, you first need to install poetry following these [instructions](https://python-poetry.org/docs/#installation). Once you've done so, you can install the dependencies for the examples by running the following command in the current directory:
-
-```bash
-# verify poetry is installed
-poetry --version
-
-# install dependencies
-poetry install
-
-```
-
-After installing the dependencies, you can run the examples by running the following command within the example directory you want to run:
-
-```bash
-
-cd <example directory>
-
-# run the example
-poetry run snakemake -j 1
-
-# or to run the example on a slurm cluster
-poetry run snakemake --executor slurm -j 1
-
-```
-
-## Cleaning up
-
-To clean up the example directory, you can run the following command in the directory of the example you want to clean up:
-
-```bash
-
-# clean up the example
-poetry run snakemake clean
-
-```
+The examples are as follows:
+* 2D Examples (`dim2/`):
+  - `homogeneous-elastic`: A simple example that demonstrates how to use the
+    package to solves wave propagation in a homogeneous elastic medium with
+    flat topography.
+  - `fluid-solid`: An example that demonstrates how to use the package to solve
+    wave propagation with fluid-solid coupling.
+  - `poroelastic-semi-infinite` An example that simulates wave propagation through a 2-dimensional poroelastic medium.

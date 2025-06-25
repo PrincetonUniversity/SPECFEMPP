@@ -48,13 +48,20 @@ bool _execute(const std::string &parameter_string,
   if (_py_mpi == NULL) {
     return false;
   }
+
   const YAML::Node parameter_dict = YAML::Load(parameter_string);
   const YAML::Node default_dict = YAML::Load(default_string);
   std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks;
   const auto signal_task =
       std::make_shared<specfem::periodic_tasks::check_signal>(10);
   tasks.push_back(signal_task);
-  execute(parameter_dict, default_dict, tasks, _py_mpi);
+  // Releasing the GIL in a scoped section
+  // is needed for long running tasks, such as a
+  // simulation.
+  {
+    py::gil_scoped_release release;
+    execute(parameter_dict, default_dict, tasks, _py_mpi);
+  }
   return true;
 }
 
@@ -71,7 +78,7 @@ bool _finalize() {
 }
 
 PYBIND11_MODULE(_core, m) {
-    m.doc() = R"pbdoc(
+  m.doc() = R"pbdoc(
         SPECfem++ core module
         -----------------------
 
@@ -83,23 +90,23 @@ PYBIND11_MODULE(_core, m) {
            _run
     )pbdoc";
 
-    m.def("_initialize", &_initialize, R"pbdoc(
+  m.def("_initialize", &_initialize, R"pbdoc(
         Initialize SPECFEM++.
     )pbdoc");
 
-    m.def("_execute", &_execute, R"pbdoc(
+  m.def("_execute", &_execute, R"pbdoc(
         Execute the main SPECFEM++ workflow.
     )pbdoc");
 
-    m.def("_finalize", &_finalize, R"pbdoc(
+  m.def("_finalize", &_finalize, R"pbdoc(
         Finalize SPECFEM++.
     )pbdoc");
 
-    m.attr("_default_file_path") = __default_file__;
+  m.attr("_default_file_path") = __default_file__;
 
 #ifdef VERSION_INFO
-    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+  m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 #else
-    m.attr("__version__") = "dev";
+  m.attr("__version__") = "dev";
 #endif
 }
