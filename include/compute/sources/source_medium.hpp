@@ -71,7 +71,7 @@ public:
    *
    * @param sources Vector of sources located within the medium
    * @param mesh Finite element mesh information
-   * @param partial_derivatives Partial derivatives for every quadrature point
+   * @param jacobian_matrix Jacobian matrix for every quadrature point
    * @param element_types Element types for every spectral element
    * @param t0 Initial time
    * @param dt Time step
@@ -80,7 +80,7 @@ public:
   source_medium(
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const specfem::compute::mesh &mesh,
-      const specfem::compute::partial_derivatives &partial_derivatives,
+      const specfem::compute::jacobian_matrix &jacobian_matrix,
       const specfem::compute::element_types &element_types, const type_real t0,
       const type_real dt, const int nsteps);
   ///@}

@@ -17,7 +17,7 @@ What the 3D mesh struct holds
     parameters/index
     coordinates/index
     mapping/index
-    partial_derivatives/index
+    jacobian_matrix/index
     element_types/index
     materials/index
     mass_matrix/index

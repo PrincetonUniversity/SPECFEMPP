@@ -1,6 +1,6 @@
 #include "algorithms/interface.hpp"
+#include "compute/compute_jacobian_matrix.hpp"
 #include "compute/compute_mesh.hpp"
-#include "compute/compute_partial_derivatives.hpp"
 #include "compute/properties/properties.hpp"
 #include "globals.h"
 #include "jacobian/interface.hpp"
@@ -17,7 +17,7 @@
 
 void specfem::sources::moment_tensor::compute_source_array(
     const specfem::compute::mesh &mesh,
-    const specfem::compute::partial_derivatives &partial_derivatives,
+    const specfem::compute::jacobian_matrix &jacobian_matrix,
     const specfem::compute::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
@@ -77,10 +77,10 @@ void specfem::sources::moment_tensor::compute_source_array(
   // Load
   specfem::kokkos::HostView2d<type_real> source_polynomial("source_polynomial",
                                                            N, N);
-  using PointPartialDerivatives =
-      specfem::point::partial_derivatives<specfem::dimension::type::dim2, false,
-                                          false>;
-  specfem::kokkos::HostView2d<PointPartialDerivatives> element_derivatives(
+  using PointJacobianMatrix =
+      specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
+                                      false>;
+  specfem::kokkos::HostView2d<PointJacobianMatrix> element_derivatives(
       "element_derivatives", N, N);
 
   Kokkos::parallel_for(
@@ -92,8 +92,8 @@ void specfem::sources::moment_tensor::compute_source_array(
         type_real hlagrange = hxi_source(ix) * hgamma_source(iz);
         const specfem::point::index<specfem::dimension::type::dim2> index(
             lcoord.ispec, iz, ix);
-        PointPartialDerivatives derivatives;
-        specfem::compute::load_on_host(index, partial_derivatives, derivatives);
+        PointJacobianMatrix derivatives;
+        specfem::compute::load_on_host(index, jacobian_matrix, derivatives);
         source_polynomial(iz, ix) = hlagrange;
         element_derivatives(iz, ix) = derivatives;
       });
@@ -111,7 +111,7 @@ void specfem::sources::moment_tensor::compute_source_array(
   // for (int iz = 0; iz < N; iz++) {
   //   for (int ix = 0; ix < N; ix++) {
   //     auto derivatives =
-  //         partial_derivatives
+  //         jacobian_matrix
   //             .load_derivatives<false, specfem::kokkos::HostExecSpace>(
   //                 lcoord.ispec, j, i);
   //     hlagrange = hxis(i) * hgammas(j);

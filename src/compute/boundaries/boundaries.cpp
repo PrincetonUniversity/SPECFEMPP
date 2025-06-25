@@ -7,7 +7,7 @@ specfem::compute::boundaries::boundaries(
     const specfem::compute::mesh_to_compute_mapping &mapping,
     const specfem::compute::quadrature &quadrature,
     const specfem::compute::properties &properties,
-    const specfem::compute::partial_derivatives &partial_derivatives)
+    const specfem::compute::jacobian_matrix &jacobian_matrix)
     : boundary_tags("specfem::compute::boundaries::boundary_tags", nspec),
       acoustic_free_surface_index_mapping(
           "specfem::compute::boundaries::acoustic_free_surface_index_mapping",
@@ -28,8 +28,7 @@ specfem::compute::boundaries::boundaries(
 
   this->stacey = specfem::compute::impl::boundaries::stacey(
       nspec, ngllz, ngllx, mesh.boundaries.absorbing_boundary, mapping,
-      quadrature, partial_derivatives, this->h_stacey_index_mapping,
-      boundary_tag);
+      quadrature, jacobian_matrix, this->h_stacey_index_mapping, boundary_tag);
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     this->boundary_tags(ispec) = boundary_tag[ispec].get_tag();

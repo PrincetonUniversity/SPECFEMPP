@@ -17,7 +17,7 @@ specfem::compute::assembly::assembly(
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures };
   this->element_types = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
                           this->mesh.mapping, mesh.tags };
-  this->partial_derivatives = { this->mesh };
+  this->jacobian_matrix = { this->mesh };
   this->properties = { this->mesh.nspec,          this->mesh.ngllz,
                        this->mesh.ngllx,          this->element_types,
                        this->mesh.mapping,        mesh.materials,
@@ -25,8 +25,8 @@ specfem::compute::assembly::assembly(
   this->kernels = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
                     this->element_types };
   this->sources = {
-    sources, this->mesh,   this->partial_derivatives, this->element_types, t0,
-    dt,      max_timesteps
+    sources, this->mesh, this->jacobian_matrix, this->element_types,
+    t0,      dt,         max_timesteps
   };
   this->receivers = { this->mesh.nspec,
                       this->mesh.ngllz,
@@ -43,11 +43,11 @@ specfem::compute::assembly::assembly(
   this->boundaries = { this->mesh.nspec,   this->mesh.ngllz,
                        this->mesh.ngllx,   mesh,
                        this->mesh.mapping, this->mesh.quadratures,
-                       this->properties,   this->partial_derivatives };
+                       this->properties,   this->jacobian_matrix };
   this->coupled_interfaces = { mesh,
                                this->mesh.points,
                                this->mesh.quadratures,
-                               this->partial_derivatives,
+                               this->jacobian_matrix,
                                this->element_types,
                                this->mesh.mapping };
   this->fields = { this->mesh, this->element_types, simulation };

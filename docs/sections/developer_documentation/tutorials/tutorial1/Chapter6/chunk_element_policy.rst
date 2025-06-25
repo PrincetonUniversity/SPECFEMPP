@@ -21,7 +21,7 @@ Chunk Element Policy is used to iterate over the elements of the mesh. Chunk ele
     // elements is view of indices of spectral elements
     // inside the acoustic medium
     KOKKOS_FUNCTION void compute_mass_matrix(
-        const partial_derivatives &derivatives,
+        const jacobian_matrix &derivatives,
         const properties &properties,
         const simulation_field &forward,
         const View<int *> &elements){
@@ -68,7 +68,7 @@ Chunk Element Policy is used to iterate over the elements of the mesh. Chunk ele
 
                                 // ... load properties and derivatives into point types
 
-                                PointMassType mass_matrix(partial_derivatives.jacobian / properties.kappa);
+                                PointMassType mass_matrix(jacobian_matrix.jacobian / properties.kappa);
 
                                 // atomic add mass matrix to the global mass matrix
                                 atomic_add(index, mass_matrix, forward);

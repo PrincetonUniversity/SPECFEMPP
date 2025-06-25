@@ -25,7 +25,7 @@ Finite Element Assembly
     :maxdepth: 1
 
     mesh/mesh
-    partial_derivatives/partial_derivatives
+    jacobian_matrix/jacobian_matrix
     properties/properties
     boundary/boundary
     fields/fields

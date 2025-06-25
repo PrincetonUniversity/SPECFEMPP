@@ -51,13 +51,13 @@ struct Accessor {
 };
 
 template <typename T, typename = void>
-struct is_point_partial_derivatives : std::false_type {};
+struct is_point_jacobian_matrix : std::false_type {};
 
 template <typename T>
-struct is_point_partial_derivatives<
+struct is_point_jacobian_matrix<
     T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
                         T::data_class ==
-                            specfem::data_class::type::partial_derivatives> >
+                            specfem::data_class::type::jacobian_matrix> >
     : std::true_type {};
 
 template <typename T, typename = void>

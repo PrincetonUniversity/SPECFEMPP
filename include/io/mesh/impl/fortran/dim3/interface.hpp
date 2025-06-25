@@ -64,10 +64,10 @@ void read_xyz(
  * @param coordinates Coordinates object
  * @param mpi MPI object
  */
-void read_partial_derivatives(
+void read_jacobian_matrix(
     std::ifstream &stream,
-    specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>
-        &partial_derivatives,
+    specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>
+        &jacobian_matrix,
     const specfem::MPI::MPI *mpi);
 
 /**

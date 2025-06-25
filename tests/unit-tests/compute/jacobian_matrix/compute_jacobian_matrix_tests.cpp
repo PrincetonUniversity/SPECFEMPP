@@ -62,11 +62,11 @@ test_config get_test_config(std::string config_filename,
  * This test should be run on single and multiple nodes
  *
  */
-TEST(COMPUTE_TESTS, compute_partial_derivatives) {
+TEST(COMPUTE_TESTS, compute_jacobian_matrix) {
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  std::string config_filename = "compute/partial_derivatives/test_config.yml";
+  std::string config_filename = "compute/jacobian_matrix/test_config.yml";
   test_config test_config = get_test_config(config_filename, mpi);
 
   // Set up GLL quadrature points
@@ -79,7 +79,7 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
 
   specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
                                       quadratures);
-  specfem::compute::partial_derivatives partial_derivatives(compute_mesh);
+  specfem::compute::jacobian_matrix jacobian_matrix(compute_mesh);
 
   const int nspec = compute_mesh.control_nodes.nspec;
   const int ngllz = compute_mesh.quadratures.gll.N;
@@ -99,23 +99,23 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
       for (int ispec = 0; ispec < nspec; ++ispec) {
         const specfem::point::index<specfem::dimension::type::dim2> index(
             ispec, iz, ix);
-        const auto point_partial_derivatives = [&]() {
-          specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                              true, false>
-              point_partial_derivatives;
-          specfem::compute::load_on_host(index, partial_derivatives,
-                                         point_partial_derivatives);
-          return point_partial_derivatives;
+        const auto point_jacobian_matrix = [&]() {
+          specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
+                                          false>
+              point_jacobian_matrix;
+          specfem::compute::load_on_host(index, jacobian_matrix,
+                                         point_jacobian_matrix);
+          return point_jacobian_matrix;
         }();
         const int ispec_mesh = compute_mesh.mapping.compute_to_mesh(ispec);
 
-        EXPECT_NEAR(point_partial_derivatives.xix,
-                    xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
-        EXPECT_NEAR(point_partial_derivatives.gammax,
+        EXPECT_NEAR(point_jacobian_matrix.xix, xix_ref.data(ispec_mesh, iz, ix),
+                    xix_ref.tol);
+        EXPECT_NEAR(point_jacobian_matrix.gammax,
                     gammax_ref.data(ispec_mesh, iz, ix), gammax_ref.tol);
-        EXPECT_NEAR(point_partial_derivatives.gammaz,
+        EXPECT_NEAR(point_jacobian_matrix.gammaz,
                     gammaz_ref.data(ispec_mesh, iz, ix), gammaz_ref.tol);
-        EXPECT_NEAR(point_partial_derivatives.jacobian,
+        EXPECT_NEAR(point_jacobian_matrix.jacobian,
                     jacobian_ref.data(ispec_mesh, iz, ix), jacobian_ref.tol);
       }
     }
@@ -131,25 +131,25 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
             (ispec + vector_length < nspec) ? vector_length : nspec - ispec;
         const specfem::point::simd_index<specfem::dimension::type::dim2>
             simd_index(ispec, num_elements, iz, ix);
-        const auto point_partial_derivatives = [&]() {
-          specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                              true, true>
-              point_partial_derivatives;
-          specfem::compute::load_on_host(simd_index, partial_derivatives,
-                                         point_partial_derivatives);
-          return point_partial_derivatives;
+        const auto point_jacobian_matrix = [&]() {
+          specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
+                                          true>
+              point_jacobian_matrix;
+          specfem::compute::load_on_host(simd_index, jacobian_matrix,
+                                         point_jacobian_matrix);
+          return point_jacobian_matrix;
         }();
 
         for (int i = 0; i < num_elements; ++i) {
           const int ispec_mesh =
               compute_mesh.mapping.compute_to_mesh(ispec + i);
-          EXPECT_NEAR(point_partial_derivatives.xix[i],
+          EXPECT_NEAR(point_jacobian_matrix.xix[i],
                       xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
-          EXPECT_NEAR(point_partial_derivatives.gammax[i],
+          EXPECT_NEAR(point_jacobian_matrix.gammax[i],
                       gammax_ref.data(ispec_mesh, iz, ix), gammax_ref.tol);
-          EXPECT_NEAR(point_partial_derivatives.gammaz[i],
+          EXPECT_NEAR(point_jacobian_matrix.gammaz[i],
                       gammaz_ref.data(ispec_mesh, iz, ix), gammaz_ref.tol);
-          EXPECT_NEAR(point_partial_derivatives.jacobian[i],
+          EXPECT_NEAR(point_jacobian_matrix.jacobian[i],
                       jacobian_ref.data(ispec_mesh, iz, ix), jacobian_ref.tol);
         }
       }

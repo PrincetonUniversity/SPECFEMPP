@@ -4,7 +4,7 @@
 Chapter 5: SPECFEM++ data-types
 ===============================
 
-We briefly discussed the concept of data-types in :ref:`Chapter4` - where we defined a point datatype to store spatial derivates at the quadrature point ``point_partial_derivatives``. This chapter lists all the data-types that are used in SPECFEM++.
+We briefly discussed the concept of data-types in :ref:`Chapter4` - where we defined a point datatype to store spatial derivates at the quadrature point ``point_jacobian_matrix``. This chapter lists all the data-types that are used in SPECFEM++.
 
 Index Types
 -----------
@@ -43,7 +43,7 @@ In addition to the elementary data types, we define derived data types that are 
 Point Data Types
 ^^^^^^^^^^^^^^^^
 
-1. Partial Derivatives :cpp:class:`specfem::point::partial_derivatives`
+1. Jacobian matrix :cpp:class:`specfem::point::jacobian_matrix`
 2. Properties :cpp:class:`specfem::point::properties`
 3. Wavefield :cpp:class:`specfem::point::field`
 4. Kernels :cpp:class:`specfem::point::kernels`

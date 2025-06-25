@@ -75,7 +75,7 @@ compute_locations(const specfem::kokkos::HostView2d<type_real> s_coorg,
                   const int ngnod, const std::vector<type_real> shape2D);
 
 /**
- * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
+ * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
  *
  * @note This function can only be called within a team policy
  *
@@ -88,14 +88,13 @@ compute_locations(const specfem::kokkos::HostView2d<type_real> s_coorg,
  * derivatives \f$ (\partial x/\partial \xi, \partial x/\partial \gamma,
  * \partial z/\partial \xi, \partial z/\partial \gamma) \f$
  */
-std::tuple<type_real, type_real, type_real, type_real>
-compute_partial_derivatives(
+std::tuple<type_real, type_real, type_real, type_real> compute_jacobian_matrix(
     const specfem::kokkos::HostTeam::member_type &teamMember,
     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
     const int ngnod, const type_real xi, const type_real gamma);
 
 /**
- * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
+ * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
  *
  * @note This function can only be called within a team policy
  *
@@ -108,14 +107,13 @@ compute_partial_derivatives(
  * derivatives \f$ (\partial x/\partial \xi, \partial x/\partial \gamma,
  * \partial z/\partial \xi, \partial z/\partial \gamma) \f$
  */
-std::tuple<type_real, type_real, type_real, type_real>
-compute_partial_derivatives(
+std::tuple<type_real, type_real, type_real, type_real> compute_jacobian_matrix(
     const specfem::kokkos::HostTeam::member_type &teamMember,
     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
     const int ngnod, const specfem::kokkos::HostView2d<type_real> dershape2D);
 
 /**
- * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
+ * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
  *
  * @note This function can only be called within a team policy
  *
@@ -129,17 +127,17 @@ compute_partial_derivatives(
  * \partial z/\partial \xi, \partial z/\partial \gamma) \f$
  */
 std::tuple<type_real, type_real, type_real, type_real>
-compute_partial_derivatives(
-    const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
-    const type_real xi, const type_real gamma);
+compute_jacobian_matrix(const specfem::kokkos::HostView2d<type_real> s_coorg,
+                        const int ngnod, const type_real xi,
+                        const type_real gamma);
 
 /**
- * @brief compute jacobian given partial derivatives at a point
+ * @brief compute jacobian given Jacobian matrix at a point
  *
- * @param xxi partial derivative \f$ \partial x/\partial \xi \f$
- * @param zxi partial derivative \f$ \partial z/\partial \xi \f$
- * @param xgamma partial derivative \f$ \partial x/\partial \gamma \f$
- * @param zgamma partial derivative \f$ \partial z/\partial \gamma \f$
+ * @param xxi Jacobian matrix \f$ \partial x/\partial \xi \f$
+ * @param zxi Jacobian matrix \f$ \partial z/\partial \xi \f$
+ * @param xgamma Jacobian matrix \f$ \partial x/\partial \gamma \f$
+ * @param zgamma Jacobian matrix \f$ \partial z/\partial \gamma \f$
  * @return type_real computed jacobian
  */
 type_real compute_jacobian(const type_real xxi, const type_real zxi,
@@ -176,7 +174,7 @@ compute_jacobian(const specfem::kokkos::HostTeam::member_type &teamMember,
                  const specfem::kokkos::HostView2d<type_real> dershape2D);
 
 /**
- * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
+ * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
  *
  * @note This function can only be called within a team policy
  *
@@ -196,7 +194,7 @@ compute_inverted_derivatives(
     const int ngnod, const type_real xi, const type_real gamma);
 
 /**
- * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
+ * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
  *
  * @note This function can only be called within a team policy
  *
@@ -216,7 +214,7 @@ compute_inverted_derivatives(
     const int ngnod, const specfem::kokkos::HostView2d<type_real> dershape2D);
 
 /**
- * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
+ * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
  *
  * @note This function can only be called within a team policy
  *
@@ -234,7 +232,7 @@ compute_inverted_derivatives(
     const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
     const type_real xi, const type_real gamma);
 
-specfem::point::partial_derivatives<specfem::dimension::type::dim2, true, false>
+specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true, false>
 compute_derivatives(const specfem::kokkos::HostTeam::member_type &teamMember,
                     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
                     const int ngnod,
