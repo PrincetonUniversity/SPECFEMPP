@@ -20,6 +20,6 @@ specfem::medium::impl_mass_matrix_component(
        properties.phi() * properties.rho_f() * properties.rho_f()) /
       (properties.phi() * properties.rho_bar());
 
-  return specfem::datatype::ScalarPointViewType<type_real, 4, UseSIMD>(
+  return specfem::datatype::VectorPointViewType<type_real, 4, UseSIMD>(
       solid_component, solid_component, fluid_component, fluid_component);
 }

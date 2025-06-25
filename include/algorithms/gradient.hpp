@@ -30,7 +30,7 @@ namespace algorithms {
  * @param f Field to compute the gradient of
  * @param callback Callback functor. Callback signature must be:
  * @code void(const typename IteratorType::index_type, const
- * specfem::datatype::VectorPointViewType<type_real, 2, ViewType::components>)
+ * specfem::datatype::TensorPointViewType<type_real, 2, ViewType::components>)
  * @endcode
  */
 template <typename ChunkIndexType, typename ViewType, typename QuadratureType,
@@ -47,8 +47,8 @@ gradient(const ChunkIndexType &chunk_index,
 
   constexpr int NGLL = ViewType::ngll;
 
-  using VectorPointViewType =
-      specfem::datatype::VectorPointViewType<type_real, components, dimension,
+  using TensorPointViewType =
+      specfem::datatype::TensorPointViewType<type_real, components, dimension,
                                              using_simd>;
 
   using datatype = typename ViewType::simd::datatype;
@@ -59,7 +59,7 @@ gradient(const ChunkIndexType &chunk_index,
   static_assert(
       std::is_invocable_v<CallbackFunctor,
                           typename ChunkIndexType::iterator_type::index_type,
-                          VectorPointViewType>,
+                          TensorPointViewType>,
       "CallbackFunctor must be invocable with the following signature: "
       "void(const int, const specfem::point::index, const "
       "specfem::kokkos::array_type<type_real, components>, const "
@@ -93,7 +93,7 @@ gradient(const ChunkIndexType &chunk_index,
 
         specfem::compute::load_on_device(point_index, jacobian_matrix,
                                          point_jacobian_matrix);
-        VectorPointViewType df;
+        TensorPointViewType df;
         for (int icomponent = 0; icomponent < components; ++icomponent) {
           df(icomponent, 0) =
               point_jacobian_matrix.xix * df_dxi[icomponent] +
@@ -127,8 +127,8 @@ gradient(const ChunkIndexType &chunk_index,
  * @param g Field to compute the gradient of
  * @param callback Callback functor. Callback signature must be:
  * @code void(const typename IteratorType::index_type, const
- * specfem::datatype::VectorPointViewType<type_real, 2, ViewType::components>,
- * const specfem::datatype::VectorPointViewType<type_real, 2,
+ * specfem::datatype::TensorPointViewType<type_real, 2, ViewType::components>,
+ * const specfem::datatype::TensorPointViewType<type_real, 2,
  * ViewType::components>)
  * @endcode
  */
@@ -146,8 +146,8 @@ gradient(const ChunkIndexType &chunk_index,
 
   constexpr int NGLL = ViewType::ngll;
 
-  using VectorPointViewType =
-      specfem::datatype::VectorPointViewType<type_real, components, dimension,
+  using TensorPointViewType =
+      specfem::datatype::TensorPointViewType<type_real, components, dimension,
                                              using_simd>;
 
   static_assert(ViewType::isScalarViewType,
@@ -158,11 +158,11 @@ gradient(const ChunkIndexType &chunk_index,
   static_assert(
       std::is_invocable_v<CallbackFunctor,
                           typename ChunkIndexType::iterator_type::index_type,
-                          VectorPointViewType, VectorPointViewType>,
+                          TensorPointViewType, TensorPointViewType>,
       "CallbackFunctor must be invocable with the following signature: "
       "void(const ChunkIndexType::iterator_type::index_type, "
-      "const specfem::datatype::VectorPointViewType<type_real, 2, components>, "
-      "const specfem::datatype::VectorPointViewType<type_real, 2, "
+      "const specfem::datatype::TensorPointViewType<type_real, 2, components>, "
+      "const specfem::datatype::TensorPointViewType<type_real, 2, "
       "components>)");
 
   specfem::execution::for_each_level(
@@ -194,7 +194,7 @@ gradient(const ChunkIndexType &chunk_index,
         specfem::compute::load_on_device(point_index, jacobian_matrix,
                                          point_jacobian_matrix);
 
-        VectorPointViewType df;
+        TensorPointViewType df;
 
         for (int icomponent = 0; icomponent < components; ++icomponent) {
           df(icomponent, 0) =
@@ -220,7 +220,7 @@ gradient(const ChunkIndexType &chunk_index,
           }
         }
 
-        VectorPointViewType dg;
+        TensorPointViewType dg;
         for (int icomponent = 0; icomponent < components; ++icomponent) {
           dg(icomponent, 0) =
               point_jacobian_matrix.xix * df_dxi[icomponent] +

@@ -6,18 +6,18 @@
 
 namespace specfem {
 namespace algorithms {
-template <typename ScalarPointViewType>
-KOKKOS_INLINE_FUNCTION typename ScalarPointViewType::value_type
-dot(const ScalarPointViewType &a, const ScalarPointViewType &b) {
+template <typename VectorPointViewType>
+KOKKOS_INLINE_FUNCTION typename VectorPointViewType::value_type
+dot(const VectorPointViewType &a, const VectorPointViewType &b) {
 
-  static_assert(ScalarPointViewType::isPointViewType,
+  static_assert(VectorPointViewType::isPointViewType,
                 "Invalid ViewType: not a PointViewType");
 
-  static_assert(ScalarPointViewType::isScalarViewType,
+  static_assert(VectorPointViewType::isScalarViewType,
                 "Invalid ViewType: not a ScalarViewType");
 
-  using value_type = typename ScalarPointViewType::value_type;
-  constexpr int N = ScalarPointViewType::components;
+  using value_type = typename VectorPointViewType::value_type;
+  constexpr int N = VectorPointViewType::components;
   value_type result{ 0.0 };
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
