@@ -110,4 +110,4 @@ Here's an example from the elastic media implementation (``core/specfem/point/pr
      }
    };
 
-In this example, the ``POINT_CONTAINER(rho, kappa, mu)`` macro generates all the necessary accessor methods and functions for the density (`rho`), bulk modulus (`kappa`), and shear modulus (`mu`) properties. The class then adds custom methods that build upon these basic properties to compute derived quantities like `lambdaplus2mu`, `rho_vp`, `rho_vs`, and `lambda`.
+In this example, the ``POINT_CONTAINER(rho, kappa, mu)`` macro generates all the necessary accessor methods and functions for the density (``rho``), bulk modulus (``kappa``), and shear modulus (``mu``) properties. The class then adds custom methods that build upon these basic properties to compute derived quantities like ``lambdaplus2mu``, ``rho_vp``, ``rho_vs``, and ``lambda``.
