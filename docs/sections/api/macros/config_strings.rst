@@ -25,18 +25,18 @@ Description
 
 For each defined string group like ``((hdf5, h5))``, the following functions are generated:
 
-+-------------------------------+-------------------------------------------------------+
-| Function                      | Description                                           |
-+===============================+=======================================================+
-| ``is_<name>(std::string)``    | Returns true if the string matches any alias          |
-| e.g., ``is_hdf5(str)``        |                                                       |
-+-------------------------------+-------------------------------------------------------+
-| ``to_<name>(std::string)``    | Converts any valid alias to the canonical string      |
-| e.g., ``to_hdf5(str)``        |                                                       |
-+-------------------------------+-------------------------------------------------------+
-| ``from_<name>(std::string)``  | Validates that the string is a valid alias and        |
-| e.g., ``from_hdf5(str)``      | returns the normalized form                           |
-+-------------------------------+-------------------------------------------------------+
++---------------------------------------+-------------------------------------------------------+
+| Function                              | Description                                           |
++=======================================+=======================================================+
+| ``is_<primary_name>(std::string)``    | Returns true if the string matches any alias          |
+| e.g., ``is_hdf5(str)``                |                                                       |
++---------------------------------------+-------------------------------------------------------+
+| ``to_<primary_name>(std::string)``    | Converts any valid alias to the canonical string      |
+| e.g., ``to_hdf5(str)``                |                                                       |
++---------------------------------------+-------------------------------------------------------+
+| ``from_<primary_name>(std::string)``  | Validates that the string is a valid alias and        |
+| e.g., ``from_hdf5(str)``              | returns the normalized form                           |
++---------------------------------------+-------------------------------------------------------+
 
 Examples
 --------
