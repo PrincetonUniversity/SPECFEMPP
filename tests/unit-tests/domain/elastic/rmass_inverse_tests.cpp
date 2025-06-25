@@ -70,7 +70,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
                                     gllz);
-  specfem::compute::partial_derivatives partial_derivatives(
+  specfem::compute::jacobian_matrix jacobian_matrix(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
   specfem::compute::properties material_properties(
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
@@ -125,7 +125,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
       specfem::enums::element::medium::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(nglob, qp5, &compute, material_properties,
-                            partial_derivatives, boundary_conditions,
+                            jacobian_matrix, boundary_conditions,
                             compute_sources, compute_receivers, gllx, gllz);
 
   elastic_domain_static.invert_mass_matrix();
@@ -148,7 +148,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   //     specfem::enums::element::medium::elastic,
   //     specfem::enums::element::quadrature::dynamic_quadrature_points>
   //     elastic_domain_dynamic(ndim, nglob, qp, &compute, material_properties,
-  //                            partial_derivatives, &compute_sources,
+  //                            jacobian_matrix, &compute_sources,
   //                            &compute_receivers, gllx, gllz);
 
   // elastic_domain_dynamic.sync_rmass_inverse(specfem::sync::DeviceToHost);

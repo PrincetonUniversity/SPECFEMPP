@@ -15,7 +15,7 @@ The assembly divided into a set of data containers, primarily implemeted as C++ 
 
     #include <Kokkos_Core.hpp>
 
-    struct partial_derivatives {
+    struct jacobian_matrix {
     private:
         using ViewType =
             typename Kokkos::View<type_real ***, Kokkos::LayoutLeft,
@@ -34,7 +34,7 @@ The assembly divided into a set of data containers, primarily implemeted as C++ 
         ViewType gammaz;
         ViewType jacobian;
 
-        partial_derivatives(const int nspec, const int ngllz, const int ngllx)
+        jacobian_matrix(const int nspec, const int ngllz, const int ngllx)
             : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
               xix("xix", nspec, ngllz, ngllx), xiz("xiz", nspec, ngllz, ngllx),
               gammax("gammax", nspec, ngllz, ngllx),
@@ -55,7 +55,7 @@ To interface with the data containers, it would be useful to define a set of fun
 
 Data access functions allow us to group data items that are generally accessed together into container specific data-types, improving cache locality and reducing memory access times.
 
-The following example shows how to define a data access function for loading spatial derivatives from the data container for a given quadrature point. ``point_partial_derivatives`` is a struct that holds the spatial derivatives at a given point. Since we generally require all the spatial derivatives at a given point, loading them into a single struct improves cache locality.
+The following example shows how to define a data access function for loading spatial derivatives from the data container for a given quadrature point. ``point_jacobian_matrix`` is a struct that holds the spatial derivatives at a given point. Since we generally require all the spatial derivatives at a given point, loading them into a single struct improves cache locality.
 
 .. code:: cpp
 
@@ -67,7 +67,7 @@ The following example shows how to define a data access function for loading spa
         int ix;
     };
 
-    struct point_partial_derivatives {
+    struct point_jacobian_matrix {
         type_real xix;
         type_real xiz;
         type_real gammax;
@@ -75,8 +75,8 @@ The following example shows how to define a data access function for loading spa
         type_real jacobian;
     };
 
-    KOKKOS_FUNCTION void load_on_device(const index &index, const partial_derivatives &derivatives,
-                                        point_partial_derivatives &point) {
+    KOKKOS_FUNCTION void load_on_device(const index &index, const jacobian_matrix &derivatives,
+                                        point_jacobian_matrix &point) {
         point.xix = derivatives.xix(index.ispec, index.iz, index.ix);
         point.xiz = derivatives.xiz(index.ispec, index.iz, index.ix);
         point.gammax = derivatives.gammax(index.ispec, index.iz, index.ix);
@@ -99,7 +99,7 @@ Data Containers and Access Functions in SPECFEM++
     If you'd like to work on this, please see `issue tracker <https://github.com/PrincetonUniversity/SPECFEMPP/issues/110>`_ for more details.
 
 1. :ref:`Assembled mesh information <assembly_mesh>`
-2. :ref:`Partial derivatives <assembly_partial_derivatives>`
+2. :ref:`Jacobian matrix <assembly_jacobian_matrix>`
 3. :ref:`Material properties <assembly_properties>`
 4. :ref:`Wavefield <assembly_fields>`
 5. :ref:`Misfit Kernels <assembly_kernels>`

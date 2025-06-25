@@ -1,8 +1,8 @@
-// core/specfem/point/test_partial_derivatives.hpp
+// core/specfem/point/test_jacobian_matrix.hpp
 
 #include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
-#include "specfem/point/partial_derivatives.hpp"
+#include "specfem/point/jacobian_matrix.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
 #include "utilities/simd.hpp"
@@ -12,10 +12,10 @@
 
 using namespace specfem;
 
-// Base test fixture for partial derivatives tests with template parameter for
+// Base test fixture for Jacobian matrix tests with template parameter for
 // SIMD
 template <bool UseSIMD>
-class PointPartialDerivativesTestUntyped : public ::testing::Test {
+class PointJacobianMatrixTestUntyped : public ::testing::Test {
 protected:
   // Define SIMD-related types for convenience
   using simd_type = specfem::datatype::simd<type_real, UseSIMD>;
@@ -40,20 +40,19 @@ struct SIMD : std::integral_constant<bool, true> {};
 using TestTypes = ::testing::Types<Serial, SIMD>;
 
 template <typename T>
-class PointPartialDerivativesTest
-    : public PointPartialDerivativesTestUntyped<T::value> {};
+class PointJacobianMatrixTest
+    : public PointJacobianMatrixTestUntyped<T::value> {};
 
-TYPED_TEST_SUITE(PointPartialDerivativesTest, TestTypes);
+TYPED_TEST_SUITE(PointJacobianMatrixTest, TestTypes);
 
 // ===============================
 // 2D, no Jacobian
 // ===============================
-TYPED_TEST(PointPartialDerivativesTest,
-           PartialDerivatives2D_DefaultConstructor) {
+TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_DefaultConstructor) {
   constexpr bool using_simd = TypeParam::value;
 
   using pd_type =
-      point::partial_derivatives<dimension::type::dim2, false, using_simd>;
+      point::jacobian_matrix<dimension::type::dim2, false, using_simd>;
   pd_type pd;
   typename pd_type::value_type zero_val{ 0.0 };
   pd.init();
@@ -69,7 +68,7 @@ TYPED_TEST(PointPartialDerivativesTest,
       << ExpectedGot(0.0, pd.gammaz);
 }
 
-TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_ValueConstructor) {
+TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_ValueConstructor) {
   constexpr bool using_simd = TypeParam::value;
 
   // Get the SIMD size
@@ -90,7 +89,7 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_ValueConstructor) {
     4.4
   };
 
-  point::partial_derivatives<dimension::type::dim2, false, using_simd> pd(
+  point::jacobian_matrix<dimension::type::dim2, false, using_simd> pd(
       xix_val, gammax_val, xiz_val, gammaz_val);
 
   // Check values using is_close
@@ -104,8 +103,7 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_ValueConstructor) {
       << ExpectedGot(gammaz_val, pd.gammaz);
 }
 
-TYPED_TEST(PointPartialDerivativesTest,
-           PartialDerivatives2D_ConstantConstructor) {
+TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_ConstantConstructor) {
   constexpr bool using_simd = TypeParam::value;
 
   // Get the SIMD size
@@ -117,7 +115,7 @@ TYPED_TEST(PointPartialDerivativesTest,
     7.7
   };
 
-  point::partial_derivatives<dimension::type::dim2, false, using_simd> pd(
+  point::jacobian_matrix<dimension::type::dim2, false, using_simd> pd(
       const_val);
 
   // Check values using is_close
@@ -131,7 +129,7 @@ TYPED_TEST(PointPartialDerivativesTest,
       << ExpectedGot(const_val, pd.gammaz);
 }
 
-TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Init) {
+TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_Init) {
   constexpr bool using_simd = TypeParam::value;
 
   // Get the SIMD size
@@ -153,7 +151,7 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Init) {
   };
 
   using pd_type =
-      point::partial_derivatives<dimension::type::dim2, false, using_simd>;
+      point::jacobian_matrix<dimension::type::dim2, false, using_simd>;
   pd_type pd(xix_val, gammax_val, xiz_val, gammaz_val);
   typename pd_type::value_type zero_val{ 0.0 };
   pd.init();
@@ -169,7 +167,7 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Init) {
       << ExpectedGot(0.0, pd.gammaz);
 }
 
-TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Arithmetic) {
+TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_Arithmetic) {
   constexpr bool using_simd = TypeParam::value;
 
   // Get the SIMD size
@@ -199,8 +197,7 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Arithmetic) {
   typename specfem::datatype::simd<type_real, using_simd>::datatype
       b_gammaz_val{ 40.0 };
 
-  using PD =
-      point::partial_derivatives<dimension::type::dim2, false, using_simd>;
+  using PD = point::jacobian_matrix<dimension::type::dim2, false, using_simd>;
   PD a(a_xix_val, a_gammax_val, a_xiz_val, a_gammaz_val);
   PD b(b_xix_val, b_gammax_val, b_xiz_val, b_gammaz_val);
 
@@ -264,8 +261,8 @@ TYPED_TEST(PointPartialDerivativesTest, PartialDerivatives2D_Arithmetic) {
 // ===============================
 // 2D, with Jacobian
 // ===============================
-TYPED_TEST(PointPartialDerivativesTest,
-           PartialDerivatives2D_WithJacobian_Constructors) {
+TYPED_TEST(PointJacobianMatrixTest,
+           JacobianMatrix2D_WithJacobian_Constructors) {
   constexpr bool using_simd = TypeParam::value;
 
   // Get the SIMD size
@@ -295,8 +292,7 @@ TYPED_TEST(PointPartialDerivativesTest,
     7.7
   };
 
-  using PD =
-      point::partial_derivatives<dimension::type::dim2, true, using_simd>;
+  using PD = point::jacobian_matrix<dimension::type::dim2, true, using_simd>;
 
   // Default constructor and init
   PD pd1;
@@ -342,8 +338,7 @@ TYPED_TEST(PointPartialDerivativesTest,
       << ExpectedGot(const_val, pd3.jacobian);
 }
 
-TYPED_TEST(PointPartialDerivativesTest,
-           PartialDerivatives2D_WithJacobian_Init) {
+TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_WithJacobian_Init) {
   constexpr bool using_simd = TypeParam::value;
 
   // Get the SIMD size
@@ -370,8 +365,7 @@ TYPED_TEST(PointPartialDerivativesTest,
     5.0
   };
 
-  using PD =
-      point::partial_derivatives<dimension::type::dim2, true, using_simd>;
+  using PD = point::jacobian_matrix<dimension::type::dim2, true, using_simd>;
   PD pd(one_val, two_val, three_val, four_val, five_val);
   pd.init();
 
@@ -390,8 +384,8 @@ TYPED_TEST(PointPartialDerivativesTest,
 // ===============================
 // 3D, with Jacobian
 // ===============================
-TYPED_TEST(PointPartialDerivativesTest,
-           PartialDerivatives3D_WithJacobian_Constructors) {
+TYPED_TEST(PointJacobianMatrixTest,
+           JacobianMatrix3D_WithJacobian_Constructors) {
   constexpr bool using_simd = TypeParam::value;
 
   // Get the SIMD size
@@ -427,8 +421,7 @@ TYPED_TEST(PointPartialDerivativesTest,
     8.8
   };
 
-  using PD =
-      point::partial_derivatives<dimension::type::dim3, true, using_simd>;
+  using PD = point::jacobian_matrix<dimension::type::dim3, true, using_simd>;
 
   // Default constructor and init
   PD pd1;
@@ -486,8 +479,7 @@ TYPED_TEST(PointPartialDerivativesTest,
       << ExpectedGot(const_val, pd3.jacobian);
 }
 
-TYPED_TEST(PointPartialDerivativesTest,
-           PartialDerivatives3D_WithJacobian_Init) {
+TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix3D_WithJacobian_Init) {
   constexpr bool using_simd = TypeParam::value;
 
   // Get the SIMD size
@@ -520,8 +512,7 @@ TYPED_TEST(PointPartialDerivativesTest,
     7.0
   };
 
-  using PD =
-      point::partial_derivatives<dimension::type::dim3, true, using_simd>;
+  using PD = point::jacobian_matrix<dimension::type::dim3, true, using_simd>;
   PD pd(one_val, two_val, three_val, four_val, five_val, six_val, seven_val);
   pd.init();
 
@@ -544,12 +535,11 @@ TYPED_TEST(PointPartialDerivativesTest,
 // ===============================
 // SIMD type verification (both cases)
 // ===============================
-TYPED_TEST(PointPartialDerivativesTest, VerifySIMDTypes) {
+TYPED_TEST(PointJacobianMatrixTest, VerifySIMDTypes) {
   constexpr bool using_simd = TypeParam::value;
 
   // Verify 2D types
-  using PD2D =
-      point::partial_derivatives<dimension::type::dim2, false, using_simd>;
+  using PD2D = point::jacobian_matrix<dimension::type::dim2, false, using_simd>;
   using simd_type2D = typename PD2D::simd;
   bool is_expected_simd2D =
       std::is_same<simd_type2D,
@@ -557,8 +547,7 @@ TYPED_TEST(PointPartialDerivativesTest, VerifySIMDTypes) {
   EXPECT_TRUE(is_expected_simd2D);
 
   // Verify 3D types
-  using PD3D =
-      point::partial_derivatives<dimension::type::dim3, false, using_simd>;
+  using PD3D = point::jacobian_matrix<dimension::type::dim3, false, using_simd>;
   using simd_type3D = typename PD3D::simd;
   bool is_expected_simd3D =
       std::is_same<simd_type3D,
@@ -567,7 +556,7 @@ TYPED_TEST(PointPartialDerivativesTest, VerifySIMDTypes) {
 
   // Verify 2D with Jacobian
   using PD2DJac =
-      point::partial_derivatives<dimension::type::dim2, true, using_simd>;
+      point::jacobian_matrix<dimension::type::dim2, true, using_simd>;
   using simd_type2DJac = typename PD2DJac::simd;
   bool is_expected_simd2DJac =
       std::is_same<simd_type2DJac,
@@ -576,7 +565,7 @@ TYPED_TEST(PointPartialDerivativesTest, VerifySIMDTypes) {
 
   // Verify 3D with Jacobian
   using PD3DJac =
-      point::partial_derivatives<dimension::type::dim3, true, using_simd>;
+      point::jacobian_matrix<dimension::type::dim3, true, using_simd>;
   using simd_type3DJac = typename PD3DJac::simd;
   bool is_expected_simd3DJac =
       std::is_same<simd_type3DJac,

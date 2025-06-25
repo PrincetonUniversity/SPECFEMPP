@@ -171,7 +171,7 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
   // setup compute struct for future use
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
                                     gllz);
-  specfem::compute::partial_derivatives partial_derivatives(
+  specfem::compute::jacobian_matrix jacobian_matrix(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
   specfem::compute::properties material_properties(
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),

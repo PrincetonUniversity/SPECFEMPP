@@ -75,7 +75,7 @@ template class specfem::compute::impl::source_medium<
 specfem::compute::sources::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::compute::mesh &mesh,
-    const specfem::compute::partial_derivatives &partial_derivatives,
+    const specfem::compute::jacobian_matrix &jacobian_matrix,
     const specfem::compute::element_types &element_types, const type_real t0,
     const type_real dt, const int nsteps)
     : timestep(0), nspec(mesh.nspec),
@@ -145,7 +145,7 @@ specfem::compute::sources::sources(
 
         _source_ = specfem::compute::impl::source_medium<_dimension_tag_,
                                                          _medium_tag_>(
-            sorted_sources, mesh, partial_derivatives, element_types, t0, dt,
+            sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
             nsteps);
       })
 

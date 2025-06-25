@@ -4,7 +4,7 @@
 
 void specfem::sources::adjoint_source::compute_source_array(
     const specfem::compute::mesh &mesh,
-    const specfem::compute::partial_derivatives &partial_derivatives,
+    const specfem::compute::jacobian_matrix &jacobian_matrix,
     const specfem::compute::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 

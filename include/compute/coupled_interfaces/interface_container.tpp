@@ -1,7 +1,7 @@
 #pragma once
 
 #include "compute/compute_mesh.hpp"
-#include "compute/compute_partial_derivatives.hpp"
+#include "compute/compute_jacobian_matrix.hpp"
 #include "compute/coupled_interfaces/interface_container.hpp"
 #include "compute/properties/properties.hpp"
 #include "edge/interface.hpp"
@@ -348,7 +348,7 @@ bool check_if_edges_are_connected(const specfem::compute::points points,
 std::tuple<std::vector<type_real>, std::vector<std::array<type_real, 2> > >
 compute_edge_factors_and_normals(
     const specfem::compute::points &points,
-    const specfem::compute::partial_derivatives &partial_derivatives,
+    const specfem::compute::jacobian_matrix &jacobian_matrix,
     const specfem::compute::quadrature &quadrature, const int ispec1,
     const int ispec2, const specfem::enums::edge::type edge1,
     const specfem::enums::edge::type edge2) {
@@ -372,22 +372,22 @@ compute_edge_factors_and_normals(
 
   for (int ipoint = 0; ipoint < ngll; ipoint++) {
 
-    using PointPartialDerivativesType =
-        specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+    using PointJacobianMatrixType =
+        specfem::point::jacobian_matrix<specfem::dimension::type::dim2,
                                             true, false>;
 
     const auto [i1, j1] = edge1_points[ipoint];
     const specfem::point::index<specfem::dimension::type::dim2> edge1_index(
         ispec1, j1, i1);
-    PointPartialDerivativesType edge1_derivatives;
-    specfem::compute::load_on_host(edge1_index, partial_derivatives,
+    PointJacobianMatrixType edge1_derivatives;
+    specfem::compute::load_on_host(edge1_index, jacobian_matrix,
                                    edge1_derivatives);
 
     const auto [i2, j2] = edge2_points[ipoint];
     const specfem::point::index<specfem::dimension::type::dim2> edge2_index(
         ispec2, j2, i2);
-    PointPartialDerivativesType edge2_derivatives;
-    specfem::compute::load_on_host(edge2_index, partial_derivatives,
+    PointJacobianMatrixType edge2_derivatives;
+    specfem::compute::load_on_host(edge2_index, jacobian_matrix,
                                    edge2_derivatives);
 
     const auto edge1_normal = edge1_derivatives.compute_normal(edge1);
@@ -432,7 +432,7 @@ std::tuple<specfem::enums::edge::type, specfem::enums::edge::type,
            std::vector<type_real>, std::vector<std::array<type_real, 2> > >
 compute_edge_factors_and_normals(
     const specfem::compute::points &points,
-    const specfem::compute::partial_derivatives &partial_derivatives,
+    const specfem::compute::jacobian_matrix &jacobian_matrix,
     const specfem::compute::quadrature &quadrature, const int ispec1,
     const int ispec2) {
 
@@ -459,7 +459,7 @@ compute_edge_factors_and_normals(
   }
 
   const auto [edge_factor, edge_normal] = compute_edge_factors_and_normals(
-      points, partial_derivatives, quadrature, ispec1, ispec2,
+      points, jacobian_matrix, quadrature, ispec1, ispec2,
       connected_edges[0], connected_edges[1]);
 
   return { connected_edges[0], connected_edges[1], edge_factor, edge_normal };
@@ -516,7 +516,7 @@ specfem::compute::interface_container<MediumTag1, MediumTag2>::
     interface_container(
         const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh, const specfem::compute::points &points,
         const specfem::compute::quadrature &quadratures,
-        const specfem::compute::partial_derivatives &partial_derivatives,
+        const specfem::compute::jacobian_matrix &jacobian_matrix,
         const specfem::compute::element_types &element_types,
         const specfem::compute::mesh_to_compute_mapping &mapping) {
 
@@ -557,7 +557,7 @@ specfem::compute::interface_container<MediumTag1, MediumTag2>::
     h_medium2_index_mapping(iedge) = ispec2_compute;
 
     const auto [edge1_type, edge2_type, edge_factor, edge_normal] =
-        compute_edge_factors_and_normals(points, partial_derivatives,
+        compute_edge_factors_and_normals(points, jacobian_matrix,
                                          quadratures, ispec1_compute,
                                          ispec2_compute);
 

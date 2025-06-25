@@ -16,7 +16,7 @@ namespace point {
  */
 template <specfem::dimension::type DimensionTag, bool StoreJacobian,
           bool UseSIMD>
-struct partial_derivatives;
+struct jacobian_matrix;
 
 /**
  * @brief Template specialization for 2D spectral elements without storing the
@@ -25,17 +25,18 @@ struct partial_derivatives;
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
 template <bool UseSIMD>
-struct partial_derivatives<specfem::dimension::type::dim2, false, UseSIMD>
+struct jacobian_matrix<specfem::dimension::type::dim2, false, UseSIMD>
     : public specfem::accessor::Accessor<
           specfem::accessor::type::point,
-          specfem::data_class::type::partial_derivatives,
+          specfem::data_class::type::jacobian_matrix,
           specfem::dimension::type::dim2, UseSIMD> {
 private:
-  using base_type = specfem::accessor::Accessor<
-      specfem::accessor::type::point,
-      specfem::data_class::type::partial_derivatives,
-      specfem::dimension::type::dim2, UseSIMD>; ///< Base type of the point
-  ///< partial derivatives
+  using base_type =
+      specfem::accessor::Accessor<specfem::accessor::type::point,
+                                  specfem::data_class::type::jacobian_matrix,
+                                  specfem::dimension::type::dim2,
+                                  UseSIMD>; ///< Base type of the point
+  ///< Jacobian matrix
 public:
   /**
    * @name Typedefs
@@ -62,7 +63,7 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  partial_derivatives() = default;
+  jacobian_matrix() = default;
 
   /**
    * @brief Constructor with values
@@ -73,8 +74,8 @@ public:
    * @param gammaz @gammaz
    */
   KOKKOS_FUNCTION
-  partial_derivatives(const value_type &xix, const value_type &gammax,
-                      const value_type &xiz, const value_type &gammaz)
+  jacobian_matrix(const value_type &xix, const value_type &gammax,
+                  const value_type &xiz, const value_type &gammaz)
       : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz) {}
 
   /**
@@ -83,7 +84,7 @@ public:
    * @param constant Value to initialize all members to
    */
   KOKKOS_FUNCTION
-  partial_derivatives(const value_type constant)
+  jacobian_matrix(const value_type constant)
       : xix(constant), gammax(constant), xiz(constant), gammaz(constant) {}
 
   KOKKOS_FUNCTION
@@ -96,15 +97,13 @@ public:
   }
 
   // operator+
-  KOKKOS_FUNCTION partial_derivatives
-  operator+(const partial_derivatives &rhs) const {
+  KOKKOS_FUNCTION jacobian_matrix operator+(const jacobian_matrix &rhs) const {
     return { xix + rhs.xix, gammax + rhs.gammax, xiz + rhs.xiz,
              gammaz + rhs.gammaz };
   }
 
   // operator+=
-  KOKKOS_FUNCTION partial_derivatives &
-  operator+=(const partial_derivatives &rhs) {
+  KOKKOS_FUNCTION jacobian_matrix &operator+=(const jacobian_matrix &rhs) {
     this->xix = this->xix + rhs.xix;
     this->gammax = this->gammax + rhs.gammax;
     this->xiz = this->xiz + rhs.xiz;
@@ -113,23 +112,23 @@ public:
   }
 
   // operator*
-  KOKKOS_FUNCTION partial_derivatives operator*(const type_real &rhs) {
+  KOKKOS_FUNCTION jacobian_matrix operator*(const type_real &rhs) {
     return { xix * rhs, gammax * rhs, xiz * rhs, gammaz * rhs };
   }
 };
 
 // operator*
-template <typename PointPartialDerivativesType>
+template <typename PointJacobianMatrixType>
 KOKKOS_FUNCTION
-    std::enable_if_t<!PointPartialDerivativesType::store_jacobian &&
-                         PointPartialDerivativesType::dimension_tag ==
+    std::enable_if_t<!PointJacobianMatrixType::store_jacobian &&
+                         PointJacobianMatrixType::dimension_tag ==
                              specfem::dimension::type::dim2 &&
-                         specfem::accessor::is_point_partial_derivatives<
-                             PointPartialDerivativesType>::value,
-                     PointPartialDerivativesType>
-    operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
-  return PointPartialDerivativesType(rhs.xix * lhs, rhs.gammax * lhs,
-                                     rhs.xiz * lhs, rhs.gammaz * lhs);
+                         specfem::accessor::is_point_jacobian_matrix<
+                             PointJacobianMatrixType>::value,
+                     PointJacobianMatrixType>
+    operator*(const type_real &lhs, const PointJacobianMatrixType &rhs) {
+  return PointJacobianMatrixType(rhs.xix * lhs, rhs.gammax * lhs, rhs.xiz * lhs,
+                                 rhs.gammaz * lhs);
 }
 
 /**
@@ -139,17 +138,18 @@ KOKKOS_FUNCTION
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
 template <bool UseSIMD>
-struct partial_derivatives<specfem::dimension::type::dim3, false, UseSIMD>
+struct jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD>
     : public specfem::accessor::Accessor<
           specfem::accessor::type::point,
-          specfem::data_class::type::partial_derivatives,
+          specfem::data_class::type::jacobian_matrix,
           specfem::dimension::type::dim3, UseSIMD> {
 private:
-  using base_type = specfem::accessor::Accessor<
-      specfem::accessor::type::point,
-      specfem::data_class::type::partial_derivatives,
-      specfem::dimension::type::dim3, UseSIMD>; ///< Base type of the point
-                                                ///< partial derivatives
+  using base_type =
+      specfem::accessor::Accessor<specfem::accessor::type::point,
+                                  specfem::data_class::type::jacobian_matrix,
+                                  specfem::dimension::type::dim3,
+                                  UseSIMD>; ///< Base type of the point
+                                            ///< Jacobian matrix
 public:
   /**
    * @name Typedefs
@@ -178,7 +178,7 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  partial_derivatives() = default;
+  jacobian_matrix() = default;
 
   /**
    * @brief Constructor with values
@@ -189,9 +189,9 @@ public:
    * @param gammaz @gammaz
    */
   KOKKOS_FUNCTION
-  partial_derivatives(const value_type &xix, const value_type &gammax,
-                      const value_type &xiy, const value_type &gammay,
-                      const value_type &xiz, const value_type &gammaz)
+  jacobian_matrix(const value_type &xix, const value_type &gammax,
+                  const value_type &xiy, const value_type &gammay,
+                  const value_type &xiz, const value_type &gammaz)
       : xix(xix), gammax(gammax), xiy(xiy), gammay(gammay), xiz(xiz),
         gammaz(gammaz) {}
 
@@ -201,7 +201,7 @@ public:
    * @param constant Value to initialize all members to
    */
   KOKKOS_FUNCTION
-  partial_derivatives(const value_type constant)
+  jacobian_matrix(const value_type constant)
       : xix(constant), gammax(constant), xiy(constant), gammay(constant),
         xiz(constant), gammaz(constant) {}
 
@@ -217,15 +217,13 @@ public:
   }
 
   // operator+
-  KOKKOS_FUNCTION partial_derivatives
-  operator+(const partial_derivatives &rhs) const {
+  KOKKOS_FUNCTION jacobian_matrix operator+(const jacobian_matrix &rhs) const {
     return { xix + rhs.xix,       gammax + rhs.gammax, xiy + rhs.xiy,
              gammay + rhs.gammay, xiz + rhs.xiz,       gammaz + rhs.gammaz };
   }
 
   // operator+=
-  KOKKOS_FUNCTION partial_derivatives &
-  operator+=(const partial_derivatives &rhs) {
+  KOKKOS_FUNCTION jacobian_matrix &operator+=(const jacobian_matrix &rhs) {
     this->xix = this->xix + rhs.xix;
     this->gammax = this->gammax + rhs.gammax;
     this->xiy = this->xiy + rhs.xiy;
@@ -236,26 +234,25 @@ public:
   }
 
   // operator*
-  KOKKOS_FUNCTION partial_derivatives operator*(const type_real &rhs) {
+  KOKKOS_FUNCTION jacobian_matrix operator*(const type_real &rhs) {
     return { xix * rhs,    gammax * rhs, xiy * rhs,
              gammay * rhs, xiz * rhs,    gammaz * rhs };
   }
 };
 
 // operator*
-template <
-    typename PointPartialDerivativesType,
-    std::enable_if_t<!PointPartialDerivativesType::store_jacobian &&
-                         PointPartialDerivativesType::dimension_tag ==
-                             specfem::dimension::type::dim3 &&
-                         PointPartialDerivativesType::data_class ==
-                             specfem::data_class::type::partial_derivatives,
-                     int> = 0>
-KOKKOS_FUNCTION PointPartialDerivativesType
-operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
-  return PointPartialDerivativesType(rhs.xix * lhs, rhs.gammax * lhs,
-                                     rhs.xiy * lhs, rhs.gammay * lhs,
-                                     rhs.xiz * lhs, rhs.gammaz * lhs);
+template <typename PointJacobianMatrixType,
+          std::enable_if_t<!PointJacobianMatrixType::store_jacobian &&
+                               PointJacobianMatrixType::dimension_tag ==
+                                   specfem::dimension::type::dim3 &&
+                               PointJacobianMatrixType::data_class ==
+                                   specfem::data_class::type::jacobian_matrix,
+                           int> = 0>
+KOKKOS_FUNCTION PointJacobianMatrixType
+operator*(const type_real &lhs, const PointJacobianMatrixType &rhs) {
+  return PointJacobianMatrixType(rhs.xix * lhs, rhs.gammax * lhs, rhs.xiy * lhs,
+                                 rhs.gammay * lhs, rhs.xiz * lhs,
+                                 rhs.gammaz * lhs);
   ;
 }
 
@@ -266,13 +263,12 @@ operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
 template <bool UseSIMD>
-struct partial_derivatives<specfem::dimension::type::dim2, true, UseSIMD>
-    : public partial_derivatives<specfem::dimension::type::dim2, false,
-                                 UseSIMD> {
+struct jacobian_matrix<specfem::dimension::type::dim2, true, UseSIMD>
+    : public jacobian_matrix<specfem::dimension::type::dim2, false, UseSIMD> {
 private:
-  using base_type = partial_derivatives<specfem::dimension::type::dim2, false,
-                                        UseSIMD>; ///< Base type of the point
-                                                  ///< partial derivatives
+  using base_type = jacobian_matrix<specfem::dimension::type::dim2, false,
+                                    UseSIMD>; ///< Base type of the point
+                                              ///< Jacobian matrix
 public:
   /**
    * @name Typedefs
@@ -297,7 +293,7 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  partial_derivatives() = default;
+  jacobian_matrix() = default;
 
   /**
    * @brief Constructor with values
@@ -309,10 +305,10 @@ public:
    * @param jacobian Jacobian
    */
   KOKKOS_FUNCTION
-  partial_derivatives(const value_type &xix, const value_type &gammax,
-                      const value_type &xiz, const value_type &gammaz,
-                      const value_type &jacobian)
-      : partial_derivatives<specfem::dimension::type::dim2, false, UseSIMD>(
+  jacobian_matrix(const value_type &xix, const value_type &gammax,
+                  const value_type &xiz, const value_type &gammaz,
+                  const value_type &jacobian)
+      : jacobian_matrix<specfem::dimension::type::dim2, false, UseSIMD>(
             xix, gammax, xiz, gammaz),
         jacobian(jacobian) {}
 
@@ -322,8 +318,8 @@ public:
    * @param constant Value to initialize all members to
    */
   KOKKOS_FUNCTION
-  partial_derivatives(const value_type constant)
-      : partial_derivatives<specfem::dimension::type::dim2, false, UseSIMD>(
+  jacobian_matrix(const value_type constant)
+      : jacobian_matrix<specfem::dimension::type::dim2, false, UseSIMD>(
             constant),
         jacobian(constant) {}
   ///@}
@@ -339,15 +335,15 @@ public:
   }
 
   // operator+
-  KOKKOS_FUNCTION partial_derivatives
-  operator+(const partial_derivatives &rhs) = delete;
+  KOKKOS_FUNCTION jacobian_matrix operator+(const jacobian_matrix &rhs) =
+      delete;
 
   // operator+=
-  KOKKOS_FUNCTION partial_derivatives &
-  operator+=(const partial_derivatives &rhs) = delete;
+  KOKKOS_FUNCTION jacobian_matrix &
+  operator+=(const jacobian_matrix &rhs) = delete;
 
   // operator*
-  KOKKOS_FUNCTION partial_derivatives operator*(const type_real &rhs) = delete;
+  KOKKOS_FUNCTION jacobian_matrix operator*(const type_real &rhs) = delete;
 
   /**
    * @name Member functions
@@ -403,13 +399,12 @@ private:
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
 template <bool UseSIMD>
-struct partial_derivatives<specfem::dimension::type::dim3, true, UseSIMD>
-    : public partial_derivatives<specfem::dimension::type::dim3, false,
-                                 UseSIMD> {
+struct jacobian_matrix<specfem::dimension::type::dim3, true, UseSIMD>
+    : public jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD> {
 private:
-  using base_type = partial_derivatives<specfem::dimension::type::dim2, false,
-                                        UseSIMD>; ///< Base type of the point
-                                                  ///< partial derivatives
+  using base_type = jacobian_matrix<specfem::dimension::type::dim2, false,
+                                    UseSIMD>; ///< Base type of the point
+                                              ///< Jacobian matrix
 public:
   /**
    * @name Typedefs
@@ -434,7 +429,7 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  partial_derivatives() = default;
+  jacobian_matrix() = default;
 
   /**
    * @brief Constructor with values
@@ -448,11 +443,11 @@ public:
    * @param jacobian Jacobian
    */
   KOKKOS_FUNCTION
-  partial_derivatives(const value_type &xix, const value_type &gammax,
-                      const value_type &xiy, const value_type &gammay,
-                      const value_type &xiz, const value_type &gammaz,
-                      const value_type &jacobian)
-      : partial_derivatives<specfem::dimension::type::dim3, false, UseSIMD>(
+  jacobian_matrix(const value_type &xix, const value_type &gammax,
+                  const value_type &xiy, const value_type &gammay,
+                  const value_type &xiz, const value_type &gammaz,
+                  const value_type &jacobian)
+      : jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD>(
             xix, gammax, xiy, gammay, xiz, gammaz),
         jacobian(jacobian) {}
 
@@ -462,8 +457,8 @@ public:
    * @param constant Value to initialize all members to
    */
   KOKKOS_FUNCTION
-  partial_derivatives(const value_type constant)
-      : partial_derivatives<specfem::dimension::type::dim3, false, UseSIMD>(
+  jacobian_matrix(const value_type constant)
+      : jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD>(
             constant),
         jacobian(constant) {}
   ///@}
@@ -481,15 +476,15 @@ public:
   }
 
   // operator+
-  KOKKOS_FUNCTION partial_derivatives
-  operator+(const partial_derivatives &rhs) = delete;
+  KOKKOS_FUNCTION jacobian_matrix operator+(const jacobian_matrix &rhs) =
+      delete;
 
   // operator+=
-  KOKKOS_FUNCTION partial_derivatives &
-  operator+=(const partial_derivatives &rhs) = delete;
+  KOKKOS_FUNCTION jacobian_matrix &
+  operator+=(const jacobian_matrix &rhs) = delete;
 
   // operator*
-  KOKKOS_FUNCTION partial_derivatives operator*(const type_real &rhs) = delete;
+  KOKKOS_FUNCTION jacobian_matrix operator*(const type_real &rhs) = delete;
 
   /**
    * @name Member functions

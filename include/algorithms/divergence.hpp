@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compute/compute_partial_derivatives.hpp"
+#include "compute/compute_jacobian_matrix.hpp"
 #include "datatypes/point_view.hpp"
 #include "execution/for_each_level.hpp"
 #include "specfem/point.hpp"
@@ -28,7 +28,7 @@ namespace algorithms {
  * @tparam QuadratureType Quadrature view type
  * @tparam CallableType Callback functor type
  * @param chunk_index Chunk index specifying the elements within this chunk
- * @param partial_derivatives Partial derivatives of basis functions
+ * @param jacobian_matrix Jacobian matrix of basis functions
  * @param weights Weights for the quadrature
  * @param hprimewgll Integration quadrature
  * @param f Field to compute the divergence of
@@ -42,7 +42,7 @@ template <typename ChunkIndexType, typename VectorFieldType,
           std::enable_if_t<(VectorFieldType::isChunkViewType), int> = 0>
 KOKKOS_FUNCTION void
 divergence(const ChunkIndexType &chunk_index,
-           const specfem::compute::partial_derivatives &partial_derivatives,
+           const specfem::compute::jacobian_matrix &jacobian_matrix,
            const WeightsType &weights, const QuadratureType &hprimewgll,
            const VectorFieldType &f, const CallableType &callback) {
 
@@ -66,9 +66,9 @@ divergence(const ChunkIndexType &chunk_index,
 
   using simd = typename VectorFieldType::simd;
   using datatype = typename VectorFieldType::simd::datatype;
-  using PointPartialDerivativesType =
-      specfem::point::partial_derivatives<specfem::dimension::type::dim2, true,
-                                          using_simd>;
+  using PointJacobianMatrixType =
+      specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
+                                      using_simd>;
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
