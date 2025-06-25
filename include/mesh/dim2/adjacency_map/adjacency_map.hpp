@@ -8,14 +8,14 @@
 
 namespace specfem {
 namespace mesh {
-template <specfem::dimension::type dimtype> struct mesh;
+template <specfem::dimension::type Dimension> struct mesh;
 namespace adjacency_map {
 
 /**
  * @brief Stores the adjacencies between elements.
  *
  */
-template <specfem::dimension::type dimtype> struct adjacency_map;
+template <specfem::dimension::type Dimension> struct adjacency_map;
 template <> struct adjacency_map<specfem::dimension::type::dim2> {
 
   /**

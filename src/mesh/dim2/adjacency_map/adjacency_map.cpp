@@ -4,6 +4,7 @@
 
 #include "index_mapping_from_adjacencies.cpp"
 #include <list>
+#include <stdexcept>
 #include <utility>
 
 // ====================================================================
@@ -126,11 +127,131 @@ static inline int node_edge(const specfem::enums::edge::type &edgetype,
   }
 }
 
+/**
+ * @brief Finds a conforming edge (shares node indices) among a list of candiate
+ * elements
+ * @return the (ispec, edgetype) pair of the corresponding edge. ispec == -1 if
+ * none is found.
+ */
+template <int ngnod>
+inline std::pair<int, specfem::enums::edge::type> find_conforming_edge(
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+    const int ispec, const specfem::enums::edge::type edge,
+    const std::vector<int> &candidates);
+
+template <>
+inline std::pair<int, specfem::enums::edge::type> find_conforming_edge<4>(
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+    const int ispec, const specfem::enums::edge::type edge,
+    const std::vector<int> &candidates) {
+  // populate nodes_edge according to which edge this is
+  const int nodes_edge_cw = mesh.control_nodes.knods(node_edge(edge, 0), ispec);
+  const int nodes_edge_ccw =
+      mesh.control_nodes.knods(node_edge(edge, 2), ispec);
+
+  // iterate over candidates found by meshfem
+  for (int ispec_o : candidates) {
+    if (ispec_o > ispec) {
+      // we we only need to iterate adjacencies once.
+      continue;
+    }
+
+    for (auto edge_o : {
+             specfem::enums::edge::type::RIGHT,
+             specfem::enums::edge::type::TOP,
+             specfem::enums::edge::type::LEFT,
+             specfem::enums::edge::type::BOTTOM,
+         }) {
+      // adjacent element has same nodes, but in clockwise direction
+      if (mesh.control_nodes.knods(node_edge(edge_o, 2), ispec_o) ==
+              nodes_edge_cw &&
+          mesh.control_nodes.knods(node_edge(edge_o, 0), ispec_o) ==
+              nodes_edge_ccw) {
+
+        return std::make_pair(ispec_o, edge_o);
+      }
+    }
+  }
+  return std::make_pair(-1, specfem::enums::edge::type::NONE);
+}
+template <>
+inline std::pair<int, specfem::enums::edge::type> find_conforming_edge<9>(
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+    const int ispec, const specfem::enums::edge::type edge,
+    const std::vector<int> &candidates) {
+
+  int nodes_edge[3]; // store nodes along edge, in counterclockwise
+                     // direction
+  for (int i = 0; i < 3; i++) {
+    nodes_edge[i] = mesh.control_nodes.knods(node_edge(edge, i), ispec);
+  }
+
+  // iterate over candidates found by meshfem
+  for (int ispec_o : candidates) {
+    if (ispec_o > ispec) {
+      // we we only need to iterate adjacencies once.
+      continue;
+    }
+
+    for (auto edge_o : {
+             specfem::enums::edge::type::RIGHT,
+             specfem::enums::edge::type::TOP,
+             specfem::enums::edge::type::LEFT,
+             specfem::enums::edge::type::BOTTOM,
+         }) {
+      // adjacent element has same nodes, but in clockwise direction
+      bool matching = true;
+      // adjacent element has same nodes, but in clockwise direction
+      for (int i = 0; i < 3; i++) {
+        if (i == 1 && mesh.control_nodes.ngnod == 4) {
+          // no middle node for ngnod = 4
+          continue;
+        }
+        if (nodes_edge[i] !=
+            mesh.control_nodes.knods(node_edge(edge_o, 2 - i), ispec_o)) {
+          matching = false;
+          break;
+        }
+      }
+      if (matching) {
+        return std::make_pair(ispec_o, edge_o);
+      }
+    }
+  }
+  return std::make_pair(-1, specfem::enums::edge::type::NONE);
+}
+
+template <int ngnod>
+static inline void mark_conforming(
+    specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
+        &adjmap,
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+    const std::vector<std::vector<int> > &elements_with_shared_nodes) {
+  static_assert(
+      ngnod == 4 || ngnod == 9,
+      "2d adjacency_map.cpp:mark_conforming(): ngnod must be either 4 or 9");
+  const int &nspec = mesh.nspec;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+
+    for (auto edge : {
+             specfem::enums::edge::type::RIGHT,
+             specfem::enums::edge::type::TOP,
+             specfem::enums::edge::type::LEFT,
+             specfem::enums::edge::type::BOTTOM,
+         }) {
+      const auto [ispec_o, edge_o] = find_conforming_edge<ngnod>(
+          mesh, ispec, edge, elements_with_shared_nodes[ispec]);
+      if (ispec_o != -1) {
+        adjmap.create_conforming_adjacency(ispec, edge, ispec_o, edge_o);
+      }
+    }
+  }
+}
 specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
     adjacency_map(
-        const specfem::mesh::mesh<specfem::dimension::type::dim2> &parent,
+        const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
         const std::vector<std::vector<int> > &elements_with_shared_nodes)
-    : nspec(parent.nspec),
+    : nspec(mesh.nspec),
       adjacent_indices("specfem::compute::adjacency_map::adjacent_indices",
                        nspec),
       adjacent_edges("specfem::compute::adjacency_map::adjacent_indices",
@@ -143,70 +264,20 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
     }
   }
   // mark boundaries
-  boundarymark(*this, parent);
+  boundarymark(*this, mesh);
 
   //===================[ FIRST PASS ]===================
   // get conforming adjacencies from shared node indices
 
-  {
-    for (int ispec = 0; ispec < nspec; ispec++) {
-
-      int nodes_edge[3]; // store nodes along edge, in counterclockwise
-                         // direction
-      for (auto edge : {
-               specfem::enums::edge::type::RIGHT,
-               specfem::enums::edge::type::TOP,
-               specfem::enums::edge::type::LEFT,
-               specfem::enums::edge::type::BOTTOM,
-           }) {
-        // did we find the candidate to this edge?
-        bool matching = false;
-        // populate nodes_edge according to which edge this is
-        for (int i = 0; i < 3; i++) {
-          if (i == 1 && parent.control_nodes.ngnod == 4) {
-            // no middle node for ngnod = 4
-            continue;
-          }
-          nodes_edge[i] = parent.control_nodes.knods(node_edge(edge, i), ispec);
-        }
-
-        // iterate over candidates found by meshfem
-        for (int ispec_o : elements_with_shared_nodes[ispec]) {
-          if (ispec_o > ispec) {
-            // we we only need to iterate adjacencies once.
-            continue;
-          }
-
-          for (auto edge_o : {
-                   specfem::enums::edge::type::RIGHT,
-                   specfem::enums::edge::type::TOP,
-                   specfem::enums::edge::type::LEFT,
-                   specfem::enums::edge::type::BOTTOM,
-               }) {
-            matching = true;
-            // adjacent element has same nodes, but in clockwise direction
-            for (int i = 0; i < 3; i++) {
-              if (i == 1 && parent.control_nodes.ngnod == 4) {
-                // no middle node for ngnod = 4
-                continue;
-              }
-              if (nodes_edge[i] != parent.control_nodes.knods(
-                                       node_edge(edge_o, 2 - i), ispec_o)) {
-                matching = false;
-                break;
-              }
-            }
-            if (matching) {
-              create_conforming_adjacency(ispec, edge, ispec_o, edge_o);
-              break;
-            }
-          }
-          if (matching) {
-            break;
-          }
-        }
-      }
-    }
+  switch (mesh.control_nodes.ngnod) {
+  case 9:
+    mark_conforming<9>(*this, mesh, elements_with_shared_nodes);
+    break;
+  case 4:
+    mark_conforming<4>(*this, mesh, elements_with_shared_nodes);
+    break;
+  default:
+    std::runtime_error("ngnod must be 4 or 9!");
   }
 }
 
