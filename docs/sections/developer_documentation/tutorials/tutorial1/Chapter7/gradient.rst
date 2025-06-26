@@ -64,7 +64,7 @@ The following code snippet demonstrates how to compute the gradient of displacem
 
                     team.team_barrier();
 
-                    gradient(team, iterator, partial_derivatives,
+                    gradient(team, iterator, jacobian_matrix,
                         element_quadrature.hprime_gll, element_field.displacement,
                         [&](const typename ChunkPolicyType::iterator_type::index_type
                                 &iterator_index,

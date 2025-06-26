@@ -1,7 +1,7 @@
 #pragma once
 
+#include "compute/compute_jacobian_matrix.hpp"
 #include "compute/compute_mesh.hpp"
-#include "compute/compute_partial_derivatives.hpp"
 #include "enumerations/interface.hpp"
 #include "source/source.hpp"
 #include "source_medium.hpp"
@@ -54,7 +54,7 @@ public:
    *
    * @param sources Vector of sources read from sources file
    * @param mesh Finite element mesh information
-   * @param partial_derivatives Partial derivatives for every quadrature point
+   * @param jacobian_matrix Jacobian matrix for every quadrature point
    * @param properties Material properties for every quadrature point
    * @param t0 Initial time
    * @param dt Time step
@@ -63,7 +63,7 @@ public:
   sources(
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const specfem::compute::mesh &mesh,
-      const specfem::compute::partial_derivatives &partial_derivatives,
+      const specfem::compute::jacobian_matrix &jacobian_matrix,
       const specfem::compute::element_types &element_types, const type_real t0,
       const type_real dt, const int nsteps);
   ///@}

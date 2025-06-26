@@ -42,11 +42,11 @@ template <specfem::dimension::type DimensionTag> struct coordinates;
 template <specfem::dimension::type DimensionTag> struct mapping;
 
 /**
- * @brief Struct to store partial derivatives
+ * @brief Struct to store Jacobian matrix
  *
  * @tparam DimensionTag Dimension type
  */
-template <specfem::dimension::type DimensionTag> struct partial_derivatives;
+template <specfem::dimension::type DimensionTag> struct jacobian_matrix;
 
 /**
  * @brief Struct to store control nodes

@@ -3,8 +3,8 @@
 
 #include "compute/boundaries/boundaries.hpp"
 #include "compute/boundary_values/boundary_values.hpp"
+#include "compute/compute_jacobian_matrix.hpp"
 #include "compute/compute_mesh.hpp"
-#include "compute/compute_partial_derivatives.hpp"
 #include "compute/coupled_interfaces/coupled_interfaces.hpp"
 #include "compute/fields/fields.hpp"
 #include "compute/kernels/kernels.hpp"
@@ -33,13 +33,13 @@ namespace compute {
  */
 struct assembly {
   specfem::compute::mesh mesh; ///< Properties of the assembled mesh
-  specfem::compute::element_types element_types; ///< Element tags for every
-                                                 ///< spectral element
-  specfem::compute::partial_derivatives partial_derivatives; ///< Partial
-                                                             ///< derivatives of
-                                                             ///< the basis
-                                                             ///< functions
-  specfem::compute::properties properties; ///< Material properties
+  specfem::compute::element_types element_types;     ///< Element tags for every
+                                                     ///< spectral element
+  specfem::compute::jacobian_matrix jacobian_matrix; ///< Partial
+                                                     ///< derivatives of
+                                                     ///< the basis
+                                                     ///< functions
+  specfem::compute::properties properties;           ///< Material properties
   specfem::compute::kernels kernels; ///< Frechet derivatives (Misfit kernels)
   specfem::compute::sources sources; ///< Source information
   specfem::compute::receivers receivers;   ///< Receiver information

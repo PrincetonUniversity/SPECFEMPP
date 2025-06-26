@@ -7,17 +7,15 @@
 #include <Kokkos_Core.hpp>
 #include <tuple>
 
-specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
-                                                           const int ngllz,
-                                                           const int ngllx)
+specfem::compute::jacobian_matrix::jacobian_matrix(const int nspec,
+                                                   const int ngllz,
+                                                   const int ngllx)
     : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
-      xix("specfem::compute::partial_derivatives::xix", nspec, ngllz, ngllx),
-      xiz("specfem::compute::partial_derivatives::xiz", nspec, ngllz, ngllx),
-      gammax("specfem::compute::partial_derivatives::gammax", nspec, ngllz,
-             ngllx),
-      gammaz("specfem::compute::partial_derivatives::gammaz", nspec, ngllz,
-             ngllx),
-      jacobian("specfem::compute::partial_derivatives::jacobian", nspec, ngllz,
+      xix("specfem::compute::jacobian_matrix::xix", nspec, ngllz, ngllx),
+      xiz("specfem::compute::jacobian_matrix::xiz", nspec, ngllz, ngllx),
+      gammax("specfem::compute::jacobian_matrix::gammax", nspec, ngllz, ngllx),
+      gammaz("specfem::compute::jacobian_matrix::gammaz", nspec, ngllz, ngllx),
+      jacobian("specfem::compute::jacobian_matrix::jacobian", nspec, ngllz,
                ngllx),
       h_xix(specfem::kokkos::create_mirror_view(xix)),
       h_xiz(specfem::kokkos::create_mirror_view(xiz)),
@@ -27,17 +25,15 @@ specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
   return;
 };
 
-specfem::compute::partial_derivatives::partial_derivatives(
+specfem::compute::jacobian_matrix::jacobian_matrix(
     const specfem::compute::mesh &mesh)
     : nspec(mesh.control_nodes.nspec), ngllz(mesh.quadratures.gll.N),
       ngllx(mesh.quadratures.gll.N),
-      xix("specfem::compute::partial_derivatives::xix", nspec, ngllz, ngllx),
-      xiz("specfem::compute::partial_derivatives::xiz", nspec, ngllz, ngllx),
-      gammax("specfem::compute::partial_derivatives::gammax", nspec, ngllz,
-             ngllx),
-      gammaz("specfem::compute::partial_derivatives::gammaz", nspec, ngllz,
-             ngllx),
-      jacobian("specfem::compute::partial_derivatives::jacobian", nspec, ngllz,
+      xix("specfem::compute::jacobian_matrix::xix", nspec, ngllz, ngllx),
+      xiz("specfem::compute::jacobian_matrix::xiz", nspec, ngllz, ngllx),
+      gammax("specfem::compute::jacobian_matrix::gammax", nspec, ngllz, ngllx),
+      gammaz("specfem::compute::jacobian_matrix::gammaz", nspec, ngllz, ngllx),
+      jacobian("specfem::compute::jacobian_matrix::jacobian", nspec, ngllz,
                ngllx),
       h_xix(specfem::kokkos::create_mirror_view(xix)),
       h_xiz(specfem::kokkos::create_mirror_view(xiz)),
@@ -77,7 +73,7 @@ specfem::compute::partial_derivatives::partial_derivatives(
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
 
-              // compute partial derivatives
+              // compute Jacobian matrix
               auto sv_dershape2D = Kokkos::subview(
                   mesh.quadratures.gll.shape_functions.h_dshape2D, iz, ix,
                   Kokkos::ALL, Kokkos::ALL);
@@ -102,7 +98,7 @@ specfem::compute::partial_derivatives::partial_derivatives(
   return;
 }
 
-void specfem::compute::partial_derivatives::sync_views() {
+void specfem::compute::jacobian_matrix::sync_views() {
   specfem::kokkos::deep_copy(xix, h_xix);
   specfem::kokkos::deep_copy(xiz, h_xiz);
   specfem::kokkos::deep_copy(gammax, h_gammax);
@@ -111,9 +107,9 @@ void specfem::compute::partial_derivatives::sync_views() {
 }
 
 std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
-specfem::compute::partial_derivatives::check_small_jacobian() const {
+specfem::compute::jacobian_matrix::check_small_jacobian() const {
   Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
-      "specfem::compute::partial_derivatives::negative", nspec);
+      "specfem::compute::jacobian_matrix::negative", nspec);
 
   Kokkos::deep_copy(small_jacobian, false);
 
@@ -121,21 +117,21 @@ specfem::compute::partial_derivatives::check_small_jacobian() const {
 
   const type_real threshold = 1e-10;
 
-  using PointPartialDerivativesType =
-      specfem::point::partial_derivatives<dimension, true, false>;
+  using PointJacobianMatrixType =
+      specfem::point::jacobian_matrix<dimension, true, false>;
 
   bool found = false;
   Kokkos::parallel_reduce(
-      "specfem::compute::partial_derivatives::check_small_jacobian",
+      "specfem::compute::jacobian_matrix::check_small_jacobian",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nspec),
       [=, *this](const int &ispec, bool &l_found) {
         for (int iz = 0; iz < ngllz; ++iz) {
           for (int ix = 0; ix < ngllx; ++ix) {
             const specfem::point::index<dimension, false> index(ispec, iz, ix);
             const auto jacobian = [&]() {
-              PointPartialDerivativesType partial_derivatives;
-              specfem::compute::load_on_host(index, *this, partial_derivatives);
-              return partial_derivatives.jacobian;
+              PointJacobianMatrixType jacobian_matrix;
+              specfem::compute::load_on_host(index, *this, jacobian_matrix);
+              return jacobian_matrix.jacobian;
             }();
             if (jacobian < threshold) {
               small_jacobian(ispec) = true;

@@ -1,10 +1,9 @@
-#include "mesh/dim3/partial_derivatives/partial_derivatives.hpp"
+#include "mesh/dim3/jacobian_matrix/jacobian_matrix.hpp"
 #include <iostream>
 #include <sstream>
 
 std::string
-specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>::print()
-    const {
+specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>::print() const {
   std::ostringstream message;
   message << "Partial parameters:\n"
           << "------------------------------\n"
@@ -17,7 +16,7 @@ specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>::print()
 }
 
 std::string
-specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>::print(
+specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>::print(
     int ispec, int igllx, int iglly, int igllz) const {
 
   std::ostringstream message;
@@ -39,7 +38,7 @@ specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>::print(
 }
 
 std::string
-specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>::print(
+specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>::print(
     int ispec, const std::string partial_name) const {
 
   std::ostringstream message;

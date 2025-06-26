@@ -133,7 +133,7 @@ add_executable(
   point/index_tests.cpp
   point/coordinates_tests.cpp
   point/boundary_tests.cpp
-  point/partial_derivatives_tests.cpp
+  point/jacobian_matrix_tests.cpp
   point/source_tests.cpp
   point/stress_integrand_tests.cpp
   point/stress_tests.cpp
@@ -187,12 +187,12 @@ target_link_libraries(
 )
 
 add_executable(
-  compute_partial_derivatives_tests
-  compute/partial_derivatives/compute_partial_derivatives_tests.cpp
+  compute_jacobian_matrix_tests
+  compute/jacobian_matrix/compute_jacobian_matrix_tests.cpp
 )
 
 target_link_libraries(
-  compute_partial_derivatives_tests
+  compute_jacobian_matrix_tests
   mesh
   compute
   quadrature
@@ -501,7 +501,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(fortranio_test WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(io_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(mesh_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(compute_partial_derivatives_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(compute_jacobian_matrix_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(compute_elastic_tests WORKING_DIRECTORY ${TEST_DIR})
   # # gtest_discover_tests(compute_acoustic_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(compute_coupled_interfaces_tests WORKING_DIRECTORY ${TEST_DIR})

@@ -26,15 +26,14 @@ bool is_on_boundary(specfem::enums::boundaries::type type, int iz, int ix,
 std::tuple<std::array<type_real, 2>, type_real> get_boundary_edge_and_weight(
     specfem::enums::boundaries::type type,
     const std::array<type_real, 2> &weights,
-    const specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                              true, false>
-        &point_partial_derivatives) {
+    const specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
+                                          false> &point_jacobian_matrix) {
 
   if (type == specfem::enums::boundaries::type::BOTTOM_LEFT ||
       type == specfem::enums::boundaries::type::TOP_LEFT ||
       type == specfem::enums::boundaries::type::LEFT) {
-    const auto normal = point_partial_derivatives.compute_normal(
-        specfem::enums::edge::type::LEFT);
+    const auto normal =
+        point_jacobian_matrix.compute_normal(specfem::enums::edge::type::LEFT);
     const std::array<type_real, 2> edge_normal = { normal(0), normal(1) };
     return std::make_tuple(edge_normal, weights[1]);
   }
@@ -42,21 +41,21 @@ std::tuple<std::array<type_real, 2>, type_real> get_boundary_edge_and_weight(
   if (type == specfem::enums::boundaries::type::BOTTOM_RIGHT ||
       type == specfem::enums::boundaries::type::TOP_RIGHT ||
       type == specfem::enums::boundaries::type::RIGHT) {
-    const auto normal = point_partial_derivatives.compute_normal(
-        specfem::enums::edge::type::RIGHT);
+    const auto normal =
+        point_jacobian_matrix.compute_normal(specfem::enums::edge::type::RIGHT);
     const std::array<type_real, 2> edge_normal = { normal(0), normal(1) };
     return std::make_tuple(edge_normal, weights[1]);
   }
 
   if (type == specfem::enums::boundaries::type::TOP) {
-    const auto normal = point_partial_derivatives.compute_normal(
-        specfem::enums::edge::type::TOP);
+    const auto normal =
+        point_jacobian_matrix.compute_normal(specfem::enums::edge::type::TOP);
     const std::array<type_real, 2> edge_normal = { normal(0), normal(1) };
     return std::make_tuple(edge_normal, weights[0]);
   }
 
   if (type == specfem::enums::boundaries::type::BOTTOM) {
-    const auto normal = point_partial_derivatives.compute_normal(
+    const auto normal = point_jacobian_matrix.compute_normal(
         specfem::enums::edge::type::BOTTOM);
     const std::array<type_real, 2> edge_normal = { normal(0), normal(1) };
     return std::make_tuple(edge_normal, weights[0]);
@@ -72,7 +71,7 @@ specfem::compute::impl::boundaries::stacey::stacey(
         &stacey,
     const specfem::compute::mesh_to_compute_mapping &mapping,
     const specfem::compute::quadrature &quadrature,
-    const specfem::compute::partial_derivatives &partial_derivatives,
+    const specfem::compute::jacobian_matrix &jacobian_matrix,
     const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
     std::vector<specfem::element::boundary_tag_container>
         &element_boundary_tags) {
@@ -204,14 +203,14 @@ specfem::compute::impl::boundaries::stacey::stacey(
                                                  quadrature.gll.h_weights(iz) };
             specfem::point::index<specfem::dimension::type::dim2> index(
                 ispec_compute, iz, ix);
-            specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                                true, false>
-                point_partial_derivatives;
-            specfem::compute::load_on_host(index, partial_derivatives,
-                                           point_partial_derivatives);
+            specfem::point::jacobian_matrix<specfem::dimension::type::dim2,
+                                            true, false>
+                point_jacobian_matrix;
+            specfem::compute::load_on_host(index, jacobian_matrix,
+                                           point_jacobian_matrix);
 
             auto [edge_normal, edge_weight] = get_boundary_edge_and_weight(
-                stacey.type(i), weights, point_partial_derivatives);
+                stacey.type(i), weights, point_jacobian_matrix);
 
             // ------------------- Assign edge normal and edge weight
 
@@ -328,13 +327,13 @@ specfem::compute::impl::boundaries::stacey::stacey(
   //                                              quadrature.gll.h_weights(iz)
   //                                              };
   //         specfem::point::index index(ispec_compute, iz, ix);
-  //         specfem::point::partial_derivatives2<false, true>
-  //             point_partial_derivatives;
-  //         specfem::compute::load_on_host(index, partial_derivatives,
-  //                                        point_partial_derivatives);
+  //         specfem::point::jacobian_matrix2<false, true>
+  //             point_jacobian_matrix;
+  //         specfem::compute::load_on_host(index, jacobian_matrix,
+  //                                        point_jacobian_matrix);
 
   //         auto [edge_normal, edge_weight] = get_boundary_edge_and_weight(
-  //             type, weights, point_partial_derivatives);
+  //             type, weights, point_jacobian_matrix);
   //         // ------------------- Assign edge normal and edge weight
 
   //         this->h_edge_weight(local_index, iz, ix) = edge_weight;

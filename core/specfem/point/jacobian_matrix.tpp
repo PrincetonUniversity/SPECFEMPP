@@ -1,10 +1,10 @@
 #pragma once
 
-#include "partial_derivatives.hpp"
+#include "jacobian_matrix.hpp"
 
 template <bool UseSIMD>
-specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
-specfem::point::partial_derivatives<
+specfem::datatype::VectorPointViewType<type_real, 2, UseSIMD>
+specfem::point::jacobian_matrix<
     specfem::dimension::type::dim2, true,
     UseSIMD>::compute_normal(const specfem::enums::edge::type &type) const {
   switch (type) {
