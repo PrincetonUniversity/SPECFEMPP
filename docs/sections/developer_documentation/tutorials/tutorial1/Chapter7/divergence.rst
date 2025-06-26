@@ -68,7 +68,7 @@ The following code snippet demonstrates how to compute the divergence of a vecto
                                                     element_field);
 
                     team.team_barrier();
-                    divergence(team, iterator, partial_derivatives, wgll,
+                    divergence(team, iterator, jacobian_matrix, wgll,
                         element_quadrature.hprime_wgll, element_field,
                         [&](const typename ChunkPolicyType::iterator_type::index_type
                                 &iterator_index,

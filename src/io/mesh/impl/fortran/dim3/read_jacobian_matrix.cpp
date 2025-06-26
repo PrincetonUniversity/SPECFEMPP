@@ -10,17 +10,17 @@
 // template<> void
 // specfem::io::mesh::impl::fortran::dim3::read_array<type_real>;
 
-void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
+void specfem::io::mesh::impl::fortran::dim3::read_jacobian_matrix(
     std::ifstream &stream,
-    specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>
-        &partial_derivatives,
+    specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>
+        &jacobian_matrix,
     const specfem::MPI::MPI *mpi) {
 
-  // Read partial derivatives
-  const int nspec = partial_derivatives.nspec;
-  const int ngllx = partial_derivatives.ngllx;
-  const int nglly = partial_derivatives.nglly;
-  const int ngllz = partial_derivatives.ngllz;
+  // Read Jacobian matrix
+  const int nspec = jacobian_matrix.nspec;
+  const int ngllx = jacobian_matrix.ngllx;
+  const int nglly = jacobian_matrix.nglly;
+  const int ngllz = jacobian_matrix.ngllz;
 
   // Init line reading dummy variable
 
@@ -36,7 +36,7 @@ void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
   // Read all elements at once
   try {
     specfem::io::mesh::impl::fortran::dim3::read_array(stream,
-                                                       partial_derivatives.xix);
+                                                       jacobian_matrix.xix);
 
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -47,7 +47,7 @@ void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
 
   try {
     specfem::io::mesh::impl::fortran::dim3::read_array(stream,
-                                                       partial_derivatives.xiy);
+                                                       jacobian_matrix.xiy);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading xiy from database file:\n"
@@ -57,7 +57,7 @@ void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
 
   try {
     specfem::io::mesh::impl::fortran::dim3::read_array(stream,
-                                                       partial_derivatives.xiz);
+                                                       jacobian_matrix.xiz);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading xiz from database file:\n"
@@ -66,8 +66,8 @@ void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::io::mesh::impl::fortran::dim3::read_array(
-        stream, partial_derivatives.etax);
+    specfem::io::mesh::impl::fortran::dim3::read_array(stream,
+                                                       jacobian_matrix.etax);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading etax from database file:\n"
@@ -76,8 +76,8 @@ void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::io::mesh::impl::fortran::dim3::read_array(
-        stream, partial_derivatives.etay);
+    specfem::io::mesh::impl::fortran::dim3::read_array(stream,
+                                                       jacobian_matrix.etay);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading etay from database file:\n"
@@ -86,8 +86,8 @@ void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::io::mesh::impl::fortran::dim3::read_array(
-        stream, partial_derivatives.etaz);
+    specfem::io::mesh::impl::fortran::dim3::read_array(stream,
+                                                       jacobian_matrix.etaz);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading etaz from database file:\n"
@@ -96,8 +96,8 @@ void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::io::mesh::impl::fortran::dim3::read_array(
-        stream, partial_derivatives.gammax);
+    specfem::io::mesh::impl::fortran::dim3::read_array(stream,
+                                                       jacobian_matrix.gammax);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading gammax from database file:\n"
@@ -106,8 +106,8 @@ void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::io::mesh::impl::fortran::dim3::read_array(
-        stream, partial_derivatives.gammay);
+    specfem::io::mesh::impl::fortran::dim3::read_array(stream,
+                                                       jacobian_matrix.gammay);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading gammay from database file:\n"
@@ -116,8 +116,8 @@ void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::io::mesh::impl::fortran::dim3::read_array(
-        stream, partial_derivatives.gammaz);
+    specfem::io::mesh::impl::fortran::dim3::read_array(stream,
+                                                       jacobian_matrix.gammaz);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading gammaz from database file:\n"
@@ -127,7 +127,7 @@ void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
 
   try {
     specfem::io::mesh::impl::fortran::dim3::read_array(
-        stream, partial_derivatives.jacobian);
+        stream, jacobian_matrix.jacobian);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading jacobian from database file:\n"

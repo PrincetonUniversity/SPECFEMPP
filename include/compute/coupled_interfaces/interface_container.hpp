@@ -1,7 +1,7 @@
 #pragma once
 
+#include "compute/compute_jacobian_matrix.hpp"
 #include "compute/compute_mesh.hpp"
-#include "compute/compute_partial_derivatives.hpp"
 #include "compute/coupled_interfaces/interface_container.hpp"
 #include "compute/element_types/element_types.hpp"
 #include "edge/interface.hpp"
@@ -71,7 +71,7 @@ public:
    * @param mesh Finite element mesh information
    * @param points Assembly information
    * @param quadrature Quadrature information
-   * @param partial_derivatives Partial derivatives for every quadrature point
+   * @param jacobian_matrix Jacobian matrix for every quadrature point
    * @param properties Material properties for every quadrature point
    * @param mapping Mapping between mesh and compute spectral element indexing
    */
@@ -79,7 +79,7 @@ public:
       const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
       const specfem::compute::points &points,
       const specfem::compute::quadrature &quadrature,
-      const specfem::compute::partial_derivatives &partial_derivatives,
+      const specfem::compute::jacobian_matrix &jacobian_matrix,
       const specfem::compute::element_types &element_types,
       const specfem::compute::mesh_to_compute_mapping &mapping);
 

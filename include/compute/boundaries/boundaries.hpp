@@ -65,7 +65,7 @@ public:
    * @param mapping mapping between mesh and compute indexing
    * @param quadrature Finite element quadrature information
    * @param properties Material properties for every quadrature point
-   * @param partial_derivatives Partial derivatives of basis functions at every
+   * @param jacobian_matrix Jacobian matrix of basis functions at every
    * quadrature point
    */
   boundaries(const int nspec, const int ngllz, const int ngllx,
@@ -73,7 +73,7 @@ public:
              const specfem::compute::mesh_to_compute_mapping &mapping,
              const specfem::compute::quadrature &quadrature,
              const specfem::compute::properties &properties,
-             const specfem::compute::partial_derivatives &partial_derivatives);
+             const specfem::compute::jacobian_matrix &jacobian_matrix);
   ///@}
 };
 

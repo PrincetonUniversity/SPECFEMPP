@@ -68,7 +68,7 @@ void specfem::coupled_interface::coupled_interface<
               const int iedge = index.iedge;
 
               const auto factor = edge_factor(iedge, ipoint);
-              const specfem::datatype::ScalarPointViewType<type_real, 2, false>
+              const specfem::datatype::VectorPointViewType<type_real, 2, false>
                   normal(edge_normal(0, iedge, ipoint),
                          edge_normal(1, iedge, ipoint));
 
