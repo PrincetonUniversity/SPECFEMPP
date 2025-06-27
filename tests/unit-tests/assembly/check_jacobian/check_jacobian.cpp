@@ -10,12 +10,12 @@ void test_check_jacobian(const specfem::compute::assembly &assembly) {
   const specfem::point::index<specfem::dimension::type::dim2, false> index(
       static_cast<int>(nspec / 2), 2, 2);
 
-  const specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                            true, false>
-      partial_derivatives(0, 0, 0, 0, -0.5);
+  const specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
+                                        false>
+      jacobian_matrix(0, 0, 0, 0, -0.5);
 
-  specfem::compute::store_on_host(index, assembly.partial_derivatives,
-                                  partial_derivatives);
+  specfem::compute::store_on_host(index, assembly.jacobian_matrix,
+                                  jacobian_matrix);
 
   assembly.check_small_jacobian();
 }

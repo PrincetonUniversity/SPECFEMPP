@@ -8,7 +8,7 @@
 namespace specfem {
 namespace medium {
 
-template <typename T, typename PointPartialDerivativesType,
+template <typename T, typename PointJacobianMatrixType,
           typename PointStressIntegrandViewType, typename PointPropertiesType,
           typename PointAccelerationType>
 KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
@@ -20,16 +20,16 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::integral_constant<
         specfem::element::property_tag,
         specfem::element::property_tag::isotropic_cosserat>,
-    const PointPartialDerivativesType &point_partial_derivatives,
+    const PointJacobianMatrixType &point_jacobian_matrix,
     const PointPropertiesType &point_properties, const T factor,
     const PointStressIntegrandViewType &F,
     PointAccelerationType &acceleration) {
 
-  const auto &xix = point_partial_derivatives.xix;
-  const auto &xiz = point_partial_derivatives.xiz;
-  const auto &gammax = point_partial_derivatives.gammax;
-  const auto &gammaz = point_partial_derivatives.gammaz;
-  const auto &jacobian = point_partial_derivatives.jacobian;
+  const auto &xix = point_jacobian_matrix.xix;
+  const auto &xiz = point_jacobian_matrix.xiz;
+  const auto &gammax = point_jacobian_matrix.gammax;
+  const auto &gammaz = point_jacobian_matrix.gammaz;
+  const auto &jacobian = point_jacobian_matrix.jacobian;
 
   // Compute inverse Jacobian elements
   const auto invD = static_cast<T>(1.0) / (xix * gammaz - xiz * gammax);

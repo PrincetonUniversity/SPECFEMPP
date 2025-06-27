@@ -59,8 +59,8 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
       specfem::point::properties<dimension, medium_tag, property_tag,
                                  using_simd>;
 
-  using PointPartialDerivativesType =
-      specfem::point::partial_derivatives<dimension, true, using_simd>;
+  using PointJacobianMatrixType =
+      specfem::point::jacobian_matrix<dimension, true, using_simd>;
 
   using PointBoundaryType =
       specfem::point::boundary<boundary_tag, dimension, using_simd>;
@@ -68,7 +68,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   using PointIndex = specfem::point::index<dimension, using_simd>;
 
   const auto &quadrature = assembly.mesh.quadratures;
-  const auto &partial_derivatives = assembly.partial_derivatives;
+  const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &properties = assembly.properties;
   const auto &boundaries = assembly.boundaries;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
@@ -91,10 +91,10 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
         }();
 
         const auto jacobian = [&]() {
-          PointPartialDerivativesType point_partial_derivatives;
-          specfem::compute::load_on_device(index, partial_derivatives,
-                                           point_partial_derivatives);
-          return point_partial_derivatives.jacobian;
+          PointJacobianMatrixType point_jacobian_matrix;
+          specfem::compute::load_on_device(index, jacobian_matrix,
+                                           point_jacobian_matrix);
+          return point_jacobian_matrix.jacobian;
         }();
 
         PointMassType mass_matrix =

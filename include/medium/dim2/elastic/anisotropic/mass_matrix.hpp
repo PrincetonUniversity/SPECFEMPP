@@ -19,8 +19,8 @@ namespace medium {
 //     const specfem::point::properties<specfem::dimension::type::dim2,
 //                                      specfem::element::medium_tag::elastic_psv,
 //                                      PropertyTag, UseSIMD> &properties,
-//     const specfem::point::partial_derivatives<
-//         specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives);
+//     const specfem::point::jacobian_matrix<
+//         specfem::dimension::type::dim2, true, UseSIMD> &jacobian_matrix);
 
 } // namespace medium
 } // namespace specfem

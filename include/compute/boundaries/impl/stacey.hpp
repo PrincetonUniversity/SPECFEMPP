@@ -1,7 +1,7 @@
 #pragma once
 
+#include "compute/compute_jacobian_matrix.hpp"
 #include "compute/compute_mesh.hpp"
-#include "compute/compute_partial_derivatives.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -56,7 +56,7 @@ public:
              &stacey,
          const specfem::compute::mesh_to_compute_mapping &mapping,
          const specfem::compute::quadrature &quadrature,
-         const specfem::compute::partial_derivatives &partial_derivatives,
+         const specfem::compute::jacobian_matrix &jacobian_matrix,
          const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
          std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 

@@ -298,7 +298,7 @@ add_library(
         src/io/mesh/impl/fortran/dim3/mesh.cpp
         src/io/mesh/impl/fortran/dim3/read_parameters.cpp
         src/io/mesh/impl/fortran/dim3/read_coordinates.cpp
-        src/io/mesh/impl/fortran/dim3/read_partial_derivatives.cpp
+        src/io/mesh/impl/fortran/dim3/read_jacobian_matrix.cpp
         src/io/mesh/impl/fortran/dim3/utilities.cpp
 )
 
@@ -402,7 +402,7 @@ add_library(
         src/mesh/dim3/mapping/mapping.cpp
         src/mesh/dim3/materials/materials.cpp
         src/mesh/dim3/coordinates/coordinates.cpp
-        src/mesh/dim3/partial_derivatives/partial_derivatives.cpp
+        src/mesh/dim3/jacobian_matrix/jacobian_matrix.cpp
 
 )
 
@@ -537,7 +537,7 @@ add_library(
         compute
         src/compute/compute_mesh.cpp
         src/compute/element_types/element_types.cpp
-        src/compute/compute_partial_derivatives.cpp
+        src/compute/compute_jacobian_matrix.cpp
         src/compute/compute_properties.cpp
         src/compute/compute_kernels.cpp
         src/compute/compute_sources.cpp

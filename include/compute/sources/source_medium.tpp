@@ -10,7 +10,7 @@ template <specfem::dimension::type Dimension,
 specfem::compute::impl::source_medium<Dimension, Medium>::source_medium(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::compute::mesh &mesh,
-    const specfem::compute::partial_derivatives &partial_derivatives,
+    const specfem::compute::jacobian_matrix &jacobian_matrix,
     const specfem::compute::element_types &element_types, const type_real t0,
     const type_real dt, const int nsteps)
     : source_index_mapping("specfem::sources::source_index_mapping",
@@ -26,7 +26,7 @@ specfem::compute::impl::source_medium<Dimension, Medium>::source_medium(
   for (int isource = 0; isource < sources.size(); isource++) {
     auto sv_source_array = Kokkos::subview(
         this->h_source_array, isource, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-    sources[isource]->compute_source_array(mesh, partial_derivatives,
+    sources[isource]->compute_source_array(mesh, jacobian_matrix,
                                            element_types, sv_source_array);
     auto sv_stf_array = Kokkos::subview(this->h_source_time_function,
                                         Kokkos::ALL, isource, Kokkos::ALL);
