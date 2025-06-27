@@ -1,10 +1,10 @@
 #pragma once
 
-#include "compute/compute_jacobian_matrix.hpp"
-#include "compute/compute_mesh.hpp"
 #include "enumerations/interface.hpp"
+#include "jacobian_matrix.hpp"
+#include "mesh.hpp"
 #include "source/source.hpp"
-#include "source_medium.hpp"
+#include "sources/source_medium.hpp"
 
 namespace specfem {
 namespace compute {

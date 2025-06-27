@@ -2,7 +2,6 @@
 
 #include "algorithms/gradient.hpp"
 #include "chunk_element/field.hpp"
-#include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
@@ -10,6 +9,7 @@
 #include "execution/for_each_level.hpp"
 #include "medium/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
+#include "specfem/compute.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 

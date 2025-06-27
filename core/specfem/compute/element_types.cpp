@@ -1,4 +1,4 @@
-#include "compute/element_types/element_types.hpp"
+#include "element_types.hpp"
 
 specfem::compute::element_types::element_types(
     const int nspec, const int ngllz, const int ngllx,

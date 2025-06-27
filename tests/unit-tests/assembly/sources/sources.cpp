@@ -1,4 +1,4 @@
-#include "compute/sources/sources.hpp"
+#include "specfem/compute/sources.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "algorithms/locate_point.hpp"
 #include "enumerations/dimension.hpp"

@@ -1,13 +1,12 @@
-#ifndef _COMPUTE_BOUNDARIES_VALUES_BOUNDARY_VALUES_CONTAINER_HPP
-#define _COMPUTE_BOUNDARIES_VALUES_BOUNDARY_VALUES_CONTAINER_HPP
+#pragma once
 
-#include "compute/boundaries/boundaries.hpp"
-#include "compute/compute_mesh.hpp"
-#include "compute/properties/properties.hpp"
+#include "boundary_medium_container.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "impl/boundary_medium_container.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/compute/boundaries.hpp"
+#include "specfem/compute/mesh.hpp"
+#include "specfem/compute/properties.hpp"
 
 namespace specfem {
 namespace compute {
@@ -143,5 +142,3 @@ load_on_device(const int istep, const IndexType index,
 
 } // namespace compute
 } // namespace specfem
-
-#endif

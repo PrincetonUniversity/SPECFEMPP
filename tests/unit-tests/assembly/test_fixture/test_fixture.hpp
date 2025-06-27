@@ -1,13 +1,13 @@
 #pragma once
 
 #include "../../MPI_environment.hpp"
-#include "compute/assembly/assembly.hpp"
 #include "enumerations/interface.hpp"
 #include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/quadratures.hpp"
 #include "receiver/receiver.hpp"
 #include "source/source.hpp"
+#include "specfem/compute.hpp"
 #include "utilities/strings.hpp"
 #include <gtest/gtest.h>
 #include <iostream>

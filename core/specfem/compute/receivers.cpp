@@ -1,9 +1,9 @@
 #include "algorithms/locate_point.hpp"
-#include "compute/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
+#include "specfem/compute.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

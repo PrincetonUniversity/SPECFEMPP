@@ -1,9 +1,9 @@
 #pragma once
 
-#include "compute/compute_jacobian_matrix.hpp"
-#include "compute/compute_mesh.hpp"
-#include "compute/element_types/element_types.hpp"
 #include "source.hpp"
+#include "specfem/compute/element_types.hpp"
+#include "specfem/compute/jacobian_matrix.hpp"
+#include "specfem/compute/mesh.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {

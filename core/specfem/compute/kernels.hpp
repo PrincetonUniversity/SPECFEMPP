@@ -1,8 +1,8 @@
 #pragma once
 
-#include "compute/element_types/element_types.hpp"
-#include "compute/impl/value_containers.hpp"
+#include "element_types.hpp"
 #include "enumerations/medium.hpp"
+#include "impl/value_containers.hpp"
 #include "medium/kernels_container.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>

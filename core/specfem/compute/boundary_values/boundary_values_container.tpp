@@ -1,5 +1,4 @@
-#ifndef _COMPUTE_BOUNDARIES_VALUES_BOUNDARY_VALUES_CONTAINER_TPP
-#define _COMPUTE_BOUNDARIES_VALUES_BOUNDARY_VALUES_CONTAINER_TPP
+#pragma once
 
 #include "boundary_values_container.hpp"
 #include <Kokkos_Core.hpp>
@@ -36,5 +35,3 @@ specfem::compute::boundary_value_container<DimensionTag, BoundaryTag>::
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
 }
-
-#endif

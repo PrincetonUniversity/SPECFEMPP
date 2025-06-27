@@ -1,13 +1,13 @@
 #pragma once
 
-#include "compute/compute_jacobian_matrix.hpp"
-#include "compute/compute_mesh.hpp"
-#include "compute/element_types/element_types.hpp"
 #include "constants.hpp"
 #include "enumerations/wavefield.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/compute/element_types.hpp"
+#include "specfem/compute/jacobian_matrix.hpp"
+#include "specfem/compute/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"

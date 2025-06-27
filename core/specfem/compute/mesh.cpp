@@ -1,10 +1,10 @@
-#include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "parallel_configuration/chunk_config.hpp"
 #include "quadrature/interface.hpp"
+#include "specfem/compute.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>

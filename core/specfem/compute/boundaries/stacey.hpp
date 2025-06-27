@@ -1,8 +1,8 @@
 #pragma once
 
-#include "compute/compute_jacobian_matrix.hpp"
-#include "compute/compute_mesh.hpp"
 #include "mesh/mesh.hpp"
+#include "specfem/compute/jacobian_matrix.hpp"
+#include "specfem/compute/mesh.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>

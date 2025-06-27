@@ -1,12 +1,11 @@
-#ifndef _COMPUTE_BOUNDARIES_BOUNDARIES_HPP
-#define _COMPUTE_BOUNDARIES_BOUNDARIES_HPP
+#pragma once
 
-#include "compute/compute_mesh.hpp"
-#include "compute/properties/properties.hpp"
+#include "boundaries/acoustic_free_surface.hpp"
+#include "boundaries/stacey.hpp"
 #include "enumerations/interface.hpp"
-#include "impl/acoustic_free_surface.hpp"
-#include "impl/stacey.hpp"
 #include "macros.hpp"
+#include "mesh.hpp"
+#include "properties.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -196,5 +195,3 @@ inline void load_on_host(const IndexType &index,
 
 } // namespace compute
 } // namespace specfem
-
-#endif

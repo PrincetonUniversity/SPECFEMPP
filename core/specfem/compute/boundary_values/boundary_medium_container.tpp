@@ -1,5 +1,4 @@
-#ifndef _COMPUTE_BOUNDARIES_VALUES_BOUNDARY_MEDIUM_CONTAINER_TPP
-#define _COMPUTE_BOUNDARIES_VALUES_BOUNDARY_MEDIUM_CONTAINER_TPP
+#pragma once
 
 #include "boundary_medium_container.hpp"
 
@@ -34,5 +33,3 @@ specfem::compute::impl::boundary_medium_container<DimensionTag, MediumTag,
 
   return;
 }
-
-#endif

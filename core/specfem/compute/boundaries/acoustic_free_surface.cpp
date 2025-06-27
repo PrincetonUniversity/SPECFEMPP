@@ -1,5 +1,5 @@
 
-#include "compute/boundaries/impl/acoustic_free_surface.hpp"
+#include "acoustic_free_surface.hpp"
 #include "macros.hpp"
 #include <Kokkos_Sort.hpp>
 #include <algorithm>

@@ -1,4 +1,4 @@
-#include "compute/boundaries/boundaries.hpp"
+#include "boundaries.hpp"
 #include "enumerations/interface.hpp"
 
 specfem::compute::boundaries::boundaries(

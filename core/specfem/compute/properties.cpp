@@ -1,5 +1,5 @@
-#include "compute/properties/properties.hpp"
-#include "enumerations/dimension.hpp"
+#include "properties.hpp"
+#include "enumerations/interface.hpp"
 
 specfem::compute::properties::properties(
     const int nspec, const int ngllz, const int ngllx,

@@ -1,5 +1,4 @@
-#ifndef _COMPUTE_QUADRATURE_HPP
-#define _COMPUTE_QUADRATURE_HPP
+#pragma once
 
 #include "quadrature/interface.hpp"
 
@@ -14,5 +13,3 @@ struct quadrature {
 
 } // namespace compute
 } // namespace specfem
-
-#endif /* _COMPUTE_QUADRATURE_HPP */

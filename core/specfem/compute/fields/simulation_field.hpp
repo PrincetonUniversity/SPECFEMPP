@@ -1,6 +1,5 @@
 #pragma once
 
-#include "compute/fields/impl/field_impl.hpp"
 #include "data_access.tpp"
 #include "element/field.hpp"
 #include "enumerations/material_definitions.hpp"
@@ -8,6 +7,7 @@
 #include "enumerations/simulation.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
+#include "field_impl.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
