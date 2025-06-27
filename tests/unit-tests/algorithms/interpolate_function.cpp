@@ -6,7 +6,7 @@
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "quadrature/gll/gll.hpp"
-#include "specfem/compute/mesh.hpp"
+#include "specfem/compute.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
