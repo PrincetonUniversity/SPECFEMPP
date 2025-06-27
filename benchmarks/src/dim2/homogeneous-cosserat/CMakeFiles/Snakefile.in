@@ -22,6 +22,7 @@ rule generate_mesh:
         """
 
 
+
 rule run_solver:
     input:
         database="OUTPUT_FILES/database.bin",
@@ -30,10 +31,10 @@ rule run_solver:
         config="specfem_config.yaml",
     output:
         seismograms=expand(
-            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}",
             station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006", "S0007", "S0008"],
             network_name=["AA"],
-            component=["BXX", "BXZ"],
+            component=["BXX.semd", "BXZ.semd", "BXT.semr", "BIT.semr"],
         ),
     resources:
         nodes=1,
@@ -53,14 +54,16 @@ rule run_solver:
 rule plot_seismogram:
     input:
         trace_files=expand(
-            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}",
             station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006", "S0007", "S0008"],
             network_name=["AA"],
-            component=["BXX", "BXZ"],
-        ),
+            component=["BXX.semd", "BXZ.semd", "BXT.semr", "BIT.semr"],
+        )
     output:
         traces_X="OUTPUT_FILES/results/traces_X.png",
-        traces_Z="OUTPUT_FILES/results/traces_Z.png"
+        traces_Z="OUTPUT_FILES/results/traces_Z.png",
+        traces_T="OUTPUT_FILES/results/traces_T.png",
+        traces_IT="OUTPUT_FILES/results/traces_IT.png"
     localrule: True
     run:
         import glob
@@ -100,6 +103,8 @@ rule plot_seismogram:
         stream = get_traces("OUTPUT_FILES/results")
         stream.select(component='X').plot(size=(800, 1000)).savefig(output.traces_X)
         stream.select(component='Z').plot(size=(800, 1000)).savefig(output.traces_Z)
+        stream.select(channel='BXT').plot(size=(800, 1000)).savefig(output.traces_T)
+        stream.select(channel='BIT').plot(size=(800, 1000)).savefig(output.traces_IT)
 
 
 rule clean:
