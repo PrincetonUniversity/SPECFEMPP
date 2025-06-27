@@ -62,11 +62,11 @@ test_config get_test_config(std::string config_filename,
  * This test should be run on single and multiple nodes
  *
  */
-TEST(COMPUTE_TESTS, compute_jacobian_matrix) {
+TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  std::string config_filename = "compute/jacobian_matrix/test_config.yml";
+  std::string config_filename = "assembly_mesh/jacobian_matrix/test_config.yml";
   test_config test_config = get_test_config(config_filename, mpi);
 
   // Set up GLL quadrature points

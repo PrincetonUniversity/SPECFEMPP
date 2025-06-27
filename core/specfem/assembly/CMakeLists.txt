@@ -1,9 +1,9 @@
 file(GLOB COMPUTE_SOURCE_FILES "./*.cpp" "./*/*.cpp")
 
-add_library(compute ${COMPUTE_SOURCE_FILES})
+add_library(assembly ${COMPUTE_SOURCE_FILES})
 
 target_link_libraries(
-        compute
+        assembly
         enumerations
         quadrature
         mesh
@@ -18,23 +18,23 @@ target_link_libraries(
 
 if (NOT VTK_CXX_BUILD)
         target_compile_definitions(
-                compute
+                assembly
                 PUBLIC -DNO_VTK
         )
 else ()
         target_link_libraries(
-                compute
+                assembly
                 ${VTK_LIBRARIES}
                 )
 
         # Only define the __APPLE__ compile definition if it is defined
         if (__APPLE__)
-        target_compile_definitions(compute PRIVATE __APPLE__)
+        target_compile_definitions(assembly PRIVATE __APPLE__)
         endif(__APPLE__)
 endif()
 
 target_include_directories(
-        compute
+        assembly
         INTERFACE
         ${HDF5_INCLUDE_DIRS}
 )

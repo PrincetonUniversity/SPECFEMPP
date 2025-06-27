@@ -456,7 +456,7 @@ add_library(
 
 target_link_libraries(
         reader
-        compute
+        assembly
         io
         read_seismogram
         utilities
@@ -539,7 +539,7 @@ add_library(coupled_interface
 target_link_libraries(
         coupled_interface
         Kokkos::kokkos
-        compute
+        assembly
 )
 
 add_library(
@@ -557,7 +557,7 @@ add_library(
 target_link_libraries(
         kokkos_kernels
         Kokkos::kokkos
-        compute
+        assembly
 )
 
 add_library(
@@ -570,7 +570,7 @@ target_link_libraries(
         timescheme
         Kokkos::kokkos
         yaml-cpp
-        compute
+        assembly
 )
 
 add_library(
@@ -595,7 +595,7 @@ add_library(
 
 target_link_libraries(
         writer
-        compute
+        assembly
         receiver_class
         io
         utilities
@@ -623,12 +623,12 @@ if (NOT VTK_CXX_BUILD)
 
         target_link_libraries(
                 periodic_tasks
-                compute
+                assembly
         )
 else ()
         target_link_libraries(
                 periodic_tasks
-                compute
+                assembly
                 ${VTK_LIBRARIES}
                 )
 
@@ -682,7 +682,7 @@ target_link_libraries(
         Kokkos::kokkos
         mesh
         quadrature
-        compute
+        assembly
         source_class
         parameter_reader
         receiver_class
@@ -717,7 +717,7 @@ target_link_libraries(
         Kokkos::kokkos
         mesh
         quadrature
-        compute
+        assembly
         source_class
         parameter_reader
         receiver_class
