@@ -3,7 +3,7 @@
 #include "enumerations/display.hpp"
 #include "enumerations/wavefield.hpp"
 #include "plotter.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <boost/filesystem.hpp>
 #ifdef NO_VTK

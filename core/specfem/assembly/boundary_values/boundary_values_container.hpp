@@ -4,9 +4,9 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem/compute/boundaries.hpp"
-#include "specfem/compute/mesh.hpp"
-#include "specfem/compute/properties.hpp"
+#include "specfem/assembly/boundaries.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/properties.hpp"
 
 namespace specfem {
 namespace compute {

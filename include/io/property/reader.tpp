@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "io/property/reader.hpp"

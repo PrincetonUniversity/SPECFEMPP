@@ -2,7 +2,7 @@
 
 #include "enumerations/interface.hpp"
 #include "io/writer.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace io {

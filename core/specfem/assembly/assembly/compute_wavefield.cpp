@@ -1,6 +1,6 @@
 
 #include "helper.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 
 namespace {
 

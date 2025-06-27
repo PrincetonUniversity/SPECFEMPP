@@ -5,7 +5,7 @@
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/compute_material_derivatives.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace kokkos_kernels {

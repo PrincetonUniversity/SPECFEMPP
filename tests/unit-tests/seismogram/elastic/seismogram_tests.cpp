@@ -10,7 +10,7 @@
 #include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "solver/solver.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 

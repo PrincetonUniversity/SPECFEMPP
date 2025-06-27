@@ -1,9 +1,9 @@
 #pragma once
 
-#include "specfem/compute/mesh.hpp"
-#include "specfem/compute/jacobian_matrix.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
 #include "interface_container.hpp"
-#include "specfem/compute/properties.hpp"
+#include "specfem/assembly/properties.hpp"
 #include "edge/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"

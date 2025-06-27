@@ -1,7 +1,7 @@
 #pragma once
 
-#include "specfem/compute/mesh.hpp"
-#include "specfem/compute/element_types.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/element_types.hpp"
 #include "field_impl.tpp"
 #include "simulation_field.hpp"
 #include "enumerations/interface.hpp"

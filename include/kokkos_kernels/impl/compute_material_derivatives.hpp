@@ -2,7 +2,7 @@
 
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace kokkos_kernels {

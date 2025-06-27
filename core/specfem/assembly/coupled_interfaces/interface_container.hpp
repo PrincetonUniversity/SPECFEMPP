@@ -3,9 +3,9 @@
 #include "edge/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem/compute/element_types.hpp"
-#include "specfem/compute/jacobian_matrix.hpp"
-#include "specfem/compute/mesh.hpp"
+#include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
+#include "specfem/assembly/mesh.hpp"
 
 namespace specfem {
 namespace compute {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {

@@ -2,7 +2,7 @@
 
 #include "execution/for_each_level.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
