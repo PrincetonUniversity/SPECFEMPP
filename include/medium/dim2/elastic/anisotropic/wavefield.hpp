@@ -45,7 +45,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     } else if (wavefield_component == specfem::wavefield::type::pressure) {
       return field.displacement;
     } else {
-      Kokkos::abort("component not supported");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D elastic anisotropic P-SV media.");
     }
   }();
 
@@ -140,7 +140,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     } else if (wavefield_component == specfem::wavefield::type::pressure) {
       return field.displacement;
     } else {
-      Kokkos::abort("component not supported");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D elastic anisotropic SH media.");
     }
   }();
 

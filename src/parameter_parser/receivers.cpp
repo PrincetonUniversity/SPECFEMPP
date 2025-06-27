@@ -34,6 +34,9 @@ specfem::runtime_configuration::receivers::get_seismogram_types() const {
     } else if (specfem::utilities::is_rotation_string(
                    seismogram_type.as<std::string>())) {
       stypes.push_back(specfem::wavefield::type::rotation);
+    } else if (specfem::utilities::is_intrinsic_rotation_string(
+                   seismogram_type.as<std::string>())) {
+      stypes.push_back(specfem::wavefield::type::intrinsic_rotation);
     } else {
       std::ostringstream message;
 

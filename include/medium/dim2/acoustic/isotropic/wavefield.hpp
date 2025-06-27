@@ -3,6 +3,7 @@
 #include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
 #include "enumerations/dimension.hpp"
+#include "enumerations/macros.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/compute_stress.hpp"
 #include "specfem/point.hpp"
@@ -47,7 +48,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     } else if (wavefield_component == specfem::wavefield::type::pressure) {
       return field.acceleration;
     } else {
-      Kokkos::abort("component not supported");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D acoustic isotropic media.");
     }
   }();
 

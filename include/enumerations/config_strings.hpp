@@ -23,5 +23,6 @@
  ((acceleration, acc, a, accel)) \
  ((pressure, p, pres)) \
  ((rotation, r, rot)) \
+ ((intrinsic_rotation, intrinsic_rot, intrinsic_r, intrinsic_rotat)) \
  ((newmark)) \
  ((onscreen, on-screen, on_screen))

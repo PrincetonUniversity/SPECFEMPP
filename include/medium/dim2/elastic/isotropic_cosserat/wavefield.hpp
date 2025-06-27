@@ -3,6 +3,7 @@
 #include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
+#include "enumerations/macros.hpp"
 #include "medium/compute_stress.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -49,7 +50,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     } else if (wavefield_component == specfem::wavefield::type::rotation) {
       return field.displacement;
     } else {
-      Kokkos::abort("component not supported");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D elastic isotropic Cosserat P-SV-T media");
     }
   }();
 
