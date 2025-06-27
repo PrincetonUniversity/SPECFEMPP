@@ -1,7 +1,7 @@
+#include "compute/sources/sources.hpp"
 #include "algorithms/interface.hpp"
 #include "compute/sources/source_medium.hpp"
 #include "compute/sources/source_medium.tpp"
-#include "compute/sources/sources.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
