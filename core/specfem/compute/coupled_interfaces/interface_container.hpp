@@ -1,12 +1,11 @@
 #pragma once
 
-#include "compute/compute_jacobian_matrix.hpp"
-#include "compute/compute_mesh.hpp"
-#include "compute/coupled_interfaces/interface_container.hpp"
-#include "compute/element_types/element_types.hpp"
 #include "edge/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/compute/element_types.hpp"
+#include "specfem/compute/jacobian_matrix.hpp"
+#include "specfem/compute/mesh.hpp"
 
 namespace specfem {
 namespace compute {

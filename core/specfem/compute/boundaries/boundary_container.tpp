@@ -1,5 +1,4 @@
-#ifndef _COMPUTE_BOUNDARIES_IMPL_BOUNDARY_CONTAINER_TPP
-#define _COMPUTE_BOUNDARIES_IMPL_BOUNDARY_CONTAINER_TPP
+#pragma once
 
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
@@ -47,5 +46,3 @@ specfem::compute::impl::boundaries::boundary_container<boundary_tag>::
 
   return;
 }
-
-#endif

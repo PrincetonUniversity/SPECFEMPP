@@ -1,4 +1,4 @@
-#include "compute/assembly/assembly.hpp"
+#include "assembly.hpp"
 #include "enumerations/interface.hpp"
 #include "io/reader.hpp"
 #include "mesh/mesh.hpp"

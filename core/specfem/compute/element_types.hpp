@@ -1,8 +1,8 @@
 #pragma once
 
-#include "compute/compute_mesh.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
+#include "mesh.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>

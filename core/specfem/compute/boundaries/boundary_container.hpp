@@ -1,5 +1,4 @@
-#ifndef _COMPUTE_BOUNDARIES_IMPL_BOUNDARY_CONTAINER_HPP
-#define _COMPUTE_BOUNDARIES_IMPL_BOUNDARY_CONTAINER_HPP
+#pragma once
 
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
@@ -50,5 +49,3 @@ struct boundary_container {
 } // namespace impl
 } // namespace compute
 } // namespace specfem
-
-#endif

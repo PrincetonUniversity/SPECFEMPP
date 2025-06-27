@@ -1,12 +1,12 @@
 #pragma once
 
-#include "compute/compute_mesh.hpp"
-#include "compute/element_types/element_types.hpp"
-#include "compute/impl/value_containers.hpp"
+#include "element_types.hpp"
 #include "enumerations/interface.hpp"
+#include "impl/value_containers.hpp"
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
 #include "medium/properties_container.hpp"
+#include "mesh.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

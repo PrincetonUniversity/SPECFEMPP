@@ -1,4 +1,4 @@
-#include "compute/assembly/assembly.hpp"
+#include "specfem/compute.hpp"
 
 #ifdef NO_VTK
 

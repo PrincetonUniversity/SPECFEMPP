@@ -1,10 +1,10 @@
-#include "compute/sources/sources.hpp"
+#include "sources.hpp"
 #include "algorithms/interface.hpp"
-#include "compute/sources/source_medium.hpp"
-#include "compute/sources/source_medium.tpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
+#include "sources/source_medium.hpp"
+#include "sources/source_medium.tpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

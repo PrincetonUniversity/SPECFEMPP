@@ -1,6 +1,5 @@
 #pragma once
 
-// #include "compute/compute_quadrature.hpp"
 #include "element/quadrature.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"

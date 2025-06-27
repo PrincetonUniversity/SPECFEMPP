@@ -1,8 +1,8 @@
 #pragma once
 
-#include "compute/compute_mesh.hpp"
-#include "compute/properties/properties.hpp"
 #include "mesh/mesh.hpp"
+#include "specfem/compute//properties.hpp"
+#include "specfem/compute/mesh.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>

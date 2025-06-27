@@ -1,9 +1,9 @@
 #pragma once
 
-#include "compute/compute_mesh.hpp"
-#include "compute/element_types/element_types.hpp"
-#include "compute/fields/impl/field_impl.tpp"
-#include "compute/fields/simulation_field.hpp"
+#include "specfem/compute/mesh.hpp"
+#include "specfem/compute/element_types.hpp"
+#include "field_impl.tpp"
+#include "simulation_field.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>

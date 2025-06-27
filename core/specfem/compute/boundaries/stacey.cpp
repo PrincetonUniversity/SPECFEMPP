@@ -1,5 +1,5 @@
 
-#include "compute/boundaries/impl/stacey.hpp"
+#include "stacey.hpp"
 #include <algorithm>
 #include <array>
 #include <numeric>

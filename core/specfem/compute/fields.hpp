@@ -1,12 +1,12 @@
 #pragma once
 
-#include "compute/compute_mesh.hpp"
-#include "compute/element_types/element_types.hpp"
+#include "element_types.hpp"
 #include "enumerations/interface.hpp"
-#include "impl/field_impl.hpp"
-#include "impl/field_impl.tpp"
-#include "simulation_field.hpp"
-#include "simulation_field.tpp"
+#include "fields/field_impl.hpp"
+#include "fields/field_impl.tpp"
+#include "fields/simulation_field.hpp"
+#include "fields/simulation_field.tpp"
+#include "mesh.hpp"
 
 namespace specfem {
 namespace compute {

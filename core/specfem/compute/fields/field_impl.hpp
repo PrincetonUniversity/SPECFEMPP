@@ -1,8 +1,8 @@
 #pragma once
 
-#include "compute/compute_mesh.hpp"
-#include "compute/element_types/element_types.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/compute/element_types.hpp"
+#include "specfem/compute/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

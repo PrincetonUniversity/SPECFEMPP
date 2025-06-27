@@ -1,11 +1,10 @@
-#ifndef _COMPUTE_BOUNDARIES_VALUES_BOUNDARY_MEDIUM_CONTAINER_HPP
-#define _COMPUTE_BOUNDARIES_VALUES_BOUNDARY_MEDIUM_CONTAINER_HPP
+#pragma once
 
-#include "compute/boundaries/boundaries.hpp"
-#include "compute/compute_mesh.hpp"
-#include "compute/properties/properties.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
+#include "specfem/compute/boundaries.hpp"
+#include "specfem/compute/mesh.hpp"
+#include "specfem/compute/properties.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -150,5 +149,3 @@ public:
 } // namespace impl
 } // namespace compute
 } // namespace specfem
-
-#endif

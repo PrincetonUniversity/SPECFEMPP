@@ -1,10 +1,10 @@
 #pragma once
 
-#include "compute/compute_mesh.hpp"
 #include "domain_view.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
+#include "mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"

@@ -1,13 +1,12 @@
-#ifndef _COMPUTE_BOUNDARIES_VALUES_BOUNDARY_VALUES_HPP
-#define _COMPUTE_BOUNDARIES_VALUES_BOUNDARY_VALUES_HPP
+#pragma once
 
-#include "boundary_values_container.hpp"
-#include "compute/boundaries/boundaries.hpp"
-#include "compute/compute_mesh.hpp"
-#include "compute/properties/properties.hpp"
+#include "boundaries.hpp"
+#include "boundary_values/boundary_medium_container.hpp"
+#include "boundary_values/boundary_values_container.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "impl/boundary_medium_container.hpp"
+#include "mesh.hpp"
+#include "properties.hpp"
 
 namespace specfem {
 namespace compute {
@@ -54,5 +53,3 @@ public:
 };
 } // namespace compute
 } // namespace specfem
-
-#endif

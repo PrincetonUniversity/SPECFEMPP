@@ -1,4 +1,4 @@
-#include "compute/kernels/kernels.hpp"
+#include "kernels.hpp"
 
 specfem::compute::kernels::kernels(
     const int nspec, const int ngllz, const int ngllx,

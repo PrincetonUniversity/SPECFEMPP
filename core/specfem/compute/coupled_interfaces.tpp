@@ -1,10 +1,9 @@
-#ifndef _COMPUTE_COUPLED_INTERFACES_COUPLED_INTERFACES_TPP
-#define _COMPUTE_COUPLED_INTERFACES_COUPLED_INTERFACES_TPP
+#pragma once
 
 #include "coupled_interfaces.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "interface_container.hpp"
-#include "interface_container.tpp"
+#include "coupled_interfaces/interface_container.hpp"
+#include "coupled_interfaces/interface_container.tpp"
 
 template <specfem::element::medium_tag medium1,
           specfem::element::medium_tag medium2>
@@ -33,5 +32,3 @@ specfem::compute::coupled_interfaces::get_interface_container() const {
         elastic_poroelastic);
   }
 }
-
-#endif
