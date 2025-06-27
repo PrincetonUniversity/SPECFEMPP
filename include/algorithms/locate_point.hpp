@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/compute/mesh.hpp"
+#include "specfem/compute.hpp"
 #include "specfem/point.hpp"
 
 namespace specfem {
