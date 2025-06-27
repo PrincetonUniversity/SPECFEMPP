@@ -1,8 +1,8 @@
 #pragma once
 
-#include "compute/interface.hpp"
 #include "periodic_tasks/periodic_task.hpp"
 #include "solver/solver.hpp"
+#include "specfem/compute.hpp"
 #include "timescheme/newmark.hpp"
 #include "utilities/strings.hpp"
 #include <memory>

@@ -1,6 +1,6 @@
 #include "io/seismogram/writer.hpp"
-#include "compute/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "specfem/compute.hpp"
 #include <fstream>
 
 void specfem::io::seismogram_writer::write(
