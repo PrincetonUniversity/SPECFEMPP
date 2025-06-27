@@ -1,5 +1,4 @@
-
-#include "helper.hpp"
+#include "compute_wavefield/helper.hpp"
 #include "specfem/assembly.hpp"
 
 namespace {
