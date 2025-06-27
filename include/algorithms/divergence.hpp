@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compute/compute_partial_derivatives.hpp"
+#include "compute/compute_jacobian_matrix.hpp"
 #include "datatypes/point_view.hpp"
 #include "execution/for_each_level.hpp"
 #include "specfem/point.hpp"
@@ -28,13 +28,13 @@ namespace algorithms {
  * @tparam QuadratureType Quadrature view type
  * @tparam CallableType Callback functor type
  * @param chunk_index Chunk index specifying the elements within this chunk
- * @param partial_derivatives Partial derivatives of basis functions
+ * @param jacobian_matrix Jacobian matrix of basis functions
  * @param weights Weights for the quadrature
  * @param hprimewgll Integration quadrature
  * @param f Field to compute the divergence of
  * @param callback Callback functor. Callback signature must be:
  * @code void(const typename IteratorType::index_type, const
- * specfem::datatype::ScalarPointViewType<type_real, ViewType::components>)
+ * specfem::datatype::VectorPointViewType<type_real, ViewType::components>)
  * @endcode
  */
 template <typename ChunkIndexType, typename VectorFieldType,
@@ -42,7 +42,7 @@ template <typename ChunkIndexType, typename VectorFieldType,
           std::enable_if_t<(VectorFieldType::isChunkViewType), int> = 0>
 KOKKOS_FUNCTION void
 divergence(const ChunkIndexType &chunk_index,
-           const specfem::compute::partial_derivatives &partial_derivatives,
+           const specfem::compute::jacobian_matrix &jacobian_matrix,
            const WeightsType &weights, const QuadratureType &hprimewgll,
            const VectorFieldType &f, const CallableType &callback) {
 
@@ -50,8 +50,8 @@ divergence(const ChunkIndexType &chunk_index,
   constexpr int NGLL = VectorFieldType::ngll;
   constexpr static bool using_simd = VectorFieldType::simd::using_simd;
 
-  using ScalarPointViewType =
-      specfem::datatype::ScalarPointViewType<type_real, components, using_simd>;
+  using VectorPointViewType =
+      specfem::datatype::VectorPointViewType<type_real, components, using_simd>;
 
   static_assert(VectorFieldType::isVectorViewType,
                 "ViewType must be a vector field view type");
@@ -59,16 +59,16 @@ divergence(const ChunkIndexType &chunk_index,
   static_assert(
       std::is_invocable_v<CallableType,
                           typename ChunkIndexType::iterator_type::index_type,
-                          ScalarPointViewType>,
+                          VectorPointViewType>,
       "CallableType must be invocable with arguments (int, "
       "specfem::point::index, "
-      "specfem::datatype::ScalarPointViewType<type_real, components>)");
+      "specfem::datatype::VectorPointViewType<type_real, components>)");
 
   using simd = typename VectorFieldType::simd;
   using datatype = typename VectorFieldType::simd::datatype;
-  using PointPartialDerivativesType =
-      specfem::point::partial_derivatives<specfem::dimension::type::dim2, true,
-                                          using_simd>;
+  using PointJacobianMatrixType =
+      specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
+                                      using_simd>;
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
@@ -91,7 +91,7 @@ divergence(const ChunkIndexType &chunk_index,
             temp2l[icomp] += f(ielement, l, ix, icomp, 1) * hprimewgll(iz, l);
           }
         }
-        ScalarPointViewType result;
+        VectorPointViewType result;
         for (int icomp = 0; icomp < components; ++icomp) {
           result(icomp) =
               weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];

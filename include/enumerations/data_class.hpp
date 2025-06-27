@@ -6,7 +6,7 @@ enum type {
   mapped_index,
   properties,
   kernels,
-  partial_derivatives,
+  jacobian_matrix,
   field_derivatives,
   field,
   source,

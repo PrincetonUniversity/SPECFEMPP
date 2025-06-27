@@ -21,7 +21,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
   auto &adjoint_field = assembly.fields.adjoint;
   auto &backward_field = assembly.fields.backward;
   auto &quadrature = assembly.mesh.quadratures;
-  auto &partial_derivatives = assembly.partial_derivatives;
+  auto &jacobian_matrix = assembly.jacobian_matrix;
 
   const auto elements =
       assembly.element_types.get_elements_on_device(MediumTag, PropertyTag);
@@ -105,7 +105,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
         // which is applied to gradient result for every quadrature point
 
         specfem::algorithms::gradient(
-            chunk_index, partial_derivatives, quadrature_element.hprime_gll,
+            chunk_index, jacobian_matrix, quadrature_element.hprime_gll,
             adjoint_element_field.displacement,
             backward_element_field.displacement,
             [&](const auto &iterator_index,

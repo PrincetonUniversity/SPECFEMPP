@@ -153,7 +153,7 @@ void plot_small_jacobian(
 
 void specfem::compute::assembly::check_small_jacobian() const {
   const auto [found, small_jacobian] =
-      this->partial_derivatives.check_small_jacobian();
+      this->jacobian_matrix.check_small_jacobian();
 
   if (found) {
 

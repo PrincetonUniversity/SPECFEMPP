@@ -1,8 +1,8 @@
 #ifndef _SPECFEM_SOURCES_EXTERNAL_HPP_
 #define _SPECFEM_SOURCES_EXTERNAL_HPP_
 
+#include "compute/compute_jacobian_matrix.hpp"
 #include "compute/compute_mesh.hpp"
-#include "compute/compute_partial_derivatives.hpp"
 #include "compute/element_types/element_types.hpp"
 #include "source.hpp"
 #include "yaml-cpp/yaml.h"
@@ -21,7 +21,7 @@ public:
 
   void compute_source_array(
       const specfem::compute::mesh &mesh,
-      const specfem::compute::partial_derivatives &partial_derivatives,
+      const specfem::compute::jacobian_matrix &jacobian_matrix,
       const specfem::compute::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 

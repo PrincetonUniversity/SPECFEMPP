@@ -50,7 +50,7 @@ KOKKOS_INLINE_FUNCTION
   sigmap = properties.C_Biot() * (du(0, 0) + du(1, 1)) +
            properties.M_Biot() * (du(2, 0) + du(3, 1));
 
-  specfem::datatype::VectorPointViewType<type_real, 4, 2, UseSIMD> T;
+  specfem::datatype::TensorPointViewType<type_real, 4, 2, UseSIMD> T;
 
   T(0, 0) = sigma_xx - properties.phi() / properties.tortuosity() * sigmap;
   T(1, 0) = sigma_xz;

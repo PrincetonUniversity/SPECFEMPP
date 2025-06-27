@@ -39,7 +39,7 @@ KOKKOS_INLINE_FUNCTION
   sigma_xz = properties.c15() * du(0, 0) + properties.c35() * du(1, 1) +
              properties.c55() * (du(1, 0) + du(0, 1));
 
-  specfem::datatype::VectorPointViewType<type_real, 2, 2, UseSIMD> T;
+  specfem::datatype::TensorPointViewType<type_real, 2, 2, UseSIMD> T;
 
   T(0, 0) = sigma_xx;
   T(0, 1) = sigma_xz;
@@ -76,7 +76,7 @@ KOKKOS_INLINE_FUNCTION
   // sigma_xz
   sigma_xz = properties.c55() * du(0, 1);
 
-  specfem::datatype::VectorPointViewType<type_real, 1, 2, UseSIMD> T;
+  specfem::datatype::TensorPointViewType<type_real, 1, 2, UseSIMD> T;
 
   T(0, 0) = sigma_xx;
   T(0, 1) = sigma_xz;

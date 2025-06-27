@@ -155,7 +155,7 @@ private:
    */
   ///@{
   using NormalViewType =
-      specfem::datatype::ScalarPointViewType<type_real, num_dimensions,
+      specfem::datatype::VectorPointViewType<type_real, num_dimensions,
                                              UseSIMD>; ///< View type to store
                                                        ///< the normal vector to
                                                        ///< the edge at the
