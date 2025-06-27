@@ -4,7 +4,7 @@
 #include "kokkos_abstractions.h"
 #include "parallel_configuration/chunk_config.hpp"
 #include "quadrature/interface.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>

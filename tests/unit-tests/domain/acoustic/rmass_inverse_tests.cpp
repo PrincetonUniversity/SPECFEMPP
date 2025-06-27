@@ -8,7 +8,7 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ----- Parse test config ------------- //

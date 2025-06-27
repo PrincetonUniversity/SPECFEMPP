@@ -2,9 +2,9 @@
 
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "specfem/compute/boundaries.hpp"
-#include "specfem/compute/mesh.hpp"
-#include "specfem/compute/properties.hpp"
+#include "specfem/assembly/boundaries.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/properties.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 

@@ -2,7 +2,7 @@
 
 #include "algorithms/gradient.hpp"
 #include "chunk_element/field.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "compute_material_derivatives.hpp"
 #include "medium/compute_frechet_derivatives.hpp"
 #include "parallel_configuration/chunk_config.hpp"

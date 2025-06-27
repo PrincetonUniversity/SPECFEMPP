@@ -2,7 +2,7 @@
 
 #include "algorithms/interpolate.hpp"
 #include "chunk_element/field.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "compute_seismogram.hpp"
 #include "datatypes/simd.hpp"
 #include "element/quadrature.hpp"

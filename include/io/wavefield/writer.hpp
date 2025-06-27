@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace io {

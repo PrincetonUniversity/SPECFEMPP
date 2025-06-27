@@ -3,7 +3,7 @@
 #include "constants.hpp"
 #include "io/writer.hpp"
 #include "receiver/interface.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem_setup.hpp"
 #include <vector>
 

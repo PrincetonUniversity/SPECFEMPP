@@ -3,7 +3,7 @@
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "boundary_conditions/boundary_conditions.tpp"
 #include "chunk_element/field.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"

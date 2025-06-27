@@ -9,7 +9,7 @@
 #include "execution/for_each_level.hpp"
 #include "medium/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 

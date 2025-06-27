@@ -6,7 +6,7 @@
 #include "boundary_conditions/boundary_conditions.tpp"
 #include "chunk_element/field.hpp"
 #include "chunk_element/stress_integrand.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 // #include "enumerations/interface.hpp"
 
 namespace specfem {

@@ -2,7 +2,7 @@
 
 #include "enumerations/display.hpp"
 #include "periodic_tasks/periodic_task.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <string>

@@ -8,7 +8,7 @@
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "solver/solver.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 #include <algorithm>

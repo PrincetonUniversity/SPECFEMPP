@@ -1,7 +1,7 @@
 #include "periodic_tasks/plot_wavefield.hpp"
 #include "enumerations/display.hpp"
 #include "periodic_tasks/plotter.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "utilities/strings.hpp"
 
 #ifdef NO_VTK

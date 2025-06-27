@@ -2,7 +2,7 @@
 
 #include "datatypes/point_view.hpp"
 #include "execution/for_each_level.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
