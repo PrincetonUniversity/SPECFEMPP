@@ -50,7 +50,7 @@ public:
    * and acoustic media.
    *
    */
-  domain_kernels(const specfem::compute::assembly &assembly)
+  domain_kernels(const specfem::assembly::assembly &assembly)
       : assembly(assembly), coupling_interfaces_dim2_elastic_psv(assembly),
         coupling_interfaces_dim2_acoustic(assembly) {}
 
@@ -186,7 +186,7 @@ public:
   }
 
 private:
-  specfem::compute::assembly assembly;
+  specfem::assembly::assembly assembly;
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ACOUSTIC)),
                       DECLARE(((impl::interface_kernels,

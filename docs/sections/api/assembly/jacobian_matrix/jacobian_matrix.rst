@@ -4,7 +4,7 @@
 Jacobian Matrix
 ===============
 
-.. doxygenstruct:: specfem::compute::jacobian_matrix
+.. doxygenstruct:: specfem::assembly::jacobian_matrix
     :members:
 
 Data Access Functions

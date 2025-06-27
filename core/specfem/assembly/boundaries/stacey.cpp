@@ -65,13 +65,13 @@ std::tuple<std::array<type_real, 2>, type_real> get_boundary_edge_and_weight(
 }
 } // namespace
 
-specfem::compute::impl::boundaries::stacey::stacey(
+specfem::assembly::impl::boundaries::stacey::stacey(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
         &stacey,
-    const specfem::compute::mesh_to_compute_mapping &mapping,
-    const specfem::compute::quadrature &quadrature,
-    const specfem::compute::jacobian_matrix &jacobian_matrix,
+    const specfem::assembly::mesh_to_compute_mapping &mapping,
+    const specfem::assembly::quadrature &quadrature,
+    const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
     std::vector<specfem::element::boundary_tag_container>
         &element_boundary_tags) {
@@ -161,18 +161,18 @@ specfem::compute::impl::boundaries::stacey::stacey(
   // Initialize views
 
   this->quadrature_point_boundary_tag =
-      BoundaryTagView("specfem::compute::impl::boundaries::stacey::"
+      BoundaryTagView("specfem::assembly::impl::boundaries::stacey::"
                       "quadrature_point_boundary_tag",
                       total_stacey_elements, ngllz, ngllx);
 
   this->h_quadrature_point_boundary_tag =
       Kokkos::create_mirror_view(quadrature_point_boundary_tag);
 
-  this->edge_weight = EdgeWeightView("specfem::compute::impl::boundaries::"
+  this->edge_weight = EdgeWeightView("specfem::assembly::impl::boundaries::"
                                      "stacey::edge_weight",
                                      total_stacey_elements, ngllz, ngllx);
 
-  this->edge_normal = EdgeNormalView("specfem::compute::impl::boundaries::"
+  this->edge_normal = EdgeNormalView("specfem::assembly::impl::boundaries::"
                                      "stacey::edge_normal",
                                      total_stacey_elements, ngllz, ngllx, 2);
 
@@ -206,8 +206,8 @@ specfem::compute::impl::boundaries::stacey::stacey(
             specfem::point::jacobian_matrix<specfem::dimension::type::dim2,
                                             true, false>
                 point_jacobian_matrix;
-            specfem::compute::load_on_host(index, jacobian_matrix,
-                                           point_jacobian_matrix);
+            specfem::assembly::load_on_host(index, jacobian_matrix,
+                                            point_jacobian_matrix);
 
             auto [edge_normal, edge_weight] = get_boundary_edge_and_weight(
                 stacey.type(i), weights, point_jacobian_matrix);
@@ -289,18 +289,18 @@ specfem::compute::impl::boundaries::stacey::stacey(
 
   // // Initialize boundary tags
   // this->quadrature_point_boundary_tag =
-  //     BoundaryTagView("specfem::compute::impl::boundaries::"
+  //     BoundaryTagView("specfem::assembly::impl::boundaries::"
   //                     "acoustic_free_surface::quadrature_point_boundary_tag",
   //                     total_indices, ngllz, ngllx);
 
   // this->h_quadrature_point_boundary_tag =
   //     Kokkos::create_mirror_view(quadrature_point_boundary_tag);
 
-  // this->edge_weight = EdgeWeightView("specfem::compute::impl::boundaries::"
+  // this->edge_weight = EdgeWeightView("specfem::assembly::impl::boundaries::"
   //                                    "acoustic_free_surface::edge_weight",
   //                                    total_indices, ngllz, ngllx);
 
-  // this->edge_normal = EdgeNormalView("specfem::compute::impl::boundaries::"
+  // this->edge_normal = EdgeNormalView("specfem::assembly::impl::boundaries::"
   //                                    "acoustic_free_surface::edge_normal",
   //                                    total_indices, ngllz, ngllx, 2);
 
@@ -329,7 +329,7 @@ specfem::compute::impl::boundaries::stacey::stacey(
   //         specfem::point::index index(ispec_compute, iz, ix);
   //         specfem::point::jacobian_matrix2<false, true>
   //             point_jacobian_matrix;
-  //         specfem::compute::load_on_host(index, jacobian_matrix,
+  //         specfem::assembly::load_on_host(index, jacobian_matrix,
   //                                        point_jacobian_matrix);
 
   //         auto [edge_normal, edge_weight] = get_boundary_edge_and_weight(

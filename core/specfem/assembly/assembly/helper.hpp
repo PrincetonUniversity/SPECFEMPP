@@ -23,7 +23,7 @@ public:
   constexpr static auto property_tag = PropertyTag;
   constexpr static auto ngll = NGLL;
 
-  helper(specfem::compute::assembly assembly,
+  helper(specfem::assembly::assembly assembly,
          Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                       Kokkos::DefaultExecutionSpace>
              wavefield_on_entire_grid)
@@ -78,7 +78,7 @@ public:
                                                     ngllz, ngllx);
 
     specfem::execution::for_each_level(
-        "specfem::compute::assembly::compute_wavefield",
+        "specfem::assembly::assembly::compute_wavefield",
         chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
         KOKKOS_CLASS_LAMBDA(
             const typename decltype(chunk)::index_type chunk_index) {
@@ -86,10 +86,10 @@ public:
           QuadratureType quadrature(team);
           ChunkElementFieldType field(team);
 
-          specfem::compute::load_on_device(team, assembly.mesh.quadratures,
-                                           quadrature);
+          specfem::assembly::load_on_device(team, assembly.mesh.quadratures,
+                                            quadrature);
 
-          specfem::compute::load_on_device(chunk_index, buffer, field);
+          specfem::assembly::load_on_device(chunk_index, buffer, field);
           team.team_barrier();
 
           const auto wavefield =
@@ -105,7 +105,7 @@ public:
   }
 
 private:
-  const specfem::compute::assembly assembly;
+  const specfem::assembly::assembly assembly;
   Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                Kokkos::DefaultExecutionSpace>
       wavefield_on_entire_grid;

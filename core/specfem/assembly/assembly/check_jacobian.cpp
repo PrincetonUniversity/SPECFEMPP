@@ -32,7 +32,7 @@
 // Maps different materials to different colors
 std::tuple<vtkSmartPointer<vtkDataSetMapper>,
            vtkSmartPointer<vtkPolyDataMapper> >
-map_small_jacobian(const specfem::compute::mesh &mesh,
+map_small_jacobian(const specfem::assembly::mesh &mesh,
                    const Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>
                        &small_jacobian) {
 
@@ -101,7 +101,7 @@ map_small_jacobian(const specfem::compute::mesh &mesh,
 }
 
 void plot_small_jacobian(
-    const specfem::compute::mesh &mesh,
+    const specfem::assembly::mesh &mesh,
     const Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>
         &small_jacobian,
     boost::filesystem::path output_folder) {
@@ -151,7 +151,7 @@ void plot_small_jacobian(
 
 #endif // NO_VTK
 
-void specfem::compute::assembly::check_small_jacobian() const {
+void specfem::assembly::assembly::check_small_jacobian() const {
   const auto [found, small_jacobian] =
       this->jacobian_matrix.check_small_jacobian();
 

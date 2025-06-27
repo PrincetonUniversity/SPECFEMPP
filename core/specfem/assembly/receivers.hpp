@@ -10,8 +10,7 @@
 #include <receiver/receiver.hpp>
 #include <vector>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 
 namespace impl {
 
@@ -181,11 +180,11 @@ public:
         nstep_between_samples(nstep_between_samples),
         max_sig_step(max_sig_step),
         h_sine_receiver_angle(
-            "specfem::compute::receivers::sine_receiver_angle", nreceivers),
+            "specfem::assembly::receivers::sine_receiver_angle", nreceivers),
         h_cosine_receiver_angle(
-            "specfem::compute::receivers::cosine_receiver_angle", nreceivers),
+            "specfem::assembly::receivers::cosine_receiver_angle", nreceivers),
         seismogram_components(
-            "specfem::compute::receivers::seismogram_components", max_sig_step,
+            "specfem::assembly::receivers::seismogram_components", max_sig_step,
             nseismograms, nreceivers, 2),
         h_seismogram_components(
             Kokkos::create_mirror_view(seismogram_components)) {}
@@ -325,9 +324,9 @@ public:
             const std::vector<std::shared_ptr<specfem::receivers::receiver> >
                 &receivers,
             const std::vector<specfem::wavefield::type> &stypes,
-            const specfem::compute::mesh &mesh,
+            const specfem::assembly::mesh &mesh,
             const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-            const specfem::compute::element_types &element_types);
+            const specfem::assembly::element_types &element_types);
 
   /**
    * @brief Get the spectral element indices in which the receivers are located
@@ -391,7 +390,7 @@ private:
   LagrangeInterpolantType::HostMirror
       h_lagrange_interpolant; ///< Lagrange interpolant for every receiver
                               ///< stored on the host
-  specfem::compute::element_types element_types; ///< Element types
+  specfem::assembly::element_types element_types; ///< Element types
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -519,5 +518,4 @@ store_on_device(const ChunkIndexType &chunk_index,
   return;
 }
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

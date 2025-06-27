@@ -52,7 +52,7 @@ public:
    * plotter object
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task>
-  instantiate_wavefield_plotter(const specfem::compute::assembly &assembly,
+  instantiate_wavefield_plotter(const specfem::assembly::assembly &assembly,
                                 specfem::MPI::MPI *mpi) const;
 
 private:

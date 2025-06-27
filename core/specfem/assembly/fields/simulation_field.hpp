@@ -13,8 +13,7 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 /**
  * @brief Store fields for a given simulation type
  *
@@ -46,8 +45,8 @@ public:
    * @param mesh Assembled mesh
    * @param properties Material properties
    */
-  simulation_field(const specfem::compute::mesh &mesh,
-                   const specfem::compute::element_types &element_types);
+  simulation_field(const specfem::assembly::mesh &mesh,
+                   const specfem::assembly::element_types &element_types);
   ///@}
 
   /**
@@ -105,7 +104,7 @@ public:
    *
    */
   template <specfem::element::medium_tag MediumTag>
-  KOKKOS_INLINE_FUNCTION constexpr specfem::compute::impl::field_impl<
+  KOKKOS_INLINE_FUNCTION constexpr specfem::assembly::impl::field_impl<
       specfem::dimension::type::dim2, MediumTag> const &
   get_field() const {
     FOR_EACH_IN_PRODUCT(
@@ -121,8 +120,8 @@ public:
     /// Code path should never be reached
 
     auto return_value =
-        new specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                               MediumTag>();
+        new specfem::assembly::impl::field_impl<specfem::dimension::type::dim2,
+                                                MediumTag>();
 
     return *return_value;
   }
@@ -160,7 +159,7 @@ public:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T)),
-                      DECLARE(((specfem::compute::impl::field_impl,
+                      DECLARE(((specfem::assembly::impl::field_impl,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                field)))
 
@@ -189,7 +188,7 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE((src_field, src.field), (dst_field, dst.field)) {
-        specfem::compute::deep_copy(_dst_field_, _src_field_);
+        specfem::assembly::deep_copy(_dst_field_, _src_field_);
       })
 }
 
@@ -206,7 +205,7 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
  * specfem::point::simd_index, @ref specfem::point::assembly_index, or @ref
  * specfem::point::simd_assembly_index
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::point::field
  * @param index Index of the quadrature point
  * @param field Wavefield container
@@ -230,7 +229,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
  * specfem::point::simd_index, @ref specfem::point::assembly_index, or @ref
  * specfem::point::simd_assembly_index
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::point::field
  * @param index Index of the quadrature point
  * @param field Wavefield container
@@ -254,7 +253,7 @@ inline void load_on_host(const IndexType &index,
  * specfem::point::simd_index, @ref specfem::point::assembly_index, or @ref
  * specfem::point::simd_assembly_index
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::point::field
  * @param index Index of the quadrature point
  * @param point_field Point field to store the field values from
@@ -278,7 +277,7 @@ store_on_device(const IndexType &index, const ViewType &point_field,
  * specfem::point::simd_index, @ref specfem::point::assembly_index, or @ref
  * specfem::point::simd_assembly_index
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::point::field
  * @param index Index of the quadrature point
  * @param point_field Point field to store the field values from
@@ -301,7 +300,7 @@ inline void store_on_host(const IndexType &index, const ViewType &point_field,
  * specfem::point::simd_index, @ref specfem::point::assembly_index, or @ref
  * specfem::point::simd_assembly_index
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::point::field
  * @param index Index of the quadrature point
  * @param point_field Point field to add to the field values from
@@ -325,7 +324,7 @@ add_on_device(const IndexType &index, const ViewType &point_field,
  * specfem::point::simd_index, @ref specfem::point::assembly_index, or @ref
  * specfem::point::simd_assembly_index
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::point::field
  * @param index Index of the quadrature point
  * @param point_field Point field to add to the field values from
@@ -348,7 +347,7 @@ inline void add_on_host(const IndexType &index, const ViewType &point_field,
  * specfem::point::simd_index, @ref specfem::point::assembly_index, or @ref
  * specfem::point::simd_assembly_index
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::point::field
  * @param index Index of the quadrature point
  * @param point_field Point field to add to the field values from
@@ -372,7 +371,7 @@ atomic_add_on_device(const IndexType &index, const ViewType &point_field,
  * specfem::point::simd_index, @ref specfem::point::assembly_index, or @ref
  * specfem::point::simd_assembly_index
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::point::field
  * @param index Index of the quadrature point
  * @param point_field Point field to add to the field values from
@@ -394,7 +393,7 @@ inline void atomic_add_on_host(const IndexType &index,
  *
  * @tparam MemberType Member type. Needs to be of @ref Kokkos::TeamPolicy
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::element::field
  * @param member Team member
  * @param index Spectral element index
@@ -416,7 +415,7 @@ load_on_device(const MemberType &member, const int &index,
  *
  * @tparam MemberType Member type. Needs to be of @ref Kokkos::TeamPolicy
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::element::field
  * @param member Team member
  * @param index Spectral element index
@@ -440,7 +439,7 @@ inline void load_on_host(const MemberType &member, const int &index,
  * @tparam ChunkIteratorType Chunk iterator type. Needs to be of @ref
  * specfem::iterator::chunk_iterator
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::element::field
  * @param member Team member
  * @param iterator Chunk iterator specifying the elements
@@ -465,7 +464,7 @@ load_on_device(const MemberType &member, const ChunkIteratorType &iterator,
  * @tparam ChunkIteratorType Chunk iterator type. Needs to be of @ref
  * specfem::iterator::chunk_iterator
  * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
- * specfem::compute::fields::simulation_field
+ * specfem::assembly::fields::simulation_field
  * @tparam ViewType View type. Needs to be of @ref specfem::element::field
  * @param member Team member
  * @param iterator Chunk iterator specifying the elements
@@ -499,5 +498,4 @@ inline void load_on_host(const ChunkIndexType &index,
   impl_load<false>(index, field, chunk_field);
 }
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

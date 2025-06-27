@@ -7,8 +7,7 @@
 #include "mesh/mesh.hpp"
 #include "properties.hpp"
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 /**
  * @brief Information about coupled interfaces between 2 different media
  *
@@ -39,11 +38,11 @@ struct coupled_interfaces {
    */
   coupled_interfaces(
       const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::compute::points &points,
-      const specfem::compute::quadrature &quadrature,
-      const specfem::compute::jacobian_matrix &jacobian_matrix,
-      const specfem::compute::element_types &element_types,
-      const specfem::compute::mesh_to_compute_mapping &mapping);
+      const specfem::assembly::points &points,
+      const specfem::assembly::quadrature &quadrature,
+      const specfem::assembly::jacobian_matrix &jacobian_matrix,
+      const specfem::assembly::element_types &element_types,
+      const specfem::assembly::mesh_to_compute_mapping &mapping);
   ///@}
 
   /**
@@ -52,28 +51,27 @@ struct coupled_interfaces {
    *
    * @tparam medium1 Self medium of the interface
    * @tparam medium2 Other medium of the interface
-   * @return specfem::compute::interface_container<medium1, medium2> Interface
+   * @return specfem::assembly::interface_container<medium1, medium2> Interface
    * container
    */
   template <specfem::element::medium_tag medium1,
             specfem::element::medium_tag medium2>
-  specfem::compute::interface_container<medium1, medium2>
+  specfem::assembly::interface_container<medium1, medium2>
   get_interface_container() const;
 
-  specfem::compute::interface_container<
+  specfem::assembly::interface_container<
       specfem::element::medium_tag::elastic_psv,
       specfem::element::medium_tag::acoustic>
       elastic_acoustic; ///< Elastic-acoustic interface
 
-  specfem::compute::interface_container<
+  specfem::assembly::interface_container<
       specfem::element::medium_tag::acoustic,
       specfem::element::medium_tag::poroelastic>
       acoustic_poroelastic; ///< Acoustic-poroelastic interface
 
-  specfem::compute::interface_container<
+  specfem::assembly::interface_container<
       specfem::element::medium_tag::elastic_psv,
       specfem::element::medium_tag::poroelastic>
       elastic_poroelastic; ///< Elastic-poroelastic interface
 };
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

@@ -32,7 +32,7 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void write(specfem::compute::assembly &assembly) override;
+  void write(specfem::assembly::assembly &assembly) override;
 
 private:
   std::string output_folder; ///< Path to output folder

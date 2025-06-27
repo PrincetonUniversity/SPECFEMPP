@@ -1,13 +1,13 @@
 #include "element_types.hpp"
 
-specfem::compute::element_types::element_types(
+specfem::assembly::element_types::element_types(
     const int nspec, const int ngllz, const int ngllx,
-    const specfem::compute::mesh_to_compute_mapping &mapping,
+    const specfem::assembly::mesh_to_compute_mapping &mapping,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
     : nspec(nspec),
-      medium_tags("specfem::compute::element_types::medium_tags", nspec),
-      property_tags("specfem::compute::element_types::property_tags", nspec),
-      boundary_tags("specfem::compute::element_types::boundary_tags", nspec) {
+      medium_tags("specfem::assembly::element_types::medium_tags", nspec),
+      property_tags("specfem::assembly::element_types::property_tags", nspec),
+      boundary_tags("specfem::assembly::element_types::boundary_tags", nspec) {
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     const int ispec_mesh = mapping.compute_to_mesh(ispec);
@@ -28,7 +28,7 @@ specfem::compute::element_types::element_types(
           }
         }
         _elements_ =
-            IndexViewType("specfem::compute::element_types::elements", count);
+            IndexViewType("specfem::assembly::element_types::elements", count);
         _h_elements_ = Kokkos::create_mirror_view(_elements_);
         for (int ispec = 0; ispec < nspec; ispec++) {
           if (medium_tags(ispec) == _medium_tag_) {
@@ -56,7 +56,7 @@ specfem::compute::element_types::element_types(
         }
 
         _elements_ =
-            IndexViewType("specfem::compute::element_types::elements", count);
+            IndexViewType("specfem::assembly::element_types::elements", count);
         _h_elements_ = Kokkos::create_mirror_view(_elements_);
 
         for (int ispec = 0; ispec < nspec; ispec++) {
@@ -70,43 +70,44 @@ specfem::compute::element_types::element_types(
         Kokkos::deep_copy(_elements_, _h_elements_);
       })
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET)),
-                      CAPTURE(elements, h_elements) {
-                        int count = 0;
-                        int index = 0;
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET)),
+      CAPTURE(elements, h_elements) {
+        int count = 0;
+        int index = 0;
 
-                        for (int ispec = 0; ispec < nspec; ispec++) {
-                          if (medium_tags(ispec) == _medium_tag_ &&
-                              property_tags(ispec) == _property_tag_ &&
-                              boundary_tags(ispec) == _boundary_tag_) {
-                            count++;
-                          }
-                        }
+        for (int ispec = 0; ispec < nspec; ispec++) {
+          if (medium_tags(ispec) == _medium_tag_ &&
+              property_tags(ispec) == _property_tag_ &&
+              boundary_tags(ispec) == _boundary_tag_) {
+            count++;
+          }
+        }
 
-                        _elements_ = IndexViewType(
-                            "specfem::compute::element_types::elements", count);
-                        _h_elements_ = Kokkos::create_mirror_view(_elements_);
+        _elements_ =
+            IndexViewType("specfem::assembly::element_types::elements", count);
+        _h_elements_ = Kokkos::create_mirror_view(_elements_);
 
-                        for (int ispec = 0; ispec < nspec; ispec++) {
-                          if (medium_tags(ispec) == _medium_tag_ &&
-                              property_tags(ispec) == _property_tag_ &&
-                              boundary_tags(ispec) == _boundary_tag_) {
-                            _h_elements_(index) = ispec;
-                            index++;
-                          }
-                        }
+        for (int ispec = 0; ispec < nspec; ispec++) {
+          if (medium_tags(ispec) == _medium_tag_ &&
+              property_tags(ispec) == _property_tag_ &&
+              boundary_tags(ispec) == _boundary_tag_) {
+            _h_elements_(index) = ispec;
+            index++;
+          }
+        }
 
-                        Kokkos::deep_copy(_elements_, _h_elements_);
-                      })
+        Kokkos::deep_copy(_elements_, _h_elements_);
+      })
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-specfem::compute::element_types::get_elements_on_host(
+specfem::assembly::element_types::get_elements_on_host(
     const specfem::element::medium_tag medium_tag) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -121,7 +122,7 @@ specfem::compute::element_types::get_elements_on_host(
 }
 
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-specfem::compute::element_types::get_elements_on_device(
+specfem::assembly::element_types::get_elements_on_device(
     const specfem::element::medium_tag medium_tag) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -136,7 +137,7 @@ specfem::compute::element_types::get_elements_on_device(
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-specfem::compute::element_types::get_elements_on_host(
+specfem::assembly::element_types::get_elements_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
@@ -155,7 +156,7 @@ specfem::compute::element_types::get_elements_on_host(
 }
 
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-specfem::compute::element_types::get_elements_on_device(
+specfem::assembly::element_types::get_elements_on_device(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
@@ -174,7 +175,7 @@ specfem::compute::element_types::get_elements_on_device(
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-specfem::compute::element_types::get_elements_on_host(
+specfem::assembly::element_types::get_elements_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag,
     const specfem::element::boundary_tag boundary_tag) const {
@@ -197,7 +198,7 @@ specfem::compute::element_types::get_elements_on_host(
 }
 
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-specfem::compute::element_types::get_elements_on_device(
+specfem::assembly::element_types::get_elements_on_device(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag,
     const specfem::element::boundary_tag boundary_tag) const {

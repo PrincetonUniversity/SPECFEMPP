@@ -45,7 +45,7 @@ public:
    */
   template <int NGLL>
   std::shared_ptr<specfem::solver::solver>
-  instantiate(const type_real dt, const specfem::compute::assembly &assembly,
+  instantiate(const type_real dt, const specfem::assembly::assembly &assembly,
               std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
               const std::vector<
                   std::shared_ptr<specfem::periodic_tasks::periodic_task> >

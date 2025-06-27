@@ -9,20 +9,20 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::compute::receivers::receivers(
+specfem::assembly::receivers::receivers(
     const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
     const type_real dt, const type_real t0, const int nsteps_between_samples,
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >
         &receivers,
     const std::vector<specfem::wavefield::type> &stypes,
-    const specfem::compute::mesh &mesh,
+    const specfem::assembly::mesh &mesh,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-    const specfem::compute::element_types &element_types)
+    const specfem::assembly::element_types &element_types)
     : nspec(nspec),
-      lagrange_interpolant("specfem::compute::receivers::lagrange_interpolant",
+      lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
                            receivers.size(), mesh.ngllz, mesh.ngllx),
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
-      elements("specfem::compute::receivers::elements", receivers.size()),
+      elements("specfem::assembly::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
       element_types(element_types),
       impl::StationIterator(receivers.size(), stypes),
@@ -105,10 +105,10 @@ specfem::compute::receivers::receivers(
         }
 
         _elements_ =
-            IndexViewType("specfem::compute::receivers::elements", count);
+            IndexViewType("specfem::assembly::receivers::elements", count);
         _h_elements_ = Kokkos::create_mirror_view(_elements_);
         _receiver_indices_ =
-            IndexViewType("specfem::compute::receivers::elements", count);
+            IndexViewType("specfem::assembly::receivers::elements", count);
         _h_receiver_indices_ = Kokkos::create_mirror_view(_receiver_indices_);
 
         for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
@@ -133,7 +133,7 @@ specfem::compute::receivers::receivers(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::compute::receivers::get_indices_on_host(
+specfem::assembly::receivers::get_indices_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
@@ -157,7 +157,7 @@ specfem::compute::receivers::get_indices_on_host(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::compute::receivers::get_indices_on_device(
+specfem::assembly::receivers::get_indices_on_device(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 

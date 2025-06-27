@@ -26,7 +26,7 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void read(specfem::compute::assembly &assembly, const int istep);
+  void read(specfem::assembly::assembly &assembly, const int istep);
 
 private:
   std::string output_folder; ///< Path to output folder

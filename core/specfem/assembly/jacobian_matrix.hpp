@@ -10,8 +10,7 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 /**
  * @brief Jacobian matrix of the basis functions at every quadrature point
  *
@@ -66,7 +65,7 @@ struct jacobian_matrix : public specfem::container::Container<
    *
    * @param mesh Mesh information
    */
-  jacobian_matrix(const specfem::compute::mesh &mesh);
+  jacobian_matrix(const specfem::assembly::mesh &mesh);
   ///@}
 
   void sync_views();
@@ -96,7 +95,7 @@ template <bool on_device, typename PointJacobianMatrixType,
 KOKKOS_FORCEINLINE_FUNCTION void impl_load(
     const specfem::point::simd_index<PointJacobianMatrixType::dimension_tag>
         &index,
-    const specfem::compute::jacobian_matrix &derivatives,
+    const specfem::assembly::jacobian_matrix &derivatives,
     PointJacobianMatrixType &jacobian_matrix) {
 
   const int ispec = index.ispec;
@@ -148,7 +147,7 @@ template <bool on_device, typename PointJacobianMatrixType,
                                     int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void impl_load(
     const specfem::point::index<PointJacobianMatrixType::dimension_tag> &index,
-    const specfem::compute::jacobian_matrix &derivatives,
+    const specfem::assembly::jacobian_matrix &derivatives,
     PointJacobianMatrixType &jacobian_matrix) {
 
   const int ispec = index.ispec;
@@ -201,7 +200,7 @@ template <typename PointJacobianMatrixType,
 inline void impl_store_on_host(
     const specfem::point::simd_index<PointJacobianMatrixType::dimension_tag>
         &index,
-    const specfem::compute::jacobian_matrix &derivatives,
+    const specfem::assembly::jacobian_matrix &derivatives,
     const PointJacobianMatrixType &jacobian_matrix) {
 
   const int ispec = index.ispec;
@@ -239,7 +238,7 @@ template <typename PointJacobianMatrixType,
                                     int> = 0>
 inline void impl_store_on_host(
     const specfem::point::index<PointJacobianMatrixType::dimension_tag> &index,
-    const specfem::compute::jacobian_matrix &derivatives,
+    const specfem::assembly::jacobian_matrix &derivatives,
     const PointJacobianMatrixType &jacobian_matrix) {
 
   const int ispec = index.ispec;
@@ -280,7 +279,7 @@ template <
                               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const IndexType &index,
-               const specfem::compute::jacobian_matrix &derivatives,
+               const specfem::assembly::jacobian_matrix &derivatives,
                PointJacobianMatrixType &jacobian_matrix) {
   impl_load<true>(index, derivatives, jacobian_matrix);
 }
@@ -305,7 +304,7 @@ template <
                                   PointJacobianMatrixType::simd::using_simd,
                               int> = 0>
 inline void load_on_host(const IndexType &index,
-                         const specfem::compute::jacobian_matrix &derivatives,
+                         const specfem::assembly::jacobian_matrix &derivatives,
                          PointJacobianMatrixType &jacobian_matrix) {
   impl_load<false>(index, derivatives, jacobian_matrix);
 }
@@ -330,9 +329,8 @@ template <
                                   PointJacobianMatrixType::simd::using_simd,
                               int> = 0>
 inline void store_on_host(const IndexType &index,
-                          const specfem::compute::jacobian_matrix &derivatives,
+                          const specfem::assembly::jacobian_matrix &derivatives,
                           const PointJacobianMatrixType &jacobian_matrix) {
   impl_store_on_host(index, derivatives, jacobian_matrix);
 }
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

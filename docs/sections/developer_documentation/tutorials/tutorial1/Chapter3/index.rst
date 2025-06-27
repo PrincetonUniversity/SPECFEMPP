@@ -11,7 +11,7 @@ Lets now generate the :ref:`assembly <assembly_index>`.
     #include <iostream>
     #include <string>
 
-    specfem::compute::assembly
+    specfem::assembly::assembly
         generate_assembly(const mesh &mesh,
                           const std::vector<source> &sources,
                           const std::vector<receiver> &receivers,
@@ -24,7 +24,7 @@ Lets now generate the :ref:`assembly <assembly_index>`.
         const auto seismo_type = params.seismo_type;
         const auto simulation = params.simulation_type;
 
-        specfem::compute::assembly assembly(mesh, sources, receivers,
+        specfem::assembly::assembly assembly(mesh, sources, receivers,
                 seimo_type, t0, dt, nsteps, nseismo_steps, simulation);
 
         return assembly;

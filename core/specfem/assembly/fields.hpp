@@ -8,8 +8,7 @@
 #include "fields/simulation_field.tpp"
 #include "mesh.hpp"
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 /**
  * @brief Store fields within the simulation
  *
@@ -34,8 +33,8 @@ struct fields {
    * @param element_types Element types
    * @param simulation Current simulation type
    */
-  fields(const specfem::compute::mesh &mesh,
-         const specfem::compute::element_types &element_types,
+  fields(const specfem::assembly::mesh &mesh,
+         const specfem::assembly::element_types &element_types,
          const specfem::simulation::type simulation);
   ///@}
 
@@ -43,10 +42,10 @@ struct fields {
    * @brief Get the simulation field object
    *
    * @tparam fieldtype Field type
-   * @return specfem::compute::simulation_field<fieldtype> Simulation field
+   * @return specfem::assembly::simulation_field<fieldtype> Simulation field
    */
   template <specfem::wavefield::simulation_field fieldtype>
-  KOKKOS_INLINE_FUNCTION specfem::compute::simulation_field<fieldtype>
+  KOKKOS_INLINE_FUNCTION specfem::assembly::simulation_field<fieldtype>
   get_simulation_field() const {
     if constexpr (fieldtype == specfem::wavefield::simulation_field::forward) {
       return forward;
@@ -86,20 +85,19 @@ struct fields {
     backward.copy_to_host();
   }
 
-  specfem::compute::simulation_field<
+  specfem::assembly::simulation_field<
       specfem::wavefield::simulation_field::buffer>
       buffer; ///< Buffer field. Generally used for temporary storage for
               ///< adjoint fields read from disk
-  specfem::compute::simulation_field<
+  specfem::assembly::simulation_field<
       specfem::wavefield::simulation_field::forward>
       forward; ///< Forward field
-  specfem::compute::simulation_field<
+  specfem::assembly::simulation_field<
       specfem::wavefield::simulation_field::adjoint>
       adjoint; ///< Adjoint field
-  specfem::compute::simulation_field<
+  specfem::assembly::simulation_field<
       specfem::wavefield::simulation_field::backward>
       backward; ///< Backward field
 };
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

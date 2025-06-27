@@ -7,15 +7,15 @@
 #include <Kokkos_Core.hpp>
 #include <tuple>
 
-specfem::compute::jacobian_matrix::jacobian_matrix(const int nspec,
-                                                   const int ngllz,
-                                                   const int ngllx)
+specfem::assembly::jacobian_matrix::jacobian_matrix(const int nspec,
+                                                    const int ngllz,
+                                                    const int ngllx)
     : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
-      xix("specfem::compute::jacobian_matrix::xix", nspec, ngllz, ngllx),
-      xiz("specfem::compute::jacobian_matrix::xiz", nspec, ngllz, ngllx),
-      gammax("specfem::compute::jacobian_matrix::gammax", nspec, ngllz, ngllx),
-      gammaz("specfem::compute::jacobian_matrix::gammaz", nspec, ngllz, ngllx),
-      jacobian("specfem::compute::jacobian_matrix::jacobian", nspec, ngllz,
+      xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, ngllx),
+      xiz("specfem::assembly::jacobian_matrix::xiz", nspec, ngllz, ngllx),
+      gammax("specfem::assembly::jacobian_matrix::gammax", nspec, ngllz, ngllx),
+      gammaz("specfem::assembly::jacobian_matrix::gammaz", nspec, ngllz, ngllx),
+      jacobian("specfem::assembly::jacobian_matrix::jacobian", nspec, ngllz,
                ngllx),
       h_xix(specfem::kokkos::create_mirror_view(xix)),
       h_xiz(specfem::kokkos::create_mirror_view(xiz)),
@@ -25,15 +25,15 @@ specfem::compute::jacobian_matrix::jacobian_matrix(const int nspec,
   return;
 };
 
-specfem::compute::jacobian_matrix::jacobian_matrix(
-    const specfem::compute::mesh &mesh)
+specfem::assembly::jacobian_matrix::jacobian_matrix(
+    const specfem::assembly::mesh &mesh)
     : nspec(mesh.control_nodes.nspec), ngllz(mesh.quadratures.gll.N),
       ngllx(mesh.quadratures.gll.N),
-      xix("specfem::compute::jacobian_matrix::xix", nspec, ngllz, ngllx),
-      xiz("specfem::compute::jacobian_matrix::xiz", nspec, ngllz, ngllx),
-      gammax("specfem::compute::jacobian_matrix::gammax", nspec, ngllz, ngllx),
-      gammaz("specfem::compute::jacobian_matrix::gammaz", nspec, ngllz, ngllx),
-      jacobian("specfem::compute::jacobian_matrix::jacobian", nspec, ngllz,
+      xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, ngllx),
+      xiz("specfem::assembly::jacobian_matrix::xiz", nspec, ngllz, ngllx),
+      gammax("specfem::assembly::jacobian_matrix::gammax", nspec, ngllz, ngllx),
+      gammaz("specfem::assembly::jacobian_matrix::gammaz", nspec, ngllz, ngllx),
+      jacobian("specfem::assembly::jacobian_matrix::jacobian", nspec, ngllz,
                ngllx),
       h_xix(specfem::kokkos::create_mirror_view(xix)),
       h_xiz(specfem::kokkos::create_mirror_view(xiz)),
@@ -98,7 +98,7 @@ specfem::compute::jacobian_matrix::jacobian_matrix(
   return;
 }
 
-void specfem::compute::jacobian_matrix::sync_views() {
+void specfem::assembly::jacobian_matrix::sync_views() {
   specfem::kokkos::deep_copy(xix, h_xix);
   specfem::kokkos::deep_copy(xiz, h_xiz);
   specfem::kokkos::deep_copy(gammax, h_gammax);
@@ -107,9 +107,9 @@ void specfem::compute::jacobian_matrix::sync_views() {
 }
 
 std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
-specfem::compute::jacobian_matrix::check_small_jacobian() const {
+specfem::assembly::jacobian_matrix::check_small_jacobian() const {
   Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
-      "specfem::compute::jacobian_matrix::negative", nspec);
+      "specfem::assembly::jacobian_matrix::negative", nspec);
 
   Kokkos::deep_copy(small_jacobian, false);
 
@@ -122,7 +122,7 @@ specfem::compute::jacobian_matrix::check_small_jacobian() const {
 
   bool found = false;
   Kokkos::parallel_reduce(
-      "specfem::compute::jacobian_matrix::check_small_jacobian",
+      "specfem::assembly::jacobian_matrix::check_small_jacobian",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nspec),
       [=, *this](const int &ispec, bool &l_found) {
         for (int iz = 0; iz < ngllz; ++iz) {
@@ -130,7 +130,7 @@ specfem::compute::jacobian_matrix::check_small_jacobian() const {
             const specfem::point::index<dimension, false> index(ispec, iz, ix);
             const auto jacobian = [&]() {
               PointJacobianMatrixType jacobian_matrix;
-              specfem::compute::load_on_host(index, *this, jacobian_matrix);
+              specfem::assembly::load_on_host(index, *this, jacobian_matrix);
               return jacobian_matrix.jacobian;
             }();
             if (jacobian < threshold) {

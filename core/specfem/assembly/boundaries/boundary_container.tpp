@@ -6,7 +6,7 @@
 #include <Kokkos_Core.hpp>
 
 template <specfem::enums::element::boundary_tag boundary_tag>
-specfem::compute::impl::boundaries::boundary_container<boundary_tag>::
+specfem::assembly::impl::boundaries::boundary_container<boundary_tag>::
     boundary_container(
         const std::vector<specfem::enums::element::boundary_tag_container>
             &boundary_tags,
@@ -21,10 +21,10 @@ specfem::compute::impl::boundaries::boundary_container<boundary_tag>::
   }
 
   index_mapping = specfem::kokkos::DeviceView1d<int>(
-      "specfem::compute::boundaries::composite_stacey_dirichlet::ispec",
+      "specfem::assembly::boundaries::composite_stacey_dirichlet::ispec",
       nelements);
   boundary_type = specfem::kokkos::DeviceView1d<specfem::point::boundary>(
-      "specfem::compute::boundaries::composite_stacey_dirichlet::type",
+      "specfem::assembly::boundaries::composite_stacey_dirichlet::type",
       nelements);
 
   h_index_mapping = Kokkos::create_mirror_view(index_mapping);

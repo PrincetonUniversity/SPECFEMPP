@@ -5,8 +5,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 namespace impl {
 
 namespace boundaries {
@@ -27,10 +26,10 @@ struct boundary_container {
   specfem::kokkos::DeviceView1d<int> boundary_index_mapping;
   specfem::kokkos::HostMirror1d<int> h_boundary_index_mapping;
 
-  specfem::compute::impl::boundaries::element_boundary_container<
+  specfem::assembly::impl::boundaries::element_boundary_container<
       specfem::enums::element::type::acoustic>
       acoustic;
-  specfem::compute::impl::boundaries::element_boundary_container<
+  specfem::assembly::impl::boundaries::element_boundary_container<
       specfem::enums::element::type::elastic>
       elastic;
 
@@ -47,5 +46,4 @@ struct boundary_container {
 };
 } // namespace boundaries
 } // namespace impl
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

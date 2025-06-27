@@ -11,7 +11,7 @@ template <specfem::wavefield::type component,
           specfem::wavefield::simulation_field type,
           specfem::element::medium_tag medium,
           specfem::element::property_tag property>
-void generate_data(specfem::compute::assembly &assembly,
+void generate_data(specfem::assembly::assembly &assembly,
                    std::vector<int> &ispecs) {
 
   auto field = assembly.fields.template get_simulation_field<type>();
@@ -53,7 +53,7 @@ void generate_data(specfem::compute::assembly &assembly,
         point_field.acceleration(ic) = 1.0;
       }
 
-      specfem::compute::store_on_host(index, point_field, field);
+      specfem::assembly::store_on_host(index, point_field, field);
     }
   }
 
@@ -62,7 +62,7 @@ void generate_data(specfem::compute::assembly &assembly,
 
 template <specfem::wavefield::type component,
           specfem::wavefield::simulation_field type>
-std::vector<int> generate_data(specfem::compute::assembly &assembly) {
+std::vector<int> generate_data(specfem::assembly::assembly &assembly) {
 
   std::vector<int> ispecs;
 

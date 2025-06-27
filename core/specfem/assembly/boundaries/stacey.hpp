@@ -8,8 +8,7 @@
 #include <cstddef>
 #include <type_traits>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 namespace impl {
 namespace boundaries {
 
@@ -54,9 +53,9 @@ public:
   stacey(const int nspec, const int ngllz, const int ngllx,
          const specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
              &stacey,
-         const specfem::compute::mesh_to_compute_mapping &mapping,
-         const specfem::compute::quadrature &quadrature,
-         const specfem::compute::jacobian_matrix &jacobian_matrix,
+         const specfem::assembly::mesh_to_compute_mapping &mapping,
+         const specfem::assembly::quadrature &quadrature,
+         const specfem::assembly::jacobian_matrix &jacobian_matrix,
          const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
          std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
@@ -255,5 +254,4 @@ public:
 };
 } // namespace boundaries
 } // namespace impl
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

@@ -6,7 +6,7 @@
 using specfem::point::global_coordinates;
 using specfem::point::local_coordinates;
 
-void test_locate_point(const specfem::compute::assembly &assembly) {
+void test_locate_point(const specfem::assembly::assembly &assembly) {
 
   constexpr auto dim = specfem::dimension::type::dim2;
 
@@ -70,7 +70,7 @@ void test_locate_point(const specfem::compute::assembly &assembly) {
 TEST_F(ASSEMBLY, LocatePoint) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    specfem::compute::assembly assembly = std::get<5>(parameters);
+    specfem::assembly::assembly assembly = std::get<5>(parameters);
 
     try {
       test_locate_point(assembly);

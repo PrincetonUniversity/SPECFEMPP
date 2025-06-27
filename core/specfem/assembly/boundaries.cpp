@@ -1,32 +1,32 @@
 #include "boundaries.hpp"
 #include "enumerations/interface.hpp"
 
-specfem::compute::boundaries::boundaries(
+specfem::assembly::boundaries::boundaries(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::compute::mesh_to_compute_mapping &mapping,
-    const specfem::compute::quadrature &quadrature,
-    const specfem::compute::properties &properties,
-    const specfem::compute::jacobian_matrix &jacobian_matrix)
-    : boundary_tags("specfem::compute::boundaries::boundary_tags", nspec),
+    const specfem::assembly::mesh_to_compute_mapping &mapping,
+    const specfem::assembly::quadrature &quadrature,
+    const specfem::assembly::properties &properties,
+    const specfem::assembly::jacobian_matrix &jacobian_matrix)
+    : boundary_tags("specfem::assembly::boundaries::boundary_tags", nspec),
       acoustic_free_surface_index_mapping(
-          "specfem::compute::boundaries::acoustic_free_surface_index_mapping",
+          "specfem::assembly::boundaries::acoustic_free_surface_index_mapping",
           nspec),
       h_acoustic_free_surface_index_mapping(
           Kokkos::create_mirror_view(acoustic_free_surface_index_mapping)),
-      stacey_index_mapping("specfem::compute::boundaries::stacey_index_mapping",
-                           nspec),
+      stacey_index_mapping(
+          "specfem::assembly::boundaries::stacey_index_mapping", nspec),
       h_stacey_index_mapping(Kokkos::create_mirror_view(stacey_index_mapping)) {
 
   std::vector<specfem::element::boundary_tag_container> boundary_tag(nspec);
 
   this->acoustic_free_surface =
-      specfem::compute::impl::boundaries::acoustic_free_surface(
+      specfem::assembly::impl::boundaries::acoustic_free_surface(
           nspec, ngllz, ngllx, mesh.boundaries.acoustic_free_surface, mapping,
           properties, this->h_acoustic_free_surface_index_mapping,
           boundary_tag);
 
-  this->stacey = specfem::compute::impl::boundaries::stacey(
+  this->stacey = specfem::assembly::impl::boundaries::stacey(
       nspec, ngllz, ngllx, mesh.boundaries.absorbing_boundary, mapping,
       quadrature, jacobian_matrix, this->h_stacey_index_mapping, boundary_tag);
 

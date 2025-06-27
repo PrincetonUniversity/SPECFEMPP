@@ -7,8 +7,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 /**
  * @brief Element types for every quadrature point in the
  * finite element mesh
@@ -63,7 +62,7 @@ public:
    */
   element_types(
       const int nspec, const int ngllz, const int ngllx,
-      const specfem::compute::mesh_to_compute_mapping &mapping,
+      const specfem::assembly::mesh_to_compute_mapping &mapping,
       const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
 
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
@@ -144,5 +143,4 @@ private:
                               (IndexViewType::HostMirror, h_elements)))
 };
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

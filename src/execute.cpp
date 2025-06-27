@@ -100,7 +100,7 @@ void execute(
   //                   Generate Assembly
   // --------------------------------------------------------------
   const type_real dt = setup.get_dt();
-  specfem::compute::assembly assembly(
+  specfem::assembly::assembly assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),

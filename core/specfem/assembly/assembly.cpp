@@ -3,7 +3,7 @@
 #include "io/reader.hpp"
 #include "mesh/mesh.hpp"
 
-specfem::compute::assembly::assembly(
+specfem::assembly::assembly::assembly(
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::quadrature::quadratures &quadratures,
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
@@ -84,7 +84,7 @@ specfem::compute::assembly::assembly(
   //                            false>
   //     point_values;
 
-  // specfem::compute::max(pe_stacey_elements, this->properties, point_values);
+  // specfem::assembly::max(pe_stacey_elements, this->properties, point_values);
 
   // if ((pe_stacey_elements.extent(0) > 0) &&
   //     std::abs(point_values.eta_f()) > 1e-6) {
@@ -100,7 +100,7 @@ specfem::compute::assembly::assembly(
   return;
 }
 
-std::string specfem::compute::assembly::print() const {
+std::string specfem::assembly::assembly::print() const {
   std::ostringstream message;
   message << "Assembly information:\n"
           << "------------------------------\n"

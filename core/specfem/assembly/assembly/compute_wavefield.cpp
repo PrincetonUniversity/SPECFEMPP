@@ -8,7 +8,7 @@ template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void get_wavefield_on_entire_grid(
     const specfem::wavefield::type component,
-    const specfem::compute::assembly &assembly,
+    const specfem::assembly::assembly &assembly,
     Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                  Kokkos::DefaultExecutionSpace>
         wavefield_on_entire_grid) {
@@ -34,7 +34,7 @@ void get_wavefield_on_entire_grid(
 } // namespace
 
 Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
-specfem::compute::assembly::generate_wavefield_on_entire_grid(
+specfem::assembly::assembly::generate_wavefield_on_entire_grid(
     const specfem::wavefield::simulation_field wavefield,
     const specfem::wavefield::type component) {
 
@@ -57,11 +57,11 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
 
   // Copy the required wavefield into the buffer
   if (wavefield == specfem::wavefield::simulation_field::forward) {
-    specfem::compute::deep_copy(this->fields.buffer, this->fields.forward);
+    specfem::assembly::deep_copy(this->fields.buffer, this->fields.forward);
   } else if (wavefield == specfem::wavefield::simulation_field::adjoint) {
-    specfem::compute::deep_copy(this->fields.buffer, this->fields.adjoint);
+    specfem::assembly::deep_copy(this->fields.buffer, this->fields.adjoint);
   } else if (wavefield == specfem::wavefield::simulation_field::backward) {
-    specfem::compute::deep_copy(this->fields.buffer, this->fields.backward);
+    specfem::assembly::deep_copy(this->fields.buffer, this->fields.backward);
   } else {
     throw std::runtime_error("Wavefield type not supported");
   }

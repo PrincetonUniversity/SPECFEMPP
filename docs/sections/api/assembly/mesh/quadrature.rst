@@ -4,7 +4,7 @@
 Integration Quadrature
 ----------------------
 
-.. doxygenstruct:: specfem::compute::quadrature
+.. doxygenstruct:: specfem::assembly::quadrature
     :members:
 
 Data Access Functions

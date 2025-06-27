@@ -6,9 +6,7 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace compute {
-namespace impl {
+namespace specfem::assembly::impl {
 /**
  * @brief Information about sources located within a medium
  *
@@ -79,9 +77,9 @@ public:
    */
   source_medium(
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-      const specfem::compute::mesh &mesh,
-      const specfem::compute::jacobian_matrix &jacobian_matrix,
-      const specfem::compute::element_types &element_types, const type_real t0,
+      const specfem::assembly::mesh &mesh,
+      const specfem::assembly::jacobian_matrix &jacobian_matrix,
+      const specfem::assembly::element_types &element_types, const type_real t0,
       const type_real dt, const int nsteps);
   ///@}
 
@@ -157,6 +155,4 @@ public:
     }
   }
 };
-} // namespace impl
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly::impl

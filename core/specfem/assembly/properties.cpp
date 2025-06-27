@@ -1,10 +1,10 @@
 #include "properties.hpp"
 #include "enumerations/interface.hpp"
 
-specfem::compute::properties::properties(
+specfem::assembly::properties::properties(
     const int nspec, const int ngllz, const int ngllx,
-    const specfem::compute::element_types &element_types,
-    const specfem::compute::mesh_to_compute_mapping &mapping,
+    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::mesh_to_compute_mapping &mapping,
     const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
     const bool has_gll_model) {
 
@@ -14,7 +14,7 @@ specfem::compute::properties::properties(
 
   this->property_index_mapping =
       Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(
-          "specfem::compute::properties::property_index_mapping", nspec);
+          "specfem::assembly::properties::property_index_mapping", nspec);
   this->h_property_index_mapping =
       Kokkos::create_mirror_view(property_index_mapping);
 

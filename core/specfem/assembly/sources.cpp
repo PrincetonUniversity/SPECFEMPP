@@ -29,8 +29,8 @@ std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >,
            std::vector<int> >
 sort_sources_per_medium(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const specfem::compute::element_types &element_types,
-    const specfem::compute::mesh &mesh) {
+    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::mesh &mesh) {
 
   std::vector<std::shared_ptr<specfem::sources::source> > sorted_sources;
   std::vector<int> source_indices;
@@ -59,24 +59,24 @@ sort_sources_per_medium(
 }
 } // namespace
 
-template class specfem::compute::impl::source_medium<
+template class specfem::assembly::impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
 
-template class specfem::compute::impl::source_medium<
+template class specfem::assembly::impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv>;
 
-template class specfem::compute::impl::source_medium<
+template class specfem::assembly::impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic>;
 
-template class specfem::compute::impl::source_medium<
+template class specfem::assembly::impl::source_medium<
     specfem::dimension::type::dim2,
     specfem::element::medium_tag::elastic_psv_t>;
 
-specfem::compute::sources::sources(
+specfem::assembly::sources::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const specfem::compute::mesh &mesh,
-    const specfem::compute::jacobian_matrix &jacobian_matrix,
-    const specfem::compute::element_types &element_types, const type_real t0,
+    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::jacobian_matrix &jacobian_matrix,
+    const specfem::assembly::element_types &element_types, const type_real t0,
     const type_real dt, const int nsteps)
     : timestep(0), nspec(mesh.nspec),
       element_indices("specfem::sources::elements", sources.size()),
@@ -143,8 +143,8 @@ specfem::compute::sources::sources(
           h_wavefield_types(global_isource) = source->get_wavefield_type();
         }
 
-        _source_ = specfem::compute::impl::source_medium<_dimension_tag_,
-                                                         _medium_tag_>(
+        _source_ = specfem::assembly::impl::source_medium<_dimension_tag_,
+                                                          _medium_tag_>(
             sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
             nsteps);
       })
@@ -196,13 +196,13 @@ specfem::compute::sources::sources(
         /* ==================================== */
         /* Allocating the element specific element_indices array */
         _element_indices_forward_ =
-            IndexViewType("specfem::compute::sources::element_indices_forward",
+            IndexViewType("specfem::assembly::sources::element_indices_forward",
                           count_forward);
-        _element_indices_backward_ =
-            IndexViewType("specfem::compute::sources::element_indices_backward",
-                          count_backward);
+        _element_indices_backward_ = IndexViewType(
+            "specfem::assembly::sources::element_indices_backward",
+            count_backward);
         _element_indices_adjoint_ =
-            IndexViewType("specfem::compute::sources::element_indices_adjoint",
+            IndexViewType("specfem::assembly::sources::element_indices_adjoint",
                           count_adjoint);
 
         _h_element_indices_forward_ =
@@ -216,13 +216,15 @@ specfem::compute::sources::sources(
         /* Allocation the element specific source_indices arrays. */
         /* We do not need a separate counter for this as it is the same */
         /* as the count for the element_indices */
-        _source_indices_forward_ = IndexViewType(
-            "specfem::compute::sources::source_indices_forward", count_forward);
+        _source_indices_forward_ =
+            IndexViewType("specfem::assembly::sources::source_indices_forward",
+                          count_forward);
         _source_indices_backward_ =
-            IndexViewType("specfem::compute::sources::source_indices_backward",
+            IndexViewType("specfem::assembly::sources::source_indices_backward",
                           count_backward);
-        _source_indices_adjoint_ = IndexViewType(
-            "specfem::compute::sources::source_indices_adjoint", count_adjoint);
+        _source_indices_adjoint_ =
+            IndexViewType("specfem::assembly::sources::source_indices_adjoint",
+                          count_adjoint);
 
         _h_source_indices_forward_ =
             Kokkos::create_mirror_view(_source_indices_forward_);
@@ -292,7 +294,7 @@ specfem::compute::sources::sources(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::compute::sources::get_sources_on_host(
+specfem::assembly::sources::get_sources_on_host(
     const specfem::element::medium_tag medium,
     const specfem::element::property_tag property,
     const specfem::element::boundary_tag boundary,
@@ -339,7 +341,7 @@ specfem::compute::sources::get_sources_on_host(
 // and the source indices for the wavefield type.
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::compute::sources::get_sources_on_device(
+specfem::assembly::sources::get_sources_on_device(
     const specfem::element::medium_tag medium,
     const specfem::element::property_tag property,
     const specfem::element::boundary_tag boundary,

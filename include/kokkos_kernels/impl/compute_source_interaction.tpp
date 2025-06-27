@@ -21,7 +21,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
 void specfem::kokkos_kernels::impl::compute_source_interaction(
-    specfem::compute::assembly &assembly, const int &timestep) {
+    specfem::assembly::assembly &assembly, const int &timestep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -81,16 +81,16 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
       "specfem::kokkos_kernels::compute_source_interaction", mapped_policy,
       KOKKOS_LAMBDA(const PointIndexType &mapped_index) {
         PointSourceType point_source;
-        specfem::compute::load_on_device(mapped_index, sources, point_source);
+        specfem::assembly::load_on_device(mapped_index, sources, point_source);
 
         PointPropertiesType point_property;
-        specfem::compute::load_on_device(mapped_index, properties,
+        specfem::assembly::load_on_device(mapped_index, properties,
                                          point_property);
 
         auto acceleration = specfem::medium::compute_source_contribution(
             point_source, point_property);
 
-        specfem::compute::atomic_add_on_device(mapped_index, acceleration,
+        specfem::assembly::atomic_add_on_device(mapped_index, acceleration,
                                                field);
       });
 }

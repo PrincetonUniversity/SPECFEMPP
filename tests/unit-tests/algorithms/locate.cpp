@@ -22,7 +22,7 @@ TEST(ALGORITHMS, locate_point) {
   specfem::quadrature::quadratures quadratures(gll);
 
   // Assemble
-  specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes, quadratures);
+  specfem::assembly::mesh assembly(mesh.tags, mesh.control_nodes, quadratures);
 
   specfem::kokkos::HostView1d<
       specfem::point::global_coordinates<specfem::dimension::type::dim2> >

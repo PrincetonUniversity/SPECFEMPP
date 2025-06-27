@@ -169,11 +169,11 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
       specfem::io::read_sources(test_config.sources_file, 1.0, mpi);
 
   // setup compute struct for future use
-  specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
-                                    gllz);
-  specfem::compute::jacobian_matrix jacobian_matrix(
+  specfem::assembly::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
+                                     gllz);
+  specfem::assembly::jacobian_matrix jacobian_matrix(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(
+  specfem::assembly::properties material_properties(
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
       gllz->get_N());
 

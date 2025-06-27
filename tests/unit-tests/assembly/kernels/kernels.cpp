@@ -18,7 +18,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-set_value(const ViewType elements, specfem::compute::assembly &assembly,
+set_value(const ViewType elements, specfem::assembly::assembly &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -36,7 +36,7 @@ set_value(const ViewType elements, specfem::compute::assembly &assembly,
       "set_to_value", policy,
       [=](const specfem::point::index<dimension, using_simd> &index) {
         PointType point(static_cast<type_real>(index.ispec + offset));
-        specfem::compute::store_on_host(index, point, kernels);
+        specfem::assembly::store_on_host(index, point, kernels);
       });
 
   Kokkos::fence();
@@ -48,7 +48,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-check_value(const ViewType elements, specfem::compute::assembly &assembly,
+check_value(const ViewType elements, specfem::assembly::assembly &assembly,
             const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -79,7 +79,7 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
 
         PointType expected(value);
         PointType computed;
-        specfem::compute::load_on_host(index, kernels, computed);
+        specfem::assembly::load_on_host(index, kernels, computed);
 
         if (computed != expected) {
           std::ostringstream message;
@@ -103,7 +103,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-add_value(const ViewType elements, specfem::compute::assembly &assembly,
+add_value(const ViewType elements, specfem::assembly::assembly &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -122,7 +122,7 @@ add_value(const ViewType elements, specfem::compute::assembly &assembly,
       "add_to_value", policy,
       [=](const specfem::point::index<dimension, using_simd> &index) {
         PointType point(static_cast<type_real>(offset));
-        specfem::compute::add_on_host(index, point, kernels);
+        specfem::assembly::add_on_host(index, point, kernels);
       });
 
   Kokkos::fence();
@@ -135,7 +135,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-set_value(const ViewType elements, specfem::compute::assembly &assembly,
+set_value(const ViewType elements, specfem::assembly::assembly &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -154,7 +154,7 @@ set_value(const ViewType elements, specfem::compute::assembly &assembly,
       "set_to_value", policy,
       KOKKOS_LAMBDA(const specfem::point::index<dimension, using_simd> &index) {
         PointType point(static_cast<type_real>(index.ispec + offset));
-        specfem::compute::store_on_device(index, point, kernels);
+        specfem::assembly::store_on_device(index, point, kernels);
       });
 
   Kokkos::fence();
@@ -166,7 +166,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-check_value(const ViewType elements, specfem::compute::assembly &assembly,
+check_value(const ViewType elements, specfem::assembly::assembly &assembly,
             const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -189,7 +189,7 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
       "check_to_value", policy,
       KOKKOS_LAMBDA(const specfem::point::index<dimension, using_simd> &index) {
         PointType computed;
-        specfem::compute::load_on_device(index, kernels, computed);
+        specfem::assembly::load_on_device(index, kernels, computed);
 
         const int ispec = index.ispec;
         const int iz = index.iz;
@@ -252,7 +252,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-add_value(const ViewType elements, specfem::compute::assembly &assembly,
+add_value(const ViewType elements, specfem::assembly::assembly &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -270,7 +270,7 @@ add_value(const ViewType elements, specfem::compute::assembly &assembly,
       "add_to_value", policy,
       KOKKOS_LAMBDA(const specfem::point::index<dimension, using_simd> &index) {
         PointType point(static_cast<type_real>(offset));
-        specfem::compute::add_on_device(index, point, kernels);
+        specfem::assembly::add_on_device(index, point, kernels);
       });
 
   Kokkos::fence();
