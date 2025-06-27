@@ -1,18 +1,16 @@
-#ifndef _COMPUTE_INTERFACE_HPP
-#define _COMPUTE_INTERFACE_HPP
+#pragma once
 
-// #include "compute_boundaries.hpp"
-#include "assembly/assembly.hpp"
-#include "boundaries/boundaries.hpp"
-#include "boundary_values/boundary_values.hpp"
-#include "compute_jacobian_matrix.hpp"
-#include "compute_mesh.hpp"
-#include "coupled_interfaces/coupled_interfaces.hpp"
-#include "coupled_interfaces/interface_container.hpp"
-#include "fields/fields.hpp"
-#include "properties/interface.hpp"
-#include "receivers/receivers.hpp"
-#include "sources/source_medium.hpp"
-#include "sources/sources.hpp"
-
-#endif
+#include "compute/assembly.hpp"
+#include "compute/boundaries.hpp"
+#include "compute/boundary_values.hpp"
+#include "compute/coupled_interfaces.hpp"
+#include "compute/fields.hpp"
+#include "compute/interface_container.hpp"
+#include "compute/jacobian_matrix.hpp"
+#include "compute/kernels.hpp"
+#include "compute/mesh.hpp"
+#include "compute/properties.hpp"
+#include "compute/receivers.hpp"
+#include "compute/simulation_field.hpp"
+#include "compute/source_medium.hpp"
+#include "compute/sources.hpp"
