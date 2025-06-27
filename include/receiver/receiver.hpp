@@ -4,7 +4,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "specfem/compute/mesh.hpp"
+#include "specfem/assembly_mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <cmath>

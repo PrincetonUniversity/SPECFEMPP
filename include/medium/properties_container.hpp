@@ -7,7 +7,7 @@
 #include "dim2/poroelastic/isotropic/properties_container.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/accessor.hpp"
-#include "specfem/compute/mesh.hpp"
+#include "specfem/assembly_mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
