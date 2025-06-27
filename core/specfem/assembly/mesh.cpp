@@ -42,7 +42,7 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
   return 1e-6 * xtypdist;
 }
 
-specfem::compute::points
+specfem::assembly::points
 assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
@@ -106,7 +106,7 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
   int nglob = ig + 1;
 
-  specfem::compute::points points(nspec, ngll, ngll);
+  specfem::assembly::points points(nspec, ngll, ngll);
 
   // Assign numbering to corresponding ispec, iz, ix
   std::vector<int> iglob_counted(nglob, -1);
@@ -171,20 +171,20 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
 } // namespace
 
-specfem::compute::control_nodes::control_nodes(
-    const specfem::compute::mesh_to_compute_mapping &mapping,
+specfem::assembly::control_nodes::control_nodes(
+    const specfem::assembly::mesh_to_compute_mapping &mapping,
     const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
         &control_nodes)
     : ngnod(control_nodes.ngnod), nspec(control_nodes.nspec),
-      index_mapping("specfem::compute::control_nodes::index_mapping",
+      index_mapping("specfem::assembly::control_nodes::index_mapping",
                     control_nodes.nspec, control_nodes.ngnod),
-      coord("specfem::compute::control_nodes::coord", ndim, control_nodes.nspec,
-            control_nodes.ngnod),
+      coord("specfem::assembly::control_nodes::coord", ndim,
+            control_nodes.nspec, control_nodes.ngnod),
       h_index_mapping(Kokkos::create_mirror_view(index_mapping)),
       h_coord(Kokkos::create_mirror_view(coord)) {
 
   Kokkos::parallel_for(
-      "specfem::compute::control_nodes::assign_index_mapping",
+      "specfem::assembly::control_nodes::assign_index_mapping",
       specfem::kokkos::HostMDrange<2>({ 0, 0 }, { ngnod, nspec }),
       [=](const int in, const int ispec) {
         const int ispec_mesh = mapping.compute_to_mesh(ispec);
@@ -200,13 +200,13 @@ specfem::compute::control_nodes::control_nodes(
   return;
 }
 
-specfem::compute::shape_functions::shape_functions(
+specfem::assembly::shape_functions::shape_functions(
     const specfem::kokkos::HostMirror1d<type_real> xi,
     const specfem::kokkos::HostMirror1d<type_real> gamma, const int &ngll,
     const int &ngnod)
     : ngllz(ngll), ngllx(ngll), ngnod(ngnod),
-      shape2D("specfem::compute::shape_functions::shape2D", ngll, ngll, ngnod),
-      dshape2D("specfem::compute::shape_functions::dshape2D", ngll, ngll, ndim,
+      shape2D("specfem::assembly::shape_functions::shape2D", ngll, ngll, ngnod),
+      dshape2D("specfem::assembly::shape_functions::dshape2D", ngll, ngll, ndim,
                ngnod),
       h_shape2D(Kokkos::create_mirror_view(shape2D)),
       h_dshape2D(Kokkos::create_mirror_view(dshape2D)) {
@@ -237,10 +237,11 @@ specfem::compute::shape_functions::shape_functions(
   return;
 }
 
-specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
+specfem::assembly::mesh_to_compute_mapping::mesh_to_compute_mapping(
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
-    : compute_to_mesh("specfem::compute::mesh_to_compute_mapping", tags.nspec),
-      mesh_to_compute("specfem::compute::mesh_to_compute_mapping", tags.nspec) {
+    : compute_to_mesh("specfem::assembly::mesh_to_compute_mapping", tags.nspec),
+      mesh_to_compute("specfem::assembly::mesh_to_compute_mapping",
+                      tags.nspec) {
 
   const int nspec = tags.nspec;
 
@@ -278,17 +279,17 @@ specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
   assert(ispec == nspec);
 }
 
-specfem::compute::mesh::mesh(
+specfem::assembly::mesh::mesh(
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
     const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
         &m_control_nodes,
     const specfem::quadrature::quadratures &m_quadratures) {
 
-  this->mapping = specfem::compute::mesh_to_compute_mapping(tags);
+  this->mapping = specfem::assembly::mesh_to_compute_mapping(tags);
   this->control_nodes =
-      specfem::compute::control_nodes(this->mapping, m_control_nodes);
+      specfem::assembly::control_nodes(this->mapping, m_control_nodes);
   this->quadratures =
-      specfem::compute::quadrature(m_quadratures, m_control_nodes);
+      specfem::assembly::quadrature(m_quadratures, m_control_nodes);
   this->nspec = this->control_nodes.nspec;
   this->ngllx = this->quadratures.gll.N;
   this->ngllz = this->quadratures.gll.N;
@@ -296,7 +297,7 @@ specfem::compute::mesh::mesh(
   this->points = this->assemble();
 }
 
-specfem::compute::points specfem::compute::mesh::assemble() {
+specfem::assembly::points specfem::assembly::mesh::assemble() {
 
   const int ngnod = control_nodes.ngnod;
   const int nspec = control_nodes.nspec;
@@ -313,8 +314,8 @@ specfem::compute::points specfem::compute::mesh::assemble() {
       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
   specfem::kokkos::HostView4d<double> global_coordinates(
-      "specfem::compute::mesh::assemble::global_coordinates", nspec, ngll, ngll,
-      2);
+      "specfem::assembly::mesh::assemble::global_coordinates", nspec, ngll,
+      ngll, 2);
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int iz = 0; iz < ngll; iz++) {
@@ -376,7 +377,7 @@ specfem::compute::points specfem::compute::mesh::assemble() {
   return assign_numbering(global_coordinates);
 }
 
-// specfem::compute::compute::compute(
+// specfem::assembly::compute::compute(
 //     const specfem::kokkos::HostView2d<type_real> coorg,
 //     const specfem::kokkos::HostView2d<int> knods,
 //     const specfem::quadrature::quadrature *quadx,
@@ -389,7 +390,7 @@ specfem::compute::points specfem::compute::mesh::assemble() {
 //   int ngllz = quadz->get_N();
 //   int ngllxz = ngllx * ngllz;
 
-//   *this = specfem::compute::compute(nspec, ngllz, ngllx);
+//   *this = specfem::assembly::compute(nspec, ngllz, ngllx);
 
 //   specfem::kokkos::HostMirror1d<type_real> xi = quadx->get_hxi();
 //   specfem::kokkos::HostMirror1d<type_real> gamma = quadz->get_hxi();
@@ -398,7 +399,7 @@ specfem::compute::points specfem::compute::mesh::assemble() {
 
 //   std::vector<qp> cart_cord(nspec * ngllxz);
 //   specfem::kokkos::HostView1d<qp> pcart_cord(
-//       "specfem::compute::compute::pcart_cord", nspec * ngllxz);
+//       "specfem::assembly::compute::pcart_cord", nspec * ngllxz);
 //   int scratch_size =
 //       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim,
 //       ngnod);
@@ -478,7 +479,7 @@ specfem::compute::points specfem::compute::mesh::assemble() {
 //   this->sync_views();
 // }
 
-// void specfem::compute::compute::sync_views() {
+// void specfem::assembly::compute::sync_views() {
 //   Kokkos::deep_copy(ibool, h_ibool);
 
 //   return;

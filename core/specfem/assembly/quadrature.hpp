@@ -2,8 +2,7 @@
 
 #include "quadrature/interface.hpp"
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 
 struct quadrature {
   specfem::quadrature::gll::gll gll;
@@ -11,5 +10,4 @@ struct quadrature {
   quadrature(const specfem::quadrature::gll::gll &gll) : gll(gll) {}
 };
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

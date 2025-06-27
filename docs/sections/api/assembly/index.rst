@@ -4,10 +4,10 @@
 Finite Element Assembly
 -----------------------
 
-.. doxygennamespace:: specfem::compute
+.. doxygennamespace:: specfem::assembly
     :desc-only:
 
-.. doxygenstruct:: specfem::compute::assembly
+.. doxygenstruct:: specfem::assembly::assembly
     :members:
 
 .. admonition:: Feature request

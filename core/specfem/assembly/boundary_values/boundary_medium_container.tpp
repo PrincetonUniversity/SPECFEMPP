@@ -5,12 +5,12 @@
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::boundary_tag BoundaryTag>
-specfem::compute::impl::boundary_medium_container<DimensionTag, MediumTag,
+specfem::assembly::impl::boundary_medium_container<DimensionTag, MediumTag,
                                             BoundaryTag>::
     boundary_medium_container(
-        const int nstep, const specfem::compute::mesh mesh,
-        const specfem::compute::element_types element_types,
-        const specfem::compute::boundaries boundaries,
+        const int nstep, const specfem::assembly::mesh mesh,
+        const specfem::assembly::element_types element_types,
+        const specfem::assembly::boundaries boundaries,
         specfem::kokkos::HostView1d<int> property_index_mapping) {
 
   int nelements = 0;
@@ -26,7 +26,7 @@ specfem::compute::impl::boundary_medium_container<DimensionTag, MediumTag,
     }
   }
 
-  values = value_type("specfem::compute::boundary_medium_container::values",
+  values = value_type("specfem::assembly::boundary_medium_container::values",
                       nelements, nz, nx, nstep);
 
   h_values = Kokkos::create_mirror_view(values);

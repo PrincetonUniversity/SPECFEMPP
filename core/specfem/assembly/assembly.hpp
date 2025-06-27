@@ -16,41 +16,40 @@
 #include "source/interface.hpp"
 #include "sources.hpp"
 
-namespace specfem {
 /**
- * @brief Compute namespace defines data structures used to store data related
+ * @brief Assembly namespace defines data structures used to store data related
  * to finite element assembly.
  *
  * The data is organized in a manner that makes it effiecient to access when
  * computing finite element compute kernels.
  *
  */
-namespace compute {
+namespace specfem::assembly {
 /**
  * @brief Finite element assembly data
  *
  */
 struct assembly {
-  specfem::compute::mesh mesh; ///< Properties of the assembled mesh
-  specfem::compute::element_types element_types;     ///< Element tags for every
-                                                     ///< spectral element
-  specfem::compute::jacobian_matrix jacobian_matrix; ///< Partial
-                                                     ///< derivatives of
-                                                     ///< the basis
-                                                     ///< functions
-  specfem::compute::properties properties;           ///< Material properties
-  specfem::compute::kernels kernels; ///< Frechet derivatives (Misfit kernels)
-  specfem::compute::sources sources; ///< Source information
-  specfem::compute::receivers receivers;   ///< Receiver information
-  specfem::compute::boundaries boundaries; ///< Boundary conditions
-  specfem::compute::coupled_interfaces coupled_interfaces; ///< Coupled
-                                                           ///< interfaces
-                                                           ///< between 2
-                                                           ///< mediums
-  specfem::compute::fields fields; ///< Displacement, velocity, and acceleration
-                                   ///< fields
-  specfem::compute::boundary_values boundary_values; ///< Field values at the
-                                                     ///< boundaries
+  specfem::assembly::mesh mesh; ///< Properties of the assembled mesh
+  specfem::assembly::element_types element_types; ///< Element tags for every
+                                                  ///< spectral element
+  specfem::assembly::jacobian_matrix jacobian_matrix; ///< Partial
+                                                      ///< derivatives of
+                                                      ///< the basis
+                                                      ///< functions
+  specfem::assembly::properties properties;           ///< Material properties
+  specfem::assembly::kernels kernels; ///< Frechet derivatives (Misfit kernels)
+  specfem::assembly::sources sources; ///< Source information
+  specfem::assembly::receivers receivers;   ///< Receiver information
+  specfem::assembly::boundaries boundaries; ///< Boundary conditions
+  specfem::assembly::coupled_interfaces coupled_interfaces; ///< Coupled
+                                                            ///< interfaces
+                                                            ///< between 2
+                                                            ///< mediums
+  specfem::assembly::fields fields; ///< Displacement, velocity, and
+                                    ///< acceleration fields
+  specfem::assembly::boundary_values boundary_values; ///< Field values at the
+                                                      ///< boundaries
 
   /**
    * @brief Generate a finite element assembly
@@ -117,5 +116,4 @@ struct assembly {
   void check_small_jacobian() const;
 };
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

@@ -8,8 +8,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 
 template <specfem::dimension::type DimensionTag,
           specfem::element::boundary_tag BoundaryTag>
@@ -22,21 +21,21 @@ public:
   specfem::kokkos::DeviceView1d<int> property_index_mapping;
   specfem::kokkos::HostMirror1d<int> h_property_index_mapping;
 
-  specfem::compute::impl::boundary_medium_container<
+  specfem::assembly::impl::boundary_medium_container<
       DimensionTag, specfem::element::medium_tag::acoustic, BoundaryTag>
       acoustic;
-  specfem::compute::impl::boundary_medium_container<
+  specfem::assembly::impl::boundary_medium_container<
       DimensionTag, specfem::element::medium_tag::elastic_psv, BoundaryTag>
       elastic;
-  specfem::compute::impl::boundary_medium_container<
+  specfem::assembly::impl::boundary_medium_container<
       DimensionTag, specfem::element::medium_tag::poroelastic, BoundaryTag>
       poroelastic;
 
   boundary_value_container() = default;
 
-  boundary_value_container(const int nstep, const specfem::compute::mesh mesh,
-                           const specfem::compute::element_types element_types,
-                           const specfem::compute::boundaries boundaries);
+  boundary_value_container(const int nstep, const specfem::assembly::mesh mesh,
+                           const specfem::assembly::element_types element_types,
+                           const specfem::assembly::boundaries boundaries);
 
   void sync_to_host() {
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
@@ -140,5 +139,4 @@ load_on_device(const int istep, const IndexType index,
   return;
 }
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

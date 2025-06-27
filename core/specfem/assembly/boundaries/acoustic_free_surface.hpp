@@ -8,8 +8,7 @@
 #include <cstddef>
 #include <type_traits>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 namespace impl {
 namespace boundaries {
 
@@ -40,8 +39,8 @@ public:
       const int nspec, const int ngllz, const int ngllx,
       const specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
           &acoustic_free_surface,
-      const specfem::compute::mesh_to_compute_mapping &mapping,
-      const specfem::compute::properties &properties,
+      const specfem::assembly::mesh_to_compute_mapping &mapping,
+      const specfem::assembly::properties &properties,
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
       std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
@@ -170,5 +169,4 @@ public:
 
 } // namespace boundaries
 } // namespace impl
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

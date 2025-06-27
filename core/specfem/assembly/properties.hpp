@@ -13,8 +13,7 @@
 #include <memory>
 #include <vector>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 
 /**
  * @brief Material properties at every quadrature point in the finite element
@@ -48,8 +47,8 @@ struct properties
    */
   properties(
       const int nspec, const int ngllz, const int ngllx,
-      const specfem::compute::element_types &element_types,
-      const specfem::compute::mesh_to_compute_mapping &mapping,
+      const specfem::assembly::element_types &element_types,
+      const specfem::assembly::mesh_to_compute_mapping &mapping,
       const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
       bool has_gll_model);
 
@@ -94,7 +93,7 @@ template <typename PointPropertiesType, typename IndexType,
                                     int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const IndexType &lcoord,
-               const specfem::compute::properties &properties,
+               const specfem::assembly::properties &properties,
                PointPropertiesType &point_properties) {
   const int ispec = lcoord.ispec;
 
@@ -134,7 +133,7 @@ template <typename PointPropertiesType, typename IndexType,
                                         PointPropertiesType::simd::using_simd,
                                     int> = 0>
 void load_on_host(const IndexType &lcoord,
-                  const specfem::compute::properties &properties,
+                  const specfem::assembly::properties &properties,
                   PointPropertiesType &point_properties) {
   const int ispec = lcoord.ispec;
 
@@ -174,7 +173,7 @@ template <typename PointPropertiesType, typename IndexType,
                                     int> = 0>
 void store_on_host(const IndexType &lcoord,
                    const PointPropertiesType &point_properties,
-                   const specfem::compute::properties &properties) {
+                   const specfem::assembly::properties &properties) {
   const int ispec = lcoord.ispec;
 
   const int index = properties.h_property_index_mapping(ispec);
@@ -196,7 +195,7 @@ void store_on_host(const IndexType &lcoord,
 
 template <typename IndexViewType, typename PointPropertiesType>
 void max(const IndexViewType &ispecs,
-         const specfem::compute::properties &properties,
+         const specfem::assembly::properties &properties,
          PointPropertiesType &point_properties) {
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
@@ -233,5 +232,4 @@ void max(const IndexViewType &ispecs,
 
   return;
 }
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

@@ -29,7 +29,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
 int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
-    const specfem::compute::assembly &assembly, const int &istep) {
+    const specfem::assembly::assembly &assembly, const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -130,10 +130,10 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
         KOKKOS_LAMBDA(
             const specfem::point::index<dimension, using_simd> &index) {
           PointAccelerationType acceleration;
-          specfem::compute::load_on_device(istep, index, boundary_values,
+          specfem::assembly::load_on_device(istep, index, boundary_values,
                                            acceleration);
 
-          specfem::compute::atomic_add_on_device(index, acceleration, field);
+          specfem::assembly::atomic_add_on_device(index, acceleration, field);
         });
   } else {
 
@@ -145,9 +145,9 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
           ChunkElementFieldType element_field(team);
           ElementQuadratureType element_quadrature(team);
           ChunkStressIntegrandType stress_integrand(team);
-          specfem::compute::load_on_device(team, quadrature,
+          specfem::assembly::load_on_device(team, quadrature,
                                            element_quadrature);
-          specfem::compute::load_on_device(chunk_index, field, element_field);
+          specfem::assembly::load_on_device(chunk_index, field, element_field);
 
           team.team_barrier();
 
@@ -159,17 +159,17 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 const auto &index = iterator_index.get_index();
                 const int &ielement = iterator_index.get_policy_index();
                 PointJacobianMatrixType point_jacobian_matrix;
-                specfem::compute::load_on_device(index, jacobian_matrix,
+                specfem::assembly::load_on_device(index, jacobian_matrix,
                                                  point_jacobian_matrix);
 
                 PointPropertyType point_property;
-                specfem::compute::load_on_device(index, properties,
+                specfem::assembly::load_on_device(index, properties,
                                                  point_property);
 
                 PointFieldDerivativesType field_derivatives(du);
 
                   PointDisplacementType point_displacement;
-                  specfem::compute::load_on_device(index, field,
+                  specfem::assembly::load_on_device(index, field,
                                                    point_displacement);
 
                 auto point_stress = specfem::medium::compute_stress(
@@ -207,20 +207,20 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 }
 
                 PointPropertyType point_property;
-                specfem::compute::load_on_device(index, properties,
+                specfem::assembly::load_on_device(index, properties,
                                                  point_property);
 
                 PointVelocityType velocity;
-                specfem::compute::load_on_device(index, field, velocity);
+                specfem::assembly::load_on_device(index, field, velocity);
 
                 PointBoundaryType point_boundary;
-                specfem::compute::load_on_device(index, boundaries,
+                specfem::assembly::load_on_device(index, boundaries,
                                                  point_boundary);
 
                   specfem::point::jacobian_matrix<dimension, true, using_simd>
                     point_jacobian_matrix;
 
-                  specfem::compute::load_on_device(index, jacobian_matrix,
+                  specfem::assembly::load_on_device(index, jacobian_matrix,
                                                     point_jacobian_matrix);
 
                   // Computing the integration factor
@@ -250,11 +250,11 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 // boundary tag is not stacey
                 if (wavefield ==
                     specfem::wavefield::simulation_field::forward) {
-                  specfem::compute::store_on_device(istep, index, acceleration,
+                  specfem::assembly::store_on_device(istep, index, acceleration,
                                                     boundary_values);
                 }
 
-                specfem::compute::atomic_add_on_device(index, acceleration,
+                specfem::assembly::atomic_add_on_device(index, acceleration,
                                                        field);
               });
         });

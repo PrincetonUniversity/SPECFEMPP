@@ -13,7 +13,7 @@ specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::write(
-    specfem::compute::assembly &assembly) {
+    specfem::assembly::assembly &assembly) {
 
   auto &forward = assembly.fields.forward;
   auto &mesh = assembly.mesh;
@@ -66,7 +66,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
             for (int ix = 0; ix < ngllx; ix++) {
 
               // This is the local medium iglob
-              // see: ``count`` in specfem::compute::simulation_field<dim2, medium>
+              // see: ``count`` in specfem::assembly::simulation_field<dim2, medium>
               const int iglob =
                   forward.template get_iglob<false>(ispec, iz, ix, _medium_tag_);
 
@@ -95,7 +95,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::write(
-    specfem::compute::assembly &assembly, const int istep) {
+    specfem::assembly::assembly &assembly, const int istep) {
   auto &forward = assembly.fields.forward;
   auto &boundary_values = assembly.boundary_values;
 

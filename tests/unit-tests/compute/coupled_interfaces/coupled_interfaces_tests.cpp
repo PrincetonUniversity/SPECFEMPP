@@ -180,14 +180,14 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
         specfem::io::read_2d_mesh(Test.databases.mesh.database_filename, mpi);
 
     // Generate compute structs to be used by the solver
-    specfem::compute::mesh assembly(mesh.control_nodes, quadratures);
+    specfem::assembly::mesh assembly(mesh.control_nodes, quadratures);
 
-    specfem::compute::properties properties(assembly.nspec, assembly.ngllz,
-                                            assembly.ngllx, mesh.materials);
+    specfem::assembly::properties properties(assembly.nspec, assembly.ngllz,
+                                             assembly.ngllx, mesh.materials);
 
     try {
       // Generate coupled interfaces struct to be used by the solver
-      specfem::compute::coupled_interfaces coupled_interfaces(
+      specfem::assembly::coupled_interfaces coupled_interfaces(
           assembly, properties, mesh.coupled_interfaces);
 
       // Test coupled interfaces

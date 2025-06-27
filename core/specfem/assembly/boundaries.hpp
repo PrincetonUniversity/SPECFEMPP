@@ -10,8 +10,7 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 /**
  * @brief Boundary condition information for every quadrature point in finite
  * element mesh
@@ -36,10 +35,10 @@ public:
   IndexViewType stacey_index_mapping;
   IndexViewType::HostMirror h_stacey_index_mapping;
 
-  specfem::compute::impl::boundaries::acoustic_free_surface
+  specfem::assembly::impl::boundaries::acoustic_free_surface
       acoustic_free_surface; ///< Acoustic free surface boundary
 
-  specfem::compute::impl::boundaries::stacey stacey; ///< Stacey boundary
+  specfem::assembly::impl::boundaries::stacey stacey; ///< Stacey boundary
 
   /**
    * @name Constructors
@@ -69,10 +68,10 @@ public:
    */
   boundaries(const int nspec, const int ngllz, const int ngllx,
              const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-             const specfem::compute::mesh_to_compute_mapping &mapping,
-             const specfem::compute::quadrature &quadrature,
-             const specfem::compute::properties &properties,
-             const specfem::compute::jacobian_matrix &jacobian_matrix);
+             const specfem::assembly::mesh_to_compute_mapping &mapping,
+             const specfem::assembly::quadrature &quadrature,
+             const specfem::assembly::properties &properties,
+             const specfem::assembly::jacobian_matrix &jacobian_matrix);
   ///@}
 };
 
@@ -102,7 +101,7 @@ template <typename IndexType, typename PointBoundaryType,
                                   int>::type = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const IndexType &index,
-               const specfem::compute::boundaries &boundaries,
+               const specfem::assembly::boundaries &boundaries,
                PointBoundaryType &boundary) {
 
   constexpr auto tag = PointBoundaryType::boundary_tag;
@@ -156,7 +155,7 @@ template <typename IndexType, typename PointBoundaryType,
                                       IndexType::using_simd,
                                   int>::type = 0>
 inline void load_on_host(const IndexType &index,
-                         const specfem::compute::boundaries &boundaries,
+                         const specfem::assembly::boundaries &boundaries,
                          PointBoundaryType &boundary) {
 
   constexpr auto tag = PointBoundaryType::boundary_tag;
@@ -193,5 +192,4 @@ inline void load_on_host(const IndexType &index,
   return;
 }
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

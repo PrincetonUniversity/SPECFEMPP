@@ -25,13 +25,13 @@ bool is_on_boundary(specfem::enums::boundaries::type type, int iz, int ix,
 }
 } // namespace
 
-specfem::compute::impl::boundaries::acoustic_free_surface::
+specfem::assembly::impl::boundaries::acoustic_free_surface::
     acoustic_free_surface(
         const int nspec, const int ngllz, const int ngllx,
         const specfem::mesh::acoustic_free_surface<
             specfem::dimension::type::dim2> &acoustic_free_surface,
-        const specfem::compute::mesh_to_compute_mapping &mapping,
-        const specfem::compute::properties &properties,
+        const specfem::assembly::mesh_to_compute_mapping &mapping,
+        const specfem::assembly::properties &properties,
         const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
         std::vector<specfem::element::boundary_tag_container>
             &element_boundary_tags) {
@@ -110,7 +110,7 @@ specfem::compute::impl::boundaries::acoustic_free_surface::
 
   // Initialize boundary tags
   this->quadrature_point_boundary_tag =
-      BoundaryTagView("specfem::compute::impl::boundaries::"
+      BoundaryTagView("specfem::assembly::impl::boundaries::"
                       "acoustic_free_surface::quadrature_point_boundary_tag",
                       total_indices, ngllz, ngllx);
 
@@ -205,7 +205,7 @@ specfem::compute::impl::boundaries::acoustic_free_surface::
   // }
 
   // this->quadrature_point_boundary_tag =
-  //     BoundaryTagView("specfem::compute::impl::boundaries::"
+  //     BoundaryTagView("specfem::assembly::impl::boundaries::"
   //                     "acoustic_free_surface::quadrature_point_boundary_tag",
   //                     total_indices, ngllz, ngllx);
 

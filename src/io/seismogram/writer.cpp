@@ -4,7 +4,7 @@
 #include <fstream>
 
 void specfem::io::seismogram_writer::write(
-    specfem::compute::assembly &assembly) {
+    specfem::assembly::assembly &assembly) {
   auto &receivers = assembly.receivers;
 
   receivers.sync_seismograms();

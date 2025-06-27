@@ -85,8 +85,8 @@ TEST(COMPUTE_TESTS, compute_ibool) {
       specfem::enums::electromagnetic_wave::te, mpi);
 
   // Setup compute structs
-  specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes,
-                                  quadratures); // mesh assembly
+  specfem::assembly::mesh assembly(mesh.tags, mesh.control_nodes,
+                                   quadratures); // mesh assembly
 
   const auto h_index_mapping = assembly.points.h_index_mapping;
   const auto h_coord = assembly.points.h_coord;

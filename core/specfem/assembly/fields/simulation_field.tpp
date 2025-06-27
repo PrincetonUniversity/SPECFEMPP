@@ -29,9 +29,9 @@ template <typename ViewType> int compute_nglob(const ViewType index_mapping) {
 } // namespace
 
 template <specfem::wavefield::simulation_field WavefieldType>
-specfem::compute::simulation_field<WavefieldType>::simulation_field(
-    const specfem::compute::mesh &mesh,
-    const specfem::compute::element_types &element_types) {
+specfem::assembly::simulation_field<WavefieldType>::simulation_field(
+    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::element_types &element_types) {
 
   nglob = compute_nglob(mesh.points.h_index_mapping);
 
@@ -44,7 +44,7 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
   assembly_index_mapping =
       Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                    specfem::kokkos::DevMemSpace>(
-          "specfem::compute::simulation_field::index_mapping", nglob);
+          "specfem::assembly::simulation_field::index_mapping", nglob);
 
   h_assembly_index_mapping =
       Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
@@ -65,7 +65,7 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
         auto index = Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
                                      static_cast<int>(_medium_tag_));
         _field_ =
-            specfem::compute::impl::field_impl<_dimension_tag_, _medium_tag_>(
+            specfem::assembly::impl::field_impl<_dimension_tag_, _medium_tag_>(
                 mesh, element_types, index);
       })
 
@@ -75,7 +75,7 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
 }
 
 template <specfem::wavefield::simulation_field WavefieldType>
-int specfem::compute::simulation_field<
+int specfem::assembly::simulation_field<
     WavefieldType>::get_total_degrees_of_freedom() {
   if (total_degrees_of_freedom != 0) {
     return total_degrees_of_freedom;

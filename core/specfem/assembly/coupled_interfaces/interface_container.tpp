@@ -103,7 +103,7 @@ get_points_on_edge(const specfem::enums::edge::type &edge, const int &ngll) {
 // // Given an edge, return the number of points along the edge
 // // This ends up being important when ngllx != ngllz
 // KOKKOS_FUNCTION
-// int specfem::compute::coupled_interfaces::access::npoints(
+// int specfem::assembly::coupled_interfaces::access::npoints(
 //     const specfem::enums::edge::type &edge, const int ngllx, const int ngllz)
 //     {
 
@@ -123,7 +123,7 @@ get_points_on_edge(const specfem::enums::edge::type &edge, const int &ngll) {
 // }
 
 // KOKKOS_FUNCTION
-// void specfem::compute::coupled_interfaces::access::self_iterator(
+// void specfem::assembly::coupled_interfaces::access::self_iterator(
 //     const int &ipoint, const specfem::enums::edge::type &edge, const int
 //     ngllx, const int ngllz, int &i, int &j) {
 
@@ -150,7 +150,7 @@ get_points_on_edge(const specfem::enums::edge::type &edge, const int &ngll) {
 // }
 
 // KOKKOS_FUNCTION
-// void specfem::compute::coupled_interfaces::access::coupled_iterator(
+// void specfem::assembly::coupled_interfaces::access::coupled_iterator(
 //     const int &ipoint, const specfem::enums::edge::type &edge, const int
 //     ngllx, const int ngllz, int &i, int &j) {
 
@@ -176,7 +176,7 @@ get_points_on_edge(const specfem::enums::edge::type &edge, const int &ngll) {
 //   }
 // }
 
-bool check_if_edges_are_connected(const specfem::compute::points points,
+bool check_if_edges_are_connected(const specfem::assembly::points points,
                                   const specfem::enums::edge::type edge1,
                                   const specfem::enums::edge::type edge2,
                                   const int ispec1, const int ispec2) {
@@ -347,9 +347,9 @@ bool check_if_edges_are_connected(const specfem::compute::points points,
 
 std::tuple<std::vector<type_real>, std::vector<std::array<type_real, 2> > >
 compute_edge_factors_and_normals(
-    const specfem::compute::points &points,
-    const specfem::compute::jacobian_matrix &jacobian_matrix,
-    const specfem::compute::quadrature &quadrature, const int ispec1,
+    const specfem::assembly::points &points,
+    const specfem::assembly::jacobian_matrix &jacobian_matrix,
+    const specfem::assembly::quadrature &quadrature, const int ispec1,
     const int ispec2, const specfem::enums::edge::type edge1,
     const specfem::enums::edge::type edge2) {
 
@@ -380,14 +380,14 @@ compute_edge_factors_and_normals(
     const specfem::point::index<specfem::dimension::type::dim2> edge1_index(
         ispec1, j1, i1);
     PointJacobianMatrixType edge1_derivatives;
-    specfem::compute::load_on_host(edge1_index, jacobian_matrix,
+    specfem::assembly::load_on_host(edge1_index, jacobian_matrix,
                                    edge1_derivatives);
 
     const auto [i2, j2] = edge2_points[ipoint];
     const specfem::point::index<specfem::dimension::type::dim2> edge2_index(
         ispec2, j2, i2);
     PointJacobianMatrixType edge2_derivatives;
-    specfem::compute::load_on_host(edge2_index, jacobian_matrix,
+    specfem::assembly::load_on_host(edge2_index, jacobian_matrix,
                                    edge2_derivatives);
 
     const auto edge1_normal = edge1_derivatives.compute_normal(edge1);
@@ -431,9 +431,9 @@ compute_edge_factors_and_normals(
 std::tuple<specfem::enums::edge::type, specfem::enums::edge::type,
            std::vector<type_real>, std::vector<std::array<type_real, 2> > >
 compute_edge_factors_and_normals(
-    const specfem::compute::points &points,
-    const specfem::compute::jacobian_matrix &jacobian_matrix,
-    const specfem::compute::quadrature &quadrature, const int ispec1,
+    const specfem::assembly::points &points,
+    const specfem::assembly::jacobian_matrix &jacobian_matrix,
+    const specfem::assembly::quadrature &quadrature, const int ispec1,
     const int ispec2) {
 
   const std::array<specfem::enums::edge::type, 4> edges{
@@ -469,7 +469,7 @@ compute_edge_factors_and_normals(
 
 template <specfem::element::medium_tag MediumTag1,
           specfem::element::medium_tag MediumTag2>
-specfem::compute::interface_container<
+specfem::assembly::interface_container<
     MediumTag1, MediumTag2>::interface_container(const int num_interfaces,
                                                  const int ngll)
     : num_interfaces(num_interfaces), num_points(ngll),
@@ -512,13 +512,13 @@ specfem::compute::interface_container<
 
 template <specfem::element::medium_tag MediumTag1,
           specfem::element::medium_tag MediumTag2>
-specfem::compute::interface_container<MediumTag1, MediumTag2>::
+specfem::assembly::interface_container<MediumTag1, MediumTag2>::
     interface_container(
-        const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh, const specfem::compute::points &points,
-        const specfem::compute::quadrature &quadratures,
-        const specfem::compute::jacobian_matrix &jacobian_matrix,
-        const specfem::compute::element_types &element_types,
-        const specfem::compute::mesh_to_compute_mapping &mapping) {
+        const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh, const specfem::assembly::points &points,
+        const specfem::assembly::quadrature &quadratures,
+        const specfem::assembly::jacobian_matrix &jacobian_matrix,
+        const specfem::assembly::element_types &element_types,
+        const specfem::assembly::mesh_to_compute_mapping &mapping) {
 
   const auto interface_container =
       std::get<specfem::mesh::interface_container<specfem::dimension::type::dim2, MediumTag1, MediumTag2> >(
@@ -532,7 +532,7 @@ specfem::compute::interface_container<MediumTag1, MediumTag2>::
     return;
   }
 
-  *this = specfem::compute::interface_container<MediumTag1, MediumTag2>(
+  *this = specfem::assembly::interface_container<MediumTag1, MediumTag2>(
       num_interfaces, ngll);
 
   for (int iedge = 0; iedge < num_interfaces; ++iedge) {

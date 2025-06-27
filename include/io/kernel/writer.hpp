@@ -31,7 +31,7 @@ public:
    * @brief write the kernel data to disk
    *
    */
-  void write(specfem::compute::assembly &assembly) override;
+  void write(specfem::assembly::assembly &assembly) override;
 
 private:
   std::string output_folder; ///< Path to output folder

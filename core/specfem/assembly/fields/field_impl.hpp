@@ -5,8 +5,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 namespace impl {
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
@@ -18,8 +17,8 @@ public:
   field_impl() = default;
 
   field_impl(
-      const specfem::compute::mesh &mesh,
-      const specfem::compute::element_types &element_type,
+      const specfem::assembly::mesh &mesh,
+      const specfem::assembly::element_types &element_type,
       Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
           assembly_index_mapping);
 
@@ -91,5 +90,4 @@ void deep_copy(impl::field_impl<DimensionTag, MediumTag> &dst,
   Kokkos::deep_copy(dst.h_field_dot_dot, src.h_field_dot_dot);
 }
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

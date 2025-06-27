@@ -6,8 +6,7 @@
 #include "source/source.hpp"
 #include "sources/source_medium.hpp"
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 struct sources {
 private:
   using IndexViewType =
@@ -62,9 +61,9 @@ public:
    */
   sources(
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-      const specfem::compute::mesh &mesh,
-      const specfem::compute::jacobian_matrix &jacobian_matrix,
-      const specfem::compute::element_types &element_types, const type_real t0,
+      const specfem::assembly::mesh &mesh,
+      const specfem::assembly::jacobian_matrix &jacobian_matrix,
+      const specfem::assembly::element_types &element_types, const type_real t0,
       const type_real dt, const int nsteps);
   ///@}
 
@@ -148,7 +147,7 @@ private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T)),
-                      DECLARE(((specfem::compute::impl::source_medium,
+                      DECLARE(((specfem::assembly::impl::source_medium,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                source)))
 
@@ -177,24 +176,24 @@ private:
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
   load_on_device(const IndexType index,
-                 const specfem::compute::sources &sources,
+                 const specfem::assembly::sources &sources,
                  PointSourceType &point_source);
 
   template <typename IndexType, typename PointSourceType>
   friend void load_on_host(const IndexType index,
-                           const specfem::compute::sources &sources,
+                           const specfem::assembly::sources &sources,
                            PointSourceType &point_source);
 
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
   store_on_device(const IndexType index, const PointSourceType &point_source,
-                  const specfem::compute::sources &sources);
+                  const specfem::assembly::sources &sources);
 
   template <typename IndexType, typename PointSourceType>
   friend void store_on_host(const IndexType index,
                             const PointSourceType &point_source,
-                            const specfem::compute::sources &sources);
-}; // namespace compute
+                            const specfem::assembly::sources &sources);
+}; // namespace specfem::assembly
 
 /**
  * @brief Load source information on device at the given index
@@ -212,7 +211,7 @@ private:
  */
 template <typename IndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
-load_on_device(const IndexType index, const specfem::compute::sources &sources,
+load_on_device(const IndexType index, const specfem::assembly::sources &sources,
                PointSourceType &point_source) {
 
   static_assert(IndexType::using_simd == false,
@@ -277,7 +276,7 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
  */
 template <typename IndexType, typename PointSourceType>
 void load_on_host(const IndexType index,
-                  const specfem::compute::sources &sources,
+                  const specfem::assembly::sources &sources,
                   PointSourceType &point_source) {
 
   // Get the mapping from the iterator index
@@ -344,7 +343,7 @@ void load_on_host(const IndexType index,
 template <typename IndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
 store_on_device(const IndexType index, const PointSourceType &point_source,
-                const specfem::compute::sources &sources) {
+                const specfem::assembly::sources &sources) {
 
   static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when storing sources");
@@ -406,7 +405,7 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
  */
 template <typename IndexType, typename PointSourceType>
 void store_on_host(const IndexType index, const PointSourceType &point_source,
-                   const specfem::compute::sources &sources) {
+                   const specfem::assembly::sources &sources) {
 
   static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when storing sources");
@@ -452,5 +451,4 @@ void store_on_host(const IndexType index, const PointSourceType &point_source,
   return;
 }
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

@@ -68,7 +68,7 @@
 // // Given an edge, return the number of points along the edge
 // // This ends up being important when ngllx != ngllz
 // KOKKOS_FUNCTION
-// int specfem::compute::coupled_interfaces::access::npoints(
+// int specfem::assembly::coupled_interfaces::access::npoints(
 //     const specfem::enums::edge::type &edge, const int ngllx, const int ngllz)
 //     {
 
@@ -88,7 +88,7 @@
 // }
 
 // KOKKOS_FUNCTION
-// void specfem::compute::coupled_interfaces::access::self_iterator(
+// void specfem::assembly::coupled_interfaces::access::self_iterator(
 //     const int &ipoint, const specfem::enums::edge::type &edge, const int
 //     ngllx, const int ngllz, int &i, int &j) {
 
@@ -115,7 +115,7 @@
 // }
 
 // KOKKOS_FUNCTION
-// void specfem::compute::coupled_interfaces::access::coupled_iterator(
+// void specfem::assembly::coupled_interfaces::access::coupled_iterator(
 //     const int &ipoint, const specfem::enums::edge::type &edge, const int
 //     ngllx, const int ngllz, int &i, int &j) {
 
@@ -256,19 +256,19 @@
 //     const auto edge2l = edge2(interface);
 
 //     // iterate over the edge
-//     int npoints = specfem::compute::coupled_interfaces::access::npoints(
+//     int npoints = specfem::assembly::coupled_interfaces::access::npoints(
 //         edge1l, ngllx, ngllz);
 
 //     for (int ipoint = 0; ipoint < npoints; ipoint++) {
 //       // Get ipoint along the edge in element1
 //       int i1, j1;
-//       specfem::compute::coupled_interfaces::access::self_iterator(
+//       specfem::assembly::coupled_interfaces::access::self_iterator(
 //           ipoint, edge1l, ngllx, ngllz, i1, j1);
 //       const int iglob1 = h_ibool(ispec1l, j1, i1);
 
 //       // Get ipoint along the edge in element2
 //       int i2, j2;
-//       specfem::compute::coupled_interfaces::access::coupled_iterator(
+//       specfem::assembly::coupled_interfaces::access::coupled_iterator(
 //           ipoint, edge2l, ngllx, ngllz, i2, j2);
 //       const int iglob2 = h_ibool(ispec2l, j2, i2);
 
@@ -288,7 +288,7 @@
 //   }
 // }
 
-// specfem::compute::coupled_interfaces::elastic_acoustic::elastic_acoustic(
+// specfem::assembly::coupled_interfaces::elastic_acoustic::elastic_acoustic(
 //     const specfem::kokkos::HostMirror3d<int> h_ibool,
 //     const specfem::kokkos::HostView2d<type_real> coord,
 //     const specfem::kokkos::HostView1d<specfem::enums::element::type>
@@ -359,7 +359,7 @@
 //   return;
 // }
 
-// specfem::compute::coupled_interfaces::elastic_poroelastic::elastic_poroelastic(
+// specfem::assembly::coupled_interfaces::elastic_poroelastic::elastic_poroelastic(
 //     const specfem::kokkos::HostMirror3d<int> h_ibool,
 //     const specfem::kokkos::HostView2d<type_real> coord,
 //     const specfem::kokkos::HostView1d<specfem::enums::element::type>
@@ -431,7 +431,7 @@
 //   return;
 // }
 
-// specfem::compute::coupled_interfaces::acoustic_poroelastic::
+// specfem::assembly::coupled_interfaces::acoustic_poroelastic::
 //     acoustic_poroelastic(
 //         const specfem::kokkos::HostMirror3d<int> h_ibool,
 //         const specfem::kokkos::HostView2d<type_real> coord,
@@ -505,7 +505,7 @@
 //   return;
 // }
 
-// specfem::compute::coupled_interfaces::coupled_interfaces::coupled_interfaces(
+// specfem::assembly::coupled_interfaces::coupled_interfaces::coupled_interfaces(
 //     const specfem::kokkos::HostMirror3d<int> h_ibool,
 //     const specfem::kokkos::HostView2d<type_real> coord,
 //     const specfem::kokkos::HostView1d<specfem::enums::element::type>
@@ -513,25 +513,25 @@
 //     const specfem::mesh::coupled_interfaces::coupled_interfaces
 //         &coupled_interfaces)
 //     :
-//     elastic_acoustic(specfem::compute::coupled_interfaces::elastic_acoustic(
+//     elastic_acoustic(specfem::assembly::coupled_interfaces::elastic_acoustic(
 //           h_ibool, coord, h_ispec_type,
 //           coupled_interfaces.elastic_acoustic)),
 //       elastic_poroelastic(
-//           specfem::compute::coupled_interfaces::elastic_poroelastic(
+//           specfem::assembly::coupled_interfaces::elastic_poroelastic(
 //               h_ibool, coord, h_ispec_type,
 //               coupled_interfaces.elastic_poroelastic)),
 //       acoustic_poroelastic(
-//           specfem::compute::coupled_interfaces::acoustic_poroelastic(
+//           specfem::assembly::coupled_interfaces::acoustic_poroelastic(
 //               h_ibool, coord, h_ispec_type,
 //               coupled_interfaces.acoustic_poroelastic)) {}
 
-specfem::compute::coupled_interfaces::coupled_interfaces(
+specfem::assembly::coupled_interfaces::coupled_interfaces(
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::compute::points &points,
-    const specfem::compute::quadrature &quadrature,
-    const specfem::compute::jacobian_matrix &jacobian_matrix,
-    const specfem::compute::element_types &element_types,
-    const specfem::compute::mesh_to_compute_mapping &mapping)
+    const specfem::assembly::points &points,
+    const specfem::assembly::quadrature &quadrature,
+    const specfem::assembly::jacobian_matrix &jacobian_matrix,
+    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::mesh_to_compute_mapping &mapping)
     : elastic_acoustic(mesh, points, quadrature, jacobian_matrix, element_types,
                        mapping),
       elastic_poroelastic(mesh, points, quadrature, jacobian_matrix,
@@ -541,57 +541,57 @@ specfem::compute::coupled_interfaces::coupled_interfaces(
 
 // Explicit template instantiation
 
-template class specfem::compute::interface_container<
+template class specfem::assembly::interface_container<
     specfem::element::medium_tag::elastic_psv,
     specfem::element::medium_tag::acoustic>;
 
-template class specfem::compute::interface_container<
+template class specfem::assembly::interface_container<
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::poroelastic>;
 
-template class specfem::compute::interface_container<
+template class specfem::assembly::interface_container<
     specfem::element::medium_tag::elastic_psv,
     specfem::element::medium_tag::poroelastic>;
 
-template specfem::compute::interface_container<
+template specfem::assembly::interface_container<
     specfem::element::medium_tag::elastic_psv,
     specfem::element::medium_tag::acoustic>
-specfem::compute::coupled_interfaces::get_interface_container<
+specfem::assembly::coupled_interfaces::get_interface_container<
     specfem::element::medium_tag::elastic_psv,
     specfem::element::medium_tag::acoustic>() const;
 
-template specfem::compute::interface_container<
+template specfem::assembly::interface_container<
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::elastic_psv>
-specfem::compute::coupled_interfaces::get_interface_container<
+specfem::assembly::coupled_interfaces::get_interface_container<
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::elastic_psv>() const;
 
-template specfem::compute::interface_container<
+template specfem::assembly::interface_container<
     specfem::element::medium_tag::elastic_psv,
     specfem::element::medium_tag::poroelastic>
-specfem::compute::coupled_interfaces::get_interface_container<
+specfem::assembly::coupled_interfaces::get_interface_container<
     specfem::element::medium_tag::elastic_psv,
     specfem::element::medium_tag::poroelastic>() const;
 
-template specfem::compute::interface_container<
+template specfem::assembly::interface_container<
     specfem::element::medium_tag::poroelastic,
     specfem::element::medium_tag::elastic_psv>
-specfem::compute::coupled_interfaces::get_interface_container<
+specfem::assembly::coupled_interfaces::get_interface_container<
     specfem::element::medium_tag::poroelastic,
     specfem::element::medium_tag::elastic_psv>() const;
 
-template specfem::compute::interface_container<
+template specfem::assembly::interface_container<
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::poroelastic>
-specfem::compute::coupled_interfaces::get_interface_container<
+specfem::assembly::coupled_interfaces::get_interface_container<
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::poroelastic>() const;
 
-template specfem::compute::interface_container<
+template specfem::assembly::interface_container<
     specfem::element::medium_tag::poroelastic,
     specfem::element::medium_tag::acoustic>
-specfem::compute::coupled_interfaces::get_interface_container<
+specfem::assembly::coupled_interfaces::get_interface_container<
     specfem::element::medium_tag::poroelastic,
     specfem::element::medium_tag::acoustic>() const;
 

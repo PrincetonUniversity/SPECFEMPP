@@ -26,7 +26,7 @@ public:
    *
    * @param assembly Assembly object.
    */
-  frechet_kernels(const specfem::compute::assembly &assembly)
+  frechet_kernels(const specfem::assembly::assembly &assembly)
       : assembly(assembly) {}
 
   /**
@@ -49,7 +49,7 @@ public:
   }
 
 private:
-  specfem::compute::assembly assembly; ///< Assembly object.
+  specfem::assembly::assembly assembly; ///< Assembly object.
 };
 } // namespace kokkos_kernels
 } // namespace specfem

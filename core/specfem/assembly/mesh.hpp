@@ -9,12 +9,11 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 
 /**
  * @brief Mapping between spectral element indexing within @ref
- * specfem::mesh::mesh and @ref specfem::compute::mesh
+ * specfem::mesh::mesh and @ref specfem::assembly::mesh
  *
  * We reorder the mesh to enable better memory access patterns when computing
  * forces.
@@ -53,9 +52,9 @@ struct shape_functions {
 
   shape_functions(const int &ngllz, const int &ngllx, const int &ngnod)
       : ngllz(ngllz), ngllx(ngllx), ngnod(ngnod),
-        shape2D("specfem::compute::shape_functions::shape2D", ngllz, ngllx,
+        shape2D("specfem::assembly::shape_functions::shape2D", ngllz, ngllx,
                 ngnod),
-        dshape2D("specfem::compute::shape_functions::dshape2D", ngllz, ngllx,
+        dshape2D("specfem::assembly::shape_functions::dshape2D", ngllz, ngllx,
                  ndim, ngnod),
         h_shape2D(Kokkos::create_mirror_view(shape2D)),
         h_dshape2D(Kokkos::create_mirror_view(dshape2D)) {}
@@ -76,7 +75,7 @@ struct quadrature {
     int N; ///< Number of quadrature points
     specfem::kokkos::DeviceView1d<type_real> xi;        ///< Quadrature points
     specfem::kokkos::HostMirror1d<type_real> h_xi;      ///< Quadrature points
-    specfem::compute::shape_functions shape_functions;  ///< Shape functions
+    specfem::assembly::shape_functions shape_functions; ///< Shape functions
     specfem::kokkos::DeviceView1d<type_real> weights;   ///< Quadrature weights
     specfem::kokkos::HostMirror1d<type_real> h_weights; ///< Quadrature weights
     specfem::kokkos::DeviceView2d<type_real> hprime;    ///< Derivative of
@@ -96,7 +95,7 @@ struct quadrature {
           shape_functions(h_xi, h_xi, N, ngnod) {}
   };
 
-  specfem::compute::quadrature::GLL gll; ///< GLL quadrature
+  specfem::assembly::quadrature::GLL gll; ///< GLL quadrature
 
   quadrature() = default;
 
@@ -125,7 +124,7 @@ struct control_nodes {
                                                       ///< distinct control node
 
   control_nodes(
-      const specfem::compute::mesh_to_compute_mapping &mapping,
+      const specfem::assembly::mesh_to_compute_mapping &mapping,
       const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
           &control_nodes);
 
@@ -162,9 +161,9 @@ struct points {
 
   points(const int &nspec, const int &ngllz, const int &ngllx)
       : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
-        index_mapping("specfem::compute::points::index_mapping", nspec, ngllz,
+        index_mapping("specfem::assembly::points::index_mapping", nspec, ngllz,
                       ngllx),
-        coord("specfem::compute::points::coord", ndim, nspec, ngllz, ngllx),
+        coord("specfem::assembly::points::coord", ndim, nspec, ngllz, ngllx),
         h_index_mapping(Kokkos::create_mirror_view(index_mapping)),
         h_coord(Kokkos::create_mirror_view(coord)) {}
 };
@@ -174,19 +173,20 @@ struct points {
  *
  */
 struct mesh {
-  int nspec;                                         ///< Number of spectral
-                                                     ///< elements
-  int ngllz;                                         ///< Number of quadrature
-                                                     ///< points in z dimension
-  int ngllx;                                         ///< Number of quadrature
-                                                     ///< points in x dimension
-  specfem::compute::control_nodes control_nodes;     ///< Control nodes
-  specfem::compute::points points;                   ///< Quadrature points
-  specfem::compute::quadrature quadratures;          ///< Quadrature object
-  specfem::compute::mesh_to_compute_mapping mapping; ///< Mapping of spectral
-                                                     ///< element index between
-                                                     ///< mesh database ordering
-                                                     ///< and compute ordering
+  int nspec;                                          ///< Number of spectral
+                                                      ///< elements
+  int ngllz;                                          ///< Number of quadrature
+                                                      ///< points in z dimension
+  int ngllx;                                          ///< Number of quadrature
+                                                      ///< points in x dimension
+  specfem::assembly::control_nodes control_nodes;     ///< Control nodes
+  specfem::assembly::points points;                   ///< Quadrature points
+  specfem::assembly::quadrature quadratures;          ///< Quadrature object
+  specfem::assembly::mesh_to_compute_mapping mapping; ///< Mapping of spectral
+                                                      ///< element index between
+                                                      ///< mesh database
+                                                      ///< ordering and compute
+                                                      ///< ordering
 
   mesh() = default;
 
@@ -195,7 +195,7 @@ struct mesh {
            &control_nodes,
        const specfem::quadrature::quadratures &quadratures);
 
-  specfem::compute::points assemble();
+  specfem::assembly::points assemble();
 
   /**
    * @brief Compute the global coordinates for a point given its local
@@ -241,7 +241,7 @@ struct mesh {
 template <bool on_device, typename MemberType, typename ViewType>
 KOKKOS_INLINE_FUNCTION void
 impl_load(const MemberType &team,
-          const specfem::compute::quadrature &quadrature,
+          const specfem::assembly::quadrature &quadrature,
           ViewType &element_quadrature) {
 
   constexpr bool store_hprime_gll = ViewType::store_hprime_gll;
@@ -298,7 +298,7 @@ impl_load(const MemberType &team,
 template <typename MemberType, typename ViewType>
 KOKKOS_FUNCTION void
 load_on_device(const MemberType &team,
-               const specfem::compute::quadrature &quadrature,
+               const specfem::assembly::quadrature &quadrature,
                ViewType &element_quadrature) {
 
   impl_load<true>(team, quadrature, element_quadrature);
@@ -317,10 +317,9 @@ load_on_device(const MemberType &team,
  */
 template <typename MemberType, typename ViewType>
 void load_on_host(const MemberType &team,
-                  const specfem::compute::quadrature &quadrature,
+                  const specfem::assembly::quadrature &quadrature,
                   ViewType &element_quadrature) {
   impl_load<false>(team, quadrature, element_quadrature);
 }
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

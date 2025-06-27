@@ -46,7 +46,7 @@ The following code snippet demonstrates how to compute the gradient of displacem
                 ChunkElementFieldType element_field(team);
                 ElementQuadratureType element_quadrature(team);
 
-                specfem::compute::load_on_device(team, quadrature, element_quadrature);
+                specfem::assembly::load_on_device(team, quadrature, element_quadrature);
                 for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
                     tile += ChunkPolicyType::chunk_size * simd_size) {
                     const int starting_element_index =
@@ -59,7 +59,7 @@ The following code snippet demonstrates how to compute the gradient of displacem
 
                     const auto iterator =
                         chunk_policy.league_iterator(starting_element_index);
-                    specfem::compute::load_on_device(team, iterator, field,
+                    specfem::assembly::load_on_device(team, iterator, field,
                                                     element_field);
 
                     team.team_barrier();

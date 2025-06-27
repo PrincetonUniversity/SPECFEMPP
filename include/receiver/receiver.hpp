@@ -40,7 +40,7 @@ public:
    * @param receiver_array view to store the source array
    */
   void
-  compute_receiver_array(const specfem::compute::mesh &mesh,
+  compute_receiver_array(const specfem::assembly::mesh &mesh,
                          specfem::kokkos::HostView3d<type_real> receiver_array);
   /**
    * @brief Get the name of network where this station lies

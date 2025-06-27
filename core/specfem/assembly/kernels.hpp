@@ -7,8 +7,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 /**
  * @brief Misfit kernels (Frechet derivatives) for every quadrature point in the
  * finite element mesh
@@ -39,7 +38,7 @@ public:
    * @param tags Tags for every element in spectral element mesh
    */
   kernels(const int nspec, const int ngllz, const int ngllx,
-          const specfem::compute::element_types &element_types);
+          const specfem::assembly::element_types &element_types);
   ///@}
 
   /**
@@ -264,5 +263,4 @@ void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
   return;
 }
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

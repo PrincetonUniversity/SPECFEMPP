@@ -3,8 +3,7 @@
 #include "execution/for_each_level.hpp"
 #include "specfem/point.hpp"
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
@@ -955,5 +954,4 @@ KOKKOS_FUNCTION void impl_load(const ChunkIndexType &index,
   return;
 }
 
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

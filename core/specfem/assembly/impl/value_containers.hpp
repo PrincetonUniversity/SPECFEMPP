@@ -3,9 +3,7 @@
 #include "enumerations/medium.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace compute {
-namespace impl {
+namespace specfem::assembly::impl {
 /**
  * @brief Values for every quadrature point in the finite element mesh
  *
@@ -112,6 +110,4 @@ struct value_containers {
   }
 };
 
-} // namespace impl
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly::impl

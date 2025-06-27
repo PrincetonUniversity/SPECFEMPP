@@ -1,8 +1,8 @@
 #include "kernels.hpp"
 
-specfem::compute::kernels::kernels(
+specfem::assembly::kernels::kernels(
     const int nspec, const int ngllz, const int ngllx,
-    const specfem::compute::element_types &element_types) {
+    const specfem::assembly::element_types &element_types) {
 
   this->nspec = nspec;
   this->ngllz = ngllz;
@@ -10,7 +10,7 @@ specfem::compute::kernels::kernels(
 
   this->property_index_mapping =
       Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(
-          "specfem::compute::kernels::property_index_mapping", nspec);
+          "specfem::assembly::kernels::property_index_mapping", nspec);
 
   this->h_property_index_mapping =
       Kokkos::create_mirror_view(property_index_mapping);

@@ -77,9 +77,9 @@ TEST(COMPUTE_TESTS, compute_jacobian_matrix) {
       test_config.database_filename, specfem::enums::elastic_wave::psv,
       specfem::enums::electromagnetic_wave::te, mpi);
 
-  specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
-                                      quadratures);
-  specfem::compute::jacobian_matrix jacobian_matrix(compute_mesh);
+  specfem::assembly::mesh compute_mesh(mesh.tags, mesh.control_nodes,
+                                       quadratures);
+  specfem::assembly::jacobian_matrix jacobian_matrix(compute_mesh);
 
   const int nspec = compute_mesh.control_nodes.nspec;
   const int ngllz = compute_mesh.quadratures.gll.N;
@@ -103,8 +103,8 @@ TEST(COMPUTE_TESTS, compute_jacobian_matrix) {
           specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
                                           false>
               point_jacobian_matrix;
-          specfem::compute::load_on_host(index, jacobian_matrix,
-                                         point_jacobian_matrix);
+          specfem::assembly::load_on_host(index, jacobian_matrix,
+                                          point_jacobian_matrix);
           return point_jacobian_matrix;
         }();
         const int ispec_mesh = compute_mesh.mapping.compute_to_mesh(ispec);
@@ -135,8 +135,8 @@ TEST(COMPUTE_TESTS, compute_jacobian_matrix) {
           specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
                                           true>
               point_jacobian_matrix;
-          specfem::compute::load_on_host(simd_index, jacobian_matrix,
-                                         point_jacobian_matrix);
+          specfem::assembly::load_on_host(simd_index, jacobian_matrix,
+                                          point_jacobian_matrix);
           return point_jacobian_matrix;
         }();
 

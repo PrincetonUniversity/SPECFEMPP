@@ -8,8 +8,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 namespace impl {
 
 template <specfem::dimension::type DimensionTag,
@@ -33,13 +32,13 @@ public:
 
   boundary_medium_container(const int nspec, const int nz, const int nx,
                             const int nstep)
-      : values("specfem::compute::impl::stacey_values", nspec, nz, nx, nstep),
+      : values("specfem::assembly::impl::stacey_values", nspec, nz, nx, nstep),
         h_values(Kokkos::create_mirror_view(values)) {}
 
   boundary_medium_container(
-      const int nstep, const specfem::compute::mesh mesh,
-      const specfem::compute::element_types element_types,
-      const specfem::compute::boundaries boundaries,
+      const int nstep, const specfem::assembly::mesh mesh,
+      const specfem::assembly::element_types element_types,
+      const specfem::assembly::boundaries boundaries,
       specfem::kokkos::HostView1d<int> property_index_mapping);
 
   template <
@@ -147,5 +146,4 @@ public:
 };
 
 } // namespace impl
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly

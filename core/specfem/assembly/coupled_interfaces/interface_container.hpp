@@ -7,8 +7,7 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 
 /**
  * @brief Information about coupled interfaces between MediumTag1 and MediumTag2
@@ -76,11 +75,11 @@ public:
    */
   interface_container(
       const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::compute::points &points,
-      const specfem::compute::quadrature &quadrature,
-      const specfem::compute::jacobian_matrix &jacobian_matrix,
-      const specfem::compute::element_types &element_types,
-      const specfem::compute::mesh_to_compute_mapping &mapping);
+      const specfem::assembly::points &points,
+      const specfem::assembly::quadrature &quadrature,
+      const specfem::assembly::jacobian_matrix &jacobian_matrix,
+      const specfem::assembly::element_types &element_types,
+      const specfem::assembly::mesh_to_compute_mapping &mapping);
 
   /**
    * @brief Construct interface container from another container where mediums
@@ -193,5 +192,4 @@ public:
    */
   EdgeNormalView get_edge_normal() const { return medium1_edge_normal; }
 };
-} // namespace compute
-} // namespace specfem
+} // namespace specfem::assembly
