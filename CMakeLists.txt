@@ -294,7 +294,7 @@ add_library(
         src/io/mesh/impl/fortran/dim2/read_mesh_database.cpp
         src/io/mesh/impl/fortran/dim2/read_interfaces.cpp
         src/io/mesh/impl/fortran/dim2/read_parameters.cpp
-        src/io/mesh/impl/fortran/dim2/read_footer.cpp
+        src/io/mesh/impl/fortran/dim2/read_adjacency_map.cpp
         # Fortran 3D part
         src/io/mesh/impl/fortran/dim3/mesh.cpp
         src/io/mesh/impl/fortran/dim3/read_parameters.cpp

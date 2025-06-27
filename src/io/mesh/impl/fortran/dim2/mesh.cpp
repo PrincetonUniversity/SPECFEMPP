@@ -3,9 +3,9 @@
 #include "enumerations/interface.hpp"
 #include "io/fortranio/interface.hpp"
 #include "io/interface.hpp"
+#include "io/mesh/impl/fortran/dim2/read_adjacency_map.hpp"
 #include "io/mesh/impl/fortran/dim2/read_boundaries.hpp"
 #include "io/mesh/impl/fortran/dim2/read_elements.hpp"
-#include "io/mesh/impl/fortran/dim2/read_footer.hpp"
 #include "io/mesh/impl/fortran/dim2/read_interfaces.hpp"
 #include "io/mesh/impl/fortran/dim2/read_material_properties.hpp"
 #include "io/mesh/impl/fortran/dim2/read_mesh_database.hpp"
@@ -138,7 +138,8 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
   }
 
   try {
-    specfem::io::mesh::impl::fortran::dim2::read_footer(stream, mesh, mpi);
+    specfem::io::mesh::impl::fortran::dim2::read_adjacency_map(stream, mesh,
+                                                               mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
