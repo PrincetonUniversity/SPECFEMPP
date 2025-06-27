@@ -2,6 +2,7 @@
 
 #include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
+#include "enumerations/macros.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/compute_stress.hpp"
 #include "specfem/point.hpp"
@@ -45,7 +46,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     } else if (wavefield_component == specfem::wavefield::type::pressure) {
       return field.displacement;
     } else {
-      Kokkos::abort("component not supported");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D elastic isotropic P-SV media.");
     }
   }();
 
@@ -117,12 +118,6 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const specfem::wavefield::type wavefield_component,
     WavefieldViewType wavefield) {
 
-  if (wavefield_component == specfem::wavefield::type::pressure) {
-    Kokkos::abort("pressure not supported for SH");
-
-    return;
-  }
-
   const auto &active_field = [&]() {
     if (wavefield_component == specfem::wavefield::type::displacement) {
       return field.displacement;
@@ -130,10 +125,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
       return field.velocity;
     } else if (wavefield_component == specfem::wavefield::type::acceleration) {
       return field.acceleration;
-    } else if (wavefield_component == specfem::wavefield::type::rotation) {
-      return field.displacement;
     } else {
-      Kokkos::abort("component not supported");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D elastic isotropic SH media.");
     }
   }();
 

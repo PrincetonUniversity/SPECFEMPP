@@ -45,7 +45,7 @@
 specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     const specfem::compute::assembly &assembly,
     const specfem::display::format &output_format,
-    const specfem::display::wavefield &component,
+    const specfem::wavefield::type &component,
     const specfem::wavefield::simulation_field &wavefield,
     const int &time_interval, const boost::filesystem::path &output_folder,
     specfem::MPI::MPI *mpi)
@@ -97,7 +97,7 @@ void specfem::periodic_tasks::plot_wavefield::finalize(
 specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     const specfem::compute::assembly &assembly,
     const specfem::display::format &output_format,
-    const specfem::display::wavefield &component,
+    const specfem::wavefield::type &component,
     const specfem::wavefield::simulation_field &wavefield,
     const int &time_interval, const boost::filesystem::path &output_folder,
     specfem::MPI::MPI *mpi)
@@ -114,15 +114,15 @@ double specfem::periodic_tasks::plot_wavefield::sigmoid(double x) {
 // Get wavefield component type from display component
 specfem::wavefield::type
 specfem::periodic_tasks::plot_wavefield::get_wavefield_component() {
-  if (component == specfem::display::wavefield::displacement) {
+  if (component == specfem::wavefield::type::displacement) {
     return specfem::wavefield::type::displacement;
-  } else if (component == specfem::display::wavefield::velocity) {
+  } else if (component == specfem::wavefield::type::velocity) {
     return specfem::wavefield::type::velocity;
-  } else if (component == specfem::display::wavefield::acceleration) {
+  } else if (component == specfem::wavefield::type::acceleration) {
     return specfem::wavefield::type::acceleration;
-  } else if (component == specfem::display::wavefield::pressure) {
+  } else if (component == specfem::wavefield::type::pressure) {
     return specfem::wavefield::type::pressure;
-  } else if (component == specfem::display::wavefield::rotation) {
+  } else if (component == specfem::wavefield::type::rotation) {
     return specfem::wavefield::type::rotation;
   } else {
     throw std::runtime_error("Unsupported component");

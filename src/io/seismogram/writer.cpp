@@ -74,6 +74,20 @@ void specfem::io::seismogram_writer::write(
               "Rotation seismograms are not supported for SH waves");
         }
         break;
+        case specfem::wavefield::type::intrinsic_rotation:
+        if (this->elastic_wave == specfem::enums::elastic_wave::psv) {
+          filename = { this->output_folder + "/" + network_name + "." +
+                       station_name + ".S2.BXT.semir" };
+        } else if (this->elastic_wave == specfem::enums::elastic_wave::sh) {
+          // NEEDS TO BE UPDATED WHEN IMPLEMENTING SH_LV
+          // L should be rotation around x and v rotation around z
+          filename = { this->output_folder + "/" + network_name + "." +
+                           station_name + ".S2.BXV.semir",
+                       this->output_folder + "/" + network_name + "." +
+                           station_name + ".S2.BXL.semir" };
+          throw std::runtime_error(
+              "Intrinsic rotation seismograms are not supported for SH waves");
+        }
       }
 
       const int ncomponents = filename.size();
