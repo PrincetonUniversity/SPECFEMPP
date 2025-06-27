@@ -40,6 +40,7 @@ parameters:
     seismogram-type:
       - displacement
       - rotation
+      - intrinsic_rotation 
     nstep_between_samples: 1
 
   ## Runtime setup
