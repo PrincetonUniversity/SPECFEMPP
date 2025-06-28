@@ -5,6 +5,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <set>
+#include <string>
 
 namespace specfem {
 namespace mesh {
@@ -24,6 +25,7 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
    * change, and some logic is simplified with this counter-clockwise ordering.
    */
   static constexpr int edge_to_index(const specfem::enums::edge::type edge) {
+    assert(edge != specfem::enums::edge::NONE);
     switch (edge) {
     case specfem::enums::edge::RIGHT:
       return 0;
@@ -34,7 +36,8 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
     case specfem::enums::edge::BOTTOM:
       return 3;
     default:
-      return 0; // this should never be called
+      return 0; // this is just to silence the linter; assert ensures this won't
+                // be called.
     }
   }
 
@@ -58,7 +61,7 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
     }
   }
 
-  adjacency_map();
+  adjacency_map(const int nspec = -1);
 
   /**
    * @brief Construct a new adjacency map object from the mesh and the adjacency
@@ -183,6 +186,23 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
    * data was not stored in the database, this will be false.
    */
   bool was_initialized() const { return nspec >= 0; }
+
+  /**
+   * @brief Returns a string representation of an edge as the element index
+   * followed by a character code 'T', 'B', 'L', or 'R' representing the top,
+   * bottom, left, or right (respectively) edge.
+   *
+   * @param ispec - index of the element
+   * @param edge - edge type
+   */
+  static std::string edge_to_string(const int ispec,
+                                    const specfem::enums::edge::type edge);
+
+  /**
+   * @brief Returns a string representation of this adjacency map as a table of
+   * adjacencies.
+   */
+  std::string pretty_adjacency_table();
 
 private:
   int nspec;

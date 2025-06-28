@@ -1,0 +1,14 @@
+C  0T  1B
+C  1T  2B
+C  2T  3B
+C  3T  4B
+C  4R  6L
+C  6R  8L
+C  8R 13L
+C 13B 12T
+C 12B 11T
+C 11B 10T
+C 10B  9T
+C  9L  7R
+C  7L  5R
+C  5L  0R

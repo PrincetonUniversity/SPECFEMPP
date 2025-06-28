@@ -322,13 +322,12 @@ specfem::compute::mesh::mesh(
   this->ngllx = this->quadratures.gll.N;
   this->ngllz = this->quadratures.gll.N;
 
-  this->points = this->assemble(adjacency_map, this->mapping);
+  this->points = this->assemble(adjacency_map);
 }
 
 specfem::compute::points specfem::compute::mesh::assemble(
     const specfem::mesh::adjacency_map::adjacency_map<
-        specfem::dimension::type::dim2> &adjacency_map,
-    specfem::compute::mesh_to_compute_mapping &mapping) {
+        specfem::dimension::type::dim2> &adjacency_map) {
 
   const int ngnod = control_nodes.ngnod;
   const int nspec = control_nodes.nspec;

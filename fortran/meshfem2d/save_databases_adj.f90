@@ -9,11 +9,9 @@ subroutine save_databases_adjacency_map()
 
   implicit none
 
-
-  logical, parameter :: adjmap_footercode = .true.
   integer :: ielem, iadj
+  write(IOUT) write_adjacency_map
   if (write_adjacency_map) then
-    write(IOUT) adjmap_footercode
 
 
     do ielem = 0, nelmnts-1

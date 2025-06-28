@@ -2,3 +2,6 @@ meshes:
   - name: "square-ring"
     description: "a 5-tall 4-wide grid of cells with the center 6 (3x2) removed"
     database: "mortar/test_meshes/square-ring/database.bin"
+    correct-adjacencies: "mortar/test_meshes/square-ring/conforming_adjacencies"
+    correct-corner-groups: "mortar/test_meshes/square-ring/corners"
+    nspec: 14

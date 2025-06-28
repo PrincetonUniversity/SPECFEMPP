@@ -13,105 +13,9 @@
 #include "mesh/dim2/adjacency_map/adjacency_map.hpp"
 #include "mortar/fixture/mortar_fixtures.hpp"
 
+#define TEST_ASSEMBLY_MAPPING_DEFAULT_NGLL (5)
 // TODO: we may want to generalize this test -- it may be useful for a wider
 // range
-void test_assembly_mapping(
-    specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
-        &adjacencies,
-    const int nspec, const int ngll = 5);
-
-void run_test_conforming(std::string databasename) {
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
-
-  auto mesh =
-      specfem::io::read_2d_mesh(databasename, specfem::enums::elastic_wave::psv,
-                                specfem::enums::electromagnetic_wave::te, mpi);
-
-  mpi->cout("Mesh read. Forming adjacency map.");
-  specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
-      &adjacencies = mesh.adjacency_map;
-  if (!adjacencies.was_initialized()) {
-    throw std::runtime_error("Test database does not have adjacencies in "
-                             "footer -- adjacency map not built.");
-  }
-  std::ostringstream msg;
-  msg << "Adjacency map formed. Comparing results...";
-  mpi->cout(msg.str());
-
-  // print out adjacencies
-  msg = std::ostringstream();
-#define COLWIDTH (7)
-#define NUMCOLS (5)
-#define NUM_DIGITS(st) (st < 10 ? 1 : (st < 100 ? 2 : (st < 1000 ? 3 : 4)))
-  char entry[COLWIDTH];
-  const auto print_entry = [&](bool terminate = false) {
-    int stsize;
-    for (stsize = 0; stsize < COLWIDTH && entry[stsize] != '\0'; stsize++) {
-    }
-    int padsize = COLWIDTH - stsize;
-    for (int i = padsize / 2; i > 0; i--) {
-      msg << ' ';
-    }
-    msg.write(entry, stsize);
-    for (int i = padsize - padsize / 2; i > 0; i--) {
-      msg << ' ';
-    }
-    if (terminate) {
-      msg << '\n';
-    } else {
-      msg << '|';
-    }
-  };
-
-  const auto set_entry_from_adj = [&](const int ispec,
-                                      const specfem::enums::edge::type type) {
-    if (adjacencies.has_conforming_adjacency(ispec, type)) {
-      int ispec_adj;
-      specfem::enums::edge::type type_adj;
-      std::tie(ispec_adj, type_adj) =
-          adjacencies.get_conforming_adjacency(ispec, type);
-      int padding_size = NUM_DIGITS(ispec_adj);
-      std::sprintf(
-          entry, "%d%c", ispec_adj,
-          type_adj == specfem::enums::edge::type::TOP
-              ? 'T'
-              : (type_adj == specfem::enums::edge::type::BOTTOM
-                     ? 'B'
-                     : (type_adj == specfem::enums::edge::type::LEFT ? 'L'
-                                                                     : 'R')));
-    } else if (adjacencies.has_boundary(ispec, type)) {
-      std::sprintf(entry, "(bdry)");
-    } else {
-      std::sprintf(entry, "MTR");
-    }
-  };
-  std::sprintf(entry, "ISPEC");
-  print_entry();
-  std::sprintf(entry, "RIGHT");
-  print_entry();
-  std::sprintf(entry, "TOP");
-  print_entry();
-  std::sprintf(entry, "LEFT");
-  print_entry();
-  std::sprintf(entry, "BOTTOM");
-  print_entry(true);
-  for (int i = 0; i < mesh.nspec; i++) {
-    std::sprintf(entry, "%d", i);
-    print_entry();
-    set_entry_from_adj(i, specfem::enums::edge::type::RIGHT);
-    print_entry();
-    set_entry_from_adj(i, specfem::enums::edge::type::TOP);
-    print_entry();
-    set_entry_from_adj(i, specfem::enums::edge::type::LEFT);
-    print_entry();
-    set_entry_from_adj(i, specfem::enums::edge::type::BOTTOM);
-    print_entry(true);
-  }
-  mpi->cout(msg.str());
-
-  test_assembly_mapping(adjacencies, mesh.nspec);
-}
-
 void test_assembly_mapping(
     specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
         &adjacencies,
@@ -141,7 +45,9 @@ void test_assembly_mapping(
       for (int iz = 0; iz < ngll; iz++) {
         int ind = index_mapping(ispec, iz, ix);
 
-        assert(0 <= ind && ind < nglob);
+        ASSERT(0 <= ind && ind < nglob,
+               "Index mapping maps to an out-of-bounds index! (" +
+                   std::to_string(ind) + ")");
         ind_to_nodes[ind].push_back(std::make_tuple(ispec, iz, ix));
       }
     }
@@ -149,7 +55,9 @@ void test_assembly_mapping(
 
   // is each index used?
   for (int iglob = 0; iglob < nglob; iglob++) {
-    assert(!ind_to_nodes[iglob].empty());
+    ASSERT(!ind_to_nodes[iglob].empty(), "Index mapping not surjective. (" +
+                                             std::to_string(iglob) +
+                                             " has no preimage.)");
   }
 
   // (1) passed. Loop again to verify each partition is equivalent
@@ -177,7 +85,10 @@ void test_assembly_mapping(
       } else if (iz == ngll - 1) {
         return specfem::enums::boundaries::type::TOP;
       } else {
-        assert(1 == 0);
+        ASSERT(1 == 0,
+               "Test internally incorrect: local_to_bdry lambda should "
+               "not have been called with internal node indices (ix = " +
+                   std::to_string(ix) + ", iz = " + std::to_string(iz) + ").");
         return specfem::enums::boundaries::type::RIGHT;
       }
     }
@@ -189,7 +100,12 @@ void test_assembly_mapping(
     std::tie(ispec, iz, ix) = nodeset[0];
     if (0 < iz && iz < ngll - 1 && 0 < ix && ix < ngll - 1) {
       // interior. No adjacencies:
-      assert(nodeset.size() == 1);
+      ASSERT(nodeset.size() == 1,
+             "Internal node (ispec = " + std::to_string(ispec) + ", ix = " +
+                 std::to_string(ix) + ", iz = " + std::to_string(iz) +
+                 ") should not share global index (" + std::to_string(iglob) +
+                 "), but shares with " + std::to_string(nodeset.size()) +
+                 " other elements.");
     } else {
       // check sets are "equal" (ix,iz) ~ bdry
       auto adjset = adjacencies.get_all_conforming_adjacencies(
@@ -299,10 +215,88 @@ void test_assembly_mapping(
   // (2) passed!
 }
 
+void run_test_conforming(test_configuration::mesh &mesh_config) {
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+
+  auto mesh = specfem::io::read_2d_mesh(
+      mesh_config.database, specfem::enums::elastic_wave::psv,
+      specfem::enums::electromagnetic_wave::te, mpi);
+
+  mpi->cout("Mesh read. Forming adjacency map.");
+  specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
+      &adjacencies = mesh.adjacency_map;
+  if (!adjacencies.was_initialized()) {
+    throw std::runtime_error("Adjacency map not built.");
+  }
+
+  specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
+      provenance_adjmap = mesh_config.reference_adjacency_map();
+
+  std::ostringstream failmsg;
+  bool fail = false;
+  // compare conforming adjacency maps
+  for (int ispec = 0; ispec < mesh.nspec; ispec++) {
+    for (auto edge : {
+             specfem::enums::edge::type::RIGHT,
+             specfem::enums::edge::type::TOP,
+             specfem::enums::edge::type::LEFT,
+             specfem::enums::edge::type::BOTTOM,
+         }) {
+      bool true_has_adj =
+          provenance_adjmap.has_conforming_adjacency(ispec, edge);
+      if (true_has_adj != adjacencies.has_conforming_adjacency(ispec, edge)) {
+        fail = true;
+        if (true_has_adj) {
+          failmsg << " - Did not find an adjacency along edge "
+                  << adjacencies.edge_to_string(ispec, edge) << "\n"
+                  << "     expected: "
+                  << std::apply(adjacencies.edge_to_string,
+                                provenance_adjmap.get_conforming_adjacency(
+                                    ispec, edge))
+                  << "\n";
+        } else {
+          failmsg << " - Found an adjacency along edge "
+                  << adjacencies.edge_to_string(ispec, edge) << "\n"
+                  << "     (should not be linked)\n";
+        }
+        break;
+      }
+      // agreement on if conforming adjacency exists. Do we have the right one?
+      if (true_has_adj &&
+          (adjacencies.get_conforming_adjacency(ispec, edge) !=
+           provenance_adjmap.get_conforming_adjacency(ispec, edge))) {
+        fail = true;
+        failmsg << " - Incorrect adjacency map along edge "
+                << adjacencies.edge_to_string(ispec, edge) << "\n"
+                << "     expected: "
+                << std::apply(
+                       adjacencies.edge_to_string,
+                       provenance_adjmap.get_conforming_adjacency(ispec, edge))
+                << "\n        found: "
+                << std::apply(adjacencies.edge_to_string,
+                              adjacencies.get_conforming_adjacency(ispec, edge))
+                << "\n";
+        break;
+      }
+    }
+  }
+  if (fail) {
+    FAIL() << "--------------------------------------------------\n"
+           << "\033[0;31m[FAILED]\033[0m Test failed\n"
+           << "               conforming\n"
+           << failmsg.str()
+           << "--------------------------------------------------\n"
+           << std::endl;
+  }
+
+  test_assembly_mapping(adjacencies, mesh.nspec,
+                        TEST_ASSEMBLY_MAPPING_DEFAULT_NGLL);
+}
+
 TEST_F(MESHES, conforming) {
   for (auto mesh : *this) {
     try {
-      run_test_conforming(mesh.database);
+      run_test_conforming(mesh);
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m " << mesh.name << "\n"
                 << "-------------------------------------------------------\n\n"
