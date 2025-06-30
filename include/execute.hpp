@@ -1,4 +1,4 @@
-#include "compute/interface.hpp"
+#include "specfem/compute.hpp"
 // #include "coupled_interface/interface.hpp"
 // #include "domain/interface.hpp"
 #include "io/interface.hpp"

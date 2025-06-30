@@ -1,9 +1,9 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
+#include "specfem/compute.hpp"
 
 namespace specfem {
 namespace kokkos_kernels {

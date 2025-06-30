@@ -1,10 +1,10 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
-#include "compute/interface.hpp"
 #include "io/interface.hpp"
 #include "medium/material.hpp"
 #include "mesh/mesh.hpp"
 #include "source/interface.hpp"
+#include "specfem/compute.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <stdexcept>

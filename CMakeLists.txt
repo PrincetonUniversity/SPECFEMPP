@@ -532,62 +532,62 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
-add_library(
-        compute
-        src/compute/compute_mesh.cpp
-        src/compute/element_types/element_types.cpp
-        src/compute/compute_jacobian_matrix.cpp
-        src/compute/compute_properties.cpp
-        src/compute/compute_kernels.cpp
-        src/compute/compute_sources.cpp
-        src/compute/compute_receivers.cpp
-        src/compute/coupled_interfaces.cpp
-        src/compute/boundaries/impl/acoustic_free_surface.cpp
-        src/compute/boundaries/impl/stacey.cpp
-        src/compute/boundaries/boundaries.cpp
-        src/compute/fields/fields.cpp
-        src/compute/compute_boundary_values.cpp
-        src/compute/assembly/check_jacobian.cpp
-        src/compute/assembly/assembly.cpp
-        src/compute/assembly/compute_wavefield.cpp
-)
+# add_library(
+#         compute
+#         src/compute/compute_mesh.cpp
+#         src/compute/element_types/element_types.cpp
+#         src/compute/compute_jacobian_matrix.cpp
+#         src/compute/compute_properties.cpp
+#         src/compute/compute_kernels.cpp
+#         src/compute/compute_sources.cpp
+#         src/compute/compute_receivers.cpp
+#         src/compute/coupled_interfaces.cpp
+#         src/compute/boundaries/impl/acoustic_free_surface.cpp
+#         src/compute/boundaries/impl/stacey.cpp
+#         src/compute/boundaries/boundaries.cpp
+#         src/compute/fields/fields.cpp
+#         src/compute/compute_boundary_values.cpp
+#         src/compute/assembly/check_jacobian.cpp
+#         src/compute/assembly/assembly.cpp
+#         src/compute/assembly/compute_wavefield.cpp
+# )
 
-target_link_libraries(
-        compute
-        enumerations
-        quadrature
-        mesh
-        # material_class
-        source_class
-        jacobian
-        point
-        edge
-        receiver_class
-        Kokkos::kokkos
-)
+# target_link_libraries(
+#         compute
+#         enumerations
+#         quadrature
+#         mesh
+#         # material_class
+#         source_class
+#         jacobian
+#         point
+#         edge
+#         receiver_class
+#         Kokkos::kokkos
+# )
 
-if (NOT VTK_CXX_BUILD)
-        target_compile_definitions(
-                compute
-                PUBLIC -DNO_VTK
-        )
-else ()
-        target_link_libraries(
-                compute
-                ${VTK_LIBRARIES}
-                )
+# if (NOT VTK_CXX_BUILD)
+#         target_compile_definitions(
+#                 compute
+#                 PUBLIC -DNO_VTK
+#         )
+# else ()
+#         target_link_libraries(
+#                 compute
+#                 ${VTK_LIBRARIES}
+#                 )
 
-        # Only define the __APPLE__ compile definition if it is defined
-        if (__APPLE__)
-        target_compile_definitions(compute PRIVATE __APPLE__)
-        endif(__APPLE__)
-endif()
+#         # Only define the __APPLE__ compile definition if it is defined
+#         if (__APPLE__)
+#         target_compile_definitions(compute PRIVATE __APPLE__)
+#         endif(__APPLE__)
+# endif()
 
-target_include_directories(
-        compute
-        INTERFACE
-        ${HDF5_INCLUDE_DIRS}
-)
+# target_include_directories(
+#         compute
+#         INTERFACE
+#         ${HDF5_INCLUDE_DIRS}
+# )
 
 add_library(coupled_interface
         src/coupled_interface/coupled_interface.cpp

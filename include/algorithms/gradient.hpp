@@ -1,8 +1,8 @@
-#ifndef _ALGORITHMS_GRADIENT_HPP
-#define _ALGORITHMS_GRADIENT_HPP
+#pragma once
 
 #include "execution/for_each_level.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/compute.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -237,5 +237,3 @@ gradient(const ChunkIndexType &chunk_index,
 }
 } // namespace algorithms
 } // namespace specfem
-
-#endif /* _ALGORITHMS_GRADIENT_HPP */

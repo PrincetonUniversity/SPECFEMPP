@@ -1,7 +1,6 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/compare_array.h"
-#include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/interface.hpp"
 #include "io/interface.hpp"
@@ -9,6 +8,7 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
+#include "specfem/compute.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ----- Parse test config ------------- //

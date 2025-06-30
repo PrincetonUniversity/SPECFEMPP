@@ -1,7 +1,6 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
-#include "compute/interface.hpp"
 #include "constants.hpp"
 #include "io/interface.hpp"
 #include "io/seismogram/reader.hpp"
@@ -9,6 +8,7 @@
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "solver/solver.hpp"
+#include "specfem/compute.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 #include <algorithm>

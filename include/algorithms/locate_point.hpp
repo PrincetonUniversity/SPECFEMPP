@@ -1,7 +1,6 @@
-#ifndef _ALGORITHMS_LOCATE_POINT_HPP
-#define _ALGORITHMS_LOCATE_POINT_HPP
+#pragma once
 
-#include "compute/compute_mesh.hpp"
+#include "specfem/compute.hpp"
 #include "specfem/point.hpp"
 
 namespace specfem {
@@ -25,5 +24,3 @@ specfem::point::global_coordinates<specfem::dimension::type::dim2> locate_point(
 
 } // namespace algorithms
 } // namespace specfem
-
-#endif

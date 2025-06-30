@@ -1,5 +1,5 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "compute/assembly/assembly.hpp"
+#include "specfem/compute.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 
