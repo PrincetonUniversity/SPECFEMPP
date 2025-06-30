@@ -9,11 +9,9 @@
 #include "impl/accessor.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace assembly {
+namespace specfem::assembly {
 class mesh_to_compute_mapping;
-}
-} // namespace specfem
+} // namespace specfem::assembly
 
 namespace specfem {
 namespace medium {
