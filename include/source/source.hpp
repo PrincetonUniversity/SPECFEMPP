@@ -11,13 +11,11 @@
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace assembly {
+namespace specfem::assembly {
 class mesh;
 class jacobian_matrix;
 class element_types;
-} // namespace assembly
-} // namespace specfem
+} // namespace specfem::assembly
 
 namespace specfem {
 namespace sources {

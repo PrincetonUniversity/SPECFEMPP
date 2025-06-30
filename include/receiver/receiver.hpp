@@ -8,11 +8,9 @@
 #include "specfem_setup.hpp"
 #include <cmath>
 
-namespace specfem {
-namespace assembly {
+namespace specfem::assembly {
 class mesh;
-}
-} // namespace specfem
+} // namespace specfem::assembly
 
 namespace specfem {
 namespace receivers {
