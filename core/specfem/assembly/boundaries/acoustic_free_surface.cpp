@@ -31,7 +31,6 @@ specfem::assembly::impl::boundaries::acoustic_free_surface::
         const specfem::mesh::acoustic_free_surface<
             specfem::dimension::type::dim2> &acoustic_free_surface,
         const specfem::assembly::mesh_to_compute_mapping &mapping,
-        const specfem::assembly::properties &properties,
         const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
         std::vector<specfem::element::boundary_tag_container>
             &element_boundary_tags) {

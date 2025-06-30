@@ -1,7 +1,7 @@
 #pragma once
 
 #include "source.hpp"
-#include "specfem/assembly_mesh.hpp"
+#include "specfem/assembly.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {

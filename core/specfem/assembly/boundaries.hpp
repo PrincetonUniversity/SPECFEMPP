@@ -70,7 +70,6 @@ public:
              const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
              const specfem::assembly::mesh_to_compute_mapping &mapping,
              const specfem::assembly::quadrature &quadrature,
-             const specfem::assembly::properties &properties,
              const specfem::assembly::jacobian_matrix &jacobian_matrix);
   ///@}
 };

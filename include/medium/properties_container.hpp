@@ -7,8 +7,13 @@
 #include "dim2/poroelastic/isotropic/properties_container.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/accessor.hpp"
-#include "specfem/assembly_mesh.hpp"
 #include <Kokkos_Core.hpp>
+
+namespace specfem {
+namespace assembly {
+class mesh_to_compute_mapping;
+}
+} // namespace specfem
 
 namespace specfem {
 namespace medium {
@@ -30,40 +35,7 @@ struct properties_container
       const int ngllz, const int ngllx,
       const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
       const bool has_gll_model,
-      const specfem::kokkos::HostView1d<int> property_index_mapping)
-      : base_type(elements.extent(0), ngllz, ngllx) {
-
-    const int nelement = elements.extent(0);
-    int count = 0;
-    for (int i = 0; i < nelement; ++i) {
-      const int ispec = elements(i);
-      const int mesh_ispec = mapping.compute_to_mesh(ispec);
-      property_index_mapping(ispec) = count;
-      if (!has_gll_model) {
-        for (int iz = 0; iz < ngllz; ++iz) {
-          for (int ix = 0; ix < ngllx; ++ix) {
-            // Get the material at index from mesh::materials
-            auto material =
-                materials.get_material<base_type::medium_tag,
-                                       base_type::property_tag>(mesh_ispec);
-
-            // Assign the material property to the property container
-            auto point_property = material.get_properties();
-            this->store_host_values(
-                specfem::point::index<base_type::dimension>(count, iz, ix),
-                point_property);
-          }
-        }
-      }
-      count++;
-    }
-
-    if (!has_gll_model) {
-      this->copy_to_device();
-    }
-
-    return;
-  }
+      const specfem::kokkos::HostView1d<int> property_index_mapping);
 
   template <typename PointValues, typename IndexType>
   KOKKOS_FORCEINLINE_FUNCTION void
