@@ -1,7 +1,6 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 // #include "../../utilities/include/compare_array.h"
-#include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
 #include "io/fortranio/interface.hpp"
@@ -11,6 +10,7 @@
 #include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "solver/solver.hpp"
+#include "specfem/compute.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 

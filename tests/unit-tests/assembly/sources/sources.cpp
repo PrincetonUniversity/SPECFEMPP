@@ -1,9 +1,9 @@
-#include "compute/sources/sources.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "algorithms/locate_point.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
+#include "specfem/compute.hpp"
 #include "specfem/point.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>

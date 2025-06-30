@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
+#include "specfem/compute.hpp"
 #include "domain_view.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"

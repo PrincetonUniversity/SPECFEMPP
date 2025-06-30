@@ -1,10 +1,10 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
-#include "compute/interface.hpp"
 #include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
+#include "specfem/compute.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>

@@ -1,7 +1,6 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "../utilities/include/interface.hpp"
-#include "compute/interface.hpp"
 #include "constants.hpp"
 #include "io/interface.hpp"
 #include "kokkos_kernels/domain_kernels.hpp"
@@ -10,6 +9,7 @@
 #include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "source/interface.hpp"
+#include "specfem/compute.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ------------------------------------- //

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "io/writer.hpp"
+#include "specfem/compute.hpp"
 
 namespace specfem {
 namespace io {

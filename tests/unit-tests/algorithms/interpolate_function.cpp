@@ -2,11 +2,11 @@
 #include "MPI_environment.hpp"
 #include "algorithms/interpolate.hpp"
 #include "algorithms/locate_point.hpp"
-#include "compute/compute_mesh.hpp"
 #include "io/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "quadrature/gll/gll.hpp"
+#include "specfem/compute.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
