@@ -6,7 +6,6 @@ specfem::assembly::boundaries::boundaries(
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::mesh_to_compute_mapping &mapping,
     const specfem::assembly::quadrature &quadrature,
-    const specfem::assembly::properties &properties,
     const specfem::assembly::jacobian_matrix &jacobian_matrix)
     : boundary_tags("specfem::assembly::boundaries::boundary_tags", nspec),
       acoustic_free_surface_index_mapping(
@@ -23,8 +22,7 @@ specfem::assembly::boundaries::boundaries(
   this->acoustic_free_surface =
       specfem::assembly::impl::boundaries::acoustic_free_surface(
           nspec, ngllz, ngllx, mesh.boundaries.acoustic_free_surface, mapping,
-          properties, this->h_acoustic_free_surface_index_mapping,
-          boundary_tag);
+          this->h_acoustic_free_surface_index_mapping, boundary_tag);
 
   this->stacey = specfem::assembly::impl::boundaries::stacey(
       nspec, ngllz, ngllx, mesh.boundaries.absorbing_boundary, mapping,

@@ -40,10 +40,10 @@ specfem::assembly::assembly::assembly(
                       this->mesh,
                       mesh.tags,
                       this->element_types };
-  this->boundaries = { this->mesh.nspec,   this->mesh.ngllz,
-                       this->mesh.ngllx,   mesh,
-                       this->mesh.mapping, this->mesh.quadratures,
-                       this->properties,   this->jacobian_matrix };
+  this->boundaries = { this->mesh.nspec,     this->mesh.ngllz,
+                       this->mesh.ngllx,     mesh,
+                       this->mesh.mapping,   this->mesh.quadratures,
+                       this->jacobian_matrix };
   this->coupled_interfaces = { mesh,
                                this->mesh.points,
                                this->mesh.quadratures,
