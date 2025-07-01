@@ -138,6 +138,19 @@ public:
 
     return F;
   }
+
+  KOKKOS_INLINE_FUNCTION
+  bool operator==(const stress &other) const { return T == other.T; };
+
+  std::string print() const {
+    std::ostringstream oss;
+    oss << "Stress Tensor:\n";
+    for (int i = 0; i < components; ++i) {
+      oss << "T(" << i << ", 0) = " << T(i, 0) << ", "
+          << "T(" << i << ", 1) = " << T(i, 1) << "\n";
+    }
+    return oss.str();
+  }
 };
 } // namespace point
 } // namespace specfem
