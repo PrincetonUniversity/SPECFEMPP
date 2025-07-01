@@ -20,7 +20,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::anisotropic>,
     const ChunkIndexType &chunk_index,
-    const specfem::compute::assembly &assembly,
+    const specfem::assembly::assembly &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
     const specfem::wavefield::type wavefield_component,
     WavefieldViewType wavefield) {
@@ -61,7 +61,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           const int ielement = iterator_index.get_policy_index();
           PointPropertyType point_property;
 
-          specfem::compute::load_on_device(index, properties, point_property);
+          specfem::assembly::load_on_device(index, properties, point_property);
 
           // cannot compute pressure for an anisotropic material if c12 or c23
           // are zero
@@ -119,7 +119,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::anisotropic>,
     const ChunkIndexType &chunk_index,
-    const specfem::compute::assembly &assembly,
+    const specfem::assembly::assembly &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
     const specfem::wavefield::type wavefield_component,
     WavefieldViewType wavefield) {

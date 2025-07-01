@@ -188,13 +188,13 @@ target_link_libraries(
 
 add_executable(
   compute_jacobian_matrix_tests
-  compute/jacobian_matrix/compute_jacobian_matrix_tests.cpp
+  assembly_mesh/jacobian_matrix/compute_jacobian_matrix_tests.cpp
 )
 
 target_link_libraries(
   compute_jacobian_matrix_tests
   mesh
-  compute
+  assembly
   quadrature
   mpi_environment
   kokkos_environment
@@ -207,13 +207,13 @@ target_link_libraries(
 
 # add_executable(
 #   compute_elastic_tests
-#   compute/elastic/compute_properties_tests.cpp
+#   assembly_mesh/elastic/compute_properties_tests.cpp
 # )
 
 # target_link_libraries(
 #   compute_elastic_tests
 #   mesh
-#   compute
+#   assembly
 #   quadrature
 #   mpi_environment
 #   kokkos_environment
@@ -226,13 +226,13 @@ target_link_libraries(
 
 # add_executable(
 #   compute_acoustic_tests
-#   compute/acoustic/compute_properties_tests.cpp
+#   assembly_mesh/acoustic/compute_properties_tests.cpp
 # )
 
 # target_link_libraries(
 #   compute_acoustic_tests
 #   mesh
-#   compute
+#   assembly
 #   quadrature
 #   mpi_environment
 #   kokkos_environment
@@ -244,13 +244,13 @@ target_link_libraries(
 
 add_executable(
   compute_tests
-  compute/index/compute_tests.cpp
+  assembly_mesh/index/compute_tests.cpp
 )
 
 target_link_libraries(
   compute_tests
   mesh
-  compute
+  assembly
   quadrature
   mpi_environment
   kokkos_environment
@@ -281,7 +281,7 @@ target_link_libraries(
   reader
   writer
   mesh
-  compute
+  assembly
   quadrature
   mpi_environment
   io
@@ -316,7 +316,7 @@ add_executable(
 target_link_libraries(
   interpolate_function
   mesh
-  compute
+  assembly
   quadrature
   mpi_environment
   kokkos_environment
@@ -387,7 +387,7 @@ target_link_libraries(
 # #   yaml-cpp
 # #   mesh
 # #   quadrature
-# #   compute
+# #   assembly
 # #   source_class
 # #   -lpthread -lm
 # # )
@@ -405,7 +405,7 @@ target_link_libraries(
   yaml-cpp
   kokkos_environment
   mpi_environment
-  compute
+  assembly
   parameter_reader
   compare_arrays
   point
@@ -428,7 +428,7 @@ target_link_libraries(
   yaml-cpp
   kokkos_environment
   mpi_environment
-  compute
+  assembly
   parameter_reader
   compare_arrays
   timescheme
@@ -455,7 +455,7 @@ target_link_libraries(
 #   yaml-cpp
 #   kokkos_environment
 #   mpi_environment
-#   compute
+#   assembly
 #   parameter_reader
 #   writer
 #   periodic_tasks
@@ -477,7 +477,7 @@ target_link_libraries(
 #   yaml-cpp
 #   kokkos_environment
 #   mpi_environment
-#   compute
+#   assembly
 #   parameter_reader
 #   writer
 #   periodic_tasks
@@ -489,7 +489,7 @@ target_link_libraries(
 
 # add_executable(
 #   compute_coupled_interfaces_tests
-#   compute/coupled_interfaces/coupled_interfaces_tests.cpp
+#   assembly_mesh/coupled_interfaces/coupled_interfaces_tests.cpp
 # )
 
 # target_link_libraries(
@@ -499,7 +499,7 @@ target_link_libraries(
 #   yaml-cpp
 #   kokkos_environment
 #   mpi_environment
-#   compute
+#   assembly
 #   compare_arrays
 #   point
 #   edge

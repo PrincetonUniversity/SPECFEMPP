@@ -2,7 +2,7 @@
 
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace kokkos_kernels {
@@ -20,7 +20,7 @@ namespace impl {
 template <specfem::dimension::type DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-void compute_material_derivatives(const specfem::compute::assembly &assembly,
+void compute_material_derivatives(const specfem::assembly::assembly &assembly,
                                   const type_real &dt);
 } // namespace impl
 

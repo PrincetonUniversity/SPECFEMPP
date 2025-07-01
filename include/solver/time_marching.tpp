@@ -199,7 +199,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     // the wavefields for the adjoint and backward simulations
     // for accurate Frechet derivatives
     if (istep == nstep - 1) {
-      specfem::compute::deep_copy(assembly.fields.backward,
+      specfem::assembly::deep_copy(assembly.fields.backward,
                                   assembly.fields.buffer);
     }
 

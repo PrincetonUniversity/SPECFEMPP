@@ -12,7 +12,7 @@ specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
 
 template <typename IOLibrary>
 void specfem::io::wavefield_reader<IOLibrary>::read(
-    specfem::compute::assembly &assembly, const int istep) {
+    specfem::assembly::assembly &assembly, const int istep) {
   auto &buffer = assembly.fields.buffer;
   auto &boundary_values = assembly.boundary_values;
 

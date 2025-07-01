@@ -5,5 +5,5 @@
 Mesh Assembly Data
 ------------------
 
-.. doxygenstruct:: specfem::compute::points
+.. doxygenstruct:: specfem::assembly::points
     :members:

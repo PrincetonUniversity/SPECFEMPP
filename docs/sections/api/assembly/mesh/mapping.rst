@@ -4,5 +4,5 @@
 Mesh-to-Compute Mapping
 -----------------------
 
-.. doxygenstruct:: specfem::compute::mesh_to_compute_mapping
+.. doxygenstruct:: specfem::assembly::mesh_to_compute_mapping
     :members:

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "parallel_configuration/range_config.hpp"
 #include "execution/range_iterator.hpp"
 #include "execution/for_all.hpp"
@@ -11,7 +11,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
 void specfem::kokkos_kernels::impl::divide_mass_matrix(
-    const specfem::compute::assembly &assembly) {
+    const specfem::assembly::assembly &assembly) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto wavefield = WavefieldType;
@@ -43,9 +43,9 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
       "specfem::kokkos_kernels::divide_mass_matrix", range,
       KOKKOS_LAMBDA(const IndexType &index) {
         LoadFieldType load_field;
-        specfem::compute::load_on_device(index, field, load_field);
+        specfem::assembly::load_on_device(index, field, load_field);
         StoreFieldType store_field(load_field.divide_mass_matrix());
-        specfem::compute::store_on_device(index, store_field, field);
+        specfem::assembly::store_on_device(index, store_field, field);
       });
 
   // Kokkos::fence();

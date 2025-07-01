@@ -26,7 +26,7 @@ public:
    * @brief Check for keyboard interrupt and more, when running from Python
    *
    */
-  void run(specfem::compute::assembly &assembly, const int istep) override {
+  void run(specfem::assembly::assembly &assembly, const int istep) override {
     std::cout << "Writing wavefield files:" << std::endl;
     std::cout << "-------------------------------" << std::endl;
     writer.write(assembly, istep);
@@ -35,7 +35,7 @@ public:
   /**
    * @brief Write coordinates of wavefield data to disk.
    */
-  void initialize(specfem::compute::assembly &assembly) override {
+  void initialize(specfem::assembly::assembly &assembly) override {
     std::cout << "Writing coordinate files:" << std::endl;
     std::cout << "-------------------------------" << std::endl;
     writer.write(assembly);

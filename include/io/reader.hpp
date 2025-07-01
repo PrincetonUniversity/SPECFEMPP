@@ -1,10 +1,8 @@
 #pragma once
 
-namespace specfem {
-namespace compute {
+namespace specfem::assembly {
 class assembly;
 }
-} // namespace specfem
 
 namespace specfem {
 namespace io {
@@ -20,7 +18,7 @@ public:
    * @param assembly Assembly object
    *
    */
-  virtual void read(specfem::compute::assembly &assembly) = 0;
+  virtual void read(specfem::assembly::assembly &assembly) = 0;
 };
 } // namespace io
 } // namespace specfem

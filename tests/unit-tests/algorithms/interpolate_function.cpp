@@ -6,7 +6,7 @@
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "quadrature/gll/gll.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -33,7 +33,7 @@ TEST(ALGORITHMS, interpolate_function) {
   specfem::quadrature::quadratures quadratures(gll);
 
   // Assemble
-  specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes, quadratures);
+  specfem::assembly::mesh assembly(mesh.tags, mesh.control_nodes, quadratures);
 
   const auto xi = assembly.quadratures.gll.h_xi;
   const auto gamma = assembly.quadratures.gll.h_xi;

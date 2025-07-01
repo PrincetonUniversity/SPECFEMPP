@@ -8,7 +8,7 @@
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "solver/solver.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 #include <algorithm>
@@ -165,7 +165,7 @@ TEST_P(Newmark, Test) {
 
   const int max_sig_step = it->get_max_seismogram_step();
 
-  specfem::compute::assembly assembly(
+  specfem::assembly::assembly assembly(
       mesh, quadratures, sources, receivers, seismogram_types, t0,
       setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
       setup.get_simulation_type(), nullptr);

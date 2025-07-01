@@ -3,7 +3,7 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace kokkos_kernels {
@@ -26,7 +26,7 @@ namespace impl {
 template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
-void divide_mass_matrix(const specfem::compute::assembly &assembly);
+void divide_mass_matrix(const specfem::assembly::assembly &assembly);
 } // namespace impl
 
 } // namespace kokkos_kernels

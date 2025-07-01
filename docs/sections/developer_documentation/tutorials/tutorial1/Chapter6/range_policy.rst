@@ -14,7 +14,7 @@ Range policy is used to iterator over the entire range of quadrature points in t
     using namespace specfem::policy;
     using namespace specfem::parallel_config;
     using namespace specfem::point;
-    using namespace specfem::compute;
+    using namespace specfem::assembly;
     using namespace Kokkos;
     using namespace specfem::datatype;
 
