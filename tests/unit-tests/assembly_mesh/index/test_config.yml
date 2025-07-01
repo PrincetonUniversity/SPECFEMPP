@@ -1,0 +1,7 @@
+SerialTest:
+  config:
+    nproc : 1
+  database:
+    - processor : 0
+      database_file : "assembly_mesh/index/serial/Database00000.bin"
+      ibool_file : "assembly_mesh/index/serial/ibool_00000.bin"

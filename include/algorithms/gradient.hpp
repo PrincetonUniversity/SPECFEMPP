@@ -1,8 +1,8 @@
-#ifndef _ALGORITHMS_GRADIENT_HPP
-#define _ALGORITHMS_GRADIENT_HPP
+#pragma once
 
 #include "execution/for_each_level.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -38,7 +38,7 @@ template <typename ChunkIndexType, typename ViewType, typename QuadratureType,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 gradient(const ChunkIndexType &chunk_index,
-         const specfem::compute::jacobian_matrix &jacobian_matrix,
+         const specfem::assembly::jacobian_matrix &jacobian_matrix,
          const QuadratureType &quadrature, const ViewType &f,
          const CallbackFunctor &callback) {
   constexpr int components = ViewType::components;
@@ -91,8 +91,8 @@ gradient(const ChunkIndexType &chunk_index,
                                         using_simd>
             point_jacobian_matrix;
 
-        specfem::compute::load_on_device(point_index, jacobian_matrix,
-                                         point_jacobian_matrix);
+        specfem::assembly::load_on_device(point_index, jacobian_matrix,
+                                          point_jacobian_matrix);
         TensorPointViewType df;
         for (int icomponent = 0; icomponent < components; ++icomponent) {
           df(icomponent, 0) =
@@ -137,7 +137,7 @@ template <typename ChunkIndexType, typename ViewType, typename QuadratureType,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 gradient(const ChunkIndexType &chunk_index,
-         const specfem::compute::jacobian_matrix &jacobian_matrix,
+         const specfem::assembly::jacobian_matrix &jacobian_matrix,
          const QuadratureType &quadrature, const ViewType &f, const ViewType &g,
          const CallbackFunctor &callback) {
   constexpr int components = ViewType::components;
@@ -191,8 +191,8 @@ gradient(const ChunkIndexType &chunk_index,
                                         using_simd>
             point_jacobian_matrix;
 
-        specfem::compute::load_on_device(point_index, jacobian_matrix,
-                                         point_jacobian_matrix);
+        specfem::assembly::load_on_device(point_index, jacobian_matrix,
+                                          point_jacobian_matrix);
 
         TensorPointViewType df;
 
@@ -237,5 +237,3 @@ gradient(const ChunkIndexType &chunk_index,
 }
 } // namespace algorithms
 } // namespace specfem
-
-#endif /* _ALGORITHMS_GRADIENT_HPP */

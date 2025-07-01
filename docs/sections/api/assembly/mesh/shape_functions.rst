@@ -4,5 +4,5 @@
 Shape Functions
 ---------------
 
-.. doxygenstruct:: specfem::compute::shape_functions
+.. doxygenstruct:: specfem::assembly::shape_functions
     :members:

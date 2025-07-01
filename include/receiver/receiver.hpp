@@ -1,7 +1,5 @@
-#ifndef _RECEIVER_HPP
-#define _RECEIVER_HPP
+#pragma once
 
-#include "compute/compute_mesh.hpp"
 #include "constants.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
@@ -9,6 +7,10 @@
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <cmath>
+
+namespace specfem::assembly {
+class mesh;
+} // namespace specfem::assembly
 
 namespace specfem {
 namespace receivers {
@@ -41,7 +43,7 @@ public:
    * @param receiver_array view to store the source array
    */
   void
-  compute_receiver_array(const specfem::compute::mesh &mesh,
+  compute_receiver_array(const specfem::assembly::mesh &mesh,
                          specfem::kokkos::HostView3d<type_real> receiver_array);
   /**
    * @brief Get the name of network where this station lies
@@ -76,5 +78,3 @@ private:
 } // namespace receivers
 
 } // namespace specfem
-
-#endif

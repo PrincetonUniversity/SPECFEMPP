@@ -21,7 +21,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::isotropic>,
     const ChunkIndexType &chunk_index,
-    const specfem::compute::assembly &assembly,
+    const specfem::assembly::assembly &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
     const specfem::wavefield::type wavefield_type,
     WavefieldViewType wavefield) {
@@ -62,7 +62,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           const int ielement = iterator_index.get_policy_index();
           PointPropertyType point_property;
 
-          specfem::compute::load_on_device(index, properties, point_property);
+          specfem::assembly::load_on_device(index, properties, point_property);
 
           // Fluid pressure
           // sigmap = -pf = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl +

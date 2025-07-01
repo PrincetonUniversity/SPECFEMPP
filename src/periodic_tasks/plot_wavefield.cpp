@@ -1,7 +1,7 @@
 #include "periodic_tasks/plot_wavefield.hpp"
-#include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
 #include "periodic_tasks/plotter.hpp"
+#include "specfem/assembly.hpp"
 #include "utilities/strings.hpp"
 
 #ifdef NO_VTK
@@ -43,7 +43,7 @@
 
 // Add this constructor implementation for NO_VTK builds
 specfem::periodic_tasks::plot_wavefield::plot_wavefield(
-    const specfem::compute::assembly &assembly,
+    const specfem::assembly::assembly &assembly,
     const specfem::display::format &output_format,
     const specfem::wavefield::type &wavefield_type,
     const specfem::wavefield::simulation_field &wavefield,
@@ -62,7 +62,7 @@ specfem::periodic_tasks::plot_wavefield::plot_wavefield(
 }
 
 void specfem::periodic_tasks::plot_wavefield::run(
-    specfem::compute::assembly &assembly, const int istep) {
+    specfem::assembly::assembly &assembly, const int istep) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -72,7 +72,7 @@ void specfem::periodic_tasks::plot_wavefield::run(
 }
 
 void specfem::periodic_tasks::plot_wavefield::initialize(
-    specfem::compute::assembly &assembly) {
+    specfem::assembly::assembly &assembly) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -82,7 +82,7 @@ void specfem::periodic_tasks::plot_wavefield::initialize(
 }
 
 void specfem::periodic_tasks::plot_wavefield::finalize(
-    specfem::compute::assembly &assembly) {
+    specfem::assembly::assembly &assembly) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -95,7 +95,7 @@ void specfem::periodic_tasks::plot_wavefield::finalize(
 
 // Constructor
 specfem::periodic_tasks::plot_wavefield::plot_wavefield(
-    const specfem::compute::assembly &assembly,
+    const specfem::assembly::assembly &assembly,
     const specfem::display::format &output_format,
     const specfem::wavefield::type &wavefield_type,
     const specfem::wavefield::simulation_field &wavefield,
@@ -369,7 +369,7 @@ void specfem::periodic_tasks::plot_wavefield::create_quad_grid() {
 // Compute wavefield scalar values for the grid points
 vtkSmartPointer<vtkFloatArray>
 specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
-    specfem::compute::assembly &assembly) {
+    specfem::assembly::assembly &assembly) {
   const auto wavefield_type = get_wavefield_type();
   const auto &wavefield_data =
       assembly.generate_wavefield_on_entire_grid(wavefield, wavefield_type);
@@ -450,7 +450,7 @@ specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
 }
 
 void specfem::periodic_tasks::plot_wavefield::initialize(
-    specfem::compute::assembly &assembly) {
+    specfem::assembly::assembly &assembly) {
 
   // Create VTK objects that will persist between calls
   colors = vtkSmartPointer<vtkNamedColors>::New();
@@ -548,7 +548,7 @@ void specfem::periodic_tasks::plot_wavefield::initialize(
 }
 
 void specfem::periodic_tasks::plot_wavefield::run(
-    specfem::compute::assembly &assembly, const int istep) {
+    specfem::assembly::assembly &assembly, const int istep) {
 
   // Update the wavefield scalars only
   auto scalars = compute_wavefield_scalars(assembly);
@@ -599,7 +599,7 @@ void specfem::periodic_tasks::plot_wavefield::run(
 }
 
 void specfem::periodic_tasks::plot_wavefield::finalize(
-    specfem::compute::assembly &assembly) {
+    specfem::assembly::assembly &assembly) {
   // If interactive, start the event loop if it hasn't been started
   if (output_format == specfem::display::format::on_screen &&
       render_window_interactor) {

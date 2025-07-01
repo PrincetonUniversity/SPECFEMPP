@@ -1,5 +1,4 @@
-#ifndef _ALGORITHMS_DOT_HPP
-#define _ALGORITHMS_DOT_HPP
+#pragma once
 
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
@@ -31,5 +30,3 @@ dot(const VectorPointViewType &a, const VectorPointViewType &b) {
 
 } // namespace algorithms
 } // namespace specfem
-
-#endif /* _ALGORITHMS_DOT_HPP */

@@ -4,7 +4,7 @@
 Receivers
 =========
 
-.. doxygenstruct:: specfem::compute::receivers
+.. doxygenstruct:: specfem::assembly::receivers
     :members:
 
 Data Access Functions

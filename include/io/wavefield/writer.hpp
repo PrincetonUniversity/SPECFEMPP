@@ -1,7 +1,7 @@
 #pragma once
 
-#include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace io {
@@ -35,9 +35,9 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void write(specfem::compute::assembly &assembly);
+  void write(specfem::assembly::assembly &assembly);
 
-  void write(specfem::compute::assembly &assembly, const int istep);
+  void write(specfem::assembly::assembly &assembly, const int istep);
 
 private:
   std::string output_folder; ///< Path to output folder
