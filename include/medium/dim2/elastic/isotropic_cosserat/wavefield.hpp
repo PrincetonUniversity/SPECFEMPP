@@ -124,7 +124,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         });
 
     return;
-  } if (wavefield_type == specfem::wavefield::type::intrinsic_rotation) {
+  } else if (wavefield_type == specfem::wavefield::type::intrinsic_rotation) {
 
     specfem::algorithms::gradient(
         chunk_index, assembly.jacobian_matrix, quadrature.hprime_gll,
@@ -136,7 +136,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           const int ielement = iterator_index.get_policy_index();
           PointPropertyType point_property;
 
-          specfem::compute::load_on_device(index, properties, point_property);
+          specfem::assembly::load_on_device(index, properties, point_property);
 
           // Here we compute the intrinsic rotation wavefield from the
           // rotation field and the curl of the displacement field.
