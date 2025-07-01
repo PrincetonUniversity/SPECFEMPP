@@ -1,8 +1,8 @@
 #pragma once
 
-#include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "io/reader.hpp"
+#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace io {
@@ -32,11 +32,11 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void read(specfem::compute::assembly &assembly) override;
+  void read(specfem::assembly::assembly &assembly) override;
 
 private:
-  std::string input_folder;                ///< Path to output folder
-  specfem::compute::properties properties; ///< Properties object
+  std::string input_folder;                 ///< Path to output folder
+  specfem::assembly::properties properties; ///< Properties object
 };
 } // namespace io
 } // namespace specfem

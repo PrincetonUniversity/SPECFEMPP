@@ -1,5 +1,4 @@
-#ifndef _ALGORITHMS_INTERPOLATE_HPP
-#define _ALGORITHMS_INTERPOLATE_HPP
+#pragma once
 
 #include "datatypes/point_view.hpp"
 #include "execution/for_each_level.hpp"
@@ -239,5 +238,3 @@ KOKKOS_FUNCTION void interpolate_function(const ChunkIndex &chunk_index,
 
 } // namespace algorithms
 } // namespace specfem
-
-#endif

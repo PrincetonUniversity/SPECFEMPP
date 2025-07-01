@@ -22,7 +22,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         specfem::element::property_tag,
         specfem::element::property_tag::isotropic_cosserat>,
     const ChunkIndexType &chunk_index,
-    const specfem::compute::assembly &assembly,
+    const specfem::assembly::assembly &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
     const specfem::wavefield::type wavefield_type,
     WavefieldViewType wavefield) {
@@ -70,7 +70,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           const int ielement = iterator_index.get_policy_index();
           PointPropertyType point_property;
 
-          specfem::compute::load_on_device(index, properties, point_property);
+          specfem::assembly::load_on_device(index, properties, point_property);
 
           /*
            * Here we compute the pressure wavefield from the elastic field:
@@ -126,6 +126,35 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         });
 
     return;
+  } else if (wavefield_type == specfem::wavefield::type::rotation) {
+    specfem::execution::for_each_level(
+        chunk_index.get_iterator(),
+        [&](const typename ChunkIndexType::iterator_type::index_type
+                &iterator_index) {
+          const auto index = iterator_index.get_index();
+          const int ielement = iterator_index.get_policy_index();
+
+          // The rotational component of the
+          wavefield(ielement, index.iz, index.ix, 0) =
+              active_field(ielement, index.iz, index.ix, 2);
+        });
+    return;
+
+  } else if (wavefield_type == specfem::wavefield::type::curl) {
+    specfem::algorithms::gradient(
+        chunk_index, assembly.jacobian_matrix, quadrature.hprime_gll,
+        active_field,
+        [&](const typename ChunkIndexType::iterator_type::index_type
+                &iterator_index,
+            const FieldDerivativesType::value_type &du) {
+          const auto index = iterator_index.get_index();
+          const int ielement = iterator_index.get_policy_index();
+
+          // Here we compute the curl of the displacement field.
+          wavefield(ielement, index.iz, index.ix, 0) = du(0, 1) - du(1, 0);
+        });
+
+    return;
   } else if (wavefield_type == specfem::wavefield::type::intrinsic_rotation) {
     specfem::algorithms::gradient(
         chunk_index, assembly.jacobian_matrix, quadrature.hprime_gll,
@@ -144,36 +173,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         });
 
     return;
-  } else if (wavefield_type == specfem::wavefield::type::curl) {
-    specfem::algorithms::gradient(
-        chunk_index, assembly.jacobian_matrix, quadrature.hprime_gll,
-        active_field,
-        [&](const typename ChunkIndexType::iterator_type::index_type
-                &iterator_index,
-            const FieldDerivativesType::value_type &du) {
-          const auto index = iterator_index.get_index();
-          const int ielement = iterator_index.get_policy_index();
-
-          // Here we compute the curl of the displacement field.
-          wavefield(ielement, index.iz, index.ix, 0) = du(0, 1) - du(1, 0);
-        });
-
-    return;
-  }
-  else if (wavefield_type == specfem::wavefield::type::rotation) {
-    specfem::execution::for_each_level(
-        chunk_index.get_iterator(),
-        [&](const typename ChunkIndexType::iterator_type::index_type
-                &iterator_index) {
-          const auto index = iterator_index.get_index();
-          const int ielement = iterator_index.get_policy_index();
-
-          // The rotational component of the
-          wavefield(ielement, index.iz, index.ix, 0) =
-              active_field(ielement, index.iz, index.ix, 2);
-        });
-    return;
-  }
+  } 
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),

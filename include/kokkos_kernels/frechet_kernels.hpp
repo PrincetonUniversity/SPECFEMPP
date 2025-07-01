@@ -1,11 +1,11 @@
 #ifndef _SPECFEM_KERNELS_FRECHET_KERNELS_HPP
 #define _SPECFEM_KERNELS_FRECHET_KERNELS_HPP
 
-#include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/compute_material_derivatives.hpp"
+#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace kokkos_kernels {
@@ -26,7 +26,7 @@ public:
    *
    * @param assembly Assembly object.
    */
-  frechet_kernels(const specfem::compute::assembly &assembly)
+  frechet_kernels(const specfem::assembly::assembly &assembly)
       : assembly(assembly) {}
 
   /**
@@ -49,7 +49,7 @@ public:
   }
 
 private:
-  specfem::compute::assembly assembly; ///< Assembly object.
+  specfem::assembly::assembly assembly; ///< Assembly object.
 };
 } // namespace kokkos_kernels
 } // namespace specfem

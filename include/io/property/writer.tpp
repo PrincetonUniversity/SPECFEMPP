@@ -11,7 +11,7 @@ property_writer<OutputLibrary>::property_writer(const std::string output_folder)
     : output_folder(output_folder) {}
 
 template <typename OutputLibrary>
-void property_writer<OutputLibrary>::write(specfem::compute::assembly &assembly) {
+void property_writer<OutputLibrary>::write(specfem::assembly::assembly &assembly) {
   impl::write_container<OutputLibrary>(output_folder, "Properties", assembly.mesh, assembly.element_types, assembly.properties);
 }
 

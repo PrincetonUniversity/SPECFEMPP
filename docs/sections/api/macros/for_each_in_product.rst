@@ -51,7 +51,7 @@ Used to explicitly instantiate templates for all combinations of the specified t
             (template void specfem::kokkos_kernels::impl::compute_mass_matrix,
             (_DIMENSION_TAG_, specfem::wavefield::simulation_field::forward, 5,
             _MEDIUM_TAG_, _PROPERTY_TAG_, _BOUNDARY_TAG_),
-            (const type_real &, const specfem::compute::assembly &);)))
+            (const type_real &, const specfem::assembly::assembly &);)))
 
 This expands to template instantiations for each combination of the specified tags. The placeholders ``_DIMENSION_TAG_``, ``_MEDIUM_TAG_``, etc. are substituted with the actual tags defined in the first argument.
 

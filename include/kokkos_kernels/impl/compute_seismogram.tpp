@@ -2,7 +2,7 @@
 
 #include "algorithms/interpolate.hpp"
 #include "chunk_element/field.hpp"
-#include "compute/assembly/assembly.hpp"
+#include "specfem/assembly.hpp"
 #include "compute_seismogram.hpp"
 #include "datatypes/simd.hpp"
 #include "element/quadrature.hpp"
@@ -21,7 +21,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void specfem::kokkos_kernels::impl::compute_seismograms(
-    specfem::compute::assembly &assembly, const int &isig_step) {
+    specfem::assembly::assembly &assembly, const int &isig_step) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -111,17 +111,17 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
           ViewType lagrange_interpolant(team.team_scratch(0));
           ResultsViewType seismogram_components(team.team_scratch(0));
 
-          specfem::compute::load_on_device(team, quadrature,
+          specfem::assembly::load_on_device(team, quadrature,
                                            element_quadrature);
 
-          specfem::compute::load_on_device(chunk_index, field, element_field);
+          specfem::assembly::load_on_device(chunk_index, field, element_field);
           team.team_barrier();
 
           specfem::medium::compute_wavefield<medium_tag, property_tag>(
               chunk_index, assembly, element_quadrature, element_field,
               wavefield_type, wavefield);
 
-          specfem::compute::load_on_device(chunk_index, receivers,
+          specfem::assembly::load_on_device(chunk_index, receivers,
                                            lagrange_interpolant);
 
           team.team_barrier();
@@ -130,7 +130,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
               chunk_index, lagrange_interpolant, wavefield,
               seismogram_components);
           team.team_barrier();
-          specfem::compute::store_on_device(chunk_index, seismogram_components,
+          specfem::assembly::store_on_device(chunk_index, seismogram_components,
                                             receivers);
         });
   }

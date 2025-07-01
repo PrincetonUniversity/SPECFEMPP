@@ -1,9 +1,9 @@
-#include "compute/sources/sources.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "algorithms/locate_point.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
@@ -13,9 +13,9 @@ template <specfem::dimension::type Dimension,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::wavefield::simulation_field WavefieldType>
-void check_store(specfem::compute::assembly &assembly) {
+void check_store(specfem::assembly::assembly &assembly) {
 
-  specfem::compute::sources &sources = assembly.sources;
+  specfem::assembly::sources &sources = assembly.sources;
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
@@ -74,8 +74,8 @@ void check_store(specfem::compute::assembly &assembly) {
           lagrange_interpolant(ic) = values_to_store(i);
         }
         PointSourceType point(stf, lagrange_interpolant);
-        specfem::compute::store_on_device(mapped_iterator_index, point,
-                                          sources);
+        specfem::assembly::store_on_device(mapped_iterator_index, point,
+                                           sources);
       });
 
   Kokkos::fence();
@@ -86,9 +86,9 @@ template <specfem::dimension::type Dimension,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::wavefield::simulation_field WavefieldType>
-void check_load(specfem::compute::assembly &assembly) {
+void check_load(specfem::assembly::assembly &assembly) {
 
-  specfem::compute::sources &sources = assembly.sources;
+  specfem::assembly::sources &sources = assembly.sources;
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
@@ -142,7 +142,8 @@ void check_load(specfem::compute::assembly &assembly) {
             mapped_chunk_index_type(index, isource);
 
         PointSourceType point;
-        specfem::compute::load_on_device(mapped_iterator_index, sources, point);
+        specfem::assembly::load_on_device(mapped_iterator_index, sources,
+                                          point);
 
         point_sources(iz, ix, i) = point;
       });
@@ -192,7 +193,7 @@ template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag>
 void check_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    specfem::compute::assembly &assembly) {
+    specfem::assembly::assembly &assembly) {
 
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
@@ -234,8 +235,8 @@ void check_assembly_source_construction(
         const auto mapped_iterator_index =
             mapped_chunk_index_type(index, isource);
         PointSourceType point;
-        specfem::compute::load_on_host(mapped_iterator_index, assembly.sources,
-                                       point);
+        specfem::assembly::load_on_host(mapped_iterator_index, assembly.sources,
+                                        point);
 
         for (int ic = 0; ic < components; ic++) {
           const auto lagrange_interpolant = point.lagrange_interpolant(ic);
@@ -275,7 +276,7 @@ void check_assembly_source_construction(
 
 void test_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    specfem::compute::assembly &assembly) {
+    specfem::assembly::assembly &assembly) {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
@@ -285,7 +286,7 @@ void test_assembly_source_construction(
       })
 }
 
-void test_sources(specfem::compute::assembly &assembly){ FOR_EACH_IN_PRODUCT(
+void test_sources(specfem::assembly::assembly &assembly){ FOR_EACH_IN_PRODUCT(
     (DIMENSION_TAG(DIM2),
      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
      PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
@@ -302,7 +303,7 @@ TEST_F(ASSEMBLY, sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     auto sources = std::get<2>(parameters);
-    specfem::compute::assembly assembly = std::get<5>(parameters);
+    specfem::assembly::assembly assembly = std::get<5>(parameters);
 
     try {
       test_assembly_source_construction(sources, assembly);
