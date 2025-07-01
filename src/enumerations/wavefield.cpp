@@ -1,6 +1,5 @@
 #include "enumerations/wavefield.hpp"
 
-
 const std::string specfem::wavefield::to_string(
     const specfem::wavefield::type &wavefield_component) {
 

@@ -43,8 +43,8 @@ specfem::runtime_configuration::receivers::get_seismogram_types() const {
     } else {
       std::ostringstream message;
 
-      message << "Error reading specfem receiver configuration. ("
-              << __FILE__ << ":" << __LINE__ << ")\n";
+      message << "Error reading specfem receiver configuration. (" << __FILE__
+              << ":" << __LINE__ << ")\n";
       message << "Unknown seismogram type: "
               << seismogram_type.as<std::string>() << "\n";
 

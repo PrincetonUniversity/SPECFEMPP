@@ -130,10 +130,9 @@ specfem::periodic_tasks::plot_wavefield::get_wavefield_type() {
     return specfem::wavefield::type::curl;
   } else {
     std::ostringstream message;
-    message << "Unsupported wavefield type for display. " 
+    message << "Unsupported wavefield type for display. "
             << specfem::wavefield::to_string(wavefield_type)
-            << " is not supported: " 
-            << __FILE__ << ":" << __LINE__;
+            << " is not supported: " << __FILE__ << ":" << __LINE__;
     throw std::runtime_error(message.str());
   }
 }
@@ -396,8 +395,9 @@ specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
 
             // Insert scalar value
             if (wavefield_type == specfem::wavefield::type::pressure ||
-                wavefield_type == specfem::wavefield::type::rotation  ||
-                wavefield_type == specfem::wavefield::type::intrinsic_rotation || 
+                wavefield_type == specfem::wavefield::type::rotation ||
+                wavefield_type ==
+                    specfem::wavefield::type::intrinsic_rotation ||
                 wavefield_type == specfem::wavefield::type::curl) {
               scalars->InsertNextValue(
                   std::abs(wavefield_data(ispec, iz_pos, ix_pos, 0)));
@@ -438,7 +438,7 @@ specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
     for (int icell = 0; icell < nspec; ++icell) {
       for (int i = 0; i < cell_points; ++i) {
         if (wavefield_type == specfem::wavefield::type::pressure ||
-            wavefield_type == specfem::wavefield::type::rotation || 
+            wavefield_type == specfem::wavefield::type::rotation ||
             wavefield_type == specfem::wavefield::type::intrinsic_rotation ||
             wavefield_type == specfem::wavefield::type::curl) {
           scalars->InsertNextValue(

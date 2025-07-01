@@ -46,7 +46,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     } else if (wavefield_type == specfem::wavefield::type::pressure) {
       return field.displacement;
     } else {
-      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D elastic isotropic P-SV media.");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D "
+                                 "elastic isotropic P-SV media.");
     }
   }();
 
@@ -121,7 +122,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   using FieldDerivativesType = specfem::point::field_derivatives<
       specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sh,
       false>;
-  
+
   const auto &active_field = [&]() {
     if (wavefield_type == specfem::wavefield::type::displacement) {
       return field.displacement;
@@ -130,7 +131,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     } else if (wavefield_type == specfem::wavefield::type::acceleration) {
       return field.acceleration;
     } else {
-      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D elastic isotropic SH media.");
+      KOKKOS_ABORT_WITH_LOCATION(
+          "Unsupported wavefield component for 2D elastic isotropic SH media.");
     }
   }();
 

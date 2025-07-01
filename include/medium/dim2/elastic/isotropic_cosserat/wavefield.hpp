@@ -2,8 +2,8 @@
 
 #include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
-#include "enumerations/medium.hpp"
 #include "enumerations/macros.hpp"
+#include "enumerations/medium.hpp"
 #include "medium/compute_stress.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -54,7 +54,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     } else if (wavefield_type == specfem::wavefield::type::curl) {
       return field.displacement;
     } else {
-      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D elastic isotropic Cosserat P-SV-T media");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D "
+                                 "elastic isotropic Cosserat P-SV-T media");
     }
   }();
 
@@ -164,16 +165,16 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
             const FieldDerivativesType::value_type &du) {
           const auto index = iterator_index.get_index();
           const int ielement = iterator_index.get_policy_index();
-    
+
           // Here we compute the intrinsic rotation wavefield from the
           // rotation field and the curl of the displacement field.
-          wavefield(ielement, index.iz, index.ix, 0) = 
-            active_field(ielement, index.iz, index.ix, 2) - 
+          wavefield(ielement, index.iz, index.ix, 0) =
+              active_field(ielement, index.iz, index.ix, 2) -
               static_cast<type_real>(0.5) * (du(0, 1) - du(1, 0));
         });
 
     return;
-  } 
+  }
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
