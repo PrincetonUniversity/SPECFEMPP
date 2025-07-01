@@ -8,12 +8,12 @@ FOR_EACH_IN_PRODUCT(
         (template void specfem::kokkos_kernels::impl::divide_mass_matrix,
          (_DIMENSION_TAG_, specfem::wavefield::simulation_field::forward,
           _MEDIUM_TAG_),
-         (const specfem::compute::assembly &);),
+         (const specfem::assembly::assembly &);),
         (template void specfem::kokkos_kernels::impl::divide_mass_matrix,
          (_DIMENSION_TAG_, specfem::wavefield::simulation_field::backward,
           _MEDIUM_TAG_),
-         (const specfem::compute::assembly &);),
+         (const specfem::assembly::assembly &);),
         (template void specfem::kokkos_kernels::impl::divide_mass_matrix,
          (_DIMENSION_TAG_, specfem::wavefield::simulation_field::adjoint,
           _MEDIUM_TAG_),
-         (const specfem::compute::assembly &);)))
+         (const specfem::assembly::assembly &);)))

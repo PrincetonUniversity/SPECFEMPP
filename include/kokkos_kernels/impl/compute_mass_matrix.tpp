@@ -2,7 +2,7 @@
 
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "boundary_conditions/boundary_conditions.tpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
@@ -21,7 +21,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
 void specfem::kokkos_kernels::impl::compute_mass_matrix(
-    const type_real &dt, const specfem::compute::assembly &assembly) {
+    const type_real &dt, const specfem::assembly::assembly &assembly) {
 
   constexpr auto dimension = DimensionTag;
   constexpr auto wavefield = WavefieldType;
@@ -86,13 +86,13 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
         const auto point_property = [&]() -> PointPropertyType {
           PointPropertyType point_property;
 
-          specfem::compute::load_on_device(index, properties, point_property);
+          specfem::assembly::load_on_device(index, properties, point_property);
           return point_property;
         }();
 
         const auto jacobian = [&]() {
           PointJacobianMatrixType point_jacobian_matrix;
-          specfem::compute::load_on_device(index, jacobian_matrix,
+          specfem::assembly::load_on_device(index, jacobian_matrix,
                                            point_jacobian_matrix);
           return point_jacobian_matrix.jacobian;
         }();
@@ -105,11 +105,11 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
         }
 
         PointBoundaryType point_boundary;
-        specfem::compute::load_on_device(index, boundaries, point_boundary);
+        specfem::assembly::load_on_device(index, boundaries, point_boundary);
 
         specfem::boundary_conditions::compute_mass_matrix_terms(
             dt, point_boundary, point_property, mass_matrix);
 
-        specfem::compute::atomic_add_on_device(index, mass_matrix, field);
+        specfem::assembly::atomic_add_on_device(index, mass_matrix, field);
       });
 }

@@ -14,7 +14,7 @@ Chunk Element Policy is used to iterate over the elements of the mesh. Chunk ele
     using namespace specfem::policy;
     using namespace specfem::parallel_config;
     using namespace specfem::point;
-    using namespace specfem::compute;
+    using namespace specfem::assembly;
     using namespace Kokkos;
     using namespace specfem::datatype;
 

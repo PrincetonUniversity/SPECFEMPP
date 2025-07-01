@@ -2,7 +2,7 @@
 
 #include "datatypes/point_view.hpp"
 #include "execution/for_each_level.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -42,7 +42,7 @@ template <typename ChunkIndexType, typename VectorFieldType,
           std::enable_if_t<(VectorFieldType::isChunkViewType), int> = 0>
 KOKKOS_FUNCTION void
 divergence(const ChunkIndexType &chunk_index,
-           const specfem::compute::jacobian_matrix &jacobian_matrix,
+           const specfem::assembly::jacobian_matrix &jacobian_matrix,
            const WeightsType &weights, const QuadratureType &hprimewgll,
            const VectorFieldType &f, const CallableType &callback) {
 

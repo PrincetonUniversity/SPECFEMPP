@@ -4,7 +4,7 @@
 Mesh Assembly
 =============
 
-.. doxygenstruct:: specfem::compute::mesh
+.. doxygenstruct:: specfem::assembly::mesh
     :members:
 
 Mesh Implemetation

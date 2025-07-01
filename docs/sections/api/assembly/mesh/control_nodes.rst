@@ -4,5 +4,5 @@
 Control Nodes
 -------------
 
-.. doxygenstruct:: specfem::compute::control_nodes
+.. doxygenstruct:: specfem::assembly::control_nodes
     :members:

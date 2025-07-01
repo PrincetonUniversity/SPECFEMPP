@@ -9,7 +9,7 @@
 #include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "source/interface.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/assembly.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ------------------------------------- //
@@ -128,9 +128,9 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     std::vector<specfem::wavefield::type> stypes(0);
 
     // Generate compute structs to be used by the solver
-    specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                        stypes, 0, 0, 0, 0, 1,
-                                        setup.get_simulation_type(), nullptr);
+    specfem::assembly::assembly assembly(mesh, quadratures, sources, receivers,
+                                         stypes, 0, 0, 0, 0, 1,
+                                         setup.get_simulation_type(), nullptr);
 
     try {
 
@@ -200,8 +200,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                       specfem::element::medium_tag::elastic_psv, false, false,
                       false, true, false>
                       point_field;
-                  specfem::compute::load_on_host(index, assembly.fields.forward,
-                                                 point_field);
+                  specfem::assembly::load_on_host(
+                      index, assembly.fields.forward, point_field);
                   return point_field;
                 }();
 
@@ -260,8 +260,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                                         specfem::element::medium_tag::acoustic,
                                         false, false, false, true, false>
                       point_field;
-                  specfem::compute::load_on_host(index, assembly.fields.forward,
-                                                 point_field);
+                  specfem::assembly::load_on_host(
+                      index, assembly.fields.forward, point_field);
                   return point_field;
                 }();
 

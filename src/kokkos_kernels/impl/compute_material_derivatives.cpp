@@ -10,9 +10,9 @@ FOR_EACH_IN_PRODUCT(
         (template void
              specfem::kokkos_kernels::impl::compute_material_derivatives,
          (_DIMENSION_TAG_, 5, _MEDIUM_TAG_, _PROPERTY_TAG_),
-         (const specfem::compute::assembly &, const type_real &);),
+         (const specfem::assembly::assembly &, const type_real &);),
         /** instantiation for NGLL = 8     */
         (template void
              specfem::kokkos_kernels::impl::compute_material_derivatives,
          (_DIMENSION_TAG_, 8, _MEDIUM_TAG_, _PROPERTY_TAG_),
-         (const specfem::compute::assembly &, const type_real &);)))
+         (const specfem::assembly::assembly &, const type_real &);)))
