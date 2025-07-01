@@ -38,13 +38,15 @@ specfem::compute::receivers::receivers(
         seis_type != specfem::wavefield::type::acceleration &&
         seis_type != specfem::wavefield::type::pressure &&
         seis_type != specfem::wavefield::type::rotation &&
-        seis_type != specfem::wavefield::type::intrinsic_rotation) {
+        seis_type != specfem::wavefield::type::intrinsic_rotation &&
+        seis_type != specfem::wavefield::type::curl) {
       std::ostringstream message;
-      message << "Error reading specfem receiver configuration. \n";
+      message << "Error reading specfem receiver configuration.("
+              << __FILE__ << ":" << __LINE__ << ")\n";
       message << "Unknown seismogram type: "
               << specfem::wavefield::to_string(seis_type) << "\n";
       message << "Valid seismogram types are: displacement, velocity, "
-              << "acceleration, pressure, rotation, intrinsic_rotation.\n";
+              << "acceleration, pressure, rotation, intrinsic_rotation, curl.\n";
       message << "Please check your configuration file.\n";
       throw std::runtime_error(message.str());
     }

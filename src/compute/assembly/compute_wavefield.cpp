@@ -49,7 +49,11 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
     } else if (component == specfem::wavefield::type::pressure) {
       return 1;
     } else if (component == specfem::wavefield::type::rotation) {
-      return 1;
+      return 2;
+    } else if (component == specfem::wavefield::type::intrinsic_rotation) {
+      return 2;
+    } else if (component == specfem::wavefield::type::curl) {
+      return 2;
     } else {
       throw std::runtime_error("Wavefield component not supported");
     }
