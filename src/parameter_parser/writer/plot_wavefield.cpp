@@ -93,6 +93,10 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
       return specfem::wavefield::type::pressure;
     } else if (specfem::utilities::is_rotation_string(this->component)) {
       return specfem::wavefield::type::rotation;
+    } else if (specfem::utilities::is_intrinsic_rotation_string(this->component)) {
+      return specfem::wavefield::type::intrinsic_rotation;
+    } else if (specfem::utilities::is_curl_string(this->component)) {
+      return specfem::wavefield::type::curl;
     } else {
       throw std::runtime_error(
           "Unknown wavefield component in the display section");
