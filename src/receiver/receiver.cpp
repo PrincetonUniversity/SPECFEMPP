@@ -1,15 +1,17 @@
+#include "receiver/receiver.hpp"
 #include "algorithms/locate_point.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 
 void specfem::receivers::receiver::compute_receiver_array(
-    const specfem::compute::mesh &mesh,
-    // const specfem::compute::properties &properties,
+    const specfem::assembly::mesh &mesh,
+    // const specfem::assembly::properties &properties,
     specfem::kokkos::HostView3d<type_real> receiver_array) {
 
   specfem::point::global_coordinates<specfem::dimension::type::dim2> gcoord = {

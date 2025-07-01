@@ -1,14 +1,12 @@
 #pragma once
 
-#include "compute/compute_jacobian_matrix.hpp"
-#include "compute/compute_mesh.hpp"
-#include "compute/element_types/element_types.hpp"
 #include "constants.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -88,9 +86,9 @@ public:
   std::string print() const override;
 
   void compute_source_array(
-      const specfem::compute::mesh &mesh,
-      const specfem::compute::jacobian_matrix &jacobian_matrix,
-      const specfem::compute::element_types &element_types,
+      const specfem::assembly::mesh &mesh,
+      const specfem::assembly::jacobian_matrix &jacobian_matrix,
+      const specfem::assembly::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
   specfem::wavefield::simulation_field get_wavefield_type() const override {

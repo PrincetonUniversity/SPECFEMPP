@@ -1,10 +1,7 @@
-#ifndef _SPECFEM_SOURCES_EXTERNAL_HPP_
-#define _SPECFEM_SOURCES_EXTERNAL_HPP_
+#pragma once
 
-#include "compute/compute_jacobian_matrix.hpp"
-#include "compute/compute_mesh.hpp"
-#include "compute/element_types/element_types.hpp"
 #include "source.hpp"
+#include "specfem/assembly.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {
@@ -20,9 +17,9 @@ public:
         specfem::sources::source(Node, nsteps, dt) {};
 
   void compute_source_array(
-      const specfem::compute::mesh &mesh,
-      const specfem::compute::jacobian_matrix &jacobian_matrix,
-      const specfem::compute::element_types &element_types,
+      const specfem::assembly::mesh &mesh,
+      const specfem::assembly::jacobian_matrix &jacobian_matrix,
+      const specfem::assembly::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
   specfem::wavefield::simulation_field get_wavefield_type() const override {
@@ -36,5 +33,3 @@ private:
 };
 } // namespace sources
 } // namespace specfem
-
-#endif /* _SPECFEM_SOURCES_EXTERNAL_HPP_ */

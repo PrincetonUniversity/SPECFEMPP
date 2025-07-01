@@ -1,8 +1,8 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
+#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace coupled_interface {
@@ -95,7 +95,7 @@ public:
    *
    * @param assembly Assembly object containing the mesh information.
    */
-  coupled_interface(const specfem::compute::assembly &assembly);
+  coupled_interface(const specfem::assembly::assembly &assembly);
   ///@}
 
   /**
@@ -106,10 +106,10 @@ public:
 private:
   int nedges;  ///< Number of edges in the interface.
   int npoints; ///< Number of quadrature points in the interface.
-  specfem::compute::interface_container<SelfMedium, CoupledMedium>
+  specfem::assembly::interface_container<SelfMedium, CoupledMedium>
       interface_data; ///< Struct containing the coupling information.
-  specfem::compute::simulation_field<WavefieldType> field; ///< Wavefield
-                                                           ///< object.
+  specfem::assembly::simulation_field<WavefieldType> field; ///< Wavefield
+                                                            ///< object.
 };
 } // namespace coupled_interface
 } // namespace specfem

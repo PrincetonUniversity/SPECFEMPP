@@ -1,9 +1,9 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "compute/assembly/assembly.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 
-void test_check_jacobian(const specfem::compute::assembly &assembly) {
+void test_check_jacobian(const specfem::assembly::assembly &assembly) {
 
   const auto nspec = assembly.mesh.nspec;
 
@@ -14,8 +14,8 @@ void test_check_jacobian(const specfem::compute::assembly &assembly) {
                                         false>
       jacobian_matrix(0, 0, 0, 0, -0.5);
 
-  specfem::compute::store_on_host(index, assembly.jacobian_matrix,
-                                  jacobian_matrix);
+  specfem::assembly::store_on_host(index, assembly.jacobian_matrix,
+                                   jacobian_matrix);
 
   assembly.check_small_jacobian();
 }
@@ -23,7 +23,7 @@ void test_check_jacobian(const specfem::compute::assembly &assembly) {
 TEST_F(ASSEMBLY, CheckJacobian) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    specfem::compute::assembly assembly = std::get<5>(parameters);
+    specfem::assembly::assembly assembly = std::get<5>(parameters);
 
     bool exception_thrown = false;
     try {
