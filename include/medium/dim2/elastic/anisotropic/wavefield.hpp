@@ -130,6 +130,10 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     return;
   }
 
+  using FieldDerivativesType = specfem::point::field_derivatives<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sh,
+      false>;
+
   const auto &active_field = [&]() {
     if (wavefield_type == specfem::wavefield::type::displacement) {
       return field.displacement;

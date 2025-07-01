@@ -24,5 +24,6 @@
  ((pressure, p, pres)) \
  ((rotation, r, rot)) \
  ((intrinsic_rotation, intrinsic_rot, intrinsic_r, intrinsic_rotat)) \
+ ((curl, crl)) \
  ((newmark)) \
  ((onscreen, on-screen, on_screen))

@@ -25,6 +25,9 @@ const std::string specfem::wavefield::to_string(
   case specfem::wavefield::type::intrinsic_rotation:
     component_string = "intrinsic rotation";
     break;
+  case specfem::wavefield::type::curl:
+    component_string = "curl";
+    break;
   default:
     component_string = "undefined";
     break;
