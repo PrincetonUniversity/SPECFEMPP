@@ -1,6 +1,7 @@
 #include "source/adjoint_source.hpp"
 #include "algorithms/locate_point.hpp"
 #include "globals.h"
+#include "specfem/assembly.hpp"
 
 void specfem::sources::adjoint_source::compute_source_array(
     const specfem::assembly::mesh &mesh,
