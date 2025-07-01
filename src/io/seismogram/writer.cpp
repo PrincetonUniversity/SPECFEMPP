@@ -119,8 +119,6 @@ void specfem::io::seismogram_writer::write(
       const int ncomponents = filenames.size();
       std::vector<std::ofstream> seismo_file(ncomponents);
       for (int icomp = 0; icomp < ncomponents; icomp++) {
-        std::cout << "Writing seismogram file: " << filenames[icomp]
-                  << "\n";
         seismo_file[icomp].open(filenames[icomp]);
       }
 
@@ -134,8 +132,6 @@ void specfem::io::seismogram_writer::write(
 
       for (int icomp = 0; icomp < ncomponents; icomp++) {
         seismo_file[icomp].close();
-        std::cout << "Seismogram file written: " << filenames[icomp]
-                  << "\n";
       }
     }
   }
