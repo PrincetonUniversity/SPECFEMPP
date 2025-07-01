@@ -1,6 +1,6 @@
 #include "algorithms/locate_point.hpp"
-#include "compute/compute_mesh.hpp"
 #include "jacobian/interface.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 
 namespace {
@@ -123,7 +123,7 @@ specfem::point::local_coordinates<specfem::dimension::type::dim2>
 specfem::algorithms::locate_point(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
-    const specfem::compute::mesh &mesh) {
+    const specfem::assembly::mesh &mesh) {
 
   const auto global_coordinates = mesh.points.h_coord;
   const auto index_mapping = mesh.points.h_index_mapping;
@@ -188,7 +188,7 @@ specfem::point::global_coordinates<specfem::dimension::type::dim2>
 specfem::algorithms::locate_point(
     const specfem::point::local_coordinates<specfem::dimension::type::dim2>
         &coordinate,
-    const specfem::compute::mesh &mesh) {
+    const specfem::assembly::mesh &mesh) {
 
   const int ispec = coordinate.ispec;
   const type_real xi = coordinate.xi;
@@ -213,7 +213,7 @@ specfem::algorithms::locate_point(
     const specfem::kokkos::HostTeam::member_type &team_member,
     const specfem::point::local_coordinates<specfem::dimension::type::dim2>
         &coordinate,
-    const specfem::compute::mesh &mesh) {
+    const specfem::assembly::mesh &mesh) {
 
   const int ispec = coordinate.ispec;
   const type_real xi = coordinate.xi;

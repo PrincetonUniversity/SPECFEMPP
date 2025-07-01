@@ -46,7 +46,7 @@ template <specfem::element::medium_tag MediumTag,
           typename WavefieldViewType>
 KOKKOS_INLINE_FUNCTION auto
 compute_wavefield(const ChunkIndexType &chunk_index,
-                  const specfem::compute::assembly &assembly,
+                  const specfem::assembly::assembly &assembly,
                   const QuadratureType &quadrature, const ChunkFieldType &field,
                   const specfem::wavefield::type &wavefield_component,
                   WavefieldViewType wavefield_on_entire_grid) {

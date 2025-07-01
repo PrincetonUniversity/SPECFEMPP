@@ -1,11 +1,12 @@
 #include "source/adjoint_source.hpp"
 #include "algorithms/locate_point.hpp"
 #include "globals.h"
+#include "specfem/assembly.hpp"
 
 void specfem::sources::adjoint_source::compute_source_array(
-    const specfem::compute::mesh &mesh,
-    const specfem::compute::jacobian_matrix &jacobian_matrix,
-    const specfem::compute::element_types &element_types,
+    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::jacobian_matrix &jacobian_matrix,
+    const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
