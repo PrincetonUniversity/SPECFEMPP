@@ -272,7 +272,11 @@ TEST_P(Newmark, Test) {
                  << std::endl;
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
           filenames.push_back(Test.traces + "/" + network_name + "." +
-                              station_name + ".S2.BXT.semr");
+                              station_name + ".S2.BXY.semr");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.semr");
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.semr");
         }
         break;
       default:
