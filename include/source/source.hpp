@@ -5,12 +5,17 @@
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
-#include "specfem/assembly_mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
+
+namespace specfem::assembly {
+class mesh;
+class jacobian_matrix;
+class element_types;
+} // namespace specfem::assembly
 
 namespace specfem {
 namespace sources {

@@ -1,5 +1,7 @@
 #include "properties.hpp"
 #include "enumerations/interface.hpp"
+#include "medium/properties_container.hpp"
+#include "medium/properties_container.tpp"
 
 specfem::assembly::properties::properties(
     const int nspec, const int ngllz, const int ngllx,

@@ -5,7 +5,7 @@
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "source_time_function/interface.hpp"
-#include "specfem/assembly_mesh.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"

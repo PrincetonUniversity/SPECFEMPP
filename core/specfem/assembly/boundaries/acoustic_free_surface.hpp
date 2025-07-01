@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mesh/mesh.hpp"
-#include "specfem/assembly//properties.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -40,7 +39,6 @@ public:
       const specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
           &acoustic_free_surface,
       const specfem::assembly::mesh_to_compute_mapping &mapping,
-      const specfem::assembly::properties &properties,
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
       std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
