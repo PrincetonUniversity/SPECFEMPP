@@ -30,7 +30,7 @@ struct coupled_interfaces {
    * @brief Compute coupled interfaces for a given mesh
    *
    * @param mesh Finite element mesh information
-   * @param mesh_assembly Assembly mesh information
+   * @param mesh_assembly Mesh information for assembly
    * @param jacobian_matrix Jacobian matrix for every quadrature point
    * @param properties Material properties for every quadrature point
    */
