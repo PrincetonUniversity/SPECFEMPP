@@ -513,32 +513,30 @@ target_link_libraries(
 # Link to gtest only if MPI is disabled
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
-
-  set(TESTS
-    gll_tests
-    lagrange_tests
-    jacobian_tests
-    fortranio_test
-    io_tests
-    mesh_tests
-    compute_jacobian_matrix_tests
-    # compute_elastic_tests
-    # compute_acoustic_tests
-    # compute_coupled_interfaces_tests
-    point_tests
-    compute_tests
-    assembly_tests
-    policies_tests
-    interpolate_function
-    mass_matrix_tests
-    stress_tests
-    rmass_inverse_tests
-    simd_tests
-    displacement_newmark_tests
+  set(TEST_TARGETS
+      gll_tests
+      lagrange_tests
+      jacobian_tests
+      fortranio_test
+      io_tests
+      mesh_tests
+      compute_jacobian_matrix_tests
+      # compute_elastic_tests
+      # compute_acoustic_tests
+      # compute_coupled_interfaces_tests
+      point_tests
+      compute_tests
+      assembly_tests
+      policies_tests
+      interpolate_function
+      mass_matrix_tests
+      stress_tests
+      rmass_inverse_tests
+      simd_tests
+      displacement_newmark_tests
   )
-
-  foreach(test IN LISTS TESTS)
-    gtest_discover_tests(${test})
+  foreach(test_target IN LISTS TEST_TARGETS)
+      gtest_discover_tests(${test_target})
   endforeach()
 
   # For tests that require data files from the tests directory,
