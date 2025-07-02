@@ -513,26 +513,31 @@ target_link_libraries(
 # Link to gtest only if MPI is disabled
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
-  gtest_discover_tests(gll_tests)
-  gtest_discover_tests(lagrange_tests)
-  gtest_discover_tests(jacobian_tests)
-  gtest_discover_tests(fortranio_test)
-  gtest_discover_tests(io_tests)
-  gtest_discover_tests(mesh_tests)
-  gtest_discover_tests(compute_jacobian_matrix_tests)
-  # gtest_discover_tests(compute_elastic_tests)
-  # # gtest_discover_tests(compute_acoustic_tests)
-  # gtest_discover_tests(compute_coupled_interfaces_tests)
-  gtest_discover_tests(point_tests)
-  gtest_discover_tests(compute_tests)
-  gtest_discover_tests(assembly_tests)
-  gtest_discover_tests(policies_tests)
-  gtest_discover_tests(interpolate_function)
-  gtest_discover_tests(mass_matrix_tests)
-  gtest_discover_tests(stress_tests)
-  gtest_discover_tests(rmass_inverse_tests)
-  gtest_discover_tests(simd_tests)
-  gtest_discover_tests(displacement_newmark_tests)
+  set(TEST_TARGETS
+      gll_tests
+      lagrange_tests
+      jacobian_tests
+      fortranio_test
+      io_tests
+      mesh_tests
+      compute_jacobian_matrix_tests
+      # compute_elastic_tests
+      # compute_acoustic_tests
+      # compute_coupled_interfaces_tests
+      point_tests
+      compute_tests
+      assembly_tests
+      policies_tests
+      interpolate_function
+      mass_matrix_tests
+      stress_tests
+      rmass_inverse_tests
+      simd_tests
+      displacement_newmark_tests
+  )
+  foreach(test_target IN LISTS TEST_TARGETS)
+      gtest_discover_tests(${test_target})
+  endforeach()
 
   # For tests that require data files from the tests directory,
   # create symbolic links to the test data directory so that
