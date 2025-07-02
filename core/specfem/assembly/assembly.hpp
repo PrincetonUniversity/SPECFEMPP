@@ -34,21 +34,21 @@ struct assembly {
   constexpr static auto dimension = specfem::dimension::type::dim2;
 
   specfem::assembly::mesh<dimension> mesh; ///< Properties of the assembled mesh
-  specfem::assembly::element_types element_types;     ///< Element tags
-                                                      ///< for every
-                                                      ///< spectral
-                                                      ///< element
-  specfem::assembly::jacobian_matrix jacobian_matrix; ///< Partial
-                                                      ///< derivatives
-                                                      ///< of the
-                                                      ///< basis
-                                                      ///< functions
-  specfem::assembly::properties properties;           ///< Material properties
-  specfem::assembly::kernels kernels;                 ///< Frechet derivatives
-                                                      ///< (Misfit kernels)
-  specfem::assembly::sources sources;                 ///< Source information
-  specfem::assembly::receivers receivers;             ///< Receiver information
-  specfem::assembly::boundaries boundaries;           ///< Boundary conditions
+  specfem::assembly::element_types element_types;      ///< Element tags
+                                                       ///< for every
+                                                       ///< spectral
+                                                       ///< element
+  specfem::assembly::jacobian_matrix jacobian_matrix;  ///< Partial
+                                                       ///< derivatives
+                                                       ///< of the
+                                                       ///< basis
+                                                       ///< functions
+  specfem::assembly::properties<dimension> properties; ///< Material properties
+  specfem::assembly::kernels<dimension> kernels;       ///< Frechet derivatives
+                                                       ///< (Misfit kernels)
+  specfem::assembly::sources sources;                  ///< Source information
+  specfem::assembly::receivers receivers;              ///< Receiver information
+  specfem::assembly::boundaries boundaries;            ///< Boundary conditions
   specfem::assembly::coupled_interfaces coupled_interfaces; ///< Coupled
                                                             ///< interfaces
                                                             ///< between 2

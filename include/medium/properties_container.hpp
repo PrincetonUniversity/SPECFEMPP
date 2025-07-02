@@ -13,16 +13,24 @@ namespace specfem::assembly {
 class mesh_to_compute_mapping;
 } // namespace specfem::assembly
 
-namespace specfem {
-namespace medium {
+namespace specfem::medium {
+
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+struct properties_container;
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct properties_container
-    : public properties::data_container<MediumTag, PropertyTag>,
-      public impl::Accessor<properties_container<MediumTag, PropertyTag> > {
+struct properties_container<specfem::dimension::type::dim2, MediumTag,
+                            PropertyTag>
+    : public properties::data_container<specfem::dimension::type::dim2,
+                                        MediumTag, PropertyTag>,
+      public impl::Accessor<properties_container<specfem::dimension::type::dim2,
+                                                 MediumTag, PropertyTag> > {
 
-  using base_type = properties::data_container<MediumTag, PropertyTag>;
+  using base_type = properties::data_container<specfem::dimension::type::dim2,
+                                               MediumTag, PropertyTag>;
   using base_type::base_type;
 
   properties_container() = default;
@@ -44,5 +52,4 @@ struct properties_container
   add_host_values(const IndexType &index, PointValues &values) const = delete;
 };
 
-} // namespace medium
-} // namespace specfem
+} // namespace specfem::medium

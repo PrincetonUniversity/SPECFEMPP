@@ -4,7 +4,7 @@
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-specfem::medium::properties_container<MediumTag, PropertyTag>::
+specfem::medium::properties_container<specfem::dimension::type::dim2, MediumTag, PropertyTag>::
     properties_container(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
