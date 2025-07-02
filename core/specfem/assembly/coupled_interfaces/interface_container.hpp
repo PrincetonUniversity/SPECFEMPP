@@ -75,11 +75,10 @@ public:
    */
   interface_container(
       const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::assembly::points &points,
-      const specfem::assembly::quadrature &quadrature,
+      const specfem::assembly::mesh<specfem::dimension::type::dim2>
+          &mesh_assembly,
       const specfem::assembly::jacobian_matrix &jacobian_matrix,
-      const specfem::assembly::element_types &element_types,
-      const specfem::assembly::mesh_to_compute_mapping &mapping);
+      const specfem::assembly::element_types &element_types);
 
   /**
    * @brief Construct interface container from another container where mediums

@@ -33,7 +33,7 @@ struct fields {
    * @param element_types Element types
    * @param simulation Current simulation type
    */
-  fields(const specfem::assembly::mesh &mesh,
+  fields(const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
          const specfem::assembly::element_types &element_types,
          const specfem::simulation::type simulation);
   ///@}

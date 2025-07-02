@@ -190,7 +190,7 @@ void check_compute_to_mesh(
 
   const auto &properties = assembly.properties;
   const auto &element_types = assembly.element_types;
-  const auto &mapping = assembly.mesh.mapping;
+  const auto &mesh_assembly = assembly.mesh;
   const auto &materials = mesh.materials;
 
   // Get all elements of the given type
@@ -210,7 +210,7 @@ void check_compute_to_mesh(
         const int ispec = index.ispec;
 
         // Get the properties stored within the mesh
-        const int ispec_mesh = mapping.compute_to_mesh(ispec);
+        const int ispec_mesh = mesh_assembly.compute_to_mesh(ispec);
         const auto expected =
             materials.get_material<MediumTag, PropertyTag>(ispec_mesh)
                 .get_properties();

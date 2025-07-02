@@ -2,6 +2,7 @@
 #include "boundaries.hpp"
 #include "boundary_values/boundary_medium_container.tpp"
 #include "boundary_values/boundary_values_container.tpp"
+#include "dim2/mesh/mesh.hpp"
 #include "mesh.hpp"
 #include "properties.hpp"
 
@@ -19,7 +20,8 @@ template class specfem::assembly::boundary_value_container<
     specfem::dimension::type::dim2, specfem::element::boundary_tag::stacey>;
 
 specfem::assembly::boundary_values::boundary_values(
-    const int nstep, const specfem::assembly::mesh mesh,
+    const int nstep,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::element_types element_types,
     const specfem::assembly::boundaries boundaries)
     : stacey(nstep, mesh, element_types, boundaries),

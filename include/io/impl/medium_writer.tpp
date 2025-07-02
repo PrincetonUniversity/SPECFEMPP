@@ -12,7 +12,7 @@
 template <typename OutputLibrary, typename ContainerType>
 void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
-    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::element_types &element_types,
     ContainerType &container) {
   using DomainView =
@@ -22,9 +22,9 @@ void specfem::io::impl::write_container(
 
   typename OutputLibrary::File file(output_folder + "/" + output_namespace);
 
-  const int nspec = mesh.points.nspec;
-  const int ngllz = mesh.points.ngllz;
-  const int ngllx = mesh.points.ngllx;
+  const int nspec = mesh.nspec;
+  const int ngllz = mesh.ngllz;
+  const int ngllx = mesh.ngllx;
 
   int n_written = 0;
 
@@ -48,8 +48,8 @@ void specfem::io::impl::write_container(
           const int ispec = element_indices(i);
           for (int iz = 0; iz < ngllz; iz++) {
             for (int ix = 0; ix < ngllx; ix++) {
-              x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
-              z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+              x(i, iz, ix) = mesh.h_coord(0, ispec, iz, ix);
+              z(i, iz, ix) = mesh.h_coord(1, ispec, iz, ix);
             }
           }
         }

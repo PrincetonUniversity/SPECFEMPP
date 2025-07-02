@@ -10,7 +10,7 @@
 #include "utilities/interface.hpp"
 
 void specfem::receivers::receiver::compute_receiver_array(
-    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     // const specfem::assembly::properties &properties,
     specfem::kokkos::HostView3d<type_real> receiver_array) {
 
@@ -20,9 +20,9 @@ void specfem::receivers::receiver::compute_receiver_array(
   specfem::point::local_coordinates<specfem::dimension::type::dim2> lcoord =
       specfem::algorithms::locate_point(gcoord, mesh);
 
-  const auto xi = mesh.quadratures.gll.h_xi;
-  const auto gamma = mesh.quadratures.gll.h_xi;
-  const auto N = mesh.quadratures.gll.N;
+  const auto xi = mesh.h_xi;
+  const auto gamma = mesh.h_xi;
+  const auto N = mesh.ngllx;
 
   auto [hxi_receiver, hpxi_receiver] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(

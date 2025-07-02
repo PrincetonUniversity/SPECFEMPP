@@ -2,7 +2,7 @@
 
 specfem::assembly::element_types::element_types(
     const int nspec, const int ngllz, const int ngllx,
-    const specfem::assembly::mesh_to_compute_mapping &mapping,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
     : nspec(nspec),
       medium_tags("specfem::assembly::element_types::medium_tags", nspec),
@@ -10,7 +10,7 @@ specfem::assembly::element_types::element_types(
       boundary_tags("specfem::assembly::element_types::boundary_tags", nspec) {
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    const int ispec_mesh = mapping.compute_to_mesh(ispec);
+    const int ispec_mesh = mesh.compute_to_mesh(ispec);
     medium_tags(ispec) = tags.tags_container(ispec_mesh).medium_tag;
     property_tags(ispec) = tags.tags_container(ispec_mesh).property_tag;
     boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;

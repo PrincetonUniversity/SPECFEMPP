@@ -324,7 +324,7 @@ public:
             const std::vector<std::shared_ptr<specfem::receivers::receiver> >
                 &receivers,
             const std::vector<specfem::wavefield::type> &stypes,
-            const specfem::assembly::mesh &mesh,
+            const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
             const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
             const specfem::assembly::element_types &element_types);
 

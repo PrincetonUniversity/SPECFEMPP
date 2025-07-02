@@ -38,7 +38,7 @@ public:
       const int nspec, const int ngllz, const int ngllx,
       const specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
           &acoustic_free_surface,
-      const specfem::assembly::mesh_to_compute_mapping &mapping,
+      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
       std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 

@@ -12,7 +12,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
-class mesh;
+template <specfem::dimension::type DimensionTag> class mesh;
 class jacobian_matrix;
 class element_types;
 } // namespace specfem::assembly
@@ -90,7 +90,7 @@ public:
   virtual ~source() = default;
 
   virtual void compute_source_array(
-      const specfem::assembly::mesh &mesh,
+      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
       const specfem::assembly::jacobian_matrix &jacobian_matrix,
       const specfem::assembly::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) = 0;

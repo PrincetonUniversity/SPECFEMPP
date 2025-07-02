@@ -7,7 +7,7 @@ template <specfem::element::medium_tag MediumTag,
 specfem::medium::properties_container<MediumTag, PropertyTag>::
     properties_container(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-        const specfem::assembly::mesh_to_compute_mapping &mapping,
+        const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
         const int ngllz, const int ngllx,
         const specfem::mesh::materials<specfem::dimension::type::dim2>
             &materials,
@@ -19,7 +19,7 @@ specfem::medium::properties_container<MediumTag, PropertyTag>::
   int count = 0;
   for (int i = 0; i < nelement; ++i) {
     const int ispec = elements(i);
-    const int mesh_ispec = mapping.compute_to_mesh(ispec);
+    const int mesh_ispec = mesh.compute_to_mesh(ispec);
     property_index_mapping(ispec) = count;
     if (!has_gll_model) {
       for (int iz = 0; iz < ngllz; ++iz) {

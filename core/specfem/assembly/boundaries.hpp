@@ -60,16 +60,15 @@ public:
    * @param ngllz Number of GLL points in z direction
    * @param ngllx Number of GLL points in x direction
    * @param mesh Finite element mesh information
-   * @param mapping mapping between mesh and compute indexing
-   * @param quadrature Finite element quadrature information
+   * @param mesh_assembly Finite element mesh assembly information
    * @param properties Material properties for every quadrature point
    * @param jacobian_matrix Jacobian matrix of basis functions at every
    * quadrature point
    */
   boundaries(const int nspec, const int ngllz, const int ngllx,
              const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-             const specfem::assembly::mesh_to_compute_mapping &mapping,
-             const specfem::assembly::quadrature &quadrature,
+             const specfem::assembly::mesh<specfem::dimension::type::dim2>
+                 &mesh_assembly,
              const specfem::assembly::jacobian_matrix &jacobian_matrix);
   ///@}
 };

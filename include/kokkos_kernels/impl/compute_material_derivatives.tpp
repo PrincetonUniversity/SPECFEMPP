@@ -20,7 +20,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
   auto &kernels = assembly.kernels;
   auto &adjoint_field = assembly.fields.adjoint;
   auto &backward_field = assembly.fields.backward;
-  auto &quadrature = assembly.mesh.quadratures;
+  auto &mesh = assembly.mesh;
   auto &jacobian_matrix = assembly.jacobian_matrix;
 
   const auto elements =
@@ -28,8 +28,8 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
 
   const int nelements = elements.extent(0);
 
-  const int ngllz = assembly.mesh.ngllz;
-  const int ngllx = assembly.mesh.ngllx;
+  const int ngllz = mesh.ngllz;
+  const int ngllx = mesh.ngllx;
 
   if (nelements == 0) {
     return;
@@ -89,7 +89,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
         ChunkElementFieldType adjoint_element_field(team);
         ChunkElementFieldType backward_element_field(team);
         ElementQuadratureType quadrature_element(team);
-        specfem::assembly::load_on_device(team, quadrature, quadrature_element);
+        specfem::assembly::load_on_device(team, mesh, quadrature_element);
 
         // Load the element index
         specfem::assembly::load_on_device(chunk_index, adjoint_field,
