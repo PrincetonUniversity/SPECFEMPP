@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
+#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::impl {
@@ -8,9 +8,9 @@ namespace specfem::assembly::impl {
  * @brief Values for every quadrature point in the finite element mesh
  *
  */
-template <template <specfem::element::medium_tag,
+template <template <specfem::dimension::type, specfem::element::medium_tag,
                     specfem::element::property_tag> class containers_type>
-struct value_containers {
+struct value_containers_dim2 {
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
@@ -36,12 +36,14 @@ struct value_containers {
     }
   }
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-      DECLARE(((containers_type, (_MEDIUM_TAG_, _PROPERTY_TAG_)), value)))
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
+                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                  POROELASTIC, ELASTIC_PSV_T),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
+                                    ISOTROPIC_COSSERAT)),
+                      DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_,
+                                                  _PROPERTY_TAG_)),
+                               value)))
 
   /**
    * @name Constructors
@@ -52,7 +54,7 @@ struct value_containers {
    * @brief Default constructor
    *
    */
-  value_containers() = default;
+  value_containers_dim2() = default;
 
   /**
    * @brief Returns the material_kernel for a given medium and property
@@ -61,7 +63,8 @@ struct value_containers {
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
   KOKKOS_INLINE_FUNCTION
-      constexpr containers_type<MediumTag, PropertyTag> const &
+      constexpr containers_type<specfem::dimension::type::dim2, MediumTag,
+                                PropertyTag> const &
       get_container() const {
 
     FOR_EACH_IN_PRODUCT(
@@ -80,7 +83,8 @@ struct value_containers {
 
     /// code path should never be reached
 
-    auto return_value = new containers_type<MediumTag, PropertyTag>();
+    auto return_value = new containers_type<specfem::dimension::type::dim2,
+                                            MediumTag, PropertyTag>();
 
     return *return_value;
   }

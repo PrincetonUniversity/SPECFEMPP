@@ -13,8 +13,11 @@ namespace specfem::assembly {
  * finite element mesh
  *
  */
-struct kernels
-    : public impl::value_containers<specfem::medium::kernels_container> {
+template <specfem::dimension::type DimensionTag> struct kernels;
+
+template <>
+struct kernels<specfem::dimension::type::dim2>
+    : public impl::value_containers_dim2<specfem::medium::kernels_container> {
 public:
   /**
    * @name Constructors
@@ -46,11 +49,12 @@ public:
    *
    */
   void copy_to_host() {
-    impl::value_containers<specfem::medium::kernels_container>::copy_to_host();
+    impl::value_containers_dim2<
+        specfem::medium::kernels_container>::copy_to_host();
   }
 
   void copy_to_device() {
-    impl::value_containers<
+    impl::value_containers_dim2<
         specfem::medium::kernels_container>::copy_to_device();
   }
 };
@@ -76,9 +80,10 @@ template <typename PointKernelType, typename IndexType,
           typename std::enable_if<IndexType::using_simd ==
                                       PointKernelType::simd::using_simd,
                                   int>::type = 0>
-KOKKOS_FUNCTION void load_on_device(const IndexType &index,
-                                    const kernels &kernels,
-                                    PointKernelType &point_kernels) {
+KOKKOS_FUNCTION void
+load_on_device(const IndexType &index,
+               const kernels<specfem::dimension::type::dim2> &kernels,
+               PointKernelType &point_kernels) {
   const int ispec = kernels.property_index_mapping(index.ispec);
 
   constexpr auto MediumTag = PointKernelType::medium_tag;
@@ -110,7 +115,8 @@ template <typename PointKernelType, typename IndexType,
           typename std::enable_if<IndexType::using_simd ==
                                       PointKernelType::simd::using_simd,
                                   int>::type = 0>
-void load_on_host(const IndexType &index, const kernels &kernels,
+void load_on_host(const IndexType &index,
+                  const kernels<specfem::dimension::type::dim2> &kernels,
                   PointKernelType &point_kernels) {
   const int ispec = kernels.h_property_index_mapping(index.ispec);
 
@@ -144,7 +150,7 @@ template <typename PointKernelType, typename IndexType,
                                       PointKernelType::simd::using_simd,
                                   int>::type = 0>
 void store_on_host(const IndexType &index, const PointKernelType &point_kernels,
-                   const kernels &kernels) {
+                   const kernels<specfem::dimension::type::dim2> &kernels) {
   const int ispec = kernels.h_property_index_mapping(index.ispec);
 
   constexpr auto MediumTag = PointKernelType::medium_tag;
@@ -176,9 +182,9 @@ template <typename PointKernelType, typename IndexType,
           typename std::enable_if<IndexType::using_simd ==
                                       PointKernelType::simd::using_simd,
                                   int>::type = 0>
-KOKKOS_FUNCTION void store_on_device(const IndexType &index,
-                                     const PointKernelType &point_kernels,
-                                     const kernels &kernels) {
+KOKKOS_FUNCTION void
+store_on_device(const IndexType &index, const PointKernelType &point_kernels,
+                const kernels<specfem::dimension::type::dim2> &kernels) {
   const int ispec = kernels.property_index_mapping(index.ispec);
 
   constexpr auto MediumTag = PointKernelType::medium_tag;
@@ -211,9 +217,9 @@ template <typename IndexType, typename PointKernelType,
           typename std::enable_if<IndexType::using_simd ==
                                       PointKernelType::simd::using_simd,
                                   int>::type = 0>
-KOKKOS_FUNCTION void add_on_device(const IndexType &index,
-                                   const PointKernelType &point_kernels,
-                                   const kernels &kernels) {
+KOKKOS_FUNCTION void
+add_on_device(const IndexType &index, const PointKernelType &point_kernels,
+              const kernels<specfem::dimension::type::dim2> &kernels) {
 
   const int ispec = kernels.property_index_mapping(index.ispec);
 
@@ -248,7 +254,7 @@ template <typename IndexType, typename PointKernelType,
                                       PointKernelType::simd::using_simd,
                                   int>::type = 0>
 void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
-                 const kernels &kernels) {
+                 const kernels<specfem::dimension::type::dim2> &kernels) {
   const int ispec = kernels.h_property_index_mapping(index.ispec);
 
   constexpr auto MediumTag = PointKernelType::medium_tag;

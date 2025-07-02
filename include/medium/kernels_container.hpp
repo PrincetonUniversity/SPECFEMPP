@@ -11,13 +11,21 @@
 namespace specfem {
 namespace medium {
 
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+struct kernels_container;
+
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct kernels_container
-    : public kernels::data_container<MediumTag, PropertyTag>,
-      public impl::Accessor<kernels_container<MediumTag, PropertyTag> > {
+struct kernels_container<specfem::dimension::type::dim2, MediumTag, PropertyTag>
+    : public kernels::data_container<specfem::dimension::type::dim2, MediumTag,
+                                     PropertyTag>,
+      public impl::Accessor<kernels_container<specfem::dimension::type::dim2,
+                                              MediumTag, PropertyTag> > {
 
-  using base_type = kernels::data_container<MediumTag, PropertyTag>;
+  using base_type = kernels::data_container<specfem::dimension::type::dim2,
+                                            MediumTag, PropertyTag>;
   using base_type::base_type;
   kernels_container() = default;
 
