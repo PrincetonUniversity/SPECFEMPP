@@ -59,6 +59,7 @@ pipeline{
                                 steps {
                                     echo "Building ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} with ${GNU_COMPILER_NAME}"
                                     sh """
+                                        module load cmake/3.30.8
                                         module load boost/1.85.0
                                         module load ${GNU_COMPILER_MODULE}
                                         cmake3 -S . -B build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} -DBUILD_TESTS=ON -D BUILD_BENCHMARKS=OFF
@@ -71,11 +72,12 @@ pipeline{
                                 steps {
                                     echo ' Testing '
                                     sh """
+                                        module load cmake/3.30.8
                                         module load boost/1.85.0
                                         module load ${GNU_COMPILER_MODULE}
                                         cd build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/tests/unit-tests
                                         export BUILD_DIR=build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} --constraint="intel|cascade" bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest --verbose;'
+                                        srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} --constraint="intel|cascade" bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places;  ctest -j --output-on-failure;'
                                     """
                                     echo ' Testing completed '
                                 }
