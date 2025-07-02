@@ -1,20 +1,14 @@
 
 .. _assembly_mesh:
 
-Mesh Assembly
-=============
+2D Mesh assembly
+================
 
-.. doxygenstruct:: specfem::assembly::mesh
+.. doxygenstruct:: specfem::assembly::mesh< specfem::dimension::type::dim2 >
     :members:
 
-Mesh Implemetation
-^^^^^^^^^^^^^^^^^^^
+Data Access Functions
+#####################
 
-.. toctree::
-    :maxdepth: 1
-
-    mapping
-    points
-    quadrature
-    shape_functions
-    control_nodes
+.. doxygengroup:: QuadratureDataAccess
+    :content-only:
