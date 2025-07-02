@@ -209,7 +209,7 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
 
   shape_functions =
       specfem::assembly::impl::shape_functions<specfem::dimension::type::dim2>(
-          quadratures.gll.get_xi(), quadratures.gll.get_xi(),
+          quadratures.gll.get_hxi(), quadratures.gll.get_hxi(),
           quadratures.gll.get_N(), control_nodes_in.ngnod);
 
   this->assemble();
