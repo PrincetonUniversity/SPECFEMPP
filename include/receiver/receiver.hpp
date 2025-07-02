@@ -1,6 +1,7 @@
 #pragma once
 
 #include "constants.hpp"
+#include "enumerations/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -9,7 +10,7 @@
 #include <cmath>
 
 namespace specfem::assembly {
-class mesh;
+template <specfem::dimension::type DimensionTag> class mesh;
 } // namespace specfem::assembly
 
 namespace specfem {
@@ -42,9 +43,9 @@ public:
    * @param quadz Quadrature object in z-dimension
    * @param receiver_array view to store the source array
    */
-  void
-  compute_receiver_array(const specfem::assembly::mesh &mesh,
-                         specfem::kokkos::HostView3d<type_real> receiver_array);
+  void compute_receiver_array(
+      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+      specfem::kokkos::HostView3d<type_real> receiver_array);
   /**
    * @brief Get the name of network where this station lies
    *

@@ -15,7 +15,7 @@ specfem::assembly::receivers::receivers(
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >
         &receivers,
     const std::vector<specfem::wavefield::type> &stypes,
-    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
     const specfem::assembly::element_types &element_types)
     : nspec(nspec),
@@ -60,16 +60,16 @@ specfem::assembly::receivers::receivers(
 
     h_elements(ireceiver) = lcoord.ispec;
 
-    const auto xi = mesh.quadratures.gll.h_xi;
-    const auto gamma = mesh.quadratures.gll.h_xi;
+    const auto xi = mesh.h_xi;
+    const auto gamma = mesh.h_xi;
 
     auto [hxi_receiver, hpxi_receiver] =
         specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-            lcoord.xi, mesh.quadratures.gll.N, xi);
+            lcoord.xi, mesh.ngllx, xi);
 
     auto [hgamma_receiver, hpgamma_receiver] =
         specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-            lcoord.gamma, mesh.quadratures.gll.N, gamma);
+            lcoord.gamma, mesh.ngllx, gamma);
 
     for (int iz = 0; iz < mesh.ngllz; ++iz) {
       for (int ix = 0; ix < mesh.ngllx; ++ix) {

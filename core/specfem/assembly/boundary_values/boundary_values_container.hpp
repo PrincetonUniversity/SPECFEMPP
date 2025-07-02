@@ -33,7 +33,8 @@ public:
 
   boundary_value_container() = default;
 
-  boundary_value_container(const int nstep, const specfem::assembly::mesh mesh,
+  boundary_value_container(const int nstep,
+                           const specfem::assembly::mesh<dimension> &mesh,
                            const specfem::assembly::element_types element_types,
                            const specfem::assembly::boundaries boundaries);
 

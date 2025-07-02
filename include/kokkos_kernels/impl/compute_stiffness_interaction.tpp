@@ -49,7 +49,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   if (nelements == 0)
     return 0;
 
-  const auto &quadrature = assembly.mesh.quadratures;
+  const auto &mesh = assembly.mesh;
   const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &properties = assembly.properties;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
@@ -110,7 +110,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
 
 
-  const auto wgll = assembly.mesh.quadratures.gll.weights;
+  const auto wgll = mesh.weights;
 
   int scratch_size = ChunkElementFieldType::shmem_size() +
                      ChunkStressIntegrandType::shmem_size() +
@@ -145,7 +145,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
           ChunkElementFieldType element_field(team);
           ElementQuadratureType element_quadrature(team);
           ChunkStressIntegrandType stress_integrand(team);
-          specfem::assembly::load_on_device(team, quadrature,
+          specfem::assembly::load_on_device(team, mesh,
                                            element_quadrature);
           specfem::assembly::load_on_device(chunk_index, field, element_field);
 
@@ -224,8 +224,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                                                     point_jacobian_matrix);
 
                   // Computing the integration factor
-                  const auto factor = quadrature.gll.weights(index.iz) *
-                                      quadrature.gll.weights(index.ix) *
+                  const auto factor = wgll(index.iz) *
+                                      wgll(index.ix) *
                                       point_jacobian_matrix.jacobian;
 
                 specfem::medium::compute_damping_force(factor, point_property,

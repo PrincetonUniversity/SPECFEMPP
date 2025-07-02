@@ -33,10 +33,11 @@ TEST(ALGORITHMS, interpolate_function) {
   specfem::quadrature::quadratures quadratures(gll);
 
   // Assemble
-  specfem::assembly::mesh assembly(mesh.tags, mesh.control_nodes, quadratures);
+  specfem::assembly::mesh<specfem::dimension::type::dim2> assembly(
+      mesh.tags, mesh.control_nodes, quadratures);
 
-  const auto xi = assembly.quadratures.gll.h_xi;
-  const auto gamma = assembly.quadratures.gll.h_xi;
+  const auto xi = assembly.h_xi;
+  const auto gamma = assembly.h_xi;
 
   const type_real xi_target = 0.15;
   const type_real gamma_target = 0.15;

@@ -14,7 +14,7 @@
 #include <cmath>
 
 void specfem::sources::moment_tensor::compute_source_array(
-    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
@@ -60,9 +60,9 @@ void specfem::sources::moment_tensor::compute_source_array(
     Kokkos::abort(message_str.c_str());
   }
 
-  const auto xi = mesh.quadratures.gll.h_xi;
-  const auto gamma = mesh.quadratures.gll.h_xi;
-  const auto N = mesh.quadratures.gll.N;
+  const auto xi = mesh.h_xi;
+  const auto gamma = mesh.h_xi;
+  const auto N = mesh.ngllx;
 
   // Compute lagrange interpolants at the source location
   auto [hxi_source, hpxi_source] =

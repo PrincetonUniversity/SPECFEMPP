@@ -3,12 +3,12 @@
 #include "boundaries.hpp"
 #include "boundary_values.hpp"
 #include "coupled_interfaces.hpp"
+#include "dim2/mesh/mesh.hpp"
 #include "enumerations/interface.hpp"
 #include "fields.hpp"
 #include "io/reader.hpp"
 #include "jacobian_matrix.hpp"
 #include "kernels.hpp"
-#include "mesh.hpp"
 #include "mesh/mesh.hpp"
 #include "properties.hpp"
 #include "receiver/interface.hpp"
@@ -30,25 +30,34 @@ namespace specfem::assembly {
  *
  */
 struct assembly {
-  specfem::assembly::mesh mesh; ///< Properties of the assembled mesh
-  specfem::assembly::element_types element_types; ///< Element tags for every
-                                                  ///< spectral element
+
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+
+  specfem::assembly::mesh<dimension> mesh; ///< Properties of the assembled mesh
+  specfem::assembly::element_types element_types;     ///< Element tags
+                                                      ///< for every
+                                                      ///< spectral
+                                                      ///< element
   specfem::assembly::jacobian_matrix jacobian_matrix; ///< Partial
-                                                      ///< derivatives of
-                                                      ///< the basis
+                                                      ///< derivatives
+                                                      ///< of the
+                                                      ///< basis
                                                       ///< functions
   specfem::assembly::properties properties;           ///< Material properties
-  specfem::assembly::kernels kernels; ///< Frechet derivatives (Misfit kernels)
-  specfem::assembly::sources sources; ///< Source information
-  specfem::assembly::receivers receivers;   ///< Receiver information
-  specfem::assembly::boundaries boundaries; ///< Boundary conditions
+  specfem::assembly::kernels kernels;                 ///< Frechet derivatives
+                                                      ///< (Misfit kernels)
+  specfem::assembly::sources sources;                 ///< Source information
+  specfem::assembly::receivers receivers;             ///< Receiver information
+  specfem::assembly::boundaries boundaries;           ///< Boundary conditions
   specfem::assembly::coupled_interfaces coupled_interfaces; ///< Coupled
                                                             ///< interfaces
                                                             ///< between 2
                                                             ///< mediums
   specfem::assembly::fields fields; ///< Displacement, velocity, and
                                     ///< acceleration fields
-  specfem::assembly::boundary_values boundary_values; ///< Field values at the
+  specfem::assembly::boundary_values boundary_values; ///< Field
+                                                      ///< values at
+                                                      ///< the
                                                       ///< boundaries
 
   /**
@@ -70,7 +79,7 @@ struct assembly {
    * assignment if exists)
    */
   assembly(
-      const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+      const specfem::mesh::mesh<dimension> &mesh,
       const specfem::quadrature::quadratures &quadratures,
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const std::vector<std::shared_ptr<specfem::receivers::receiver> >

@@ -25,8 +25,8 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
   using MappingView =
       Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
 
-  const int ngllz = mesh.points.ngllz;
-  const int ngllx = mesh.points.ngllx;
+  const int ngllz = mesh.ngllz;
+  const int ngllx = mesh.ngllx;
   // const int nspec = mesh.points.nspec;
 
   typename OutputLibrary::Group base_group =
@@ -74,8 +74,8 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
               mapping(iel, iz, ix) = iglob;
 
               // Assign the coordinates to the local iglob
-              x(iglob) = mesh.points.h_coord(0, ispec, iz, ix);
-              z(iglob) = mesh.points.h_coord(1, ispec, iz, ix);
+              x(iglob) = mesh.h_coord(0, ispec, iz, ix);
+              z(iglob) = mesh.h_coord(1, ispec, iz, ix);
 
             }
           }

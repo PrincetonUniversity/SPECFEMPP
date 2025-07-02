@@ -77,13 +77,13 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
       test_config.database_filename, specfem::enums::elastic_wave::psv,
       specfem::enums::electromagnetic_wave::te, mpi);
 
-  specfem::assembly::mesh compute_mesh(mesh.tags, mesh.control_nodes,
-                                       quadratures);
+  specfem::assembly::mesh<specfem::dimension::type::dim2> compute_mesh(
+      mesh.tags, mesh.control_nodes, quadratures);
   specfem::assembly::jacobian_matrix jacobian_matrix(compute_mesh);
 
-  const int nspec = compute_mesh.control_nodes.nspec;
-  const int ngllz = compute_mesh.quadratures.gll.N;
-  const int ngllx = compute_mesh.quadratures.gll.N;
+  const int nspec = compute_mesh.nspec;
+  const int ngllz = compute_mesh.ngllz;
+  const int ngllx = compute_mesh.ngllx;
 
   specfem::testing::array3d<double, Kokkos::LayoutRight> xix_ref(
       test_config.xix_file, nspec, ngllz, ngllx);
@@ -107,7 +107,7 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
                                           point_jacobian_matrix);
           return point_jacobian_matrix;
         }();
-        const int ispec_mesh = compute_mesh.mapping.compute_to_mesh(ispec);
+        const int ispec_mesh = compute_mesh.compute_to_mesh(ispec);
 
         EXPECT_NEAR(point_jacobian_matrix.xix, xix_ref.data(ispec_mesh, iz, ix),
                     xix_ref.tol);
@@ -141,8 +141,7 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
         }();
 
         for (int i = 0; i < num_elements; ++i) {
-          const int ispec_mesh =
-              compute_mesh.mapping.compute_to_mesh(ispec + i);
+          const int ispec_mesh = compute_mesh.compute_to_mesh(ispec + i);
           EXPECT_NEAR(point_jacobian_matrix.xix[i],
                       xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
           EXPECT_NEAR(point_jacobian_matrix.gammax[i],

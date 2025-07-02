@@ -85,15 +85,16 @@ TEST(ASSEMBLY_MESH, compute_ibool) {
       specfem::enums::electromagnetic_wave::te, mpi);
 
   // Setup compute structs
-  specfem::assembly::mesh assembly(mesh.tags, mesh.control_nodes,
-                                   quadratures); // mesh assembly
+  specfem::assembly::mesh<specfem::dimension::type::dim2> compute_mesh(
+      mesh.tags, mesh.control_nodes,
+      quadratures); // mesh assembly
 
-  const auto h_index_mapping = assembly.points.h_index_mapping;
-  const auto h_coord = assembly.points.h_coord;
+  const auto h_index_mapping = compute_mesh.h_index_mapping;
+  const auto h_coord = compute_mesh.h_coord;
 
-  const int nspec = assembly.points.nspec;
-  const int ngllz = assembly.points.ngllz;
-  const int ngllx = assembly.points.ngllx;
+  const int nspec = compute_mesh.nspec;
+  const int ngllz = compute_mesh.ngllz;
+  const int ngllx = compute_mesh.ngllx;
 
   type_real nglob;
   Kokkos::parallel_reduce(

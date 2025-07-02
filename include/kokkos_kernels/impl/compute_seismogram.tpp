@@ -45,7 +45,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
 
   const int nseismograms = seismogram_types.size();
   const auto field = assembly.fields.get_simulation_field<wavefield_type>();
-  const auto &quadrature = assembly.mesh.quadratures;
+  const auto &mesh = assembly.mesh;
 
 
   if (ngllz != ngll || ngllx != ngll) {
@@ -111,7 +111,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
           ViewType lagrange_interpolant(team.team_scratch(0));
           ResultsViewType seismogram_components(team.team_scratch(0));
 
-          specfem::assembly::load_on_device(team, quadrature,
+          specfem::assembly::load_on_device(team, mesh,
                                            element_quadrature);
 
           specfem::assembly::load_on_device(chunk_index, field, element_field);

@@ -26,9 +26,8 @@ specfem::assembly::jacobian_matrix::jacobian_matrix(const int nspec,
 };
 
 specfem::assembly::jacobian_matrix::jacobian_matrix(
-    const specfem::assembly::mesh &mesh)
-    : nspec(mesh.control_nodes.nspec), ngllz(mesh.quadratures.gll.N),
-      ngllx(mesh.quadratures.gll.N),
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh)
+    : nspec(mesh.nspec), ngllz(mesh.ngllz), ngllx(mesh.ngllx),
       xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, ngllx),
       xiz("specfem::assembly::jacobian_matrix::xiz", nspec, ngllz, ngllx),
       gammax("specfem::assembly::jacobian_matrix::gammax", nspec, ngllz, ngllx),
@@ -41,7 +40,7 @@ specfem::assembly::jacobian_matrix::jacobian_matrix(
       h_gammaz(specfem::kokkos::create_mirror_view(gammaz)),
       h_jacobian(specfem::kokkos::create_mirror_view(jacobian)) {
 
-  const int ngnod = mesh.control_nodes.ngnod;
+  const int ngnod = mesh.ngnod;
   const int ngllxz = ngllz * ngllx;
 
   const int scratch_size =
@@ -61,8 +60,8 @@ specfem::assembly::jacobian_matrix::jacobian_matrix(
         // knods(ispec, in) is not vectorizable
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(teamMember, ngnod), [&](const int in) {
-              s_coorg(0, in) = mesh.control_nodes.h_coord(0, ispec, in);
-              s_coorg(1, in) = mesh.control_nodes.h_coord(1, ispec, in);
+              s_coorg(0, in) = mesh.h_control_node_coord(0, ispec, in);
+              s_coorg(1, in) = mesh.h_control_node_coord(1, ispec, in);
             });
 
         teamMember.team_barrier();
@@ -74,9 +73,8 @@ specfem::assembly::jacobian_matrix::jacobian_matrix(
               sub2ind(xz, ngllx, iz, ix);
 
               // compute Jacobian matrix
-              auto sv_dershape2D = Kokkos::subview(
-                  mesh.quadratures.gll.shape_functions.h_dshape2D, iz, ix,
-                  Kokkos::ALL, Kokkos::ALL);
+              auto sv_dershape2D = Kokkos::subview(mesh.h_dshape2D, iz, ix,
+                                                   Kokkos::ALL, Kokkos::ALL);
 
               auto derivatives = jacobian::compute_derivatives(
                   teamMember, s_coorg, ngnod, sv_dershape2D);

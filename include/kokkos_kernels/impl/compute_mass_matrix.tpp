@@ -67,13 +67,13 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
 
   using PointIndex = specfem::point::index<dimension, using_simd>;
 
-  const auto &quadrature = assembly.mesh.quadratures;
+  const auto &mesh = assembly.mesh;
   const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &properties = assembly.properties;
   const auto &boundaries = assembly.boundaries;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
-  const auto wgll = quadrature.gll.weights;
+  const auto wgll = mesh.weights;
 
   specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements, ngllz, ngllx);
 
