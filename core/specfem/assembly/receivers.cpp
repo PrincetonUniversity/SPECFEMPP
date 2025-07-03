@@ -9,7 +9,7 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::assembly::receivers::receivers(
+specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
     const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
     const type_real dt, const type_real t0, const int nsteps_between_samples,
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >
@@ -133,9 +133,10 @@ specfem::assembly::receivers::receivers(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::receivers::get_indices_on_host(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag) const {
+specfem::assembly::receivers<specfem::dimension::type::dim2>::
+    get_indices_on_host(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
@@ -157,9 +158,10 @@ specfem::assembly::receivers::get_indices_on_host(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::receivers::get_indices_on_device(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag) const {
+specfem::assembly::receivers<specfem::dimension::type::dim2>::
+    get_indices_on_device(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),

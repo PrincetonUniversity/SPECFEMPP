@@ -280,8 +280,12 @@ protected:
  * @brief Struct to store information related to the receivers
  *
  */
-struct receivers : public impl::StationIterator,
-                   public impl::SeismogramIterator {
+
+template <specfem::dimension::type DimensionTag> struct receivers;
+
+template <>
+struct receivers<specfem::dimension::type::dim2>
+    : public impl::StationIterator, public impl::SeismogramIterator {
 private:
   using IndexViewType =
       Kokkos::View<int *, Kokkos::DefaultExecutionSpace>; ///< View to store the
@@ -436,9 +440,10 @@ private:
  * receivers in the iterator
  */
 template <typename ChunkIndexType, typename ViewType>
-KOKKOS_FUNCTION void load_on_device(const ChunkIndexType &chunk_index,
-                                    const receivers &receivers,
-                                    ViewType &lagrange_interpolant) {
+KOKKOS_FUNCTION void
+load_on_device(const ChunkIndexType &chunk_index,
+               const receivers<specfem::dimension::type::dim2> &receivers,
+               ViewType &lagrange_interpolant) {
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
@@ -486,7 +491,7 @@ template <typename ChunkIndexType, typename SeismogramViewType>
 KOKKOS_FUNCTION void
 store_on_device(const ChunkIndexType &chunk_index,
                 const SeismogramViewType &seismogram_components,
-                const receivers &receivers) {
+                const receivers<specfem::dimension::type::dim2> &receivers) {
 
   const int isig_step = receivers.get_seismogram_step();
   const int iseis = receivers.get_seis_type();
