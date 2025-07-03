@@ -126,6 +126,7 @@ private:
   type_real deltatover2;
   type_real deltasquareover2;
   specfem::assembly::simulation_field<
+      specfem::dimension::type::dim2,
       specfem::wavefield::simulation_field::forward>
       field; ///< forward wavefield
 };
@@ -237,9 +238,11 @@ private:
   type_real deltatover2;
   type_real deltasquareover2;
   specfem::assembly::simulation_field<
+      specfem::dimension::type::dim2,
       specfem::wavefield::simulation_field::adjoint>
       adjoint_field; ///< adjoint wavefield
   specfem::assembly::simulation_field<
+      specfem::dimension::type::dim2,
       specfem::wavefield::simulation_field::backward>
       backward_field; ///< backward wavefield
 };
