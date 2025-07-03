@@ -110,7 +110,7 @@ bool check_if_edges_are_connected(
 std::tuple<std::vector<type_real>, std::vector<std::array<type_real, 2> > >
 compute_edge_factors_and_normals(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix, const int ispec1,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2> &jacobian_matrix, const int ispec1,
     const int ispec2, const specfem::enums::edge::type edge1,
     const specfem::enums::edge::type edge2) {
 
@@ -193,7 +193,7 @@ std::tuple<specfem::enums::edge::type, specfem::enums::edge::type,
            std::vector<type_real>, std::vector<std::array<type_real, 2> > >
 compute_edge_factors_and_normals(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix, const int ispec1,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2> &jacobian_matrix, const int ispec1,
     const int ispec2) {
 
   const std::array<specfem::enums::edge::type, 4> edges{
@@ -277,7 +277,7 @@ specfem::assembly::interface_container<MediumTag1, MediumTag2>::
         const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
         const specfem::assembly::mesh<specfem::dimension::type::dim2>
             &mesh_assembly,
-        const specfem::assembly::jacobian_matrix &jacobian_matrix,
+        const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2> &jacobian_matrix,
         const specfem::assembly::element_types &element_types) {
 
   const auto interface_container = std::get<specfem::mesh::interface_container<

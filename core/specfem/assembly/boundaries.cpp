@@ -6,7 +6,8 @@ specfem::assembly::boundaries::boundaries(
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::mesh<specfem::dimension::type::dim2>
         &mesh_assembly,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix)
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        &jacobian_matrix)
     : boundary_tags("specfem::assembly::boundaries::boundary_tags", nspec),
       acoustic_free_surface_index_mapping(
           "specfem::assembly::boundaries::acoustic_free_surface_index_mapping",

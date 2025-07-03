@@ -10,7 +10,7 @@ template <specfem::dimension::type Dimension,
 specfem::assembly::impl::source_medium<Dimension, Medium>::source_medium(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2> &jacobian_matrix,
     const specfem::assembly::element_types &element_types, const type_real t0,
     const type_real dt, const int nsteps)
     : source_index_mapping("specfem::sources::source_index_mapping",
