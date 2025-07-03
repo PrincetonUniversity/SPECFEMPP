@@ -8,9 +8,14 @@ namespace specfem::assembly::impl {
  * @brief Values for every quadrature point in the finite element mesh
  *
  */
+template <specfem::dimension::type,
+          template <specfem::dimension::type, specfem::element::medium_tag,
+                    specfem::element::property_tag> class containers_type>
+struct value_containers;
+
 template <template <specfem::dimension::type, specfem::element::medium_tag,
                     specfem::element::property_tag> class containers_type>
-struct value_containers_dim2 {
+struct value_containers<specfem::dimension::type::dim2, containers_type> {
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
@@ -54,7 +59,7 @@ struct value_containers_dim2 {
    * @brief Default constructor
    *
    */
-  value_containers_dim2() = default;
+  value_containers() = default;
 
   /**
    * @brief Returns the material_kernel for a given medium and property
