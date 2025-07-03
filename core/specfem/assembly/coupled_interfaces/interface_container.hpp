@@ -77,7 +77,8 @@ public:
       const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
       const specfem::assembly::mesh<specfem::dimension::type::dim2>
           &mesh_assembly,
-      const specfem::assembly::jacobian_matrix &jacobian_matrix,
+      const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+          &jacobian_matrix,
       const specfem::assembly::element_types &element_types);
 
   /**
