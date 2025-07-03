@@ -14,11 +14,11 @@ pipeline{
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON;-n 1', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON; -n 1 -c 10'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON;-n 1 -c 20', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON; -n 1 -c 20'
                     }
                     axis{
                         name 'DeviceSpace'
-                        values 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON;--gres=gpu:1 --constraint=a100'
+                        values 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON; --gres=gpu:1 --constraint=a100'
                     }
                     axis{
                         name 'SIMD'
