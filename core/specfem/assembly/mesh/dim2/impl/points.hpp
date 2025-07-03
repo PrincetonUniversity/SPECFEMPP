@@ -3,7 +3,7 @@
 #include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::assembly::impl {
+namespace specfem::assembly::mesh_impl {
 
 /**
  * @brief Spectral element assembly information
@@ -47,4 +47,4 @@ public:
         h_coord(Kokkos::create_mirror_view(coord)) {}
 };
 
-} // namespace specfem::assembly::impl
+} // namespace specfem::assembly::mesh_impl
