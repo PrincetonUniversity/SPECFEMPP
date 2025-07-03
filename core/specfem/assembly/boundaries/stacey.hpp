@@ -50,13 +50,15 @@ public:
 
   stacey() = default;
 
-  stacey(const int nspec, const int ngllz, const int ngllx,
-         const specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
-             &stacey,
-         const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-         const specfem::assembly::jacobian_matrix &jacobian_matrix,
-         const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
-         std::vector<specfem::element::boundary_tag_container> &boundary_tag);
+  stacey(
+      const int nspec, const int ngllz, const int ngllx,
+      const specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
+          &stacey,
+      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+      const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+          &jacobian_matrix,
+      const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
+      std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
   KOKKOS_FORCEINLINE_FUNCTION void
   load_on_device(const specfem::point::index<dimension> &index,
