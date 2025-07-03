@@ -5,7 +5,7 @@
 #include "mesh_to_compute_mapping.hpp"
 #include <vector>
 
-specfem::assembly::impl::mesh_to_compute_mapping<
+specfem::assembly::mesh_impl::mesh_to_compute_mapping<
     specfem::dimension::type::dim2>::
     mesh_to_compute_mapping(
         const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
