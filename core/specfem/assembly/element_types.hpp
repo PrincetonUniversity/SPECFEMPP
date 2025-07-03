@@ -13,7 +13,9 @@ namespace specfem::assembly {
  * finite element mesh
  *
  */
-struct element_types {
+template <specfem::dimension::type DimensionTag> struct element_types;
+
+template <> struct element_types<specfem::dimension::type::dim2> {
 protected:
   using MediumTagViewType =
       Kokkos::View<specfem::element::medium_tag *,
@@ -41,6 +43,9 @@ public:
   int ngllz; ///< number of quadrature points in z dimension
   int ngllx; ///< number of quadrature points in x dimension
 
+  constexpr static auto dimension_tag =
+      specfem::dimension::type::dim2; ///< Dimension tag
+
   MediumTagViewType medium_tags;     ///< View to store medium tags
   PropertyTagViewType property_tags; ///< View to store property tags
   BoundaryViewType boundary_tags;    ///< View to store boundary tags
@@ -60,10 +65,9 @@ public:
    * @param mesh Mesh information
    * @param tags Element Tags for every spectral element
    */
-  element_types(
-      const int nspec, const int ngllz, const int ngllx,
-      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
+  element_types(const int nspec, const int ngllz, const int ngllx,
+                const specfem::assembly::mesh<dimension_tag> &mesh,
+                const specfem::mesh::tags<dimension_tag> &tags);
 
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
   get_elements_on_host(const specfem::element::medium_tag tag) const;

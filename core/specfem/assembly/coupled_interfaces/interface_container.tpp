@@ -278,7 +278,7 @@ specfem::assembly::interface_container<MediumTag1, MediumTag2>::
         const specfem::assembly::mesh<specfem::dimension::type::dim2>
             &mesh_assembly,
         const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2> &jacobian_matrix,
-        const specfem::assembly::element_types &element_types) {
+        const specfem::assembly::element_types<specfem::dimension::type::dim2> &element_types) {
 
   const auto interface_container = std::get<specfem::mesh::interface_container<
       specfem::dimension::type::dim2, MediumTag1, MediumTag2> >(

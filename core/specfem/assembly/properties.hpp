@@ -26,6 +26,7 @@ template <>
 struct properties<specfem::dimension::type::dim2>
     : public impl::value_containers<specfem::dimension::type::dim2,
                                     specfem::medium::properties_container> {
+  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
   /**
    * @name Constructors
    */
@@ -51,9 +52,9 @@ struct properties<specfem::dimension::type::dim2>
    */
   properties(
       const int nspec, const int ngllz, const int ngllx,
-      const specfem::assembly::element_types &element_types,
-      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
+      const specfem::assembly::element_types<dimension_tag> &element_types,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::mesh::materials<dimension_tag> &materials,
       bool has_gll_model);
 
   ///@}
@@ -64,14 +65,12 @@ struct properties<specfem::dimension::type::dim2>
    */
   void copy_to_host() {
     impl::value_containers<
-        specfem::dimension::type::dim2,
-        specfem::medium::properties_container>::copy_to_host();
+        dimension_tag, specfem::medium::properties_container>::copy_to_host();
   }
 
   void copy_to_device() {
     impl::value_containers<
-        specfem::dimension::type::dim2,
-        specfem::medium::properties_container>::copy_to_device();
+        dimension_tag, specfem::medium::properties_container>::copy_to_device();
   }
 };
 

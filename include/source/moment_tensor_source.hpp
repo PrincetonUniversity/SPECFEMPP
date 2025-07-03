@@ -89,7 +89,8 @@ public:
       const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
       const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
           &jacobian_matrix,
-      const specfem::assembly::element_types &element_types,
+      const specfem::assembly::element_types<specfem::dimension::type::dim2>
+          &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
   specfem::wavefield::simulation_field get_wavefield_type() const override {

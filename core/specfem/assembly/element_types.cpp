@@ -1,6 +1,6 @@
 #include "element_types.hpp"
 
-specfem::assembly::element_types::element_types(
+specfem::assembly::element_types<specfem::dimension::type::dim2>::element_types(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
@@ -107,8 +107,8 @@ specfem::assembly::element_types::element_types(
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-specfem::assembly::element_types::get_elements_on_host(
-    const specfem::element::medium_tag medium_tag) const {
+specfem::assembly::element_types<specfem::dimension::type::dim2>::
+    get_elements_on_host(const specfem::element::medium_tag medium_tag) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
@@ -121,9 +121,9 @@ specfem::assembly::element_types::get_elements_on_host(
   throw std::runtime_error("Medium tag not found");
 }
 
-Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-specfem::assembly::element_types::get_elements_on_device(
-    const specfem::element::medium_tag medium_tag) const {
+Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
+    element_types<specfem::dimension::type::dim2>::get_elements_on_device(
+        const specfem::element::medium_tag medium_tag) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
@@ -136,10 +136,10 @@ specfem::assembly::element_types::get_elements_on_device(
   throw std::runtime_error("Medium tag not found");
 }
 
-Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-specfem::assembly::element_types::get_elements_on_host(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag) const {
+Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
+    element_types<specfem::dimension::type::dim2>::get_elements_on_host(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
@@ -155,10 +155,10 @@ specfem::assembly::element_types::get_elements_on_host(
   throw std::runtime_error("Medium tag or property tag not found");
 }
 
-Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-specfem::assembly::element_types::get_elements_on_device(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag) const {
+Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
+    element_types<specfem::dimension::type::dim2>::get_elements_on_device(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
@@ -174,11 +174,11 @@ specfem::assembly::element_types::get_elements_on_device(
   throw std::runtime_error("Medium tag or property tag not found");
 }
 
-Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-specfem::assembly::element_types::get_elements_on_host(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag,
-    const specfem::element::boundary_tag boundary_tag) const {
+Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
+    element_types<specfem::dimension::type::dim2>::get_elements_on_host(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag,
+        const specfem::element::boundary_tag boundary_tag) const {
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T),
@@ -197,11 +197,11 @@ specfem::assembly::element_types::get_elements_on_host(
       "Medium tag, property tag or boundary tag not found");
 }
 
-Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-specfem::assembly::element_types::get_elements_on_device(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag,
-    const specfem::element::boundary_tag boundary_tag) const {
+Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
+    element_types<specfem::dimension::type::dim2>::get_elements_on_device(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag,
+        const specfem::element::boundary_tag boundary_tag) const {
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,

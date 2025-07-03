@@ -31,7 +31,7 @@ template <typename ViewType> int compute_nglob(const ViewType index_mapping) {
 template <specfem::wavefield::simulation_field WavefieldType>
 specfem::assembly::simulation_field<WavefieldType>::simulation_field(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::element_types &element_types) {
+    const specfem::assembly::element_types<specfem::dimension::type::dim2> &element_types) {
 
   nglob = compute_nglob(mesh.h_index_mapping);
 

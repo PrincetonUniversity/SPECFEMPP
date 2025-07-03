@@ -80,8 +80,9 @@ public:
       const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
       const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
           &jacobian_matrix,
-      const specfem::assembly::element_types &element_types, const type_real t0,
-      const type_real dt, const int nsteps);
+      const specfem::assembly::element_types<specfem::dimension::type::dim2>
+          &element_types,
+      const type_real t0, const type_real dt, const int nsteps);
   ///@}
 
   IndexView source_index_mapping; ///< Spectral element index for every source
