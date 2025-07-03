@@ -20,8 +20,12 @@ namespace specfem::assembly {
  * mesh
  *
  */
-struct properties
-    : public impl::value_containers<specfem::medium::properties_container> {
+template <specfem::dimension::type DimensionTag> struct properties;
+
+template <>
+struct properties<specfem::dimension::type::dim2>
+    : public impl::value_containers<specfem::dimension::type::dim2,
+                                    specfem::medium::properties_container> {
   /**
    * @name Constructors
    */
@@ -60,11 +64,13 @@ struct properties
    */
   void copy_to_host() {
     impl::value_containers<
+        specfem::dimension::type::dim2,
         specfem::medium::properties_container>::copy_to_host();
   }
 
   void copy_to_device() {
     impl::value_containers<
+        specfem::dimension::type::dim2,
         specfem::medium::properties_container>::copy_to_device();
   }
 };
@@ -91,10 +97,11 @@ template <typename PointPropertiesType, typename IndexType,
           typename std::enable_if_t<IndexType::using_simd ==
                                         PointPropertiesType::simd::using_simd,
                                     int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
-load_on_device(const IndexType &lcoord,
-               const specfem::assembly::properties &properties,
-               PointPropertiesType &point_properties) {
+KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
+    const IndexType &lcoord,
+    const specfem::assembly::properties<specfem::dimension::type::dim2>
+        &properties,
+    PointPropertiesType &point_properties) {
   const int ispec = lcoord.ispec;
 
   IndexType l_index = lcoord;
@@ -132,9 +139,11 @@ template <typename PointPropertiesType, typename IndexType,
           typename std::enable_if_t<IndexType::using_simd ==
                                         PointPropertiesType::simd::using_simd,
                                     int> = 0>
-void load_on_host(const IndexType &lcoord,
-                  const specfem::assembly::properties &properties,
-                  PointPropertiesType &point_properties) {
+void load_on_host(
+    const IndexType &lcoord,
+    const specfem::assembly::properties<specfem::dimension::type::dim2>
+        &properties,
+    PointPropertiesType &point_properties) {
   const int ispec = lcoord.ispec;
 
   IndexType l_index = lcoord;
@@ -171,9 +180,10 @@ template <typename PointPropertiesType, typename IndexType,
           typename std::enable_if_t<IndexType::using_simd ==
                                         PointPropertiesType::simd::using_simd,
                                     int> = 0>
-void store_on_host(const IndexType &lcoord,
-                   const PointPropertiesType &point_properties,
-                   const specfem::assembly::properties &properties) {
+void store_on_host(
+    const IndexType &lcoord, const PointPropertiesType &point_properties,
+    const specfem::assembly::properties<specfem::dimension::type::dim2>
+        &properties) {
   const int ispec = lcoord.ispec;
 
   const int index = properties.h_property_index_mapping(ispec);
@@ -195,7 +205,8 @@ void store_on_host(const IndexType &lcoord,
 
 template <typename IndexViewType, typename PointPropertiesType>
 void max(const IndexViewType &ispecs,
-         const specfem::assembly::properties &properties,
+         const specfem::assembly::properties<specfem::dimension::type::dim2>
+             &properties,
          PointPropertiesType &point_properties) {
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
