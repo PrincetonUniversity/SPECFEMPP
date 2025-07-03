@@ -70,7 +70,8 @@ specfem::assembly::impl::boundaries::stacey::stacey(
     const specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
         &stacey,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        &jacobian_matrix,
     const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
     std::vector<specfem::element::boundary_tag_container>
         &element_boundary_tags) {

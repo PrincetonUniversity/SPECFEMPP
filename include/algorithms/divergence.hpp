@@ -40,11 +40,12 @@ namespace algorithms {
 template <typename ChunkIndexType, typename VectorFieldType,
           typename WeightsType, typename QuadratureType, typename CallableType,
           std::enable_if_t<(VectorFieldType::isChunkViewType), int> = 0>
-KOKKOS_FUNCTION void
-divergence(const ChunkIndexType &chunk_index,
-           const specfem::assembly::jacobian_matrix &jacobian_matrix,
-           const WeightsType &weights, const QuadratureType &hprimewgll,
-           const VectorFieldType &f, const CallableType &callback) {
+KOKKOS_FUNCTION void divergence(
+    const ChunkIndexType &chunk_index,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        &jacobian_matrix,
+    const WeightsType &weights, const QuadratureType &hprimewgll,
+    const VectorFieldType &f, const CallableType &callback) {
 
   constexpr int components = VectorFieldType::components;
   constexpr int NGLL = VectorFieldType::ngll;
