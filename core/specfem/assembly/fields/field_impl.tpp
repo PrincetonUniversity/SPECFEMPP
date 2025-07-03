@@ -24,7 +24,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 specfem::assembly::impl::field_impl<DimensionTag, MediumTag>::field_impl(
     const specfem::assembly::mesh<dimension_tag> &mesh,
-    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::element_types<dimension_tag> &element_types,
     Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
         assembly_index_mapping) {
 

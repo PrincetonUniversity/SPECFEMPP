@@ -6,7 +6,8 @@
 
 specfem::assembly::properties<specfem::dimension::type::dim2>::properties(
     const int nspec, const int ngllz, const int ngllx,
-    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+        &element_types,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
     const bool has_gll_model) {

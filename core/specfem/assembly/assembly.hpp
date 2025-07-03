@@ -34,10 +34,10 @@ struct assembly {
   constexpr static auto dimension = specfem::dimension::type::dim2;
 
   specfem::assembly::mesh<dimension> mesh; ///< Properties of the assembled mesh
-  specfem::assembly::element_types element_types; ///< Element tags
-                                                  ///< for every
-                                                  ///< spectral
-                                                  ///< element
+  specfem::assembly::element_types<dimension> element_types; ///< Element tags
+                                                             ///< for every
+                                                             ///< spectral
+                                                             ///< element
   specfem::assembly::jacobian_matrix<dimension>
       jacobian_matrix;                      ///< Partial
                                             ///< derivatives

@@ -36,7 +36,8 @@ specfem::assembly::coupled_interfaces::coupled_interfaces(
         &mesh_assembly,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
-    const specfem::assembly::element_types &element_types)
+    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+        &element_types)
     : elastic_acoustic(mesh, mesh_assembly, jacobian_matrix, element_types),
       elastic_poroelastic(mesh, mesh_assembly, jacobian_matrix, element_types),
       acoustic_poroelastic(mesh, mesh_assembly, jacobian_matrix,

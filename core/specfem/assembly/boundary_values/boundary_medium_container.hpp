@@ -37,7 +37,8 @@ public:
 
   boundary_medium_container(
       const int nstep, const specfem::assembly::mesh<dimension> &mesh,
-      const specfem::assembly::element_types element_types,
+      const specfem::assembly::element_types<specfem::dimension::type::dim2>
+          element_types,
       const specfem::assembly::boundaries boundaries,
       specfem::kokkos::HostView1d<int> property_index_mapping);
 

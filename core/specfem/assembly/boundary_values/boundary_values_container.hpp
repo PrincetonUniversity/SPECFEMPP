@@ -33,10 +33,10 @@ public:
 
   boundary_value_container() = default;
 
-  boundary_value_container(const int nstep,
-                           const specfem::assembly::mesh<dimension> &mesh,
-                           const specfem::assembly::element_types element_types,
-                           const specfem::assembly::boundaries boundaries);
+  boundary_value_container(
+      const int nstep, const specfem::assembly::mesh<dimension> &mesh,
+      const specfem::assembly::element_types<dimension> element_types,
+      const specfem::assembly::boundaries boundaries);
 
   void sync_to_host() {
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
