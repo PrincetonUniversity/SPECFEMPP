@@ -358,6 +358,21 @@ target_link_libraries(
   gtest_main
 )
 
+add_executable(
+  stress_tests
+  stress/dim2/acoustic.cpp
+  stress/dim2/elastic_isotropic.cpp
+  stress/dim2/elastic_anisotropic.cpp
+  stress/dim2/elastic_isotropic_cosserat.cpp
+  stress/dim2/poroelastic_isotropic.cpp
+)
+
+target_link_libraries(
+  stress_tests
+  point
+  gtest_main
+)
+
 
 # # add_executable(
 # #   source_location_tests
@@ -511,6 +526,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(interpolate_function WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(mass_matrix_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(stress_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(rmass_inverse_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(simd_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(displacement_newmark_tests WORKING_DIRECTORY ${TEST_DIR})
