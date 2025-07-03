@@ -211,14 +211,16 @@ namespace specfem {
 namespace medium {
 namespace properties {
 
-template <specfem::element::medium_tag MediumTag,
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename Enable = void>
 struct data_container;
 
 } // namespace properties
 
 namespace kernels {
-template <specfem::element::medium_tag MediumTag,
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename Enable = void>
 struct data_container;
 } // namespace kernels
