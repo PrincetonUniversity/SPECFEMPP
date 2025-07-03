@@ -32,7 +32,7 @@ struct mesh<specfem::dimension::type::dim2>
           specfem::dimension::type::dim2> {
 
 public:
-  constexpr static auto dimension =
+  constexpr static auto dimension_tag =
       specfem::dimension::type::dim2; ///< Dimension
   int nspec;                          ///< Number of spectral
                                       ///< elements
