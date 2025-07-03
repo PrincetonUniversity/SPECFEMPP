@@ -1,7 +1,6 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "specfem/assembly/mesh_base.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::impl {

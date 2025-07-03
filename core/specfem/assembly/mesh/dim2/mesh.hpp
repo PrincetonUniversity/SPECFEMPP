@@ -9,7 +9,6 @@
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
-#include "specfem/assembly/mesh_base.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

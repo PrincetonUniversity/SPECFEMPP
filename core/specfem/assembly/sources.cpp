@@ -1,7 +1,7 @@
 #include "sources.hpp"
 #include "algorithms/interface.hpp"
-#include "dim2/mesh/mesh.hpp"
 #include "kokkos_abstractions.h"
+#include "mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "sources/source_medium.hpp"

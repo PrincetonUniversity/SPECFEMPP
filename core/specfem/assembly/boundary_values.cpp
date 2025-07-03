@@ -2,7 +2,6 @@
 #include "boundaries.hpp"
 #include "boundary_values/boundary_medium_container.tpp"
 #include "boundary_values/boundary_values_container.tpp"
-#include "dim2/mesh/mesh.hpp"
 #include "mesh.hpp"
 #include "properties.hpp"
 
