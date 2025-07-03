@@ -7,5 +7,6 @@
 // #include "properties.hpp"
 #include "accessor.hpp"
 #include "container.hpp"
+#include "simulation.hpp"
 #include "specfem_enums.hpp"
 #include "wavefield.hpp"
