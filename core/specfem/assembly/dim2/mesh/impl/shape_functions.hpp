@@ -18,11 +18,11 @@ public:
   int ngllx; ///< Number of quadrature points in x dimension
   int ngnod; ///< Number of control nodes
 
-  using ShapeFunctionViewType = Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+  using ShapeFunctionViewType = Kokkos::View<type_real ***, Kokkos::LayoutRight,
                                              Kokkos::DefaultExecutionSpace>;
 
   using DShapeFunctionViewType =
-      Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+      Kokkos::View<type_real ****, Kokkos::LayoutRight,
                    Kokkos::DefaultExecutionSpace>;
 
   shape_functions(const int &ngllz, const int &ngllx, const int &ngnod)

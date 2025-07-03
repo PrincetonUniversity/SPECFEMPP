@@ -18,7 +18,7 @@ specfem::assembly::impl::shape_functions<specfem::dimension::type::dim2>::shape_
   // Compute shape functions and their derivatives at quadrature points
   Kokkos::parallel_for(
       "shape_functions",
-      Kokkos::MDRangePolicy<Kokkos::Rank<2> >({ 0, 0 }, { ngllz, ngllx }),
+      Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace, Kokkos::Rank<2> >({ 0, 0 }, { ngllz, ngllx }),
       [=](const int iz, const int ix) {
         type_real xil = xi(ix);
         type_real gammal = gamma(iz);

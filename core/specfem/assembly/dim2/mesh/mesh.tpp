@@ -4,11 +4,11 @@
 #include "enumerations/material_definitions.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "mesh.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem_setup.hpp"
-#include "mesh.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 #include <vector>
@@ -179,28 +179,38 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
     const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
         &control_nodes_in,
-    const specfem::quadrature::quadratures &quadratures)
-    : specfem::assembly::impl::mesh_to_compute_mapping<
-          specfem::dimension::type::dim2>(tags),
-      specfem::assembly::impl::control_nodes<specfem::dimension::type::dim2>(
-          *static_cast<const specfem::assembly::impl::mesh_to_compute_mapping<
-              specfem::dimension::type::dim2> *>(this),
-          control_nodes_in),
-      specfem::assembly::impl::quadrature<specfem::dimension::type::dim2>(
-          quadratures),
-      specfem::assembly::impl::points<specfem::dimension::type::dim2>(
-          tags.nspec,
-          quadratures.gll.get_N(), // ngllz
-          quadratures.gll.get_N()  // ngllx
-          ),
-      specfem::assembly::impl::shape_functions<
-          specfem::dimension::type::dim2>(
-          quadratures.gll.get_xi(), quadratures.gll.get_xi(),
-          quadratures.gll.get_N(), control_nodes_in.ngnod) {
+    const specfem::quadrature::quadratures &quadratures) {
   nspec = tags.nspec;
   ngllz = quadratures.gll.get_N();
   ngllx = quadratures.gll.get_N();
   ngnod = control_nodes_in.ngnod;
+
+  auto &mapping = static_cast<specfem::assembly::impl::mesh_to_compute_mapping<
+      specfem::dimension::type::dim2> &>(*this);
+  auto &control_nodes = static_cast<
+      specfem::assembly::impl::control_nodes<specfem::dimension::type::dim2> &>(
+      *this);
+  auto &quadrature = static_cast<
+      specfem::assembly::impl::quadrature<specfem::dimension::type::dim2> &>(
+      *this);
+  auto &shape_functions = static_cast<specfem::assembly::impl::shape_functions<
+      specfem::dimension::type::dim2> &>(*this);
+
+  mapping = specfem::assembly::impl::mesh_to_compute_mapping<
+      specfem::dimension::type::dim2>(tags);
+  control_nodes =
+      specfem::assembly::impl::control_nodes<specfem::dimension::type::dim2>(
+          *static_cast<const specfem::assembly::impl::mesh_to_compute_mapping<
+              specfem::dimension::type::dim2> *>(this),
+          control_nodes_in);
+  quadrature =
+      specfem::assembly::impl::quadrature<specfem::dimension::type::dim2>(
+          quadratures);
+
+  shape_functions =
+      specfem::assembly::impl::shape_functions<specfem::dimension::type::dim2>(
+          quadratures.gll.get_hxi(), quadratures.gll.get_hxi(),
+          quadratures.gll.get_N(), control_nodes_in.ngnod);
 
   this->assemble();
 }
@@ -245,9 +255,8 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
     }
   }
 
-  auto &points =
-      static_cast<specfem::assembly::impl::points<specfem::dimension::type::dim2> &>(
-          *this);
+  auto &points = static_cast<
+      specfem::assembly::impl::points<specfem::dimension::type::dim2> &>(*this);
 
   points = assign_numbering(global_coordinates);
 }
