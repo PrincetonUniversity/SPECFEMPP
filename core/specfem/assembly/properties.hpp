@@ -24,8 +24,8 @@ template <specfem::dimension::type DimensionTag> struct properties;
 
 template <>
 struct properties<specfem::dimension::type::dim2>
-    : public impl::value_containers_dim2<
-          specfem::medium::properties_container> {
+    : public impl::value_containers<specfem::dimension::type::dim2,
+                                    specfem::medium::properties_container> {
   /**
    * @name Constructors
    */
@@ -63,12 +63,14 @@ struct properties<specfem::dimension::type::dim2>
    *
    */
   void copy_to_host() {
-    impl::value_containers_dim2<
+    impl::value_containers<
+        specfem::dimension::type::dim2,
         specfem::medium::properties_container>::copy_to_host();
   }
 
   void copy_to_device() {
-    impl::value_containers_dim2<
+    impl::value_containers<
+        specfem::dimension::type::dim2,
         specfem::medium::properties_container>::copy_to_device();
   }
 };
