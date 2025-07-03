@@ -2,7 +2,6 @@
 
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem/assembly/mesh_base.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::impl {
