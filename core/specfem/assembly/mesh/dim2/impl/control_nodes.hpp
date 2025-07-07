@@ -3,13 +3,9 @@
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "mesh_to_compute_mapping.hpp"
-#include "specfem/assembly/mesh_base.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace assembly {
-namespace impl {
-
+namespace specfem::assembly::mesh_impl {
 /**
  * @brief Spectral element control nodes
  *
@@ -36,7 +32,7 @@ public:
                                                            ///< node
 
   control_nodes(
-      const specfem::assembly::impl::mesh_to_compute_mapping<
+      const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
           specfem::dimension::type::dim2> &mapping,
       const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
           &control_nodes);
@@ -44,6 +40,4 @@ public:
   control_nodes() = default;
 };
 
-} // namespace impl
-} // namespace assembly
-} // namespace specfem
+} // namespace specfem::assembly::mesh_impl

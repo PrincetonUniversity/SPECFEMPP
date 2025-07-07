@@ -3,7 +3,6 @@
 #include "boundaries.hpp"
 #include "boundary_values/boundary_medium_container.hpp"
 #include "boundary_values/boundary_values_container.hpp"
-#include "dim2/mesh/mesh.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "mesh.hpp"
