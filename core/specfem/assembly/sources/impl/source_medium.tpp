@@ -32,7 +32,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
                                         Kokkos::ALL, isource, Kokkos::ALL);
     sources[isource]->compute_source_time_function(t0, dt, nsteps,
                                                    sv_stf_array);
-    specfem::point::global_coordinates<DimensionTag> coord(
+    specfem::point::global_coordinates<dimension_tag> coord(
         sources[isource]->get_x(), sources[isource]->get_z());
 
     auto lcoord = specfem::algorithms::locate_point(coord, mesh);

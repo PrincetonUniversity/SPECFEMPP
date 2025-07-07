@@ -1,9 +1,6 @@
 #pragma once
 
 #include "source.hpp"
-#include "specfem/assembly/element_types.hpp"
-#include "specfem/assembly/jacobian_matrix.hpp"
-#include "specfem/assembly/mesh.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {
