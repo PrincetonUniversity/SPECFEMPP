@@ -35,13 +35,18 @@ struct properties_container<specfem::dimension::type::dim2, MediumTag,
                                                MediumTag, PropertyTag>;
   using base_type::base_type;
 
+  constexpr static auto dimension_tag =
+      base_type::dimension_tag; ///< Dimension of the material
+  constexpr static auto medium_tag = base_type::medium_tag; ///< Medium type
+  constexpr static auto property_tag =
+      base_type::property_tag; ///< Property type
+
   properties_container() = default;
 
   properties_container(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-      const int ngllz, const int ngllx,
-      const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
+      const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,
+      const int ngllx, const specfem::mesh::materials<dimension_tag> &materials,
       const bool has_gll_model,
       const specfem::kokkos::HostView1d<int> property_index_mapping);
 

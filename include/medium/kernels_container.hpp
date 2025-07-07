@@ -27,6 +27,13 @@ struct kernels_container<specfem::dimension::type::dim2, MediumTag, PropertyTag>
   using base_type = kernels::data_container<specfem::dimension::type::dim2,
                                             MediumTag, PropertyTag>;
   using base_type::base_type;
+
+  constexpr static auto dimension_tag =
+      base_type::dimension_tag; ///< Dimension of the material
+  constexpr static auto medium_tag = base_type::medium_tag; ///< Medium type
+  constexpr static auto property_tag =
+      base_type::property_tag; ///< Property type
+
   kernels_container() = default;
 
   kernels_container(
