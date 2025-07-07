@@ -10,7 +10,7 @@ specfem::assembly::impl::boundary_medium_container<DimensionTag, MediumTag,
     boundary_medium_container(
         const int nstep, const specfem::assembly::mesh<dimension> &mesh,
         const specfem::assembly::element_types element_types,
-        const specfem::assembly::boundaries boundaries,
+        const specfem::assembly::boundaries<dimension> boundaries,
         specfem::kokkos::HostView1d<int> property_index_mapping) {
 
   int nelements = 0;
