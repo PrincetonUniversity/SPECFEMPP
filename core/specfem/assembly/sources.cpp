@@ -5,8 +5,8 @@
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
-#include "sources/source_medium.hpp"
-#include "sources/source_medium.tpp"
+#include "sources/impl/source_medium.hpp"
+#include "sources/impl/source_medium.tpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -61,16 +61,16 @@ sort_sources_per_medium(
 }
 } // namespace
 
-template class specfem::assembly::impl::source_medium<
+template class specfem::assembly::sources_impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
 
-template class specfem::assembly::impl::source_medium<
+template class specfem::assembly::sources_impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv>;
 
-template class specfem::assembly::impl::source_medium<
+template class specfem::assembly::sources_impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic>;
 
-template class specfem::assembly::impl::source_medium<
+template class specfem::assembly::sources_impl::source_medium<
     specfem::dimension::type::dim2,
     specfem::element::medium_tag::elastic_psv_t>;
 
@@ -145,10 +145,11 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
           h_wavefield_types(global_isource) = source->get_wavefield_type();
         }
 
-        _source_ = specfem::assembly::impl::source_medium<_dimension_tag_,
-                                                          _medium_tag_>(
-            sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
-            nsteps);
+        _source_ =
+            specfem::assembly::sources_impl::source_medium<_dimension_tag_,
+                                                           _medium_tag_>(
+                sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
+                nsteps);
       })
 
   // if the number of sources is not equal to the number of sources

@@ -5,11 +5,11 @@
 #include "source_medium.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type Dimension,
-          specfem::element::medium_tag Medium>
-specfem::assembly::impl::source_medium<Dimension, Medium>::source_medium(
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag>
+specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_medium(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<DimensionTag> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types, const type_real t0,
     const type_real dt, const int nsteps)
@@ -32,7 +32,7 @@ specfem::assembly::impl::source_medium<Dimension, Medium>::source_medium(
                                         Kokkos::ALL, isource, Kokkos::ALL);
     sources[isource]->compute_source_time_function(t0, dt, nsteps,
                                                    sv_stf_array);
-    specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
+    specfem::point::global_coordinates<DimensionTag> coord(
         sources[isource]->get_x(), sources[isource]->get_z());
 
     auto lcoord = specfem::algorithms::locate_point(coord, mesh);
