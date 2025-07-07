@@ -31,9 +31,10 @@ namespace specfem::assembly {
  */
 struct assembly {
 
-  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
 
-  specfem::assembly::mesh<dimension> mesh; ///< Properties of the assembled mesh
+  specfem::assembly::mesh<dimension_tag> mesh; ///< Properties of the assembled
+                                               ///< mesh
   specfem::assembly::element_types element_types;     ///< Element tags
                                                       ///< for every
                                                       ///< spectral
@@ -79,7 +80,7 @@ struct assembly {
    * assignment if exists)
    */
   assembly(
-      const specfem::mesh::mesh<dimension> &mesh,
+      const specfem::mesh::mesh<dimension_tag> &mesh,
       const specfem::quadrature::quadratures &quadratures,
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const std::vector<std::shared_ptr<specfem::receivers::receiver> >
