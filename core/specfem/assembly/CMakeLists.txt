@@ -1,4 +1,4 @@
-file(GLOB COMPUTE_SOURCE_FILES "./*.cpp" "./boundaries/*.cpp")
+file(GLOB_RECURSE COMPUTE_SOURCE_FILES "./*.cpp" "./**/*.cpp")
 
 add_library(assembly ${COMPUTE_SOURCE_FILES})
 
