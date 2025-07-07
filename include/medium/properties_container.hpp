@@ -7,10 +7,12 @@
 #include "dim2/poroelastic/isotropic/properties_container.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/accessor.hpp"
+#include "mesh/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
 class mesh_to_compute_mapping;
+template <specfem::dimension::type Dimension> struct mesh;
 } // namespace specfem::assembly
 
 namespace specfem::medium {

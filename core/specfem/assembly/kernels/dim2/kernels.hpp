@@ -44,14 +44,13 @@ public:
    *
    */
   void copy_to_host() {
-    impl::value_containers<specfem::dimension::type::dim2,
+    impl::value_containers<dimension_tag,
                            specfem::medium::kernels_container>::copy_to_host();
   }
 
   void copy_to_device() {
     impl::value_containers<
-        specfem::dimension::type::dim2,
-        specfem::medium::kernels_container>::copy_to_device();
+        dimension_tag, specfem::medium::kernels_container>::copy_to_device();
   }
 };
 
