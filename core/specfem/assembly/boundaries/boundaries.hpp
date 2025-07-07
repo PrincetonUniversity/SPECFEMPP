@@ -129,7 +129,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
 
   if constexpr (tag == specfem::element::boundary_tag::acoustic_free_surface) {
 #ifndef NDEBUG
-    if (boundaries.boundary_tag(index.ispec) !=
+    if (boundaries.boundary_tags(index.ispec) !=
         specfem::element::boundary_tag::acoustic_free_surface) {
       Kokkos::Abort(
           "Boundary tag for acoustic free surface does not match the expected "
@@ -140,7 +140,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
     boundaries.acoustic_free_surface.load_on_device(l_index, boundary);
   } else if constexpr (tag == specfem::element::boundary_tag::stacey) {
 #ifndef NDEBUG
-    if (boundaries.boundary_tag(index.ispec) !=
+    if (boundaries.boundary_tags(index.ispec) !=
         specfem::element::boundary_tag::stacey) {
       Kokkos::Abort(
           "Boundary tag for acoustic free surface does not match the expected "
@@ -152,7 +152,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
   } else if constexpr (tag == specfem::element::boundary_tag::
                                   composite_stacey_dirichlet) {
 #ifndef NDEBUG
-    if (boundaries.boundary_tag(index.ispec) !=
+    if (boundaries.boundary_tags(index.ispec) !=
         specfem::element::boundary_tag::composite_stacey_dirichlet) {
       Kokkos::Abort(
           "Boundary tag for acoustic free surface does not match the expected "
