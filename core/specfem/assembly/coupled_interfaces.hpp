@@ -30,19 +30,16 @@ struct coupled_interfaces {
    * @brief Compute coupled interfaces for a given mesh
    *
    * @param mesh Finite element mesh information
-   * @param points Information on finite element assembly
-   * @param quadrature Quadrature information
+   * @param mesh_assembly Mesh information for assembly
    * @param jacobian_matrix Jacobian matrix for every quadrature point
    * @param properties Material properties for every quadrature point
-   * @param mapping Mapping between mesh and compute spectral element indexing
    */
   coupled_interfaces(
       const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::assembly::points &points,
-      const specfem::assembly::quadrature &quadrature,
+      const specfem::assembly::mesh<specfem::dimension::type::dim2>
+          &mesh_assembly,
       const specfem::assembly::jacobian_matrix &jacobian_matrix,
-      const specfem::assembly::element_types &element_types,
-      const specfem::assembly::mesh_to_compute_mapping &mapping);
+      const specfem::assembly::element_types &element_types);
   ///@}
 
   /**

@@ -65,7 +65,8 @@ struct jacobian_matrix : public specfem::container::Container<
    *
    * @param mesh Mesh information
    */
-  jacobian_matrix(const specfem::assembly::mesh &mesh);
+  jacobian_matrix(
+      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh);
   ///@}
 
   void sync_views();

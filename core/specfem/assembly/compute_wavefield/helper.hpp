@@ -86,8 +86,7 @@ public:
           QuadratureType quadrature(team);
           ChunkElementFieldType field(team);
 
-          specfem::assembly::load_on_device(team, assembly.mesh.quadratures,
-                                            quadrature);
+          specfem::assembly::load_on_device(team, assembly.mesh, quadrature);
 
           specfem::assembly::load_on_device(chunk_index, buffer, field);
           team.team_barrier();

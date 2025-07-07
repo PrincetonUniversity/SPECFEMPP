@@ -159,7 +159,7 @@ specfem::periodic_tasks::plot_wavefield::map_materials_with_color() {
           { 169, 169, 169 } },
       };
 
-  const auto &coordinates = assembly.mesh.points.h_coord;
+  const auto &coordinates = assembly.mesh.h_coord;
   const int nspec = assembly.mesh.nspec;
   const int ngllx = assembly.mesh.ngllx;
   const int ngllz = assembly.mesh.ngllz;
@@ -236,7 +236,7 @@ specfem::periodic_tasks::plot_wavefield::map_materials_with_color() {
  * @return vtkSmartPointer<vtkUnstructuredGrid>
  */
 void specfem::periodic_tasks::plot_wavefield::create_biquad_grid() {
-  const auto &coordinates = assembly.mesh.points.h_coord;
+  const auto &coordinates = assembly.mesh.h_coord;
 
   const int ncells = nspec;
   const int cell_points = 9;
@@ -318,7 +318,7 @@ void specfem::periodic_tasks::plot_wavefield::create_biquad_grid() {
  *
  */
 void specfem::periodic_tasks::plot_wavefield::create_quad_grid() {
-  const auto &coordinates = assembly.mesh.points.h_coord;
+  const auto &coordinates = assembly.mesh.h_coord;
 
   // For ngll = 5, each spectral element has 16 cells
   const int n_cells_per_spec = (ngllx - 1) * (ngllz - 1);

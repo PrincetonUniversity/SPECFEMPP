@@ -4,7 +4,7 @@
 #include "mesh/mesh.hpp"
 
 specfem::assembly::assembly::assembly(
-    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >
@@ -16,12 +16,13 @@ specfem::assembly::assembly::assembly(
     const std::shared_ptr<specfem::io::reader> &property_reader) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures };
   this->element_types = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
-                          this->mesh.mapping, mesh.tags };
+                          this->mesh, mesh.tags };
   this->jacobian_matrix = { this->mesh };
-  this->properties = { this->mesh.nspec,          this->mesh.ngllz,
-                       this->mesh.ngllx,          this->element_types,
-                       this->mesh.mapping,        mesh.materials,
-                       property_reader != nullptr };
+  this->properties = {
+    this->mesh.nspec,          this->mesh.ngllz, this->mesh.ngllx,
+    this->element_types,       this->mesh,       mesh.materials,
+    property_reader != nullptr
+  };
   this->kernels = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
                     this->element_types };
   this->sources = {
@@ -40,16 +41,11 @@ specfem::assembly::assembly::assembly(
                       this->mesh,
                       mesh.tags,
                       this->element_types };
-  this->boundaries = { this->mesh.nspec,     this->mesh.ngllz,
-                       this->mesh.ngllx,     mesh,
-                       this->mesh.mapping,   this->mesh.quadratures,
-                       this->jacobian_matrix };
-  this->coupled_interfaces = { mesh,
-                               this->mesh.points,
-                               this->mesh.quadratures,
-                               this->jacobian_matrix,
-                               this->element_types,
-                               this->mesh.mapping };
+  this->boundaries = { this->mesh.nspec, this->mesh.ngllz,
+                       this->mesh.ngllx, mesh,
+                       this->mesh,       this->jacobian_matrix };
+  this->coupled_interfaces = { mesh, this->mesh, this->jacobian_matrix,
+                               this->element_types };
   this->fields = { this->mesh, this->element_types, simulation };
   this->boundary_values = { max_timesteps, this->mesh, this->element_types,
                             this->boundaries };
@@ -72,30 +68,6 @@ specfem::assembly::assembly::assembly(
   }
 
   this->check_small_jacobian();
-
-  // const auto pe_stacey_elements = this->element_types.get_elements_on_device(
-  //     specfem::element::medium_tag::poroelastic,
-  //     specfem::element::property_tag::isotropic,
-  //     specfem::element::boundary_tag::stacey);
-
-  // specfem::point::properties<specfem::dimension::type::dim2,
-  //                            specfem::element::medium_tag::poroelastic,
-  //                            specfem::element::property_tag::isotropic,
-  //                            false>
-  //     point_values;
-
-  // specfem::assembly::max(pe_stacey_elements, this->properties, point_values);
-
-  // if ((pe_stacey_elements.extent(0) > 0) &&
-  //     std::abs(point_values.eta_f()) > 1e-6) {
-  //   std::ostringstream msg;
-  //   msg << "Warning: The poroelastic model with Stacey BCs can be numerically
-  //   "
-  //          "error prone. Please make sure there are no spurious reflections "
-  //          "off the boundary";
-
-  //   std::cerr << msg.str();
-  // }
 
   return;
 }

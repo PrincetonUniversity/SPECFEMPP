@@ -69,8 +69,7 @@ specfem::assembly::impl::boundaries::stacey::stacey(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
         &stacey,
-    const specfem::assembly::mesh_to_compute_mapping &mapping,
-    const specfem::assembly::quadrature &quadrature,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
     std::vector<specfem::element::boundary_tag_container>
@@ -99,7 +98,7 @@ specfem::assembly::impl::boundaries::stacey::stacey(
 
   for (int i = 0; i < nelements; ++i) {
     const int ispec_mesh = stacey.index_mapping(i);
-    const int ispec_compute = mapping.mesh_to_compute(ispec_mesh);
+    const int ispec_compute = mesh.mesh_to_compute(ispec_mesh);
     if (ispec_to_stacey.find(ispec_compute) == ispec_to_stacey.end()) {
       ispec_to_stacey[ispec_compute] = { i };
     } else {
@@ -199,8 +198,8 @@ specfem::assembly::impl::boundaries::stacey::stacey(
                 specfem::element::boundary_tag::stacey;
 
             // Compute edge normal and edge weight
-            std::array<type_real, 2> weights = { quadrature.gll.h_weights(ix),
-                                                 quadrature.gll.h_weights(iz) };
+            std::array<type_real, 2> weights = { mesh.h_weights(ix),
+                                                 mesh.h_weights(iz) };
             specfem::point::index<specfem::dimension::type::dim2> index(
                 ispec_compute, iz, ix);
             specfem::point::jacobian_matrix<specfem::dimension::type::dim2,
@@ -222,127 +221,6 @@ specfem::assembly::impl::boundaries::stacey::stacey(
       }
     }
   }
-
-  // // ------------------- Sort ispec_absorbing_boundary -------------------
-  // // There might be better way of doing this but for now I am sorting
-  // const int nelements = stacey.nelements;
-  // std::vector<int> sorted_ispec(nelements);
-  // std::vector<specfem::enums::boundaries::type> sorted_type(nelements);
-
-  // std::vector<std::size_t> iota(nelements);
-
-  // std::iota(iota.begin(), iota.end(), 0);
-
-  // // Sort indices based on ispec_absorbing_boundary
-  // std::sort(iota.begin(), iota.end(), [&](std::size_t i1, std::size_t i2) {
-  //   return stacey.ispec(i1) < stacey.ispec(i2);
-  // });
-
-  // // Reorder ispec_absorbing_boundary and type
-  // for (int i = 0; i < nelements; ++i) {
-  //   sorted_ispec[i] = stacey.ispec(iota[i]);
-  //   sorted_type[i] = stacey.type(iota[i]);
-  // }
-  // // -------------------------------------------------------------------
-
-  // // ------------------- Assign boundary index mapping -------------------
-  // // Initialize all index mappings to -1
-  // for (int ispec = 0; ispec < nspec; ++ispec) {
-  //   boundary_index_mapping(ispec) = -1;
-  // }
-
-  // // Assign boundary index mapping
-  // int total_indices = 0;
-  // for (int i = 0; i < nelements; ++i) {
-  //   const int ispec = sorted_ispec[i];
-  //   const int ispec_compute = mapping.mesh_to_compute(ispec);
-  //   if (boundary_index_mapping(ispec_compute) == -1) {
-  //     boundary_index_mapping(ispec_compute) = total_indices;
-  //     ++total_indices;
-  //   }
-  // }
-
-  // // Make sure the index mapping is contiguous
-  // for (int ispec = 0; ispec < nspec; ++ispec) {
-  //   if (ispec == 0)
-  //     continue;
-
-  //   if ((boundary_index_mapping(ispec) == -1) &&
-  //       (boundary_index_mapping(ispec - 1) != -1)) {
-  //     std::cout << "ispec: " << ispec << std::endl;
-  //     throw std::invalid_argument(
-  //         "Error: Boundary index mapping is not contiguous");
-  //   } else {
-  //     continue;
-  //   }
-
-  //   if (boundary_index_mapping(ispec) !=
-  //       boundary_index_mapping(ispec - 1) + 1) {
-  //     std::cout << "ispec: " << ispec << std::endl;
-  //     throw std::invalid_argument(
-  //         "Error: Boundary index mapping is not contiguous");
-  //   }
-  // }
-
-  // // ------------------- Assign quadrature point boundary tag
-  // // ------------------- Assign boundary tags
-
-  // // Initialize boundary tags
-  // this->quadrature_point_boundary_tag =
-  //     BoundaryTagView("specfem::assembly::impl::boundaries::"
-  //                     "acoustic_free_surface::quadrature_point_boundary_tag",
-  //                     total_indices, ngllz, ngllx);
-
-  // this->h_quadrature_point_boundary_tag =
-  //     Kokkos::create_mirror_view(quadrature_point_boundary_tag);
-
-  // this->edge_weight = EdgeWeightView("specfem::assembly::impl::boundaries::"
-  //                                    "acoustic_free_surface::edge_weight",
-  //                                    total_indices, ngllz, ngllx);
-
-  // this->edge_normal = EdgeNormalView("specfem::assembly::impl::boundaries::"
-  //                                    "acoustic_free_surface::edge_normal",
-  //                                    total_indices, ngllz, ngllx, 2);
-
-  // this->h_edge_weight = Kokkos::create_mirror_view(edge_weight);
-  // this->h_edge_normal = Kokkos::create_mirror_view(edge_normal);
-
-  // for (int i = 0; i < nelements; ++i) {
-  //   const int ispec = sorted_ispec[i];
-  //   const int ispec_compute = mapping.mesh_to_compute(ispec);
-  //   const auto type = sorted_type[i];
-  //   const int local_index = boundary_index_mapping(ispec_compute);
-
-  //   element_boundary_tags(ispec_compute) +=
-  //       specfem::element::boundary_tag::stacey;
-
-  //   for (int iz = 0; iz < ngllz; ++iz) {
-  //     for (int ix = 0; ix < ngllx; ++ix) {
-  //       if (is_on_boundary(type, iz, ix, ngllz, ngllx)) {
-  //         this->h_quadrature_point_boundary_tag(local_index, iz, ix) +=
-  //             specfem::element::boundary_tag::stacey;
-
-  //         // Compute edge normal and edge weight
-  //         std::array<type_real, 2> weights = { quadrature.gll.h_weights(ix),
-  //                                              quadrature.gll.h_weights(iz)
-  //                                              };
-  //         specfem::point::index index(ispec_compute, iz, ix);
-  //         specfem::point::jacobian_matrix2<false, true>
-  //             point_jacobian_matrix;
-  //         specfem::assembly::load_on_host(index, jacobian_matrix,
-  //                                        point_jacobian_matrix);
-
-  //         auto [edge_normal, edge_weight] = get_boundary_edge_and_weight(
-  //             type, weights, point_jacobian_matrix);
-  //         // ------------------- Assign edge normal and edge weight
-
-  //         this->h_edge_weight(local_index, iz, ix) = edge_weight;
-  //         this->h_edge_normal(local_index, iz, ix, 0) = edge_normal[0];
-  //         this->h_edge_normal(local_index, iz, ix, 1) = edge_normal[1];
-  //       }
-  //     }
-  //   }
-  // }
 
   Kokkos::deep_copy(quadrature_point_boundary_tag,
                     h_quadrature_point_boundary_tag);
