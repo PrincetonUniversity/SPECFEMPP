@@ -332,6 +332,7 @@ endif()
 add_library(
         enumerations
         src/enumerations/medium.cpp
+        src/enumerations/wavefield.cpp
 )
 
 target_link_libraries(
