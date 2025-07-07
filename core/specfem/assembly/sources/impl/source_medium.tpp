@@ -9,7 +9,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_medium(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const specfem::assembly::mesh<DimensionTag> &mesh,
+    const specfem::assembly::mesh<dimension_tag> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types, const type_real t0,
     const type_real dt, const int nsteps)
