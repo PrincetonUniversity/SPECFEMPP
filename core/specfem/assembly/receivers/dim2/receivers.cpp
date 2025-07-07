@@ -9,7 +9,7 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::assembly::receivers::receivers(
+specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
     const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
     const type_real dt, const type_real t0, const int nsteps_between_samples,
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >
@@ -25,9 +25,11 @@ specfem::assembly::receivers::receivers(
       elements("specfem::assembly::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
       element_types(element_types),
-      impl::StationIterator(receivers.size(), stypes),
-      impl::SeismogramIterator(receivers.size(), stypes.size(), max_sig_step,
-                               dt, t0, nsteps_between_samples) {
+      specfem::assembly::receivers_impl::StationIterator(receivers.size(),
+                                                         stypes),
+      specfem::assembly::receivers_impl::SeismogramIterator(
+          receivers.size(), stypes.size(), max_sig_step, dt, t0,
+          nsteps_between_samples) {
 
   // Validate and populate seismogram type mapping
   for (int isies = 0; isies < stypes.size(); ++isies) {
@@ -144,9 +146,10 @@ specfem::assembly::receivers::receivers(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::receivers::get_indices_on_host(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag) const {
+specfem::assembly::receivers<specfem::dimension::type::dim2>::
+    get_indices_on_host(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
@@ -168,9 +171,10 @@ specfem::assembly::receivers::get_indices_on_host(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::receivers::get_indices_on_device(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag) const {
+specfem::assembly::receivers<specfem::dimension::type::dim2>::
+    get_indices_on_device(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
