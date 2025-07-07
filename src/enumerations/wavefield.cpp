@@ -1,6 +1,5 @@
 #include "enumerations/wavefield.hpp"
 
-
 const std::string specfem::wavefield::to_string(
     const specfem::wavefield::type &wavefield_component) {
 
@@ -24,6 +23,9 @@ const std::string specfem::wavefield::to_string(
     break;
   case specfem::wavefield::type::intrinsic_rotation:
     component_string = "intrinsic rotation";
+    break;
+  case specfem::wavefield::type::curl:
+    component_string = "curl";
     break;
   default:
     component_string = "undefined";

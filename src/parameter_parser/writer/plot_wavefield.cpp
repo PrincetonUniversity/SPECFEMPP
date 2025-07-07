@@ -1,10 +1,10 @@
 #include "parameter_parser/writer/plot_wavefield.hpp"
+#include "enumerations/display.hpp"
+#include "enumerations/wavefield.hpp"
 #include "periodic_tasks/plot_wavefield.hpp"
 #include "periodic_tasks/plotter.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/strings.hpp"
-#include "enumerations/display.hpp"
-#include "enumerations/wavefield.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::plot_wavefield::plot_wavefield(
@@ -93,6 +93,11 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
       return specfem::wavefield::type::pressure;
     } else if (specfem::utilities::is_rotation_string(this->component)) {
       return specfem::wavefield::type::rotation;
+    } else if (specfem::utilities::is_intrinsic_rotation_string(
+                   this->component)) {
+      return specfem::wavefield::type::intrinsic_rotation;
+    } else if (specfem::utilities::is_curl_string(this->component)) {
+      return specfem::wavefield::type::curl;
     } else {
       throw std::runtime_error(
           "Unknown wavefield component in the display section");
