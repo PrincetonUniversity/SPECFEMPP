@@ -49,7 +49,8 @@ struct assembly {
                                                       ///< (Misfit kernels)
   specfem::assembly::sources sources;                 ///< Source information
   specfem::assembly::receivers receivers;             ///< Receiver information
-  specfem::assembly::boundaries boundaries;           ///< Boundary conditions
+  specfem::assembly::boundaries<dimension_tag> boundaries;  ///< Boundary
+                                                            ///< conditions
   specfem::assembly::coupled_interfaces coupled_interfaces; ///< Coupled
                                                             ///< interfaces
                                                             ///< between 2
