@@ -37,7 +37,7 @@ public:
    *
    * @param assembly SPECFFEM++ assembly object
    * @param output_format Output format of the plot (PNG, JPG, etc.)
-   * @param component Component of the wavefield to plot (displacement,
+   * @param wavefield_type Type of the wavefield to plot (displacement,
    * velocity, etc.)
    * @param wavefield Type of wavefield to plot (forward, adjoint, etc.)
    * @param time_interval Time interval between subsequent plots
@@ -45,7 +45,7 @@ public:
    */
   plot_wavefield(const specfem::assembly::assembly &assembly,
                  const specfem::display::format &output_format,
-                 const specfem::display::wavefield &component,
+                 const specfem::wavefield::type &wavefield_type,
                  const specfem::wavefield::simulation_field &wavefield,
                  const int &time_interval,
                  const boost::filesystem::path &output_folder,
@@ -76,8 +76,8 @@ public:
   void finalize(specfem::assembly::assembly &assembly) override;
 
 private:
-  const specfem::display::format output_format; ///< Output format of the plot
-  const specfem::display::wavefield component;  ///< Component of the wavefield
+  const specfem::display::format output_format;  ///< Output format of the plot
+  const specfem::wavefield::type wavefield_type; ///< Type of the wavefield
   const specfem::wavefield::simulation_field wavefield; ///< Type of wavefield
                                                         ///< to plot
   const boost::filesystem::path output_folder; ///< Path to output folder
@@ -116,8 +116,8 @@ private:
   vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_quad_grid();
   double sigmoid(double x);
 
-  // Get wavefield component from display component
-  specfem::wavefield::type get_wavefield_component();
+  // Get wavefield type from display type
+  specfem::wavefield::type get_wavefield_type();
 
 #endif // NO_VTK
 };
