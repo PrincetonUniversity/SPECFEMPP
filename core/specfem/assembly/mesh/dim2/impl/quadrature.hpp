@@ -2,10 +2,9 @@
 
 #include "enumerations/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "specfem/assembly/mesh_base.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::assembly::impl {
+namespace specfem::assembly::mesh_impl {
 
 struct GLLQuadrature {
   constexpr static auto dimension =
@@ -39,7 +38,7 @@ struct GLLQuadrature {
  */
 template <>
 struct quadrature<specfem::dimension::type::dim2>
-    : public specfem::assembly::impl::GLLQuadrature {
+    : public specfem::assembly::mesh_impl::GLLQuadrature {
 public:
   constexpr static auto dimension =
       specfem::dimension::type::dim2; ///< Dimension
@@ -47,7 +46,7 @@ public:
   quadrature() = default;
 
   quadrature(const specfem::quadrature::quadratures &quadratures)
-      : specfem::assembly::impl::GLLQuadrature(quadratures) {}
+      : specfem::assembly::mesh_impl::GLLQuadrature(quadratures) {}
 };
 
-} // namespace specfem::assembly::impl
+} // namespace specfem::assembly::mesh_impl

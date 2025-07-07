@@ -2,10 +2,9 @@
 
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem/assembly/mesh_base.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::assembly::impl {
+namespace specfem::assembly::mesh_impl {
 
 /**
  * @brief Mapping between spectral element indexing within @ref
@@ -50,4 +49,4 @@ template <> struct mesh_to_compute_mapping<specfem::dimension::type::dim2> {
    */
   mesh_to_compute_mapping(const specfem::mesh::tags<dimension> &tags);
 };
-} // namespace specfem::assembly::impl
+} // namespace specfem::assembly::mesh_impl

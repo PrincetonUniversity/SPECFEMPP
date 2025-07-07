@@ -2,6 +2,7 @@
 
 #include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
+#include "enumerations/macros.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/compute_stress.hpp"
 #include "specfem/point.hpp"
@@ -23,7 +24,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const ChunkIndexType &chunk_index,
     const specfem::assembly::assembly &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
-    const specfem::wavefield::type wavefield_component,
+    const specfem::wavefield::type wavefield_type,
     WavefieldViewType wavefield) {
 
   using FieldDerivativesType = specfem::point::field_derivatives<
@@ -38,22 +39,27 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   const auto &properties = assembly.properties;
 
   const auto &active_field = [&]() {
-    if (wavefield_component == specfem::wavefield::type::displacement) {
+    if (wavefield_type == specfem::wavefield::type::displacement) {
       return field.displacement;
-    } else if (wavefield_component == specfem::wavefield::type::velocity) {
+    } else if (wavefield_type == specfem::wavefield::type::velocity) {
       return field.velocity;
-    } else if (wavefield_component == specfem::wavefield::type::acceleration) {
+    } else if (wavefield_type == specfem::wavefield::type::acceleration) {
       return field.acceleration;
-    } else if (wavefield_component == specfem::wavefield::type::pressure) {
+    } else if (wavefield_type == specfem::wavefield::type::pressure) {
       return field.displacement;
-    } else if (wavefield_component == specfem::wavefield::type::rotation) {
+    } else if (wavefield_type == specfem::wavefield::type::rotation) {
+      return field.displacement;
+    } else if (wavefield_type == specfem::wavefield::type::intrinsic_rotation) {
+      return field.displacement;
+    } else if (wavefield_type == specfem::wavefield::type::curl) {
       return field.displacement;
     } else {
-      Kokkos::abort("component not supported");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D "
+                                 "elastic isotropic Cosserat P-SV-T media");
     }
   }();
 
-  if (wavefield_component == specfem::wavefield::type::pressure) {
+  if (wavefield_type == specfem::wavefield::type::pressure) {
 
     specfem::algorithms::gradient(
         chunk_index, assembly.jacobian_matrix, quadrature.hprime_gll,
@@ -121,7 +127,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         });
 
     return;
-  } else if (wavefield_component == specfem::wavefield::type::rotation) {
+  } else if (wavefield_type == specfem::wavefield::type::rotation) {
     specfem::execution::for_each_level(
         chunk_index.get_iterator(),
         [&](const typename ChunkIndexType::iterator_type::index_type
@@ -133,6 +139,40 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           wavefield(ielement, index.iz, index.ix, 0) =
               active_field(ielement, index.iz, index.ix, 2);
         });
+    return;
+
+  } else if (wavefield_type == specfem::wavefield::type::curl) {
+    specfem::algorithms::gradient(
+        chunk_index, assembly.jacobian_matrix, quadrature.hprime_gll,
+        active_field,
+        [&](const typename ChunkIndexType::iterator_type::index_type
+                &iterator_index,
+            const FieldDerivativesType::value_type &du) {
+          const auto index = iterator_index.get_index();
+          const int ielement = iterator_index.get_policy_index();
+
+          // Here we compute the curl of the displacement field.
+          wavefield(ielement, index.iz, index.ix, 0) = du(0, 1) - du(1, 0);
+        });
+
+    return;
+  } else if (wavefield_type == specfem::wavefield::type::intrinsic_rotation) {
+    specfem::algorithms::gradient(
+        chunk_index, assembly.jacobian_matrix, quadrature.hprime_gll,
+        active_field,
+        [&](const typename ChunkIndexType::iterator_type::index_type
+                &iterator_index,
+            const FieldDerivativesType::value_type &du) {
+          const auto index = iterator_index.get_index();
+          const int ielement = iterator_index.get_policy_index();
+
+          // Here we compute the intrinsic rotation wavefield from the
+          // rotation field and the curl of the displacement field.
+          wavefield(ielement, index.iz, index.ix, 0) =
+              active_field(ielement, index.iz, index.ix, 2) -
+              static_cast<type_real>(0.5) * (du(0, 1) - du(1, 0));
+        });
+
     return;
   }
 

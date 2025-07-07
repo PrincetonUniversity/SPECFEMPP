@@ -14,11 +14,11 @@ pipeline{
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON;-n 1', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON; -n 1 -c 10'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON;-n 1 -c 20', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON; -n 1 -c 20'
                     }
                     axis{
                         name 'DeviceSpace'
-                        values 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON;--gres=gpu:1 --constraint=a100'
+                        values 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON; --gres=gpu:1 --constraint=a100'
                     }
                     axis{
                         name 'SIMD'
@@ -74,6 +74,7 @@ pipeline{
                                 steps {
                                     echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} ${SIMD_FLAGS} with ${CUDA_COMPILER_NAME}"
                                     sh """
+                                        module load cmake/3.30.8
                                         module load boost/1.85.0
                                         module load ${CUDA_MODULE}
                                         cmake3 -S . -B build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} ${SIMD_FLAGS} -D BUILD_TESTS=ON -D BUILD_BENCHMARKS=OFF
@@ -86,11 +87,12 @@ pipeline{
                                 steps {
                                     echo ' Testing '
                                     sh """
+                                        module load cmake/3.30.8
                                         module load boost/1.85.0
                                         module load ${CUDA_MODULE}
                                         cd build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/tests/unit-tests
                                         export BUILD_DIR=build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
-                                        srun -N 1 -t 00:30:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest --verbose;'
+                                        srun -N 1 -t 00:30:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest -j 10 --output-on-failure;'
                                     """
                                     echo ' Testing completed '
                                 }
