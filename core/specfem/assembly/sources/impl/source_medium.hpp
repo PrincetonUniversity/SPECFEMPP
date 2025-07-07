@@ -6,15 +6,25 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::assembly::impl {
+// Forward declarations
+namespace specfem {
+namespace algorithms {
+template <specfem::dimension::type DimensionTag>
+specfem::point::local_coordinates<DimensionTag> locate_point(
+    const specfem::point::global_coordinates<DimensionTag> &coordinates,
+    const specfem::assembly::mesh<DimensionTag> &mesh);
+}
+} // namespace specfem
+
+namespace specfem::assembly::sources_impl {
 /**
  * @brief Information about sources located within a medium
  *
  * @tparam Dimension Dimension of spectral elements
  * @tparam Medium Medium type
  */
-template <specfem::dimension::type Dimension,
-          specfem::element::medium_tag Medium>
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag>
 struct source_medium {
 
 private:
@@ -34,12 +44,12 @@ private:
                                                    ///< store source arrays
 
   constexpr static int components =
-      specfem::element::attributes<Dimension,
-                                   Medium>::components; ///< Number
-                                                        ///< of
-                                                        ///< components
-                                                        ///< in the
-                                                        ///< medium
+      specfem::element::attributes<DimensionTag,
+                                   MediumTag>::components; ///< Number
+                                                           ///< of
+                                                           ///< components
+                                                           ///< in the
+                                                           ///< medium
 
 public:
   /**
@@ -47,9 +57,9 @@ public:
    *
    */
   ///@{
-  constexpr static auto medium_tag = Medium; ///< Medium type
-  constexpr static auto dimension =
-      Dimension; ///< Dimension of spectral elements
+  constexpr static auto medium_tag = MediumTag; ///< Medium type
+  constexpr static auto dimension_tag =
+      DimensionTag; ///< Dimension of spectral elements
   ///@}
 
   /**
@@ -77,7 +87,7 @@ public:
    */
   source_medium(
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+      const specfem::assembly::mesh<DimensionTag> &mesh,
       const specfem::assembly::jacobian_matrix &jacobian_matrix,
       const specfem::assembly::element_types &element_types, const type_real t0,
       const type_real dt, const int nsteps);
@@ -155,4 +165,4 @@ public:
     }
   }
 };
-} // namespace specfem::assembly::impl
+} // namespace specfem::assembly::sources_impl

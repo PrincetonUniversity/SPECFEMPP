@@ -4,6 +4,7 @@ add_library(assembly ${COMPUTE_SOURCE_FILES})
 
 target_link_libraries(
         assembly
+        algorithms
         enumerations
         quadrature
         mesh

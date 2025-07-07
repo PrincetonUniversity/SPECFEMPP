@@ -25,9 +25,11 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
       elements("specfem::assembly::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
       element_types(element_types),
-      impl::StationIterator(receivers.size(), stypes),
-      impl::SeismogramIterator(receivers.size(), stypes.size(), max_sig_step,
-                               dt, t0, nsteps_between_samples) {
+      specfem::assembly::receivers_impl::StationIterator(receivers.size(),
+                                                         stypes),
+      specfem::assembly::receivers_impl::SeismogramIterator(
+          receivers.size(), stypes.size(), max_sig_step, dt, t0,
+          nsteps_between_samples) {
 
   // Validate and populate seismogram type mapping
   for (int isies = 0; isies < stypes.size(); ++isies) {
