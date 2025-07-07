@@ -33,7 +33,7 @@ specfem::medium::properties_container<specfem::dimension::type::dim2, MediumTag,
           // Assign the material property to the property container
           auto point_property = material.get_properties();
           this->store_host_values(
-              specfem::point::index<base_type::dimension>(count, iz, ix),
+              specfem::point::index<base_type::dimension_tag>(count, iz, ix),
               point_property);
         }
       }
