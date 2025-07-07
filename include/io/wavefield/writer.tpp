@@ -132,18 +132,29 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
       .createDataset("IndexMapping",
                      boundary_values.stacey.h_property_index_mapping)
       .write();
-  stacey
-      .createDataset("ElasticAcceleration",
-                     boundary_values.stacey.elastic.h_values)
-      .write();
-  stacey
-      .createDataset("AcousticAcceleration",
-                     boundary_values.stacey.acoustic.h_values)
-      .write();
-  stacey
-      .createDataset("PoroelasticAcceleration",
-                     boundary_values.stacey.poroelastic.h_values)
-      .write();
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2),
+        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                    POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE((container, boundary_values.stacey.container)) {
+        const std::string dataset_name =
+            specfem::element::to_string(_medium_tag_) + "Acceleration";
+        stacey.createDataset(dataset_name, _container_.h_values).write();
+      });
+
+  // stacey
+  //     .createDataset("ElasticAcceleration",
+  //                    boundary_values.stacey.elastic.h_values)
+  //     .write();
+  // stacey
+  //     .createDataset("AcousticAcceleration",
+  //                    boundary_values.stacey.acoustic.h_values)
+  //     .write();
+  // stacey
+  //     .createDataset("PoroelasticAcceleration",
+  //                    boundary_values.stacey.poroelastic.h_values)
+  //     .write();
 
   file.flush();
 
