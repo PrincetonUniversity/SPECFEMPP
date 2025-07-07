@@ -9,7 +9,6 @@
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
-#include "specfem/assembly/mesh_base.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -22,18 +21,19 @@ namespace specfem::assembly {
  */
 template <>
 struct mesh<specfem::dimension::type::dim2>
-    : public specfem::assembly::impl::points<specfem::dimension::type::dim2>,
-      public specfem::assembly::impl::quadrature<
+    : public specfem::assembly::mesh_impl::points<
           specfem::dimension::type::dim2>,
-      public specfem::assembly::impl::control_nodes<
+      public specfem::assembly::mesh_impl::quadrature<
           specfem::dimension::type::dim2>,
-      public specfem::assembly::impl::mesh_to_compute_mapping<
+      public specfem::assembly::mesh_impl::control_nodes<
           specfem::dimension::type::dim2>,
-      public specfem::assembly::impl::shape_functions<
+      public specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+          specfem::dimension::type::dim2>,
+      public specfem::assembly::mesh_impl::shape_functions<
           specfem::dimension::type::dim2> {
 
 public:
-  constexpr static auto dimension =
+  constexpr static auto dimension_tag =
       specfem::dimension::type::dim2; ///< Dimension
   int nspec;                          ///< Number of spectral
                                       ///< elements
@@ -46,9 +46,8 @@ public:
 
   mesh() = default;
 
-  mesh(const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-       const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
-           &control_nodes,
+  mesh(const specfem::mesh::tags<dimension_tag> &tags,
+       const specfem::mesh::control_nodes<dimension_tag> &control_nodes,
        const specfem::quadrature::quadratures &quadratures);
 
   void assemble();
@@ -83,7 +82,7 @@ impl_load(const MemberType &team,
   constexpr int NGLL = ViewType::ngll;
 
   const auto &quadrature =
-      static_cast<const specfem::assembly::impl::quadrature<
+      static_cast<const specfem::assembly::mesh_impl::quadrature<
           specfem::dimension::type::dim2> &>(mesh);
 
   static_assert(std::is_same_v<typename MemberType::execution_space,

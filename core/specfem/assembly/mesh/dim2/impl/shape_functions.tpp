@@ -4,7 +4,7 @@
 #include "shape_functions.hpp"
 #include <Kokkos_Core.hpp>
 
-specfem::assembly::impl::shape_functions<specfem::dimension::type::dim2>::shape_functions(
+specfem::assembly::mesh_impl::shape_functions<specfem::dimension::type::dim2>::shape_functions(
     const Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace> xi,
     const Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace> gamma,
     const int &ngll, const int &ngnod)
