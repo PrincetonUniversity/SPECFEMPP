@@ -30,12 +30,14 @@
 // // |                 |      |                 |
 // // +-----------------+      +-----------------+
 
-specfem::assembly::coupled_interfaces::coupled_interfaces(
-    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2>
-        &mesh_assembly,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix,
-    const specfem::assembly::element_types &element_types)
+template <>
+specfem::assembly::coupled_interfaces<specfem::dimension::type::dim2>::
+    coupled_interfaces(
+        const specfem::mesh::mesh<dimension_tag> &mesh,
+        const specfem::assembly::mesh<specfem::dimension::type::dim2>
+            &mesh_assembly,
+        const specfem::assembly::jacobian_matrix &jacobian_matrix,
+        const specfem::assembly::element_types &element_types)
     : elastic_acoustic(mesh, mesh_assembly, jacobian_matrix, element_types),
       elastic_poroelastic(mesh, mesh_assembly, jacobian_matrix, element_types),
       acoustic_poroelastic(mesh, mesh_assembly, jacobian_matrix,
@@ -57,43 +59,43 @@ template class specfem::assembly::interface_container<
 template specfem::assembly::interface_container<
     specfem::element::medium_tag::elastic_psv,
     specfem::element::medium_tag::acoustic>
-specfem::assembly::coupled_interfaces::get_interface_container<
-    specfem::element::medium_tag::elastic_psv,
-    specfem::element::medium_tag::acoustic>() const;
+specfem::assembly::coupled_interfaces<specfem::dimension::type::dim2>::
+    get_interface_container<specfem::element::medium_tag::elastic_psv,
+                            specfem::element::medium_tag::acoustic>() const;
 
 template specfem::assembly::interface_container<
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::elastic_psv>
-specfem::assembly::coupled_interfaces::get_interface_container<
-    specfem::element::medium_tag::acoustic,
-    specfem::element::medium_tag::elastic_psv>() const;
+specfem::assembly::coupled_interfaces<specfem::dimension::type::dim2>::
+    get_interface_container<specfem::element::medium_tag::acoustic,
+                            specfem::element::medium_tag::elastic_psv>() const;
 
 template specfem::assembly::interface_container<
     specfem::element::medium_tag::elastic_psv,
     specfem::element::medium_tag::poroelastic>
-specfem::assembly::coupled_interfaces::get_interface_container<
-    specfem::element::medium_tag::elastic_psv,
-    specfem::element::medium_tag::poroelastic>() const;
+specfem::assembly::coupled_interfaces<specfem::dimension::type::dim2>::
+    get_interface_container<specfem::element::medium_tag::elastic_psv,
+                            specfem::element::medium_tag::poroelastic>() const;
 
 template specfem::assembly::interface_container<
     specfem::element::medium_tag::poroelastic,
     specfem::element::medium_tag::elastic_psv>
-specfem::assembly::coupled_interfaces::get_interface_container<
-    specfem::element::medium_tag::poroelastic,
-    specfem::element::medium_tag::elastic_psv>() const;
+specfem::assembly::coupled_interfaces<specfem::dimension::type::dim2>::
+    get_interface_container<specfem::element::medium_tag::poroelastic,
+                            specfem::element::medium_tag::elastic_psv>() const;
 
 template specfem::assembly::interface_container<
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::poroelastic>
-specfem::assembly::coupled_interfaces::get_interface_container<
-    specfem::element::medium_tag::acoustic,
-    specfem::element::medium_tag::poroelastic>() const;
+specfem::assembly::coupled_interfaces<specfem::dimension::type::dim2>::
+    get_interface_container<specfem::element::medium_tag::acoustic,
+                            specfem::element::medium_tag::poroelastic>() const;
 
 template specfem::assembly::interface_container<
     specfem::element::medium_tag::poroelastic,
     specfem::element::medium_tag::acoustic>
-specfem::assembly::coupled_interfaces::get_interface_container<
-    specfem::element::medium_tag::poroelastic,
-    specfem::element::medium_tag::acoustic>() const;
+specfem::assembly::coupled_interfaces<specfem::dimension::type::dim2>::
+    get_interface_container<specfem::element::medium_tag::poroelastic,
+                            specfem::element::medium_tag::acoustic>() const;
 
 // Explicit template member function instantiation

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "coupled_interfaces/interface_container.hpp"
 #include "enumerations/interface.hpp"
+#include "impl/interface_container.hpp"
 #include "jacobian_matrix.hpp"
 #include "mesh.hpp"
 #include "mesh/mesh.hpp"
@@ -12,7 +12,17 @@ namespace specfem::assembly {
  * @brief Information about coupled interfaces between 2 different media
  *
  */
-struct coupled_interfaces {
+template <specfem::dimension::type DimensionTag> struct coupled_interfaces {
+
+public:
+  /**
+   * @name Compile-time constants
+   *
+   */
+  ///@{
+  constexpr static auto dimension_tag = DimensionTag; ///< Dimension of spectral
+                                                      ///< elements
+  ///@}
 
   /**
    * @brief Default constructor
@@ -35,9 +45,8 @@ struct coupled_interfaces {
    * @param properties Material properties for every quadrature point
    */
   coupled_interfaces(
-      const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::assembly::mesh<specfem::dimension::type::dim2>
-          &mesh_assembly,
+      const specfem::mesh::mesh<dimension_tag> &mesh,
+      const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
       const specfem::assembly::jacobian_matrix &jacobian_matrix,
       const specfem::assembly::element_types &element_types);
   ///@}

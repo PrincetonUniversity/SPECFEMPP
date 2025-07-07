@@ -50,10 +50,11 @@ struct assembly {
   specfem::assembly::sources sources;                 ///< Source information
   specfem::assembly::receivers receivers;             ///< Receiver information
   specfem::assembly::boundaries boundaries;           ///< Boundary conditions
-  specfem::assembly::coupled_interfaces coupled_interfaces; ///< Coupled
-                                                            ///< interfaces
-                                                            ///< between 2
-                                                            ///< mediums
+  specfem::assembly::coupled_interfaces<dimension_tag>
+      coupled_interfaces;           ///< Coupled
+                                    ///< interfaces
+                                    ///< between 2
+                                    ///< mediums
   specfem::assembly::fields fields; ///< Displacement, velocity, and
                                     ///< acceleration fields
   specfem::assembly::boundary_values boundary_values; ///< Field
