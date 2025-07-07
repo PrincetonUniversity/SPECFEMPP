@@ -16,6 +16,6 @@ template <specfem::dimension::type DimensionTag> class boundaries;
 
 }
 
-#include "boundaries/boundaries.hpp"
-#include "boundaries/impl/acoustic_free_surface.hpp"
-#include "boundaries/impl/stacey.hpp"
+#include "boundaries/dim2/boundaries.hpp"
+#include "boundaries/dim2/impl/acoustic_free_surface.hpp"
+#include "boundaries/dim2/impl/stacey.hpp"
