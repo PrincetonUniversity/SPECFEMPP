@@ -1,14 +1,15 @@
 #pragma once
 
 #include "coupled_interfaces.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "coupled_interfaces/interface_container.hpp"
 #include "coupled_interfaces/interface_container.tpp"
 
+template <>
 template <specfem::element::medium_tag medium1,
           specfem::element::medium_tag medium2>
 specfem::assembly::interface_container<medium1, medium2>
-specfem::assembly::coupled_interfaces::get_interface_container() const {
+specfem::assembly::coupled_interfaces<specfem::dimension::type::dim2>::get_interface_container() const {
   if constexpr (medium1 == specfem::element::medium_tag::elastic_psv &&
                 medium2 == specfem::element::medium_tag::acoustic) {
     return elastic_acoustic;
