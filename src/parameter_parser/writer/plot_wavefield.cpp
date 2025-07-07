@@ -3,6 +3,8 @@
 #include "periodic_tasks/plotter.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/strings.hpp"
+#include "enumerations/display.hpp"
+#include "enumerations/wavefield.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::plot_wavefield::plot_wavefield(
@@ -82,15 +84,15 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   const auto component = [&]() {
     if (specfem::utilities::is_displacement_string(this->component)) {
-      return specfem::display::wavefield::displacement;
+      return specfem::wavefield::type::displacement;
     } else if (specfem::utilities::is_velocity_string(this->component)) {
-      return specfem::display::wavefield::velocity;
+      return specfem::wavefield::type::velocity;
     } else if (specfem::utilities::is_acceleration_string(this->component)) {
-      return specfem::display::wavefield::acceleration;
+      return specfem::wavefield::type::acceleration;
     } else if (specfem::utilities::is_pressure_string(this->component)) {
-      return specfem::display::wavefield::pressure;
+      return specfem::wavefield::type::pressure;
     } else if (specfem::utilities::is_rotation_string(this->component)) {
-      return specfem::display::wavefield::rotation;
+      return specfem::wavefield::type::rotation;
     } else {
       throw std::runtime_error(
           "Unknown wavefield component in the display section");

@@ -45,11 +45,11 @@
 specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     const specfem::assembly::assembly &assembly,
     const specfem::display::format &output_format,
-    const specfem::display::wavefield &component,
+    const specfem::wavefield::type &wavefield_type,
     const specfem::wavefield::simulation_field &wavefield,
     const int &time_interval, const boost::filesystem::path &output_folder,
     specfem::MPI::MPI *mpi)
-    : assembly(assembly), wavefield(wavefield), component(component),
+    : assembly(assembly), wavefield(wavefield), wavefield_type(wavefield_type),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec),
       ngllx(assembly.mesh.ngllx), ngllz(assembly.mesh.ngllz), mpi(mpi) {
@@ -97,11 +97,11 @@ void specfem::periodic_tasks::plot_wavefield::finalize(
 specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     const specfem::assembly::assembly &assembly,
     const specfem::display::format &output_format,
-    const specfem::display::wavefield &component,
+    const specfem::wavefield::type &wavefield_type,
     const specfem::wavefield::simulation_field &wavefield,
     const int &time_interval, const boost::filesystem::path &output_folder,
     specfem::MPI::MPI *mpi)
-    : assembly(assembly), wavefield(wavefield), component(component),
+    : assembly(assembly), wavefield(wavefield), wavefield_type(wavefield_type),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec),
       ngllx(assembly.mesh.ngllx), ngllz(assembly.mesh.ngllz), mpi(mpi) {};
@@ -111,21 +111,26 @@ double specfem::periodic_tasks::plot_wavefield::sigmoid(double x) {
   return (1 / (1 + std::exp(-100 * x)) - 0.5) * 1.5;
 }
 
-// Get wavefield component type from display component
+// Get wavefield type to display
 specfem::wavefield::type
-specfem::periodic_tasks::plot_wavefield::get_wavefield_component() {
-  if (component == specfem::display::wavefield::displacement) {
+specfem::periodic_tasks::plot_wavefield::get_wavefield_type() {
+  if (wavefield_type == specfem::wavefield::type::displacement) {
     return specfem::wavefield::type::displacement;
-  } else if (component == specfem::display::wavefield::velocity) {
+  } else if (wavefield_type == specfem::wavefield::type::velocity) {
     return specfem::wavefield::type::velocity;
-  } else if (component == specfem::display::wavefield::acceleration) {
+  } else if (wavefield_type == specfem::wavefield::type::acceleration) {
     return specfem::wavefield::type::acceleration;
-  } else if (component == specfem::display::wavefield::pressure) {
+  } else if (wavefield_type == specfem::wavefield::type::pressure) {
     return specfem::wavefield::type::pressure;
-  } else if (component == specfem::display::wavefield::rotation) {
+  } else if (wavefield_type == specfem::wavefield::type::rotation) {
     return specfem::wavefield::type::rotation;
   } else {
-    throw std::runtime_error("Unsupported component");
+    std::ostringstream message;
+    message << "Unsupported wavefield type for display. " 
+            << specfem::wavefield::to_string(wavefield_type)
+            << " is not supported: " 
+            << __FILE__ << ":" << __LINE__;
+    throw std::runtime_error(message.str());
   }
 }
 
@@ -225,9 +230,6 @@ specfem::periodic_tasks::plot_wavefield::map_materials_with_color() {
  * Each element has therefore 9 points, that are the used to return a
  * vtkUnstructuredGrid object containing vtkBiQuadraticQuad cells.
  *
- * @param assembly
- * @param type
- * @param display_component
  * @return vtkSmartPointer<vtkUnstructuredGrid>
  */
 void specfem::periodic_tasks::plot_wavefield::create_biquad_grid() {
@@ -311,10 +313,6 @@ void specfem::periodic_tasks::plot_wavefield::create_biquad_grid() {
  *
  * The wavefield is assigned to the points accordingly.
  *
- * @param assembly
- * @param type
- * @param display_component
- * @return vtkSmartPointer<vtkUnstructuredGrid>
  */
 void specfem::periodic_tasks::plot_wavefield::create_quad_grid() {
   const auto &coordinates = assembly.mesh.points.h_coord;
@@ -372,9 +370,9 @@ void specfem::periodic_tasks::plot_wavefield::create_quad_grid() {
 vtkSmartPointer<vtkFloatArray>
 specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
     specfem::assembly::assembly &assembly) {
-  const auto component_type = get_wavefield_component();
+  const auto wavefield_type = get_wavefield_type();
   const auto &wavefield_data =
-      assembly.generate_wavefield_on_entire_grid(wavefield, component_type);
+      assembly.generate_wavefield_on_entire_grid(wavefield, wavefield_type);
 
   auto scalars = vtkSmartPointer<vtkFloatArray>::New();
 
@@ -393,8 +391,8 @@ specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
             int ix_pos = ix + x_index[ipoint];
 
             // Insert scalar value
-            if (component_type == specfem::wavefield::type::pressure ||
-                component_type == specfem::wavefield::type::rotation) {
+            if (wavefield_type == specfem::wavefield::type::pressure ||
+                wavefield_type == specfem::wavefield::type::rotation) {
               scalars->InsertNextValue(
                   std::abs(wavefield_data(ispec, iz_pos, ix_pos, 0)));
             } else {
@@ -433,8 +431,8 @@ specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
 
     for (int icell = 0; icell < nspec; ++icell) {
       for (int i = 0; i < cell_points; ++i) {
-        if (component_type == specfem::wavefield::type::pressure ||
-            component_type == specfem::wavefield::type::rotation) {
+        if (wavefield_type == specfem::wavefield::type::pressure ||
+            wavefield_type == specfem::wavefield::type::rotation) {
           scalars->InsertNextValue(
               std::abs(wavefield_data(icell, z_index[i], x_index[i], 0)));
         } else {
