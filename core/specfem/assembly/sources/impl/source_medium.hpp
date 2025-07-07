@@ -27,6 +27,17 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 struct source_medium {
 
+public:
+  /**
+   * @name Compile-time constants
+   *
+   */
+  ///@{
+  constexpr static auto medium_tag = MediumTag; ///< Medium type
+  constexpr static auto dimension_tag =
+      DimensionTag; ///< Dimension of spectral elements
+  ///@}
+
 private:
   using IndexView =
       Kokkos::View<int *, Kokkos::DefaultExecutionSpace>; ///< Underlying view
@@ -44,24 +55,13 @@ private:
                                                    ///< store source arrays
 
   constexpr static int components =
-      specfem::element::attributes<DimensionTag,
+      specfem::element::attributes<dimension_tag,
                                    MediumTag>::components; ///< Number
                                                            ///< of
                                                            ///< components
                                                            ///< in the
                                                            ///< medium
-
 public:
-  /**
-   * @name Compile-time constants
-   *
-   */
-  ///@{
-  constexpr static auto medium_tag = MediumTag; ///< Medium type
-  constexpr static auto dimension_tag =
-      DimensionTag; ///< Dimension of spectral elements
-  ///@}
-
   /**
    * @name Constructors
    *
@@ -87,7 +87,7 @@ public:
    */
   source_medium(
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-      const specfem::assembly::mesh<DimensionTag> &mesh,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::jacobian_matrix &jacobian_matrix,
       const specfem::assembly::element_types &element_types, const type_real t0,
       const type_real dt, const int nsteps);
