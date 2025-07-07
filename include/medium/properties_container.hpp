@@ -29,7 +29,7 @@ struct properties_container
 
   properties_container(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-      const specfem::assembly::mesh_to_compute_mapping &mapping,
+      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
       const int ngllz, const int ngllx,
       const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
       const bool has_gll_model,

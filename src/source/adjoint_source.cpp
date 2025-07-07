@@ -4,7 +4,7 @@
 #include "specfem/assembly.hpp"
 
 void specfem::sources::adjoint_source::compute_source_array(
-    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
@@ -13,9 +13,9 @@ void specfem::sources::adjoint_source::compute_source_array(
       this->x, this->z);
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
-  const auto xi = mesh.quadratures.gll.h_xi;
-  const auto gamma = mesh.quadratures.gll.h_xi;
-  const auto N = mesh.quadratures.gll.N;
+  const auto xi = mesh.h_xi;
+  const auto gamma = mesh.h_xi;
+  const auto N = mesh.ngllx;
 
   const auto el_type = element_types.get_medium_tag(lcoord.ispec);
   const int ncomponents = source_array.extent(0);

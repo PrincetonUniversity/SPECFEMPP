@@ -30,25 +30,35 @@ namespace specfem::assembly {
  *
  */
 struct assembly {
-  specfem::assembly::mesh mesh; ///< Properties of the assembled mesh
-  specfem::assembly::element_types element_types; ///< Element tags for every
-                                                  ///< spectral element
+
+  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+
+  specfem::assembly::mesh<dimension_tag> mesh; ///< Properties of the assembled
+                                               ///< mesh
+  specfem::assembly::element_types element_types;     ///< Element tags
+                                                      ///< for every
+                                                      ///< spectral
+                                                      ///< element
   specfem::assembly::jacobian_matrix jacobian_matrix; ///< Partial
-                                                      ///< derivatives of
-                                                      ///< the basis
+                                                      ///< derivatives
+                                                      ///< of the
+                                                      ///< basis
                                                       ///< functions
   specfem::assembly::properties properties;           ///< Material properties
-  specfem::assembly::kernels kernels; ///< Frechet derivatives (Misfit kernels)
-  specfem::assembly::sources sources; ///< Source information
-  specfem::assembly::receivers receivers;   ///< Receiver information
-  specfem::assembly::boundaries boundaries; ///< Boundary conditions
+  specfem::assembly::kernels kernels;                 ///< Frechet derivatives
+                                                      ///< (Misfit kernels)
+  specfem::assembly::sources sources;                 ///< Source information
+  specfem::assembly::receivers receivers;             ///< Receiver information
+  specfem::assembly::boundaries boundaries;           ///< Boundary conditions
   specfem::assembly::coupled_interfaces coupled_interfaces; ///< Coupled
                                                             ///< interfaces
                                                             ///< between 2
                                                             ///< mediums
   specfem::assembly::fields fields; ///< Displacement, velocity, and
                                     ///< acceleration fields
-  specfem::assembly::boundary_values boundary_values; ///< Field values at the
+  specfem::assembly::boundary_values boundary_values; ///< Field
+                                                      ///< values at
+                                                      ///< the
                                                       ///< boundaries
 
   /**
@@ -70,7 +80,7 @@ struct assembly {
    * assignment if exists)
    */
   assembly(
-      const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+      const specfem::mesh::mesh<dimension_tag> &mesh,
       const specfem::quadrature::quadratures &quadratures,
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const std::vector<std::shared_ptr<specfem::receivers::receiver> >

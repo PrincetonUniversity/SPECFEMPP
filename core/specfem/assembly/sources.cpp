@@ -1,6 +1,7 @@
 #include "sources.hpp"
 #include "algorithms/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "sources/source_medium.hpp"
@@ -30,7 +31,7 @@ std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >,
 sort_sources_per_medium(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::assembly::element_types &element_types,
-    const specfem::assembly::mesh &mesh) {
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
 
   std::vector<std::shared_ptr<specfem::sources::source> > sorted_sources;
   std::vector<int> source_indices;
@@ -74,7 +75,7 @@ template class specfem::assembly::impl::source_medium<
 
 specfem::assembly::sources::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types, const type_real t0,
     const type_real dt, const int nsteps)

@@ -57,12 +57,12 @@ public:
    * @param nspec Number of spectral elements
    * @param ngllz Number of quadrature points in z direction
    * @param ngllx Number of quadrature points in x direction
-   * @param mapping Mapping of spectral element index from mesh to assembly
+   * @param mesh Mesh information
    * @param tags Element Tags for every spectral element
    */
   element_types(
       const int nspec, const int ngllz, const int ngllx,
-      const specfem::assembly::mesh_to_compute_mapping &mapping,
+      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
       const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
 
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>

@@ -23,15 +23,15 @@ specfem::assembly::impl::field_impl<DimensionTag, MediumTag>::field_impl(
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 specfem::assembly::impl::field_impl<DimensionTag, MediumTag>::field_impl(
-    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::mesh<dimension_tag> &mesh,
     const specfem::assembly::element_types &element_types,
     Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
         assembly_index_mapping) {
 
-  const auto index_mapping = mesh.points.h_index_mapping;
-  const int nspec = mesh.points.nspec;
-  const int ngllz = mesh.points.ngllz;
-  const int ngllx = mesh.points.ngllx;
+  const auto index_mapping = mesh.h_index_mapping;
+  const int nspec = mesh.nspec;
+  const int ngllz = mesh.ngllz;
+  const int ngllx = mesh.ngllx;
 
   // Count the total number of distinct global indices for the medium
   int count = 0;

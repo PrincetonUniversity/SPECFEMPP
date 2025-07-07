@@ -11,13 +11,15 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 class field_impl {
 public:
+  constexpr static auto dimension_tag = DimensionTag;
+  constexpr static auto medium_tag = MediumTag;
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
   field_impl() = default;
 
   field_impl(
-      const specfem::assembly::mesh &mesh,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::element_types &element_type,
       Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
           assembly_index_mapping);

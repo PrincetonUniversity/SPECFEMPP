@@ -44,9 +44,9 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   const auto seismogram_types = receivers.get_seismogram_types();
 
   const int nseismograms = seismogram_types.size();
-  const auto field = assembly.fields.get_simulation_field<wavefield_simulation_field>();
-  const auto &quadrature = assembly.mesh.quadratures;
 
+  const auto &mesh = assembly.mesh;
+  const auto field = assembly.fields.get_simulation_field<wavefield_simulation_field>();
 
   if (ngllz != ngll || ngllx != ngll) {
     throw std::runtime_error("The number of GLL points in z and x must match "
@@ -111,7 +111,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
           ViewType lagrange_interpolant(team.team_scratch(0));
           ResultsViewType seismogram_components(team.team_scratch(0));
 
-          specfem::assembly::load_on_device(team, quadrature,
+          specfem::assembly::load_on_device(team, mesh,
                                            element_quadrature);
 
           specfem::assembly::load_on_device(chunk_index, field, element_field);

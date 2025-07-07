@@ -30,16 +30,16 @@ template <typename ViewType> int compute_nglob(const ViewType index_mapping) {
 
 template <specfem::wavefield::simulation_field WavefieldType>
 specfem::assembly::simulation_field<WavefieldType>::simulation_field(
-    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::element_types &element_types) {
 
-  nglob = compute_nglob(mesh.points.h_index_mapping);
+  nglob = compute_nglob(mesh.h_index_mapping);
 
-  this->nspec = mesh.points.nspec;
-  this->ngllz = mesh.points.ngllz;
-  this->ngllx = mesh.points.ngllx;
-  this->index_mapping = mesh.points.index_mapping;
-  this->h_index_mapping = mesh.points.h_index_mapping;
+  this->nspec = mesh.nspec;
+  this->ngllz = mesh.ngllz;
+  this->ngllx = mesh.ngllx;
+  this->index_mapping = mesh.index_mapping;
+  this->h_index_mapping = mesh.h_index_mapping;
 
   assembly_index_mapping =
       Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,

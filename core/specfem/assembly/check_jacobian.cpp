@@ -29,12 +29,21 @@
 
 #ifndef NO_VTK
 
-// Maps different materials to different colors
+template <specfem::dimension::type DimensionTag>
 std::tuple<vtkSmartPointer<vtkDataSetMapper>,
            vtkSmartPointer<vtkPolyDataMapper> >
-map_small_jacobian(const specfem::assembly::mesh &mesh,
+map_small_jacobian(const specfem::assembly::mesh<DimensionTag> &mesh,
                    const Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>
-                       &small_jacobian) {
+                       &small_jacobian);
+
+// Maps different materials to different colors
+template <>
+std::tuple<vtkSmartPointer<vtkDataSetMapper>,
+           vtkSmartPointer<vtkPolyDataMapper> >
+map_small_jacobian(
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>
+        &small_jacobian) {
 
   const std::array<int, 3> blue = { 0, 0, 255 }; // Tag all elements with small
                                                  // jacobian blue
@@ -45,7 +54,7 @@ map_small_jacobian(const specfem::assembly::mesh &mesh,
   const int ngllx = mesh.ngllx;
   const int ngllz = mesh.ngllz;
 
-  const auto &coordinates = mesh.points.h_coord;
+  const auto &coordinates = mesh.h_coord;
 
   const int cell_points = 4;
 
@@ -100,8 +109,16 @@ map_small_jacobian(const specfem::assembly::mesh &mesh,
   return std::make_tuple(mapper, outlineMapper);
 }
 
+template <specfem::dimension::type DimensionTag>
 void plot_small_jacobian(
-    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::mesh<DimensionTag> &mesh,
+    const Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>
+        &small_jacobian,
+    boost::filesystem::path output_folder);
+
+template <>
+void plot_small_jacobian(
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>
         &small_jacobian,
     boost::filesystem::path output_folder) {

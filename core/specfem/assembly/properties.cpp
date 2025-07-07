@@ -2,11 +2,12 @@
 #include "enumerations/interface.hpp"
 #include "medium/properties_container.hpp"
 #include "medium/properties_container.tpp"
+#include "mesh.hpp"
 
 specfem::assembly::properties::properties(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::assembly::element_types &element_types,
-    const specfem::assembly::mesh_to_compute_mapping &mapping,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
     const bool has_gll_model) {
 
@@ -34,7 +35,7 @@ specfem::assembly::properties::properties(
             specfem::medium::properties_container<_medium_tag_, _property_tag_>(
                 element_types.get_elements_on_host(_medium_tag_,
                                                    _property_tag_),
-                mapping, ngllz, ngllx, materials, has_gll_model,
+                mesh, ngllz, ngllx, materials, has_gll_model,
                 h_property_index_mapping);
       })
 

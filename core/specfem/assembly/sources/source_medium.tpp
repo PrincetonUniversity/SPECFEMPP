@@ -9,7 +9,7 @@ template <specfem::dimension::type Dimension,
           specfem::element::medium_tag Medium>
 specfem::assembly::impl::source_medium<Dimension, Medium>::source_medium(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const specfem::assembly::mesh &mesh,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types, const type_real t0,
     const type_real dt, const int nsteps)
@@ -20,7 +20,7 @@ specfem::assembly::impl::source_medium<Dimension, Medium>::source_medium(
                            sources.size(), components),
       h_source_time_function(Kokkos::create_mirror_view(source_time_function)),
       source_array("specfem::sources::source_array", sources.size(), components,
-                   mesh.quadratures.gll.N, mesh.quadratures.gll.N),
+                   mesh.ngllz, mesh.ngllx),
       h_source_array(Kokkos::create_mirror_view(source_array)) {
 
   for (int isource = 0; isource < sources.size(); isource++) {
