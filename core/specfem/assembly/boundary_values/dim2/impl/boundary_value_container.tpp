@@ -8,8 +8,8 @@ specfem::assembly::boundary_values_impl::boundary_value_container<
     specfem::dimension::type::dim2, BoundaryTag>::
     boundary_value_container(
         const int nstep, const specfem::assembly::mesh<dimension_tag> &mesh,
-        const specfem::assembly::element_types<dimension_tag> element_types,
-        const specfem::assembly::boundaries<dimension_tag> boundaries)
+        const specfem::assembly::element_types<dimension_tag> &element_types,
+        const specfem::assembly::boundaries<dimension_tag> &boundaries)
     : property_index_mapping(
           "specfem::assembly::boundary_value_container::property_index_mapping",
           mesh.nspec),

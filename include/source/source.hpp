@@ -14,7 +14,7 @@
 namespace specfem::assembly {
 template <specfem::dimension::type DimensionTag> class mesh;
 template <specfem::dimension::type DimensionTag> class jacobian_matrix;
-class element_types;
+template <specfem::dimension::type DimensionTag> class element_types;
 } // namespace specfem::assembly
 
 namespace specfem {

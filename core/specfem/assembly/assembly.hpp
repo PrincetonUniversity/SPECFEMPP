@@ -55,26 +55,6 @@ struct assembly {
                                                            ///< information
   specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
                                                            ///< conditions
-  specfem::assembly::element_types<dimension_tag> element_types; ///< Element
-                                                                 ///< tags for
-                                                                 ///< every
-                                                                 ///< spectral
-                                                                 ///< element
-  specfem::assembly::jacobian_matrix<dimension_tag>
-      jacobian_matrix;                                     ///< Partial
-                                                           ///< derivatives
-                                                           ///< of the
-                                                           ///< basis
-                                                           ///< functions
-  specfem::assembly::properties<dimension_tag> properties; ///< Material
-                                                           ///< properties
-  specfem::assembly::kernels<dimension_tag> kernels; ///< Frechet derivatives
-                                                     ///< (Misfit kernels)
-  specfem::assembly::sources<dimension_tag> sources; ///< Source information
-  specfem::assembly::receivers<dimension_tag> receivers;   ///< Receiver
-                                                           ///< information
-  specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
-                                                           ///< conditions
   specfem::assembly::coupled_interfaces<dimension_tag>
       coupled_interfaces;                          ///< Coupled
                                                    ///< interfaces
