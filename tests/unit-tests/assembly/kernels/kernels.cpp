@@ -18,7 +18,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-set_value(const ViewType elements, specfem::assembly::assembly &assembly,
+set_value(const ViewType elements,
+          specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -48,8 +49,10 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-check_value(const ViewType elements, specfem::assembly::assembly &assembly,
-            const type_real offset) {
+check_value(
+    const ViewType elements,
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -103,7 +106,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-add_value(const ViewType elements, specfem::assembly::assembly &assembly,
+add_value(const ViewType elements,
+          specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -135,7 +139,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-set_value(const ViewType elements, specfem::assembly::assembly &assembly,
+set_value(const ViewType elements,
+          specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -166,8 +171,10 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-check_value(const ViewType elements, specfem::assembly::assembly &assembly,
-            const type_real offset) {
+check_value(
+    const ViewType elements,
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -252,7 +259,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-add_value(const ViewType elements, specfem::assembly::assembly &assembly,
+add_value(const ViewType elements,
+          specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;

@@ -33,7 +33,7 @@ template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionTag, int NGLL>
 class domain_kernels {
 public:
-  constexpr static auto dimension = DimensionTag;
+  constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto wavefield = WavefieldType;
   constexpr static auto ngll = NGLL;
 
@@ -50,7 +50,7 @@ public:
    * and acoustic media.
    *
    */
-  domain_kernels(const specfem::assembly::assembly &assembly)
+  domain_kernels(const specfem::assembly::assembly<dimension_tag> &assembly)
       : assembly(assembly), coupling_interfaces_dim2_elastic_psv(assembly),
         coupling_interfaces_dim2_acoustic(assembly) {}
 
@@ -73,7 +73,7 @@ public:
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ACOUSTIC)),
         CAPTURE(coupling_interfaces) {
-          if constexpr (dimension == _dimension_tag_ &&
+          if constexpr (dimension_tag == _dimension_tag_ &&
                         medium == _medium_tag_) {
             _coupling_interfaces_.compute_coupling();
           }
@@ -87,9 +87,9 @@ public:
          BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                       COMPOSITE_STACEY_DIRICHLET)),
         {
-          if constexpr (dimension == _dimension_tag_ &&
+          if constexpr (dimension_tag == _dimension_tag_ &&
                         medium == _medium_tag_) {
-            impl::compute_source_interaction<dimension, wavefield, ngll,
+            impl::compute_source_interaction<dimension_tag, wavefield, ngll,
                                              _medium_tag_, _property_tag_,
                                              _boundary_tag_>(assembly, istep);
           }
@@ -103,10 +103,10 @@ public:
          BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                       COMPOSITE_STACEY_DIRICHLET)),
         {
-          if constexpr (dimension == _dimension_tag_ &&
+          if constexpr (dimension_tag == _dimension_tag_ &&
                         medium == _medium_tag_) {
             elements_updated += impl::compute_stiffness_interaction<
-                dimension, wavefield, ngll, _medium_tag_, _property_tag_,
+                dimension_tag, wavefield, ngll, _medium_tag_, _property_tag_,
                 _boundary_tag_>(assembly, istep);
           }
         })
@@ -115,9 +115,9 @@ public:
         (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                          POROELASTIC, ELASTIC_PSV_T)),
         {
-          if constexpr (dimension == _dimension_tag_ &&
+          if constexpr (dimension_tag == _dimension_tag_ &&
                         medium == _medium_tag_) {
-            impl::divide_mass_matrix<dimension, wavefield, _medium_tag_>(
+            impl::divide_mass_matrix<dimension_tag, wavefield, _medium_tag_>(
                 assembly);
           }
         })
@@ -142,10 +142,10 @@ public:
          BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                       COMPOSITE_STACEY_DIRICHLET)),
         {
-          if constexpr (dimension == _dimension_tag_) {
-            impl::compute_mass_matrix<dimension, wavefield, ngll, _medium_tag_,
-                                      _property_tag_, _boundary_tag_>(dt,
-                                                                      assembly);
+          if constexpr (dimension_tag == _dimension_tag_) {
+            impl::compute_mass_matrix<dimension_tag, wavefield, ngll,
+                                      _medium_tag_, _property_tag_,
+                                      _boundary_tag_>(dt, assembly);
           }
         })
 
@@ -153,8 +153,8 @@ public:
         (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                          POROELASTIC, ELASTIC_PSV_T)),
         {
-          if constexpr (dimension == _dimension_tag_) {
-            impl::invert_mass_matrix<dimension, wavefield, _medium_tag_>(
+          if constexpr (dimension_tag == _dimension_tag_) {
+            impl::invert_mass_matrix<dimension_tag, wavefield, _medium_tag_>(
                 assembly);
           }
         })
@@ -178,15 +178,16 @@ public:
                     ELASTIC_PSV_T),
          PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
         {
-          if constexpr (dimension == _dimension_tag_) {
-            impl::compute_seismograms<dimension, wavefield, ngll, _medium_tag_,
-                                      _property_tag_>(assembly, isig_step);
+          if constexpr (dimension_tag == _dimension_tag_) {
+            impl::compute_seismograms<dimension_tag, wavefield, ngll,
+                                      _medium_tag_, _property_tag_>(assembly,
+                                                                    isig_step);
           }
         })
   }
 
 private:
-  specfem::assembly::assembly assembly;
+  specfem::assembly::assembly<dimension_tag> assembly;
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ACOUSTIC)),
                       DECLARE(((impl::interface_kernels,

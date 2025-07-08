@@ -67,7 +67,7 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
     throw std::runtime_error(msg.str());
   }
 
-  this->check_small_jacobian();
+  this->check_jacobian_matrix();
 
   return;
 }

@@ -9,7 +9,7 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::assembly::receivers::receivers(
+specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
     const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
     const type_real dt, const type_real t0, const int nsteps_between_samples,
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >
@@ -25,9 +25,11 @@ specfem::assembly::receivers::receivers(
       elements("specfem::assembly::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
       element_types(element_types),
-      impl::StationIterator(receivers.size(), stypes),
-      impl::SeismogramIterator(receivers.size(), stypes.size(), max_sig_step,
-                               dt, t0, nsteps_between_samples) {
+      specfem::assembly::receivers_impl::StationIterator(receivers.size(),
+                                                         stypes),
+      specfem::assembly::receivers_impl::SeismogramIterator(
+          receivers.size(), stypes.size(), max_sig_step, dt, t0,
+          nsteps_between_samples) {
 
   // Validate and populate seismogram type mapping
   for (int isies = 0; isies < stypes.size(); ++isies) {
@@ -37,8 +39,19 @@ specfem::assembly::receivers::receivers(
         seis_type != specfem::wavefield::type::velocity &&
         seis_type != specfem::wavefield::type::acceleration &&
         seis_type != specfem::wavefield::type::pressure &&
-        seis_type != specfem::wavefield::type::rotation) {
-      throw std::runtime_error("Invalid seismogram type");
+        seis_type != specfem::wavefield::type::rotation &&
+        seis_type != specfem::wavefield::type::intrinsic_rotation &&
+        seis_type != specfem::wavefield::type::curl) {
+      std::ostringstream message;
+      message << "Error reading specfem receiver configuration.(" << __FILE__
+              << ":" << __LINE__ << ")\n";
+      message << "Unknown seismogram type: "
+              << specfem::wavefield::to_string(seis_type) << "\n";
+      message
+          << "Valid seismogram types are: displacement, velocity, "
+          << "acceleration, pressure, rotation, intrinsic_rotation, curl.\n";
+      message << "Please check your configuration file.\n";
+      throw std::runtime_error(message.str());
     }
 
     seismogram_type_map[seis_type] = isies;
@@ -133,9 +146,10 @@ specfem::assembly::receivers::receivers(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::receivers::get_indices_on_host(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag) const {
+specfem::assembly::receivers<specfem::dimension::type::dim2>::
+    get_indices_on_host(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
@@ -157,9 +171,10 @@ specfem::assembly::receivers::get_indices_on_host(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::receivers::get_indices_on_device(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag) const {
+specfem::assembly::receivers<specfem::dimension::type::dim2>::
+    get_indices_on_device(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),

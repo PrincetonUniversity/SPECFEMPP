@@ -1,20 +1,20 @@
 #pragma once
 
-#include "boundaries.hpp"
-#include "boundary_values.hpp"
-#include "coupled_interfaces.hpp"
 #include "enumerations/interface.hpp"
-#include "fields.hpp"
 #include "io/reader.hpp"
-#include "jacobian_matrix.hpp"
-#include "kernels.hpp"
-#include "mesh.hpp"
 #include "mesh/mesh.hpp"
-#include "properties.hpp"
 #include "receiver/interface.hpp"
-#include "receivers.hpp"
 #include "source/interface.hpp"
-#include "sources.hpp"
+#include "specfem/assembly/boundaries.hpp"
+#include "specfem/assembly/boundary_values.hpp"
+#include "specfem/assembly/coupled_interfaces.hpp"
+#include "specfem/assembly/fields.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
+#include "specfem/assembly/kernels.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/properties.hpp"
+#include "specfem/assembly/receivers.hpp"
+#include "specfem/assembly/sources.hpp"
 
 /**
  * @brief Assembly namespace defines data structures used to store data related
@@ -47,8 +47,9 @@ template <> struct assembly<specfem::dimension::type::dim2> {
   specfem::assembly::properties properties;           ///< Material properties
   specfem::assembly::kernels kernels;                 ///< Frechet derivatives
                                                       ///< (Misfit kernels)
-  specfem::assembly::sources sources;                 ///< Source information
-  specfem::assembly::receivers receivers;             ///< Receiver information
+  specfem::assembly::sources<dimension_tag> sources;  ///< Source information
+  specfem::assembly::receivers<dimension_tag> receivers;    ///< Receiver
+                                                            ///< information
   specfem::assembly::boundaries<dimension_tag> boundaries;  ///< Boundary
                                                             ///< conditions
   specfem::assembly::coupled_interfaces coupled_interfaces; ///< Coupled
@@ -125,7 +126,7 @@ template <> struct assembly<specfem::dimension::type::dim2> {
    * small Jacobian
    *
    */
-  void check_small_jacobian() const;
+  void check_jacobian_matrix() const;
 };
 
 } // namespace specfem::assembly
