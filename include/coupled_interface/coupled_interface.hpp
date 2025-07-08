@@ -74,7 +74,8 @@ public:
       SelfMedium; ///< Medium of the primary domain.
   constexpr static auto coupled_medium =
       CoupledMedium; ///< Medium of the coupled domain.
-  constexpr static auto dimension = DimensionTag; ///< Dimension of the element.
+  constexpr static auto dimension_tag =
+      DimensionTag; ///< Dimension of the element.
   constexpr static auto wavefield = WavefieldType; ///< Wavefield type.
 
   static_assert(SelfMedium != CoupledMedium,
@@ -106,7 +107,8 @@ public:
 private:
   int nedges;  ///< Number of edges in the interface.
   int npoints; ///< Number of quadrature points in the interface.
-  specfem::assembly::interface_container<SelfMedium, CoupledMedium>
+  specfem::assembly::interface_container<dimension_tag, SelfMedium,
+                                         CoupledMedium>
       interface_data; ///< Struct containing the coupling information.
   specfem::assembly::simulation_field<dimension, WavefieldType>
       field; ///< Wavefield
