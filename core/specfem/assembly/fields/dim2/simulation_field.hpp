@@ -43,8 +43,9 @@ public:
    * @param mesh Assembled mesh
    * @param properties Material properties
    */
-  simulation_field(const specfem::assembly::mesh<dimension_tag> &mesh,
-                   const specfem::assembly::element_types &element_types);
+  simulation_field(
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::assembly::element_types<dimension_tag> &element_types);
   ///@}
 
   /**

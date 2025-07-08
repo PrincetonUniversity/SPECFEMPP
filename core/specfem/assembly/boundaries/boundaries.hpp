@@ -75,10 +75,11 @@ public:
    * @param jacobian_matrix Jacobian matrix of basis functions at every
    * quadrature point
    */
-  boundaries(const int nspec, const int ngllz, const int ngllx,
-             const specfem::mesh::mesh<dimension_tag> &mesh,
-             const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
-             const specfem::assembly::jacobian_matrix &jacobian_matrix);
+  boundaries(
+      const int nspec, const int ngllz, const int ngllx,
+      const specfem::mesh::mesh<dimension_tag> &mesh,
+      const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
+      const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix);
   ///@}
 };
 
