@@ -47,10 +47,10 @@ struct assembly {
   specfem::assembly::properties properties;           ///< Material properties
   specfem::assembly::kernels kernels;                 ///< Frechet derivatives
                                                       ///< (Misfit kernels)
-  specfem::assembly::sources sources;                 ///< Source information
-  specfem::assembly::receivers receivers;             ///< Receiver information
-  specfem::assembly::boundaries<dimension_tag> boundaries;  ///< Boundary
-                                                            ///< conditions
+  specfem::assembly::sources<dimension_tag> sources;  ///< Source information
+  specfem::assembly::receivers<dimension_tag> receivers; ///< Receiver
+                                                         ///< information
+  specfem::assembly::boundaries boundaries; ///< Boundary conditions
   specfem::assembly::coupled_interfaces coupled_interfaces; ///< Coupled
                                                             ///< interfaces
                                                             ///< between 2

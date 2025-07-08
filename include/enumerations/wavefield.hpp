@@ -14,7 +14,15 @@ enum class simulation_field { forward, adjoint, backward, buffer };
  * @brief Type of wavefield component
  *
  */
-enum class type { displacement, velocity, acceleration, pressure, rotation };
+enum class type {
+  displacement,
+  velocity,
+  acceleration,
+  pressure,
+  rotation,
+  intrinsic_rotation,
+  curl
+};
 
 /**
  * @brief Defines compile time constants for wavefield components
@@ -96,6 +104,16 @@ public:
   }
   static constexpr int num_components() { return 1; }
 };
+
+/**
+ * @brief Gets the string representation of a wavefield component
+ *
+ * @param wavefield_component The wavefield component to convert
+ * @return std::string The string representation of the wavefield component
+ *
+ */
+const std::string
+to_string(const specfem::wavefield::type &wavefield_component);
 
 } // namespace wavefield
 } // namespace specfem
