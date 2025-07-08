@@ -41,6 +41,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # For external modules that need to be built suppress build output
 set(FETCHCONTENT_QUIET TRUE)
 
+# Enable unity build for faster compilation
+option(ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
+if(ENABLE_UNITY_BUILD)
+    message(STATUS "Unity build enabled - this will speed up compilation")
+    set(CMAKE_UNITY_BUILD ON)
+    set(CMAKE_UNITY_BUILD_BATCH_SIZE 8)
+endif()
+
 if (SPECFEMPP_BINDING_PYTHON)
     message(STATUS "Adding -fPIC flag for Python binding.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
@@ -80,6 +88,11 @@ if (DEFINED Kokkos_ENABLE_CUDA)
     endif()
 endif()
 
+
+# Temporarily disable unity build for external dependencies
+set(SAVED_UNITY_BUILD ${CMAKE_UNITY_BUILD})
+set(CMAKE_UNITY_BUILD OFF)
+
 # For the installation of dependencies
 include(FetchContent)
 
@@ -114,6 +127,12 @@ set(YAML_CPP_BUILD_INSTALL OFF CACHE BOOL "Disable yaml-cpp installation" FORCE)
 FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
+
+# Restore unity build for our own code after all dependencies are fetched
+set(CMAKE_UNITY_BUILD ${SAVED_UNITY_BUILD})
+if(CMAKE_UNITY_BUILD)
+    message(STATUS "Unity build restored for SPECFEM++ code")
+endif()
 
 
 if (VTK_CXX_BUILD)
@@ -492,6 +511,9 @@ target_link_libraries(
         utilities
 )
 
+# Disable unity build for source_time_function due to KOKKOS_INLINE_FUNCTION issues
+set_target_properties(source_time_function PROPERTIES UNITY_BUILD OFF)
+
 
 
 add_library(
@@ -554,6 +576,7 @@ add_library(
         src/kokkos_kernels/impl/compute_material_derivatives.cpp
         src/kokkos_kernels/frechet_kernels.cpp
 )
+set_target_properties(kokkos_kernels PROPERTIES UNITY_BUILD_BATCH_SIZE 2)
 
 target_link_libraries(
         kokkos_kernels

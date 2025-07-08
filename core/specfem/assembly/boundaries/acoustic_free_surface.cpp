@@ -1,29 +1,12 @@
 
 #include "acoustic_free_surface.hpp"
 #include "macros.hpp"
+#include "utilities.hpp"
 #include <Kokkos_Sort.hpp>
 #include <algorithm>
 #include <numeric>
 #include <unordered_map>
 #include <vector>
-
-namespace {
-bool is_on_boundary(specfem::enums::boundaries::type type, int iz, int ix,
-                    int ngllz, int ngllx) {
-  return (type == specfem::enums::boundaries::type::TOP && iz == ngllz - 1) ||
-         (type == specfem::enums::boundaries::type::BOTTOM && iz == 0) ||
-         (type == specfem::enums::boundaries::type::LEFT && ix == 0) ||
-         (type == specfem::enums::boundaries::type::RIGHT && ix == ngllx - 1) ||
-         (type == specfem::enums::boundaries::type::BOTTOM_RIGHT && iz == 0 &&
-          ix == ngllx - 1) ||
-         (type == specfem::enums::boundaries::type::BOTTOM_LEFT && iz == 0 &&
-          ix == 0) ||
-         (type == specfem::enums::boundaries::type::TOP_RIGHT &&
-          iz == ngllz - 1 && ix == ngllx - 1) ||
-         (type == specfem::enums::boundaries::type::TOP_LEFT &&
-          iz == ngllz - 1 && ix == 0);
-}
-} // namespace
 
 specfem::assembly::impl::boundaries::acoustic_free_surface::
     acoustic_free_surface(
@@ -130,7 +113,8 @@ specfem::assembly::impl::boundaries::acoustic_free_surface::
       // Assign boundary tag to each quadrature point
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int ix = 0; ix < ngllx; ++ix) {
-          if (is_on_boundary(type, iz, ix, ngllz, ngllx)) {
+          if (specfem::assembly::impl::boundaries::is_on_boundary(
+                  type, iz, ix, ngllz, ngllx)) {
             this->h_quadrature_point_boundary_tag(index_compute, iz, ix) +=
                 specfem::element::boundary_tag::acoustic_free_surface;
           }
