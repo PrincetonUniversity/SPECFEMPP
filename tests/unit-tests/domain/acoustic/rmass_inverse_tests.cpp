@@ -113,9 +113,10 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   const type_real zmax = compute.coordinates.zmax;
   const type_real zmin = compute.coordinates.zmin;
 
-  specfem::assembly::sources compute_sources(sources, gllx, gllz, xmax, xmin,
-                                             zmax, zmin, mpi);
-  specfem::assembly::receivers compute_receivers;
+  specfem::assembly::sources<specfem::dimension::type::dim2> compute_sources(
+      sources, gllx, gllz, xmax, xmin, zmax, zmin, mpi);
+  specfem::assembly::receivers<specfem::dimension::type::dim2>
+      compute_receivers;
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
