@@ -54,8 +54,8 @@ struct assembly {
                                                             ///< interfaces
                                                             ///< between 2
                                                             ///< mediums
-  specfem::assembly::fields fields; ///< Displacement, velocity, and
-                                    ///< acceleration fields
+  specfem::assembly::fields<dimension_tag> fields; ///< Displacement, velocity,
+                                                   ///< and acceleration fields
   specfem::assembly::boundary_values boundary_values; ///< Field
                                                       ///< values at
                                                       ///< the
