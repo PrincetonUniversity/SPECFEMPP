@@ -48,8 +48,8 @@ public:
   coupled_interfaces(
       const specfem::mesh::mesh<dimension_tag> &mesh,
       const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
-      const specfem::assembly::jacobian_matrix &jacobian_matrix,
-      const specfem::assembly::element_types &element_types);
+      const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
+      const specfem::assembly::element_types<dimension_tag> &element_types);
   ///@}
 
   /**
