@@ -28,19 +28,5 @@ specfem::assembly::boundary_values_impl::boundary_value_container<
             nstep, mesh, element_types, boundaries, h_property_index_mapping);
       });
 
-  //   acoustic = specfem::assembly::impl::boundary_medium_container<
-  //       DimensionTag, specfem::element::medium_tag::acoustic, BoundaryTag>(
-  //       nstep, mesh, element_types, boundaries, h_property_index_mapping);
-
-  //   elastic = specfem::assembly::impl::boundary_medium_container<
-  //       DimensionTag, specfem::element::medium_tag::elastic_psv,
-  //       BoundaryTag>( nstep, mesh, element_types, boundaries,
-  //       h_property_index_mapping);
-
-  //   poroelastic = specfem::assembly::impl::boundary_medium_container<
-  //       DimensionTag, specfem::element::medium_tag::poroelastic,
-  //       BoundaryTag>( nstep, mesh, element_types, boundaries,
-  //       h_property_index_mapping);
-
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
 }

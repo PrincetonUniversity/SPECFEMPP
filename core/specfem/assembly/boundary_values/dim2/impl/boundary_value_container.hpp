@@ -33,17 +33,6 @@ public:
       DECLARE(((_boundary_medium_container, (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                container)))
 
-  // boundary_medium_container<DimensionTag,
-  //                           specfem::element::medium_tag::acoustic,
-  //                           BoundaryTag>
-  //     acoustic;
-  // boundary_medium_container<
-  //     DimensionTag, specfem::element::medium_tag::elastic_psv, BoundaryTag>
-  //     elastic;
-  // boundary_medium_container<
-  //     DimensionTag, specfem::element::medium_tag::poroelastic, BoundaryTag>
-  //     poroelastic;
-
   boundary_value_container() = default;
 
   boundary_value_container(
