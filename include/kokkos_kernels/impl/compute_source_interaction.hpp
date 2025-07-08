@@ -14,8 +14,8 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
-void compute_source_interaction(specfem::assembly::assembly &assembly,
-                                const int &timestep);
+void compute_source_interaction(
+    specfem::assembly::assembly<DimensionTag> &assembly, const int &timestep);
 }
 } // namespace kokkos_kernels
 } // namespace specfem

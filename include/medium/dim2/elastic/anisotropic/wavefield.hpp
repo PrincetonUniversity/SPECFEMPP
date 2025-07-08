@@ -20,9 +20,9 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::anisotropic>,
     const ChunkIndexType &chunk_index,
-    const specfem::assembly::assembly &assembly,
+    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
-    const specfem::wavefield::type wavefield_component,
+    const specfem::wavefield::type wavefield_type,
     WavefieldViewType wavefield) {
 
   using FieldDerivativesType = specfem::point::field_derivatives<
@@ -36,20 +36,21 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   const auto &properties = assembly.properties;
 
   const auto &active_field = [&]() {
-    if (wavefield_component == specfem::wavefield::type::displacement) {
+    if (wavefield_type == specfem::wavefield::type::displacement) {
       return field.displacement;
-    } else if (wavefield_component == specfem::wavefield::type::velocity) {
+    } else if (wavefield_type == specfem::wavefield::type::velocity) {
       return field.velocity;
-    } else if (wavefield_component == specfem::wavefield::type::acceleration) {
+    } else if (wavefield_type == specfem::wavefield::type::acceleration) {
       return field.acceleration;
-    } else if (wavefield_component == specfem::wavefield::type::pressure) {
+    } else if (wavefield_type == specfem::wavefield::type::pressure) {
       return field.displacement;
     } else {
-      Kokkos::abort("component not supported");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D "
+                                 "elastic anisotropic P-SV media.");
     }
   }();
 
-  if (wavefield_component == specfem::wavefield::type::pressure) {
+  if (wavefield_type == specfem::wavefield::type::pressure) {
 
     specfem::algorithms::gradient(
         chunk_index, assembly.jacobian_matrix, quadrature.hprime_gll,
@@ -119,28 +120,33 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::anisotropic>,
     const ChunkIndexType &chunk_index,
-    const specfem::assembly::assembly &assembly,
+    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
-    const specfem::wavefield::type wavefield_component,
+    const specfem::wavefield::type wavefield_type,
     WavefieldViewType wavefield) {
 
-  if (wavefield_component == specfem::wavefield::type::pressure) {
+  if (wavefield_type == specfem::wavefield::type::pressure) {
     Kokkos::abort("Pressure not supported for SH anisotropic media");
 
     return;
   }
 
+  using FieldDerivativesType = specfem::point::field_derivatives<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sh,
+      false>;
+
   const auto &active_field = [&]() {
-    if (wavefield_component == specfem::wavefield::type::displacement) {
+    if (wavefield_type == specfem::wavefield::type::displacement) {
       return field.displacement;
-    } else if (wavefield_component == specfem::wavefield::type::velocity) {
+    } else if (wavefield_type == specfem::wavefield::type::velocity) {
       return field.velocity;
-    } else if (wavefield_component == specfem::wavefield::type::acceleration) {
+    } else if (wavefield_type == specfem::wavefield::type::acceleration) {
       return field.acceleration;
-    } else if (wavefield_component == specfem::wavefield::type::pressure) {
+    } else if (wavefield_type == specfem::wavefield::type::pressure) {
       return field.displacement;
     } else {
-      Kokkos::abort("component not supported");
+      KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D "
+                                 "elastic anisotropic SH media.");
     }
   }();
 

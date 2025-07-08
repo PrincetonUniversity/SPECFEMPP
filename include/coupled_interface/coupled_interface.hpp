@@ -95,7 +95,9 @@ public:
    *
    * @param assembly Assembly object containing the mesh information.
    */
-  coupled_interface(const specfem::assembly::assembly &assembly);
+  coupled_interface(
+      const specfem::assembly::assembly<specfem::dimension::type::dim2>
+          &assembly);
   ///@}
 
   /**

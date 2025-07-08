@@ -1,5 +1,10 @@
-#include "compute_wavefield/helper.hpp"
-#include "specfem/assembly.hpp"
+#include "enumerations/interface.hpp"
+#include "enumerations/material_definitions.hpp"
+#include "helper.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include <Kokkos_Core.hpp>
+#include <stdexcept>
+#include <type_traits>
 
 namespace {
 
@@ -7,7 +12,7 @@ template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void get_wavefield_on_entire_grid(
     const specfem::wavefield::type component,
-    const specfem::assembly::assembly &assembly,
+    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
     Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                  Kokkos::DefaultExecutionSpace>
         wavefield_on_entire_grid) {
@@ -49,7 +54,11 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::
     } else if (component == specfem::wavefield::type::pressure) {
       return 1;
     } else if (component == specfem::wavefield::type::rotation) {
-      return 1;
+      return 2;
+    } else if (component == specfem::wavefield::type::intrinsic_rotation) {
+      return 2;
+    } else if (component == specfem::wavefield::type::curl) {
+      return 2;
     } else {
       throw std::runtime_error("Wavefield component not supported");
     }

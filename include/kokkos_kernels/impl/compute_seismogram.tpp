@@ -17,15 +17,15 @@
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field WavefieldType, int NGLL,
+          specfem::wavefield::simulation_field SimulationFieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void specfem::kokkos_kernels::impl::compute_seismograms(
-    specfem::assembly::assembly &assembly, const int &isig_step) {
+    specfem::assembly::assembly<DimensionTag> &assembly, const int &isig_step) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
-  constexpr auto wavefield_type = WavefieldType;
+  constexpr auto wavefield_simulation_field = SimulationFieldType;
   constexpr int ngll = NGLL;
   constexpr auto dimension = DimensionTag;
 
@@ -44,9 +44,9 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   const auto seismogram_types = receivers.get_seismogram_types();
 
   const int nseismograms = seismogram_types.size();
-  const auto field = assembly.fields.get_simulation_field<wavefield_type>();
-  const auto &mesh = assembly.mesh;
 
+  const auto &mesh = assembly.mesh;
+  const auto field = assembly.fields.template get_simulation_field<wavefield_simulation_field>();
 
   if (ngllz != ngll || ngllx != ngll) {
     throw std::runtime_error("The number of GLL points in z and x must match "
@@ -98,7 +98,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   for (int iseis = 0; iseis < nseismograms; ++iseis) {
 
     receivers.set_seismogram_type(iseis);
-    const auto wavefield_component = seismogram_types[iseis];
+    const auto wavefield_type = seismogram_types[iseis];
 
     specfem::execution::for_each_level(
         "specfem::kokkos_kernels::compute_seismograms",
@@ -119,7 +119,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
 
           specfem::medium::compute_wavefield<medium_tag, property_tag>(
               chunk_index, assembly, element_quadrature, element_field,
-              wavefield_component, wavefield);
+              wavefield_type, wavefield);
 
           specfem::assembly::load_on_device(chunk_index, receivers,
                                            lagrange_interpolant);
