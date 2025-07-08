@@ -9,7 +9,8 @@ namespace {
 template <specfem::element::medium_tag MediumTag,
           specfem::wavefield::simulation_field WavefieldType>
 int corrector_phase_impl(
-    const specfem::assembly::simulation_field<WavefieldType> &field,
+    const specfem::assembly::simulation_field<specfem::dimension::type::dim2,
+                                              WavefieldType> &field,
     const type_real deltatover2) {
 
   constexpr int components =
@@ -58,7 +59,8 @@ int corrector_phase_impl(
 template <specfem::element::medium_tag MediumTag,
           specfem::wavefield::simulation_field WavefieldType>
 int predictor_phase_impl(
-    const specfem::assembly::simulation_field<WavefieldType> &field,
+    const specfem::assembly::simulation_field<specfem::dimension::type::dim2,
+                                              WavefieldType> &field,
     const type_real deltat, const type_real deltatover2,
     const type_real deltasquareover2) {
 
