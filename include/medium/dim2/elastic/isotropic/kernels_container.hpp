@@ -13,7 +13,7 @@ template <specfem::dimension::type DimensionTag,
 struct data_container<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
-  constexpr static auto dimension = DimensionTag;
+  constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto medium_tag = MediumTag;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;

@@ -7,10 +7,9 @@ template <specfem::element::medium_tag MediumTag,
 specfem::medium::properties_container<specfem::dimension::type::dim2, MediumTag, PropertyTag>::
     properties_container(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-        const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+        const specfem::assembly::mesh<dimension_tag> &mesh,
         const int ngllz, const int ngllx,
-        const specfem::mesh::materials<specfem::dimension::type::dim2>
-            &materials,
+        const specfem::mesh::materials<dimension_tag> &materials,
         const bool has_gll_model,
         const specfem::kokkos::HostView1d<int> property_index_mapping)
     : base_type(elements.extent(0), ngllz, ngllx) {
@@ -26,14 +25,13 @@ specfem::medium::properties_container<specfem::dimension::type::dim2, MediumTag,
         for (int ix = 0; ix < ngllx; ++ix) {
           // Get the material at index from mesh::materials
           auto material =
-              materials
-                  .get_material<base_type::medium_tag, base_type::property_tag>(
+              materials.template get_material<medium_tag, property_tag>(
                       mesh_ispec);
 
           // Assign the material property to the property container
           auto point_property = material.get_properties();
           this->store_host_values(
-              specfem::point::index<base_type::dimension>(count, iz, ix),
+              specfem::point::index<dimension_tag>(count, iz, ix),
               point_property);
         }
       }

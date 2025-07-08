@@ -3,7 +3,7 @@
 #include "execution/for_each_level.hpp"
 #include "specfem/point.hpp"
 
-namespace specfem::assembly {
+namespace specfem::assembly::fields_impl {
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
@@ -76,7 +76,7 @@ impl_load(const typename ViewType::simd::mask_type &mask, const int *iglob,
     if constexpr (StoreDisplacement) {
       simd_type result([&](std::size_t lane) {
         return mask[lane] ? curr_field.template get_field<on_device>(
-                                  iglob[lane], icomp)
+                                iglob[lane], icomp)
                           : 0.0;
       });
       point_field.displacement(icomp) = result;
@@ -84,7 +84,7 @@ impl_load(const typename ViewType::simd::mask_type &mask, const int *iglob,
     if constexpr (StoreVelocity) {
       simd_type result([&](std::size_t lane) {
         return mask[lane] ? curr_field.template get_field_dot<on_device>(
-                                  iglob[lane], icomp)
+                                iglob[lane], icomp)
                           : 0.0;
       });
       point_field.velocity(icomp) = result;
@@ -92,7 +92,7 @@ impl_load(const typename ViewType::simd::mask_type &mask, const int *iglob,
     if constexpr (StoreAcceleration) {
       simd_type result([&](std::size_t lane) {
         return mask[lane] ? curr_field.template get_field_dot_dot<on_device>(
-                                  iglob[lane], icomp)
+                                iglob[lane], icomp)
                           : 0.0;
       });
       point_field.acceleration(icomp) = result;
@@ -100,7 +100,7 @@ impl_load(const typename ViewType::simd::mask_type &mask, const int *iglob,
     if constexpr (StoreMassMatrix) {
       simd_type result([&](std::size_t lane) {
         return mask[lane] ? curr_field.template get_mass_inverse<on_device>(
-                                  iglob[lane], icomp)
+                                iglob[lane], icomp)
                           : 0.0;
       });
       point_field.mass_matrix(icomp) = result;
@@ -954,4 +954,4 @@ KOKKOS_FUNCTION void impl_load(const ChunkIndexType &index,
   return;
 }
 
-} // namespace specfem::assembly
+} // namespace specfem::assembly::fields_impl

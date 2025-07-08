@@ -11,7 +11,7 @@ namespace properties {
 template <specfem::dimension::type DimensionTag>
 struct data_container<DimensionTag, specfem::element::medium_tag::poroelastic,
                       specfem::element::property_tag::isotropic> {
-  constexpr static auto dimension = DimensionTag;
+  constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto medium_tag = specfem::element::medium_tag::poroelastic;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;

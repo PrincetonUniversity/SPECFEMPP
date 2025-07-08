@@ -4,14 +4,6 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::impl {
-/**
- * @brief Values for every quadrature point in the finite element mesh
- *
- */
-template <specfem::dimension::type,
-          template <specfem::dimension::type, specfem::element::medium_tag,
-                    specfem::element::property_tag> class containers_type>
-struct value_containers;
 
 template <template <specfem::dimension::type, specfem::element::medium_tag,
                     specfem::element::property_tag> class containers_type>
@@ -22,6 +14,8 @@ struct value_containers<specfem::dimension::type::dim2, containers_type> {
   int nspec; ///< Total number of spectral elements
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
+
+  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
 
   IndexViewType property_index_mapping; ///< View to store property index
                                         ///< mapping
