@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

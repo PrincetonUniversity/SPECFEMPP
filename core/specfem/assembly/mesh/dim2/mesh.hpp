@@ -82,7 +82,7 @@ impl_load(const MemberType &team,
   constexpr int NGLL = ViewType::ngll;
 
   const auto &quadrature =
-      static_cast<const specfem::assembly::impl::quadrature<
+      static_cast<const specfem::assembly::mesh_impl::quadrature<
           specfem::dimension::type::dim2> &>(mesh);
 
   static_assert(std::is_same_v<typename MemberType::execution_space,

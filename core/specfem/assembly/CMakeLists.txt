@@ -1,9 +1,11 @@
-file(GLOB COMPUTE_SOURCE_FILES "./*.cpp" "./boundaries/*.cpp")
+file(GLOB_RECURSE COMPUTE_SOURCE_FILES "./*.cpp" "**/*.cpp")
+
 
 add_library(assembly ${COMPUTE_SOURCE_FILES})
 
 target_link_libraries(
         assembly
+        algorithms
         enumerations
         quadrature
         mesh
@@ -13,6 +15,7 @@ target_link_libraries(
         edge
         receiver_class
         Kokkos::kokkos
+        ${BOOST_LIBS}
 )
 
 
