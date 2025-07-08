@@ -1,11 +1,11 @@
 #pragma once
 
-#include "specfem/assembly/mesh.hpp"
-#include "specfem/assembly/element_types.hpp"
-#include "field_impl.tpp"
-#include "simulation_field.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "simulation_field.hpp"
+#include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/fields/impl/field_impl.tpp"
+#include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace {
@@ -29,9 +29,10 @@ template <typename ViewType> int compute_nglob(const ViewType index_mapping) {
 } // namespace
 
 template <specfem::wavefield::simulation_field WavefieldType>
-specfem::assembly::simulation_field<WavefieldType>::simulation_field(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2> &element_types) {
+specfem::assembly::simulation_field<specfem::dimension::type::dim2,
+                                    WavefieldType>::
+    simulation_field(const specfem::assembly::mesh<dimension_tag> &mesh,
+                     const specfem::assembly::element_types<dimension_tag> &element_types) {
 
   nglob = compute_nglob(mesh.h_index_mapping);
 
@@ -58,15 +59,14 @@ specfem::assembly::simulation_field<WavefieldType>::simulation_field(
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-                 MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                  ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE(field) {
         auto index = Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
                                      static_cast<int>(_medium_tag_));
-        _field_ =
-            specfem::assembly::impl::field_impl<_dimension_tag_, _medium_tag_>(
-                mesh, element_types, index);
+        _field_ = specfem::assembly::fields_impl::field_impl<_dimension_tag_,
+                                                             _medium_tag_>(
+            mesh, element_types, index);
       })
 
   Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
@@ -76,15 +76,15 @@ specfem::assembly::simulation_field<WavefieldType>::simulation_field(
 
 template <specfem::wavefield::simulation_field WavefieldType>
 int specfem::assembly::simulation_field<
+    specfem::dimension::type::dim2,
     WavefieldType>::get_total_degrees_of_freedom() {
   if (total_degrees_of_freedom != 0) {
     return total_degrees_of_freedom;
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-                 MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH,
-                  ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE(field) {
         total_degrees_of_freedom +=
             this->get_nglob<_medium_tag_>() *
@@ -93,4 +93,14 @@ int specfem::assembly::simulation_field<
       })
 
   return total_degrees_of_freedom;
+}
+
+template <specfem::wavefield::simulation_field WavefieldType>
+template <specfem::sync::kind sync>
+void specfem::assembly::simulation_field<specfem::dimension::type::dim2,
+                                         WavefieldType>::sync_fields() {
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE(field) { _field_.template sync_fields<sync>(); })
 }

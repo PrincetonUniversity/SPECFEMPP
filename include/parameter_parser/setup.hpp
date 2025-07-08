@@ -163,8 +163,6 @@ public:
   /**
    * @brief Instantiate a seismogram writer object
    *
-   * @param receivers Pointer to specfem::assembly::receivers struct
-   used
    * to instantiate the writer
    * @return specfem::io::writer* Pointer to an instantiated writer
    object

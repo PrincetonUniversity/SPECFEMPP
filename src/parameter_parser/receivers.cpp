@@ -34,10 +34,17 @@ specfem::runtime_configuration::receivers::get_seismogram_types() const {
     } else if (specfem::utilities::is_rotation_string(
                    seismogram_type.as<std::string>())) {
       stypes.push_back(specfem::wavefield::type::rotation);
+    } else if (specfem::utilities::is_intrinsic_rotation_string(
+                   seismogram_type.as<std::string>())) {
+      stypes.push_back(specfem::wavefield::type::intrinsic_rotation);
+    } else if (specfem::utilities::is_curl_string(
+                   seismogram_type.as<std::string>())) {
+      stypes.push_back(specfem::wavefield::type::curl);
     } else {
       std::ostringstream message;
 
-      message << "Error reading specfem receiver configuration. \n";
+      message << "Error reading specfem receiver configuration. (" << __FILE__
+              << ":" << __LINE__ << ")\n";
       message << "Unknown seismogram type: "
               << seismogram_type.as<std::string>() << "\n";
 

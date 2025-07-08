@@ -1,11 +1,12 @@
-#include "sources.hpp"
+#include "specfem/assembly/sources.hpp"
+#include "../impl/source_medium.hpp"
+#include "../impl/source_medium.tpp"
 #include "algorithms/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
-#include "sources/source_medium.hpp"
-#include "sources/source_medium.tpp"
+#include "specfem/assembly/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -61,20 +62,20 @@ sort_sources_per_medium(
 }
 } // namespace
 
-template class specfem::assembly::impl::source_medium<
+template class specfem::assembly::sources_impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
 
-template class specfem::assembly::impl::source_medium<
+template class specfem::assembly::sources_impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv>;
 
-template class specfem::assembly::impl::source_medium<
+template class specfem::assembly::sources_impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic>;
 
-template class specfem::assembly::impl::source_medium<
+template class specfem::assembly::sources_impl::source_medium<
     specfem::dimension::type::dim2,
     specfem::element::medium_tag::elastic_psv_t>;
 
-specfem::assembly::sources::sources(
+specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
@@ -147,10 +148,11 @@ specfem::assembly::sources::sources(
           h_wavefield_types(global_isource) = source->get_wavefield_type();
         }
 
-        _source_ = specfem::assembly::impl::source_medium<_dimension_tag_,
-                                                          _medium_tag_>(
-            sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
-            nsteps);
+        _source_ =
+            specfem::assembly::sources_impl::source_medium<_dimension_tag_,
+                                                           _medium_tag_>(
+                sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
+                nsteps);
       })
 
   // if the number of sources is not equal to the number of sources
@@ -298,7 +300,7 @@ specfem::assembly::sources::sources(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::sources::get_sources_on_host(
+specfem::assembly::sources<specfem::dimension::type::dim2>::get_sources_on_host(
     const specfem::element::medium_tag medium,
     const specfem::element::property_tag property,
     const specfem::element::boundary_tag boundary,
@@ -345,11 +347,12 @@ specfem::assembly::sources::get_sources_on_host(
 // and the source indices for the wavefield type.
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::sources::get_sources_on_device(
-    const specfem::element::medium_tag medium,
-    const specfem::element::property_tag property,
-    const specfem::element::boundary_tag boundary,
-    const specfem::wavefield::simulation_field wavefield) const {
+specfem::assembly::sources<specfem::dimension::type::dim2>::
+    get_sources_on_device(
+        const specfem::element::medium_tag medium,
+        const specfem::element::property_tag property,
+        const specfem::element::boundary_tag boundary,
+        const specfem::wavefield::simulation_field wavefield) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,

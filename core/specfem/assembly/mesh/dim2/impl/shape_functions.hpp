@@ -3,7 +3,7 @@
 #include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::assembly::impl {
+namespace specfem::assembly::mesh_impl {
 /**
  * @brief Shape function and their derivatives for every control node within the
  * mesh
@@ -47,4 +47,4 @@ public:
   DShapeFunctionViewType::HostMirror h_dshape2D; ///< Shape function
                                                  ///< derivatives
 };
-} // namespace specfem::assembly::impl
+} // namespace specfem::assembly::mesh_impl
