@@ -9,7 +9,7 @@ specfem::assembly::boundaries<specfem::dimension::type::dim2>::boundaries(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::assembly::mesh<dimension_tag> &mesh_assembly,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix)
+    const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix)
     : boundary_tags("specfem::assembly::boundaries::boundary_tags", nspec),
       h_boundary_tags(Kokkos::create_mirror_view(boundary_tags)),
       acoustic_free_surface_index_mapping(
