@@ -8,4 +8,4 @@ template <specfem::dimension::type DimensionTag> struct assembly;
 
 }
 
-#include "assembly/assembly.hpp"
+#include "assembly/dim2/assembly.hpp"
