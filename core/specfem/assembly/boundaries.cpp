@@ -1,4 +1,4 @@
 #include "boundaries.hpp"
-#include "boundaries/boundaries.tpp"
-#include "boundaries/impl/acoustic_free_surface.tpp"
-#include "boundaries/impl/stacey.tpp"
+#include "boundaries/dim2/boundaries.tpp"
+#include "boundaries/dim2/impl/acoustic_free_surface.tpp"
+#include "boundaries/dim2/impl/stacey.tpp"
