@@ -4,19 +4,19 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-constexpr auto dimension = specfem::dimension::type::dim2;
-constexpr auto medium_tag = specfem::element::medium_tag::acoustic;
-constexpr auto property_tag = specfem::element::property_tag::isotropic;
-
-using PointPropertiesType =
-    specfem::point::properties<dimension, medium_tag, property_tag, false>;
-
-using PointFieldDerivativesType =
-    specfem::point::field_derivatives<dimension, medium_tag, false>;
-
-using PointStressType = specfem::point::stress<dimension, medium_tag, false>;
+namespace {
 
 TEST(Stress, AcousticIsotropic2D) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto medium_tag = specfem::element::medium_tag::acoustic;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  using PointPropertiesType =
+      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, medium_tag, false>;
+  using PointStressType = specfem::point::stress<dimension, medium_tag, false>;
   const type_real rho_inverse = 2.0;
   const type_real kappa = 10.0;
   const PointPropertiesType properties(rho_inverse, kappa);
@@ -41,6 +41,16 @@ TEST(Stress, AcousticIsotropic2D) {
 }
 
 TEST(Stress, AcousticIsotropic2D_ZeroDerivatives) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto medium_tag = specfem::element::medium_tag::acoustic;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  using PointPropertiesType =
+      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, medium_tag, false>;
+  using PointStressType = specfem::point::stress<dimension, medium_tag, false>;
   const type_real rho_inverse = 2.0;
   const type_real kappa = 10.0;
   const PointPropertiesType properties(rho_inverse, kappa);
@@ -63,3 +73,5 @@ TEST(Stress, AcousticIsotropic2D_ZeroDerivatives) {
 
   EXPECT_TRUE(stress == expected_stress) << message.str();
 }
+
+} // namespace
