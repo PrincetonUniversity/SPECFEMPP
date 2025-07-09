@@ -327,12 +327,12 @@ target_link_libraries(
 )
 
 add_executable(
-  policies
+  policies_tests
   policies/policies.cpp
 )
 
 target_link_libraries(
-  policies
+  policies_tests
   mesh
   source_class
   receiver_class
@@ -507,29 +507,65 @@ target_link_libraries(
 #   -lpthread -lm
 # )
 
-# Link to gtest only if MPI is enabled
+
+
+
+# Link to gtest only if MPI is disabled
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
-  gtest_discover_tests(gll_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(lagrange_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(jacobian_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(fortranio_test WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(io_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(mesh_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(compute_jacobian_matrix_tests WORKING_DIRECTORY ${TEST_DIR})
-  # gtest_discover_tests(compute_elastic_tests WORKING_DIRECTORY ${TEST_DIR})
-  # # gtest_discover_tests(compute_acoustic_tests WORKING_DIRECTORY ${TEST_DIR})
-  # gtest_discover_tests(compute_coupled_interfaces_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(point_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(compute_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(assembly_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(interpolate_function WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(mass_matrix_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(stress_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(rmass_inverse_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(simd_tests WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(displacement_newmark_tests WORKING_DIRECTORY ${TEST_DIR})
+  set(TEST_TARGETS
+      gll_tests
+      lagrange_tests
+      jacobian_tests
+      fortranio_test
+      io_tests
+      mesh_tests
+      compute_jacobian_matrix_tests
+      # compute_elastic_tests
+      # compute_acoustic_tests
+      # compute_coupled_interfaces_tests
+      point_tests
+      compute_tests
+      assembly_tests
+      policies_tests
+      interpolate_function
+      mass_matrix_tests
+      stress_tests
+      rmass_inverse_tests
+      simd_tests
+      displacement_newmark_tests
+  )
+  foreach(test_target IN LISTS TEST_TARGETS)
+      gtest_discover_tests(${test_target})
+  endforeach()
+
+  # For tests that require data files from the tests directory,
+  # create symbolic links to the test data directory so that
+  # the tests can access them from the build folder.
+
+  set(LINK_DIRS
+    algorithms
+    assembly
+    assembly_mesh
+    data
+    displacement_tests
+    domain
+    fortran_io
+    io
+    mesh
+    policies
+  )
+
+  foreach(dir_name IN LISTS LINK_DIRS)
+      file(CREATE_LINK
+          ${CMAKE_CURRENT_SOURCE_DIR}/${dir_name}
+          ${CMAKE_CURRENT_BINARY_DIR}/${dir_name}
+          SYMBOLIC)
+  endforeach()
+
+
+
+
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
 endif(NOT MPI_PARALLEL)

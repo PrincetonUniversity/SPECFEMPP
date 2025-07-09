@@ -272,7 +272,39 @@ TEST_P(Newmark, Test) {
                  << std::endl;
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
           filenames.push_back(Test.traces + "/" + network_name + "." +
-                              station_name + ".S2.BXT.semr");
+                              station_name + ".S2.BXY.semr");
+        }
+        break;
+      case specfem::wavefield::type::intrinsic_rotation:
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          FAIL() << "--------------------------------------------------\n"
+                 << "\033[0;31m[FAILED]\033[0m Test failed\n"
+                 << " - Test name: " << Test.name << "\n"
+                 << " - Error: Intrinsic Rotation seismograms "
+                    "are not supported for SH waves\n"
+                 << " - Network: " << network_name << "\n"
+                 << " - Station: " << station_name << "\n"
+                 << "--------------------------------------------------\n\n"
+                 << std::endl;
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.semir");
+        }
+        break;
+      case specfem::wavefield::type::curl:
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          FAIL() << "--------------------------------------------------\n"
+                 << "\033[0;31m[FAILED]\033[0m Test failed\n"
+                 << " - Test name: " << Test.name << "\n"
+                 << " - Error: Curl seismograms are not supported for SH"
+                    "waves\n"
+                 << " - Network: " << network_name << "\n"
+                 << " - Station: " << station_name << "\n"
+                 << "--------------------------------------------------\n\n"
+                 << std::endl;
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.semc");
         }
         break;
       default:
