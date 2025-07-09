@@ -11,7 +11,7 @@ template <specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag CoupledMedium>
 specfem::coupled_interface::coupled_interface<WavefieldType, DimensionTag,
                                               SelfMedium, CoupledMedium>::
-    coupled_interface(const specfem::compute::assembly &assembly) {
+    coupled_interface(const specfem::assembly::assembly &assembly) {
 
   const auto coupled_interfaces = assembly.coupled_interfaces;
   const auto interface_container =
@@ -68,19 +68,19 @@ void specfem::coupled_interface::coupled_interface<
               const int iedge = index.iedge;
 
               const auto factor = edge_factor(iedge, ipoint);
-              const specfem::datatype::ScalarPointViewType<type_real, 2, false>
+              const specfem::datatype::VectorPointViewType<type_real, 2, false>
                   normal(edge_normal(0, iedge, ipoint),
                          edge_normal(1, iedge, ipoint));
 
               CoupledPointFieldType coupled_field;
-              specfem::compute::load_on_device(coupled_index, this->field,
+              specfem::assembly::load_on_device(coupled_index, this->field,
                                                coupled_field);
 
               SelfPointFieldType acceleration;
               specfem::coupled_interface::impl::compute_coupling(
                   factor, normal, coupled_field, acceleration);
 
-              specfem::compute::atomic_add_on_device(self_index, acceleration,
+              specfem::assembly::atomic_add_on_device(self_index, acceleration,
                                                      this->field);
             });
       });

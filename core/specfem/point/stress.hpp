@@ -2,7 +2,7 @@
 
 #include "datatypes/point_view.hpp"
 #include "enumerations/interface.hpp"
-#include "partial_derivatives.hpp"
+#include "jacobian_matrix.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -111,13 +111,14 @@ public:
    * @endcode
    *
    *
-   * @param partial_derivatives Spatial derivatives
+   * @param jacobian_matrix Spatial derivatives
    * @return ViewType Result of the product
    */
   KOKKOS_INLINE_FUNCTION
-  value_type operator*(const specfem::point::partial_derivatives<
-                       specfem::dimension::type::dim2, true, UseSIMD>
-                           &partial_derivatives) const {
+  value_type operator*(
+      const specfem::point::jacobian_matrix<specfem::dimension::type::dim2,
+                                            true, UseSIMD> &jacobian_matrix)
+      const {
     value_type F;
 
     // The correct expression for F does not include Jacobian factor here.
@@ -127,15 +128,28 @@ public:
     // Jacobian factor helps normalize the result. We then avoid the jacobian
     // factor when computing the divergence in equation (A6).
     for (int icomponent = 0; icomponent < components; ++icomponent) {
-      F(icomponent, 0) = partial_derivatives.jacobian *
-                         (T(icomponent, 0) * partial_derivatives.xix +
-                          T(icomponent, 1) * partial_derivatives.xiz);
-      F(icomponent, 1) = partial_derivatives.jacobian *
-                         (T(icomponent, 0) * partial_derivatives.gammax +
-                          T(icomponent, 1) * partial_derivatives.gammaz);
+      F(icomponent, 0) =
+          jacobian_matrix.jacobian * (T(icomponent, 0) * jacobian_matrix.xix +
+                                      T(icomponent, 1) * jacobian_matrix.xiz);
+      F(icomponent, 1) = jacobian_matrix.jacobian *
+                         (T(icomponent, 0) * jacobian_matrix.gammax +
+                          T(icomponent, 1) * jacobian_matrix.gammaz);
     }
 
     return F;
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  bool operator==(const stress &other) const { return T == other.T; };
+
+  std::string print() const {
+    std::ostringstream oss;
+    oss << "Stress Tensor:\n";
+    for (int i = 0; i < components; ++i) {
+      oss << "T(" << i << ", 0) = " << T(i, 0) << ", "
+          << "T(" << i << ", 1) = " << T(i, 1) << "\n";
+    }
+    return oss.str();
   }
 };
 } // namespace point

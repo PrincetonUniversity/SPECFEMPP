@@ -2,7 +2,7 @@
 
 #include "algorithms/gradient.hpp"
 #include "chunk_element/field.hpp"
-#include "compute/assembly/assembly.hpp"
+#include "specfem/assembly.hpp"
 #include "compute_material_derivatives.hpp"
 #include "medium/compute_frechet_derivatives.hpp"
 #include "parallel_configuration/chunk_config.hpp"
@@ -15,21 +15,21 @@ template <specfem::dimension::type DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void specfem::kokkos_kernels::impl::compute_material_derivatives(
-    const specfem::compute::assembly &assembly, const type_real &dt) {
+    const specfem::assembly::assembly &assembly, const type_real &dt) {
   auto &properties = assembly.properties;
   auto &kernels = assembly.kernels;
   auto &adjoint_field = assembly.fields.adjoint;
   auto &backward_field = assembly.fields.backward;
-  auto &quadrature = assembly.mesh.quadratures;
-  auto &partial_derivatives = assembly.partial_derivatives;
+  auto &mesh = assembly.mesh;
+  auto &jacobian_matrix = assembly.jacobian_matrix;
 
   const auto elements =
       assembly.element_types.get_elements_on_device(MediumTag, PropertyTag);
 
   const int nelements = elements.extent(0);
 
-  const int ngllz = assembly.mesh.ngllz;
-  const int ngllx = assembly.mesh.ngllx;
+  const int ngllz = mesh.ngllz;
+  const int ngllx = mesh.ngllx;
 
   if (nelements == 0) {
     return;
@@ -89,12 +89,12 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
         ChunkElementFieldType adjoint_element_field(team);
         ChunkElementFieldType backward_element_field(team);
         ElementQuadratureType quadrature_element(team);
-        specfem::compute::load_on_device(team, quadrature, quadrature_element);
+        specfem::assembly::load_on_device(team, mesh, quadrature_element);
 
         // Load the element index
-        specfem::compute::load_on_device(chunk_index, adjoint_field,
+        specfem::assembly::load_on_device(chunk_index, adjoint_field,
                                          adjoint_element_field);
-        specfem::compute::load_on_device(chunk_index, backward_field,
+        specfem::assembly::load_on_device(chunk_index, backward_field,
                                          backward_element_field);
         team.team_barrier();
 
@@ -105,7 +105,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
         // which is applied to gradient result for every quadrature point
 
         specfem::algorithms::gradient(
-            chunk_index, partial_derivatives, quadrature_element.hprime_gll,
+            chunk_index, jacobian_matrix, quadrature_element.hprime_gll,
             adjoint_element_field.displacement,
             backward_element_field.displacement,
             [&](const auto &iterator_index,
@@ -117,21 +117,21 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
               // ------------------------------
               const auto point_properties = [&]() -> PointPropertiesType {
                 PointPropertiesType point_properties;
-                specfem::compute::load_on_device(index, properties,
+                specfem::assembly::load_on_device(index, properties,
                                                  point_properties);
                 return point_properties;
               }();
 
               const auto adjoint_point_field = [&]() {
                 AdjointPointFieldType adjoint_point_field;
-                specfem::compute::load_on_device(index, adjoint_field,
+                specfem::assembly::load_on_device(index, adjoint_field,
                                                  adjoint_point_field);
                 return adjoint_point_field;
               }();
 
               const auto backward_point_field = [&]() {
                 BackwardPointFieldType backward_point_field;
-                specfem::compute::load_on_device(index, backward_field,
+                specfem::assembly::load_on_device(index, backward_field,
                                                  backward_point_field);
                 return backward_point_field;
               }();
@@ -148,7 +148,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
                       backward_point_derivatives, dt);
 
               // Update the kernel in the global memory
-              specfem::compute::add_on_device(index, point_kernel, kernels);
+              specfem::assembly::add_on_device(index, point_kernel, kernels);
             });
       });
 }

@@ -6,14 +6,14 @@
 using specfem::point::global_coordinates;
 using specfem::point::local_coordinates;
 
-void test_locate_point(const specfem::compute::assembly &assembly) {
+void test_locate_point(const specfem::assembly::assembly &assembly) {
 
   constexpr auto dim = specfem::dimension::type::dim2;
 
-  const type_real xmin = assembly.mesh.points.xmin;
-  const type_real xmax = assembly.mesh.points.xmax;
-  const type_real zmin = assembly.mesh.points.zmin;
-  const type_real zmax = assembly.mesh.points.zmax;
+  const type_real xmin = assembly.mesh.xmin;
+  const type_real xmax = assembly.mesh.xmax;
+  const type_real zmin = assembly.mesh.zmin;
+  const type_real zmax = assembly.mesh.zmax;
 
   // Select 4 points between the min and max values
   const type_real x1 = xmin + 0.265 * (xmax - xmin);
@@ -70,7 +70,7 @@ void test_locate_point(const specfem::compute::assembly &assembly) {
 TEST_F(ASSEMBLY, LocatePoint) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    specfem::compute::assembly assembly = std::get<5>(parameters);
+    specfem::assembly::assembly assembly = std::get<5>(parameters);
 
     try {
       test_locate_point(assembly);

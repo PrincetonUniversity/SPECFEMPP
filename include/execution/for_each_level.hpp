@@ -33,8 +33,7 @@ constexpr KOKKOS_INLINE_FUNCTION void check_compatibility() {
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
     ((Iterator::is_top_level_policy) &&
-     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy) &&
-     (std::is_same_v<typename Iterator::base_policy_type::execution_space,
+     (std::is_same_v<typename Iterator::execution_space,
                      Kokkos::DefaultExecutionSpace>)),
     void>
 impl_for_each_level(const std::string &name, const Iterator &iterator,
@@ -55,8 +54,7 @@ impl_for_each_level(const std::string &name, const Iterator &iterator,
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
     ((Iterator::is_top_level_policy) &&
-     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy) &&
-     (std::is_same_v<typename Iterator::base_policy_type::execution_space,
+     (std::is_same_v<typename Iterator::execution_space,
                      Kokkos::DefaultHostExecutionSpace>)),
     void>
 impl_for_each_level(const std::string &name, const Iterator &iterator,
@@ -77,8 +75,7 @@ impl_for_each_level(const std::string &name, const Iterator &iterator,
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
     ((Iterator::is_top_level_policy) &&
-     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy) &&
-     (std::is_same_v<typename Iterator::base_policy_type::execution_space,
+     (std::is_same_v<typename Iterator::execution_space,
                      Kokkos::DefaultExecutionSpace>)),
     void>
 impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
@@ -98,8 +95,7 @@ impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
 template <typename Iterator, typename ClosureType>
 constexpr inline std::enable_if_t<
     ((Iterator::is_top_level_policy) &&
-     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy) &&
-     (std::is_same_v<typename Iterator::base_policy_type::execution_space,
+     (std::is_same_v<typename Iterator::execution_space,
                      Kokkos::DefaultHostExecutionSpace>)),
     void>
 impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
@@ -115,9 +111,11 @@ impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
 }
 
 template <typename Iterator, typename ClosureType>
-constexpr KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<
+constexpr std::enable_if_t<
     ((!Iterator::is_top_level_policy) &&
-     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy)),
+     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy) &&
+     (std::is_same_v<typename Iterator::execution_space,
+                     Kokkos::DefaultHostExecutionSpace>)),
     void>
 impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
 
@@ -131,9 +129,60 @@ impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
       });
 }
 
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+
 template <typename Iterator, typename ClosureType>
 constexpr KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<
-    Iterator::policy_type == specfem::execution::PolicyType::TilePolicy, void>
+    ((!Iterator::is_top_level_policy) &&
+     (Iterator::policy_type == specfem::execution::PolicyType::KokkosPolicy) &&
+     (std::is_same_v<typename Iterator::execution_space,
+                     Kokkos::DefaultExecutionSpace>)),
+    void>
+impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
+
+  impl::check_compatibility<Iterator, ClosureType>();
+
+  Kokkos::parallel_for(
+      static_cast<const typename Iterator::base_policy_type &>(iterator),
+      [&](const typename Iterator::policy_index_type &i) {
+        const typename Iterator::index_type index = iterator(i);
+        closure(index);
+      });
+}
+
+#endif
+
+template <typename Iterator, typename ClosureType>
+constexpr std::enable_if_t<
+    (Iterator::policy_type == specfem::execution::PolicyType::TilePolicy) &&
+        (std::is_same_v<typename Iterator::execution_space,
+                        Kokkos::DefaultHostExecutionSpace>),
+    void>
+impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
+  constexpr std::size_t tile_size = Iterator::tile_size;
+
+  impl::check_compatibility<Iterator, ClosureType>();
+#pragma unroll
+  for (std::size_t itile = 0; itile < tile_size; ++itile) {
+    const typename Iterator::index_type index = iterator(itile);
+
+    // Check if the index is valid
+    if (index.is_end()) {
+      break; // Skip if the index is at the end
+    }
+
+    closure(index);
+  }
+}
+
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+
+template <typename Iterator, typename ClosureType>
+constexpr KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<
+    (Iterator::policy_type == specfem::execution::PolicyType::TilePolicy) &&
+        (std::is_same_v<typename Iterator::execution_space,
+                        Kokkos::DefaultExecutionSpace>),
+    void>
 impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
 
   constexpr std::size_t tile_size = Iterator::tile_size;
@@ -152,6 +201,8 @@ impl_for_each_level(const Iterator &iterator, const ClosureType &closure) {
     closure(index);
   }
 }
+
+#endif
 
 template <typename Iterator, typename ClosureType>
 constexpr KOKKOS_FORCEINLINE_FUNCTION std::enable_if_t<
@@ -184,6 +235,8 @@ inline void for_each_level(const std::string &name,
   impl::impl_for_each_level(name, iterator, closure);
 }
 
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+
 /**
  * @brief This function applies a closure to each index in the given iterator.
  *
@@ -196,8 +249,21 @@ inline void for_each_level(const std::string &name,
  * closure must be invocable with the index type of the iterator.
  */
 template <typename IteratorType, typename ClosureType>
-KOKKOS_FORCEINLINE_FUNCTION void for_each_level(const IteratorType &iterator,
-                                                const ClosureType &closure) {
+KOKKOS_INLINE_FUNCTION
+    std::enable_if_t<std::is_same_v<typename IteratorType::execution_space,
+                                    Kokkos::DefaultExecutionSpace>,
+                     void>
+    for_each_level(const IteratorType &iterator, const ClosureType &closure) {
+  impl::impl_for_each_level(iterator, closure);
+}
+
+#endif // KOKKOS_ENABLE_CUDA || KOKKOS_ENABLE_HIP
+
+template <typename IteratorType, typename ClosureType>
+std::enable_if_t<std::is_same_v<typename IteratorType::execution_space,
+                                Kokkos::DefaultHostExecutionSpace>,
+                 void>
+for_each_level(const IteratorType &iterator, const ClosureType &closure) {
   impl::impl_for_each_level(iterator, closure);
 }
 

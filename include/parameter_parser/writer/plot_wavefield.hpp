@@ -1,8 +1,8 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
 #include "periodic_tasks/periodic_task.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <string>
@@ -52,7 +52,7 @@ public:
    * plotter object
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task>
-  instantiate_wavefield_plotter(const specfem::compute::assembly &assembly,
+  instantiate_wavefield_plotter(const specfem::assembly::assembly &assembly,
                                 specfem::MPI::MPI *mpi) const;
 
 private:

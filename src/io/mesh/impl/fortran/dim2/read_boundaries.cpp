@@ -49,12 +49,12 @@ find_corners(const specfem::kokkos::HostView1d<int> ispec_edge,
   }
 
   specfem::kokkos::HostView1d<int> ispec_corners(
-      "specfem:IO::mesh::impl::fortran::read_boundaries::find_corners::ispec_"
+      "specfem:io::mesh::impl::fortran::read_boundaries::find_corners::ispec_"
       "corners",
       ncorner);
 
   specfem::kokkos::HostView1d<specfem::enums::boundaries::type> type_corners(
-      "specfem:IO::mesh::impl::fortran::read_boundaries::find_corners::type_"
+      "specfem:io::mesh::impl::fortran::read_boundaries::find_corners::type_"
       "corners",
       ncorner);
 

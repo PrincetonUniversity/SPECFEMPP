@@ -1,13 +1,11 @@
 #include "algorithms/interface.hpp"
-#include "compute/compute_mesh.hpp"
-#include "compute/compute_partial_derivatives.hpp"
-#include "compute/properties/properties.hpp"
 #include "globals.h"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
@@ -16,9 +14,9 @@
 #include <cmath>
 
 void specfem::sources::moment_tensor::compute_source_array(
-    const specfem::compute::mesh &mesh,
-    const specfem::compute::partial_derivatives &partial_derivatives,
-    const specfem::compute::element_types &element_types,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::jacobian_matrix &jacobian_matrix,
+    const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
@@ -62,9 +60,9 @@ void specfem::sources::moment_tensor::compute_source_array(
     Kokkos::abort(message_str.c_str());
   }
 
-  const auto xi = mesh.quadratures.gll.h_xi;
-  const auto gamma = mesh.quadratures.gll.h_xi;
-  const auto N = mesh.quadratures.gll.N;
+  const auto xi = mesh.h_xi;
+  const auto gamma = mesh.h_xi;
+  const auto N = mesh.ngllx;
 
   // Compute lagrange interpolants at the source location
   auto [hxi_source, hpxi_source] =
@@ -77,10 +75,10 @@ void specfem::sources::moment_tensor::compute_source_array(
   // Load
   specfem::kokkos::HostView2d<type_real> source_polynomial("source_polynomial",
                                                            N, N);
-  using PointPartialDerivatives =
-      specfem::point::partial_derivatives<specfem::dimension::type::dim2, false,
-                                          false>;
-  specfem::kokkos::HostView2d<PointPartialDerivatives> element_derivatives(
+  using PointJacobianMatrix =
+      specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
+                                      false>;
+  specfem::kokkos::HostView2d<PointJacobianMatrix> element_derivatives(
       "element_derivatives", N, N);
 
   Kokkos::parallel_for(
@@ -92,8 +90,8 @@ void specfem::sources::moment_tensor::compute_source_array(
         type_real hlagrange = hxi_source(ix) * hgamma_source(iz);
         const specfem::point::index<specfem::dimension::type::dim2> index(
             lcoord.ispec, iz, ix);
-        PointPartialDerivatives derivatives;
-        specfem::compute::load_on_host(index, partial_derivatives, derivatives);
+        PointJacobianMatrix derivatives;
+        specfem::assembly::load_on_host(index, jacobian_matrix, derivatives);
         source_polynomial(iz, ix) = hlagrange;
         element_derivatives(iz, ix) = derivatives;
       });
@@ -111,7 +109,7 @@ void specfem::sources::moment_tensor::compute_source_array(
   // for (int iz = 0; iz < N; iz++) {
   //   for (int ix = 0; ix < N; ix++) {
   //     auto derivatives =
-  //         partial_derivatives
+  //         jacobian_matrix
   //             .load_derivatives<false, specfem::kokkos::HostExecSpace>(
   //                 lcoord.ispec, j, i);
   //     hlagrange = hxis(i) * hgammas(j);

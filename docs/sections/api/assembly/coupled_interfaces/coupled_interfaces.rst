@@ -4,13 +4,13 @@
 Coupled Interfaces
 ==================
 
-.. doxygenstruct:: specfem::compute::coupled_interfaces
+.. doxygenstruct:: specfem::assembly::coupled_interfaces
     :members:
 
 Interface Container
 ^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::compute::interface_container
+.. doxygenstruct:: specfem::assembly::interface_container
     :members:
 
 Data Access Functions

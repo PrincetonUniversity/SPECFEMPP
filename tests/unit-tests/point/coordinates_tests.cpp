@@ -26,9 +26,6 @@ class PointCoordinatesTest : public CoordinatesTest {};
 
 // Test 2D local coordinates
 TEST_F(PointCoordinatesTest, LocalCoordinates2D) {
-  // Default constructor
-  specfem::point::local_coordinates<specfem::dimension::type::dim2>
-      local_default;
 
   // Constructor with parameters
   const int ispec = 5;
@@ -45,9 +42,6 @@ TEST_F(PointCoordinatesTest, LocalCoordinates2D) {
 
 // Test 2D global coordinates
 TEST_F(PointCoordinatesTest, GlobalCoordinates2D) {
-  // Default constructor
-  specfem::point::global_coordinates<specfem::dimension::type::dim2>
-      global_default;
 
   // Constructor with parameters
   const type_real x = 10.5;
@@ -146,9 +140,6 @@ TEST_F(PointCoordinatesTest, NegativeCoordinates2D) {
 
 // Test 3D local coordinates
 TEST_F(PointCoordinatesTest, LocalCoordinates3D) {
-  // Default constructor
-  specfem::point::local_coordinates<specfem::dimension::type::dim3>
-      local_default;
 
   // Constructor with parameters
   const int ispec = 8;
@@ -167,9 +158,6 @@ TEST_F(PointCoordinatesTest, LocalCoordinates3D) {
 
 // Test 3D global coordinates
 TEST_F(PointCoordinatesTest, GlobalCoordinates3D) {
-  // Default constructor
-  specfem::point::global_coordinates<specfem::dimension::type::dim3>
-      global_default;
 
   // Constructor with parameters
   const type_real x = 11.5;

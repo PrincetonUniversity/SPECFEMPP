@@ -1,7 +1,6 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/compare_array.h"
-#include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/interface.hpp"
 #include "io/interface.hpp"
@@ -9,6 +8,7 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
+#include "specfem/assembly.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ----- Parse test config ------------- //
@@ -68,16 +68,16 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   auto [sources, t0] = specfem::io::read_sources(source_node, 1e-5, mpi);
 
   // Generate compute structs to be used by the solver
-  specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
-                                    gllz);
-  specfem::compute::partial_derivatives partial_derivatives(
+  specfem::assembly::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
+                                     gllz);
+  specfem::assembly::jacobian_matrix jacobian_matrix(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(
+  specfem::assembly::properties material_properties(
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
       gllz->get_N());
 
   // Set up boundary conditions
-  specfem::compute::boundaries boundary_conditions(
+  specfem::assembly::boundaries boundary_conditions(
       mesh.material_ind.kmato, materials, mesh.acfree_surface,
       mesh.abs_boundary);
 
@@ -113,9 +113,10 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   const type_real zmax = compute.coordinates.zmax;
   const type_real zmin = compute.coordinates.zmin;
 
-  specfem::compute::sources compute_sources(sources, gllx, gllz, xmax, xmin,
-                                            zmax, zmin, mpi);
-  specfem::compute::receivers compute_receivers;
+  specfem::assembly::sources<specfem::dimension::type::dim2> compute_sources(
+      sources, gllx, gllz, xmax, xmin, zmax, zmin, mpi);
+  specfem::assembly::receivers<specfem::dimension::type::dim2>
+      compute_receivers;
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
@@ -125,7 +126,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
       specfem::enums::element::medium::acoustic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       acoustic_domain_static(nglob, qp5, &compute, material_properties,
-                             partial_derivatives, boundary_conditions,
+                             jacobian_matrix, boundary_conditions,
                              compute_sources, compute_receivers, gllx, gllz);
 
   acoustic_domain_static.invert_mass_matrix();
@@ -148,7 +149,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   //     specfem::enums::element::medium::elastic,
   //     specfem::enums::element::quadrature::dynamic_quadrature_points>
   //     elastic_domain_dynamic(ndim, nglob, qp, &compute, material_properties,
-  //                            partial_derivatives, &compute_sources,
+  //                            jacobian_matrix, &compute_sources,
   //                            &compute_receivers, gllx, gllz);
 
   // elastic_domain_dynamic.sync_rmass_inverse(specfem::sync::DeviceToHost);

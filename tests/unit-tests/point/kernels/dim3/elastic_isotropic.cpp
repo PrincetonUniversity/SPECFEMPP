@@ -6,8 +6,6 @@
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
-const type_real tol = 1e-6; ///< Tolerance for floating point comparisons
-
 // ============================================================================
 // 3D Elastic Isotropic Tests
 // ============================================================================

@@ -1,5 +1,4 @@
-#ifndef _ALGORITHMS_INTERPOLATE_HPP
-#define _ALGORITHMS_INTERPOLATE_HPP
+#pragma once
 
 #include "datatypes/point_view.hpp"
 #include "execution/for_each_level.hpp"
@@ -57,7 +56,7 @@ KOKKOS_FUNCTION T interpolate_function(
 
 template <int components, typename Layout, typename MemorySpace,
           typename MemoryTraits>
-specfem::datatype::ScalarPointViewType<type_real, components, false>
+specfem::datatype::VectorPointViewType<type_real, components, false>
 interpolate_function(
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
                        MemorySpace, MemoryTraits> &polynomial,
@@ -65,7 +64,7 @@ interpolate_function(
                        MemoryTraits> &function) {
 
   using T =
-      specfem::datatype::ScalarPointViewType<type_real, components, false>;
+      specfem::datatype::VectorPointViewType<type_real, components, false>;
 
   const int N = polynomial.extent(0);
   T result(0.0);
@@ -84,7 +83,7 @@ interpolate_function(
 
 template <int components, typename Layout, typename MemorySpace,
           typename MemoryTraits>
-KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, components,
+KOKKOS_FUNCTION specfem::datatype::VectorPointViewType<type_real, components,
                                                        false>
 interpolate_function(
     const typename Kokkos::TeamPolicy<MemorySpace>::member_type &team_member,
@@ -94,7 +93,7 @@ interpolate_function(
                        MemoryTraits> &function) {
 
   using T =
-      specfem::datatype::ScalarPointViewType<type_real, components, false>;
+      specfem::datatype::VectorPointViewType<type_real, components, false>;
 
   const int N = polynomial.extent(0);
   T result(0.0);
@@ -180,7 +179,8 @@ KOKKOS_FUNCTION void interpolate_function(const ChunkIndex &chunk_index,
                                           const FunctionViewType &function,
                                           ResultType &result) {
 
-  static_assert(PolynomialViewType::rank() == 4, "Polynomial must be a 4D view");
+  static_assert(PolynomialViewType::rank() == 4,
+                "Polynomial must be a 4D view");
   static_assert(FunctionViewType::rank() == 4, "Function must be a 4D view");
 
   static_assert(ResultType::rank() == 2, "Result must be 2D views");
@@ -238,5 +238,3 @@ KOKKOS_FUNCTION void interpolate_function(const ChunkIndex &chunk_index,
 
 } // namespace algorithms
 } // namespace specfem
-
-#endif

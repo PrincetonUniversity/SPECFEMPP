@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
+#include "specfem/assembly.hpp"
 #include "parallel_configuration/range_config.hpp"
 #include "execution/range_iterator.hpp"
 #include "execution/for_all.hpp"
@@ -11,14 +11,14 @@ template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
 void specfem::kokkos_kernels::impl::invert_mass_matrix(
-    const specfem::compute::assembly &assembly) {
+    const specfem::assembly::assembly &assembly) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto wavefield = WavefieldType;
   constexpr auto dimension = DimensionTag;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
-  const int nglob = field.template get_nglob<MediumTag>();
+  const int nglob = field.template get_nglob<medium_tag>();
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
@@ -26,7 +26,7 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
   constexpr bool using_simd = true;
 #endif
 
-  using PointFieldType = specfem::point::field<DimensionTag, MediumTag, false,
+  using PointFieldType = specfem::point::field<dimension, medium_tag, false,
                                                false, false, true, using_simd>;
 
   using parallel_config = specfem::parallel_config::default_range_config<
@@ -41,9 +41,9 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
       "specfem::kokkos_kernels::divide_mass_matrix", range,
       KOKKOS_LAMBDA(const IndexType &index) {
         PointFieldType load_field;
-        specfem::compute::load_on_device(index, field, load_field);
+        specfem::assembly::load_on_device(index, field, load_field);
         PointFieldType store_field(load_field.invert_mass_matrix());
-        specfem::compute::store_on_device(index, store_field, field);
+        specfem::assembly::store_on_device(index, store_field, field);
       });
 
   // Kokkos::fence();

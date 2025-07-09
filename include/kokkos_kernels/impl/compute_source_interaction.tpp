@@ -3,7 +3,7 @@
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "boundary_conditions/boundary_conditions.tpp"
 #include "chunk_element/field.hpp"
-#include "compute/assembly/assembly.hpp"
+#include "specfem/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
@@ -21,13 +21,12 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
 void specfem::kokkos_kernels::impl::compute_source_interaction(
-    specfem::compute::assembly &assembly, const int &timestep) {
+    specfem::assembly::assembly &assembly, const int &timestep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
   constexpr auto boundary_tag = BoundaryTag;
   constexpr auto dimension = DimensionTag;
-  constexpr int ngll = NGLL;
   constexpr auto wavefield = WavefieldType;
 
   const auto [element_indices, source_indices] =
@@ -46,7 +45,6 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
 
   // Some aliases
   const auto &properties = assembly.properties;
-  const auto &boundaries = assembly.boundaries;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
   sources.update_timestep(timestep);
@@ -62,7 +60,6 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
   using PointIndexType = specfem::point::mapped_index<dimension, false>;
 
       using simd = specfem::datatype::simd<type_real, false>;
-  constexpr int simd_size = simd::size();
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr int nthreads = 32;
@@ -84,16 +81,16 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
       "specfem::kokkos_kernels::compute_source_interaction", mapped_policy,
       KOKKOS_LAMBDA(const PointIndexType &mapped_index) {
         PointSourceType point_source;
-        specfem::compute::load_on_device(mapped_index, sources, point_source);
+        specfem::assembly::load_on_device(mapped_index, sources, point_source);
 
         PointPropertiesType point_property;
-        specfem::compute::load_on_device(mapped_index, properties,
+        specfem::assembly::load_on_device(mapped_index, properties,
                                          point_property);
 
         auto acceleration = specfem::medium::compute_source_contribution(
             point_source, point_property);
 
-        specfem::compute::atomic_add_on_device(mapped_index, acceleration,
+        specfem::assembly::atomic_add_on_device(mapped_index, acceleration,
                                                field);
       });
 }

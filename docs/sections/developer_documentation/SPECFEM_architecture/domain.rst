@@ -472,7 +472,7 @@ Again, similar to a methodology described in section `Understanding the parallel
             const auto self_edge_l = this->self_edge(iedge_l);
             const auto coupled_edge_l = this->coupled_edge(iedge_l);
 
-            auto npoints = specfem::compute::coupled_interfaces::iterator::npoints(
+            auto npoints = specfem::assembly::coupled_interfaces::iterator::npoints(
                 self_edge_l, ngllx, ngllz);
 
             // Iterate over the edges using TeamThreadRange

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compute/interface.hpp"
+#include "specfem/assembly.hpp"
 #include "enumerations/interface.hpp"
 #include "io/wavefield/writer.hpp"
 #include "utilities/strings.hpp"
@@ -13,7 +13,7 @@ specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::write(
-    specfem::compute::assembly &assembly) {
+    specfem::assembly::assembly &assembly) {
 
   auto &forward = assembly.fields.forward;
   auto &mesh = assembly.mesh;
@@ -25,8 +25,8 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
   using MappingView =
       Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
 
-  const int ngllz = mesh.points.ngllz;
-  const int ngllx = mesh.points.ngllx;
+  const int ngllz = mesh.ngllz;
+  const int ngllx = mesh.ngllx;
   // const int nspec = mesh.points.nspec;
 
   typename OutputLibrary::Group base_group =
@@ -66,7 +66,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
             for (int ix = 0; ix < ngllx; ix++) {
 
               // This is the local medium iglob
-              // see: ``count`` in specfem::compute::simulation_field<dim2, medium>
+              // see: ``count`` in specfem::assembly::simulation_field<dim2, medium>
               const int iglob =
                   forward.template get_iglob<false>(ispec, iz, ix, _medium_tag_);
 
@@ -74,8 +74,8 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
               mapping(iel, iz, ix) = iglob;
 
               // Assign the coordinates to the local iglob
-              x(iglob) = mesh.points.h_coord(0, ispec, iz, ix);
-              z(iglob) = mesh.points.h_coord(1, ispec, iz, ix);
+              x(iglob) = mesh.h_coord(0, ispec, iz, ix);
+              z(iglob) = mesh.h_coord(1, ispec, iz, ix);
 
             }
           }
@@ -95,7 +95,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::write(
-    specfem::compute::assembly &assembly, const int istep) {
+    specfem::assembly::assembly &assembly, const int istep) {
   auto &forward = assembly.fields.forward;
   auto &boundary_values = assembly.boundary_values;
 
