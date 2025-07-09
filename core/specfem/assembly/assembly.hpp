@@ -59,10 +59,11 @@ struct assembly {
                                                             ///< mediums
   specfem::assembly::fields<dimension_tag> fields; ///< Displacement, velocity,
                                                    ///< and acceleration fields
-  specfem::assembly::boundary_values boundary_values; ///< Field
-                                                      ///< values at
-                                                      ///< the
-                                                      ///< boundaries
+  specfem::assembly::boundary_values<dimension_tag>
+      boundary_values; ///< Field
+                       ///< values at
+                       ///< the
+                       ///< boundaries
 
   /**
    * @brief Generate a finite element assembly
