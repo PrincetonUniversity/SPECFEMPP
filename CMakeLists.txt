@@ -403,7 +403,7 @@ add_library(
         src/mesh/dim3/materials/materials.cpp
         src/mesh/dim3/coordinates/coordinates.cpp
         src/mesh/dim3/jacobian_matrix/jacobian_matrix.cpp
-
+        src/mesh/dim3/control_nodes/control_nodes.cpp
 )
 
 target_link_libraries(
