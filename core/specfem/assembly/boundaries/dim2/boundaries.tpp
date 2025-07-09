@@ -1,3 +1,5 @@
+#pragma once
+
 #include "boundaries.hpp"
 #include "impl/acoustic_free_surface.hpp"
 #include "impl/stacey.hpp"

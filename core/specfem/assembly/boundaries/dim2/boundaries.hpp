@@ -132,7 +132,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
 #ifndef NDEBUG
     if (boundaries.boundary_tags(index.ispec) !=
         specfem::element::boundary_tag::acoustic_free_surface) {
-      Kokkos::Abort(
+      Kokkos::abort(
           "Boundary tag for acoustic free surface does not match the expected "
           "tag");
     }
@@ -143,7 +143,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
 #ifndef NDEBUG
     if (boundaries.boundary_tags(index.ispec) !=
         specfem::element::boundary_tag::stacey) {
-      Kokkos::Abort(
+      Kokkos::abort(
           "Boundary tag for acoustic free surface does not match the expected "
           "tag");
     }
@@ -155,7 +155,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
 #ifndef NDEBUG
     if (boundaries.boundary_tags(index.ispec) !=
         specfem::element::boundary_tag::composite_stacey_dirichlet) {
-      Kokkos::Abort(
+      Kokkos::abort(
           "Boundary tag for acoustic free surface does not match the expected "
           "tag");
     }
@@ -212,7 +212,7 @@ load_on_host(const IndexType &index,
 #ifndef NDEBUG
     if (boundaries.h_boundary_tags(index.ispec) !=
         specfem::element::boundary_tag::acoustic_free_surface) {
-      throw std::runtime_error(
+      Kokkos::abort(
           "Boundary tag for acoustic free surface does not match the expected "
           "tag");
     }
@@ -224,7 +224,7 @@ load_on_host(const IndexType &index,
 #ifndef NDEBUG
     if (boundaries.h_boundary_tags(index.ispec) !=
         specfem::element::boundary_tag::stacey) {
-      throw std::runtime_error(
+      Kokkos::abort(
           "Boundary tag for acoustic free surface does not match the expected "
           "tag");
     }
@@ -236,7 +236,7 @@ load_on_host(const IndexType &index,
 #ifndef NDEBUG
     if (boundaries.h_boundary_tags(index.ispec) !=
         specfem::element::boundary_tag::composite_stacey_dirichlet) {
-      throw std::runtime_error(
+      Kokkos::abort(
           "Boundary tag for acoustic free surface does not match the expected "
           "tag");
     }
