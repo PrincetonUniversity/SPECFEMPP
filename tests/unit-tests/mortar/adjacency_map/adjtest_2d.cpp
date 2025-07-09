@@ -10,24 +10,33 @@
 #include "../../MPI_environment.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "io/interface.hpp"
+#include "jacobian/interface.hpp"
 #include "macros.hpp"
 #include "mesh/dim2/adjacency_map/adjacency_map.hpp"
+#include "mesh/mesh_base.hpp"
 #include "mortar/fixture/mortar_fixtures.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem_setup.hpp"
 
-#define TEST_ASSEMBLY_MAPPING_DEFAULT_NGLL (5)
+static constexpr int TEST_ASSEMBLY_MAPPING_DEFAULT_NGLL = 5;
+static constexpr double node_spacing_eps = 1e-4;
 // TODO: we may want to generalize this test -- it may be useful for a wider
 // range
 void test_assembly_mapping(
     specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
         &adjacencies,
-    const int nspec, const int ngll) {
+    const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+        &control_nodes,
+    const int nspec, const int ngll, const double eps) {
   /*
    * To test adjacency_map::generate_assembly_mapping, we want to verify that
    * the mapping is valid. We will enforce these rules:
    *
    * - 1) Every node i has a global index 0 <= ind[i] < nglob. ind is
    * surjective.
-   * - 2) ind[i] == ind[j] iff. i,j share a conforming edge or corner.
+   * - 2) ind[i] == ind[j] iff. dist(i,j) < eps iff. i,j share a conforming edge
+   or corner.
+
    *
    * Ordering is not constrained, as it can be changed by a simple renumbering.
    * We also assume that the sharing check is an equivalence relation.
@@ -37,34 +46,93 @@ void test_assembly_mapping(
   const auto assembly_out = adjacencies.generate_assembly_mapping(ngll);
   const auto index_mapping = assembly_out.first;
   const int nglob = assembly_out.second;
+  const double eps2 = eps * eps;
 
   // preimage of index_mapping.
   std::vector<std::vector<std::tuple<int, int, int> > > ind_to_nodes(
       nglob, std::vector<std::tuple<int, int, int> >());
+  std::vector<std::pair<double, double> > ind_locations(nglob);
+  specfem::assembly::mesh_impl::quadrature<specfem::dimension::type::dim2>
+      quadrature(specfem::quadrature::quadratures(
+          specfem::quadrature::gll::gll(0, 0, ngll)));
+
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int ix = 0; ix < ngll; ix++) {
       for (int iz = 0; iz < ngll; iz++) {
         int ind = index_mapping(ispec, iz, ix);
+        auto shape_functions = specfem::jacobian::define_shape_functions(
+            quadrature.xi(ix), quadrature.xi(iz), control_nodes.ngnod);
 
         if (0 > ind || ind >= nglob) {
           FAIL() << "Index mapping maps to an out-of-bounds index! (" << ind
                  << ")";
+        }
+        double xcor = 0.0;
+        double zcor = 0.0;
+
+        for (int in = 0; in < control_nodes.ngnod; in++) {
+          int control_node_ind = control_nodes.knods(in, ispec);
+          xcor +=
+              control_nodes.coord(0, control_node_ind) * shape_functions[in];
+          zcor +=
+              control_nodes.coord(1, control_node_ind) * shape_functions[in];
+        }
+        if (ind_to_nodes[ind].size() == 0) {
+          // first point: initialize location
+          ind_locations[ind] = std::make_pair(xcor, zcor);
+        } else {
+          // compare to set location
+          double xdiff = ind_locations[ind].first - xcor;
+          double zdiff = ind_locations[ind].second - zcor;
+          if (xdiff * xdiff + zdiff * zdiff > eps2) {
+            FAIL() << "Global index " << ind
+                   << ", originally assigned to (ispec = "
+                   << std::get<0>(ind_to_nodes[ind][0])
+                   << ", ix = " << std::get<2>(ind_to_nodes[ind][0])
+                   << ", iz = " << std::get<1>(ind_to_nodes[ind][0])
+                   << ") @ (x = " << ind_locations[ind].first
+                   << ", z = " << ind_locations[ind].second
+                   << ") is too far away from (ispec = " << ispec
+                   << ", ix = " << ix << ", iz = " << iz << ") @ (x = " << xcor
+                   << ", z = " << zcor
+                   << "), despite generate_assembly_mapping() giving them the "
+                      "same index. (threshold = "
+                   << eps << ")";
+          }
         }
         ind_to_nodes[ind].push_back(std::make_tuple(ispec, iz, ix));
       }
     }
   }
 
-  // is each index used?
+  // is each index used for (1)? additionally, we already know same iglob =>
+  // close, so we just need the converse for position equivalence in (2).
   for (int iglob = 0; iglob < nglob; iglob++) {
     if (ind_to_nodes[iglob].empty()) {
       FAIL() << "Index mapping not surjective. (" << iglob
              << " has no preimage.)";
     }
+
+    for (int jglob = iglob + 1; jglob < nglob; jglob++) {
+
+      // distance should be greater than eps
+
+      double xdiff = ind_locations[iglob].first - ind_locations[jglob].first;
+      double zdiff = ind_locations[iglob].second - ind_locations[jglob].second;
+
+      if (xdiff * xdiff + zdiff * zdiff < eps2) {
+        FAIL() << "Global indices " << iglob
+               << " @ (x = " << ind_locations[iglob].first
+               << ", z = " << ind_locations[iglob].second << ") and " << jglob
+               << " @ (x = " << ind_locations[jglob].first
+               << ", z = " << ind_locations[jglob].second
+               << ") are too far apart. (threshold = " << eps << ")";
+      }
+    }
   }
 
-  // (1) passed. Loop again to verify each partition is equivalent
-
+  // (1) passed. position equivalence in (2) passed.
+  // End with the conforming edge/corner condition
   const auto local_to_bdry = [&](const int ix, const int iz) {
     if (ix == 0) {
       if (iz == 0) {
@@ -111,7 +179,7 @@ void test_assembly_mapping(
                << " other elements.";
       }
     } else {
-      // check sets are "equal" (ix,iz) ~ bdry
+      // check sets are "equal" when equating (ix,iz) ~ bdry
       auto adjset = adjacencies.get_all_conforming_adjacencies(
           ispec, local_to_bdry(ix, iz));
       std::vector<std::pair<int, specfem::enums::boundaries::type> >
@@ -127,8 +195,11 @@ void test_assembly_mapping(
             std::get<0>(node),
             local_to_bdry(std::get<2>(node), std::get<1>(node))));
         if (it == adjset.end()) {
+          // nodeset edge should be in the adjacency set, but isn't
           matchfail = true;
         } else {
+          // delete this entry. if at the end, adjset is nonempty, then adjset >
+          // nodeset
           nodeset_match[i] = *it;
           adjset.erase(it);
         }
@@ -195,8 +266,7 @@ void test_assembly_mapping(
             }
           }
           corrprint << "\033[0m\n";
-        }
-        {
+        } else {
           corrprint << "No unpaired adjacency-map boundaries (as desired).";
         }
         FAIL() << "--------------------------------------------------\n"
@@ -219,7 +289,7 @@ void test_assembly_mapping(
   // (2) passed!
 }
 
-void run_test_conforming(test_configuration::mesh &mesh_config) {
+void run_test_conforming(const test_configuration::mesh &mesh_config) {
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   auto mesh = specfem::io::read_2d_mesh(
@@ -233,68 +303,9 @@ void run_test_conforming(test_configuration::mesh &mesh_config) {
     throw std::runtime_error("Adjacency map not built.");
   }
 
-  specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
-      provenance_adjmap = mesh_config.reference_adjacency_map();
-
-  std::ostringstream failmsg;
-  bool fail = false;
-  // compare conforming adjacency maps
-  for (int ispec = 0; ispec < mesh.nspec; ispec++) {
-    for (auto edge : {
-             specfem::enums::edge::type::RIGHT,
-             specfem::enums::edge::type::TOP,
-             specfem::enums::edge::type::LEFT,
-             specfem::enums::edge::type::BOTTOM,
-         }) {
-      bool true_has_adj =
-          provenance_adjmap.has_conforming_adjacency(ispec, edge);
-      if (true_has_adj != adjacencies.has_conforming_adjacency(ispec, edge)) {
-        fail = true;
-        if (true_has_adj) {
-          failmsg << " - Did not find an adjacency along edge "
-                  << adjacencies.edge_to_string(ispec, edge) << "\n"
-                  << "     expected: "
-                  << std::apply(adjacencies.edge_to_string,
-                                provenance_adjmap.get_conforming_adjacency(
-                                    ispec, edge))
-                  << "\n";
-        } else {
-          failmsg << " - Found an adjacency along edge "
-                  << adjacencies.edge_to_string(ispec, edge) << "\n"
-                  << "     (should not be linked)\n";
-        }
-        break;
-      }
-      // agreement on if conforming adjacency exists. Do we have the right one?
-      if (true_has_adj &&
-          (adjacencies.get_conforming_adjacency(ispec, edge) !=
-           provenance_adjmap.get_conforming_adjacency(ispec, edge))) {
-        fail = true;
-        failmsg << " - Incorrect adjacency map along edge "
-                << adjacencies.edge_to_string(ispec, edge) << "\n"
-                << "     expected: "
-                << std::apply(
-                       adjacencies.edge_to_string,
-                       provenance_adjmap.get_conforming_adjacency(ispec, edge))
-                << "\n        found: "
-                << std::apply(adjacencies.edge_to_string,
-                              adjacencies.get_conforming_adjacency(ispec, edge))
-                << "\n";
-        break;
-      }
-    }
-  }
-  if (fail) {
-    FAIL() << "--------------------------------------------------\n"
-           << "\033[0;31m[FAILED]\033[0m Test failed\n"
-           << "               conforming\n"
-           << failmsg.str()
-           << "--------------------------------------------------\n"
-           << std::endl;
-  }
-
-  test_assembly_mapping(adjacencies, mesh.nspec,
-                        TEST_ASSEMBLY_MAPPING_DEFAULT_NGLL);
+  test_assembly_mapping(adjacencies, mesh.control_nodes, mesh.nspec,
+                        TEST_ASSEMBLY_MAPPING_DEFAULT_NGLL,
+                        node_spacing_eps * mesh_config.characteristic_length);
 }
 
 TEST_F(MESHES, conforming) {

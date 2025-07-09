@@ -20,22 +20,15 @@ public:
     name = node["name"].as<std::string>();
     description = node["description"].as<std::string>();
     database = node["database"].as<std::string>();
-    correct_adjacencies = node["correct-adjacencies"].as<std::string>();
-    correct_corner_groups = node["correct-corner-groups"].as<std::string>();
     nspec = node["nspec"].as<int>();
+    characteristic_length = node["characteristic-length"].as<double>();
   }
 
   std::string name;
   std::string description;
   std::string database;
-  std::string correct_adjacencies;
-  std::string correct_corner_groups;
   int nspec;
-
-  specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
-  reference_adjacency_map() const;
-  std::vector<std::set<std::pair<int, specfem::enums::boundaries::type> > >
-  reference_corner_groups() const;
+  double characteristic_length;
 };
 } // namespace test_configuration
 
