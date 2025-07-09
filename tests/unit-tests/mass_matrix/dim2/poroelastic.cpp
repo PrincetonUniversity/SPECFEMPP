@@ -8,8 +8,8 @@ constexpr auto dimension = specfem::dimension::type::dim2;
 constexpr auto medium_tag = specfem::element::medium_tag::poroelastic;
 constexpr auto property_tag = specfem::element::property_tag::isotropic;
 
-using PointPartialDerivativesType =
-    specfem::point::partial_derivatives<dimension, true, false>;
+using PointJacobianMatrixType =
+    specfem::point::jacobian_matrix<dimension, true, false>;
 
 using PointPropertiesType =
     specfem::point::properties<dimension, medium_tag, property_tag, false>;

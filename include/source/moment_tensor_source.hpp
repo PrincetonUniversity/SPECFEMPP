@@ -1,8 +1,5 @@
 #pragma once
 
-#include "compute/compute_mesh.hpp"
-#include "compute/compute_partial_derivatives.hpp"
-#include "compute/element_types/element_types.hpp"
 #include "constants.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
@@ -88,9 +85,9 @@ public:
   std::string print() const override;
 
   void compute_source_array(
-      const specfem::compute::mesh &mesh,
-      const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::element_types &element_types,
+      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+      const specfem::assembly::jacobian_matrix &jacobian_matrix,
+      const specfem::assembly::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
   specfem::wavefield::simulation_field get_wavefield_type() const override {

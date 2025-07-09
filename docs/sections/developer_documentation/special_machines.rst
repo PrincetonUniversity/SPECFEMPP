@@ -35,7 +35,7 @@ CPU
 
     # Test
     ctest --test-dir build/release/tests/unit-tests/
-  
+
 
 GPU
 +++
@@ -63,4 +63,3 @@ GPU
 
     # Test
     ctest --test-dir build/release-frontier/tests/unit-tests/
-

@@ -1,7 +1,6 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 // #include "../../utilities/include/compare_array.h"
-#include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
 #include "io/fortranio/interface.hpp"
@@ -11,6 +10,7 @@
 #include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "solver/solver.hpp"
+#include "specfem/assembly.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -99,9 +99,9 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   auto receivers = specfem::io::read_receivers(stations_node, angle);
   const auto stypes = setup.get_seismogram_types();
 
-  specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                      stypes, 0, 0, 0, 1,
-                                      setup.get_simulation_type(), nullptr);
+  specfem::assembly::assembly assembly(mesh, quadratures, sources, receivers,
+                                       stypes, 0, 0, 0, 1,
+                                       setup.get_simulation_type(), nullptr);
 
   const auto displacement_field = assembly.fields.forward.elastic.h_field;
   const auto velocity_field = assembly.fields.forward.elastic.h_field_dot;

@@ -2,7 +2,7 @@
 
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "boundary_conditions/boundary_conditions.tpp"
-#include "compute/assembly/assembly.hpp"
+#include "specfem/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
@@ -21,7 +21,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
 void specfem::kokkos_kernels::impl::compute_mass_matrix(
-    const type_real &dt, const specfem::compute::assembly &assembly) {
+    const type_real &dt, const specfem::assembly::assembly &assembly) {
 
   constexpr auto dimension = DimensionTag;
   constexpr auto wavefield = WavefieldType;
@@ -59,21 +59,21 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
       specfem::point::properties<dimension, medium_tag, property_tag,
                                  using_simd>;
 
-  using PointPartialDerivativesType =
-      specfem::point::partial_derivatives<dimension, true, using_simd>;
+  using PointJacobianMatrixType =
+      specfem::point::jacobian_matrix<dimension, true, using_simd>;
 
   using PointBoundaryType =
       specfem::point::boundary<boundary_tag, dimension, using_simd>;
 
   using PointIndex = specfem::point::index<dimension, using_simd>;
 
-  const auto &quadrature = assembly.mesh.quadratures;
-  const auto &partial_derivatives = assembly.partial_derivatives;
+  const auto &mesh = assembly.mesh;
+  const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &properties = assembly.properties;
   const auto &boundaries = assembly.boundaries;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
 
-  const auto wgll = quadrature.gll.weights;
+  const auto wgll = mesh.weights;
 
   specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements, ngllz, ngllx);
 
@@ -86,15 +86,15 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
         const auto point_property = [&]() -> PointPropertyType {
           PointPropertyType point_property;
 
-          specfem::compute::load_on_device(index, properties, point_property);
+          specfem::assembly::load_on_device(index, properties, point_property);
           return point_property;
         }();
 
         const auto jacobian = [&]() {
-          PointPartialDerivativesType point_partial_derivatives;
-          specfem::compute::load_on_device(index, partial_derivatives,
-                                           point_partial_derivatives);
-          return point_partial_derivatives.jacobian;
+          PointJacobianMatrixType point_jacobian_matrix;
+          specfem::assembly::load_on_device(index, jacobian_matrix,
+                                           point_jacobian_matrix);
+          return point_jacobian_matrix.jacobian;
         }();
 
         PointMassType mass_matrix =
@@ -105,11 +105,11 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
         }
 
         PointBoundaryType point_boundary;
-        specfem::compute::load_on_device(index, boundaries, point_boundary);
+        specfem::assembly::load_on_device(index, boundaries, point_boundary);
 
         specfem::boundary_conditions::compute_mass_matrix_terms(
             dt, point_boundary, point_property, mass_matrix);
 
-        specfem::compute::atomic_add_on_device(index, mass_matrix, field);
+        specfem::assembly::atomic_add_on_device(index, mass_matrix, field);
       });
 }

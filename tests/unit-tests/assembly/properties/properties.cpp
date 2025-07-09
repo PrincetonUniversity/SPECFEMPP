@@ -21,7 +21,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-set_value(const ViewType elements, specfem::compute::assembly &assembly,
+set_value(const ViewType elements, specfem::assembly::assembly &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -41,7 +41,7 @@ set_value(const ViewType elements, specfem::compute::assembly &assembly,
       "set_to_value", policy,
       [=](const specfem::point::index<dimension, using_simd> &index) {
         PointPropertiesType point(static_cast<type_real>(index.ispec + offset));
-        specfem::compute::store_on_host(index, point, properties);
+        specfem::assembly::store_on_host(index, point, properties);
       });
 
   Kokkos::fence();
@@ -53,7 +53,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-check_value(const ViewType elements, specfem::compute::assembly &assembly,
+check_value(const ViewType elements, specfem::assembly::assembly &assembly,
             const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -86,8 +86,8 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
         }
 
         PointType point_poperties_computed;
-        specfem::compute::load_on_host(index, properties,
-                                       point_poperties_computed);
+        specfem::assembly::load_on_host(index, properties,
+                                        point_poperties_computed);
 
         if (point_poperties_computed != expected) {
           std::ostringstream message;
@@ -112,7 +112,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-check_value(const ViewType elements, specfem::compute::assembly &assembly,
+check_value(const ViewType elements, specfem::assembly::assembly &assembly,
             const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -136,7 +136,7 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
       "set_to_value", policy,
       KOKKOS_LAMBDA(const specfem::point::index<dimension, using_simd> &index) {
         PointType computed;
-        specfem::compute::load_on_device(index, properties, computed);
+        specfem::assembly::load_on_device(index, properties, computed);
 
         const int ispec = index.ispec;
         const int iz = index.iz;
@@ -183,14 +183,14 @@ check_value(const ViewType elements, specfem::compute::assembly &assembly,
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void check_compute_to_mesh(
-    const specfem::compute::assembly &assembly,
+    const specfem::assembly::assembly &assembly,
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
   const auto &properties = assembly.properties;
   const auto &element_types = assembly.element_types;
-  const auto &mapping = assembly.mesh.mapping;
+  const auto &mesh_assembly = assembly.mesh;
   const auto &materials = mesh.materials;
 
   // Get all elements of the given type
@@ -210,7 +210,7 @@ void check_compute_to_mesh(
         const int ispec = index.ispec;
 
         // Get the properties stored within the mesh
-        const int ispec_mesh = mapping.compute_to_mesh(ispec);
+        const int ispec_mesh = mesh_assembly.compute_to_mesh(ispec);
         const auto expected =
             materials.get_material<MediumTag, PropertyTag>(ispec_mesh)
                 .get_properties();
@@ -218,7 +218,7 @@ void check_compute_to_mesh(
         // Get the properties stored within the compute object
         const auto computed = [&]() {
           PointType point;
-          specfem::compute::load_on_host(index, properties, point);
+          specfem::assembly::load_on_host(index, properties, point);
           return point;
         }();
 

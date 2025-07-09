@@ -2,11 +2,11 @@
 #include "MPI_environment.hpp"
 #include "algorithms/interpolate.hpp"
 #include "algorithms/locate_point.hpp"
-#include "compute/compute_mesh.hpp"
 #include "io/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "quadrature/gll/gll.hpp"
+#include "specfem/assembly.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -33,11 +33,11 @@ TEST(ALGORITHMS, interpolate_function) {
   specfem::quadrature::quadratures quadratures(gll);
 
   // Assemble
-  specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes, quadratures,
-                                  mesh.adjacency_map);
+  specfem::assembly::mesh<specfem::dimension::type::dim2> assembly(
+      mesh.tags, mesh.control_nodes, quadratures, mesh.adjacency_map);
 
-  const auto xi = assembly.quadratures.gll.h_xi;
-  const auto gamma = assembly.quadratures.gll.h_xi;
+  const auto xi = assembly.h_xi;
+  const auto gamma = assembly.h_xi;
 
   const type_real xi_target = 0.15;
   const type_real gamma_target = 0.15;

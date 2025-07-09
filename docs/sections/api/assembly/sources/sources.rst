@@ -4,13 +4,13 @@
 Sources
 =======
 
-.. doxygenstruct:: specfem::compute::sources
+.. doxygenstruct:: specfem::assembly::sources
     :members:
 
 Source Medium Container
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::compute::impl::source_medium
+.. doxygenstruct:: specfem::assembly::impl::source_medium
     :members:
 
 Data Access Functions

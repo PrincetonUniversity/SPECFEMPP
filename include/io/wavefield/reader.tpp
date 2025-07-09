@@ -12,7 +12,7 @@ specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
 
 template <typename IOLibrary>
 void specfem::io::wavefield_reader<IOLibrary>::read(
-    specfem::compute::assembly &assembly, const int istep) {
+    specfem::assembly::assembly &assembly, const int istep) {
   auto &buffer = assembly.fields.buffer;
   auto &boundary_values = assembly.boundary_values;
 
@@ -22,8 +22,8 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
       std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       {
         typename IOLibrary::Group group =
             base_group.openGroup(specfem::element::to_string(_medium_tag_));
@@ -33,8 +33,7 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
           group.openDataset("Potential", field.h_field).read();
           group.openDataset("PotentialDot", field.h_field_dot).read();
           group.openDataset("PotentialDotDot", field.h_field_dot_dot).read();
-        }
-        else {
+        } else {
           group.openDataset("Displacement", field.h_field).read();
           group.openDataset("Velocity", field.h_field_dot).read();
           group.openDataset("Acceleration", field.h_field_dot_dot).read();
@@ -48,18 +47,28 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
       .openDataset("IndexMapping",
                    boundary_values.stacey.h_property_index_mapping)
       .read();
-  stacey
-      .openDataset("ElasticAcceleration",
-                   boundary_values.stacey.elastic.h_values)
-      .read();
-  stacey
-      .openDataset("AcousticAcceleration",
-                   boundary_values.stacey.acoustic.h_values)
-      .read();
-  stacey
-      .openDataset("PoroelasticAcceleration",
-                   boundary_values.stacey.poroelastic.h_values)
-      .read();
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE((container, boundary_values.stacey.container)) {
+        const std::string dataset_name =
+            specfem::element::to_string(_medium_tag_) + "Acceleration";
+        stacey.openDataset(dataset_name, _container_.h_values).read();
+      });
+
+  //   stacey
+  //       .openDataset("ElasticAcceleration",
+  //                    boundary_values.stacey.elastic.h_values)
+  //       .read();
+  //   stacey
+  //       .openDataset("AcousticAcceleration",
+  //                    boundary_values.stacey.acoustic.h_values)
+  //       .read();
+  //   stacey
+  //       .openDataset("PoroelasticAcceleration",
+  //                    boundary_values.stacey.poroelastic.h_values)
+  //       .read();
 
   buffer.copy_to_device();
   boundary_values.copy_to_device();

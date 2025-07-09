@@ -7,10 +7,10 @@ namespace specfem {
 namespace medium {
 
 namespace kernels {
-template <>
-struct data_container<specfem::element::medium_tag::poroelastic,
+template <specfem::dimension::type DimensionTag>
+struct data_container<DimensionTag, specfem::element::medium_tag::poroelastic,
                       specfem::element::property_tag::isotropic> {
-  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto medium_tag = specfem::element::medium_tag::poroelastic;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;

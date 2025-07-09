@@ -1,7 +1,6 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
-#include "compute/interface.hpp"
 #include "constants.hpp"
 #include "io/interface.hpp"
 #include "io/seismogram/reader.hpp"
@@ -9,6 +8,7 @@
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "solver/solver.hpp"
+#include "specfem/assembly.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 #include <algorithm>
@@ -165,7 +165,7 @@ TEST_P(Newmark, Test) {
 
   const int max_sig_step = it->get_max_seismogram_step();
 
-  specfem::compute::assembly assembly(
+  specfem::assembly::assembly assembly(
       mesh, quadratures, sources, receivers, seismogram_types, t0,
       setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
       setup.get_simulation_type(), nullptr);
@@ -272,7 +272,39 @@ TEST_P(Newmark, Test) {
                  << std::endl;
         } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
           filenames.push_back(Test.traces + "/" + network_name + "." +
-                              station_name + ".S2.BXT.semr");
+                              station_name + ".S2.BXY.semr");
+        }
+        break;
+      case specfem::wavefield::type::intrinsic_rotation:
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          FAIL() << "--------------------------------------------------\n"
+                 << "\033[0;31m[FAILED]\033[0m Test failed\n"
+                 << " - Test name: " << Test.name << "\n"
+                 << " - Error: Intrinsic Rotation seismograms "
+                    "are not supported for SH waves\n"
+                 << " - Network: " << network_name << "\n"
+                 << " - Station: " << station_name << "\n"
+                 << "--------------------------------------------------\n\n"
+                 << std::endl;
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.semir");
+        }
+        break;
+      case specfem::wavefield::type::curl:
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          FAIL() << "--------------------------------------------------\n"
+                 << "\033[0;31m[FAILED]\033[0m Test failed\n"
+                 << " - Test name: " << Test.name << "\n"
+                 << " - Error: Curl seismograms are not supported for SH"
+                    "waves\n"
+                 << " - Network: " << network_name << "\n"
+                 << " - Station: " << station_name << "\n"
+                 << "--------------------------------------------------\n\n"
+                 << std::endl;
+        } else if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          filenames.push_back(Test.traces + "/" + network_name + "." +
+                              station_name + ".S2.BXY.semc");
         }
         break;
       default:

@@ -47,7 +47,7 @@ KOKKOS_INLINE_FUNCTION
 
   sigma_c_zy = (properties.mu_c() + properties.nu_c()) * du(2, 1);
 
-  specfem::datatype::VectorPointViewType<type_real, 3, 2, UseSIMD> T;
+  specfem::datatype::TensorPointViewType<type_real, 3, 2, UseSIMD> T;
 
   // Note that the the spin notes have the divergence act on the first component
   // Komatitsch & Tromp (1999) which we are following here defines the
