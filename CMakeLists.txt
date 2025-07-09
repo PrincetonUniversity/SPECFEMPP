@@ -13,6 +13,7 @@ option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(BUILD_BENCHMARKS "Benchmarks included" ON)
+option(ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
 
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
@@ -42,11 +43,15 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(FETCHCONTENT_QUIET TRUE)
 
 # Enable unity build for faster compilation
-option(ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
 if(ENABLE_UNITY_BUILD)
-    message(STATUS "Unity build enabled - this will speed up compilation")
-    set(CMAKE_UNITY_BUILD ON)
-    set(CMAKE_UNITY_BUILD_BATCH_SIZE 8)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(STATUS "Unity build disabled for Debug build type.")
+        set(CMAKE_UNITY_BUILD OFF)
+    else (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(STATUS "Unity build enabled - this will speed up compilation")
+        set(CMAKE_UNITY_BUILD ON)
+        set(CMAKE_UNITY_BUILD_BATCH_SIZE 8)
+    endif()
 endif()
 
 if (SPECFEMPP_BINDING_PYTHON)
@@ -88,11 +93,6 @@ if (DEFINED Kokkos_ENABLE_CUDA)
     endif()
 endif()
 
-
-# Temporarily disable unity build for external dependencies
-set(SAVED_UNITY_BUILD ${CMAKE_UNITY_BUILD})
-set(CMAKE_UNITY_BUILD OFF)
-
 # For the installation of dependencies
 include(FetchContent)
 
@@ -127,12 +127,6 @@ set(YAML_CPP_BUILD_INSTALL OFF CACHE BOOL "Disable yaml-cpp installation" FORCE)
 FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
-
-# Restore unity build for our own code after all dependencies are fetched
-set(CMAKE_UNITY_BUILD ${SAVED_UNITY_BUILD})
-if(CMAKE_UNITY_BUILD)
-    message(STATUS "Unity build restored for SPECFEM++ code")
-endif()
 
 
 if (VTK_CXX_BUILD)
@@ -576,7 +570,7 @@ add_library(
         src/kokkos_kernels/impl/compute_material_derivatives.cpp
         src/kokkos_kernels/frechet_kernels.cpp
 )
-set_target_properties(kokkos_kernels PROPERTIES UNITY_BUILD_BATCH_SIZE 2)
+set_target_properties(kokkos_kernels PROPERTIES UNITY_BUILD_BATCH_SIZE 4)
 
 target_link_libraries(
         kokkos_kernels
