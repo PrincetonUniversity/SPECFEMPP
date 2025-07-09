@@ -35,7 +35,7 @@ public:
         index_mapping("control_nodes_indexing", nspec, ngnod),
         coordinates("control_nodes_coordinates", nnodes, ndim) {}
 
-  void print() const;
+  std::string print() const;
 };
 
 } // namespace specfem::mesh
