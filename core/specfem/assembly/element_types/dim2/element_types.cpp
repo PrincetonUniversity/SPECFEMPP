@@ -1,4 +1,4 @@
-#include "element_types.hpp"
+#include "specfem/assembly/element_types.hpp"
 
 specfem::assembly::element_types<specfem::dimension::type::dim2>::element_types(
     const int nspec, const int ngllz, const int ngllx,
