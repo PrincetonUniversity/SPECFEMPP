@@ -1,8 +1,8 @@
+#pragma once
+
 #include "enumerations/interface.hpp"
-#include "specfem/point/jacobian_matrix.hpp"
 
-namespace specfem::assembly::impl::boundaries {
-
+namespace {
 bool is_on_boundary(specfem::enums::boundaries::type type, int iz, int ix,
                     int ngllz, int ngllx) {
   return (type == specfem::enums::boundaries::type::TOP && iz == ngllz - 1) ||
@@ -59,5 +59,4 @@ std::tuple<std::array<type_real, 2>, type_real> get_boundary_edge_and_weight(
 
   throw std::invalid_argument("Error: Unknown boundary type");
 }
-
-} // namespace specfem::assembly::impl::boundaries
+} // namespace

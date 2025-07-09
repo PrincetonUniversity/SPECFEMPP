@@ -1,19 +1,19 @@
+#pragma once
+
+#include <map>
+#include <stdexcept>
+#include <vector>
 
 #include "acoustic_free_surface.hpp"
 #include "macros.hpp"
 #include "utilities.hpp"
-#include <Kokkos_Sort.hpp>
-#include <algorithm>
-#include <numeric>
-#include <unordered_map>
-#include <vector>
 
-specfem::assembly::impl::boundaries::acoustic_free_surface::
+specfem::assembly::boundaries_impl::acoustic_free_surface<specfem::dimension::type::dim2>::
     acoustic_free_surface(
         const int nspec, const int ngllz, const int ngllx,
-        const specfem::mesh::acoustic_free_surface<
-            specfem::dimension::type::dim2> &acoustic_free_surface,
-        const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+        const specfem::mesh::acoustic_free_surface<dimension_tag>
+            &acoustic_free_surface,
+        const specfem::assembly::mesh<dimension_tag> &mesh,
         const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
         std::vector<specfem::element::boundary_tag_container>
             &element_boundary_tags) {
@@ -113,7 +113,7 @@ specfem::assembly::impl::boundaries::acoustic_free_surface::
       // Assign boundary tag to each quadrature point
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int ix = 0; ix < ngllx; ++ix) {
-          if (specfem::assembly::impl::boundaries::is_on_boundary(
+          if (is_on_boundary(
                   type, iz, ix, ngllz, ngllx)) {
             this->h_quadrature_point_boundary_tag(index_compute, iz, ix) +=
                 specfem::element::boundary_tag::acoustic_free_surface;
