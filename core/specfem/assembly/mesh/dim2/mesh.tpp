@@ -49,7 +49,8 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
 assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
                  const specfem::mesh::adjacency_map::adjacency_map<
                      specfem::dimension::type::dim2> &adjacency_map,
-                 specfem::compute::mesh_to_compute_mapping &mapping) {
+                 specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+                     specfem::dimension::type::dim2> &mapping) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
@@ -291,5 +292,5 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
       specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2> &>(
       *this);
 
-  points = assign_numbering(global_coordinates, adjacency_map, mapping);
+  points = assign_numbering(global_coordinates, adjacency_map, *this);
 }

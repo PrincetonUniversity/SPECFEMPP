@@ -10,6 +10,7 @@
 #include "../../MPI_environment.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "io/interface.hpp"
+#include "macros.hpp"
 #include "mesh/dim2/adjacency_map/adjacency_map.hpp"
 #include "mortar/fixture/mortar_fixtures.hpp"
 
@@ -45,9 +46,10 @@ void test_assembly_mapping(
       for (int iz = 0; iz < ngll; iz++) {
         int ind = index_mapping(ispec, iz, ix);
 
-        ASSERT(0 <= ind && ind < nglob,
-               "Index mapping maps to an out-of-bounds index! (" +
-                   std::to_string(ind) + ")");
+        if (0 > ind || ind >= nglob) {
+          FAIL() << "Index mapping maps to an out-of-bounds index! (" << ind
+                 << ")";
+        }
         ind_to_nodes[ind].push_back(std::make_tuple(ispec, iz, ix));
       }
     }
@@ -55,9 +57,10 @@ void test_assembly_mapping(
 
   // is each index used?
   for (int iglob = 0; iglob < nglob; iglob++) {
-    ASSERT(!ind_to_nodes[iglob].empty(), "Index mapping not surjective. (" +
-                                             std::to_string(iglob) +
-                                             " has no preimage.)");
+    if (ind_to_nodes[iglob].empty()) {
+      FAIL() << "Index mapping not surjective. (" << iglob
+             << " has no preimage.)";
+    }
   }
 
   // (1) passed. Loop again to verify each partition is equivalent
@@ -85,10 +88,11 @@ void test_assembly_mapping(
       } else if (iz == ngll - 1) {
         return specfem::enums::boundaries::type::TOP;
       } else {
-        ASSERT(1 == 0,
-               "Test internally incorrect: local_to_bdry lambda should "
-               "not have been called with internal node indices (ix = " +
-                   std::to_string(ix) + ", iz = " + std::to_string(iz) + ").");
+        [&]() {
+          FAIL() << "Test internally incorrect: local_to_bdry lambda should "
+                 << "not have been called with internal node indices (ix = "
+                 << ix << ", iz = " << iz << ").";
+        }();
         return specfem::enums::boundaries::type::RIGHT;
       }
     }
@@ -100,12 +104,12 @@ void test_assembly_mapping(
     std::tie(ispec, iz, ix) = nodeset[0];
     if (0 < iz && iz < ngll - 1 && 0 < ix && ix < ngll - 1) {
       // interior. No adjacencies:
-      ASSERT(nodeset.size() == 1,
-             "Internal node (ispec = " + std::to_string(ispec) + ", ix = " +
-                 std::to_string(ix) + ", iz = " + std::to_string(iz) +
-                 ") should not share global index (" + std::to_string(iglob) +
-                 "), but shares with " + std::to_string(nodeset.size()) +
-                 " other elements.");
+      if (nodeset.size() != 1) {
+        FAIL() << "Internal node (ispec = " << ispec << ", ix = " << ix
+               << ", iz = " << iz << ") should not share global index ("
+               << iglob << "), but shares with " << nodeset.size()
+               << " other elements.";
+      }
     } else {
       // check sets are "equal" (ix,iz) ~ bdry
       auto adjset = adjacencies.get_all_conforming_adjacencies(

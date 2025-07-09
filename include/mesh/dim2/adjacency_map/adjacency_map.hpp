@@ -202,7 +202,7 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
    * @brief Returns a string representation of this adjacency map as a table of
    * adjacencies.
    */
-  std::string pretty_adjacency_table();
+  // std::string pretty_adjacency_table();
 
 private:
   int nspec;
