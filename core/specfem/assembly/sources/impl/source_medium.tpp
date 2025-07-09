@@ -3,6 +3,7 @@
 #include "algorithms/locate_point.hpp"
 #include "specfem/point.hpp"
 #include "source_medium.hpp"
+#include "specfem/assembly/sources/impl/source_array.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionTag,
@@ -26,8 +27,12 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
   for (int isource = 0; isource < sources.size(); isource++) {
     auto sv_source_array = Kokkos::subview(
         this->h_source_array, isource, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-    sources[isource]->compute_source_array(mesh, jacobian_matrix,
-                                           element_types, sv_source_array);
+
+    // Pre overload setup.
+    specfem::assembly::sources_impl::compute_source_array(
+      sources[isource], mesh, jacobian_matrix, element_types,
+      sv_source_array);
+
     auto sv_stf_array = Kokkos::subview(this->h_source_time_function,
                                         Kokkos::ALL, isource, Kokkos::ALL);
     sources[isource]->compute_source_time_function(t0, dt, nsteps,
