@@ -1,24 +1,26 @@
 #pragma once
 
-#include "mesh/mesh.hpp"
-#include "specfem/assembly/mesh.hpp"
-#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
 #include <type_traits>
+#include <vector>
 
-namespace specfem::assembly {
-namespace impl {
-namespace boundaries {
+#include "enumerations/interface.hpp"
+#include "mesh/mesh.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/point.hpp"
 
-struct acoustic_free_surface {
+namespace specfem::assembly::boundaries_impl {
+
+template <> struct acoustic_free_surface<specfem::dimension::type::dim2> {
 private:
   constexpr static auto boundary_tag =
       specfem::element::boundary_tag::acoustic_free_surface; ///< Boundary tag
-  constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension
 
 public:
+  constexpr static auto dimension_tag =
+      specfem::dimension::type::dim2; ///< Dimension tag
   using BoundaryTagView =
       Kokkos::View<specfem::element::boundary_tag_container ***,
                    Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
@@ -36,15 +38,15 @@ public:
 
   acoustic_free_surface(
       const int nspec, const int ngllz, const int ngllx,
-      const specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
+      const specfem::mesh::acoustic_free_surface<dimension_tag>
           &acoustic_free_surface,
-      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
       std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
   KOKKOS_FORCEINLINE_FUNCTION void
-  load_on_device(const specfem::point::index<dimension> &index,
-                 specfem::point::boundary<boundary_tag, dimension, false>
+  load_on_device(const specfem::point::index<dimension_tag> &index,
+                 specfem::point::boundary<boundary_tag, dimension_tag, false>
                      &boundary) const {
 
     boundary.tag +=
@@ -53,19 +55,20 @@ public:
   }
 
   KOKKOS_FORCEINLINE_FUNCTION void
-  load_on_device(const specfem::point::index<dimension> &index,
+  load_on_device(const specfem::point::index<dimension_tag> &index,
                  specfem::point::boundary<
                      specfem::element::boundary_tag::composite_stacey_dirichlet,
-                     dimension, false> &boundary) const {
+                     dimension_tag, false> &boundary) const {
 
     boundary.tag +=
         quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
     return;
   }
 
-  KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
-      const specfem::point::simd_index<dimension> &index,
-      specfem::point::boundary<boundary_tag, dimension, true> &boundary) const {
+  KOKKOS_FORCEINLINE_FUNCTION void
+  load_on_device(const specfem::point::simd_index<dimension_tag> &index,
+                 specfem::point::boundary<boundary_tag, dimension_tag, true>
+                     &boundary) const {
 
     using simd = typename specfem::datatype::simd<type_real, true>;
 
@@ -85,10 +88,10 @@ public:
   }
 
   KOKKOS_FORCEINLINE_FUNCTION void
-  load_on_device(const specfem::point::simd_index<dimension> &index,
+  load_on_device(const specfem::point::simd_index<dimension_tag> &index,
                  specfem::point::boundary<
                      specfem::element::boundary_tag::composite_stacey_dirichlet,
-                     dimension, true> &boundary) const {
+                     dimension_tag, true> &boundary) const {
 
     using simd = typename specfem::datatype::simd<type_real, true>;
 
@@ -107,28 +110,30 @@ public:
     return;
   }
 
-  inline void load_on_host(const specfem::point::index<dimension> &index,
-                           specfem::point ::boundary<boundary_tag, dimension,
-                                                     false> &boundary) const {
+  inline void
+  load_on_host(const specfem::point::index<dimension_tag> &index,
+               specfem::point ::boundary<boundary_tag, dimension_tag, false>
+                   &boundary) const {
     boundary.tag +=
         h_quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
     return;
   }
 
   inline void
-  load_on_host(const specfem::point::index<dimension> &index,
+  load_on_host(const specfem::point::index<dimension_tag> &index,
                specfem::point::boundary<
                    specfem::element::boundary_tag::composite_stacey_dirichlet,
-                   dimension, false> &boundary) const {
+                   dimension_tag, false> &boundary) const {
 
     boundary.tag +=
         h_quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
     return;
   }
 
-  inline void load_on_host(
-      const specfem::point::simd_index<dimension> &index,
-      specfem::point::boundary<boundary_tag, dimension, true> &boundary) const {
+  inline void
+  load_on_host(const specfem::point::simd_index<dimension_tag> &index,
+               specfem::point::boundary<boundary_tag, dimension_tag, true>
+                   &boundary) const {
 
     using simd = typename specfem::datatype::simd<type_real, true>;
 
@@ -145,10 +150,10 @@ public:
   }
 
   inline void
-  load_on_host(const specfem::point::simd_index<dimension> &index,
+  load_on_host(const specfem::point::simd_index<dimension_tag> &index,
                specfem::point::boundary<
                    specfem::element::boundary_tag::composite_stacey_dirichlet,
-                   dimension, true> &boundary) const {
+                   dimension_tag, true> &boundary) const {
 
     using simd = typename specfem::datatype::simd<type_real, true>;
 
@@ -165,6 +170,4 @@ public:
   }
 };
 
-} // namespace boundaries
-} // namespace impl
-} // namespace specfem::assembly
+} // namespace specfem::assembly::boundaries_impl
