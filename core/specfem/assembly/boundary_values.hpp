@@ -25,8 +25,9 @@ public:
   boundary_values(
       const int nstep,
       const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::assembly::element_types element_types,
-      const specfem::assembly::boundaries boundaries);
+      const specfem::assembly::element_types &element_types,
+      const specfem::assembly::boundaries<specfem::dimension::type::dim2>
+          &boundaries);
 
   template <specfem::element::boundary_tag BoundaryTag>
   specfem::assembly::boundary_value_container<specfem::dimension::type::dim2,

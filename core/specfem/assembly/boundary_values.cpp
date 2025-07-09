@@ -21,7 +21,8 @@ template class specfem::assembly::boundary_value_container<
 specfem::assembly::boundary_values::boundary_values(
     const int nstep,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::element_types element_types,
-    const specfem::assembly::boundaries boundaries)
+    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::boundaries<specfem::dimension::type::dim2>
+        &boundaries)
     : stacey(nstep, mesh, element_types, boundaries),
       composite_stacey_dirichlet(nstep, mesh, element_types, boundaries) {}
