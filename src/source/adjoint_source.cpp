@@ -1,20 +1,21 @@
 #include "source/adjoint_source.hpp"
 #include "algorithms/locate_point.hpp"
 #include "globals.h"
+#include "specfem/assembly.hpp"
 
 void specfem::sources::adjoint_source::compute_source_array(
-    const specfem::compute::mesh &mesh,
-    const specfem::compute::partial_derivatives &partial_derivatives,
-    const specfem::compute::element_types &element_types,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::jacobian_matrix &jacobian_matrix,
+    const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
       this->x, this->z);
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
-  const auto xi = mesh.quadratures.gll.h_xi;
-  const auto gamma = mesh.quadratures.gll.h_xi;
-  const auto N = mesh.quadratures.gll.N;
+  const auto xi = mesh.h_xi;
+  const auto gamma = mesh.h_xi;
+  const auto N = mesh.ngllx;
 
   const auto el_type = element_types.get_medium_tag(lcoord.ispec);
   const int ncomponents = source_array.extent(0);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
+#include "specfem/assembly.hpp"
 #include "domain_view.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
@@ -12,8 +12,8 @@
 template <typename OutputLibrary, typename ContainerType>
 void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
-    const specfem::compute::mesh &mesh,
-    const specfem::compute::element_types &element_types,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::element_types &element_types,
     ContainerType &container) {
   using DomainView =
       specfem::kokkos::DomainView2d<type_real, 3, Kokkos::HostSpace>;
@@ -22,15 +22,16 @@ void specfem::io::impl::write_container(
 
   typename OutputLibrary::File file(output_folder + "/" + output_namespace);
 
-  const int nspec = mesh.points.nspec;
-  const int ngllz = mesh.points.ngllz;
-  const int ngllx = mesh.points.ngllx;
+  const int nspec = mesh.nspec;
+  const int ngllz = mesh.ngllz;
+  const int ngllx = mesh.ngllx;
 
   int n_written = 0;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
+       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       {
         const std::string name =
@@ -47,8 +48,8 @@ void specfem::io::impl::write_container(
           const int ispec = element_indices(i);
           for (int iz = 0; iz < ngllz; iz++) {
             for (int ix = 0; ix < ngllx; ix++) {
-              x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
-              z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+              x(i, iz, ix) = mesh.h_coord(0, ispec, iz, ix);
+              z(i, iz, ix) = mesh.h_coord(1, ispec, iz, ix);
             }
           }
         }
@@ -63,7 +64,14 @@ void specfem::io::impl::write_container(
             });
       })
 
-  assert(n_written == nspec);
+  if (n_written != nspec) {
+    std::ostringstream message;
+    message << "Error while writing output container at" << __FILE__ << ":"
+            << __LINE__ << "\n"
+            << "Error writing output: expected to write " << nspec
+            << " elements, but wrote " << n_written << " elements.";
+    throw std::runtime_error(message.str());
+  }
 
   std::cout << output_namespace << " written to " << output_folder << "/"
             << output_namespace << std::endl;

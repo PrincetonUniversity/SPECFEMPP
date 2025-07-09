@@ -26,5 +26,5 @@ ExpectedGot<T, U> expected_got(const T &expected, const U &got) {
 // Operator<< for ExpectedGot in global namespace for ADL
 template <typename T, typename U>
 std::ostream &operator<<(std::ostream &os, const ExpectedGot<T, U> &eg) {
-  return os << "Expected: " << eg.expected << ", Got: " << eg.got;
+  return os << "Expected: " << eg.expected << "\nGot:      " << eg.got;
 }

@@ -163,8 +163,6 @@ public:
   /**
    * @brief Instantiate a seismogram writer object
    *
-   * @param receivers Pointer to specfem::compute::receivers struct
-   used
    * to instantiate the writer
    * @return specfem::io::writer* Pointer to an instantiated writer
    object
@@ -199,7 +197,7 @@ public:
   }
 
   std::shared_ptr<specfem::periodic_tasks::periodic_task>
-  instantiate_wavefield_plotter(const specfem::compute::assembly &assembly,
+  instantiate_wavefield_plotter(const specfem::assembly::assembly &assembly,
                                 specfem::MPI::MPI *mpi) const {
     if (this->plot_wavefield) {
       return this->plot_wavefield->instantiate_wavefield_plotter(assembly, mpi);
@@ -238,7 +236,7 @@ public:
 
   template <int NGLL>
   std::shared_ptr<specfem::solver::solver> instantiate_solver(
-      const type_real dt, const specfem::compute::assembly &assembly,
+      const type_real dt, const specfem::assembly::assembly &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<
           std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)

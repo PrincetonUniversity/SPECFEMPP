@@ -9,7 +9,8 @@ namespace {
 template <specfem::element::medium_tag MediumTag,
           specfem::wavefield::simulation_field WavefieldType>
 int corrector_phase_impl(
-    const specfem::compute::simulation_field<WavefieldType> &field,
+    const specfem::assembly::simulation_field<specfem::dimension::type::dim2,
+                                              WavefieldType> &field,
     const type_real deltatover2) {
 
   constexpr int components =
@@ -42,13 +43,13 @@ int corrector_phase_impl(
         LoadFieldType load;
         AddFieldType add;
 
-        specfem::compute::load_on_device(index, field, load);
+        specfem::assembly::load_on_device(index, field, load);
 
         for (int idim = 0; idim < components; ++idim) {
           add.velocity(idim) += deltatover2 * load.acceleration(idim);
         }
 
-        specfem::compute::add_on_device(index, add, field);
+        specfem::assembly::add_on_device(index, add, field);
       });
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
@@ -58,7 +59,8 @@ int corrector_phase_impl(
 template <specfem::element::medium_tag MediumTag,
           specfem::wavefield::simulation_field WavefieldType>
 int predictor_phase_impl(
-    const specfem::compute::simulation_field<WavefieldType> &field,
+    const specfem::assembly::simulation_field<specfem::dimension::type::dim2,
+                                              WavefieldType> &field,
     const type_real deltat, const type_real deltatover2,
     const type_real deltasquareover2) {
 
@@ -96,7 +98,7 @@ int predictor_phase_impl(
         AddFieldType add;
         StoreFieldType store;
 
-        specfem::compute::load_on_device(index, field, load);
+        specfem::assembly::load_on_device(index, field, load);
 
         for (int idim = 0; idim < components; ++idim) {
           add.displacement(idim) += deltat * load.velocity(idim) +
@@ -107,8 +109,8 @@ int predictor_phase_impl(
           store.acceleration(idim) = 0;
         }
 
-        specfem::compute::add_on_device(index, add, field);
-        specfem::compute::store_on_device(index, store, field);
+        specfem::assembly::add_on_device(index, add, field);
+        specfem::assembly::store_on_device(index, store, field);
       });
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,

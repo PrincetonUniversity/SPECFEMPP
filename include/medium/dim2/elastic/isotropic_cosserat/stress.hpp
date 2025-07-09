@@ -27,9 +27,6 @@ KOKKOS_INLINE_FUNCTION
 
   datatype sigma_xx, sigma_xz, sigma_zx, sigma_zz, sigma_c_xy, sigma_c_zy;
 
-  const auto twothirds =
-      static_cast<type_real>(2.0) / static_cast<type_real>(3.0);
-
   sigma_xx = properties.lambda() * (du(0, 0) + du(1, 1)) +
              static_cast<type_real>(2.0) * properties.mu() * du(0, 0);
 
@@ -50,7 +47,7 @@ KOKKOS_INLINE_FUNCTION
 
   sigma_c_zy = (properties.mu_c() + properties.nu_c()) * du(2, 1);
 
-  specfem::datatype::VectorPointViewType<type_real, 3, 2, UseSIMD> T;
+  specfem::datatype::TensorPointViewType<type_real, 3, 2, UseSIMD> T;
 
   // Note that the the spin notes have the divergence act on the first component
   // Komatitsch & Tromp (1999) which we are following here defines the

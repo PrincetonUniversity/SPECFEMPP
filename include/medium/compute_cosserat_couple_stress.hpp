@@ -8,7 +8,7 @@
 #include "utilities/errors.hpp"
 #include <Kokkos_Core.hpp>
 
-template <typename T, typename PointPartialDerivativesType,
+template <typename T, typename PointJacobianMatrixType,
           typename PointPropertiesType, typename PointStressIntegrandViewType,
           typename PointAccelerationType>
 KOKKOS_INLINE_FUNCTION void
@@ -18,10 +18,9 @@ assert_types(const std::integral_constant<bool, true>) {
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
 
-  static_assert(
-      specfem::accessor::is_point_partial_derivatives<
-          PointPartialDerivativesType>::value,
-      "point_partial_derivatives is not a point partial derivatives type");
+  static_assert(specfem::accessor::is_point_jacobian_matrix<
+                    PointJacobianMatrixType>::value,
+                "point_jacobian_matrix is not a point Jacobian matrix type");
 
   static_assert(
       specfem::accessor::is_point_properties<PointPropertiesType>::value,
@@ -31,13 +30,13 @@ assert_types(const std::integral_constant<bool, true>) {
                 "point_acceleration is not a point field type");
 
   static_assert(
-      PointPartialDerivativesType::simd::using_simd ==
+      PointJacobianMatrixType::simd::using_simd ==
           PointAccelerationType::simd::using_simd,
       "point_properties and acceleration have different SIMD settings");
 
   static_assert(PointPropertiesType::dimension_tag ==
-                    PointPartialDerivativesType::dimension_tag,
-                "point_properties and point_partial_derivatives have different "
+                    PointJacobianMatrixType::dimension_tag,
+                "point_properties and point_jacobian_matrix have different "
                 "dimensions");
 
   static_assert(PointPropertiesType::medium_tag ==
@@ -45,8 +44,8 @@ assert_types(const std::integral_constant<bool, true>) {
                 "point_properties and acceleration have different medium tags");
 
   static_assert(PointPropertiesType::simd::using_simd ==
-                    PointPartialDerivativesType::simd::using_simd,
-                "point_properties and point_partial_derivatives have different "
+                    PointJacobianMatrixType::simd::using_simd,
+                "point_properties and point_jacobian_matrix have different "
                 "SIMD settings");
 
   // Check the PointStressIntegrandViewType, which is a kokkos view for its
@@ -67,7 +66,7 @@ assert_types(const std::integral_constant<bool, true>) {
   return;
 }
 
-template <typename T, typename PointPartialDerivativesType,
+template <typename T, typename PointJacobianMatrixType,
           typename PointPropertiesType, typename PointStressIntegrandViewType,
           typename PointAccelerationType>
 KOKKOS_INLINE_FUNCTION void
@@ -79,26 +78,26 @@ assert_types(const std::integral_constant<bool, false>) {
 namespace specfem {
 namespace medium {
 
-template <typename T, typename PointPartialDerivativesType,
+template <typename T, typename PointJacobianMatrixType,
           typename PointPropertiesType, typename PointStressIntegrandViewType,
           typename PointAccelerationType, typename DimensionTagType,
           typename MediumTagType, typename PropertyTagType>
 KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::false_type, const DimensionTagType dimension_tag,
     const MediumTagType medium_tag, const PropertyTagType property_tag,
-    const PointPartialDerivativesType &point_partial_derivatives,
+    const PointJacobianMatrixType &point_jacobian_matrix,
     const PointPropertiesType &point_properties, const T factor,
     const PointStressIntegrandViewType &F,
     PointAccelerationType &acceleration) {};
 
-template <typename T, typename PointPartialDerivativesType,
+template <typename T, typename PointJacobianMatrixType,
           typename PointPropertiesType, typename PointStressIntegrandViewType,
           typename PointAccelerationType, typename DimensionTagType,
           typename MediumTagType, typename PropertyTagType>
 KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::true_type, const DimensionTagType dimension_tag,
     const MediumTagType medium_tag, const PropertyTagType property_tag,
-    const PointPartialDerivativesType &point_partial_derivatives,
+    const PointJacobianMatrixType &point_jacobian_matrix,
     const PointPropertiesType &point_properties, const T factor,
     const PointStressIntegrandViewType &F,
     PointAccelerationType &acceleration) {
@@ -139,14 +138,14 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
  * @param velocity Velocity at the quadrature point
  * @param acceleration Acceleration at the quadrature point
  */
-template <typename T, typename PointPartialDerivativesType,
+template <typename T, typename PointJacobianMatrixType,
           typename PointPropertiesType, typename PointStressIntegrandViewType,
           typename PointAccelerationType>
-KOKKOS_INLINE_FUNCTION void compute_couple_stress(
-    const PointPartialDerivativesType &point_partial_derivatives,
-    const PointPropertiesType &point_properties, const T factor,
-    const PointStressIntegrandViewType &F,
-    PointAccelerationType &acceleration) {
+KOKKOS_INLINE_FUNCTION void
+compute_couple_stress(const PointJacobianMatrixType &point_jacobian_matrix,
+                      const PointPropertiesType &point_properties,
+                      const T factor, const PointStressIntegrandViewType &F,
+                      PointAccelerationType &acceleration) {
 
   constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
@@ -166,13 +165,13 @@ KOKKOS_INLINE_FUNCTION void compute_couple_stress(
       std::integral_constant<bool, has_cosserat_couple_stress>;
 
   // Check that the types are compatible
-  assert_types<T, PointPartialDerivativesType, PointPropertiesType,
+  assert_types<T, PointJacobianMatrixType, PointPropertiesType,
                PointStressIntegrandViewType, PointAccelerationType>(
       cosserat_couple_stress_dispatch());
 
   impl_compute_cosserat_couple_stress(
       cosserat_couple_stress_dispatch(), dimension_dispatch(),
-      medium_dispatch(), property_dispatch(), point_partial_derivatives,
+      medium_dispatch(), property_dispatch(), point_jacobian_matrix,
       point_properties, factor, F, acceleration);
 }
 

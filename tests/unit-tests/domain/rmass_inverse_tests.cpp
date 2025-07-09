@@ -1,7 +1,6 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "../utilities/include/interface.hpp"
-#include "compute/interface.hpp"
 #include "constants.hpp"
 #include "io/interface.hpp"
 #include "kokkos_kernels/domain_kernels.hpp"
@@ -10,6 +9,7 @@
 #include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "source/interface.hpp"
+#include "specfem/assembly.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ------------------------------------- //
@@ -128,9 +128,9 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     std::vector<specfem::wavefield::type> stypes(0);
 
     // Generate compute structs to be used by the solver
-    specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                        stypes, 0, 0, 0, 0, 1,
-                                        setup.get_simulation_type(), nullptr);
+    specfem::assembly::assembly assembly(mesh, quadratures, sources, receivers,
+                                         stypes, 0, 0, 0, 0, 1,
+                                         setup.get_simulation_type(), nullptr);
 
     try {
 
@@ -157,11 +157,11 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
       const int nglob = assembly.fields.forward.nglob;
 
-      const int nspec = assembly.mesh.points.nspec;
-      const int ngllz = assembly.mesh.points.ngllz;
-      const int ngllx = assembly.mesh.points.ngllx;
+      const int nspec = assembly.mesh.nspec;
+      const int ngllz = assembly.mesh.ngllz;
+      const int ngllx = assembly.mesh.ngllx;
 
-      const auto global_index_mapping = assembly.mesh.points.h_index_mapping;
+      const auto global_index_mapping = assembly.mesh.h_index_mapping;
 
       if ((Test.database.acoustic_mass_matrix == "NULL") &&
           (Test.database.elastic_mass_matrix == "NULL")) {
@@ -188,8 +188,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
             for (int ispec = 0; ispec < nspec; ++ispec) {
               specfem::point::index<specfem::dimension::type::dim2> index(
                   ispec, iz, ix);
-              const int ispec_mesh =
-                  assembly.mesh.mapping.compute_to_mesh(ispec);
+              const int ispec_mesh = assembly.mesh.compute_to_mesh(ispec);
               if (assembly.element_types.get_medium_tag(ispec) ==
                   specfem::element::medium_tag::elastic_psv) {
 
@@ -200,8 +199,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                       specfem::element::medium_tag::elastic_psv, false, false,
                       false, true, false>
                       point_field;
-                  specfem::compute::load_on_host(index, assembly.fields.forward,
-                                                 point_field);
+                  specfem::assembly::load_on_host(
+                      index, assembly.fields.forward, point_field);
                   return point_field;
                 }();
 
@@ -249,8 +248,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
             for (int ispec = 0; ispec < nspec; ++ispec) {
               specfem::point::index<specfem::dimension::type::dim2> index(
                   ispec, iz, ix);
-              const int ispec_mesh =
-                  assembly.mesh.mapping.compute_to_mesh(ispec);
+              const int ispec_mesh = assembly.mesh.compute_to_mesh(ispec);
               if (assembly.element_types.get_medium_tag(ispec) ==
                   specfem::element::medium_tag::acoustic) {
 
@@ -260,8 +258,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                                         specfem::element::medium_tag::acoustic,
                                         false, false, false, true, false>
                       point_field;
-                  specfem::compute::load_on_host(index, assembly.fields.forward,
-                                                 point_field);
+                  specfem::assembly::load_on_host(
+                      index, assembly.fields.forward, point_field);
                   return point_field;
                 }();
 
