@@ -8,7 +8,7 @@ template <specfem::dimension::type DimensionTag,
 specfem::assembly::boundary_value_container<DimensionTag, BoundaryTag>::
     boundary_value_container(const int nstep, const specfem::assembly::mesh<dimension> &mesh,
                              const specfem::assembly::element_types element_types,
-                             const specfem::assembly::boundaries boundaries)
+                             const specfem::assembly::boundaries<dimension> boundaries)
     : property_index_mapping(
           "specfem::assembly::boundary_value_container::property_index_mapping",
           mesh.nspec),

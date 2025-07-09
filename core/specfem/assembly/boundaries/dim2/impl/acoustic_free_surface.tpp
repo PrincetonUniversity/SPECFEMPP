@@ -1,36 +1,19 @@
+#pragma once
+
+#include <map>
+#include <stdexcept>
+#include <vector>
 
 #include "acoustic_free_surface.hpp"
 #include "macros.hpp"
-#include <Kokkos_Sort.hpp>
-#include <algorithm>
-#include <numeric>
-#include <unordered_map>
-#include <vector>
+#include "utilities.hpp"
 
-namespace {
-bool is_on_boundary(specfem::enums::boundaries::type type, int iz, int ix,
-                    int ngllz, int ngllx) {
-  return (type == specfem::enums::boundaries::type::TOP && iz == ngllz - 1) ||
-         (type == specfem::enums::boundaries::type::BOTTOM && iz == 0) ||
-         (type == specfem::enums::boundaries::type::LEFT && ix == 0) ||
-         (type == specfem::enums::boundaries::type::RIGHT && ix == ngllx - 1) ||
-         (type == specfem::enums::boundaries::type::BOTTOM_RIGHT && iz == 0 &&
-          ix == ngllx - 1) ||
-         (type == specfem::enums::boundaries::type::BOTTOM_LEFT && iz == 0 &&
-          ix == 0) ||
-         (type == specfem::enums::boundaries::type::TOP_RIGHT &&
-          iz == ngllz - 1 && ix == ngllx - 1) ||
-         (type == specfem::enums::boundaries::type::TOP_LEFT &&
-          iz == ngllz - 1 && ix == 0);
-}
-} // namespace
-
-specfem::assembly::impl::boundaries::acoustic_free_surface::
+specfem::assembly::boundaries_impl::acoustic_free_surface<specfem::dimension::type::dim2>::
     acoustic_free_surface(
         const int nspec, const int ngllz, const int ngllx,
-        const specfem::mesh::acoustic_free_surface<
-            specfem::dimension::type::dim2> &acoustic_free_surface,
-        const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+        const specfem::mesh::acoustic_free_surface<dimension_tag>
+            &acoustic_free_surface,
+        const specfem::assembly::mesh<dimension_tag> &mesh,
         const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
         std::vector<specfem::element::boundary_tag_container>
             &element_boundary_tags) {
