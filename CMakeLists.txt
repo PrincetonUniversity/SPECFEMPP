@@ -570,7 +570,7 @@ add_library(
         src/kokkos_kernels/impl/compute_material_derivatives.cpp
         src/kokkos_kernels/frechet_kernels.cpp
 )
-set_target_properties(kokkos_kernels PROPERTIES UNITY_BUILD_BATCH_SIZE 2)
+set_target_properties(kokkos_kernels PROPERTIES UNITY_BUILD_BATCH_SIZE 4)
 
 target_link_libraries(
         kokkos_kernels
