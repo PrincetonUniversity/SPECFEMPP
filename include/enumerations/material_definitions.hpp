@@ -82,7 +82,9 @@
                             PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,                           \
        PROPERTY_TAG_ISOTROPIC_COSSERAT,                                        \
-       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,           \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,      \
+        PROPERTY_TAG_ISOTROPIC_COSSERAT, BOUNDARY_TAG_STACEY))(                \
+          (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,                            \
                             PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))(       \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
        BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE))(                                   \
