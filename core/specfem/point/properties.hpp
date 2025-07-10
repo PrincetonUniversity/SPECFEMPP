@@ -1,6 +1,6 @@
 #pragma once
 
-#include "impl/point_container.hpp"
+#include "point/point_container.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {
