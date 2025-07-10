@@ -15,3 +15,4 @@ struct value_containers;
 } // namespace specfem::assembly::impl
 
 #include "value_containers/dim2/value_containers.hpp"
+#include "value_containers/dim3/value_containers.hpp"
