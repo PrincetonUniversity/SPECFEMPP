@@ -11,6 +11,7 @@
  */
 /// @{
 #define DIMENSION_TAG_DIM2 (0, specfem::dimension::type::dim2, dim2)
+#define DIMENSION_TAG_DIM3 (1, specfem::dimension::type::dim3, dim3)
 
 #define MEDIUM_TAG_ELASTIC_PSV                                                 \
   (0, specfem::element::medium_tag::elastic_psv, elastic_psv)
@@ -51,7 +52,8 @@
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T))(                         \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))(                              \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC))(                           \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE))
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE))(                    \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_PSV))
 
 /**
  * @brief Macro to generate a list of material systems
@@ -67,7 +69,8 @@
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))(      \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC))(   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
-       PROPERTY_TAG_ISOTROPIC))
+       PROPERTY_TAG_ISOTROPIC))(                                               \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC))
 
 /**
  * @brief Macro to generate a list of element types
@@ -100,7 +103,9 @@
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC,        \
                             PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
-       PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
+       PROPERTY_TAG_ISOTROPIC,                                                 \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_PSV,        \
+                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
 
 /**
  * @brief Tag getters. The macros are intended to be used only in @ref DECLARE
