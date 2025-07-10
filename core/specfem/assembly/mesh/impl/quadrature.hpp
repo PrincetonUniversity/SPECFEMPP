@@ -6,9 +6,8 @@
 
 namespace specfem::assembly::mesh_impl {
 
-struct GLLQuadrature {
-  constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension
+template <specfem::dimension::type DimensionTag> struct GLLQuadrature {
+  constexpr static auto dimension = DimensionTag; ///< Dimension tag
 
   using ViewType = Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>;
   using DViewType = Kokkos::View<type_real **, Kokkos::LayoutRight,
@@ -36,17 +35,17 @@ struct GLLQuadrature {
  * @brief Information about the integration quadratures
  *
  */
-template <>
-struct quadrature<specfem::dimension::type::dim2>
-    : public specfem::assembly::mesh_impl::GLLQuadrature {
+template <specfem::dimension::type DimensionTag>
+struct quadrature
+    : public specfem::assembly::mesh_impl::GLLQuadrature<DimensionTag> {
 public:
-  constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension
+  constexpr static auto dimension = DimensionTag; ///< Dimension tag
 
   quadrature() = default;
 
   quadrature(const specfem::quadrature::quadratures &quadratures)
-      : specfem::assembly::mesh_impl::GLLQuadrature(quadratures) {}
+      : specfem::assembly::mesh_impl::GLLQuadrature<DimensionTag>(quadratures) {
+  }
 };
 
 } // namespace specfem::assembly::mesh_impl
