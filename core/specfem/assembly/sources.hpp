@@ -11,4 +11,3 @@ struct sources; ///< Forward declaration of sources class
 
 // Include template specializations
 #include "sources/dim2/sources.hpp"
-#include "sources/impl/source_array.hpp"
