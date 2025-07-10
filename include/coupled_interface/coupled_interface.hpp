@@ -110,8 +110,9 @@ private:
   specfem::assembly::interface_container<dimension_tag, SelfMedium,
                                          CoupledMedium>
       interface_data; ///< Struct containing the coupling information.
-  specfem::assembly::simulation_field<WavefieldType> field; ///< Wavefield
-                                                            ///< object.
+  specfem::assembly::simulation_field<dimension, WavefieldType>
+      field; ///< Wavefield
+             ///< object.
 };
 } // namespace coupled_interface
 } // namespace specfem
