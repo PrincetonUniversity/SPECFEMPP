@@ -23,7 +23,7 @@ namespace specfem::assembly::mesh_impl {
  *
  */
 template <> struct mesh_to_compute_mapping<specfem::dimension::type::dim2> {
-  constexpr static auto dimension =
+  constexpr static auto dimension_tag =
       specfem::dimension::type::dim2; ///< Dimension
   int nspec;                          ///< Number of spectral elements
 
@@ -47,6 +47,6 @@ template <> struct mesh_to_compute_mapping<specfem::dimension::type::dim2> {
    *
    * @param tags Tags for every spectral element within the mesh
    */
-  mesh_to_compute_mapping(const specfem::mesh::tags<dimension> &tags);
+  mesh_to_compute_mapping(const specfem::mesh::tags<dimension_tag> &tags);
 };
 } // namespace specfem::assembly::mesh_impl
