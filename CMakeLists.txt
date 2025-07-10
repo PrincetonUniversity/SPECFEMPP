@@ -509,10 +509,8 @@ target_link_libraries(
         Kokkos::kokkos
         specfem_mpi
         utilities
-        quadrature
         source_time_function
         yaml-cpp
-        point
         enumerations
         algorithms
         ${BOOST_LIBS}
