@@ -2,6 +2,7 @@
 
 #include "boundaries.hpp"
 #include "boundary_values.hpp"
+#include "compute_source_array.hpp"
 #include "coupled_interfaces.hpp"
 #include "enumerations/interface.hpp"
 #include "fields.hpp"
