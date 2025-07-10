@@ -38,8 +38,7 @@ edge_to_bdtype(const specfem::enums::edge::type &bd) {
     return specfem::enums::boundaries::type::RIGHT;
     break;
   default:
-    // this should never be called
-    return specfem::enums::boundaries::type::RIGHT;
+    assert(false);
   }
 }
 // ====================================================================
@@ -63,8 +62,7 @@ edge_and_polarity_to_corner(const specfem::enums::edge::type &bd,
                             : specfem::enums::boundaries::type::BOTTOM_RIGHT;
     break;
   default:
-    // this should never be called
-    return specfem::enums::boundaries::type::RIGHT;
+    assert(false);
   }
 }
 
