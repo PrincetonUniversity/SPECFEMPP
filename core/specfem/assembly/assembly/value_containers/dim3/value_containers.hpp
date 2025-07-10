@@ -7,15 +7,16 @@ namespace specfem::assembly::impl {
 
 template <template <specfem::dimension::type, specfem::element::medium_tag,
                     specfem::element::property_tag> class containers_type>
-struct value_containers<specfem::dimension::type::dim2, containers_type> {
+struct value_containers<specfem::dimension::type::dim3, containers_type> {
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
   int nspec; ///< Total number of spectral elements
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
+  int nglly; ///< Number of quadrature points in y dimension
 
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
 
   IndexViewType property_index_mapping; ///< View to store property index
                                         ///< mapping
@@ -35,11 +36,8 @@ struct value_containers<specfem::dimension::type::dim2, containers_type> {
     }
   }
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
-                                    ISOTROPIC_COSSERAT)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+                       PROPERTY_TAG(ISOTROPIC)),
                       DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_,
                                                   _PROPERTY_TAG_)),
                                value)))
@@ -66,10 +64,7 @@ struct value_containers<specfem::dimension::type::dim2, containers_type> {
       get_container() const {
 
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC)),
         CAPTURE(value) {
           if constexpr (_medium_tag_ == MediumTag &&
                         _property_tag_ == PropertyTag) {
@@ -94,20 +89,14 @@ struct value_containers<specfem::dimension::type::dim2, containers_type> {
   void copy_to_host() {
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC)),
         CAPTURE(value) { _value_.copy_to_host(); })
   }
 
   void copy_to_device() {
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2),
-         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                    ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC)),
         CAPTURE(value) { _value_.copy_to_device(); })
   }
 };
