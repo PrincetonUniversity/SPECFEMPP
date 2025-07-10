@@ -192,16 +192,19 @@ impl_base_elastic_psv_t_traction(const PointBoundaryType &boundary,
 
   if (boundary.tag != tag)
     return;
-
+  // can't use specfem::algorithms::dot here because
+  // field.velocity is a 3-component vector, and edge_normal is a 2-component
   const auto vn =
       field.velocity(0) * boundary.edge_normal(0) +
       field.velocity(1) * boundary.edge_normal(1);
-    //   specfem::algorithms::dot(field.velocity, boundary.edge_normal);
   const auto &dn = boundary.edge_normal;
 
   const auto jacobian1d = dn.l2_norm();
-    // just guesses for now -- these are the limiting velocities for \beta_\pm,
-    // but they are not necessarily kept to shear and rotation components separately
+    // these are the high frequency limit group velocities for \beta_\pm
+    // because of the mode switching phenomenon, they are correct at high
+    // frequencies (though it's not guaranteed which branch corresponds to
+    // displacement and which to rotation), but they don't necessarily
+    // work well at low frequency
   const auto rho_vs = property.rho() * Kokkos::sqrt((property.mu() +
                         property.nu()) / property.rho());
   const auto j_vt = property.j() * Kokkos::sqrt((property.mu_c() +
@@ -244,17 +247,20 @@ impl_base_elastic_psv_t_traction(const PointBoundaryType &boundary,
 
   if (Kokkos::Experimental::none_of(mask))
     return;
-
+  // can't use specfem::algorithms::dot here because
+  // field.velocity is a 3-component vector, and edge_normal is a 2-component
   const auto vn =
         field.velocity(0) * boundary.edge_normal(0) +
         field.velocity(1) * boundary.edge_normal(1);
-    //   specfem::algorithms::dot(field.velocity, boundary.edge_normal);
   const auto &dn = boundary.edge_normal;
 
   const auto jacobian1d = dn.l2_norm();
 
-    // just guesses for now -- these are the limiting velocities for \beta_\pm,
-    // but they are not necessarily kept to shear and rotation components separately
+    // these are the high frequency limit group velocities for \beta_\pm
+    // because of the mode switching phenomenon, they are correct at high
+    // frequencies (though it's not guaranteed which branch corresponds to
+    // displacement and which to rotation), but they don't necessarily
+    // work well at low frequency
   const auto rho_vs = property.rho() * Kokkos::sqrt((property.mu() +
                             property.nu()) / property.rho());
   const auto j_vt = property.j() * Kokkos::sqrt((property.mu_c() +
