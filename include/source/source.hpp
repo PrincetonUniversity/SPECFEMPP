@@ -11,12 +11,6 @@
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::assembly {
-template <specfem::dimension::type DimensionTag> class mesh;
-class jacobian_matrix;
-class element_types;
-} // namespace specfem::assembly
-
 namespace specfem {
 namespace sources {
 
@@ -88,12 +82,6 @@ public:
   virtual std::string print() const { return ""; };
 
   virtual ~source() = default;
-
-  virtual void compute_source_array(
-      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::assembly::jacobian_matrix &jacobian_matrix,
-      const specfem::assembly::element_types &element_types,
-      specfem::kokkos::HostView3d<type_real> source_array) = 0;
 
   void compute_source_time_function(
       const type_real t0, const type_real dt, const int nsteps,

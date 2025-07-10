@@ -3,7 +3,7 @@
 #include "algorithms/locate_point.hpp"
 #include "specfem/point.hpp"
 #include "source_medium.hpp"
-#include "specfem/assembly/sources/impl/source_array.hpp"
+#include "source_array.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionTag,
