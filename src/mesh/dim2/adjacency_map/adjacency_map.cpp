@@ -129,8 +129,7 @@ static inline int node_edge(const specfem::enums::edge::type &edgetype,
   case specfem::enums::edge::type::RIGHT:
     return (ind == 0 ? 1 : (ind == 2 ? 2 : 5));
   default:
-    // this will never be called. Not throwing error for inlining.
-    return 0;
+    assert(false);
   }
 }
 
