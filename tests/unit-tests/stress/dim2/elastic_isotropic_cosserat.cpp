@@ -4,18 +4,21 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-constexpr auto dimension = specfem::dimension::type::dim2;
-constexpr auto property_tag =
-    specfem::element::property_tag::isotropic_cosserat;
-constexpr auto CosseratTag = specfem::element::medium_tag::elastic_psv_t;
-using CosseratPropertiesType =
-    specfem::point::properties<dimension, CosseratTag, property_tag, false>;
-using CosseratFieldDerivativesType =
-    specfem::point::field_derivatives<dimension, CosseratTag, false>;
-using CosseratStressType =
-    specfem::point::stress<dimension, CosseratTag, false>;
+namespace {
 
 TEST(Stress, ElasticIsotropicCosserat2D_Basic) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic_cosserat;
+  static constexpr auto CosseratTag =
+      specfem::element::medium_tag::elastic_psv_t;
+
+  using CosseratPropertiesType =
+      specfem::point::properties<dimension, CosseratTag, property_tag, false>;
+  using CosseratFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, CosseratTag, false>;
+  using CosseratStressType =
+      specfem::point::stress<dimension, CosseratTag, false>;
   // Set up properties (arbitrary but nonzero values)
   const type_real rho = 2.5;
   const type_real kappa = 7.0;
@@ -70,6 +73,18 @@ TEST(Stress, ElasticIsotropicCosserat2D_Basic) {
 }
 
 TEST(Stress, ElasticIsotropicCosserat2D_ZeroDerivatives) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic_cosserat;
+  static constexpr auto CosseratTag =
+      specfem::element::medium_tag::elastic_psv_t;
+
+  using CosseratPropertiesType =
+      specfem::point::properties<dimension, CosseratTag, property_tag, false>;
+  using CosseratFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, CosseratTag, false>;
+  using CosseratStressType =
+      specfem::point::stress<dimension, CosseratTag, false>;
   const type_real rho = 2.5;
   const type_real kappa = 7.0;
   const type_real mu = 3.0;
@@ -107,6 +122,18 @@ TEST(Stress, ElasticIsotropicCosserat2D_ZeroDerivatives) {
 }
 
 TEST(Stress, ElasticIsotropicCosserat2D_SymmetricWhenNuZero) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic_cosserat;
+  static constexpr auto CosseratTag =
+      specfem::element::medium_tag::elastic_psv_t;
+
+  using CosseratPropertiesType =
+      specfem::point::properties<dimension, CosseratTag, property_tag, false>;
+  using CosseratFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, CosseratTag, false>;
+  using CosseratStressType =
+      specfem::point::stress<dimension, CosseratTag, false>;
   const type_real rho = 2.5;
   const type_real kappa = 7.0;
   const type_real mu = 3.0;
@@ -160,3 +187,5 @@ TEST(Stress, ElasticIsotropicCosserat2D_SymmetricWhenNuZero) {
       << "Tensor is not symmetric: T(0,1) != T(1,0)";
   EXPECT_TRUE(stress == expected_stress) << message.str();
 }
+
+} // namespace
