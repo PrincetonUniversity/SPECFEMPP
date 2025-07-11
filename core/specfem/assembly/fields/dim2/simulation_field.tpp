@@ -32,7 +32,7 @@ template <specfem::wavefield::simulation_field WavefieldType>
 specfem::assembly::simulation_field<specfem::dimension::type::dim2,
                                     WavefieldType>::
     simulation_field(const specfem::assembly::mesh<dimension_tag> &mesh,
-                     const specfem::assembly::element_types &element_types) {
+                     const specfem::assembly::element_types<dimension_tag> &element_types) {
 
   nglob = compute_nglob(mesh.h_index_mapping);
 

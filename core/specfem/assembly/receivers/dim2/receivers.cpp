@@ -17,7 +17,8 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
     const std::vector<specfem::wavefield::type> &stypes,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-    const specfem::assembly::element_types &element_types)
+    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+        &element_types)
     : nspec(nspec),
       lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
                            receivers.size(), mesh.ngllz, mesh.ngllx),
