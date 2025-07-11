@@ -1,7 +1,7 @@
-#include "specfem/receiver.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
+#include "specfem/receivers.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 

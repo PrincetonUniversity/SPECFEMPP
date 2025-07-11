@@ -10,4 +10,4 @@ template <specfem::dimension::type DimensionTag> class receiver;
 
 } // namespace specfem::receivers
 
-#include "receiver/dim2/receiver.hpp"
+#include "receivers/dim2/receiver.hpp"

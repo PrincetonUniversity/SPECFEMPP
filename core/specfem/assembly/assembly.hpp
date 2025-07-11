@@ -14,7 +14,7 @@
 #include "receivers.hpp"
 #include "source/interface.hpp"
 #include "sources.hpp"
-#include "specfem/receiver.hpp"
+#include "specfem/receivers.hpp"
 
 /**
  * @brief Assembly namespace defines data structures used to store data related
