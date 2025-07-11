@@ -325,7 +325,7 @@ if (NOT HDF5_CXX_BUILD)
         io
         mesh
         source_class
-        receiver_class
+        specfem::receivers
         yaml-cpp
         ${BOOST_LIBS}
         Kokkos::kokkos)
@@ -334,7 +334,7 @@ else()
         io
         mesh
         source_class
-        receiver_class
+        specfem::receivers
         Kokkos::kokkos
         yaml-cpp
         ${BOOST_LIBS}
@@ -600,7 +600,7 @@ add_library(
 target_link_libraries(
         writer
         assembly
-        receiver_class
+        specfem::receivers
         io
         utilities
 )
@@ -665,7 +665,7 @@ target_link_libraries(
         parameter_reader
         quadrature
         timescheme
-        receiver_class
+        specfem::receivers
         yaml-cpp
         periodic_tasks
         writer
@@ -689,7 +689,7 @@ target_link_libraries(
         assembly
         source_class
         parameter_reader
-        receiver_class
+        specfem::receivers
         writer
         periodic_tasks
         reader
@@ -724,7 +724,7 @@ target_link_libraries(
         assembly
         source_class
         parameter_reader
-        receiver_class
+        specfem::receivers
         writer
         periodic_tasks
         reader

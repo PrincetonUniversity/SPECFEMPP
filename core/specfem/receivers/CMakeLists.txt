@@ -5,6 +5,8 @@ add_library(
         ${COMPUTE_SOURCE_FILES}
 )
 
+add_library(specfem::receivers ALIAS receiver_class)
+
 target_link_libraries(
         receiver_class
         specfem_mpi
