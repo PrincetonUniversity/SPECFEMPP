@@ -28,6 +28,8 @@ private:
                                                    ///< every receiver
 
 public:
+  constexpr static auto dimension_tag =
+      specfem::dimension::type::dim2; ///< Dimension of the mesh
   /**
    * @brief Construct a new receivers object
    *
@@ -51,16 +53,16 @@ public:
    * @param tags Tags for every element in the mesh
    * @param properties Properties object
    */
-  receivers(const int nspec, const int ngllz, const int ngllx,
-            const int max_sig_step, const type_real dt, const type_real t0,
-            const int nsteps_between_samples,
-            const std::vector<std::shared_ptr<
-                specfem::receivers::receiver<specfem::dimension::type::dim2> > >
-                &receivers,
-            const std::vector<specfem::wavefield::type> &stypes,
-            const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-            const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-            const specfem::assembly::element_types &element_types);
+  receivers(
+      const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
+      const type_real dt, const type_real t0, const int nsteps_between_samples,
+      const std::vector<std::shared_ptr<
+          specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+          &receivers,
+      const std::vector<specfem::wavefield::type> &stypes,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::mesh::tags<dimension_tag> &tags,
+      const specfem::assembly::element_types<dimension_tag> &element_types);
 
   /**
    * @brief Get the spectral element indices in which the receivers are located
@@ -124,7 +126,8 @@ private:
   LagrangeInterpolantType::HostMirror
       h_lagrange_interpolant; ///< Lagrange interpolant for every receiver
                               ///< stored on the host
-  specfem::assembly::element_types element_types; ///< Element types
+  specfem::assembly::element_types<dimension_tag> element_types; ///< Element
+                                                                 ///< types
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
