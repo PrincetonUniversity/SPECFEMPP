@@ -14,6 +14,7 @@ target_link_libraries(
         point
         edge
         receiver_class
+        shape_functions
         Kokkos::kokkos
 )
 

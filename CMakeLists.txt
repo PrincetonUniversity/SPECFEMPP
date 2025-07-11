@@ -418,7 +418,6 @@ target_link_libraries(
 
 add_library(
         jacobian
-        src/jacobian/shape_functions.cpp
         src/jacobian/jacobian.cpp
 )
 
@@ -426,6 +425,7 @@ target_link_libraries(
         jacobian
         Kokkos::kokkos
         point
+        shape_functions
 )
 
 add_library(
