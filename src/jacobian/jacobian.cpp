@@ -1,5 +1,6 @@
 #include "jacobian/interface.hpp"
 #include "macros.hpp"
+#include "specfem/shape_functions.hpp"
 
 std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
     const specfem::kokkos::HostTeam::member_type &teamMember,
@@ -9,7 +10,7 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
   ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
   ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
 
-  auto shape2D = specfem::jacobian::define_shape_functions(xi, gamma, ngnod);
+  auto shape2D = specfem::shape_function::shape_function(xi, gamma, ngnod);
 
   // FIXME:: Multi reduction is not yet implemented in kokkos
   // This is hacky way of doing this using double vector loops
@@ -25,7 +26,7 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
   ASSERT(coorg.extent(0) == ndim, "Dimension mismatch");
   ASSERT(coorg.extent(1) == ngnod, "Number of nodes mismatch");
 
-  auto shape2D = specfem::jacobian::define_shape_functions(xi, gamma, ngnod);
+  auto shape2D = specfem::shape_function::shape_function(xi, gamma, ngnod);
 
   return specfem::jacobian::compute_locations(coorg, ngnod, shape2D);
 }
@@ -88,7 +89,7 @@ specfem::jacobian::compute_jacobian_matrix(
   type_real zgamma = 0.0;
 
   const auto dershape2D =
-      specfem::jacobian::define_shape_functions_derivatives(xi, gamma, ngnod);
+      specfem::shape_function::shape_function_derivatives(xi, gamma, ngnod);
 
   // FIXME:: Multi reduction is not yet implemented in kokkos
   // This is hacky way of doing this using double vector loops
@@ -184,7 +185,7 @@ specfem::jacobian::compute_jacobian_matrix(
   type_real zgamma = 0.0;
 
   const auto dershape2D =
-      specfem::jacobian::define_shape_functions_derivatives(xi, gamma, ngnod);
+      specfem::shape_function::shape_function_derivatives(xi, gamma, ngnod);
 
   for (int in = 0; in < ngnod; in++) {
     xxi += dershape2D[0][in] * s_coorg(0, in);
