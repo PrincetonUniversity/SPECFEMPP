@@ -1,7 +1,7 @@
 #include "specfem/assembly/element_types.hpp"
 
 specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
-    const int nspec, const int ngllx, const int nglly, const int ngllz,
+    const int nspec, const int ngllz, const int nglly, const int ngllx,
     const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
     const specfem::mesh::tags<specfem::dimension::type::dim3> &tags)
     : nspec(nspec),
