@@ -23,8 +23,7 @@ std::vector<T> shape_function_8node(const T xi, const T eta, const T zeta) {
 
 template <typename T, typename std::enable_if<std::is_floating_point<T>::value,
                                               bool>::type = true>
-std::vector<T> shape_function_derivatives_27node(const T xi, const T eta,
-                                                 const T zeta) {
+std::vector<T> shape_function_27node(const T xi, const T eta, const T zeta) {
 
   std::vector<T> shape3D(27, 0.0);
 
@@ -102,7 +101,7 @@ std::vector<T> specfem::shape_function::shape_function(const T xi, const T eta,
   if (ngnod == 8) {
     return shape_function_8node(xi, eta, zeta);
   } else if (ngnod == 27) {
-    return shape_function_derivatives_27node(xi, eta, zeta);
+    return shape_function_27node(xi, eta, zeta);
   } else {
     throw std::invalid_argument("Error: wrong number of control nodes");
   }
