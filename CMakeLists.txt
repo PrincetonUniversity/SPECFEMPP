@@ -543,8 +543,6 @@ target_link_libraries(
         receiver_class
         specfem_mpi
         Kokkos::kokkos
-        # utilities
-        quadrature
         yaml-cpp
         ${BOOST_LIBS}
 )

@@ -135,12 +135,12 @@ class ASSEMBLY : public ::testing::Test {
 protected:
   class Iterator {
   public:
-    Iterator(
-        test_configuration::Test *p_Test,
-        specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh,
-        std::vector<std::shared_ptr<specfem::sources::source> > *p_sources,
-        std::vector<std::shared_ptr<specfem::receivers::receiver> > *p_stations,
-        std::string *p_suffixes, specfem::assembly::assembly *p_assembly)
+    Iterator(test_configuration::Test *p_Test,
+             specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh,
+             std::vector<std::shared_ptr<specfem::sources::source> > *p_sources,
+             std::vector<std::shared_ptr<specfem::receivers::receiver<
+                 specfem::dimension::type::dim2> > > *p_stations,
+             std::string *p_suffixes, specfem::assembly::assembly *p_assembly)
         : p_Test(p_Test), p_mesh(p_mesh), p_sources(p_sources),
           p_stations(p_stations), p_suffixes(p_suffixes),
           p_assembly(p_assembly) {}
@@ -148,7 +148,8 @@ protected:
     std::tuple<test_configuration::Test,
                specfem::mesh::mesh<specfem::dimension::type::dim2>,
                std::vector<std::shared_ptr<specfem::sources::source> >,
-               std::vector<std::shared_ptr<specfem::receivers::receiver> >,
+               std::vector<std::shared_ptr<specfem::receivers::receiver<
+                   specfem::dimension::type::dim2> > >,
                std::string, specfem::assembly::assembly>
     operator*() {
       std::cout << "-------------------------------------------------------\n"
@@ -177,7 +178,9 @@ protected:
     test_configuration::Test *p_Test;
     specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh;
     std::vector<std::shared_ptr<specfem::sources::source> > *p_sources;
-    std::vector<std::shared_ptr<specfem::receivers::receiver> > *p_stations;
+    std::vector<std::shared_ptr<
+        specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+        *p_stations;
     std::string *p_suffixes;
     specfem::assembly::assembly *p_assembly;
   };
@@ -198,7 +201,8 @@ protected:
   std::vector<test_configuration::Test> Tests;
   std::vector<specfem::mesh::mesh<specfem::dimension::type::dim2> > Meshes;
   std::vector<std::vector<std::shared_ptr<specfem::sources::source> > > Sources;
-  std::vector<std::vector<std::shared_ptr<specfem::receivers::receiver> > >
+  std::vector<std::vector<std::shared_ptr<
+      specfem::receivers::receiver<specfem::dimension::type::dim2> > > >
       Stations;
   std::vector<std::string> suffixes;
   std::vector<specfem::assembly::assembly> assemblies;

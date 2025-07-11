@@ -1,6 +1,2 @@
-#ifndef _RECEIVER_INTERFACE_HPP
-#define _RECEIVER_INTERFACE_HPP
-
+#pragma once
 #include "receiver.hpp"
-
-#endif
