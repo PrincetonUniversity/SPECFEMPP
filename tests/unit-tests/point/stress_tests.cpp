@@ -2,6 +2,7 @@
 #include "specfem/point/jacobian_matrix.hpp"
 #include "specfem/point/stress.hpp"
 #include "specfem_setup.hpp"
+#include "test_helper.hpp"
 #include "test_macros.hpp"
 #include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
@@ -28,12 +29,6 @@ protected:
       Kokkos::finalize();
   }
 };
-
-// For better naming
-struct Serial : std::integral_constant<bool, false> {};
-struct SIMD : std::integral_constant<bool, true> {};
-
-using TestTypes = ::testing::Types<Serial, SIMD>;
 
 template <typename T>
 class PointStressTest : public PointStressTestUntyped<T::value> {};
