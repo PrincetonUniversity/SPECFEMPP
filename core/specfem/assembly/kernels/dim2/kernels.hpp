@@ -2,8 +2,8 @@
 
 #include "enumerations/interface.hpp"
 #include "medium/kernels_container.hpp"
-#include "specfem/assembly/assembly/value_containers.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/impl/value_containers.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
