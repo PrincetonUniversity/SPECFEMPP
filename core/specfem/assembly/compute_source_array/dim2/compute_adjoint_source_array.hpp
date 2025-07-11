@@ -28,16 +28,6 @@ void compute_source_array(
     const std::shared_ptr<specfem::sources::adjoint_source> &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
- * @param source The adjoint source for which the source array is computed.
- * @param mesh The mesh on which the source is defined.
- * @param jacobian_matrix The Jacobian matrix for the mesh.
- * @param element_types The element types for the mesh.
- * @param source_array The output source array to be filled.
- */
-void compute_source_array(
-    const std::shared_ptr<specfem::sources::adjoint_source> &source,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array);
 
