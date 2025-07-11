@@ -1,5 +1,6 @@
 
 #include "shape_functions.hpp"
+#include <stdexcept>
 #include <vector>
 
 namespace {
@@ -8,7 +9,7 @@ template <typename T, typename std::enable_if<std::is_floating_point<T>::value,
                                               int>::type = 0>
 std::vector<std::vector<T> > shape_function_derivatives_4node(const T xi,
                                                               const T gamma) {
-  std::vector<std::vector<T> > dershape2D(2, std::vector<T>(4));
+  std::vector<std::vector<T> > dershape2D(2, std::vector<T>(4, 0.0));
 
   const T sp = xi + 1;
   const T sm = xi - 1;
@@ -29,7 +30,7 @@ template <typename T, typename std::enable_if<std::is_floating_point<T>::value,
                                               int>::type = 0>
 std::vector<std::vector<T> > shape_function_derivatives_9node(const T xi,
                                                               const T gamma) {
-  std::vector<std::vector<T> > dershape2D(2, std::vector<T>(9));
+  std::vector<std::vector<T> > dershape2D(2, std::vector<T>(9, 0.0));
 
   const T sp = xi + 1.0;
   const T sm = xi - 1.0;
