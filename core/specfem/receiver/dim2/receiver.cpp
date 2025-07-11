@@ -1,4 +1,4 @@
-#include "specfem/receiver/receiver.hpp"
+#include "specfem/receiver.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
