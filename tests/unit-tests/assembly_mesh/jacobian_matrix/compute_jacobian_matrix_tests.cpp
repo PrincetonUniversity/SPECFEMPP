@@ -79,7 +79,7 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
 
   specfem::assembly::mesh<specfem::dimension::type::dim2> compute_mesh(
       mesh.tags, mesh.control_nodes, quadratures, mesh.adjacency_map);
-  specfem::assembly::jacobian_matrix jacobian_matrix(compute_mesh);
+  specfem::assembly::jacobian_matrix jacobian_matrix<specfem::dimension::type::dim2>(compute_mesh);
 
   const int nspec = compute_mesh.nspec;
   const int ngllz = compute_mesh.ngllz;

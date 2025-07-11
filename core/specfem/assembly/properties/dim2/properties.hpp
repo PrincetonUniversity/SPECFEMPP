@@ -42,11 +42,12 @@ struct properties<specfem::dimension::type::dim2>
    * @param has_gll_model Whether a GLL model is present (skip material property
    * assignment if true)
    */
-  properties(const int nspec, const int ngllz, const int ngllx,
-             const specfem::assembly::element_types &element_types,
-             const specfem::assembly::mesh<dimension_tag> &mesh,
-             const specfem::mesh::materials<dimension_tag> &materials,
-             bool has_gll_model);
+  properties(
+      const int nspec, const int ngllz, const int ngllx,
+      const specfem::assembly::element_types<dimension_tag> &element_types,
+      const specfem::assembly::mesh<dimension_tag> &mesh,
+      const specfem::mesh::materials<dimension_tag> &materials,
+      bool has_gll_model);
 
   ///@}
 
