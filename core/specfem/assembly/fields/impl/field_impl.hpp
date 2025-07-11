@@ -21,7 +21,7 @@ public:
 
   field_impl(
       const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::assembly::element_types &element_type,
+      const specfem::assembly::element_types<dimension_tag> &element_type,
       Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
           assembly_index_mapping);
 

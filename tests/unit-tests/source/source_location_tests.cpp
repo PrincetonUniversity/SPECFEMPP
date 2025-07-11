@@ -171,8 +171,8 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
   // setup compute struct for future use
   specfem::assembly::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
                                      gllz);
-  specfem::assembly::jacobian_matrix jacobian_matrix(
-      mesh.coorg, mesh.material_ind.knods, gllx, gllz);
+  specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+      jacobian_matrix(mesh.coorg, mesh.material_ind.knods, gllx, gllz);
   specfem::assembly::properties material_properties(
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
       gllz->get_N());
