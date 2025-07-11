@@ -28,8 +28,6 @@ private:
                                                    ///< every receiver
 
 public:
-  constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension of the mesh
   /**
    * @brief Construct a new receivers object
    *
@@ -56,8 +54,8 @@ public:
   receivers(
       const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
       const type_real dt, const type_real t0, const int nsteps_between_samples,
-      const std::vector<std::shared_ptr<
-          specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+      const std::vector<
+          std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
           &receivers,
       const std::vector<specfem::wavefield::type> &stypes,
       const specfem::assembly::mesh<dimension_tag> &mesh,
