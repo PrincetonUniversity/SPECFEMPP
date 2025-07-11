@@ -11,10 +11,10 @@
 #include "mesh.hpp"
 #include "mesh/mesh.hpp"
 #include "properties.hpp"
-#include "receiver/interface.hpp"
 #include "receivers.hpp"
 #include "source/interface.hpp"
 #include "sources.hpp"
+#include "specfem/receiver/interface.hpp"
 
 /**
  * @brief Assembly namespace defines data structures used to store data related

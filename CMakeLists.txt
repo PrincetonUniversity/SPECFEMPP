@@ -534,18 +534,6 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
-add_library(
-        receiver_class
-        src/receiver/receiver.cpp
-)
-
-target_link_libraries(
-        receiver_class
-        specfem_mpi
-        Kokkos::kokkos
-        yaml-cpp
-        ${BOOST_LIBS}
-)
 
 add_library(coupled_interface
         src/coupled_interface/coupled_interface.cpp
