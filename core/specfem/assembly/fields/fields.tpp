@@ -48,7 +48,7 @@ template void specfem::assembly::simulation_field<specfem::dimension::type::
 
 specfem::assembly::fields<specfem::dimension::type::dim2>::fields(
     const specfem::assembly::mesh<dimension_tag> &mesh,
-    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::element_types<dimension_tag> &element_types,
     const specfem::simulation::type simulation)
     : // Initialize the forward field only if the simulation type is forward
       forward([&]() -> specfem::assembly::simulation_field<dimension_tag,
