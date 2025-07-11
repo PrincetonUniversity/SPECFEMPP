@@ -41,30 +41,23 @@ void compute_source_array(
   // Check the type of the source and call the appropriate specialization
   if (std::shared_ptr<specfem::sources::adjoint_source> adjoint =
           std::dynamic_pointer_cast<specfem::sources::adjoint_source>(source)) {
-    std::cout << "Computing source array for adjoint source." << std::endl;
     compute_source_array(adjoint, mesh, jacobian_matrix, element_types,
                          source_array);
     return;
   } else if (std::shared_ptr<specfem::sources::cosserat_force> cosserat =
                  std::dynamic_pointer_cast<specfem::sources::cosserat_force>(
                      source)) {
-    std::cout << "Computing source array for Cosserat force source."
-              << std::endl;
     compute_source_array(cosserat, mesh, jacobian_matrix, element_types,
                          source_array);
     return;
   } else if (std::shared_ptr<specfem::sources::external> external =
                  std::dynamic_pointer_cast<specfem::sources::external>(
                      source)) {
-    std::cout << "Computing source array for external source." << std::endl;
     compute_source_array(external, mesh, jacobian_matrix, element_types,
                          source_array);
     return;
   } else if (std::shared_ptr<specfem::sources::force> force =
                  std::dynamic_pointer_cast<specfem::sources::force>(source)) {
-    std::cout << "Force source x: " << force->get_x()
-              << ", z: " << force->get_z() << ", angle: " << force->get_angle()
-              << std::endl;
     // print force type
     compute_source_array(force, mesh, jacobian_matrix, element_types,
                          source_array);
@@ -72,8 +65,6 @@ void compute_source_array(
   } else if (std::shared_ptr<specfem::sources::moment_tensor> moment_tensor =
                  std::dynamic_pointer_cast<specfem::sources::moment_tensor>(
                      source)) {
-    std::cout << "Computing source array for moment tensor source."
-              << std::endl;
     compute_source_array(moment_tensor, mesh, jacobian_matrix, element_types,
                          source_array);
     return;
