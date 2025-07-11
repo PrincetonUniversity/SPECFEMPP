@@ -36,8 +36,9 @@ public:
                 &assembly) override;
 
 private:
-  std::string input_folder;                 ///< Path to output folder
-  specfem::assembly::properties properties; ///< Properties object
+  std::string input_folder; ///< Path to output folder
+  specfem::assembly::properties<specfem::dimension::type::dim2>
+      properties; ///< Properties object
 };
 } // namespace io
 } // namespace specfem

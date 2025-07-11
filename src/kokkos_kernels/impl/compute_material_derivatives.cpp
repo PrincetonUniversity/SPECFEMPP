@@ -4,8 +4,6 @@
 #include "kokkos_kernels/impl/compute_material_derivatives.tpp"
 #include "specfem/assembly.hpp"
 
-constexpr auto _2D = specfem::dimension::type::dim2;
-
 FOR_EACH_IN_PRODUCT(
     (DIMENSION_TAG(DIM2),
      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
@@ -15,9 +13,11 @@ FOR_EACH_IN_PRODUCT(
         (template void
              specfem::kokkos_kernels::impl::compute_material_derivatives,
          (_DIMENSION_TAG_, 5, _MEDIUM_TAG_, _PROPERTY_TAG_),
-         (const specfem::assembly::assembly<_2D> &, const type_real &);),
+         (const specfem::assembly::assembly<specfem::dimension::type::dim2> &,
+          const type_real &);),
         /** instantiation for NGLL = 8     */
         (template void
              specfem::kokkos_kernels::impl::compute_material_derivatives,
          (_DIMENSION_TAG_, 8, _MEDIUM_TAG_, _PROPERTY_TAG_),
-         (const specfem::assembly::assembly<_2D> &, const type_real &);)))
+         (const specfem::assembly::assembly<specfem::dimension::type::dim2> &,
+          const type_real &);)))
