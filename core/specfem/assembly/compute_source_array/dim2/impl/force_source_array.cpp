@@ -1,4 +1,4 @@
-#include "compute_force_source_array.hpp"
+#include "force_source_array.hpp"
 #include "algorithms/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -9,15 +9,25 @@
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 
-void specfem::assembly::compute_source_array(
-    const std::shared_ptr<specfem::sources::force> &source,
+bool specfem::assembly::compute_source_array_impl::force_source_array(
+    const std::shared_ptr<specfem::sources::source> &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
+  // Check if the source is correct type
+  if (source->get_source_type() !=
+      specfem::sources::source_type::force_source) {
+    return false;
+  }
+
+  // Cast to derived class to access specific methods
+  auto force_source =
+      static_cast<const specfem::sources::force *>(source.get());
+
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
-      source->get_x(), source->get_z());
+      force_source->get_x(), force_source->get_z());
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
   const auto xi = mesh.h_xi;
@@ -65,11 +75,11 @@ void specfem::assembly::compute_source_array(
               "poroelastic, or electromagnetic-sv media.");
         }
         source_array(0, iz, ix) = std::sin(Kokkos::numbers::pi_v<type_real> /
-                                           180 * source->get_angle()) *
+                                           180 * force_source->get_angle()) *
                                   hlagrange;
         source_array(1, iz, ix) = -1.0 *
                                   std::cos(Kokkos::numbers::pi_v<type_real> /
-                                           180 * source->get_angle()) *
+                                           180 * force_source->get_angle()) *
                                   hlagrange;
       } else if ((el_type == specfem::element::medium_tag::poroelastic)) {
         if (ncomponents != 4) {
@@ -77,18 +87,18 @@ void specfem::assembly::compute_source_array(
               "Force source requires 4 components for poroelastic medium");
         }
         source_array(0, iz, ix) = std::sin(Kokkos::numbers::pi_v<type_real> /
-                                           180 * source->get_angle()) *
+                                           180 * force_source->get_angle()) *
                                   hlagrange;
         source_array(1, iz, ix) = -1.0 *
                                   std::cos(Kokkos::numbers::pi_v<type_real> /
-                                           180 * source->get_angle()) *
+                                           180 * force_source->get_angle()) *
                                   hlagrange;
         source_array(2, iz, ix) = std::sin(Kokkos::numbers::pi_v<type_real> /
-                                           180 * source->get_angle()) *
+                                           180 * force_source->get_angle()) *
                                   hlagrange;
         source_array(3, iz, ix) = -1.0 *
                                   std::cos(Kokkos::numbers::pi_v<type_real> /
-                                           180 * source->get_angle()) *
+                                           180 * force_source->get_angle()) *
                                   hlagrange;
       } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
         if (ncomponents != 3) {
@@ -96,11 +106,11 @@ void specfem::assembly::compute_source_array(
               "Force source requires 3 components for elastic psv_t medium");
         }
         source_array(0, iz, ix) = std::sin(Kokkos::numbers::pi_v<type_real> /
-                                           180 * source->get_angle()) *
+                                           180 * force_source->get_angle()) *
                                   hlagrange;
         source_array(1, iz, ix) = -1.0 *
                                   std::cos(Kokkos::numbers::pi_v<type_real> /
-                                           180 * source->get_angle()) *
+                                           180 * force_source->get_angle()) *
                                   hlagrange;
         source_array(2, iz, ix) = static_cast<type_real>(0.0);
       } else {
@@ -113,4 +123,6 @@ void specfem::assembly::compute_source_array(
       }
     }
   }
+
+  return true;
 }

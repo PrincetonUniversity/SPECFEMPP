@@ -1,4 +1,4 @@
-#include "compute_adjoint_source_array.hpp"
+#include "adjoint_source_array.hpp"
 #include "algorithms/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -16,15 +16,24 @@
  * It uses the GLL quadrature points to compute the source array based on the
  * specified parameters of the adjoint source.
  */
-void specfem::assembly::compute_source_array(
-    const std::shared_ptr<specfem::sources::adjoint_source> &source,
+bool specfem::assembly::compute_source_array_impl::adjoint_source_array(
+    const std::shared_ptr<specfem::sources::source> &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
+  // Check if the source is correct type
+  if (source->get_source_type() !=
+      specfem::sources::source_type::adjoint_source)
+    return false;
+
+  // Cast to derived class to access specific methods
+  auto adjoint_source =
+      static_cast<const specfem::sources::adjoint_source *>(source.get());
+
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
-      source->get_x(), source->get_z());
+      adjoint_source->get_x(), adjoint_source->get_z());
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
   const auto xi = mesh.h_xi;
@@ -105,4 +114,5 @@ void specfem::assembly::compute_source_array(
       }
     }
   }
+  return true;
 }

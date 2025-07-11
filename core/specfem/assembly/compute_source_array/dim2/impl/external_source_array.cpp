@@ -1,4 +1,4 @@
-#include "compute_external_source_array.hpp"
+#include "external_source_array.hpp"
 #include "algorithms/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -9,15 +9,25 @@
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 
-void specfem::assembly::compute_source_array(
-    const std::shared_ptr<specfem::sources::external> &source,
+bool specfem::assembly::compute_source_array_impl::external_source_array(
+    const std::shared_ptr<specfem::sources::source> &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
+  // Check if the source is correct type
+  if (source->get_source_type() !=
+      specfem::sources::source_type::external_source) {
+    return false;
+  }
+
+  // Cast to derived class to access specific methods
+  auto external_source =
+      static_cast<const specfem::sources::external *>(source.get());
+
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
-      source->get_x(), source->get_z());
+      external_source->get_x(), external_source->get_z());
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
   const auto xi = mesh.h_xi;
@@ -100,4 +110,6 @@ void specfem::assembly::compute_source_array(
       }
     }
   }
+
+  return true;
 }

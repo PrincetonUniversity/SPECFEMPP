@@ -21,6 +21,15 @@ public:
 
   std::string print() const override;
 
+  /**
+   * @brief Get the source type
+   *
+   * @return source_type type of source
+   */
+  source_type get_source_type() const override {
+    return source_type::adjoint_source;
+  }
+
 private:
   std::string station_name;
   std::string network_name;
