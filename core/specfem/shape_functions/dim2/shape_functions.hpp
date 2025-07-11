@@ -1,7 +1,7 @@
 #pragma once
 
+#include <type_traits>
 #include <vector>
-
 namespace specfem::shape_function {
 
 /** @brief Calculate shape functions for a 2D element given natural
