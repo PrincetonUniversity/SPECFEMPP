@@ -101,7 +101,7 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-specfem::assembly::element_types<specfem::dimension::type::dim2>::
+specfem::assembly::element_types<specfem::dimension::type::dim3>::
     get_elements_on_host(const specfem::element::medium_tag medium_tag) const {
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
@@ -115,7 +115,7 @@ specfem::assembly::element_types<specfem::dimension::type::dim2>::
 }
 
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
-    element_types<specfem::dimension::type::dim2>::get_elements_on_device(
+    element_types<specfem::dimension::type::dim3>::get_elements_on_device(
         const specfem::element::medium_tag medium_tag) const {
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
@@ -129,7 +129,7 @@ Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
-    element_types<specfem::dimension::type::dim2>::get_elements_on_host(
+    element_types<specfem::dimension::type::dim3>::get_elements_on_host(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag) const {
 
@@ -146,7 +146,7 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
 }
 
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
-    element_types<specfem::dimension::type::dim2>::get_elements_on_device(
+    element_types<specfem::dimension::type::dim3>::get_elements_on_device(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag) const {
 
@@ -163,7 +163,7 @@ Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
-    element_types<specfem::dimension::type::dim2>::get_elements_on_host(
+    element_types<specfem::dimension::type::dim3>::get_elements_on_host(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
@@ -182,7 +182,7 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
 }
 
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
-    element_types<specfem::dimension::type::dim2>::get_elements_on_device(
+    element_types<specfem::dimension::type::dim3>::get_elements_on_device(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
