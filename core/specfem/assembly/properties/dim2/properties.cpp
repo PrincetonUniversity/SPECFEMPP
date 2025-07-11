@@ -1,10 +1,10 @@
-#include "properties.hpp"
+#include "specfem/assembly/properties.hpp"
 #include "enumerations/interface.hpp"
 #include "medium/properties_container.hpp"
 #include "medium/properties_container.tpp"
-#include "mesh.hpp"
+#include "specfem/assembly/mesh.hpp"
 
-specfem::assembly::properties::properties(
+specfem::assembly::properties<specfem::dimension::type::dim2>::properties(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::assembly::element_types &element_types,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
@@ -31,12 +31,11 @@ specfem::assembly::properties::properties(
                   ELASTIC_PSV_T),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       CAPTURE(value) {
-        _value_ =
-            specfem::medium::properties_container<_medium_tag_, _property_tag_>(
-                element_types.get_elements_on_host(_medium_tag_,
-                                                   _property_tag_),
-                mesh, ngllz, ngllx, materials, has_gll_model,
-                h_property_index_mapping);
+        _value_ = specfem::medium::properties_container<
+            _dimension_tag_, _medium_tag_, _property_tag_>(
+            element_types.get_elements_on_host(_medium_tag_, _property_tag_),
+            mesh, ngllz, ngllx, materials, has_gll_model,
+            h_property_index_mapping);
       })
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);

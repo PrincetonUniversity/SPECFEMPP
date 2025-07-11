@@ -1,51 +1,58 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::assembly {
-namespace impl {
+namespace specfem::assembly::boundary_values_impl {
 
-template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag,
+template <specfem::element::medium_tag MediumTag,
           specfem::element::boundary_tag BoundaryTag>
-class boundary_medium_container {
+class boundary_medium_container<specfem::dimension::type::dim2, MediumTag,
+                                BoundaryTag> {
+public:
+  constexpr static auto dimension_tag =
+      specfem::dimension::type::dim2; ///< Dimension tag
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto boundary_tag = BoundaryTag;
+
 private:
   constexpr static int components =
-      specfem::element::attributes<DimensionTag, MediumTag>::components;
-  constexpr static auto dimension = DimensionTag;
+      specfem::element::attributes<dimension_tag, medium_tag>::components;
 
-public:
-  using value_type =
+  using ValueViewType =
       Kokkos::View<type_real ****[components], Kokkos::LayoutLeft,
-                   Kokkos::DefaultExecutionSpace>;
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
+public:
+  ///< store field values
 
-  value_type values;
-  typename value_type::HostMirror h_values;
+  ValueViewType values;
+  typename ValueViewType::HostMirror h_values;
 
   boundary_medium_container() = default;
 
-  boundary_medium_container(const int nspec, const int nz, const int nx,
+  boundary_medium_container(const int nspec, const int ngllz, const int ngllx,
                             const int nstep)
-      : values("specfem::assembly::impl::stacey_values", nspec, nz, nx, nstep),
+      : values("specfem::assembly::impl::boundary_values", nspec, ngllz, ngllx,
+               nstep),
         h_values(Kokkos::create_mirror_view(values)) {}
 
   boundary_medium_container(
-      const int nstep, const specfem::assembly::mesh<dimension> &mesh,
+      const int nstep, const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::element_types element_types,
-      const specfem::assembly::boundaries<dimension> boundaries,
-      specfem::kokkos::HostView1d<int> property_index_mapping);
+      const specfem::assembly::boundaries<dimension_tag> boundaries,
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
+          property_index_mapping);
 
   template <
       typename AccelerationType,
       typename std::enable_if_t<!AccelerationType::simd::using_simd, int> = 0>
   KOKKOS_FUNCTION void
-  load_on_device(const int istep, const specfem::point::index<dimension> &index,
+  load_on_device(const int istep,
+                 const specfem::point::index<dimension_tag> &index,
                  AccelerationType &acceleration) const {
 
     const int ispec = index.ispec;
@@ -67,7 +74,7 @@ public:
       typename std::enable_if_t<!AccelerationType::simd::using_simd, int> = 0>
   KOKKOS_FUNCTION void
   store_on_device(const int istep,
-                  const specfem::point::index<dimension> &index,
+                  const specfem::point::index<dimension_tag> &index,
                   const AccelerationType &acceleration) const {
 
     const int ispec = index.ispec;
@@ -89,7 +96,7 @@ public:
       typename std::enable_if_t<AccelerationType::simd::using_simd, int> = 0>
   KOKKOS_FUNCTION void
   load_on_device(const int istep,
-                 const specfem::point::simd_index<dimension> &index,
+                 const specfem::point::simd_index<dimension_tag> &index,
                  AccelerationType &acceleration) const {
 
     const int ispec = index.ispec;
@@ -114,7 +121,7 @@ public:
       typename std::enable_if_t<AccelerationType::simd::using_simd, int> = 0>
   KOKKOS_FUNCTION void
   store_on_device(const int istep,
-                  const specfem::point::simd_index<dimension> &index,
+                  const specfem::point::simd_index<dimension_tag> &index,
                   const AccelerationType &acceleration) const {
 
     const int ispec = index.ispec;
@@ -145,5 +152,4 @@ public:
   }
 };
 
-} // namespace impl
-} // namespace specfem::assembly
+} // namespace specfem::assembly::boundary_values_impl
