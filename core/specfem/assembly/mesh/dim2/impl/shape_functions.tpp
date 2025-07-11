@@ -1,6 +1,5 @@
 #pragma once
 
-#include "jacobian/interface.hpp"
 #include "shape_functions.hpp"
 #include "specfem/shape_functions.hpp"
 #include <Kokkos_Core.hpp>
