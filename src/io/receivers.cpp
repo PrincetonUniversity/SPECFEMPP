@@ -1,6 +1,6 @@
 // Internal Includes
 #include "io/interface.hpp"
-#include "receiver/interface.hpp"
+#include "specfem/receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"

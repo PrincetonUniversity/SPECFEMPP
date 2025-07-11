@@ -2,8 +2,8 @@
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "receiver/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/receiver/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

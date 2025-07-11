@@ -7,9 +7,9 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "receiver/interface.hpp"
 #include "source/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/receiver/interface.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ------------------------------------- //
