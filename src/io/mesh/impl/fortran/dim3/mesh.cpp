@@ -50,6 +50,9 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
 
   // Creating aliases for Array Reading functions
   using specfem::io::mesh::impl::fortran::dim3::try_read_array;
+  using specfem::io::mesh::impl::fortran::dim3::
+      try_read_control_nodes_coordinates;
+  using specfem::io::mesh::impl::fortran::dim3::try_read_control_nodes_indexing;
   using specfem::io::mesh::impl::fortran::dim3::try_read_index_array;
   using specfem::io::mesh::impl::fortran::dim3::try_read_line;
 
@@ -87,15 +90,17 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
     throw std::runtime_error("Could not open mesh database file");
   }
 
-  int nspec, nglob, nspec_irregular;
+  int nspec, nglob, nspec_irregular, ngnod;
 
   try_read_line("read_nspec", stream, &nspec);
   try_read_line("read_nglob", stream, &nglob);
+  try_read_line("read_nspec_irregular", stream, &ngnod);
   try_read_line("read_nspec_irregular", stream, &nspec_irregular);
 
   // Check values
   check_values("nspec", nspec, mesh.parameters.nspec);
   check_values("nglob", nglob, mesh.parameters.nglob);
+  check_values("ngnod", ngnod, mesh.parameters.ngnod);
   check_values("nspec_irregular", nspec_irregular,
                mesh.parameters.nspec_irregular);
 
@@ -197,6 +202,22 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
 
   // Marker that should be 10000
   check_read_test_value(stream, 10000);
+
+  mesh.control_nodes =
+      specfem::mesh::control_nodes<specfem::dimension::type::dim3>(
+          mesh.parameters.nspec, mesh.parameters.ngnod, mesh.parameters.nnodes);
+
+  // Read control nodes indexing
+  try_read_control_nodes_indexing("read_control_nodes_indexing", stream,
+                                  mesh.control_nodes.index_mapping);
+
+  try_read_control_nodes_coordinates("read_control_nodes_coordinates", stream,
+                                     mesh.control_nodes.coordinates);
+
+#ifndef NDEBUG
+  // Print control nodes parameters and the first spectral element
+  mpi->cout(mesh.control_nodes.print());
+#endif
 
   // Create material object
   mesh.materials = specfem::mesh::materials<specfem::dimension::type::dim3>(
