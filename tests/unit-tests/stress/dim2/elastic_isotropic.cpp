@@ -4,18 +4,19 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-constexpr auto dimension = specfem::dimension::type::dim2;
-constexpr auto property_tag = specfem::element::property_tag::isotropic;
-
-// elastic_psv tests
-constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
-using PSVPropertiesType =
-    specfem::point::properties<dimension, PSVTag, property_tag, false>;
-using PSVFieldDerivativesType =
-    specfem::point::field_derivatives<dimension, PSVTag, false>;
-using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
+namespace {
 
 TEST(Stress, ElasticIsotropic2D_PSV_Basic) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+  static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
+
+  using PSVPropertiesType =
+      specfem::point::properties<dimension, PSVTag, property_tag, false>;
+  using PSVFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, PSVTag, false>;
+  using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation
@@ -47,6 +48,16 @@ TEST(Stress, ElasticIsotropic2D_PSV_Basic) {
 }
 
 TEST(Stress, ElasticIsotropic2D_PSV_ZeroDerivatives) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+  static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
+
+  using PSVPropertiesType =
+      specfem::point::properties<dimension, PSVTag, property_tag, false>;
+  using PSVFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, PSVTag, false>;
+  using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation
@@ -75,15 +86,17 @@ TEST(Stress, ElasticIsotropic2D_PSV_ZeroDerivatives) {
   EXPECT_TRUE(stress == expected_stress) << message.str();
 }
 
-// elastic_sh tests
-constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;
-using SHPropertiesType =
-    specfem::point::properties<dimension, SHTag, property_tag, false>;
-using SHFieldDerivativesType =
-    specfem::point::field_derivatives<dimension, SHTag, false>;
-using SHStressType = specfem::point::stress<dimension, SHTag, false>;
-
 TEST(Stress, ElasticIsotropic2D_SH_Basic) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+  static constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;
+
+  using SHPropertiesType =
+      specfem::point::properties<dimension, SHTag, property_tag, false>;
+  using SHFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, SHTag, false>;
+  using SHStressType = specfem::point::stress<dimension, SHTag, false>;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation
@@ -109,6 +122,16 @@ TEST(Stress, ElasticIsotropic2D_SH_Basic) {
 }
 
 TEST(Stress, ElasticIsotropic2D_SH_ZeroDerivatives) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+  static constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;
+
+  using SHPropertiesType =
+      specfem::point::properties<dimension, SHTag, property_tag, false>;
+  using SHFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, SHTag, false>;
+  using SHStressType = specfem::point::stress<dimension, SHTag, false>;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation
@@ -132,3 +155,4 @@ TEST(Stress, ElasticIsotropic2D_SH_ZeroDerivatives) {
 
   EXPECT_TRUE(stress == expected_stress) << message.str();
 }
+} // namespace

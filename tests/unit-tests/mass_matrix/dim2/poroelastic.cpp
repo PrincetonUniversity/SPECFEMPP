@@ -4,20 +4,19 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-constexpr auto dimension = specfem::dimension::type::dim2;
-constexpr auto medium_tag = specfem::element::medium_tag::poroelastic;
-constexpr auto property_tag = specfem::element::property_tag::isotropic;
-
-using PointJacobianMatrixType =
-    specfem::point::jacobian_matrix<dimension, true, false>;
-
-using PointPropertiesType =
-    specfem::point::properties<dimension, medium_tag, property_tag, false>;
-
-using PointMassMatrixType = specfem::point::field<dimension, medium_tag, false,
-                                                  false, false, true, false>;
-
 TEST(MassMatrix, PoroelasticIsotropic2DZeroPorosity) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto medium_tag = specfem::element::medium_tag::poroelastic;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  using PointJacobianMatrixType =
+      specfem::point::jacobian_matrix<dimension, true, false>;
+  using PointPropertiesType =
+      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointMassMatrixType =
+      specfem::point::field<dimension, medium_tag, false, false, false, true,
+                            false>;
 
   const type_real rho_s = 2.0;
   const type_real phi = 0.0;
@@ -45,6 +44,18 @@ TEST(MassMatrix, PoroelasticIsotropic2DZeroPorosity) {
 }
 
 TEST(MassMatrix, PoroelasticIsotropic2D) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto medium_tag = specfem::element::medium_tag::poroelastic;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  using PointJacobianMatrixType =
+      specfem::point::jacobian_matrix<dimension, true, false>;
+  using PointPropertiesType =
+      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointMassMatrixType =
+      specfem::point::field<dimension, medium_tag, false, false, false, true,
+                            false>;
 
   const type_real rho_s = 2.0;
   const type_real phi = 0.5;
