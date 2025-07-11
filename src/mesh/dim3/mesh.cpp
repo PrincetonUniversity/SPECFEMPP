@@ -29,6 +29,8 @@ std::string specfem::mesh::mesh<specfem::dimension::type::dim3>::print() const {
   message << "3D Mesh information :\n"
           << "------------------------------\n"
           << "Total number of spectral elements: " << nspec << "\n"
+          << "Total number of distinct control nodes: "
+          << this->control_nodes.nnodes << "\n"
           << "Total number of global nodes: " << nglob << "\n"
           << "Total number of irregular spectral elements: " << nspec_irregular
           << "\n"
