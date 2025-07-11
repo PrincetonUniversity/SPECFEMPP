@@ -29,5 +29,5 @@ The code is divided into set of modules (classes and structs), the major of whic
 
    quadrature
    mesh
-   compute
+   assembly
    domain

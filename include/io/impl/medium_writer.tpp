@@ -13,7 +13,7 @@ template <typename OutputLibrary, typename ContainerType>
 void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::element_types<specfem::dimension::type::dim2> &element_types,
     ContainerType &container) {
   using DomainView =
       specfem::kokkos::DomainView2d<type_real, 3, Kokkos::HostSpace>;

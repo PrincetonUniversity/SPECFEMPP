@@ -31,7 +31,8 @@ std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >,
            std::vector<int> >
 sort_sources_per_medium(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+        &element_types,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
 
   std::vector<std::shared_ptr<specfem::sources::source> > sorted_sources;
@@ -77,9 +78,11 @@ template class specfem::assembly::sources_impl::source_medium<
 specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix,
-    const specfem::assembly::element_types &element_types, const type_real t0,
-    const type_real dt, const int nsteps)
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        &jacobian_matrix,
+    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+        &element_types,
+    const type_real t0, const type_real dt, const int nsteps)
     : timestep(0), nspec(mesh.nspec),
       element_indices("specfem::sources::elements", sources.size()),
       h_element_indices(Kokkos::create_mirror_view(element_indices)),

@@ -12,10 +12,22 @@ Datatype used to store properties at quadrature point.
 Implementation Details
 ----------------------
 
+
+2D/3D Generalized
++++++++++++++++++
+
 .. toctree::
     :maxdepth: 1
 
-    dim2/acoustic_isotropic.rst
-    dim2/elastic_isotropic.rst
-    dim2/elastic_anisotropic.rst
-    dim2/poroelastic_isotropic.rst
+    elastic_isotropic
+
+
+2D only
++++++++
+
+.. toctree::
+    :maxdepth: 1
+
+    dim2/acoustic_isotropic
+    dim2/elastic_anisotropic
+    dim2/poroelastic_isotropic
