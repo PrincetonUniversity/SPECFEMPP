@@ -42,7 +42,7 @@ public:
 
   boundary_medium_container(
       const int nstep, const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::assembly::element_types element_types,
+      const specfem::assembly::element_types<dimension_tag> &element_types,
       const specfem::assembly::boundaries<dimension_tag> boundaries,
       Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
           property_index_mapping);

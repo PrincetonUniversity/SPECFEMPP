@@ -1,5 +1,4 @@
-file(GLOB_RECURSE COMPUTE_SOURCE_FILES "./*.cpp" "**/*.cpp")
-
+file(GLOB_RECURSE COMPUTE_SOURCE_FILES "./*.cpp" "./**/*.cpp")
 
 add_library(assembly ${COMPUTE_SOURCE_FILES})
 
@@ -15,6 +14,7 @@ target_link_libraries(
         edge
         receiver_class
         Kokkos::kokkos
+        ${BOOST_LIBS}
 )
 
 
