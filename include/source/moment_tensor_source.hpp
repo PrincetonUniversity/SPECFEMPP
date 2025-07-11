@@ -91,6 +91,15 @@ public:
   bool operator==(const specfem::sources::source &other) const override;
   bool operator!=(const specfem::sources::source &other) const override;
 
+  /**
+   * @brief Get the source type
+   *
+   * @return source_type type of source
+   */
+  source_type get_source_type() const override {
+    return source_type::moment_tensor_source;
+  }
+
 private:
   type_real Mxx;                                       ///< Mxx for the source
   type_real Mxz;                                       ///< Mxz for the source

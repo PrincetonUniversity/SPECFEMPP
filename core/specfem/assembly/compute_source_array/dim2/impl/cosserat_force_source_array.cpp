@@ -1,6 +1,6 @@
 
 
-#include "compute_cosserat_force_source_array.hpp"
+#include "cosserat_force_source_array.hpp"
 #include "algorithms/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -17,15 +17,26 @@
  * It uses the GLL quadrature points to compute the source array based on the
  * specified parameters of the Cosserat force source.
  */
-void specfem::assembly::compute_source_array(
-    const std::shared_ptr<specfem::sources::cosserat_force> &source,
+bool specfem::assembly::compute_source_array_impl::cosserat_force_source_array(
+    const std::shared_ptr<specfem::sources::source> &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
+  // Check if the source is correct type
+  if (source->get_source_type() !=
+      specfem::sources::source_type::cosserat_force_source) {
+    return false;
+  }
+
+  // Cast to derived class to access specific methods
+  auto cosserat_source =
+      static_cast<const specfem::sources::cosserat_force *>(source.get());
+
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
-      source->get_x(), source->get_z());
+      cosserat_source->get_x(), cosserat_source->get_z());
+
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
   const auto xi = mesh.h_xi;
@@ -66,16 +77,18 @@ void specfem::assembly::compute_source_array(
     for (int ix = 0; ix < N; ++ix) {
       hlagrange = hxi_source(ix) * hgamma_source(iz);
 
-      source_array(0, iz, ix) = source->get_f() *
+      source_array(0, iz, ix) = cosserat_source->get_f() *
                                 std::sin(Kokkos::numbers::pi_v<type_real> /
-                                         180 * source->get_angle()) *
+                                         180 * cosserat_source->get_angle()) *
                                 hlagrange;
-      source_array(1, iz, ix) = -1.0 * source->get_f() *
+      source_array(1, iz, ix) = -1.0 * cosserat_source->get_f() *
                                 std::cos(Kokkos::numbers::pi_v<type_real> /
-                                         180 * source->get_angle()) *
+                                         180 * cosserat_source->get_angle()) *
                                 hlagrange;
 
-      source_array(2, iz, ix) = source->get_fc() * hlagrange;
+      source_array(2, iz, ix) = cosserat_source->get_fc() * hlagrange;
     }
   }
+
+  return true;
 }

@@ -78,6 +78,15 @@ public:
   bool operator==(const specfem::sources::source &other) const override;
   bool operator!=(const specfem::sources::source &other) const override;
 
+  /**
+   * @brief Get the source type
+   *
+   * @return source_type type of source
+   */
+  source_type get_source_type() const override {
+    return source_type::cosserat_force_source;
+  }
+
 private:
   type_real angle; ///< Angle of the elastic force source
   type_real f;     ///< Factor to scale the elastic force

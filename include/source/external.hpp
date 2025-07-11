@@ -21,6 +21,15 @@ public:
 
   std::string print() const override;
 
+  /**
+   * @brief Get the source type
+   *
+   * @return source_type type of source
+   */
+  source_type get_source_type() const override {
+    return source_type::external_source;
+  }
+
 private:
   specfem::wavefield::simulation_field wavefield_type;
 };

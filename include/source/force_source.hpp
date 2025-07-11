@@ -83,6 +83,15 @@ public:
   bool operator==(const specfem::sources::source &other) const override;
   bool operator!=(const specfem::sources::source &other) const override;
 
+  /**
+   * @brief Get the source type
+   *
+   * @return source_type type of source
+   */
+  source_type get_source_type() const override {
+    return source_type::force_source;
+  }
+
 private:
   type_real angle; ///< Angle of force source
   specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on

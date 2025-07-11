@@ -1,4 +1,4 @@
-#include "compute_moment_tensor_source_array.hpp"
+#include "moment_tensor_source_array.hpp"
 #include "algorithms/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -9,15 +9,25 @@
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 
-void specfem::assembly::compute_source_array(
-    const std::shared_ptr<specfem::sources::moment_tensor> &source,
+bool specfem::assembly::compute_source_array_impl::moment_tensor_source_array(
+    const std::shared_ptr<specfem::sources::source> &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix &jacobian_matrix,
     const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
+  // Check if the source is correct type
+  if (source->get_source_type() !=
+      specfem::sources::source_type::moment_tensor_source) {
+    return false;
+  }
+
+  // Cast to derived class to access specific methods
+  auto moment_tensor_source =
+      static_cast<const specfem::sources::moment_tensor *>(source.get());
+
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
-      source->get_x(), source->get_z());
+      moment_tensor_source->get_x(), moment_tensor_source->get_z());
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
   const auto el_type = element_types.get_medium_tag(lcoord.ispec);
@@ -125,10 +135,10 @@ void specfem::assembly::compute_source_array(
       type_real dsrc_dz =
           (hpxi_source(ix) * derivatives_source.xiz) * hgamma_source(iz) +
           hxi_source(ix) * (hpgamma_source(iz) * derivatives_source.gammaz);
-      source_array(0, iz, ix) =
-          source->get_Mxx() * dsrc_dx + source->get_Mxz() * dsrc_dz;
-      source_array(1, iz, ix) =
-          source->get_Mxz() * dsrc_dx + source->get_Mzz() * dsrc_dz;
+      source_array(0, iz, ix) = moment_tensor_source->get_Mxx() * dsrc_dx +
+                                moment_tensor_source->get_Mxz() * dsrc_dz;
+      source_array(1, iz, ix) = moment_tensor_source->get_Mxz() * dsrc_dx +
+                                moment_tensor_source->get_Mzz() * dsrc_dz;
 
       if (el_type == specfem::element::medium_tag::poroelastic) {
         source_array(2, iz, ix) = source_array(0, iz, ix);
@@ -138,4 +148,6 @@ void specfem::assembly::compute_source_array(
       }
     }
   }
+
+  return true;
 }

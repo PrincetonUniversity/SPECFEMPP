@@ -14,6 +14,14 @@
 namespace specfem {
 namespace sources {
 
+enum class source_type {
+  adjoint_source,
+  force_source,
+  moment_tensor_source,
+  cosserat_force_source,
+  external_source
+};
+
 /**
  * @brief Base source class
  *
@@ -82,6 +90,8 @@ public:
   virtual std::string print() const { return ""; };
 
   virtual ~source() = default;
+
+  virtual source_type get_source_type() const = 0;
 
   void compute_source_time_function(
       const type_real t0, const type_real dt, const int nsteps,
