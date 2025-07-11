@@ -10,10 +10,9 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
       boundary_tags("specfem::assembly::element_types::boundary_tags", nspec) {
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    const int ispec_mesh = mesh.compute_to_mesh(ispec);
-    medium_tags(ispec) = tags.tags_container(ispec_mesh).medium_tag;
-    property_tags(ispec) = tags.tags_container(ispec_mesh).property_tag;
-    boundary_tags(ispec) = tags.tags_container(ispec_mesh).boundary_tag;
+    medium_tags(ispec) = tags.tags_container(ispec).medium_tag;
+    property_tags(ispec) = tags.tags_container(ispec).property_tag;
+    boundary_tags(ispec) = tags.tags_container(ispec).boundary_tag;
   }
 
   FOR_EACH_IN_PRODUCT(
