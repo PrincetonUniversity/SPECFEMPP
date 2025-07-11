@@ -5,7 +5,7 @@
 #include "execution/for_each_level.hpp"
 #include "mesh.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem/receiver/interface.hpp"
+#include "specfem/receiver.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
 

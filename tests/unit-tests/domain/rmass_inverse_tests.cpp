@@ -9,7 +9,7 @@
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "specfem/assembly.hpp"
-#include "specfem/receiver/interface.hpp"
+#include "specfem/receiver.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ------------------------------------- //

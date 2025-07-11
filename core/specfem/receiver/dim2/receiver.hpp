@@ -9,15 +9,7 @@
 #include "specfem_setup.hpp"
 #include <cmath>
 
-namespace specfem {
-namespace receivers {
-
-/**
- * @brief Receiver Class
- *
- */
-
-template <specfem::dimension::type DimensionTag> class receiver;
+namespace specfem::receivers {
 
 template <> class receiver<specfem::dimension::type::dim2> {
 
@@ -74,6 +66,5 @@ private:
   std::string network_name; ///< Name of the network where this station lies
   std::string station_name; ///< Name of the station
 };
-} // namespace receivers
 
-} // namespace specfem
+} // namespace specfem::receivers

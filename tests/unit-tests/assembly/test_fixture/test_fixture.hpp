@@ -7,7 +7,7 @@
 #include "quadrature/quadratures.hpp"
 #include "source/source.hpp"
 #include "specfem/assembly.hpp"
-#include "specfem/receiver/receiver.hpp"
+#include "specfem/receiver.hpp"
 #include "utilities/strings.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
