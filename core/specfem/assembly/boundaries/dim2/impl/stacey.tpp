@@ -16,7 +16,7 @@ specfem::assembly::boundaries_impl::stacey<specfem::dimension::type::dim2>::
     stacey(const int nspec, const int ngllz, const int ngllx,
            const specfem::mesh::absorbing_boundary<dimension_tag> &stacey,
            const specfem::assembly::mesh<dimension_tag> &mesh,
-           const specfem::assembly::jacobian_matrix &jacobian_matrix,
+           const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
            const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
            std::vector<specfem::element::boundary_tag_container>
                &element_boundary_tags) {

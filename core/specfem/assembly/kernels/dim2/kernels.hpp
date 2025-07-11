@@ -36,7 +36,7 @@ public:
    * @param tags Tags for every element in spectral element mesh
    */
   kernels(const int nspec, const int ngllz, const int ngllx,
-          const specfem::assembly::element_types &element_types);
+          const specfem::assembly::element_types<dimension_tag> &element_types);
   ///@}
 
   /**

@@ -35,11 +35,13 @@ struct assembly {
 
   specfem::assembly::mesh<dimension_tag> mesh; ///< Properties of the assembled
                                                ///< mesh
-  specfem::assembly::element_types element_types;          ///< Element tags
-                                                           ///< for every
-                                                           ///< spectral
-                                                           ///< element
-  specfem::assembly::jacobian_matrix jacobian_matrix;      ///< Partial
+  specfem::assembly::element_types<dimension_tag> element_types; ///< Element
+                                                                 ///< tags for
+                                                                 ///< every
+                                                                 ///< spectral
+                                                                 ///< element
+  specfem::assembly::jacobian_matrix<dimension_tag>
+      jacobian_matrix;                                     ///< Partial
                                                            ///< derivatives
                                                            ///< of the
                                                            ///< basis
