@@ -16,7 +16,7 @@ specfem::assembly::boundaries_impl::stacey<specfem::dimension::type::dim2>::
     stacey(const int nspec, const int ngllz, const int ngllx,
            const specfem::mesh::absorbing_boundary<dimension_tag> &stacey,
            const specfem::assembly::mesh<dimension_tag> &mesh,
-           const specfem::assembly::jacobian_matrix &jacobian_matrix,
+           const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
            const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
            std::vector<specfem::element::boundary_tag_container>
                &element_boundary_tags) {
@@ -139,7 +139,8 @@ specfem::assembly::boundaries_impl::stacey<specfem::dimension::type::dim2>::
     for (int i : indices) {
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int ix = 0; ix < ngllx; ++ix) {
-          if (is_on_boundary(stacey.type(i), iz, ix, ngllz, ngllx)) {
+          if (is_on_boundary(
+                  stacey.type(i), iz, ix, ngllz, ngllx)) {
             this->h_quadrature_point_boundary_tag(local_index, iz, ix) +=
                 specfem::element::boundary_tag::stacey;
 
@@ -153,7 +154,7 @@ specfem::assembly::boundaries_impl::stacey<specfem::dimension::type::dim2>::
                                             point_jacobian_matrix);
 
             auto [edge_normal, edge_weight] = get_boundary_edge_and_weight(
-                stacey.type(i), weights, point_jacobian_matrix);
+                    stacey.type(i), weights, point_jacobian_matrix);
 
             // ------------------- Assign edge normal and edge weight
 
