@@ -16,11 +16,6 @@ void specfem::assembly::compute_source_array(
     const specfem::assembly::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
-  std::cout << "in compute_array" << std::endl;
-  std::cout << "      Force source x: " << source->get_x()
-            << ", z: " << source->get_z() << ", angle: " << source->get_angle()
-            << std::endl;
-  std::cout << "Got vals" << std::endl;
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
       source->get_x(), source->get_z());
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
