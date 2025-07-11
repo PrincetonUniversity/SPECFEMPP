@@ -16,9 +16,20 @@ namespace receivers {
  * @brief Receiver Class
  *
  */
-class receiver {
+
+template <specfem::dimension::type DimensionTag> class receiver;
+
+template <> class receiver<specfem::dimension::type::dim2> {
 
 public:
+  /**
+   * Compile-time constants
+   * @{
+   */
+  constexpr static specfem::dimension::type dimension_tag =
+      specfem::dimension::type::dim2;
+  /// @}
+
   /**
    * @brief Construct a new receiver object
    *

@@ -1,15 +1,12 @@
 #include "receiver/receiver.hpp"
-#include "algorithms/locate_point.hpp"
+#include "enumerations/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
-#include "receiver/interface.hpp"
-#include "specfem/assembly.hpp"
-#include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 
-std::string specfem::receivers::receiver::print() const {
+std::string
+specfem::receivers::receiver<specfem::dimension::type::dim2>::print() const {
   std::ostringstream message;
   message << " - Receiver:\n"
           << "      Station Name = " << this->station_name << "\n"

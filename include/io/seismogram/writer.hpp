@@ -1,8 +1,8 @@
 #pragma once
 
 #include "constants.hpp"
+#include "enumerations/interface.hpp"
 #include "io/writer.hpp"
-#include "receiver/interface.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem_setup.hpp"
 #include <vector>

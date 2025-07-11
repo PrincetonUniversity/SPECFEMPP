@@ -88,7 +88,8 @@ struct assembly {
       const specfem::mesh::mesh<dimension_tag> &mesh,
       const specfem::quadrature::quadratures &quadratures,
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-      const std::vector<std::shared_ptr<specfem::receivers::receiver> >
+      const std::vector<
+          std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
           &receivers,
       const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
       const type_real dt, const int max_timesteps, const int max_sig_step,

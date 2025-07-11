@@ -12,7 +12,8 @@
 specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
     const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
     const type_real dt, const type_real t0, const int nsteps_between_samples,
-    const std::vector<std::shared_ptr<specfem::receivers::receiver> >
+    const std::vector<std::shared_ptr<
+        specfem::receivers::receiver<specfem::dimension::type::dim2> > >
         &receivers,
     const std::vector<specfem::wavefield::type> &stypes,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
