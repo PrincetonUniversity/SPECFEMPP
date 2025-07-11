@@ -9,40 +9,6 @@
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 
-void specfem::receivers::receiver::compute_receiver_array(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    // const specfem::assembly::properties &properties,
-    specfem::kokkos::HostView3d<type_real> receiver_array) {
-
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> gcoord = {
-    this->x, this->z
-  };
-  specfem::point::local_coordinates<specfem::dimension::type::dim2> lcoord =
-      specfem::algorithms::locate_point(gcoord, mesh);
-
-  const auto xi = mesh.h_xi;
-  const auto gamma = mesh.h_xi;
-  const auto N = mesh.ngllx;
-
-  auto [hxi_receiver, hpxi_receiver] =
-      specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          lcoord.xi, N, xi);
-  auto [hgamma_receiver, hpgamma_receiver] =
-      specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          lcoord.gamma, N, gamma);
-
-  for (int iz = 0; iz < N; ++iz) {
-    for (int ix = 0; ix < N; ++ix) {
-      type_real hlagrange = hxi_receiver(ix) * hgamma_receiver(iz);
-
-      receiver_array(0, iz, ix) = hlagrange;
-      receiver_array(1, iz, ix) = hlagrange;
-    }
-  }
-
-  return;
-}
-
 std::string specfem::receivers::receiver::print() const {
   std::ostringstream message;
   message << " - Receiver:\n"
