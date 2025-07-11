@@ -50,14 +50,15 @@ struct assembly {
   specfem::assembly::kernels<dimension_tag> kernels; ///< Frechet derivatives
                                                      ///< (Misfit kernels)
   specfem::assembly::sources<dimension_tag> sources; ///< Source information
-  specfem::assembly::receivers<dimension_tag> receivers;    ///< Receiver
-                                                            ///< information
-  specfem::assembly::boundaries<dimension_tag> boundaries;  ///< Boundary
-                                                            ///< conditions
-  specfem::assembly::coupled_interfaces coupled_interfaces; ///< Coupled
-                                                            ///< interfaces
-                                                            ///< between 2
-                                                            ///< mediums
+  specfem::assembly::receivers<dimension_tag> receivers;   ///< Receiver
+                                                           ///< information
+  specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
+                                                           ///< conditions
+  specfem::assembly::coupled_interfaces<dimension_tag>
+      coupled_interfaces;                          ///< Coupled
+                                                   ///< interfaces
+                                                   ///< between 2
+                                                   ///< mediums
   specfem::assembly::fields<dimension_tag> fields; ///< Displacement, velocity,
                                                    ///< and acceleration fields
   specfem::assembly::boundary_values<dimension_tag>

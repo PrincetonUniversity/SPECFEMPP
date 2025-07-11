@@ -229,7 +229,7 @@ compute_edge_factors_and_normals(
 
 template <specfem::element::medium_tag MediumTag1,
           specfem::element::medium_tag MediumTag2>
-specfem::assembly::interface_container<
+specfem::assembly::interface_container<specfem::dimension::type::dim2,
     MediumTag1, MediumTag2>::interface_container(const int num_interfaces,
                                                  const int ngll)
     : num_interfaces(num_interfaces), num_points(ngll),
@@ -272,7 +272,7 @@ specfem::assembly::interface_container<
 
 template <specfem::element::medium_tag MediumTag1,
           specfem::element::medium_tag MediumTag2>
-specfem::assembly::interface_container<MediumTag1, MediumTag2>::
+specfem::assembly::interface_container<specfem::dimension::type::dim2, MediumTag1, MediumTag2>::
     interface_container(
         const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
         const specfem::assembly::mesh<specfem::dimension::type::dim2>
@@ -292,7 +292,7 @@ specfem::assembly::interface_container<MediumTag1, MediumTag2>::
     return;
   }
 
-  *this = specfem::assembly::interface_container<MediumTag1, MediumTag2>(
+  *this = specfem::assembly::interface_container<specfem::dimension::type::dim2, MediumTag1, MediumTag2>(
       num_interfaces, ngll);
 
   for (int iedge = 0; iedge < num_interfaces; ++iedge) {
