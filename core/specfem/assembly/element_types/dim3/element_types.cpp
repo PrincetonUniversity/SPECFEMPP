@@ -17,8 +17,8 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC),
+       BOUNDARY_TAG(NONE)),
       CAPTURE(elements, h_elements) {
         int count = 0;
         int index = 0;
@@ -40,10 +40,8 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
       })
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC),
+       BOUNDARY_TAG(NONE)),
       CAPTURE(elements, h_elements) {
         int count = 0;
         int index = 0;
@@ -71,12 +69,8 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
       })
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC),
+       BOUNDARY_TAG(NONE)),
       CAPTURE(elements, h_elements) {
         int count = 0;
         int index = 0;
@@ -109,14 +103,13 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
 specfem::assembly::element_types<specfem::dimension::type::dim2>::
     get_elements_on_host(const specfem::element::medium_tag medium_tag) const {
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE(h_elements) {
-        if (_medium_tag_ == medium_tag) {
-          return _h_elements_;
-        }
-      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+                       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+                      CAPTURE(h_elements) {
+                        if (_medium_tag_ == medium_tag) {
+                          return _h_elements_;
+                        }
+                      })
 
   throw std::runtime_error("Medium tag not found");
 }
@@ -124,14 +117,13 @@ specfem::assembly::element_types<specfem::dimension::type::dim2>::
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
     element_types<specfem::dimension::type::dim2>::get_elements_on_device(
         const specfem::element::medium_tag medium_tag) const {
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE(elements) {
-        if (_medium_tag_ == medium_tag) {
-          return _elements_;
-        }
-      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+                       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+                      CAPTURE(elements) {
+                        if (_medium_tag_ == medium_tag) {
+                          return _elements_;
+                        }
+                      })
 
   throw std::runtime_error("Medium tag not found");
 }
@@ -141,16 +133,14 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag) const {
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-      CAPTURE(h_elements) {
-        if (_medium_tag_ == medium_tag && _property_tag_ == property_tag) {
-          return _h_elements_;
-        }
-      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+                       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+                      CAPTURE(h_elements) {
+                        if (_medium_tag_ == medium_tag &&
+                            _property_tag_ == property_tag) {
+                          return _h_elements_;
+                        }
+                      })
 
   throw std::runtime_error("Medium tag or property tag not found");
 }
@@ -160,16 +150,14 @@ Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag) const {
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
-      CAPTURE(elements) {
-        if (_medium_tag_ == medium_tag && _property_tag_ == property_tag) {
-          return _elements_;
-        }
-      })
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+                       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+                      CAPTURE(elements) {
+                        if (_medium_tag_ == medium_tag &&
+                            _property_tag_ == property_tag) {
+                          return _elements_;
+                        }
+                      })
 
   throw std::runtime_error("Medium tag or property tag not found");
 }
@@ -179,12 +167,8 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+                       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       CAPTURE(h_elements) {
                         if (_medium_tag_ == medium_tag &&
                             _property_tag_ == property_tag &&
@@ -203,12 +187,8 @@ Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+                       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       CAPTURE(elements) {
                         if (_medium_tag_ == medium_tag &&
                             _property_tag_ == property_tag &&
