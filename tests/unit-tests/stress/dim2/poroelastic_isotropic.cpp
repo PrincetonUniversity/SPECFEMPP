@@ -4,16 +4,19 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-constexpr auto dimension = specfem::dimension::type::dim2;
-constexpr auto property_tag = specfem::element::property_tag::isotropic;
-constexpr auto PoroTag = specfem::element::medium_tag::poroelastic;
-using PoroPropertiesType =
-    specfem::point::properties<dimension, PoroTag, property_tag, false>;
-using PoroFieldDerivativesType =
-    specfem::point::field_derivatives<dimension, PoroTag, false>;
-using PoroStressType = specfem::point::stress<dimension, PoroTag, false>;
+namespace {
 
 TEST(Stress, PoroelasticIsotropic2D_Basic) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+  static constexpr auto PoroTag = specfem::element::medium_tag::poroelastic;
+
+  using PoroPropertiesType =
+      specfem::point::properties<dimension, PoroTag, property_tag, false>;
+  using PoroFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, PoroTag, false>;
+  using PoroStressType = specfem::point::stress<dimension, PoroTag, false>;
   // Set up properties (arbitrary but nonzero values)
   const type_real phi = 0.25;
   const type_real rho_s = 2.5;
@@ -75,6 +78,16 @@ TEST(Stress, PoroelasticIsotropic2D_Basic) {
 }
 
 TEST(Stress, PoroelasticIsotropic2D_ZeroDerivatives) {
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+  static constexpr auto PoroTag = specfem::element::medium_tag::poroelastic;
+
+  using PoroPropertiesType =
+      specfem::point::properties<dimension, PoroTag, property_tag, false>;
+  using PoroFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, PoroTag, false>;
+  using PoroStressType = specfem::point::stress<dimension, PoroTag, false>;
   const type_real phi = 0.25;
   const type_real rho_s = 2.5;
   const type_real rho_f = 1.2;
@@ -115,3 +128,5 @@ TEST(Stress, PoroelasticIsotropic2D_ZeroDerivatives) {
 
   EXPECT_TRUE(stress == expected_stress) << message.str();
 }
+
+} // namespace
