@@ -61,8 +61,8 @@ public:
    * @param mesh Mesh information
    * @param tags Element Tags for every spectral element
    */
-  element_types(const int nspec, const int ngllx, const int nglly,
-                const int ngllz,
+  element_types(const int nspec, const int ngllz, const int nglly,
+                const int ngllx,
                 const specfem::assembly::mesh<dimension_tag> &mesh,
                 const specfem::mesh::tags<dimension_tag> &tags);
 
