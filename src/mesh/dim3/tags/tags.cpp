@@ -1,4 +1,4 @@
-#include "mesh/dim2/tags/tags.hpp"
+#include "mesh/dim3/tags/tags.hpp"
 #include "enumerations/dimension.hpp"
 
-specfem::mesh::tags<specfem::dimension::type::dim2>::tags() {}
+specfem::mesh::tags<specfem::dimension::type::dim3>::tags() {}
