@@ -2,7 +2,7 @@
 
 #include "../impl/receiver_iterator.hpp"
 #include "enumerations/interface.hpp"
-#include "specfem/receiver.hpp"
+#include "specfem/receivers.hpp"
 
 namespace specfem::assembly {
 
