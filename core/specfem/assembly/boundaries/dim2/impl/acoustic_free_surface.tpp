@@ -113,7 +113,8 @@ specfem::assembly::boundaries_impl::acoustic_free_surface<specfem::dimension::ty
       // Assign boundary tag to each quadrature point
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int ix = 0; ix < ngllx; ++ix) {
-          if (is_on_boundary(type, iz, ix, ngllz, ngllx)) {
+          if (is_on_boundary(
+                  type, iz, ix, ngllz, ngllx)) {
             this->h_quadrature_point_boundary_tag(index_compute, iz, ix) +=
                 specfem::element::boundary_tag::acoustic_free_surface;
           }
