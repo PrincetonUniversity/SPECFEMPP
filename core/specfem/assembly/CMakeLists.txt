@@ -15,6 +15,7 @@ target_link_libraries(
         edge
         receiver_class
         Kokkos::kokkos
+        ${BOOST_LIBS}
 )
 
 
