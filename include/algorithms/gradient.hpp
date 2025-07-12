@@ -36,11 +36,12 @@ namespace algorithms {
 template <typename ChunkIndexType, typename ViewType, typename QuadratureType,
           typename CallbackFunctor,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
-gradient(const ChunkIndexType &chunk_index,
-         const specfem::assembly::jacobian_matrix &jacobian_matrix,
-         const QuadratureType &quadrature, const ViewType &f,
-         const CallbackFunctor &callback) {
+KOKKOS_FORCEINLINE_FUNCTION void gradient(
+    const ChunkIndexType &chunk_index,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        &jacobian_matrix,
+    const QuadratureType &quadrature, const ViewType &f,
+    const CallbackFunctor &callback) {
   constexpr int components = ViewType::components;
   constexpr bool using_simd = ViewType::simd::using_simd;
   constexpr int dimension = 2;
@@ -135,11 +136,12 @@ gradient(const ChunkIndexType &chunk_index,
 template <typename ChunkIndexType, typename ViewType, typename QuadratureType,
           typename CallbackFunctor,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
-gradient(const ChunkIndexType &chunk_index,
-         const specfem::assembly::jacobian_matrix &jacobian_matrix,
-         const QuadratureType &quadrature, const ViewType &f, const ViewType &g,
-         const CallbackFunctor &callback) {
+KOKKOS_FORCEINLINE_FUNCTION void gradient(
+    const ChunkIndexType &chunk_index,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        &jacobian_matrix,
+    const QuadratureType &quadrature, const ViewType &f, const ViewType &g,
+    const CallbackFunctor &callback) {
   constexpr int components = ViewType::components;
   constexpr bool using_simd = ViewType::simd::using_simd;
   constexpr int dimension = 2;
