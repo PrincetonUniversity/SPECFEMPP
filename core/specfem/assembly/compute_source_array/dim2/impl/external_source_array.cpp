@@ -1,5 +1,6 @@
 #include "external_source_array.hpp"
 #include "algorithms/interface.hpp"
+#include "enumerations/macros.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
@@ -12,8 +13,10 @@
 bool specfem::assembly::compute_source_array_impl::external_source_array(
     const std::shared_ptr<specfem::sources::source> &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix,
-    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        &jacobian_matrix,
+    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+        &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   // Check if the source is correct type
@@ -101,12 +104,8 @@ bool specfem::assembly::compute_source_array_impl::external_source_array(
         source_array(1, iz, ix) = hlagrange;
         source_array(2, iz, ix) = hlagrange;
       } else {
-        std::ostringstream message;
-        message << "Source array computation not implemented for element type: "
-                << specfem::element::to_string(el_type) << " [" << __FILE__
-                << ":" << __LINE__ << "]";
-        auto message_str = message.str();
-        Kokkos::abort(message_str.c_str());
+        KOKKOS_ABORT_WITH_LOCATION("External source array computation not "
+                                   "implemented for requested element type.");
       }
     }
   }

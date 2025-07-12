@@ -21,8 +21,9 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-set_value(const ViewType elements, specfem::assembly::assembly &assembly,
-          const type_real offset) {
+set_property_value(const ViewType elements,
+                   specfem::assembly::assembly &assembly,
+                   const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -53,8 +54,9 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-check_value(const ViewType elements, specfem::assembly::assembly &assembly,
-            const type_real offset) {
+check_property_value(const ViewType elements,
+                     specfem::assembly::assembly &assembly,
+                     const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
   const auto &properties = assembly.properties;
@@ -112,8 +114,9 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-check_value(const ViewType elements, specfem::assembly::assembly &assembly,
-            const type_real offset) {
+check_property_value(const ViewType elements,
+                     specfem::assembly::assembly &assembly,
+                     const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -253,8 +256,8 @@ TEST_F(ASSEMBLY, properties_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            set_value<_medium_tag_, _property_tag_, false>(elements, assembly,
-                                                           offset);
+            set_property_value<_medium_tag_, _property_tag_, false>(
+                elements, assembly, offset);
           })
 
       // Check that we are able to access the values stored in the properties
@@ -266,8 +269,8 @@ TEST_F(ASSEMBLY, properties_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            check_value<_medium_tag_, _property_tag_, false>(elements, assembly,
-                                                             offset);
+            check_property_value<_medium_tag_, _property_tag_, false>(
+                elements, assembly, offset);
           });
 
       // SIMD access functions
@@ -280,8 +283,8 @@ TEST_F(ASSEMBLY, properties_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            set_value<_medium_tag_, _property_tag_, true>(elements, assembly,
-                                                          offset);
+            set_property_value<_medium_tag_, _property_tag_, true>(
+                elements, assembly, offset);
           })
 
       // Check that we are able to access the values stored in the properties
@@ -293,8 +296,8 @@ TEST_F(ASSEMBLY, properties_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            check_value<_medium_tag_, _property_tag_, true>(elements, assembly,
-                                                            offset);
+            check_property_value<_medium_tag_, _property_tag_, true>(
+                elements, assembly, offset);
           });
 
       std::cout << "-------------------------------------------------------\n"
@@ -375,8 +378,8 @@ TEST_F(ASSEMBLY, properties_io_routines) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            set_value<_medium_tag_, _property_tag_, false>(elements, assembly,
-                                                           random_value);
+            set_property_value<_medium_tag_, _property_tag_, false>(
+                elements, assembly, random_value);
           });
 
       // Copy properties to device
@@ -402,8 +405,8 @@ TEST_F(ASSEMBLY, properties_io_routines) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            check_value<_medium_tag_, _property_tag_, false>(elements, assembly,
-                                                             random_value);
+            check_property_value<_medium_tag_, _property_tag_, false>(
+                elements, assembly, random_value);
           });
 
       std::cout << "-------------------------------------------------------\n"

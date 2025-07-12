@@ -3,10 +3,6 @@ cmake_minimum_required(VERSION 3.17.5)
 # GoogleTest requires at least C++17
 set(CMAKE_CXX_STANDARD 17)
 
-# disabling UNITY build for tests
-message(STATUS "Unity build disabled for tests")
-set(CMAKE_UNITY_BUILD OFF)
-
 # Make sure that GTEST is not installed later in the process
 set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 
@@ -22,7 +18,6 @@ FetchContent_MakeAvailable(googletest)
 
 # Explicitly set binary output directory for tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
-
 
 
 include_directories(.)

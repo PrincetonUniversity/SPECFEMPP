@@ -30,8 +30,8 @@ template <specfem::dimension::type DimensionTag>
 void compute_source_array(
     const std::shared_ptr<specfem::sources::source> &source,
     const specfem::assembly::mesh<DimensionTag> &mesh,
-    const specfem::assembly::jacobian_matrix &jacobian_matrix,
-    const specfem::assembly::element_types &element_types,
+    const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
+    const specfem::assembly::element_types<DimensionTag> &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   // Marker to indicate that the source array has been computed

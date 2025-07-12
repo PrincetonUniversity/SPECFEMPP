@@ -2,7 +2,8 @@
 
 specfem::assembly::kernels<specfem::dimension::type::dim2>::kernels(
     const int nspec, const int ngllz, const int ngllx,
-    const specfem::assembly::element_types &element_types) {
+    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+        &element_types) {
 
   this->nspec = nspec;
   this->ngllz = ngllz;

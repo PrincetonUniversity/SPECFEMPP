@@ -16,8 +16,8 @@ namespace specfem::assembly::compute_source_array_impl {
 static std::vector<std::function<bool(
     const std::shared_ptr<specfem::sources::source>,
     const specfem::assembly::mesh<specfem::dimension::type::dim2>,
-    const specfem::assembly::jacobian_matrix,
-    const specfem::assembly::element_types,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>,
+    const specfem::assembly::element_types<specfem::dimension::type::dim2>,
     specfem::kokkos::HostView3d<type_real>)> >
     compute_source_array_functions = {
       adjoint_source_array, cosserat_force_source_array, external_source_array,

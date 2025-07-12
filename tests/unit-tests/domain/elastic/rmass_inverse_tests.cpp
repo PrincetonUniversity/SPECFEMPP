@@ -70,8 +70,8 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   // Generate compute structs to be used by the solver
   specfem::assembly::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
                                      gllz);
-  specfem::assembly::jacobian_matrix jacobian_matrix(
-      mesh.coorg, mesh.material_ind.knods, gllx, gllz);
+  specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+      jacobian_matrix(mesh.coorg, mesh.material_ind.knods, gllx, gllz);
   specfem::assembly::properties material_properties(
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
       gllz->get_N());

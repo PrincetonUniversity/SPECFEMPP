@@ -1,15 +1,16 @@
+#include "specfem/assembly/jacobian_matrix.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
-#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 
-specfem::assembly::jacobian_matrix::jacobian_matrix(const int nspec,
-                                                    const int ngllz,
-                                                    const int ngllx)
+specfem::assembly::jacobian_matrix<
+    specfem::dimension::type::dim2>::jacobian_matrix(const int nspec,
+                                                     const int ngllz,
+                                                     const int ngllx)
     : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
       xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, ngllx),
       xiz("specfem::assembly::jacobian_matrix::xiz", nspec, ngllz, ngllx),
@@ -25,8 +26,9 @@ specfem::assembly::jacobian_matrix::jacobian_matrix(const int nspec,
   return;
 };
 
-specfem::assembly::jacobian_matrix::jacobian_matrix(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh)
+specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
+    jacobian_matrix(
+        const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh)
     : nspec(mesh.nspec), ngllz(mesh.ngllz), ngllx(mesh.ngllx),
       xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, ngllx),
       xiz("specfem::assembly::jacobian_matrix::xiz", nspec, ngllz, ngllx),
@@ -96,7 +98,8 @@ specfem::assembly::jacobian_matrix::jacobian_matrix(
   return;
 }
 
-void specfem::assembly::jacobian_matrix::sync_views() {
+void specfem::assembly::jacobian_matrix<
+    specfem::dimension::type::dim2>::sync_views() {
   specfem::kokkos::deep_copy(xix, h_xix);
   specfem::kokkos::deep_copy(xiz, h_xiz);
   specfem::kokkos::deep_copy(gammax, h_gammax);
@@ -105,7 +108,8 @@ void specfem::assembly::jacobian_matrix::sync_views() {
 }
 
 std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::jacobian_matrix::check_small_jacobian() const {
+specfem::assembly::jacobian_matrix<
+    specfem::dimension::type::dim2>::check_small_jacobian() const {
   Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
       "specfem::assembly::jacobian_matrix::negative", nspec);
 
