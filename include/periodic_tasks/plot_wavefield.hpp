@@ -115,8 +115,8 @@ private:
   // Separated grid and wavefield functions
   void create_quad_grid();
   void create_biquad_grid();
-  vtkSmartPointer<vtkFloatArray>
-  compute_wavefield_scalars(specfem::assembly::assembly &assembly);
+  vtkSmartPointer<vtkFloatArray> compute_wavefield_scalars(
+      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly);
   vtkSmartPointer<vtkDataSetMapper> map_materials_with_color();
   vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_biquad_grid();
   vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_quad_grid();
