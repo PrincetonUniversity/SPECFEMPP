@@ -11,12 +11,12 @@ template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
 void specfem::kokkos_kernels::impl::invert_mass_matrix(
-    const specfem::assembly::assembly &assembly) {
+    const specfem::assembly::assembly<DimensionTag> &assembly) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto wavefield = WavefieldType;
   constexpr auto dimension = DimensionTag;
-  const auto field = assembly.fields.get_simulation_field<wavefield>();
+  const auto field = assembly.fields.template get_simulation_field<wavefield>();
 
   const int nglob = field.template get_nglob<medium_tag>();
 

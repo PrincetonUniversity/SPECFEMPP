@@ -11,7 +11,7 @@ template <specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag CoupledMedium>
 specfem::coupled_interface::coupled_interface<WavefieldType, DimensionTag,
                                               SelfMedium, CoupledMedium>::
-    coupled_interface(const specfem::assembly::assembly &assembly) {
+    coupled_interface(const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
   const auto coupled_interfaces = assembly.coupled_interfaces;
   const auto interface_container =
