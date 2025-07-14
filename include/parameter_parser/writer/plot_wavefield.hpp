@@ -52,8 +52,10 @@ public:
    * plotter object
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task>
-  instantiate_wavefield_plotter(const specfem::assembly::assembly &assembly,
-                                specfem::MPI::MPI *mpi) const;
+  instantiate_wavefield_plotter(
+      const specfem::assembly::assembly<specfem::dimension::type::dim2>
+          &assembly,
+      specfem::MPI::MPI *mpi) const;
 
 private:
   std::string output_format;  ///< format of output file

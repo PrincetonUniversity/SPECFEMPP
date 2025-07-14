@@ -13,7 +13,8 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::wavefield::simulation_field WavefieldType>
-void check_store(specfem::assembly::assembly &assembly) {
+void check_store(
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
   specfem::assembly::sources<DimensionTag> &sources = assembly.sources;
   const int ngllz = assembly.mesh.ngllz;
@@ -86,7 +87,8 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::wavefield::simulation_field WavefieldType>
-void check_load(specfem::assembly::assembly &assembly) {
+void check_load(
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
   specfem::assembly::sources<DimensionTag> &sources = assembly.sources;
   const int ngllz = assembly.mesh.ngllz;
@@ -193,7 +195,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 void check_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    specfem::assembly::assembly &assembly) {
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
@@ -277,7 +279,7 @@ void check_assembly_source_construction(
 
 void test_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    specfem::assembly::assembly &assembly) {
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
@@ -287,7 +289,8 @@ void test_assembly_source_construction(
       })
 }
 
-void test_sources(specfem::assembly::assembly &assembly){ FOR_EACH_IN_PRODUCT(
+void test_sources(specfem::assembly::assembly<specfem::dimension::type::dim2>
+                      &assembly){ FOR_EACH_IN_PRODUCT(
     (DIMENSION_TAG(DIM2),
      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
      PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
@@ -304,7 +307,8 @@ TEST_F(ASSEMBLY, sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     auto sources = std::get<2>(parameters);
-    specfem::assembly::assembly assembly = std::get<5>(parameters);
+    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
+        std::get<5>(parameters);
 
     try {
       test_assembly_source_construction(sources, assembly);

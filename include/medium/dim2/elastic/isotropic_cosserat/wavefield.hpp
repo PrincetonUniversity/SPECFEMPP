@@ -22,7 +22,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         specfem::element::property_tag,
         specfem::element::property_tag::isotropic_cosserat>,
     const ChunkIndexType &chunk_index,
-    const specfem::assembly::assembly &assembly,
+    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
     const specfem::wavefield::type wavefield_type,
     WavefieldViewType wavefield) {
