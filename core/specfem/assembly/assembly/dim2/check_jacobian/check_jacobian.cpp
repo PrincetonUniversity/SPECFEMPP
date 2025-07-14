@@ -1,4 +1,5 @@
-#include "specfem/assembly.hpp"
+#include "enumerations/interface.hpp"
+#include "specfem/assembly/assembly.hpp"
 
 #ifdef NO_VTK
 
@@ -168,7 +169,8 @@ void plot_small_jacobian(
 
 #endif // NO_VTK
 
-void specfem::assembly::assembly::check_small_jacobian() const {
+void specfem::assembly::assembly<
+    specfem::dimension::type::dim2>::check_jacobian_matrix() const {
   const auto [found, small_jacobian] =
       this->jacobian_matrix.check_small_jacobian();
 

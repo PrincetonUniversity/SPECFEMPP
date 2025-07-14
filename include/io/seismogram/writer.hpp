@@ -42,7 +42,8 @@ public:
    * @param assembly Assembly object
    *
    */
-  void write(specfem::assembly::assembly &assembly) override;
+  void write(specfem::assembly::assembly<specfem::dimension::type::dim2>
+                 &assembly) override;
 
 private:
   specfem::enums::seismogram::format type; ///< Output format of the seismogram
