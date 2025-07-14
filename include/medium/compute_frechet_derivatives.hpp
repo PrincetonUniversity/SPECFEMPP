@@ -4,7 +4,7 @@
 #include "dim2/elastic/anisotropic/frechet_derivative.hpp"
 #include "dim2/elastic/isotropic/frechet_derivative.hpp"
 #include "dim2/poroelastic/isotropic/frechet_derivative.hpp"
-#include "enumerations/accessor.hpp"
+#include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -21,18 +21,24 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
     const type_real &dt) {
 
   static_assert(
-      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      specfem::data_access::is_point<PointPropertiesType>::value &&
+          specfem::data_access::is_properties<PointPropertiesType>::value,
       "properties is not a point properties type");
 
-  static_assert(specfem::accessor::is_point_field_derivatives<
-                    PointFieldDerivativesType>::value,
-                "field_derivatives is not a point field derivatives type");
-
-  static_assert(specfem::accessor::is_point_field<AdjointPointFieldType>::value,
-                "adjoint_field is not a point field type");
+  static_assert(
+      specfem::data_access::is_point<PointFieldDerivativesType>::value &&
+          specfem::data_access::is_field_derivatives<
+              PointFieldDerivativesType>::value,
+      "field_derivatives is not a point field derivatives type");
 
   static_assert(
-      specfem::accessor::is_point_field<BackwardPointFieldType>::value,
+      specfem::data_access::is_point<AdjointPointFieldType>::value &&
+          specfem::data_access::is_field<AdjointPointFieldType>::value,
+      "adjoint_field is not a point field type");
+
+  static_assert(
+      specfem::data_access::is_point<BackwardPointFieldType>::value &&
+          specfem::data_access::is_field<BackwardPointFieldType>::value,
       "backward_field is not a point field type");
 
   static_assert(AdjointPointFieldType::store_acceleration,

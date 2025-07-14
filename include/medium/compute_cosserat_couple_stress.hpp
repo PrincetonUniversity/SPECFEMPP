@@ -1,9 +1,9 @@
 #pragma once
 
-#include "enumerations/accessor.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/dim2/elastic/isotropic_cosserat/cosserat_couple_stress.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem/point.hpp"
 #include "utilities/errors.hpp"
 #include <Kokkos_Core.hpp>
@@ -18,16 +18,21 @@ assert_types(const std::integral_constant<bool, true>) {
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
 
-  static_assert(specfem::accessor::is_point_jacobian_matrix<
-                    PointJacobianMatrixType>::value,
-                "point_jacobian_matrix is not a point Jacobian matrix type");
+  static_assert(
+      specfem::data_access::is_point<PointJacobianMatrixType>::value &&
+          specfem::data_access::is_jacobian_matrix<
+              PointJacobianMatrixType>::value,
+      "point_jacobian_matrix is not a point Jacobian matrix type");
 
   static_assert(
-      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      specfem::data_access::is_point<PointPropertiesType>::value &&
+          specfem::data_access::is_properties<PointPropertiesType>::value,
       "point_properties is not a point properties type");
 
-  static_assert(specfem::accessor::is_point_field<PointAccelerationType>::value,
-                "point_acceleration is not a point field type");
+  static_assert(
+      specfem::data_access::is_point<PointAccelerationType>::value &&
+          specfem::data_access::is_field<PointAccelerationType>::value,
+      "point_acceleration is not a point field type");
 
   static_assert(
       PointJacobianMatrixType::simd::using_simd ==
