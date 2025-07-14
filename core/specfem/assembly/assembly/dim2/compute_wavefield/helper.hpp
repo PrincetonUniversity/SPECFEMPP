@@ -1,15 +1,12 @@
 #pragma once
 
-#include "algorithms/gradient.hpp"
 #include "chunk_element/field.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
-#include "enumerations/wavefield.hpp"
+#include "enumerations/interface.hpp"
 #include "execution/chunked_domain_iterator.hpp"
 #include "execution/for_each_level.hpp"
 #include "medium/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -23,7 +20,7 @@ public:
   constexpr static auto property_tag = PropertyTag;
   constexpr static auto ngll = NGLL;
 
-  helper(specfem::assembly::assembly assembly,
+  helper(specfem::assembly::assembly<specfem::dimension::type::dim2> assembly,
          Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                       Kokkos::DefaultExecutionSpace>
              wavefield_on_entire_grid)
@@ -104,7 +101,7 @@ public:
   }
 
 private:
-  const specfem::assembly::assembly assembly;
+  const specfem::assembly::assembly<specfem::dimension::type::dim2> assembly;
   Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                Kokkos::DefaultExecutionSpace>
       wavefield_on_entire_grid;

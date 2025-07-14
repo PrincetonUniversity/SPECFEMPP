@@ -182,7 +182,9 @@ public:
   virtual int
   apply_corrector_phase_backward(const specfem::element::medium_tag tag) = 0;
 
-  virtual void link_assembly(const specfem::assembly::assembly &assembly) = 0;
+  virtual void link_assembly(
+      const specfem::assembly::assembly<specfem::dimension::type::dim2>
+          &assembly) = 0;
 
   virtual specfem::enums::time_scheme::type timescheme() const = 0;
 

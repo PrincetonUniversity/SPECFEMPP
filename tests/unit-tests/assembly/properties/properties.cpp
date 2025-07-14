@@ -21,9 +21,10 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-set_property_value(const ViewType elements,
-                   specfem::assembly::assembly &assembly,
-                   const type_real offset) {
+set_property_value(
+    const ViewType elements,
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -54,9 +55,10 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-check_property_value(const ViewType elements,
-                     specfem::assembly::assembly &assembly,
-                     const type_real offset) {
+check_property_value(
+    const ViewType elements,
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
   const auto &properties = assembly.properties;
@@ -114,9 +116,10 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-check_property_value(const ViewType elements,
-                     specfem::assembly::assembly &assembly,
-                     const type_real offset) {
+check_property_value(
+    const ViewType elements,
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -186,7 +189,7 @@ check_property_value(const ViewType elements,
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void check_compute_to_mesh(
-    const specfem::assembly::assembly &assembly,
+    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;

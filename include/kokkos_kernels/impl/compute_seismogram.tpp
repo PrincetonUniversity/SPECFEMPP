@@ -21,7 +21,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void specfem::kokkos_kernels::impl::compute_seismograms(
-    specfem::assembly::assembly &assembly, const int &isig_step) {
+    specfem::assembly::assembly<DimensionTag> &assembly, const int &isig_step) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -46,7 +46,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   const int nseismograms = seismogram_types.size();
 
   const auto &mesh = assembly.mesh;
-  const auto field = assembly.fields.get_simulation_field<wavefield_simulation_field>();
+  const auto field = assembly.fields.template get_simulation_field<wavefield_simulation_field>();
 
   if (ngllz != ngll || ngllx != ngll) {
     throw std::runtime_error("The number of GLL points in z and x must match "
