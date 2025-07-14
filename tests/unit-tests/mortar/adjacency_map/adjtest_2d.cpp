@@ -61,7 +61,7 @@ void test_assembly_mapping(
       for (int iz = 0; iz < ngll; iz++) {
         int ind = index_mapping(ispec, iz, ix);
         auto shape_functions = specfem::jacobian::define_shape_functions(
-            quadrature.xi(ix), quadrature.xi(iz), control_nodes.ngnod);
+            quadrature.h_xi(ix), quadrature.h_xi(iz), control_nodes.ngnod);
 
         if (0 > ind || ind >= nglob) {
           FAIL() << "Index mapping maps to an out-of-bounds index! (" << ind
