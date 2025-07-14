@@ -51,9 +51,8 @@ private:
                                                    ///< functions
 
   using SourceArrayView =
-      Kokkos::View<type_real ****, Kokkos::LayoutRight,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store source arrays
+      specfem::kokkos::DeviceView4d<type_real>; ///< Underlying view type to
+                                                ///< store source arrays
 
   constexpr static int components =
       specfem::element::attributes<dimension_tag,
