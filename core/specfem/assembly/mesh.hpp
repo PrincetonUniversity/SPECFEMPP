@@ -22,3 +22,5 @@ template <specfem::dimension::type Dimension> struct mesh;
 
 // Include dim2 declarations
 #include "mesh/dim2/mesh.hpp"
+// Include dim3 declarations
+#include "mesh/dim3/mesh.hpp"

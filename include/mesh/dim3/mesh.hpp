@@ -5,6 +5,7 @@
 #include "boundaries/boundaries.hpp"
 #include "boundaries/free_surface.hpp"
 #include "coloring/coloring.hpp"
+#include "control_nodes/control_nodes.hpp"
 #include "coordinates/coordinates.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "element_types/element_types.hpp"
@@ -19,6 +20,7 @@
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "surface/surface.hpp"
+#include "tags/tags.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -65,6 +67,11 @@ template <> struct mesh<specfem::dimension::type::dim3> {
   // Struct to store the boundaries
   specfem::mesh::boundaries<dimension> boundaries; ///< Boundaries
 
+  specfem::mesh::tags<dimension> tags; ///< Struct to store
+                                       ///< tags for every
+                                       ///< spectral
+                                       ///< element
+
   // Struct to store the absorbing boundaries
   specfem::mesh::absorbing_boundary<dimension>
       absorbing_boundary; ///< Absorbing
@@ -92,6 +99,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
 
   // Adjacency
   specfem::mesh::adjacency<dimension> adjacency; ///< Adjacency
+
+  // Control nodes
+  specfem::mesh::control_nodes<dimension> control_nodes; ///< Control nodes
 
   /**
    * @name Constructors
@@ -143,6 +153,7 @@ template <> struct mesh<specfem::dimension::type::dim3> {
        const specfem::mesh::mass_matrix<dimension> &mass_matrix,
        const specfem::mesh::materials<dimension> &materials,
        const specfem::mesh::boundaries<dimension> &boundaries,
+       const specfem::mesh::tags<dimension> &tags,
        const specfem::mesh::absorbing_boundary<dimension> &absorbing_boundary,
        const specfem::mesh::free_surface<dimension> &free_surface,
        const specfem::mesh::coupled_interfaces<dimension> &coupled_interfaces,
@@ -156,10 +167,10 @@ template <> struct mesh<specfem::dimension::type::dim3> {
         irregular_element_number(irregular_element_number),
         jacobian_matrix(jacobian_matrix), elements_types(elements_types),
         mass_matrix(mass_matrix), materials(materials), boundaries(boundaries),
-        absorbing_boundary(absorbing_boundary), free_surface(free_surface),
-        coupled_interfaces(coupled_interfaces), mpi(mpi),
-        inner_outer(inner_outer), coloring(coloring), surface(surface),
-        adjacency(adjacency) {};
+        tags(tags), absorbing_boundary(absorbing_boundary),
+        free_surface(free_surface), coupled_interfaces(coupled_interfaces),
+        mpi(mpi), inner_outer(inner_outer), coloring(coloring),
+        surface(surface), adjacency(adjacency) {};
 
   ///@} // Constructors
 
