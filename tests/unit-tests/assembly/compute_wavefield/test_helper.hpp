@@ -14,8 +14,7 @@
 //      Since, the computed strain for a uniform wavefield is zero.
 
 #pragma once
-#include "enumerations/medium.hpp"
-#include "enumerations/wavefield.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/point/coordinates.hpp"
 #include "specfem/point/field.hpp"
 
@@ -25,10 +24,11 @@ template <specfem::wavefield::type component,
 class test_helper {
 
 public:
-  test_helper(const int ispec,
-              const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
-                                 Kokkos::HostSpace> &wavefield,
-              specfem::assembly::assembly &assembly)
+  test_helper(
+      const int ispec,
+      const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
+          &wavefield,
+      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly)
       : ispec(ispec), wavefield(wavefield), assembly(assembly) {}
 
   void test() {
@@ -67,17 +67,18 @@ private:
   const int ispec;
   const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
       &wavefield;
-  specfem::assembly::assembly &assembly;
+  specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly;
 };
 
 template <specfem::element::medium_tag medium,
           specfem::element::property_tag property>
 class test_helper<specfem::wavefield::type::pressure, medium, property> {
 public:
-  test_helper(const int ispec,
-              const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
-                                 Kokkos::HostSpace> &wavefield,
-              specfem::assembly::assembly &assembly)
+  test_helper(
+      const int ispec,
+      const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
+          &wavefield,
+      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly)
       : ispec(ispec), wavefield(wavefield), assembly(assembly) {}
 
   void test() {
@@ -132,7 +133,7 @@ private:
   const int ispec;
   const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
       &wavefield;
-  specfem::assembly::assembly &assembly;
+  specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly;
 };
 
 template <specfem::wavefield::type component>
@@ -140,10 +141,11 @@ class test_helper<component, specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic> {
 
 public:
-  test_helper(const int ispec,
-              const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
-                                 Kokkos::HostSpace> &wavefield,
-              specfem::assembly::assembly &assembly)
+  test_helper(
+      const int ispec,
+      const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
+          &wavefield,
+      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly)
       : ispec(ispec), wavefield(wavefield), assembly(assembly) {}
 
   void test() {
@@ -194,7 +196,7 @@ private:
   const int ispec;
   const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
       &wavefield;
-  specfem::assembly::assembly &assembly;
+  specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly;
 };
 
 template <>
@@ -203,10 +205,11 @@ class test_helper<specfem::wavefield::type::pressure,
                   specfem::element::property_tag::isotropic> {
 
 public:
-  test_helper(const int ispec,
-              const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
-                                 Kokkos::HostSpace> &wavefield,
-              specfem::assembly::assembly &assembly)
+  test_helper(
+      const int ispec,
+      const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
+          &wavefield,
+      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly)
       : ispec(ispec), wavefield(wavefield), assembly(assembly) {}
 
   void test() {
@@ -256,5 +259,5 @@ private:
   const int ispec;
   const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
       &wavefield;
-  specfem::assembly::assembly &assembly;
+  specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly;
 };

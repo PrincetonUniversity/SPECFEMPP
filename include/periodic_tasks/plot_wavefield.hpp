@@ -43,19 +43,22 @@ public:
    * @param time_interval Time interval between subsequent plots
    * @param output_folder Path to output folder where plots will be stored
    */
-  plot_wavefield(const specfem::assembly::assembly &assembly,
-                 const specfem::display::format &output_format,
-                 const specfem::wavefield::type &wavefield_type,
-                 const specfem::wavefield::simulation_field &wavefield,
-                 const int &time_interval,
-                 const boost::filesystem::path &output_folder,
-                 specfem::MPI::MPI *mpi);
+  plot_wavefield(
+      const specfem::assembly::assembly<specfem::dimension::type::dim2>
+          &assembly,
+      const specfem::display::format &output_format,
+      const specfem::wavefield::type &wavefield_type,
+      const specfem::wavefield::simulation_field &wavefield,
+      const int &time_interval, const boost::filesystem::path &output_folder,
+      specfem::MPI::MPI *mpi);
 
   /**
    * @brief Updates the wavefield within open window
    *
    */
-  void run(specfem::assembly::assembly &assembly, const int istep) override;
+  void
+  run(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+      const int istep) override;
 
   /**
    * @brief Wavefield plotter
@@ -64,7 +67,8 @@ public:
    *
    * @param assembly SPECFFEM++ assembly object
    */
-  void initialize(specfem::assembly::assembly &assembly) override;
+  void initialize(specfem::assembly::assembly<specfem::dimension::type::dim2>
+                      &assembly) override;
 
   /**
    * @brief Finalize the plotter
@@ -73,7 +77,8 @@ public:
    *
    * @param assembly SPECFFEM++ assembly object
    */
-  void finalize(specfem::assembly::assembly &assembly) override;
+  void finalize(specfem::assembly::assembly<specfem::dimension::type::dim2>
+                    &assembly) override;
 
 private:
   const specfem::display::format output_format;  ///< Output format of the plot
@@ -81,7 +86,8 @@ private:
   const specfem::wavefield::simulation_field wavefield; ///< Type of wavefield
                                                         ///< to plot
   const boost::filesystem::path output_folder; ///< Path to output folder
-  specfem::assembly::assembly assembly;        ///< Assembly object
+  specfem::assembly::assembly<specfem::dimension::type::dim2>
+      assembly; ///< Assembly object
 
   // Grid parameter members
   int nspec;
