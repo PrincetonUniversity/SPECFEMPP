@@ -140,7 +140,8 @@ protected:
         specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh,
         std::vector<std::shared_ptr<specfem::sources::source> > *p_sources,
         std::vector<std::shared_ptr<specfem::receivers::receiver> > *p_stations,
-        std::string *p_suffixes, specfem::assembly::assembly *p_assembly)
+        std::string *p_suffixes,
+        specfem::assembly::assembly<specfem::dimension::type::dim2> *p_assembly)
         : p_Test(p_Test), p_mesh(p_mesh), p_sources(p_sources),
           p_stations(p_stations), p_suffixes(p_suffixes),
           p_assembly(p_assembly) {}
@@ -149,7 +150,8 @@ protected:
                specfem::mesh::mesh<specfem::dimension::type::dim2>,
                std::vector<std::shared_ptr<specfem::sources::source> >,
                std::vector<std::shared_ptr<specfem::receivers::receiver> >,
-               std::string, specfem::assembly::assembly>
+               std::string,
+               specfem::assembly::assembly<specfem::dimension::type::dim2> >
     operator*() {
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[RUNNING]\033[0m " << p_Test->name << "\n"
@@ -179,7 +181,7 @@ protected:
     std::vector<std::shared_ptr<specfem::sources::source> > *p_sources;
     std::vector<std::shared_ptr<specfem::receivers::receiver> > *p_stations;
     std::string *p_suffixes;
-    specfem::assembly::assembly *p_assembly;
+    specfem::assembly::assembly<specfem::dimension::type::dim2> *p_assembly;
   };
 
   ASSEMBLY();
@@ -201,5 +203,6 @@ protected:
   std::vector<std::vector<std::shared_ptr<specfem::receivers::receiver> > >
       Stations;
   std::vector<std::string> suffixes;
-  std::vector<specfem::assembly::assembly> assemblies;
+  std::vector<specfem::assembly::assembly<specfem::dimension::type::dim2> >
+      assemblies;
 };
