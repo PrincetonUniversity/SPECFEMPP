@@ -340,7 +340,7 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
   // if there are absorbing boundaries create the absorbing boundary object
   // and read the absorbing boundaries
   if (num_abs_boundary_faces > 0) {
-    mesh.absorbing_boundary =
+    mesh.boundaries.absorbing_boundary =
         specfem::mesh::absorbing_boundary<specfem::dimension::type::dim3>(
             mesh.parameters.nglob, mesh.parameters.num_abs_boundary_faces,
             mesh.parameters.ngllsquare, mesh.parameters.acoustic_simulation,
@@ -351,37 +351,38 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
 
     // Read the absorbing ispec
     try_read_index_array("abs_boundary_ispec", stream,
-                         mesh.absorbing_boundary.ispec);
-    try_read_index_array("abs_bounary_ijk", stream,
-                         mesh.absorbing_boundary.ijk);
+                         mesh.boundaries.absorbing_boundary.ispec);
+    try_read_index_array("abs_boundary_ijk", stream,
+                         mesh.boundaries.absorbing_boundary.ijk);
     try_read_array("abs_boundary_jacobian2Dw", stream,
-                   mesh.absorbing_boundary.jacobian2Dw);
+                   mesh.boundaries.absorbing_boundary.jacobian2Dw);
     try_read_array("abs_boundary_normal", stream,
-                   mesh.absorbing_boundary.normal);
+                   mesh.boundaries.absorbing_boundary.normal);
 
     // Read the absorbing mass matrix elastic
     if (mesh.parameters.elastic_simulation) {
       try_read_array("abs_boundary_mass_elastic.mass", stream,
-                     mesh.absorbing_boundary.mass_elastic.x);
+                     mesh.boundaries.absorbing_boundary.mass_elastic.x);
       try_read_array("abs_boundary_mass_elastic.mass", stream,
-                     mesh.absorbing_boundary.mass_elastic.y);
+                     mesh.boundaries.absorbing_boundary.mass_elastic.y);
       try_read_array("abs_boundary_mass_elastic.mass", stream,
-                     mesh.absorbing_boundary.mass_elastic.z);
+                     mesh.boundaries.absorbing_boundary.mass_elastic.z);
     }
 
     // Read the absorbing mass matrix acoustic
     if (mesh.parameters.acoustic_simulation) {
       try_read_array("abs_boundary_mass_acoustic.mass", stream,
-                     mesh.absorbing_boundary.mass_acoustic.mass);
+                     mesh.boundaries.absorbing_boundary.mass_acoustic.mass);
     }
 #ifndef NDEBUG
     // Print the absorbing boundaries
-    mpi->cout(mesh.absorbing_boundary.print());
+    mpi->cout(mesh.boundaries.absorbing_boundary.print());
 
     // Print the absorbing boundaries for the first face
     // for debugging the array layout (Fortran v. C)
-    // mpi->cout(mesh.absorbing_boundary.print_ijk(0));
-    // mpi->cout(mesh.absorbing_boundary.print_ijk(num_abs_boundary_faces - 1));
+    // mpi->cout(mesh.boundaries.absorbing_boundary.print_ijk(0));
+    // mpi->cout(mesh.boundaries.absorbing_boundary.print_ijk(num_abs_boundary_faces
+    // - 1));
 #endif
   }
 
@@ -424,31 +425,31 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
 
     if (nspec2D_xmin > 0) {
       try_read_index_array("ibelm_xmin", stream,
-                           mesh.absorbing_boundary.ibelm_xmin);
+                           mesh.boundaries.absorbing_boundary.ibelm_xmin);
     }
     if (nspec2D_xmax > 0) {
       try_read_index_array("ibelm_xmax", stream,
-                           mesh.absorbing_boundary.ibelm_xmax);
+                           mesh.boundaries.absorbing_boundary.ibelm_xmax);
     }
     if (nspec2D_ymin > 0) {
       try_read_index_array("ibelm_ymin", stream,
-                           mesh.absorbing_boundary.ibelm_ymin);
+                           mesh.boundaries.absorbing_boundary.ibelm_ymin);
     }
     if (nspec2D_ymax > 0) {
       try_read_index_array("ibelm_ymax", stream,
-                           mesh.absorbing_boundary.ibelm_ymax);
+                           mesh.boundaries.absorbing_boundary.ibelm_ymax);
     }
     if (nspec2D_bottom > 0) {
       try_read_index_array("ibelm_bottom", stream,
-                           mesh.absorbing_boundary.ibelm_bottom);
+                           mesh.boundaries.absorbing_boundary.ibelm_bottom);
     }
     if (nspec2D_top > 0) {
       try_read_index_array("ibelm_top", stream,
-                           mesh.absorbing_boundary.ibelm_top);
+                           mesh.boundaries.absorbing_boundary.ibelm_top);
     }
-    // Print the abosrbing boundaries
+    // Print the absorbing boundaries
 #ifndef NDEBUG
-    mpi->cout(mesh.absorbing_boundary.print());
+    mpi->cout(mesh.boundaries.absorbing_boundary.print());
 #endif
   }
 
@@ -459,20 +460,23 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
                mesh.parameters.num_free_surface_faces);
 
   // Create the free surface object
-  mesh.free_surface =
+  mesh.boundaries.free_surface =
       specfem::mesh::free_surface<specfem::dimension::type::dim3>(
           mesh.parameters.num_free_surface_faces, mesh.parameters.ngllsquare);
 
   // Read the free surface ispec
-  try_read_index_array("free_surface_ispec", stream, mesh.free_surface.ispec);
-  try_read_index_array("free_surface_ijk", stream, mesh.free_surface.ijk);
+  try_read_index_array("free_surface_ispec", stream,
+                       mesh.boundaries.free_surface.ispec);
+  try_read_index_array("free_surface_ijk", stream,
+                       mesh.boundaries.free_surface.ijk);
   try_read_array("free_surface_jacobian2Dw", stream,
-                 mesh.free_surface.jacobian2Dw);
-  try_read_array("free_surface_normal", stream, mesh.free_surface.normal);
+                 mesh.boundaries.free_surface.jacobian2Dw);
+  try_read_array("free_surface_normal", stream,
+                 mesh.boundaries.free_surface.normal);
 
 #ifndef NDEBUG
   // Print the free surface
-  mpi->cout(mesh.free_surface.print());
+  mpi->cout(mesh.boundaries.free_surface.print());
 
   // Print the free surface for the first face
   // for debugging the array layout (Fortran v. C)
