@@ -1,4 +1,5 @@
 #include "shape_functions.hpp"
+#include <stdexcept>
 #include <vector>
 
 namespace {
@@ -6,7 +7,7 @@ namespace {
 template <typename T, typename std::enable_if<std::is_floating_point<T>::value,
                                               int>::type = 0>
 std::vector<T> shape_function_4node(const T xi, const T gamma) {
-  std::vector<T> shape2D(4);
+  std::vector<T> shape2D(4, 0.0);
   shape2D[0] = 0.25 * (xi - 1) * (gamma - 1);
   shape2D[1] = -0.25 * (xi + 1) * (gamma - 1);
   shape2D[2] = 0.25 * (xi + 1) * (gamma + 1);
@@ -17,7 +18,7 @@ std::vector<T> shape_function_4node(const T xi, const T gamma) {
 template <typename T, typename std::enable_if<std::is_floating_point<T>::value,
                                               int>::type = 0>
 std::vector<T> shape_function_9node(const T xi, const T gamma) {
-  std::vector<T> shape2D(9);
+  std::vector<T> shape2D(9, 0.0);
   shape2D[0] = 0.25 * (xi - 1) * xi * (gamma - 1) * gamma;
   shape2D[1] = 0.25 * (xi + 1) * xi * (gamma - 1) * gamma;
   shape2D[2] = 0.25 * (xi + 1) * xi * (gamma + 1) * gamma;
