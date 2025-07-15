@@ -72,14 +72,6 @@ template <> struct mesh<specfem::dimension::type::dim3> {
                                        ///< spectral
                                        ///< element
 
-  // Struct to store the absorbing boundaries
-  specfem::mesh::absorbing_boundary<dimension>
-      absorbing_boundary; ///< Absorbing
-                          ///< boundaries
-
-  // Struct to store the free surface
-  specfem::mesh::free_surface<dimension> free_surface; ///< Free surface
-
   // Struct to store the coupled interfaces
   specfem::mesh::coupled_interfaces<dimension>
       coupled_interfaces; ///< Coupled
@@ -128,8 +120,6 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    * @param mass_matrix Struct to store mass matrix
    * @param materials Struct to store material properties
    * @param boundaries Struct to store information at the boundaries
-   * @param absorbing_boundary Struct to store absorbing boundaries
-   * @param free_surface Struct to store free surface boundaries
    * @param coupled_interfaces Struct to store coupled interfaces
    * @param mpi Struct to store MPI information
    * @param inner_outer Struct to store inner outer elements
@@ -154,8 +144,6 @@ template <> struct mesh<specfem::dimension::type::dim3> {
        const specfem::mesh::materials<dimension> &materials,
        const specfem::mesh::boundaries<dimension> &boundaries,
        const specfem::mesh::tags<dimension> &tags,
-       const specfem::mesh::absorbing_boundary<dimension> &absorbing_boundary,
-       const specfem::mesh::free_surface<dimension> &free_surface,
        const specfem::mesh::coupled_interfaces<dimension> &coupled_interfaces,
        const specfem::mesh::mpi<dimension> &mpi,
        const specfem::mesh::inner_outer<dimension> &inner_outer,
@@ -167,10 +155,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
         irregular_element_number(irregular_element_number),
         jacobian_matrix(jacobian_matrix), elements_types(elements_types),
         mass_matrix(mass_matrix), materials(materials), boundaries(boundaries),
-        tags(tags), absorbing_boundary(absorbing_boundary),
-        free_surface(free_surface), coupled_interfaces(coupled_interfaces),
-        mpi(mpi), inner_outer(inner_outer), coloring(coloring),
-        surface(surface), adjacency(adjacency) {};
+        tags(tags), coupled_interfaces(coupled_interfaces), mpi(mpi),
+        inner_outer(inner_outer), coloring(coloring), surface(surface),
+        adjacency(adjacency) {};
 
   ///@} // Constructors
 
