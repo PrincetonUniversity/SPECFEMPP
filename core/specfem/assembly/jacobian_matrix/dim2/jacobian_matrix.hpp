@@ -6,6 +6,7 @@
 #include "macros.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -14,18 +15,18 @@ namespace specfem::assembly {
 
 template <>
 struct jacobian_matrix<specfem::dimension::type::dim2>
-    : public specfem::container::Container<
-          specfem::container::type::domain,
-          specfem::data_class::type::jacobian_matrix,
+    : public specfem::data_access::Container<
+          specfem::data_access::ContainerType::domain,
+          specfem::data_access::DataClassType::jacobian_matrix,
           specfem::dimension::type::dim2> {
   /**
    * @name Typedefs
    *
    */
   ///@{
-  using base_type = specfem::container::Container<
-      specfem::container::type::domain,
-      specfem::data_class::type::jacobian_matrix,
+  using base_type = specfem::data_access::Container<
+      specfem::data_access::ContainerType::domain,
+      specfem::data_access::DataClassType::jacobian_matrix,
       specfem::dimension::type::dim2>; ///< Base type of the point partial
                                        ///< derivatives
   using view_type = typename base_type::scalar_type<
