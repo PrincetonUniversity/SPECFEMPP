@@ -2,6 +2,7 @@
 
 #include "impl/control_nodes.hpp"
 #include "impl/points.hpp"
+#include "impl/shape_functions.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
@@ -23,6 +24,8 @@ struct mesh<specfem::dimension::type::dim3>
       public specfem::assembly::mesh_impl::quadrature<
           specfem::dimension::type::dim3>,
       public specfem::assembly::mesh_impl::control_nodes<
+          specfem::dimension::type::dim3>,
+      public specfem::assembly::mesh_impl::shape_functions<
           specfem::dimension::type::dim3> {
 
 public:

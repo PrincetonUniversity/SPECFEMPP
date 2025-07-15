@@ -93,7 +93,8 @@ target_link_libraries(
 
 add_executable(
   jacobian_tests
-  jacobian/shape_functions.cpp
+  jacobian/shape_functions2d.cpp
+  jacobian/shape_functions3d.cpp
 )
 
 target_link_libraries(
