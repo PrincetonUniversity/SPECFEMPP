@@ -1,5 +1,6 @@
 #include "mesh/dim3/tags/tags.hpp"
 #include "enumerations/dimension.hpp"
+#include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
 specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
@@ -7,14 +8,14 @@ specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
     const specfem::mesh::boundaries<specfem::dimension::type::dim3>
         &boundaries) {
 
-  // this->nspec = materials.nspec;
+  this->nspec = materials.nspec;
 
-  // this->tags_container =
-  //     specfem::kokkos::HostView1d<specfem::mesh::impl::tags_container>(
-  //         "specfem::mesh::tags::tags", this->nspec);
+  this->tags_container =
+      specfem::kokkos::HostView1d<specfem::mesh::impl::tags_container>(
+          "specfem::mesh::tags::tags", this->nspec);
 
-  // std::vector<specfem::element::boundary_tag_container> boundary_tag(
-  //     this->nspec);
+  std::vector<specfem::element::boundary_tag_container> boundary_tag(
+      this->nspec);
 
   // const auto &absorbing_boundary = boundaries.absorbing_boundary;
   // for (int i = 0; i < absorbing_boundary.nelements; ++i) {
