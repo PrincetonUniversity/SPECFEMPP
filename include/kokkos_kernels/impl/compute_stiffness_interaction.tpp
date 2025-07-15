@@ -109,6 +109,9 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
       specfem::point::field_derivatives<dimension, medium_tag, using_simd>;
 
 
+  Kokkos::View<simd::datatype *****, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace> stress(
+      "stress", parallel_config::chunk_size, ngllz, ngllx, components, num_dimensions);
+
 
   const auto wgll = mesh.weights;
 
@@ -185,6 +188,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   for (int idim = 0; idim < num_dimensions; ++idim) {
                     stress_integrand.F(ielement, index.iz, index.ix, icomponent,
                                        idim) = F(icomponent, idim);
+                    stress(ielement, index.iz, index.ix, icomponent,
+                           idim) = point_stress.T(icomponent, idim);
                   }
                 }
               });
@@ -236,7 +241,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                     point_jacobian_matrix,
                     point_property,
                     factor,
-                    Kokkos::subview(stress_integrand.F,
+                    Kokkos::subview(stress,
                       ielement, index.iz, index.ix,
                       Kokkos::ALL, Kokkos::ALL),
                     acceleration);

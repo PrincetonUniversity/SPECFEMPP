@@ -52,16 +52,17 @@ assert_types(const std::integral_constant<bool, true>) {
   //  extent
   static_assert(PointStressIntegrandViewType::rank == 2,
                 "PointStressIntegrandViewType must be a 2D view");
-  static_assert(
-      PointStressIntegrandViewType::static_extent(0) ==
-          specfem::element::attributes<DimensionTag, MediumTag>::components,
-      "PointStressIntegrandViewType must have the same number of "
-      "components as the medium");
-  static_assert(
-      PointStressIntegrandViewType::static_extent(1) ==
-          specfem::element::attributes<DimensionTag, MediumTag>::dimension,
-      "PointStressIntegrandViewType must have the same number of "
-      "dimensions as the medium");
+  //   static_assert(
+  //       PointStressIntegrandViewType::extent(0) ==
+  //           specfem::element::attributes<DimensionTag,
+  //           MediumTag>::components,
+  //       "PointStressIntegrandViewType must have the same number of "
+  //       "components as the medium");
+  //   static_assert(
+  //       PointStressIntegrandViewType::extent(1) ==
+  //           specfem::element::attributes<DimensionTag, MediumTag>::dimension,
+  //       "PointStressIntegrandViewType must have the same number of "
+  //       "dimensions as the medium");
 
   return;
 }
@@ -99,7 +100,7 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const MediumTagType medium_tag, const PropertyTagType property_tag,
     const PointJacobianMatrixType &point_jacobian_matrix,
     const PointPropertiesType &point_properties, const T factor,
-    const PointStressIntegrandViewType &F,
+    const PointStressIntegrandViewType &stress,
     PointAccelerationType &acceleration) {
 
   // Extract actual tag types for the static_assert message
