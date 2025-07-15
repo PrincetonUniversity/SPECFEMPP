@@ -152,6 +152,14 @@ void check_read_test_value(std::ifstream &stream, int test_value);
  */
 void check_values(std::string message, int value, int expected);
 
+template <typename ViewType>
+void read_control_nodes_indexing(std::ifstream &stream,
+                                 ViewType &control_nodes_indexing);
+
+template <typename ViewType>
+void read_control_nodes_coordinates(std::ifstream &stream,
+                                    ViewType &control_nodes_coordinates);
+
 } // namespace dim3
 } // namespace fortran
 } // namespace impl
@@ -159,4 +167,5 @@ void check_values(std::string message, int value, int expected);
 } // namespace io
 } // namespace specfem
 
+#include "io/mesh/impl/fortran/dim3/interface.tpp"
 #include "io/mesh/impl/fortran/dim3/utilities.hpp"
