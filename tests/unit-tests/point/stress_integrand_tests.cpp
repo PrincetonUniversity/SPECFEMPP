@@ -353,11 +353,12 @@ TYPED_TEST(PointStressIntegrandTest, AccessorBaseType) {
                               element::medium_tag::acoustic, using_simd>;
 
   // Check if stress_integrand_type is derived from the correct base class
-  bool is_accessor = std::is_base_of<
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::stress_integrand,
-                                  dimension::type::dim2, using_simd>,
-      stress_integrand_type>::value;
+  bool is_accessor =
+      std::is_base_of<specfem::data_access::Accessor<
+                          specfem::data_access::AccessorType::point,
+                          specfem::data_access::DataClassType::stress_integrand,
+                          dimension::type::dim2, using_simd>,
+                      stress_integrand_type>::value;
 
   EXPECT_TRUE(is_accessor);
 }

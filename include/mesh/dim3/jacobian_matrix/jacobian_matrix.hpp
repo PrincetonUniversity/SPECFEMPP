@@ -14,7 +14,8 @@ namespace mesh {
 template <> struct jacobian_matrix<specfem::dimension::type::dim3> {
   constexpr static auto dimension = specfem::dimension::type::dim3;
 
-  using LocalView = Kokkos::View<type_real ****, Kokkos::HostSpace>;
+  using LocalView = Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                                 Kokkos::DefaultHostExecutionSpace>;
 
   // Parameters
   int nspec; ///< Number of spectral elements
