@@ -25,6 +25,7 @@
   (4, specfem::element::medium_tag::poroelastic, poroelastic)
 #define MEDIUM_TAG_ELECTROMAGNETIC_TE                                          \
   (5, specfem::element::medium_tag::electromagnetic_te, electromagnetic_te)
+#define MEDIUM_TAG_ELASTIC (6, specfem::element::medium_tag::elastic, elastic)
 
 #define PROPERTY_TAG_ISOTROPIC                                                 \
   (0, specfem::element::property_tag::isotropic, isotropic)
@@ -54,7 +55,7 @@
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC))(                           \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE))
 
-#define MEDIUM_TAGS_DIM3 ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_PSV))
+#define MEDIUM_TAGS_DIM3 ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC))
 
 #define MEDIUM_TAGS MEDIUM_TAGS_DIM2 MEDIUM_TAGS_DIM3
 
@@ -75,7 +76,7 @@
        PROPERTY_TAG_ISOTROPIC))
 
 #define MATERIAL_SYSTEMS_DIM3                                                  \
-  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC))
+  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC))
 
 #define MATERIAL_SYSTEMS MATERIAL_SYSTEMS_DIM2 MATERIAL_SYSTEMS_DIM3
 
@@ -113,7 +114,7 @@
        PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
 
 #define ELEMENT_TYPES_DIM3                                                     \
-  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC,        \
+  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC,            \
     BOUNDARY_TAG_NONE))
 
 #define ELEMENT_TYPES ELEMENT_TYPES_DIM2 ELEMENT_TYPES_DIM3
