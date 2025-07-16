@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "../../MPI_environment.hpp"
+#include "enumerations/dimension.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "io/interface.hpp"
 #include "jacobian/interface.hpp"
@@ -52,16 +53,17 @@ void test_assembly_mapping(
   std::vector<std::vector<std::tuple<int, int, int> > > ind_to_nodes(
       nglob, std::vector<std::tuple<int, int, int> >());
   std::vector<std::pair<double, double> > ind_locations(nglob);
-  specfem::assembly::mesh_impl::quadrature<specfem::dimension::type::dim2>
-      quadrature(specfem::quadrature::quadratures(
-          specfem::quadrature::gll::gll(0, 0, ngll)));
-
+  const auto quadratures = specfem::quadrature::quadratures(
+      specfem::quadrature::gll::gll(0, 0, ngll));
+  specfem::assembly::mesh_impl::shape_functions<specfem::dimension::type::dim2>
+      shape_funcs(quadratures.gll.get_hxi(), quadratures.gll.get_hxi(),
+                  quadratures.gll.get_N(), control_nodes.ngnod);
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int ix = 0; ix < ngll; ix++) {
       for (int iz = 0; iz < ngll; iz++) {
         int ind = index_mapping(ispec, iz, ix);
-        auto shape_functions = specfem::jacobian::define_shape_functions(
-            quadrature.h_xi(ix), quadrature.h_xi(iz), control_nodes.ngnod);
+        auto shape_functions =
+            Kokkos::subview(shape_funcs.h_shape2D, iz, ix, Kokkos::ALL());
 
         if (0 > ind || ind >= nglob) {
           FAIL() << "Index mapping maps to an out-of-bounds index! (" << ind

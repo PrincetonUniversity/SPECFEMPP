@@ -217,6 +217,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   mesh
+  assembly
   yaml-cpp
   io
   # utilities
