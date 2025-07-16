@@ -8,7 +8,6 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "receiver/interface.hpp"
 #include "solver/solver.hpp"
 #include "specfem/assembly.hpp"
 #include "timescheme/timescheme.hpp"
