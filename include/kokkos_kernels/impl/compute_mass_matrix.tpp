@@ -21,7 +21,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
 void specfem::kokkos_kernels::impl::compute_mass_matrix(
-    const type_real &dt, const specfem::assembly::assembly &assembly) {
+    const type_real &dt, const specfem::assembly::assembly<DimensionTag> &assembly) {
 
   constexpr auto dimension = DimensionTag;
   constexpr auto wavefield = WavefieldType;
@@ -71,7 +71,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &properties = assembly.properties;
   const auto &boundaries = assembly.boundaries;
-  const auto field = assembly.fields.get_simulation_field<wavefield>();
+  const auto field = assembly.fields.template get_simulation_field<wavefield>();
 
   const auto wgll = mesh.weights;
 

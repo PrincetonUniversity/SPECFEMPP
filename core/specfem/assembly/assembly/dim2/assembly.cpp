@@ -3,11 +3,12 @@
 #include "io/reader.hpp"
 #include "mesh/mesh.hpp"
 
-specfem::assembly::assembly::assembly(
+specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const std::vector<std::shared_ptr<specfem::receivers::receiver> >
+    const std::vector<std::shared_ptr<
+        specfem::receivers::receiver<specfem::dimension::type::dim2> > >
         &receivers,
     const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
@@ -67,12 +68,13 @@ specfem::assembly::assembly::assembly(
     throw std::runtime_error(msg.str());
   }
 
-  this->check_small_jacobian();
+  this->check_jacobian_matrix();
 
   return;
 }
 
-std::string specfem::assembly::assembly::print() const {
+std::string
+specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
   std::ostringstream message;
   message << "Assembly information:\n"
           << "------------------------------\n"
