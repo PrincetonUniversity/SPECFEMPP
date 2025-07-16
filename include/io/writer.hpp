@@ -1,7 +1,9 @@
 #pragma once
 
+#include "enumerations/interface.hpp"
+
 namespace specfem::assembly {
-class assembly;
+template <specfem::dimension::type DimensionTag> class assembly;
 }
 
 namespace specfem {
@@ -18,7 +20,8 @@ public:
    * @param assembly Assembly object
    *
    */
-  virtual void write(specfem::assembly::assembly &assembly) = 0;
+  virtual void write(specfem::assembly::assembly<specfem::dimension::type::dim2>
+                         &assembly) = 0;
 };
 
 } // namespace io

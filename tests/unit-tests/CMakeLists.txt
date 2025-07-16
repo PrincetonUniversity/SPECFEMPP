@@ -166,6 +166,21 @@ target_link_libraries(
   gmock_main
 )
 
+add_executable(
+  receivers_tests
+  receivers/dim2/receiver_tests.cpp
+)
+
+target_link_libraries(
+  receivers_tests
+  gtest_main
+  specfem::receivers
+  mpi_environment
+  kokkos_environment
+  yaml-cpp
+  Boost::filesystem
+  -lpthread -lm
+)
 
 add_executable(
   mesh_tests
@@ -337,7 +352,7 @@ target_link_libraries(
   policies_tests
   mesh
   source_class
-  receiver_class
+  specfem::receivers
   kokkos_environment
   mpi_environment
   yaml-cpp
@@ -516,26 +531,27 @@ target_link_libraries(
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
   set(TEST_TARGETS
-      gll_tests
-      lagrange_tests
-      jacobian_tests
-      fortranio_test
-      io_tests
-      mesh_tests
-      compute_jacobian_matrix_tests
-      # compute_elastic_tests
-      # compute_acoustic_tests
-      # compute_coupled_interfaces_tests
-      point_tests
-      compute_tests
-      assembly_tests
-      policies_tests
-      interpolate_function
-      mass_matrix_tests
-      stress_tests
-      rmass_inverse_tests
-      simd_tests
-      displacement_newmark_tests
+    assembly_tests
+    # compute_acoustic_tests
+    # compute_coupled_interfaces_tests
+    # compute_elastic_tests
+    compute_jacobian_matrix_tests
+    compute_tests
+    displacement_newmark_tests
+    fortranio_test
+    gll_tests
+    interpolate_function
+    io_tests
+    jacobian_tests
+    lagrange_tests
+    mass_matrix_tests
+    mesh_tests
+    point_tests
+    policies_tests
+    receivers_tests
+    rmass_inverse_tests
+    simd_tests
+    stress_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
       gtest_discover_tests(${test_target})
