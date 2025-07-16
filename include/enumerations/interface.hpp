@@ -5,7 +5,6 @@
 #include "dimension.hpp"
 #include "medium.hpp"
 // #include "properties.hpp"
-#include "material_definitions.hpp"
 #include "simulation.hpp"
 #include "specfem_enums.hpp"
 #include "wavefield.hpp"
