@@ -1,10 +1,11 @@
 #include "io/seismogram/writer.hpp"
+#include "enumerations/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "specfem/assembly.hpp"
 #include <fstream>
 
 void specfem::io::seismogram_writer::write(
-    specfem::assembly::assembly &assembly) {
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
   auto &receivers = assembly.receivers;
 
   receivers.sync_seismograms();

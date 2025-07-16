@@ -9,20 +9,19 @@
 #include "specfem_setup.hpp"
 #include <cmath>
 
-namespace specfem::assembly {
-template <specfem::dimension::type DimensionTag> class mesh;
-} // namespace specfem::assembly
+namespace specfem::receivers {
 
-namespace specfem {
-namespace receivers {
-
-/**
- * @brief Receiver Class
- *
- */
-class receiver {
+template <> class receiver<specfem::dimension::type::dim2> {
 
 public:
+  /**
+   * Compile-time constants
+   * @{
+   */
+  constexpr static specfem::dimension::type dimension_tag =
+      specfem::dimension::type::dim2;
+  /// @}
+
   /**
    * @brief Construct a new receiver object
    *
@@ -36,16 +35,7 @@ public:
            const type_real x, const type_real z, const type_real angle)
       : network_name(network_name), station_name(station_name), x(x), z(z),
         angle(angle) {};
-  /**
-   * @brief Compute the receiver array (lagrangians) for this station
-   *
-   * @param quadx Quadrature object in x-dimension
-   * @param quadz Quadrature object in z-dimension
-   * @param receiver_array view to store the source array
-   */
-  void compute_receiver_array(
-      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-      specfem::kokkos::HostView3d<type_real> receiver_array);
+
   /**
    * @brief Get the name of network where this station lies
    *
@@ -76,6 +66,5 @@ private:
   std::string network_name; ///< Name of the network where this station lies
   std::string station_name; ///< Name of the station
 };
-} // namespace receivers
 
-} // namespace specfem
+} // namespace specfem::receivers

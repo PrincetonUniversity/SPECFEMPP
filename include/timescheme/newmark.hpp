@@ -100,7 +100,9 @@ public:
     return 0;
   };
 
-  void link_assembly(const specfem::assembly::assembly &assembly) override {
+  void link_assembly(
+      const specfem::assembly::assembly<specfem::dimension::type::dim2>
+          &assembly) override {
     field = assembly.fields.forward;
   }
 
@@ -211,7 +213,9 @@ public:
   int apply_corrector_phase_backward(
       const specfem::element::medium_tag tag) override;
 
-  void link_assembly(const specfem::assembly::assembly &assembly) override {
+  void link_assembly(
+      const specfem::assembly::assembly<specfem::dimension::type::dim2>
+          &assembly) override {
     adjoint_field = assembly.fields.adjoint;
     backward_field = assembly.fields.backward;
   }

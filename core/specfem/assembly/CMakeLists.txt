@@ -1,6 +1,7 @@
 file(GLOB_RECURSE COMPUTE_SOURCE_FILES "./*.cpp" "./**/*.cpp")
 
 add_library(assembly ${COMPUTE_SOURCE_FILES})
+add_library(specfem::assembly ALIAS assembly)
 
 target_link_libraries(
         assembly
@@ -12,7 +13,7 @@ target_link_libraries(
         jacobian
         point
         edge
-        receiver_class
+        specfem::receivers
         shape_functions
         Kokkos::kokkos
         ${BOOST_LIBS}

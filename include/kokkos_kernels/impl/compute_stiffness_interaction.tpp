@@ -29,7 +29,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
 int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
-    const specfem::assembly::assembly &assembly, const int &istep) {
+    const specfem::assembly::assembly<DimensionTag> &assembly, const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -52,10 +52,10 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   const auto &mesh = assembly.mesh;
   const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &properties = assembly.properties;
-  const auto field = assembly.fields.get_simulation_field<wavefield>();
+  const auto field = assembly.fields.template get_simulation_field<wavefield>();
   const auto &boundaries = assembly.boundaries;
   const auto boundary_values =
-      assembly.boundary_values.get_container<boundary_tag>();
+      assembly.boundary_values.template get_container<boundary_tag>();
 
   if (ngllz != NGLL || ngllx != NGLL) {
     throw std::runtime_error("The number of GLL points in z and x must match "
