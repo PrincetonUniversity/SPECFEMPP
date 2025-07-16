@@ -87,17 +87,16 @@ template <> struct assembly<specfem::dimension::type::dim2> {
    * @param property_reader Reader for GLL model (skip material property
    * assignment if exists)
    */
-  assembly(
-      const specfem::mesh::mesh<dimension_tag> &mesh,
-      const specfem::quadrature::quadratures &quadratures,
-      const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-      const std::vector<std::shared_ptr<specfem::receivers::receiver> >
-          &receivers,
-      const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
-      const type_real dt, const int max_timesteps, const int max_sig_step,
-      const int nsteps_between_samples,
-      const specfem::simulation::type simulation,
-      const std::shared_ptr<specfem::io::reader> &property_reader);
+  assembly(const specfem::mesh::mesh<dimension_tag> &mesh,
+           const specfem::quadrature::quadratures &quadratures,
+           std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+           const std::vector<std::shared_ptr<specfem::receivers::receiver> >
+               &receivers,
+           const std::vector<specfem::wavefield::type> &stypes,
+           const type_real t0, const type_real dt, const int max_timesteps,
+           const int max_sig_step, const int nsteps_between_samples,
+           const specfem::simulation::type simulation,
+           const std::shared_ptr<specfem::io::reader> &property_reader);
 
   /**
    * @brief Maps the component of wavefield on the entire spectral element grid

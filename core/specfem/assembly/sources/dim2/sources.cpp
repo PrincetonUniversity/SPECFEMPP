@@ -1,4 +1,5 @@
 #include "specfem/assembly/sources.hpp"
+#include "../impl/locate_sources.hpp"
 #include "../impl/source_medium.hpp"
 #include "../impl/source_medium.tpp"
 #include "algorithms/interface.hpp"
@@ -16,14 +17,13 @@
 // Forward declarations
 namespace {
 
-/* THIS FUNCTION WILL HAVE TO CHANGE. IF YOU HAVE MANY SOURCES IN
- * MULTIPLE DOMAINS THE SOURCES ARE BEING LOCATED MULTIPLE TIMES
- * FOR ONE SOURCE, THIS WILL NOT HAVE AN IMPACT AT ALL, BUT FOR MANY SOURCES
- * THIS WILL BECOME A BOTTLENECK.
- *
- * The function runs for every material type and returns a tuple of two vectors
- * - the first vector contains the sources that fall into that material domain
- * - the second vector contains the global indices of the sources that
+/** @brief Sort sources per medium
+ * @tparam DimensionTag Dimension tag (e.g., dim2)
+ * @tparam MediumTag Medium tag (e.g., elastic_psv, acoustic, etc.)
+ * @param sources Vector of sources to be sorted
+ * @param element_types Element types for every spectral element
+ * @param mesh Finite element mesh information
+ * @return Tuple containing sorted sources and their indices
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
@@ -41,23 +41,19 @@ sort_sources_per_medium(
   // Loop over all sources
   for (int isource = 0; isource < sources.size(); isource++) {
 
-    // Get the source coordinates
+    // Get the source
     const auto &source = sources[isource];
-    const type_real x = source->get_x();
-    const type_real z = source->get_z();
 
-    // Get element that the source is located in
-    const specfem::point::global_coordinates<DimensionTag> coord(x, z);
-    const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
+    // Get the medium tag for the source
+    const specfem::element::medium_tag medium_tag = source->get_medium_tag();
 
     // Check if the element is in currently checked medium and add to
     // the list of sources and indices if it is.
-    if (element_types.get_medium_tag(lcoord.ispec) == MediumTag) {
+    if (medium_tag == MediumTag) {
       sorted_sources.push_back(source);
       source_indices.push_back(isource);
     }
   }
-
   return std::make_tuple(sorted_sources, source_indices);
 }
 } // namespace
@@ -76,7 +72,7 @@ template class specfem::assembly::sources_impl::source_medium<
     specfem::element::medium_tag::elastic_psv_t>;
 
 specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
-    const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
@@ -107,6 +103,10 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
 
   int nsources = 0;
   int nsource_indices = 0;
+
+  // Locate all sources in the mesh and set their local coordinates,
+  // global element index, and medium that the source is located in
+  specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
