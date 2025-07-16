@@ -1,7 +1,7 @@
 #pragma once
 
 #include "constants.hpp"
-#include "enumerations/wavefield.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
@@ -55,18 +55,21 @@ public:
    * @param dt
    */
   source(YAML::Node &Node, const int nsteps, const type_real dt);
+
   /**
    * @brief Get the x coordinate of the source
    *
    * @return type_real x-coordinate
    */
   type_real get_x() const { return x; }
+
   /**
    * @brief Get the z coordinate of the source
    *
    * @return type_real z-coordinate
    */
   type_real get_z() const { return z; }
+
   /**
    * @brief Get the value of t0 from the specfem::stf::stf object
    *
@@ -119,12 +122,80 @@ public:
     return forcing_function;
   }
 
+  /**
+   * @brief Set the local xi coordinates of the source in the local coordinate
+   * system
+   * @param xi xi coordinate of source in the local coordinate system
+   */
+  void set_xi(type_real xi) { this->xi = xi; }
+
+  /**
+   * @brief Set the local gamma coordinates of the source in the local
+   * coordinate system
+   * @param gamma gamma coordinate of source in the local coordinate system
+   */
+  void set_gamma(type_real gamma) { this->gamma = gamma; }
+  /**
+   * @brief Set the medium tag for the source
+   *
+   * @param medium_tag medium tag
+   */
+  void set_medium_tag(specfem::element::medium_tag medium_tag) {
+    this->medium_tag = medium_tag;
+  }
+
+  /**
+   * @brief Get the local xi coordinate of the source in the local coordinate
+   * system
+   *
+   * @return type_real xi coordinate
+   */
+  type_real get_xi() const { return this->xi; }
+  /**
+   * @brief Get the local gamma coordinate of the source in the local coordinate
+   * system
+   *
+   * @return type_real gamma coordinate
+   */
+  type_real get_gamma() const { return this->gamma; }
+  /**
+   * @brief Get the medium tag for the source
+   *
+   * @return specfem::medium::medium_tag medium tag
+   */
+  specfem::element::medium_tag get_medium_tag() const { return medium_tag; }
+  /**
+   * @brief Get the index of the element that the source is located in
+   *
+   * @return int index of the element
+   */
+  int get_element_index() const { return this->element_index; }
+  /**
+   * @brief Set the index of the element that the source is located in
+   *
+   * @param ielement index of the element
+   */
+  void set_element_index(int element_index) {
+    this->element_index = element_index;
+  }
+
 protected:
+  // Read-only member variables
   type_real x; ///< x-coordinate of source
   type_real z; ///< z-coordinate of source
-
   std::unique_ptr<specfem::forcing_function::stf>
       forcing_function; ///< pointer to source time function
+
+private:
+  // Member variables to be set.
+  type_real xi;
+  ///< xi coordinate of source in the local coordinate system
+  type_real gamma;
+  ///< gamma coordinate of source in the local coordinate system
+  specfem::element::medium_tag medium_tag;
+  ///< medium tag for the source
+  ///< (e.g., acoustic, elastic, poroelastic, etc.)
+  int element_index; ///< index of the element that the source is located in
 };
 
 } // namespace sources
