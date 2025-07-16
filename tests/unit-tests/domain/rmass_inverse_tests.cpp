@@ -7,9 +7,9 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "receiver/interface.hpp"
 #include "source/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/receivers.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ------------------------------------- //
@@ -124,7 +124,9 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
     // Setup dummy sources and receivers for testing
     std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
-    std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers(0);
+    std::vector<std::shared_ptr<
+        specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+        receivers(0);
     std::vector<specfem::wavefield::type> stypes(0);
 
     // Generate compute structs to be used by the solver
