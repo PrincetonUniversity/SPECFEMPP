@@ -12,15 +12,14 @@ namespace specfem::assembly {
  * @tparam WavefieldType Wavefield type.
  */
 template <specfem::wavefield::simulation_field SimulationWavefieldType>
-struct simulation_field<specfem::dimension::type::dim2,
+struct simulation_field<specfem::dimension::type::dim3,
                         SimulationWavefieldType> {
 
 private:
   using IndexViewType =
-      Kokkos::View<int ***, Kokkos::LayoutLeft,
+      Kokkos::View<int ****, Kokkos::LayoutLeft,
                    Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
                                                    ///< store field values
-
   using AssemblyIndexViewType =
       Kokkos::View<int *, Kokkos::DefaultExecutionSpace>; ///< Underlying view
                                                           ///< type to store
@@ -28,7 +27,7 @@ private:
 
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::dimension::type::dim3; ///< Dimension tag
   constexpr static auto simulation_wavefield =
       SimulationWavefieldType; ///< Simulation wavefield type
   /**
@@ -77,12 +76,12 @@ public:
     this->nglob = rhs.nglob;
     this->nspec = rhs.nspec;
     this->ngllz = rhs.ngllz;
+    this->nglly = rhs.nglly;
     this->ngllx = rhs.ngllx;
     this->assembly_index_mapping = rhs.assembly_index_mapping;
     this->h_assembly_index_mapping = rhs.h_assembly_index_mapping;
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                         POROELASTIC, ELASTIC_PSV_T)),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
         CAPTURE(field, (rhs_field, rhs.field)) { _field_ = _rhs_field_; })
   }
 
@@ -94,14 +93,12 @@ public:
    */
   template <specfem::element::medium_tag MediumTag>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                         POROELASTIC, ELASTIC_PSV_T)),
-        CAPTURE(field) {
-          if constexpr (MediumTag == _medium_tag_) {
-            return _field_.nglob;
-          }
-        })
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+                        CAPTURE(field) {
+                          if constexpr (MediumTag == _medium_tag_) {
+                            return _field_.nglob;
+                          }
+                        })
 
     Kokkos::abort("Medium type not supported");
     return 0;
@@ -116,14 +113,12 @@ public:
       constexpr specfem::assembly::fields_impl::field_impl<dimension_tag,
                                                            MediumTag> const &
       get_field() const {
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                         POROELASTIC, ELASTIC_PSV_T)),
-        CAPTURE(field) {
-          if constexpr (MediumTag == _medium_tag_) {
-            return _field_;
-          }
-        })
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+                        CAPTURE(field) {
+                          if constexpr (MediumTag == _medium_tag_) {
+                            return _field_;
+                          }
+                        })
 
     Kokkos::abort("Medium type not supported");
     /// Code path should never be reached
@@ -141,50 +136,43 @@ public:
    */
   template <bool on_device>
   KOKKOS_INLINE_FUNCTION constexpr int
-  get_iglob(const int &ispec, const int &iz, const int &ix,
+  get_iglob(const int &ispec, const int &iz, const int &iy, const int &ix,
             const specfem::element::medium_tag MediumTag) const {
     if constexpr (on_device) {
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                           POROELASTIC, ELASTIC_PSV_T)),
-          CAPTURE(assembly_index_mapping) {
-            if (MediumTag == _medium_tag_) {
-              return _assembly_index_mapping_(index_mapping(ispec, iz, ix));
-            }
-          })
+      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+                          CAPTURE(assembly_index_mapping) {
+                            if (MediumTag == _medium_tag_) {
+                              return _assembly_index_mapping_(
+                                  index_mapping(ispec, iz, iy, ix));
+                            }
+                          })
 
     } else {
-      FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                           POROELASTIC, ELASTIC_PSV_T)),
-          CAPTURE(h_assembly_index_mapping) {
-            if (MediumTag == _medium_tag_) {
-              return _h_assembly_index_mapping_(h_index_mapping(ispec, iz, ix));
-            }
-          })
+      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+                          CAPTURE(h_assembly_index_mapping) {
+                            if (MediumTag == _medium_tag_) {
+                              return _h_assembly_index_mapping_(
+                                  h_index_mapping(ispec, iz, iy, ix));
+                            }
+                          })
     }
-
-    // If we reach here, it means the medium type is not defined in the macro
-    Kokkos::abort("Medium type not defined in the macro");
-
-    return -1;
   }
 
   int nglob = 0; ///< Number of global degrees of freedom
   int nspec;     ///< Number of spectral elements
   int ngllz;     ///< Number of quadrature points in z direction
+  int nglly;     ///< Number of quadrature points in y direction
   int ngllx;     ///< Number of quadrature points in x direction
   IndexViewType index_mapping;
   IndexViewType::HostMirror h_index_mapping;
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      DECLARE(((specfem::assembly::fields_impl::field_impl,
-                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-               field),
-              (AssemblyIndexViewType, assembly_index_mapping),
-              (AssemblyIndexViewType::HostMirror, h_assembly_index_mapping)))
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+                      DECLARE(((specfem::assembly::fields_impl::field_impl,
+                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
+                               field),
+                              (AssemblyIndexViewType, assembly_index_mapping),
+                              (AssemblyIndexViewType::HostMirror,
+                               h_assembly_index_mapping)))
 
   int get_total_degrees_of_freedom();
 
@@ -195,17 +183,16 @@ private:
 
 template <typename SimulationWavefieldType1, typename SimulationWavefieldType2,
           typename std::enable_if_t<((SimulationWavefieldType1::dimension_tag ==
-                                      specfem::dimension::type::dim2) &&
+                                      specfem::dimension::type::dim3) &&
                                      (SimulationWavefieldType2::dimension_tag ==
-                                      specfem::dimension::type::dim2)),
+                                      specfem::dimension::type::dim3)),
                                     int> = 0>
 inline void deep_copy(SimulationWavefieldType1 &dst,
                       const SimulationWavefieldType2 &src) {
   dst.nglob = src.nglob;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
       CAPTURE((src_assembly_index_mapping, src.assembly_index_mapping),
               (dst_assembly_index_mapping, dst.assembly_index_mapping),
               (src_h_assembly_index_mapping, src.h_assembly_index_mapping),
