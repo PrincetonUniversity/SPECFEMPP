@@ -14,6 +14,7 @@ target_link_libraries(
         point
         edge
         specfem::receivers
+        shape_functions
         Kokkos::kokkos
         ${BOOST_LIBS}
 )
