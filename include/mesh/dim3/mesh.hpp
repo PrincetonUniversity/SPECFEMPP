@@ -5,6 +5,7 @@
 #include "boundaries/boundaries.hpp"
 #include "boundaries/free_surface.hpp"
 #include "coloring/coloring.hpp"
+#include "control_nodes/control_nodes.hpp"
 #include "coordinates/coordinates.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "element_types/element_types.hpp"
@@ -92,6 +93,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
 
   // Adjacency
   specfem::mesh::adjacency<dimension> adjacency; ///< Adjacency
+
+  // Control nodes
+  specfem::mesh::control_nodes<dimension> control_nodes; ///< Control nodes
 
   /**
    * @name Constructors
