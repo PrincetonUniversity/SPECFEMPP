@@ -4,11 +4,11 @@
 #include "impl/control_nodes.hpp"
 #include "impl/mesh_to_compute_mapping.hpp"
 #include "impl/points.hpp"
-#include "impl/quadrature.hpp"
 #include "impl/shape_functions.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
+#include "specfem/assembly/mesh/impl/quadrature.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

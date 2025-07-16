@@ -15,7 +15,7 @@ specfem::io::property_reader<InputLibrary>::property_reader(
 
 template <typename InputLibrary>
 void specfem::io::property_reader<InputLibrary>::read(
-    specfem::assembly::assembly &assembly) {
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
   auto &properties = assembly.properties;
 
   typename InputLibrary::File file(input_folder + "/Properties");

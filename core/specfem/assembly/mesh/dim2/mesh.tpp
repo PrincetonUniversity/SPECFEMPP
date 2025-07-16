@@ -271,8 +271,7 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
-        auto shape_functions =
-            specfem::jacobian::define_shape_functions(xi(ix), gamma(iz), ngnod);
+        auto shape_functions = Kokkos::subview(h_shape2D, iz, ix, Kokkos::ALL());
 
         double xcor = 0.0;
         double zcor = 0.0;

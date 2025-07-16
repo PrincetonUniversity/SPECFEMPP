@@ -20,7 +20,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::anisotropic>,
     const ChunkIndexType &chunk_index,
-    const specfem::assembly::assembly &assembly,
+    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
     const specfem::wavefield::type wavefield_type,
     WavefieldViewType wavefield) {
@@ -120,7 +120,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::anisotropic>,
     const ChunkIndexType &chunk_index,
-    const specfem::assembly::assembly &assembly,
+    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
     const specfem::wavefield::type wavefield_type,
     WavefieldViewType wavefield) {

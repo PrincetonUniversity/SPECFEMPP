@@ -21,7 +21,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
 void specfem::kokkos_kernels::impl::compute_source_interaction(
-    specfem::assembly::assembly &assembly, const int &timestep) {
+    specfem::assembly::assembly<DimensionTag> &assembly, const int &timestep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -45,7 +45,7 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
 
   // Some aliases
   const auto &properties = assembly.properties;
-  const auto field = assembly.fields.get_simulation_field<wavefield>();
+  const auto field = assembly.fields.template get_simulation_field<wavefield>();
 
   sources.update_timestep(timestep);
 
