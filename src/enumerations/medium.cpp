@@ -98,3 +98,31 @@ specfem::element::to_string(const specfem::element::boundary_tag &boundary) {
 
   return boundary_string;
 }
+
+specfem::element::medium_tag
+specfem::element::from_string(const std::string &medium_tag) {
+  if (medium_tag == "elastic_psv") {
+    return specfem::element::medium_tag::elastic_psv;
+  } else if (medium_tag == "elastic_sh") {
+    return specfem::element::medium_tag::elastic_sh;
+  } else if (medium_tag == "elastic_psv_t") {
+    return specfem::element::medium_tag::elastic_psv_t;
+  } else if (medium_tag == "acoustic") {
+    return specfem::element::medium_tag::acoustic;
+  } else if (medium_tag == "poroelastic") {
+    return specfem::element::medium_tag::poroelastic;
+  } else if (medium_tag == "electromagnetic_te") {
+    return specfem::element::medium_tag::electromagnetic_te;
+  } else if (medium_tag == "elastic") {
+    return specfem::element::medium_tag::elastic;
+  } else if (medium_tag == "elastic_spin") {
+    return specfem::element::medium_tag::elastic_spin;
+  } else if (medium_tag == "electromagnetic") {
+    return specfem::element::medium_tag::electromagnetic;
+  } else {
+    // If the medium tag is not recognized, throw an error
+    // This is to ensure that the function always returns a valid medium tag
+    // or throws an error if the input is invalid.
+    throw std::runtime_error("Unknown medium tag: " + medium_tag);
+  }
+}

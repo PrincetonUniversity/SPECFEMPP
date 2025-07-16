@@ -221,5 +221,7 @@ using is_electromagnetic = typename std::conditional_t<
      MediumTag == specfem::element::medium_tag::electromagnetic_te),
     std::true_type, std::false_type>::type;
 
+specfem::element::medium_tag from_string(const std::string &medium_tag);
+
 } // namespace element
 } // namespace specfem
