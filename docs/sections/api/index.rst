@@ -18,6 +18,7 @@ New structure
     :glob:
 
     specfem/point/index
+    specfem/receivers/index
 
 
 Old structure
@@ -32,7 +33,6 @@ Old structure
     material/index
     mesh/index
     sources/index
-    receivers/index
     datatypes/index
     assembly/index
     execution/index

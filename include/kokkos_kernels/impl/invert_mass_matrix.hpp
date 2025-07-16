@@ -12,7 +12,8 @@ namespace impl {
 template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
-void invert_mass_matrix(const specfem::assembly::assembly &assembly);
+void invert_mass_matrix(
+    const specfem::assembly::assembly<DimensionTag> &assembly);
 }
 
 } // namespace kokkos_kernels
