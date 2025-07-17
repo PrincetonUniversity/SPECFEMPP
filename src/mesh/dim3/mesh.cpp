@@ -21,9 +21,9 @@ std::string specfem::mesh::mesh<specfem::dimension::type::dim3>::print() const {
   int nglly = this->parameters.nglly;
   int ngllz = this->parameters.ngllz;
 
-  int nacoustic = this->elements_types.nacoustic;
-  int nelastic = this->elements_types.nelastic;
-  int nporoelastic = this->elements_types.nporoelastic;
+  int nacoustic = this->element_types.nacoustic;
+  int nelastic = this->element_types.nelastic;
+  int nporoelastic = this->element_types.nporoelastic;
 
   // Print Mapping parameters
   message << "3D Mesh information :\n"

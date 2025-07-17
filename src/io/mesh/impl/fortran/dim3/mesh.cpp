@@ -24,12 +24,12 @@
 template <specfem::element::medium_tag medium>
 std::string try_print_medium_element(
     const specfem::mesh::element_types<specfem::dimension::type::dim3>
-        &elements_types,
+        &element_types,
     int index) {
 
   std::ostringstream message;
   try {
-    message << elements_types.print<medium>(index);
+    message << element_types.print<medium>(index);
   } catch (std::runtime_error &e) {
     message << e.what();
   } catch (...) {
@@ -241,7 +241,7 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
   try_read_line("read_nporoelastic", stream, &nporoelastic);
 
   // Initialize element types object
-  mesh.elements_types =
+  mesh.element_types =
       specfem::mesh::element_types<specfem::dimension::type::dim3>(
           mesh.parameters.nspec, nacoustic, nelastic, nporoelastic);
 
@@ -250,20 +250,20 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
   try_read_array("read_ispec_type", stream, ispec_type);
 
   // Compute the element arrays
-  mesh.elements_types.set_elements(ispec_type);
+  mesh.element_types.set_elements(ispec_type);
 
 #ifndef NDEBUG
   // Print the element types
-  mpi->cout(mesh.elements_types.print());
-  mpi->cout(mesh.elements_types.print(0));
+  mpi->cout(mesh.element_types.print());
+  mpi->cout(mesh.element_types.print(0));
 
   // Print elements first element of each category
   mpi->cout(try_print_medium_element<specfem::element::medium_tag::acoustic>(
-      mesh.elements_types, 0));
+      mesh.element_types, 0));
   mpi->cout(try_print_medium_element<specfem::element::medium_tag::elastic>(
-      mesh.elements_types, 0));
+      mesh.element_types, 0));
   mpi->cout(try_print_medium_element<specfem::element::medium_tag::poroelastic>(
-      mesh.elements_types, 0));
+      mesh.element_types, 0));
 #endif
 
   // Read test value 9999
@@ -817,6 +817,9 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
   mpi->cout(mesh.print());
 
   stream.close();
+
+  mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim3>(
+      mesh.element_types, mesh.boundaries, mesh.parameters);
 
   return mesh;
 }
