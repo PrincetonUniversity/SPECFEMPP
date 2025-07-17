@@ -59,31 +59,15 @@ bool specfem::assembly::compute_source_array_impl::cosserat_force_source_array(
 
   type_real hlagrange;
 
-  if (el_type != specfem::element::medium_tag::elastic_psv_t) {
-    KOKKOS_ABORT_WITH_LOCATION("Cosserat source array computation not "
-                               "implemented for requested element type.");
-  }
-
-  if (ncomponents != 3) {
-    throw std::runtime_error(
-        "Source array requires 3 components for elastic psv_t medium");
-  }
+  const auto force_vector = cosserat_source->get_force_vector();
 
   // Source array computation
   for (int iz = 0; iz < N; ++iz) {
     for (int ix = 0; ix < N; ++ix) {
       hlagrange = hxi_source(ix) * hgamma_source(iz);
-
-      source_array(0, iz, ix) = cosserat_source->get_f() *
-                                std::sin(Kokkos::numbers::pi_v<type_real> /
-                                         180 * cosserat_source->get_angle()) *
-                                hlagrange;
-      source_array(1, iz, ix) = -1.0 * cosserat_source->get_f() *
-                                std::cos(Kokkos::numbers::pi_v<type_real> /
-                                         180 * cosserat_source->get_angle()) *
-                                hlagrange;
-
-      source_array(2, iz, ix) = cosserat_source->get_fc() * hlagrange;
+      for (int i = 0; i < ncomponents; ++i) {
+        source_array(i, iz, ix) = hlagrange * force_vector(i);
+      }
     }
   }
 
