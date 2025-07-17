@@ -115,13 +115,13 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
             specfem::element::to_string(_medium_tag_));
 
         if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
-          group.createDataset("Potential", field.h_field).write();
-          group.createDataset("PotentialDot", field.h_field_dot).write();
-          group.createDataset("PotentialDotDot", field.h_field_dot_dot).write();
+          group.createDataset("Potential", field.get_host_field()).write();
+          group.createDataset("PotentialDot", field.get_host_field_dot()).write();
+          group.createDataset("PotentialDotDot", field.get_host_field_dot_dot()).write();
         } else {
-          group.createDataset("Displacement", field.h_field).write();
-          group.createDataset("Velocity", field.h_field_dot).write();
-          group.createDataset("Acceleration", field.h_field_dot_dot).write();
+          group.createDataset("Displacement", field.get_host_field()).write();
+          group.createDataset("Velocity", field.get_host_field_dot()).write();
+          group.createDataset("Acceleration", field.get_host_field_dot_dot()).write();
         }
       });
 
