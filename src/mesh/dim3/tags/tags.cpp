@@ -1,14 +1,17 @@
 #include "mesh/dim3/tags/tags.hpp"
 #include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
+#include "mesh/dim3/element_types/element_types.hpp"
 #include <Kokkos_Core.hpp>
 
 specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
-    const specfem::mesh::materials<specfem::dimension::type::dim3> &materials,
-    const specfem::mesh::boundaries<specfem::dimension::type::dim3>
-        &boundaries) {
+    const specfem::mesh::element_types<specfem::dimension::type::dim3>
+        &element_types,
+    const specfem::mesh::boundaries<specfem::dimension::type::dim3> &boundaries,
+    const specfem::mesh::parameters<specfem::dimension::type::dim3>
+        &parameters) {
 
-  this->nspec = materials.nspec;
+  this->nspec = element_types.nspec;
 
   this->tags_container =
       specfem::kokkos::HostView1d<specfem::mesh::impl::tags_container>(
