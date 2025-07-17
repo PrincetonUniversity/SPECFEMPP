@@ -18,7 +18,8 @@ void assign_assembly_index_mapping(
 template <>
 void assign_assembly_index_mapping<specfem::dimension::type::dim2>(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2> &element_types,
+    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+        &element_types,
     Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
         assembly_index_mapping,
     int &nglob, const specfem::element::medium_tag MediumTag) {
@@ -63,7 +64,8 @@ void assign_assembly_index_mapping<specfem::dimension::type::dim2>(
 template <>
 void assign_assembly_index_mapping<specfem::dimension::type::dim3>(
     const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
-    const specfem::assembly::element_types<specfem::dimension::type::dim3> &element_types,
+    const specfem::assembly::element_types<specfem::dimension::type::dim3>
+        &element_types,
     Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
         assembly_index_mapping,
     int &nglob, const specfem::element::medium_tag MediumTag) {
@@ -105,64 +107,80 @@ template <specfem::dimension::type DimensionTag,
 specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
     const int nglob)
     : nglob(nglob),
-      field("specfem::assembly::fields::field", nglob, components),
-      h_field(Kokkos::create_mirror_view(field)),
-      field_dot("specfem::assembly::fields::field_dot", nglob, components),
-      h_field_dot(Kokkos::create_mirror_view(field_dot)),
-      field_dot_dot("specfem::assembly::fields::field_dot_dot", nglob,
-                    components),
-      h_field_dot_dot(Kokkos::create_mirror_view(field_dot_dot)),
-      mass_inverse("specfem::assembly::fields::mass_inverse", nglob,
-                   components),
-      h_mass_inverse(Kokkos::create_mirror_view(mass_inverse)) {}
+      specfem::assembly::fields_impl::field<DimensionTag, MediumTag>(nglob),
+      specfem::assembly::fields_impl::field_dot<DimensionTag, MediumTag>(nglob),
+      specfem::assembly::fields_impl::field_dot_dot<DimensionTag, MediumTag>(
+          nglob),
+      specfem::assembly::fields_impl::mass_inverse<DimensionTag, MediumTag>(
+          nglob) {}
 
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
-specfem::assembly::fields_impl::
-    field_impl<DimensionTag, MediumTag>::field_impl(
-        const specfem::assembly::mesh<dimension_tag> &mesh,
-        const specfem::assembly::element_types<dimension_tag>
-            &element_types,
-        Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
-            assembly_index_mapping) {
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag>
+specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
+    const specfem::assembly::mesh<dimension_tag> &mesh,
+    const specfem::assembly::element_types<dimension_tag> &element_types,
+    Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+        assembly_index_mapping) {
 
-  assign_assembly_index_mapping(mesh, element_types, assembly_index_mapping, nglob,
-                                MediumTag);
+  assign_assembly_index_mapping(mesh, element_types, assembly_index_mapping,
+                                nglob, MediumTag);
 
-  field = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-      "specfem::assembly::fields::field", nglob, components);
-  h_field = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
-      Kokkos::create_mirror_view(field));
-  field_dot = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-      "specfem::assembly::fields::field_dot", nglob, components);
-  h_field_dot = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
-      Kokkos::create_mirror_view(field_dot));
-  field_dot_dot = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-      "specfem::assembly::fields::field_dot_dot", nglob, components);
-  h_field_dot_dot =
-      specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
-          Kokkos::create_mirror_view(field_dot_dot));
-  mass_inverse = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-      "specfem::assembly::fields::mass_inverse", nglob, components);
-  h_mass_inverse = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
-      Kokkos::create_mirror_view(mass_inverse));
+  static_cast<specfem::assembly::fields_impl::field<DimensionTag, MediumTag> &>(
+      *this) =
+      specfem::assembly::fields_impl::field<DimensionTag, MediumTag>(nglob);
+  static_cast<
+      specfem::assembly::fields_impl::field_dot<DimensionTag, MediumTag> &>(
+      *this) =
+      specfem::assembly::fields_impl::field_dot<DimensionTag, MediumTag>(nglob);
+  static_cast<
+      specfem::assembly::fields_impl::field_dot_dot<DimensionTag, MediumTag> &>(
+      *this) =
+      specfem::assembly::fields_impl::field_dot_dot<DimensionTag, MediumTag>(
+          nglob);
+  static_cast<
+      specfem::assembly::fields_impl::mass_inverse<DimensionTag, MediumTag> &>(
+      *this) =
+      specfem::assembly::fields_impl::mass_inverse<DimensionTag, MediumTag>(
+          nglob);
 
-  Kokkos::parallel_for(
-      "specfem::assembly::fields::field_impl::initialize_field",
-      specfem::kokkos::HostRange(0, nglob), [=](const int &iglob) {
-        for (int icomp = 0; icomp < components; ++icomp) {
-          h_field(iglob, icomp) = 0.0;
-          h_field_dot(iglob, icomp) = 0.0;
-          h_field_dot_dot(iglob, icomp) = 0.0;
-          h_mass_inverse(iglob, icomp) = 0.0;
-        }
-      });
+  // field = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
+  //     "specfem::assembly::fields::field", nglob, components);
+  // h_field = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
+  //     Kokkos::create_mirror_view(field));
+  // field_dot = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
+  //     "specfem::assembly::fields::field_dot", nglob, components);
+  // h_field_dot = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
+  //     Kokkos::create_mirror_view(field_dot));
+  // field_dot_dot = specfem::kokkos::DeviceView2d<type_real,
+  // Kokkos::LayoutLeft>(
+  //     "specfem::assembly::fields::field_dot_dot", nglob, components);
+  // h_field_dot_dot =
+  //     specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
+  //         Kokkos::create_mirror_view(field_dot_dot));
+  // mass_inverse = specfem::kokkos::DeviceView2d<type_real,
+  // Kokkos::LayoutLeft>(
+  //     "specfem::assembly::fields::mass_inverse", nglob, components);
+  // h_mass_inverse = specfem::kokkos::HostMirror2d<type_real,
+  // Kokkos::LayoutLeft>(
+  //     Kokkos::create_mirror_view(mass_inverse));
 
-  Kokkos::fence();
+  // Kokkos::parallel_for(
+  //     "specfem::assembly::fields::field_impl::initialize_field",
+  //     specfem::kokkos::HostRange(0, nglob), [=](const int &iglob) {
+  //       for (int icomp = 0; icomp < components; ++icomp) {
+  //         h_field(iglob, icomp) = 0.0;
+  //         h_field_dot(iglob, icomp) = 0.0;
+  //         h_field_dot_dot(iglob, icomp) = 0.0;
+  //         h_mass_inverse(iglob, icomp) = 0.0;
+  //       }
+  //     });
 
-  Kokkos::deep_copy(field, h_field);
-  Kokkos::deep_copy(field_dot, h_field_dot);
-  Kokkos::deep_copy(field_dot_dot, h_field_dot_dot);
-  Kokkos::deep_copy(mass_inverse, h_mass_inverse);
+  // Kokkos::fence();
+
+  // Kokkos::deep_copy(field, h_field);
+  // Kokkos::deep_copy(field_dot, h_field_dot);
+  // Kokkos::deep_copy(field_dot_dot, h_field_dot_dot);
+  // Kokkos::deep_copy(mass_inverse, h_mass_inverse);
 
   return;
 }
@@ -172,13 +190,16 @@ template <specfem::dimension::type DimensionTag,
 template <specfem::sync::kind sync>
 void specfem::assembly::fields_impl::field_impl<
     DimensionTag, MediumTag>::sync_fields() const {
-  if constexpr (sync == specfem::sync::kind::DeviceToHost) {
-    Kokkos::deep_copy(h_field, field);
-    Kokkos::deep_copy(h_field_dot, field_dot);
-    Kokkos::deep_copy(h_field_dot_dot, field_dot_dot);
-  } else if constexpr (sync == specfem::sync::kind::HostToDevice) {
-    Kokkos::deep_copy(field, h_field);
-    Kokkos::deep_copy(field_dot, h_field_dot);
-    Kokkos::deep_copy(field_dot_dot, h_field_dot_dot);
-  }
+  static_cast<
+      const specfem::assembly::fields_impl::field<DimensionTag, MediumTag> &>(
+      *this)
+      .template sync<sync>();
+  static_cast<const specfem::assembly::fields_impl::field_dot<DimensionTag,
+                                                             MediumTag> &>(
+      *this)
+      .template sync<sync>();
+  static_cast<const specfem::assembly::fields_impl::field_dot_dot<DimensionTag,
+                                                                 MediumTag> &>(
+      *this)
+      .template sync<sync>();
 }
