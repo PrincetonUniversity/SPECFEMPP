@@ -3,8 +3,8 @@
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "source.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/source/vector_source.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -17,7 +17,7 @@ namespace sources {
  * @brief Collocated force source
  *
  */
-class cosserat_force : public source {
+class cosserat_force : public vector_source {
 
 public:
   /**
@@ -42,8 +42,7 @@ public:
           }
         }(Node)),
         f(Node["f"].as<type_real>()), fc(Node["fc"].as<type_real>()),
-        wavefield_type(wavefield_type),
-        specfem::sources::source(Node, nsteps, dt) {};
+        wavefield_type(wavefield_type), vector_source(Node, nsteps, dt) {};
 
   type_real get_angle() const { return angle; }
   type_real get_f() const { return f; }
@@ -64,7 +63,7 @@ public:
       std::unique_ptr<specfem::forcing_function::stf> forcing_function,
       const specfem::wavefield::simulation_field wavefield_type)
       : f(f), fc(fc), angle(angle), wavefield_type(wavefield_type),
-        specfem::sources::source(x, z, std::move(forcing_function)) {};
+        vector_source(x, z, std::move(forcing_function)) {};
   /**
    * @brief User output
    *
@@ -79,21 +78,12 @@ public:
   bool operator!=(const specfem::sources::source &other) const override;
 
   /**
-   * @brief Get the source type
-   *
-   * @return source_type type of source
-   */
-  source_type get_source_type() const override {
-    return source_type::cosserat_force_source;
-  }
-
-  /**
    * @brief Get the force vector
    *
    * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
    * Force vector
    */
-  specfem::kokkos::HostView1d<type_real> get_force_vector() const;
+  specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
 
 private:
   type_real angle; ///< Angle of the elastic force source

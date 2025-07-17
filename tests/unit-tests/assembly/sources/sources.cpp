@@ -223,8 +223,7 @@ void check_assembly_source_construction(
         "source_array", components, assembly.mesh.ngllz, assembly.mesh.ngllx);
 
     specfem::assembly::compute_source_array(
-        source, assembly.mesh, assembly.jacobian_matrix, assembly.element_types,
-        source_array);
+        source, assembly.mesh, assembly.jacobian_matrix, source_array);
     Kokkos::View<type_real **, Kokkos::DefaultHostExecutionSpace> stf(
         "stf", 1, components);
 
