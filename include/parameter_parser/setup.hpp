@@ -246,6 +246,8 @@ public:
 
   int get_nsteps() const { return this->time_scheme->get_nsteps(); }
 
+  bool write_wavefield() const { return this->wavefield != nullptr; }
+
 private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
                                                                   ///< to header

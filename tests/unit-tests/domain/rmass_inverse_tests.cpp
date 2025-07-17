@@ -128,9 +128,9 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     std::vector<specfem::wavefield::type> stypes(0);
 
     // Generate compute structs to be used by the solver
-    specfem::assembly::assembly assembly(mesh, quadratures, sources, receivers,
-                                         stypes, 0, 0, 0, 0, 1,
-                                         setup.get_simulation_type(), nullptr);
+    specfem::assembly::assembly assembly(
+        mesh, quadratures, sources, receivers, stypes, 0, 0, 0, 0, 1,
+        setup.get_simulation_type(), false, nullptr);
 
     try {
 
