@@ -1,5 +1,3 @@
-#include "../Kokkos_Environment.hpp"
-#include "../MPI_environment.hpp"
 #include "io/interface.hpp"
 #include "medium/material.hpp"
 #include "mesh/mesh.hpp"
@@ -142,7 +140,7 @@ test_config parse_test_config(std::string config_filename) {
  * This test should be run on single and multiple nodes
  *
  */
-TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
+TEST(SOURCES, compute_source_locations) {
   std::string config_filename = "source/test_config.yml";
 
   //  alias the mpi environment pointer

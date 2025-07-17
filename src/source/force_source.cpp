@@ -1,11 +1,62 @@
 #include "source/force_source.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "globals.h"
 #include "source_time_function/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
+
+specfem::kokkos::HostView1d<type_real>
+specfem::sources::force::get_force_vector() const {
+
+  // Get the medium tag that the source is located in
+  specfem::element::medium_tag medium_tag = this->get_medium_tag();
+
+  // Declare the force vector
+  specfem::kokkos::HostView1d<type_real> force_vector;
+
+  // Convert angle to radians
+  type_real angle_in_rad = this->angle * Kokkos::numbers::pi_v<type_real> /
+                           static_cast<type_real>(180.0);
+
+  // Acoustic
+  if (medium_tag == specfem::element::medium_tag::acoustic) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 1);
+    force_vector(0) = 1.0;
+  }
+  // Elastic SH
+  else if (medium_tag == specfem::element::medium_tag::elastic_sh) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 1);
+    force_vector(0) = 1.0;
+  }
+  // Elastic P-SV
+  else if (medium_tag == specfem::element::medium_tag::elastic_psv) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 2);
+    force_vector(0) = std::sin(angle_in_rad);
+    force_vector(1) = static_cast<type_real>(-1.0) * std::cos(angle_in_rad);
+  }
+  // Poroelastic
+  else if (medium_tag == specfem::element::medium_tag::poroelastic) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 4);
+    force_vector(0) = std::sin(angle_in_rad);
+    force_vector(1) = static_cast<type_real>(-1.0) * std::cos(angle_in_rad);
+    force_vector(2) = std::sin(angle_in_rad);
+    force_vector(3) = static_cast<type_real>(-1.0) * std::cos(angle_in_rad);
+  }
+  // Elastic P-SV-T
+  else if (medium_tag == specfem::element::medium_tag::elastic_psv_t) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 3);
+    force_vector(0) = std::sin(angle_in_rad);
+    force_vector(1) = static_cast<type_real>(-1.0) * std::cos(angle_in_rad);
+    force_vector(2) = static_cast<type_real>(0.0);
+  } else {
+    KOKKOS_ABORT_WITH_LOCATION("Force source array computation not "
+                               "implemented for requested element type.");
+  }
+
+  return force_vector;
+}
 
 std::string specfem::sources::force::print() const {
 
