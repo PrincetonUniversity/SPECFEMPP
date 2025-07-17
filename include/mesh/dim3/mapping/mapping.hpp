@@ -19,7 +19,8 @@ template <> struct mapping<specfem::dimension::type::dim3> {
 
   using UniqueViewInt = Kokkos::View<int *, Kokkos::HostSpace>;
   using UniqueViewBool = Kokkos::View<bool *, Kokkos::HostSpace>;
-  using LocalViewInt = Kokkos::View<int ****, Kokkos::HostSpace>;
+  using LocalViewInt =
+      Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::HostSpace>;
 
   // Parameters needed for ibool mapping
   int nspec;           ///< Number of spectral elements

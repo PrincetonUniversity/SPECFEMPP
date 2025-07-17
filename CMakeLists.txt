@@ -325,7 +325,7 @@ if (NOT HDF5_CXX_BUILD)
         io
         mesh
         source_class
-        receiver_class
+        specfem::receivers
         yaml-cpp
         ${BOOST_LIBS}
         Kokkos::kokkos)
@@ -334,7 +334,7 @@ else()
         io
         mesh
         source_class
-        receiver_class
+        specfem::receivers
         Kokkos::kokkos
         yaml-cpp
         ${BOOST_LIBS}
@@ -416,7 +416,7 @@ add_library(
         src/mesh/dim3/materials/materials.cpp
         src/mesh/dim3/coordinates/coordinates.cpp
         src/mesh/dim3/jacobian_matrix/jacobian_matrix.cpp
-
+        src/mesh/dim3/control_nodes/control_nodes.cpp
 )
 
 target_link_libraries(
@@ -431,7 +431,6 @@ target_link_libraries(
 
 add_library(
         jacobian
-        src/jacobian/shape_functions.cpp
         src/jacobian/jacobian.cpp
 )
 
@@ -439,6 +438,7 @@ target_link_libraries(
         jacobian
         Kokkos::kokkos
         point
+        shape_functions
 )
 
 add_library(
@@ -532,20 +532,6 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
-add_library(
-        receiver_class
-        src/receiver/receiver.cpp
-)
-
-target_link_libraries(
-        receiver_class
-        specfem_mpi
-        Kokkos::kokkos
-        # utilities
-        quadrature
-        yaml-cpp
-        ${BOOST_LIBS}
-)
 
 add_library(coupled_interface
         src/coupled_interface/coupled_interface.cpp
@@ -612,7 +598,7 @@ add_library(
 target_link_libraries(
         writer
         assembly
-        receiver_class
+        specfem::receivers
         io
         utilities
 )
@@ -677,7 +663,7 @@ target_link_libraries(
         parameter_reader
         quadrature
         timescheme
-        receiver_class
+        specfem::receivers
         yaml-cpp
         periodic_tasks
         writer
@@ -701,7 +687,7 @@ target_link_libraries(
         assembly
         source_class
         parameter_reader
-        receiver_class
+        specfem::receivers
         writer
         periodic_tasks
         reader
@@ -736,7 +722,7 @@ target_link_libraries(
         assembly
         source_class
         parameter_reader
-        receiver_class
+        specfem::receivers
         writer
         periodic_tasks
         reader
