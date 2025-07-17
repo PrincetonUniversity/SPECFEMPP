@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source.hpp"
@@ -86,6 +86,14 @@ public:
   source_type get_source_type() const override {
     return source_type::cosserat_force_source;
   }
+
+  /**
+   * @brief Get the force vector
+   *
+   * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * Force vector
+   */
+  specfem::kokkos::HostView1d<type_real> get_force_vector() const;
 
 private:
   type_real angle; ///< Angle of the elastic force source

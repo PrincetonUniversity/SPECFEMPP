@@ -42,11 +42,11 @@ public:
                                                        ///< Kokkos format
 };
 
-type_real sqrt2over2 = std::sqrt(2.0) / 2.0;
-
 // Vector of pairs of force parameters and corresponding vector force solutions
 std::vector<std::tuple<force_parameters, force_solution> >
 get_parameters_and_solutions() {
+  type_real sqrt2over2 = std::sqrt(2.0) / 2.0;
+
   return std::vector<std::tuple<force_parameters, force_solution> >{
     // Test elastic PSV source at origin with zero angle
     std::make_tuple(
