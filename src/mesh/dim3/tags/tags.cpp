@@ -2,6 +2,7 @@
 #include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/dim3/element_types/element_types.hpp"
+#include "mesh/dim3/parameters/parameters.hpp"
 #include <Kokkos_Core.hpp>
 
 specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
@@ -20,35 +21,33 @@ specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
   std::vector<specfem::element::boundary_tag_container> boundary_tag(
       this->nspec);
 
-  // const auto &absorbing_boundary = boundaries.absorbing_boundary;
-  // for (int i = 0; i < absorbing_boundary.nelements; ++i) {
-  //   const int ispec = absorbing_boundary.index_mapping(i);
-  //   boundary_tag[ispec] += specfem::element::boundary_tag::stacey;
-  // }
+  const auto &absorbing_boundary = boundaries.absorbing_boundary;
+  for (int i = 0; i < absorbing_boundary.num_abs_boundary_faces; ++i) {
+    const int ispec = absorbing_boundary.ispec(i);
+    boundary_tag[ispec] += specfem::element::boundary_tag::stacey;
+  }
 
-  // const auto &acoustic_free_surface = boundaries.acoustic_free_surface;
-  // for (int i = 0; i < acoustic_free_surface.nelem_acoustic_surface; ++i) {
-  //   const int ispec = acoustic_free_surface.index_mapping(i);
-  //   const auto &material_specification =
-  //       materials.material_index_mapping(ispec);
-  //   if (material_specification.type !=
-  //   specfem::element::medium_tag::acoustic) {
-  //     throw std::invalid_argument(
-  //         "Error: Acoustic free surface boundary is not an acoustic
-  //         element");
-  //   }
-  //   boundary_tag[ispec] +=
-  //       specfem::element::boundary_tag::acoustic_free_surface;
-  // }
+  const auto &free_surface = boundaries.free_surface;
+  for (int i = 0; i < free_surface.nelements; ++i) {
+    const int ispec = free_surface.ispec(i);
+    if (element_types.ispec_type(ispec) !=
+        specfem::element::medium_tag::acoustic) {
+      throw std::invalid_argument(
+          "Error: Acoustic free surface boundary is not an acoustic element");
+    }
+    boundary_tag[ispec] +=
+        specfem::element::boundary_tag::acoustic_free_surface;
+  }
 
-  // for (int ispec = 0; ispec < nspec; ispec++) {
-  //   const auto &material_specification =
-  //       materials.material_index_mapping(ispec);
-  //   const auto medium_tag = material_specification.type;
-  //   const auto property_tag = material_specification.property;
-
-  //   this->tags_container(ispec).medium_tag = medium_tag;
-  //   this->tags_container(ispec).property_tag = property_tag;
-  //   this->tags_container(ispec).boundary_tag = boundary_tag[ispec].get_tag();
-  // }
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    this->tags_container(ispec).medium_tag = element_types.ispec_type(ispec);
+    if (parameters.anisotropy) {
+      this->tags_container(ispec).property_tag =
+          specfem::element::property_tag::anisotropic;
+    } else {
+      this->tags_container(ispec).property_tag =
+          specfem::element::property_tag::isotropic;
+    }
+    this->tags_container(ispec).boundary_tag = boundary_tag[ispec].get_tag();
+  }
 }
