@@ -2,8 +2,8 @@
 #include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
 #include "io/interface.hpp"
-#include "source/interface.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>

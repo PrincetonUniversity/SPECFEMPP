@@ -1,10 +1,10 @@
 #pragma once
 
 #include "kokkos_abstractions.h"
-#include "source/source.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem::assembly::compute_source_array_impl {

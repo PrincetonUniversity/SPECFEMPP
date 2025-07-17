@@ -5,9 +5,9 @@
 #include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/quadratures.hpp"
-#include "source/source.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/receivers.hpp"
+#include "specfem/source.hpp"
 #include "utilities/strings.hpp"
 #include <gtest/gtest.h>
 #include <iostream>

@@ -3,8 +3,8 @@
 #include "compute_source_array.hpp"
 #include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
-#include "source/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 
 template <>

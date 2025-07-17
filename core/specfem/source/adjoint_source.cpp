@@ -1,4 +1,4 @@
-#include "source/adjoint_source.hpp"
+#include "specfem/source/adjoint_source.hpp"
 #include "algorithms/locate_point.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
