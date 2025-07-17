@@ -1,5 +1,5 @@
+#include "specfem/source.hpp"
 #include "kokkos_abstractions.h"
-#include "source/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <cmath>

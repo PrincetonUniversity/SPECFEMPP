@@ -3,10 +3,10 @@
 #include "../impl/source_medium.tpp"
 #include "enumerations/accessor.hpp"
 #include "enumerations/interface.hpp"
-#include "source/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/source.hpp"
 
 #include <Kokkos_Core.hpp>
 

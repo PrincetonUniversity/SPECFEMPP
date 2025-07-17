@@ -1,8 +1,8 @@
 #include "io/interface.hpp"
 #include "medium/material.hpp"
 #include "mesh/mesh.hpp"
-#include "source/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <stdexcept>
