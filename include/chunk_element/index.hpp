@@ -2,6 +2,7 @@
 
 #include "enumerations/interface.hpp"
 #include "execution/chunked_domain_iterator.hpp"
+#include "specfem/data_access.hpp"
 
 namespace specfem {
 namespace chunk_element {
@@ -11,19 +12,20 @@ template <specfem::dimension::type DimensionTag, typename SIMD,
 class Index
     : public specfem::execution::ChunkElementIndex<DimensionTag, SIMD, ViewType,
                                                    TeamMemberType>,
-      public specfem::accessor::Accessor<specfem::accessor::type::chunk_element,
-                                         specfem::data_class::type::index,
-                                         DimensionTag, SIMD::value> {
+      public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::chunk_element,
+          specfem::data_access::DataClassType::index, DimensionTag,
+          SIMD::value> {
 private:
   using base_type =
       specfem::execution::ChunkElementIndex<DimensionTag, SIMD, ViewType,
                                             TeamMemberType>; ///< Base type of
                                                              ///< the chunk
                                                              ///< element index
-  using accessor_type =
-      specfem::accessor::Accessor<specfem::accessor::type::chunk_element,
-                                  specfem::data_class::type::index,
-                                  DimensionTag, SIMD::value>; ///< Accessor type
+  using accessor_type = specfem::data_access::Accessor<
+      specfem::data_access::AccessorType::chunk_element,
+      specfem::data_access::DataClassType::index, DimensionTag,
+      SIMD::value>; ///< Accessor type
 public:
   using iterator_type = typename base_type::iterator_type;
 
