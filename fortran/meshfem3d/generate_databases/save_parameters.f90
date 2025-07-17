@@ -14,7 +14,8 @@ subroutine save_parameters()
     ANISOTROPY, &
     STACEY_ABSORBING_CONDITIONS, PML_CONDITIONS, APPROXIMATE_OCEAN_LOAD, &
     USE_MESH_COLORING_GPU, &
-    num_interfaces_ext_mesh, max_nibool_interfaces_ext_mesh
+    num_interfaces_ext_mesh, max_nibool_interfaces_ext_mesh, &
+    NGNOD, nnodes_ext_mesh
 
   use create_regions_mesh_ext_par, only: NSPEC_PORO, &
     NGLOB_OCEAN, nspec_irregular, &
@@ -71,6 +72,7 @@ subroutine save_parameters()
       WRITE(IOUT) NGLLY
       WRITE(IOUT) NGLLZ
       WRITE(IOUT) NGLLSQUARE
+      WRITE(IOUT) NGNOD
       WRITE(IOUT) sizeprocs
 
       ! Write test parameter
@@ -93,6 +95,7 @@ subroutine save_parameters()
       WRITE(IOUT) nspec2D_ymin
       WRITE(IOUT) nspec2D_ymax
       WRITE(IOUT) nspec_irregular
+      WRITE(IOUT) nnodes_ext_mesh
 
       ! Write test parameter
       itest = 9995

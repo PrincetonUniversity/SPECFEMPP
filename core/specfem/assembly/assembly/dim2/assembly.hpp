@@ -3,7 +3,6 @@
 #include "enumerations/interface.hpp"
 #include "io/reader.hpp"
 #include "mesh/mesh.hpp"
-#include "receiver/interface.hpp"
 #include "source/interface.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
@@ -16,6 +15,7 @@
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
+#include "specfem/receivers.hpp"
 
 /**
  * @brief Assembly namespace defines data structures used to store data related
@@ -90,7 +90,8 @@ template <> struct assembly<specfem::dimension::type::dim2> {
   assembly(const specfem::mesh::mesh<dimension_tag> &mesh,
            const specfem::quadrature::quadratures &quadratures,
            std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-           const std::vector<std::shared_ptr<specfem::receivers::receiver> >
+           const std::vector<
+               std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
                &receivers,
            const std::vector<specfem::wavefield::type> &stypes,
            const type_real t0, const type_real dt, const int max_timesteps,
