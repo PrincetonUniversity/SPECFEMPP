@@ -3,7 +3,9 @@
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 
-void test_check_jacobian(const specfem::assembly::assembly &assembly) {
+void test_check_jacobian(
+    const specfem::assembly::assembly<specfem::dimension::type::dim2>
+        &assembly) {
 
   const auto nspec = assembly.mesh.nspec;
 
@@ -17,13 +19,14 @@ void test_check_jacobian(const specfem::assembly::assembly &assembly) {
   specfem::assembly::store_on_host(index, assembly.jacobian_matrix,
                                    jacobian_matrix);
 
-  assembly.check_small_jacobian();
+  assembly.check_jacobian_matrix();
 }
 
 TEST_F(ASSEMBLY, CheckJacobian) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    specfem::assembly::assembly assembly = std::get<5>(parameters);
+    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
+        std::get<5>(parameters);
 
     bool exception_thrown = false;
     try {

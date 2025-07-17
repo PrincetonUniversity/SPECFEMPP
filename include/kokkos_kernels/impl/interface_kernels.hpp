@@ -20,7 +20,7 @@ template <specfem::wavefield::simulation_field WavefieldType,
 class interface_kernels<WavefieldType, DimensionTag,
                         specfem::element::medium_tag::elastic_psv> {
 public:
-  interface_kernels(const specfem::assembly::assembly &assembly)
+  interface_kernels(const specfem::assembly::assembly<DimensionTag> &assembly)
       : elastic_acoustic_interface(assembly) {}
 
   inline void compute_coupling() {
@@ -39,7 +39,7 @@ template <specfem::wavefield::simulation_field WavefieldType,
 class interface_kernels<WavefieldType, DimensionTag,
                         specfem::element::medium_tag::acoustic> {
 public:
-  interface_kernels(const specfem::assembly::assembly &assembly)
+  interface_kernels(const specfem::assembly::assembly<DimensionTag> &assembly)
       : acoustic_elastic_interface(assembly) {}
 
   inline void compute_coupling() {

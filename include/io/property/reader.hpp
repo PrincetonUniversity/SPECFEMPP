@@ -32,7 +32,8 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void read(specfem::assembly::assembly &assembly) override;
+  void read(specfem::assembly::assembly<specfem::dimension::type::dim2>
+                &assembly) override;
 
 private:
   std::string input_folder; ///< Path to output folder
