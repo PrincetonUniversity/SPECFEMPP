@@ -36,8 +36,18 @@ public:
    */
   specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
 
+  /**
+   * @brief Get the list of supported media for this source type
+   *
+   * @return std::vector<specfem::element::medium_tag> list of supported media
+   */
+  std::vector<specfem::element::medium_tag>
+  get_supported_media() const override;
+
 private:
   specfem::wavefield::simulation_field wavefield_type;
+  const static std::string name;
+  const static std::vector<specfem::element::medium_tag> supported_media;
 };
 } // namespace sources
 } // namespace specfem

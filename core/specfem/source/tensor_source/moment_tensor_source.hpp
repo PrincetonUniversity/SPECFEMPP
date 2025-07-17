@@ -100,6 +100,14 @@ public:
    */
   specfem::kokkos::HostView2d<type_real> get_source_tensor() const override;
 
+  /**
+   * @brief Get the list of supported media for this source type
+   *
+   * @return std::vector<specfem::element::medium_tag> list of supported media
+   */
+  std::vector<specfem::element::medium_tag>
+  get_supported_media() const override;
+
 private:
   type_real Mxx;                                       ///< Mxx for the source
   type_real Mxz;                                       ///< Mxz for the source
@@ -107,6 +115,9 @@ private:
   specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
                                                        ///< which the source
                                                        ///< acts
+
+protected:
+  const static std::string name;
 };
 } // namespace sources
 } // namespace specfem

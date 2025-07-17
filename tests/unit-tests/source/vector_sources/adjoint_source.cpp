@@ -96,7 +96,6 @@ TEST(SOURCES, adjoint_source_vector) {
                                                             1.0, false),
         "STA", "NET");
 
-    // Set the medium tag
     adjoint_source.set_medium_tag(params.medium_tag);
 
     // Compare x and z (this is just reassignment, no computation)
