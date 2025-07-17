@@ -32,7 +32,8 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void write(specfem::assembly::assembly &assembly) override;
+  void write(specfem::assembly::assembly<specfem::dimension::type::dim2>
+                 &assembly) override;
 
 private:
   std::string output_folder; ///< Path to output folder

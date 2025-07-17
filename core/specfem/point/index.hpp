@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {
@@ -33,8 +34,9 @@ using simd_index = index<DimensionTag, true>;
  */
 template <>
 struct index<specfem::dimension::type::dim2, false>
-    : public specfem::accessor::Accessor<
-          specfem::accessor::type::point, specfem::data_class::type::index,
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::index,
           specfem::dimension::type::dim2, false> {
   int ispec; ///< Index of the spectral element
   int iz;    ///< Index of the quadrature point in the z direction within the
@@ -71,9 +73,10 @@ struct index<specfem::dimension::type::dim2, false>
  */
 template <>
 struct index<specfem::dimension::type::dim2, true>
-    : public specfem::accessor::Accessor<specfem::accessor::type::point,
-                                         specfem::data_class::type::index,
-                                         specfem::dimension::type::dim2, true> {
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::index,
+          specfem::dimension::type::dim2, true> {
   int ispec; ///< Index associated with the spectral element at the start
              ///< of the SIMD vector
   int number_elements; ///< Number of elements stored in the SIMD vector
@@ -126,8 +129,9 @@ struct index<specfem::dimension::type::dim2, true>
  */
 template <>
 struct index<specfem::dimension::type::dim3, false>
-    : public specfem::accessor::Accessor<
-          specfem::accessor::type::point, specfem::data_class::type::index,
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::index,
           specfem::dimension::type::dim3, false> {
   int ispec; ///< Index of the spectral element
   int iz;    ///< Index of the quadrature point in the z direction within the
@@ -169,9 +173,10 @@ struct index<specfem::dimension::type::dim3, false>
  */
 template <>
 struct index<specfem::dimension::type::dim3, true>
-    : public specfem::accessor::Accessor<specfem::accessor::type::point,
-                                         specfem::data_class::type::index,
-                                         specfem::dimension::type::dim3, true> {
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::index,
+          specfem::dimension::type::dim3, true> {
   int ispec; ///< Index associated with the spectral element at the start
              ///< of the SIMD vector
   int number_elements; ///< Number of elements stored in the SIMD vector

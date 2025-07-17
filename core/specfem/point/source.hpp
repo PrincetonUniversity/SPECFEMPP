@@ -2,6 +2,7 @@
 
 #include "enumerations/interface.hpp"
 #include "field.hpp"
+#include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -18,15 +19,15 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::wavefield::simulation_field WavefieldType>
 struct source
-    : public specfem::accessor::Accessor<specfem::accessor::type::point,
-                                         specfem::data_class::type::source,
-                                         DimensionTag, false> {
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::source, DimensionTag, false> {
 private:
-  using base_type =
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::source,
-                                  DimensionTag, false>; ///< Base type for the
-                                                        ///< source
+  using base_type = specfem::data_access::Accessor<
+      specfem::data_access::AccessorType::point,
+      specfem::data_access::DataClassType::source, DimensionTag,
+      false>; ///< Base type for the
+              ///< source
 public:
   constexpr static auto medium_tag = MediumTag; ///< Medium tag of the spectral
                                                 ///< element
