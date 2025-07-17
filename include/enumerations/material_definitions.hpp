@@ -25,7 +25,7 @@
   (4, specfem::element::medium_tag::poroelastic, poroelastic)
 #define MEDIUM_TAG_ELECTROMAGNETIC_TE                                          \
   (5, specfem::element::medium_tag::electromagnetic_te, electromagnetic_te)
-#define MEDIUM_TAG_ELASTIC (0, specfem::element::medium_tag::elastic, elastic)
+#define MEDIUM_TAG_ELASTIC (6, specfem::element::medium_tag::elastic, elastic)
 
 #define PROPERTY_TAG_ISOTROPIC                                                 \
   (0, specfem::element::property_tag::isotropic, isotropic)
