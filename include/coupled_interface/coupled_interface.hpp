@@ -1,8 +1,8 @@
 #pragma once
 
+#include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace coupled_interface {
@@ -74,8 +74,7 @@ public:
       SelfMedium; ///< Medium of the primary domain.
   constexpr static auto coupled_medium =
       CoupledMedium; ///< Medium of the coupled domain.
-  constexpr static auto dimension_tag =
-      DimensionTag; ///< Dimension of the element.
+  constexpr static auto dimension = DimensionTag; ///< Dimension of the element.
   constexpr static auto wavefield = WavefieldType; ///< Wavefield type.
 
   static_assert(SelfMedium != CoupledMedium,
@@ -96,9 +95,7 @@ public:
    *
    * @param assembly Assembly object containing the mesh information.
    */
-  coupled_interface(
-      const specfem::assembly::assembly<specfem::dimension::type::dim2>
-          &assembly);
+  coupled_interface(const specfem::compute::assembly &assembly);
   ///@}
 
   /**
@@ -109,12 +106,10 @@ public:
 private:
   int nedges;  ///< Number of edges in the interface.
   int npoints; ///< Number of quadrature points in the interface.
-  specfem::assembly::interface_container<dimension_tag, SelfMedium,
-                                         CoupledMedium>
+  specfem::compute::interface_container<SelfMedium, CoupledMedium>
       interface_data; ///< Struct containing the coupling information.
-  specfem::assembly::simulation_field<dimension_tag, WavefieldType>
-      field; ///< Wavefield
-             ///< object.
+  specfem::compute::simulation_field<WavefieldType> field; ///< Wavefield
+                                                           ///< object.
 };
 } // namespace coupled_interface
 } // namespace specfem

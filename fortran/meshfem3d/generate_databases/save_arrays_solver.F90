@@ -29,58 +29,6 @@ module save_arrays_module
   implicit none
   contains
 
-  subroutine save_control_nodes_indexing(nspec, indices)
-
-    use constants, only: IOUT, CUSTOM_REAL
-    use generate_databases_par, only: NGNOD
-
-    implicit none
-
-    integer, intent(in) :: nspec
-    integer, dimension(:, :), intent(in) :: indices
-    integer :: ispec
-
-    ! Check if the size of the indices array is correct
-    if (size(indices, 1) /= NGNOD .or. size(indices, 2) /= nspec) then
-      write(*,*) 'Error: size of the indices array is not correct'
-      stop
-    endif
-
-    ! Save the indices array element by element
-    do ispec = 1, nspec
-      write(IOUT) indices(:, ispec)
-    end do
-
-  end subroutine save_control_nodes_indexing
-
-  subroutine save_control_nodes_array(nnodes, array)
-
-    use constants, only: IOUT, CUSTOM_REAL
-    use generate_databases_par, only: NGNOD
-
-    implicit none
-
-    integer, intent(in) :: nnodes
-    integer :: i
-    double precision, dimension(:, :), intent(in) :: array
-    real(kind=CUSTOM_REAL), dimension(:), allocatable :: array_real
-
-    ! Allocate the real array with the correct size
-    allocate(array_real(3))
-    ! Check if the size of the array is correct
-    if (size(array, 1) /= 3 .or. size(array, 2) /= nnodes) then
-      write(*,*) 'Error: size of the array is not correct'
-      stop
-    endif
-
-    ! Save the array node by node
-    do i = 1, nnodes
-      ! Convert the double precision array to real kind
-      write(IOUT) real(array(:, i), kind=CUSTOM_REAL)
-    end do
-
-  end subroutine save_control_nodes_array
-
   subroutine save_global_arrays(nspec, array)
 
     use constants, only: IOUT, CUSTOM_REAL
@@ -382,15 +330,13 @@ end module save_arrays_module
     print_ibool_element, &
     print_unique_at_ispec, &
     print_global_array, &
-    print_ijk, &
-    save_control_nodes_indexing, &
-    save_control_nodes_array
+    print_ijk
 
   use shared_parameters, only: ACOUSTIC_SIMULATION, ELASTIC_SIMULATION, POROELASTIC_SIMULATION, &
     APPROXIMATE_OCEAN_LOAD, SAVE_MESH_FILES, ANISOTROPY
 
   use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE
-  use generate_databases_par, only: MESH_A_CHUNK_OF_THE_EARTH,NGNOD
+  use generate_databases_par, only: MESH_A_CHUNK_OF_THE_EARTH
 
   ! global indices
   use generate_databases_par, only: nspec => NSPEC_AB, ibool
@@ -412,8 +358,7 @@ end module save_arrays_module
     d_store_x,d_store_y,d_store_z,k_store_x,k_store_y,k_store_z, &
     alpha_store_x,alpha_store_y,alpha_store_z, &
     nglob_interface_PML_acoustic,points_interface_PML_acoustic, &
-    nglob_interface_PML_elastic,points_interface_PML_elastic, nnodes_ext_mesh, &
-    nodes_coords_ext_mesh,elmnts_ext_mesh
+    nglob_interface_PML_elastic,points_interface_PML_elastic
 
   ! mesh surface
   use generate_databases_par, only: ispec_is_surface_external_mesh,iglob_is_surface_external_mesh, &
@@ -484,7 +429,6 @@ end module save_arrays_module
 
   write(IOUT) nspec
   write(IOUT) nglob
-  write(IOUT) NGNOD
   write(IOUT) nspec_irregular
 
   do i = 1, nspec
@@ -528,10 +472,6 @@ end module save_arrays_module
   ! write test value
   itest = 10000
   write(IOUT) itest
-
-  ! Store arrays related to the control nodes
-  call save_control_nodes_indexing(nspec, elmnts_ext_mesh)
-  call save_control_nodes_array(nnodes_ext_mesh, nodes_coords_ext_mesh)
 
   call save_global_arrays(nspec, kappastore)
   call save_global_arrays(nspec, mustore)

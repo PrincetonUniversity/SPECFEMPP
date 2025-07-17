@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "compute/assembly/assembly.hpp"
 #include "parallel_configuration/range_config.hpp"
 #include "execution/range_iterator.hpp"
 #include "execution/for_all.hpp"
@@ -11,12 +11,12 @@ template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
 void specfem::kokkos_kernels::impl::invert_mass_matrix(
-    const specfem::assembly::assembly<DimensionTag> &assembly) {
+    const specfem::compute::assembly &assembly) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto wavefield = WavefieldType;
   constexpr auto dimension = DimensionTag;
-  const auto field = assembly.fields.template get_simulation_field<wavefield>();
+  const auto field = assembly.fields.get_simulation_field<wavefield>();
 
   const int nglob = field.template get_nglob<medium_tag>();
 
@@ -41,9 +41,9 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
       "specfem::kokkos_kernels::divide_mass_matrix", range,
       KOKKOS_LAMBDA(const IndexType &index) {
         PointFieldType load_field;
-        specfem::assembly::load_on_device(index, field, load_field);
+        specfem::compute::load_on_device(index, field, load_field);
         PointFieldType store_field(load_field.invert_mass_matrix());
-        specfem::assembly::store_on_device(index, store_field, field);
+        specfem::compute::store_on_device(index, store_field, field);
       });
 
   // Kokkos::fence();

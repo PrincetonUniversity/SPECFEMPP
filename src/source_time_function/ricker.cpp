@@ -1,6 +1,6 @@
-#include "source_time_function/impl/time_functions.hpp"
 #include "source_time_function/interface.hpp"
 #include "specfem_setup.hpp"
+#include "utilities.cpp"
 #include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
@@ -41,13 +41,9 @@ type_real specfem::forcing_function::Ricker::compute(type_real t) {
   type_real val;
 
   if (this->__use_trick_for_better_pressure) {
-    val = -1.0 * this->__factor *
-          specfem::forcing_function::impl::d4gaussian(t - this->__tshift,
-                                                      this->__f0);
+    val = -1.0 * this->__factor * d4gaussian(t - this->__tshift, this->__f0);
   } else {
-    val = -1.0 * this->__factor *
-          specfem::forcing_function::impl::d2gaussian(t - this->__tshift,
-                                                      this->__f0);
+    val = -1.0 * this->__factor * d2gaussian(t - this->__tshift, this->__f0);
   }
 
   return val;

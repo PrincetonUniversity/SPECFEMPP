@@ -32,8 +32,7 @@ void catch_signals() {
 }
 
 void specfem::periodic_tasks::check_signal::run(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const int istep) {
+    specfem::compute::assembly &assembly, const int istep) {
   // Catch signals
   catch_signals();
 

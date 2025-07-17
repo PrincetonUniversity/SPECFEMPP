@@ -1,8 +1,5 @@
-#pragma once
-
 #include "datatypes/simd.hpp"
 #include "specfem_setup.hpp"
-#include "test_helper.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
@@ -24,6 +21,12 @@ protected:
       Kokkos::finalize();
   }
 };
+
+// For better naming
+struct Serial : std::integral_constant<bool, false> {};
+struct SIMD : std::integral_constant<bool, true> {};
+
+using TestTypes = ::testing::Types<Serial, SIMD>;
 
 template <typename T>
 class PointKernelsTest : public PointKernelsTestUntyped<T::value> {};

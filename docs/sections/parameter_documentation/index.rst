@@ -631,11 +631,8 @@ Parameter definitions
 
                             :default value: None
 
-                            :possible values: ``displacement`` | ``velocity`` | ``acceleration`` | ``pressure`` | ``rotation`` | ``intrinsic-rotation`` | ``curl``
+                            :possible values: [displacement, velocity, acceleration, pressure]
 
-                            Note that the ``curl``, ``rotation`` and
-                            ``intrinsic-rotation`` fields are only available in
-                            Cosserat/micropolar media.
 
                         .. dropdown:: ``simulation-field``
 
@@ -722,24 +719,22 @@ Parameter definitions
             .. rst-class:: center-table
 
                 +-------------------+---------------------------------------+-------------------------------------+
-                |  Seismogram       | SPECFEM Par_file ``seismotype`` value |``receivers.seismogram-type`` value  |
+                |  Seismogram       | SPECFEM Par_file ``seismotype`` value | ``receivers.seismogram-type`` value |
                 +===================+=======================================+=====================================+
-                | Displacement      |                   1                   | ``displacement``                    |
+                | Displacement      |                   1                   |   ``displacement``                  |
                 +-------------------+---------------------------------------+-------------------------------------+
-                | Velocity          |                   2                   | ``velocity``                        |
+                | Velocity          |                   2                   |    ``velocity``                     |
                 +-------------------+---------------------------------------+-------------------------------------+
-                | Acceleration      |                   3                   | ``acceleration``                    |
+                | Acceleration      |                   3                   |     ``acceleration``                |
                 +-------------------+---------------------------------------+-------------------------------------+
-                | Pressure          |                   4                   | ``pressure``                        |
+                | Pressure          |                   4                   |      ``pressure``                   |
                 +-------------------+---------------------------------------+-------------------------------------+
-                | Displacement Curl |                   5                   | ``curl`` Cosserat only              |
+                | Displacement Curl |                   5                   |     ✘ Unsupported                   |
                 +-------------------+---------------------------------------+-------------------------------------+
-                | Fluid Potential   |                   6                   | ✘ Unsupported                       |
+                | Fluid Potential   |                   6                   |     ✘ Unsupported                   |
                 +-------------------+---------------------------------------+-------------------------------------+
-                | Rotation          |            ✘ Unsupported              | ``rotation`` Cosserat only          |
-                +-------------------+---------------------------------------+-------------------------------------+
-                | Intrinsic-Rotation|            ✘ Unsupported              | ``intrinsic-rotation`` Cosserat only|
-                +-------------------+---------------------------------------+-------------------------------------+
+
+
 
         .. dropdown:: ``nstep_between_samples``
 

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-
-namespace specfem::assembly {
-template <specfem::dimension::type DimensionTag> struct assembly;
-} // namespace specfem::assembly
+namespace specfem {
+namespace compute {
+struct assembly;
+} // namespace compute
+} // namespace specfem
 
 namespace specfem {
 namespace periodic_tasks {
@@ -28,19 +28,15 @@ public:
    * @brief Function to be called periodically.
    *
    */
-  virtual void
-  run(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-      const int istep) {};
+  virtual void run(specfem::compute::assembly &assembly, const int istep) {};
 
   /**
    * @brief Functions to be called once at the beginning and once at the end of
    * the simulation.
    *
    */
-  virtual void initialize(
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {};
-  virtual void finalize(
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {};
+  virtual void initialize(specfem::compute::assembly &assembly) {};
+  virtual void finalize(specfem::compute::assembly &assembly) {};
 
   /**
    * @brief Returns true if the data should be plotted at the current

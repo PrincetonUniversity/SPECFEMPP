@@ -14,7 +14,8 @@
 //      Since, the computed strain for a uniform wavefield is zero.
 
 #pragma once
-#include "enumerations/interface.hpp"
+#include "enumerations/medium.hpp"
+#include "enumerations/wavefield.hpp"
 #include "specfem/point/coordinates.hpp"
 #include "specfem/point/field.hpp"
 
@@ -24,11 +25,10 @@ template <specfem::wavefield::type component,
 class test_helper {
 
 public:
-  test_helper(
-      const int ispec,
-      const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
-          &wavefield,
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly)
+  test_helper(const int ispec,
+              const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                                 Kokkos::HostSpace> &wavefield,
+              specfem::compute::assembly &assembly)
       : ispec(ispec), wavefield(wavefield), assembly(assembly) {}
 
   void test() {
@@ -67,18 +67,17 @@ private:
   const int ispec;
   const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
       &wavefield;
-  specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly;
+  specfem::compute::assembly &assembly;
 };
 
 template <specfem::element::medium_tag medium,
           specfem::element::property_tag property>
 class test_helper<specfem::wavefield::type::pressure, medium, property> {
 public:
-  test_helper(
-      const int ispec,
-      const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
-          &wavefield,
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly)
+  test_helper(const int ispec,
+              const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                                 Kokkos::HostSpace> &wavefield,
+              specfem::compute::assembly &assembly)
       : ispec(ispec), wavefield(wavefield), assembly(assembly) {}
 
   void test() {
@@ -103,8 +102,8 @@ public:
             index(ispec, iz, ix);
 
         PointProperties point_properties;
-        specfem::assembly::load_on_host(index, assembly.properties,
-                                        point_properties);
+        specfem::compute::load_on_host(index, assembly.properties,
+                                       point_properties);
 
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed =
@@ -133,7 +132,7 @@ private:
   const int ispec;
   const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
       &wavefield;
-  specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly;
+  specfem::compute::assembly &assembly;
 };
 
 template <specfem::wavefield::type component>
@@ -141,11 +140,10 @@ class test_helper<component, specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic> {
 
 public:
-  test_helper(
-      const int ispec,
-      const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
-          &wavefield,
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly)
+  test_helper(const int ispec,
+              const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                                 Kokkos::HostSpace> &wavefield,
+              specfem::compute::assembly &assembly)
       : ispec(ispec), wavefield(wavefield), assembly(assembly) {}
 
   void test() {
@@ -168,8 +166,8 @@ public:
             index(ispec, iz, ix);
 
         PointProperties point_properties;
-        specfem::assembly::load_on_host(index, assembly.properties,
-                                        point_properties);
+        specfem::compute::load_on_host(index, assembly.properties,
+                                       point_properties);
 
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed =
@@ -196,7 +194,7 @@ private:
   const int ispec;
   const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
       &wavefield;
-  specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly;
+  specfem::compute::assembly &assembly;
 };
 
 template <>
@@ -205,11 +203,10 @@ class test_helper<specfem::wavefield::type::pressure,
                   specfem::element::property_tag::isotropic> {
 
 public:
-  test_helper(
-      const int ispec,
-      const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
-          &wavefield,
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly)
+  test_helper(const int ispec,
+              const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                                 Kokkos::HostSpace> &wavefield,
+              specfem::compute::assembly &assembly)
       : ispec(ispec), wavefield(wavefield), assembly(assembly) {}
 
   void test() {
@@ -232,8 +229,8 @@ public:
             index(ispec, iz, ix);
 
         PointProperties point_properties;
-        specfem::assembly::load_on_host(index, assembly.properties,
-                                        point_properties);
+        specfem::compute::load_on_host(index, assembly.properties,
+                                       point_properties);
 
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed = wavefield(ispec, iz, ix, ic);
@@ -259,5 +256,5 @@ private:
   const int ispec;
   const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
       &wavefield;
-  specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly;
+  specfem::compute::assembly &assembly;
 };

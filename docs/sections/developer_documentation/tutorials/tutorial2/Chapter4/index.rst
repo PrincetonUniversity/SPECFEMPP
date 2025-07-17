@@ -9,7 +9,7 @@ Now that we have implemented the writer and reader classes, let's instantiate th
 .. code:: cpp
 
     int main() {
-        const specfem::assembly::assembly assembly;
+        const specfem::compute::assembly assembly;
         const auto& fields = assembly.fields;
         const auto& forward = fields.forward;
         const auto& buffer = fields.buffer;
@@ -21,7 +21,7 @@ Now that we have implemented the writer and reader classes, let's instantiate th
         reader.read();
 
         // Deep copy the buffer into the backward field
-        specfem::assembly::deep_copy(fields.backward, fields.buffer);
+        specfem::compute::deep_copy(fields.backward, fields.buffer);
 
         return 0;
     }
@@ -31,7 +31,7 @@ Similarly, you could instantiate the writer and reader with the ASCII library.
 .. code:: cpp
 
     int main() {
-        const specfem::assembly::assembly assembly;
+        const specfem::compute::assembly assembly;
         const auto& fields = assembly.fields;
         const auto& forward = fields.forward;
         const auto& buffer = fields.buffer;
@@ -43,7 +43,7 @@ Similarly, you could instantiate the writer and reader with the ASCII library.
         reader.read();
 
         // Deep copy the buffer into the backward field
-        specfem::assembly::deep_copy(fields.backward, fields.buffer);
+        specfem::compute::deep_copy(fields.backward, fields.buffer);
 
         return 0;
     }

@@ -4,10 +4,6 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "mesh/dim2/adjacency_map/adjacency_map.hpp"
-
 namespace test_configuration {
 /**
  * @brief contains the data of a mesh that any test may wish to use.
@@ -16,19 +12,15 @@ namespace test_configuration {
 struct mesh {
 public:
   mesh() {};
-  mesh(const YAML::Node &node) {
-    name = node["name"].as<std::string>();
-    description = node["description"].as<std::string>();
-    database = node["database"].as<std::string>();
-    nspec = node["nspec"].as<int>();
-    characteristic_length = node["characteristic-length"].as<double>();
+  mesh(const YAML::Node &Node) {
+    name = Node["name"].as<std::string>();
+    description = Node["description"].as<std::string>();
+    database = Node["database"].as<std::string>();
   }
 
   std::string name;
   std::string description;
   std::string database;
-  int nspec;
-  double characteristic_length;
 };
 } // namespace test_configuration
 

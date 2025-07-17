@@ -1,8 +1,8 @@
 #pragma once
 
+#include "compute/interface.hpp"
 #include "periodic_tasks/periodic_task.hpp"
 #include "solver/solver.hpp"
-#include "specfem/assembly.hpp"
 #include "timescheme/newmark.hpp"
 #include "utilities/strings.hpp"
 #include <memory>
@@ -45,9 +45,7 @@ public:
    */
   template <int NGLL>
   std::shared_ptr<specfem::solver::solver>
-  instantiate(const type_real dt,
-              const specfem::assembly::assembly<specfem::dimension::type::dim2>
-                  &assembly,
+  instantiate(const type_real dt, const specfem::compute::assembly &assembly,
               std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
               const std::vector<
                   std::shared_ptr<specfem::periodic_tasks::periodic_task> >

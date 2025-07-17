@@ -4,10 +4,10 @@
 Finite Element Assembly
 -----------------------
 
-.. doxygennamespace:: specfem::assembly
+.. doxygennamespace:: specfem::compute
     :desc-only:
 
-.. doxygenstruct:: specfem::assembly::assembly
+.. doxygenstruct:: specfem::compute::assembly
     :members:
 
 .. admonition:: Feature request
@@ -25,7 +25,7 @@ Finite Element Assembly
     :maxdepth: 1
 
     mesh/mesh
-    jacobian_matrix/jacobian_matrix
+    partial_derivatives/partial_derivatives
     properties/properties
     boundary/boundary
     fields/fields

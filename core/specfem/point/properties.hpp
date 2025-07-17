@@ -1,7 +1,5 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "enumerations/material_definitions.hpp"
 #include "impl/point_container.hpp"
 #include "specfem_setup.hpp"
 
@@ -588,16 +586,3 @@ struct properties : impl::properties::data_container<Dimension, MediumTag,
 
 } // namespace point
 } // namespace specfem
-
-// FOR_EACH_IN_PRODUCT(
-//     (DIMENSION_TAG(DIM2),
-//      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-//      ELASTIC_PSV_T), PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
-//      ISOTROPIC_COSSERAT)),
-//     INSTANTIATE(
-//         (extern template struct specfem::point::properties,
-//          (_DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_, false),;),
-//         (extern template struct specfem::point::properties,
-//          (_DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_, true),;),
-//         )
-//     )

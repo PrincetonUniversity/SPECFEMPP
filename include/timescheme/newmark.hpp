@@ -100,9 +100,7 @@ public:
     return 0;
   };
 
-  void link_assembly(
-      const specfem::assembly::assembly<specfem::dimension::type::dim2>
-          &assembly) override {
+  void link_assembly(const specfem::compute::assembly &assembly) override {
     field = assembly.fields.forward;
   }
 
@@ -127,8 +125,7 @@ private:
   type_real deltat; ///< Time increment
   type_real deltatover2;
   type_real deltasquareover2;
-  specfem::assembly::simulation_field<
-      specfem::dimension::type::dim2,
+  specfem::compute::simulation_field<
       specfem::wavefield::simulation_field::forward>
       field; ///< forward wavefield
 };
@@ -213,9 +210,7 @@ public:
   int apply_corrector_phase_backward(
       const specfem::element::medium_tag tag) override;
 
-  void link_assembly(
-      const specfem::assembly::assembly<specfem::dimension::type::dim2>
-          &assembly) override {
+  void link_assembly(const specfem::compute::assembly &assembly) override {
     adjoint_field = assembly.fields.adjoint;
     backward_field = assembly.fields.backward;
   }
@@ -241,12 +236,10 @@ private:
   type_real deltat; ///< Time increment
   type_real deltatover2;
   type_real deltasquareover2;
-  specfem::assembly::simulation_field<
-      specfem::dimension::type::dim2,
+  specfem::compute::simulation_field<
       specfem::wavefield::simulation_field::adjoint>
       adjoint_field; ///< adjoint wavefield
-  specfem::assembly::simulation_field<
-      specfem::dimension::type::dim2,
+  specfem::compute::simulation_field<
       specfem::wavefield::simulation_field::backward>
       backward_field; ///< backward wavefield
 };

@@ -50,9 +50,6 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
 
   // Creating aliases for Array Reading functions
   using specfem::io::mesh::impl::fortran::dim3::try_read_array;
-  using specfem::io::mesh::impl::fortran::dim3::
-      try_read_control_nodes_coordinates;
-  using specfem::io::mesh::impl::fortran::dim3::try_read_control_nodes_indexing;
   using specfem::io::mesh::impl::fortran::dim3::try_read_index_array;
   using specfem::io::mesh::impl::fortran::dim3::try_read_line;
 
@@ -90,17 +87,15 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
     throw std::runtime_error("Could not open mesh database file");
   }
 
-  int nspec, nglob, nspec_irregular, ngnod;
+  int nspec, nglob, nspec_irregular;
 
   try_read_line("read_nspec", stream, &nspec);
   try_read_line("read_nglob", stream, &nglob);
-  try_read_line("read_nspec_irregular", stream, &ngnod);
   try_read_line("read_nspec_irregular", stream, &nspec_irregular);
 
   // Check values
   check_values("nspec", nspec, mesh.parameters.nspec);
   check_values("nglob", nglob, mesh.parameters.nglob);
-  check_values("ngnod", ngnod, mesh.parameters.ngnod);
   check_values("nspec_irregular", nspec_irregular,
                mesh.parameters.nspec_irregular);
 
@@ -143,7 +138,7 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
   // mpi->cout(mesh.coordinates.print(0, mesh.mapping, "z"));
 #endif
 
-  // Initialize the Jacobian matrix object
+  // Initialize the partial derivatives object
   mesh.irregular_element_number = decltype(mesh.irregular_element_number)(
       "irregular_element_number", mesh.parameters.nspec_irregular);
 
@@ -151,7 +146,7 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
   try_read_index_array("read_irregular_element_number", stream,
                        mesh.irregular_element_number);
 
-  // Read the Jacobian matrix (only two CUSTOM_REALs)
+  // Read the partial derivatives (only two CUSTOM_REALs)
   try_read_line("read_xix_regular", stream, &mesh.xix_regular);
   try_read_line("read_jacobian_regular", stream, &mesh.jacobian_regular);
 
@@ -170,54 +165,38 @@ specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
   mpi->cout(message.str());
 #endif
 
-  // Create the Jacobian matrix object
-  mesh.jacobian_matrix =
-      specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>(
+  // Create the partial derivatives object
+  mesh.partial_derivatives =
+      specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>(
           mesh.parameters.nspec, mesh.parameters.ngllx, mesh.parameters.nglly,
           mesh.parameters.ngllz);
 
-  // Reading the Jacobian matrix from the database file.
-  try_read_array("read_xi_x", stream, mesh.jacobian_matrix.xix);
-  try_read_array("read_xi_y", stream, mesh.jacobian_matrix.xiy);
-  try_read_array("read_xi_z", stream, mesh.jacobian_matrix.xiz);
-  try_read_array("read_eta_x", stream, mesh.jacobian_matrix.etax);
-  try_read_array("read_eta_y", stream, mesh.jacobian_matrix.etay);
-  try_read_array("read_eta_z", stream, mesh.jacobian_matrix.etaz);
-  try_read_array("read_gamma_x", stream, mesh.jacobian_matrix.gammax);
-  try_read_array("read_gamma_y", stream, mesh.jacobian_matrix.gammay);
-  try_read_array("read_gamma_z", stream, mesh.jacobian_matrix.gammaz);
-  try_read_array("read_jacobian", stream, mesh.jacobian_matrix.jacobian);
+  // Reading the partial derivatives from the database file.
+  try_read_array("read_xi_x", stream, mesh.partial_derivatives.xix);
+  try_read_array("read_xi_y", stream, mesh.partial_derivatives.xiy);
+  try_read_array("read_xi_z", stream, mesh.partial_derivatives.xiz);
+  try_read_array("read_eta_x", stream, mesh.partial_derivatives.etax);
+  try_read_array("read_eta_y", stream, mesh.partial_derivatives.etay);
+  try_read_array("read_eta_z", stream, mesh.partial_derivatives.etaz);
+  try_read_array("read_gamma_x", stream, mesh.partial_derivatives.gammax);
+  try_read_array("read_gamma_y", stream, mesh.partial_derivatives.gammay);
+  try_read_array("read_gamma_z", stream, mesh.partial_derivatives.gammaz);
+  try_read_array("read_jacobian", stream, mesh.partial_derivatives.jacobian);
 
 #ifndef NDEBUG
-  // Print Jacobian matrix parameters and the first spectral element
-  mpi->cout(mesh.jacobian_matrix.print());
-  mpi->cout(mesh.jacobian_matrix.print(0, 0, 0, 0));
+  // Print Partial Derivatives parameters and the first spectral element
+  mpi->cout(mesh.partial_derivatives.print());
+  mpi->cout(mesh.partial_derivatives.print(0, 0, 0, 0));
 
-  // These print the Jacobian matrix array layout for the first spectral
+  // These print the partial derivatives array layout for the first spectral
   // element for debugging the array layout (Fortran v. C)
-  // mpi->cout(mesh.jacobian_matrix.print(0, "xix"));
-  // mpi->cout(mesh.jacobian_matrix.print(0, "etay"));
-  // mpi->cout(mesh.jacobian_matrix.print(0, "gammaz"));
+  // mpi->cout(mesh.partial_derivatives.print(0, "xix"));
+  // mpi->cout(mesh.partial_derivatives.print(0, "etay"));
+  // mpi->cout(mesh.partial_derivatives.print(0, "gammaz"));
 #endif
 
   // Marker that should be 10000
   check_read_test_value(stream, 10000);
-
-  mesh.control_nodes =
-      specfem::mesh::control_nodes<specfem::dimension::type::dim3>(
-          mesh.parameters.nspec, mesh.parameters.ngnod, mesh.parameters.nnodes);
-
-  // Read control nodes indexing
-  try_read_control_nodes_indexing("read_control_nodes_indexing", stream,
-                                  mesh.control_nodes.index_mapping);
-
-  try_read_control_nodes_coordinates("read_control_nodes_coordinates", stream,
-                                     mesh.control_nodes.coordinates);
-
-#ifndef NDEBUG
-  // Print control nodes parameters and the first spectral element
-  mpi->cout(mesh.control_nodes.print());
-#endif
 
   // Create material object
   mesh.materials = specfem::mesh::materials<specfem::dimension::type::dim3>(

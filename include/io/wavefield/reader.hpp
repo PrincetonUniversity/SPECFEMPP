@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "compute/interface.hpp"
 // #include "enumerations/interface.hpp"
 
 namespace specfem {
@@ -26,9 +26,7 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void
-  read(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-       const int istep);
+  void read(specfem::compute::assembly &assembly, const int istep);
 
 private:
   std::string output_folder; ///< Path to output folder

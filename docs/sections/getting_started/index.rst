@@ -62,7 +62,7 @@ The following table lists the versions of compilers that are supported by SPECFE
       * 22.3, 22.9
 
     * * ROCM
-      * 6.2.4 (Not Tested)
+      * Not Tested
       * Not Tested
       * 5.2.0
 

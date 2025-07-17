@@ -1,8 +1,8 @@
 #pragma once
 
+#include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace kokkos_kernels {
@@ -20,9 +20,8 @@ namespace impl {
 template <specfem::dimension::type DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-void compute_material_derivatives(
-    const specfem::assembly::assembly<DimensionTag> &assembly,
-    const type_real &dt);
+void compute_material_derivatives(const specfem::compute::assembly &assembly,
+                                  const type_real &dt);
 } // namespace impl
 
 } // namespace kokkos_kernels

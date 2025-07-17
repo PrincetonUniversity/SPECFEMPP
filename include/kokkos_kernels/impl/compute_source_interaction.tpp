@@ -3,7 +3,7 @@
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "boundary_conditions/boundary_conditions.tpp"
 #include "chunk_element/field.hpp"
-#include "specfem/assembly.hpp"
+#include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
@@ -21,7 +21,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
 void specfem::kokkos_kernels::impl::compute_source_interaction(
-    specfem::assembly::assembly<DimensionTag> &assembly, const int &timestep) {
+    specfem::compute::assembly &assembly, const int &timestep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -45,7 +45,7 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
 
   // Some aliases
   const auto &properties = assembly.properties;
-  const auto field = assembly.fields.template get_simulation_field<wavefield>();
+  const auto field = assembly.fields.get_simulation_field<wavefield>();
 
   sources.update_timestep(timestep);
 
@@ -81,16 +81,16 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
       "specfem::kokkos_kernels::compute_source_interaction", mapped_policy,
       KOKKOS_LAMBDA(const PointIndexType &mapped_index) {
         PointSourceType point_source;
-        specfem::assembly::load_on_device(mapped_index, sources, point_source);
+        specfem::compute::load_on_device(mapped_index, sources, point_source);
 
         PointPropertiesType point_property;
-        specfem::assembly::load_on_device(mapped_index, properties,
+        specfem::compute::load_on_device(mapped_index, properties,
                                          point_property);
 
         auto acceleration = specfem::medium::compute_source_contribution(
             point_source, point_property);
 
-        specfem::assembly::atomic_add_on_device(mapped_index, acceleration,
+        specfem::compute::atomic_add_on_device(mapped_index, acceleration,
                                                field);
       });
 }

@@ -55,12 +55,14 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
                   static_cast<type_real>(vs_arr[i]) *
                   static_cast<type_real>(vs_arr[i]);
 
-      kappa_arr[i] = static_cast<type_real>(rho_arr[i]) *
-                         static_cast<type_real>(vp_arr[i]) *
-                         static_cast<type_real>(vp_arr[i]) -
-                     static_cast<type_real>(4.0) / static_cast<type_real>(3.0) *
-                         static_cast<type_real>(mu_arr[i]);
+        kappa_arr[i] =
+            static_cast<type_real>(rho_arr[i]) *
+                static_cast<type_real>(vp_arr[i]) *
+                static_cast<type_real>(vp_arr[i]) -
+            static_cast<type_real>(4.0) / static_cast<type_real>(3.0) *
+                static_cast<type_real>(mu_arr[i]);
 
+        
       lambda_arr[i] =
           static_cast<type_real>(rho_arr[i]) *
               static_cast<type_real>(vp_arr[i]) *
@@ -81,7 +83,7 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
     mu.copy_from(mu_arr, Kokkos::Experimental::simd_flag_default);
     lambda_val.copy_from(lambda_arr, Kokkos::Experimental::simd_flag_default);
     lambdaplus2mu_val.copy_from(lambdaplus2mu_arr,
-                                Kokkos::Experimental::simd_flag_default);
+                            Kokkos::Experimental::simd_flag_default);
     rho_vp_val.copy_from(rho_vp_arr, Kokkos::Experimental::simd_flag_default);
     rho_vs_val.copy_from(rho_vs_arr, Kokkos::Experimental::simd_flag_default);
   } else {
@@ -149,15 +151,18 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
 
   PointPropertiesType props4(kappa);
 
-  EXPECT_TRUE(props2 == props) << ExpectedGot(props2.kappa(), props.kappa())
-                               << ExpectedGot(props2.mu(), props.mu())
-                               << ExpectedGot(props2.rho(), props.rho());
+  EXPECT_TRUE(props2 == props)
+      << ExpectedGot(props2.kappa(), props.kappa())
+      << ExpectedGot(props2.mu(), props.mu())
+      << ExpectedGot(props2.rho(), props.rho());
 
-  EXPECT_TRUE(props2 == props3) << ExpectedGot(props3.kappa(), props2.kappa())
-                                << ExpectedGot(props3.mu(), props2.mu())
-                                << ExpectedGot(props3.rho(), props2.rho());
+  EXPECT_TRUE(props2 == props3)
+      << ExpectedGot(props3.kappa(), props2.kappa())
+      << ExpectedGot(props3.mu(), props2.mu())
+      << ExpectedGot(props3.rho(), props2.rho());
 
-  EXPECT_TRUE(specfem::utilities::is_close(props4.kappa(), kappa));
+  EXPECT_TRUE(
+      specfem::utilities::is_close(props4.kappa(), kappa));
   EXPECT_TRUE(specfem::utilities::is_close(props4.mu(), kappa));
   EXPECT_TRUE(specfem::utilities::is_close(props4.rho(), kappa));
 }

@@ -1,11 +1,13 @@
 #include "algorithms/locate_point.hpp"
+#include "compute/compute_mesh.hpp"
+#include "compute/compute_partial_derivatives.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "source_time_function/interface.hpp"
-#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
@@ -14,20 +16,18 @@
 #include <cmath>
 
 void specfem::sources::cosserat_force::compute_source_array(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
-        &jacobian_matrix,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types,
+    const specfem::compute::mesh &mesh,
+    const specfem::compute::partial_derivatives &partial_derivatives,
+    const specfem::compute::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
       this->x, this->z);
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
-  const auto xi = mesh.h_xi;
-  const auto gamma = mesh.h_xi;
-  const auto N = mesh.ngllx;
+  const auto xi = mesh.quadratures.gll.h_xi;
+  const auto gamma = mesh.quadratures.gll.h_xi;
+  const auto N = mesh.quadratures.gll.N;
 
   const auto el_type = element_types.get_medium_tag(lcoord.ispec);
   const int ncomponents = source_array.extent(0);

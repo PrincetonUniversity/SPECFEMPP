@@ -11,7 +11,6 @@
  */
 /// @{
 #define DIMENSION_TAG_DIM2 (0, specfem::dimension::type::dim2, dim2)
-#define DIMENSION_TAG_DIM3 (1, specfem::dimension::type::dim3, dim3)
 
 #define MEDIUM_TAG_ELASTIC_PSV                                                 \
   (0, specfem::element::medium_tag::elastic_psv, elastic_psv)
@@ -46,7 +45,7 @@
  * @brief Macro to generate a list of medium types
  *
  */
-#define MEDIUM_TAGS_DIM2                                                       \
+#define MEDIUM_TAGS                                                            \
   ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV))(                              \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH))(                            \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T))(                         \
@@ -54,15 +53,11 @@
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC))(                           \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE))
 
-#define MEDIUM_TAGS_DIM3 ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_PSV))
-
-#define MEDIUM_TAGS MEDIUM_TAGS_DIM2 MEDIUM_TAGS_DIM3
-
 /**
  * @brief Macro to generate a list of material systems
  *
  */
-#define MATERIAL_SYSTEMS_DIM2                                                  \
+#define MATERIAL_SYSTEMS                                                       \
   ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC))(      \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ANISOTROPIC))( \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC))(    \
@@ -74,16 +69,11 @@
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
        PROPERTY_TAG_ISOTROPIC))
 
-#define MATERIAL_SYSTEMS_DIM3                                                  \
-  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC))
-
-#define MATERIAL_SYSTEMS MATERIAL_SYSTEMS_DIM2 MATERIAL_SYSTEMS_DIM3
-
 /**
  * @brief Macro to generate a list of element types
  *
  */
-#define ELEMENT_TYPES_DIM2                                                     \
+#define ELEMENT_TYPES                                                          \
   ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC,        \
     BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV,           \
                          PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(        \
@@ -91,11 +81,9 @@
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH,         \
                             PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,                           \
-       PROPERTY_TAG_ISOTROPIC_COSSERAT, BOUNDARY_TAG_NONE))(                   \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,                           \
        PROPERTY_TAG_ISOTROPIC_COSSERAT,                                        \
-       BOUNDARY_TAG_STACEY))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,         \
-                              PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))(     \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,           \
+                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))(       \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
        BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE))(                                   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
@@ -113,12 +101,6 @@
                             PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
        PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
-
-#define ELEMENT_TYPES_DIM3                                                     \
-  ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ISOTROPIC,        \
-    BOUNDARY_TAG_NONE))
-
-#define ELEMENT_TYPES ELEMENT_TYPES_DIM2 ELEMENT_TYPES_DIM3
 
 /**
  * @brief Tag getters. The macros are intended to be used only in @ref DECLARE
@@ -220,19 +202,15 @@ constexpr auto medium_types() {
  *
  * @return constexpr auto list of material systems
  */
-template <specfem::dimension::type DimensionTag>
-constexpr auto material_systems();
-
-template <> constexpr auto material_systems<specfem::dimension::type::dim2>() {
+constexpr auto material_systems() {
   // Use boost preprocessor library to generate a list of
   // material systems
-  constexpr int total_material_systems =
-      BOOST_PP_SEQ_SIZE(MATERIAL_SYSTEMS_DIM2);
+  constexpr int total_material_systems = BOOST_PP_SEQ_SIZE(MATERIAL_SYSTEMS);
   constexpr std::array<
       std::tuple<specfem::dimension::type, specfem::element::medium_tag,
                  specfem::element::property_tag>,
       total_material_systems>
-      material_systems{ _MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS_DIM2) };
+      material_systems{ _MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS) };
 
   return material_systems;
 }
@@ -246,18 +224,16 @@ template <> constexpr auto material_systems<specfem::dimension::type::dim2>() {
  *
  * @return constexpr auto list of element types
  */
-template <specfem::dimension::type DimensionTag> constexpr auto element_types();
-
-template <> constexpr auto element_types<specfem::dimension::type::dim2>() {
+constexpr auto element_types() {
   // Use boost preprocessor library to generate a list of
   // material systems
-  constexpr int total_element_types = BOOST_PP_SEQ_SIZE(ELEMENT_TYPES_DIM2);
+  constexpr int total_element_types = BOOST_PP_SEQ_SIZE(ELEMENT_TYPES);
   constexpr std::array<
       std::tuple<specfem::dimension::type, specfem::element::medium_tag,
                  specfem::element::property_tag,
                  specfem::element::boundary_tag>,
       total_element_types>
-      material_systems{ _MAKE_CONSTEXPR_ARRAY(ELEMENT_TYPES_DIM2) };
+      material_systems{ _MAKE_CONSTEXPR_ARRAY(ELEMENT_TYPES) };
 
   return material_systems;
 }

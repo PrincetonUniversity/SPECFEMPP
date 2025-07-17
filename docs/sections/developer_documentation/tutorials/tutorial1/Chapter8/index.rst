@@ -47,7 +47,7 @@ In particular, we will implement 2 kernels - 1. Compute the interaction of stiff
         using PointFieldDerivativesType = ...;
         using PointMassType = ...;
         using PointPropertyType = ...;
-        using PointJacobianMatrixType = ...;
+        using PointPartialDerivativesType = ...;
     };
 
     class domain {
@@ -112,7 +112,7 @@ Next, lets implement ``compute_stiffness_interaction`` kernel.
 
     KOKKOS_FUNCTION
     stress_integrand stiffness_component(
-        const point_jacobian_matrix &point_jacobian_matrix,
+        const point_partial_derivatives &point_partial_derivatives,
         const point_property &point_property,
         const field_derivatives &du) {
 
@@ -128,17 +128,17 @@ Next, lets implement ``compute_stiffness_interaction`` kernel.
                 properties.mu * (du(0, 1) + du(1, 0));
 
             F(0, 0) =
-                sigma_xx * jacobian_matrix.xix +
-                sigma_xz * jacobian_matrix.xiz;
+                sigma_xx * partial_derivatives.xix +
+                sigma_xz * partial_derivatives.xiz;
             F(0, 1) =
-                sigma_xz * jacobian_matrix.xix +
-                sigma_zz * jacobian_matrix.xiz;
+                sigma_xz * partial_derivatives.xix +
+                sigma_zz * partial_derivatives.xiz;
             F(1, 0) =
-                sigma_xx * jacobian_matrix.gammax +
-                sigma_xz * jacobian_matrix.gammaz;
+                sigma_xx * partial_derivatives.gammax +
+                sigma_xz * partial_derivatives.gammaz;
             F(1, 1) =
-                sigma_xz * jacobian_matrix.gammax +
-                sigma_zz * jacobian_matrix.gammaz;
+                sigma_xz * partial_derivatives.gammax +
+                sigma_zz * partial_derivatives.gammaz;
         };
 
     void domain::compute_stiffness_interaction() {
@@ -177,18 +177,18 @@ Next, lets implement ``compute_stiffness_interaction`` kernel.
                     team.team_barrier();
 
                     algorithms::gradient(
-                        team, iterator, jacobian_matrix,
+                        team, iterator, partial_derivatives,
                         element_quadrature.hprime_gll, element_field.displacement,
                         [&](const index_type &index,
                             const field_derivatives &du) {
 
-                            // load Jacobian matrix and properties into point types
+                            // load partial derivatives and properties into point types
                             // ...
                             // ...
                             // ...
 
                             const auto stress =
-                                stiffness_component(point_jacobian_matrix, point_properties, du);
+                                stiffness_component(point_partial_derivatives, point_properties, du);
 
                             for (int idim = 0; idim < num_dimensions; ++idim) {
                                 for (int icomponent = 0; icomponent < components;
@@ -203,7 +203,7 @@ Next, lets implement ``compute_stiffness_interaction`` kernel.
 
                     // Compute the divergence term
                     algorithms::divergence(
-                        team, iterator, jacobian_matrix, element_quadrature.hprime_gll,
+                        team, iterator, partial_derivatives, element_quadrature.hprime_gll,
                         [&](const index_type &index,
                             const ScalarViewType &result) {
 

@@ -11,7 +11,7 @@ using MaterialVectorType = std::vector<std::any>; /// NOLINT
 constexpr static auto dimension = specfem::dimension::type::dim2;
 
 const static std::unordered_map<std::string, MaterialVectorType>
-    properties_ground_truth = {
+    ground_truth = {
       { "Simple mesh with flat topography (P_SV wave)",
         MaterialVectorType({ specfem::point::properties<
             dimension, specfem::element::medium_tag::elastic_psv,
@@ -216,7 +216,7 @@ TEST_F(MESH, derived_properties) {
     try {
 
       const auto computed = mesh.materials;
-      const auto expected = properties_ground_truth.at(Test.name);
+      const auto expected = ground_truth.at(Test.name);
 
       check_property(computed, expected);
 

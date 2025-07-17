@@ -3,9 +3,8 @@ MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
 
 rule all:
     input:
-        unified_plot="OUTPUT_FILES/results/unified_traces.png",
-        geometry_plot="OUTPUT_FILES/results/geometry.png",
-        comparison_plot="OUTPUT_FILES/results/reference_comparison.png"
+        traces_X="OUTPUT_FILES/results/traces_X.png",
+        traces_Z="OUTPUT_FILES/results/traces_Z.png",
     localrule: True
 
 
@@ -23,7 +22,6 @@ rule generate_mesh:
         """
 
 
-
 rule run_solver:
     input:
         database="OUTPUT_FILES/database.bin",
@@ -32,10 +30,10 @@ rule run_solver:
         config="specfem_config.yaml",
     output:
         seismograms=expand(
-            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}",
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
             station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006", "S0007", "S0008"],
             network_name=["AA"],
-            component=["BXX.semd", "BXZ.semd", "BXY.semr", "BXY.semir", "BXY.semc"],
+            component=["BXX", "BXZ"],
         ),
     resources:
         nodes=1,
@@ -55,53 +53,53 @@ rule run_solver:
 rule plot_seismogram:
     input:
         trace_files=expand(
-            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}",
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
             station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006", "S0007", "S0008"],
             network_name=["AA"],
-            component=["BXX.semd", "BXZ.semd", "BXY.semr", "BXY.semir", "BXY.semc"],
+            component=["BXX", "BXZ"],
         ),
-        plot_script="plot_seismograms.py",
-        stations="OUTPUT_FILES/STATIONS",
-        source="source.yaml"
     output:
-        unified_plot="OUTPUT_FILES/results/unified_traces.png"
+        traces_X="OUTPUT_FILES/results/traces_X.png",
+        traces_Z="OUTPUT_FILES/results/traces_Z.png"
     localrule: True
-    shell:
-        "python {input.plot_script} {output.unified_plot}"
+    run:
+        import glob
+        import os
+        import numpy as np
+        import obspy
+
+        # Set matplotlib gui off
+        import matplotlib
+        matplotlib.use("Agg")
+
+        def get_traces(directory):
+            traces = []
+            files = glob.glob(directory + "/*.sem*")
+            ## iterate over all seismograms
+            for filename in files:
+                station_name = os.path.splitext(filename)[0]
+                network, station, location, channel = station_name.split("/")[-1].split(".")
+                trace = np.loadtxt(filename, delimiter=" ")
+                starttime = trace[0, 0]
+                dt = trace[1, 0] - trace[0, 0]
+                traces.append(
+                    obspy.Trace(
+                        trace[:, 1],
+                        {"network": network,
+                         "station": station,
+                         "location": location,
+                         "channel": channel, "starttime": starttime, "delta": dt},
+                    )
+                )
+
+            stream = obspy.Stream(traces)
+
+            return stream
 
 
-rule plot_geometry:
-    input:
-        plot_script="plot_geometry.py",
-        stations="OUTPUT_FILES/STATIONS",
-        source="source.yaml",
-        topography="topography.dat"
-    output:
-        geometry_plot="OUTPUT_FILES/results/geometry.png"
-    localrule: True
-    shell:
-        "python {input.plot_script} {output.geometry_plot}"
-
-
-rule plot_reference_comparison:
-    input:
-        plot_script="plot_reference_comparison.py",
-        stations="OUTPUT_FILES/STATIONS",
-        source="source.yaml",
-        seismograms=expand(
-            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}",
-            station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006", "S0007", "S0008"],
-            network_name=["AA"],
-            component=["BXX.semd", "BXZ.semd", "BXY.semr"],
-        ),
-        reference_ux="reference/traces_fd/ux.npy",
-        reference_uz="reference/traces_fd/uz.npy",
-        reference_ry="reference/traces_fd/ry.npy"
-    output:
-        comparison_plot="OUTPUT_FILES/results/reference_comparison.png"
-    localrule: True
-    shell:
-        "python {input.plot_script} {output.comparison_plot}"
+        stream = get_traces("OUTPUT_FILES/results")
+        stream.select(component='X').plot(size=(800, 1000)).savefig(output.traces_X)
+        stream.select(component='Z').plot(size=(800, 1000)).savefig(output.traces_Z)
 
 
 rule clean:

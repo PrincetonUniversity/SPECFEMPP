@@ -18,10 +18,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-set_kernel_value(
-    const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const type_real offset) {
+set_value(const ViewType elements, specfem::compute::assembly &assembly,
+          const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -38,7 +36,7 @@ set_kernel_value(
       "set_to_value", policy,
       [=](const specfem::point::index<dimension, using_simd> &index) {
         PointType point(static_cast<type_real>(index.ispec + offset));
-        specfem::assembly::store_on_host(index, point, kernels);
+        specfem::compute::store_on_host(index, point, kernels);
       });
 
   Kokkos::fence();
@@ -50,10 +48,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-check_kernel_value(
-    const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const type_real offset) {
+check_value(const ViewType elements, specfem::compute::assembly &assembly,
+            const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -83,7 +79,7 @@ check_kernel_value(
 
         PointType expected(value);
         PointType computed;
-        specfem::assembly::load_on_host(index, kernels, computed);
+        specfem::compute::load_on_host(index, kernels, computed);
 
         if (computed != expected) {
           std::ostringstream message;
@@ -107,8 +103,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-add_value(const ViewType elements,
-          specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+add_value(const ViewType elements, specfem::compute::assembly &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -127,7 +122,7 @@ add_value(const ViewType elements,
       "add_to_value", policy,
       [=](const specfem::point::index<dimension, using_simd> &index) {
         PointType point(static_cast<type_real>(offset));
-        specfem::assembly::add_on_host(index, point, kernels);
+        specfem::compute::add_on_host(index, point, kernels);
       });
 
   Kokkos::fence();
@@ -140,10 +135,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-set_kernel_value(
-    const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const type_real offset) {
+set_value(const ViewType elements, specfem::compute::assembly &assembly,
+          const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -161,7 +154,7 @@ set_kernel_value(
       "set_to_value", policy,
       KOKKOS_LAMBDA(const specfem::point::index<dimension, using_simd> &index) {
         PointType point(static_cast<type_real>(index.ispec + offset));
-        specfem::assembly::store_on_device(index, point, kernels);
+        specfem::compute::store_on_device(index, point, kernels);
       });
 
   Kokkos::fence();
@@ -173,10 +166,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-check_kernel_value(
-    const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const type_real offset) {
+check_value(const ViewType elements, specfem::compute::assembly &assembly,
+            const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -198,7 +189,7 @@ check_kernel_value(
       "check_to_value", policy,
       KOKKOS_LAMBDA(const specfem::point::index<dimension, using_simd> &index) {
         PointType computed;
-        specfem::assembly::load_on_device(index, kernels, computed);
+        specfem::compute::load_on_device(index, kernels, computed);
 
         const int ispec = index.ispec;
         const int iz = index.iz;
@@ -261,8 +252,7 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-add_value(const ViewType elements,
-          specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+add_value(const ViewType elements, specfem::compute::assembly &assembly,
           const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
@@ -280,7 +270,7 @@ add_value(const ViewType elements,
       "add_to_value", policy,
       KOKKOS_LAMBDA(const specfem::point::index<dimension, using_simd> &index) {
         PointType point(static_cast<type_real>(offset));
-        specfem::assembly::add_on_device(index, point, kernels);
+        specfem::compute::add_on_device(index, point, kernels);
       });
 
   Kokkos::fence();
@@ -303,8 +293,8 @@ TEST_F(ASSEMBLY, kernels_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            set_kernel_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, offset);
+            set_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                           offset);
           })
 
       // Check that we are able to access the values stored in the properties
@@ -315,8 +305,8 @@ TEST_F(ASSEMBLY, kernels_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            check_kernel_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, offset);
+            check_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                             offset);
           })
 
       // Check that we are able to add the values stored in the properties
@@ -339,8 +329,8 @@ TEST_F(ASSEMBLY, kernels_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            check_kernel_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, 2 * offset);
+            check_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                             2 * offset);
           });
 
       // SIMD access functions
@@ -352,8 +342,8 @@ TEST_F(ASSEMBLY, kernels_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            set_kernel_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, offset);
+            set_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                           offset);
           })
 
       // Check that we are able to access the values stored in the properties
@@ -364,8 +354,8 @@ TEST_F(ASSEMBLY, kernels_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            check_kernel_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, offset);
+            check_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                             offset);
           })
 
       // Check that we are able to add the values stored in the properties
@@ -388,8 +378,8 @@ TEST_F(ASSEMBLY, kernels_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            check_kernel_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, 2 * offset);
+            check_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                             2 * offset);
           });
 
       std::cout << "-------------------------------------------------------\n"

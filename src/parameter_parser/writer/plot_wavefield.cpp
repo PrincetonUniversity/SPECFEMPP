@@ -1,6 +1,4 @@
 #include "parameter_parser/writer/plot_wavefield.hpp"
-#include "enumerations/display.hpp"
-#include "enumerations/wavefield.hpp"
 #include "periodic_tasks/plot_wavefield.hpp"
 #include "periodic_tasks/plotter.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -68,8 +66,7 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
 
 std::shared_ptr<specfem::periodic_tasks::periodic_task>
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    specfem::MPI::MPI *mpi) const {
+    const specfem::compute::assembly &assembly, specfem::MPI::MPI *mpi) const {
 
   const auto output_format = [&]() {
     if (specfem::utilities::is_png_string(this->output_format)) {
@@ -85,20 +82,15 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   const auto component = [&]() {
     if (specfem::utilities::is_displacement_string(this->component)) {
-      return specfem::wavefield::type::displacement;
+      return specfem::display::wavefield::displacement;
     } else if (specfem::utilities::is_velocity_string(this->component)) {
-      return specfem::wavefield::type::velocity;
+      return specfem::display::wavefield::velocity;
     } else if (specfem::utilities::is_acceleration_string(this->component)) {
-      return specfem::wavefield::type::acceleration;
+      return specfem::display::wavefield::acceleration;
     } else if (specfem::utilities::is_pressure_string(this->component)) {
-      return specfem::wavefield::type::pressure;
+      return specfem::display::wavefield::pressure;
     } else if (specfem::utilities::is_rotation_string(this->component)) {
-      return specfem::wavefield::type::rotation;
-    } else if (specfem::utilities::is_intrinsic_rotation_string(
-                   this->component)) {
-      return specfem::wavefield::type::intrinsic_rotation;
-    } else if (specfem::utilities::is_curl_string(this->component)) {
-      return specfem::wavefield::type::curl;
+      return specfem::display::wavefield::rotation;
     } else {
       throw std::runtime_error(
           "Unknown wavefield component in the display section");

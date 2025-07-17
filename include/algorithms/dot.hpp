@@ -1,22 +1,23 @@
-#pragma once
+#ifndef _ALGORITHMS_DOT_HPP
+#define _ALGORITHMS_DOT_HPP
 
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace algorithms {
-template <typename VectorPointViewType>
-KOKKOS_INLINE_FUNCTION typename VectorPointViewType::value_type
-dot(const VectorPointViewType &a, const VectorPointViewType &b) {
+template <typename ScalarPointViewType>
+KOKKOS_INLINE_FUNCTION typename ScalarPointViewType::value_type
+dot(const ScalarPointViewType &a, const ScalarPointViewType &b) {
 
-  static_assert(VectorPointViewType::isPointViewType,
+  static_assert(ScalarPointViewType::isPointViewType,
                 "Invalid ViewType: not a PointViewType");
 
-  static_assert(VectorPointViewType::isScalarViewType,
+  static_assert(ScalarPointViewType::isScalarViewType,
                 "Invalid ViewType: not a ScalarViewType");
 
-  using value_type = typename VectorPointViewType::value_type;
-  constexpr int N = VectorPointViewType::components;
+  using value_type = typename ScalarPointViewType::value_type;
+  constexpr int N = ScalarPointViewType::components;
   value_type result{ 0.0 };
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
@@ -30,3 +31,5 @@ dot(const VectorPointViewType &a, const VectorPointViewType &b) {
 
 } // namespace algorithms
 } // namespace specfem
+
+#endif /* _ALGORITHMS_DOT_HPP */

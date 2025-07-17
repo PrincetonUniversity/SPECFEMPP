@@ -16,11 +16,11 @@ template <> struct AccessorValueType<specfem::accessor::type::point> {
 
   template <typename T, int dimension, bool UseSIMD>
   using vector_type =
-      typename specfem::datatype::VectorPointViewType<T, dimension, UseSIMD>;
+      typename specfem::datatype::ScalarPointViewType<T, dimension, UseSIMD>;
 
   template <typename T, int components, int dimension, bool UseSIMD>
   using tensor_type =
-      typename specfem::datatype::TensorPointViewType<T, components, dimension,
+      typename specfem::datatype::VectorPointViewType<T, components, dimension,
                                                       UseSIMD>;
 };
 } // namespace impl
@@ -51,13 +51,13 @@ struct Accessor {
 };
 
 template <typename T, typename = void>
-struct is_point_jacobian_matrix : std::false_type {};
+struct is_point_partial_derivatives : std::false_type {};
 
 template <typename T>
-struct is_point_jacobian_matrix<
+struct is_point_partial_derivatives<
     T, std::enable_if_t<T::accessor_type == specfem::accessor::type::point &&
                         T::data_class ==
-                            specfem::data_class::type::jacobian_matrix> >
+                            specfem::data_class::type::partial_derivatives> >
     : std::true_type {};
 
 template <typename T, typename = void>

@@ -1,11 +1,11 @@
 #ifndef _SPECFEM_KERNELS_FRECHET_KERNELS_HPP
 #define _SPECFEM_KERNELS_FRECHET_KERNELS_HPP
 
+#include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/compute_material_derivatives.hpp"
-#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace kokkos_kernels {
@@ -19,15 +19,14 @@ namespace kokkos_kernels {
 template <specfem::dimension::type DimensionTag, int NGLL>
 class frechet_kernels {
 public:
-  constexpr static auto dimension_tag =
-      DimensionTag; ///< Dimension of the problem.
+  constexpr static auto dimension = DimensionTag; ///< Dimension of the problem.
 
   /**
    * @brief Constructor.
    *
    * @param assembly Assembly object.
    */
-  frechet_kernels(const specfem::assembly::assembly<dimension_tag> &assembly)
+  frechet_kernels(const specfem::compute::assembly &assembly)
       : assembly(assembly) {}
 
   /**
@@ -41,16 +40,16 @@ public:
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
          PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
         {
-          if constexpr (dimension_tag == _dimension_tag_) {
-            impl::compute_material_derivatives<dimension_tag, NGLL,
-                                               _medium_tag_, _property_tag_>(
-                this->assembly, dt);
+          if constexpr (dimension == _dimension_tag_) {
+            impl::compute_material_derivatives<dimension, NGLL, _medium_tag_,
+                                               _property_tag_>(this->assembly,
+                                                               dt);
           }
         })
   }
 
 private:
-  specfem::assembly::assembly<dimension_tag> assembly; ///< Assembly object.
+  specfem::compute::assembly assembly; ///< Assembly object.
 };
 } // namespace kokkos_kernels
 } // namespace specfem

@@ -1,5 +1,4 @@
 #pragma once
-#include "enumerations/interface.hpp"
 #include "io/operators.hpp"
 #include "io/wavefield/reader.hpp"
 #include "periodic_task.hpp"
@@ -27,9 +26,7 @@ public:
    * @brief Check for keyboard interrupt and more, when running from Python
    *
    */
-  void
-  run(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-      const int istep) override {
+  void run(specfem::compute::assembly &assembly, const int istep) override {
     std::cout << "Reading wavefield files:" << std::endl;
     std::cout << "-------------------------------" << std::endl;
     reader.read(assembly, istep);

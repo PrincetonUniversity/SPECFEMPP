@@ -3,19 +3,20 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-TEST(MassMatrix, AcousticIsotropic2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
-  static constexpr auto medium_tag = specfem::element::medium_tag::acoustic;
-  static constexpr auto property_tag =
-      specfem::element::property_tag::isotropic;
+constexpr auto dimension = specfem::dimension::type::dim2;
+constexpr auto medium_tag = specfem::element::medium_tag::acoustic;
+constexpr auto property_tag = specfem::element::property_tag::isotropic;
 
-  using PointJacobianMatrixType =
-      specfem::point::jacobian_matrix<dimension, true, false>;
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
-  using PointMassMatrixType =
-      specfem::point::field<dimension, medium_tag, false, false, false, true,
-                            false>;
+using PointPartialDerivativesType =
+    specfem::point::partial_derivatives<dimension, true, false>;
+
+using PointPropertiesType =
+    specfem::point::properties<dimension, medium_tag, property_tag, false>;
+
+using PointMassMatrixType = specfem::point::field<dimension, medium_tag, false,
+                                                  false, false, true, false>;
+
+TEST(MassMatrix, AcousticIsotropic2D) {
 
   const type_real kappa = 10.0;
 

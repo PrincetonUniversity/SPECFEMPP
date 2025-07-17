@@ -22,7 +22,7 @@ functions used to represent and manipulate points in the SPECFEM++ framework.
     index/index
     kernels/index
     mapped_index/index
-    jacobian_matrix/index
+    partial_derivatives/index
     properties/index
     source/index
     stress/index

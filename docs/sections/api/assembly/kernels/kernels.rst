@@ -4,7 +4,7 @@
 Misfit Kernels (Frechet Derivatives)
 =====================================
 
-.. doxygenstruct:: specfem::assembly::kernels
+.. doxygenstruct:: specfem::compute::kernels
     :members:
 
 

@@ -1,8 +1,4 @@
 #include "mortar_fixtures.hpp"
-#include <fstream>
-#include <regex>
-#include <stdexcept>
-#include <utility>
 #include <vector>
 
 YAML::Node YAML_DATA = YAML::Node();

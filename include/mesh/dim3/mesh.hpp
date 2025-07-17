@@ -5,18 +5,17 @@
 #include "boundaries/boundaries.hpp"
 #include "boundaries/free_surface.hpp"
 #include "coloring/coloring.hpp"
-#include "control_nodes/control_nodes.hpp"
 #include "coordinates/coordinates.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "element_types/element_types.hpp"
 #include "inner_outer/inner_outer.hpp"
-#include "jacobian_matrix/jacobian_matrix.hpp"
 #include "mass_matrix/mass_matrix.hpp"
 #include "materials/materials.hpp"
 #include "mesh/dim3/mapping/mapping.hpp"
 #include "mesh/mesh_base.hpp"
 #include "mpi/mpi.hpp"
 #include "parameters/parameters.hpp"
+#include "partial_derivatives/partial_derivatives.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "surface/surface.hpp"
@@ -50,9 +49,10 @@ template <> struct mesh<specfem::dimension::type::dim3> {
   type_real xix_regular, jacobian_regular; ///< Regular xi-xi mapping
   View1D<int> irregular_element_number;    ///< Irregular elements
 
-  // Struct to store the Jacobian matrix
-  specfem::mesh::jacobian_matrix<dimension> jacobian_matrix; ///< Partial
-                                                             ///< derivatives
+  // Struct to store the partial derivatives
+  specfem::mesh::partial_derivatives<dimension>
+      partial_derivatives; ///< Partial
+                           ///< derivatives
 
   // Struct to store element_types
   specfem::mesh::element_types<dimension> elements_types; ///< Element types
@@ -94,9 +94,6 @@ template <> struct mesh<specfem::dimension::type::dim3> {
   // Adjacency
   specfem::mesh::adjacency<dimension> adjacency; ///< Adjacency
 
-  // Control nodes
-  specfem::mesh::control_nodes<dimension> control_nodes; ///< Control nodes
-
   /**
    * @name Constructors
    *
@@ -117,7 +114,7 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    * @param xix_regular Regular xi-xi mapping
    * @param jacobian_regular Regular Jacobian
    * @param irregular_element_number Kokkos View of irregular elements
-   * @param jacobian_matrix Struct to store Jacobian matrix
+   * @param partial_derivatives Struct to store partial derivatives
    * @param elements_types Struct to store element types
    * @param mass_matrix Struct to store mass matrix
    * @param materials Struct to store material properties
@@ -142,7 +139,7 @@ template <> struct mesh<specfem::dimension::type::dim3> {
        const specfem::mesh::mapping<dimension> &mapping,
        const type_real xix_regular, const type_real jacobian_regular,
        const View1D<int> irregular_element_number,
-       const specfem::mesh::jacobian_matrix<dimension> &jacobian_matrix,
+       const specfem::mesh::partial_derivatives<dimension> &partial_derivatives,
        const specfem::mesh::element_types<dimension> &elements_types,
        const specfem::mesh::mass_matrix<dimension> &mass_matrix,
        const specfem::mesh::materials<dimension> &materials,
@@ -158,8 +155,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
       : parameters(parameters), coordinates(coordinates), mapping(mapping),
         xix_regular(xix_regular), jacobian_regular(jacobian_regular),
         irregular_element_number(irregular_element_number),
-        jacobian_matrix(jacobian_matrix), elements_types(elements_types),
-        mass_matrix(mass_matrix), materials(materials), boundaries(boundaries),
+        partial_derivatives(partial_derivatives),
+        elements_types(elements_types), mass_matrix(mass_matrix),
+        materials(materials), boundaries(boundaries),
         absorbing_boundary(absorbing_boundary), free_surface(free_surface),
         coupled_interfaces(coupled_interfaces), mpi(mpi),
         inner_outer(inner_outer), coloring(coloring), surface(surface),

@@ -4,7 +4,7 @@
 Fields
 ======
 
-.. doxygenstruct:: specfem::assembly::fields
+.. doxygenstruct:: specfem::compute::fields
     :members:
 
 .. _assembly_simulation_field:
@@ -12,7 +12,7 @@ Fields
 Simulation Field
 ^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::assembly::simulation_field
+.. doxygenstruct:: specfem::compute::simulation_field
     :members:
 
 Data Access Functions

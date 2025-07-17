@@ -1,10 +1,10 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
+#include "compute/interface.hpp"
 #include "io/interface.hpp"
 #include "medium/material.hpp"
 #include "mesh/mesh.hpp"
 #include "source/interface.hpp"
-#include "specfem/assembly.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <stdexcept>
@@ -169,11 +169,11 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
       specfem::io::read_sources(test_config.sources_file, 1.0, mpi);
 
   // setup compute struct for future use
-  specfem::assembly::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
-                                     gllz);
-  specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
-      jacobian_matrix(mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::assembly::properties material_properties(
+  specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
+                                    gllz);
+  specfem::compute::partial_derivatives partial_derivatives(
+      mesh.coorg, mesh.material_ind.knods, gllx, gllz);
+  specfem::compute::properties material_properties(
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
       gllz->get_N());
 

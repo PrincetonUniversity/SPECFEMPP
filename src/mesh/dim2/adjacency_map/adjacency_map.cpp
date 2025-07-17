@@ -38,7 +38,8 @@ edge_to_bdtype(const specfem::enums::edge::type &bd) {
     return specfem::enums::boundaries::type::RIGHT;
     break;
   default:
-    assert(false);
+    // this should never be called
+    return specfem::enums::boundaries::type::RIGHT;
   }
 }
 // ====================================================================
@@ -62,7 +63,8 @@ edge_and_polarity_to_corner(const specfem::enums::edge::type &bd,
                             : specfem::enums::boundaries::type::BOTTOM_RIGHT;
     break;
   default:
-    assert(false);
+    // this should never be called
+    return specfem::enums::boundaries::type::RIGHT;
   }
 }
 
@@ -70,7 +72,7 @@ edge_and_polarity_to_corner(const specfem::enums::edge::type &bd,
  * @brief calls set_as_boundary() for all boundary edges tagged by the
  * mesh::mesh.
  */
-static inline void mark_all_boundaries(
+static inline void boundarymark(
     specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
         &adjmap,
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &parent) {
@@ -96,15 +98,8 @@ static inline void mark_all_boundaries(
 }
 
 specfem::mesh::adjacency_map::adjacency_map<
-    specfem::dimension::type::dim2>::adjacency_map(const int nspec)
-    : nspec(nspec) {
-  if (nspec >= 0) {
-    adjacent_indices = decltype(adjacent_indices)(
-        "specfem::compute::adjacency_map::adjacent_indices", nspec);
-    adjacent_edges = decltype(adjacent_edges)(
-        "specfem::compute::adjacency_map::adjacent_indices", nspec);
-  }
-}
+    specfem::dimension::type::dim2>::adjacency_map()
+    : nspec(-1) {}
 
 static inline int node_edge(const specfem::enums::edge::type &edgetype,
                             const int &ind) {
@@ -127,7 +122,8 @@ static inline int node_edge(const specfem::enums::edge::type &edgetype,
   case specfem::enums::edge::type::RIGHT:
     return (ind == 0 ? 1 : (ind == 2 ? 2 : 5));
   default:
-    assert(false);
+    // this will never be called. Not throwing error for inlining.
+    return 0;
   }
 }
 
@@ -268,7 +264,7 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
     }
   }
   // mark boundaries
-  mark_all_boundaries(*this, mesh);
+  boundarymark(*this, mesh);
 
   //===================[ FIRST PASS ]===================
   // get conforming adjacencies from shared node indices
@@ -474,94 +470,3 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
   }
   return adj;
 }
-
-std::string
-specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
-    edge_to_string(const int ispec, const specfem::enums::edge::type edge) {
-  switch (edge) {
-  case specfem::enums::edge::TOP:
-    return std::to_string(ispec) + 'T';
-  case specfem::enums::edge::BOTTOM:
-    return std::to_string(ispec) + 'B';
-  case specfem::enums::edge::LEFT:
-    return std::to_string(ispec) + 'L';
-  case specfem::enums::edge::RIGHT:
-    return std::to_string(ispec) + 'R';
-  default:
-    return std::to_string(ispec);
-  }
-}
-
-// std::string specfem::mesh::adjacency_map::adjacency_map<
-//     specfem::dimension::type::dim2>::pretty_adjacency_table() {
-//   std::ostringstream msg;
-// #define COLWIDTH (7)
-// #define NUMCOLS (5)
-// #define NUM_DIGITS(st) (st < 10 ? 1 : (st < 100 ? 2 : (st < 1000 ? 3 : 4)))
-//   char entry[COLWIDTH];
-//   const auto print_entry = [&](bool terminate = false) {
-//     int stsize;
-//     for (stsize = 0; stsize < COLWIDTH && entry[stsize] != '\0'; stsize++) {
-//     }
-//     int padsize = COLWIDTH - stsize;
-//     for (int i = padsize / 2; i > 0; i--) {
-//       msg << ' ';
-//     }
-//     msg.write(entry, stsize);
-//     for (int i = padsize - padsize / 2; i > 0; i--) {
-//       msg << ' ';
-//     }
-//     if (terminate) {
-//       msg << '\n';
-//     } else {
-//       msg << '|';
-//     }
-//   };
-
-//   const auto set_entry_from_adj = [&](const int ispec,
-//                                       const specfem::enums::edge::type type)
-//                                       {
-//     if (has_conforming_adjacency(ispec, type)) {
-//       int ispec_adj;
-//       specfem::enums::edge::type type_adj;
-//       std::tie(ispec_adj, type_adj) = get_conforming_adjacency(ispec, type);
-//       int padding_size = NUM_DIGITS(ispec_adj);
-//       std::sprintf(
-//           entry, "%d%c", ispec_adj,
-//           type_adj == specfem::enums::edge::type::TOP
-//               ? 'T'
-//               : (type_adj == specfem::enums::edge::type::BOTTOM
-//                      ? 'B'
-//                      : (type_adj == specfem::enums::edge::type::LEFT ? 'L'
-//                                                                      :
-//                                                                      'R')));
-//     } else if (has_boundary(ispec, type)) {
-//       std::sprintf(entry, "(bdry)");
-//     } else {
-//       std::sprintf(entry, "MTR");
-//     }
-//   };
-//   std::sprintf(entry, "ISPEC");
-//   print_entry();
-//   std::sprintf(entry, "RIGHT");
-//   print_entry();
-//   std::sprintf(entry, "TOP");
-//   print_entry();
-//   std::sprintf(entry, "LEFT");
-//   print_entry();
-//   std::sprintf(entry, "BOTTOM");
-//   print_entry(true);
-//   for (int i = 0; i < nspec; i++) {
-//     std::sprintf(entry, "%d", i);
-//     print_entry();
-//     set_entry_from_adj(i, specfem::enums::edge::type::RIGHT);
-//     print_entry();
-//     set_entry_from_adj(i, specfem::enums::edge::type::TOP);
-//     print_entry();
-//     set_entry_from_adj(i, specfem::enums::edge::type::LEFT);
-//     print_entry();
-//     set_entry_from_adj(i, specfem::enums::edge::type::BOTTOM);
-//     print_entry(true);
-//   }
-//   return msg.str();
-// }

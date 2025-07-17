@@ -59,7 +59,6 @@ specfem::io::mesh::impl::fortran::dim3::read_mesh_parameters(
   try_read_line("mesh.parameters.nglly", stream, &parameters.nglly);
   try_read_line("mesh.parameters.ngllz", stream, &parameters.ngllz);
   try_read_line("mesh.parameters.ngllsquare", stream, &parameters.ngllsquare);
-  try_read_line("mesh.parameters.ngnod", stream, &parameters.ngnod);
   try_read_line("mesh.parameters.nproc", stream, &parameters.nproc);
 
 #ifndef NDEBUG
@@ -107,7 +106,6 @@ specfem::io::mesh::impl::fortran::dim3::read_mesh_parameters(
                 &parameters.nspec2D_ymax);
   try_read_line("mesh.parameters.nspec_irregular", stream,
                 &parameters.nspec_irregular);
-  try_read_line("mesh.parameters.nnodes_ext_mesh", stream, &parameters.nnodes);
 
 #ifndef NDEBUG
   std::cout << "nspec2D_bottom:........" << parameters.nspec2D_bottom

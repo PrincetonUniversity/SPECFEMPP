@@ -1,8 +1,7 @@
 #include "enumerations/interface.hpp"
-#include "specfem/point/jacobian_matrix.hpp"
+#include "specfem/point/partial_derivatives.hpp"
 #include "specfem/point/stress.hpp"
 #include "specfem_setup.hpp"
-#include "test_helper.hpp"
 #include "test_macros.hpp"
 #include "utilities/simd.hpp"
 #include <Kokkos_Core.hpp>
@@ -29,6 +28,12 @@ protected:
       Kokkos::finalize();
   }
 };
+
+// For better naming
+struct Serial : std::integral_constant<bool, false> {};
+struct SIMD : std::integral_constant<bool, true> {};
+
+using TestTypes = ::testing::Types<Serial, SIMD>;
 
 template <typename T>
 class PointStressTest : public PointStressTestUntyped<T::value> {};
@@ -311,7 +316,7 @@ TYPED_TEST(PointStressTest, DefaultConstructor) {
       << ExpectedGot(zero_val, stress.T(0, 1));
 }
 
-// Test stress operator* with Jacobian matrix in 2D
+// Test stress operator* with partial derivatives in 2D
 TEST_F(PointStressTestSerial, StressOperatorMultiply2D) {
   constexpr bool using_simd = false;
 
@@ -335,9 +340,9 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2D) {
   // Create a stress tensor
   typename stress_type::value_type T(val11, val21, val12, val22);
 
-  // Create Jacobian matrix
+  // Create partial derivatives
   using pd_type =
-      point::jacobian_matrix<dimension::type::dim2, true, using_simd>;
+      point::partial_derivatives<dimension::type::dim2, true, using_simd>;
   pd_type pd;
   pd.xix = 0.5;      // dx/dxi
   pd.xiz = 0.6;      // dz/dxi
@@ -379,9 +384,9 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2DAcoustic) {
   // Create a stress tensor with transposed indexing
   typename stress_type::value_type T(5.0, 6.0); // T(0,0)=5.0, T(0,1)=6.0
 
-  // Create Jacobian matrix
+  // Create partial derivatives
   using pd_type =
-      point::jacobian_matrix<dimension::type::dim2, true, using_simd>;
+      point::partial_derivatives<dimension::type::dim2, true, using_simd>;
   pd_type pd;
   pd.xix = 0.5;      // dx/dxi
   pd.xiz = 0.6;      // dz/dxi

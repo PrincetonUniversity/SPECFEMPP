@@ -3,19 +3,24 @@
 #include <gtest/gtest.h>
 #include <sstream>
 
-TEST(MassMatrix, ElasticPSVIsotropicTrivialSolution2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
-  static constexpr auto property_tag =
-      specfem::element::property_tag::isotropic;
+constexpr auto dimension = specfem::dimension::type::dim2;
+constexpr auto property_tag = specfem::element::property_tag::isotropic;
 
-  using PointPSVPropertiesType =
-      specfem::point::properties<dimension,
-                                 specfem::element::medium_tag::elastic_psv,
-                                 property_tag, false>;
-  using PointPSVMassMatrixType =
-      specfem::point::field<dimension,
-                            specfem::element::medium_tag::elastic_psv, false,
-                            false, false, true, false>;
+using PointPSVPropertiesType = specfem::point::properties<
+    dimension, specfem::element::medium_tag::elastic_psv, property_tag, false>;
+
+using PointPSVMassMatrixType =
+    specfem::point::field<dimension, specfem::element::medium_tag::elastic_psv,
+                          false, false, false, true, false>;
+
+using PointSHPropertiesType = specfem::point::properties<
+    dimension, specfem::element::medium_tag::elastic_sh, property_tag, false>;
+
+using PointSHMassMatrixType =
+    specfem::point::field<dimension, specfem::element::medium_tag::elastic_sh,
+                          false, false, false, true, false>;
+
+TEST(MassMatrix, ElasticPSVIsotropicTrivialSolution2D) {
 
   const PointPSVPropertiesType properties(0.0, 0.0, 0.0);
 
@@ -28,15 +33,6 @@ TEST(MassMatrix, ElasticPSVIsotropicTrivialSolution2D) {
 }
 
 TEST(MassMatrix, ElasticSHIsotropicTrivialSolution2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
-  static constexpr auto property_tag =
-      specfem::element::property_tag::isotropic;
-
-  using PointSHPropertiesType = specfem::point::properties<
-      dimension, specfem::element::medium_tag::elastic_sh, property_tag, false>;
-  using PointSHMassMatrixType =
-      specfem::point::field<dimension, specfem::element::medium_tag::elastic_sh,
-                            false, false, false, true, false>;
 
   const PointSHPropertiesType properties(0.0, 0.0, 0.0);
 
@@ -49,18 +45,6 @@ TEST(MassMatrix, ElasticSHIsotropicTrivialSolution2D) {
 }
 
 TEST(MassMatrix, ElasticPSVIsotropic2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
-  static constexpr auto property_tag =
-      specfem::element::property_tag::isotropic;
-
-  using PointPSVPropertiesType =
-      specfem::point::properties<dimension,
-                                 specfem::element::medium_tag::elastic_psv,
-                                 property_tag, false>;
-  using PointPSVMassMatrixType =
-      specfem::point::field<dimension,
-                            specfem::element::medium_tag::elastic_psv, false,
-                            false, false, true, false>;
 
   const type_real rho = 10.0;
 
@@ -75,15 +59,6 @@ TEST(MassMatrix, ElasticPSVIsotropic2D) {
 }
 
 TEST(MassMatrix, ElasticSHIsotropic2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
-  static constexpr auto property_tag =
-      specfem::element::property_tag::isotropic;
-
-  using PointSHPropertiesType = specfem::point::properties<
-      dimension, specfem::element::medium_tag::elastic_sh, property_tag, false>;
-  using PointSHMassMatrixType =
-      specfem::point::field<dimension, specfem::element::medium_tag::elastic_sh,
-                            false, false, false, true, false>;
 
   const type_real rho = 10.0;
 

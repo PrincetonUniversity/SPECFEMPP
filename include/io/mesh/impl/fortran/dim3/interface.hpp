@@ -64,10 +64,10 @@ void read_xyz(
  * @param coordinates Coordinates object
  * @param mpi MPI object
  */
-void read_jacobian_matrix(
+void read_partial_derivatives(
     std::ifstream &stream,
-    specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>
-        &jacobian_matrix,
+    specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>
+        &partial_derivatives,
     const specfem::MPI::MPI *mpi);
 
 /**
@@ -152,14 +152,6 @@ void check_read_test_value(std::ifstream &stream, int test_value);
  */
 void check_values(std::string message, int value, int expected);
 
-template <typename ViewType>
-void read_control_nodes_indexing(std::ifstream &stream,
-                                 ViewType &control_nodes_indexing);
-
-template <typename ViewType>
-void read_control_nodes_coordinates(std::ifstream &stream,
-                                    ViewType &control_nodes_coordinates);
-
 } // namespace dim3
 } // namespace fortran
 } // namespace impl
@@ -167,5 +159,4 @@ void read_control_nodes_coordinates(std::ifstream &stream,
 } // namespace io
 } // namespace specfem
 
-#include "io/mesh/impl/fortran/dim3/interface.tpp"
 #include "io/mesh/impl/fortran/dim3/utilities.hpp"

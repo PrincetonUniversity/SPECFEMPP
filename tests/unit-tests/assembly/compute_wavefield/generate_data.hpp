@@ -3,16 +3,16 @@
 // combinations and assign 1.0 to all the quadrature points in the element
 
 #pragma once
-#include "enumerations/interface.hpp"
+#include "enumerations/medium.hpp"
+#include "enumerations/wavefield.hpp"
 #include "specfem/point.hpp"
 
 template <specfem::wavefield::type component,
           specfem::wavefield::simulation_field type,
           specfem::element::medium_tag medium,
           specfem::element::property_tag property>
-void generate_data(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    std::vector<int> &ispecs) {
+void generate_data(specfem::compute::assembly &assembly,
+                   std::vector<int> &ispecs) {
 
   auto field = assembly.fields.template get_simulation_field<type>();
 
@@ -53,7 +53,7 @@ void generate_data(
         point_field.acceleration(ic) = 1.0;
       }
 
-      specfem::assembly::store_on_host(index, point_field, field);
+      specfem::compute::store_on_host(index, point_field, field);
     }
   }
 
@@ -62,8 +62,7 @@ void generate_data(
 
 template <specfem::wavefield::type component,
           specfem::wavefield::simulation_field type>
-std::vector<int> generate_data(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+std::vector<int> generate_data(specfem::compute::assembly &assembly) {
 
   std::vector<int> ispecs;
 

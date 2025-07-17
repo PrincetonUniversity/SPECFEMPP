@@ -1,8 +1,7 @@
 #include "periodic_tasks/plot_wavefield.hpp"
+#include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
-#include "enumerations/interface.hpp"
 #include "periodic_tasks/plotter.hpp"
-#include "specfem/assembly.hpp"
 #include "utilities/strings.hpp"
 
 #ifdef NO_VTK
@@ -44,13 +43,13 @@
 
 // Add this constructor implementation for NO_VTK builds
 specfem::periodic_tasks::plot_wavefield::plot_wavefield(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const specfem::compute::assembly &assembly,
     const specfem::display::format &output_format,
-    const specfem::wavefield::type &wavefield_type,
+    const specfem::display::wavefield &component,
     const specfem::wavefield::simulation_field &wavefield,
     const int &time_interval, const boost::filesystem::path &output_folder,
     specfem::MPI::MPI *mpi)
-    : assembly(assembly), wavefield(wavefield), wavefield_type(wavefield_type),
+    : assembly(assembly), wavefield(wavefield), component(component),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec),
       ngllx(assembly.mesh.ngllx), ngllz(assembly.mesh.ngllz), mpi(mpi) {
@@ -63,8 +62,7 @@ specfem::periodic_tasks::plot_wavefield::plot_wavefield(
 }
 
 void specfem::periodic_tasks::plot_wavefield::run(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const int istep) {
+    specfem::compute::assembly &assembly, const int istep) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -74,7 +72,7 @@ void specfem::periodic_tasks::plot_wavefield::run(
 }
 
 void specfem::periodic_tasks::plot_wavefield::initialize(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::compute::assembly &assembly) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -84,7 +82,7 @@ void specfem::periodic_tasks::plot_wavefield::initialize(
 }
 
 void specfem::periodic_tasks::plot_wavefield::finalize(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::compute::assembly &assembly) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -97,13 +95,13 @@ void specfem::periodic_tasks::plot_wavefield::finalize(
 
 // Constructor
 specfem::periodic_tasks::plot_wavefield::plot_wavefield(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const specfem::compute::assembly &assembly,
     const specfem::display::format &output_format,
-    const specfem::wavefield::type &wavefield_type,
+    const specfem::display::wavefield &component,
     const specfem::wavefield::simulation_field &wavefield,
     const int &time_interval, const boost::filesystem::path &output_folder,
     specfem::MPI::MPI *mpi)
-    : assembly(assembly), wavefield(wavefield), wavefield_type(wavefield_type),
+    : assembly(assembly), wavefield(wavefield), component(component),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec),
       ngllx(assembly.mesh.ngllx), ngllz(assembly.mesh.ngllz), mpi(mpi) {};
@@ -113,29 +111,21 @@ double specfem::periodic_tasks::plot_wavefield::sigmoid(double x) {
   return (1 / (1 + std::exp(-100 * x)) - 0.5) * 1.5;
 }
 
-// Get wavefield type to display
+// Get wavefield component type from display component
 specfem::wavefield::type
-specfem::periodic_tasks::plot_wavefield::get_wavefield_type() {
-  if (wavefield_type == specfem::wavefield::type::displacement) {
+specfem::periodic_tasks::plot_wavefield::get_wavefield_component() {
+  if (component == specfem::display::wavefield::displacement) {
     return specfem::wavefield::type::displacement;
-  } else if (wavefield_type == specfem::wavefield::type::velocity) {
+  } else if (component == specfem::display::wavefield::velocity) {
     return specfem::wavefield::type::velocity;
-  } else if (wavefield_type == specfem::wavefield::type::acceleration) {
+  } else if (component == specfem::display::wavefield::acceleration) {
     return specfem::wavefield::type::acceleration;
-  } else if (wavefield_type == specfem::wavefield::type::pressure) {
+  } else if (component == specfem::display::wavefield::pressure) {
     return specfem::wavefield::type::pressure;
-  } else if (wavefield_type == specfem::wavefield::type::rotation) {
+  } else if (component == specfem::display::wavefield::rotation) {
     return specfem::wavefield::type::rotation;
-  } else if (wavefield_type == specfem::wavefield::type::intrinsic_rotation) {
-    return specfem::wavefield::type::intrinsic_rotation;
-  } else if (wavefield_type == specfem::wavefield::type::curl) {
-    return specfem::wavefield::type::curl;
   } else {
-    std::ostringstream message;
-    message << "Unsupported wavefield type for display. "
-            << specfem::wavefield::to_string(wavefield_type)
-            << " is not supported: " << __FILE__ << ":" << __LINE__;
-    throw std::runtime_error(message.str());
+    throw std::runtime_error("Unsupported component");
   }
 }
 
@@ -161,7 +151,7 @@ specfem::periodic_tasks::plot_wavefield::map_materials_with_color() {
           { 169, 169, 169 } },
       };
 
-  const auto &coordinates = assembly.mesh.h_coord;
+  const auto &coordinates = assembly.mesh.points.h_coord;
   const int nspec = assembly.mesh.nspec;
   const int ngllx = assembly.mesh.ngllx;
   const int ngllz = assembly.mesh.ngllz;
@@ -235,10 +225,13 @@ specfem::periodic_tasks::plot_wavefield::map_materials_with_color() {
  * Each element has therefore 9 points, that are the used to return a
  * vtkUnstructuredGrid object containing vtkBiQuadraticQuad cells.
  *
+ * @param assembly
+ * @param type
+ * @param display_component
  * @return vtkSmartPointer<vtkUnstructuredGrid>
  */
 void specfem::periodic_tasks::plot_wavefield::create_biquad_grid() {
-  const auto &coordinates = assembly.mesh.h_coord;
+  const auto &coordinates = assembly.mesh.points.h_coord;
 
   const int ncells = nspec;
   const int cell_points = 9;
@@ -318,9 +311,13 @@ void specfem::periodic_tasks::plot_wavefield::create_biquad_grid() {
  *
  * The wavefield is assigned to the points accordingly.
  *
+ * @param assembly
+ * @param type
+ * @param display_component
+ * @return vtkSmartPointer<vtkUnstructuredGrid>
  */
 void specfem::periodic_tasks::plot_wavefield::create_quad_grid() {
-  const auto &coordinates = assembly.mesh.h_coord;
+  const auto &coordinates = assembly.mesh.points.h_coord;
 
   // For ngll = 5, each spectral element has 16 cells
   const int n_cells_per_spec = (ngllx - 1) * (ngllz - 1);
@@ -374,10 +371,10 @@ void specfem::periodic_tasks::plot_wavefield::create_quad_grid() {
 // Compute wavefield scalar values for the grid points
 vtkSmartPointer<vtkFloatArray>
 specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
-  const auto wavefield_type = get_wavefield_type();
+    specfem::compute::assembly &assembly) {
+  const auto component_type = get_wavefield_component();
   const auto &wavefield_data =
-      assembly.generate_wavefield_on_entire_grid(wavefield, wavefield_type);
+      assembly.generate_wavefield_on_entire_grid(wavefield, component_type);
 
   auto scalars = vtkSmartPointer<vtkFloatArray>::New();
 
@@ -396,11 +393,8 @@ specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
             int ix_pos = ix + x_index[ipoint];
 
             // Insert scalar value
-            if (wavefield_type == specfem::wavefield::type::pressure ||
-                wavefield_type == specfem::wavefield::type::rotation ||
-                wavefield_type ==
-                    specfem::wavefield::type::intrinsic_rotation ||
-                wavefield_type == specfem::wavefield::type::curl) {
+            if (component_type == specfem::wavefield::type::pressure ||
+                component_type == specfem::wavefield::type::rotation) {
               scalars->InsertNextValue(
                   std::abs(wavefield_data(ispec, iz_pos, ix_pos, 0)));
             } else {
@@ -439,10 +433,8 @@ specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
 
     for (int icell = 0; icell < nspec; ++icell) {
       for (int i = 0; i < cell_points; ++i) {
-        if (wavefield_type == specfem::wavefield::type::pressure ||
-            wavefield_type == specfem::wavefield::type::rotation ||
-            wavefield_type == specfem::wavefield::type::intrinsic_rotation ||
-            wavefield_type == specfem::wavefield::type::curl) {
+        if (component_type == specfem::wavefield::type::pressure ||
+            component_type == specfem::wavefield::type::rotation) {
           scalars->InsertNextValue(
               std::abs(wavefield_data(icell, z_index[i], x_index[i], 0)));
         } else {
@@ -460,7 +452,7 @@ specfem::periodic_tasks::plot_wavefield::compute_wavefield_scalars(
 }
 
 void specfem::periodic_tasks::plot_wavefield::initialize(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::compute::assembly &assembly) {
 
   // Create VTK objects that will persist between calls
   colors = vtkSmartPointer<vtkNamedColors>::New();
@@ -558,8 +550,7 @@ void specfem::periodic_tasks::plot_wavefield::initialize(
 }
 
 void specfem::periodic_tasks::plot_wavefield::run(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const int istep) {
+    specfem::compute::assembly &assembly, const int istep) {
 
   // Update the wavefield scalars only
   auto scalars = compute_wavefield_scalars(assembly);
@@ -610,7 +601,7 @@ void specfem::periodic_tasks::plot_wavefield::run(
 }
 
 void specfem::periodic_tasks::plot_wavefield::finalize(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::compute::assembly &assembly) {
   // If interactive, start the event loop if it hasn't been started
   if (output_format == specfem::display::format::on_screen &&
       render_window_interactor) {

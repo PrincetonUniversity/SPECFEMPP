@@ -25,9 +25,7 @@ file(
     ${CMAKE_CURRENT_SOURCE_DIR}/source.yaml
     ${CMAKE_CURRENT_SOURCE_DIR}/README.md
     ${CMAKE_CURRENT_SOURCE_DIR}/topography.dat
-    ${CMAKE_CURRENT_SOURCE_DIR}/plot_seismograms.py
-    ${CMAKE_CURRENT_SOURCE_DIR}/plot_geometry.py
-    ${CMAKE_CURRENT_SOURCE_DIR}/plot_reference_comparison.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/plot_seis.py
     ${CMAKE_CURRENT_SOURCE_DIR}/STATIONS
     ${CMAKE_CURRENT_SOURCE_DIR}/reference
   DESTINATION ${CURRENT_BENCHMARK_BUILD_DIR}

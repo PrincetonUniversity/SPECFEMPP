@@ -1,6 +1,6 @@
 #include "algorithms/locate_point.hpp"
+#include "compute/compute_mesh.hpp"
 #include "jacobian/interface.hpp"
-#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 
 namespace {
@@ -123,15 +123,15 @@ specfem::point::local_coordinates<specfem::dimension::type::dim2>
 specfem::algorithms::locate_point(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
+    const specfem::compute::mesh &mesh) {
 
-  const auto global_coordinates = mesh.h_coord;
-  const auto index_mapping = mesh.h_index_mapping;
-  const auto xi = mesh.h_xi;
-  const auto gamma = mesh.h_xi;
-  const auto shape2D = mesh.h_shape2D;
-  const int ngnod = mesh.ngnod;
-  const int N = mesh.ngllx;
+  const auto global_coordinates = mesh.points.h_coord;
+  const auto index_mapping = mesh.points.h_index_mapping;
+  const auto xi = mesh.quadratures.gll.h_xi;
+  const auto gamma = mesh.quadratures.gll.h_xi;
+  const auto shape2D = mesh.quadratures.gll.shape_functions.h_shape2D;
+  const int ngnod = mesh.control_nodes.ngnod;
+  const int N = mesh.quadratures.gll.N;
 
   int ix_guess, iz_guess, ispec_guess;
 
@@ -154,8 +154,8 @@ specfem::algorithms::locate_point(
     type_real gamma_guess = gamma(iz_guess);
 
     for (int i = 0; i < ngnod; i++) {
-      s_coord(0, i) = mesh.h_control_node_coord(0, ispec, i);
-      s_coord(1, i) = mesh.h_control_node_coord(1, ispec, i);
+      s_coord(0, i) = mesh.control_nodes.h_coord(0, ispec, i);
+      s_coord(1, i) = mesh.control_nodes.h_coord(1, ispec, i);
     }
 
     // find the best location
@@ -163,8 +163,8 @@ specfem::algorithms::locate_point(
         get_best_location(coordinates, s_coord, xi_guess, gamma_guess);
 
     // compute the distance
-    auto [x, z] =
-        jacobian::compute_locations(s_coord, mesh.ngnod, xi_guess, gamma_guess);
+    auto [x, z] = jacobian::compute_locations(s_coord, mesh.control_nodes.ngnod,
+                                              xi_guess, gamma_guess);
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         cart_coord = { x, z };
 
@@ -188,19 +188,19 @@ specfem::point::global_coordinates<specfem::dimension::type::dim2>
 specfem::algorithms::locate_point(
     const specfem::point::local_coordinates<specfem::dimension::type::dim2>
         &coordinate,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
+    const specfem::compute::mesh &mesh) {
 
   const int ispec = coordinate.ispec;
   const type_real xi = coordinate.xi;
   const type_real gamma = coordinate.gamma;
 
-  const int ngnod = mesh.ngnod;
+  const int ngnod = mesh.control_nodes.ngnod;
 
   specfem::kokkos::HostView2d<type_real> s_coord("s_coord", 2, ngnod);
 
   for (int i = 0; i < ngnod; i++) {
-    s_coord(0, i) = mesh.h_control_node_coord(0, ispec, i);
-    s_coord(1, i) = mesh.h_control_node_coord(1, ispec, i);
+    s_coord(0, i) = mesh.control_nodes.h_coord(0, ispec, i);
+    s_coord(1, i) = mesh.control_nodes.h_coord(1, ispec, i);
   }
 
   const auto [x, z] = jacobian::compute_locations(s_coord, ngnod, xi, gamma);
@@ -213,22 +213,22 @@ specfem::algorithms::locate_point(
     const specfem::kokkos::HostTeam::member_type &team_member,
     const specfem::point::local_coordinates<specfem::dimension::type::dim2>
         &coordinate,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
+    const specfem::compute::mesh &mesh) {
 
   const int ispec = coordinate.ispec;
   const type_real xi = coordinate.xi;
   const type_real gamma = coordinate.gamma;
 
-  const int ngnod = mesh.ngnod;
+  const int ngnod = mesh.control_nodes.ngnod;
 
   specfem::kokkos::HostScratchView2d<type_real> s_coord(
       team_member.team_scratch(0), 2, ngnod);
 
-  Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, ngnod),
-                       [&](const int i) {
-                         s_coord(0, i) = mesh.h_control_node_coord(0, ispec, i);
-                         s_coord(1, i) = mesh.h_control_node_coord(1, ispec, i);
-                       });
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team_member, ngnod), [&](const int i) {
+        s_coord(0, i) = mesh.control_nodes.h_coord(0, ispec, i);
+        s_coord(1, i) = mesh.control_nodes.h_coord(1, ispec, i);
+      });
 
   team_member.team_barrier();
 

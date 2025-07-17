@@ -1,8 +1,8 @@
 #pragma once
 
+#include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "io/writer.hpp"
-#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace io {
@@ -32,8 +32,7 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void write(specfem::assembly::assembly<specfem::dimension::type::dim2>
-                 &assembly) override;
+  void write(specfem::compute::assembly &assembly) override;
 
 private:
   std::string output_folder; ///< Path to output folder

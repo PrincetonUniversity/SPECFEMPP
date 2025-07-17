@@ -4,7 +4,7 @@
 Material Properties
 ===================
 
-.. doxygenstruct:: specfem::assembly::properties
+.. doxygenstruct:: specfem::compute::properties
     :members:
 
 Data Access Functions

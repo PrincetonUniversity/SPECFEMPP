@@ -1,5 +1,8 @@
 #pragma once
 
+#include "compute/compute_mesh.hpp"
+#include "compute/compute_partial_derivatives.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "constants.hpp"
 #include "enumerations/wavefield.hpp"
 #include "kokkos_abstractions.h"
@@ -10,12 +13,6 @@
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
-
-namespace specfem::assembly {
-template <specfem::dimension::type DimensionTag> class mesh;
-template <specfem::dimension::type DimensionTag> class jacobian_matrix;
-template <specfem::dimension::type DimensionTag> class element_types;
-} // namespace specfem::assembly
 
 namespace specfem {
 namespace sources {
@@ -90,11 +87,9 @@ public:
   virtual ~source() = default;
 
   virtual void compute_source_array(
-      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
-          &jacobian_matrix,
-      const specfem::assembly::element_types<specfem::dimension::type::dim2>
-          &element_types,
+      const specfem::compute::mesh &mesh,
+      const specfem::compute::partial_derivatives &partial_derivatives,
+      const specfem::compute::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) = 0;
 
   void compute_source_time_function(

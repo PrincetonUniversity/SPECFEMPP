@@ -30,8 +30,6 @@ template <> struct parameters<specfem::dimension::type::dim3> {
   int ngllz;      ///< Number of GLL points in z
   int ngllsquare; ///< Number of GLL points in square
   int nproc;      ///< Number of processors
-  int ngnod;      ///< Number of control nodes per spectral element
-  int nnodes;     ///< Number of control nodes
 
   // Integer Parameters: Elements/Nodes
   int nspec;           ///< Number of spectral elements (SEs)

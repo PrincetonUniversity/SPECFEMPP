@@ -1,9 +1,9 @@
 #pragma once
 
+#include "compute/interface.hpp"
 #include "constants.hpp"
-#include "enumerations/interface.hpp"
 #include "io/writer.hpp"
-#include "specfem/assembly.hpp"
+#include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include <vector>
 
@@ -42,8 +42,7 @@ public:
    * @param assembly Assembly object
    *
    */
-  void write(specfem::assembly::assembly<specfem::dimension::type::dim2>
-                 &assembly) override;
+  void write(specfem::compute::assembly &assembly) override;
 
 private:
   specfem::enums::seismogram::format type; ///< Output format of the seismogram

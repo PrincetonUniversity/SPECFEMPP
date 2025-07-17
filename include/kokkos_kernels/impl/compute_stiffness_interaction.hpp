@@ -1,9 +1,9 @@
 #pragma once
 
+#include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "specfem/assembly.hpp"
 
 namespace specfem {
 namespace kokkos_kernels {
@@ -14,9 +14,8 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
-int compute_stiffness_interaction(
-    const specfem::assembly::assembly<DimensionTag> &assembly,
-    const int &istep);
+int compute_stiffness_interaction(const specfem::compute::assembly &assembly,
+                                  const int &istep);
 }
 } // namespace kokkos_kernels
 } // namespace specfem

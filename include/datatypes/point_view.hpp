@@ -18,7 +18,7 @@ namespace datatype {
  * SIMD type
  */
 template <typename T, std::size_t Components, bool UseSIMD>
-struct VectorPointViewType
+struct ScalarPointViewType
     : public impl::RegisterArray<
           typename specfem::datatype::simd<T, UseSIMD>::datatype,
           Kokkos::extents<std::size_t, Components>, Kokkos::layout_left> {
@@ -78,7 +78,7 @@ struct VectorPointViewType
  * SIMD type
  */
 template <typename T, int Components, int Dimensions, bool UseSIMD>
-struct TensorPointViewType
+struct VectorPointViewType
     : public impl::RegisterArray<
           typename specfem::datatype::simd<T, UseSIMD>::datatype,
           Kokkos::extents<std::size_t, Components, Dimensions>,

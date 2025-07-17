@@ -108,7 +108,10 @@ get_edge(const specfem::HostView1d<int> n, const int itype, const int e1,
   return std::make_tuple(ixmin, ixmax, izmin, izmax, sens);
 }
 
-namespace specfem::assembly::mpi_interfaces {
+namespace specfem {
+namespace compute {
+
+namespace mpi_interfaces {
 
 template <element_type E> struct mpi_interface_type {
   specfem::HostView2d<int> ibool_interfaces;
@@ -135,7 +138,7 @@ template <element_type E> struct mpi_interface_type {
     std::vector<bool> mask_ibool(nglob, false);
     std::vector<int> n(ngnod, 0);
     ip dummy_ip{};
-    *this = specfem::assembly::mpi_interfaces::mpi_interface_type<E>(
+    *this = specfem::compute::mpi_interfaces::mpi_interface_type<E>(
         max_interface_size, ninterfaces, ngllx);
 
     if (nproc == 1)
@@ -209,5 +212,6 @@ template <element_type E> struct mpi_interface_type {
     }
   };
 }
-
-} // namespace specfem::assembly::mpi_interfaces
+} // namespace mpi_interfaces
+} // namespace compute
+} // namespace specfem

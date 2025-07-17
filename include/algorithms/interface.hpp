@@ -1,7 +1,7 @@
-#pragma once
+#ifndef _SPECFEM_ALGORITHMS_HPP
+#define _SPECFEM_ALGORITHMS_HPP
 
-#include "algorithms/divergence.hpp"
-#include "algorithms/dot.hpp"
-#include "algorithms/gradient.hpp"
 #include "algorithms/interpolate.hpp"
 #include "algorithms/locate_point.hpp"
+
+#endif /* _SPECFEM_ALGORITHMS_HPP */

@@ -24,7 +24,7 @@ namespace medium {
  * @tparam PropertyTag Property tag for the element
  * @tparam UseSIMD Use SIMD instructions
  * @param properties Material properties at the quadrature point
- * @param jacobian_matrix Spatial derivatives of basis functions at the
+ * @param partial_derivatives Spatial derivatives of basis functions at the
  * quadrature point
  * @return specfem::point::field<DimensionTag, MediumTag, false, false, false,
  * true, UseSIMD> Contribution to mass matrix at the quadrature point

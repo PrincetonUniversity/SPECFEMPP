@@ -11,7 +11,7 @@ specfem::medium::impl_mass_matrix_component(
                                      specfem::element::medium_tag::elastic_psv,
                                      PropertyTag, UseSIMD> &properties) {
 
-  return specfem::datatype::VectorPointViewType<type_real, 2, UseSIMD>(
+  return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>(
       properties.rho(), properties.rho());
 }
 
@@ -24,6 +24,6 @@ specfem::medium::impl_mass_matrix_component(
                                      specfem::element::medium_tag::elastic_sh,
                                      PropertyTag, UseSIMD> &properties) {
 
-  return specfem::datatype::VectorPointViewType<type_real, 1, UseSIMD>(
+  return specfem::datatype::ScalarPointViewType<type_real, 1, UseSIMD>(
       properties.rho());
 }

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "compute/compute_mesh.hpp"
+#include "compute/compute_partial_derivatives.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "source.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -16,11 +19,9 @@ public:
         specfem::sources::source(Node, nsteps, dt) {};
 
   void compute_source_array(
-      const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-      const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
-          &jacobian_matrix,
-      const specfem::assembly::element_types<specfem::dimension::type::dim2>
-          &element_types,
+      const specfem::compute::mesh &mesh,
+      const specfem::compute::partial_derivatives &partial_derivatives,
+      const specfem::compute::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
   specfem::wavefield::simulation_field get_wavefield_type() const override {

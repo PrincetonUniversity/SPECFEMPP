@@ -457,5 +457,5 @@ GPU_MODE                        = .false.
 
 write_adjacency_map = .true.
 OUTPUT_FILES = .
-database_filename = database.bin
+database_filename = database_adjmap.bin
 stations_filename = STATIONS

@@ -27,14 +27,13 @@ namespace specfem::medium::properties {
  * - `mu_c`: Coupling shear modulus @f$ \mu_c @f$
  * - `nu_c`: Coupling symmetry breaking modulus @f$ \nu_c @f$
  */
-template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag>
+template <specfem::element::medium_tag MediumTag>
 struct data_container<
-    DimensionTag, MediumTag, specfem::element::property_tag::isotropic_cosserat,
+    MediumTag, specfem::element::property_tag::isotropic_cosserat,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
 
-  constexpr static auto dimension_tag =
-      DimensionTag;                             ///< Dimension of the material
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2;           ///< Dimension of the material
   constexpr static auto medium_tag = MediumTag; ///< Medium tag
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic_cosserat; ///< Property tag

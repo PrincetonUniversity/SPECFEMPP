@@ -21,10 +21,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-set_property_value(
-    const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const type_real offset) {
+set_value(const ViewType elements, specfem::compute::assembly &assembly,
+          const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -43,7 +41,7 @@ set_property_value(
       "set_to_value", policy,
       [=](const specfem::point::index<dimension, using_simd> &index) {
         PointPropertiesType point(static_cast<type_real>(index.ispec + offset));
-        specfem::assembly::store_on_host(index, point, properties);
+        specfem::compute::store_on_host(index, point, properties);
       });
 
   Kokkos::fence();
@@ -55,10 +53,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
-check_property_value(
-    const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const type_real offset) {
+check_value(const ViewType elements, specfem::compute::assembly &assembly,
+            const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
   const auto &properties = assembly.properties;
@@ -90,8 +86,8 @@ check_property_value(
         }
 
         PointType point_poperties_computed;
-        specfem::assembly::load_on_host(index, properties,
-                                        point_poperties_computed);
+        specfem::compute::load_on_host(index, properties,
+                                       point_poperties_computed);
 
         if (point_poperties_computed != expected) {
           std::ostringstream message;
@@ -116,10 +112,8 @@ template <specfem::element::medium_tag MediumTag,
 std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
-check_property_value(
-    const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const type_real offset) {
+check_value(const ViewType elements, specfem::compute::assembly &assembly,
+            const type_real offset) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
@@ -142,7 +136,7 @@ check_property_value(
       "set_to_value", policy,
       KOKKOS_LAMBDA(const specfem::point::index<dimension, using_simd> &index) {
         PointType computed;
-        specfem::assembly::load_on_device(index, properties, computed);
+        specfem::compute::load_on_device(index, properties, computed);
 
         const int ispec = index.ispec;
         const int iz = index.iz;
@@ -189,14 +183,14 @@ check_property_value(
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void check_compute_to_mesh(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const specfem::compute::assembly &assembly,
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
   const auto &properties = assembly.properties;
   const auto &element_types = assembly.element_types;
-  const auto &mesh_assembly = assembly.mesh;
+  const auto &mapping = assembly.mesh.mapping;
   const auto &materials = mesh.materials;
 
   // Get all elements of the given type
@@ -216,7 +210,7 @@ void check_compute_to_mesh(
         const int ispec = index.ispec;
 
         // Get the properties stored within the mesh
-        const int ispec_mesh = mesh_assembly.compute_to_mesh(ispec);
+        const int ispec_mesh = mapping.compute_to_mesh(ispec);
         const auto expected =
             materials.get_material<MediumTag, PropertyTag>(ispec_mesh)
                 .get_properties();
@@ -224,7 +218,7 @@ void check_compute_to_mesh(
         // Get the properties stored within the compute object
         const auto computed = [&]() {
           PointType point;
-          specfem::assembly::load_on_host(index, properties, point);
+          specfem::compute::load_on_host(index, properties, point);
           return point;
         }();
 
@@ -259,8 +253,8 @@ TEST_F(ASSEMBLY, properties_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            set_property_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, offset);
+            set_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                           offset);
           })
 
       // Check that we are able to access the values stored in the properties
@@ -272,8 +266,8 @@ TEST_F(ASSEMBLY, properties_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            check_property_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, offset);
+            check_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                             offset);
           });
 
       // SIMD access functions
@@ -286,8 +280,8 @@ TEST_F(ASSEMBLY, properties_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            set_property_value<_medium_tag_, _property_tag_, true>(
-                elements, assembly, offset);
+            set_value<_medium_tag_, _property_tag_, true>(elements, assembly,
+                                                          offset);
           })
 
       // Check that we are able to access the values stored in the properties
@@ -299,8 +293,8 @@ TEST_F(ASSEMBLY, properties_access_functions) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            check_property_value<_medium_tag_, _property_tag_, true>(
-                elements, assembly, offset);
+            check_value<_medium_tag_, _property_tag_, true>(elements, assembly,
+                                                            offset);
           });
 
       std::cout << "-------------------------------------------------------\n"
@@ -381,8 +375,8 @@ TEST_F(ASSEMBLY, properties_io_routines) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            set_property_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, random_value);
+            set_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                           random_value);
           });
 
       // Copy properties to device
@@ -408,8 +402,8 @@ TEST_F(ASSEMBLY, properties_io_routines) {
           {
             const auto elements = assembly.element_types.get_elements_on_host(
                 _medium_tag_, _property_tag_);
-            check_property_value<_medium_tag_, _property_tag_, false>(
-                elements, assembly, random_value);
+            check_value<_medium_tag_, _property_tag_, false>(elements, assembly,
+                                                             random_value);
           });
 
       std::cout << "-------------------------------------------------------\n"

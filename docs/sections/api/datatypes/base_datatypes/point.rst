@@ -6,10 +6,10 @@ Point View Types
 
 Elementary datatypes used to store field values at quadrature points.
 
-.. doxygenstruct:: specfem::datatype::VectorPointViewType
+.. doxygenstruct:: specfem::datatype::ScalarPointViewType
     :members:
 
-.. doxygenstruct:: specfem::datatype::TensorPointViewType
+.. doxygenstruct:: specfem::datatype::VectorPointViewType
     :members:
 
 Implementation Details

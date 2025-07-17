@@ -13,7 +13,6 @@ option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(BUILD_BENCHMARKS "Benchmarks included" ON)
-option(ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
 
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
@@ -41,18 +40,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # For external modules that need to be built suppress build output
 set(FETCHCONTENT_QUIET TRUE)
-
-# Enable unity build for faster compilation
-if(ENABLE_UNITY_BUILD)
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(STATUS "Unity build disabled for Debug build type.")
-        set(CMAKE_UNITY_BUILD OFF)
-    else (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(STATUS "Unity build enabled - this will speed up compilation")
-        set(CMAKE_UNITY_BUILD ON)
-        set(CMAKE_UNITY_BUILD_BATCH_SIZE 8)
-    endif()
-endif()
 
 if (SPECFEMPP_BINDING_PYTHON)
     message(STATUS "Adding -fPIC flag for Python binding.")
@@ -307,12 +294,12 @@ add_library(
         src/io/mesh/impl/fortran/dim2/read_mesh_database.cpp
         src/io/mesh/impl/fortran/dim2/read_interfaces.cpp
         src/io/mesh/impl/fortran/dim2/read_parameters.cpp
-        src/io/mesh/impl/fortran/dim2/read_adjacency_map.cpp
+        src/io/mesh/impl/fortran/dim2/read_footer.cpp
         # Fortran 3D part
         src/io/mesh/impl/fortran/dim3/mesh.cpp
         src/io/mesh/impl/fortran/dim3/read_parameters.cpp
         src/io/mesh/impl/fortran/dim3/read_coordinates.cpp
-        src/io/mesh/impl/fortran/dim3/read_jacobian_matrix.cpp
+        src/io/mesh/impl/fortran/dim3/read_partial_derivatives.cpp
         src/io/mesh/impl/fortran/dim3/utilities.cpp
 )
 
@@ -326,7 +313,7 @@ if (NOT HDF5_CXX_BUILD)
         io
         mesh
         source_class
-        specfem::receivers
+        receiver_class
         yaml-cpp
         ${BOOST_LIBS}
         Kokkos::kokkos)
@@ -335,7 +322,7 @@ else()
         io
         mesh
         source_class
-        specfem::receivers
+        receiver_class
         Kokkos::kokkos
         yaml-cpp
         ${BOOST_LIBS}
@@ -346,7 +333,6 @@ endif()
 add_library(
         enumerations
         src/enumerations/medium.cpp
-        src/enumerations/wavefield.cpp
 )
 
 target_link_libraries(
@@ -417,8 +403,8 @@ add_library(
         src/mesh/dim3/mapping/mapping.cpp
         src/mesh/dim3/materials/materials.cpp
         src/mesh/dim3/coordinates/coordinates.cpp
-        src/mesh/dim3/jacobian_matrix/jacobian_matrix.cpp
-        src/mesh/dim3/control_nodes/control_nodes.cpp
+        src/mesh/dim3/partial_derivatives/partial_derivatives.cpp
+
 )
 
 target_link_libraries(
@@ -433,6 +419,7 @@ target_link_libraries(
 
 add_library(
         jacobian
+        src/jacobian/shape_functions.cpp
         src/jacobian/jacobian.cpp
 )
 
@@ -440,7 +427,6 @@ target_link_libraries(
         jacobian
         Kokkos::kokkos
         point
-        shape_functions
 )
 
 add_library(
@@ -472,7 +458,7 @@ add_library(
 
 target_link_libraries(
         reader
-        assembly
+        compute
         io
         read_seismogram
         utilities
@@ -507,9 +493,6 @@ target_link_libraries(
         utilities
 )
 
-# Disable unity build for source_time_function due to KOKKOS_INLINE_FUNCTION issues
-set_target_properties(source_time_function PROPERTIES UNITY_BUILD OFF)
-
 
 
 add_library(
@@ -536,6 +519,77 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
+add_library(
+        receiver_class
+        src/receiver/receiver.cpp
+)
+
+target_link_libraries(
+        receiver_class
+        specfem_mpi
+        Kokkos::kokkos
+        # utilities
+        quadrature
+        yaml-cpp
+        ${BOOST_LIBS}
+)
+
+add_library(
+        compute
+        src/compute/compute_mesh.cpp
+        src/compute/element_types/element_types.cpp
+        src/compute/compute_partial_derivatives.cpp
+        src/compute/compute_properties.cpp
+        src/compute/compute_kernels.cpp
+        src/compute/compute_sources.cpp
+        src/compute/compute_receivers.cpp
+        src/compute/coupled_interfaces.cpp
+        src/compute/boundaries/impl/acoustic_free_surface.cpp
+        src/compute/boundaries/impl/stacey.cpp
+        src/compute/boundaries/boundaries.cpp
+        src/compute/fields/fields.cpp
+        src/compute/compute_boundary_values.cpp
+        src/compute/assembly/check_jacobian.cpp
+        src/compute/assembly/assembly.cpp
+        src/compute/assembly/compute_wavefield.cpp
+)
+
+target_link_libraries(
+        compute
+        enumerations
+        quadrature
+        mesh
+        # material_class
+        source_class
+        jacobian
+        point
+        edge
+        receiver_class
+        Kokkos::kokkos
+)
+
+if (NOT VTK_CXX_BUILD)
+        target_compile_definitions(
+                compute
+                PUBLIC -DNO_VTK
+        )
+else ()
+        target_link_libraries(
+                compute
+                ${VTK_LIBRARIES}
+                )
+
+        # Only define the __APPLE__ compile definition if it is defined
+        if (__APPLE__)
+        target_compile_definitions(compute PRIVATE __APPLE__)
+        endif(__APPLE__)
+endif()
+
+target_include_directories(
+        compute
+        INTERFACE
+        ${HDF5_INCLUDE_DIRS}
+)
 
 add_library(coupled_interface
         src/coupled_interface/coupled_interface.cpp
@@ -544,7 +598,7 @@ add_library(coupled_interface
 target_link_libraries(
         coupled_interface
         Kokkos::kokkos
-        assembly
+        compute
 )
 
 add_library(
@@ -558,12 +612,11 @@ add_library(
         src/kokkos_kernels/impl/compute_material_derivatives.cpp
         src/kokkos_kernels/frechet_kernels.cpp
 )
-set_target_properties(kokkos_kernels PROPERTIES UNITY_BUILD_BATCH_SIZE 4)
 
 target_link_libraries(
         kokkos_kernels
         Kokkos::kokkos
-        assembly
+        compute
 )
 
 add_library(
@@ -576,7 +629,7 @@ target_link_libraries(
         timescheme
         Kokkos::kokkos
         yaml-cpp
-        assembly
+        compute
 )
 
 add_library(
@@ -601,8 +654,8 @@ add_library(
 
 target_link_libraries(
         writer
-        assembly
-        specfem::receivers
+        compute
+        receiver_class
         io
         utilities
 )
@@ -629,12 +682,12 @@ if (NOT VTK_CXX_BUILD)
 
         target_link_libraries(
                 periodic_tasks
-                assembly
+                compute
         )
 else ()
         target_link_libraries(
                 periodic_tasks
-                assembly
+                compute
                 ${VTK_LIBRARIES}
                 )
 
@@ -667,7 +720,7 @@ target_link_libraries(
         parameter_reader
         quadrature
         timescheme
-        specfem::receivers
+        receiver_class
         yaml-cpp
         periodic_tasks
         writer
@@ -688,10 +741,10 @@ target_link_libraries(
         Kokkos::kokkos
         mesh
         quadrature
-        assembly
+        compute
         source_class
         parameter_reader
-        specfem::receivers
+        receiver_class
         writer
         periodic_tasks
         reader
@@ -723,10 +776,10 @@ target_link_libraries(
         Kokkos::kokkos
         mesh
         quadrature
-        assembly
+        compute
         source_class
         parameter_reader
-        specfem::receivers
+        receiver_class
         writer
         periodic_tasks
         reader

@@ -32,8 +32,6 @@ template <specfem::dimension::type DimensionTag, int NGLL>
 class time_marching<specfem::simulation::type::forward, DimensionTag, NGLL>
     : public solver {
 public:
-  constexpr static auto dimension_tag =
-      DimensionTag; ///< Dimension of the problem
   /**
    * @name Constructors
    *
@@ -53,7 +51,7 @@ public:
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<
           std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks,
-      specfem::assembly::assembly<dimension_tag> assembly)
+      specfem::compute::assembly assembly)
       : kernels(kernels), time_scheme(time_scheme), tasks(tasks),
         assembly(assembly) {}
 
@@ -74,8 +72,7 @@ private:
   std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
       tasks; ///< Periodic tasks
   ///< objects
-  specfem::assembly::assembly<dimension_tag> assembly; ///< Spectral element
-                                                       ///< assembly object
+  specfem::compute::assembly assembly; ///< Spectral element assembly object
 };
 
 /**
@@ -85,8 +82,6 @@ template <specfem::dimension::type DimensionTag, int NGLL>
 class time_marching<specfem::simulation::type::combined, DimensionTag, NGLL>
     : public solver {
 public:
-  constexpr static auto dimension_tag =
-      DimensionTag; ///< Dimension of the problem
   /**
    * @name Constructors
    *
@@ -102,7 +97,7 @@ public:
    * @param time_scheme Time scheme
    */
   time_marching(
-      const specfem::assembly::assembly<dimension_tag> &assembly,
+      const specfem::compute::assembly &assembly,
       const specfem::kokkos_kernels::domain_kernels<
           specfem::wavefield::simulation_field::adjoint, DimensionTag, NGLL>
           &adjoint_kernels,
@@ -133,9 +128,8 @@ private:
       NGLL>
       backward_kernels; ///< Backward computational kernels
   specfem::kokkos_kernels::frechet_kernels<DimensionTag, NGLL>
-      frechet_kernels;                                 ///< Misfit kernels
-  specfem::assembly::assembly<dimension_tag> assembly; ///< Spectral element
-                                                       ///< assembly object
+      frechet_kernels;                 ///< Misfit kernels
+  specfem::compute::assembly assembly; ///< Spectral element assembly object
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
   std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
