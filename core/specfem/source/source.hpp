@@ -132,14 +132,27 @@ public:
    * @param gamma gamma coordinate of source in the local coordinate system
    */
   void set_gamma(type_real gamma) { this->gamma = gamma; }
+
   /**
-   * @brief Set the medium tag for the source
+   * @brief Set the medium tag for the source.
+   *
+   * This needs to be set inside the since each medium requires a separate
+   * implementation for each medium and some source do not have implementations
+   * for certain media at all. E.g., if you want to assign a moment tensor to an
+   * element in the water column (acoustic), it does not make sense, or rather
+   * it is unphysical.
    *
    * @param medium_tag medium tag
    */
-  void set_medium_tag(specfem::element::medium_tag medium_tag) {
-    this->medium_tag = medium_tag;
-  }
+  void set_medium_tag(specfem::element::medium_tag medium_tag);
+
+  /**
+   * @brief Get the list of supported media for this source type
+   *
+   * @return std::vector<specfem::element::medium_tag> list of supported media
+   */
+  virtual std::vector<specfem::element::medium_tag>
+  get_supported_media() const = 0;
 
   /**
    * @brief Get the local xi coordinate of the source in the local coordinate
@@ -178,18 +191,19 @@ public:
 
 protected:
   // Read-only member variables
+  std::string name;
   type_real x; ///< x-coordinate of source
   type_real z; ///< z-coordinate of source
   std::unique_ptr<specfem::forcing_function::stf>
       forcing_function; ///< pointer to source time function
 
-private:
   // Member variables to be set.
   type_real xi;
   ///< xi coordinate of source in the local coordinate system
   type_real gamma;
   ///< gamma coordinate of source in the local coordinate system
   specfem::element::medium_tag medium_tag;
+
   ///< medium tag for the source
   ///< (e.g., acoustic, elastic, poroelastic, etc.)
   int element_index; ///< index of the element that the source is located in

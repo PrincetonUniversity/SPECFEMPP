@@ -6,6 +6,15 @@
 #include "utilities/interface.hpp"
 #include <cmath>
 
+// Static member definitions
+const std::string specfem::sources::cosserat_force::name =
+    "cosserat force source";
+
+std::vector<specfem::element::medium_tag>
+specfem::sources::cosserat_force::get_supported_media() const {
+  return { specfem::element::medium_tag::elastic_psv_t };
+}
+
 specfem::kokkos::HostView1d<type_real>
 specfem::sources::cosserat_force::get_force_vector() const {
 

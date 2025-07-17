@@ -4,6 +4,21 @@
 #include "specfem_setup.hpp"
 #include <cmath>
 
+// Static member definitions
+const std::string specfem::sources::external::name = "external source";
+
+std::vector<specfem::element::medium_tag>
+specfem::sources::external::get_supported_media() const {
+  return {
+    specfem::element::medium_tag::acoustic,
+    specfem::element::medium_tag::elastic_psv,
+    specfem::element::medium_tag::elastic_psv_t,
+    specfem::element::medium_tag::elastic_sh,
+    specfem::element::medium_tag::electromagnetic_te,
+    specfem::element::medium_tag::poroelastic,
+  };
+}
+
 specfem::kokkos::HostView1d<type_real>
 specfem::sources::external::get_force_vector() const {
 

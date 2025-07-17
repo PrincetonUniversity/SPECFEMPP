@@ -85,13 +85,23 @@ public:
    */
   specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
 
+  /**
+   * @brief Get the list of supported media for this source type
+   *
+   * @return std::vector<specfem::element::medium_tag> list of supported media
+   */
+  std::vector<specfem::element::medium_tag>
+  get_supported_media() const override;
+
 private:
+  const static std::string name;
   type_real angle; ///< Angle of the elastic force source
   type_real f;     ///< Factor to scale the elastic force
   type_real fc;    ///< Factor to scale the rotational force
   specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
                                                        ///< which the source
                                                        ///< acts
+  const static std::vector<specfem::element::medium_tag> supported_media;
 };
 
 } // namespace sources
