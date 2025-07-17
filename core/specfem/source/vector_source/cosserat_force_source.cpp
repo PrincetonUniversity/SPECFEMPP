@@ -1,4 +1,4 @@
-#include "specfem/source/cosserat_force_source.hpp"
+#include "specfem/source/vector_source/cosserat_force_source.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 #include "source_time_function/interface.hpp"

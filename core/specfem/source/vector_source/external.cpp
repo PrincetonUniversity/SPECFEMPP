@@ -1,6 +1,6 @@
+#include "specfem/source/vector_source/external.hpp"
 #include "enumerations/interface.hpp"
 #include "source_time_function/interface.hpp"
-#include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include <cmath>
 

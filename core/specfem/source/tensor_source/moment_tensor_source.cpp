@@ -1,4 +1,4 @@
-#include "specfem/source/moment_tensor_source.hpp"
+#include "specfem/source/tensor_source/moment_tensor_source.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"

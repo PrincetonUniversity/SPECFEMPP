@@ -1,4 +1,3 @@
-#include "moment_tensor_source_array.hpp"
 #include "algorithms/interface.hpp"
 #include "enumerations/macros.hpp"
 #include "kokkos_abstractions.h"
@@ -10,93 +9,45 @@
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 
-bool specfem::assembly::compute_source_array_impl::moment_tensor_source_array(
-    const std::shared_ptr<specfem::sources::source> &source,
+template <>
+void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
+    const specfem::sources::tensor_source &tensor_source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
-  // Check if the source is correct type
-  if (source->get_source_type() !=
-      specfem::sources::source_type::moment_tensor_source) {
-    return false;
-  }
+  // Not getting around the mesh input
+  auto xi = mesh.h_xi;
+  auto gamma = mesh.h_xi;
+  const int ngllx = mesh.ngllx;
+  const int ngllz = mesh.ngllz;
 
-  // Cast to derived class to access specific methods
-  auto moment_tensor_source =
-      static_cast<const specfem::sources::moment_tensor *>(source.get());
-
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
-      moment_tensor_source->get_x(), moment_tensor_source->get_z());
-  auto lcoord = specfem::algorithms::locate_point(coord, mesh);
-
-  const auto el_type = element_types.get_medium_tag(lcoord.ispec);
-
-  if (el_type == specfem::element::medium_tag::acoustic) {
-    throw std::runtime_error(
-        "Moment tensor source not implemented for acoustic medium");
-  }
-
-  if (el_type == specfem::element::medium_tag::elastic_sh) {
-    throw std::runtime_error(
-        "Moment tensor source not implemented for elastic SH medium");
-  }
-
-  const int ncomponents = source_array.extent(0);
-  if ((el_type == specfem::element::medium_tag::elastic_psv) ||
-      (el_type == specfem::element::medium_tag::electromagnetic_te)) {
-    if (ncomponents != 2) {
-      throw std::runtime_error(
-          "Moment tensor source requires 2 components for elastic medium");
-    }
-  } else if (el_type == specfem::element::medium_tag::poroelastic) {
-    if (ncomponents != 4) {
-      throw std::runtime_error(
-          "Moment tensor source requires 4 components for poroelastic medium");
-    }
-  } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
-    if (ncomponents != 3) {
-      throw std::runtime_error("Moment tensor source requires 3 components for "
-                               "elastic psv_t medium");
-    }
-  } else {
-    KOKKOS_ABORT_WITH_LOCATION("Moment tensor source array computation not "
-                               "implemented for requested element type.");
-  }
-
-  const auto xi = mesh.h_xi;
-  const auto gamma = mesh.h_xi;
-  const auto N = mesh.ngllx;
-
-  // Compute lagrange interpolants at the source location
+  // Compute lagrange interpolants at the local source location
   auto [hxi_source, hpxi_source] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          lcoord.xi, N, xi);
+          tensor_source.get_xi(), ngllx, xi);
   auto [hgamma_source, hpgamma_source] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          lcoord.gamma, N, gamma);
+          tensor_source.get_gamma(), ngllz, gamma);
 
-  // Load
   specfem::kokkos::HostView2d<type_real> source_polynomial("source_polynomial",
-                                                           N, N);
+                                                           ngllz, ngllx);
   using PointJacobianMatrix =
       specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
                                       false>;
   specfem::kokkos::HostView2d<PointJacobianMatrix> element_derivatives(
-      "element_derivatives", N, N);
+      "element_derivatives", ngllz, ngllx);
 
   Kokkos::parallel_for(
-      specfem::kokkos::HostMDrange<2>({ 0, 0 }, { N, N }),
+      specfem::kokkos::HostMDrange<2>({ 0, 0 }, { ngllz, ngllx }),
       // Structured binding does not work with lambdas
       // Workaround: capture by value
-      [=, hxi_source = hxi_source,
-       hgamma_source = hgamma_source](const int iz, const int ix) {
+      [=, hxi_source = hxi_source, hgamma_source = hgamma_source,
+       &tensor_source](const int iz, const int ix) {
         type_real hlagrange = hxi_source(ix) * hgamma_source(iz);
         const specfem::point::index<specfem::dimension::type::dim2> index(
-            lcoord.ispec, iz, ix);
+            tensor_source.get_element_index(), iz, ix);
         PointJacobianMatrix derivatives;
         specfem::assembly::load_on_host(index, jacobian_matrix, derivatives);
         source_polynomial(iz, ix) = hlagrange;
@@ -127,10 +78,20 @@ bool specfem::assembly::compute_source_array_impl::moment_tensor_source_array(
   //   }
   // }
 
-  const auto source_tensor = moment_tensor_source->get_source_tensor();
+  const auto source_tensor = tensor_source.get_source_tensor();
 
-  for (int iz = 0; iz < N; ++iz) {
-    for (int ix = 0; ix < N; ++ix) {
+  int ncomponents = source_array.extent(0);
+
+  // Sanity check
+  if (ncomponents != source_tensor.extent(0)) {
+    KOKKOS_ABORT_WITH_LOCATION(
+        "source_array_components and tensor components do not match")
+  }
+
+  for (int iz = 0; iz < ngllz; ++iz) {
+    for (int ix = 0; ix < ngllx; ++ix) {
+
+      // Compute the derivatives at the source location
       type_real dsrc_dx =
           (hpxi_source(ix) * derivatives_source.xix) * hgamma_source(iz) +
           hxi_source(ix) * (hpgamma_source(iz) * derivatives_source.gammax);
@@ -145,5 +106,5 @@ bool specfem::assembly::compute_source_array_impl::moment_tensor_source_array(
     }
   }
 
-  return true;
+  return;
 }

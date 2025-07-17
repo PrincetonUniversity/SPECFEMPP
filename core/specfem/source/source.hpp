@@ -15,11 +15,8 @@ namespace specfem {
 namespace sources {
 
 enum class source_type {
-  adjoint_source,
-  force_source,
-  moment_tensor_source,
-  cosserat_force_source,
-  external_source
+  vector_source, ///< Vector source
+  tensor_source, ///< Tensor source
 };
 
 /**
