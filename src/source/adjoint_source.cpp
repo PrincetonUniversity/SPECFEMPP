@@ -1,6 +1,60 @@
 #include "source/adjoint_source.hpp"
 #include "algorithms/locate_point.hpp"
+#include "enumerations/interface.hpp"
 #include "globals.h"
+
+specfem::kokkos::HostView1d<type_real>
+specfem::sources::adjoint_source::get_force_vector() const {
+
+  // Get the medium tag that the source is located in
+  specfem::element::medium_tag medium_tag = this->get_medium_tag();
+
+  // Declare the force vector
+  specfem::kokkos::HostView1d<type_real> force_vector;
+
+  // Acoustic
+  if (medium_tag == specfem::element::medium_tag::acoustic) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 1);
+    force_vector(0) = 1.0;
+  }
+  // Elastic SH
+  else if (medium_tag == specfem::element::medium_tag::elastic_sh) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 1);
+    force_vector(0) = 1.0;
+  }
+  // Elastic P-SV
+  else if (medium_tag == specfem::element::medium_tag::elastic_psv) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 2);
+    force_vector(0) = 1.0;
+    force_vector(1) = 1.0;
+  }
+  // Poroelastic
+  else if (medium_tag == specfem::element::medium_tag::poroelastic) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 4);
+    force_vector(0) = 1.0;
+    force_vector(1) = 1.0;
+    force_vector(2) = 1.0;
+    force_vector(3) = 1.0;
+  }
+  // Elastic P-SV-T
+  else if (medium_tag == specfem::element::medium_tag::elastic_psv_t) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 3);
+    force_vector(0) = 1.0;
+    force_vector(1) = 1.0;
+    force_vector(2) = static_cast<type_real>(0.0);
+  }
+  // Electromagnetic TE
+  else if (medium_tag == specfem::element::medium_tag::electromagnetic_te) {
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 2);
+    force_vector(0) = 1.0;
+    force_vector(1) = 1.0;
+  } else {
+    KOKKOS_ABORT_WITH_LOCATION("Adjoint source array computation not "
+                               "implemented for requested element type.");
+  }
+
+  return force_vector;
+}
 
 std::string specfem::sources::adjoint_source::print() const {
 

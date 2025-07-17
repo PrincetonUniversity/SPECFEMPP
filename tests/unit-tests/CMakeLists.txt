@@ -396,6 +396,7 @@ add_executable(
   source/source.cpp
   source/vector_sources/force_source.cpp
   source/vector_sources/cosserat_force_source.cpp
+  source/vector_sources/adjoint_source.cpp
 )
 target_link_libraries(
   source_class_tests

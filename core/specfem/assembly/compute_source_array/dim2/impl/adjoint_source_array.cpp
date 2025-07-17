@@ -56,60 +56,14 @@ bool specfem::assembly::compute_source_array_impl::adjoint_source_array(
 
   type_real hlagrange;
 
+  const auto force_vector = adjoint_source->get_force_vector();
+
+  // Source array computation
   for (int iz = 0; iz < N; ++iz) {
     for (int ix = 0; ix < N; ++ix) {
       hlagrange = hxi_source(ix) * hgamma_source(iz);
-
-      if (el_type == specfem::element::medium_tag::acoustic) {
-        if (ncomponents != 1) {
-          throw std::runtime_error(
-              "Adjoint source requires 1 component for acoustic medium");
-        }
-        source_array(0, iz, ix) = hlagrange;
-      }
-      // Elastic SH
-      else if (el_type == specfem::element::medium_tag::elastic_sh) {
-        if (ncomponents != 1) {
-          throw std::runtime_error(
-              "Adjoint source requires 1 component for elastic SH medium");
-        }
-        source_array(0, iz, ix) = hlagrange;
-      } else if (el_type == specfem::element::medium_tag::elastic_psv) {
-        if (ncomponents != 2) {
-          throw std::runtime_error(
-              "Adjoint source for elastic P-SV, poroelastic, or "
-              "electromagnetic P-SV requires 2 components");
-        }
-        source_array(0, iz, ix) = hlagrange;
-        source_array(1, iz, ix) = hlagrange;
-      } else if ((el_type == specfem::element::medium_tag::poroelastic)) {
-        if (ncomponents != 4) {
-          throw std::runtime_error(
-              "Force source requires 4 components for poroelastic medium");
-        }
-        source_array(0, iz, ix) = hlagrange;
-        source_array(1, iz, ix) = hlagrange;
-        source_array(2, iz, ix) = hlagrange;
-        source_array(3, iz, ix) = hlagrange;
-      } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
-        if (ncomponents != 3) {
-          throw std::runtime_error(
-              "Adjoint source requires 3 components for elastic psv_t medium");
-        }
-        source_array(0, iz, ix) = hlagrange;
-        source_array(1, iz, ix) = hlagrange;
-        source_array(2, iz, ix) = static_cast<type_real>(0.0);
-      } else if (el_type == specfem::element::medium_tag::electromagnetic_te) {
-        if (ncomponents != 2) {
-          throw std::runtime_error(
-              "Adjoint source requires 2 components for electromagnetic "
-              "TE medium");
-        }
-        source_array(0, iz, ix) = hlagrange;
-        source_array(1, iz, ix) = hlagrange;
-      } else {
-        KOKKOS_ABORT_WITH_LOCATION("Adjoint source array computation not "
-                                   "implemented for requested element type.");
+      for (int i = 0; i < ncomponents; ++i) {
+        source_array(i, iz, ix) = hlagrange * force_vector(i);
       }
     }
   }
