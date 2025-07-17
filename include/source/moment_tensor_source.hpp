@@ -1,7 +1,7 @@
 #pragma once
 
 #include "constants.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source.hpp"
@@ -99,6 +99,15 @@ public:
   source_type get_source_type() const override {
     return source_type::moment_tensor_source;
   }
+
+  /**
+   * @brief Get the source tensor
+   *
+   * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * Source tensor with dimensions [ncomponents][2] where each row contains
+   * [Mxx, Mxz] or [Mxz, Mzz]
+   */
+  specfem::kokkos::HostView2d<type_real> get_source_tensor() const;
 
 private:
   type_real Mxx;                                       ///< Mxx for the source

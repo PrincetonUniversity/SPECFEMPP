@@ -127,6 +127,8 @@ bool specfem::assembly::compute_source_array_impl::moment_tensor_source_array(
   //   }
   // }
 
+  const auto source_tensor = moment_tensor_source->get_source_tensor();
+
   for (int iz = 0; iz < N; ++iz) {
     for (int ix = 0; ix < N; ++ix) {
       type_real dsrc_dx =
@@ -135,16 +137,10 @@ bool specfem::assembly::compute_source_array_impl::moment_tensor_source_array(
       type_real dsrc_dz =
           (hpxi_source(ix) * derivatives_source.xiz) * hgamma_source(iz) +
           hxi_source(ix) * (hpgamma_source(iz) * derivatives_source.gammaz);
-      source_array(0, iz, ix) = moment_tensor_source->get_Mxx() * dsrc_dx +
-                                moment_tensor_source->get_Mxz() * dsrc_dz;
-      source_array(1, iz, ix) = moment_tensor_source->get_Mxz() * dsrc_dx +
-                                moment_tensor_source->get_Mzz() * dsrc_dz;
 
-      if (el_type == specfem::element::medium_tag::poroelastic) {
-        source_array(2, iz, ix) = source_array(0, iz, ix);
-        source_array(3, iz, ix) = source_array(1, iz, ix);
-      } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
-        source_array(2, iz, ix) = static_cast<type_real>(0.0);
+      for (int i = 0; i < ncomponents; ++i) {
+        source_array(i, iz, ix) =
+            source_tensor(i, 0) * dsrc_dx + source_tensor(i, 1) * dsrc_dz;
       }
     }
   }
