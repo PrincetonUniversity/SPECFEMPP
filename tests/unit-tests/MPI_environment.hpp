@@ -1,3 +1,5 @@
+#pragma once
+
 #include "specfem_mpi/interface.hpp"
 #include <gtest/gtest.h>
 
