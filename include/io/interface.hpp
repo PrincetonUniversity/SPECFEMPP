@@ -1,10 +1,9 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "enumerations/simulation.hpp"
 #include "mesh/mesh.hpp"
-#include "receiver/interface.hpp"
 #include "source/interface.hpp"
+#include "specfem/receivers.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <yaml-cpp/yaml.h>
@@ -52,7 +51,8 @@ read_3d_mesh(const std::string mesh_parameters_file,
  * @param angle Angle of the receivers
  * @return vector of instantiated receiver objects
  */
-std::vector<std::shared_ptr<specfem::receivers::receiver> >
+std::vector<std::shared_ptr<
+    specfem::receivers::receiver<specfem::dimension::type::dim2> > >
 read_receivers(const std::string stations_file, const type_real angle);
 
 /**
@@ -78,7 +78,8 @@ read_receivers(const std::string stations_file, const type_real angle);
  * @param angle Angle of the receivers
  * @return vector of instantiated receiver objects
  */
-std::vector<std::shared_ptr<specfem::receivers::receiver> >
+std::vector<std::shared_ptr<
+    specfem::receivers::receiver<specfem::dimension::type::dim2> > >
 read_receivers(const YAML::Node &stations, const type_real angle);
 
 /**
