@@ -1,5 +1,6 @@
 #include "enumerations/interface.hpp"
 #include "enumerations/wavefield.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem/point/properties.hpp"
 #include "specfem/point/source.hpp"
 #include "specfem_setup.hpp"
@@ -285,11 +286,12 @@ TEST_F(PointSourceTest, AccessorBaseType) {
                     wavefield::simulation_field::forward>;
 
   // Check if source_type is derived from the correct base class
-  bool is_accessor = std::is_base_of<
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::source,
-                                  dimension::type::dim2, false>,
-      source_type>::value;
+  bool is_accessor =
+      std::is_base_of<specfem::data_access::Accessor<
+                          specfem::data_access::AccessorType::point,
+                          specfem::data_access::DataClassType::source,
+                          dimension::type::dim2, false>,
+                      source_type>::value;
 
   EXPECT_TRUE(is_accessor);
 }

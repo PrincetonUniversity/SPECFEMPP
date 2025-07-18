@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/simd.hpp"
 #include <Kokkos_SIMD.hpp>
@@ -144,18 +145,18 @@ namespace properties {
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
-struct PropertyAccessor
-    : public specfem::accessor::Accessor<specfem::accessor::type::point,
-                                         specfem::data_class::type::properties,
-                                         DimensionTag, UseSIMD> {
+struct PropertyAccessor : public specfem::data_access::Accessor<
+                              specfem::data_access::AccessorType::point,
+                              specfem::data_access::DataClassType::properties,
+                              DimensionTag, UseSIMD> {
 
 public:
-  using base_accessor =
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::properties,
-                                  DimensionTag, UseSIMD>; ///< Base type of
-                                                          ///< the point
-                                                          ///< properties
+  using base_accessor = specfem::data_access::Accessor<
+      specfem::data_access::AccessorType::point,
+      specfem::data_access::DataClassType::properties, DimensionTag,
+      UseSIMD>; ///< Base type of
+                ///< the point
+                ///< properties
 
   using simd =
       typename base_accessor::template simd<type_real>; ///< SIMD data type
@@ -191,13 +192,13 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct KernelsAccessor
-    : public specfem::accessor::Accessor<specfem::accessor::type::point,
-                                         specfem::data_class::type::kernels,
-                                         DimensionTag, UseSIMD> {
-  using base_type =
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::kernels,
-                                  DimensionTag, UseSIMD>;    ///< Base type of
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::kernels, DimensionTag, UseSIMD> {
+  using base_type = specfem::data_access::Accessor<
+      specfem::data_access::AccessorType::point,
+      specfem::data_access::DataClassType::kernels, DimensionTag,
+      UseSIMD>;                                              ///< Base type of
                                                              ///< the point
                                                              ///< kernels
   using simd = typename base_type::template simd<type_real>; ///< SIMD data type

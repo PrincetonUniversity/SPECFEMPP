@@ -13,7 +13,7 @@ specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::write(
-    specfem::assembly::assembly &assembly) {
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
   auto &forward = assembly.fields.forward;
   auto &mesh = assembly.mesh;
@@ -95,7 +95,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::write(
-    specfem::assembly::assembly &assembly, const int istep) {
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly, const int istep) {
   auto &forward = assembly.fields.forward;
   auto &boundary_values = assembly.boundary_values;
 
@@ -142,19 +142,6 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
             specfem::element::to_string(_medium_tag_) + "Acceleration";
         stacey.createDataset(dataset_name, _container_.h_values).write();
       });
-
-  // stacey
-  //     .createDataset("ElasticAcceleration",
-  //                    boundary_values.stacey.elastic.h_values)
-  //     .write();
-  // stacey
-  //     .createDataset("AcousticAcceleration",
-  //                    boundary_values.stacey.acoustic.h_values)
-  //     .write();
-  // stacey
-  //     .createDataset("PoroelasticAcceleration",
-  //                    boundary_values.stacey.poroelastic.h_values)
-  //     .write();
 
   file.flush();
 
