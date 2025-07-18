@@ -372,6 +372,5 @@ specfem::io::mesh::impl::fortran::dim2::read_boundaries(
   auto forcing_boundary =
       read_forcing_boundaries(stream, n_acforcing, nspec, mpi);
 
-  return specfem::mesh::boundaries(absorbing_boundary, acoustic_free_surface,
-                                   forcing_boundary);
+  return { absorbing_boundary, acoustic_free_surface, forcing_boundary };
 }
