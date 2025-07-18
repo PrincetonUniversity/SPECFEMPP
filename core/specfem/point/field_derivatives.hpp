@@ -2,6 +2,7 @@
 
 #include "datatypes/point_view.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -22,17 +23,18 @@ namespace point {
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct field_derivatives
-    : public specfem::accessor::Accessor<
-          specfem::accessor::type::point,
-          specfem::data_class::type::field_derivatives, DimensionTag, UseSIMD> {
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::field_derivatives, DimensionTag,
+          UseSIMD> {
 
 private:
-  using base_type =
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::field_derivatives,
-                                  DimensionTag, UseSIMD>; ///< Base type of the
-                                                          ///< point field
-                                                          ///< derivatives
+  using base_type = specfem::data_access::Accessor<
+      specfem::data_access::AccessorType::point,
+      specfem::data_access::DataClassType::field_derivatives, DimensionTag,
+      UseSIMD>; ///< Base type of the
+                ///< point field
+                ///< derivatives
 public:
   /**
    * @name Compile time constants

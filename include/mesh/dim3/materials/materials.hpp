@@ -95,87 +95,87 @@ template <> struct materials<specfem::dimension::type::dim3> {
    * @param poroelastic  whether the simulation is poroelastic
    * @param anisotropic  whether the simulation is anisotropic
    */
-  materials(const int nspec, const int ngllx, const int nglly, const int ngllz,
+  materials(const int nspec, const int ngllz, const int nglly, const int ngllx,
             const bool acoustic, const bool elastic, const bool poroelastic,
             const bool anisotropic)
       : nspec(nspec), ngllx(ngllx), nglly(nglly), ngllz(ngllz),
         acoustic(acoustic), elastic(elastic), poroelastic(poroelastic),
         anisotropic(anisotropic),
-        rho("specfem::mesh::materials::rho", nspec, ngllx, nglly, ngllz),
-        kappa("specfem::mesh::materials::kappa", nspec, ngllx, nglly, ngllz),
-        mu("specfem::mesh::materials::mu", nspec, ngllx, nglly, ngllz) {
+        rho("specfem::mesh::materials::rho", nspec, ngllz, nglly, ngllx),
+        kappa("specfem::mesh::materials::kappa", nspec, ngllz, nglly, ngllx),
+        mu("specfem::mesh::materials::mu", nspec, ngllz, nglly, ngllx) {
     if (elastic) {
       rho_vp = View4D<type_real>("specfem::mesh::materials::rho_vp", nspec,
-                                 ngllx, nglly, ngllz);
+                                 ngllz, nglly, ngllx);
       rho_vs = View4D<type_real>("specfem::mesh::materials::rho_vs", nspec,
-                                 ngllx, nglly, ngllz);
+                                 ngllz, nglly, ngllx);
 
       if (anisotropic) {
-        c11 = View4D<type_real>("specfem::mesh::materials::c11", nspec, ngllx,
-                                nglly, ngllz);
-        c12 = View4D<type_real>("specfem::mesh::materials::c12", nspec, ngllx,
-                                nglly, ngllz);
-        c13 = View4D<type_real>("specfem::mesh::materials::c13", nspec, ngllx,
-                                nglly, ngllz);
-        c14 = View4D<type_real>("specfem::mesh::materials::c14", nspec, ngllx,
-                                nglly, ngllz);
-        c15 = View4D<type_real>("specfem::mesh::materials::c15", nspec, ngllx,
-                                nglly, ngllz);
-        c16 = View4D<type_real>("specfem::mesh::materials::c16", nspec, ngllx,
-                                nglly, ngllz);
-        c22 = View4D<type_real>("specfem::mesh::materials::c22", nspec, ngllx,
-                                nglly, ngllz);
-        c23 = View4D<type_real>("specfem::mesh::materials::c23", nspec, ngllx,
-                                nglly, ngllz);
-        c24 = View4D<type_real>("specfem::mesh::materials::c24", nspec, ngllx,
-                                nglly, ngllz);
-        c25 = View4D<type_real>("specfem::mesh::materials::c25", nspec, ngllx,
-                                nglly, ngllz);
-        c26 = View4D<type_real>("specfem::mesh::materials::c26", nspec, ngllx,
-                                nglly, ngllz);
-        c33 = View4D<type_real>("specfem::mesh::materials::c33", nspec, ngllx,
-                                nglly, ngllz);
-        c34 = View4D<type_real>("specfem::mesh::materials::c34", nspec, ngllx,
-                                nglly, ngllz);
-        c35 = View4D<type_real>("specfem::mesh::materials::c35", nspec, ngllx,
-                                nglly, ngllz);
-        c36 = View4D<type_real>("specfem::mesh::materials::c36", nspec, ngllx,
-                                nglly, ngllz);
-        c44 = View4D<type_real>("specfem::mesh::materials::c44", nspec, ngllx,
-                                nglly, ngllz);
-        c45 = View4D<type_real>("specfem::mesh::materials::c45", nspec, ngllx,
-                                nglly, ngllz);
-        c46 = View4D<type_real>("specfem::mesh::materials::c46", nspec, ngllx,
-                                nglly, ngllz);
-        c55 = View4D<type_real>("specfem::mesh::materials::c55", nspec, ngllx,
-                                nglly, ngllz);
-        c56 = View4D<type_real>("specfem::mesh::materials::c56", nspec, ngllx,
-                                nglly, ngllz);
-        c66 = View4D<type_real>("specfem::mesh::materials::c66", nspec, ngllx,
-                                nglly, ngllz);
+        c11 = View4D<type_real>("specfem::mesh::materials::c11", nspec, ngllz,
+                                nglly, ngllx);
+        c12 = View4D<type_real>("specfem::mesh::materials::c12", nspec, ngllz,
+                                nglly, ngllx);
+        c13 = View4D<type_real>("specfem::mesh::materials::c13", nspec, ngllz,
+                                nglly, ngllx);
+        c14 = View4D<type_real>("specfem::mesh::materials::c14", nspec, ngllz,
+                                nglly, ngllx);
+        c15 = View4D<type_real>("specfem::mesh::materials::c15", nspec, ngllz,
+                                nglly, ngllx);
+        c16 = View4D<type_real>("specfem::mesh::materials::c16", nspec, ngllz,
+                                nglly, ngllx);
+        c22 = View4D<type_real>("specfem::mesh::materials::c22", nspec, ngllz,
+                                nglly, ngllx);
+        c23 = View4D<type_real>("specfem::mesh::materials::c23", nspec, ngllz,
+                                nglly, ngllx);
+        c24 = View4D<type_real>("specfem::mesh::materials::c24", nspec, ngllz,
+                                nglly, ngllx);
+        c25 = View4D<type_real>("specfem::mesh::materials::c25", nspec, ngllz,
+                                nglly, ngllx);
+        c26 = View4D<type_real>("specfem::mesh::materials::c26", nspec, ngllz,
+                                nglly, ngllx);
+        c33 = View4D<type_real>("specfem::mesh::materials::c33", nspec, ngllz,
+                                nglly, ngllx);
+        c34 = View4D<type_real>("specfem::mesh::materials::c34", nspec, ngllz,
+                                nglly, ngllx);
+        c35 = View4D<type_real>("specfem::mesh::materials::c35", nspec, ngllz,
+                                nglly, ngllx);
+        c36 = View4D<type_real>("specfem::mesh::materials::c36", nspec, ngllz,
+                                nglly, ngllx);
+        c44 = View4D<type_real>("specfem::mesh::materials::c44", nspec, ngllz,
+                                nglly, ngllx);
+        c45 = View4D<type_real>("specfem::mesh::materials::c45", nspec, ngllz,
+                                nglly, ngllx);
+        c46 = View4D<type_real>("specfem::mesh::materials::c46", nspec, ngllz,
+                                nglly, ngllx);
+        c55 = View4D<type_real>("specfem::mesh::materials::c55", nspec, ngllz,
+                                nglly, ngllx);
+        c56 = View4D<type_real>("specfem::mesh::materials::c56", nspec, ngllz,
+                                nglly, ngllx);
+        c66 = View4D<type_real>("specfem::mesh::materials::c66", nspec, ngllz,
+                                nglly, ngllx);
       }
     }
     if (poroelastic) {
       // Hardcoded array sizes
       poro_rho = View5D<type_real>("specfem::mesh::materials::poro_rho", nspec,
-                                   2, ngllx, nglly, ngllz);
+                                   2, ngllz, nglly, ngllx);
       poro_kappa = View5D<type_real>("specfem::mesh::materials::poro_kappa",
-                                     nspec, 3, ngllx, nglly, ngllz);
+                                     nspec, 3, ngllz, nglly, ngllx);
       poro_perm = View5D<type_real>("specfem::mesh::materials::poro_perm",
-                                    nspec, 6, ngllx, nglly, ngllz);
+                                    nspec, 6, ngllz, nglly, ngllx);
       poro_eta = View4D<type_real>("specfem::mesh::materials::poro_eta", nspec,
-                                   ngllx, nglly, ngllz);
+                                   ngllz, nglly, ngllx);
       poro_tort = View4D<type_real>("specfem::mesh::materials::poro_tort",
-                                    nspec, ngllx, nglly, ngllz);
+                                    nspec, ngllz, nglly, ngllx);
       poro_phi = View4D<type_real>("specfem::mesh::materials::poro_phi", nspec,
-                                   ngllx, nglly, ngllz);
+                                   ngllz, nglly, ngllx);
       poro_rho_vpI = View4D<type_real>("specfem::mesh::materials::poro_rho_vpI",
-                                       nspec, ngllx, nglly, ngllz);
+                                       nspec, ngllz, nglly, ngllx);
       poro_rho_vpII =
           View4D<type_real>("specfem::mesh::materials::poro_rho_vpII", nspec,
-                            ngllx, nglly, ngllz);
+                            ngllz, nglly, ngllx);
       poro_rho_vsI = View4D<type_real>("specfem::mesh::materials::poro_rho_vsI",
-                                       nspec, ngllx, nglly, ngllz);
+                                       nspec, ngllz, nglly, ngllx);
     }
   };
 

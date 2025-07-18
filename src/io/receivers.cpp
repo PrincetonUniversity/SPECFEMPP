@@ -1,6 +1,6 @@
 // Internal Includes
+#include "specfem/receivers.hpp"
 #include "io/interface.hpp"
-#include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
@@ -11,12 +11,15 @@
 #include <string>
 #include <vector>
 
-std::vector<std::shared_ptr<specfem::receivers::receiver> >
+std::vector<std::shared_ptr<
+    specfem::receivers::receiver<specfem::dimension::type::dim2> > >
 specfem::io::read_receivers(const std::string stations_file,
                             const type_real angle) {
 
   boost::char_separator<char> sep(" ");
-  std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers;
+  std::vector<std::shared_ptr<
+      specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+      receivers;
   std::fstream stations;
   stations.open(stations_file, std::ios::in);
   if (stations.is_open()) {
@@ -42,8 +45,10 @@ specfem::io::read_receivers(const std::string stations_file,
       const type_real x = static_cast<type_real>(std::stod(current_station[2]));
       const type_real z = static_cast<type_real>(std::stod(current_station[3]));
 
-      receivers.push_back(std::make_shared<specfem::receivers::receiver>(
-          network_name, station_name, x, z, angle));
+      receivers.push_back(
+          std::make_shared<
+              specfem::receivers::receiver<specfem::dimension::type::dim2> >(
+              network_name, station_name, x, z, angle));
     }
 
     stations.close();
@@ -52,7 +57,8 @@ specfem::io::read_receivers(const std::string stations_file,
   return receivers;
 }
 
-std::vector<std::shared_ptr<specfem::receivers::receiver> >
+std::vector<std::shared_ptr<
+    specfem::receivers::receiver<specfem::dimension::type::dim2> > >
 specfem::io::read_receivers(const YAML::Node &stations, const type_real angle) {
 
   // If stations file is a string then read the stations file from text format
@@ -64,7 +70,9 @@ specfem::io::read_receivers(const YAML::Node &stations, const type_real angle) {
     // node
   }
 
-  std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers;
+  std::vector<std::shared_ptr<
+      specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+      receivers;
 
   // Throw error if length of stations is zero or if it is not a sequence
   if (stations["stations"].IsSequence()) {
@@ -84,8 +92,10 @@ specfem::io::read_receivers(const YAML::Node &stations, const type_real angle) {
       const type_real x = station["x"].as<type_real>();
       const type_real z = station["z"].as<type_real>();
 
-      receivers.push_back(std::make_shared<specfem::receivers::receiver>(
-          network_name, station_name, x, z, angle));
+      receivers.push_back(
+          std::make_shared<
+              specfem::receivers::receiver<specfem::dimension::type::dim2> >(
+              network_name, station_name, x, z, angle));
     }
   } catch (const YAML::Exception &e) {
     std::cerr << e.what() << std::endl;
