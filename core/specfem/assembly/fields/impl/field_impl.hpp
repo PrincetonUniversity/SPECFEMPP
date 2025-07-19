@@ -13,11 +13,11 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 class base_field {
 private:
-  constexpr static int components =
-      specfem::element::attributes<DimensionTag, MediumTag>::components;
   int nglob;
 
 protected:
+  constexpr static int components =
+      specfem::element::attributes<DimensionTag, MediumTag>::components;
   base_field() = default;
   base_field(const int nglob, std::string name)
       : nglob(nglob), data(name, nglob, components),
@@ -56,6 +56,8 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 class field : public base_field<DimensionTag, MediumTag> {
 public:
+  constexpr static auto data_class =
+      specfem::data_access::DataClassType::displacement;
   field() = default;
   field(int nglob)
       : base_field<DimensionTag, MediumTag>(
@@ -67,6 +69,13 @@ public:
     return this->template get_base_field<on_device>(iglob, icomp);
   }
 
+  template <specfem::data_access::DataClassType U,
+            typename std::enable_if_t<U == data_class, int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
+      const std::integral_constant<specfem::data_access::DataClassType, U>,
+      const int &iglob, const int &icomp) const {
+    return this->template get_base_field<true>(iglob, icomp);
+  }
   auto get_field() const { return this->get_data(); }
   auto get_host_field() const { return this->get_host_data(); }
 
@@ -79,6 +88,8 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 class field_dot : public base_field<DimensionTag, MediumTag> {
 public:
+  constexpr static auto data_class =
+      specfem::data_access::DataClassType::velocity;
   field_dot() = default;
   field_dot(int nglob)
       : base_field<DimensionTag, MediumTag>(
@@ -88,6 +99,14 @@ public:
   KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &
   get_field_dot(const int &iglob, const int &icomp) const {
     return this->template get_base_field<on_device>(iglob, icomp);
+  }
+
+  template <specfem::data_access::DataClassType U,
+            typename std::enable_if_t<U == data_class, int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
+      const std::integral_constant<specfem::data_access::DataClassType, U>,
+      const int &iglob, const int &icomp) const {
+    return this->template get_base_field<true>(iglob, icomp);
   }
 
   auto get_field_dot() const { return this->get_data(); }
@@ -102,6 +121,8 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 class field_dot_dot : public base_field<DimensionTag, MediumTag> {
 public:
+  constexpr static auto data_class =
+      specfem::data_access::DataClassType::acceleration;
   field_dot_dot() = default;
   field_dot_dot(int nglob)
       : base_field<DimensionTag, MediumTag>(
@@ -111,6 +132,14 @@ public:
   KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &
   get_field_dot_dot(const int &iglob, const int &icomp) const {
     return this->template get_base_field<on_device>(iglob, icomp);
+  }
+
+  template <specfem::data_access::DataClassType U,
+            typename std::enable_if_t<U == data_class, int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
+      const std::integral_constant<specfem::data_access::DataClassType, U>,
+      const int &iglob, const int &icomp) const {
+    return this->template get_base_field<true>(iglob, icomp);
   }
 
   auto get_field_dot_dot() const { return this->get_data(); }
@@ -125,6 +154,8 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 class mass_inverse : public base_field<DimensionTag, MediumTag> {
 public:
+  constexpr static auto data_class =
+      specfem::data_access::DataClassType::mass_matrix;
   mass_inverse() = default;
   mass_inverse(int nglob)
       : base_field<DimensionTag, MediumTag>(
@@ -132,6 +163,14 @@ public:
 
   auto get_mass_inverse() const { return this->get_data(); }
   auto get_host_mass_inverse() const { return this->get_host_data(); }
+
+  template <specfem::data_access::DataClassType U,
+            typename std::enable_if_t<U == data_class, int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
+      const std::integral_constant<specfem::data_access::DataClassType, U>,
+      const int &iglob, const int &icomp) const {
+    return this->template get_base_field<true>(iglob, icomp);
+  }
 
   template <bool on_device>
   KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &
@@ -151,6 +190,11 @@ public:
   constexpr static auto medium_tag = MediumTag;
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
+
+  using field<DimensionTag, MediumTag>::get_value;
+  using field_dot<DimensionTag, MediumTag>::get_value;
+  using field_dot_dot<DimensionTag, MediumTag>::get_value;
+  using mass_inverse<DimensionTag, MediumTag>::get_value;
 
   field_impl() = default;
 
