@@ -1,4 +1,3 @@
-#include "simulation_field.tpp"
 #include "enumerations/interface.hpp"
 #include "specfem/assembly/fields.hpp"
 

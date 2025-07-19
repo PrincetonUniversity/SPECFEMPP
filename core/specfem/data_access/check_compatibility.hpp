@@ -86,4 +86,33 @@ struct is_stress<T,
                                   specfem::data_access::DataClassType::stress> >
     : std::true_type {};
 
+template <typename T, typename = void> struct is_field_l : std::false_type {};
+
+template <typename T>
+struct is_field_l<
+    T, std::enable_if_t<
+           T::data_class == specfem::data_access::DataClassType::displacement ||
+           T::data_class == specfem::data_access::DataClassType::velocity ||
+           T::data_class == specfem::data_access::DataClassType::acceleration ||
+           T::data_class == specfem::data_access::DataClassType::mass_matrix> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_index_type : std::false_type {};
+
+template <typename T>
+struct is_index_type<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::index> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_assembly_index : std::false_type {};
+
+template <typename T>
+struct is_assembly_index<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::assembly_index> >
+    : std::true_type {};
+
 } // namespace specfem::data_access
