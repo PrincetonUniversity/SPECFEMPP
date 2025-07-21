@@ -215,7 +215,7 @@ inline void deep_copy(SimulationWavefieldType1 &dst,
                           _src_assembly_index_mapping_);
         Kokkos::deep_copy(_dst_h_assembly_index_mapping_,
                           _src_h_assembly_index_mapping_);
-        specfem::assembly::deep_copy(_dst_field_, _src_field_);
+        specfem::assembly::fields_impl::deep_copy(_dst_field_, _src_field_);
       })
 }
 

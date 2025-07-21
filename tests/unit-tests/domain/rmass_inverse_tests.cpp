@@ -151,11 +151,10 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           assembly.fields.forward
               .get_field<specfem::element::medium_tag::acoustic>();
 
-      Kokkos::deep_copy(elastic_psv_field.h_mass_inverse,
-                        elastic_psv_field.mass_inverse);
-
-      Kokkos::deep_copy(acoustic_field.h_mass_inverse,
-                        acoustic_field.mass_inverse);
+      Kokkos::deep_copy(elastic_psv_field.get_host_mass_inverse(),
+                        elastic_psv_field.get_mass_inverse());
+      Kokkos::deep_copy(acoustic_field.get_host_mass_inverse(),
+                        acoustic_field.get_mass_inverse());
 
       const int nglob = assembly.fields.forward.nglob;
 
