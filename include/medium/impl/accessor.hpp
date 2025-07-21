@@ -10,8 +10,6 @@ namespace impl {
 template <typename DataContainer> class Accessor {
 
 private:
-  constexpr static auto dimension = specfem::dimension::type::dim2;
-
   template <typename PointValues>
   KOKKOS_INLINE_FUNCTION void
   get_data_on_device(const specfem::point::index<dimension> &index,
