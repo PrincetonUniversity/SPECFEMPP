@@ -1,5 +1,4 @@
-#ifndef _JACOBIAN_HPP
-#define _JACOBIAN_HPP
+#pragma once
 
 #include "kokkos_abstractions.h"
 #include "specfem/point.hpp"
@@ -240,5 +239,3 @@ compute_derivatives(const specfem::kokkos::HostTeam::member_type &teamMember,
 
 } // namespace jacobian
 } // namespace specfem
-
-#endif

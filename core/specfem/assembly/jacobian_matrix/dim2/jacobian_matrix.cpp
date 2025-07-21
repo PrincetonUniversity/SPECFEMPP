@@ -1,7 +1,7 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
-#include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
+#include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
