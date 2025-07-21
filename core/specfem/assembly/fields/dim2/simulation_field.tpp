@@ -2,9 +2,8 @@
 
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "simulation_field.hpp"
+#include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/element_types.hpp"
-#include "specfem/assembly/fields/impl/field_impl.tpp"
 #include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
