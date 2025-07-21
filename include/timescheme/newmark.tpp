@@ -44,13 +44,13 @@ int corrector_phase_impl(
         AccelerationPointType acceleration;
         VelocityPointType velocity;
 
-        specfem::assembly::load_on_device(index, field, acceleration);
+        specfem::assembly::load_on_device(index, field, velocity, acceleration);
 
         for (int idim = 0; idim < components; ++idim) {
           velocity(idim) += deltatover2 * acceleration(idim);
         }
 
-        specfem::assembly::add_on_device(index, field, velocity);
+        specfem::assembly::store_on_device(index, field, velocity);
       });
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
@@ -96,11 +96,12 @@ int predictor_phase_impl(
   specfem::execution::for_all(
       "specfem::TimeScheme::Newmark::corrector_phase_impl", range,
       KOKKOS_LAMBDA(const IndexType &index) {
-        DisplacementPointType displacement(0.0);
-        VelocityPointType velocity(0.0);
-        AccelerationPointType acceleration(0.0);
+        DisplacementPointType displacement;
+        VelocityPointType velocity;
+        AccelerationPointType acceleration;
 
-        specfem::assembly::load_on_device(index, field, velocity, acceleration);
+        specfem::assembly::load_on_device(index, field, displacement, velocity,
+                                          acceleration);
 
         for (int idim = 0; idim < components; ++idim) {
           displacement(idim) +=
@@ -110,8 +111,7 @@ int predictor_phase_impl(
           acceleration(idim) = 0;
         }
 
-        specfem::assembly::add_on_device(index, field, displacement);
-        specfem::assembly::store_on_device(index, field, velocity,
+        specfem::assembly::store_on_device(index, field, displacement, velocity,
                                            acceleration);
       });
 

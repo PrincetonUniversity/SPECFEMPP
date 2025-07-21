@@ -84,7 +84,7 @@ load_on_device(const std::true_type, const IndexType &index,
       0, std::tuple<AccessorTypes...> >::simd::mask_type;
   mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
-  const auto current_field = field.template get_field<MediumTag>();
+  const auto &current_field = field.template get_field<MediumTag>();
 
   constexpr static int ncomponents = specfem::element::attributes<
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
@@ -93,8 +93,7 @@ load_on_device(const std::true_type, const IndexType &index,
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_load_accessor(iglob[icomp], icomp, mask, current_field, accessors),
-     ...);
+    (base_load_accessor(iglob, icomp, mask, current_field, accessors), ...);
   }
 }
 } // namespace specfem::assembly::simulation_field_impl
