@@ -99,6 +99,12 @@ Table below shows various features available and tested in this package on vario
       - ✔ /  ✘
       - ✔* / ✘
 
+    * - Elastic Isotropic Cosserat P-SV **
+      - ✔ /  ✘
+      - ✔ /  ✘
+      - ✔ /  ✘
+      - ✔* / ✘
+
     * - **2-D Medium Coupling**
       -
       -
@@ -212,6 +218,8 @@ continuous integration if the entire column has a star, and if the row has a
 star, it means that the feature is not tested/does not match the `Fortran`
 version of `specfem2d`. In the former case, see `HIP` column, and for the latter
 case, see the Poroelastic Isotropic row.
+
+\*\* Not peer reviewed yet.
 
 .. note::
 
