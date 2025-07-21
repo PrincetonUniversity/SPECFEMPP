@@ -2,6 +2,7 @@
 #include "compute_source_array.hpp"
 #include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/assembly/compute_source_array/impl/compute_source_array_from.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
@@ -27,8 +28,8 @@ void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
           "array.");
     }
 
-    specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
-        *vector_source, mesh, source_array);
+    specfem::assembly::compute_source_array_impl::from_vector<
+        specfem::dimension::type::dim2>(*vector_source, source_array);
     break;
   }
   case specfem::sources::source_type::tensor_source: {
@@ -43,7 +44,7 @@ void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
           "array.");
     }
 
-    specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
+    specfem::assembly::compute_source_array_impl::from_tensor(
         *tensor_source, mesh, jacobian_matrix, source_array);
     break;
   }

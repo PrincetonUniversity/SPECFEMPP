@@ -10,16 +10,19 @@
 #include "specfem_setup.hpp"
 
 template <>
-void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
+void specfem::assembly::compute_source_array_impl::from_vector<
+    specfem::dimension::type::dim2>(
     const specfem::sources::vector_source &vector_source,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
-  // Not getting around the mesh input
-  auto xi = mesh.h_xi;
-  auto gamma = mesh.h_xi;
-  const int ngllx = mesh.ngllx;
-  const int ngllz = mesh.ngllz;
+  const int ngllx = source_array.extent(2);
+  const int ngllz = source_array.extent(1);
+
+  // Create quadrature and compute xi/gamma arrays
+  specfem::quadrature::gll::gll quadrature_x(0.0, 0.0, ngllx);
+  specfem::quadrature::gll::gll quadrature_z(0.0, 0.0, ngllz);
+  auto xi = quadrature_x.get_hxi();
+  auto gamma = quadrature_z.get_hxi();
 
   // Compute lagrange interpolants at the local source location
   auto [hxi_source, hpxi_source] =
