@@ -32,29 +32,6 @@ void compute_source_array(
     const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
     specfem::kokkos::HostView3d<type_real> source_array);
 
-/**
- * @brief Compute the source array from a vector source.
- *
- * @tparam DimensionTag
- * @param source
- * @param source_array
- */
-template <specfem::dimension::type DimensionTag>
-void compute_source_array(const specfem::sources::vector_source &source,
-                          const specfem::assembly::mesh<DimensionTag> &mesh,
-                          specfem::kokkos::HostView3d<type_real> source_array);
-
-/** * @brief Compute the source array from a tensor source.
- * @tparam DimensionTag
- * @param source
- * @param source_array
- */
-template <specfem::dimension::type DimensionTag>
-void compute_source_array(
-    const specfem::sources::tensor_source &source,
-    const specfem::assembly::mesh<DimensionTag> &mesh,
-    const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
-    specfem::kokkos::HostView3d<type_real> source_array);
 } // namespace specfem::assembly
 
 #include "compute_source_array/dim2/compute_source_array.hpp"
