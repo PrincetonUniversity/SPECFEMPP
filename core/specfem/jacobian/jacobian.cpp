@@ -1,4 +1,4 @@
-#include "jacobian/interface.hpp"
+#include "specfem/jacobian.hpp"
 #include "macros.hpp"
 #include "specfem/shape_functions.hpp"
 
