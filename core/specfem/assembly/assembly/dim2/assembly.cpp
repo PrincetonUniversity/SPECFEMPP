@@ -13,7 +13,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
     const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
     const int nsteps_between_samples,
-    const specfem::simulation::type simulation, const bool write_wavefield,
+    const specfem::simulation::type simulation,
+    const bool allocate_boundary_values,
     const std::shared_ptr<specfem::io::reader> &property_reader) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures };
   this->element_types = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
@@ -49,7 +50,7 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
                                this->element_types };
   this->fields = { this->mesh, this->element_types, simulation };
 
-  if (write_wavefield)
+  if (allocate_boundary_values)
     this->boundary_values = { max_timesteps, this->mesh, this->element_types,
                               this->boundaries };
 
