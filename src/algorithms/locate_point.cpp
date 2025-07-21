@@ -1,6 +1,6 @@
 #include "algorithms/locate_point.hpp"
-#include "jacobian/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 
 namespace {

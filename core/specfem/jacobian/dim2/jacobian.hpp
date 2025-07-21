@@ -26,7 +26,7 @@ namespace jacobian {
  */
 std::tuple<type_real, type_real>
 compute_locations(const specfem::kokkos::HostTeam::member_type &teamMember,
-                  const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+                  const specfem::kokkos::HostScratchView2d<type_real> &s_coorg,
                   const int ngnod, const type_real xi, const type_real gamma);
 
 /**
@@ -40,7 +40,7 @@ compute_locations(const specfem::kokkos::HostTeam::member_type &teamMember,
  * @return std::tuple<type_real, type_real> (x,z) value for the point
  */
 std::tuple<type_real, type_real>
-compute_locations(const specfem::kokkos::HostView2d<type_real> s_coorg,
+compute_locations(const specfem::kokkos::HostView2d<type_real> &s_coorg,
                   const int ngnod, const type_real xi, const type_real gamma);
 
 /**
@@ -57,8 +57,8 @@ compute_locations(const specfem::kokkos::HostView2d<type_real> s_coorg,
  */
 std::tuple<type_real, type_real>
 compute_locations(const specfem::kokkos::HostTeam::member_type &teamMember,
-                  const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
-                  const int ngnod, const std::vector<type_real> shape2D);
+                  const specfem::kokkos::HostScratchView2d<type_real> &s_coorg,
+                  const int ngnod, const std::vector<type_real> &shape2D);
 
 /**
  * @brief Compute global locations (x,z) from shape function matrix calcualted
@@ -70,8 +70,8 @@ compute_locations(const specfem::kokkos::HostTeam::member_type &teamMember,
  * @return std::tuple<type_real, type_real> (x,z) value for the point
  */
 std::tuple<type_real, type_real>
-compute_locations(const specfem::kokkos::HostView2d<type_real> s_coorg,
-                  const int ngnod, const std::vector<type_real> shape2D);
+compute_locations(const specfem::kokkos::HostView2d<type_real> &s_coorg,
+                  const int ngnod, const std::vector<type_real> &shape2D);
 
 /**
  * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
@@ -89,7 +89,7 @@ compute_locations(const specfem::kokkos::HostView2d<type_real> s_coorg,
  */
 std::tuple<type_real, type_real, type_real, type_real> compute_jacobian_matrix(
     const specfem::kokkos::HostTeam::member_type &teamMember,
-    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const specfem::kokkos::HostScratchView2d<type_real> &s_coorg,
     const int ngnod, const type_real xi, const type_real gamma);
 
 /**
@@ -108,8 +108,8 @@ std::tuple<type_real, type_real, type_real, type_real> compute_jacobian_matrix(
  */
 std::tuple<type_real, type_real, type_real, type_real> compute_jacobian_matrix(
     const specfem::kokkos::HostTeam::member_type &teamMember,
-    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
-    const int ngnod, const specfem::kokkos::HostView2d<type_real> dershape2D);
+    const specfem::kokkos::HostScratchView2d<type_real> &s_coorg,
+    const int ngnod, const specfem::kokkos::HostView2d<type_real> &dershape2D);
 
 /**
  * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
@@ -126,7 +126,7 @@ std::tuple<type_real, type_real, type_real, type_real> compute_jacobian_matrix(
  * \partial z/\partial \xi, \partial z/\partial \gamma) \f$
  */
 std::tuple<type_real, type_real, type_real, type_real>
-compute_jacobian_matrix(const specfem::kokkos::HostView2d<type_real> s_coorg,
+compute_jacobian_matrix(const specfem::kokkos::HostView2d<type_real> &s_coorg,
                         const int ngnod, const type_real xi,
                         const type_real gamma);
 
@@ -153,7 +153,7 @@ type_real compute_jacobian(const type_real xxi, const type_real zxi,
  */
 type_real
 compute_jacobian(const specfem::kokkos::HostTeam::member_type &teamMember,
-                 const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+                 const specfem::kokkos::HostScratchView2d<type_real> &s_coorg,
                  const int ngnod, const type_real xi, const type_real gamma);
 
 /**
@@ -168,9 +168,9 @@ compute_jacobian(const specfem::kokkos::HostTeam::member_type &teamMember,
  */
 type_real
 compute_jacobian(const specfem::kokkos::HostTeam::member_type &teamMember,
-                 const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+                 const specfem::kokkos::HostScratchView2d<type_real> &s_coorg,
                  const int ngnod,
-                 const specfem::kokkos::HostView2d<type_real> dershape2D);
+                 const specfem::kokkos::HostView2d<type_real> &dershape2D);
 
 /**
  * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
@@ -189,7 +189,7 @@ compute_jacobian(const specfem::kokkos::HostTeam::member_type &teamMember,
 std::tuple<type_real, type_real, type_real, type_real>
 compute_inverted_derivatives(
     const specfem::kokkos::HostTeam::member_type &teamMember,
-    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const specfem::kokkos::HostScratchView2d<type_real> &s_coorg,
     const int ngnod, const type_real xi, const type_real gamma);
 
 /**
@@ -209,8 +209,8 @@ compute_inverted_derivatives(
 std::tuple<type_real, type_real, type_real, type_real>
 compute_inverted_derivatives(
     const specfem::kokkos::HostTeam::member_type &teamMember,
-    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
-    const int ngnod, const specfem::kokkos::HostView2d<type_real> dershape2D);
+    const specfem::kokkos::HostScratchView2d<type_real> &s_coorg,
+    const int ngnod, const specfem::kokkos::HostView2d<type_real> &dershape2D);
 
 /**
  * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
@@ -228,14 +228,14 @@ compute_inverted_derivatives(
  */
 std::tuple<type_real, type_real, type_real, type_real>
 compute_inverted_derivatives(
-    const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
+    const specfem::kokkos::HostView2d<type_real> &s_coorg, const int ngnod,
     const type_real xi, const type_real gamma);
 
 specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true, false>
-compute_derivatives(const specfem::kokkos::HostTeam::member_type &teamMember,
-                    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
-                    const int ngnod,
-                    const specfem::kokkos::HostView2d<type_real> dershape2D);
+compute_derivatives(
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> &s_coorg,
+    const int ngnod, const specfem::kokkos::HostView2d<type_real> &dershape2D);
 
 } // namespace jacobian
 } // namespace specfem
