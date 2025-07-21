@@ -143,45 +143,6 @@ specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
       specfem::assembly::fields_impl::mass_inverse<DimensionTag, MediumTag>(
           nglob);
 
-  // field = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-  //     "specfem::assembly::fields::field", nglob, components);
-  // h_field = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
-  //     Kokkos::create_mirror_view(field));
-  // field_dot = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-  //     "specfem::assembly::fields::field_dot", nglob, components);
-  // h_field_dot = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
-  //     Kokkos::create_mirror_view(field_dot));
-  // field_dot_dot = specfem::kokkos::DeviceView2d<type_real,
-  // Kokkos::LayoutLeft>(
-  //     "specfem::assembly::fields::field_dot_dot", nglob, components);
-  // h_field_dot_dot =
-  //     specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
-  //         Kokkos::create_mirror_view(field_dot_dot));
-  // mass_inverse = specfem::kokkos::DeviceView2d<type_real,
-  // Kokkos::LayoutLeft>(
-  //     "specfem::assembly::fields::mass_inverse", nglob, components);
-  // h_mass_inverse = specfem::kokkos::HostMirror2d<type_real,
-  // Kokkos::LayoutLeft>(
-  //     Kokkos::create_mirror_view(mass_inverse));
-
-  // Kokkos::parallel_for(
-  //     "specfem::assembly::fields::field_impl::initialize_field",
-  //     specfem::kokkos::HostRange(0, nglob), [=](const int &iglob) {
-  //       for (int icomp = 0; icomp < components; ++icomp) {
-  //         h_field(iglob, icomp) = 0.0;
-  //         h_field_dot(iglob, icomp) = 0.0;
-  //         h_field_dot_dot(iglob, icomp) = 0.0;
-  //         h_mass_inverse(iglob, icomp) = 0.0;
-  //       }
-  //     });
-
-  // Kokkos::fence();
-
-  // Kokkos::deep_copy(field, h_field);
-  // Kokkos::deep_copy(field_dot, h_field_dot);
-  // Kokkos::deep_copy(field_dot_dot, h_field_dot_dot);
-  // Kokkos::deep_copy(mass_inverse, h_mass_inverse);
-
   return;
 }
 
