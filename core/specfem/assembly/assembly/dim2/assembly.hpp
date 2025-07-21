@@ -97,7 +97,8 @@ template <> struct assembly<specfem::dimension::type::dim2> {
       const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
       const type_real dt, const int max_timesteps, const int max_sig_step,
       const int nsteps_between_samples,
-      const specfem::simulation::type simulation, const bool write_wavefield,
+      const specfem::simulation::type simulation,
+      const bool allocate_boundary_values,
       const std::shared_ptr<specfem::io::reader> &property_reader);
 
   /**

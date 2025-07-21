@@ -1,20 +1,19 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
 #include "enumerations/interface.hpp"
 #include "io/wavefield/writer.hpp"
+#include "specfem/assembly.hpp"
 #include "utilities/strings.hpp"
 
 template <typename OutputLibrary>
 specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
-    const std::string output_folder)
-    : output_folder(output_folder), file(typename OutputLibrary::File(
-                                        output_folder + "/ForwardWavefield")) {}
+    const std::string output_folder, const bool save_boundary_values)
+    : output_folder(output_folder), save_boundary_values(save_boundary_values),
+      file(typename OutputLibrary::File(output_folder + "/ForwardWavefield")) {}
 
 template <typename OutputLibrary>
-void specfem::io::wavefield_writer<OutputLibrary>::write(
+void specfem::io::wavefield_writer<OutputLibrary>::initialize(
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
-
   auto &forward = assembly.fields.forward;
   auto &mesh = assembly.mesh;
   auto &element_types = assembly.element_types;
@@ -33,13 +32,13 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
       file.createGroup(std::string("/Coordinates"));
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH, ACOUSTIC, POROELASTIC)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
+                                       ACOUSTIC, POROELASTIC)),
       {
         const auto &field = forward.get_field<_medium_tag_>();
 
-        typename OutputLibrary::Group group = base_group.createGroup(
-            specfem::element::to_string(_medium_tag_));
+        typename OutputLibrary::Group group =
+            base_group.createGroup(specfem::element::to_string(_medium_tag_));
 
         // Get the elements of the medium and their total
         const auto element_indices =
@@ -66,9 +65,10 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
             for (int ix = 0; ix < ngllx; ix++) {
 
               // This is the local medium iglob
-              // see: ``count`` in specfem::assembly::simulation_field<dim2, medium>
-              const int iglob =
-                  forward.template get_iglob<false>(ispec, iz, ix, _medium_tag_);
+              // see: ``count`` in specfem::assembly::simulation_field<dim2,
+              // medium>
+              const int iglob = forward.template get_iglob<false>(ispec, iz, ix,
+                                                                  _medium_tag_);
 
               // Set the mapping for the medium element
               mapping(iel, iz, ix) = iglob;
@@ -76,7 +76,6 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
               // Assign the coordinates to the local iglob
               x(iglob) = mesh.h_coord(0, ispec, iz, ix);
               z(iglob) = mesh.h_coord(1, ispec, iz, ix);
-
             }
           }
         }
@@ -84,7 +83,6 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
         group.createDataset("X", x).write();
         group.createDataset("Z", z).write();
         group.createDataset("mapping", mapping).write();
-
       });
 
   file.flush();
@@ -94,25 +92,24 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
 }
 
 template <typename OutputLibrary>
-void specfem::io::wavefield_writer<OutputLibrary>::write(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly, const int istep) {
+void specfem::io::wavefield_writer<OutputLibrary>::run(
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const int istep) {
   auto &forward = assembly.fields.forward;
-  auto &boundary_values = assembly.boundary_values;
 
   forward.copy_to_host();
-  boundary_values.copy_to_host();
 
   typename OutputLibrary::Group base_group = file.createGroup(
       std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       {
         const auto &field = forward.get_field<_medium_tag_>();
 
-        typename OutputLibrary::Group group = base_group.createGroup(
-            specfem::element::to_string(_medium_tag_));
+        typename OutputLibrary::Group group =
+            base_group.createGroup(specfem::element::to_string(_medium_tag_));
 
         if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
           group.createDataset("Potential", field.h_field).write();
@@ -125,25 +122,36 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
         }
       });
 
-  typename OutputLibrary::Group boundary = base_group.createGroup("Boundary");
-  typename OutputLibrary::Group stacey = boundary.createGroup("Stacey");
-
-  stacey
-      .createDataset("IndexMapping",
-                     boundary_values.stacey.h_property_index_mapping)
-      .write();
-
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                    POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE((container, boundary_values.stacey.container)) {
-        const std::string dataset_name =
-            specfem::element::to_string(_medium_tag_) + "Acceleration";
-        stacey.createDataset(dataset_name, _container_.h_values).write();
-      });
-
   file.flush();
+}
+
+template <typename OutputLibrary>
+void specfem::io::wavefield_writer<OutputLibrary>::finalize(
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+
+  if (save_boundary_values) {
+    auto &boundary_values = assembly.boundary_values;
+    boundary_values.copy_to_host();
+
+    typename OutputLibrary::Group boundary_group =
+        file.createGroup("/BoundaryValues");
+    typename OutputLibrary::Group stacey = boundary_group.createGroup("Stacey");
+
+    stacey
+        .createDataset("IndexMapping",
+                       boundary_values.stacey.h_property_index_mapping)
+        .write();
+
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                         POROELASTIC, ELASTIC_PSV_T)),
+        CAPTURE((container, boundary_values.stacey.container)) {
+          const std::string dataset_name =
+              specfem::element::to_string(_medium_tag_) + "Acceleration";
+          stacey.createDataset(dataset_name, _container_.h_values).write();
+        });
+    file.flush();
+  }
 
   std::cout << "Wavefield written to " << output_folder + "/ForwardWavefield"
             << std::endl;
