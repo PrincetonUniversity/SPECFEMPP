@@ -2,6 +2,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace {
 
