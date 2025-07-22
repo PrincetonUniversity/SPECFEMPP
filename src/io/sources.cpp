@@ -12,18 +12,22 @@
 #include <string>
 #include <vector>
 
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
-specfem::io::read_sources(const std::string sources_file, const int nsteps,
-                          const type_real user_t0, const type_real dt,
-                          const specfem::simulation::type simulation_type) {
+std::tuple<std::vector<std::shared_ptr<
+               specfem::sources::source<specfem::dimension::type::dim2> > >,
+           type_real>
+specfem::io::read_2d_sources(const std::string sources_file, const int nsteps,
+                             const type_real user_t0, const type_real dt,
+                             const specfem::simulation::type simulation_type) {
   YAML::Node source_node = YAML::LoadFile(sources_file);
-  return read_sources(source_node, nsteps, user_t0, dt, simulation_type);
+  return read_2d_sources(source_node, nsteps, user_t0, dt, simulation_type);
 }
 
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
-specfem::io::read_sources(const YAML::Node source_node, const int nsteps,
-                          const type_real user_t0, const type_real dt,
-                          const specfem::simulation::type simulation_type) {
+std::tuple<std::vector<std::shared_ptr<
+               specfem::sources::source<specfem::dimension::type::dim2> > >,
+           type_real>
+specfem::io::read_2d_sources(const YAML::Node source_node, const int nsteps,
+                             const type_real user_t0, const type_real dt,
+                             const specfem::simulation::type simulation_type) {
 
   const bool user_defined_start_time =
       (std::abs(user_t0) > std::numeric_limits<type_real>::epsilon());
@@ -64,7 +68,9 @@ specfem::io::read_sources(const YAML::Node source_node, const int nsteps,
   }();
 
   // read sources file
-  std::vector<std::shared_ptr<specfem::sources::source> > sources;
+  std::vector<std::shared_ptr<
+      specfem::sources::source<specfem::dimension::type::dim2> > >
+      sources;
 
   // Note: Make sure you name the YAML node different from the name of the
   // source class Otherwise, the compiler will get confused and throw an error
@@ -74,28 +80,36 @@ specfem::io::read_sources(const YAML::Node source_node, const int nsteps,
   int number_of_adjoint_sources = 0;
   for (auto N : file_sources) {
     if (YAML::Node force_source = N["force"]) {
-      sources.push_back(std::make_shared<specfem::sources::force>(
-          force_source, nsteps, dt, source_wavefield_type));
+      sources.push_back(
+          std::make_shared<
+              specfem::sources::force<specfem::dimension::type::dim2> >(
+              force_source, nsteps, dt, source_wavefield_type));
       number_of_sources++;
     } else if (YAML::Node cosserat_force = N["cosserat-force"]) {
-      sources.push_back(std::make_shared<specfem::sources::cosserat_force>(
+      sources.push_back(std::make_shared<specfem::sources::cosserat_force<
+                            specfem::dimension::type::dim2> >(
           cosserat_force, nsteps, dt, source_wavefield_type));
       number_of_sources++;
     } else if (YAML::Node moment_tensor_source = N["moment-tensor"]) {
-      sources.push_back(std::make_shared<specfem::sources::moment_tensor>(
-          moment_tensor_source, nsteps, dt, source_wavefield_type));
+      sources.push_back(
+          std::make_shared<
+              specfem::sources::moment_tensor<specfem::dimension::type::dim2> >(
+              moment_tensor_source, nsteps, dt, source_wavefield_type));
       number_of_sources++;
     } else if (YAML::Node external_source = N["user-defined"]) {
-      sources.push_back(std::make_shared<specfem::sources::external>(
-          external_source, nsteps, dt, source_wavefield_type));
+      sources.push_back(
+          std::make_shared<
+              specfem::sources::external<specfem::dimension::type::dim2> >(
+              external_source, nsteps, dt, source_wavefield_type));
       number_of_sources++;
     } else if (YAML::Node adjoint_node = N["adjoint-source"]) {
       if (!adjoint_node["station_name"] || !adjoint_node["network_name"]) {
         throw std::runtime_error(
             "Station name and network name are required for adjoint source");
       }
-      sources.push_back(std::make_shared<specfem::sources::adjoint_source>(
-          adjoint_node, nsteps, dt));
+      sources.push_back(
+          std::make_shared<specfem::sources::adjoint_source<
+              specfem::dimension::type::dim2> >(adjoint_node, nsteps, dt));
       number_of_adjoint_sources++;
     } else {
       throw std::runtime_error("Unknown source type");

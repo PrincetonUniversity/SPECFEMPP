@@ -8,7 +8,8 @@ namespace specfem::assembly::compute_source_array_impl {
 
 template <>
 void from_tensor<specfem::dimension::type::dim2>(
-    const specfem::sources::tensor_source &source,
+    const specfem::sources::tensor_source<specfem::dimension::type::dim2>
+        &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,

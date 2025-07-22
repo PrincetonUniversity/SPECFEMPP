@@ -107,11 +107,12 @@ TEST(SOURCES, moment_tensor_source_tensor) {
     SCOPED_TRACE("Testing moment tensor source for: " + params.name);
 
     // Create a moment tensor source
-    specfem::sources::moment_tensor moment_tensor_source(
-        params.x, params.z, params.Mxx, params.Mzz, params.Mxz,
-        std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
-                                                            1.0, false),
-        params.wavefield_type);
+    specfem::sources::moment_tensor<specfem::dimension::type::dim2>
+        moment_tensor_source(
+            params.x, params.z, params.Mxx, params.Mzz, params.Mxz,
+            std::make_unique<specfem::forcing_function::Ricker>(
+                10, 0.01, 1.0, 0.0, 1.0, false),
+            params.wavefield_type);
 
     // Set the medium tag
     moment_tensor_source.set_medium_tag(params.medium_tag);

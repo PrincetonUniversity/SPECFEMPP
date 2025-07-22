@@ -1,13 +1,15 @@
-#include "specfem/source/vector_source/adjoint_source.hpp"
+#include "adjoint_source.hpp"
 #include "algorithms/locate_point.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 
 // Static member definitions
-const std::string specfem::sources::adjoint_source::name = "adjoint source";
+const std::string
+    specfem::sources::adjoint_source<specfem::dimension::type::dim2>::name =
+        "2D adjoint source";
 
-std::vector<specfem::element::medium_tag>
-specfem::sources::adjoint_source::get_supported_media() const {
+std::vector<specfem::element::medium_tag> specfem::sources::adjoint_source<
+    specfem::dimension::type::dim2>::get_supported_media() const {
   return {
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::elastic_psv,
@@ -18,8 +20,8 @@ specfem::sources::adjoint_source::get_supported_media() const {
   };
 }
 
-specfem::kokkos::HostView1d<type_real>
-specfem::sources::adjoint_source::get_force_vector() const {
+specfem::kokkos::HostView1d<type_real> specfem::sources::adjoint_source<
+    specfem::dimension::type::dim2>::get_force_vector() const {
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
@@ -71,7 +73,9 @@ specfem::sources::adjoint_source::get_force_vector() const {
   return force_vector;
 }
 
-std::string specfem::sources::adjoint_source::print() const {
+std::string
+specfem::sources::adjoint_source<specfem::dimension::type::dim2>::print()
+    const {
 
   std::ostringstream message;
   message << "- Adjoint Source: \n"

@@ -1,4 +1,4 @@
-#include "specfem/source/vector_source/cosserat_force_source.hpp"
+#include "cosserat_force_source.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 #include "source_time_function/interface.hpp"
@@ -7,16 +7,17 @@
 #include <cmath>
 
 // Static member definitions
-const std::string specfem::sources::cosserat_force::name =
-    "cosserat force source";
+const std::string
+    specfem::sources::cosserat_force<specfem::dimension::type::dim2>::name =
+        "2D cosserat force source";
 
-std::vector<specfem::element::medium_tag>
-specfem::sources::cosserat_force::get_supported_media() const {
+std::vector<specfem::element::medium_tag> specfem::sources::cosserat_force<
+    specfem::dimension::type::dim2>::get_supported_media() const {
   return { specfem::element::medium_tag::elastic_psv_t };
 }
 
-specfem::kokkos::HostView1d<type_real>
-specfem::sources::cosserat_force::get_force_vector() const {
+specfem::kokkos::HostView1d<type_real> specfem::sources::cosserat_force<
+    specfem::dimension::type::dim2>::get_force_vector() const {
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
@@ -43,7 +44,9 @@ specfem::sources::cosserat_force::get_force_vector() const {
   return force_vector;
 }
 
-std::string specfem::sources::cosserat_force::print() const {
+std::string
+specfem::sources::cosserat_force<specfem::dimension::type::dim2>::print()
+    const {
 
   std::ostringstream message;
   message << "- Cosserat Force Source: \n"
@@ -59,12 +62,14 @@ std::string specfem::sources::cosserat_force::print() const {
   return message.str();
 }
 
-bool specfem::sources::cosserat_force::operator==(
-    const specfem::sources::source &other) const {
+bool specfem::sources::cosserat_force<specfem::dimension::type::dim2>::
+operator==(const specfem::sources::source<specfem::dimension::type::dim2>
+               &other) const {
 
   // Try casting the other source to a cosserat_force source
-  const auto *other_source =
-      dynamic_cast<const specfem::sources::cosserat_force *>(&other);
+  const auto *other_source = dynamic_cast<
+      const specfem::sources::cosserat_force<specfem::dimension::type::dim2> *>(
+      &other);
 
   // Check if cast was successful
   if (other_source == nullptr) {
@@ -85,7 +90,8 @@ bool specfem::sources::cosserat_force::operator==(
   return internal &&
          (*(this->forcing_function) == *(other_source->forcing_function));
 }
-bool specfem::sources::cosserat_force::operator!=(
-    const specfem::sources::source &other) const {
+bool specfem::sources::cosserat_force<specfem::dimension::type::dim2>::
+operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
+               &other) const {
   return !(*this == other);
 }

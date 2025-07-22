@@ -108,11 +108,12 @@ TEST(SOURCES, cosserat_force_source_vector) {
     SCOPED_TRACE("Testing cosserat force source for: " + params.name);
 
     // Create a cosserat force source
-    specfem::sources::cosserat_force cosserat_force_source(
-        params.x, params.z, params.f, params.fc, params.angle,
-        std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
-                                                            1.0, false),
-        params.wavefield_type);
+    specfem::sources::cosserat_force<specfem::dimension::type::dim2>
+        cosserat_force_source(
+            params.x, params.z, params.f, params.fc, params.angle,
+            std::make_unique<specfem::forcing_function::Ricker>(
+                10, 0.01, 1.0, 0.0, 1.0, false),
+            params.wavefield_type);
 
     // Set the medium tag
     cosserat_force_source.set_medium_tag(params.medium_tag);

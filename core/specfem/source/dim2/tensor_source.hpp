@@ -1,11 +1,15 @@
 #pragma once
 
 #include "source.hpp"
+#include "specfem/source/common/types.hpp"
+#include "specfem/source/fwd.hpp"
 
 namespace specfem {
 namespace sources {
 
-class tensor_source : public source {
+template <>
+class tensor_source<specfem::dimension::type::dim2>
+    : public source<specfem::dimension::type::dim2> {
 
 public:
   /**

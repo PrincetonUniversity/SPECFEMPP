@@ -194,7 +194,8 @@ void check_load(
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 void check_assembly_source_construction(
-    std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
   const int ngllz = assembly.mesh.ngllz;
@@ -277,7 +278,8 @@ void check_assembly_source_construction(
 }
 
 void test_assembly_source_construction(
-    std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,

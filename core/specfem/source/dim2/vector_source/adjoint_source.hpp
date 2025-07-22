@@ -1,13 +1,15 @@
 #pragma once
 
+#include "../vector_source.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem/source/vector_source.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {
 namespace sources {
-class adjoint_source : public vector_source {
+template <>
+class adjoint_source<specfem::dimension::type::dim2>
+    : public vector_source<specfem::dimension::type::dim2> {
 
 public:
   adjoint_source() {};
