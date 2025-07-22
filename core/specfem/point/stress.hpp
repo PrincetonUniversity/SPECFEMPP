@@ -3,6 +3,7 @@
 #include "datatypes/point_view.hpp"
 #include "enumerations/interface.hpp"
 #include "jacobian_matrix.hpp"
+#include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -18,15 +19,14 @@ namespace point {
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct stress
-    : public specfem::accessor::Accessor<specfem::accessor::type::point,
-                                         specfem::data_class::type::stress,
-                                         DimensionTag, UseSIMD> {
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::stress, DimensionTag, UseSIMD> {
 private:
-  using base_type =
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::stress,
-                                  DimensionTag,
-                                  UseSIMD>; ///< Base accessor type
+  using base_type = specfem::data_access::Accessor<
+      specfem::data_access::AccessorType::point,
+      specfem::data_access::DataClassType::stress, DimensionTag,
+      UseSIMD>; ///< Base accessor type
 public:
   /**
    * @name Compile time constants
