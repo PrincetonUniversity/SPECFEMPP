@@ -17,8 +17,19 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
 
   auto &boundary_values = assembly.boundary_values;
 
-  try {
   typename IOLibrary::Group boundary_group = file.openGroup("/BoundaryValues");
+
+  Kokkos::View<bool *, Kokkos::HostSpace> boundary_values_view(
+      "save_boundary_values", 1);
+
+  boundary_group.openDataset("save_boundary_values", boundary_values_view)
+      .read();
+
+  if (!boundary_values_view(0)) {
+    throw std::runtime_error("Boundary values were not saved in the wavefield "
+                             "output, please set `for_adjoint_simulation` to "
+                             "true in the input file for forward simulations.");
+  }
 
   typename IOLibrary::Group stacey = boundary_group.openGroup("Stacey");
 
@@ -37,14 +48,6 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
       });
 
   boundary_values.copy_to_device();
-
-  } catch (const std::runtime_error &e) {
-    std::ostringstream message;
-    message << "Error reading boundary values from file: " << e.what()
-            << "\nBoundary values were not read from file, "
-            << "Please ensure that 'for_adjoint_simulations' is set to true during the forward simulation.";
-    throw std::runtime_error(message.str());
-  }
 
   return;
 }
