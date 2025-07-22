@@ -6,7 +6,8 @@
 specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
-    std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
+        &sources,
     const std::vector<std::shared_ptr<
         specfem::receivers::receiver<specfem::dimension::type::dim2> > >
         &receivers,

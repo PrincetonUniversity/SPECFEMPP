@@ -19,24 +19,27 @@ type_real user_t0 = -10.0; // user defined t0
 
 specfem::wavefield::simulation_field wavefield_type =
     specfem::wavefield::simulation_field::forward;
-using SourceVectorType =
-    std::vector<std::shared_ptr<specfem::sources::source> >;
+using SourceVectorType = std::vector<std::shared_ptr<
+    specfem::sources::source<specfem::dimension::type::dim2> > >;
 
 const static std::unordered_map<std::string, SourceVectorType> expected = {
   { "Single Moment Tensor",
-    { std::make_shared<specfem::sources::moment_tensor>(
+    { std::make_shared<
+        specfem::sources::moment_tensor<specfem::dimension::type::dim2> >(
         2000.0, 3000.0, 1.0, 1.0, 0.0,
         std::make_unique<specfem::forcing_function::Ricker>(
             nsteps, dt, 1.0, 30.0, 1.0e10, false),
         wavefield_type) } },
   { "Single Force",
-    { std::make_shared<specfem::sources::force>(
+    { std::make_shared<
+        specfem::sources::force<specfem::dimension::type::dim2> >(
         2500.0, 2500.0, 0.0,
         std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0,
                                                             5.0, 1.0e10, false),
         wavefield_type) } },
   { "Single Cosserat Force",
-    { std::make_shared<specfem::sources::cosserat_force>(
+    { std::make_shared<
+        specfem::sources::cosserat_force<specfem::dimension::type::dim2> >(
         2500.0, 2500.0, 0.0, 1.0, 0.0,
         std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0,
                                                             0.0, 1e10, false),
@@ -63,7 +66,7 @@ TEST(IO_TESTS, read_sources) {
               << "-------------------------------------------------------\n\n"
               << std::endl;
 
-    auto [sources, _t0] = specfem::io::read_sources(
+    auto [sources, _t0] = specfem::io::read_2d_sources(
         source_file, nsteps, user_t0, dt, specfem::simulation::type::forward);
 
     if (expected.find(key) != expected.end()) {

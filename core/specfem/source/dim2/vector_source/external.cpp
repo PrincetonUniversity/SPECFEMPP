@@ -1,14 +1,16 @@
-#include "specfem/source/vector_source/external.hpp"
+#include "external.hpp"
 #include "enumerations/interface.hpp"
 #include "source_time_function/interface.hpp"
 #include "specfem_setup.hpp"
 #include <cmath>
 
 // Static member definitions
-const std::string specfem::sources::external::name = "external source";
+const std::string
+    specfem::sources::external<specfem::dimension::type::dim2>::name =
+        "2D external source";
 
-std::vector<specfem::element::medium_tag>
-specfem::sources::external::get_supported_media() const {
+std::vector<specfem::element::medium_tag> specfem::sources::external<
+    specfem::dimension::type::dim2>::get_supported_media() const {
   return {
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::elastic_psv,
@@ -20,7 +22,8 @@ specfem::sources::external::get_supported_media() const {
 }
 
 specfem::kokkos::HostView1d<type_real>
-specfem::sources::external::get_force_vector() const {
+specfem::sources::external<specfem::dimension::type::dim2>::get_force_vector()
+    const {
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
@@ -73,7 +76,8 @@ specfem::sources::external::get_force_vector() const {
   return force_vector;
 }
 
-std::string specfem::sources::external::print() const {
+std::string
+specfem::sources::external<specfem::dimension::type::dim2>::print() const {
 
   std::ostringstream message;
   message << "- External Source: \n"

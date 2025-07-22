@@ -87,7 +87,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (1,0) - force in x direction only (angle=0)
   {
-    specfem::sources::force force_x(
+    specfem::sources::force<specfem::dimension::type::dim2> force_x(
         0.0, 0.0, 0.0, // x, z, angle (angle=0 means force in x direction)
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
                                                             1.0, false),
@@ -98,7 +98,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (0,1) - force in z direction only (angle=90)
   {
-    specfem::sources::force force_z(
+    specfem::sources::force<specfem::dimension::type::dim2> force_z(
         0.0, 0.0, 90.0, // angle=90 means force in z direction
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
                                                             1.0, false),
@@ -109,7 +109,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (1,1) - force in both directions (angle=45)
   {
-    specfem::sources::force force_both(
+    specfem::sources::force<specfem::dimension::type::dim2> force_both(
         0.0, 0.0, 45.0, // angle=45 means equal force in both directions
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
                                                             1.0, false),
@@ -120,7 +120,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (0,0) - zero force (amplitude=0)
   {
-    specfem::sources::force force_zero(
+    specfem::sources::force<specfem::dimension::type::dim2> force_zero(
         0.0, 0.0, 0.0, // angle doesn't matter
         std::make_unique<specfem::forcing_function::Ricker>(
             10, 0.01, 0.0, 0.0, 1.0, false), // amplitude = 0
@@ -131,7 +131,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // Test Adjoint sources (2 components)
   {
-    specfem::sources::adjoint_source adjoint(
+    specfem::sources::adjoint_source<specfem::dimension::type::dim2> adjoint(
         0.0, 0.0, // x, z
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
                                                             1.0, false),
@@ -144,7 +144,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (1,0,0) - force in x direction only
   {
-    specfem::sources::cosserat_force cosserat_x(
+    specfem::sources::cosserat_force<specfem::dimension::type::dim2> cosserat_x(
         0.0, 0.0, // x, z
         1.0, 0.0, // f=1 (elastic force), fc=0 (no rotational force)
         0.0,      // angle=0 means force in x direction
@@ -157,7 +157,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (0,1,0) - force in z direction only
   {
-    specfem::sources::cosserat_force cosserat_z(
+    specfem::sources::cosserat_force<specfem::dimension::type::dim2> cosserat_z(
         0.0, 0.0, // x, z
         1.0, 0.0, // f=1 (elastic force), fc=0 (no rotational force)
         90.0,     // angle=90 means force in z direction
@@ -170,33 +170,34 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (0,0,1) - rotational force only
   {
-    specfem::sources::cosserat_force cosserat_rot(
-        0.0, 0.0, // x, z
-        0.0, 1.0, // f=0 (no elastic force), fc=1 (rotational force)
-        0.0,      // angle doesn't matter for pure rotation
-        std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
-                                                            1.0, false),
-        specfem::wavefield::simulation_field::forward);
+    specfem::sources::cosserat_force<specfem::dimension::type::dim2>
+        cosserat_rot(0.0, 0.0, // x, z
+                     0.0,
+                     1.0, // f=0 (no elastic force), fc=1 (rotational force)
+                     0.0, // angle doesn't matter for pure rotation
+                     std::make_unique<specfem::forcing_function::Ricker>(
+                         10, 0.01, 1.0, 0.0, 1.0, false),
+                     specfem::wavefield::simulation_field::forward);
     cosserat_rot.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
     test_vector_source("Cosserat Rotation (0,0,1)", cosserat_rot, ngll);
   }
 
   // (1,1,1) - force in all directions
   {
-    specfem::sources::cosserat_force cosserat_all(
-        0.0, 0.0, // x, z
-        1.0, 1.0, // f=1 (elastic force), fc=1 (rotational force)
-        45.0,     // angle=45 means equal force in both directions
-        std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
-                                                            1.0, false),
-        specfem::wavefield::simulation_field::forward);
+    specfem::sources::cosserat_force<specfem::dimension::type::dim2>
+        cosserat_all(0.0, 0.0, // x, z
+                     1.0, 1.0, // f=1 (elastic force), fc=1 (rotational force)
+                     45.0,     // angle=45 means equal force in both directions
+                     std::make_unique<specfem::forcing_function::Ricker>(
+                         10, 0.01, 1.0, 0.0, 1.0, false),
+                     specfem::wavefield::simulation_field::forward);
     cosserat_all.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
     test_vector_source("Cosserat All directions (1,1,1)", cosserat_all, ngll);
   }
 
   // Test External source (2 components)
   {
-    specfem::sources::external external(
+    specfem::sources::external<specfem::dimension::type::dim2> external(
         0.0, 0.0, // x, z
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
                                                             1.0, false),

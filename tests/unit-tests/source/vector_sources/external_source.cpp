@@ -101,7 +101,7 @@ TEST(SOURCES, external_source_vector) {
     SCOPED_TRACE("Testing external source for: " + params.name);
 
     // Create an external source
-    specfem::sources::external external_source(
+    specfem::sources::external<specfem::dimension::type::dim2> external_source(
         params.x, params.z,
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
                                                             1.0, false),

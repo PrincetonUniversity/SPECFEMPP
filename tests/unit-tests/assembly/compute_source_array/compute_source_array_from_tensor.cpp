@@ -221,7 +221,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (1,0,0) - Mxx only
   {
-    specfem::sources::moment_tensor moment_xx(
+    specfem::sources::moment_tensor<specfem::dimension::type::dim2> moment_xx(
         0.0, 0.0,      // x, z
         1.0, 0.0, 0.0, // Mxx=1, Mzz=0, Mxz=0
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
@@ -234,7 +234,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (0,1,0) - Mzz only
   {
-    specfem::sources::moment_tensor moment_zz(
+    specfem::sources::moment_tensor<specfem::dimension::type::dim2> moment_zz(
         0.0, 0.0,      // x, z
         0.0, 1.0, 0.0, // Mxx=0, Mzz=1, Mxz=0
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
@@ -247,7 +247,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (0,0,1) - Mxz only
   {
-    specfem::sources::moment_tensor moment_xz(
+    specfem::sources::moment_tensor<specfem::dimension::type::dim2> moment_xz(
         0.0, 0.0,      // x, z
         0.0, 0.0, 1.0, // Mxx=0, Mzz=0, Mxz=1
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
@@ -260,12 +260,12 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (1,1,0) - Mxx and Mzz
   {
-    specfem::sources::moment_tensor moment_xx_zz(
-        0.0, 0.0,      // x, z
-        1.0, 1.0, 0.0, // Mxx=1, Mzz=1, Mxz=0
-        std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
-                                                            1.0, false),
-        specfem::wavefield::simulation_field::forward);
+    specfem::sources::moment_tensor<specfem::dimension::type::dim2>
+        moment_xx_zz(0.0, 0.0,      // x, z
+                     1.0, 1.0, 0.0, // Mxx=1, Mzz=1, Mxz=0
+                     std::make_unique<specfem::forcing_function::Ricker>(
+                         10, 0.01, 1.0, 0.0, 1.0, false),
+                     specfem::wavefield::simulation_field::forward);
     moment_xx_zz.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_tensor_source("Moment Tensor Mxx+Mzz (1,1,0)", moment_xx_zz, ngll);
     test_tensor_source_off_gll("Moment Tensor Mxx+Mzz (1,1,0)", moment_xx_zz,
@@ -274,7 +274,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (1,1,1) - All components
   {
-    specfem::sources::moment_tensor moment_all(
+    specfem::sources::moment_tensor<specfem::dimension::type::dim2> moment_all(
         0.0, 0.0,      // x, z
         1.0, 1.0, 1.0, // Mxx=1, Mzz=1, Mxz=1
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
@@ -287,7 +287,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (0,0,0) - Zero tensor
   {
-    specfem::sources::moment_tensor moment_zero(
+    specfem::sources::moment_tensor<specfem::dimension::type::dim2> moment_zero(
         0.0, 0.0,      // x, z
         0.0, 0.0, 0.0, // Mxx=0, Mzz=0, Mxz=0
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
@@ -300,12 +300,12 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // Test with elastic_psv_t medium (3 components)
   {
-    specfem::sources::moment_tensor moment_psv_t(
-        0.0, 0.0,      // x, z
-        1.0, 2.0, 0.5, // Mxx=1, Mzz=2, Mxz=0.5
-        std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
-                                                            1.0, false),
-        specfem::wavefield::simulation_field::forward);
+    specfem::sources::moment_tensor<specfem::dimension::type::dim2>
+        moment_psv_t(0.0, 0.0,      // x, z
+                     1.0, 2.0, 0.5, // Mxx=1, Mzz=2, Mxz=0.5
+                     std::make_unique<specfem::forcing_function::Ricker>(
+                         10, 0.01, 1.0, 0.0, 1.0, false),
+                     specfem::wavefield::simulation_field::forward);
     moment_psv_t.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
     test_tensor_source("Moment Tensor PSV-T (1,2,0.5)", moment_psv_t, ngll);
     test_tensor_source_off_gll("Moment Tensor PSV-T (1,2,0.5)", moment_psv_t,

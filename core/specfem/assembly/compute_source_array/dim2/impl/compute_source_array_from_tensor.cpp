@@ -18,7 +18,8 @@ using PointJacobianMatrix =
 using JacobianViewType = specfem::kokkos::HostView2d<PointJacobianMatrix>;
 
 void compute_source_array_from_tensor_and_element_jacobian(
-    const specfem::sources::tensor_source &tensor_source,
+    const specfem::sources::tensor_source<specfem::dimension::type::dim2>
+        &tensor_source,
     const JacobianViewType &element_jacobian_matrix,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
@@ -90,7 +91,8 @@ void compute_source_array_from_tensor_and_element_jacobian(
 template <>
 void specfem::assembly::compute_source_array_impl::from_tensor<
     specfem::dimension::type::dim2>(
-    const specfem::sources::tensor_source &tensor_source,
+    const specfem::sources::tensor_source<specfem::dimension::type::dim2>
+        &tensor_source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
