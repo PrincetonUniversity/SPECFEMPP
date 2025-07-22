@@ -33,10 +33,10 @@ protected:
     }
   }
 
-  template <specfem::sync::kind sync> void sync() const {
-    if constexpr (sync == specfem::sync::kind::HostToDevice) {
+  template <specfem::sync::kind SyncField> void sync() const {
+    if constexpr (SyncField == specfem::sync::kind::HostToDevice) {
       Kokkos::deep_copy(data, h_data);
-    } else if constexpr (sync == specfem::sync::kind::DeviceToHost) {
+    } else if constexpr (SyncField == specfem::sync::kind::DeviceToHost) {
       Kokkos::deep_copy(h_data, data);
     }
   }
@@ -70,8 +70,8 @@ public:
   auto get_field() const { return this->get_data(); }
   auto get_host_field() const { return this->get_host_data(); }
 
-  template <specfem::sync::kind sync> void sync() const {
-    base_field<DimensionTag, MediumTag>::template sync<sync>();
+  template <specfem::sync::kind SyncField> void sync() const {
+    base_field<DimensionTag, MediumTag>::template sync<SyncField>();
   }
 };
 
@@ -93,8 +93,8 @@ public:
   auto get_field_dot() const { return this->get_data(); }
   auto get_host_field_dot() const { return this->get_host_data(); }
 
-  template <specfem::sync::kind sync> void sync() const {
-    base_field<DimensionTag, MediumTag>::template sync<sync>();
+  template <specfem::sync::kind SyncField> void sync() const {
+    base_field<DimensionTag, MediumTag>::template sync<SyncField>();
   }
 };
 
@@ -116,8 +116,8 @@ public:
   auto get_field_dot_dot() const { return this->get_data(); }
   auto get_host_field_dot_dot() const { return this->get_host_data(); }
 
-  template <specfem::sync::kind sync> void sync() const {
-    base_field<DimensionTag, MediumTag>::template sync<sync>();
+  template <specfem::sync::kind SyncField> void sync() const {
+    base_field<DimensionTag, MediumTag>::template sync<SyncField>();
   }
 };
 
@@ -162,7 +162,7 @@ public:
 
   field_impl(const int nglob);
 
-  template <specfem::sync::kind sync> void sync_fields() const;
+  template <specfem::sync::kind SyncField> void sync_fields() const;
 
   int nglob;
 };
