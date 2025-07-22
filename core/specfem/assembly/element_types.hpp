@@ -13,3 +13,4 @@ template <specfem::dimension::type DimensionTag> struct element_types;
 } // namespace specfem::assembly
 
 #include "element_types/dim2/element_types.hpp"
+#include "element_types/dim3/element_types.hpp"
