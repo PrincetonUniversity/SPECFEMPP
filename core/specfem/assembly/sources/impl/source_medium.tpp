@@ -30,8 +30,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
 
     // Pre overload setup.
     specfem::assembly::compute_source_array(
-      sources[isource], mesh, jacobian_matrix, element_types,
-      sv_source_array);
+      sources[isource], mesh, jacobian_matrix, sv_source_array);
 
     auto sv_stf_array = Kokkos::subview(this->h_source_time_function,
                                         Kokkos::ALL, isource, Kokkos::ALL);

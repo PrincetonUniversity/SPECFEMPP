@@ -30,3 +30,33 @@ specfem::sources::source::source(YAML::Node &Node, const int nsteps,
 
   return;
 }
+
+void specfem::sources::source::set_medium_tag(
+    specfem::element::medium_tag medium_tag) {
+
+  auto supported_media_list = this->get_supported_media();
+  for (auto &supported_medium : supported_media_list) {
+    if (supported_medium == medium_tag) {
+      this->medium_tag = medium_tag;
+      return;
+    }
+  }
+
+  std::ostringstream message;
+
+  message << "The element that a " << this->name
+          << " is supposed to be placed in \n"
+          << "belongs to a medium that is not supported by the " << this->name
+          << ".\n"
+          << "  Requested medium: " << specfem::element::to_string(medium_tag)
+          << "\n"
+          << "  Element index:    " << this->element_index << "\n"
+          << "  Global (x,z):     " << "(" << this->x << "," << this->z << ")\n"
+          << "  Local (xi,gamma)  " << "(" << this->xi << "," << this->gamma
+          << ")\n"
+          << "Supported media:";
+  for (auto &supported_medium : supported_media_list) {
+    message << "  - " << specfem::element::to_string(supported_medium) << "\n";
+  }
+  throw std::runtime_error(message.str());
+}

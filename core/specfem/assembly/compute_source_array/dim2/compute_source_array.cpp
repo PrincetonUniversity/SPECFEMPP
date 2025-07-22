@@ -1,5 +1,4 @@
 #include "specfem/assembly/compute_source_array.hpp"
-#include "../impl/compute_source_array.hpp"
 #include "compute_source_array.hpp"
 #include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
@@ -13,30 +12,45 @@ void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
-  // Marker to indicate that the source array has been computed
-  bool computed_source = false;
+  switch (source->get_source_type()) {
+  case specfem::sources::source_type::vector_source: {
 
-  // Get the compute source array functions for the specific dimension.
-  compute_source_array_impl::SourceArrayFunctionVector
-      compute_source_array_functions =
-          compute_source_array_impl::get_compute_source_array_functions();
+    // Cast to derived class to access specific methods
+    auto vector_source =
+        static_cast<const specfem::sources::vector_source *>(source.get());
 
-  // Loop through the function that compute the source.
-  for (const auto &compute_source_array : compute_source_array_functions) {
-    computed_source = compute_source_array(source, mesh, jacobian_matrix,
-                                           element_types, source_array);
-    if (computed_source) {
-      return;
+    if (!vector_source) {
+      KOKKOS_ABORT_WITH_LOCATION(
+          "Source is not of vector type. Cannot compute vector source "
+          "array.");
     }
-  }
 
-  KOKKOS_ABORT_WITH_LOCATION(
-      "For this source type, the compute_source_array "
-      "function is not implemented. Please implement "
-      "it in the source class or provide a specialization "
-      "for this function.");
+    specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
+        *vector_source, mesh, source_array);
+    break;
+  }
+  case specfem::sources::source_type::tensor_source: {
+
+    // Cast to derived class to access specific methods
+    auto tensor_source =
+        static_cast<const specfem::sources::tensor_source *>(source.get());
+
+    if (!tensor_source) {
+      KOKKOS_ABORT_WITH_LOCATION(
+          "Source is not of tensor type. Cannot compute tensor source "
+          "array.");
+    }
+
+    specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
+        *tensor_source, mesh, jacobian_matrix, source_array);
+    break;
+  }
+  default:
+    // Handle unsupported source types
+    KOKKOS_ABORT_WITH_LOCATION(
+        "Unsupported source type for compute_source_array.");
+  }
+  return;
 }
