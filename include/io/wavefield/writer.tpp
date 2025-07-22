@@ -144,8 +144,6 @@ void specfem::io::wavefield_writer<OutputLibrary>::finalize(
     auto &boundary_values = assembly.boundary_values;
     boundary_values.copy_to_host();
 
-    typename OutputLibrary::Group boundary_group =
-        file.createGroup("/BoundaryValues");
     typename OutputLibrary::Group stacey = boundary_group.createGroup("Stacey");
 
     stacey
