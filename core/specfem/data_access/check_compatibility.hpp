@@ -1,0 +1,89 @@
+#pragma once
+
+#include "accessor.hpp"
+#include "container.hpp"
+
+namespace specfem::data_access {
+
+template <typename IndexType, typename ContainerType, typename AccessorType>
+struct CheckCompatibility {
+private:
+  static constexpr bool check_dimension =
+      IndexType::dimension_tag == ContainerType::dimension_tag &&
+      IndexType::dimension_tag == AccessorType::dimension_tag;
+  static constexpr bool check_data_class =
+      ContainerType::data_class == AccessorType::data_class;
+
+public:
+  static constexpr bool value = check_dimension && check_data_class;
+
+  static_assert(check_dimension, "Dimension tags do not match");
+  static_assert(check_data_class, "Data classes do not match");
+  static_assert(specfem::data_access::is_container<ContainerType>::value,
+                "ContainerType is not a container");
+
+  static_assert(specfem::data_access::is_point<AccessorType>::value,
+                "PointType is not an accessor");
+};
+
+template <typename T, typename = void>
+struct is_jacobian_matrix : std::false_type {};
+
+template <typename T>
+struct is_jacobian_matrix<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::jacobian_matrix> >
+    : std::true_type {};
+
+template <typename T, typename = void> struct is_field : std::false_type {};
+
+template <typename T>
+struct is_field<T,
+                std::enable_if_t<T::data_class ==
+                                 specfem::data_access::DataClassType::field> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_field_derivatives : std::false_type {};
+
+template <typename T>
+struct is_field_derivatives<
+    T,
+    std::enable_if_t<T::data_class ==
+                     specfem::data_access::DataClassType::field_derivatives> >
+    : std::true_type {};
+
+template <typename T, typename = void> struct is_source : std::false_type {};
+
+template <typename T>
+struct is_source<T,
+                 std::enable_if_t<T::data_class ==
+                                  specfem::data_access::DataClassType::source> >
+    : std::true_type {};
+
+template <typename T, typename = void> struct is_boundary : std::false_type {};
+
+template <typename T>
+struct is_boundary<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::boundary> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_properties : std::false_type {};
+
+template <typename T>
+struct is_properties<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::properties> >
+    : std::true_type {};
+
+template <typename T, typename = void> struct is_stress : std::false_type {};
+
+template <typename T>
+struct is_stress<T,
+                 std::enable_if_t<T::data_class ==
+                                  specfem::data_access::DataClassType::stress> >
+    : std::true_type {};
+
+} // namespace specfem::data_access
