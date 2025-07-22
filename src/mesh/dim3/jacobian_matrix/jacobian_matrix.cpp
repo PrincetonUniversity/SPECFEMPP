@@ -44,7 +44,8 @@ specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>::print(
   std::ostringstream message;
 
   // Create array pointer to coordinates.x y or z depending on the partial_name
-  const Kokkos::View<type_real ****, Kokkos::HostSpace> &array = [&]() {
+  const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                     Kokkos::DefaultHostExecutionSpace> &array = [&]() {
     if (partial_name == "xix") {
       return this->xix;
     } else if (partial_name == "xiy") {
