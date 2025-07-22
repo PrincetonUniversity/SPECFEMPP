@@ -1,8 +1,6 @@
 #pragma once
 
-#include "accessor.hpp"
 #include "boundary.hpp"
-#include "container.hpp"
 #include "dimension.hpp"
 #include "macros.hpp"
 #include "medium.hpp"
