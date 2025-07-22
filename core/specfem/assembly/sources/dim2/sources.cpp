@@ -6,8 +6,8 @@
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "source/interface.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/source.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

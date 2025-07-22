@@ -510,30 +510,6 @@ target_link_libraries(
 set_target_properties(source_time_function PROPERTIES UNITY_BUILD OFF)
 
 
-
-add_library(
-        source_class
-        src/source/source.cpp
-        src/source/force_source.cpp
-        src/source/cosserat_force_source.cpp
-        src/source/moment_tensor_source.cpp
-        src/source/adjoint_source.cpp
-        src/source/external.cpp
-)
-
-target_link_libraries(
-        source_class
-        Kokkos::kokkos
-        specfem_mpi
-        utilities
-        source_time_function
-        yaml-cpp
-        enumerations
-        algorithms
-        ${BOOST_LIBS}
-)
-
-
 add_library(coupled_interface
         src/coupled_interface/coupled_interface.cpp
 )
