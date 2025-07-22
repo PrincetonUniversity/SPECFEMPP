@@ -92,6 +92,14 @@ public:
     return source_type::force_source;
   }
 
+  /**
+   * @brief Get the force vector
+   *
+   * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * Force vector
+   */
+  specfem::kokkos::HostView1d<type_real> get_force_vector() const;
+
 private:
   type_real angle; ///< Angle of force source
   specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
