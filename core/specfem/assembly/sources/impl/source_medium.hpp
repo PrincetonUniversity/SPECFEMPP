@@ -1,9 +1,9 @@
 #pragma once
 
-#include "source/source.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 

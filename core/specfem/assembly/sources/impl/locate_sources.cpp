@@ -1,9 +1,9 @@
 
 #include "specfem/assembly/sources/impl/locate_sources.hpp"
 #include "algorithms/locate_point.hpp"
-#include "source/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/source.hpp"
 
 void specfem::assembly::sources_impl::locate_sources(
     const specfem::assembly::element_types<specfem::dimension::type::dim2>
