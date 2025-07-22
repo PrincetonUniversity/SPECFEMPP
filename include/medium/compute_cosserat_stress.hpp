@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/accessor.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/dim2/elastic/isotropic_cosserat/cosserat_stress.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem/point.hpp"
 #include "utilities/errors.hpp"
 #include <Kokkos_Core.hpp>
@@ -17,14 +17,18 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
 
   static_assert(
-      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      specfem::data_access::is_point<PointPropertiesType>::value &&
+          specfem::data_access::is_properties<PointPropertiesType>::value,
       "point_properties is not a point properties type");
 
-  static_assert(specfem::accessor::is_point_stress<PointStressType>::value,
+  static_assert(specfem::data_access::is_point<PointStressType>::value &&
+                    specfem::data_access::is_stress<PointStressType>::value,
                 "point_stress is not a point stress type");
 
-  static_assert(specfem::accessor::is_point_field<PointDisplacementType>::value,
-                "point_displacement is not a point field type");
+  static_assert(
+      specfem::data_access::is_point<PointDisplacementType>::value &&
+          specfem::data_access::is_field<PointDisplacementType>::value,
+      "point_displacement is not a point field type");
 
   static_assert(PointPropertiesType::dimension_tag ==
                     PointDisplacementType::dimension_tag,
