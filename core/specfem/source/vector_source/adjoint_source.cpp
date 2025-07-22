@@ -1,7 +1,22 @@
-#include "specfem/source/adjoint_source.hpp"
+#include "specfem/source/vector_source/adjoint_source.hpp"
 #include "algorithms/locate_point.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
+
+// Static member definitions
+const std::string specfem::sources::adjoint_source::name = "adjoint source";
+
+std::vector<specfem::element::medium_tag>
+specfem::sources::adjoint_source::get_supported_media() const {
+  return {
+    specfem::element::medium_tag::acoustic,
+    specfem::element::medium_tag::elastic_psv,
+    specfem::element::medium_tag::elastic_psv_t,
+    specfem::element::medium_tag::elastic_sh,
+    specfem::element::medium_tag::electromagnetic_te,
+    specfem::element::medium_tag::poroelastic,
+  };
+}
 
 specfem::kokkos::HostView1d<type_real>
 specfem::sources::adjoint_source::get_force_vector() const {

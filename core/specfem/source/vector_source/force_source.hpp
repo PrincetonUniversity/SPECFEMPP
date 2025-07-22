@@ -3,8 +3,8 @@
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "source.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/source/vector_source.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -17,7 +17,7 @@ namespace sources {
  * @brief Collocated force source
  *
  */
-class force : public source {
+class force : public vector_source {
 
 public:
   /**
@@ -41,8 +41,7 @@ public:
             return 0.0;
           }
         }(Node)),
-        wavefield_type(wavefield_type),
-        specfem::sources::source(Node, nsteps, dt) {};
+        wavefield_type(wavefield_type), vector_source(Node, nsteps, dt) {};
 
   /**
    * @brief Construct a new collocated force object
@@ -57,7 +56,7 @@ public:
         std::unique_ptr<specfem::forcing_function::stf> forcing_function,
         const specfem::wavefield::simulation_field wavefield_type)
       : angle(angle), wavefield_type(wavefield_type),
-        specfem::sources::source(x, z, std::move(forcing_function)) {};
+        vector_source(x, z, std::move(forcing_function)) {};
 
   /**
    * @brief User output
@@ -84,27 +83,28 @@ public:
   bool operator!=(const specfem::sources::source &other) const override;
 
   /**
-   * @brief Get the source type
-   *
-   * @return source_type type of source
-   */
-  source_type get_source_type() const override {
-    return source_type::force_source;
-  }
-
-  /**
    * @brief Get the force vector
    *
    * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
    * Force vector
    */
-  specfem::kokkos::HostView1d<type_real> get_force_vector() const;
+  specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
+
+  /**
+   * @brief Get the list of supported media for this source type
+   *
+   * @return std::vector<specfem::element::medium_tag> list of supported media
+   */
+  std::vector<specfem::element::medium_tag>
+  get_supported_media() const override;
 
 private:
+  const static std::string name;
   type_real angle; ///< Angle of force source
   specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
                                                        ///< which the source
                                                        ///< acts
+  const static std::vector<specfem::element::medium_tag> supported_media;
 };
 } // namespace sources
 } // namespace specfem

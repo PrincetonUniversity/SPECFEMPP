@@ -1,4 +1,4 @@
-#include "specfem/source/moment_tensor_source.hpp"
+#include "specfem/source/tensor_source/moment_tensor_source.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
@@ -7,6 +7,18 @@
 // #include "utilities.cpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
+#include <stdexcept>
+
+// Static member definitions
+const std::string specfem::sources::moment_tensor::name = "moment tensor";
+
+std::vector<specfem::element::medium_tag>
+specfem::sources::moment_tensor::get_supported_media() const {
+  return { specfem::element::medium_tag::elastic_psv,
+           specfem::element::medium_tag::poroelastic,
+           specfem::element::medium_tag::elastic_psv_t,
+           specfem::element::medium_tag::electromagnetic_te };
+}
 
 specfem::kokkos::HostView2d<type_real>
 specfem::sources::moment_tensor::get_source_tensor() const {

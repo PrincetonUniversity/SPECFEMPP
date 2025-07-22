@@ -1,4 +1,4 @@
-#include "specfem/source/force_source.hpp"
+#include "specfem/source/vector_source/force_source.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 #include "source_time_function/interface.hpp"
@@ -6,6 +6,20 @@
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
+
+// Static member definitions
+const std::string specfem::sources::force::name = "force source";
+
+std::vector<specfem::element::medium_tag>
+specfem::sources::force::get_supported_media() const {
+  return {
+    specfem::element::medium_tag::acoustic,
+    specfem::element::medium_tag::elastic_psv,
+    specfem::element::medium_tag::elastic_psv_t,
+    specfem::element::medium_tag::elastic_sh,
+    specfem::element::medium_tag::poroelastic,
+  };
+}
 
 specfem::kokkos::HostView1d<type_real>
 specfem::sources::force::get_force_vector() const {

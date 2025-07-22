@@ -4,8 +4,8 @@
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "source.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/source/tensor_source.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -18,7 +18,7 @@ namespace sources {
  * @brief Moment-tensor source
  *
  */
-class moment_tensor : public source {
+class moment_tensor : public tensor_source {
 
 public:
   /**
@@ -56,7 +56,7 @@ public:
                 const specfem::wavefield::simulation_field wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
         Mxz(Node["Mxz"].as<type_real>()), wavefield_type(wavefield_type),
-        specfem::sources::source(Node, nsteps, dt) {};
+        tensor_source(Node, nsteps, dt) {};
 
   /**
    * @brief Costruct new moment tensor source using forcing function
@@ -76,7 +76,7 @@ public:
       std::unique_ptr<specfem::forcing_function::stf> forcing_function,
       const specfem::wavefield::simulation_field wavefield_type)
       : Mxx(Mxx), Mzz(Mzz), Mxz(Mxz), wavefield_type(wavefield_type),
-        specfem::sources::source(x, z, std::move(forcing_function)) {};
+        tensor_source(x, z, std::move(forcing_function)) {};
 
   /**
    * @brief User output
@@ -92,22 +92,21 @@ public:
   bool operator!=(const specfem::sources::source &other) const override;
 
   /**
-   * @brief Get the source type
-   *
-   * @return source_type type of source
-   */
-  source_type get_source_type() const override {
-    return source_type::moment_tensor_source;
-  }
-
-  /**
    * @brief Get the source tensor
    *
    * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
    * Source tensor with dimensions [ncomponents][2] where each row contains
-   * [Mxx, Mxz] or [Mxz, Mzz]
+   * [Mxx, Mxz], [Mxz, Mzz] etc, depending on the medium type
    */
-  specfem::kokkos::HostView2d<type_real> get_source_tensor() const;
+  specfem::kokkos::HostView2d<type_real> get_source_tensor() const override;
+
+  /**
+   * @brief Get the list of supported media for this source type
+   *
+   * @return std::vector<specfem::element::medium_tag> list of supported media
+   */
+  std::vector<specfem::element::medium_tag>
+  get_supported_media() const override;
 
 private:
   type_real Mxx;                                       ///< Mxx for the source
@@ -116,6 +115,9 @@ private:
   specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
                                                        ///< which the source
                                                        ///< acts
+
+protected:
+  const static std::string name;
 };
 } // namespace sources
 } // namespace specfem
