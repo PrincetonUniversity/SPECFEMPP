@@ -1,11 +1,11 @@
 #pragma once
 #include "../impl/source_medium.hpp"
 #include "../impl/source_medium.tpp"
-#include "enumerations/accessor.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem/source.hpp"
 
 #include <Kokkos_Core.hpp>
@@ -233,7 +233,8 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
-      specfem::accessor::is_point_source<PointSourceType>::value,
+      specfem::data_access::is_point<PointSourceType>::value &&
+          specfem::data_access::is_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
   static_assert(PointSourceType::dimension_tag ==
@@ -301,7 +302,8 @@ void load_on_host(
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
-      specfem::accessor::is_point_source<PointSourceType>::value,
+      specfem::data_access::is_point<PointSourceType>::value &&
+          specfem::data_access::is_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
   static_assert(PointSourceType::dimension_tag ==
@@ -365,7 +367,8 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
-      specfem::accessor::is_point_source<PointSourceType>::value,
+      specfem::data_access::is_point<PointSourceType>::value &&
+          specfem::data_access::is_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
   static_assert(PointSourceType::dimension_tag ==
@@ -428,7 +431,8 @@ void store_on_host(
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
-      specfem::accessor::is_point_source<PointSourceType>::value,
+      specfem::data_access::is_point<PointSourceType>::value &&
+          specfem::data_access::is_source<PointSourceType>::value,
       "PointSourceType must be a point source type specfem::point::source");
 
   static_assert(PointSourceType::dimension_tag ==

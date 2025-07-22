@@ -69,7 +69,7 @@ template <> struct coordinates<specfem::dimension::type::dim3> {
    * @endcode
    *
    */
-  coordinates(int nspec, int nglob, int ngllx, int nglly, int ngllz)
+  coordinates(int nspec, int nglob, int ngllz, int nglly, int ngllx)
       : nspec(nspec), nglob(nglob), ngllx(ngllx), nglly(nglly), ngllz(ngllz),
         x("x", nglob), y("y", nglob), z("z", nglob) {};
 

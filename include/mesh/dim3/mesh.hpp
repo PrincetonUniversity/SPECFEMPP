@@ -13,6 +13,7 @@
 #include "jacobian_matrix/jacobian_matrix.hpp"
 #include "mass_matrix/mass_matrix.hpp"
 #include "materials/materials.hpp"
+#include "mesh/dim3/element_types/element_types.hpp"
 #include "mesh/dim3/mapping/mapping.hpp"
 #include "mesh/mesh_base.hpp"
 #include "mpi/mpi.hpp"
@@ -20,6 +21,7 @@
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "surface/surface.hpp"
+#include "tags/tags.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -55,7 +57,7 @@ template <> struct mesh<specfem::dimension::type::dim3> {
                                                              ///< derivatives
 
   // Struct to store element_types
-  specfem::mesh::element_types<dimension> elements_types; ///< Element types
+  specfem::mesh::element_types<dimension> element_types; ///< Element types
 
   // Mass matrix
   specfem::mesh::mass_matrix<dimension> mass_matrix; ///< Mass matrix
@@ -66,13 +68,10 @@ template <> struct mesh<specfem::dimension::type::dim3> {
   // Struct to store the boundaries
   specfem::mesh::boundaries<dimension> boundaries; ///< Boundaries
 
-  // Struct to store the absorbing boundaries
-  specfem::mesh::absorbing_boundary<dimension>
-      absorbing_boundary; ///< Absorbing
-                          ///< boundaries
-
-  // Struct to store the free surface
-  specfem::mesh::free_surface<dimension> free_surface; ///< Free surface
+  specfem::mesh::tags<dimension> tags; ///< Struct to store
+                                       ///< tags for every
+                                       ///< spectral
+                                       ///< element
 
   // Struct to store the coupled interfaces
   specfem::mesh::coupled_interfaces<dimension>
@@ -118,12 +117,10 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    * @param jacobian_regular Regular Jacobian
    * @param irregular_element_number Kokkos View of irregular elements
    * @param jacobian_matrix Struct to store Jacobian matrix
-   * @param elements_types Struct to store element types
+   * @param element_types Struct to store element types
    * @param mass_matrix Struct to store mass matrix
    * @param materials Struct to store material properties
    * @param boundaries Struct to store information at the boundaries
-   * @param absorbing_boundary Struct to store absorbing boundaries
-   * @param free_surface Struct to store free surface boundaries
    * @param coupled_interfaces Struct to store coupled interfaces
    * @param mpi Struct to store MPI information
    * @param inner_outer Struct to store inner outer elements
@@ -143,12 +140,11 @@ template <> struct mesh<specfem::dimension::type::dim3> {
        const type_real xix_regular, const type_real jacobian_regular,
        const View1D<int> irregular_element_number,
        const specfem::mesh::jacobian_matrix<dimension> &jacobian_matrix,
-       const specfem::mesh::element_types<dimension> &elements_types,
+       const specfem::mesh::element_types<dimension> &element_types,
        const specfem::mesh::mass_matrix<dimension> &mass_matrix,
        const specfem::mesh::materials<dimension> &materials,
        const specfem::mesh::boundaries<dimension> &boundaries,
-       const specfem::mesh::absorbing_boundary<dimension> &absorbing_boundary,
-       const specfem::mesh::free_surface<dimension> &free_surface,
+       const specfem::mesh::tags<dimension> &tags,
        const specfem::mesh::coupled_interfaces<dimension> &coupled_interfaces,
        const specfem::mesh::mpi<dimension> &mpi,
        const specfem::mesh::inner_outer<dimension> &inner_outer,
@@ -158,10 +154,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
       : parameters(parameters), coordinates(coordinates), mapping(mapping),
         xix_regular(xix_regular), jacobian_regular(jacobian_regular),
         irregular_element_number(irregular_element_number),
-        jacobian_matrix(jacobian_matrix), elements_types(elements_types),
+        jacobian_matrix(jacobian_matrix), element_types(element_types),
         mass_matrix(mass_matrix), materials(materials), boundaries(boundaries),
-        absorbing_boundary(absorbing_boundary), free_surface(free_surface),
-        coupled_interfaces(coupled_interfaces), mpi(mpi),
+        tags(tags), coupled_interfaces(coupled_interfaces), mpi(mpi),
         inner_outer(inner_outer), coloring(coloring), surface(surface),
         adjacency(adjacency) {};
 
