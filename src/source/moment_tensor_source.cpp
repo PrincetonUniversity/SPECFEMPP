@@ -1,4 +1,5 @@
 #include "source/moment_tensor_source.hpp"
+#include "enumerations/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "source_time_function/interface.hpp"
@@ -6,6 +7,64 @@
 // #include "utilities.cpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
+
+specfem::kokkos::HostView2d<type_real>
+specfem::sources::moment_tensor::get_source_tensor() const {
+
+  // Get the medium tag that the source is located in
+  specfem::element::medium_tag medium_tag = this->get_medium_tag();
+
+  // Declare the source tensor
+  specfem::kokkos::HostView2d<type_real> source_tensor;
+
+  // For elastic P-SV: 2x2 tensor [[Mxx, Mxz], [Mxz, Mzz]]
+  if (medium_tag == specfem::element::medium_tag::elastic_psv) {
+    source_tensor =
+        specfem::kokkos::HostView2d<type_real>("source_tensor", 2, 2);
+    source_tensor(0, 0) = this->Mxx;
+    source_tensor(0, 1) = this->Mxz;
+    source_tensor(1, 0) = this->Mxz;
+    source_tensor(1, 1) = this->Mzz;
+  }
+  // For poroelastic: 4x2 tensor using elastic moment tensor twice
+  else if (medium_tag == specfem::element::medium_tag::poroelastic) {
+    source_tensor =
+        specfem::kokkos::HostView2d<type_real>("source_tensor", 4, 2);
+    source_tensor(0, 0) = this->Mxx;
+    source_tensor(0, 1) = this->Mxz;
+    source_tensor(1, 0) = this->Mxz;
+    source_tensor(1, 1) = this->Mzz;
+    source_tensor(2, 0) = this->Mxx;
+    source_tensor(2, 1) = this->Mxz;
+    source_tensor(3, 0) = this->Mxz;
+    source_tensor(3, 1) = this->Mzz;
+  }
+  // For elastic P-SV-T: 3x2 tensor with third component set to 0
+  else if (medium_tag == specfem::element::medium_tag::elastic_psv_t) {
+    source_tensor =
+        specfem::kokkos::HostView2d<type_real>("source_tensor", 3, 2);
+    source_tensor(0, 0) = this->Mxx;
+    source_tensor(0, 1) = this->Mxz;
+    source_tensor(1, 0) = this->Mxz;
+    source_tensor(1, 1) = this->Mzz;
+    source_tensor(2, 0) = static_cast<type_real>(0.0);
+    source_tensor(2, 1) = static_cast<type_real>(0.0);
+  }
+  // For electromagnetic TE: 2x2 tensor [[Mxx, Mxz], [Mxz, Mzz]]
+  else if (medium_tag == specfem::element::medium_tag::electromagnetic_te) {
+    source_tensor =
+        specfem::kokkos::HostView2d<type_real>("source_tensor", 2, 2);
+    source_tensor(0, 0) = this->Mxx;
+    source_tensor(0, 1) = this->Mxz;
+    source_tensor(1, 0) = this->Mxz;
+    source_tensor(1, 1) = this->Mzz;
+  } else {
+    KOKKOS_ABORT_WITH_LOCATION("Moment tensor source array computation not "
+                               "implemented for requested element type.");
+  }
+
+  return source_tensor;
+}
 
 std::string specfem::sources::moment_tensor::print() const {
   std::ostringstream message;
