@@ -1,7 +1,7 @@
 #pragma once
 
-namespace specfem::data_class {
-enum type {
+namespace specfem::data_access {
+enum DataClassType {
   index,
   mapped_index,
   properties,
@@ -14,4 +14,4 @@ enum type {
   stress_integrand,
   boundary
 };
-} // namespace specfem::data_class
+} // namespace specfem::data_access

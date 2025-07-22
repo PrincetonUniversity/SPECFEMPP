@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/accessor.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/dim2/poroelastic/isotropic/damping.hpp"
+#include "specfem/data_access.hpp"
 #include "utilities/errors.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -16,18 +16,22 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
 
   static_assert(
-      specfem::accessor::is_point_properties<PointPropertiesType>::value,
+      specfem::data_access::is_point<PointPropertiesType>::value &&
+          specfem::data_access::is_properties<PointPropertiesType>::value,
       "point_properties is not a point properties type");
 
   // Check that the types are compatible
   static_assert(std::is_same_v<T, typename PointPropertiesType::simd::datatype>,
                 "factor must have the same SIMD type as point_properties");
 
-  static_assert(specfem::accessor::is_point_field<PointVelocityType>::value,
+  static_assert(specfem::data_access::is_point<PointVelocityType>::value &&
+                    specfem::data_access::is_field<PointVelocityType>::value,
                 "velocity is not a point field type");
 
-  static_assert(specfem::accessor::is_point_field<PointAccelerationType>::value,
-                "acceleration is not a point field type");
+  static_assert(
+      specfem::data_access::is_point<PointAccelerationType>::value &&
+          specfem::data_access::is_field<PointAccelerationType>::value,
+      "acceleration is not a point field type");
 
   static_assert(PointVelocityType::store_velocity,
                 "velocity must store velocity");
