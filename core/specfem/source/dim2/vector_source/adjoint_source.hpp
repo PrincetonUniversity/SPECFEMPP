@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../vector_source.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/source.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {

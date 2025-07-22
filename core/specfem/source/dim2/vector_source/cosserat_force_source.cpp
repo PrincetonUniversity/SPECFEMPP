@@ -1,7 +1,7 @@
-#include "cosserat_force_source.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 #include "source_time_function/interface.hpp"
+#include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include <cmath>

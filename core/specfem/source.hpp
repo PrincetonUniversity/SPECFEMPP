@@ -1,7 +1,35 @@
 #pragma once
 
-#include "source/common/types.hpp"
-#include "source/fwd.hpp"
+#include "enumerations/interface.hpp"
+
+namespace specfem::sources {
+
+enum class source_type {
+  vector_source, ///< Vector source
+  tensor_source, ///< Tensor source
+};
+
+}
+
+namespace specfem::sources {
+
+template <specfem::dimension::type DimensionTag> class source;
+
+template <specfem::dimension::type DimensionTag> class tensor_source;
+
+template <specfem::dimension::type DimensionTag> class vector_source;
+
+template <specfem::dimension::type DimensionTag> struct moment_tensor;
+
+template <specfem::dimension::type DimensionTag> class force;
+
+template <specfem::dimension::type DimensionTag> class cosserat_force;
+
+template <specfem::dimension::type DimensionTag> class adjoint_source;
+
+template <specfem::dimension::type DimensionTag> class external;
+
+} // namespace specfem::sources
 
 #include "source/dim2/source.hpp"
 #include "source/dim2/tensor_source.hpp"

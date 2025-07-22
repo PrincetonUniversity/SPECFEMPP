@@ -1,9 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "source.hpp"
-#include "specfem/source/common/types.hpp"
-#include "specfem/source/fwd.hpp"
+#include "specfem/source.hpp"
 
 namespace specfem {
 namespace sources {
