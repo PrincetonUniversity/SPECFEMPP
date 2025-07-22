@@ -1,8 +1,9 @@
 #pragma once
 
-#include "source.hpp"
-#include "specfem/source/common/types.hpp"
-#include "specfem/source/fwd.hpp"
+#include "enumerations/interface.hpp"
+#include "kokkos_abstractions.h"
+#include "specfem/source.hpp"
+#include "yaml-cpp/yaml.h"
 
 namespace specfem {
 namespace sources {

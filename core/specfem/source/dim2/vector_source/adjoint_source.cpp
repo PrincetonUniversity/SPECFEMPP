@@ -1,7 +1,7 @@
-#include "adjoint_source.hpp"
 #include "algorithms/locate_point.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
+#include "specfem/source.hpp"
 
 // Static member definitions
 const std::string
