@@ -21,16 +21,16 @@ void compute_source_array_from_tensor_and_element_jacobian(
     const specfem::sources::tensor_source<specfem::dimension::type::dim2>
         &tensor_source,
     const JacobianViewType &element_jacobian_matrix,
+    const specfem::assembly::mesh_impl::quadrature<
+        specfem::dimension::type::dim2> &quadrature,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
-  const int ngllx = source_array.extent(2);
-  const int ngllz = source_array.extent(1);
+  const int ngllx = quadrature.N;
+  const int ngllz = quadrature.N;
 
   // Create quadrature and compute xi/gamma arrays
-  specfem::quadrature::gll::gll quadrature_x(0.0, 0.0, ngllx);
-  specfem::quadrature::gll::gll quadrature_z(0.0, 0.0, ngllz);
-  auto xi = quadrature_x.get_hxi();
-  auto gamma = quadrature_z.get_hxi();
+  auto xi = quadrature.h_xi;
+  auto gamma = quadrature.h_xi;
 
   // Compute lagrange interpolants at the local source location
   auto [hxi_source, hpxi_source] =
@@ -117,10 +117,13 @@ void specfem::assembly::compute_source_array_impl::from_tensor<
       element_jacobian(iz, ix) = derivatives;
     }
   }
+  const auto &quadrature =
+      static_cast<const specfem::assembly::mesh_impl::quadrature<
+          specfem::dimension::type::dim2> &>(mesh);
 
   specfem::assembly::compute_source_array_impl::
       compute_source_array_from_tensor_and_element_jacobian(
-          tensor_source, element_jacobian, source_array);
+          tensor_source, element_jacobian, quadrature, source_array);
 
   return;
 }

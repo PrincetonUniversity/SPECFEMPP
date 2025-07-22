@@ -39,6 +39,8 @@ void compute_source_array_from_tensor_and_element_jacobian(
     const specfem::kokkos::HostView2d<specfem::point::jacobian_matrix<
         specfem::dimension::type::dim2, false, false> >
         &element_jacobian_matrix,
+    const specfem::assembly::mesh_impl::quadrature<
+        specfem::dimension::type::dim2> &quadrature,
     specfem::kokkos::HostView3d<type_real> source_array);
 
 } // namespace specfem::assembly::compute_source_array_impl

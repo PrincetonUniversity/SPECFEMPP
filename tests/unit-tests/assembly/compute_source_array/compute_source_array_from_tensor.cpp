@@ -17,9 +17,14 @@ void test_tensor_source(const std::string &source_name, SourceType &source,
                         int ngll) {
   SCOPED_TRACE("Testing " + source_name);
 
-  // Create quadrature to get GLL points
-  specfem::quadrature::gll::gll quadrature(0.0, 0.0, ngll);
-  auto xi_gamma_points = quadrature.get_hxi();
+  // Create quadrature::quadratures from GLL quadrature first
+  specfem::quadrature::gll::gll gll_quad(0.0, 0.0, ngll);
+  specfem::quadrature::quadratures quadratures(gll_quad);
+
+  // Create mesh_impl quadrature from quadratures object
+  specfem::assembly::mesh_impl::quadrature<specfem::dimension::type::dim2>
+      quadrature(quadratures);
+  auto xi_gamma_points = quadrature.h_xi;
 
   // Get the source tensor for this source to determine number of components
   auto source_tensor = source.get_source_tensor();
@@ -67,7 +72,7 @@ void test_tensor_source(const std::string &source_name, SourceType &source,
       // Compute source array using the testable helper function
       specfem::assembly::compute_source_array_impl::
           compute_source_array_from_tensor_and_element_jacobian(
-              source, element_jacobian, source_array);
+              source, element_jacobian, quadrature, source_array);
 
       // For simplified jacobian (all derivatives = 1.0), we need to compute
       // expected derivatives properly First, compute the Lagrange interpolants
@@ -117,9 +122,14 @@ void test_tensor_source_off_gll(const std::string &source_name,
                                 SourceType &source, int ngll) {
   SCOPED_TRACE("Testing " + source_name + " at off-GLL points");
 
-  // Create quadrature to get GLL points
-  specfem::quadrature::gll::gll quadrature(0.0, 0.0, ngll);
-  auto xi_gamma_points = quadrature.get_hxi();
+  // Create quadrature::quadratures from GLL quadrature first
+  specfem::quadrature::gll::gll gll_quad(0.0, 0.0, ngll);
+  specfem::quadrature::quadratures quadratures(gll_quad);
+
+  // Create mesh_impl quadrature from quadratures object
+  specfem::assembly::mesh_impl::quadrature<specfem::dimension::type::dim2>
+      quadrature(quadratures);
+  auto xi_gamma_points = quadrature.h_xi;
 
   // Get the source tensor for this source to determine number of components
   auto source_tensor = source.get_source_tensor();
@@ -169,7 +179,7 @@ void test_tensor_source_off_gll(const std::string &source_name,
       // Compute source array using the testable helper function
       specfem::assembly::compute_source_array_impl::
           compute_source_array_from_tensor_and_element_jacobian(
-              source, element_jacobian, source_array);
+              source, element_jacobian, quadrature, source_array);
 
       // Now manually compute expected derivatives for verification
       // Compute lagrange interpolants at the source location
