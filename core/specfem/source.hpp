@@ -39,3 +39,5 @@ template <specfem::dimension::type DimensionTag> class external;
 #include "source/dim2/vector_source/cosserat_force_source.hpp"
 #include "source/dim2/vector_source/external.hpp"
 #include "source/dim2/vector_source/force_source.hpp"
+
+#include "source/dim3/source.hpp"
