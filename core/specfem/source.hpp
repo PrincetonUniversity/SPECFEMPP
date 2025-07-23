@@ -41,3 +41,7 @@ template <specfem::dimension::type DimensionTag> class external;
 #include "source/dim2/vector_source/force_source.hpp"
 
 #include "source/dim3/source.hpp"
+#include "source/dim3/tensor_source.hpp"
+#include "source/dim3/tensor_source/moment_tensor_source.hpp"
+#include "source/dim3/vector_source.hpp"
+#include "source/dim3/vector_source/force_source.hpp"

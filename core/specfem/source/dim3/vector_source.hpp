@@ -29,7 +29,7 @@ public:
   vector_source(
       type_real x, type_real y, type_real z,
       std::unique_ptr<specfem::forcing_function::stf> forcing_function)
-      : source(x, y, std::move(forcing_function)) {};
+      : source(x, y, z, std::move(forcing_function)) {};
 
   /**
    * @brief Construct a new vector source object from a YAML node and time steps

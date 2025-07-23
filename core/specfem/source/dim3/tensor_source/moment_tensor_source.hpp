@@ -100,7 +100,7 @@ public:
    *
    */
   moment_tensor(
-      type_real x, type_real z, const type_real Mxx, type_real Myy,
+      type_real x, type_real y, type_real z, type_real Mxx, type_real Myy,
       type_real Mzz, type_real Mxy, type_real Mxz, type_real Myz,
       std::unique_ptr<specfem::forcing_function::stf> forcing_function,
       const specfem::wavefield::simulation_field wavefield_type)
@@ -118,9 +118,9 @@ public:
     return wavefield_type;
   }
 
-  bool operator==(const specfem::sources::source<specfem::dimension::type::dim2>
+  bool operator==(const specfem::sources::source<specfem::dimension::type::dim3>
                       &other) const override;
-  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
+  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim3>
                       &other) const override;
 
   /**

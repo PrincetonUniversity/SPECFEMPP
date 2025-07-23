@@ -103,8 +103,8 @@ operator==(const specfem::sources::source<specfem::dimension::type::dim3>
          (*(this->forcing_function) == *(other_source->forcing_function));
 }
 
-bool specfem::sources::moment_tensor<specfem::dimension::type::dim3>:: :
-    operator!=(const specfem::sources::source<specfem::dimension::type::dim3>
-                   &other) const {
+bool specfem::sources::moment_tensor<specfem::dimension::type::dim3>::
+operator!=(const specfem::sources::source<specfem::dimension::type::dim3>
+               &other) const {
   return !(*this == other);
 }
