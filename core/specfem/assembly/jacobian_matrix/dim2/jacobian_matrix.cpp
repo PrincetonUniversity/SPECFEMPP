@@ -55,8 +55,7 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
         const int ispec = teamMember.league_rank();
 
         //----- Load coorgx, coorgz in level 0 cache to be utilized later
-        specfem::kokkos::HostScratchView2d<type_real> s_coorg(
-            teamMember.team_scratch(0), ndim, ngnod);
+        specfem::kokkos::HostView2d<type_real> s_coorg("s_coorg", 2, ngnod);
 
         // This loop is not vectorizable because access to coorg via
         // knods(ispec, in) is not vectorizable
@@ -75,17 +74,22 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
               sub2ind(xz, ngllx, iz, ix);
 
               // compute Jacobian matrix
-              auto sv_dershape2D = Kokkos::subview(mesh.h_dshape2D, iz, ix,
-                                                   Kokkos::ALL, Kokkos::ALL);
+              std::vector<std::vector<type_real> > sv_dershape2D(
+                  2, std::vector<type_real>(ngnod));
+              for (int in = 0; in < ngnod; ++in) {
+                for (int idim = 0; idim < ndim; ++idim) {
+                  sv_dershape2D[idim][in] = mesh.h_dshape2D(iz, ix, idim, in);
+                }
+              }
 
-              auto derivatives = jacobian::compute_derivatives(
-                  teamMember, s_coorg, ngnod, sv_dershape2D);
+              auto [xix, gammax, xiz, gammaz, jacobian] =
+                  jacobian::compute_derivatives(s_coorg, ngnod, sv_dershape2D);
 
-              this->h_xix(ispec, iz, ix) = derivatives.xix;
-              this->h_gammax(ispec, iz, ix) = derivatives.gammax;
-              this->h_xiz(ispec, iz, ix) = derivatives.xiz;
-              this->h_gammaz(ispec, iz, ix) = derivatives.gammaz;
-              this->h_jacobian(ispec, iz, ix) = derivatives.jacobian;
+              this->h_xix(ispec, iz, ix) = xix;
+              this->h_gammax(ispec, iz, ix) = gammax;
+              this->h_xiz(ispec, iz, ix) = xiz;
+              this->h_gammaz(ispec, iz, ix) = gammaz;
+              this->h_jacobian(ispec, iz, ix) = jacobian;
             });
       });
 

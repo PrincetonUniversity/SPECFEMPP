@@ -92,9 +92,10 @@ std::tuple<type_real, type_real> get_best_location(
   for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
     auto [x, z] =
         specfem::jacobian::compute_locations(s_coord, ngnod, xi, gamma);
-    auto [xix, gammax, xiz, gammaz] =
-        specfem::jacobian::compute_inverted_derivatives(s_coord, ngnod, xi,
-                                                        gamma);
+    auto [xix, gammax, xiz, gammaz, jacobian] =
+        specfem::jacobian::compute_derivatives(s_coord, ngnod, xi, gamma);
+
+    (void)jacobian; // unused variable
 
     type_real dx = -(x - global.x);
     type_real dz = -(z - global.z);
@@ -222,8 +223,8 @@ specfem::algorithms::locate_point(
 
   const int ngnod = mesh.ngnod;
 
-  specfem::kokkos::HostScratchView2d<type_real> s_coord(
-      team_member.team_scratch(0), 2, ngnod);
+  specfem::kokkos::HostView2d<type_real> s_coord(team_member.team_scratch(0), 2,
+                                                 ngnod);
 
   Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, ngnod),
                        [&](const int i) {
@@ -233,8 +234,7 @@ specfem::algorithms::locate_point(
 
   team_member.team_barrier();
 
-  const auto [x, z] =
-      jacobian::compute_locations(team_member, s_coord, ngnod, xi, gamma);
+  const auto [x, z] = jacobian::compute_locations(s_coord, ngnod, xi, gamma);
 
   return { x, z };
 }
