@@ -1,52 +1,15 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "dim2/simulation_field.hpp"
+#include "fields.hpp"
 #include "dim2/simulation_field.tpp"
+#include "dim3/simulation_field.tpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 
-// Explcitly instantiate the template class
-template class specfem::assembly::simulation_field<specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::forward>;
-
-template class specfem::assembly::simulation_field<specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::adjoint>;
-
-template class specfem::assembly::simulation_field<specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::backward>;
-
-template class specfem::assembly::simulation_field<specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::buffer>;
-
-// Explicitly instantiate the sync_fields function for all combinations
-template void specfem::assembly::simulation_field<specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::forward>::sync_fields<
-    specfem::sync::kind::DeviceToHost>();
-template void specfem::assembly::simulation_field<specfem::dimension::type::
-    dim2, specfem::wavefield::simulation_field::forward>::sync_fields<
-    specfem::sync::kind::HostToDevice>();
-template void specfem::assembly::simulation_field<specfem::dimension::type::
-    dim2, specfem::wavefield::simulation_field::adjoint>::sync_fields<
-    specfem::sync::kind::DeviceToHost>();
-template void specfem::assembly::simulation_field<specfem::dimension::type::
-    dim2, specfem::wavefield::simulation_field::adjoint>::sync_fields
-    <specfem::sync::kind::HostToDevice>();
-template void specfem::assembly::simulation_field<specfem::dimension::type::
-    dim2, specfem::wavefield::simulation_field::backward>::sync_fields<
-    specfem::sync::kind::DeviceToHost>();
-template void specfem::assembly::simulation_field<specfem::dimension::type::
-    dim2, specfem::wavefield::simulation_field::backward>::sync_fields
-    <specfem::sync::kind::HostToDevice>();
-template void specfem::assembly::simulation_field<specfem::dimension::type::
-    dim2, specfem::wavefield::simulation_field::buffer>::sync_fields<
-    specfem::sync::kind::DeviceToHost>();
-template void specfem::assembly::simulation_field<specfem::dimension::type::
-    dim2, specfem::wavefield::simulation_field::buffer>::sync_fields
-    <specfem::sync::kind::HostToDevice>();
-
-specfem::assembly::fields<specfem::dimension::type::dim2>::fields(
+template <specfem::dimension::type DimensionTag>
+specfem::assembly::fields<DimensionTag>::fields(
     const specfem::assembly::mesh<dimension_tag> &mesh,
     const specfem::assembly::element_types<dimension_tag> &element_types,
     const specfem::simulation::type simulation)
@@ -95,14 +58,16 @@ specfem::assembly::fields<specfem::dimension::type::dim2>::fields(
         }
       }()) {}
 
-void specfem::assembly::fields<specfem::dimension::type::dim2>::copy_to_device() {
+template <specfem::dimension::type DimensionTag>
+void specfem::assembly::fields<DimensionTag>::copy_to_device() {
   buffer.copy_to_device();
   forward.copy_to_device();
   adjoint.copy_to_device();
   backward.copy_to_device();
 }
 
-void specfem::assembly::fields<specfem::dimension::type::dim2>::copy_to_host() {
+template <specfem::dimension::type DimensionTag>
+void specfem::assembly::fields<DimensionTag>::copy_to_host() {
   buffer.copy_to_host();
   forward.copy_to_host();
   adjoint.copy_to_host();
