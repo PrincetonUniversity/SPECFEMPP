@@ -168,7 +168,7 @@ TEST_P(Newmark, Test) {
   specfem::compute::assembly assembly(
       mesh, quadratures, sources, receivers, seismogram_types, t0,
       setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
-      setup.get_simulation_type(), nullptr);
+      setup.get_simulation_type(), false, nullptr);
 
   it->link_assembly(assembly);
 

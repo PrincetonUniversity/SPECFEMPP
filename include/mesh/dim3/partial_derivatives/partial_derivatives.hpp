@@ -8,13 +8,14 @@ namespace specfem {
 namespace mesh {
 
 /**
- * @brief Struct to store partial derivatives for a 3D mesh
+ * @brief Struct to store Jacobian matrix for a 3D mesh
  *
  */
-template <> struct partial_derivatives<specfem::dimension::type::dim3> {
+template <> struct jacobian_matrix<specfem::dimension::type::dim3> {
   constexpr static auto dimension = specfem::dimension::type::dim3;
 
-  using LocalView = Kokkos::View<type_real ****, Kokkos::HostSpace>;
+  using LocalView = Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                                 Kokkos::DefaultHostExecutionSpace>;
 
   // Parameters
   int nspec; ///< Number of spectral elements
@@ -41,10 +42,10 @@ template <> struct partial_derivatives<specfem::dimension::type::dim3> {
    * @brief Default constructor
    *
    */
-  partial_derivatives() {}; // Default constructor
+  jacobian_matrix() {}; // Default constructor
 
   /**
-   * @brief Construct a new partial derivatives object
+   * @brief Construct a new Jacobian matrix object
    *
    * @param nspec Number of spectral elements
    * @param ngllx Number of GLL points in x
@@ -53,29 +54,29 @@ template <> struct partial_derivatives<specfem::dimension::type::dim3> {
    *
    *
    */
-  partial_derivatives(int nspec, int ngllx, int nglly, int ngllz)
+  jacobian_matrix(int nspec, int ngllz, int nglly, int ngllx)
       : nspec(nspec), ngllx(ngllx), nglly(nglly), ngllz(ngllz),
-        xix("xix", nspec, ngllx, nglly, ngllz),
-        xiy("xiy", nspec, ngllx, nglly, ngllz),
-        xiz("xiz", nspec, ngllx, nglly, ngllz),
-        etax("etax", nspec, ngllx, nglly, ngllz),
-        etay("etay", nspec, ngllx, nglly, ngllz),
-        etaz("etaz", nspec, ngllx, nglly, ngllz),
-        gammax("gammax", nspec, ngllx, nglly, ngllz),
-        gammay("gammay", nspec, ngllx, nglly, ngllz),
-        gammaz("gammaz", nspec, ngllx, nglly, ngllz),
-        jacobian("jacobian", nspec, ngllx, nglly, ngllz) {};
+        xix("xix", nspec, ngllz, nglly, ngllx),
+        xiy("xiy", nspec, ngllz, nglly, ngllx),
+        xiz("xiz", nspec, ngllz, nglly, ngllx),
+        etax("etax", nspec, ngllz, nglly, ngllx),
+        etay("etay", nspec, ngllz, nglly, ngllx),
+        etaz("etaz", nspec, ngllz, nglly, ngllx),
+        gammax("gammax", nspec, ngllz, nglly, ngllx),
+        gammay("gammay", nspec, ngllz, nglly, ngllx),
+        gammaz("gammaz", nspec, ngllz, nglly, ngllx),
+        jacobian("jacobian", nspec, ngllz, nglly, ngllx) {};
 
   ///@}
 
   /**
-   * @brief Print basic information on the partial derivatives
+   * @brief Print basic information on the Jacobian matrix
    *
    */
   std::string print() const;
 
   /**
-   * @brief Print the partial derivatives for a given spectral element and
+   * @brief Print the Jacobian matrix for a given spectral element and
    *        GLL point
    *
    * @param ispec Spectral element index
@@ -88,7 +89,7 @@ template <> struct partial_derivatives<specfem::dimension::type::dim3> {
   std::string print(int ispec, int igllx, int iglly, int igllz) const;
 
   /**
-   * @brief Print the partial derivatives for a given spectral element
+   * @brief Print the Jacobian matrix for a given spectral element
    *
    * @param ispec Spectral element index
    * @param component Component to print (xix, xiy, xiz, etax, etay, etaz,

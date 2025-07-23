@@ -248,6 +248,13 @@ public:
 
   int get_nsteps() const { return this->time_scheme->get_nsteps(); }
 
+  bool allocate_boundary_values() const {
+    return (
+        ((this->wavefield != nullptr) &&
+         (this->wavefield->is_for_adjoint_simulations())) ||
+        (this->get_simulation_type() == specfem::simulation::type::combined));
+  }
+
 private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
                                                                   ///< to header

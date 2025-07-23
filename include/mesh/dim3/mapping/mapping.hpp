@@ -61,13 +61,13 @@ template <> struct mapping<specfem::dimension::type::dim3> {
    * @param nglly Number of GLL points in y direction
    * @param ngllz Number of GLL points in z direction
    */
-  mapping(int nspec, int nglob, int nspec_irregular, int ngllx, int nglly,
-          int ngllz)
+  mapping(int nspec, int nglob, int nspec_irregular, int ngllz, int nglly,
+          int ngllx)
       : nspec(nspec), nglob(nglob), nspec_irregular(nspec_irregular),
         ngllx(ngllx), nglly(nglly), ngllz(ngllz), xix_regular(0.0),
         jacobian_regular(0.0),
         irregular_elements("irregular_elements", nspec_irregular),
-        ibool("ibool", nspec, ngllx, nglly, ngllz) {};
+        ibool("ibool", nspec, ngllz, nglly, ngllx) {};
   ///@}
 
   /**

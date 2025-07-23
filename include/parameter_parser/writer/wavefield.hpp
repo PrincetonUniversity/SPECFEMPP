@@ -35,11 +35,12 @@ public:
   wavefield(const std::string output_format, const std::string output_folder,
             const specfem::simulation::type type, const int time_interval,
             const std::string time_interval_by_memory,
-            const bool include_last_step)
+            const bool include_last_step, bool for_adjoint_simulations)
       : output_format(output_format), output_folder(output_folder),
         simulation_type(type), time_interval(time_interval),
         time_interval_by_memory(time_interval_by_memory),
-        include_last_step(include_last_step) {}
+        include_last_step(include_last_step),
+        for_adjoint_simulations(for_adjoint_simulations) {}
 
   /**
    * @brief Construct a new wavefield configuration object from YAML node
@@ -72,6 +73,10 @@ public:
     return this->simulation_type;
   }
 
+  inline bool is_for_adjoint_simulations() const {
+    return this->for_adjoint_simulations;
+  }
+
 private:
   std::string output_format;                 ///< format of output file
   std::string output_folder;                 ///< Path to output folder
@@ -82,7 +87,9 @@ private:
                                        ///< of timesteps between wavefield by
                                        ///< the memory value provided, e.g.
                                        ///< 100MB, 20GB.
-  bool include_last_step; ///< Whether or not to write the final time step
+  bool include_last_step;       ///< Whether or not to write the final time step
+  bool for_adjoint_simulations; ///< Whether or not the wavefield is for
+                                ///< adjoint simulations
 };
 } // namespace runtime_configuration
 } // namespace specfem

@@ -17,10 +17,11 @@ private:
 
 public:
   wavefield_writer(const std::string output_folder, const int time_interval,
-                   const bool include_last_step)
+                   const bool include_last_step,
+                   const bool save_boundary_values)
       : periodic_task(time_interval, include_last_step),
         writer(specfem::io::wavefield_writer<IOLibrary<specfem::io::write> >(
-            output_folder)) {}
+            output_folder, save_boundary_values)) {}
 
   /**
    * @brief Check for keyboard interrupt and more, when running from Python
@@ -29,7 +30,7 @@ public:
   void run(specfem::compute::assembly &assembly, const int istep) override {
     std::cout << "Writing wavefield files:" << std::endl;
     std::cout << "-------------------------------" << std::endl;
-    writer.write(assembly, istep);
+    writer.run(assembly, istep);
   }
 
   /**
@@ -38,7 +39,14 @@ public:
   void initialize(specfem::compute::assembly &assembly) override {
     std::cout << "Writing coordinate files:" << std::endl;
     std::cout << "-------------------------------" << std::endl;
-    writer.write(assembly);
+    writer.initialize(assembly);
+  }
+
+  void finalize(specfem::assembly::assembly<specfem::dimension::type::dim2>
+                    &assembly) override {
+    std::cout << "Finalizing wavefield files:" << std::endl;
+    std::cout << "-------------------------------" << std::endl;
+    writer.finalize(assembly);
   }
 };
 

@@ -128,9 +128,9 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     std::vector<specfem::wavefield::type> stypes(0);
 
     // Generate compute structs to be used by the solver
-    specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                        stypes, 0, 0, 0, 0, 1,
-                                        setup.get_simulation_type(), nullptr);
+    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly(
+        mesh, quadratures, sources, receivers, stypes, 0, 0, 0, 0, 1,
+        setup.get_simulation_type(), false, nullptr);
 
     try {
 
@@ -149,11 +149,10 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           assembly.fields.forward
               .get_field<specfem::element::medium_tag::acoustic>();
 
-      Kokkos::deep_copy(elastic_psv_field.h_mass_inverse,
-                        elastic_psv_field.mass_inverse);
-
-      Kokkos::deep_copy(acoustic_field.h_mass_inverse,
-                        acoustic_field.mass_inverse);
+      Kokkos::deep_copy(elastic_psv_field.get_host_mass_inverse(),
+                        elastic_psv_field.get_mass_inverse());
+      Kokkos::deep_copy(acoustic_field.get_host_mass_inverse(),
+                        acoustic_field.get_mass_inverse());
 
       const int nglob = assembly.fields.forward.nglob;
 

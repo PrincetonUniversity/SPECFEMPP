@@ -101,27 +101,21 @@ template <> struct mesh<specfem::dimension::type::dim2> {
    *
    * @code{.cpp}
    * // Example of how to use this constructor
-   * specfem::mesh::mesh<specfem::dimension::type::dim2> mesh(
+   * specfem::mesh::mesh<dimension> mesh(
    *    npgeo, nspec, nproc, control_nodes, parameters, coupled_interfaces,
    *    boundaries, tags, tangential_nodes, axial_nodes, materials);
    * @endcode
    */
-  mesh(
-      const int npgeo, const int nspec, const int nproc,
-      const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
-          &control_nodes,
-      const specfem::mesh::parameters<specfem::dimension::type::dim2>
-          &parameters,
-      const specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
-          &coupled_interfaces,
-      const specfem::mesh::boundaries<specfem::dimension::type::dim2>
-          &boundaries,
-      const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-      const specfem::mesh::elements::tangential_elements<
-          specfem::dimension::type::dim2> &tangential_nodes,
-      const specfem::mesh::elements::axial_elements<
-          specfem::dimension::type::dim2> &axial_nodes,
-      const specfem::mesh::materials<specfem::dimension::type::dim2> &materials)
+  mesh(const int npgeo, const int nspec, const int nproc,
+       const specfem::mesh::control_nodes<dimension> &control_nodes,
+       const specfem::mesh::parameters<dimension> &parameters,
+       const specfem::mesh::coupled_interfaces<dimension> &coupled_interfaces,
+       const specfem::mesh::boundaries<dimension> &boundaries,
+       const specfem::mesh::tags<dimension> &tags,
+       const specfem::mesh::elements::tangential_elements<dimension>
+           &tangential_nodes,
+       const specfem::mesh::elements::axial_elements<dimension> &axial_nodes,
+       const specfem::mesh::materials<dimension> &materials)
       : npgeo(npgeo), nspec(nspec), nproc(nproc), control_nodes(control_nodes),
         parameters(parameters), coupled_interfaces(coupled_interfaces),
         boundaries(boundaries), tags(tags), tangential_nodes(tangential_nodes),
