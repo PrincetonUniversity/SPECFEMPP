@@ -4,7 +4,8 @@
 
 namespace specfem::jacobian::impl {
 
-std::tuple<type_real, type_real, type_real, type_real> compute_jacobian_matrix(
+std::tuple<type_real, type_real, type_real, type_real>
+compute_jacobian_matrix2d(
     const specfem::kokkos::HostView2d<type_real> &s_coorg, const int ngnod,
     const std::vector<std::vector<type_real> > &dershape2D) {
   type_real xxi = 0.0;
@@ -23,11 +24,11 @@ std::tuple<type_real, type_real, type_real, type_real> compute_jacobian_matrix(
 }
 
 type_real
-compute_jacobian(const specfem::kokkos::HostView2d<type_real> &s_coorg,
-                 const int ngnod,
-                 const std::vector<std::vector<type_real> > &dershape2D) {
+compute_jacobian2d(const specfem::kokkos::HostView2d<type_real> &s_coorg,
+                   const int ngnod,
+                   const std::vector<std::vector<type_real> > &dershape2D) {
   const auto [xxi, zxi, xgamma, zgamma] =
-      compute_jacobian_matrix(s_coorg, ngnod, dershape2D);
+      compute_jacobian_matrix2d(s_coorg, ngnod, dershape2D);
   return xxi * zgamma - xgamma * zxi;
 };
 
@@ -35,30 +36,23 @@ compute_jacobian(const specfem::kokkos::HostView2d<type_real> &s_coorg,
 
 std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
     const specfem::kokkos::HostView2d<type_real> &s_coorg, const int ngnod,
-    const std::vector<type_real> &shape2D) {
+    const type_real xi, const type_real gamma) {
+
+  auto shape2D = specfem::shape_function::shape_function(xi, gamma, ngnod);
 
   ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
   ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
   ASSERT(shape2D.size() == ngnod, "Number of nodes mismatch");
 
   type_real xcor = 0.0;
-  type_real ycor = 0.0;
+  type_real zcor = 0.0;
 
   for (int in = 0; in < ngnod; in++) {
     xcor += shape2D[in] * s_coorg(0, in);
-    ycor += shape2D[in] * s_coorg(1, in);
+    zcor += shape2D[in] * s_coorg(1, in);
   }
 
-  return std::make_tuple(xcor, ycor);
-}
-
-std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
-    const specfem::kokkos::HostView2d<type_real> &s_coorg, const int ngnod,
-    const type_real xi, const type_real gamma) {
-
-  auto shape2D = specfem::shape_function::shape_function(xi, gamma, ngnod);
-
-  return specfem::jacobian::compute_locations(s_coorg, ngnod, shape2D);
+  return std::make_tuple(xcor, zcor);
 }
 
 std::tuple<type_real, type_real, type_real, type_real, type_real>
@@ -72,8 +66,8 @@ specfem::jacobian::compute_derivatives(
   ASSERT(dershape2D[0].size() == ngnod, "Number of nodes mismatch");
 
   auto [xxi, zxi, xgamma, zgamma] =
-      impl::compute_jacobian_matrix(s_coorg, ngnod, dershape2D);
-  auto jacobian = impl::compute_jacobian(s_coorg, ngnod, dershape2D);
+      impl::compute_jacobian_matrix2d(s_coorg, ngnod, dershape2D);
+  auto jacobian = impl::compute_jacobian2d(s_coorg, ngnod, dershape2D);
 
   type_real xix = zgamma / jacobian;
   type_real gammax = -zxi / jacobian;
@@ -83,11 +77,13 @@ specfem::jacobian::compute_derivatives(
   return std::make_tuple(xix, gammax, xiz, gammaz, jacobian);
 }
 
-std::tuple<type_real, type_real, type_real, type_real, type_real>
+std::tuple<type_real, type_real, type_real, type_real>
 specfem::jacobian::compute_derivatives(
     const specfem::kokkos::HostView2d<type_real> &s_coorg, const int ngnod,
     const type_real xi, const type_real gamma) {
   const auto dershape2D =
       specfem::shape_function::shape_function_derivatives(xi, gamma, ngnod);
-  return specfem::jacobian::compute_derivatives(s_coorg, ngnod, dershape2D);
+  auto [xix, gammax, xiz, gammaz, jacobian] =
+      specfem::jacobian::compute_derivatives(s_coorg, ngnod, dershape2D);
+  return std::make_tuple(xix, gammax, xiz, gammaz);
 }

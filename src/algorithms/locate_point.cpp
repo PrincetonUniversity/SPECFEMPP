@@ -92,10 +92,8 @@ std::tuple<type_real, type_real> get_best_location(
   for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
     auto [x, z] =
         specfem::jacobian::compute_locations(s_coord, ngnod, xi, gamma);
-    auto [xix, gammax, xiz, gammaz, jacobian] =
+    auto [xix, gammax, xiz, gammaz] =
         specfem::jacobian::compute_derivatives(s_coord, ngnod, xi, gamma);
-
-    (void)jacobian; // unused variable
 
     type_real dx = -(x - global.x);
     type_real dz = -(z - global.z);
