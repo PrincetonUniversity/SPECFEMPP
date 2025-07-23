@@ -32,11 +32,11 @@ specfem::sources::force<specfem::dimension::type::dim3>::get_force_vector()
   // Acoustic
   if (medium_tag == specfem::element::medium_tag::acoustic) {
     force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 1);
-    force_vector(0) = 1.0;
+    force_vector(0) = fx;
   }
   // Elastic P-SV
   else if (medium_tag == specfem::element::medium_tag::elastic) {
-    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 2);
+    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 3);
     force_vector(0) = fx;
     force_vector(1) = fy;
     force_vector(2) = fz;
@@ -57,7 +57,10 @@ specfem::sources::force<specfem::dimension::type::dim3>::print() const {
           << "      x = " << type_real(this->x) << "\n"
           << "      y = " << type_real(this->y) << "\n"
           << "      z = " << type_real(this->z) << "\n"
-
+          << "    Force Vector: \n"
+          << "      fx = " << type_real(this->fx) << "\n"
+          << "      fy = " << type_real(this->fy) << "\n"
+          << "      fz = " << type_real(this->fz) << "\n"
           << "    Source Time Function: \n"
           << this->forcing_function->print() << "\n";
 
