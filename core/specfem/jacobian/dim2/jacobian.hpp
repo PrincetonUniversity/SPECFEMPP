@@ -28,10 +28,6 @@ std::tuple<type_real, type_real>
 compute_locations(const specfem::kokkos::HostView2d<type_real> &s_coorg,
                   const int ngnod, const type_real xi, const type_real gamma);
 
-std::tuple<type_real, type_real>
-compute_locations(const specfem::kokkos::HostView2d<type_real> &s_coorg,
-                  const int ngnod, const std::vector<type_real> &shape2D);
-
 /**
  * @brief Compute Jacobian matrix at  \f$ (\xi, \gamma) \f$
  *
@@ -49,7 +45,7 @@ compute_locations(const specfem::kokkos::HostView2d<type_real> &s_coorg,
  * x,
  * \partial \xi/ \partial z, \partial \gamma/ \partial z) \f$
  */
-std::tuple<type_real, type_real, type_real, type_real, type_real>
+std::tuple<type_real, type_real, type_real, type_real>
 compute_derivatives(const specfem::kokkos::HostView2d<type_real> &s_coorg,
                     const int ngnod, const type_real xi, const type_real gamma);
 
@@ -60,5 +56,3 @@ compute_derivatives(const specfem::kokkos::HostView2d<type_real> &s_coorg,
 
 } // namespace jacobian
 } // namespace specfem
-
-#include "specfem/jacobian/dim2/jacobian.hpp"
