@@ -37,6 +37,11 @@ public:
       m_data(icomp) = initializer;
   }
 
+  template <typename... Args,
+            typename = std::enable_if_t<sizeof...(Args) == components> >
+  KOKKOS_FORCEINLINE_FUNCTION constexpr field(Args &&...args)
+      : m_data(std::forward<Args>(args)...) {}
+
   KOKKOS_FORCEINLINE_FUNCTION typename value_type::value_type
   operator()(const std::size_t icomp) const {
     return m_data(icomp);
@@ -45,6 +50,14 @@ public:
   KOKKOS_FORCEINLINE_FUNCTION typename value_type::value_type &
   operator()(const std::size_t icomp) {
     return m_data(icomp);
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION bool operator==(const field &other) const {
+    return (this->m_data == other.m_data);
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION bool operator!=(const field &other) const {
+    return !(*this == other);
   }
 };
 
