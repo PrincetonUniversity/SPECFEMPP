@@ -125,5 +125,48 @@ read_2d_sources(const YAML::Node yaml, const int nsteps,
                 const type_real user_t0, const type_real dt,
                 const specfem::simulation::type simulation_type);
 
+/**
+ * @brief Read sources file written in .yml format
+ *
+ * Parse source specification file written in yaml format and create a vector of
+ * specfem::source::source * object
+ *
+ * @param sources_file Name of the yaml file
+ * @param nsteps Number of time steps
+ * @param user_t0 User defined t0
+ * @param dt Time step
+ * @param simulation_type Type of simulation
+ *
+ * @return std::vector<specfem::sources::source *> vector of instantiated source
+ * objects
+ */
+std::tuple<std::vector<std::shared_ptr<
+               specfem::sources::source<specfem::dimension::type::dim3> > >,
+           type_real>
+read_3d_sources(const std::string sources_file, const int nsteps,
+                const type_real user_t0, const type_real dt,
+                const specfem::simulation::type simulation_type);
+
+/**
+ * @brief Read sources file written in .yml format
+ *
+ * Parse source specification file written in yaml format and create a vector of
+ * specfem::source::source * object
+ *
+ * @param yaml YAML node containing source information
+ * @param nsteps Number of time steps
+ * @param user_t0 User defined t0
+ * @param dt Time step
+ * @param simulation_type Type of simulation
+ * @return std::vector<specfem::sources::source *> vector of instantiated source
+ * objects
+ */
+std::tuple<std::vector<std::shared_ptr<
+               specfem::sources::source<specfem::dimension::type::dim3> > >,
+           type_real>
+read_3d_sources(const YAML::Node yaml, const int nsteps,
+                const type_real user_t0, const type_real dt,
+                const specfem::simulation::type simulation_type);
+
 } // namespace io
 } // namespace specfem

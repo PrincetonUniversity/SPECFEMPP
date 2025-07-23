@@ -36,8 +36,8 @@ public:
    */
   force(YAML::Node &Node, const int nsteps, const type_real dt,
         const specfem::wavefield::simulation_field wavefield_type)
-      : vector_source(Node, nsteps, dt), fx(Node['fx'].as<type_real>()),
-        fy(Node['fy'].as<type_real>()), fz(Node['fz'].as<type_real>()),
+      : vector_source(Node, nsteps, dt), fx(Node["fx"].as<type_real>()),
+        fy(Node["fy"].as<type_real>()), fz(Node["fz"].as<type_real>()),
         wavefield_type(wavefield_type) {};
 
   /**

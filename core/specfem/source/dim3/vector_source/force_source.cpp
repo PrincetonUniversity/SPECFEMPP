@@ -29,10 +29,6 @@ specfem::sources::force<specfem::dimension::type::dim3>::get_force_vector()
   // Declare the force vector
   specfem::kokkos::HostView1d<type_real> force_vector;
 
-  // Convert angle to radians
-  type_real angle_in_rad = this->angle * Kokkos::numbers::pi_v<type_real> /
-                           static_cast<type_real>(180.0);
-
   // Acoustic
   if (medium_tag == specfem::element::medium_tag::acoustic) {
     force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 1);
@@ -53,7 +49,7 @@ specfem::sources::force<specfem::dimension::type::dim3>::get_force_vector()
 }
 
 std::string
-specfem::sources::force<specfem::dimension::type::dim2>::print() const {
+specfem::sources::force<specfem::dimension::type::dim3>::print() const {
 
   std::ostringstream message;
   message << "- Force Source: \n"
@@ -68,13 +64,13 @@ specfem::sources::force<specfem::dimension::type::dim2>::print() const {
   return message.str();
 }
 
-bool specfem::sources::force<specfem::dimension::type::dim2>::operator==(
-    const specfem::sources::source<specfem::dimension::type::dim2> &other)
+bool specfem::sources::force<specfem::dimension::type::dim3>::operator==(
+    const specfem::sources::source<specfem::dimension::type::dim3> &other)
     const {
 
   // Try casting the other source to a force source
   const auto *other_source = dynamic_cast<
-      const specfem::sources::force<specfem::dimension::type::dim2> *>(&other);
+      const specfem::sources::force<specfem::dimension::type::dim3> *>(&other);
 
   // Check if cast was successful
   if (other_source == nullptr) {
@@ -83,14 +79,15 @@ bool specfem::sources::force<specfem::dimension::type::dim2>::operator==(
   }
 
   return specfem::utilities::almost_equal(this->x, other_source->x) &&
+         specfem::utilities::almost_equal(this->y, other_source->y) &&
          specfem::utilities::almost_equal(this->z, other_source->z) &&
          specfem::utilities::almost_equal(this->fx, other_source->fx) &&
          specfem::utilities::almost_equal(this->fy, other_source->fy) &&
          specfem::utilities::almost_equal(this->fz, other_source->fz) &&
          *(this->forcing_function) == *(other_source->forcing_function);
 }
-bool specfem::sources::force<specfem::dimension::type::dim2>::operator!=(
-    const specfem::sources::source<specfem::dimension::type::dim2> &other)
+bool specfem::sources::force<specfem::dimension::type::dim3>::operator!=(
+    const specfem::sources::source<specfem::dimension::type::dim3> &other)
     const {
   return !(*this == other);
 }
