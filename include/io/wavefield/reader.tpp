@@ -68,13 +68,13 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
         const auto &field = buffer.get_field<_medium_tag_>();
 
         if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
-          group.openDataset("Potential", field.h_field).read();
-          group.openDataset("PotentialDot", field.h_field_dot).read();
-          group.openDataset("PotentialDotDot", field.h_field_dot_dot).read();
+          group.openDataset("Potential", field.get_host_field()).read();
+          group.openDataset("PotentialDot", field.get_host_field_dot()).read();
+          group.openDataset("PotentialDotDot", field.get_host_field_dot_dot()).read();
         } else {
-          group.openDataset("Displacement", field.h_field).read();
-          group.openDataset("Velocity", field.h_field_dot).read();
-          group.openDataset("Acceleration", field.h_field_dot_dot).read();
+          group.openDataset("Displacement", field.get_host_field()).read();
+          group.openDataset("Velocity", field.get_host_field_dot()).read();
+          group.openDataset("Acceleration", field.get_host_field_dot_dot()).read();
         }
       });
 
