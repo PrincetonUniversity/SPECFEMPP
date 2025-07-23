@@ -80,7 +80,7 @@ load_on_device(const std::true_type, const IndexType &index,
                       : field.nglob + 1;
   }
 
-  const auto current_field = field.template get_field<MediumTag>();
+  const auto &current_field = field.template get_field<MediumTag>();
 
   constexpr static int ncomponents = specfem::element::attributes<
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,

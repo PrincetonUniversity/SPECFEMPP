@@ -23,7 +23,7 @@ KOKKOS_FORCEINLINE_FUNCTION void add_on_device(const IndexType &index,
   // Check that all accessors have the same medium tag
   fields_impl::check_accessor_compatibility<AccessorTypes...>();
 
-  const auto current_field = field.template get_field<MediumTag>();
+  const auto &current_field = field.template get_field<MediumTag>();
 
   fields_impl::add_on_device(index, current_field, accessors...);
 
