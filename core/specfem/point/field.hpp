@@ -2,6 +2,7 @@
 
 #include "datatypes/point_view.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -287,15 +288,15 @@ public:
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct FieldAccessor
-    : public specfem::accessor::Accessor<specfem::accessor::type::point,
-                                         specfem::data_class::type::field,
-                                         DimensionTag, UseSIMD> {
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::field, DimensionTag, UseSIMD> {
 private:
   using base_type =
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::field,
-                                  DimensionTag, UseSIMD>; ///< Base accessor
-                                                          ///< type
+      specfem::data_access::Accessor<specfem::data_access::AccessorType::point,
+                                     specfem::data_access::DataClassType::field,
+                                     DimensionTag, UseSIMD>; ///< Base accessor
+                                                             ///< type
 public:
   using simd = typename base_type::template simd<type_real>; ///< SIMD type
   using value_type = typename base_type::template vector_type<

@@ -3,6 +3,7 @@
 #include "datatypes/point_view.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -29,9 +30,10 @@ struct boundary;
  */
 template <specfem::dimension::type DimensionTag, bool UseSIMD>
 struct boundary<specfem::element::boundary_tag::none, DimensionTag, UseSIMD>
-    : public specfem::accessor::Accessor<specfem::accessor::type::point,
-                                         specfem::data_class::type::boundary,
-                                         DimensionTag, UseSIMD> {
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::boundary, DimensionTag,
+          UseSIMD> {
 private:
   // We use simd_like vector to store tags. Tags are stored as enums, so a simd
   // type is ill-defined for them. However, we use scalar array types of size
@@ -155,7 +157,7 @@ private:
    */
   ///@{
   using NormalViewType =
-      specfem::datatype::ScalarPointViewType<type_real, num_dimensions,
+      specfem::datatype::VectorPointViewType<type_real, num_dimensions,
                                              UseSIMD>; ///< View type to store
                                                        ///< the normal vector to
                                                        ///< the edge at the
