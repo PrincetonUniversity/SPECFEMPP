@@ -9,11 +9,6 @@
 #include <cmath>
 #include <stdexcept>
 
-// Static member definitions
-const std::string
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2>::name =
-        "2D moment tensor";
-
 std::vector<specfem::element::medium_tag> specfem::sources::moment_tensor<
     specfem::dimension::type::dim2>::get_supported_media() const {
   return { specfem::element::medium_tag::elastic_psv,

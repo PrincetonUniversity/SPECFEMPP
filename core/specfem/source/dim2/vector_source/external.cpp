@@ -4,11 +4,6 @@
 #include "specfem_setup.hpp"
 #include <cmath>
 
-// Static member definitions
-const std::string
-    specfem::sources::external<specfem::dimension::type::dim2>::name =
-        "2D external source";
-
 std::vector<specfem::element::medium_tag> specfem::sources::external<
     specfem::dimension::type::dim2>::get_supported_media() const {
   return {

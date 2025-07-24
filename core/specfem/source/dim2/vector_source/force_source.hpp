@@ -102,8 +102,10 @@ public:
   std::vector<specfem::element::medium_tag>
   get_supported_media() const override;
 
+public:
+  static constexpr const char *name = "2-D force";
+
 private:
-  const static std::string name;
   type_real angle; ///< Angle of force source
   specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
                                                        ///< which the source

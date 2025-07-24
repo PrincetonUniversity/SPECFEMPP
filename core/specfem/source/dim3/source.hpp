@@ -16,6 +16,7 @@ namespace sources {
 template <> class source<specfem::dimension::type::dim3> {
 
 public:
+  static constexpr auto dimension_tag = specfem::dimension::type::dim3;
   /**
    * @brief Default source constructor
    *
@@ -219,8 +220,9 @@ public:
 
 protected:
   // Read-only member variables
-  std::string name = "base_source, if this was printed, you are not using the "
-                     "correct source class";
+  static constexpr const char *name =
+      "3D base_source, if this was printed, you are not using the "
+      "correct source class";
   type_real x; ///< x-coordinate of source
   type_real y; ///< y-coordinate of source
   type_real z; ///< z-coordinate of source

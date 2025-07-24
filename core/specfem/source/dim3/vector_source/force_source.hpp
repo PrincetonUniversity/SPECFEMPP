@@ -92,8 +92,10 @@ public:
   std::vector<specfem::element::medium_tag>
   get_supported_media() const override;
 
+public:
+  static constexpr const char *name = "3-D force";
+
 private:
-  const static std::string name;
   type_real fx;                                        ///< Force in x-direction
   type_real fy;                                        ///< Force in y-direction
   type_real fz;                                        ///< Force in z-direction

@@ -3,11 +3,6 @@
 #include "globals.h"
 #include "specfem/source.hpp"
 
-// Static member definitions
-const std::string
-    specfem::sources::adjoint_source<specfem::dimension::type::dim2>::name =
-        "2D adjoint source";
-
 std::vector<specfem::element::medium_tag> specfem::sources::adjoint_source<
     specfem::dimension::type::dim2>::get_supported_media() const {
   return {
