@@ -7,7 +7,7 @@
 
 namespace specfem::assembly::fields_impl {
 
-template <typename ContainerType, typename AccessorType>
+template <bool on_device, typename ContainerType, typename AccessorType>
 KOKKOS_FORCEINLINE_FUNCTION void
 base_add_accessor(const int iglob, const int icomp, const ContainerType &field,
                   AccessorType &accessor) {
@@ -19,10 +19,12 @@ base_add_accessor(const int iglob, const int icomp, const ContainerType &field,
   using data_accessor =
       std::integral_constant<specfem::data_access::DataClassType,
                              AccessorType::data_class>;
-  field.get_value(data_accessor(), iglob, icomp) += accessor(icomp);
+  field.template get_value<on_device>(data_accessor(), iglob, icomp) +=
+      accessor(icomp);
 }
 
-template <typename MaskType, typename ContainerType, typename AccessorType>
+template <bool on_device, typename MaskType, typename ContainerType,
+          typename AccessorType>
 KOKKOS_FORCEINLINE_FUNCTION void
 base_add_accessor(const int iglob, const int icomp, const MaskType &mask,
                   const ContainerType &field, AccessorType &accessor) {
@@ -43,15 +45,15 @@ base_add_accessor(const int iglob, const int icomp, const MaskType &mask,
 
   simd_type lhs;
   Kokkos::Experimental::where(mask, lhs).copy_from(
-      &(field.get_value(data_accessor(), iglob, icomp)),
+      &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
       typename AccessorType::simd::tag_type());
   lhs = lhs + accessor(icomp);
   Kokkos::Experimental::where(mask, lhs).copy_to(
-      &(field.get_value(data_accessor(), iglob, icomp)),
+      &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
       typename AccessorType::simd::tag_type());
 }
 
-template <typename ContainerType, typename... AccessorTypes,
+template <bool on_device, typename ContainerType, typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_field_l<AccessorTypes>::value && ...),
               int> = 0>
@@ -70,12 +72,12 @@ KOKKOS_FORCEINLINE_FUNCTION void add_after_simd_dispatch(
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_add_accessor(iglob, icomp, field, accessors), ...);
+    (base_add_accessor<on_device>(iglob, icomp, field, accessors), ...);
   }
   return;
 }
 
-template <typename ContainerType, typename... AccessorTypes,
+template <bool on_device, typename ContainerType, typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_field_l<AccessorTypes>::value && ...),
               int> = 0>
@@ -98,7 +100,7 @@ KOKKOS_FORCEINLINE_FUNCTION void add_after_simd_dispatch(
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_add_accessor(iglob, icomp, mask, field, accessors), ...);
+    (base_add_accessor<on_device>(iglob, icomp, mask, field, accessors), ...);
   }
   return;
 }
@@ -118,7 +120,27 @@ KOKKOS_FORCEINLINE_FUNCTION void add_on_device(const IndexType &index,
       std::integral_constant<bool, IndexType::using_simd>;
 
   // Call load for each accessor
-  add_after_simd_dispatch(simd_accessor_type(), index, field, accessors...);
+  add_after_simd_dispatch<true>(simd_accessor_type(), index, field,
+                                accessors...);
+  return;
+}
+
+template <typename IndexType, typename ContainerType, typename... AccessorTypes,
+          typename std::enable_if_t<
+              (specfem::data_access::is_assembly_index<IndexType>::value &&
+               (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
+              int> = 0>
+void add_on_host(const IndexType &index, const ContainerType &field,
+                 AccessorTypes &...accessors) {
+
+  check_accessor_compatibility<AccessorTypes...>();
+
+  using simd_accessor_type =
+      std::integral_constant<bool, IndexType::using_simd>;
+
+  // Call load for each accessor
+  add_after_simd_dispatch<false>(simd_accessor_type(), index, field,
+                                 accessors...);
   return;
 }
 
