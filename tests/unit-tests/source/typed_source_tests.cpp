@@ -37,7 +37,7 @@ struct SourceTestNameGenerator {
 TYPED_TEST_SUITE(SourceTest, SourceTypes);
 
 // Source typed tests, Source Parameters and Solutions (SPS)
-TYPED_TEST(SourceTest, SPS) {
+TYPED_TEST(SourceTest, Type) {
   using SourceType = typename TestFixture::SourceType;
   constexpr auto DimensionTag = TestFixture::DimensionTag;
 
@@ -50,3 +50,4 @@ TYPED_TEST(SourceTest, SPS) {
     test_source<DimensionTag, SourceType>(parameters, solution);
   }
 }
+g

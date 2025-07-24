@@ -6,13 +6,27 @@
 
 namespace specfem::assembly::compute_source_array_impl {
 
-template <>
-void from_tensor<specfem::dimension::type::dim2>(
+using PointJacobianMatrix =
+    specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
+                                    false>;
+using JacobianViewType = specfem::kokkos::HostView2d<PointJacobianMatrix>;
+
+void from_tensor(
     const specfem::sources::tensor_source<specfem::dimension::type::dim2>
         &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
+    specfem::kokkos::HostView3d<type_real> source_array);
+
+// Implementation details for computing source array from tensor and element
+// jacobian
+void compute_source_array_from_tensor_and_element_jacobian(
+    const specfem::sources::tensor_source<specfem::dimension::type::dim2>
+        &tensor_source,
+    const JacobianViewType &element_jacobian_matrix,
+    const specfem::assembly::mesh_impl::quadrature<
+        specfem::dimension::type::dim2> &quadrature,
     specfem::kokkos::HostView3d<type_real> source_array);
 
 } // namespace specfem::assembly::compute_source_array_impl

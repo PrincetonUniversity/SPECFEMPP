@@ -1,8 +1,8 @@
+#include "specfem/assembly/compute_source_array/dim2/impl/compute_source_array_from_tensor.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
-#include "specfem/assembly/compute_source_array/impl/compute_source_array_from.hpp"
 #include "specfem/source.hpp"
 #include "test_macros.hpp"
 #include <gtest/gtest.h>
