@@ -77,11 +77,14 @@ specfem::kokkos::HostView2d<type_real> specfem::sources::moment_tensor<
 
 std::string
 specfem::sources::moment_tensor<specfem::dimension::type::dim2>::print() const {
+
+  const auto gcoord = this->get_global_coordinates();
+
   std::ostringstream message;
   message << "- Moment Tensor Source: \n"
           << "    Source Location: \n"
-          << "      x = " << this->x << "\n"
-          << "      z = " << this->z << "\n"
+          << "      x = " << gcoord.x << "\n"
+          << "      z = " << gcoord.z << "\n"
           << "    Moment Tensor: \n"
           << "      Mxx, Mzz, Mxz = " << this->Mxx << ", " << this->Mzz << ", "
           << this->Mxz << "\n"
@@ -106,12 +109,15 @@ operator==(const specfem::sources::source<specfem::dimension::type::dim2>
     return false;
   }
 
+  const auto gcoord = this->get_global_coordinates();
+  const auto other_gcoord = other_source->get_global_coordinates();
+
   bool internal =
       specfem::utilities::almost_equal(this->Mxx, other_source->Mxx) &&
       specfem::utilities::almost_equal(this->Mxz, other_source->Mxz) &&
       specfem::utilities::almost_equal(this->Mzz, other_source->Mzz) &&
-      specfem::utilities::almost_equal(this->x, other_source->x) &&
-      specfem::utilities::almost_equal(this->z, other_source->z);
+      specfem::utilities::almost_equal(gcoord.x, other_gcoord.x) &&
+      specfem::utilities::almost_equal(gcoord.z, other_gcoord.z);
 
   if (!internal) {
     std::cout << "Moment tensor source not equal" << std::endl;

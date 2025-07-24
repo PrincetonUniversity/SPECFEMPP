@@ -28,10 +28,10 @@ void specfem::assembly::compute_source_array_impl::from_vector<
   // Compute lagrange interpolants at the local source location
   auto [hxi_source, hpxi_source] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          vector_source.get_xi(), ngllx, xi);
+          vector_source.get_local_coordinates().xi, ngllx, xi);
   auto [hgamma_source, hpgamma_source] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          vector_source.get_gamma(), ngllz, gamma);
+          vector_source.get_local_coordinates().gamma, ngllz, gamma);
 
   type_real hlagrange;
 

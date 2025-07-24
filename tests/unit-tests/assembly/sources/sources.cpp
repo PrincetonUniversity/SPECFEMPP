@@ -211,10 +211,12 @@ void check_assembly_source_construction(
   const int nsources = sources.size();
   for (int isource = 0; isource < nsources; isource++) {
     const auto &source = sources[isource];
-    specfem::point::global_coordinates<DimensionTag> coord(source->get_x(),
-                                                           source->get_z());
+    const auto coord = source->get_global_coordinates();
 
     const auto lcoord = specfem::algorithms::locate_point(coord, assembly.mesh);
+
+    source->set_local_coordinates(lcoord);
+    source->set_medium_tag(assembly.element_types.get_medium_tag(lcoord.ispec));
 
     if (assembly.element_types.get_medium_tag(lcoord.ispec) != MediumTag) {
       continue;

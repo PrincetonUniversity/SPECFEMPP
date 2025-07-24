@@ -74,11 +74,13 @@ specfem::sources::external<specfem::dimension::type::dim2>::get_force_vector()
 std::string
 specfem::sources::external<specfem::dimension::type::dim2>::print() const {
 
+  const auto gcoord = this->get_global_coordinates();
+
   std::ostringstream message;
   message << "- External Source: \n"
           << "    Source Location: \n"
-          << "      x = " << type_real(this->x) << "\n"
-          << "      z = " << type_real(this->z) << "\n"
+          << "      x = " << type_real(gcoord.x) << "\n"
+          << "      z = " << type_real(gcoord.z) << "\n"
           << "    Source Time Function: \n"
           << this->forcing_function->print() << "\n";
 
