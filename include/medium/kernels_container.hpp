@@ -21,7 +21,8 @@ template <specfem::element::medium_tag MediumTag,
 struct kernels_container<specfem::dimension::type::dim2, MediumTag, PropertyTag>
     : public kernels::data_container<specfem::dimension::type::dim2, MediumTag,
                                      PropertyTag>,
-      public impl::Accessor<kernels_container<specfem::dimension::type::dim2,
+      public impl::Accessor<specfem::dimension::type::dim2,
+                            kernels_container<specfem::dimension::type::dim2,
                                               MediumTag, PropertyTag> > {
 
   using base_type = kernels::data_container<specfem::dimension::type::dim2,
@@ -56,7 +57,8 @@ template <specfem::element::medium_tag MediumTag,
 struct kernels_container<specfem::dimension::type::dim3, MediumTag, PropertyTag>
     : public kernels::data_container<specfem::dimension::type::dim3, MediumTag,
                                      PropertyTag>,
-      public impl::Accessor<kernels_container<specfem::dimension::type::dim3,
+      public impl::Accessor<specfem::dimension::type::dim3,
+                            kernels_container<specfem::dimension::type::dim3,
                                               MediumTag, PropertyTag> > {
 
   using base_type = kernels::data_container<specfem::dimension::type::dim3,

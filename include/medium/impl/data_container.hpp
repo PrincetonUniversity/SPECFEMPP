@@ -86,7 +86,19 @@
       : BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW, _, seq)),            \
         BOOST_PP_SEQ_ENUM(                                                     \
-            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {}
+            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {             \
+    static_assert(dimension_tag == specfem::dimension::type::dim2,             \
+                  "Calling a 2D constructor from non-2D container");           \
+  }                                                                            \
+  data_container(const int nspec, const int ngllz, const int nglly,            \
+                 const int ngllx)                                              \
+      : BOOST_PP_SEQ_ENUM(                                                     \
+            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW, _, seq)),            \
+        BOOST_PP_SEQ_ENUM(                                                     \
+            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {             \
+    static_assert(dimension_tag == specfem::dimension::type::dim3,             \
+                  "Calling a 3D constructor from non-3D container");           \
+  }
 
 #define _SYNC_DEVICE(r, data, elem)                                            \
   specfem::kokkos::deep_copy(BOOST_PP_SEQ_ELEM(0, elem),                       \

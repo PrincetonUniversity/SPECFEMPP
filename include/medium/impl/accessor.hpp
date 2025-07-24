@@ -7,9 +7,12 @@ namespace specfem {
 namespace medium {
 namespace impl {
 
-template <typename DataContainer> class Accessor {
+template <specfem::dimension::type DimensionTag, typename DataContainer>
+class Accessor {
 
 private:
+  constexpr static auto dimension = DimensionTag;
+
   template <typename PointValues>
   KOKKOS_INLINE_FUNCTION void
   get_data_on_device(const specfem::point::index<dimension> &index,
