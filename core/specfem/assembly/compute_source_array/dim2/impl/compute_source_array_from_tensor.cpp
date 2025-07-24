@@ -1,3 +1,4 @@
+#include "compute_source_array_from_tensor.hpp"
 #include "algorithms/interface.hpp"
 #include "enumerations/macros.hpp"
 #include "kokkos_abstractions.h"
@@ -11,11 +12,6 @@
 
 // Local namespace for implementation details
 namespace specfem::assembly::compute_source_array_impl {
-
-using PointJacobianMatrix =
-    specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
-                                    false>;
-using JacobianViewType = specfem::kokkos::HostView2d<PointJacobianMatrix>;
 
 void compute_source_array_from_tensor_and_element_jacobian(
     const specfem::sources::tensor_source<specfem::dimension::type::dim2>
@@ -88,9 +84,7 @@ void compute_source_array_from_tensor_and_element_jacobian(
 
 } // namespace specfem::assembly::compute_source_array_impl
 
-template <>
-void specfem::assembly::compute_source_array_impl::from_tensor<
-    specfem::dimension::type::dim2>(
+void specfem::assembly::compute_source_array_impl::from_tensor(
     const specfem::sources::tensor_source<specfem::dimension::type::dim2>
         &tensor_source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,

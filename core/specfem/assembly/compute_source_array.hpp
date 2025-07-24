@@ -11,7 +11,7 @@
 namespace specfem::assembly {
 
 /**
- * @brief Compute the lagrange interpolants for a specific source location in
+ * @brief Compute the lagrange interpolants for a specific 2d source location in
  * an element.
  *
  * This is a helper function that computes the source array for a given
@@ -25,13 +25,12 @@ namespace specfem::assembly {
  * @param source_array The output source array to be filled.
  *
  */
-template <specfem::dimension::type DimensionTag>
 void compute_source_array(
-    const std::shared_ptr<specfem::sources::source<DimensionTag> > &source,
-    const specfem::assembly::mesh<DimensionTag> &mesh,
-    const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
+    const std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > &source,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        &jacobian_matrix,
     specfem::kokkos::HostView3d<type_real> source_array);
 
 } // namespace specfem::assembly
-
-#include "compute_source_array/dim2/compute_source_array.hpp"
