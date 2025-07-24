@@ -69,12 +69,12 @@ public:
     return this->template get_base_field<on_device>(iglob, icomp);
   }
 
-  template <specfem::data_access::DataClassType U,
+  template <bool on_device, specfem::data_access::DataClassType U,
             typename std::enable_if_t<U == data_class, int> = 0>
   KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
       const std::integral_constant<specfem::data_access::DataClassType, U>,
       const int &iglob, const int &icomp) const {
-    return this->template get_base_field<true>(iglob, icomp);
+    return this->template get_base_field<on_device>(iglob, icomp);
   }
   auto get_field() const { return this->get_data(); }
   auto get_host_field() const { return this->get_host_data(); }
@@ -101,12 +101,12 @@ public:
     return this->template get_base_field<on_device>(iglob, icomp);
   }
 
-  template <specfem::data_access::DataClassType U,
+  template <bool on_device, specfem::data_access::DataClassType U,
             typename std::enable_if_t<U == data_class, int> = 0>
   KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
       const std::integral_constant<specfem::data_access::DataClassType, U>,
       const int &iglob, const int &icomp) const {
-    return this->template get_base_field<true>(iglob, icomp);
+    return this->template get_base_field<on_device>(iglob, icomp);
   }
 
   auto get_field_dot() const { return this->get_data(); }
@@ -134,12 +134,12 @@ public:
     return this->template get_base_field<on_device>(iglob, icomp);
   }
 
-  template <specfem::data_access::DataClassType U,
+  template <bool on_device, specfem::data_access::DataClassType U,
             typename std::enable_if_t<U == data_class, int> = 0>
   KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
       const std::integral_constant<specfem::data_access::DataClassType, U>,
       const int &iglob, const int &icomp) const {
-    return this->template get_base_field<true>(iglob, icomp);
+    return this->template get_base_field<on_device>(iglob, icomp);
   }
 
   auto get_field_dot_dot() const { return this->get_data(); }
@@ -164,12 +164,12 @@ public:
   auto get_mass_inverse() const { return this->get_data(); }
   auto get_host_mass_inverse() const { return this->get_host_data(); }
 
-  template <specfem::data_access::DataClassType U,
+  template <bool on_device, specfem::data_access::DataClassType U,
             typename std::enable_if_t<U == data_class, int> = 0>
   KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
       const std::integral_constant<specfem::data_access::DataClassType, U>,
       const int &iglob, const int &icomp) const {
-    return this->template get_base_field<true>(iglob, icomp);
+    return this->template get_base_field<on_device>(iglob, icomp);
   }
 
   template <bool on_device>
