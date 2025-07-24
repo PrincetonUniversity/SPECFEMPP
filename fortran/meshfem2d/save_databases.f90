@@ -38,6 +38,7 @@ subroutine save_databases()
    use constants, only: IMAIN,IOUT,MAX_STRING_LEN,SAVE_MESHFILES_VTK_FORMAT,myrank
    use part_unstruct_par, only: nspec,iproc
    use shared_parameters, only: NPROC, database_filename, OUTPUT_FILES
+   use save_databases_adj, only: save_databases_adjacency_map
 
    implicit none
 
@@ -96,6 +97,9 @@ subroutine save_databases()
 
       ! axial elements
       call save_databases_axial_elements()
+
+      ! adjacency map (if flag is set)
+      call save_databases_adjacency_map()
 
       ! closes Database file
       close(IOUT)

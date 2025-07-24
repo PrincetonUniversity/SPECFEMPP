@@ -78,7 +78,7 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
       specfem::enums::electromagnetic_wave::te, mpi);
 
   specfem::assembly::mesh<specfem::dimension::type::dim2> compute_mesh(
-      mesh.tags, mesh.control_nodes, quadratures);
+      mesh.tags, mesh.control_nodes, quadratures, mesh.adjacency_map);
   specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
       jacobian_matrix(compute_mesh);
 
