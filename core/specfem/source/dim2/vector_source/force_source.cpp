@@ -7,11 +7,6 @@
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 
-// Static member definitions
-const std::string
-    specfem::sources::force<specfem::dimension::type::dim2>::name =
-        "2D force source";
-
 std::vector<specfem::element::medium_tag>
 specfem::sources::force<specfem::dimension::type::dim2>::get_supported_media()
     const {

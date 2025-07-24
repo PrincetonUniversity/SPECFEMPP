@@ -152,8 +152,10 @@ private:
                                                        ///< which the source
                                                        ///< acts
 
+public:
+  static constexpr const char *name = "3-D moment tensor";
+
 protected:
-  const static std::string name;
 };
 } // namespace sources
 } // namespace specfem

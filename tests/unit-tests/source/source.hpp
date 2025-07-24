@@ -52,14 +52,6 @@ template <specfem::dimension::type DimensionTag, typename SourceType>
 SourceType
 create_source(const source_parameters<DimensionTag, SourceType> &parameters);
 
-#include "source/dim2/tensor_sources/moment_tensor_source.hpp"
-#include "source/dim2/vector_sources/adjoint_source.hpp"
-#include "source/dim2/vector_sources/cosserat_force_source.hpp"
-#include "source/dim2/vector_sources/external_source.hpp"
-#include "source/dim2/vector_sources/force_source.hpp"
-#include "source/dim3/tensor_sources/moment_tensor_source.hpp"
-#include "source/dim3/vector_sources/force_source.hpp"
-
 // Generic test function implementation
 template <specfem::dimension::type DimensionTag, typename SourceType>
 void test_source(const source_parameters<DimensionTag, SourceType> &parameters,
