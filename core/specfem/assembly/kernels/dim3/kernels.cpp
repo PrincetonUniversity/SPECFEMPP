@@ -22,8 +22,7 @@ specfem::assembly::kernels<specfem::dimension::type::dim3>::kernels(
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
-       BOUNDARY_TAG(NONE)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)),
       CAPTURE(value) {
         _value_ = specfem::medium::kernels_container<
             _dimension_tag_, _medium_tag_, _property_tag_>(
