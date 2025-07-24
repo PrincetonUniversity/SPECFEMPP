@@ -25,15 +25,8 @@ impl_compute_coupling(const acoustic_type &, const elastic_type &,
                       const CoupledFieldType &coupled_field,
                       SelfFieldType &self_field) {
 
-  static_assert(SelfFieldType::store_acceleration,
-                "SelfFieldType must store acceleration");
-
-  static_assert(CoupledFieldType::store_displacement,
-                "CoupledFieldType must store displacement");
-
-  self_field.acceleration(0) =
-      factor * (normal(0) * coupled_field.displacement(0) +
-                normal(1) * coupled_field.displacement(1));
+  self_field(0) =
+      factor * (normal(0) * coupled_field(0) + normal(1) * coupled_field(1));
 }
 
 template <typename SelfFieldType, typename CoupledFieldType,
@@ -43,17 +36,8 @@ impl_compute_coupling(const elastic_type &, const acoustic_type &,
                       const type_real &factor, const NormalViewType &normal,
                       const CoupledFieldType &coupled_field,
                       SelfFieldType &self_field) {
-
-  static_assert(SelfFieldType::store_acceleration,
-                "SelfFieldType must store acceleration");
-
-  static_assert(CoupledFieldType::store_acceleration,
-                "CoupledFieldType must store acceleration");
-
-  self_field.acceleration(0) =
-      factor * normal(0) * coupled_field.acceleration(0);
-  self_field.acceleration(1) =
-      factor * normal(1) * coupled_field.acceleration(0);
+  self_field(0) = factor * normal(0) * coupled_field(0);
+  self_field(1) = factor * normal(1) * coupled_field(0);
 }
 
 /**
@@ -89,11 +73,11 @@ compute_coupling(const type_real &factor, const NormalViewType &normal,
                 "NormalViewType must have dimension 2");
 
   static_assert(specfem::data_access::is_point<SelfFieldType>::value &&
-                    specfem::data_access::is_field<SelfFieldType>::value,
+                    specfem::data_access::is_field_l<SelfFieldType>::value,
                 "SelfFieldType must be a point field");
 
   static_assert(specfem::data_access::is_point<CoupledFieldType>::value &&
-                    specfem::data_access::is_field<CoupledFieldType>::value,
+                    specfem::data_access::is_field_l<CoupledFieldType>::value,
                 "CoupledFieldType must be a point field");
 
   impl_compute_coupling(self_type(), coupled_type(), factor, normal,

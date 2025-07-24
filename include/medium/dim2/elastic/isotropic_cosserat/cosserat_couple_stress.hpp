@@ -50,7 +50,7 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   const auto sigma_zx = t_01;
 
   // Add to acceleration
-  acceleration.acceleration(2) -= (sigma_xz - sigma_zx) * factor;
+  acceleration(2) -= (sigma_xz - sigma_zx) * factor;
 };
 
 } // namespace medium

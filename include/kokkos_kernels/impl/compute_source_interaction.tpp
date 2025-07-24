@@ -55,8 +55,6 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
       specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointBoundaryType =
       specfem::point::boundary<boundary_tag, dimension, false>;
-  using PointVelocityType = specfem::point::field<dimension, medium_tag, false,
-                                                  true, false, false, false>;
   using PointIndexType = specfem::point::mapped_index<dimension, false>;
 
       using simd = specfem::datatype::simd<type_real, false>;
@@ -90,7 +88,6 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
         auto acceleration = specfem::medium::compute_source_contribution(
             point_source, point_property);
 
-        specfem::assembly::atomic_add_on_device(mapped_index, acceleration,
-                                               field);
+        specfem::assembly::atomic_add_on_device(mapped_index, field, acceleration);
       });
 }

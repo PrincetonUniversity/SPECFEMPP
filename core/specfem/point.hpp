@@ -5,6 +5,7 @@
 #include "point/boundary.hpp"
 #include "point/coordinates.hpp"
 #include "point/displacement.hpp"
+#include "point/field.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/index.hpp"
 #include "point/jacobian_matrix.hpp"
