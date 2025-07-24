@@ -6,8 +6,8 @@
 
 specfem::sources::source<specfem::dimension::type::dim3>::source(
     YAML::Node &Node, const int nsteps, const type_real dt)
-    : x(Node["x"].as<type_real>()), y(Node["y"].as<type_real>()),
-      z(Node["z"].as<type_real>()) {
+    : global_coordinates(Node["x"].as<type_real>(), Node["y"].as<type_real>(),
+                         Node["z"].as<type_real>()) {
 
   // Read source time function
   if (YAML::Node Dirac = Node["Dirac"]) {
@@ -45,17 +45,22 @@ void specfem::sources::source<specfem::dimension::type::dim3>::set_medium_tag(
 
   std::ostringstream message;
 
+  const auto gcoord = this->get_global_coordinates();
+  const auto lcoord = this->get_local_coordinates();
+
   message << "The element that a " << this->name
           << " is supposed to be placed in \n"
           << "belongs to a medium that is not supported by the " << this->name
           << ".\n"
           << "  Requested medium: " << specfem::element::to_string(medium_tag)
           << "\n"
-          << "  Element index:    " << this->element_index << "\n"
-          << "  Global (x,y,z):     " << "(" << this->x << "," << this->y << ","
-          << this->z << ")\n"
-          << "  Local (xi,eta,zeta)  " << "(" << this->xi << "," << this->eta
-          << "," << this->zeta << ")\n"
+          << "  Global:\n"
+          << "    (x,y,z)      = " << "(" << gcoord.x << "," << gcoord.y << ","
+          << gcoord.z << ")\n"
+          << "  Local:\n"
+          << "   ispec         = " << lcoord.ispec << "\n"
+          << "   (xi,eta,zeta) = " << "(" << lcoord.xi << "," << lcoord.eta
+          << "," << lcoord.gamma << ")\n"
           << "Supported media:\n";
   for (auto &supported_medium : supported_media_list) {
     message << "  - " << specfem::element::to_string(supported_medium) << "\n";

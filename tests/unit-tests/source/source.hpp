@@ -75,10 +75,11 @@ void test_source(const source_parameters<DimensionTag, SourceType> &parameters,
   source.set_medium_tag(parameters.medium_tag);
 
   // Test common coordinate access methods
-  EXPECT_REAL_EQ(parameters.x, source.get_x());
-  EXPECT_REAL_EQ(parameters.z, source.get_z());
+  const auto global_coords = source.get_global_coordinates();
+  EXPECT_REAL_EQ(global_coords.x, parameters.x);
+  EXPECT_REAL_EQ(global_coords.z, parameters.z);
   if constexpr (DimensionTag == specfem::dimension::type::dim3) {
-    EXPECT_REAL_EQ(parameters.y, source.get_y());
+    EXPECT_REAL_EQ(global_coords.y, parameters.y);
   }
 
   // Test source-specific functionality using SFINAE

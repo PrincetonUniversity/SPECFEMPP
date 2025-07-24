@@ -128,15 +128,8 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
         /* Loops over the current source*/
         for (int isource = 0; isource < sorted_sources.size(); isource++) {
           const auto &source = sorted_sources[isource];
-          const type_real x = source->get_x();
-          const type_real z = source->get_z();
-          const specfem::point::global_coordinates<_dimension_tag_> coord(x, z);
+          const auto lcoord = source->get_local_coordinates();
 
-          /* Locates the source in the mesh. Should have been stored already. */
-          const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
-          if (lcoord.ispec < 0) {
-            throw std::runtime_error("Source is outside of the domain");
-          }
           int ispec = lcoord.ispec;
           const int global_isource = source_indices[isource];
 

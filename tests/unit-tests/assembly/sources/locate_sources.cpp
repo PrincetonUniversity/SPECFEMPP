@@ -26,17 +26,20 @@ TEST_F(ASSEMBLY, locate_sources) {
     EXPECT_REAL_EQ(sources.size(), 1);
 
     // Check xi
-    EXPECT_TRUE(specfem::utilities::almost_equal(sources[0]->get_xi(),
-                                                 source_solution.xi, 1e-4))
-        << ExpectedGot(source_solution.xi, sources[0]->get_xi());
+    EXPECT_TRUE(specfem::utilities::almost_equal(
+        sources[0]->get_local_coordinates().xi, source_solution.xi, 1e-4))
+        << ExpectedGot(source_solution.xi,
+                       sources[0]->get_local_coordinates().xi);
 
     // Check gamma
-    EXPECT_TRUE(specfem::utilities::almost_equal(sources[0]->get_gamma(),
-                                                 source_solution.gamma, 1e-4))
-        << ExpectedGot(source_solution.gamma, sources[0]->get_gamma());
+    EXPECT_TRUE(specfem::utilities::almost_equal(
+        sources[0]->get_local_coordinates().gamma, source_solution.gamma, 1e-4))
+        << ExpectedGot(source_solution.gamma,
+                       sources[0]->get_local_coordinates().gamma);
 
     // Check ispec
-    EXPECT_EQ(sources[0]->get_element_index(), source_solution.ispec);
+    const auto ispec = sources[0]->get_local_coordinates().ispec;
+    EXPECT_EQ(ispec, source_solution.ispec);
 
     // Check medium tag/medium that the source is located in
     EXPECT_TRUE(sources[0]->get_medium_tag() == source_solution.medium_tag)

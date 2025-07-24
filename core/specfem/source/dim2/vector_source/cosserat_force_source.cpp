@@ -43,11 +43,13 @@ std::string
 specfem::sources::cosserat_force<specfem::dimension::type::dim2>::print()
     const {
 
+  const auto gcoord = this->get_global_coordinates();
+
   std::ostringstream message;
   message << "- Cosserat Force Source: \n"
           << "    Source Location: \n"
-          << "      x = " << type_real(this->x) << "\n"
-          << "      z = " << type_real(this->z) << "\n"
+          << "      x = " << gcoord.x << "\n"
+          << "      z = " << gcoord.z << "\n"
           << "    Source Angle: " << type_real(this->angle) << "\n"
           << "    Source f: " << type_real(this->f) << "\n"
           << "    Source fc: " << type_real(this->fc) << "\n"
@@ -72,10 +74,13 @@ operator==(const specfem::sources::source<specfem::dimension::type::dim2>
     return false;
   }
 
+  const auto gcoord = this->get_global_coordinates();
+  const auto other_gcoord = other_source->get_global_coordinates();
+
   bool internal =
       specfem::utilities::almost_equal(this->f, other_source->f) &&
-      specfem::utilities::almost_equal(this->x, other_source->x) &&
-      specfem::utilities::almost_equal(this->z, other_source->z) &&
+      specfem::utilities::almost_equal(gcoord.x, other_gcoord.x) &&
+      specfem::utilities::almost_equal(gcoord.z, other_gcoord.z) &&
       specfem::utilities::almost_equal(this->angle, other_source->angle);
 
   if (!internal) {

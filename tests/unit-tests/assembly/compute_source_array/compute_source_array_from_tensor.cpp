@@ -56,9 +56,10 @@ void test_tensor_source(const std::string &source_name, SourceType &source,
                    ", iz=" + std::to_string(iz) + ")");
 
       // Set source location to this GLL point
-      source.set_xi(xi_gamma_points(ix));
-      source.set_gamma(xi_gamma_points(iz));
-      source.set_element_index(0);
+      const auto local_coords =
+          specfem::point::local_coordinates<specfem::dimension::type::dim2>(
+              0, xi_gamma_points(ix), xi_gamma_points(iz));
+      source.set_local_coordinates(local_coords);
 
       // Initialize source array to zero
       for (int ic = 0; ic < ncomponents; ++ic) {
@@ -163,9 +164,10 @@ void test_tensor_source_off_gll(const std::string &source_name,
                    ", gamma=" + std::to_string(gamma_source) + ")");
 
       // Set source location to this off-GLL point
-      source.set_xi(xi_source);
-      source.set_gamma(gamma_source);
-      source.set_element_index(0);
+      const auto local_coords =
+          specfem::point::local_coordinates<specfem::dimension::type::dim2>(
+              0, xi_source, gamma_source);
+      source.set_local_coordinates(local_coords);
 
       // Initialize source array to zero
       for (int ic = 0; ic < ncomponents; ++ic) {

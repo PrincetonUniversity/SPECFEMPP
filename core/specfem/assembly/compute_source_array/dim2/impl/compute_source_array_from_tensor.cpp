@@ -35,10 +35,10 @@ void compute_source_array_from_tensor_and_element_jacobian(
   // Compute lagrange interpolants at the local source location
   auto [hxi_source, hpxi_source] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          tensor_source.get_xi(), ngllx, xi);
+          tensor_source.get_local_coordinates().xi, ngllx, xi);
   auto [hgamma_source, hpgamma_source] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          tensor_source.get_gamma(), ngllz, gamma);
+          tensor_source.get_local_coordinates().gamma, ngllz, gamma);
 
   specfem::kokkos::HostView2d<type_real> source_polynomial("source_polynomial",
                                                            ngllz, ngllx);
@@ -111,7 +111,7 @@ void specfem::assembly::compute_source_array_impl::from_tensor<
   for (int iz = 0; iz < ngllz; ++iz) {
     for (int ix = 0; ix < ngllx; ++ix) {
       const specfem::point::index<specfem::dimension::type::dim2> index(
-          tensor_source.get_element_index(), iz, ix);
+          tensor_source.get_local_coordinates().ispec, iz, ix);
       PointJacobianMatrix derivatives;
       specfem::assembly::load_on_host(index, jacobian_matrix, derivatives);
       element_jacobian(iz, ix) = derivatives;

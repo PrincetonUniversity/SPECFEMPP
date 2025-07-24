@@ -3,7 +3,9 @@
 #include "constants.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/point.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -34,7 +36,8 @@ public:
    */
   source(type_real x, type_real y, type_real z,
          std::unique_ptr<specfem::forcing_function::stf> forcing_function)
-      : x(x), y(y), z(z), forcing_function(std::move(forcing_function)) {};
+      : global_coordinates(x, y, z),
+        forcing_function(std::move(forcing_function)) {};
 
   /**
    * @brief Construct a new source object from a YAML node and time steps
@@ -44,41 +47,6 @@ public:
    * @param dt
    */
   source(YAML::Node &Node, const int nsteps, const type_real dt);
-
-  /**
-   * @brief Get the x coordinate of the source
-   *
-   * @return type_real x-coordinate
-   */
-  type_real get_x() const { return x; }
-
-  /**
-   * @brief Get the y coordinate of the source
-   *
-   * @return type_real y-coordinate
-   */
-  type_real get_y() const { return y; }
-
-  /**
-   * @brief Get the z coordinate of the source
-   *
-   * @return type_real z-coordinate
-   */
-  type_real get_z() const { return z; }
-
-  /**
-   * @brief Get coordinates as a Kokkos array
-   *
-   * @return Kokkos::View<type_real[2], Kokkos::HostSpace> coordinates array [x,
-   * z]
-   */
-  Kokkos::View<type_real[3], Kokkos::HostSpace> get_coords() const {
-    Kokkos::View<type_real[3], Kokkos::HostSpace> coords("coords");
-    coords[0] = x;
-    coords[1] = y;
-    coords[2] = z;
-    return coords;
-  }
 
   /**
    * @brief Get the value of t0 from the specfem::stf::stf object
@@ -135,23 +103,46 @@ public:
   /**
    * @brief Set the local xi coordinates of the source in the local coordinate
    * system
-   * @param xi xi coordinate of source in the local coordinate system
+   * @param specfem::point::local_coordinates<specfem::dimension::type::dim3>
+   * local_coordinates
    */
-  void set_xi(type_real xi) { this->xi = xi; }
+  void
+  set_local_coordinates(const specfem::point::local_coordinates<dimension_tag>
+                            &local_coordinates) {
+    this->local_coordinates = local_coordinates;
+  };
 
   /**
-   * @brief Set the local eta coordinates of the source in the local
-   * coordinate system
-   * @param eta eta coordinate of source in the local coordinate system
+   * @brief Get the local coordinates of the source in the local coordinate
+   * system
+   * @return specfem::point::local_coordinates<specfem::dimension::type::dim3>
    */
-  void set_eta(type_real eta) { this->eta = eta; }
+  specfem::point::local_coordinates<dimension_tag>
+  get_local_coordinates() const {
+    return local_coordinates;
+  }
 
   /**
-   * @brief Set the local zeta coordinates of the source in the local
-   * coordinate system
-   * @param zeta zeta coordinate of source in the local coordinate system
+   * @brief Set the global coordinates of the source in the global coordinate
+   * system
+   * @param specfem::point::global_coordinates<specfem::dimension::type::dim3>
+   * global_coordinates
    */
-  void set_zeta(type_real zeta) { this->zeta = zeta; }
+  void
+  set_global_coordinates(const specfem::point::global_coordinates<dimension_tag>
+                             &global_coordinates) {
+    this->global_coordinates = global_coordinates;
+  };
+
+  /**
+   * @brief Get the global coordinates of the source in the global coordinate
+   * system
+   * @return specfem::point::global_coordinates<specfem::dimension::type::dim3>
+   */
+  specfem::point::global_coordinates<dimension_tag>
+  get_global_coordinates() const {
+    return global_coordinates;
+  }
 
   /**
    * @brief Set the medium tag for the source.
@@ -175,76 +166,27 @@ public:
   get_supported_media() const = 0;
 
   /**
-   * @brief Get the local xi coordinate of the source in the local coordinate
-   * system
-   *
-   * @return type_real xi coordinate
-   */
-  type_real get_xi() const { return this->xi; }
-  /**
-   * @brief Get the local eta coordinate of the source in the local coordinate
-   * system
-   *
-   * @return type_real eta coordinate
-   */
-  type_real get_eta() const { return this->eta; }
-
-  /**
-   * @brief Get the local zeta coordinate of the source in the local coordinate
-   * system
-   *
-   * @return type_real zeta coordinate
-   */
-  type_real get_zeta() const { return this->zeta; }
-
-  /**
    * @brief Get the medium tag for the source
    *
    * @return specfem::medium::medium_tag medium tag
    */
   specfem::element::medium_tag get_medium_tag() const { return medium_tag; }
-  /**
-   * @brief Get the index of the element that the source is located in
-   *
-   * @return int index of the element
-   */
-  int get_element_index() const { return this->element_index; }
-  /**
-   * @brief Set the index of the element that the source is located in
-   *
-   * @param ielement index of the element
-   */
-  void set_element_index(int element_index) {
-    this->element_index = element_index;
-  }
 
 protected:
   // Read-only member variables
   static constexpr const char *name =
       "3D base_source, if this was printed, you are not using the "
       "correct source class";
-  type_real x; ///< x-coordinate of source
-  type_real y; ///< y-coordinate of source
-  type_real z; ///< z-coordinate of source
   std::unique_ptr<specfem::forcing_function::stf>
       forcing_function; ///< pointer to source time function
 
   // Member variables to be set.
-
-  type_real xi;
-  ///< xi coordinate of source in the local coordinate system
-
-  type_real eta;
-  ///< eta coordinate of source in the local coordinate system
-
-  type_real zeta;
-  ///< zeta coordinate of source in the local coordinate system
-
+  specfem::point::local_coordinates<dimension_tag>
+      local_coordinates; ///< Local coordinates of the source in the local
+  specfem::point::global_coordinates<dimension_tag>
+      global_coordinates; ///< Global coordinates of the source in the global
+                          ///< coordinate system
   specfem::element::medium_tag medium_tag;
-  ///< medium tag for the source
-  ///< (e.g., acoustic, elastic, poroelastic, etc.)
-
-  int element_index; ///< index of the element that the source is located in
 };
 
 } // namespace sources

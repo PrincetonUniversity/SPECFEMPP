@@ -192,13 +192,17 @@ TEST(SOURCES, compute_source_locations) {
 
       // check results for every source
       for (int i = 0; i < sources.size(); i++) {
-        EXPECT_EQ(sources[i]->get_ispec(), solution.sources[i].ispec - 1)
+        EXPECT_EQ(sources[i]->get_local_coordinates().ispec,
+                  solution.sources[i].ispec - 1)
             << "For source " << i;
-        EXPECT_EQ(sources[i]->get_islice(), solution.sources[i].islice)
+        EXPECT_EQ(sources[i]->get_local_coordinates().islice,
+                  solution.sources[i].islice)
             << "For source " << i;
-        EXPECT_NEAR(sources[i]->get_xi(), solution.sources[i].xi, 1e-2)
+        EXPECT_NEAR(sources[i]->get_local_coordinates().xi,
+                    solution.sources[i].xi, 1e-2)
             << "For source " << i;
-        EXPECT_NEAR(sources[i]->get_gamma(), solution.sources[i].gamma, 1e-2)
+        EXPECT_NEAR(sources[i]->get_local_coordinates().gamma,
+                    solution.sources[i].gamma, 1e-2)
             << "For source " << i;
       }
     }

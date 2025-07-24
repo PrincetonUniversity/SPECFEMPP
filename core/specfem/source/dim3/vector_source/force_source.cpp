@@ -46,12 +46,14 @@ specfem::sources::force<specfem::dimension::type::dim3>::get_force_vector()
 std::string
 specfem::sources::force<specfem::dimension::type::dim3>::print() const {
 
+  const auto gcoord = this->get_global_coordinates();
+
   std::ostringstream message;
   message << "- Force Source: \n"
           << "    Source Location: \n"
-          << "      x = " << type_real(this->x) << "\n"
-          << "      y = " << type_real(this->y) << "\n"
-          << "      z = " << type_real(this->z) << "\n"
+          << "      x = " << type_real(gcoord.x) << "\n"
+          << "      y = " << type_real(gcoord.y) << "\n"
+          << "      z = " << type_real(gcoord.z) << "\n"
           << "    Force Vector: \n"
           << "      fx = " << type_real(this->fx) << "\n"
           << "      fy = " << type_real(this->fy) << "\n"
@@ -76,9 +78,12 @@ bool specfem::sources::force<specfem::dimension::type::dim3>::operator==(
     return false;
   }
 
-  return specfem::utilities::almost_equal(this->x, other_source->x) &&
-         specfem::utilities::almost_equal(this->y, other_source->y) &&
-         specfem::utilities::almost_equal(this->z, other_source->z) &&
+  const auto gcoord = this->get_global_coordinates();
+  const auto other_gcoord = other_source->get_global_coordinates();
+
+  return specfem::utilities::almost_equal(gcoord.x, other_gcoord.x) &&
+         specfem::utilities::almost_equal(gcoord.y, other_gcoord.y) &&
+         specfem::utilities::almost_equal(gcoord.z, other_gcoord.z) &&
          specfem::utilities::almost_equal(this->fx, other_source->fx) &&
          specfem::utilities::almost_equal(this->fy, other_source->fy) &&
          specfem::utilities::almost_equal(this->fz, other_source->fz) &&

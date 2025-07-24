@@ -16,13 +16,9 @@ void specfem::assembly::sources_impl::locate_sources(
   for (auto &source : sources) {
 
     // Get the source coordinates
-    const type_real x = source->get_x();
-    const type_real z = source->get_z();
+    const auto &coord = source->get_global_coordinates();
 
-    // Get element that that source is located in, as well as the local
-    // coordinates
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        coord(x, z);
+    // Create a point with the global coordinates
     const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
     // Set the local coordinates and global element index in the source
@@ -31,9 +27,7 @@ void specfem::assembly::sources_impl::locate_sources(
     }
 
     // Giving the local coordinates and global element index to the source
-    source->set_element_index(lcoord.ispec);
-    source->set_xi(lcoord.xi);
-    source->set_gamma(lcoord.gamma);
+    source->set_local_coordinates(lcoord);
 
     // Given the spectral element index provide the medium tag
     source->set_medium_tag(element_types.get_medium_tag(lcoord.ispec));
