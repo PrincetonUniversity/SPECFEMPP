@@ -164,13 +164,13 @@ public:
   ///@}
 
   value_type xix;    ///< @xix
-  value_type eta_x;  ///< @eta_x
+  value_type etax;   ///< @etax
   value_type gammax; ///< @gammax
   value_type xiy;    ///< @xiy
-  value_type eta_y;  ///< @eta_y
+  value_type etay;   ///< @etay
   value_type gammay; ///< @gammay
   value_type xiz;    ///< @xiz
-  value_type eta_z;  ///< @eta_z
+  value_type etaz;   ///< @etaz
   value_type gammaz; ///< @gammaz
 
   /**
@@ -189,23 +189,23 @@ public:
    * @brief Constructor with values
    *
    * @param xix @xix
-   * @param eta_x @eta_x
+   * @param etax @etax
    * @param gammax @gammax
    * @param xiy @xiy
-   * @param eta_y @eta_y
+   * @param etay @etay
    * @param gammay @gammay
    * @param xiz @xiz
-   * @param eta_z @eta_z
+   * @param etaz @etaz
    * @param gammaz @gammaz
    */
   KOKKOS_FUNCTION
-  jacobian_matrix(const value_type &xix, const value_type &eta_x,
+  jacobian_matrix(const value_type &xix, const value_type &etax,
                   const value_type &gammax, const value_type &xiy,
-                  const value_type &eta_y, const value_type &gammay,
-                  const value_type &xiz, const value_type &eta_z,
+                  const value_type &etay, const value_type &gammay,
+                  const value_type &xiz, const value_type &etaz,
                   const value_type &gammaz)
-      : xix(xix), eta_x(eta_x), gammax(gammax), xiy(xiy), eta_y(eta_y),
-        gammay(gammay), xiz(xiz), eta_z(eta_z), gammaz(gammaz) {}
+      : xix(xix), etax(etax), gammax(gammax), xiy(xiy), etay(etay),
+        gammay(gammay), xiz(xiz), etaz(etaz), gammaz(gammaz) {}
 
   /**
    * @brief Constructor with constant value
@@ -214,48 +214,49 @@ public:
    */
   KOKKOS_FUNCTION
   jacobian_matrix(const value_type constant)
-      : xix(constant), gammax(constant), xiy(constant), gammay(constant),
-        xiz(constant), gammaz(constant) {}
+      : xix(constant), etax(constant), gammax(constant), xiy(constant),
+        etay(constant), gammay(constant), xiz(constant), etaz(constant),
+        gammaz(constant) {}
 
   KOKKOS_FUNCTION
   void init() {
     this->xix = 0.0;
-    this->eta_x = 0.0;
+    this->etax = 0.0;
     this->gammax = 0.0;
     this->xiy = 0.0;
-    this->eta_y = 0.0;
+    this->etay = 0.0;
     this->gammay = 0.0;
     this->xiz = 0.0;
-    this->eta_z = 0.0;
+    this->etaz = 0.0;
     this->gammaz = 0.0;
     return;
   }
 
   // operator+
   KOKKOS_FUNCTION jacobian_matrix operator+(const jacobian_matrix &rhs) const {
-    return { xix + rhs.xix, eta_x + rhs.eta_x, gammax + rhs.gammax,
-             xiy + rhs.xiy, eta_y + rhs.eta_y, gammay + rhs.gammay,
-             xiz + rhs.xiz, eta_z + rhs.eta_z, gammaz + rhs.gammaz };
+    return { xix + rhs.xix, etax + rhs.etax, gammax + rhs.gammax,
+             xiy + rhs.xiy, etay + rhs.etay, gammay + rhs.gammay,
+             xiz + rhs.xiz, etaz + rhs.etaz, gammaz + rhs.gammaz };
   }
 
   // operator+=
   KOKKOS_FUNCTION jacobian_matrix &operator+=(const jacobian_matrix &rhs) {
     this->xix = this->xix + rhs.xix;
-    this->eta_x = this->eta_x + rhs.eta_x;
+    this->etax = this->etax + rhs.etax;
     this->gammax = this->gammax + rhs.gammax;
     this->xiy = this->xiy + rhs.xiy;
-    this->eta_y = this->eta_y + rhs.eta_y;
+    this->etay = this->etay + rhs.etay;
     this->gammay = this->gammay + rhs.gammay;
     this->xiz = this->xiz + rhs.xiz;
-    this->eta_z = this->eta_z + rhs.eta_z;
+    this->etaz = this->etaz + rhs.etaz;
     this->gammaz = this->gammaz + rhs.gammaz;
     return *this;
   }
 
   // operator*
   KOKKOS_FUNCTION jacobian_matrix operator*(const type_real &rhs) {
-    return { xix * rhs,    eta_x * rhs, gammax * rhs, xiy * rhs,   eta_y * rhs,
-             gammay * rhs, xiz * rhs,   eta_z * rhs,  gammaz * rhs };
+    return { xix * rhs,    etax * rhs, gammax * rhs, xiy * rhs,   etay * rhs,
+             gammay * rhs, xiz * rhs,  etaz * rhs,   gammaz * rhs };
   }
 };
 
@@ -271,8 +272,8 @@ template <typename PointJacobianMatrixType,
 KOKKOS_FUNCTION PointJacobianMatrixType
 operator*(const type_real &lhs, const PointJacobianMatrixType &rhs) {
   return PointJacobianMatrixType(
-      rhs.xix * lhs, rhs.eta_x * lhs, rhs.gammax * lhs, rhs.xiy * lhs,
-      rhs.eta_y * lhs, rhs.gammay * lhs, rhs.xiz * lhs, rhs.eta_z * lhs,
+      rhs.xix * lhs, rhs.etax * lhs, rhs.gammax * lhs, rhs.xiy * lhs,
+      rhs.etay * lhs, rhs.gammay * lhs, rhs.xiz * lhs, rhs.etaz * lhs,
       rhs.gammaz * lhs);
 }
 
@@ -455,24 +456,24 @@ public:
    * @brief Constructor with values
    *
    * @param xix @xix
-   * @param eta_x @eta_x
+   * @param etax @etax
    * @param gammax @gammax
    * @param xiy @xiy
-   * @param eta_y @eta_y
+   * @param etay @etay
    * @param gammay @gammay
    * @param xiz @xiz
-   * @param eta_z @eta_z
+   * @param etaz @etaz
    * @param gammaz @gammaz
    * @param jacobian Jacobian
    */
   KOKKOS_FUNCTION
-  jacobian_matrix(const value_type &xix, const value_type &eta_x,
+  jacobian_matrix(const value_type &xix, const value_type &etax,
                   const value_type &gammax, const value_type &xiy,
-                  const value_type &eta_y, const value_type &gammay,
-                  const value_type &xiz, const value_type &eta_z,
+                  const value_type &etay, const value_type &gammay,
+                  const value_type &xiz, const value_type &etaz,
                   const value_type &gammaz, const value_type &jacobian)
       : jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD>(
-            xix, eta_x, gammax, xiy, eta_y, gammay, xiz, eta_z, gammaz),
+            xix, etax, gammax, xiy, etay, gammay, xiz, etaz, gammaz),
         jacobian(jacobian) {}
 
   /**
@@ -490,13 +491,13 @@ public:
   KOKKOS_FUNCTION
   void init() {
     this->xix = 0.0;
-    this->eta_x = 0.0;
+    this->etax = 0.0;
     this->gammax = 0.0;
     this->xiy = 0.0;
-    this->eta_y = 0.0;
+    this->etay = 0.0;
     this->gammay = 0.0;
     this->xiz = 0.0;
-    this->eta_z = 0.0;
+    this->etaz = 0.0;
     this->gammaz = 0.0;
     this->jacobian = 0.0;
     return;
