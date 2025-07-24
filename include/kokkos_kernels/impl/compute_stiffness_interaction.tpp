@@ -92,14 +92,11 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   using PointBoundaryType =
       specfem::point::boundary<boundary_tag, dimension, using_simd>;
   using PointDisplacementType =
-      specfem::point::field<dimension, medium_tag, true, false, false, false,
-                            using_simd>;
+      specfem::point::displacement<dimension, medium_tag, using_simd>;
   using PointVelocityType =
-      specfem::point::field<dimension, medium_tag, false, true, false, false,
-                            using_simd>;
+      specfem::point::velocity<dimension, medium_tag, using_simd>;
   using PointAccelerationType =
-      specfem::point::field<dimension, medium_tag, false, false, true, false,
-                            using_simd>;
+      specfem::point::acceleration<dimension, medium_tag, using_simd>;
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension, true, using_simd>;
   using PointPropertyType =
@@ -129,7 +126,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
           specfem::assembly::load_on_device(istep, index, boundary_values,
                                             acceleration);
 
-          specfem::assembly::atomic_add_on_device(index, acceleration, field);
+          specfem::assembly::atomic_add_on_device(index, field, acceleration);
         });
   } else {
 
@@ -197,7 +194,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
                 for (int icomponent = 0; icomponent < components;
                      ++icomponent) {
-                  acceleration.acceleration(icomponent) *=
+                  acceleration(icomponent) *=
                       static_cast<type_real>(-1.0);
                 }
 
@@ -245,8 +242,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                                                      boundary_values);
                 }
 
-                specfem::assembly::atomic_add_on_device(index, acceleration,
-                                                        field);
+                specfem::assembly::atomic_add_on_device(index, field,
+                                                        acceleration);
               });
         });
   }

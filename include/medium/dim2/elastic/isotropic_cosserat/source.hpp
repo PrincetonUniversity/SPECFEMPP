@@ -18,20 +18,18 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
         specfem::element::property_tag::isotropic_cosserat>,
     const PointSourcesType &point_source,
     const PointPropertiesType &point_properties) {
+  constexpr bool using_simd = PointPropertiesType::simd::using_simd;
 
   using PointAccelerationType =
-      specfem::point::field<PointPropertiesType::dimension_tag,
-                            PointPropertiesType::medium_tag, false, false, true,
-                            false, PointPropertiesType::simd::using_simd>;
+      specfem::point::acceleration<specfem::dimension::type::dim2,
+                                   specfem::element::medium_tag::elastic_psv_t,
+                                   using_simd>;
 
   PointAccelerationType result;
 
-  result.acceleration(0) =
-      point_source.stf(0) * point_source.lagrange_interpolant(0);
-  result.acceleration(1) =
-      point_source.stf(1) * point_source.lagrange_interpolant(1);
-  result.acceleration(2) =
-      point_source.stf(2) * point_source.lagrange_interpolant(2);
+  result(0) = point_source.stf(0) * point_source.lagrange_interpolant(0);
+  result(1) = point_source.stf(1) * point_source.lagrange_interpolant(1);
+  result(2) = point_source.stf(2) * point_source.lagrange_interpolant(2);
 
   return result;
 }

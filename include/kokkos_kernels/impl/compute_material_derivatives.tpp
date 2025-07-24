@@ -2,12 +2,12 @@
 
 #include "algorithms/gradient.hpp"
 #include "chunk_element/field.hpp"
-#include "specfem/assembly.hpp"
 #include "compute_material_derivatives.hpp"
-#include "medium/compute_frechet_derivatives.hpp"
-#include "parallel_configuration/chunk_config.hpp"
 #include "execution/chunked_domain_iterator.hpp"
 #include "execution/for_each_level.hpp"
+#include "medium/compute_frechet_derivatives.hpp"
+#include "parallel_configuration/chunk_config.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -15,7 +15,8 @@ template <specfem::dimension::type DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void specfem::kokkos_kernels::impl::compute_material_derivatives(
-    const specfem::assembly::assembly<DimensionTag> &assembly, const type_real &dt) {
+    const specfem::assembly::assembly<DimensionTag> &assembly,
+    const type_real &dt) {
   auto &properties = assembly.properties;
   auto &kernels = assembly.kernels;
   auto &adjoint_field = assembly.fields.adjoint;
@@ -60,13 +61,12 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
       NGLL, DimensionTag, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
 
-  using AdjointPointFieldType =
-      specfem::point::field<DimensionTag, MediumTag, false, true, true, false,
-                            using_simd>;
-
-  using BackwardPointFieldType =
-      specfem::point::field<DimensionTag, MediumTag, true, false, false, false,
-                            using_simd>;
+  using PointDisplacementType =
+      specfem::point::displacement<DimensionTag, MediumTag, using_simd>;
+  using PointVelocityType =
+      specfem::point::velocity<DimensionTag, MediumTag, using_simd>;
+  using PointAccelerationType =
+      specfem::point::acceleration<DimensionTag, MediumTag, using_simd>;
 
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<DimensionTag, MediumTag, using_simd>;
@@ -93,9 +93,9 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
 
         // Load the element index
         specfem::assembly::load_on_device(chunk_index, adjoint_field,
-                                         adjoint_element_field);
+                                          adjoint_element_field);
         specfem::assembly::load_on_device(chunk_index, backward_field,
-                                         backward_element_field);
+                                          backward_element_field);
         team.team_barrier();
 
         // Generate the Kernels
@@ -118,23 +118,18 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
               const auto point_properties = [&]() -> PointPropertiesType {
                 PointPropertiesType point_properties;
                 specfem::assembly::load_on_device(index, properties,
-                                                 point_properties);
+                                                  point_properties);
                 return point_properties;
               }();
 
-              const auto adjoint_point_field = [&]() {
-                AdjointPointFieldType adjoint_point_field;
-                specfem::assembly::load_on_device(index, adjoint_field,
-                                                 adjoint_point_field);
-                return adjoint_point_field;
-              }();
+              PointVelocityType adjoint_velocity;
+              PointAccelerationType adjoint_acceleration;
+              specfem::assembly::load_on_device(
+                  index, adjoint_field, adjoint_velocity, adjoint_acceleration);
 
-              const auto backward_point_field = [&]() {
-                BackwardPointFieldType backward_point_field;
-                specfem::assembly::load_on_device(index, backward_field,
-                                                 backward_point_field);
-                return backward_point_field;
-              }();
+              PointDisplacementType backward_displacement;
+              specfem::assembly::load_on_device(index, backward_field,
+                                                backward_displacement);
               // ------------------------------
 
               const PointFieldDerivativesType adjoint_point_derivatives(df);
@@ -143,8 +138,8 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
               // Compute the kernel for the point
               const auto point_kernel =
                   specfem::medium::compute_frechet_derivatives(
-                      point_properties, adjoint_point_field,
-                      backward_point_field, adjoint_point_derivatives,
+                      point_properties, adjoint_velocity, adjoint_acceleration,
+                      backward_displacement, adjoint_point_derivatives,
                       backward_point_derivatives, dt);
 
               // Update the kernel in the global memory

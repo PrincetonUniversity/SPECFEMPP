@@ -8,8 +8,10 @@
 namespace specfem {
 namespace medium {
 
-template <typename PointPropertiesType, typename AdjointPointFieldType,
-          typename BackwardPointFieldType, typename PointFieldDerivativesType>
+template <typename PointPropertiesType, typename AdjointPointVelocityType,
+          typename AdjointPointAccelerationType,
+          typename BackwardPointDisplacementType,
+          typename PointFieldDerivativesType>
 KOKKOS_FUNCTION specfem::point::kernels<
     PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
     PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
@@ -21,8 +23,9 @@ impl_compute_frechet_derivatives(
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::isotropic>,
     const PointPropertiesType &properties,
-    const AdjointPointFieldType &adjoint_field,
-    const BackwardPointFieldType &backward_field,
+    const AdjointPointVelocityType &adjoint_velocity,
+    const AdjointPointAccelerationType &adjoint_acceleration,
+    const BackwardPointDisplacementType &backward_displacement,
     const PointFieldDerivativesType &adjoint_derivatives,
     const PointFieldDerivativesType &backward_derivatives,
     const type_real &dt) {
@@ -32,9 +35,10 @@ impl_compute_frechet_derivatives(
        adjoint_derivatives.du(0, 1) * backward_derivatives.du(0, 1)) *
       properties.rho_inverse() * dt;
 
-  const auto kappa_kl = specfem::algorithms::dot(adjoint_field.acceleration,
-                                                 backward_field.displacement) *
-                        static_cast<type_real>(1.0) / properties.kappa() * dt;
+  const auto kappa_kl =
+      specfem::algorithms::dot(adjoint_acceleration.get_data(),
+                               backward_displacement.get_data()) *
+      static_cast<type_real>(1.0) / properties.kappa() * dt;
 
   return { rho_kl, kappa_kl };
 }
