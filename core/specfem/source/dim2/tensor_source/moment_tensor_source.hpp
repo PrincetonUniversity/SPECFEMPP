@@ -58,7 +58,7 @@ public:
                 const specfem::wavefield::simulation_field wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
         Mxz(Node["Mxz"].as<type_real>()), wavefield_type(wavefield_type),
-        tensor_source(Node, nsteps, dt) {};
+        tensor_source<specfem::dimension::type::dim2>(Node, nsteps, dt) {};
 
   /**
    * @brief Costruct new moment tensor source using forcing function
@@ -78,7 +78,8 @@ public:
       std::unique_ptr<specfem::forcing_function::stf> forcing_function,
       const specfem::wavefield::simulation_field wavefield_type)
       : Mxx(Mxx), Mzz(Mzz), Mxz(Mxz), wavefield_type(wavefield_type),
-        tensor_source(x, z, std::move(forcing_function)) {};
+        tensor_source<specfem::dimension::type::dim2>(
+            x, z, std::move(forcing_function)) {};
 
   /**
    * @brief User output
