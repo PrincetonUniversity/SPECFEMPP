@@ -82,23 +82,21 @@
 
 #define _DATA_CONSTRUCTORS(seq)                                                \
   data_container() = default;                                                  \
+  template <specfem::dimension::type U = dimension_tag,                        \
+            std::enable_if_t<U == specfem::dimension::type::dim2, int> = 0>    \
   data_container(const int nspec, const int ngllz, const int ngllx)            \
       : BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW, _, seq)),            \
         BOOST_PP_SEQ_ENUM(                                                     \
-            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {             \
-    static_assert(dimension_tag == specfem::dimension::type::dim2,             \
-                  "Calling 2D constructor from non-2D container");             \
-  }                                                                            \
+            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {}            \
+  template <specfem::dimension::type U = dimension_tag,                        \
+            std::enable_if_t<U == specfem::dimension::type::dim3, int> = 0>    \
   data_container(const int nspec, const int ngllz, const int nglly,            \
                  const int ngllx)                                              \
       : BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW, _, seq)),            \
         BOOST_PP_SEQ_ENUM(                                                     \
-            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {             \
-    static_assert(dimension_tag == specfem::dimension::type::dim3,             \
-                  "Calling 3D constructor from non-3D container");             \
-  }
+            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {}
 
 #define _SYNC_DEVICE(r, data, elem)                                            \
   specfem::kokkos::deep_copy(BOOST_PP_SEQ_ELEM(0, elem),                       \
