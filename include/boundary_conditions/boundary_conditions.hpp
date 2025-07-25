@@ -66,12 +66,10 @@ compute_mass_matrix_terms(const type_real dt, const PointBoundaryType &boundary,
                     specfem::data_access::is_boundary<PointBoundaryType>::value,
                 "PointBoundaryType must be a PointBoundaryType");
 
-  static_assert(specfem::data_access::is_point<PointMassMatrixType>::value &&
-                    specfem::data_access::is_field<PointMassMatrixType>::value,
-                "PointMassMatrixType must be a PointFieldType");
-
-  static_assert(PointMassMatrixType::store_mass_matrix,
-                "PointMassMatrixType must store mass matrix");
+  static_assert(
+      specfem::data_access::is_point<PointMassMatrixType>::value &&
+          specfem::data_access::is_field_l<PointMassMatrixType>::value,
+      "PointMassMatrixType must be a PointFieldType");
 
   using boundary_tag_type =
       std::integral_constant<specfem::element::boundary_tag,
