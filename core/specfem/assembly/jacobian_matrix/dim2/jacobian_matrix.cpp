@@ -55,14 +55,17 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
         const int ispec = teamMember.league_rank();
 
         //----- Load coorgx, coorgz in level 0 cache to be utilized later
-        specfem::kokkos::HostView2d<type_real> s_coorg("s_coorg", 2, ngnod);
+        Kokkos::View<
+            point::global_coordinates<specfem::dimension::type::dim2> *,
+            Kokkos::HostSpace>
+            coorg("coorg", ngnod);
 
         // This loop is not vectorizable because access to coorg via
         // knods(ispec, in) is not vectorizable
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(teamMember, ngnod), [&](const int in) {
-              s_coorg(0, in) = mesh.h_control_node_coord(0, ispec, in);
-              s_coorg(1, in) = mesh.h_control_node_coord(1, ispec, in);
+              coorg(in).x = mesh.h_control_node_coord(0, ispec, in);
+              coorg(in).z = mesh.h_control_node_coord(1, ispec, in);
             });
 
         teamMember.team_barrier();
@@ -82,14 +85,14 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
                 }
               }
 
-              auto [xix, gammax, xiz, gammaz, jacobian] =
-                  jacobian::compute_derivatives(s_coorg, ngnod, sv_dershape2D);
+              auto jacobian =
+                  jacobian::compute_derivatives(coorg, ngnod, sv_dershape2D);
 
-              this->h_xix(ispec, iz, ix) = xix;
-              this->h_gammax(ispec, iz, ix) = gammax;
-              this->h_xiz(ispec, iz, ix) = xiz;
-              this->h_gammaz(ispec, iz, ix) = gammaz;
-              this->h_jacobian(ispec, iz, ix) = jacobian;
+              this->h_xix(ispec, iz, ix) = jacobian.xix;
+              this->h_gammax(ispec, iz, ix) = jacobian.gammax;
+              this->h_xiz(ispec, iz, ix) = jacobian.xiz;
+              this->h_gammaz(ispec, iz, ix) = jacobian.gammaz;
+              this->h_jacobian(ispec, iz, ix) = jacobian.jacobian;
             });
       });
 
