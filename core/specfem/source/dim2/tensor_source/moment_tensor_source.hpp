@@ -5,7 +5,7 @@
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
-#include "specfem/source/tensor_source.hpp"
+#include "specfem/source.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -18,7 +18,9 @@ namespace sources {
  * @brief Moment-tensor source
  *
  */
-class moment_tensor : public tensor_source {
+template <>
+class moment_tensor<specfem::dimension::type::dim2>
+    : public tensor_source<specfem::dimension::type::dim2> {
 
 public:
   /**
@@ -88,8 +90,10 @@ public:
     return wavefield_type;
   }
 
-  bool operator==(const specfem::sources::source &other) const override;
-  bool operator!=(const specfem::sources::source &other) const override;
+  bool operator==(const specfem::sources::source<specfem::dimension::type::dim2>
+                      &other) const override;
+  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
+                      &other) const override;
 
   /**
    * @brief Get the source tensor

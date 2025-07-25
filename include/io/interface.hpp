@@ -97,10 +97,12 @@ read_receivers(const YAML::Node &stations, const type_real angle);
  * @return std::vector<specfem::sources::source *> vector of instantiated source
  * objects
  */
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
-read_sources(const std::string sources_file, const int nsteps,
-             const type_real user_t0, const type_real dt,
-             const specfem::simulation::type simulation_type);
+std::tuple<std::vector<std::shared_ptr<
+               specfem::sources::source<specfem::dimension::type::dim2> > >,
+           type_real>
+read_2d_sources(const std::string sources_file, const int nsteps,
+                const type_real user_t0, const type_real dt,
+                const specfem::simulation::type simulation_type);
 
 /**
  * @brief Read sources file written in .yml format
@@ -116,10 +118,12 @@ read_sources(const std::string sources_file, const int nsteps,
  * @return std::vector<specfem::sources::source *> vector of instantiated source
  * objects
  */
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
-read_sources(const YAML::Node yaml, const int nsteps, const type_real user_t0,
-             const type_real dt,
-             const specfem::simulation::type simulation_type);
+std::tuple<std::vector<std::shared_ptr<
+               specfem::sources::source<specfem::dimension::type::dim2> > >,
+           type_real>
+read_2d_sources(const YAML::Node yaml, const int nsteps,
+                const type_real user_t0, const type_real dt,
+                const specfem::simulation::type simulation_type);
 
 } // namespace io
 } // namespace specfem

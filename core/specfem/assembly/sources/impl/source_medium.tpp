@@ -6,10 +6,9 @@
 #include "specfem/assembly/compute_source_array.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag>
+template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_medium(
-    const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    const std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > > &sources,
     const specfem::assembly::mesh<dimension_tag> &mesh,
     const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
     const specfem::assembly::element_types<dimension_tag> &element_types, const type_real t0,
@@ -37,7 +36,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
     sources[isource]->compute_source_time_function(t0, dt, nsteps,
                                                    sv_stf_array);
     specfem::point::global_coordinates<dimension_tag> coord(
-        sources[isource]->get_x(), sources[isource]->get_z());
+        sources[isource]->get_coords());
 
     auto lcoord = specfem::algorithms::locate_point(coord, mesh);
     this->h_source_index_mapping(isource) = lcoord.ispec;
