@@ -50,4 +50,3 @@ TYPED_TEST(SourceTest, Type) {
     test_source<DimensionTag, SourceType>(parameters, solution);
   }
 }
-g
