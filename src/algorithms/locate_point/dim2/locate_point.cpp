@@ -208,6 +208,7 @@ specfem::algorithms::locate_point(
   return { x, z };
 }
 
+// Except for the tests this function is not used in the codebase.
 specfem::point::global_coordinates<specfem::dimension::type::dim2>
 specfem::algorithms::locate_point(
     const specfem::kokkos::HostTeam::member_type &team_member,
