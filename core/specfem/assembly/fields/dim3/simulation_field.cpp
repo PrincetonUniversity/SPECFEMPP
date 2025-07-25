@@ -3,7 +3,7 @@
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/fields/impl/field_impl.tpp"
 
-// Explcitly instantiate the template class
+// Explicitly instantiate the template class
 template class specfem::assembly::simulation_field<
     specfem::dimension::type::dim3,
     specfem::wavefield::simulation_field::forward>;
