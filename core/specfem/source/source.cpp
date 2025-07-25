@@ -54,7 +54,7 @@ void specfem::sources::source::set_medium_tag(
           << "  Global (x,z):     " << "(" << this->x << "," << this->z << ")\n"
           << "  Local (xi,gamma)  " << "(" << this->xi << "," << this->gamma
           << ")\n"
-          << "Supported media:";
+          << "Supported media:\n";
   for (auto &supported_medium : supported_media_list) {
     message << "  - " << specfem::element::to_string(supported_medium) << "\n";
   }

@@ -191,7 +191,8 @@ public:
 
 protected:
   // Read-only member variables
-  std::string name;
+  std::string name = "base_source, if this was printed, you are not using the "
+                     "correct source class";
   type_real x; ///< x-coordinate of source
   type_real z; ///< z-coordinate of source
   std::unique_ptr<specfem::forcing_function::stf>
