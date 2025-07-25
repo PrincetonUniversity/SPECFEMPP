@@ -673,5 +673,5 @@ specfem::boundary_conditions::impl_compute_mass_matrix_terms(
   impl_enforce_traction(
       std::integral_constant<specfem::element::medium_tag, MediumTag>{},
       std::integral_constant<specfem::element::property_tag, PropertyTag>{},
-      boundary, property, velocity, mass_matrix.mass_matrix);
+      boundary, property, velocity, mass_matrix);
 }

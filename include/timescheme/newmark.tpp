@@ -22,11 +22,11 @@ int corrector_phase_impl(
 #else
   constexpr bool using_simd = true;
 #endif
-  using AccelerationPointType =
+  using PointAccelerationType =
       specfem::point::acceleration<specfem::dimension::type::dim2, MediumTag,
                                    using_simd>;
 
-  using VelocityPointType =
+  using PointVelocityType =
       specfem::point::velocity<specfem::dimension::type::dim2, MediumTag,
                                using_simd>;
 
@@ -41,8 +41,8 @@ int corrector_phase_impl(
   specfem::execution::for_all(
       "specfem::TimeScheme::Newmark::corrector_phase_impl", range,
       KOKKOS_LAMBDA(const IndexType &index) {
-        AccelerationPointType acceleration;
-        VelocityPointType velocity;
+        PointAccelerationType acceleration;
+        PointVelocityType velocity;
 
         specfem::assembly::load_on_device(index, field, velocity, acceleration);
 
@@ -75,13 +75,13 @@ int predictor_phase_impl(
   constexpr bool using_simd = true;
 #endif
 
-  using AccelerationPointType =
+  using PointAccelerationType =
       specfem::point::acceleration<specfem::dimension::type::dim2, MediumTag,
                                    using_simd>;
-  using VelocityPointType =
+  using PointVelocityType =
       specfem::point::velocity<specfem::dimension::type::dim2, MediumTag,
                                using_simd>;
-  using DisplacementPointType =
+  using PointDisplacementType =
       specfem::point::displacement<specfem::dimension::type::dim2, MediumTag,
                                    using_simd>;
 
@@ -96,9 +96,9 @@ int predictor_phase_impl(
   specfem::execution::for_all(
       "specfem::TimeScheme::Newmark::corrector_phase_impl", range,
       KOKKOS_LAMBDA(const IndexType &index) {
-        DisplacementPointType displacement;
-        VelocityPointType velocity;
-        AccelerationPointType acceleration;
+        PointDisplacementType displacement;
+        PointVelocityType velocity;
+        PointAccelerationType acceleration;
 
         specfem::assembly::load_on_device(index, field, displacement, velocity,
                                           acceleration);
