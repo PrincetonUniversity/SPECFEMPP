@@ -181,7 +181,9 @@ protected:
     Iterator(
         test_configuration::Test *p_Test,
         specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh,
-        std::vector<std::shared_ptr<specfem::sources::source> > *p_sources,
+        std::vector<std::shared_ptr<
+            specfem::sources::source<specfem::dimension::type::dim2> > >
+            *p_sources,
         std::vector<std::shared_ptr<
             specfem::receivers::receiver<specfem::dimension::type::dim2> > >
             *p_stations,
@@ -193,7 +195,8 @@ protected:
 
     std::tuple<test_configuration::Test,
                specfem::mesh::mesh<specfem::dimension::type::dim2>,
-               std::vector<std::shared_ptr<specfem::sources::source> >,
+               std::vector<std::shared_ptr<
+                   specfem::sources::source<specfem::dimension::type::dim2> > >,
                std::vector<std::shared_ptr<specfem::receivers::receiver<
                    specfem::dimension::type::dim2> > >,
                std::string,
@@ -224,7 +227,8 @@ protected:
   private:
     test_configuration::Test *p_Test;
     specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh;
-    std::vector<std::shared_ptr<specfem::sources::source> > *p_sources;
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > > *p_sources;
     std::vector<std::shared_ptr<
         specfem::receivers::receiver<specfem::dimension::type::dim2> > >
         *p_stations;
@@ -247,7 +251,9 @@ protected:
 
   std::vector<test_configuration::Test> Tests;
   std::vector<specfem::mesh::mesh<specfem::dimension::type::dim2> > Meshes;
-  std::vector<std::vector<std::shared_ptr<specfem::sources::source> > > Sources;
+  std::vector<std::vector<std::shared_ptr<
+      specfem::sources::source<specfem::dimension::type::dim2> > > >
+      Sources;
   std::vector<std::vector<std::shared_ptr<
       specfem::receivers::receiver<specfem::dimension::type::dim2> > > >
       Stations;

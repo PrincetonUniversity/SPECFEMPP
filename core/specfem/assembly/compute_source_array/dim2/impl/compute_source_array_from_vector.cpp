@@ -12,7 +12,8 @@
 template <>
 void specfem::assembly::compute_source_array_impl::from_vector<
     specfem::dimension::type::dim2>(
-    const specfem::sources::vector_source &vector_source,
+    const specfem::sources::vector_source<specfem::dimension::type::dim2>
+        &vector_source,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   const int ngllx = source_array.extent(2);

@@ -5,6 +5,7 @@
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem/source.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -14,16 +15,7 @@
 namespace specfem {
 namespace sources {
 
-enum class source_type {
-  vector_source, ///< Vector source
-  tensor_source, ///< Tensor source
-};
-
-/**
- * @brief Base source class
- *
- */
-class source {
+template <> class source<specfem::dimension::type::dim2> {
 
 public:
   /**
@@ -66,6 +58,19 @@ public:
    * @return type_real z-coordinate
    */
   type_real get_z() const { return z; }
+
+  /**
+   * @brief Get coordinates as a Kokkos array
+   *
+   * @return Kokkos::View<type_real[2], Kokkos::HostSpace> coordinates array [x,
+   * z]
+   */
+  Kokkos::View<type_real[2], Kokkos::HostSpace> get_coords() const {
+    Kokkos::View<type_real[2], Kokkos::HostSpace> coords("coords");
+    coords[0] = x;
+    coords[1] = z;
+    return coords;
+  }
 
   /**
    * @brief Get the value of t0 from the specfem::stf::stf object

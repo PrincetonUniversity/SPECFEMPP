@@ -11,6 +11,7 @@ void locate_sources(
     const specfem::assembly::element_types<specfem::dimension::type::dim2>
         &element_types,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    std::vector<std::shared_ptr<specfem::sources::source> > &sources);
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > > &sources);
 
 } // namespace specfem::assembly::sources_impl

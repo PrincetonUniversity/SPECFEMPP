@@ -27,7 +27,7 @@ namespace specfem::assembly {
  */
 template <specfem::dimension::type DimensionTag>
 void compute_source_array(
-    const std::shared_ptr<specfem::sources::source> &source,
+    const std::shared_ptr<specfem::sources::source<DimensionTag> > &source,
     const specfem::assembly::mesh<DimensionTag> &mesh,
     const specfem::assembly::jacobian_matrix<DimensionTag> &jacobian_matrix,
     specfem::kokkos::HostView3d<type_real> source_array);

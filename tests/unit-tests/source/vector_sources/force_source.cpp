@@ -106,7 +106,7 @@ TEST(SOURCES, force_source_vector) {
     SCOPED_TRACE("Testing force source for: " + params.name);
 
     // Create a force source
-    specfem::sources::force force_source(
+    specfem::sources::force<specfem::dimension::type::dim2> force_source(
         params.x, params.z, params.angle,
         std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
                                                             1.0, false),

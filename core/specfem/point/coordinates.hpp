@@ -68,6 +68,21 @@ template <> struct local_coordinates<specfem::dimension::type::dim2> {
   local_coordinates(const int &ispec, const type_real &xi,
                     const type_real &gamma)
       : ispec(ispec), xi(xi), gamma(gamma) {}
+
+  /**
+   * @brief Construct a new local coordinates object from element index and
+   * Kokkos array
+   *
+   * @param ispec Index of the spectral element
+   * @param coords Kokkos 1D array containing [xi, gamma] coordinates
+   */
+  template <typename ViewType>
+  KOKKOS_FUNCTION local_coordinates(const int &ispec, const ViewType &coords)
+      : ispec(ispec), xi(coords[0]), gamma(coords[1]) {
+    static_assert(ViewType::rank == 1, "ViewType must be rank 1");
+    static_assert(ViewType::static_extent(0) == 2,
+                  "ViewType must have extent 2 for 2D coordinates");
+  }
 };
 
 /**
@@ -93,6 +108,19 @@ template <> struct global_coordinates<specfem::dimension::type::dim2> {
    */
   KOKKOS_FUNCTION
   global_coordinates(const type_real &x, const type_real &z) : x(x), z(z) {}
+
+  /**
+   * @brief Construct a new global coordinates object from Kokkos array
+   *
+   * @param coords Kokkos 1D array containing [x, z] coordinates
+   */
+  template <typename ViewType>
+  KOKKOS_FUNCTION global_coordinates(const ViewType &coords)
+      : x(coords[0]), z(coords[1]) {
+    static_assert(ViewType::rank == 1, "ViewType must be rank 1");
+    static_assert(ViewType::static_extent(0) == 2,
+                  "ViewType must have extent 2 for 2D coordinates");
+  }
 };
 
 //-------------------------- 3D Specializations ------------------------------//
@@ -126,6 +154,21 @@ template <> struct local_coordinates<specfem::dimension::type::dim3> {
   local_coordinates(const int &ispec, const type_real &xi, const type_real &eta,
                     const type_real &gamma)
       : ispec(ispec), xi(xi), eta(eta), gamma(gamma) {}
+
+  /**
+   * @brief Construct a new local coordinates object from element index and
+   * Kokkos array
+   *
+   * @param ispec Index of the spectral element
+   * @param coords Kokkos 1D array containing [xi, eta, gamma] coordinates
+   */
+  template <typename ViewType>
+  KOKKOS_FUNCTION local_coordinates(const int &ispec, const ViewType &coords)
+      : ispec(ispec), xi(coords[0]), eta(coords[1]), gamma(coords[2]) {
+    static_assert(ViewType::rank == 1, "ViewType must be rank 1");
+    static_assert(ViewType::static_extent(0) == 3,
+                  "ViewType must have extent 3 for 3D coordinates");
+  }
 };
 
 /**
@@ -154,6 +197,19 @@ template <> struct global_coordinates<specfem::dimension::type::dim3> {
   KOKKOS_FUNCTION
   global_coordinates(const type_real &x, const type_real &y, const type_real &z)
       : x(x), y(y), z(z) {}
+
+  /**
+   * @brief Construct a new global coordinates object from Kokkos array
+   *
+   * @param coords Kokkos 1D array containing [x, y, z] coordinates
+   */
+  template <typename ViewType>
+  KOKKOS_FUNCTION global_coordinates(const ViewType &coords)
+      : x(coords[0]), y(coords[1]), z(coords[2]) {
+    static_assert(ViewType::rank == 1, "ViewType must be rank 1");
+    static_assert(ViewType::static_extent(0) == 3,
+                  "ViewType must have extent 3 for 3D coordinates");
+  }
 };
 
 } // namespace point

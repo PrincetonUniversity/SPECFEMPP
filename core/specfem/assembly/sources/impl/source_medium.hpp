@@ -86,7 +86,8 @@ public:
    * @param nsteps Number of time steps
    */
   source_medium(
-      const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+      const std::vector<
+          std::shared_ptr<specfem::sources::source<dimension_tag> > > &sources,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::element_types<dimension_tag> &element_types,

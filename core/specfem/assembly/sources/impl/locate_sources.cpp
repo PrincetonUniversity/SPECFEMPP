@@ -9,7 +9,8 @@ void specfem::assembly::sources_impl::locate_sources(
     const specfem::assembly::element_types<specfem::dimension::type::dim2>
         &element_types,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    std::vector<std::shared_ptr<specfem::sources::source> > &sources) {
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > > &sources) {
 
   // Loop over all sources
   for (auto &source : sources) {

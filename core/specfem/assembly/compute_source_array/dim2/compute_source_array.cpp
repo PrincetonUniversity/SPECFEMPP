@@ -9,7 +9,8 @@
 
 template <>
 void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
-    const std::shared_ptr<specfem::sources::source> &source,
+    const std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
@@ -19,8 +20,8 @@ void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
   case specfem::sources::source_type::vector_source: {
 
     // Cast to derived class to access specific methods
-    auto vector_source =
-        static_cast<const specfem::sources::vector_source *>(source.get());
+    auto vector_source = static_cast<const specfem::sources::vector_source<
+        specfem::dimension::type::dim2> *>(source.get());
 
     if (!vector_source) {
       KOKKOS_ABORT_WITH_LOCATION(
@@ -35,8 +36,8 @@ void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
   case specfem::sources::source_type::tensor_source: {
 
     // Cast to derived class to access specific methods
-    auto tensor_source =
-        static_cast<const specfem::sources::tensor_source *>(source.get());
+    auto tensor_source = static_cast<const specfem::sources::tensor_source<
+        specfem::dimension::type::dim2> *>(source.get());
 
     if (!tensor_source) {
       KOKKOS_ABORT_WITH_LOCATION(
