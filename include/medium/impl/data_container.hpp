@@ -88,7 +88,7 @@
         BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {             \
     static_assert(dimension_tag == specfem::dimension::type::dim2,             \
-                  "Calling a 2D constructor from non-2D container");           \
+                  "Calling 2D constructor from non-2D container");             \
   }                                                                            \
   data_container(const int nspec, const int ngllz, const int nglly,            \
                  const int ngllx)                                              \
@@ -97,7 +97,7 @@
         BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {             \
     static_assert(dimension_tag == specfem::dimension::type::dim3,             \
-                  "Calling a 3D constructor from non-3D container");           \
+                  "Calling 3D constructor from non-3D container");             \
   }
 
 #define _SYNC_DEVICE(r, data, elem)                                            \
@@ -180,7 +180,17 @@
  *     : rho("rho", nspec, ngllz, ngllx),
  *       kappa("kappa", nspec, ngllz, ngllx),
  *       h_rho(specfem::kokkos::create_mirror_view(rho)),
- *       h_kappa(specfem::kokkos::create_mirror_view(kappa)) {}
+ *       h_kappa(specfem::kokkos::create_mirror_view(kappa)) {
+ *  static_assert(dimension_tag == specfem::dimension::type::dim2,
+ *                "Calling 2D constructor from non-2D container");
+ * }
+ * data_container(const int nspec, const int ngllz, const int nglly, const int
+ * ngllx) : rho("rho", nspec, ngllz, ngllx), kappa("kappa", nspec, ngllz,
+ * ngllx), h_rho(specfem::kokkos::create_mirror_view(rho)),
+ *       h_kappa(specfem::kokkos::create_mirror_view(kappa)) {
+ *  static_assert(dimension_tag == specfem::dimension::type::dim3,
+ *                "Calling 3D constructor from non-3D container");
+ * }
  * template <typename FunctorType, typename IndexType>
  * KOKKOS_INLINE_FUNCTION
  * void for_each_on_device(const IndexType &index, FunctorType f) const {
