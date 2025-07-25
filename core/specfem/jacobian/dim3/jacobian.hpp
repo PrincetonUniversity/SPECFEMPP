@@ -54,7 +54,7 @@ compute_locations(
  * z) \f$
  */
 specfem::point::jacobian_matrix<specfem::dimension::type::dim3, true, false>
-compute_derivatives(
+compute_jacobian(
     const Kokkos::View<
         point::global_coordinates<specfem::dimension::type::dim3> *,
         Kokkos::HostSpace> &coorg,

@@ -23,7 +23,7 @@ specfem::jacobian::compute_locations(
 }
 
 specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true, false>
-specfem::jacobian::compute_derivatives(
+specfem::jacobian::compute_jacobian(
     const Kokkos::View<
         point::global_coordinates<specfem::dimension::type::dim2> *,
         Kokkos::HostSpace> &coorg,
@@ -52,12 +52,12 @@ specfem::jacobian::compute_derivatives(
 }
 
 specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true, false>
-specfem::jacobian::compute_derivatives(
+specfem::jacobian::compute_jacobian(
     const Kokkos::View<
         point::global_coordinates<specfem::dimension::type::dim2> *,
         Kokkos::HostSpace> &coorg,
     const int ngnod, const type_real xi, const type_real gamma) {
   const auto dershape2D =
       specfem::shape_function::shape_function_derivatives(xi, gamma, ngnod);
-  return specfem::jacobian::compute_derivatives(coorg, ngnod, dershape2D);
+  return specfem::jacobian::compute_jacobian(coorg, ngnod, dershape2D);
 }

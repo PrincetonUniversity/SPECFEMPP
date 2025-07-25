@@ -93,14 +93,14 @@ std::tuple<type_real, type_real> get_best_location(
 
   for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
     auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma);
-    auto derivatives =
-        specfem::jacobian::compute_derivatives(coorg, ngnod, xi, gamma);
+    auto jacobian =
+        specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma);
 
     type_real dx = -(loc.x - global.x);
     type_real dz = -(loc.z - global.z);
 
-    type_real dxi = derivatives.xix * dx + derivatives.xiz * dz;
-    type_real dgamma = derivatives.gammax * dx + derivatives.gammaz * dz;
+    type_real dxi = jacobian.xix * dx + jacobian.xiz * dz;
+    type_real dgamma = jacobian.gammax * dx + jacobian.gammaz * dz;
 
     xi += dxi;
     gamma += dgamma;

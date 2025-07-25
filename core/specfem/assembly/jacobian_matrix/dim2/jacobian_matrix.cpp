@@ -86,7 +86,7 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
               }
 
               auto jacobian =
-                  jacobian::compute_derivatives(coorg, ngnod, sv_dershape2D);
+                  jacobian::compute_jacobian(coorg, ngnod, sv_dershape2D);
 
               this->h_xix(ispec, iz, ix) = jacobian.xix;
               this->h_gammax(ispec, iz, ix) = jacobian.gammax;
