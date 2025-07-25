@@ -51,14 +51,14 @@ compute_locations(
  * \partial \xi/ \partial z, \partial \gamma/ \partial z) \f$
  */
 specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true, false>
-compute_derivatives(
+compute_jacobian(
     const Kokkos::View<
         point::global_coordinates<specfem::dimension::type::dim2> *,
         Kokkos::HostSpace> &coorg,
     const int ngnod, const type_real xi, const type_real gamma);
 
 specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true, false>
-compute_derivatives(
+compute_jacobian(
     const Kokkos::View<
         point::global_coordinates<specfem::dimension::type::dim2> *,
         Kokkos::HostSpace> &coorg,
