@@ -6,9 +6,8 @@
 namespace specfem {
 namespace sources {
 
-template <>
-class vector_source<specfem::dimension::type::dim3>
-    : public source<specfem::dimension::type::dim3> {
+template <specfem::dimension::type DimensionTag>
+class vector_source : public source<DimensionTag> {
 
 public:
   /**
@@ -18,18 +17,36 @@ public:
   vector_source() {};
 
   /**
-   * @brief Construct a new vector source object using the forcing function
+   * @brief Construct a new 2D vector source object using the forcing function
    *
+   * @param x x-coordinate of source
+   * @param z z-coordinate of source
+   * @param forcing_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  template <specfem::dimension::type U = DimensionTag,
+            typename std::enable_if<U == specfem::dimension::type::dim2>::type
+                * = nullptr>
+  vector_source(
+      type_real x, type_real z,
+      std::unique_ptr<specfem::forcing_function::stf> forcing_function)
+      : source<DimensionTag>(x, z, std::move(forcing_function)){};
+
+  /**
+   * @brief Construct a new 3D vector source object using the forcing function
    * @param x x-coordinate of source
    * @param y y-coordinate of source
    * @param z z-coordinate of source
    * @param forcing_function pointer to source time function
    * @param wavefield_type type of wavefield
    */
+  template <specfem::dimension::type U = DimensionTag,
+            typename std::enable_if<U == specfem::dimension::type::dim3>::type
+                * = nullptr>
   vector_source(
       type_real x, type_real y, type_real z,
       std::unique_ptr<specfem::forcing_function::stf> forcing_function)
-      : source(x, y, z, std::move(forcing_function)) {};
+      : source<DimensionTag>(x, y, z, std::move(forcing_function)){};
 
   /**
    * @brief Construct a new vector source object from a YAML node and time steps
@@ -40,7 +57,7 @@ public:
    * @param wavefield_type Type of wavefield on which the source acts
    */
   vector_source(YAML::Node &Node, const int nsteps, const type_real dt)
-      : source(Node, nsteps, dt) {};
+      : source<DimensionTag>(Node, nsteps, dt) {};
 
   /**
    * @brief Get the source type object

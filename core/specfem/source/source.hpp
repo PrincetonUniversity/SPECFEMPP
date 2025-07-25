@@ -215,13 +215,4 @@ protected:
   specfem::element::medium_tag medium_tag;
 };
 
-// // Explicit specialization declarations
-// template <>
-// source<specfem::dimension::type::dim2>::source(
-//     YAML::Node &Node, const int nsteps, const type_real dt);
-
-// template <>
-// source<specfem::dimension::type::dim3>::source(
-//     YAML::Node &Node, const int nsteps, const type_real dt);
-
 } // namespace specfem::sources
