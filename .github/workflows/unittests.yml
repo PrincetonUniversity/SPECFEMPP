@@ -23,5 +23,5 @@ jobs:
       - name: Build
         run: cmake --build --preset release -j 4
       - name: Run all tests
-        run: cd build/tests/unit-tests
+        run: cd build/release/tests/unit-tests
           && ctest --verbose
