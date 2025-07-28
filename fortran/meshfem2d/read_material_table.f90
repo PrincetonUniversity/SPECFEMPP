@@ -70,76 +70,8 @@ subroutine read_material_table()
   ! safety check
   if (nbmodels <= 0) call stop_the_code('Non-positive number of materials not allowed!')
 
-   ! allocates and initializes material arrays
-   call initialize_material_properties()
-
-   !  ! allocates material tables
-   !  allocate(icodemat(nbmodels))
-   !  allocate(cp(nbmodels))
-   !  allocate(cs(nbmodels))
-
-   !  allocate(aniso3(nbmodels))
-   !  allocate(aniso4(nbmodels))
-   !  allocate(aniso5(nbmodels))
-   !  allocate(aniso6(nbmodels))
-   !  allocate(aniso7(nbmodels))
-   !  allocate(aniso8(nbmodels))
-   !  allocate(aniso9(nbmodels))
-   !  allocate(aniso10(nbmodels))
-   !  allocate(aniso11(nbmodels))
-   !  allocate(aniso12(nbmodels))
-
-   !  allocate(comp_g(nbmodels))
-   !  allocate(QKappa(nbmodels))
-   !  allocate(Qmu(nbmodels))
-
-   !  allocate(rho_s_read(nbmodels))
-   !  allocate(rho_f_read(nbmodels))
-
-   !  allocate( phi_read(nbmodels), &
-   !     tortuosity_read(nbmodels), &
-   !     permxx_read(nbmodels), &
-   !     permxz_read(nbmodels), &
-   !     permzz_read(nbmodels), &
-   !     kappa_s_read(nbmodels), &
-   !     kappa_f_read(nbmodels), &
-   !     kappa_fr_read(nbmodels), &
-   !     eta_f_read(nbmodels), &
-   !     mu_fr_read(nbmodels))
-
-   !  ! initializes material properties
-   !  icodemat(:) = 0
-
-   !  cp(:) = 0.d0
-   !  cs(:) = 0.d0
-
-   !  aniso3(:) = 0.d0
-   !  aniso4(:) = 0.d0
-   !  aniso5(:) = 0.d0
-   !  aniso6(:) = 0.d0
-   !  aniso7(:) = 0.d0
-   !  aniso8(:) = 0.d0
-   !  aniso9(:) = 0.d0
-   !  aniso10(:) = 0.d0
-   !  aniso11(:) = 0.d0
-
-   !  comp_g(:) = 0.0d0
-   !  QKappa(:) = 9999.d0
-   !  Qmu(:) = 9999.d0
-
-   !  rho_s_read(:) = 0.d0
-   !  rho_f_read(:) = 0.d0
-
-   !  phi_read(:) = 0.d0
-   !  tortuosity_read(:) = 0.d0
-   !  permxx_read(:) = 0.d0
-   !  permxz_read(:) = 0.d0
-   !  permzz_read(:) = 0.d0
-   !  kappa_s_read(:) = 0.d0
-   !  kappa_f_read(:) = 0.d0
-   !  kappa_fr_read(:) = 0.d0
-   !  eta_f_read(:) = 0.d0
-   !  mu_fr_read(:) = 0.d0
+  ! allocates and initializes material arrays
+  call initialize_material_properties()
 
   number_of_materials_defined_by_tomo_file = 0
 
@@ -348,7 +280,8 @@ subroutine initialize_material_properties()
     use shared_parameters, only: nbmodels, &
                                  icodemat,comp_g
     ! isotropy
-    use shared_parameters, only: cp,cs
+    use shared_parameters, only: cp,cs, compaction_grad
+
     ! anisotropy
     use shared_parameters, only: aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12
     ! elastic spin
@@ -375,6 +308,7 @@ subroutine initialize_material_properties()
     allocate(icodemat(nbmodels))
     allocate(cp(nbmodels))
     allocate(cs(nbmodels))
+    allocate(compaction_grad(nbmodels))
     allocate(aniso3(nbmodels))
     allocate(aniso4(nbmodels))
     allocate(aniso5(nbmodels))

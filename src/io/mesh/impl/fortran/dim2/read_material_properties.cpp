@@ -489,11 +489,16 @@ void read_material_indices(
                                    &pml_read);
 
     if (n < 1 || n > nspec) {
-      throw std::runtime_error("Error reading material indices");
+      throw std::runtime_error("Error reading material indices value n");
     }
 
     if (kmato_read < 1 || kmato_read > numat) {
-      throw std::runtime_error("Error reading material indices");
+      std::ostringstream message;
+      message << "Error reading material indices value kmato_read\n"
+              << "  Material indices for element " << n << ":\n"
+              << "    numat: " << numat << "\n"
+              << "    Material ID: " << kmato_read << "\n";
+      throw std::runtime_error(message.str());
     }
 
     for (int i = 0; i < ngnod; i++) {
