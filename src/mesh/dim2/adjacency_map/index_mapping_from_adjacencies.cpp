@@ -93,13 +93,15 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
     for (int iz = 0; iz < ngll; iz++) {
       for (int ispec = 0; ispec < nspec; ispec++) {
         if (inds(ispec, iz, ix) >= 0) {
-          // already set this one through an adjacency.
+          // already set this one through an adjacency in logic below.
           continue;
         }
         inds(ispec, iz, ix) = nglob;
 
-        // send this value to all conforming adjacencies to this node.
-
+        /*
+         * Set inds(...) of local indices that are conformally adjacent to
+         * (ispec,iz,ix). This is only for edge / corner nodes.
+         */
         if (ix == 0) {
           if (iz == 0) {
             generate_assembly_mapping__push_adjacencies_to_corner<
