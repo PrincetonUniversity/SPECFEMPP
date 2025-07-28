@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/assembly/fields.hpp"
-#include "specfem/assembly/fields/impl/add_on_device.hpp"
+#include "specfem/assembly/fields/impl/add_access_functions.hpp"
 #include "specfem/assembly/fields/impl/check_accessor_compatibility.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>

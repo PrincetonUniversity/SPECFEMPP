@@ -16,10 +16,10 @@ private:
   using base_type =
       specfem::data_access::Accessor<specfem::data_access::AccessorType::point,
                                      DataClass, DimensionTag, UseSIMD>;
-  constexpr static int components =
-      specfem::element::attributes<DimensionTag, MediumTag>::components;
 
 public:
+  constexpr static int components =
+      specfem::element::attributes<DimensionTag, MediumTag>::components;
   using simd = typename base_type::template simd<type_real>; ///< SIMD type
   using value_type =
       typename base_type::template vector_type<type_real, components>;
@@ -31,11 +31,23 @@ private:
 public:
   KOKKOS_FORCEINLINE_FUNCTION field() = default;
 
-  KOKKOS_FORCEINLINE_FUNCTION constexpr
-  field(const typename value_type::value_type initializer) {
+  KOKKOS_FORCEINLINE_FUNCTION const value_type &get_data() const {
+    return m_data;
+  }
+
+  template <
+      typename U,
+      std::enable_if_t<
+          std::is_convertible_v<U, typename value_type::value_type>, int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION constexpr field(const U initializer) {
     for (std::size_t icomp = 0; icomp < components; ++icomp)
       m_data(icomp) = initializer;
   }
+
+  template <typename U, typename... Args,
+            typename = std::enable_if_t<std::is_same_v<U, value_type>, int> >
+  KOKKOS_FORCEINLINE_FUNCTION constexpr field(const U &initializer)
+      : m_data(initializer) {}
 
   template <typename... Args,
             typename = std::enable_if_t<sizeof...(Args) == components> >

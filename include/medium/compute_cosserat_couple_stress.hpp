@@ -31,7 +31,7 @@ assert_types(const std::integral_constant<bool, true>) {
 
   static_assert(
       specfem::data_access::is_point<PointAccelerationType>::value &&
-          specfem::data_access::is_field<PointAccelerationType>::value,
+          specfem::data_access::is_field_l<PointAccelerationType>::value,
       "point_acceleration is not a point field type");
 
   static_assert(

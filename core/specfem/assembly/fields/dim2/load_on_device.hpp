@@ -1,9 +1,9 @@
 #pragma once
 
-#include "impl/load_on_device.hpp"
+#include "impl/load_access_functions.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/fields/impl/check_accessor_compatibility.hpp"
-#include "specfem/assembly/fields/impl/load_on_device.hpp"
+#include "specfem/assembly/fields/impl/load_access_functions.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -48,8 +48,8 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
 
   using simd_accessor_type =
       std::integral_constant<bool, IndexType::using_simd>;
-  simulation_field_impl::load_on_device(simd_accessor_type(), index, field,
-                                        accessors...);
+  simulation_field_impl::load_after_simd_dispatch<true>(
+      simd_accessor_type(), index, field, accessors...);
   return;
 }
 } // namespace specfem::assembly

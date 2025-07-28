@@ -102,8 +102,9 @@ struct is_index_type : std::false_type {};
 
 template <typename T>
 struct is_index_type<
-    T, std::enable_if_t<T::data_class ==
-                        specfem::data_access::DataClassType::index> >
+    T, std::enable_if_t<
+           T::data_class == specfem::data_access::DataClassType::index ||
+           T::data_class == specfem::data_access::DataClassType::mapped_index> >
     : std::true_type {};
 
 template <typename T, typename = void>

@@ -27,7 +27,7 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
 
   static_assert(
       specfem::data_access::is_point<PointDisplacementType>::value &&
-          specfem::data_access::is_field<PointDisplacementType>::value,
+          specfem::data_access::is_field_l<PointDisplacementType>::value,
       "point_displacement is not a point field type");
 
   static_assert(PointPropertiesType::dimension_tag ==
