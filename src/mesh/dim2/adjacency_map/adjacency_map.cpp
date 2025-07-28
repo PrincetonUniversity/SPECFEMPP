@@ -418,27 +418,67 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
     get_all_conforming_adjacencies(
         const int ispec_start,
         const specfem::enums::boundaries::type bdry_start) const {
+  // return value: fill `adj` with the conforming adjacencies
   std::set<std::pair<int, specfem::enums::boundaries::type> > adj;
+
+  // container for the boundary we are currently interested in. The first one is
+  // the argument
   auto bd = std::make_pair(ispec_start, bdry_start);
   adj.insert(bd);
 
-  // expand region by taking corner/edge adjacencies
+  /* expand "region" by taking corner/edge adjacencies. The conforming adjacency
+   * graph for this geometry:
+   * ┌───┐
+   * │   ├───┬────┐
+   * │ 0 │ 1 │  2 │
+   * └───┼───🯚────┤
+   *     🯗 3🯖 🯔 5 │
+   *    🯖   🯗4🯕   │
+   *
+   * with element conforming adjacencies 1-2, 2-5, 5-4, 4-3, and 3-1 would have
+   * conforming edge adjacencies:
+   * - {1R, 2L}
+   * - {2B, 5T}
+   * - {5L, 4T}   (4 is assumed to be rotated clockwise 45°)
+   * - {4L, 3R}
+   * - {3T, 1B}
+   *
+   * The conforming corner adjacencies would include
+   * - {1TR, 2TL}
+   * - {1BL, 3TL} (0BR excluded, since 0R-1L is not conforming)
+   * - {0BR}      (if 0B and 3L were conforming to a shared element, then this
+   *               would be in the above set.)
+   * - {1BR, 2BL, 5TL, 4TL, 3TR}
+   */
+  // this is BFS, but any algo would work, since we want a full traversal
   std::list<std::pair<int, specfem::enums::boundaries::type> > search;
   search.push_back(bd);
 
   while (!search.empty()) {
     bd = search.front();
     search.pop_front();
+
+    // we handle edges and corners differently. Corners first.
     switch (bd.second) {
+
+    /*
+     * for a given corner, search into the 2 corresponding edges. If they are
+     * conforming, then the corresponding corner to the mating edge should also
+     * be in adj.
+     */
     case enums::boundaries::type::TOP_LEFT:
+      // T is clockwise from TL
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::TOP, false>(*this, adj, search, bd);
+      // L is counter-clockwise from TL
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::LEFT, true>(*this, adj, search, bd);
       break;
     case enums::boundaries::type::BOTTOM_LEFT:
+      // L is clockwise from BL
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::LEFT, false>(*this, adj, search, bd);
+      // B is counter-clockwise from BL -- you get the idea
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::BOTTOM, true>(*this, adj, search, bd);
       break;
@@ -454,6 +494,10 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::TOP, true>(*this, adj, search, bd);
       break;
+    /*
+     * for a given edge, we only need to check if the edge is conforming. If so,
+     * add it to adj.
+     */
     case enums::boundaries::type::TOP:
       get_all_conforming_adjacencies__test_edge<
           specfem::enums::edge::type::TOP>(*this, adj, search, bd);
