@@ -26,7 +26,8 @@ KOKKOS_FORCEINLINE_FUNCTION void store_on_device(const IndexType &index,
 
   const auto &current_field = field.template get_field<MediumTag>();
 
-  fields_impl::store_on_device(index, current_field, accessors...);
+  fields_impl::store_after_field_access<true>(index, current_field,
+                                              accessors...);
 
   return;
 }

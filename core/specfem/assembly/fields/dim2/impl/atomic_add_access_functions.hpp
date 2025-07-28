@@ -41,9 +41,13 @@ atomic_add_after_simd_dispatch(const std::false_type, const IndexType &index,
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
       components;
 
+  constexpr static auto DataClass =
+      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
+
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (specfem::assembly::fields_impl::base_atomic_add_accessor<on_device>(
-         iglob, icomp, current_field, accessors),
+    (specfem::assembly::fields_impl::base_atomic_add_accessor<on_device,
+                                                              DataClass>(
+         iglob, icomp, current_field, accessors(icomp)),
      ...);
   }
 
@@ -89,11 +93,15 @@ atomic_add_after_simd_dispatch(const std::true_type, const IndexType &index,
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
       components;
 
+  constexpr static auto DataClass =
+      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
+
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (specfem::assembly::fields_impl::base_atomic_add_accessor<on_device>(
+    (specfem::assembly::fields_impl::base_atomic_add_accessor<on_device,
+                                                              DataClass>(
          iglob, icomp, [&](std::size_t lane) { return index.mask(lane); },
-         current_field, accessors),
+         current_field, accessors(icomp)),
      ...);
   }
 }
