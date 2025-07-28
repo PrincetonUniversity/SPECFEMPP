@@ -1,17 +1,16 @@
 #pragma once
 
 #include "check_accessor_compatibility.hpp"
-#include "enumerations/macros.hpp"
 #include "field_impl.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
 namespace specfem::assembly::fields_impl {
 
-template <typename ContainerType, typename AccessorType>
+template <bool on_device, typename ContainerType, typename AccessorType>
 KOKKOS_FORCEINLINE_FUNCTION void
-base_atomic_add_accessor(const int iglob, const int icomp,
-                         const ContainerType &field, AccessorType &accessor) {
+base_store_accessor(const int iglob, const int icomp,
+                    const ContainerType &field, AccessorType &accessor) {
 
   static_assert(
       !AccessorType::simd::using_simd,
@@ -24,25 +23,15 @@ base_atomic_add_accessor(const int iglob, const int icomp,
   using data_accessor =
       std::integral_constant<specfem::data_access::DataClassType,
                              AccessorType::data_class>;
-  Kokkos::atomic_add(&(field.get_value(data_accessor(), iglob, icomp)),
-                     accessor(icomp));
+  field.template get_value<on_device>(data_accessor(), iglob, icomp) =
+      accessor(icomp);
 }
 
-template <typename MaskType, typename ContainerType, typename AccessorType>
+template <bool on_device, typename MaskType, typename ContainerType,
+          typename AccessorType>
 KOKKOS_FORCEINLINE_FUNCTION void
-base_atomic_add_accessor(const int iglob, const int icomp, const MaskType &mask,
-                         const ContainerType &field, AccessorType &accessor) {
-
-  KOKKOS_ABORT_WITH_LOCATION(
-      "This function is not implemented for SIMD accessors. Use the other "
-      "overload.");
-}
-
-template <typename MaskType, typename ContainerType, typename AccessorType>
-KOKKOS_FORCEINLINE_FUNCTION void
-base_atomic_add_accessor(const int *iglob, const int icomp,
-                         const MaskType &mask, const ContainerType &field,
-                         AccessorType &accessor) {
+base_store_accessor(const int iglob, const int icomp, const MaskType &mask,
+                    const ContainerType &field, AccessorType &accessor) {
 
   static_assert(
       AccessorType::simd::using_simd,
@@ -52,26 +41,23 @@ base_atomic_add_accessor(const int *iglob, const int icomp,
       specfem::element::attributes<AccessorType::dimension_tag,
                                    AccessorType::medium_tag>::components;
 
-  using simd_type = typename AccessorType::simd::datatype;
   using data_accessor =
       std::integral_constant<specfem::data_access::DataClassType,
                              AccessorType::data_class>;
 
-  for (int lane = 0; lane < AccessorType::simd::size(); ++lane) {
-    if (mask(lane)) {
-      Kokkos::atomic_add(
-          &(field.get_value(data_accessor(), iglob[lane], icomp)),
-          accessor(icomp)[lane]);
-    }
-  }
-  return;
+  using simd_type = typename AccessorType::simd::datatype;
+
+  Kokkos::Experimental::where(mask, accessor(icomp))
+      .copy_to(
+          &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
+          typename AccessorType::simd::tag_type());
 }
 
-template <typename ContainerType, typename... AccessorTypes,
+template <bool on_device, typename ContainerType, typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_field_l<AccessorTypes>::value && ...),
               int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void atomic_add_after_simd_dispatch(
+KOKKOS_FORCEINLINE_FUNCTION void store_after_simd_dispatch(
     const std::false_type, const specfem::point::assembly_index<false> index,
     const ContainerType &field, AccessorTypes &...accessors) {
 
@@ -86,16 +72,16 @@ KOKKOS_FORCEINLINE_FUNCTION void atomic_add_after_simd_dispatch(
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_atomic_add_accessor(iglob, icomp, field, accessors), ...);
+    (base_store_accessor<on_device>(iglob, icomp, field, accessors), ...);
   }
   return;
 }
 
-template <typename ContainerType, typename... AccessorTypes,
+template <bool on_device, typename ContainerType, typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_field_l<AccessorTypes>::value && ...),
               int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void atomic_add_after_simd_dispatch(
+KOKKOS_FORCEINLINE_FUNCTION void store_after_simd_dispatch(
     std::true_type, const specfem::point::assembly_index<true> index,
     const ContainerType &field, AccessorTypes &...accessors) {
 
@@ -114,7 +100,7 @@ KOKKOS_FORCEINLINE_FUNCTION void atomic_add_after_simd_dispatch(
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_atomic_add_accessor(iglob, icomp, mask, field, accessors), ...);
+    (base_store_accessor<on_device>(iglob, icomp, mask, field, accessors), ...);
   }
   return;
 }
@@ -124,9 +110,9 @@ template <typename IndexType, typename ContainerType, typename... AccessorTypes,
               (specfem::data_access::is_assembly_index<IndexType>::value &&
                (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
               int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
-atomic_add_on_device(const IndexType &index, const ContainerType &field,
-                     AccessorTypes &...accessors) {
+KOKKOS_FORCEINLINE_FUNCTION void store_on_device(const IndexType &index,
+                                                 const ContainerType &field,
+                                                 AccessorTypes &...accessors) {
 
   check_accessor_compatibility<AccessorTypes...>();
 
@@ -134,8 +120,26 @@ atomic_add_on_device(const IndexType &index, const ContainerType &field,
       std::integral_constant<bool, IndexType::using_simd>;
 
   // Call load for each accessor
-  atomic_add_after_simd_dispatch(simd_accessor_type(), index, field,
-                                 accessors...);
+  store_after_simd_dispatch<true>(simd_accessor_type(), index, field,
+                                  accessors...);
+  return;
+}
+
+template <typename IndexType, typename ContainerType, typename... AccessorTypes,
+          typename std::enable_if_t<
+              ((specfem::data_access::is_index_type<IndexType>::value) &&
+               (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
+              int> = 0>
+void store_on_host(const IndexType &index, const ContainerType &field,
+                   AccessorTypes &...accessors) {
+
+  check_accessor_compatibility<AccessorTypes...>();
+  using simd_accessor_type =
+      std::integral_constant<bool, IndexType::using_simd>;
+
+  // Call load for each accessor
+  store_after_simd_dispatch<false>(simd_accessor_type(), index, field,
+                                   accessors...);
   return;
 }
 

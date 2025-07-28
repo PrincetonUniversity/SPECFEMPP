@@ -1,9 +1,9 @@
 #pragma once
 
-#include "impl/load_on_device.hpp"
+#include "impl/store_access_functions.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/fields/impl/check_accessor_compatibility.hpp"
-#include "specfem/assembly/fields/impl/store_on_device.hpp"
+#include "specfem/assembly/fields/impl/store_access_functions.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>

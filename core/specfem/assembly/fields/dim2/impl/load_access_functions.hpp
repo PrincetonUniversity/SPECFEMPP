@@ -1,29 +1,25 @@
 #pragma once
 
 #include "specfem/assembly/fields.hpp"
-#include "specfem/assembly/fields/impl/atomic_add_on_device.hpp"
 #include "specfem/assembly/fields/impl/check_accessor_compatibility.hpp"
 #include "specfem/assembly/fields/impl/field_impl.hpp"
+#include "specfem/assembly/fields/impl/load_access_functions.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
 namespace specfem::assembly::simulation_field_impl {
 
-template <typename IndexType, typename ContainerType, typename... AccessorTypes,
+template <bool on_device, typename IndexType, typename ContainerType,
+          typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_index_type<IndexType>::value &&
                (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-atomic_add_on_device(const std::false_type, const IndexType &index,
-                     const ContainerType &field, AccessorTypes &...accessors) {
-
-  static_assert(
-      ((specfem::data_access::CheckCompatibility<IndexType, ContainerType,
-                                                 AccessorTypes>::value) &&
-       ...),
-      "Incompatible types in atomic_add_on_device");
+load_after_simd_dispatch(const std::false_type, const IndexType &index,
+                         const ContainerType &field,
+                         AccessorTypes &...accessors) {
 
   static_assert(!IndexType::using_simd,
                 "IndexType must not use SIMD in this overload");
@@ -32,9 +28,10 @@ atomic_add_on_device(const std::false_type, const IndexType &index,
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
 
   // Check that all accessors have the same medium tag
-  fields_impl::check_accessor_compatibility<AccessorTypes...>();
+  specfem::assembly::fields_impl::check_accessor_compatibility<
+      AccessorTypes...>();
 
-  const auto &current_field = field.template get_field<MediumTag>();
+  const auto current_field = field.template get_field<MediumTag>();
 
   const int iglob = field.template get_iglob<true>(index.ispec, index.iz,
                                                    index.ix, MediumTag);
@@ -45,20 +42,24 @@ atomic_add_on_device(const std::false_type, const IndexType &index,
       components;
 
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_atomic_add_accessor(iglob, icomp, current_field, accessors), ...);
+    (specfem::assembly::fields_impl::base_load_accessor<on_device>(
+         iglob, icomp, current_field, accessors),
+     ...);
   }
 
   return;
 }
 
-template <typename IndexType, typename ContainerType, typename... AccessorTypes,
+template <bool on_device, typename IndexType, typename ContainerType,
+          typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_index_type<IndexType>::value &&
                (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-atomic_add_on_device(const std::true_type, const IndexType &index,
-                     const ContainerType &field, AccessorTypes &...accessors) {
+load_after_simd_dispatch(const std::true_type, const IndexType &index,
+                         const ContainerType &field,
+                         AccessorTypes &...accessors) {
 
   static_assert(IndexType::using_simd,
                 "IndexType must use SIMD in this overload");
@@ -67,7 +68,8 @@ atomic_add_on_device(const std::true_type, const IndexType &index,
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag;
 
   // Check that all accessors have the same medium tag
-  fields_impl::check_accessor_compatibility<AccessorTypes...>();
+  specfem::assembly::fields_impl::check_accessor_compatibility<
+      AccessorTypes...>();
 
   constexpr static int simd_size =
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::simd::size();
@@ -89,7 +91,7 @@ atomic_add_on_device(const std::true_type, const IndexType &index,
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_atomic_add_accessor(
+    (specfem::assembly::fields_impl::base_load_accessor<on_device>(
          iglob, icomp, [&](std::size_t lane) { return index.mask(lane); },
          current_field, accessors),
      ...);
