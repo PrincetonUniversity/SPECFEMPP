@@ -25,7 +25,8 @@ void store_on_host(const IndexType &index, const ContainerType &field,
 
   const auto &current_field = field.template get_field<MediumTag>();
 
-  fields_impl::store_on_host(index, current_field, accessors...);
+  fields_impl::store_after_field_access<false>(index, current_field,
+                                               accessors...);
 
   return;
 }

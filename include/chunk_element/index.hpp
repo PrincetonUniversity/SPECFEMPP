@@ -15,17 +15,13 @@ class Index
       public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::chunk_element,
           specfem::data_access::DataClassType::index, DimensionTag,
-          SIMD::value> {
+          SIMD::using_simd> {
 private:
   using base_type =
       specfem::execution::ChunkElementIndex<DimensionTag, SIMD, ViewType,
                                             TeamMemberType>; ///< Base type of
                                                              ///< the chunk
                                                              ///< element index
-  using accessor_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::chunk_element,
-      specfem::data_access::DataClassType::index, DimensionTag,
-      SIMD::value>; ///< Accessor type
 public:
   using iterator_type = typename base_type::iterator_type;
 
