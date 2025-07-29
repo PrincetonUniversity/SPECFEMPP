@@ -22,7 +22,7 @@ parameters:
         time-scheme:
           type: Newmark
           dt: 5.0e-6
-          nstep: 100000
+          nstep: 1000000
 
     simulation-mode:
       forward:
@@ -33,11 +33,12 @@ parameters:
 
 
           # Uncomment the following lines to enable display output if VTK is installed
-          # display:
-          #   format: on_screen
-          #   field: displacement
-          #   simulation-field: forward
-          #   time-interval: 10
+          display:
+            directory: "OUTPUT_FILES/display"
+            format: PNG
+            field: displacement
+            simulation-field: forward
+            time-interval: 100000
 
   receivers:
     stations: "OUTPUT_FILES/STATIONS"
