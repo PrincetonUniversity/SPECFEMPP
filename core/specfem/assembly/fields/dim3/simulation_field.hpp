@@ -78,11 +78,16 @@ public:
     this->ngllz = rhs.ngllz;
     this->nglly = rhs.nglly;
     this->ngllx = rhs.ngllx;
-    this->assembly_index_mapping = rhs.assembly_index_mapping;
-    this->h_assembly_index_mapping = rhs.h_assembly_index_mapping;
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
-        CAPTURE(field, (rhs_field, rhs.field)) { _field_ = _rhs_field_; })
+        CAPTURE(field, (rhs_field, rhs.field), assembly_index_mapping,
+                (rhs_assembly_index_mapping, rhs.assembly_index_mapping),
+                h_assembly_index_mapping,
+                (rhs_h_assembly_index_mapping, rhs.h_assembly_index_mapping)) {
+          _field_ = _rhs_field_;
+          _assembly_index_mapping_ = _rhs_assembly_index_mapping_;
+          _h_assembly_index_mapping_ = _rhs_h_assembly_index_mapping_;
+        })
   }
 
   /**
