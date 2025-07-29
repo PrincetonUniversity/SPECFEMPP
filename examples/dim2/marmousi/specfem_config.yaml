@@ -22,7 +22,7 @@ parameters:
         time-scheme:
           type: Newmark
           dt: 5.0e-6
-          nstep: 100000
+          nstep: 10000
 
     simulation-mode:
       forward:
@@ -30,14 +30,13 @@ parameters:
           seismogram:
             format: "ascii"
             directory: "OUTPUT_FILES/seismograms"
-
-
           # Uncomment the following lines to enable display output if VTK is installed
-          # display:
-          #   format: on_screen
-          #   field: displacement
-          #   simulation-field: forward
-          #   time-interval: 10
+          display:
+            directory: "OUTPUT_FILES/display"
+            format: PNG
+            field: displacement
+            simulation-field: forward
+            time-interval: 500
 
   receivers:
     stations: "OUTPUT_FILES/STATIONS"
