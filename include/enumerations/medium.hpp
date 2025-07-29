@@ -60,6 +60,13 @@ enum class boundary_tag {
   composite_stacey_dirichlet
 };
 
+class base_attributes {
+public:
+  constexpr static bool has_damping_force = false;
+  constexpr static bool has_cosserat_stress = false;
+  constexpr static bool has_cosserat_couple_stress = false;
+};
+
 /*
  * @brief Attributes class
  *
@@ -76,7 +83,7 @@ enum class boundary_tag {
  */
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag>
-class attributes {
+class attributes : public base_attributes {
   static_assert(specfem::utilities::always_false<Dimension, MediumTag>,
                 "Unregistered attributes tag! Please add a specialization for "
                 "dimension/medium enum value.");
@@ -87,78 +94,65 @@ class attributes {
 // ===========================================================================
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic_psv> {
+                 specfem::element::medium_tag::elastic_psv>
+    : public base_attributes {
 
 public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 2;
-
-  constexpr static bool has_damping_force = false;
-  inline constexpr static bool has_cosserat_stress = false;
-  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic_sh> {
+                 specfem::element::medium_tag::elastic_sh>
+    : public base_attributes {
 
 public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 1;
-
-  inline constexpr static bool has_damping_force = false;
-  inline constexpr static bool has_cosserat_stress = false;
-  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic_psv_t> {
+                 specfem::element::medium_tag::elastic_psv_t>
+    : public base_attributes {
 
 public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 3;
 
-  inline constexpr static bool has_damping_force = false;
   inline constexpr static bool has_cosserat_stress = true;
   inline constexpr static bool has_cosserat_couple_stress = true;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::acoustic> {
+                 specfem::element::medium_tag::acoustic>
+    : public base_attributes {
 
 public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 1;
-
-  inline constexpr static bool has_damping_force = false;
-  inline constexpr static bool has_cosserat_stress = false;
-  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::poroelastic> {
+                 specfem::element::medium_tag::poroelastic>
+    : public base_attributes {
 public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 4;
 
   inline constexpr static bool has_damping_force = true;
-  inline constexpr static bool has_cosserat_stress = false;
-  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::electromagnetic_te> {
+                 specfem::element::medium_tag::electromagnetic_te>
+    : public base_attributes {
 public:
   inline static constexpr int dimension = 2;
   inline static constexpr int components = 2;
-
-  inline constexpr static bool has_damping_force = false;
-  inline constexpr static bool has_cosserat_stress = false;
-  inline constexpr static bool has_cosserat_couple_stress = false;
 };
 
 // ===========================================================================
@@ -167,12 +161,11 @@ public:
 
 template <>
 class attributes<specfem::dimension::type::dim3,
-                 specfem::element::medium_tag::acoustic> {
+                 specfem::element::medium_tag::acoustic>
+    : public base_attributes {
 public:
   inline static constexpr int dimension = 3;
   inline static constexpr int components = 1;
-
-  constexpr static bool has_damping_force = false;
 };
 
 template <>
@@ -181,8 +174,6 @@ class attributes<specfem::dimension::type::dim3,
 public:
   inline static constexpr int dimension = 3;
   inline static constexpr int components = 3;
-
-  constexpr static bool has_damping_force = false;
 };
 
 const std::string to_string(const medium_tag &medium,
