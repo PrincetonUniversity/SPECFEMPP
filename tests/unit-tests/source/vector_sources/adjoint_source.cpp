@@ -90,11 +90,11 @@ TEST(SOURCES, adjoint_source_vector) {
     SCOPED_TRACE("Testing adjoint source for: " + params.name);
 
     // Create an adjoint source
-    specfem::sources::adjoint_source adjoint_source(
-        params.x, params.z,
-        std::make_unique<specfem::forcing_function::Ricker>(10, 0.01, 1.0, 0.0,
-                                                            1.0, false),
-        "STA", "NET");
+    specfem::sources::adjoint_source<specfem::dimension::type::dim2>
+        adjoint_source(params.x, params.z,
+                       std::make_unique<specfem::forcing_function::Ricker>(
+                           10, 0.01, 1.0, 0.0, 1.0, false),
+                       "STA", "NET");
 
     adjoint_source.set_medium_tag(params.medium_tag);
 

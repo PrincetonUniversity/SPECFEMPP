@@ -123,7 +123,9 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     std::cout << "Setting up sources and receivers" << std::endl;
 
     // Setup dummy sources and receivers for testing
-    std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > >
+        sources(0);
     std::vector<std::shared_ptr<
         specfem::receivers::receiver<specfem::dimension::type::dim2> > >
         receivers(0);

@@ -2,13 +2,15 @@
 #include "compute_source_array.hpp"
 #include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/assembly/compute_source_array/impl/compute_source_array_from.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 
 template <>
 void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
-    const std::shared_ptr<specfem::sources::source> &source,
+    const std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
@@ -18,8 +20,8 @@ void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
   case specfem::sources::source_type::vector_source: {
 
     // Cast to derived class to access specific methods
-    auto vector_source =
-        static_cast<const specfem::sources::vector_source *>(source.get());
+    auto vector_source = static_cast<const specfem::sources::vector_source<
+        specfem::dimension::type::dim2> *>(source.get());
 
     if (!vector_source) {
       KOKKOS_ABORT_WITH_LOCATION(
@@ -27,15 +29,15 @@ void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
           "array.");
     }
 
-    specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
-        *vector_source, mesh, source_array);
+    specfem::assembly::compute_source_array_impl::from_vector<
+        specfem::dimension::type::dim2>(*vector_source, source_array);
     break;
   }
   case specfem::sources::source_type::tensor_source: {
 
     // Cast to derived class to access specific methods
-    auto tensor_source =
-        static_cast<const specfem::sources::tensor_source *>(source.get());
+    auto tensor_source = static_cast<const specfem::sources::tensor_source<
+        specfem::dimension::type::dim2> *>(source.get());
 
     if (!tensor_source) {
       KOKKOS_ABORT_WITH_LOCATION(
@@ -43,7 +45,7 @@ void specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
           "array.");
     }
 
-    specfem::assembly::compute_source_array<specfem::dimension::type::dim2>(
+    specfem::assembly::compute_source_array_impl::from_tensor(
         *tensor_source, mesh, jacobian_matrix, source_array);
     break;
   }

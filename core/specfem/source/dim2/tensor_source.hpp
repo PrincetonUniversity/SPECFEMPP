@@ -1,11 +1,16 @@
 #pragma once
 
-#include "source.hpp"
+#include "enumerations/interface.hpp"
+#include "kokkos_abstractions.h"
+#include "specfem/source.hpp"
+#include "yaml-cpp/yaml.h"
 
 namespace specfem {
 namespace sources {
 
-class tensor_source : public source {
+template <>
+class tensor_source<specfem::dimension::type::dim2>
+    : public source<specfem::dimension::type::dim2> {
 
 public:
   /**

@@ -4,8 +4,8 @@
 #include "specfem_setup.hpp"
 #include <cmath>
 
-specfem::sources::source::source(YAML::Node &Node, const int nsteps,
-                                 const type_real dt)
+specfem::sources::source<specfem::dimension::type::dim2>::source(
+    YAML::Node &Node, const int nsteps, const type_real dt)
     : x(Node["x"].as<type_real>()), z(Node["z"].as<type_real>()) {
 
   // Read source time function
@@ -31,7 +31,7 @@ specfem::sources::source::source(YAML::Node &Node, const int nsteps,
   return;
 }
 
-void specfem::sources::source::set_medium_tag(
+void specfem::sources::source<specfem::dimension::type::dim2>::set_medium_tag(
     specfem::element::medium_tag medium_tag) {
 
   auto supported_media_list = this->get_supported_media();
@@ -54,7 +54,7 @@ void specfem::sources::source::set_medium_tag(
           << "  Global (x,z):     " << "(" << this->x << "," << this->z << ")\n"
           << "  Local (xi,gamma)  " << "(" << this->xi << "," << this->gamma
           << ")\n"
-          << "Supported media:";
+          << "Supported media:\n";
   for (auto &supported_medium : supported_media_list) {
     message << "  - " << specfem::element::to_string(supported_medium) << "\n";
   }

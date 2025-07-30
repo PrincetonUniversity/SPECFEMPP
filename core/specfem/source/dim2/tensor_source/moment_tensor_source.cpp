@@ -1,8 +1,8 @@
-#include "specfem/source/tensor_source/moment_tensor_source.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "source_time_function/interface.hpp"
+#include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 // #include "utilities.cpp"
 #include "yaml-cpp/yaml.h"
@@ -10,18 +10,20 @@
 #include <stdexcept>
 
 // Static member definitions
-const std::string specfem::sources::moment_tensor::name = "moment tensor";
+const std::string
+    specfem::sources::moment_tensor<specfem::dimension::type::dim2>::name =
+        "2D moment tensor";
 
-std::vector<specfem::element::medium_tag>
-specfem::sources::moment_tensor::get_supported_media() const {
+std::vector<specfem::element::medium_tag> specfem::sources::moment_tensor<
+    specfem::dimension::type::dim2>::get_supported_media() const {
   return { specfem::element::medium_tag::elastic_psv,
            specfem::element::medium_tag::poroelastic,
            specfem::element::medium_tag::elastic_psv_t,
            specfem::element::medium_tag::electromagnetic_te };
 }
 
-specfem::kokkos::HostView2d<type_real>
-specfem::sources::moment_tensor::get_source_tensor() const {
+specfem::kokkos::HostView2d<type_real> specfem::sources::moment_tensor<
+    specfem::dimension::type::dim2>::get_source_tensor() const {
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
@@ -78,7 +80,8 @@ specfem::sources::moment_tensor::get_source_tensor() const {
   return source_tensor;
 }
 
-std::string specfem::sources::moment_tensor::print() const {
+std::string
+specfem::sources::moment_tensor<specfem::dimension::type::dim2>::print() const {
   std::ostringstream message;
   message << "- Moment Tensor Source: \n"
           << "    Source Location: \n"
@@ -93,12 +96,14 @@ std::string specfem::sources::moment_tensor::print() const {
   return message.str();
 }
 
-bool specfem::sources::moment_tensor::operator==(
-    const specfem::sources::source &other) const {
+bool specfem::sources::moment_tensor<specfem::dimension::type::dim2>::
+operator==(const specfem::sources::source<specfem::dimension::type::dim2>
+               &other) const {
 
   // Try casting the other source to a moment tensor source
-  const auto *other_source =
-      dynamic_cast<const specfem::sources::moment_tensor *>(&other);
+  const auto *other_source = dynamic_cast<
+      const specfem::sources::moment_tensor<specfem::dimension::type::dim2> *>(
+      &other);
 
   // Check if cast was successful
   if (other_source == nullptr) {
@@ -121,7 +126,8 @@ bool specfem::sources::moment_tensor::operator==(
          (*(this->forcing_function) == *(other_source->forcing_function));
 }
 
-bool specfem::sources::moment_tensor::operator!=(
-    const specfem::sources::source &other) const {
+bool specfem::sources::moment_tensor<specfem::dimension::type::dim2>::
+operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
+               &other) const {
   return !(*this == other);
 }
