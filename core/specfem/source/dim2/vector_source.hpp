@@ -1,11 +1,14 @@
 #pragma once
 
-#include "source.hpp"
+#include "enumerations/interface.hpp"
+#include "specfem/source.hpp"
 
 namespace specfem {
 namespace sources {
 
-class vector_source : public source {
+template <>
+class vector_source<specfem::dimension::type::dim2>
+    : public source<specfem::dimension::type::dim2> {
 
 public:
   /**

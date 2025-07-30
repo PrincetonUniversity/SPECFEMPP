@@ -27,15 +27,17 @@ namespace {
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >,
-           std::vector<int> >
+std::tuple<
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >,
+    std::vector<int> >
 sort_sources_per_medium(
-    const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
+    const std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+        &sources,
+    const specfem::assembly::element_types<DimensionTag> &element_types,
+    const specfem::assembly::mesh<DimensionTag> &mesh) {
 
-  std::vector<std::shared_ptr<specfem::sources::source> > sorted_sources;
+  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+      sorted_sources;
   std::vector<int> source_indices;
 
   // Loop over all sources
@@ -72,7 +74,8 @@ template class specfem::assembly::sources_impl::source_medium<
     specfem::element::medium_tag::elastic_psv_t>;
 
 specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
-    std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,

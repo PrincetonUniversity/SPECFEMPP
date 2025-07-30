@@ -1,17 +1,20 @@
-#include "specfem/source/vector_source/force_source.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
 #include "source_time_function/interface.hpp"
+#include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 
 // Static member definitions
-const std::string specfem::sources::force::name = "force source";
+const std::string
+    specfem::sources::force<specfem::dimension::type::dim2>::name =
+        "2D force source";
 
 std::vector<specfem::element::medium_tag>
-specfem::sources::force::get_supported_media() const {
+specfem::sources::force<specfem::dimension::type::dim2>::get_supported_media()
+    const {
   return {
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::elastic_psv,
@@ -22,7 +25,8 @@ specfem::sources::force::get_supported_media() const {
 }
 
 specfem::kokkos::HostView1d<type_real>
-specfem::sources::force::get_force_vector() const {
+specfem::sources::force<specfem::dimension::type::dim2>::get_force_vector()
+    const {
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
@@ -72,7 +76,8 @@ specfem::sources::force::get_force_vector() const {
   return force_vector;
 }
 
-std::string specfem::sources::force::print() const {
+std::string
+specfem::sources::force<specfem::dimension::type::dim2>::print() const {
 
   std::ostringstream message;
   message << "- Force Source: \n"
@@ -85,12 +90,13 @@ std::string specfem::sources::force::print() const {
   return message.str();
 }
 
-bool specfem::sources::force::operator==(
-    const specfem::sources::source &other) const {
+bool specfem::sources::force<specfem::dimension::type::dim2>::operator==(
+    const specfem::sources::source<specfem::dimension::type::dim2> &other)
+    const {
 
   // Try casting the other source to a force source
-  const auto *other_source =
-      dynamic_cast<const specfem::sources::force *>(&other);
+  const auto *other_source = dynamic_cast<
+      const specfem::sources::force<specfem::dimension::type::dim2> *>(&other);
 
   // Check if cast was successful
   if (other_source == nullptr) {
@@ -103,7 +109,8 @@ bool specfem::sources::force::operator==(
          specfem::utilities::almost_equal(this->angle, other_source->angle) &&
          *(this->forcing_function) == *(other_source->forcing_function);
 }
-bool specfem::sources::force::operator!=(
-    const specfem::sources::source &other) const {
+bool specfem::sources::force<specfem::dimension::type::dim2>::operator!=(
+    const specfem::sources::source<specfem::dimension::type::dim2> &other)
+    const {
   return !(*this == other);
 }

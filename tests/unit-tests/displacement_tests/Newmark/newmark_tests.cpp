@@ -126,7 +126,7 @@ TEST_P(Newmark, Test) {
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
-  auto [sources, t0] = specfem::io::read_sources(
+  auto [sources, t0] = specfem::io::read_2d_sources(
       source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
   for (auto &source : sources) {
