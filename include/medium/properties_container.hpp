@@ -28,7 +28,8 @@ struct properties_container<specfem::dimension::type::dim2, MediumTag,
                             PropertyTag>
     : public properties::data_container<specfem::dimension::type::dim2,
                                         MediumTag, PropertyTag>,
-      public impl::Accessor<properties_container<specfem::dimension::type::dim2,
+      public impl::Accessor<specfem::dimension::type::dim2,
+                            properties_container<specfem::dimension::type::dim2,
                                                  MediumTag, PropertyTag> > {
 
   using base_type = properties::data_container<specfem::dimension::type::dim2,
