@@ -7,11 +7,6 @@
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 
-// Static member definitions
-const std::string
-    specfem::sources::force<specfem::dimension::type::dim2>::name =
-        "2D force source";
-
 std::vector<specfem::element::medium_tag>
 specfem::sources::force<specfem::dimension::type::dim2>::get_supported_media()
     const {
@@ -79,11 +74,13 @@ specfem::sources::force<specfem::dimension::type::dim2>::get_force_vector()
 std::string
 specfem::sources::force<specfem::dimension::type::dim2>::print() const {
 
+  const auto gcoord = this->get_global_coordinates();
+
   std::ostringstream message;
   message << "- Force Source: \n"
           << "    Source Location: \n"
-          << "      x = " << type_real(this->x) << "\n"
-          << "      z = " << type_real(this->z) << "\n"
+          << "      x = " << type_real(gcoord.x) << "\n"
+          << "      z = " << type_real(gcoord.z) << "\n"
           << "    Source Time Function: \n"
           << this->forcing_function->print() << "\n";
 
@@ -103,9 +100,11 @@ bool specfem::sources::force<specfem::dimension::type::dim2>::operator==(
     std::cout << "Other source is not a force object" << std::endl;
     return false;
   }
+  const auto gcoord = this->get_global_coordinates();
+  const auto other_gcoord = other_source->get_global_coordinates();
 
-  return specfem::utilities::almost_equal(this->x, other_source->x) &&
-         specfem::utilities::almost_equal(this->z, other_source->z) &&
+  return specfem::utilities::almost_equal(gcoord.x, other_gcoord.x) &&
+         specfem::utilities::almost_equal(gcoord.z, other_gcoord.z) &&
          specfem::utilities::almost_equal(this->angle, other_source->angle) &&
          *(this->forcing_function) == *(other_source->forcing_function);
 }

@@ -35,8 +35,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
                                         Kokkos::ALL, isource, Kokkos::ALL);
     sources[isource]->compute_source_time_function(t0, dt, nsteps,
                                                    sv_stf_array);
-    specfem::point::global_coordinates<dimension_tag> coord(
-        sources[isource]->get_coords());
+    const auto coord = sources[isource]->get_global_coordinates();
 
     auto lcoord = specfem::algorithms::locate_point(coord, mesh);
     this->h_source_index_mapping(isource) = lcoord.ispec;

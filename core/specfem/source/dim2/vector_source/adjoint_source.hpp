@@ -48,8 +48,9 @@ public:
   std::vector<specfem::element::medium_tag>
   get_supported_media() const override;
 
+  static constexpr const char *name = "2-D adjoint source";
+
 private:
-  const static std::string name;
   std::string station_name;
   std::string network_name;
 };

@@ -3,11 +3,6 @@
 #include "globals.h"
 #include "specfem/source.hpp"
 
-// Static member definitions
-const std::string
-    specfem::sources::adjoint_source<specfem::dimension::type::dim2>::name =
-        "2D adjoint source";
-
 std::vector<specfem::element::medium_tag> specfem::sources::adjoint_source<
     specfem::dimension::type::dim2>::get_supported_media() const {
   return {
@@ -77,11 +72,13 @@ std::string
 specfem::sources::adjoint_source<specfem::dimension::type::dim2>::print()
     const {
 
+  const auto gcoord = this->get_global_coordinates();
+
   std::ostringstream message;
   message << "- Adjoint Source: \n"
           << "    Source Location: \n"
-          << "      x = " << type_real(this->x) << "\n"
-          << "      z = " << type_real(this->z) << "\n"
+          << "      x = " << gcoord.x << "\n"
+          << "      z = " << gcoord.z << "\n"
           << "    Source Time Function: \n"
           << this->forcing_function->print() << "\n";
   return message.str();

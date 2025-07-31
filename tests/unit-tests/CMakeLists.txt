@@ -397,11 +397,14 @@ add_executable(
   source_class_tests
   source/source.cpp
   source/base_source_tests.cpp
-  source/vector_sources/force_source.cpp
-  source/vector_sources/cosserat_force_source.cpp
-  source/vector_sources/adjoint_source.cpp
-  source/vector_sources/external_source.cpp
-  source/tensor_sources/moment_tensor_source.cpp
+  source/typed_source_tests.cpp
+  # source/dim2/vector_sources/force_source.cpp
+  # source/dim2/vector_sources/cosserat_force_source.cpp
+  # source/dim2/vector_sources/adjoint_source.cpp
+  # source/dim2/vector_sources/external_source.cpp
+  # source/dim2/tensor_sources/moment_tensor_source.cpp
+  # source/dim3/vector_sources/force_source.cpp
+  # source/dim3/tensor_sources/moment_tensor_source.cpp
 )
 target_link_libraries(
   source_class_tests

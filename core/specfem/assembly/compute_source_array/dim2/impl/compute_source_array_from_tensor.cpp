@@ -1,3 +1,4 @@
+#include "compute_source_array_from_tensor.hpp"
 #include "algorithms/interface.hpp"
 #include "enumerations/macros.hpp"
 #include "kokkos_abstractions.h"
@@ -11,11 +12,6 @@
 
 // Local namespace for implementation details
 namespace specfem::assembly::compute_source_array_impl {
-
-using PointJacobianMatrix =
-    specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
-                                    false>;
-using JacobianViewType = specfem::kokkos::HostView2d<PointJacobianMatrix>;
 
 void compute_source_array_from_tensor_and_element_jacobian(
     const specfem::sources::tensor_source<specfem::dimension::type::dim2>
@@ -35,10 +31,10 @@ void compute_source_array_from_tensor_and_element_jacobian(
   // Compute lagrange interpolants at the local source location
   auto [hxi_source, hpxi_source] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          tensor_source.get_xi(), ngllx, xi);
+          tensor_source.get_local_coordinates().xi, ngllx, xi);
   auto [hgamma_source, hpgamma_source] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          tensor_source.get_gamma(), ngllz, gamma);
+          tensor_source.get_local_coordinates().gamma, ngllz, gamma);
 
   specfem::kokkos::HostView2d<type_real> source_polynomial("source_polynomial",
                                                            ngllz, ngllx);
@@ -88,9 +84,7 @@ void compute_source_array_from_tensor_and_element_jacobian(
 
 } // namespace specfem::assembly::compute_source_array_impl
 
-template <>
-void specfem::assembly::compute_source_array_impl::from_tensor<
-    specfem::dimension::type::dim2>(
+void specfem::assembly::compute_source_array_impl::from_tensor(
     const specfem::sources::tensor_source<specfem::dimension::type::dim2>
         &tensor_source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
@@ -111,7 +105,7 @@ void specfem::assembly::compute_source_array_impl::from_tensor<
   for (int iz = 0; iz < ngllz; ++iz) {
     for (int ix = 0; ix < ngllx; ++ix) {
       const specfem::point::index<specfem::dimension::type::dim2> index(
-          tensor_source.get_element_index(), iz, ix);
+          tensor_source.get_local_coordinates().ispec, iz, ix);
       PointJacobianMatrix derivatives;
       specfem::assembly::load_on_host(index, jacobian_matrix, derivatives);
       element_jacobian(iz, ix) = derivatives;

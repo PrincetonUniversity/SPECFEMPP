@@ -120,8 +120,10 @@ private:
                                                        ///< which the source
                                                        ///< acts
 
+public:
+  static constexpr const char *name = "2-D moment tensor";
+
 protected:
-  const static std::string name;
 };
 } // namespace sources
 } // namespace specfem

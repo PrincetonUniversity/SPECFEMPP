@@ -1,3 +1,4 @@
+#include "compute_source_array_from_vector.hpp"
 #include "algorithms/interface.hpp"
 #include "enumerations/macros.hpp"
 #include "kokkos_abstractions.h"
@@ -9,9 +10,7 @@
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 
-template <>
-void specfem::assembly::compute_source_array_impl::from_vector<
-    specfem::dimension::type::dim2>(
+void specfem::assembly::compute_source_array_impl::from_vector(
     const specfem::sources::vector_source<specfem::dimension::type::dim2>
         &vector_source,
     specfem::kokkos::HostView3d<type_real> source_array) {
@@ -28,10 +27,10 @@ void specfem::assembly::compute_source_array_impl::from_vector<
   // Compute lagrange interpolants at the local source location
   auto [hxi_source, hpxi_source] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          vector_source.get_xi(), ngllx, xi);
+          vector_source.get_local_coordinates().xi, ngllx, xi);
   auto [hgamma_source, hpgamma_source] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-          vector_source.get_gamma(), ngllz, gamma);
+          vector_source.get_local_coordinates().gamma, ngllz, gamma);
 
   type_real hlagrange;
 
