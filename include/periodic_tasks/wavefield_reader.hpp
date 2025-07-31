@@ -32,7 +32,14 @@ public:
       const int istep) override {
     std::cout << "Reading wavefield files:" << std::endl;
     std::cout << "-------------------------------" << std::endl;
-    reader.read(assembly, istep);
+    reader.run(assembly, istep);
+  }
+
+  void initialize(specfem::assembly::assembly<specfem::dimension::type::dim2>
+                      &assembly) override {
+    std::cout << "Reading coordinate files:" << std::endl;
+    std::cout << "-------------------------------" << std::endl;
+    reader.initialize(assembly);
   }
 };
 
