@@ -1,8 +1,8 @@
+#include "specfem/assembly/compute_source_array/dim2/impl/compute_source_array_from_vector.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
-#include "specfem/assembly/compute_source_array/impl/compute_source_array_from.hpp"
 #include "specfem/source.hpp"
 #include "test_macros.hpp"
 #include <gtest/gtest.h>
@@ -35,9 +35,9 @@ void test_vector_source(const std::string &source_name, SourceType &source,
                    ", iz=" + std::to_string(iz) + ")");
 
       // Set source location to this GLL point
-      source.set_xi(xi_gamma_points(ix));
-      source.set_gamma(xi_gamma_points(iz));
-      source.set_element_index(0);
+      specfem::point::local_coordinates<specfem::dimension::type::dim2>
+          local_coords(0, xi_gamma_points(ix), xi_gamma_points(iz));
+      source.set_local_coordinates(local_coords);
 
       // Initialize source array to zero
       for (int ic = 0; ic < ncomponents; ++ic) {
@@ -49,8 +49,8 @@ void test_vector_source(const std::string &source_name, SourceType &source,
       }
 
       // Compute source array using the implementation function
-      specfem::assembly::compute_source_array_impl::from_vector<
-          specfem::dimension::type::dim2>(source, source_array);
+      specfem::assembly::compute_source_array_impl::from_vector(source,
+                                                                source_array);
 
       // The source array should have non-zero values only at the GLL point
       // where the source is located, and those values should equal the force

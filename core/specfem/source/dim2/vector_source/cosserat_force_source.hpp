@@ -97,8 +97,10 @@ public:
   std::vector<specfem::element::medium_tag>
   get_supported_media() const override;
 
+public:
+  static constexpr const char *name = "2-D Cosserat force";
+
 private:
-  const static std::string name;
   type_real angle; ///< Angle of the elastic force source
   type_real f;     ///< Factor to scale the elastic force
   type_real fc;    ///< Factor to scale the rotational force

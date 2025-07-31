@@ -297,7 +297,8 @@ target_link_libraries(
 add_library(
         io
         src/io/fortranio/fortran_io.cpp
-        src/io/sources.cpp
+        src/io/sources/dim2/read_sources.cpp
+        src/io/sources/dim3/read_sources.cpp
         src/io/receivers.cpp
         # Fortran 2D part
         src/io/mesh/impl/fortran/dim2/mesh.cpp

@@ -28,6 +28,9 @@ specfem::element::to_string(const specfem::element::medium_tag &medium) {
   std::string medium_string;
 
   switch (medium) {
+  case specfem::element::medium_tag::elastic:
+    medium_string = "elastic";
+    break;
   case specfem::element::medium_tag::elastic_psv:
     medium_string = "elastic_psv";
     break;
