@@ -18,9 +18,9 @@ contains
 
       allocate(elmnts_bis(0:NCORNERS*nelmnts-1),stat=ier)
       allocate(num_adjacent(0:nelmnts-1),stat=ier)
-      allocate(adjacency_type(0:nelmnts-1, MAX_NEIGHBORS),stat=ier)
-      allocate(adjacency_id(0:nelmnts-1, MAX_NEIGHBORS),stat=ier)
-      allocate(adjacent_elements(0:nelmnts-1, MAX_NEIGHBORS),stat=ier)
+      allocate(adjacency_type(0:nelmnts-1, 0:MAX_NEIGHBORS),stat=ier)
+      allocate(adjacency_id(0:nelmnts-1, 0:MAX_NEIGHBORS),stat=ier)
+      allocate(adjacent_elements(0:nelmnts-1, 0:MAX_NEIGHBORS),stat=ier)
       num_adjacent(:) = 0
       adjacency_type(:,:) = -1
       adjacency_id(:,:) = -1
@@ -41,7 +41,7 @@ contains
 
    subroutine get_adjacencies(elmnts_bis)
       use constants, only: MAX_NEIGHBORS, MAX_NSIZE_SHARED, NCORNERS, ISTRONGLY_CONFORMING_EDGE, ISTRONGLY_CONFORMING_VERTEX
-      use part_unstruct_par, only: adjacency_type, adjacency_id, adjacent_elements, num_adjacent
+      use part_unstruct_par, only: adjacency_type, adjacency_id, adjacent_elements, num_adjacent, nnodes
       use shared_parameters, only: nelmnts
 
       implicit none
@@ -51,14 +51,13 @@ contains
       integer :: corner_id1, corner_id2
       integer, allocatable :: nnodes_elmnts(:)
       integer, allocatable :: nodes_elmnts(:,:)
-      integer :: nnodes
 
       integer, intent(in) :: elmnts_bis(0:NCORNERS*nelmnts-1)
 
       ! List all elements at each corner node
 
       if (.not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
-      if (.not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nnodes-1, MAX_NSIZE_SHARED))
+      if (.not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nnodes-1, 0:MAX_NSIZE_SHARED-1))
 
       ! initializes
       nnodes_elmnts(:) = 0
@@ -86,15 +85,21 @@ contains
                   call get_edge(elmnts_bis, current_elem, current_node, other_node, edge_id1)
                   call get_edge(elmnts_bis, neighbor_elem, current_node, other_node, edge_id2)
 
-                  adjacent_elements(current_elem, num_adjacent(current_elem)) = neighbor_elem
-                  adjacency_type(current_elem, num_adjacent(current_elem)) = ISTRONGLY_CONFORMING_EDGE
-                  adjacency_id(current_elem, num_adjacent(current_elem)) = edge_id1
-                  num_adjacent(current_elem) = num_adjacent(current_elem) + 1
+                  ! count only if edge is not accounted yet
+                  if (edge_id1 > 0) then
+                     adjacent_elements(current_elem, num_adjacent(current_elem)) = neighbor_elem
+                     adjacency_type(current_elem, num_adjacent(current_elem)) = ISTRONGLY_CONFORMING_EDGE
+                     adjacency_id(current_elem, num_adjacent(current_elem)) = edge_id1
+                     num_adjacent(current_elem) = num_adjacent(current_elem) + 1
+                  endif
 
-                  adjacent_elements(neighbor_elem, num_adjacent(neighbor_elem)) = current_elem
-                  adjacency_type(neighbor_elem, num_adjacent(neighbor_elem)) = ISTRONGLY_CONFORMING_EDGE
-                  adjacency_id(neighbor_elem, num_adjacent(neighbor_elem)) = edge_id2
-                  num_adjacent(neighbor_elem) = num_adjacent(neighbor_elem) + 1
+                  ! count the neighbor's adjacency only if not accounted yet
+                  if (edge_id2 > 0) then
+                     adjacent_elements(neighbor_elem, num_adjacent(neighbor_elem)) = current_elem
+                     adjacency_type(neighbor_elem, num_adjacent(neighbor_elem)) = ISTRONGLY_CONFORMING_EDGE
+                     adjacency_id(neighbor_elem, num_adjacent(neighbor_elem)) = edge_id2
+                     num_adjacent(neighbor_elem) = num_adjacent(neighbor_elem) + 1
+                  endif
                else ! Assign this a corner node
                   ! They share only one node, so they are strongly conforming at a corner
                   call get_corner_id(elmnts_bis, current_elem, current_node, corner_id1)
@@ -172,32 +177,48 @@ contains
 
       edge_id = -1
 
-      bottom_nodes = [elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT), elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT)]
-      right_nodes = [elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT), elmnts_bis(elem*NCORNERS + ITOP_RIGHT)]
-      top_nodes = [elmnts_bis(elem*NCORNERS + ITOP_RIGHT), elmnts_bis(elem*NCORNERS + ITOP_LEFT)]
-      left_nodes = [elmnts_bis(elem*NCORNERS + ITOP_LEFT), elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT)]
+      bottom_nodes = [elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT - 1), elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT - 1)]
+      right_nodes = [elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT - 1), elmnts_bis(elem*NCORNERS + ITOP_RIGHT - 1)]
+      top_nodes = [elmnts_bis(elem*NCORNERS + ITOP_RIGHT - 1), elmnts_bis(elem*NCORNERS + ITOP_LEFT - 1)]
+      left_nodes = [elmnts_bis(elem*NCORNERS + ITOP_LEFT - 1), elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT - 1)]
 
-      if ((node1 == bottom_nodes(1) .and. node2 == bottom_nodes(2)) .or. &
-         (node1 == bottom_nodes(2) .and. node2 == bottom_nodes(1))) then
+      if (node1 ==  bottom_nodes(1) .and. node2 == bottom_nodes(2)) then
          edge_id = IBOTTOM
          return
       endif
 
-      if ((node1 == right_nodes(1) .and. node2 == right_nodes(2)) .or. &
-         (node1 == right_nodes(2) .and. node2 == right_nodes(1))) then
+      if (node1 ==  bottom_nodes(2) .and. node2 == bottom_nodes(1)) then
+         edge_id = 0 ! we set this to avoid double counting
+         return
+      endif
+
+      if (node1 ==  right_nodes(1) .and. node2 == right_nodes(2)) then
          edge_id = IRIGHT
          return
       endif
 
-      if ((node1 == top_nodes(1) .and. node2 == top_nodes(2)) .or. &
-         (node1 == top_nodes(2) .and. node2 == top_nodes(1))) then
+      if (node1 ==  right_nodes(2) .and. node2 == right_nodes(1)) then
+         edge_id = 0
+         return
+      endif
+
+      if (node1 ==  top_nodes(1) .and. node2 == top_nodes(2)) then
          edge_id = ITOP
          return
       endif
 
-      if ((node1 == left_nodes(1) .and. node2 == left_nodes(2)) .or. &
-         (node1 == left_nodes(2) .and. node2 == left_nodes(1))) then
+      if (node1 ==  top_nodes(2) .and. node2 == top_nodes(1)) then
+         edge_id = 0
+         return
+      endif
+
+      if (node1 ==  left_nodes(1) .and. node2 == left_nodes(2)) then
          edge_id = ILEFT
+         return
+      endif
+
+      if (node1 ==  left_nodes(2) .and. node2 == left_nodes(1)) then
+         edge_id = 0
          return
       endif
 
@@ -219,13 +240,13 @@ contains
       integer :: i
       corner_id = -1
 
-      if (elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT) == node) then
+      if (elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT - 1) == node) then
          corner_id = IBOTTOM_LEFT
-      else if (elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT) == node) then
+      else if (elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT - 1) == node) then
          corner_id = IBOTTOM_RIGHT
-      else if (elmnts_bis(elem*NCORNERS + ITOP_RIGHT) == node) then
+      else if (elmnts_bis(elem*NCORNERS + ITOP_RIGHT - 1) == node) then
          corner_id = ITOP_RIGHT
-      else if (elmnts_bis(elem*NCORNERS + ITOP_LEFT) == node) then
+      else if (elmnts_bis(elem*NCORNERS + ITOP_LEFT - 1) == node) then
          corner_id = ITOP_LEFT
       else
          write(*,*) 'Error: Node ', node, ' is not a corner of element ', elem

@@ -864,7 +864,6 @@ subroutine save_databases_adjacency_graph()
 
    ! local parameters
    do i = 0, nelmnts-1
-      write(*,*) 'Element ', i+1, ' has ', num_adjacent(i), ' adjacent elements'
       if (num_adjacent(i) > 0) then
          do j = 0, num_adjacent(i)-1
             !! Write out adjacency graph
@@ -872,8 +871,6 @@ subroutine save_databases_adjacency_graph()
             ! adjacent_elements(i,j) = adjacent element number
             ! adjacency_type(i,j) = type of adjacency (1 = STRONGLY_CONFORMING_EDGE, 2 = STRONGLY_CONFORMING_VERTEX)
             ! adjacency_id(i,j) = if adjacency_type=1, which edge (1-4); if adjacency_type=2, which vertex (1-4)
-            write(*,*) 'Adjacency: element ', i+1, ' adjacent to element ', adjacent_elements(i,j)+1, &
-                       ' type ', adjacency_type(i,j), ' id ', adjacency_id(i,j)
             write(IOUT) i + 1, adjacent_elements(i,j) + 1, adjacency_type(i,j), adjacency_id(i,j)
          enddo
       endif
