@@ -58,6 +58,6 @@ ASSEMBLY::ASSEMBLY() {
     this->assemblies.push_back(
         specfem::assembly::assembly<specfem::dimension::type::dim2>(
             mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1,
-            1, 1, specfem::simulation::type::forward, nullptr));
+            1, 1, specfem::simulation::type::forward, false, nullptr));
   }
 }
