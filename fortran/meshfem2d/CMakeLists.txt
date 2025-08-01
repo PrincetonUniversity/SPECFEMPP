@@ -184,7 +184,6 @@ add_library(meshfem2D_mesh
     save_databases.f90
     save_gnuplot_file.f90
     save_stations_file.f90
-    save_databases_adj.f90
 )
 add_library(meshfem2D::mesh ALIAS meshfem2D_mesh)
 target_link_libraries(meshfem2D_mesh
