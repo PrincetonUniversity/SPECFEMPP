@@ -860,11 +860,20 @@ subroutine save_databases_adjacency_graph()
 
    implicit none
 
-   integer :: i,j
+   integer :: i,j, total_adjacencies
 
    write(IOUT) write_adjacency_map
 
    if (.not. write_adjacency_map) return
+
+   ! Find total number of adjacent elements
+
+   total_adjacencies = 0
+   do i = 0, nelmnts-1
+      total_adjacencies = total_adjacencies + num_adjacent(i)
+   enddo
+
+   write(IOUT) total_adjacencies
 
    ! local parameters
    do i = 0, nelmnts-1

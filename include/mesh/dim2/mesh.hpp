@@ -1,5 +1,7 @@
 #pragma once
 
+#include "adjacency_graph/adjacency_graph.hpp"
+#include "adjacency_map/adjacency_map.hpp"
 #include "boundaries/boundaries.hpp"
 #include "control_nodes/control_nodes.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
@@ -9,7 +11,6 @@
 #include "enumerations/interface.hpp"
 #include "materials/materials.hpp"
 #include "materials/materials.tpp"
-#include "mesh/dim2/adjacency_map/adjacency_map.hpp"
 #include "mesh/mesh_base.hpp"
 #include "parameters/parameters.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -65,6 +66,8 @@ template <> struct mesh<specfem::dimension::type::dim2> {
                                                  ///< properties
 
   specfem::mesh::adjacency_map::adjacency_map<dimension> adjacency_map;
+
+  specfem::mesh::adjacency_graph<dimension> adjacency_graph;
 
   /**
    * @name Constructors
