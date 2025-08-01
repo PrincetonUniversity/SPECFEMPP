@@ -95,7 +95,7 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
   bool has_conforming_adjacency(const int ispec, const int edge) const;
 
   /**
-   * @brief For a conforming edge, returns its adjacenct edge. If the edge is
+   * @brief For a conforming edge, returns its adjacent edge. If the edge is
    * nonconforming, the behavior is undefined.
    *
    * @param ispec - index of the element
@@ -106,7 +106,7 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
   get_conforming_adjacency(const int ispec,
                            const specfem::enums::edge::type edge) const;
   /**
-   * @brief For a conforming edge, returns its adjacenct edge. If the edge is
+   * @brief For a conforming edge, returns its adjacent edge. If the edge is
    * nonconforming, the behavior is undefined.
    *
    * @param ispec - index of the element
@@ -174,8 +174,18 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
    * edge. When assembling, nodes corresponding to these adjacencies will share
    * global indices.
    *
+   * If the passed `bdry` is an edge, then the only other conforming adjacency
+   * can be the mating edge to the argument. The resultant set contains the
+   * passed-in edge and the mating edge.
+   *
+   * If the passed `bdry` is a corner, then the conforming adjacencies are the
+   * other corners that meet the passed-in corner via conforming adjacencies.
+   *
    * @param ispec - index of the element
    * @param bdry - edge or corner of the element to check
+   * @return std::set<std::pair<int, specfem::enums::boundaries::type> >
+   *           - the collection of (ispec, bdry) pairs that match (conformally)
+   * with the given arguments.
    */
   std::set<std::pair<int, specfem::enums::boundaries::type> >
   get_all_conforming_adjacencies(

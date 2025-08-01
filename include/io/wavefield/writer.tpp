@@ -129,12 +129,21 @@ template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::finalize(
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
+  typename OutputLibrary::Group boundary_group =
+      file.createGroup(std::string("/BoundaryValues"));
+
+  Kokkos::View<bool*, Kokkos::HostSpace> boundary_values_view(
+      "save_boundary_values", 1);
+
+  boundary_values_view(0) = this->save_boundary_values;
+
+  boundary_group.createDataset("save_boundary_values", boundary_values_view)
+      .write();
+
   if (save_boundary_values) {
     auto &boundary_values = assembly.boundary_values;
     boundary_values.copy_to_host();
 
-    typename OutputLibrary::Group boundary_group =
-        file.createGroup("/BoundaryValues");
     typename OutputLibrary::Group stacey = boundary_group.createGroup("Stacey");
 
     stacey
