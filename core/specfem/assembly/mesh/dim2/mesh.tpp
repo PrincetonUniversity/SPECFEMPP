@@ -46,7 +46,11 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
 }
 
 specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
-assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
+assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
+                 const specfem::mesh::adjacency_map::adjacency_map<
+                     specfem::dimension::type::dim2> &adjacency_map,
+                 specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+                     specfem::dimension::type::dim2> &mapping) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
@@ -73,30 +77,57 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
     }
   }
 
-  // Sort cartesian coordinates in ascending order i.e.
-  // cart_cord = [{0,0}, {0, 25}, {0, 50}, ..., {50, 0}, {50, 25}, {50, 50}]
-  std::sort(cart_cord.begin(), cart_cord.end(),
-            [&](const qp qp1, const qp qp2) {
-              if (qp1.x != qp2.x) {
-                return qp1.x < qp2.x;
-              }
-
-              return qp1.z < qp2.z;
-            });
-
-  // Setup numbering
-  int ig = 0;
-  cart_cord[0].iglob = ig;
-
-  type_real xtol = get_tolerance(cart_cord, nspec, ngllxz);
-
-  for (int iloc = 1; iloc < cart_cord.size(); iloc++) {
-    // check if the previous point is same as current
-    if ((std::abs(cart_cord[iloc].x - cart_cord[iloc - 1].x) > xtol) ||
-        (std::abs(cart_cord[iloc].z - cart_cord[iloc - 1].z) > xtol)) {
-      ig++;
+  int nglob;
+  if (adjacency_map.was_initialized()) {
+    iloc = 0;
+    specfem::kokkos::HostView3d<int> adjmap_index_mapping;
+    std::tie(adjmap_index_mapping, nglob) =
+        adjacency_map.generate_assembly_mapping(ngll);
+    // const auto [adjmap_index_mapping, nglob_] =
+    //     adjacency_map.generate_assembly_mapping(ngll);
+    // nglob = nglob_;
+    for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
+      for (int iz = 0; iz < ngll; iz++) {
+        for (int ix = 0; ix < ngll; ix++) {
+          for (int ielement = 0; ielement < chunk_size; ielement++) {
+            int ispec = ichunk + ielement;
+            if (ispec >= nspec)
+              break;
+            const int ispec_mesh = mapping.compute_to_mesh(ispec);
+            cart_cord[iloc].iglob = adjmap_index_mapping(ispec_mesh, iz, ix);
+            iloc++;
+          }
+        }
+      }
     }
-    cart_cord[iloc].iglob = ig;
+  } else {
+    // Sort cartesian coordinates in ascending order i.e.
+    // cart_cord = [{0,0}, {0, 25}, {0, 50}, ..., {50, 0}, {50, 25}, {50, 50}]
+    std::sort(cart_cord.begin(), cart_cord.end(),
+              [&](const qp qp1, const qp qp2) {
+                if (qp1.x != qp2.x) {
+                  return qp1.x < qp2.x;
+                }
+
+                return qp1.z < qp2.z;
+              });
+
+    // Setup numbering
+    int ig = 0;
+    cart_cord[0].iglob = ig;
+
+    type_real xtol = get_tolerance(cart_cord, nspec, ngllxz);
+
+    for (int iloc = 1; iloc < cart_cord.size(); iloc++) {
+      // check if the previous point is same as current
+      if ((std::abs(cart_cord[iloc].x - cart_cord[iloc - 1].x) > xtol) ||
+          (std::abs(cart_cord[iloc].z - cart_cord[iloc - 1].z) > xtol)) {
+        ig++;
+      }
+      cart_cord[iloc].iglob = ig;
+    }
+
+    nglob = ig + 1;
   }
 
   std::vector<qp> copy_cart_cord(nspec * ngllxz);
@@ -106,8 +137,6 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
     int iloc = cart_cord[i].iloc;
     copy_cart_cord[iloc] = cart_cord[i];
   }
-
-  int nglob = ig + 1;
 
   specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2> points(
       nspec, ngll, ngll);
@@ -179,43 +208,47 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
     const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
         &control_nodes_in,
-    const specfem::quadrature::quadratures &quadratures) {
+    const specfem::quadrature::quadratures &quadratures,
+    const specfem::mesh::adjacency_map::adjacency_map<
+        specfem::dimension::type::dim2> &adjacency_map) {
   nspec = tags.nspec;
   ngllz = quadratures.gll.get_N();
   ngllx = quadratures.gll.get_N();
   ngnod = control_nodes_in.ngnod;
 
-  auto &mapping = static_cast<specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+  auto &mapping =
+      static_cast<specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+          specfem::dimension::type::dim2> &>(*this);
+  auto &control_nodes = static_cast<specfem::assembly::mesh_impl::control_nodes<
       specfem::dimension::type::dim2> &>(*this);
-  auto &control_nodes = static_cast<
-      specfem::assembly::mesh_impl::control_nodes<specfem::dimension::type::dim2> &>(
-      *this);
-  auto &quadrature = static_cast<
-      specfem::assembly::mesh_impl::quadrature<specfem::dimension::type::dim2> &>(
-      *this);
-  auto &shape_functions = static_cast<specfem::assembly::mesh_impl::shape_functions<
+  auto &quadrature = static_cast<specfem::assembly::mesh_impl::quadrature<
       specfem::dimension::type::dim2> &>(*this);
+  auto &shape_functions =
+      static_cast<specfem::assembly::mesh_impl::shape_functions<
+          specfem::dimension::type::dim2> &>(*this);
 
   mapping = specfem::assembly::mesh_impl::mesh_to_compute_mapping<
       specfem::dimension::type::dim2>(tags);
-  control_nodes =
-      specfem::assembly::mesh_impl::control_nodes<specfem::dimension::type::dim2>(
-          *static_cast<const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-              specfem::dimension::type::dim2> *>(this),
-          control_nodes_in);
+  control_nodes = specfem::assembly::mesh_impl::control_nodes<
+      specfem::dimension::type::dim2>(
+      *static_cast<const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+          specfem::dimension::type::dim2> *>(this),
+      control_nodes_in);
   quadrature =
       specfem::assembly::mesh_impl::quadrature<specfem::dimension::type::dim2>(
           quadratures);
 
-  shape_functions =
-      specfem::assembly::mesh_impl::shape_functions<specfem::dimension::type::dim2>(
-          quadratures.gll.get_hxi(), quadratures.gll.get_hxi(),
-          quadratures.gll.get_N(), control_nodes_in.ngnod);
+  shape_functions = specfem::assembly::mesh_impl::shape_functions<
+      specfem::dimension::type::dim2>(
+      quadratures.gll.get_hxi(), quadratures.gll.get_hxi(),
+      quadratures.gll.get_N(), control_nodes_in.ngnod);
 
-  this->assemble();
+  this->assemble(adjacency_map);
 }
 
-void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
+void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
+    const specfem::mesh::adjacency_map::adjacency_map<
+        specfem::dimension::type::dim2> &adjacency_map) {
 
   const int ngnod = this->ngnod;
   const int nspec = this->nspec;
@@ -255,7 +288,8 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
   }
 
   auto &points = static_cast<
-      specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2> &>(*this);
+      specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2> &>(
+      *this);
 
-  points = assign_numbering(global_coordinates);
+  points = assign_numbering(global_coordinates, adjacency_map, *this);
 }
