@@ -38,7 +38,6 @@ subroutine save_databases()
    use constants, only: IMAIN,IOUT,MAX_STRING_LEN,SAVE_MESHFILES_VTK_FORMAT,myrank
    use part_unstruct_par, only: nspec,iproc
    use shared_parameters, only: NPROC, database_filename, OUTPUT_FILES
-   use save_databases_adj, only: save_databases_adjacency_map
 
    implicit none
 
@@ -856,12 +855,16 @@ end subroutine save_databases_VTK_files
 subroutine save_databases_adjacency_graph()
 
    use constants, only: IOUT
-   use shared_parameters, only: nelmnts
+   use shared_parameters, only: nelmnts, write_adjacency_map
    use part_unstruct_par, only: num_adjacent, adjacency_type, adjacency_id, adjacent_elements
 
    implicit none
 
    integer :: i,j
+
+   write(IOUT) write_adjacency_map
+
+   if (.not. write_adjacency_map) return
 
    ! local parameters
    do i = 0, nelmnts-1

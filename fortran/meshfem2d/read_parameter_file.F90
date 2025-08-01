@@ -537,7 +537,11 @@ subroutine read_parameter_file_only()
    ! Database output parameters
    !--------------------------------------------------------------------
 
-   call read_value_logical_p(write_adjacency_map, "write_adjacency_map")
+   call read_value_logical_p(write_adjacency_map, 'write_adjacency_map')
+   if (err_occurred() /= 0) then
+      write(*,*) 'Warning: write_adjacency_map parameter not found in Par_file, setting to .false. by default.'
+      write_adjacency_map = .false.
+   endif
 
    !--------------------------------------------------------------------
    ! Display parameters
