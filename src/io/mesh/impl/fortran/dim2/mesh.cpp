@@ -3,6 +3,7 @@
 #include "enumerations/interface.hpp"
 #include "io/fortranio/interface.hpp"
 #include "io/interface.hpp"
+#include "io/mesh/impl/fortran/dim2/read_adjacency_map.hpp"
 #include "io/mesh/impl/fortran/dim2/read_boundaries.hpp"
 #include "io/mesh/impl/fortran/dim2/read_elements.hpp"
 #include "io/mesh/impl/fortran/dim2/read_interfaces.hpp"
@@ -132,6 +133,13 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
     mesh.axial_nodes =
         specfem::io::mesh::impl::fortran::dim2::read_axial_elements(
             stream, mesh.parameters.nelem_on_the_axis, mesh.nspec, mpi);
+  } catch (std::runtime_error &e) {
+    throw;
+  }
+
+  try {
+    specfem::io::mesh::impl::fortran::dim2::read_adjacency_map(stream, mesh,
+                                                               mpi);
   } catch (std::runtime_error &e) {
     throw;
   }

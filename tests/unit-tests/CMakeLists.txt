@@ -203,6 +203,28 @@ target_link_libraries(
   -lpthread -lm
 )
 
+
+add_executable(
+  mortar_tests
+  mortar/adjacency_map/adjtest_2d.cpp
+  mortar/fixture/mortar_fixtures.cpp
+  mortar/runner.cpp
+)
+
+target_link_libraries(
+  mortar_tests
+  gtest_main
+  mpi_environment
+  kokkos_environment
+  mesh
+  assembly
+  yaml-cpp
+  io
+  # utilities
+  # material_class
+  -lpthread -lm
+)
+
 add_executable(
   compute_jacobian_matrix_tests
   assembly_mesh/jacobian_matrix/compute_jacobian_matrix_tests.cpp
@@ -546,6 +568,7 @@ if (NOT MPI_PARALLEL)
     lagrange_tests
     mass_matrix_tests
     mesh_tests
+    mortar_tests
     point_tests
     policies_tests
     receivers_tests
@@ -572,6 +595,7 @@ if (NOT MPI_PARALLEL)
     io
     mesh
     policies
+    mortar
   )
 
   foreach(dir_name IN LISTS LINK_DIRS)
