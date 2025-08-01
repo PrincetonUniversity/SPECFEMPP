@@ -62,7 +62,7 @@
   part(:) = -1
 
   ! connectivity
-  if (NPROC > 1) then
+  if (NPROC >= 1) then
     allocate(xadj_g(0:nelmnts), &
              adjncy_g(0:MAX_NEIGHBORS*nelmnts-1),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating connectivity arrays')
@@ -88,7 +88,6 @@
       elmnts_bis(i*NCORNERS:i*NCORNERS+NCORNERS-1) = elmnts(i*NGNOD:i*NGNOD+NCORNERS-1)
     enddo
 
-    if (NPROC > 1) then
 !! DK DK fixed problem in the previous implementation by Nicolas Le Goff:
 !! DK DK (nxread+1)*(nzread+1) is OK for a regular internal mesh only, not for non structured external meshes
 !! DK DK      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), &
@@ -96,12 +95,9 @@
 !! DK DK the subset of element corners is not renumbered therefore we must still use the nnodes computed for 9 nodes here
       ! determines maximum neighbors based on 1 common node
       call mesh2dual_ncommonnodes(elmnts_bis,1,xadj_g,adjncy_g)
-    endif
   else
-    if (NPROC > 1) then
       ! determines maximum neighbors based on 1 common node
       call mesh2dual_ncommonnodes(elmnts,1,xadj_g,adjncy_g)
-    endif
   endif
   ! user output
   if (myrank == 0) then
