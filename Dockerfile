@@ -74,8 +74,8 @@ RUN echo "Installing SPECFEM++..." && \
     echo "" && \
     cd ${SOURCE} && \
     rm -rf ${BUILD} && \
-    cmake --preset release-nosimd && \
-    cmake --build --preset release-nosimd && \
+    cmake --preset release && \
+    cmake --build --preset release && \
     echo "Done."
 
 # Set environment variables
