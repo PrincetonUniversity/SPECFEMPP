@@ -29,7 +29,7 @@ public:
    *
    * @param simulation_type Type of the simulation (forward or combined)
    */
-  solver(const std::string simulation_type)
+  solver(const std::string &simulation_type)
       : simulation_type(simulation_type) {}
 
   /**

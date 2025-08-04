@@ -10,7 +10,7 @@ namespace specfem {
 namespace io {
 
 template <typename OutputLibrary>
-property_writer<OutputLibrary>::property_writer(const std::string output_folder)
+property_writer<OutputLibrary>::property_writer(const std::string &output_folder)
     : output_folder(output_folder) {}
 
 template <typename OutputLibrary>
