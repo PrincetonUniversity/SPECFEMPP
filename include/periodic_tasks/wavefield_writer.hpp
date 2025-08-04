@@ -17,7 +17,7 @@ private:
   specfem::io::wavefield_writer<IOLibrary<specfem::io::write> > writer;
 
 public:
-  wavefield_writer(const std::string output_folder, const int time_interval,
+  wavefield_writer(const std::string &output_folder, const int time_interval,
                    const bool include_last_step,
                    const bool save_boundary_values)
       : periodic_task(time_interval, include_last_step),

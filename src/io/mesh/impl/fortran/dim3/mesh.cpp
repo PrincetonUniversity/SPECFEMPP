@@ -40,8 +40,8 @@ std::string try_print_medium_element(
 }
 
 specfem::mesh::mesh<specfem::dimension::type::dim3>
-specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
-                          const std::string mesh_databases_file,
+specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
+                          const std::string &mesh_databases_file,
                           const specfem::MPI::MPI *mpi) {
 
   // Creating aliases for Checking functions
