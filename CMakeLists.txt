@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # SPECFEM options
 option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" ON)
-option(VTK_CXX_BUILD "Build VTK C++" ON)
+option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
 option(ENABLE_SIMD "Enable SIMD" OFF)
@@ -504,7 +504,7 @@ target_link_libraries(
         writer
 )
 
-if (NOT VTK_CXX_BUILD)
+if (NOT SPECFEM_ENABLE_VTK)
         target_compile_definitions(
                 periodic_tasks
                 PUBLIC -DNO_VTK
