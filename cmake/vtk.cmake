@@ -1,4 +1,4 @@
-if (VTK_CXX_BUILD)
+if (SPECFEM_ENABLE_VTK)
 
     find_package(VTK COMPONENTS
         CommonColor
@@ -23,5 +23,6 @@ if (VTK_CXX_BUILD)
     endif()
 else ()
     set(VTK_FOUND OFF)
+    set(SPECFEM_ENABLE_VTK OFF)
     message(STATUS "Building without VTK.")
 endif()
