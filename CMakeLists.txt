@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 # SPECFEM options
 option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" ON)
 option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
-option(MPI_PARALLEL "MPI enabled" OFF)
+option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
@@ -253,7 +253,7 @@ add_library(
         src/specfem_mpi/specfem_mpi.cpp
 )
 
-if (MPI_PARALLEL)
+if (SPECFEM_ENABLE_MPI)
         target_compile_definitions(
                 specfem_mpi
                 PUBLIC -DMPI_PARALLEL
@@ -261,7 +261,7 @@ if (MPI_PARALLEL)
         message(STATUS "Compiling SPECFEM with MPI")
 else()
         message(STATUS "Compiling SPECFEM without MPI")
-endif(MPI_PARALLEL)
+endif(SPECFEM_ENABLE_MPI)
 
 # add_library(
 #         material_class
