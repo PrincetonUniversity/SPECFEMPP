@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.17.5)
 project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
 
 set(CMAKE_CXX_STANDARD 17)
-option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
+
+# SPECFEM options
+option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" ON)
 option(VTK_CXX_BUILD "Build VTK C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
@@ -197,7 +199,7 @@ add_library(
         src/io/mesh/impl/fortran/dim3/utilities.cpp
 )
 
-if (NOT HDF5_CXX_BUILD)
+if (NOT SPECFEM_ENABLE_HDF5)
     target_compile_definitions(
         io
         PUBLIC -DNO_HDF5
