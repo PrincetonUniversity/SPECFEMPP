@@ -84,138 +84,20 @@ else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message(STATUS "macOS not detected -- setting __APPLE__ FALSE")
 endif()
 
-if (DEFINED Kokkos_ENABLE_CUDA)
-    if (Kokkos_ENABLE_CUDA)
-        # message(STATUS "Setting CUDA variables")
-        set(Kokkos_ENABLE_CUDA_LAMBDA ON CACHE BOOL "Using CUDA Lambda by default")
-        set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON CACHE BOOL "Using CUDA Relocatable device by default")
-        set(Kokkos_ENABLE_CUDA_CONSTEXPR ON CACHE BOOL "Using CUDA Constexpr by default")
-    endif()
-endif()
-
-# For the installation of dependencies
-include(FetchContent)
-
 # Install Kokkos as a dependency
-# Set Kokkos options before fetching
-set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+include("${CMAKE_SOURCE_DIR}/cmake/kokkos.cmake")
 
-FetchContent_Declare(
-        kokkos
-        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.6.01.zip
-)
+# Install yaml-cpp as a dependency
+include("${CMAKE_SOURCE_DIR}/cmake/yaml.cmake")
 
-# Using this instead of FetchContent_MakeAvailable to be backwards compatible
-# with older CMake versions
-FetchContent_GetProperties(kokkos)
-if(NOT kokkos_POPULATED)
-  FetchContent_Populate(kokkos)
-  add_subdirectory(${kokkos_SOURCE_DIR} ${kokkos_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
+# Include VTK if available
+include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 
-# Install yaml content
-FetchContent_Declare(
-        yaml
-        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-        GIT_TAG 2f86d13775d119edbb69af52e5f566fd65c6953b
-)
+# Find or install boost library function
+include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 
-# Disable yaml-cpp installation
-set(YAML_CPP_BUILD_INSTALL OFF CACHE BOOL "Disable yaml-cpp installation" FORCE)
-
-FetchContent_MakeAvailable(yaml)
-
-include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
-
-
-if (VTK_CXX_BUILD)
-
-    find_package(VTK COMPONENTS
-        CommonColor
-        CommonCore
-        FiltersSources
-        InteractionStyle
-        RenderingContextOpenGL2
-        RenderingCore
-        RenderingFreeType
-        RenderingGL2PSOpenGL2
-        RenderingOpenGL2
-    )
-
-    if (VTK_FOUND)
-        message(STATUS "VTK libs/ and incs/:")
-        message(STATUS "    LIB:   ${VTK_LIBRARY_DIRS}")
-        message(STATUS "    INC:   ${VTK_INCLUDE_DIRS}")
-        message(STATUS "    LIBSO: ${VTK_LIBRARIES}")
-    else(NOT VTK_FOUND)
-        message(STATUS "VTK not found. Building without VTK.")
-        set(VTK_CXX_BUILD OFF)
-    endif()
-else ()
-    set(VTK_FOUND OFF)
-    message(STATUS "Building without VTK.")
-endif()
-
-
-# Try finding boost and if not found install.
-find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
-
-
-if (NOT ${Boost_FOUND})
-    # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd)
-    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
-                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd)
-    set(BOOST_ENABLE_CMAKE ON)
-    set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
-    set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
-    set(BOOST_BUILD_TESTING OFF CACHE BOOL INTERNAL "Boost Test Switch") # Disable testing for boost
-    # The test flag is not really working... added it for completeness
-
-    # Download and extract the boost library from GitHub
-    set(BOOST_VERSION 1.87.0)
-    message(STATUS "Downloading and extracting boost (${BOOST_VERSION}) library sources. This will take <1 min.")
-    include(FetchContent)
-
-    # Fetch boost from the Github release zip file to reduce download time
-    FetchContent_Declare(
-        Boost
-        URL https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.gz # downloading a zip release speeds up the download
-        USES_TERMINAL_DOWNLOAD True
-        GIT_PROGRESS TRUE
-        DOWNLOAD_NO_EXTRACT FALSE
-        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-    )
-
-    # Disable Boost installation
-    set(BOOST_INSTALL OFF CACHE BOOL "Don't install Boost" FORCE)
-    set(BOOST_INSTALL_LIBRARIES OFF CACHE BOOL "Don't install Boost libraries" FORCE)
-    set(BOOST_SKIP_INSTALL_RULES ON CACHE BOOL "Skip Boost install rules" FORCE)
-
-    FetchContent_MakeAvailable(Boost)
-
-else()
-    # Check which boost LIBRARY_DIRS to use
-    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system)
-    message(STATUS "Boost libs/ and incs/:")
-    message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
-    message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
-    message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
-endif()
-
-# Install HDF5 as a dependency if not found
-find_package(HDF5 COMPONENTS CXX)
-
-if (NOT ${HDF5_FOUND})
-    message(STATUS "HDF5 not found. Building without HDF5.")
-    set(HDF5_CXX_BUILD OFF)
-else()
-    message(STATUS "HDF5 libs/ and incs/:.")
-    message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
-    message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
-    message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
-endif()
+# Find HDF5
+include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
 
 
 if (ENABLE_SIMD)
@@ -759,32 +641,9 @@ if (BUILD_BENCHMARKS)
     message(STATUS "Benchmarks built.")
 endif()
 
-# Doxygen
 
-# look for Doxygen package
-find_package(Doxygen)
-
-if (DOXYGEN_FOUND)
-    # set input and output files
-    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile.in)
-    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.out)
-
-    # request to configure the file
-    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-    message(STATUS "Doxygen build started")
-    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
-        ${DOXYGEN_OUT}
-    )
-
-    # Note: do not put "ALL" - this builds docs together with application EVERY TIME!
-    add_custom_target( docs
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM )
-else (DOXYGEN_FOUND)
-  message(STATUS "Doxygen need to be installed to generate the doxygen documentation")
-endif (DOXYGEN_FOUND)
+# Include Doxygen
+include("${CMAKE_SOURCE_DIR}/cmake/doxygen.cmake")
 
 if (SPECFEMPP_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})
     install(TARGETS specfem2d DESTINATION ${SKBUILD_SCRIPTS_DIR})
