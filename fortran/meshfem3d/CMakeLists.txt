@@ -15,7 +15,7 @@ set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 unset(WITH_MPI)
 unset(WITH_SCOTCH)
 
-option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(WITH_MPI "Build with MPI support" OFF)
 option(WITH_SCOTCH "Build with SCOTCH support" OFF)
 option(WITH_ADIOS "Build with ADIOS support" OFF)
@@ -51,18 +51,18 @@ include_directories(${CMAKE_Fortran_MODULE_DIRECTORY})
 include_directories(${SETUP_DIR})
 
 # Setting values dependent on options
-if (ENABLE_DOUBLE_PRECISION)
+if (SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "-- Enabling double precision")
     # These are used by Meshfem
     set(CUSTOM_REAL "SIZE_DOUBLE")
     set(CUSTOM_MPI_TYPE "MPI_DOUBLE_PRECISION")
 
-else(ENABLE_DOUBLE_PRECISION)
+else(SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "-- Enabling single precision")
     # These are used by Meshfem
     set(CUSTOM_REAL "SIZE_REAL")
     set(CUSTOM_MPI_TYPE "MPI_REAL")
-endif(ENABLE_DOUBLE_PRECISION)
+endif(SPECFEM_ENABLE_DOUBLE_PRECISION)
 
 
 if (WITH_ADIOS)
