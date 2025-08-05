@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" ON)
 option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
 option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
-option(BUILD_TESTS "Tests included" OFF)
+option(SPECFEM_BUILD_TESTS "Tests included" OFF)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
@@ -622,7 +622,7 @@ target_link_libraries(
 
 
 # Include tests
-if (BUILD_TESTS)
+if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
         add_subdirectory(tests/unit-tests)
 endif()
