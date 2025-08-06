@@ -1,3 +1,7 @@
+message(STATUS "Configuring Kokkos library...")
+
+# Prepend the CMAKE_MESSAGE_INDENT variable to ensure proper indentation in messages
+list(APPEND CMAKE_MESSAGE_INDENT "  Kokkos: ")
 
 if (DEFINED Kokkos_ENABLE_CUDA)
     if (Kokkos_ENABLE_CUDA)
@@ -25,3 +29,6 @@ if(NOT kokkos_POPULATED)
   FetchContent_Populate(kokkos)
   add_subdirectory(${kokkos_SOURCE_DIR} ${kokkos_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
+
+# Pop the indentation for Kokkos messages
+list(POP_BACK CMAKE_MESSAGE_INDENT)

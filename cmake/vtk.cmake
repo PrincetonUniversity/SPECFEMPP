@@ -1,5 +1,10 @@
 if (SPECFEM_ENABLE_VTK)
 
+    message(STATUS "VTK support is enabled. Proceeding with VTK configuration.")
+
+    # Prepend the CMAKE_MESSAGE_INDENT variable to ensure proper indentation in messages
+    list(APPEND CMAKE_MESSAGE_INDENT "  VTK: ")
+
     find_package(VTK COMPONENTS
         CommonColor
         CommonCore
@@ -21,6 +26,9 @@ if (SPECFEM_ENABLE_VTK)
         message(STATUS "VTK not found. Building without VTK.")
         set(VTK_CXX_BUILD OFF)
     endif()
+
+    # Pop the indentation for VTK messages
+    list(POP_BACK CMAKE_MESSAGE_INDENT)
 else ()
     set(VTK_FOUND OFF)
     set(SPECFEM_ENABLE_VTK OFF)
