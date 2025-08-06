@@ -24,7 +24,7 @@ if (SPECFEM_ENABLE_VTK)
         message(STATUS "    LIBSO: ${VTK_LIBRARIES}")
     else(NOT VTK_FOUND)
         message(STATUS "VTK not found. Building without VTK.")
-        set(VTK_CXX_BUILD OFF)
+        set(SPECFEM_ENABLE_VTK OFF)
     endif()
 
     # Pop the indentation for VTK messages
