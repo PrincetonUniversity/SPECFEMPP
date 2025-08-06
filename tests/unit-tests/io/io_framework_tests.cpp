@@ -148,13 +148,21 @@ private:
   }
 };
 
-// Type list for all I/O frameworks
+// Type list for all I/O frameworks - conditionally include based on available
+// packages
 using IOTypes = ::testing::Types<specfem::io::ASCII<specfem::io::write>,
-                                 specfem::io::ASCII<specfem::io::read>,
+                                 specfem::io::ASCII<specfem::io::read>
+#ifndef NO_HDF5
+                                 ,
                                  specfem::io::HDF5<specfem::io::write>,
-                                 specfem::io::HDF5<specfem::io::read>,
+                                 specfem::io::HDF5<specfem::io::read>
+#endif
+#ifndef NO_ADIOS2
+                                 ,
                                  specfem::io::ADIOS2<specfem::io::write>,
-                                 specfem::io::ADIOS2<specfem::io::read> >;
+                                 specfem::io::ADIOS2<specfem::io::read>
+#endif
+                                 >;
 
 TYPED_TEST_SUITE(IOFrameworkTest, IOTypes);
 

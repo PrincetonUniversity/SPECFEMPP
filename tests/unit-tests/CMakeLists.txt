@@ -58,14 +58,26 @@ add_executable(
 )
 
 target_link_libraries(io_framework_tests PRIVATE
-  adios2
+  io
   ${BOOST_LIBS}
   gtest_main
   Kokkos::kokkos
-  io
   kokkos_environment
-
 )
+
+if (NOT SPECFEM_ENABLE_HDF5)
+    target_compile_definitions(
+        io_framework_tests
+        PUBLIC -DNO_HDF5
+    )
+endif()
+
+if (NOT SPECFEM_ENABLE_ADIOS2)
+    target_compile_definitions(
+        io_framework_tests
+        PUBLIC -DNO_ADIOS2
+    )
+endif()
 
 add_executable(
   gll_tests
