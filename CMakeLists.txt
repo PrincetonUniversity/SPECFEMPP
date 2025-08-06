@@ -15,7 +15,7 @@ option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
-option(ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
+option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
 
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
@@ -45,7 +45,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(FETCHCONTENT_QUIET TRUE)
 
 # Enable unity build for faster compilation
-if(ENABLE_UNITY_BUILD)
+if(SPECFEM_ENABLE_UNITY_BUILD)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(STATUS "Unity build disabled for Debug build type.")
         set(CMAKE_UNITY_BUILD OFF)
