@@ -5,7 +5,7 @@ project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
 set(CMAKE_CXX_STANDARD 17)
 
 # SPECFEM options
-option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" ON)
+option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" OFF)
 option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" ON)
 option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
 option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
@@ -207,29 +207,23 @@ add_library(
         src/io/mesh/impl/fortran/dim3/utilities.cpp
 )
 
+target_link_libraries(
+        io
+        mesh
+        source_class
+        specfem::receivers
+        yaml-cpp
+        ${BOOST_LIBS}
+)
+
 if (NOT SPECFEM_ENABLE_HDF5)
     target_compile_definitions(
         io
         PUBLIC -DNO_HDF5
     )
-
-    target_link_libraries(
-        io
-        mesh
-        source_class
-        specfem::receivers
-        yaml-cpp
-        ${BOOST_LIBS}
-        Kokkos::kokkos)
 else()
     target_link_libraries(
         io
-        mesh
-        source_class
-        specfem::receivers
-        Kokkos::kokkos
-        yaml-cpp
-        ${BOOST_LIBS}
         ${HDF5_LIBRARIES}
     )
 endif()
