@@ -22,9 +22,8 @@ public:
   using Properties = EdgeProperties;
 
 private:
-  using Graph =
-      boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
-                            boost::no_property, Properties>;
+  using Graph = boost::adjacency_list<boost::vecS, boost::vecS,
+                                      boost::directedS, Properties>;
   Graph graph_;
 
 public:
