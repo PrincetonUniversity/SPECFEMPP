@@ -1,3 +1,7 @@
+message(STATUS "Configuring Doxygen documentation...")
+
+list(APPEND CMAKE_MESSAGE_INDENT "  Doxygen: ")
+
 # look for Doxygen package
 find_package(Doxygen)
 
@@ -22,3 +26,6 @@ if (DOXYGEN_FOUND)
 else (DOXYGEN_FOUND)
   message(STATUS "Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
+
+# Pop the indentation for Doxygen messages
+list(POP_BACK CMAKE_MESSAGE_INDENT)
