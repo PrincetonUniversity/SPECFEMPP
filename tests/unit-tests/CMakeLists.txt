@@ -586,8 +586,6 @@ if (NOT MPI_PARALLEL)
   endforeach()
 
 
-
-
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
 endif(NOT MPI_PARALLEL)

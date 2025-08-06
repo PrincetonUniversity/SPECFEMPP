@@ -30,19 +30,37 @@ template <> struct GetWriteType<specfem::io::ADIOS2<specfem::io::read> > {
 // Base test class
 class IOFrameworkTestBase : public ::testing::Test {
 protected:
-  static constexpr const char *test_file_name = "test_io_framework";
-
-  void SetUp() override {
-    cleanup(); // Clean up any leftover files
+  // Generate unique filename based on I/O type to avoid conflicts during
+  // parallel execution
+  template <typename IOType> std::string getTestFileName() {
+    if constexpr (std::is_same_v<IOType,
+                                 specfem::io::ASCII<specfem::io::write> >) {
+      return "test_ascii_write";
+    } else if constexpr (std::is_same_v<
+                             IOType, specfem::io::ASCII<specfem::io::read> >) {
+      return "test_ascii_read";
+    } else if constexpr (std::is_same_v<
+                             IOType, specfem::io::HDF5<specfem::io::write> >) {
+      return "test_hdf5_write";
+    } else if constexpr (std::is_same_v<
+                             IOType, specfem::io::HDF5<specfem::io::read> >) {
+      return "test_hdf5_read";
+    } else if constexpr (std::is_same_v<IOType, specfem::io::ADIOS2<
+                                                    specfem::io::write> >) {
+      return "test_adios2_write";
+    } else if constexpr (std::is_same_v<
+                             IOType, specfem::io::ADIOS2<specfem::io::read> >) {
+      return "test_adios2_read";
+    } else {
+      return "test_unknown";
+    }
   }
 
-  void TearDown() override { cleanup(); }
-
-  // Clean up files/directories created during testing
-  void cleanup() {
-    std::vector<std::string> patterns = { test_file_name,
-                                          std::string(test_file_name) + ".h5",
-                                          std::string(test_file_name) + ".bp" };
+  // Clean up files/directories for a specific test filename
+  template <typename IOType> void cleanup() {
+    std::string base_name = getTestFileName<IOType>();
+    std::vector<std::string> patterns = { base_name, base_name + ".h5",
+                                          base_name + ".bp" };
 
     for (const auto &pattern : patterns) {
       fs::path path(pattern);
@@ -103,8 +121,18 @@ protected:
 };
 
 // Test fixture template
-template <typename IOType>
-class IOFrameworkTest : public IOFrameworkTestBase {};
+template <typename IOType> class IOFrameworkTest : public IOFrameworkTestBase {
+protected:
+  void SetUp() override {
+    cleanup<IOType>(); // Clean up any leftover files
+  }
+
+  void TearDown() override {
+    cleanup<IOType>(); // Clean up after test
+  }
+
+  std::string getTestFile() { return this->template getTestFileName<IOType>(); }
+};
 
 // Type list for all I/O frameworks
 using IOTypes = ::testing::Types<specfem::io::ASCII<specfem::io::write>,
@@ -123,11 +151,11 @@ TYPED_TEST(IOFrameworkTest, BasicFileOperations) {
   // Test file creation (write operations)
   if constexpr (std::is_same_v<typename IOType::IO_OpType,
                                specfem::io::write>) {
-    typename IOType::File file(this->test_file_name);
+    typename IOType::File file(this->getTestFile());
     EXPECT_NO_THROW(file.flush());
 
     // Verify file/directory was created
-    std::string expected_name = this->test_file_name;
+    std::string expected_name = this->getTestFile();
     if constexpr (std::is_same_v<IOType,
                                  specfem::io::HDF5<specfem::io::write> >) {
       expected_name += ".h5";
@@ -147,7 +175,7 @@ TYPED_TEST(IOFrameworkTest, GroupOperations) {
   if constexpr (std::is_same_v<typename IOType::IO_OpType,
                                specfem::io::write>) {
     // Create file and groups
-    typename IOType::File file(this->test_file_name);
+    typename IOType::File file(this->getTestFile());
     auto group1 = file.createGroup("group1");
     auto group2 = file.createGroup("group2");
     auto nested_group = group1.createGroup("nested");
@@ -156,7 +184,7 @@ TYPED_TEST(IOFrameworkTest, GroupOperations) {
     // For read operations, first create the file with groups
     {
       using WriteIOType = typename GetWriteType<IOType>::type;
-      typename WriteIOType::File write_file(this->test_file_name);
+      typename WriteIOType::File write_file(this->getTestFile());
       auto group1 = write_file.createGroup("group1");
       auto group2 = write_file.createGroup("group2");
       auto nested_group = group1.createGroup("nested");
@@ -164,7 +192,7 @@ TYPED_TEST(IOFrameworkTest, GroupOperations) {
     }
 
     // Then read it back
-    typename IOType::File file(this->test_file_name);
+    typename IOType::File file(this->getTestFile());
     auto group1 = file.openGroup("group1");
     auto group2 = file.openGroup("group2");
     auto nested_group = group1.openGroup("nested");
@@ -203,7 +231,7 @@ TYPED_TEST(IOFrameworkTest, DatasetOperations) {
   if constexpr (std::is_same_v<typename IOType::IO_OpType,
                                specfem::io::write>) {
     // Write operations - create file and datasets
-    typename IOType::File file(this->test_file_name);
+    typename IOType::File file(this->getTestFile());
 
     // Create datasets
     auto int_dataset =
@@ -226,7 +254,7 @@ TYPED_TEST(IOFrameworkTest, DatasetOperations) {
     // For read operations, first create the file with data
     {
       using WriteIOType = typename GetWriteType<IOType>::type;
-      typename WriteIOType::File write_file(this->test_file_name);
+      typename WriteIOType::File write_file(this->getTestFile());
       auto int_dataset =
           write_file
               .template createDataset<Kokkos::View<int *, Kokkos::HostSpace> >(
@@ -245,7 +273,7 @@ TYPED_TEST(IOFrameworkTest, DatasetOperations) {
 
     // Read data back and verify
     // Read back and verify
-    typename IOType::File file(this->test_file_name);
+    typename IOType::File file(this->getTestFile());
 
     // Create views for reading
     Kokkos::View<int *, Kokkos::HostSpace> read_int_view("read_int", data_size);
@@ -300,7 +328,7 @@ TYPED_TEST(IOFrameworkTest, BoolDataOperations) {
 
   if constexpr (std::is_same_v<typename IOType::IO_OpType,
                                specfem::io::write>) {
-    typename IOType::File file(this->test_file_name);
+    typename IOType::File file(this->getTestFile());
     auto bool_dataset =
         file.template createDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
             "bool_data", bool_view);
@@ -310,7 +338,7 @@ TYPED_TEST(IOFrameworkTest, BoolDataOperations) {
     // Create file with bool data
     {
       using WriteIOType = typename GetWriteType<IOType>::type;
-      typename WriteIOType::File write_file(this->test_file_name);
+      typename WriteIOType::File write_file(this->getTestFile());
       auto bool_dataset =
           write_file
               .template createDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
@@ -320,7 +348,7 @@ TYPED_TEST(IOFrameworkTest, BoolDataOperations) {
     }
 
     // Read back and verify
-    typename IOType::File file(this->test_file_name);
+    typename IOType::File file(this->getTestFile());
     Kokkos::View<bool *, Kokkos::HostSpace> read_bool_view("read_bool",
                                                            data_size);
     auto bool_dataset =
@@ -347,7 +375,7 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 
   if constexpr (std::is_same_v<typename IOType::IO_OpType,
                                specfem::io::write>) {
-    typename IOType::File file(this->test_file_name);
+    typename IOType::File file(this->getTestFile());
 
     // Create hierarchical structure
     auto physics_group = file.createGroup("physics");
@@ -397,7 +425,7 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
     // Create the complex structure first
     {
       using WriteIOType = typename GetWriteType<IOType>::type;
-      typename WriteIOType::File write_file(this->test_file_name);
+      typename WriteIOType::File write_file(this->getTestFile());
 
       auto physics_group = write_file.createGroup("physics");
       auto mesh_group = write_file.createGroup("mesh");
@@ -443,7 +471,7 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 
     // Read back the complex structure
     auto should_not_throw = [this]() {
-      typename IOType::File file(this->test_file_name);
+      typename IOType::File file(this->getTestFile());
 
       auto physics_group = file.openGroup("physics");
       auto mesh_group = file.openGroup("mesh");

@@ -28,5 +28,6 @@ public:
       specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>; ///< Wrapper for
                                                             ///< ADIOS2 dataset
 };
+
 } // namespace io
 } // namespace specfem

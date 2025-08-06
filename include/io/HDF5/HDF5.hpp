@@ -27,5 +27,6 @@ public:
       specfem::io::impl::HDF5::Dataset<ViewType, OpType>; ///< Wrapper for HDF5
                                                           ///< dataset
 };
+
 } // namespace io
 } // namespace specfem
