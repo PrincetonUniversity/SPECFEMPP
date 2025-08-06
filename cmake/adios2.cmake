@@ -1,7 +1,10 @@
 if (SPECFEM_ENABLE_ADIOS2)
 
+  # Disable unity build for here
+  set(CMAKE_UNITY_BUILD OFF)
+
   message(STATUS "Enabling ADIOS2 support")
-  list(APPEND CMAKE_MESSAGE_INDENT "  ")
+  list(APPEND CMAKE_MESSAGE_INDENT "  ADIOS2: ")
 
   set(ADIOS2_VERSION 2.10.2)
   message(STATUS "Downloading and extracting ADIOS2 (${ADIOS2_VERSION}) library sources. This will take <1 min.")
@@ -40,6 +43,7 @@ if (SPECFEM_ENABLE_ADIOS2)
 
     list(POP_BACK CMAKE_MESSAGE_INDENT)
 
+    set(CMAKE_UNITY_BUILD OFF)
 else()
   message(STATUS "ADIOS2 support is disabled. Set SPECFEM_ENABLE_ADIOS2 to ON to enable it.")
   set(SPECFEM_ENABLE_ADIOS2 OFF CACHE BOOL "Disable ADIOS2 support" FORCE)
