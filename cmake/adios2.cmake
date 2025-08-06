@@ -1,6 +1,7 @@
 if (SPECFEM_ENABLE_ADIOS2)
 
   # Disable unity build for here
+  set(SAVE_UNITY_BUILD ${CMAKE_UNITY_BUILD})
   set(CMAKE_UNITY_BUILD OFF)
 
   message(STATUS "Enabling ADIOS2 support")
@@ -37,13 +38,14 @@ if (SPECFEM_ENABLE_ADIOS2)
 
   FetchContent_MakeAvailable(ADIOS2)
 
-    message(STATUS "ADIOS2 downloaded and configured.")
+  message(STATUS "ADIOS2 downloaded and configured.")
 
-    unset(BUILD_TESTING)
+  unset(BUILD_TESTING)
 
-    list(POP_BACK CMAKE_MESSAGE_INDENT)
+  list(POP_BACK CMAKE_MESSAGE_INDENT)
 
-    set(CMAKE_UNITY_BUILD OFF)
+  set(CMAKE_UNITY_BUILD ${SAVE_UNITY_BUILD})
+
 else()
   message(STATUS "ADIOS2 support is disabled. Set SPECFEM_ENABLE_ADIOS2 to ON to enable it.")
   set(SPECFEM_ENABLE_ADIOS2 OFF CACHE BOOL "Disable ADIOS2 support" FORCE)
