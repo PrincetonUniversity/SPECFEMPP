@@ -8,9 +8,6 @@ if (DEFINED Kokkos_ENABLE_CUDA)
     endif()
 endif()
 
-# For the installation of dependencies
-include(FetchContent)
-
 # Install Kokkos as a dependency
 # Set Kokkos options before fetching
 set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)

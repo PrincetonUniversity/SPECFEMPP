@@ -18,6 +18,7 @@ namespace io {
  */
 template <typename OpType> class HDF5 {
 public:
+  using IO_OpType = OpType; ///< Operation type (read/write)
   using File = specfem::io::impl::HDF5::File<OpType>; ///< Wrapper for HDF5 file
   using Group =
       specfem::io::impl::HDF5::Group<OpType>; ///< Wrapper for HDF5 group

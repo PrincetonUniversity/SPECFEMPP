@@ -3,9 +3,6 @@ cmake_minimum_required(VERSION 3.17.5)
 if (NOT DEFINED SPECFEM_BENCHMARKS_BUILD_DIR)
     message(STATUS "SPECFEM_BENCHMARKS_BUILD_DIR is not defined, using default: ${CMAKE_CURRENT_SOURCE_DIR}/../build")
     set(SPECFEM_BENCHMARKS_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../build)
-
-else()
-    message(STATUS "SPECFEM_BENCHMARKS_BUILD_DIR is defined as: ${SPECFEM_BENCHMARKS_BUILD_DIR}")
 endif()
 
 # Add the benchmarks build dir to the clean target
