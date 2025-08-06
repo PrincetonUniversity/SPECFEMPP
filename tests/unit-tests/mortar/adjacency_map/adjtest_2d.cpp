@@ -138,32 +138,32 @@ void test_assembly_mapping(
   const auto local_to_bdry = [&](const int ix, const int iz) {
     if (ix == 0) {
       if (iz == 0) {
-        return specfem::enums::boundaries::type::BOTTOM_LEFT;
+        return specfem::mesh_entity::type::bottom_left;
       } else if (iz == ngll - 1) {
-        return specfem::enums::boundaries::type::TOP_LEFT;
+        return specfem::mesh_entity::type::top_left;
       } else {
-        return specfem::enums::boundaries::type::LEFT;
+        return specfem::mesh_entity::type::left;
       }
     } else if (ix == ngll - 1) {
       if (iz == 0) {
-        return specfem::enums::boundaries::type::BOTTOM_RIGHT;
+        return specfem::mesh_entity::type::bottom_right;
       } else if (iz == ngll - 1) {
-        return specfem::enums::boundaries::type::TOP_RIGHT;
+        return specfem::mesh_entity::type::top_right;
       } else {
-        return specfem::enums::boundaries::type::RIGHT;
+        return specfem::mesh_entity::type::right;
       }
     } else {
       if (iz == 0) {
-        return specfem::enums::boundaries::type::BOTTOM;
+        return specfem::mesh_entity::type::bottom;
       } else if (iz == ngll - 1) {
-        return specfem::enums::boundaries::type::TOP;
+        return specfem::mesh_entity::type::top;
       } else {
         [&]() {
           FAIL() << "Test internally incorrect: local_to_bdry lambda should "
                  << "not have been called with internal node indices (ix = "
                  << ix << ", iz = " << iz << ").";
         }();
-        return specfem::enums::boundaries::type::RIGHT;
+        return specfem::mesh_entity::type::right;
       }
     }
   };
@@ -184,10 +184,9 @@ void test_assembly_mapping(
       // check sets are "equal" when equating (ix,iz) ~ bdry
       auto adjset = adjacencies.get_all_conforming_adjacencies(
           ispec, local_to_bdry(ix, iz));
-      std::vector<std::pair<int, specfem::enums::boundaries::type> >
-          nodeset_match(
-              nodeset.size(),
-              std::make_pair(-1, specfem::enums::boundaries::type::RIGHT));
+      std::vector<std::pair<int, specfem::mesh_entity::type> > nodeset_match(
+          nodeset.size(),
+          std::make_pair(-1, specfem::mesh_entity::type::right));
       bool matchfail = false;
       // node and adjset are in 1-1 correspondence?
 
@@ -212,23 +211,23 @@ void test_assembly_mapping(
         corrprint << "Nodes sharing global index " << iglob
                   << " -> adjacencies\n"
                   << "   ispec   | ix | iz | paired boundary\n";
-        const auto bd_to_string = [](specfem::enums::boundaries::type bd) {
+        const auto bd_to_string = [](specfem::mesh_entity::type bd) {
           switch (bd) {
-          case specfem::enums::boundaries::TOP_LEFT:
+          case specfem::mesh_entity::type::top_left:
             return "TOP_LEFT";
-          case specfem::enums::boundaries::TOP_RIGHT:
+          case specfem::mesh_entity::type::top_right:
             return "TOP_RIGHT";
-          case specfem::enums::boundaries::BOTTOM_LEFT:
+          case specfem::mesh_entity::type::bottom_left:
             return "BOTTOM_LEFT";
-          case specfem::enums::boundaries::BOTTOM_RIGHT:
+          case specfem::mesh_entity::type::bottom_right:
             return "BOTTOM_RIGHT";
-          case specfem::enums::boundaries::TOP:
+          case specfem::mesh_entity::type::top:
             return "TOP";
-          case specfem::enums::boundaries::LEFT:
+          case specfem::mesh_entity::type::left:
             return "LEFT";
-          case specfem::enums::boundaries::RIGHT:
+          case specfem::mesh_entity::type::right:
             return "RIGHT";
-          case specfem::enums::boundaries::BOTTOM:
+          case specfem::mesh_entity::type::bottom:
             return "BOTTOM";
           default:
             return "";
@@ -249,20 +248,20 @@ void test_assembly_mapping(
           for (const auto &unpaired : adjset) {
             corrprint << "\n " << bd_to_string(unpaired.second)
                       << " @ ispec = " << unpaired.first;
-            if (unpaired.second == specfem::enums::boundaries::BOTTOM_RIGHT) {
+            if (unpaired.second == specfem::mesh_entity::type::bottom_right) {
               corrprint << " (corner iglob = "
                         << index_mapping(unpaired.first, 0, ngll - 1) << ")";
             } else if (unpaired.second ==
-                       specfem::enums::boundaries::TOP_RIGHT) {
+                       specfem::mesh_entity::type::top_right) {
               corrprint << " (corner iglob = "
                         << index_mapping(unpaired.first, ngll - 1, ngll - 1)
                         << ")";
             } else if (unpaired.second ==
-                       specfem::enums::boundaries::TOP_LEFT) {
+                       specfem::mesh_entity::type::top_left) {
               corrprint << " (corner iglob = "
                         << index_mapping(unpaired.first, ngll - 1, 0) << ")";
             } else if (unpaired.second ==
-                       specfem::enums::boundaries::BOTTOM_LEFT) {
+                       specfem::mesh_entity::type::bottom_left) {
               corrprint << " (corner iglob = "
                         << index_mapping(unpaired.first, 0, 0) << ")";
             }
