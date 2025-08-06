@@ -30,35 +30,38 @@ template <> struct GetWriteType<specfem::io::ADIOS2<specfem::io::read> > {
 // Base test class
 class IOFrameworkTestBase : public ::testing::Test {
 protected:
-  // Generate unique filename based on I/O type to avoid conflicts during
-  // parallel execution
-  template <typename IOType> std::string getTestFileName() {
+  // Generate unique filename based on I/O type and test name to avoid conflicts
+  // during parallel execution
+  template <typename IOType>
+  std::string getTestFileName(const std::string &test_name) {
+    std::string base_name;
     if constexpr (std::is_same_v<IOType,
                                  specfem::io::ASCII<specfem::io::write> >) {
-      return "test_ascii_write";
+      base_name = "test_ascii_write";
     } else if constexpr (std::is_same_v<
                              IOType, specfem::io::ASCII<specfem::io::read> >) {
-      return "test_ascii_read";
+      base_name = "test_ascii_read";
     } else if constexpr (std::is_same_v<
                              IOType, specfem::io::HDF5<specfem::io::write> >) {
-      return "test_hdf5_write";
+      base_name = "test_hdf5_write";
     } else if constexpr (std::is_same_v<
                              IOType, specfem::io::HDF5<specfem::io::read> >) {
-      return "test_hdf5_read";
+      base_name = "test_hdf5_read";
     } else if constexpr (std::is_same_v<IOType, specfem::io::ADIOS2<
                                                     specfem::io::write> >) {
-      return "test_adios2_write";
+      base_name = "test_adios2_write";
     } else if constexpr (std::is_same_v<
                              IOType, specfem::io::ADIOS2<specfem::io::read> >) {
-      return "test_adios2_read";
+      base_name = "test_adios2_read";
     } else {
-      return "test_unknown";
+      base_name = "test_unknown";
     }
+    return base_name + "_" + test_name;
   }
 
   // Clean up files/directories for a specific test filename
-  template <typename IOType> void cleanup() {
-    std::string base_name = getTestFileName<IOType>();
+  template <typename IOType> void cleanup(const std::string &test_name) {
+    std::string base_name = getTestFileName<IOType>(test_name);
     std::vector<std::string> patterns = { base_name, base_name + ".h5",
                                           base_name + ".bp" };
 
@@ -124,14 +127,25 @@ protected:
 template <typename IOType> class IOFrameworkTest : public IOFrameworkTestBase {
 protected:
   void SetUp() override {
-    cleanup<IOType>(); // Clean up any leftover files
+    std::string test_name = getCurrentTestName();
+    cleanup<IOType>(test_name); // Clean up any leftover files
   }
 
   void TearDown() override {
-    cleanup<IOType>(); // Clean up after test
+    std::string test_name = getCurrentTestName();
+    cleanup<IOType>(test_name); // Clean up after test
   }
 
-  std::string getTestFile() { return this->template getTestFileName<IOType>(); }
+  std::string getTestFile() {
+    return this->template getTestFileName<IOType>(getCurrentTestName());
+  }
+
+private:
+  std::string getCurrentTestName() {
+    const ::testing::TestInfo *const test_info =
+        ::testing::UnitTest::GetInstance()->current_test_info();
+    return test_info->name();
+  }
 };
 
 // Type list for all I/O frameworks
