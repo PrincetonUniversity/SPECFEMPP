@@ -14,7 +14,7 @@
         "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
         "SPECFEM_INSTALL": "ON",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release",
-        "BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
         "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release"
       }
     },
@@ -31,7 +31,7 @@
         "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
         "SPECFEM_INSTALL": "ON",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-nosimd",
-        "BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
         "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-nosimd"
       }
     },
@@ -48,7 +48,7 @@
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "SPECFEM_INSTALL": "ON",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-cuda",
-        "BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
         "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-cuda"
       }
     },
@@ -65,7 +65,7 @@
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "SPECFEM_INSTALL": "ON",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-hip",
-        "BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
         "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-hip"
       }
     },
@@ -83,7 +83,7 @@
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "SPECFEM_INSTALL": "ON",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-frontier",
-        "BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
         "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-frontier"
       }
     },
@@ -102,7 +102,7 @@
         "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
         "SPECFEM_INSTALL": "ON",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug",
-        "BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
         "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug"
       }
     },
@@ -122,7 +122,7 @@
         "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
         "SPECFEM_INSTALL": "ON",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug-cuda",
-        "BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
         "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-cuda"
       }
     },
@@ -141,7 +141,7 @@
         "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON",
         "SPECFEM_INSTALL": "ON",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug-nosimd",
-        "BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
         "BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-nosimd"
       }
     }

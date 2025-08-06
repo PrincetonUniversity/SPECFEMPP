@@ -14,7 +14,7 @@ option(SPECFEM_ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
-option(BUILD_BENCHMARKS "Benchmarks included" ON)
+option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
 option(ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
 
 # set(CMAKE_BUILD_TYPE Release)
@@ -627,14 +627,14 @@ if (SPECFEM_BUILD_TESTS)
         add_subdirectory(tests/unit-tests)
 endif()
 
-if (BUILD_BENCHMARKS)
+if (SPECFEM_BUILD_BENCHMARKS)
     # Define option with default value
 
-    if(DEFINED BENCHMARKS_BUILD_DIR)
-        message(STATUS "BENCHMARKS_BUILD_DIR was defined as: ${BENCHMARKS_BUILD_DIR}")
+    if(DEFINED SPECFEM_BENCHMARKS_BUILD_DIR)
+        message(STATUS "SPECFEM_BENCHMARKS_BUILD_DIR was defined as: ${SPECFEM_BENCHMARKS_BUILD_DIR}")
     else()
-        set(BENCHMARKS_BUILD_DIR ${CMAKE_SOURCE_DIR}/benchmarks/build)
-        message(STATUS "BENCHMARKS_BUILD_DIR was not defined, using default: ${BENCHMARKS_BUILD_DIR}")
+        set(SPECFEM_BENCHMARKS_BUILD_DIR ${CMAKE_SOURCE_DIR}/benchmarks/build)
+        message(STATUS "SPECFEM_BENCHMARKS_BUILD_DIR was not defined, using default: ${SPECFEM_BENCHMARKS_BUILD_DIR}")
     endif()
 
     # Create the benchmarks build directory if it does not exist
