@@ -1,6 +1,7 @@
 #include "parameter_parser/writer/wavefield.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
+#include "io/adios2/ADIOS2.hpp"
 #include "io/reader.hpp"
 #include "periodic_tasks/wavefield_reader.hpp"
 #include "periodic_tasks/wavefield_writer.hpp"
@@ -97,6 +98,11 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
             specfem::periodic_tasks::wavefield_writer<specfem::io::HDF5> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
+      } else if (specfem::utilities::is_adios2_string(this->output_format)) {
+        return std::make_shared<
+            specfem::periodic_tasks::wavefield_writer<specfem::io::ADIOS2> >(
+            this->output_folder, this->time_interval, this->include_last_step,
+            this->for_adjoint_simulations);
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<
             specfem::periodic_tasks::wavefield_writer<specfem::io::ASCII> >(
@@ -123,6 +129,10 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
       if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<
             specfem::periodic_tasks::wavefield_reader<specfem::io::HDF5> >(
+            this->output_folder, this->time_interval, this->include_last_step);
+      } else if (specfem::utilities::is_adios2_string(this->output_format)) {
+        return std::make_shared<
+            specfem::periodic_tasks::wavefield_reader<specfem::io::ADIOS2> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<
