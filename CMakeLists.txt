@@ -5,6 +5,7 @@ project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
 set(CMAKE_CXX_STANDARD 17)
 
 # SPECFEM options
+option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" ON)
 option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" ON)
 option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
 option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
@@ -40,6 +41,10 @@ endif()
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/archive)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+
+# For the installation of dependencies
+include(FetchContent)
 
 # For external modules that need to be built suppress build output
 set(FETCHCONTENT_QUIET TRUE)
@@ -100,6 +105,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 
 # Find HDF5
 include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
+
+# Find or install ADIOS2 library function
+include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 
 
 if (SPECFEM_ENABLE_SIMD)
@@ -223,6 +231,18 @@ else()
         yaml-cpp
         ${BOOST_LIBS}
         ${HDF5_LIBRARIES}
+    )
+endif()
+
+if (NOT SPECFEM_ENABLE_ADIOS2)
+    target_compile_definitions(
+        io
+        PUBLIC -DNO_ADIOS2
+    )
+else()
+    target_link_libraries(
+        io
+        adios2
     )
 endif()
 
