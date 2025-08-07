@@ -1,13 +1,11 @@
-#ifndef _SPECFEM_IO_ASCII_HPP
-#define _SPECFEM_IO_ASCII_HPP
+#pragma once
 
 #include "impl/dataset.hpp"
 #include "impl/dataset.tpp"
 #include "impl/file.hpp"
 #include "impl/group.hpp"
 
-namespace specfem {
-namespace io {
+namespace specfem::io {
 
 /**
  * @brief
@@ -22,17 +20,11 @@ namespace io {
  */
 template <typename OpType> class ASCII {
 public:
-  using File =
-      specfem::io::impl::ASCII::File<OpType>; ///< ASCII file implementation
-  using Group =
-      specfem::io::impl::ASCII::Group<OpType>; ///< ASCII group implementation
+  using File = impl::ASCII::File<OpType>;   ///< ASCII file implementation
+  using Group = impl::ASCII::Group<OpType>; ///< ASCII group implementation
   template <typename ViewType>
-  using Dataset =
-      specfem::io::impl::ASCII::Dataset<ViewType, OpType>; ///< ASCII dataset
-                                                           ///< implementation
+  using Dataset = impl::ASCII::Dataset<ViewType, OpType>; ///< ASCII dataset
+                                                          ///< implementation
 };
 
-} // namespace io
-} // namespace specfem
-
-#endif /* _SPECFEM_IO_ASCII_HPP */
+} // namespace specfem::io

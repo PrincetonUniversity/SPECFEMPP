@@ -5,15 +5,19 @@ from scipy.interpolate import griddata
 
 # Load the kernels
 def load_data(directory):
-    X = np.loadtxt(directory + "/elastic_psv_isotropic/X.txt")
-    Z = np.loadtxt(directory + "/elastic_psv_isotropic/Z.txt")
+    X = np.fromfile(directory + "/elastic_psv_isotropic/X.bin", dtype=np.float32)
+    Z = np.fromfile(directory + "/elastic_psv_isotropic/Z.bin", dtype=np.float32)
 
-    rho = np.loadtxt(directory + "/elastic_psv_isotropic/rho.txt")
-    mu = np.loadtxt(directory + "/elastic_psv_isotropic/mu.txt")
-    kappa = np.loadtxt(directory + "/elastic_psv_isotropic/kappa.txt")
-    rhop = np.loadtxt(directory + "/elastic_psv_isotropic/rhop.txt")
-    alpha = np.loadtxt(directory + "/elastic_psv_isotropic/alpha.txt")
-    beta = np.loadtxt(directory + "/elastic_psv_isotropic/beta.txt")
+    rho = np.fromfile(directory + "/elastic_psv_isotropic/rho.bin", dtype=np.float32)
+    mu = np.fromfile(directory + "/elastic_psv_isotropic/mu.bin", dtype=np.float32)
+    kappa = np.fromfile(
+        directory + "/elastic_psv_isotropic/kappa.bin", dtype=np.float32
+    )
+    rhop = np.fromfile(directory + "/elastic_psv_isotropic/rhop.bin", dtype=np.float32)
+    alpha = np.fromfile(
+        directory + "/elastic_psv_isotropic/alpha.bin", dtype=np.float32
+    )
+    beta = np.fromfile(directory + "/elastic_psv_isotropic/beta.bin", dtype=np.float32)
 
     return X, Z, rho, kappa, mu, rhop, alpha, beta
 

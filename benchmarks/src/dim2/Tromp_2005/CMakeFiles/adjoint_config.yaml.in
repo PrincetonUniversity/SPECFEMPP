@@ -40,7 +40,7 @@ parameters:
         reader:
           wavefield:
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
-            format: HDF5
+            format: ASCII
 
         writer:
           kernels:

@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_IO_ASCII_IMPL_DATASET_TPP
-#define _SPECFEM_IO_ASCII_IMPL_DATASET_TPP
+#pragma once
 
 #include "dataset.hpp"
 #include "datasetbase.hpp"
@@ -47,5 +46,3 @@ void specfem::io::impl::ASCII::Dataset<ViewType, OpType>::read() {
     throw std::runtime_error("Unknown memory space");
   }
 }
-
-#endif /* _SPECFEM_IO_ASCII_IMPL_DATASET_TPP */

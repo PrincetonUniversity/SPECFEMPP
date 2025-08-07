@@ -1,15 +1,11 @@
-#ifndef _SPECFEM_IO_ASCII_IMPL_DATASET_HPP
-#define _SPECFEM_IO_ASCII_IMPL_DATASET_HPP
+#pragma once
 
 #include "datasetbase.hpp"
 #include "native_type.hpp"
 #include <boost/filesystem.hpp>
 #include <string>
 
-namespace specfem {
-namespace io {
-namespace impl {
-namespace ASCII {
+namespace specfem::io::impl::ASCII {
 
 // Forward declaration
 template <typename OpType> class Group;
@@ -24,12 +20,7 @@ class Dataset : public DatasetBase<OpType> {
 public:
   // static_assert(ViewType::is_contiguous, "ViewType must be contiguous");
 
-#if KOKKOS_VERSION < 40100
-  constexpr static int rank = ViewType::rank;
-  ; ///< Rank of the View
-#else
   constexpr static int rank = ViewType::rank(); ///< Rank of the View
-#endif
 
   using value_type =
       typename ViewType::non_const_value_type; ///< Underlying type
@@ -75,9 +66,5 @@ public:
 private:
   ViewType data; ///< Data to write
 };
-} // namespace ASCII
-} // namespace impl
-} // namespace io
-} // namespace specfem
 
-#endif /* _SPECFEM_IO_ASCII_IMPL_DATASET_HPP */
+} // namespace specfem::io::impl::ASCII

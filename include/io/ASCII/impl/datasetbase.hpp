@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_IO_ASCII_IMPL_DATASETBASE_HPP
-#define _SPECFEM_IO_ASCII_IMPL_DATASETBASE_HPP
+#pragma once
 
 #include "io/operators.hpp"
 #include "native_type.hpp"
@@ -11,37 +10,35 @@
 #include <stdexcept>
 #include <string>
 
-namespace specfem {
-namespace io {
-namespace impl {
-namespace ASCII {
+namespace specfem::io::impl::ASCII {
 template <typename OpType> class DatasetBase;
 
 template <> class DatasetBase<specfem::io::write> {
 protected:
   DatasetBase(const boost::filesystem::path &folder_path,
               const std::string &name, const int rank, const int *dims)
-      : file_path(folder_path / boost::filesystem::path(name + ".txt")),
-        rank(rank), dims(dims) {
+      : data_path(folder_path / boost::filesystem::path(name + ".bin")),
+        meta_path(folder_path / boost::filesystem::path(name + ".meta")),
+        rank(rank), dims(dims) {}
 
-    boost::filesystem::path metadata_path =
-        folder_path / boost::filesystem::path(name + ".meta");
+  template <typename value_type> void write(const value_type *data) const {
     // Delete the file if it exists
-    if (boost::filesystem::exists(file_path)) {
+    if (boost::filesystem::exists(data_path)) {
       std::ostringstream oss;
-      oss << "WARNING : File " << name << " already exists. Deleting it.";
+      oss << "WARNING : File " << data_path << " already exists. Deleting it.";
       std::cout << oss.str() << std::endl;
-      boost::filesystem::remove(file_path);
-      boost::filesystem::remove(metadata_path);
+      boost::filesystem::remove(data_path);
+      boost::filesystem::remove(meta_path);
     }
 
-    std::ofstream metadata(metadata_path.string());
+    std::ofstream metadata(meta_path.string());
     if (!metadata.is_open()) {
       std::ostringstream oss;
-      oss << "ERROR : Could not open file " << metadata_path;
+      oss << "ERROR : Could not open file " << meta_path;
       throw std::runtime_error(oss.str());
     }
 
+    metadata << "type " << native_type<value_type>::string() << "\n";
     metadata << "rank " << rank << "\n";
     metadata << "dims ";
     for (int i = 0; i < rank; ++i) {
@@ -50,26 +47,21 @@ protected:
     metadata << "\n";
 
     metadata.close();
-  }
 
-  template <typename value_type> void write(const value_type *data) const {
-
-    std::ofstream file(file_path.string());
+    std::ofstream file(data_path.string(), std::ios::out | std::ios::binary);
     if (!file.is_open()) {
       std::ostringstream oss;
-      oss << "ERROR : Could not open file " << file_path;
+      oss << "ERROR : Could not open file " << data_path;
       throw std::runtime_error(oss.str());
     }
 
-    // Count total elements
     int total_elements = 1;
     for (int i = 0; i < rank; ++i) {
       total_elements *= dims[i];
     }
 
-    for (int i = 0; i < total_elements; ++i) {
-      specfem::io::impl::ASCII::native_type<value_type>::write(file, data[i]);
-    }
+    file.write(reinterpret_cast<const char *>(data),
+               total_elements * sizeof(value_type));
 
     file.close();
   }
@@ -77,7 +69,8 @@ protected:
   void close() const {};
 
 private:
-  boost::filesystem::path file_path;
+  boost::filesystem::path data_path;
+  boost::filesystem::path meta_path;
   const int rank;
   const int *dims;
 };
@@ -86,31 +79,50 @@ template <> class DatasetBase<specfem::io::read> {
 protected:
   DatasetBase(const boost::filesystem::path &folder_path,
               const std::string &name, const int rank, const int *dims)
-      : file_path(folder_path / boost::filesystem::path(name + ".txt")),
-        rank(rank), dims(dims) {
+      : data_path(folder_path / boost::filesystem::path(name + ".bin")),
+        meta_path(folder_path / boost::filesystem::path(name + ".meta")),
+        rank(rank), dims(dims) {}
+
+  template <typename value_type> void read(value_type *data) const {
     // Read meta data file and check if the dimensions match
-    boost::filesystem::path metadata_path =
-        folder_path / boost::filesystem::path(name + ".meta");
-    if (!boost::filesystem::exists(metadata_path)) {
+    if (!boost::filesystem::exists(meta_path)) {
       std::ostringstream oss;
-      oss << "ERROR : Metadata file " << metadata_path << " does not exist";
+      oss << "ERROR : Metadata file " << meta_path << " does not exist";
       throw std::runtime_error(oss.str());
     }
-    std::ifstream metadata(metadata_path.string());
+    std::ifstream metadata(meta_path.string());
     if (!metadata.is_open()) {
       std::ostringstream oss;
-      oss << "ERROR : Could not open file " << metadata_path;
+      oss << "ERROR : Could not open file " << meta_path;
       throw std::runtime_error(oss.str());
     }
 
     std::string line;
+    std::string token;
+
     std::getline(metadata, line);
     std::istringstream iss(line);
-    std::string token;
+    iss >> token;
+    if (token != "type") {
+      std::ostringstream oss;
+      oss << "ERROR : Metadata file " << meta_path << " is corrupted";
+      throw std::runtime_error(oss.str());
+    }
+    iss >> token;
+    if (token != native_type<value_type>::string()) {
+      std::ostringstream oss;
+      oss << "ERROR : Metadata file " << meta_path << " type does not match";
+      oss << "Expected type: " << native_type<value_type>::string()
+          << ", but got: " << token;
+      throw std::runtime_error(oss.str());
+    }
+
+    std::getline(metadata, line);
+    iss = std::istringstream(line);
     iss >> token;
     if (token != "rank") {
       std::ostringstream oss;
-      oss << "ERROR : Metadata file " << metadata_path << " is corrupted";
+      oss << "ERROR : Metadata file " << meta_path << " is corrupted";
       throw std::runtime_error(oss.str());
     }
     iss >> token;
@@ -121,12 +133,13 @@ protected:
       oss << "Expected rank: " << rank << ", but got: " << read_rank;
       throw std::runtime_error(oss.str());
     }
+
     std::getline(metadata, line);
     iss = std::istringstream(line);
     iss >> token;
     if (token != "dims") {
       std::ostringstream oss;
-      oss << "ERROR : Metadata file " << metadata_path << " is corrupted";
+      oss << "ERROR : Metadata file " << meta_path << " is corrupted";
       throw std::runtime_error(oss.str());
     }
     int read_dims;
@@ -142,13 +155,11 @@ protected:
       }
     }
     metadata.close();
-  }
 
-  template <typename value_type> void read(value_type *data) const {
-    std::ifstream file(file_path.string());
+    std::ifstream file(data_path.string(), std::ios::in | std::ios::binary);
     if (!file.is_open()) {
       std::ostringstream oss;
-      oss << "ERROR : Could not open file " << file_path;
+      oss << "ERROR : Could not open file " << data_path;
       throw std::runtime_error(oss.str());
     }
 
@@ -158,24 +169,19 @@ protected:
       total_elements *= dims[i];
     }
 
-    for (int i = 0; i < total_elements; ++i) {
-      specfem::io::impl::ASCII::native_type<value_type>::read(file, data[i]);
-    }
+    file.read(reinterpret_cast<char *>(data),
+              total_elements * sizeof(value_type));
 
     file.close();
   }
 
-  void close() const {};
+  void close() const {}
 
 private:
-  boost::filesystem::path file_path;
+  boost::filesystem::path data_path;
+  boost::filesystem::path meta_path;
   const int rank;
   const int *dims;
 };
 
-} // namespace ASCII
-} // namespace impl
-} // namespace io
-} // namespace specfem
-
-#endif /* _SPECFEM_IO_ASCII_IMPL_DATASETBASE_HPP */
+} // namespace specfem::io::impl::ASCII

@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_IO_ASCII_IMPL_FILE_HPP
-#define _SPECFEM_IO_ASCII_IMPL_FILE_HPP
+#pragma once
 
 #include "group.hpp"
 #include <boost/filesystem.hpp>
@@ -8,10 +7,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace specfem {
-namespace io {
-namespace impl {
-namespace ASCII {
+namespace specfem::io::impl::ASCII {
 
 // Forward declaration
 template <typename OpType> class Group;
@@ -164,9 +160,4 @@ public:
 private:
   boost::filesystem::path folder_path; ///< Path to the folder
 };
-} // namespace ASCII
-} // namespace impl
-} // namespace io
-} // namespace specfem
-
-#endif /* _SPECFEM_IO_ASCII_IMPL_FILE_HPP */
+} // namespace specfem::io::impl::ASCII
