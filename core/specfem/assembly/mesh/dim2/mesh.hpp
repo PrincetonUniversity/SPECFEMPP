@@ -54,6 +54,8 @@ public:
 
   void assemble(const specfem::mesh::adjacency_map::adjacency_map<dimension_tag>
                     &adjacency_map);
+
+  void assemble(const specfem::mesh::adjacency_graph<dimension_tag> &graph);
 };
 
 /**

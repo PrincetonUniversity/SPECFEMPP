@@ -10,20 +10,19 @@ template <specfem::dimension::type Dimension> struct adjacency_graph {
 public:
   struct EdgeProperties {
     specfem::connections::type connection;
-    specfem::connections::orientation orientation;
+    specfem::mesh_entity::type orientation;
 
     EdgeProperties() = default;
 
     EdgeProperties(const specfem::connections::type conn,
-                   const specfem::connections::orientation orient)
+                   const specfem::mesh_entity::type orient)
         : connection(conn), orientation(orient) {}
   };
 
-  using Properties = EdgeProperties;
-
 private:
-  using Graph = boost::adjacency_list<boost::vecS, boost::vecS,
-                                      boost::directedS, Properties>;
+  using Graph =
+      boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
+                            boost::no_property, EdgeProperties>;
   Graph graph_;
 
 public:
