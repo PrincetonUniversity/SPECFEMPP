@@ -6,40 +6,6 @@
 #include <fstream>
 #include <map>
 
-enum class ConnectionType {
-  STRONGLY_CONNECTED_EDGE = 1,
-  STRONGLY_CONNECTED_VERTEX = 2
-};
-
-enum class EdgeOrientation { BOTTOM = 1, RIGHT = 2, TOP = 3, LEFT = 4 };
-
-enum class VertexOrientation {
-  BOTTOM_LEFT = 1,
-  BOTTOM_RIGHT = 2,
-  TOP_RIGHT = 3,
-  TOP_LEFT = 4
-};
-
-const static std::map<EdgeOrientation, specfem::connections::orientation>
-    connection_type_map = {
-      { EdgeOrientation::BOTTOM, specfem::connections::orientation::bottom },
-      { EdgeOrientation::RIGHT, specfem::connections::orientation::right },
-      { EdgeOrientation::TOP, specfem::connections::orientation::top },
-      { EdgeOrientation::LEFT, specfem::connections::orientation::left }
-    };
-
-const static std::map<VertexOrientation, specfem::connections::orientation>
-    vertex_orientation_map = {
-      { VertexOrientation::BOTTOM_LEFT,
-        specfem::connections::orientation::bottom_left },
-      { VertexOrientation::BOTTOM_RIGHT,
-        specfem::connections::orientation::bottom_right },
-      { VertexOrientation::TOP_RIGHT,
-        specfem::connections::orientation::top_right },
-      { VertexOrientation::TOP_LEFT,
-        specfem::connections::orientation::top_left }
-    };
-
 specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
     const int nspec, std::ifstream &stream) {
@@ -75,29 +41,28 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
     specfem::io::fortran_read_line(stream, &current_element, &neighbor_element,
                                    &connection_int, &orientation_int);
 
-    const auto connection_type = static_cast<ConnectionType>(connection_int);
+    const auto connection_type =
+        static_cast<specfem::connections::type>(connection_int);
 
-    if (connection_type == ConnectionType::STRONGLY_CONNECTED_EDGE) {
+    if (connection_type == specfem::connections::type::strongly_conforming) {
       const auto edge_orientation =
-          static_cast<EdgeOrientation>(orientation_int);
-      const auto specfem_orientation = connection_type_map.at(edge_orientation);
+          static_cast<specfem::mesh_entity::type>(orientation_int);
       boost::add_edge(
           current_element - 1, neighbor_element - 1,
           EdgeProperties{ specfem::connections::type::strongly_conforming,
-                          specfem_orientation },
-          g);
-    } else if (connection_type == ConnectionType::STRONGLY_CONNECTED_VERTEX) {
-      const auto vertex_orientation =
-          static_cast<VertexOrientation>(orientation_int);
-      const auto specfem_orientation =
-          vertex_orientation_map.at(vertex_orientation);
-      boost::add_edge(
-          current_element - 1, neighbor_element - 1,
-          EdgeProperties{ specfem::connections::type::strongly_conforming,
-                          specfem_orientation },
+                          edge_orientation },
           g);
     } else {
       throw std::runtime_error("Unknown connection type in adjacency graph.");
+    }
+  }
+
+  // Check that the graph is symmetric
+  for (const auto &edge : boost::make_iterator_range(boost::edges(g))) {
+    const auto source = boost::source(edge, g);
+    const auto target = boost::target(edge, g);
+    if (!boost::edge(target, source, g).second) {
+      throw std::runtime_error("Adjacency graph is not symmetric.");
     }
   }
 

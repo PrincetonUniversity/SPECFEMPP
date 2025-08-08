@@ -40,7 +40,7 @@ contains
    end subroutine compute_adjacency_graph
 
    subroutine get_adjacencies(elmnts_bis)
-      use constants, only: MAX_NEIGHBORS, MAX_NSIZE_SHARED, NCORNERS, ISTRONGLY_CONFORMING_EDGE, ISTRONGLY_CONFORMING_VERTEX
+      use constants, only: MAX_NEIGHBORS, MAX_NSIZE_SHARED, NCORNERS, ISTRONGLY_CONFORMING
       use part_unstruct_par, only: adjacency_type, adjacency_id, adjacent_elements, num_adjacent, nnodes
       use shared_parameters, only: nelmnts
 
@@ -88,7 +88,7 @@ contains
                   ! count only if edge is not accounted yet
                   if (edge_id1 > 0) then
                      adjacent_elements(current_elem, num_adjacent(current_elem)) = neighbor_elem
-                     adjacency_type(current_elem, num_adjacent(current_elem)) = ISTRONGLY_CONFORMING_EDGE
+                     adjacency_type(current_elem, num_adjacent(current_elem)) = ISTRONGLY_CONFORMING
                      adjacency_id(current_elem, num_adjacent(current_elem)) = edge_id1
                      num_adjacent(current_elem) = num_adjacent(current_elem) + 1
                   endif
@@ -96,7 +96,7 @@ contains
                   ! count the neighbor's adjacency only if not accounted yet
                   if (edge_id2 > 0) then
                      adjacent_elements(neighbor_elem, num_adjacent(neighbor_elem)) = current_elem
-                     adjacency_type(neighbor_elem, num_adjacent(neighbor_elem)) = ISTRONGLY_CONFORMING_EDGE
+                     adjacency_type(neighbor_elem, num_adjacent(neighbor_elem)) = ISTRONGLY_CONFORMING
                      adjacency_id(neighbor_elem, num_adjacent(neighbor_elem)) = edge_id2
                      num_adjacent(neighbor_elem) = num_adjacent(neighbor_elem) + 1
                   endif
@@ -105,12 +105,12 @@ contains
                   call get_corner_id(elmnts_bis, current_elem, current_node, corner_id1)
                   call get_corner_id(elmnts_bis, neighbor_elem, current_node, corner_id2)
                   adjacent_elements(current_elem, num_adjacent(current_elem)) = current_node
-                  adjacency_type(current_elem, num_adjacent(current_elem)) = ISTRONGLY_CONFORMING_VERTEX
+                  adjacency_type(current_elem, num_adjacent(current_elem)) = ISTRONGLY_CONFORMING
                   adjacency_id(current_elem, num_adjacent(current_elem)) = corner_id1
                   num_adjacent(current_elem) = num_adjacent(current_elem) + 1
 
                   adjacent_elements(neighbor_elem, num_adjacent(neighbor_elem)) = current_node
-                  adjacency_type(neighbor_elem, num_adjacent(neighbor_elem)) = ISTRONGLY_CONFORMING_VERTEX
+                  adjacency_type(neighbor_elem, num_adjacent(neighbor_elem)) = ISTRONGLY_CONFORMING
                   adjacency_id(neighbor_elem, num_adjacent(neighbor_elem)) = corner_id2
                   num_adjacent(neighbor_elem) = num_adjacent(neighbor_elem) + 1
                endif
