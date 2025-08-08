@@ -117,6 +117,9 @@ public:
     return !(*this == other);
   }
 
+  void set_forcing_function(YAML::Node &Node, const int nsteps,
+                            const type_real dt);
+
   /**
    * @brief Get the forcing function object
    *
