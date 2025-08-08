@@ -30,6 +30,7 @@ template <specfem::dimension::type DimensionTag> class external;
 } // namespace specfem::sources
 
 #include "source/source.hpp"
+#include "source/source.tpp"
 #include "source/tensor_source.hpp"
 #include "source/vector_source.hpp"
 
