@@ -7,8 +7,7 @@ namespace specfem::assembly::interface {
 
 namespace module {
 
-template <specfem::element::medium_tag MediumTag>
-struct single_edge_container<specfem::dimension::type::dim2, MediumTag> {
+template <> struct single_edge_container<specfem::dimension::type::dim2> {
 private:
   using IndexView =
       Kokkos::View<int *, Kokkos::DefaultExecutionSpace>; ///< Underlying view
@@ -19,8 +18,6 @@ private:
                    Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
                                                    ///< store edge types
 public:
-  static constexpr specfem::element::medium_tag Medium1 = MediumTag;
-  static constexpr specfem::element::medium_tag Medium2 = MediumTag;
   single_edge_container(int num_edges)
       : num_edges(num_edges),
         index_mapping("specfem::assembly::interface::module::single_edge_"
@@ -38,10 +35,7 @@ public:
   EdgeTypeView::HostMirror h_edge_type;
 };
 
-template <specfem::element::medium_tag MediumTag1,
-          specfem::element::medium_tag MediumTag2>
-struct double_edge_container<specfem::dimension::type::dim2, MediumTag1,
-                             MediumTag2> {
+template <> struct double_edge_container<specfem::dimension::type::dim2> {
 private:
   using IndexView =
       Kokkos::View<int *, Kokkos::DefaultExecutionSpace>; ///< Underlying view
@@ -53,8 +47,6 @@ private:
                                                    ///< store edge types
 
 public:
-  static constexpr specfem::element::medium_tag Medium1 = MediumTag1;
-  static constexpr specfem::element::medium_tag Medium2 = MediumTag2;
   double_edge_container(int num_medium1_edges, int num_medium2_edges)
       : num_medium1_edges(num_medium1_edges),
         num_medium2_edges(num_medium2_edges),
