@@ -1,3 +1,6 @@
+# To work for CMake 3.28 and below
+cmake_policy(SET CMP0169 OLD)
+
 message(STATUS "Configuring Kokkos library...")
 
 # Prepend the CMAKE_MESSAGE_INDENT variable to ensure proper indentation in messages

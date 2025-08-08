@@ -88,6 +88,25 @@
       }
     },
     {
+      "name": "release-hdf5",
+      "displayName": "Default Release -- SIMD and HDF5 enabled",
+      "binaryDir": "build/release-hdf5",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-hdf5",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_ENABLE_SIMD": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
+        "SPECFEM_ENABLE_HDF5": "ON",
+        "SPECFEM_ENABLE_HDF5_FORCE_INSTALL": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-hdf5"
+      }
+    },
+    {
       "name": "debug",
       "displayName": "Default Debug -- SIMD enabled",
       "binaryDir": "build/debug",
@@ -178,6 +197,13 @@
     {
       "name": "release-frontier",
       "configurePreset": "release-frontier",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-hdf5",
+      "configurePreset": "release-hdf5",
       "targets": [
         "all"
       ]
