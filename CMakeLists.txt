@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # SPECFEM options
 option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" OFF)
-option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" ON)
+option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" OFF)
 option(SPECFEM_ENABLE_HDF5_FORCE_INSTALL "Force install HDF5 dependency if SPECFEM_ENABLE_HDF5 is ON even if system HDF5 is found" OFF)
 option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
 option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
