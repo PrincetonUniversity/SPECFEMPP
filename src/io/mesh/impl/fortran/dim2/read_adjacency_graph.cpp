@@ -5,6 +5,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <fstream>
 #include <map>
+#include <sstream>
 
 specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
@@ -62,7 +63,11 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
     const auto source = boost::source(edge, g);
     const auto target = boost::target(edge, g);
     if (!boost::edge(target, source, g).second) {
-      throw std::runtime_error("Adjacency graph is not symmetric.");
+      std::ostringstream message;
+      message << "Adjacency graph is not symmetric: edge from " << source
+              << " to " << target << " exists, but not from " << target
+              << " to " << source;
+      throw std::runtime_error(message.str());
     }
   }
 
