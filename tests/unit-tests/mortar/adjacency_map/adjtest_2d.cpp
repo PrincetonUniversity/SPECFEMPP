@@ -294,9 +294,7 @@ void test_assembly_mapping(
 void run_test_conforming(const test_configuration::mesh &mesh_config) {
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  auto mesh = specfem::io::read_2d_mesh(
-      mesh_config.database, specfem::enums::elastic_wave::psv,
-      specfem::enums::electromagnetic_wave::te, mpi);
+  auto mesh = mesh_config.get_mesh();
 
   mpi->cout("Mesh read. Forming adjacency map.");
   specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>
@@ -311,11 +309,12 @@ void run_test_conforming(const test_configuration::mesh &mesh_config) {
 }
 
 TEST_F(MESHES, conforming) {
-  for (auto mesh : *this) {
+  for (const auto &mesh : *this) {
     try {
       run_test_conforming(mesh);
       std::cout << "-------------------------------------------------------\n"
-                << "\033[0;32m[PASSED]\033[0m " << mesh.name << "\n"
+                << "\033[0;32m[PASSED]\033[0m conforming -- " << mesh.name
+                << "\n"
                 << "-------------------------------------------------------\n\n"
                 << std::endl;
     } catch (std::exception &e) {
