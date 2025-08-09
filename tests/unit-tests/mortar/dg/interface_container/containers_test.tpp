@@ -24,47 +24,45 @@ static specfem::enums::edge::type edge_from_int(const int edgetype) {
 namespace test_configuration::interface_containers {
 
 template <typename ContainerType>
-ContainerType load_interfaces(const test_configuration::mesh &mesh_config) {
+ContainerType load_interfaces(const test_configuration::mesh &mesh_config,
+                              const int ngll) {
   // temporary measure while adjacency_graph is WIP
+  // interface file is stored in 3 chunks, the size of each specified in the
+  // first line.
+  //
+  // chunk 1: medium 1 edges  (ispec, edgetype)
+  // chunk 2: medium 2 edges  (ispec, edgetype)
+  // chunk 3: interfaces   (edge1, edge2, param_start_edge1,
+  //                param_end_edge1, param_start_edge2, param_end_edge2)
   std::ifstream interfaces_in(mesh_config.interface_file);
-  int num_edges;
-  interfaces_in >> num_edges;
+  int num_edges_1, num_edges_2, num_interfaces;
+  interfaces_in >> num_edges_1 >> num_edges_2 >> num_interfaces;
+  ContainerType container(specfem::assembly::interface::initializer(
+      num_edges_1, num_edges_2, num_interfaces, ngll, ngll, ngll));
 
-  // break into cases: 1 or 2 edge container;
-
-  if constexpr (ContainerType::is_single_edge) {
-    ContainerType container(num_edges * 2);
-    int iedge = 0, ispec, edgetype;
-    while (interfaces_in >> ispec >> edgetype) {
-      container.h_index_mapping(iedge) = ispec - 1;
-      container.h_edge_type(iedge) = edge_from_int(edgetype);
-      iedge ++;
-    }
-    Kokkos::deep_copy(container.index_mapping, container.h_index_mapping);
-    Kokkos::deep_copy(container.edge_type, container.h_edge_type);
-    interfaces_in.close();
-    return container;
-  } else {
-    ContainerType container(num_edges, num_edges);
-    int iedge = 0, ispec1, edgetype1, ispec2, edgetype2;
-    while (interfaces_in >> ispec1 >> edgetype1 >> ispec2 >> edgetype2) {
-      container.h_medium1_index_mapping(iedge) = ispec1 - 1;
-      container.h_medium1_edge_type(iedge) = edge_from_int(edgetype1);
-      container.h_medium2_index_mapping(iedge) = ispec2 - 1;
-      container.h_medium2_edge_type(iedge) = edge_from_int(edgetype2);
-      iedge ++;
-    }
-    Kokkos::deep_copy(container.medium1_index_mapping,
-                      container.h_medium1_index_mapping);
-    Kokkos::deep_copy(container.medium1_edge_type,
-                      container.h_medium1_edge_type);
-    Kokkos::deep_copy(container.medium2_index_mapping,
-                      container.h_medium2_index_mapping);
-    Kokkos::deep_copy(container.medium2_edge_type,
-                      container.h_medium2_edge_type);
-    interfaces_in.close();
-    return container;
+  // medium 1:
+  int ispec, edgetype;
+  for (int iedge = 0; iedge < num_edges_1; iedge++) {
+    interfaces_in >> ispec >> edgetype;
+    container.template index_at<1, true>(iedge) = ispec - 1;
+    container.template edge_type_at<1, true>(iedge) = edge_from_int(edgetype);
   }
+
+  // medium 2 behavior depends on single or double edge
+  // single edge medium 2 is appended onto medium 1, and index_at<2> points to
+  // first medium.
+
+  for (int iedge = 0; iedge < num_edges_2; iedge++) {
+    interfaces_in >> ispec >> edgetype;
+    const int ind = iedge + ContainerType::is_single_edge ? iedge : 0;
+    container.template index_at<2, true>(ind) = ispec - 1;
+    container.template index_at<2, true>(ind) = edge_from_int(edgetype);
+  }
+
+  container.template sync_edge_container<specfem::sync::kind::HostToDevice>();
+
+  interfaces_in.close();
+  return container;
 }
 
 template <typename ContainerType>
@@ -73,7 +71,8 @@ void test_interface(
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
-  ContainerType container = load_interfaces<ContainerType>(mesh_config);
+  ContainerType container =
+      load_interfaces<ContainerType>(mesh_config, assembly.mesh.ngllz);
   test_edge_policy(container, mesh, assembly);
 }
 

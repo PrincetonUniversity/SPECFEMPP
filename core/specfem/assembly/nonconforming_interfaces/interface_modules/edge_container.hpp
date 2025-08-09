@@ -1,6 +1,6 @@
 #pragma once
-
-#include "enumerations/interface.hpp"
+#include "../interface_modules.hpp"
+#include "enumerations/dimension.hpp"
 
 namespace specfem::assembly::interface {
 

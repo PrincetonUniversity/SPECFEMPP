@@ -1,100 +1,64 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 #include "mortar/fixture/mortar_fixtures.hpp"
 #include "specfem/assembly/assembly.hpp"
-#include "specfem/assembly/nonconforming_interfaces/interface_modules/edge_container.hpp"
+#include "specfem/assembly/nonconforming_interfaces/moduled_interface_container.hpp"
 
 namespace test_configuration::interface_containers {
 
-struct fluid_2d
-    : public specfem::assembly::interface::module::single_edge_container<
-          specfem::dimension::type::dim2> {
+using setc_type = specfem::assembly::interface::moduled_interface_container<
+    specfem::dimension::type::dim2,
+    specfem::assembly::interface::module::type::SINGLE_EDGE_CONTAINER>;
+using detc_type = specfem::assembly::interface::moduled_interface_container<
+    specfem::dimension::type::dim2,
+    specfem::assembly::interface::module::type::DOUBLE_EDGE_CONTAINER>;
+
+template <specfem::element::medium_tag MediumTag>
+struct single_edge_test_container : public setc_type {
 public:
   static constexpr bool is_single_edge = true;
-  static constexpr specfem::element::medium_tag Medium1 =
-      specfem::element::medium_tag::acoustic;
-  static constexpr specfem::element::medium_tag Medium2 =
-      specfem::element::medium_tag::acoustic;
-  fluid_2d(int num_edges)
-      : specfem::assembly::interface::module::single_edge_container<
-            specfem::dimension::type::dim2>(num_edges) {}
+  static constexpr specfem::element::medium_tag Medium1 = MediumTag;
+  static constexpr specfem::element::medium_tag Medium2 = MediumTag;
+  single_edge_test_container(
+      const specfem::assembly::interface::initializer &init)
+      : setc_type(init) {}
 };
 
-struct solid_2d
-    : public specfem::assembly::interface::module::single_edge_container<
-          specfem::dimension::type::dim2> {
+template <specfem::element::medium_tag MediumTag1,
+          specfem::element::medium_tag MediumTag2>
+struct double_edge_test_container : public detc_type {
 public:
-  static constexpr bool is_single_edge = true;
-  static constexpr specfem::element::medium_tag Medium1 =
-      specfem::element::medium_tag::elastic_psv;
-  static constexpr specfem::element::medium_tag Medium2 =
-      specfem::element::medium_tag::elastic_psv;
-  solid_2d(int num_edges)
-      : specfem::assembly::interface::module::single_edge_container<
-            specfem::dimension::type::dim2>(num_edges) {}
+  static constexpr bool is_single_edge = false;
+  static constexpr specfem::element::medium_tag Medium1 = MediumTag1;
+  static constexpr specfem::element::medium_tag Medium2 = MediumTag2;
+  double_edge_test_container(
+      const specfem::assembly::interface::initializer &init)
+      : detc_type(init) {}
 };
 
-struct fluid_solid_2d
-    : public specfem::assembly::interface::module::double_edge_container<
-          specfem::dimension::type::dim2> {
-public:
-  static constexpr bool is_single_edge = false;
-  static constexpr specfem::element::medium_tag Medium1 =
-      specfem::element::medium_tag::acoustic;
-  static constexpr specfem::element::medium_tag Medium2 =
-      specfem::element::medium_tag::elastic_psv;
-  fluid_solid_2d(int num_edges1, int num_edges2)
-      : specfem::assembly::interface::module::double_edge_container<
-            specfem::dimension::type::dim2>(num_edges1, num_edges2) {}
-};
-struct solid_fluid_2d
-    : public specfem::assembly::interface::module::double_edge_container<
-          specfem::dimension::type::dim2> {
-public:
-  static constexpr bool is_single_edge = false;
-  static constexpr specfem::element::medium_tag Medium1 =
-      specfem::element::medium_tag::elastic_psv;
-  static constexpr specfem::element::medium_tag Medium2 =
-      specfem::element::medium_tag::acoustic;
-  solid_fluid_2d(int num_edges1, int num_edges2)
-      : specfem::assembly::interface::module::double_edge_container<
-            specfem::dimension::type::dim2>(num_edges1, num_edges2) {}
-};
+using fluid_2d =
+    single_edge_test_container<specfem::element::medium_tag::acoustic>;
+using solid_2d =
+    single_edge_test_container<specfem::element::medium_tag::elastic_psv>;
 
-struct fluid_fluid_2d
-    : public specfem::assembly::interface::module::double_edge_container<
-          specfem::dimension::type::dim2> {
-public:
-  static constexpr bool is_single_edge = false;
-  static constexpr specfem::element::medium_tag Medium1 =
-      specfem::element::medium_tag::acoustic;
-  static constexpr specfem::element::medium_tag Medium2 =
-      specfem::element::medium_tag::acoustic;
-  fluid_fluid_2d(int num_edges1, int num_edges2)
-      : specfem::assembly::interface::module::double_edge_container<
-            specfem::dimension::type::dim2>(num_edges1, num_edges2) {}
-};
-struct solid_solid_2d
-    : public specfem::assembly::interface::module::double_edge_container<
-          specfem::dimension::type::dim2> {
-public:
-  static constexpr bool is_single_edge = false;
-  static constexpr specfem::element::medium_tag Medium1 =
-      specfem::element::medium_tag::elastic_psv;
-  static constexpr specfem::element::medium_tag Medium2 =
-      specfem::element::medium_tag::elastic_psv;
-  solid_solid_2d(int num_edges1, int num_edges2)
-      : specfem::assembly::interface::module::double_edge_container<
-            specfem::dimension::type::dim2>(num_edges1, num_edges2) {}
-};
+using fluid_fluid_2d =
+    double_edge_test_container<specfem::element::medium_tag::acoustic,
+                               specfem::element::medium_tag::acoustic>;
+using fluid_solid_2d =
+    double_edge_test_container<specfem::element::medium_tag::acoustic,
+                               specfem::element::medium_tag::elastic_psv>;
+using solid_fluid_2d =
+    double_edge_test_container<specfem::element::medium_tag::elastic_psv,
+                               specfem::element::medium_tag::acoustic>;
+using solid_solid_2d =
+    double_edge_test_container<specfem::element::medium_tag::elastic_psv,
+                               specfem::element::medium_tag::elastic_psv>;
 
 void test_on_mesh(
     const test_configuration::mesh &mesh_config,
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly);
-
-template <typename ContainerType>
-ContainerType load_interfaces(const test_configuration::mesh &mesh_config);
 
 } // namespace test_configuration::interface_containers
