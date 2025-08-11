@@ -4,10 +4,10 @@
 #include <adios2.h>
 #endif
 
-#include "io/adios2/impl/dataset.hpp"
-#include "io/adios2/impl/dataset.tpp"
-#include "io/adios2/impl/file.hpp"
-#include "io/adios2/impl/group.hpp"
+#include "io/ADIOS2/impl/dataset.hpp"
+#include "io/ADIOS2/impl/dataset.tpp"
+#include "io/ADIOS2/impl/file.hpp"
+#include "io/ADIOS2/impl/group.hpp"
 
 namespace specfem {
 namespace io {

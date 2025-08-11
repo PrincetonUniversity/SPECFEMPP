@@ -1,5 +1,4 @@
-#ifndef SPECFEM_IO_ADIOS2_IMPL_NATIVE_TYPE_HPP
-#define SPECFEM_IO_ADIOS2_IMPL_NATIVE_TYPE_HPP
+#pragma once
 
 #ifndef NO_ADIOS2
 #include <adios2.h>
@@ -20,11 +19,11 @@ template <typename T> struct native_type {
   }
 };
 #else
-template <typename T> struct native_type {};
+template <typename T> struct native_type {
+  static T type() { return T{}; }
+};
 #endif
 } // namespace ADIOS2
 } // namespace impl
 } // namespace io
 } // namespace specfem
-
-#endif
