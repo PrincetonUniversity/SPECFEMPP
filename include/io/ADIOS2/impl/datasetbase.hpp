@@ -1,5 +1,4 @@
-#ifndef SPECFEM_IO_ADIOS2_IMPL_DATASETBASE_HPP
-#define SPECFEM_IO_ADIOS2_IMPL_DATASETBASE_HPP
+#pragma once
 
 #ifndef NO_ADIOS2
 #include <adios2.h>
@@ -49,7 +48,7 @@ protected:
       : io_ptr(io), engine_ptr(engine), dataset_name(name) {}
 
   template <typename value_type>
-  void read(value_type *data, const adios2::Variable<value_type> &variable) {
+  void read(value_type *data, adios2::Variable<value_type> &variable) {
 
     // Get shape of the variable from file
     auto shape = variable.Shape();
@@ -59,11 +58,10 @@ protected:
     std::vector<std::size_t> count = shape;
 
     // Make a mutable copy of the variable to set selection
-    auto mutable_variable = variable;
-    mutable_variable.SetSelection({ start, count });
+    variable.SetSelection({ start, count });
 
     // Perform read
-    engine_ptr->Get(mutable_variable, data);
+    engine_ptr->Get(variable, data);
     engine_ptr->PerformGets(); // <--- Required to actually retrieve the data
   }
 
@@ -83,5 +81,3 @@ protected:
 } // namespace impl
 } // namespace io
 } // namespace specfem
-
-#endif
