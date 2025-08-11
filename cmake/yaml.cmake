@@ -33,7 +33,7 @@ file(WRITE ${yaml-cpp_BINARY_DIR}/yaml-cpp-config.cmake "
 # Generated config for yaml-cpp from FetchContent
 add_library(yaml-cpp::yaml-cpp ALIAS yaml-cpp)
 set(yaml-cpp_FOUND TRUE)
-set(yaml-cpp_VERSION \"0.8.0\")
+set(yaml-cpp_VERSION \"0.7.0\")
 ")
 
 message(STATUS "yaml-cpp include directory set to: ${YAML_CPP_INCLUDE_DIR}")
