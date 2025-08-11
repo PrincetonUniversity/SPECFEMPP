@@ -13,8 +13,6 @@ enum class source_type {
 
 namespace specfem::sources {
 
-template <specfem::dimension::type DimensionTag> class source;
-
 template <specfem::dimension::type DimensionTag> class tensor_source;
 
 template <specfem::dimension::type DimensionTag> class vector_source;
@@ -31,17 +29,20 @@ template <specfem::dimension::type DimensionTag> class external;
 
 } // namespace specfem::sources
 
-#include "source/dim2/source.hpp"
-#include "source/dim2/tensor_source.hpp"
+#include "source/source.hpp"
+#include "source/source.tpp"
+#include "source/tensor_source.hpp"
+#include "source/vector_source.hpp"
+
+// dim2 specializations
+#include "source/dim2/source.tpp"
 #include "source/dim2/tensor_source/moment_tensor_source.hpp"
-#include "source/dim2/vector_source.hpp"
 #include "source/dim2/vector_source/adjoint_source.hpp"
 #include "source/dim2/vector_source/cosserat_force_source.hpp"
 #include "source/dim2/vector_source/external.hpp"
 #include "source/dim2/vector_source/force_source.hpp"
 
-#include "source/dim3/source.hpp"
-#include "source/dim3/tensor_source.hpp"
+// dim3 specializations
+#include "source/dim3/source.tpp"
 #include "source/dim3/tensor_source/moment_tensor_source.hpp"
-#include "source/dim3/vector_source.hpp"
 #include "source/dim3/vector_source/force_source.hpp"
