@@ -69,15 +69,27 @@ template <typename T>
 std::enable_if_t<std::is_same_v<T, specfem::io::write>, void>
 specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::write() {
 
-  using native_type = specfem::io::impl::ADIOS2::native_type<value_type>;
-  using storage_type = decltype(native_type::type());
+  using native_t = specfem::io::impl::ADIOS2::native_type<value_type>;
+  using storage_type = decltype(native_t::type());
 
-  if constexpr (std::is_same_v<value_type, bool> && !std::is_same_v<storage_type, bool>) {
-    // Handle bool conversion to uint8_t
+  if constexpr (std::is_same_v<value_type, storage_type>) {
+    // Direct write - no conversion needed
+    if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
+      DatasetBase<specfem::io::write>::write(data.data(), variable);
+    } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
+      auto host_data = Kokkos::create_mirror_view(data);
+      Kokkos::deep_copy(host_data, data);
+      DatasetBase<specfem::io::write>::write(host_data.data(), variable);
+    } else {
+      throw std::runtime_error("Unknown memory space");
+    }
+  } else {
+    // Convert then write
+    native_t converter;
     if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
       std::vector<storage_type> converted_data(data.size());
       for (size_t i = 0; i < data.size(); ++i) {
-        converted_data[i] = static_cast<storage_type>(data.data()[i] ? 1 : 0);
+        converted_data[i] = converter(data.data()[i]);
       }
       DatasetBase<specfem::io::write>::write(converted_data.data(), variable);
     } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
@@ -85,20 +97,9 @@ specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::write() {
       Kokkos::deep_copy(host_data, data);
       std::vector<storage_type> converted_data(host_data.size());
       for (size_t i = 0; i < host_data.size(); ++i) {
-        converted_data[i] = static_cast<storage_type>(host_data.data()[i] ? 1 : 0);
+        converted_data[i] = converter(host_data.data()[i]);
       }
       DatasetBase<specfem::io::write>::write(converted_data.data(), variable);
-    } else {
-      throw std::runtime_error("Unknown memory space");
-    }
-  } else {
-    // Standard case - no conversion needed
-    if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
-      DatasetBase<specfem::io::write>::write(data.data(), variable);
-    } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
-      auto host_data = Kokkos::create_mirror_view(data);
-      Kokkos::deep_copy(host_data, data);
-      DatasetBase<specfem::io::write>::write(host_data.data(), variable);
     } else {
       throw std::runtime_error("Unknown memory space");
     }
@@ -111,35 +112,35 @@ template <typename T>
 std::enable_if_t<std::is_same_v<T, specfem::io::read>, void>
 specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::read() {
 
-  using native_type = specfem::io::impl::ADIOS2::native_type<value_type>;
-  using storage_type = decltype(native_type::type());
+  using native_t = specfem::io::impl::ADIOS2::native_type<value_type>;
+  using storage_type = decltype(native_t::type());
 
-  if constexpr (std::is_same_v<value_type, bool> && !std::is_same_v<storage_type, bool>) {
-    // Handle bool conversion from uint8_t
+  if constexpr (std::is_same_v<value_type, storage_type>) {
+    // Direct read - no conversion needed
+    if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
+      DatasetBase<specfem::io::read>::read(data.data(), variable);
+    } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
+      auto host_data = Kokkos::create_mirror_view(data);
+      DatasetBase<specfem::io::read>::read(host_data.data(), variable);
+      Kokkos::deep_copy(data, host_data);
+    } else {
+      throw std::runtime_error("Unknown memory space");
+    }
+  } else {
+    // Read native type, then convert back
     if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
       std::vector<storage_type> converted_data(data.size());
       DatasetBase<specfem::io::read>::read(converted_data.data(), variable);
       for (size_t i = 0; i < data.size(); ++i) {
-        data.data()[i] = (converted_data[i] != 0);
+        data.data()[i] = (converted_data[i] != 0);  // Convert back from storage type
       }
     } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
       auto host_data = Kokkos::create_mirror_view(data);
       std::vector<storage_type> converted_data(host_data.size());
       DatasetBase<specfem::io::read>::read(converted_data.data(), variable);
       for (size_t i = 0; i < host_data.size(); ++i) {
-        host_data.data()[i] = (converted_data[i] != 0);
+        host_data.data()[i] = (converted_data[i] != 0);  // Convert back from storage type
       }
-      Kokkos::deep_copy(data, host_data);
-    } else {
-      throw std::runtime_error("Unknown memory space");
-    }
-  } else {
-    // Standard case - no conversion needed
-    if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
-      DatasetBase<specfem::io::read>::read(data.data(), variable);
-    } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
-      auto host_data = Kokkos::create_mirror_view(data);
-      DatasetBase<specfem::io::read>::read(host_data.data(), variable);
       Kokkos::deep_copy(data, host_data);
     } else {
       throw std::runtime_error("Unknown memory space");
