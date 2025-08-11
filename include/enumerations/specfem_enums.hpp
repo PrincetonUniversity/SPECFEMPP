@@ -63,27 +63,6 @@ enum type {
 constexpr int num_edges = 5; ///< Number of edges in the mesh
 } // namespace edge
 
-/**
- * @namespace Boundaries enumeration
- *
- */
-namespace boundaries {
-/**
- * @brief type of the boundary (corner, edge)
- *
- */
-enum type {
-  TOP_LEFT,     ///< Top left corner
-  TOP_RIGHT,    ///< Top right corner
-  BOTTOM_LEFT,  ///< Bottom left corner
-  BOTTOM_RIGHT, ///< Bottom right corner
-  TOP,          ///< Top edge
-  LEFT,         ///< Left edge
-  RIGHT,        ///< Right edge
-  BOTTOM        ///< Bottom edge
-};
-} // namespace boundaries
-
 namespace time_scheme {
 /**
  * @brief Time scheme enumeration
