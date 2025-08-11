@@ -142,9 +142,17 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
 )
 
 # Add the include directories so that the generated files can be found
-include_directories(include)
 include_directories(core)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
+
+
+message(STATUS "INCLUDE DIRECTORIES:")
+message(STATUS "    core: ${CMAKE_CURRENT_SOURCE_DIR}/core")
+message(STATUS "    include: ${CMAKE_SOURCE_DIR}/include")
+message(STATUS "    binary: ${CMAKE_BINARY_DIR}/include")
+
+
 
 # Set loglevel to STATUS if build type is debug
 if (CMAKE_BUILD_TYPE MATCHES Release)
