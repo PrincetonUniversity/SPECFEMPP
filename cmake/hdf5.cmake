@@ -26,15 +26,14 @@ if (SPECFEM_ENABLE_HDF5)
 
         include(FetchContent)
 
+        if (CMAKE_VERSION VERSION_GREATER "3.30.0")
+            # For CMake versions > 3.30, we need to use Set the policy)
+            cmake_policy(SET CMP0169 NEW)
+        endif()
+
         # Set the specific version you want
         set(SPECFEM_HDF5_VERSION "1.14.6" CACHE STRING "HDF5 version to use for source install")
         set(HDF5_SOURCE_URL "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${SPECFEM_HDF5_VERSION}/hdf5-${SPECFEM_HDF5_VERSION}.tar.gz")
-        FetchContent_Declare(
-            hdf5
-            URL ${HDF5_SOURCE_URL}
-            DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-            # URL_HASH SHA256=# Add the SHA256 hash here for verification (optional but recommended)
-        )
 
         # Configure HDF5 options before fetching
         set(HDF5_BUILD_STATIC ON CACHE BOOL "Build HDF5 static library")
@@ -51,12 +50,31 @@ if (SPECFEM_ENABLE_HDF5)
         set(SKIP_HDF5_FORTRAN_SHARED ON CACHE BOOL "Skip HDF5 Fortran shared install" FORCE)
         set(HDF5_SKIP_INSTALL_RULES ON CACHE BOOL "Skip HDF5 install rules" FORCE)
 
-        # Using this instead of FetchContent_MakeAvailable to be backwards compatible
-        # with older CMake versions
-        FetchContent_GetProperties(hdf5)
-        if(NOT hdf5_POPULATED)
-            FetchContent_Populate(hdf5)
-            add_subdirectory(${hdf5_SOURCE_DIR} ${hdf5_BINARY_DIR} EXCLUDE_FROM_ALL)
+        if (CMAKE_VERSION VERSION_LESS "3.28.0")
+            # For CMake versions < 3.28, EXCLUDE_FROM_ALL is not supported in FetchContent_Declare
+            FetchContent_Declare(
+                hdf5
+                URL ${HDF5_SOURCE_URL}
+                DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+                # URL_HASH SHA256=# Add the SHA256 hash here for verification (optional but recommended)
+            )
+
+            FetchContent_GetProperties(hdf5)
+            if(NOT hdf5_POPULATED)
+                FetchContent_Populate(hdf5)
+                add_subdirectory(${hdf5_SOURCE_DIR} ${hdf5_BINARY_DIR} EXCLUDE_FROM_ALL)
+            endif()
+        else()
+            # For CMake versions >= 3.28, EXCLUDE_FROM_ALL is supported in FetchContent_Declare
+            FetchContent_Declare(
+                hdf5
+                URL ${HDF5_SOURCE_URL}
+                DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+                EXCLUDE_FROM_ALL
+                # URL_HASH SHA256=# Add the SHA256 hash here for verification (optional but recommended)
+            )
+
+            FetchContent_MakeAvailable(hdf5)
         endif()
 
         # Set variables that find_package would normally set
