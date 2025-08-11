@@ -3,17 +3,19 @@ cmake_minimum_required(VERSION 3.17.5)
 project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
 
 set(CMAKE_CXX_STANDARD 17)
-option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
-option(VTK_CXX_BUILD "Build VTK C++" ON)
-option(MPI_PARALLEL "MPI enabled" OFF)
-option(BUILD_TESTS "Tests included" OFF)
-option(ENABLE_SIMD "Enable SIMD" OFF)
-option(ENABLE_PROFILING "Enable profiling" OFF)
+
+# SPECFEM options
+option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" ON)
+option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
+option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
+option(SPECFEM_BUILD_TESTS "Tests included" OFF)
+option(SPECFEM_ENABLE_SIMD "Enable SIMD" OFF)
+option(SPECFEM_ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
-option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
-option(BUILD_BENCHMARKS "Benchmarks included" ON)
-option(ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
+option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
+option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
 
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
@@ -43,7 +45,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(FETCHCONTENT_QUIET TRUE)
 
 # Enable unity build for faster compilation
-if(ENABLE_UNITY_BUILD)
+if(SPECFEM_ENABLE_UNITY_BUILD)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(STATUS "Unity build disabled for Debug build type.")
         set(CMAKE_UNITY_BUILD OFF)
@@ -100,23 +102,23 @@ include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
 
 
-if (ENABLE_SIMD)
+if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
-    add_definitions(-DENABLE_SIMD)
+    add_definitions(-DSPECFEM_ENABLE_SIMD)
 endif()
 
-if (ENABLE_PROFILING)
+if (SPECFEM_ENABLE_PROFILING)
     message(STATUS "Enabling profiling")
-    add_definitions(-DENABLE_PROFILING)
+    add_definitions(-DSPECFEM_ENABLE_PROFILING)
 endif()
 
-if (ENABLE_DOUBLE_PRECISION)
+if (SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling double precision")
     set(TYPE_REAL "double")
-else(ENABLE_DOUBLE_PRECISION)
+else(SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling single precision")
     set(TYPE_REAL "float")
-endif(ENABLE_DOUBLE_PRECISION)
+endif(SPECFEM_ENABLE_DOUBLE_PRECISION)
 
 # Configure the setup headers
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
@@ -197,7 +199,7 @@ add_library(
         src/io/mesh/impl/fortran/dim3/utilities.cpp
 )
 
-if (NOT HDF5_CXX_BUILD)
+if (NOT SPECFEM_ENABLE_HDF5)
     target_compile_definitions(
         io
         PUBLIC -DNO_HDF5
@@ -251,7 +253,7 @@ add_library(
         src/specfem_mpi/specfem_mpi.cpp
 )
 
-if (MPI_PARALLEL)
+if (SPECFEM_ENABLE_MPI)
         target_compile_definitions(
                 specfem_mpi
                 PUBLIC -DMPI_PARALLEL
@@ -259,7 +261,7 @@ if (MPI_PARALLEL)
         message(STATUS "Compiling SPECFEM with MPI")
 else()
         message(STATUS "Compiling SPECFEM without MPI")
-endif(MPI_PARALLEL)
+endif(SPECFEM_ENABLE_MPI)
 
 # add_library(
 #         material_class
@@ -502,7 +504,7 @@ target_link_libraries(
         writer
 )
 
-if (NOT VTK_CXX_BUILD)
+if (NOT SPECFEM_ENABLE_VTK)
         target_compile_definitions(
                 periodic_tasks
                 PUBLIC -DNO_VTK
@@ -620,19 +622,19 @@ target_link_libraries(
 
 
 # Include tests
-if (BUILD_TESTS)
+if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
         add_subdirectory(tests/unit-tests)
 endif()
 
-if (BUILD_BENCHMARKS)
+if (SPECFEM_BUILD_BENCHMARKS)
     # Define option with default value
 
-    if(DEFINED BENCHMARKS_BUILD_DIR)
-        message(STATUS "BENCHMARKS_BUILD_DIR was defined as: ${BENCHMARKS_BUILD_DIR}")
+    if(DEFINED SPECFEM_BENCHMARKS_BUILD_DIR)
+        message(STATUS "SPECFEM_BENCHMARKS_BUILD_DIR was defined as: ${SPECFEM_BENCHMARKS_BUILD_DIR}")
     else()
-        set(BENCHMARKS_BUILD_DIR ${CMAKE_SOURCE_DIR}/benchmarks/build)
-        message(STATUS "BENCHMARKS_BUILD_DIR was not defined, using default: ${BENCHMARKS_BUILD_DIR}")
+        set(SPECFEM_BENCHMARKS_BUILD_DIR ${CMAKE_SOURCE_DIR}/benchmarks/build)
+        message(STATUS "SPECFEM_BENCHMARKS_BUILD_DIR was not defined, using default: ${SPECFEM_BENCHMARKS_BUILD_DIR}")
     endif()
 
     # Create the benchmarks build directory if it does not exist
