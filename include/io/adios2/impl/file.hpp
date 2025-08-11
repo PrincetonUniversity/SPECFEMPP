@@ -1,5 +1,4 @@
-#ifndef SPECFEM_IO_ADIOS2_IMPL_FILE_HPP
-#define SPECFEM_IO_ADIOS2_IMPL_FILE_HPP
+#pragma once
 
 #ifndef NO_ADIOS2
 #include <adios2.h>
@@ -217,5 +216,3 @@ private:
 } // namespace impl
 } // namespace io
 } // namespace specfem
-
-#endif
