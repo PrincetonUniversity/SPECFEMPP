@@ -30,8 +30,9 @@ if (SPECFEM_ENABLE_ADIOS2)
   set(ADIOS2_USE_MPI ${SPECFEM_ENABLE_MPI} CACHE BOOL "Enable MPI support" FORCE)
   set(BUILD_TESTING OFF CACHE BOOL "Disable ADIOS2 testing" FORCE)
   set(ADIOS2_BUILD_EXAMPLES OFF CACHE BOOL "Disable ADIOS2 examples" FORCE)
+
+  # We already have YAML-CPP in the project, so we can use it
   set(ADIOS2_USE_EXTERNAL_YAMLCPP ON CACHE BOOL "Use external YAML-CPP" FORCE)
-  set(ADIOS2_USE_EXTERNAL_PUGIXML ON CACHE BOOL "Use external pugixml" FORCE)
 
   # Optional: Control other features based on your needs
   set(ADIOS2_USE_ZeroMQ OFF CACHE BOOL "Disable ZeroMQ" FORCE)
