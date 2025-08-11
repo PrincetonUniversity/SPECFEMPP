@@ -31,14 +31,13 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
   const auto shape2D = this->h_shape2D;
   const auto coorg = this->h_control_node_coord;
 
-  const int scratch_size =
-      specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
-
   this->xmin = std::numeric_limits<type_real>::max();
   this->xmax = std::numeric_limits<type_real>::min();
   this->zmin = std::numeric_limits<type_real>::max();
   this->zmax = std::numeric_limits<type_real>::min();
 
+  // Get the coordinates for each quadrature point
+  // ----
   Kokkos::View<
       specfem::point::global_coordinates<specfem::dimension::type::dim2> ***,
       Kokkos::DefaultHostExecutionSpace>
@@ -75,6 +74,7 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
   }
 
   const type_real tolerance = std::min(xmax - xmin, zmax - zmin) * 1e-6;
+  // ----
 
   constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
 
@@ -138,7 +138,8 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
     for (auto iedge : specfem::mesh_entity::edges) {
       const auto npoints =
           element_connections.number_of_points_on_orientation(iedge);
-      for (int ipoint = 1; ipoint < npoints - 1; ipoint++) {
+      for (int ipoint = 1; ipoint < npoints - 1;
+           ipoint++) { // we loop only over interior points of edge
         for (int ielement = 0; ielement < chunk_size; ielement++) {
           int ispec = ichunk + ielement;
           if (ispec >= nspec)
@@ -171,6 +172,8 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
                   boost::edge(jspec_mesh, ispec_mesh, fg).first;
               const auto mapped_iedge = fg[other_edge].orientation;
 
+              // Get the correct coordinates for the edge point on the other
+              // edge
               const auto [from_coords, to_coords] =
                   element_connections.map_coordinates(iedge, mapped_iedge,
                                                       ipoint);
@@ -211,6 +214,8 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
           }
           // ----
 
+          // If the point has not been assigned yet, we assign it a new index
+          // and store the coordinates
           if (!previously_assigned) {
             this->h_index_mapping(ispec, iz, ix) = iglob;
             this->h_coord(0, ispec, iz, ix) =
@@ -240,8 +245,11 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
 
         bool previously_assigned = false;
 
+        // Get the edges that are connected to this corner
         auto valid_connections = specfem::mesh_entity::edges_of_corner(corner);
 
+        // We also need to add the corner itself to the valid connections
+        // This is necessary to handle cases where a corner connection is made
         valid_connections.push_back(corner);
 
         // get all connections for this element
@@ -344,10 +352,8 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
         }
         if (!previously_assigned) {
           this->h_index_mapping(ispec, iz, ix) = iglob;
-          this->h_coord(0, ispec, iz, ix) =
-              global_coordinates(ispec, iz, ix).x;
-          this->h_coord(1, ispec, iz, ix) =
-              global_coordinates(ispec, iz, ix).z;
+          this->h_coord(0, ispec, iz, ix) = global_coordinates(ispec, iz, ix).x;
+          this->h_coord(1, ispec, iz, ix) = global_coordinates(ispec, iz, ix).z;
           iglob++;
         }
       }
