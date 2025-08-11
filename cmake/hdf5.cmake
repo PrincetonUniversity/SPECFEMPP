@@ -66,6 +66,9 @@ if (SPECFEM_ENABLE_HDF5)
 
         message(STATUS "HDF5 configured from source")
 
+        # Restore the original unity build setting
+        set(CMAKE_UNITY_BUILD ${SAVE_UNITY_BUILD})
+
     elseif(HDF5_FOUND)
         message(STATUS "Using system-wide HDF5")
         message(STATUS "HDF5 libs/ and incs/:.")
