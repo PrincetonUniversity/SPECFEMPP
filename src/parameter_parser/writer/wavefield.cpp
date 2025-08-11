@@ -1,7 +1,7 @@
 #include "parameter_parser/writer/wavefield.hpp"
+#include "io/ADIOS2/ADIOS2.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
-#include "io/adios2/ADIOS2.hpp"
 #include "io/reader.hpp"
 #include "periodic_tasks/wavefield_reader.hpp"
 #include "periodic_tasks/wavefield_writer.hpp"
