@@ -12,13 +12,12 @@
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace sources {
+namespace specfem::sources {
 
-template <> class source<specfem::dimension::type::dim3> {
+template <specfem::dimension::type DimensionTag> class source {
 
 public:
-  static constexpr auto dimension_tag = specfem::dimension::type::dim3;
+  static constexpr auto dimension_tag = DimensionTag;
   /**
    * @brief Default source constructor
    *
@@ -29,15 +28,17 @@ public:
    * @brief Construct a new source object using the forcing function
    *
    * @param x x-coordinate of source
-   * @param y y-coordinate of source
    * @param z z-coordinate of source
    * @param forcing_function pointer to source time function
    * @param wavefield_type type of wavefield
    */
-  source(type_real x, type_real y, type_real z,
+  template <specfem::dimension::type U = DimensionTag,
+            typename std::enable_if<U == specfem::dimension::type::dim2>::type
+                * = nullptr>
+  source(type_real x, type_real z,
          std::unique_ptr<specfem::forcing_function::stf> forcing_function)
-      : global_coordinates(x, y, z),
-        forcing_function(std::move(forcing_function)) {};
+      : global_coordinates(x, z),
+        forcing_function(std::move(forcing_function)){};
 
   /**
    * @brief Construct a new source object from a YAML node and time steps
@@ -46,7 +47,32 @@ public:
    * @param nsteps
    * @param dt
    */
+  template <specfem::dimension::type U = DimensionTag,
+            typename std::enable_if<U == specfem::dimension::type::dim2>::type
+                * = nullptr>
   source(YAML::Node &Node, const int nsteps, const type_real dt);
+
+  template <specfem::dimension::type U = DimensionTag,
+            typename std::enable_if<U == specfem::dimension::type::dim3>::type
+                * = nullptr>
+  source(YAML::Node &Node, const int nsteps, const type_real dt);
+
+  /**
+   * @brief Construct a new source object using the forcing function
+   *
+   * @param x x-coordinate of source
+   * @param y y-coordinate of source
+   * @param z z-coordinate of source
+   * @param forcing_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  template <specfem::dimension::type U = DimensionTag,
+            typename std::enable_if<U == specfem::dimension::type::dim3>::type
+                * = nullptr>
+  source(type_real x, type_real y, type_real z,
+         std::unique_ptr<specfem::forcing_function::stf> forcing_function)
+      : global_coordinates(x, y, z),
+        forcing_function(std::move(forcing_function)){};
 
   /**
    * @brief Get the value of t0 from the specfem::stf::stf object
@@ -91,6 +117,9 @@ public:
     return !(*this == other);
   }
 
+  void set_forcing_function(YAML::Node &Node, const int nsteps,
+                            const type_real dt);
+
   /**
    * @brief Get the forcing function object
    *
@@ -103,7 +132,7 @@ public:
   /**
    * @brief Set the local xi coordinates of the source in the local coordinate
    * system
-   * @param specfem::point::local_coordinates<specfem::dimension::type::dim3>
+   * @param specfem::point::local_coordinates<dimension_tag>
    * local_coordinates
    */
   void
@@ -115,7 +144,7 @@ public:
   /**
    * @brief Get the local coordinates of the source in the local coordinate
    * system
-   * @return specfem::point::local_coordinates<specfem::dimension::type::dim3>
+   * @return specfem::point::local_coordinates<dimension_tag>
    */
   specfem::point::local_coordinates<dimension_tag>
   get_local_coordinates() const {
@@ -125,8 +154,7 @@ public:
   /**
    * @brief Set the global coordinates of the source in the global coordinate
    * system
-   * @param specfem::point::global_coordinates<specfem::dimension::type::dim3>
-   * global_coordinates
+   * @param specfem::point::global_coordinates<dimension_tag> global_coordinates
    */
   void
   set_global_coordinates(const specfem::point::global_coordinates<dimension_tag>
@@ -137,7 +165,7 @@ public:
   /**
    * @brief Get the global coordinates of the source in the global coordinate
    * system
-   * @return specfem::point::global_coordinates<specfem::dimension::type::dim3>
+   * @return specfem::point::global_coordinates<dimension_tag>
    */
   specfem::point::global_coordinates<dimension_tag>
   get_global_coordinates() const {
@@ -175,8 +203,9 @@ public:
 protected:
   // Read-only member variables
   static constexpr const char *name =
-      "3D base_source, if this was printed, you are not using the "
-      "correct source class";
+      "!!! base_source, if this was printed, you are not using the "
+      "correct source class !!!";
+
   std::unique_ptr<specfem::forcing_function::stf>
       forcing_function; ///< pointer to source time function
 
@@ -189,6 +218,4 @@ protected:
   specfem::element::medium_tag medium_tag;
 };
 
-} // namespace sources
-
-} // namespace specfem
+} // namespace specfem::sources

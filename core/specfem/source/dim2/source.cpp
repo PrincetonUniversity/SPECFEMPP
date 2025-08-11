@@ -4,33 +4,7 @@
 #include "specfem_setup.hpp"
 #include <cmath>
 
-specfem::sources::source<specfem::dimension::type::dim2>::source(
-    YAML::Node &Node, const int nsteps, const type_real dt)
-    : global_coordinates(Node["x"].as<type_real>(), Node["z"].as<type_real>()) {
-
-  // Read source time function
-  if (YAML::Node Dirac = Node["Dirac"]) {
-    this->forcing_function = std::make_unique<specfem::forcing_function::Dirac>(
-        Dirac, nsteps, dt, false);
-  } else if (YAML::Node Ricker = Node["Ricker"]) {
-    this->forcing_function =
-        std::make_unique<specfem::forcing_function::Ricker>(Ricker, nsteps, dt,
-                                                            false);
-  } else if (YAML::Node dGaussian = Node["dGaussian"]) {
-    this->forcing_function =
-        std::make_unique<specfem::forcing_function::dGaussian>(
-            dGaussian, nsteps, dt, false);
-  } else if (YAML::Node external = Node["External"]) {
-    this->forcing_function =
-        std::make_unique<specfem::forcing_function::external>(external, nsteps,
-                                                              dt);
-  } else {
-    throw std::runtime_error("Error: source time function not recognized");
-  }
-
-  return;
-}
-
+template <>
 void specfem::sources::source<specfem::dimension::type::dim2>::set_medium_tag(
     specfem::element::medium_tag medium_tag) {
 
@@ -65,3 +39,6 @@ void specfem::sources::source<specfem::dimension::type::dim2>::set_medium_tag(
   }
   throw std::runtime_error(message.str());
 }
+
+template specfem::sources::source<specfem::dimension::type::dim2>::source(
+    YAML::Node &Node, const int nsteps, const type_real dt);
