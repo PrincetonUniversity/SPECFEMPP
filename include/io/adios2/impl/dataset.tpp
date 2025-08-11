@@ -15,51 +15,61 @@
 #include <vector>
 
 #ifndef NO_ADIOS2
+
+// Constructor implementation for write operations
 template <typename ViewType, typename OpType>
+template <typename T>
 specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::Dataset(
     std::shared_ptr<adios2::IO> &io, std::shared_ptr<adios2::Engine> &engine,
-    const std::string &name, const ViewType data)
+    const std::string &name, const ViewType data,
+    std::enable_if_t<std::is_same_v<T, specfem::io::write>, int>)
     : data(data), DatasetBase<OpType>(io, engine, name) {
 
-  // Convert dimensions to ADIOS2 format
-  std::vector<std::size_t> shape(rank);
-  std::vector<std::size_t> start(rank, 0);
-  std::vector<std::size_t> count(rank);
+  auto [shape, start, count] = this->convert_dimensions(data);
 
-  for (int i = 0; i < rank; ++i) {
-    shape[i] = data.extent(i);
-    count[i] = data.extent(i);  // full dataset write
+  // Define variable for writing
+  using native_type = specfem::io::impl::ADIOS2::native_type<value_type>;
+  variable = this->io_ptr->template DefineVariable<decltype(native_type::type())>(name, shape, start, count);
+}
+
+// Constructor implementation for read operations
+template <typename ViewType, typename OpType>
+template <typename T>
+specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::Dataset(
+    std::shared_ptr<adios2::IO> &io, std::shared_ptr<adios2::Engine> &engine,
+    const std::string &name, const ViewType data,
+    std::enable_if_t<std::is_same_v<T, specfem::io::read>, int>)
+    : data(data), DatasetBase<OpType>(io, engine, name) {
+
+  auto [shape, start, count] = this->convert_dimensions(data);
+
+  // Inquire variable for reading
+  using native_type = specfem::io::impl::ADIOS2::native_type<value_type>;
+  variable = this->io_ptr->template InquireVariable<decltype(native_type::type())>(name);
+  if (!variable) {
+    throw std::runtime_error("Variable not found: " + name);
   }
 
-  if constexpr (std::is_same_v<OpType, specfem::io::write>) {
-    // Define variable for writing
-    variable = this->io_ptr->template DefineVariable<decltype(native_type::type())>(name, shape, start, count);
-  } else {
-    // Inquire variable for reading
-    variable = this->io_ptr->template InquireVariable<decltype(native_type::type())>(name);
-    if (!variable) {
-      throw std::runtime_error("Variable not found: " + name);
-    }
+  // Check dimensions match
+  auto var_shape = variable.Shape();
+  if (var_shape.size() != static_cast<size_t>(rank)) {
+    throw std::runtime_error("Rank mismatch for variable: " + name);
+  }
 
-    // Check dimensions match
-    auto var_shape = variable.Shape();
-    if (var_shape.size() != static_cast<size_t>(rank)) {
-      throw std::runtime_error("Rank mismatch for variable: " + name);
-    }
-
-    for (int i = 0; i < rank; ++i) {
-      if (var_shape[i] != shape[i]) {
-        throw std::runtime_error("Dimension mismatch for variable: " + name);
-      }
+  for (int i = 0; i < rank; ++i) {
+    if (var_shape[i] != shape[i]) {
+      throw std::runtime_error("Dimension mismatch for variable: " + name);
     }
   }
 }
 
+// SFINAE write method implementation
 template <typename ViewType, typename OpType>
-void specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::write() {
-  static_assert(std::is_same_v<OpType, specfem::io::write>,
-                "write() can only be called on write datasets");
+template <typename T>
+std::enable_if_t<std::is_same_v<T, specfem::io::write>, void>
+specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::write() {
 
+  using native_type = specfem::io::impl::ADIOS2::native_type<value_type>;
   using storage_type = decltype(native_type::type());
 
   if constexpr (std::is_same_v<value_type, bool> && !std::is_same_v<storage_type, bool>) {
@@ -69,7 +79,7 @@ void specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::write() {
       for (size_t i = 0; i < data.size(); ++i) {
         converted_data[i] = static_cast<storage_type>(data.data()[i] ? 1 : 0);
       }
-      DatasetBase<OpType>::write(converted_data.data(), variable);
+      DatasetBase<specfem::io::write>::write(converted_data.data(), variable);
     } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
       auto host_data = Kokkos::create_mirror_view(data);
       Kokkos::deep_copy(host_data, data);
@@ -77,43 +87,45 @@ void specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::write() {
       for (size_t i = 0; i < host_data.size(); ++i) {
         converted_data[i] = static_cast<storage_type>(host_data.data()[i] ? 1 : 0);
       }
-      DatasetBase<OpType>::write(converted_data.data(), variable);
+      DatasetBase<specfem::io::write>::write(converted_data.data(), variable);
     } else {
       throw std::runtime_error("Unknown memory space");
     }
   } else {
     // Standard case - no conversion needed
     if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
-      DatasetBase<OpType>::write(data.data(), variable);
+      DatasetBase<specfem::io::write>::write(data.data(), variable);
     } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
       auto host_data = Kokkos::create_mirror_view(data);
       Kokkos::deep_copy(host_data, data);
-      DatasetBase<OpType>::write(host_data.data(), variable);
+      DatasetBase<specfem::io::write>::write(host_data.data(), variable);
     } else {
       throw std::runtime_error("Unknown memory space");
     }
   }
 }
 
+// SFINAE read method implementation
 template <typename ViewType, typename OpType>
-void specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::read() {
-  static_assert(std::is_same_v<OpType, specfem::io::read>,
-                "read() can only be called on read datasets");
+template <typename T>
+std::enable_if_t<std::is_same_v<T, specfem::io::read>, void>
+specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::read() {
 
+  using native_type = specfem::io::impl::ADIOS2::native_type<value_type>;
   using storage_type = decltype(native_type::type());
 
   if constexpr (std::is_same_v<value_type, bool> && !std::is_same_v<storage_type, bool>) {
     // Handle bool conversion from uint8_t
     if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
       std::vector<storage_type> converted_data(data.size());
-      DatasetBase<OpType>::read(converted_data.data(), variable);
+      DatasetBase<specfem::io::read>::read(converted_data.data(), variable);
       for (size_t i = 0; i < data.size(); ++i) {
         data.data()[i] = (converted_data[i] != 0);
       }
     } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
       auto host_data = Kokkos::create_mirror_view(data);
       std::vector<storage_type> converted_data(host_data.size());
-      DatasetBase<OpType>::read(converted_data.data(), variable);
+      DatasetBase<specfem::io::read>::read(converted_data.data(), variable);
       for (size_t i = 0; i < host_data.size(); ++i) {
         host_data.data()[i] = (converted_data[i] != 0);
       }
@@ -124,10 +136,10 @@ void specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::read() {
   } else {
     // Standard case - no conversion needed
     if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
-      DatasetBase<OpType>::read(data.data(), variable);
+      DatasetBase<specfem::io::read>::read(data.data(), variable);
     } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
       auto host_data = Kokkos::create_mirror_view(data);
-      DatasetBase<OpType>::read(host_data.data(), variable);
+      DatasetBase<specfem::io::read>::read(host_data.data(), variable);
       Kokkos::deep_copy(data, host_data);
     } else {
       throw std::runtime_error("Unknown memory space");
