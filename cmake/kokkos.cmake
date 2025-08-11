@@ -17,9 +17,14 @@ endif()
 # Set Kokkos options before fetching
 set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 
+# Set the policy for CMake versions > 3.30
 if (CMAKE_VERSION VERSION_GREATER "3.30.0")
     # For CMake versions > 3.30, we need to use Set the policy)
-    cmake_policy(SET CMP0169 NEW)
+    if (CMAKE_VERSION VERSION_LESS "3.28.0")
+        cmake_policy(SET CMP0169 OLD)
+    else()
+        cmake_policy(SET CMP0169 NEW)
+    endif()
 endif()
 
 # Set common FetchContent parameters

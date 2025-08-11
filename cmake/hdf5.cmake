@@ -2,9 +2,6 @@
 
 if (SPECFEM_ENABLE_HDF5)
 
-    # To work for CMake 3.28 and below
-    cmake_policy(SET CMP0169 OLD)
-
     message(STATUS "HDF5 support is enabled. Proceeding with HDF5 configuration.")
 
     # Prepend the CMAKE_MESSAGE_INDENT variable to ensure proper indentation in messages
@@ -28,7 +25,11 @@ if (SPECFEM_ENABLE_HDF5)
 
         if (CMAKE_VERSION VERSION_GREATER "3.30.0")
             # For CMake versions > 3.30, we need to use Set the policy)
-            cmake_policy(SET CMP0169 NEW)
+            if (CMAKE_VERSION VERSION_LESS "3.28.0")
+                cmake_policy(SET CMP0169 OLD)
+            else()
+                cmake_policy(SET CMP0169 NEW)
+            endif()
         endif()
 
         # Set the specific version you want
