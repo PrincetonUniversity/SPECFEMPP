@@ -1,5 +1,4 @@
-#ifndef SPECFEM_IO_ADIOS2_IMPL_DATASET_TPP
-#define SPECFEM_IO_ADIOS2_IMPL_DATASET_TPP
+#pragma once
 
 #ifndef NO_ADIOS2
 #include <adios2.h>
@@ -34,10 +33,10 @@ specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::Dataset(
 
   if constexpr (std::is_same_v<OpType, specfem::io::write>) {
     // Define variable for writing
-    variable = this->io_ptr->template DefineVariable<typename native_type::type>(name, shape, start, count);
+    variable = this->io_ptr->template DefineVariable<decltype(native_type::type())>(name, shape, start, count);
   } else {
     // Inquire variable for reading
-    variable = this->io_ptr->template InquireVariable<typename native_type::type>(name);
+    variable = this->io_ptr->template InquireVariable<decltype(native_type::type())>(name);
     if (!variable) {
       throw std::runtime_error("Variable not found: " + name);
     }
@@ -61,7 +60,7 @@ void specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::write() {
   static_assert(std::is_same_v<OpType, specfem::io::write>,
                 "write() can only be called on write datasets");
 
-  using storage_type = typename native_type::type;
+  using storage_type = decltype(native_type::type());
 
   if constexpr (std::is_same_v<value_type, bool> && !std::is_same_v<storage_type, bool>) {
     // Handle bool conversion to uint8_t
@@ -101,7 +100,7 @@ void specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::read() {
   static_assert(std::is_same_v<OpType, specfem::io::read>,
                 "read() can only be called on read datasets");
 
-  using storage_type = typename native_type::type;
+  using storage_type = decltype(native_type::type());
 
   if constexpr (std::is_same_v<value_type, bool> && !std::is_same_v<storage_type, bool>) {
     // Handle bool conversion from uint8_t
@@ -135,6 +134,4 @@ void specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::read() {
     }
   }
 }
-#endif
-
 #endif

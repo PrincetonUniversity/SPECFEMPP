@@ -1,5 +1,4 @@
-#ifndef SPECFEM_IO_ADIOS2_IMPL_DATASET_HPP
-#define SPECFEM_IO_ADIOS2_IMPL_DATASET_HPP
+#pragma once
 
 #ifndef NO_ADIOS2
 #include <adios2.h>
@@ -101,12 +100,10 @@ public:
 
 private:
   ViewType data; ///< Data to be written/read
-  adios2::Variable<typename native_type::type> variable; ///< ADIOS2 variable
+  adios2::Variable<decltype(native_type::type())> variable; ///< ADIOS2 variable
 };
 #endif
 } // namespace ADIOS2
 } // namespace impl
 } // namespace io
 } // namespace specfem
-
-#endif

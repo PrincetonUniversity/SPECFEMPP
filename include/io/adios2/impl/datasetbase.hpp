@@ -1,5 +1,4 @@
-#ifndef SPECFEM_IO_ADIOS2_IMPL_DATASETBASE_HPP
-#define SPECFEM_IO_ADIOS2_IMPL_DATASETBASE_HPP
+#pragma once
 
 #ifndef NO_ADIOS2
 #include <adios2.h>
@@ -83,5 +82,3 @@ protected:
 } // namespace impl
 } // namespace io
 } // namespace specfem
-
-#endif
