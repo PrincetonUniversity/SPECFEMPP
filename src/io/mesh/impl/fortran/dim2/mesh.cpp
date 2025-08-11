@@ -3,6 +3,7 @@
 #include "enumerations/interface.hpp"
 #include "io/fortranio/interface.hpp"
 #include "io/interface.hpp"
+#include "io/mesh/impl/fortran/dim2/read_adjacency_graph.hpp"
 #include "io/mesh/impl/fortran/dim2/read_adjacency_map.hpp"
 #include "io/mesh/impl/fortran/dim2/read_boundaries.hpp"
 #include "io/mesh/impl/fortran/dim2/read_elements.hpp"
@@ -137,9 +138,17 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
     throw;
   }
 
+  // try {
+  //   specfem::io::mesh::impl::fortran::dim2::read_adjacency_map(stream, mesh,
+  //                                                              mpi);
+  // } catch (std::runtime_error &e) {
+  //   throw;
+  // }
+
   try {
-    specfem::io::mesh::impl::fortran::dim2::read_adjacency_map(stream, mesh,
-                                                               mpi);
+    mesh.adjacency_graph =
+        specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(mesh.nspec,
+                                                                     stream);
   } catch (std::runtime_error &e) {
     throw;
   }

@@ -1,7 +1,7 @@
 #include "mesh/dim2/adjacency_map/adjacency_map.hpp"
 #include "relative_node_inds.cpp"
 
-template <specfem::enums::boundaries::type bdtype>
+template <specfem::mesh_entity::type bdtype>
 static inline void generate_assembly_mapping__push_adjacencies_to_corner(
     const specfem::mesh::adjacency_map::adjacency_map<
         specfem::dimension::type::dim2> &map,
@@ -19,17 +19,16 @@ static inline void generate_assembly_mapping__push_adjacencies_to_corner(
        map.get_all_conforming_adjacencies(ispec, bdtype)) {
     // all of these will share our iglob
     ispec_adj = corners.first;
-    if (corners.second == specfem::enums::boundaries::type::BOTTOM_LEFT) {
+    if (corners.second == specfem::mesh_entity::type::bottom_left) {
       ix_adj = 0;
       iz_adj = 0;
-    } else if (corners.second ==
-               specfem::enums::boundaries::type::BOTTOM_RIGHT) {
+    } else if (corners.second == specfem::mesh_entity::type::bottom_right) {
       ix_adj = ngll - 1;
       iz_adj = 0;
-    } else if (corners.second == specfem::enums::boundaries::type::TOP_RIGHT) {
+    } else if (corners.second == specfem::mesh_entity::type::top_right) {
       ix_adj = ngll - 1;
       iz_adj = ngll - 1;
-    } else if (corners.second == specfem::enums::boundaries::type::TOP_LEFT) {
+    } else if (corners.second == specfem::mesh_entity::type::top_left) {
       ix_adj = 0;
       iz_adj = ngll - 1;
     } else {
@@ -105,12 +104,12 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
         if (ix == 0) {
           if (iz == 0) {
             generate_assembly_mapping__push_adjacencies_to_corner<
-                specfem::enums::boundaries::type::BOTTOM_LEFT>(
-                *this, inds, ispec, iz, ix, nglob, ngll);
+                specfem::mesh_entity::type::bottom_left>(*this, inds, ispec, iz,
+                                                         ix, nglob, ngll);
           } else if (iz == ngll - 1) {
             generate_assembly_mapping__push_adjacencies_to_corner<
-                specfem::enums::boundaries::type::TOP_LEFT>(
-                *this, inds, ispec, iz, ix, nglob, ngll);
+                specfem::mesh_entity::type::top_left>(*this, inds, ispec, iz,
+                                                      ix, nglob, ngll);
           } else {
             generate_assembly_mapping__push_adjacencies_to_edge<
                 specfem::enums::edge::type::LEFT>(*this, inds, ispec, iz, ix,
@@ -119,12 +118,12 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
         } else if (ix == ngll - 1) {
           if (iz == 0) {
             generate_assembly_mapping__push_adjacencies_to_corner<
-                specfem::enums::boundaries::type::BOTTOM_RIGHT>(
-                *this, inds, ispec, iz, ix, nglob, ngll);
+                specfem::mesh_entity::type::bottom_right>(*this, inds, ispec,
+                                                          iz, ix, nglob, ngll);
           } else if (iz == ngll - 1) {
             generate_assembly_mapping__push_adjacencies_to_corner<
-                specfem::enums::boundaries::type::TOP_RIGHT>(
-                *this, inds, ispec, iz, ix, nglob, ngll);
+                specfem::mesh_entity::type::top_right>(*this, inds, ispec, iz,
+                                                       ix, nglob, ngll);
           } else {
             generate_assembly_mapping__push_adjacencies_to_edge<
                 specfem::enums::edge::type::RIGHT>(*this, inds, ispec, iz, ix,

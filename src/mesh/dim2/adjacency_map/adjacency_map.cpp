@@ -11,31 +11,31 @@
 // conversions between edge and boundary enums.
 
 static inline specfem::enums::edge::type
-bdtype_to_edge(const specfem::enums::boundaries::type &bd) {
+bdtype_to_edge(const specfem::mesh_entity::type &bd) {
   switch (bd) {
-  case specfem::enums::boundaries::TOP:
+  case specfem::mesh_entity::type::top:
     return specfem::enums::edge::type::TOP;
-  case specfem::enums::boundaries::LEFT:
+  case specfem::mesh_entity::type::left:
     return specfem::enums::edge::type::LEFT;
-  case specfem::enums::boundaries::RIGHT:
+  case specfem::mesh_entity::type::right:
     return specfem::enums::edge::type::RIGHT;
-  case specfem::enums::boundaries::BOTTOM:
+  case specfem::mesh_entity::type::bottom:
     return specfem::enums::edge::type::BOTTOM;
   default:
     return specfem::enums::edge::type::NONE;
   }
 }
-static inline specfem::enums::boundaries::type
+static inline specfem::mesh_entity::type
 edge_to_bdtype(const specfem::enums::edge::type &bd) {
   switch (bd) {
   case specfem::enums::edge::TOP:
-    return specfem::enums::boundaries::type::TOP;
+    return specfem::mesh_entity::type::top;
   case specfem::enums::edge::BOTTOM:
-    return specfem::enums::boundaries::type::BOTTOM;
+    return specfem::mesh_entity::type::bottom;
   case specfem::enums::edge::LEFT:
-    return specfem::enums::boundaries::type::LEFT;
+    return specfem::mesh_entity::type::left;
   case specfem::enums::edge::RIGHT:
-    return specfem::enums::boundaries::type::RIGHT;
+    return specfem::mesh_entity::type::right;
     break;
   default:
     assert(false);
@@ -44,22 +44,22 @@ edge_to_bdtype(const specfem::enums::edge::type &bd) {
 // ====================================================================
 // helper: given an edge, returns either the clockwise or counterclockwise
 // corner.
-static inline specfem::enums::boundaries::type
+static inline specfem::mesh_entity::type
 edge_and_polarity_to_corner(const specfem::enums::edge::type &bd,
                             const bool counterclockwise) {
   switch (bd) {
   case specfem::enums::edge::TOP:
-    return counterclockwise ? specfem::enums::boundaries::type::TOP_LEFT
-                            : specfem::enums::boundaries::type::TOP_RIGHT;
+    return counterclockwise ? specfem::mesh_entity::type::top_left
+                            : specfem::mesh_entity::type::top_right;
   case specfem::enums::edge::BOTTOM:
-    return counterclockwise ? specfem::enums::boundaries::type::BOTTOM_RIGHT
-                            : specfem::enums::boundaries::type::BOTTOM_LEFT;
+    return counterclockwise ? specfem::mesh_entity::type::bottom_right
+                            : specfem::mesh_entity::type::bottom_left;
   case specfem::enums::edge::LEFT:
-    return counterclockwise ? specfem::enums::boundaries::type::BOTTOM_LEFT
-                            : specfem::enums::boundaries::type::TOP_LEFT;
+    return counterclockwise ? specfem::mesh_entity::type::bottom_left
+                            : specfem::mesh_entity::type::top_left;
   case specfem::enums::edge::RIGHT:
-    return counterclockwise ? specfem::enums::boundaries::type::TOP_RIGHT
-                            : specfem::enums::boundaries::type::BOTTOM_RIGHT;
+    return counterclockwise ? specfem::mesh_entity::type::top_right
+                            : specfem::mesh_entity::type::bottom_right;
     break;
   default:
     assert(false);
@@ -349,9 +349,9 @@ void specfem::mesh::adjacency_map::
 }
 
 static inline void get_all_conforming_adjacencies__try_append(
-    std::set<std::pair<int, specfem::enums::boundaries::type> > &adj,
-    std::list<std::pair<int, specfem::enums::boundaries::type> > &search,
-    const int &ispec, const specfem::enums::boundaries::type &bdry) {
+    std::set<std::pair<int, specfem::mesh_entity::type> > &adj,
+    std::list<std::pair<int, specfem::mesh_entity::type> > &search,
+    const int &ispec, const specfem::mesh_entity::type &bdry) {
   /* helper for get_all_conforming_adjacencies:
    * main body for BFS -- if (ispec, bdry) was not yet explored, mark it and
    * append it to search.
@@ -367,9 +367,9 @@ template <specfem::enums::edge::type edgetype, bool is_ccw_from_corner>
 static inline void get_all_conforming_adjacencies__test_corner(
     const specfem::mesh::adjacency_map::adjacency_map<
         specfem::dimension::type::dim2> &map,
-    std::set<std::pair<int, specfem::enums::boundaries::type> > &adj,
-    std::list<std::pair<int, specfem::enums::boundaries::type> > &search,
-    std::pair<int, specfem::enums::boundaries::type> &front) {
+    std::set<std::pair<int, specfem::mesh_entity::type> > &adj,
+    std::list<std::pair<int, specfem::mesh_entity::type> > &search,
+    std::pair<int, specfem::mesh_entity::type> &front) {
   /* helper for get_all_conforming_adjacencies:
    * given a corner (specified by edge and direction), try_append the opposite
    * corner (across the given mating edge).
@@ -393,9 +393,9 @@ template <specfem::enums::edge::type edgetype>
 static inline void get_all_conforming_adjacencies__test_edge(
     const specfem::mesh::adjacency_map::adjacency_map<
         specfem::dimension::type::dim2> &map,
-    std::set<std::pair<int, specfem::enums::boundaries::type> > &adj,
-    std::list<std::pair<int, specfem::enums::boundaries::type> > &search,
-    std::pair<int, specfem::enums::boundaries::type> &front) {
+    std::set<std::pair<int, specfem::mesh_entity::type> > &adj,
+    std::list<std::pair<int, specfem::mesh_entity::type> > &search,
+    std::pair<int, specfem::mesh_entity::type> &front) {
   /* helper for get_all_conforming_adjacencies:
    * given a corner (specified by edge and direction), try_append the opposite
    * corner (across the given mating edge).
@@ -413,13 +413,13 @@ static inline void get_all_conforming_adjacencies__test_edge(
   }
 }
 
-std::set<std::pair<int, specfem::enums::boundaries::type> >
+std::set<std::pair<int, specfem::mesh_entity::type> >
 specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
     get_all_conforming_adjacencies(
         const int ispec_start,
-        const specfem::enums::boundaries::type bdry_start) const {
+        const specfem::mesh_entity::type bdry_start) const {
   // return value: fill `adj` with the conforming adjacencies
-  std::set<std::pair<int, specfem::enums::boundaries::type> > adj;
+  std::set<std::pair<int, specfem::mesh_entity::type> > adj;
 
   // container for the boundary we are currently interested in. The first one is
   // the argument
@@ -451,7 +451,7 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
    * - {1BR, 2BL, 5TL, 4TL, 3TR}
    */
   // this is BFS, but any algo would work, since we want a full traversal
-  std::list<std::pair<int, specfem::enums::boundaries::type> > search;
+  std::list<std::pair<int, specfem::mesh_entity::type> > search;
   search.push_back(bd);
 
   while (!search.empty()) {
@@ -466,7 +466,7 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
      * conforming, then the corresponding corner to the mating edge should also
      * be in adj.
      */
-    case enums::boundaries::type::TOP_LEFT:
+    case specfem::mesh_entity::type::top_left:
       // T is clockwise from TL
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::TOP, false>(*this, adj, search, bd);
@@ -474,7 +474,7 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::LEFT, true>(*this, adj, search, bd);
       break;
-    case enums::boundaries::type::BOTTOM_LEFT:
+    case specfem::mesh_entity::type::bottom_left:
       // L is clockwise from BL
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::LEFT, false>(*this, adj, search, bd);
@@ -482,13 +482,13 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::BOTTOM, true>(*this, adj, search, bd);
       break;
-    case enums::boundaries::type::BOTTOM_RIGHT:
+    case specfem::mesh_entity::type::bottom_right:
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::BOTTOM, false>(*this, adj, search, bd);
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::RIGHT, true>(*this, adj, search, bd);
       break;
-    case enums::boundaries::type::TOP_RIGHT:
+    case specfem::mesh_entity::type::top_right:
       get_all_conforming_adjacencies__test_corner<
           specfem::enums::edge::type::RIGHT, false>(*this, adj, search, bd);
       get_all_conforming_adjacencies__test_corner<
@@ -498,19 +498,19 @@ specfem::mesh::adjacency_map::adjacency_map<specfem::dimension::type::dim2>::
      * for a given edge, we only need to check if the edge is conforming. If so,
      * add it to adj.
      */
-    case enums::boundaries::type::TOP:
+    case specfem::mesh_entity::type::top:
       get_all_conforming_adjacencies__test_edge<
           specfem::enums::edge::type::TOP>(*this, adj, search, bd);
       break;
-    case enums::boundaries::type::LEFT:
+    case specfem::mesh_entity::type::left:
       get_all_conforming_adjacencies__test_edge<
           specfem::enums::edge::type::LEFT>(*this, adj, search, bd);
       break;
-    case enums::boundaries::type::RIGHT:
+    case specfem::mesh_entity::type::right:
       get_all_conforming_adjacencies__test_edge<
           specfem::enums::edge::type::RIGHT>(*this, adj, search, bd);
       break;
-    case enums::boundaries::type::BOTTOM:
+    case specfem::mesh_entity::type::bottom:
       get_all_conforming_adjacencies__test_edge<
           specfem::enums::edge::type::BOTTOM>(*this, adj, search, bd);
       break;

@@ -860,11 +860,20 @@ subroutine save_databases_adjacency_graph()
 
    implicit none
 
-   integer :: i,j
+   integer :: i,j, total_adjacencies
 
    write(IOUT) write_adjacency_map
 
    if (.not. write_adjacency_map) return
+
+   ! Find total number of adjacent elements
+
+   total_adjacencies = 0
+   do i = 0, nelmnts-1
+      total_adjacencies = total_adjacencies + num_adjacent(i)
+   enddo
+
+   write(IOUT) total_adjacencies
 
    ! local parameters
    do i = 0, nelmnts-1
@@ -873,8 +882,8 @@ subroutine save_databases_adjacency_graph()
             !! Write out adjacency graph
             ! i = current element
             ! adjacent_elements(i,j) = adjacent element number
-            ! adjacency_type(i,j) = type of adjacency (1 = STRONGLY_CONFORMING_EDGE, 2 = STRONGLY_CONFORMING_VERTEX)
-            ! adjacency_id(i,j) = if adjacency_type=1, which edge (1-4); if adjacency_type=2, which vertex (1-4)
+            ! adjacency_type(i,j) = type of adjacency (1 = STRONGLY_CONFORMING)
+            ! adjacency_id(i,j) = defines which edge/vertex is connected from i to adjacent_elements(i,j)
             write(IOUT) i + 1, adjacent_elements(i,j) + 1, adjacency_type(i,j), adjacency_id(i,j)
          enddo
       endif

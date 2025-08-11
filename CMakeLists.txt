@@ -159,14 +159,14 @@ endif()
 
 
 # Try finding boost and if not found install.
-find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
+find_package(Boost 1.85.0 COMPONENTS program_options filesystem system graph)
 
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd)
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd graph)
     set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
-                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd)
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd Boost::graph)
     set(BOOST_ENABLE_CMAKE ON)
     set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
     set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
@@ -308,6 +308,7 @@ add_library(
         src/io/mesh/impl/fortran/dim2/read_interfaces.cpp
         src/io/mesh/impl/fortran/dim2/read_parameters.cpp
         src/io/mesh/impl/fortran/dim2/read_adjacency_map.cpp
+        src/io/mesh/impl/fortran/dim2/read_adjacency_graph.cpp
         # Fortran 3D part
         src/io/mesh/impl/fortran/dim3/mesh.cpp
         src/io/mesh/impl/fortran/dim3/read_parameters.cpp

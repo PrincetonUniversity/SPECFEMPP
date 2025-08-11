@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Kokkos_Macros.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <set>
 #include <string>
@@ -183,13 +182,13 @@ template <> struct adjacency_map<specfem::dimension::type::dim2> {
    *
    * @param ispec - index of the element
    * @param bdry - edge or corner of the element to check
-   * @return std::set<std::pair<int, specfem::enums::boundaries::type> >
+   * @return std::set<std::pair<int, specfem::mesh_entity::type> >
    *           - the collection of (ispec, bdry) pairs that match (conformally)
    * with the given arguments.
    */
-  std::set<std::pair<int, specfem::enums::boundaries::type> >
-  get_all_conforming_adjacencies(
-      const int ispec, const specfem::enums::boundaries::type bdry) const;
+  std::set<std::pair<int, specfem::mesh_entity::type> >
+  get_all_conforming_adjacencies(const int ispec,
+                                 const specfem::mesh_entity::type bdry) const;
 
   /**
    * @brief Returns whether or not this adjacency map was built. If adjacency
