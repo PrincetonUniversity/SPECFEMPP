@@ -3,7 +3,17 @@
 #include "enumerations/connections.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/point.hpp"
 #include <boost/graph/filtered_graph.hpp>
+
+bool is_close(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &p1,
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &p2,
+    const type_real tolerance) {
+  return std::abs(p1.x - p2.x) < tolerance && std::abs(p1.z - p2.z) < tolerance;
+}
 
 void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
     const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
@@ -13,7 +23,76 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
   const int ngllx = this->ngllx;
   const int ngllz = this->ngllz;
 
+  const int ngnod = this->ngnod;
+
+  const auto xi = this->h_xi;
+  const auto gamma = this->h_xi;
+
+  const auto shape2D = this->h_shape2D;
+  const auto coorg = this->h_control_node_coord;
+
+  const int scratch_size =
+      specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
+
+  this->xmin = std::numeric_limits<type_real>::max();
+  this->xmax = std::numeric_limits<type_real>::min();
+  this->zmin = std::numeric_limits<type_real>::max();
+  this->zmax = std::numeric_limits<type_real>::min();
+
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> ***,
+      Kokkos::DefaultHostExecutionSpace>
+      global_coordinates("specfem::assembly::mesh::h_coord", nspec, ngllz,
+                         ngllx);
+
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int iz = 0; iz < ngllz; iz++) {
+      for (int ix = 0; ix < ngllx; ix++) {
+        auto shape_functions =
+            Kokkos::subview(h_shape2D, iz, ix, Kokkos::ALL());
+
+        double xcor = 0.0;
+        double zcor = 0.0;
+
+        for (int in = 0; in < ngnod; in++) {
+          xcor += coorg(0, ispec, in) * shape_functions[in];
+          zcor += coorg(1, ispec, in) * shape_functions[in];
+        }
+
+        global_coordinates(ispec, iz, ix).x = xcor;
+        global_coordinates(ispec, iz, ix).z = zcor;
+
+        if (this->xmin > xcor)
+          this->xmin = xcor;
+        if (this->zmin > zcor)
+          this->zmin = zcor;
+        if (this->xmax < xcor)
+          this->xmax = xcor;
+        if (this->zmax < zcor)
+          this->zmax = zcor;
+      }
+    }
+  }
+
+  const type_real tolerance = std::min(xmax - xmin, zmax - zmin) * 1e-6;
+
   constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
+
+  this->h_index_mapping = Kokkos::View<int ***, Kokkos::LayoutLeft,
+                                       Kokkos::DefaultHostExecutionSpace>(
+      "specfem::assembly::mesh::h_index_mapping", nspec, ngllz, ngllx);
+  this->h_coord = Kokkos::View<type_real ****, Kokkos::LayoutRight,
+                               Kokkos::DefaultHostExecutionSpace>(
+      "specfem::assembly::mesh::h_coord", ndim, nspec, ngllz, ngllx);
+
+  // Initialize index mapping and coordinates
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int iz = 0; iz < ngllz; iz++) {
+      for (int ix = 0; ix < ngllx; ix++) {
+        this->h_index_mapping(ispec, iz, ix) = -1;
+      }
+    }
+  }
 
   int iglob = 0;
 
@@ -31,7 +110,9 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
                   specfem::dimension::type::dim2> &>(*this)
                   .compute_to_mesh(ispec);
           // Interior points are unique, assign unique global number
-          h_index_mapping(ispec, iz, ix) = iglob;
+          this->h_index_mapping(ispec, iz, ix) = iglob;
+          this->h_coord(0, ispec, iz, ix) = global_coordinates(ispec, iz, ix).x;
+          this->h_coord(1, ispec, iz, ix) = global_coordinates(ispec, iz, ix).z;
           iglob++;
         }
       }
@@ -93,20 +174,49 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
               const auto [from_coords, to_coords] =
                   element_connections.map_coordinates(iedge, mapped_iedge,
                                                       ipoint);
-              const auto [mapped_ix, mapped_iz] = to_coords;
+              const auto [mapped_iz, mapped_ix] = to_coords;
 
-              if (h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
-                h_index_mapping(ispec, iz, ix) =
-                    h_index_mapping(jspec, mapped_iz, mapped_ix);
-                previously_assigned = true;
-                break;
+              if (this->h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
+                // Check the 2 points have the same coordinates
+                if (is_close(global_coordinates(ispec, iz, ix),
+                             global_coordinates(jspec, mapped_iz, mapped_ix),
+                             tolerance)) {
+                  // If they are close enough, we can assign the same index
+                  // Assign the same index
+
+                  this->h_index_mapping(ispec, iz, ix) =
+                      this->h_index_mapping(jspec, mapped_iz, mapped_ix);
+                  this->h_coord(0, ispec, iz, ix) =
+                      global_coordinates(ispec, iz, ix).x;
+                  this->h_coord(1, ispec, iz, ix) =
+                      global_coordinates(ispec, iz, ix).z;
+                  previously_assigned = true;
+                  break;
+                } else {
+                  std::ostringstream oss;
+                  oss << "Error: Mismatched coordinates for edge-edge point "
+                      << ispec << " at (" << iz << ", " << ix
+                      << ") and element " << jspec << " at (" << mapped_iz
+                      << ", " << mapped_ix << "). Coordinates: ("
+                      << global_coordinates(ispec, iz, ix).x << ", "
+                      << global_coordinates(ispec, iz, ix).z << ") vs ("
+                      << global_coordinates(jspec, mapped_iz, mapped_ix).x
+                      << ", "
+                      << global_coordinates(jspec, mapped_iz, mapped_ix).z
+                      << ")";
+                  throw std::runtime_error(oss.str());
+                }
               }
             }
           }
           // ----
 
           if (!previously_assigned) {
-            h_index_mapping(ispec, iz, ix) = iglob;
+            this->h_index_mapping(ispec, iz, ix) = iglob;
+            this->h_coord(0, ispec, iz, ix) =
+                global_coordinates(ispec, iz, ix).x;
+            this->h_coord(1, ispec, iz, ix) =
+                global_coordinates(ispec, iz, ix).z;
             iglob++;
           }
         }
@@ -130,8 +240,7 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
 
         bool previously_assigned = false;
 
-        auto valid_connections =
-            specfem::mesh_entity::edges_of_corner(corner);
+        auto valid_connections = specfem::mesh_entity::edges_of_corner(corner);
 
         valid_connections.push_back(corner);
 
@@ -152,7 +261,6 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
             const auto other_edge =
                 boost::edge(jspec_mesh, ispec_mesh, fg).first;
             const auto mapped_iedge = fg[other_edge].orientation;
-            bool previously_assigned = false;
 
             // Check if the connection is an edge connection
             if (specfem::mesh_entity::contains(specfem::mesh_entity::edges,
@@ -162,38 +270,112 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
               const auto [from_coords, to_coords] =
                   element_connections.map_coordinates(fg[edge].orientation,
                                                       mapped_iedge, point);
-              const auto [mapped_ix, mapped_iz] = to_coords;
+              const auto [mapped_iz, mapped_ix] = to_coords;
 
-              if (h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
-                h_index_mapping(ispec, iz, ix) =
-                    h_index_mapping(jspec, mapped_iz, mapped_ix);
-                previously_assigned = true;
-                break;
+              if (this->h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
+                if (is_close(global_coordinates(ispec, iz, ix),
+                             global_coordinates(jspec, mapped_iz, mapped_ix),
+                             tolerance)) {
+                  // If they are close enough, we can assign the same index
+                  // Assign the same index
+
+                  this->h_index_mapping(ispec, iz, ix) =
+                      this->h_index_mapping(jspec, mapped_iz, mapped_ix);
+                  this->h_coord(0, ispec, iz, ix) =
+                      global_coordinates(ispec, iz, ix).x;
+                  this->h_coord(1, ispec, iz, ix) =
+                      global_coordinates(ispec, iz, ix).z;
+                  previously_assigned = true;
+                  break;
+                } else {
+                  std::ostringstream oss;
+                  oss << "Error: Mismatched coordinates for corner-edge point "
+                      << ispec << " at (" << iz << ", " << ix
+                      << ") and element " << jspec << " at (" << mapped_iz
+                      << ", " << mapped_ix << "). Coordinates: ("
+                      << global_coordinates(ispec, iz, ix).x << ", "
+                      << global_coordinates(ispec, iz, ix).z << ") vs ("
+                      << global_coordinates(jspec, mapped_iz, mapped_ix).x
+                      << ", "
+                      << global_coordinates(jspec, mapped_iz, mapped_ix).z
+                      << ")";
+                  throw std::runtime_error(oss.str());
+                }
               }
             } else {
               // Corner to corner connection
               const auto [from_coords, to_coords] =
                   element_connections.map_coordinates(corner, mapped_iedge, 0);
-              const auto [mapped_ix, mapped_iz] = to_coords;
+              const auto [mapped_iz, mapped_ix] = to_coords;
 
-              if (h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
-                h_index_mapping(ispec, iz, ix) =
-                    h_index_mapping(jspec, mapped_iz, mapped_ix);
-                previously_assigned = true;
-                break;
+              if (this->h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
+                if (is_close(global_coordinates(ispec, iz, ix),
+                             global_coordinates(jspec, mapped_iz, mapped_ix),
+                             tolerance)) {
+                  // If they are close enough, we can assign the same index
+                  // Assign the same index
+
+                  this->h_index_mapping(ispec, iz, ix) =
+                      this->h_index_mapping(jspec, mapped_iz, mapped_ix);
+                  this->h_coord(0, ispec, iz, ix) =
+                      global_coordinates(ispec, iz, ix).x;
+                  this->h_coord(1, ispec, iz, ix) =
+                      global_coordinates(ispec, iz, ix).z;
+                  previously_assigned = true;
+                  break;
+                } else {
+                  std::ostringstream oss;
+                  oss << "Error: Mismatched coordinates for corner-corner "
+                         "point "
+                      << ispec << " at (" << iz << ", " << ix
+                      << ") and element " << jspec << " at (" << mapped_iz
+                      << ", " << mapped_ix << "). Coordinates: ("
+                      << global_coordinates(ispec, iz, ix).x << ", "
+                      << global_coordinates(ispec, iz, ix).z << ") vs ("
+                      << global_coordinates(jspec, mapped_iz, mapped_ix).x
+                      << ", "
+                      << global_coordinates(jspec, mapped_iz, mapped_ix).z
+                      << ")";
+                  throw std::runtime_error(oss.str());
+                }
               }
             }
           }
         }
         if (!previously_assigned) {
-          const auto [ix, iz] =
-              element_connections.coordinates_at_corner(corner);
-          h_index_mapping(ispec, iz, ix) = iglob;
+          this->h_index_mapping(ispec, iz, ix) = iglob;
+          this->h_coord(0, ispec, iz, ix) =
+              global_coordinates(ispec, iz, ix).x;
+          this->h_coord(1, ispec, iz, ix) =
+              global_coordinates(ispec, iz, ix).z;
           iglob++;
         }
       }
     }
   }
 
-  Kokkos::deep_copy(index_mapping, h_index_mapping);
+  this->index_mapping =
+      Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>(
+          "specfem::assembly::mesh::index_mapping", nspec, ngllz, ngllx);
+  this->coord = Kokkos::View<type_real ****, Kokkos::LayoutRight,
+                             Kokkos::DefaultExecutionSpace>(
+      "specfem::assembly::mesh::coord", ndim, nspec, ngllz, ngllx);
+
+  // Copy the host views to device views
+  Kokkos::deep_copy(this->index_mapping, this->h_index_mapping);
+  Kokkos::deep_copy(this->coord, this->h_coord);
+
+  // Check all points have been assigned a global index
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int iz = 0; iz < ngllz; iz++) {
+      for (int ix = 0; ix < ngllx; ix++) {
+        if (this->h_index_mapping(ispec, iz, ix) == -1) {
+          std::ostringstream oss;
+          oss << "Error: Point (" << ispec << ", " << iz << ", " << ix
+              << ") has not been assigned a global index.";
+          throw std::runtime_error(oss.str());
+        }
+      }
+    }
+  }
 }

@@ -34,7 +34,8 @@ TEST(ALGORITHMS, interpolate_function) {
 
   // Assemble
   specfem::assembly::mesh<specfem::dimension::type::dim2> assembly(
-      mesh.tags, mesh.control_nodes, quadratures, mesh.adjacency_map);
+      mesh.tags, mesh.control_nodes, quadratures, mesh.adjacency_map,
+      mesh.adjacency_graph);
 
   const auto xi = assembly.h_xi;
   const auto gamma = assembly.h_xi;
