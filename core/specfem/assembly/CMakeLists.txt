@@ -20,7 +20,7 @@ target_link_libraries(
 )
 
 
-if (NOT VTK_CXX_BUILD)
+if (NOT SPECFEM_ENABLE_VTK)
         target_compile_definitions(
                 assembly
                 PUBLIC -DNO_VTK
