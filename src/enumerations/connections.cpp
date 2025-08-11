@@ -50,11 +50,11 @@ specfem::connections::connection_mapping::connection_mapping(const int ngllx,
     : ngllx(ngllx), ngllz(ngllz) {
   // corner coordinates
   corner_coordinates[specfem::mesh_entity::type::top_left] =
-      std::make_tuple(0, ngllz - 1);
+      std::make_tuple(ngllz - 1, 0);
   corner_coordinates[specfem::mesh_entity::type::top_right] =
-      std::make_tuple(ngllx - 1, ngllz - 1);
+      std::make_tuple(ngllz - 1, ngllx - 1);
   corner_coordinates[specfem::mesh_entity::type::bottom_right] =
-      std::make_tuple(ngllx - 1, 0);
+      std::make_tuple(0, ngllx - 1);
   corner_coordinates[specfem::mesh_entity::type::bottom_left] =
       std::make_tuple(0, 0);
 

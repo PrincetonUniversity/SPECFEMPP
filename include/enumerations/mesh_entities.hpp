@@ -21,7 +21,7 @@ namespace specfem::mesh_entity {
  * follows the convention:
  *
  * @code
- * 8 --- 3 --- 6
+ * 8 --- 3 --- 7
  * |           |
  * 4           2
  * |           |
@@ -34,9 +34,9 @@ namespace specfem::mesh_entity {
  */
 enum class type : int {
   bottom = 1,       ///< Bottom edge of the element
-  top = 2,          ///< Top edge of the element
-  left = 3,         ///< Left edge of the element
-  right = 4,        ///< Right edge of the element
+  right = 2,        ///< Top edge of the element
+  top = 3,          ///< Left edge of the element
+  left = 4,         ///< Right edge of the element
   bottom_left = 5,  ///< Bottom-left corner of the element
   bottom_right = 6, ///< Bottom-right corner of the element
   top_right = 7,    ///< Top-right corner of the element
