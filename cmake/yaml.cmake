@@ -20,5 +20,8 @@ FetchContent_MakeAvailable(yaml-cpp)
 # yaml-cpp -> yaml-cpp_BINARY_DIR, yaml-cpp_SOURCE_DIR
 include_directories(BEFORE SYSTEM ${yaml-cpp_BINARY_DIR} ${yaml-cpp_SOURCE_DIR}/include)
 
+# Set yaml-cpp_DIR for ADIOS2 to find the correct yaml-cpp
+set(yaml-cpp_DIR ${yaml-cpp_BINARY_DIR} CACHE PATH "Path to yaml-cpp build directory" FORCE)
+
 # pop the indentation for YAML messages
 list(POP_BACK CMAKE_MESSAGE_INDENT)
