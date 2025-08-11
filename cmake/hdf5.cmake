@@ -27,8 +27,8 @@ if (SPECFEM_ENABLE_HDF5)
         include(FetchContent)
 
         # Set the specific version you want
-        set(HDF5_VERSION "1.14.6")  # Change this to your desired version
-        set(HDF5_SOURCE_URL "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${HDF5_VERSION}/hdf5-${HDF5_VERSION}.tar.gz")
+        set(SPECFEM_HDF5_VERSION "1.14.6" CACHE STRING "HDF5 version to use for source install")
+        set(HDF5_SOURCE_URL "https://github.com/HDFGroup/hdf5/releases/download/hdf5_${SPECFEM_HDF5_VERSION}/hdf5-${SPECFEM_HDF5_VERSION}.tar.gz")
         FetchContent_Declare(
             hdf5
             URL ${HDF5_SOURCE_URL}
