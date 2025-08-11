@@ -97,9 +97,6 @@ include("${CMAKE_SOURCE_DIR}/cmake/kokkos.cmake")
 # Install yaml-cpp as a dependency
 include("${CMAKE_SOURCE_DIR}/cmake/yaml.cmake")
 
-# Include VTK if available
-include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
-
 # Find or install boost library function
 include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 
@@ -108,6 +105,10 @@ include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
 
 # Find or install ADIOS2 library function
 include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
+
+# Include VTK if available (MUST BE AFTER ADIOS2, VTK is smarter about finding
+# the pugixml dependency than ADIOS2)
+include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 
 
 if (SPECFEM_ENABLE_SIMD)
