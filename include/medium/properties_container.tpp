@@ -18,6 +18,7 @@ specfem::medium::properties_container<specfem::dimension::type::dim2, MediumTag,
   int count = 0;
   for (int i = 0; i < nelement; ++i) {
     const int ispec = elements(i);
+    const int mesh_ispec = mesh.compute_to_mesh(ispec);
     property_index_mapping(ispec) = count;
     if (!has_gll_model) {
       for (int iz = 0; iz < ngllz; ++iz) {
@@ -51,17 +52,16 @@ specfem::medium::properties_container<specfem::dimension::type::dim3, MediumTag,
     properties_container(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const specfem::assembly::mesh<dimension_tag> &mesh,
-        const int ngllz, const int ngllx,
+        const int ngllz, const int nglly, const int ngllx,
         const specfem::mesh::materials<dimension_tag> &materials,
         const specfem::kokkos::HostView1d<int> property_index_mapping)
-    : base_type(elements.extent(0), ngllz, ngllx) {
+    : base_type(elements.extent(0), ngllz, nglly, ngllx) {
 
   const int nelement = elements.extent(0);
   int count = 0;
   for (int i = 0; i < nelement; ++i) {
     const int ispec = elements(i);
     property_index_mapping(ispec) = count;
-    if (!has_gll_model) {
       if (medium_tag == specfem::element::medium_tag::elastic && property_tag == specfem::element::property_tag::isotropic) {
         // Handle the specific case for 3D elastic isotropic materials
         for (int iz = 0; iz < ngllz; ++iz) {
@@ -72,14 +72,12 @@ specfem::medium::properties_container<specfem::dimension::type::dim3, MediumTag,
              this->mu(count, iz, iy, ix) = materials.mu(ispec, iz, iy, ix);
            }
          }
-      }
+       }
     }
     count++;
   }
 
-  if (!has_gll_model) {
-    this->copy_to_device();
-  }
+  this->copy_to_device();
 
   return;
 }
