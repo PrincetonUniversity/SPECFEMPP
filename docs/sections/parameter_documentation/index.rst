@@ -424,6 +424,15 @@ Parameter definitions
 
                             :possible values: [string]
 
+                        .. dropdown:: ``for_adjoint_simulations`` [optional]
+
+                            Flag to indicate if the wavefield written with the intension to
+                            be used in adjoint simulations.
+
+                            :default value: False
+
+                            :possible values: [bool]
+
 
                     .. dropdown:: ``display``
 

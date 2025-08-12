@@ -62,6 +62,14 @@ specfem::runtime_configuration::wavefield::wavefield(
     }
   }();
 
+  const bool for_adjoint_simulations = [&]() -> bool {
+    if (Node["for_adjoint_simulations"]) {
+      return Node["for_adjoint_simulations"].as<bool>();
+    } else {
+      return false;
+    }
+  }();
+
   if (time_interval == 0 && !include_last_step) {
     std::ostringstream message;
     message << "************************************************\n"
@@ -72,7 +80,7 @@ specfem::runtime_configuration::wavefield::wavefield(
 
   *this = specfem::runtime_configuration::wavefield(
       output_format, output_folder, type, time_interval,
-      time_interval_by_memory, include_last_step);
+      time_interval_by_memory, include_last_step, for_adjoint_simulations);
 
   return;
 }
@@ -87,11 +95,13 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
       if (specfem::utilities::is_hdf5_string(this->output_format)) {
         return std::make_shared<
             specfem::periodic_tasks::wavefield_writer<specfem::io::HDF5> >(
-            this->output_folder, this->time_interval, this->include_last_step);
+            this->output_folder, this->time_interval, this->include_last_step,
+            this->for_adjoint_simulations);
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<
             specfem::periodic_tasks::wavefield_writer<specfem::io::ASCII> >(
-            this->output_folder, this->time_interval, this->include_last_step);
+            this->output_folder, this->time_interval, this->include_last_step,
+            this->for_adjoint_simulations);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }

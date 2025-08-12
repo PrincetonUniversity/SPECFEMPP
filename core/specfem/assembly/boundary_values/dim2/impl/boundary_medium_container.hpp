@@ -55,6 +55,9 @@ public:
                  const specfem::point::index<dimension_tag> &index,
                  AccelerationType &acceleration) const {
 
+    if (values.size() == 0)
+      return;
+
     const int ispec = index.ispec;
     const int iz = index.iz;
     const int ix = index.ix;
@@ -77,6 +80,9 @@ public:
                   const specfem::point::index<dimension_tag> &index,
                   const AccelerationType &acceleration) const {
 
+    if (values.size() == 0)
+      return;
+
     const int ispec = index.ispec;
     const int iz = index.iz;
     const int ix = index.ix;
@@ -98,6 +104,9 @@ public:
   load_on_device(const int istep,
                  const specfem::point::simd_index<dimension_tag> &index,
                  AccelerationType &acceleration) const {
+
+    if (values.size() == 0)
+      return;
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -123,6 +132,9 @@ public:
   store_on_device(const int istep,
                   const specfem::point::simd_index<dimension_tag> &index,
                   const AccelerationType &acceleration) const {
+
+    if (values.size() == 0)
+      return;
 
     const int ispec = index.ispec;
     const int iz = index.iz;
