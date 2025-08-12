@@ -132,3 +132,4 @@ void store_on_host(
 } // namespace specfem::assembly
 
 #include "properties/dim2/properties.hpp"
+#include "properties/dim3/properties.hpp"
