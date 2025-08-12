@@ -36,6 +36,8 @@ set(yaml-cpp_FOUND TRUE)
 set(yaml-cpp_VERSION \"0.7.0\")
 ")
 
+set(yaml-cpp_DIR ${yaml-cpp_BINARY_DIR} CACHE PATH "Path to yaml-cpp config file directory")
+
 message(STATUS "yaml-cpp include directory set to: ${YAML_CPP_INCLUDE_DIR}")
 
 # pop the indentation for YAML messages
