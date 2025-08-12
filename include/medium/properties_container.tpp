@@ -60,24 +60,18 @@ specfem::medium::properties_container<specfem::dimension::type::dim3, MediumTag,
   int count = 0;
   for (int i = 0; i < nelement; ++i) {
     const int ispec = elements(i);
-    const int mesh_ispec = mesh.compute_to_mesh(ispec);
     property_index_mapping(ispec) = count;
     if (!has_gll_model) {
-      // from here: store chunk propertiesfor 3D?
-      // from here: or change the material layout in materials.hpp?
-      for (int iz = 0; iz < ngllz; ++iz) {
-        for (int ix = 0; ix < ngllx; ++ix) {
-          // Get the material at index from mesh::materials
-          auto material =
-              materials.template get_material<medium_tag, property_tag>(
-                      mesh_ispec);
-
-          // Assign the material property to the property container
-          auto point_property = material.get_properties();
-          this->store_host_values(
-              specfem::point::index<dimension_tag>(count, iz, ix),
-              point_property);
-        }
+      if (medium_tag == specfem::element::medium_tag::elastic && property_tag == specfem::element::property_tag::isotropic) {
+        // Handle the specific case for 3D elastic isotropic materials
+        for (int iz = 0; iz < ngllz; ++iz) {
+         for (int iy = 0; iy < ngllx; ++iy) {
+           for (int ix = 0; ix < ngllx; ++ix) {
+             this->rho(count, iz, iy, ix) = materials.rho(ispec, iz, iy, ix);
+             this->kappa(count, iz, iy, ix) = materials.kappa(ispec, iz, iy, ix);
+             this->mu(count, iz, iy, ix) = materials.mu(ispec, iz, iy, ix);
+           }
+         }
       }
     }
     count++;
