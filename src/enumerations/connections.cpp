@@ -210,3 +210,26 @@ specfem::connections::connection_mapping::coordinates_at_corner(
 
   return corner_coordinates.at(corner);
 }
+
+std::list<specfem::mesh_entity::type>
+specfem::mesh_entity::corners_of_edge(const specfem::mesh_entity::type &edge) {
+  if (!specfem::mesh_entity::contains(specfem::mesh_entity::edges, edge)) {
+    throw std::runtime_error("The argument is not an edge");
+  }
+
+  if (edge == specfem::mesh_entity::type::top) {
+    return { specfem::mesh_entity::type::top_left,
+             specfem::mesh_entity::type::top_right };
+  } else if (edge == specfem::mesh_entity::type::right) {
+    return { specfem::mesh_entity::type::top_right,
+             specfem::mesh_entity::type::bottom_right };
+  } else if (edge == specfem::mesh_entity::type::bottom) {
+    return { specfem::mesh_entity::type::bottom_right,
+             specfem::mesh_entity::type::bottom_left };
+  } else if (edge == specfem::mesh_entity::type::left) {
+    return { specfem::mesh_entity::type::bottom_left,
+             specfem::mesh_entity::type::top_left };
+  }
+
+  throw std::runtime_error("The edge does not have corners");
+}

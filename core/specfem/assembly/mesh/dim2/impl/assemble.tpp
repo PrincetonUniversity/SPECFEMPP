@@ -6,15 +6,6 @@
 #include "specfem/point.hpp"
 #include <boost/graph/filtered_graph.hpp>
 
-bool is_close(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &p1,
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &p2,
-    const type_real tolerance) {
-  return std::abs(p1.x - p2.x) < tolerance && std::abs(p1.z - p2.z) < tolerance;
-}
-
 void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
     const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
         &graph) {
@@ -180,35 +171,15 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
               const auto [mapped_iz, mapped_ix] = to_coords;
 
               if (this->h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
-                // Check the 2 points have the same coordinates
-                if (is_close(global_coordinates(ispec, iz, ix),
-                             global_coordinates(jspec, mapped_iz, mapped_ix),
-                             tolerance)) {
-                  // If they are close enough, we can assign the same index
-                  // Assign the same index
 
-                  this->h_index_mapping(ispec, iz, ix) =
-                      this->h_index_mapping(jspec, mapped_iz, mapped_ix);
-                  this->h_coord(0, ispec, iz, ix) =
-                      global_coordinates(ispec, iz, ix).x;
-                  this->h_coord(1, ispec, iz, ix) =
-                      global_coordinates(ispec, iz, ix).z;
-                  previously_assigned = true;
-                  break;
-                } else {
-                  std::ostringstream oss;
-                  oss << "Error: Mismatched coordinates for edge-edge point "
-                      << ispec << " at (" << iz << ", " << ix
-                      << ") and element " << jspec << " at (" << mapped_iz
-                      << ", " << mapped_ix << "). Coordinates: ("
-                      << global_coordinates(ispec, iz, ix).x << ", "
-                      << global_coordinates(ispec, iz, ix).z << ") vs ("
-                      << global_coordinates(jspec, mapped_iz, mapped_ix).x
-                      << ", "
-                      << global_coordinates(jspec, mapped_iz, mapped_ix).z
-                      << ")";
-                  throw std::runtime_error(oss.str());
-                }
+                this->h_index_mapping(ispec, iz, ix) =
+                    this->h_index_mapping(jspec, mapped_iz, mapped_ix);
+                this->h_coord(0, ispec, iz, ix) =
+                    global_coordinates(ispec, iz, ix).x;
+                this->h_coord(1, ispec, iz, ix) =
+                    global_coordinates(ispec, iz, ix).z;
+                previously_assigned = true;
+                break;
               }
             }
           }
@@ -281,34 +252,14 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
               const auto [mapped_iz, mapped_ix] = to_coords;
 
               if (this->h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
-                if (is_close(global_coordinates(ispec, iz, ix),
-                             global_coordinates(jspec, mapped_iz, mapped_ix),
-                             tolerance)) {
-                  // If they are close enough, we can assign the same index
-                  // Assign the same index
-
-                  this->h_index_mapping(ispec, iz, ix) =
-                      this->h_index_mapping(jspec, mapped_iz, mapped_ix);
-                  this->h_coord(0, ispec, iz, ix) =
-                      global_coordinates(ispec, iz, ix).x;
-                  this->h_coord(1, ispec, iz, ix) =
-                      global_coordinates(ispec, iz, ix).z;
-                  previously_assigned = true;
-                  break;
-                } else {
-                  std::ostringstream oss;
-                  oss << "Error: Mismatched coordinates for corner-edge point "
-                      << ispec << " at (" << iz << ", " << ix
-                      << ") and element " << jspec << " at (" << mapped_iz
-                      << ", " << mapped_ix << "). Coordinates: ("
-                      << global_coordinates(ispec, iz, ix).x << ", "
-                      << global_coordinates(ispec, iz, ix).z << ") vs ("
-                      << global_coordinates(jspec, mapped_iz, mapped_ix).x
-                      << ", "
-                      << global_coordinates(jspec, mapped_iz, mapped_ix).z
-                      << ")";
-                  throw std::runtime_error(oss.str());
-                }
+                this->h_index_mapping(ispec, iz, ix) =
+                    this->h_index_mapping(jspec, mapped_iz, mapped_ix);
+                this->h_coord(0, ispec, iz, ix) =
+                    global_coordinates(ispec, iz, ix).x;
+                this->h_coord(1, ispec, iz, ix) =
+                    global_coordinates(ispec, iz, ix).z;
+                previously_assigned = true;
+                break;
               }
             } else {
               // Corner to corner connection
@@ -317,35 +268,14 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
               const auto [mapped_iz, mapped_ix] = to_coords;
 
               if (this->h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
-                if (is_close(global_coordinates(ispec, iz, ix),
-                             global_coordinates(jspec, mapped_iz, mapped_ix),
-                             tolerance)) {
-                  // If they are close enough, we can assign the same index
-                  // Assign the same index
-
-                  this->h_index_mapping(ispec, iz, ix) =
-                      this->h_index_mapping(jspec, mapped_iz, mapped_ix);
-                  this->h_coord(0, ispec, iz, ix) =
-                      global_coordinates(ispec, iz, ix).x;
-                  this->h_coord(1, ispec, iz, ix) =
-                      global_coordinates(ispec, iz, ix).z;
-                  previously_assigned = true;
-                  break;
-                } else {
-                  std::ostringstream oss;
-                  oss << "Error: Mismatched coordinates for corner-corner "
-                         "point "
-                      << ispec << " at (" << iz << ", " << ix
-                      << ") and element " << jspec << " at (" << mapped_iz
-                      << ", " << mapped_ix << "). Coordinates: ("
-                      << global_coordinates(ispec, iz, ix).x << ", "
-                      << global_coordinates(ispec, iz, ix).z << ") vs ("
-                      << global_coordinates(jspec, mapped_iz, mapped_ix).x
-                      << ", "
-                      << global_coordinates(jspec, mapped_iz, mapped_ix).z
-                      << ")";
-                  throw std::runtime_error(oss.str());
-                }
+                this->h_index_mapping(ispec, iz, ix) =
+                    this->h_index_mapping(jspec, mapped_iz, mapped_ix);
+                this->h_coord(0, ispec, iz, ix) =
+                    global_coordinates(ispec, iz, ix).x;
+                this->h_coord(1, ispec, iz, ix) =
+                    global_coordinates(ispec, iz, ix).z;
+                previously_assigned = true;
+                break;
               }
             }
           }

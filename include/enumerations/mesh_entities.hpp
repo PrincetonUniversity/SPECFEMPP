@@ -104,4 +104,24 @@ template <typename T> bool contains(const T &list, const type &value) {
  */
 std::list<type> edges_of_corner(const type &corner);
 
+/**
+ * @brief Returns the corners that are adjacent to a given edge.
+ *
+ * For a specified edge of a quadrilateral element, this function returns the
+ * two corners that are connected to that edge. The corners are returned in a
+ * consistent order.
+ *
+ * Edge-to-corner mappings:
+ * - top: [top_left, top_right]
+ * - right: [top_right, bottom_right]
+ * - bottom: [bottom_right, bottom_left]
+ * - left: [bottom_left, top_left]
+ *
+ * @param edge The edge mesh entity type.
+ * @return std::list<type> List of corner types adjacent to the specified edge.
+ *
+ * @throws std::runtime_error if the input is not a valid edge type.
+ */
+std::list<type> corners_of_edge(const type &edge);
+
 } // namespace specfem::mesh_entity
