@@ -1,7 +1,8 @@
 #include "algorithms/locate_point.hpp"
-#include "jacobian/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace {
 
@@ -83,23 +84,23 @@ std::vector<int> get_best_candidates(
 std::tuple<type_real, type_real> get_best_location(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,
-    const specfem::kokkos::HostView2d<type_real> s_coord, type_real xi,
-    type_real gamma) {
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &coorg,
+    type_real xi, type_real gamma) {
 
-  const int ngnod = s_coord.extent(1);
+  const int ngnod = coorg.extent(0);
 
   for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
-    auto [x, z] =
-        specfem::jacobian::compute_locations(s_coord, ngnod, xi, gamma);
-    auto [xix, gammax, xiz, gammaz] =
-        specfem::jacobian::compute_inverted_derivatives(s_coord, ngnod, xi,
-                                                        gamma);
+    auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma);
+    auto jacobian =
+        specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma);
 
-    type_real dx = -(x - global.x);
-    type_real dz = -(z - global.z);
+    type_real dx = -(loc.x - global.x);
+    type_real dz = -(loc.z - global.z);
 
-    type_real dxi = xix * dx + xiz * dz;
-    type_real dgamma = gammax * dx + gammaz * dz;
+    type_real dxi = jacobian.xix * dx + jacobian.xiz * dz;
+    type_real dgamma = jacobian.gammax * dx + jacobian.gammaz * dz;
 
     xi += dxi;
     gamma += dgamma;
@@ -145,7 +146,10 @@ specfem::algorithms::locate_point(
   int ispec_selected_source;
   type_real xi_source, gamma_source;
 
-  specfem::kokkos::HostView2d<type_real> s_coord("s_coord", 2, ngnod);
+  const Kokkos::View<
+      point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+      coorg("coorg", ngnod);
 
   for (auto &ispec : best_candidates) {
     auto sv_shape2D = Kokkos::subview(shape2D, iz_guess, ix_guess, Kokkos::ALL);
@@ -154,17 +158,17 @@ specfem::algorithms::locate_point(
     type_real gamma_guess = gamma(iz_guess);
 
     for (int i = 0; i < ngnod; i++) {
-      s_coord(0, i) = mesh.h_control_node_coord(0, ispec, i);
-      s_coord(1, i) = mesh.h_control_node_coord(1, ispec, i);
+      coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
+      coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
     }
 
     // find the best location
     std::tie(xi_guess, gamma_guess) =
-        get_best_location(coordinates, s_coord, xi_guess, gamma_guess);
+        get_best_location(coordinates, coorg, xi_guess, gamma_guess);
 
     // compute the distance
     auto [x, z] =
-        jacobian::compute_locations(s_coord, mesh.ngnod, xi_guess, gamma_guess);
+        jacobian::compute_locations(coorg, mesh.ngnod, xi_guess, gamma_guess);
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         cart_coord = { x, z };
 
@@ -196,16 +200,17 @@ specfem::algorithms::locate_point(
 
   const int ngnod = mesh.ngnod;
 
-  specfem::kokkos::HostView2d<type_real> s_coord("s_coord", 2, ngnod);
+  const Kokkos::View<
+      point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+      coorg("coorg", ngnod);
 
   for (int i = 0; i < ngnod; i++) {
-    s_coord(0, i) = mesh.h_control_node_coord(0, ispec, i);
-    s_coord(1, i) = mesh.h_control_node_coord(1, ispec, i);
+    coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
+    coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
   }
 
-  const auto [x, z] = jacobian::compute_locations(s_coord, ngnod, xi, gamma);
-
-  return { x, z };
+  return jacobian::compute_locations(coorg, ngnod, xi, gamma);
 }
 
 specfem::point::global_coordinates<specfem::dimension::type::dim2>
@@ -221,19 +226,18 @@ specfem::algorithms::locate_point(
 
   const int ngnod = mesh.ngnod;
 
-  specfem::kokkos::HostScratchView2d<type_real> s_coord(
-      team_member.team_scratch(0), 2, ngnod);
+  const Kokkos::View<
+      point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+      coorg("coorg", ngnod);
 
   Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, ngnod),
                        [&](const int i) {
-                         s_coord(0, i) = mesh.h_control_node_coord(0, ispec, i);
-                         s_coord(1, i) = mesh.h_control_node_coord(1, ispec, i);
+                         coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
+                         coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
                        });
 
   team_member.team_barrier();
 
-  const auto [x, z] =
-      jacobian::compute_locations(team_member, s_coord, ngnod, xi, gamma);
-
-  return { x, z };
+  return jacobian::compute_locations(coorg, ngnod, xi, gamma);
 }
