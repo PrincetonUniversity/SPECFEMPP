@@ -63,6 +63,13 @@ void test_container(const test_configuration::mesh &mesh_config) {
 
 TEST_F(MESHES, interface_containers) {
   for (const auto &mesh : *this) {
+    if (!(mesh.interface_fluid_2d || mesh.interface_fluid_fluid_2d ||
+          mesh.interface_fluid_solid_2d || mesh.interface_solid_2d ||
+          mesh.interface_solid_fluid_2d || mesh.interface_solid_solid_2d)) {
+      std::cout << "'interface container' skipped for " << mesh.name
+                << std::endl;
+      continue;
+    }
     try {
       test_container(mesh);
       std::cout << "-------------------------------------------------------\n"

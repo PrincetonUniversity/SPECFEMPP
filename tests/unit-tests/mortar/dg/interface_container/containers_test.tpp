@@ -54,9 +54,9 @@ ContainerType load_interfaces(const test_configuration::mesh &mesh_config,
 
   for (int iedge = 0; iedge < num_edges_2; iedge++) {
     interfaces_in >> ispec >> edgetype;
-    const int ind = iedge + ContainerType::is_single_edge ? iedge : 0;
+    const int ind = iedge + (ContainerType::is_single_edge ? num_edges_1 : 0);
     container.template index_at<2, true>(ind) = ispec - 1;
-    container.template index_at<2, true>(ind) = edge_from_int(edgetype);
+    container.template edge_type_at<2, true>(ind) = edge_from_int(edgetype);
   }
 
   container.template sync_edge_container<specfem::sync::kind::HostToDevice>();

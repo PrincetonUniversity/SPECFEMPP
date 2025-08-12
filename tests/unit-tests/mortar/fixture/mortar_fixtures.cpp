@@ -24,6 +24,20 @@ static std::vector<test_configuration::mesh> get_meshes() {
   return meshes;
 }
 
+std::vector<std::string>
+test_configuration::meshes_in_test(const std::string &testname) {
+  if (YAML_DATA.IsNull()) {
+    YAML_DATA = YAML::LoadFile(config_filename);
+  }
+  std::vector<std::string> meshes;
+  YAML::Node meshlist = YAML_DATA[testname];
+  assert(meshlist.IsSequence());
+  for (const auto &meshentry : meshlist) {
+    meshes.push_back(meshentry["mesh"].as<std::string>());
+  }
+  return meshes;
+}
+
 MESHES::MESHES() {
   for (const auto &mesh : get_meshes())
     this->push_back(mesh);

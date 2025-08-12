@@ -42,6 +42,8 @@ private:
   specfem::mesh::mesh<specfem::dimension::type::dim2> mesh_instance;
 };
 
+std::vector<std::string> meshes_in_test(const std::string &testname);
+
 } // namespace test_configuration
 
 class MESHES : public ::testing::Test,

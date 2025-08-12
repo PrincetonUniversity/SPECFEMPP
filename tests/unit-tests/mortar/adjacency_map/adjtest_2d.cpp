@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <streambuf>
@@ -309,7 +310,14 @@ void run_test_conforming(const test_configuration::mesh &mesh_config) {
 }
 
 TEST_F(MESHES, conforming) {
+  std::vector<std::string> adjtest_meshes =
+      test_configuration::meshes_in_test("adjtest");
   for (const auto &mesh : *this) {
+    if (std::find(adjtest_meshes.begin(), adjtest_meshes.end(), mesh.name) ==
+        adjtest_meshes.end()) {
+      std::cout << "adjtest: conforming skipped for " << mesh.name << std::endl;
+      continue;
+    }
     try {
       run_test_conforming(mesh);
       std::cout << "-------------------------------------------------------\n"

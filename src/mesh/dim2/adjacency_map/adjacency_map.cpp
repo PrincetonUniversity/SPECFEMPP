@@ -5,6 +5,7 @@
 #include "index_mapping_from_adjacencies.cpp"
 #include <list>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 // ====================================================================
@@ -289,8 +290,8 @@ void specfem::mesh::adjacency_map::
     adjacency_map<specfem::dimension::type::dim2>::set_as_boundary(
         const int ispec, const specfem::enums::edge::type edge) {
   const int edgeind = edge_to_index(edge);
-  adjacent_edges(ispec, edge) = specfem::enums::edge::type::NONE;
-  adjacent_indices(ispec, edge) = -1;
+  adjacent_edges(ispec, edgeind) = specfem::enums::edge::type::NONE;
+  adjacent_indices(ispec, edgeind) = -1;
 }
 
 bool specfem::mesh::adjacency_map::

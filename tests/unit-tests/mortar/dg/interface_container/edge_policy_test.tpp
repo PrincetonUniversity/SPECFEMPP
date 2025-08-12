@@ -38,6 +38,15 @@ void test_edge_policy(
                              container.template get_edge_type_view<1>(),
                              container.template get_edge_type_view<2>(),
                              assembly.mesh.ngllz);
+  // for (int i = 0; i < container.template get_edge_index_view<1>().extent(0);
+  //      i++) {
+  //   std::cout
+  //       << specfem::mesh::adjacency_map::
+  //              adjacency_map<specfem::dimension::type::dim2>::edge_to_string(
+  //                  container.template index_at<1>(i),
+  //                  container.template edge_type_at<1>(i))
+  //       << std::endl;
+  // }
 
   Kokkos::parallel_for(
       "edge_policy_test.tpp:test_edge_policy",
