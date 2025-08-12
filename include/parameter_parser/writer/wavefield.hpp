@@ -32,9 +32,9 @@ public:
    * timesteps between wavefield by the memory value provided, e.g. 100MB, 20GB.
    * @param include_last_step Whether or not to write the final time step.
    */
-  wavefield(const std::string output_format, const std::string output_folder,
+  wavefield(const std::string &output_format, const std::string &output_folder,
             const specfem::simulation::type type, const int time_interval,
-            const std::string time_interval_by_memory,
+            const std::string &time_interval_by_memory,
             const bool include_last_step, bool for_adjoint_simulations)
       : output_format(output_format), output_folder(output_folder),
         simulation_type(type), time_interval(time_interval),

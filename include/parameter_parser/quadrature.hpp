@@ -38,7 +38,7 @@ public:
    * @param quadrature pre-defined quadratures. e.g. GLL4 for 4th order GLL
    * quadrature
    */
-  quadrature(const std::string quadrature);
+  quadrature(const std::string &quadrature);
   /**
    * @brief Instantiate quadrature objects in x and z dimensions
    *

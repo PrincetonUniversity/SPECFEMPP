@@ -24,7 +24,7 @@ public:
    * @param output_folder Path to input location (will be an .h5 file if using
    * HDF5, and a folder if using ASCII)
    */
-  property_reader(const std::string input_folder);
+  property_reader(const std::string &input_folder);
 
   /**
    * @brief read the property from disk
