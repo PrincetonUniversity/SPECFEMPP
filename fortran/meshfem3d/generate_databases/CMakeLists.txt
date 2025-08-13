@@ -66,9 +66,9 @@ endif(ADIOS)
 
 # Add MPI dependency
 if (MPI_PARALLEL)
-  list(APPEND MESHFEM3D_GENERATE_DATABASES_MODULE model_sep)
+  list(APPEND MESHFEM3D_GENERATE_DATABASES_MODULE model_sep.f90)
 else(MPI_PARALLEL)
-  list(APPEND MESHFEM3D_GENERATE_DATABASES_MODULE model_sep_nompi)
+  list(APPEND MESHFEM3D_GENERATE_DATABASES_MODULE model_sep_nompi.f90)
 endif(MPI_PARALLEL)
 
 # Create parameter library module
