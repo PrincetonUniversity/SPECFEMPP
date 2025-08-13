@@ -423,7 +423,7 @@ template <bool UseSIMD>
 struct jacobian_matrix<specfem::dimension::type::dim3, true, UseSIMD>
     : public jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD> {
 private:
-  using base_type = jacobian_matrix<specfem::dimension::type::dim2, false,
+  using base_type = jacobian_matrix<specfem::dimension::type::dim3, false,
                                     UseSIMD>; ///< Base type of the point
                                               ///< Jacobian matrix
 public:

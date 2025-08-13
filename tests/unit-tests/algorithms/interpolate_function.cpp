@@ -33,11 +33,11 @@ TEST(ALGORITHMS, interpolate_function) {
   specfem::quadrature::quadratures quadratures(gll);
 
   // Assemble
-  specfem::assembly::mesh<specfem::dimension::type::dim2> mesh(
+  specfem::assembly::mesh<specfem::dimension::type::dim2> assembly_mesh(
       mesh.tags, mesh.control_nodes, quadratures);
 
-  const auto xi = mesh.h_xi;
-  const auto gamma = mesh.h_gamma;
+  const auto xi = assembly_mesh.h_xi;
+  const auto gamma = assembly_mesh.h_xi;
 
   const type_real xi_target = 0.15;
   const type_real gamma_target = 0.15;
@@ -58,7 +58,7 @@ TEST(ALGORITHMS, interpolate_function) {
       polynomial(iz, ix) = hxi(ix) * hgamma(iz);
       specfem::point::local_coordinates<specfem::dimension::type::dim2>
           lcoord = { ispec_target, gamma(iz), xi(ix) };
-      auto gcoord = specfem::algorithms::locate_point(lcoord, mesh);
+      auto gcoord = specfem::algorithms::locate_point(lcoord, assembly_mesh);
 
       function(iz, ix) = function1(gcoord.x, gcoord.z);
     }
@@ -69,7 +69,7 @@ TEST(ALGORITHMS, interpolate_function) {
 
   const specfem::point::local_coordinates<specfem::dimension::type::dim2>
       lcoord = { ispec_target, gamma_target, xi_target };
-  auto gcoord = specfem::algorithms::locate_point(lcoord, mesh);
+  auto gcoord = specfem::algorithms::locate_point(lcoord, assembly_mesh);
 
   type_real function_value = function1(gcoord.x, gcoord.z);
 
