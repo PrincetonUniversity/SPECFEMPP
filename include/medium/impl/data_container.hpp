@@ -76,11 +76,10 @@ template <> struct DomainViewDimension<specfem::dimension::type::dim3> {
   }
 
 #define _DEFINE_DOMAIN_VIEW(r, data, elem)                                     \
-  constexpr std::size_t rank = specfem::dimension::dimensIon<dimension_tag>::dim + 1;
-  specfem::kokkos::DomainView<                                                 \
-      dimension_tag, type_real,                                                \
-      rank,          \
-      Kokkos::DefaultExecutionSpace::memory_space>                             \
+  constexpr std::size_t rank =                                                 \
+      specfem::dimension::dimensIon<dimension_tag>::dim + 1;                   \
+  specfem::kokkos::DomainView<dimension_tag, type_real, rank,                  \
+                              Kokkos::DefaultExecutionSpace::memory_space>     \
       BOOST_PP_SEQ_ELEM(0, elem);                                              \
   typename decltype(BOOST_PP_SEQ_ELEM(0, elem))::HostMirror BOOST_PP_CAT(      \
       h_, BOOST_PP_SEQ_ELEM(0, elem));
