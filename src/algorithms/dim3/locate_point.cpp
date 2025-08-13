@@ -57,18 +57,26 @@ std::tuple<int, int, int, int> rough_location(
 
 std::vector<int> get_best_candidates(
     const int ispec_guess,
-    const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+    const Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
         index_mapping) {
 
-  const int nspec = index_mapping.extent(0);
-  const int ngllx = index_mapping.extent(1);
+  const int nspec = index_mapping.extent(1);
   const int ngllz = index_mapping.extent(2);
+  const int nglly = index_mapping.extent(3);
+  const int ngllx = index_mapping.extent(4);
 
   std::vector<int> iglob_guess;
-  iglob_guess.push_back(index_mapping(ispec_guess, 0, 0));
-  iglob_guess.push_back(index_mapping(ispec_guess, ngllz - 1, 0));
-  iglob_guess.push_back(index_mapping(ispec_guess, 0, ngllx - 1));
-  iglob_guess.push_back(index_mapping(ispec_guess, ngllz - 1, ngllx - 1));
+  // corners at gllz = 0
+  iglob_guess.push_back(index_mapping(ispec_guess, 0, 0, 0));
+  iglob_guess.push_back(index_mapping(ispec_guess, 0, 0, ngllx - 1));
+  iglob_guess.push_back(index_mapping(ispec_guess, 0, nglly - 1, 0));
+  iglob_guess.push_back(index_mapping(ispec_guess, 0, nglly - 1, ngllx - 1));
+  // corners at gllz = ngllz - 1
+  iglob_guess.push_back(index_mapping(ispec_guess, ngllz - 1, 0, 0));
+  iglob_guess.push_back(index_mapping(ispec_guess, ngllz - 1, nglly - 1, 0));
+  iglob_guess.push_back(index_mapping(ispec_guess, ngllz - 1, 0, ngllx - 1));
+  iglob_guess.push_back(
+      index_mapping(ispec_guess, ngllz - 1, nglly - 1, ngllx - 1));
 
   std::vector<int> ispec_candidates;
   ispec_candidates.push_back(ispec_guess);
