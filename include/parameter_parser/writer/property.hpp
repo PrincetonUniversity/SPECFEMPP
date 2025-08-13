@@ -8,7 +8,7 @@ namespace specfem {
 namespace runtime_configuration {
 class property {
 public:
-  property(const std::string output_format, const std::string output_folder,
+  property(const std::string &output_format, const std::string &output_folder,
            const bool write_mode)
       : output_format(output_format), output_folder(output_folder),
         write_mode(write_mode) {}
