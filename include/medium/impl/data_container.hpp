@@ -4,18 +4,6 @@
 #include "enumerations/medium.hpp"
 #include <boost/preprocessor.hpp>
 
-namespace specfem::medium::impl {
-template <specfem::dimension::type DimensionTag> struct DomainViewDimension;
-
-template <> struct DomainViewDimension<specfem::dimension::type::dim2> {
-  static constexpr int dim = 3;
-};
-
-template <> struct DomainViewDimension<specfem::dimension::type::dim3> {
-  static constexpr int dim = 4;
-};
-} // namespace specfem::medium::impl
-
 #define _CREATE_NAMED_VARIABLE(prefix, postfix)                                \
   BOOST_PP_CAT(prefix, BOOST_PP_CAT(_, postfix))
 
