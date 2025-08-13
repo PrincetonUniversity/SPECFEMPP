@@ -1,0 +1,10 @@
+id: "HomogeneousAcousticDomainAdjmapAssembly"
+name: "Homogeneous acoustic domain with assembly done by the adjacency map"
+description: >
+  Equivalent to HomogeneousAcousticDomain, but run with adjacency_map generate_index_mapping. Test is run on a single MPI process.
+config:
+  nproc: 1
+  tolerance: 1e-3
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "../HomogeneousAcousticDomain/traces"
