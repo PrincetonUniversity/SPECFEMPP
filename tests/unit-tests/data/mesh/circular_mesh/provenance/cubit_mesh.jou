@@ -1,0 +1,5 @@
+undo group begin
+create surface circle radius 50 yplane
+undo group end
+surface 1 scheme pave
+mesh surface 1
