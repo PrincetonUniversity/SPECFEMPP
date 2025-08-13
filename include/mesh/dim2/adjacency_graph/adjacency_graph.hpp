@@ -19,12 +19,10 @@ public:
         : connection(conn), orientation(orient) {}
   };
 
-  using Properties = EdgeProperties;
-
 private:
   using Graph =
       boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
-                            boost::no_property, Properties>;
+                            boost::no_property, EdgeProperties>;
   Graph graph_;
 
 public:

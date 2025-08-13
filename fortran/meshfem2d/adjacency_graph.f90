@@ -104,12 +104,12 @@ contains
                   ! They share only one node, so they are strongly conforming at a corner
                   call get_corner_id(elmnts_bis, current_elem, current_node, corner_id1)
                   call get_corner_id(elmnts_bis, neighbor_elem, current_node, corner_id2)
-                  adjacent_elements(current_elem, num_adjacent(current_elem)) = current_node
+                  adjacent_elements(current_elem, num_adjacent(current_elem)) = neighbor_elem
                   adjacency_type(current_elem, num_adjacent(current_elem)) = ISTRONGLY_CONFORMING
                   adjacency_id(current_elem, num_adjacent(current_elem)) = corner_id1
                   num_adjacent(current_elem) = num_adjacent(current_elem) + 1
 
-                  adjacent_elements(neighbor_elem, num_adjacent(neighbor_elem)) = current_node
+                  adjacent_elements(neighbor_elem, num_adjacent(neighbor_elem)) = current_elem
                   adjacency_type(neighbor_elem, num_adjacent(neighbor_elem)) = ISTRONGLY_CONFORMING
                   adjacency_id(neighbor_elem, num_adjacent(neighbor_elem)) = corner_id2
                   num_adjacent(neighbor_elem) = num_adjacent(neighbor_elem) + 1
@@ -170,6 +170,8 @@ contains
       integer, intent(in) :: elmnts_bis(0:NCORNERS*nelmnts-1)
       integer, intent(in) :: elem, node1, node2
       integer, intent(out) :: edge_id
+      integer :: bottom_left_index, bottom_right_index
+      integer :: top_right_index, top_left_index
 
       integer :: i
       integer :: n1, n2
@@ -177,10 +179,10 @@ contains
 
       edge_id = -1
 
-      bottom_nodes = [elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT - 1), elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT - 1)]
-      right_nodes = [elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT - 1), elmnts_bis(elem*NCORNERS + ITOP_RIGHT - 1)]
-      top_nodes = [elmnts_bis(elem*NCORNERS + ITOP_RIGHT - 1), elmnts_bis(elem*NCORNERS + ITOP_LEFT - 1)]
-      left_nodes = [elmnts_bis(elem*NCORNERS + ITOP_LEFT - 1), elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT - 1)]
+      bottom_nodes = [elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT - 5), elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT - 5)]
+      right_nodes = [elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT - 5), elmnts_bis(elem*NCORNERS + ITOP_RIGHT - 5)]
+      top_nodes = [elmnts_bis(elem*NCORNERS + ITOP_LEFT - 5), elmnts_bis(elem*NCORNERS + ITOP_RIGHT - 5)]
+      left_nodes = [elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT - 5), elmnts_bis(elem*NCORNERS + ITOP_LEFT - 5)]
 
       if (node1 ==  bottom_nodes(1) .and. node2 == bottom_nodes(2)) then
          edge_id = IBOTTOM
@@ -240,13 +242,13 @@ contains
       integer :: i
       corner_id = -1
 
-      if (elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT - 1) == node) then
+      if (elmnts_bis(elem*NCORNERS + IBOTTOM_LEFT - 5) == node) then
          corner_id = IBOTTOM_LEFT
-      else if (elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT - 1) == node) then
+      else if (elmnts_bis(elem*NCORNERS + IBOTTOM_RIGHT - 5) == node) then
          corner_id = IBOTTOM_RIGHT
-      else if (elmnts_bis(elem*NCORNERS + ITOP_RIGHT - 1) == node) then
+      else if (elmnts_bis(elem*NCORNERS + ITOP_RIGHT - 5) == node) then
          corner_id = ITOP_RIGHT
-      else if (elmnts_bis(elem*NCORNERS + ITOP_LEFT - 1) == node) then
+      else if (elmnts_bis(elem*NCORNERS + ITOP_LEFT - 5) == node) then
          corner_id = ITOP_LEFT
       else
          write(*,*) 'Error: Node ', node, ' is not a corner of element ', elem
