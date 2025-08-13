@@ -1,0 +1,46 @@
+parameters:
+  header:
+    title: Anisotropic Crystal
+    description: |
+      Wave propagation through anisotropic zinc crystal
+
+  simulation-setup:
+    elastic-wave: "P_SV"    # P_SV = .true.
+    quadrature:
+      quadrature-type: GLL4
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark.    # time_stepping_scheme = 1 in Par_file
+          dt: 55.e-9        # From DT in Par_file
+          nstep: 1500       # From NSTEP in Par_file
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:       # save_ASCII_seismograms = .true.
+            format: ascii
+            directory: ./OUTPUT_FILES/seismograms
+          display:          # Visualization parameters too different to list here
+            format: PNG
+            directory: ./OUTPUT_FILES/display
+            field: displacement
+            simulation-field: forward
+            time-interval: 100  # From NTSTEP_BETWEEN_OUTPUT_IMAGES
+
+  receivers:
+    stations: "./OUTPUT_FILES/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 1
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  databases:
+    mesh-database: "./OUTPUT_FILES/database.bin"
+
+  sources: "./source.yaml"
