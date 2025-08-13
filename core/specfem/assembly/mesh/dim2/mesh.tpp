@@ -19,6 +19,24 @@ struct qp {
   int iloc = 0, iglob = 0;
 };
 
+template <typename ViewType> int compute_nglob2D(const ViewType index_mapping) {
+  const int nspec = index_mapping.extent(0);
+  const int ngllz = index_mapping.extent(1);
+  const int ngllx = index_mapping.extent(2);
+
+  int nglob = -1;
+  // compute max value stored in index_mapping
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int igllz = 0; igllz < ngllz; igllz++) {
+      for (int igllx = 0; igllx < ngllx; igllx++) {
+        nglob = std::max(nglob, index_mapping(ispec, igllz, igllx));
+      }
+    }
+  }
+
+  return nglob + 1;
+}
+
 type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
                         const int ngllxz) {
 
@@ -210,7 +228,9 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
         &control_nodes_in,
     const specfem::quadrature::quadratures &quadratures,
     const specfem::mesh::adjacency_map::adjacency_map<
-        specfem::dimension::type::dim2> &adjacency_map) {
+        specfem::dimension::type::dim2> &adjacency_map,
+    const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
+        &adjacency_graph) {
   nspec = tags.nspec;
   ngllz = quadratures.gll.get_N();
   ngllx = quadratures.gll.get_N();
@@ -243,7 +263,14 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       quadratures.gll.get_hxi(), quadratures.gll.get_hxi(),
       quadratures.gll.get_N(), control_nodes_in.ngnod);
 
-  this->assemble(adjacency_map);
+  if (adjacency_graph.empty()) {
+    this->assemble(adjacency_map);
+  } else {
+    // If the adjacency graph is not empty, we use it to assemble the mesh
+    this->assemble(adjacency_graph);
+  }
+
+  this->nglob = compute_nglob2D(this->h_index_mapping);
 }
 
 void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
@@ -271,7 +298,8 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
-        auto shape_functions = Kokkos::subview(h_shape2D, iz, ix, Kokkos::ALL());
+        auto shape_functions =
+            Kokkos::subview(h_shape2D, iz, ix, Kokkos::ALL());
 
         double xcor = 0.0;
         double zcor = 0.0;
