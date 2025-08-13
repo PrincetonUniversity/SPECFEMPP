@@ -3,22 +3,52 @@ message(STATUS "Configuring YAML library...")
 # Prepend the CMAKE_MESSAGE_INDENT variable to ensure proper indentation in messages
 list(APPEND CMAKE_MESSAGE_INDENT "  YAML: ")
 
-# Install yaml content
-FetchContent_Declare(
-        yaml-cpp
-        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-        GIT_TAG 2f86d13775d119edbb69af52e5f566fd65c6953b
-)
+# Include FetchContent module
+include(FetchContent)
+
+# YAML version
+set(YAML_CPP_VERSION "0.7.0" CACHE STRING "yaml-cpp version")
+
+set(YAML_URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-${YAML_CPP_VERSION}.tar.gz)
 
 # Disable yaml-cpp installation and config generation
+set(YAML_CPP_INSTALL OFF CACHE BOOL "Disable yaml-cpp install targets" FORCE)
 set(YAML_CPP_BUILD_INSTALL OFF CACHE BOOL "Disable yaml-cpp installation" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "Disable yaml-cpp tools" FORCE)
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "Disable yaml-cpp tests" FORCE)
-set(YAML_CPP_INSTALL OFF CACHE BOOL "Disable yaml-cpp install targets" FORCE)
 # Fix to make paths set by yaml-cpp-config.cmake discoverable by ADIOS2
 set(YAML_CPP_INSTALL_CMAKEDIR "./" CACHE STRING "CMake config install directory for yaml-cpp" FORCE)
 
-FetchContent_MakeAvailable(yaml-cpp)
+if (CMAKE_VERSION VERSION_LESS "3.28.0")
+  # For CMake versions < 3.28, EXCLUDE_FROM_ALL is not supported in FetchContent_Declare
+  FetchContent_Declare(
+    yaml-cpp
+    URL ${YAML_URL}
+    USES_TERMINAL_DOWNLOAD True
+    GIT_PROGRESS TRUE
+    DOWNLOAD_NO_EXTRACT FALSE
+    DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+  )
+
+  FetchContent_GetProperties(yaml-cpp)
+  if(NOT yaml-cpp_POPULATED)
+    FetchContent_Populate(yaml-cpp)
+    add_subdirectory(${yaml-cpp_SOURCE_DIR} ${yaml-cpp_BINARY_DIR} EXCLUDE_FROM_ALL)
+  endif()
+else()
+  # For CMake versions >= 3.28, EXCLUDE_FROM_ALL is supported in FetchContent_Declare
+  FetchContent_Declare(
+    yaml-cpp
+    URL ${YAML_URL}
+    USES_TERMINAL_DOWNLOAD True
+    GIT_PROGRESS TRUE
+    DOWNLOAD_NO_EXTRACT FALSE
+    DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+    EXCLUDE_FROM_ALL
+  )
+
+  FetchContent_MakeAvailable(yaml-cpp)
+endif()
 
 message(STATUS "yaml-cpp library has been configured and is available.")
 message(STATUS "Include directory: ${yaml-cpp_SOURCE_DIR}/include")
