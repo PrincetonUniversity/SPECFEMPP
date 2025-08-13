@@ -7,18 +7,19 @@ if (SPECFEM_ENABLE_ADIOS2)
   message(STATUS "Enabling ADIOS2 support")
   list(APPEND CMAKE_MESSAGE_INDENT "  ADIOS2: ")
 
+
+  if (CMAKE_VERSION VERSION_GREATER "3.30.0")
+  # For CMake versions > 3.30, we need to use Set the policy)
+    if (CMAKE_VERSION VERSION_LESS "3.28.0")
+      cmake_policy(SET CMP0169 OLD)
+    else()
+      cmake_policy(SET CMP0169 NEW)
+    endif()
+  endif()
+
   set(ADIOS2_VERSION 2.10.2)
   message(STATUS "Downloading and extracting ADIOS2 (${ADIOS2_VERSION}) library sources. This will take <1 min.")
   include(FetchContent)
-
-  if (CMAKE_VERSION VERSION_GREATER "3.30.0")
-      # For CMake versions > 3.30, we need to use Set the policy)
-      if (CMAKE_VERSION VERSION_LESS "3.28.0")
-          cmake_policy(SET CMP0169 OLD)
-      else()
-          cmake_policy(SET CMP0169 NEW)
-      endif()
-  endif()
 
   # Set common FetchContent parameters
   set(ADIOS2_URL "https://github.com/ornladios/ADIOS2/archive/refs/tags/v${ADIOS2_VERSION}.tar.gz")
