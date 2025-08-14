@@ -415,6 +415,17 @@ TEST(LOCATE_HELPERS, locate_point_core_2x2_four_elements) {
   EXPECT_EQ(result.ispec, 3);
   EXPECT_NEAR(result.xi, 0.66, 1e-6);
   EXPECT_NEAR(result.gamma, 0.66, 1e-6);
+
+  // Add one test for a point that is not in any element
+  // Point (2.5, 2.5) should not be in any element
+  target = { 2.5, 2.5 };
+  result = specfem::algorithms::locate_point_impl::locate_point_core(
+      target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
+
+  // Should return ispec = -1 indicating not found
+  EXPECT_EQ(result.ispec, -1);
+  EXPECT_TRUE(std::isnan(result.xi));
+  EXPECT_TRUE(std::isnan(result.gamma));
 }
 
 int main(int argc, char *argv[]) {
