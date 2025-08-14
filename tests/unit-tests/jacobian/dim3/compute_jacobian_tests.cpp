@@ -501,3 +501,168 @@ TEST_F(ComputeJacobianDim3Test, SmallElementStability) {
                                            static_cast<type_real>(2.0 / scale)))
       << expected_got(2.0 / scale, result.gammaz);
 }
+
+TEST_F(ComputeJacobianDim3Test, TwentySevenNodeUnitCubeMapping) {
+  // Test with a 27-node unit cube element
+  const int ngnod = 27;
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+      Kokkos::HostSpace>
+      coorg("coorg", ngnod);
+
+  // 27-node unit cube control nodes (corners + mid-edge + face-center + center)
+  // Corner nodes (0-7)
+  coorg(0) = { 0.0, 0.0, 0.0 }; // Corner 0: (0,0,0)
+  coorg(1) = { 1.0, 0.0, 0.0 }; // Corner 1: (1,0,0)
+  coorg(2) = { 1.0, 1.0, 0.0 }; // Corner 2: (1,1,0)
+  coorg(3) = { 0.0, 1.0, 0.0 }; // Corner 3: (0,1,0)
+  coorg(4) = { 0.0, 0.0, 1.0 }; // Corner 4: (0,0,1)
+  coorg(5) = { 1.0, 0.0, 1.0 }; // Corner 5: (1,0,1)
+  coorg(6) = { 1.0, 1.0, 1.0 }; // Corner 6: (1,1,1)
+  coorg(7) = { 0.0, 1.0, 1.0 }; // Corner 7: (0,1,1)
+
+  // Mid-edge nodes (8-19)
+  coorg(8) = { 0.5, 0.0, 0.0 };  // Edge 0-1
+  coorg(9) = { 1.0, 0.5, 0.0 };  // Edge 1-2
+  coorg(10) = { 0.5, 1.0, 0.0 }; // Edge 2-3
+  coorg(11) = { 0.0, 0.5, 0.0 }; // Edge 3-0
+  coorg(12) = { 0.0, 0.0, 0.5 }; // Edge 0-4
+  coorg(13) = { 1.0, 0.0, 0.5 }; // Edge 1-5
+  coorg(14) = { 1.0, 1.0, 0.5 }; // Edge 2-6
+  coorg(15) = { 0.0, 1.0, 0.5 }; // Edge 3-7
+  coorg(16) = { 0.5, 0.0, 1.0 }; // Edge 4-5
+  coorg(17) = { 1.0, 0.5, 1.0 }; // Edge 5-6
+  coorg(18) = { 0.5, 1.0, 1.0 }; // Edge 6-7
+  coorg(19) = { 0.0, 0.5, 1.0 }; // Edge 7-4
+
+  // Face center nodes (20-25)
+  coorg(20) = { 0.5, 0.5, 0.0 }; // Face z=0
+  coorg(21) = { 0.5, 0.0, 0.5 }; // Face y=0
+  coorg(22) = { 1.0, 0.5, 0.5 }; // Face x=1
+  coorg(23) = { 0.5, 1.0, 0.5 }; // Face y=1
+  coorg(24) = { 0.0, 0.5, 0.5 }; // Face x=0
+  coorg(25) = { 0.5, 0.5, 1.0 }; // Face z=1
+
+  // Center node (26)
+  coorg(26) = { 0.5, 0.5, 0.5 }; // Center
+
+  // Test at center point (0, 0, 0) in reference coordinates
+  auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
+
+  // For unit cube, jacobian should be 0.125 (volume = 1, reference volume = 8)
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+                                           static_cast<type_real>(0.125)))
+      << expected_got(0.125, result.jacobian);
+
+  // For unit cube mapping, the inverse jacobian matrix elements should be:
+  // Each direction scaled by factor of 2
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.xix, static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.xix);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.etax, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etax);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.xiy, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiy);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.etay, static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.etay);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.gammay, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammay);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.xiz, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiz);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.etaz, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etaz);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.gammaz, static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.gammaz);
+}
+
+TEST_F(ComputeJacobianDim3Test, TwentySevenNodeScaledCubeMapping) {
+  // Test with a 27-node scaled cube element
+  const int ngnod = 27;
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+      Kokkos::HostSpace>
+      coorg("coorg", ngnod);
+
+  // 27-node cube with side length 2
+  // Corner nodes (0-7)
+  coorg(0) = { 0.0, 0.0, 0.0 };
+  coorg(1) = { 2.0, 0.0, 0.0 };
+  coorg(2) = { 2.0, 2.0, 0.0 };
+  coorg(3) = { 0.0, 2.0, 0.0 };
+  coorg(4) = { 0.0, 0.0, 2.0 };
+  coorg(5) = { 2.0, 0.0, 2.0 };
+  coorg(6) = { 2.0, 2.0, 2.0 };
+  coorg(7) = { 0.0, 2.0, 2.0 };
+
+  // Mid-edge nodes (8-19)
+  coorg(8) = { 1.0, 0.0, 0.0 };
+  coorg(9) = { 2.0, 1.0, 0.0 };
+  coorg(10) = { 1.0, 2.0, 0.0 };
+  coorg(11) = { 0.0, 1.0, 0.0 };
+  coorg(12) = { 0.0, 0.0, 1.0 };
+  coorg(13) = { 2.0, 0.0, 1.0 };
+  coorg(14) = { 2.0, 2.0, 1.0 };
+  coorg(15) = { 0.0, 2.0, 1.0 };
+  coorg(16) = { 1.0, 0.0, 2.0 };
+  coorg(17) = { 2.0, 1.0, 2.0 };
+  coorg(18) = { 1.0, 2.0, 2.0 };
+  coorg(19) = { 0.0, 1.0, 2.0 };
+
+  // Face center nodes (20-25)
+  coorg(20) = { 1.0, 1.0, 0.0 };
+  coorg(21) = { 1.0, 0.0, 1.0 };
+  coorg(22) = { 2.0, 1.0, 1.0 };
+  coorg(23) = { 1.0, 2.0, 1.0 };
+  coorg(24) = { 0.0, 1.0, 1.0 };
+  coorg(25) = { 1.0, 1.0, 2.0 };
+
+  // Center node (26)
+  coorg(26) = { 1.0, 1.0, 1.0 };
+
+  // Test at center point (0, 0, 0) in reference coordinates
+  auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0, 0.0);
+
+  // For 2x2x2 cube, jacobian should be 1.0 (volume = 8, reference volume = 8)
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+                                           static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.jacobian);
+
+  // For 2x2x2 cube mapping, each direction scaled by factor of 1
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.xix, static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.xix);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.etax, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etax);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.xiy, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiy);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.etay, static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.etay);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.gammay, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammay);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.xiz, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiz);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.etaz, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.etaz);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.gammaz, static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.gammaz);
+}

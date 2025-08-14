@@ -362,3 +362,88 @@ TEST_F(ComputeJacobianDim2Test, OverloadedFunction) {
       result_overloaded.gammaz, static_cast<type_real>(result_direct.gammaz)))
       << expected_got(result_direct.gammaz, result_overloaded.gammaz);
 }
+
+TEST_F(ComputeJacobianDim2Test, NineNodeUnitSquareMapping) {
+  // Test with a 9-node unit square element
+  const int ngnod = 9;
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+      coorg("coorg", ngnod);
+
+  // 9-node unit square control nodes (corners + mid-edge + center)
+  coorg(0) = { 0.0, 0.0 }; // Corner 0: (0,0)
+  coorg(1) = { 1.0, 0.0 }; // Corner 1: (1,0)
+  coorg(2) = { 1.0, 1.0 }; // Corner 2: (1,1)
+  coorg(3) = { 0.0, 1.0 }; // Corner 3: (0,1)
+  coorg(4) = { 0.5, 0.0 }; // Mid-edge 4: (0.5,0)
+  coorg(5) = { 1.0, 0.5 }; // Mid-edge 5: (1,0.5)
+  coorg(6) = { 0.5, 1.0 }; // Mid-edge 6: (0.5,1)
+  coorg(7) = { 0.0, 0.5 }; // Mid-edge 7: (0,0.5)
+  coorg(8) = { 0.5, 0.5 }; // Center 8: (0.5,0.5)
+
+  // Test at center point (0, 0) in reference coordinates
+  auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0);
+
+  // For unit square, jacobian should be 0.25 (area = 1, reference area = 4)
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+                                           static_cast<type_real>(0.25)))
+      << expected_got(0.25, result.jacobian);
+
+  // For unit square mapping, the inverse jacobian matrix elements should be:
+  // Each direction scaled by factor of 2
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.xix, static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.xix);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.xiz, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiz);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.gammaz, static_cast<type_real>(2.0)))
+      << expected_got(2.0, result.gammaz);
+}
+
+TEST_F(ComputeJacobianDim2Test, NineNodeScaledSquareMapping) {
+  // Test with a 9-node scaled square element
+  const int ngnod = 9;
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+      coorg("coorg", ngnod);
+
+  // 9-node square with side length 2
+  coorg(0) = { 0.0, 0.0 }; // Corner 0
+  coorg(1) = { 2.0, 0.0 }; // Corner 1
+  coorg(2) = { 2.0, 2.0 }; // Corner 2
+  coorg(3) = { 0.0, 2.0 }; // Corner 3
+  coorg(4) = { 1.0, 0.0 }; // Mid-edge 4
+  coorg(5) = { 2.0, 1.0 }; // Mid-edge 5
+  coorg(6) = { 1.0, 2.0 }; // Mid-edge 6
+  coorg(7) = { 0.0, 1.0 }; // Mid-edge 7
+  coorg(8) = { 1.0, 1.0 }; // Center 8
+
+  // Test at center point (0, 0) in reference coordinates
+  auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0);
+
+  // For 2x2 square, jacobian should be 1.0 (area = 4, reference area = 4)
+  EXPECT_TRUE(specfem::utilities::is_close(result.jacobian,
+                                           static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.jacobian);
+
+  // For 2x2 square mapping, each direction scaled by factor of 1
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.xix, static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.xix);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.gammax, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.gammax);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.xiz, static_cast<type_real>(0.0)))
+      << expected_got(0.0, result.xiz);
+  EXPECT_TRUE(
+      specfem::utilities::is_close(result.gammaz, static_cast<type_real>(1.0)))
+      << expected_got(1.0, result.gammaz);
+}
