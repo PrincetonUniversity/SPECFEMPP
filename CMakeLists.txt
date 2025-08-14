@@ -468,6 +468,7 @@ target_link_libraries(
 add_library(
         algorithms
         src/algorithms/dim2/locate_point.cpp
+        src/algorithms/dim2/locate_point_impl.cpp
         src/algorithms/dim3/locate_point.cpp
 )
 
