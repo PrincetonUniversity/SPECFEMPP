@@ -362,6 +362,24 @@ target_link_libraries(
 )
 
 add_executable(
+  locate_point_impl_3d
+  algorithms/dim3/locate_point_impl.cpp
+)
+
+target_link_libraries(
+  locate_point_impl_3d
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  jacobian
+  point
+  ${GTEST_BOTH_LIBRARIES}
+)
+
+add_executable(
   policies_tests
   policies/policies.cpp
 )
