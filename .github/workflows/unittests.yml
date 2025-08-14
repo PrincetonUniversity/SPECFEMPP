@@ -25,3 +25,18 @@ jobs:
       - name: Run all tests
         run: cd build/release/tests/unit-tests
           && ctest --verbose
+  # This job is for building and testing with IO dependencies like HDF5 and ADIOS2
+  build-and-test-with-io-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check GNU and Cmake versions
+        run: gcc --version && cmake --version
+      - name: Checkout repository
+        uses: actions/checkout@v1
+      - name: Configure
+        run: cmake --preset release-io
+      - name: Build
+        run: cmake --build --preset release-io -j 2
+      - name: Run all tests
+        run: cd build/release-io/tests/unit-tests
+          && ctest --verbose

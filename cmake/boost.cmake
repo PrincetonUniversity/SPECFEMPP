@@ -1,3 +1,5 @@
+# Set policy for New find boost
+cmake_policy(SET CMP0167 NEW)
 
 message(STATUS "Configuring Boost library...")
 
