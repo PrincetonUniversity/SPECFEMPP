@@ -93,13 +93,20 @@ target_link_libraries(
 
 add_executable(
   jacobian_tests
-  jacobian/shape_functions2d.cpp
-  jacobian/shape_functions3d.cpp
+  jacobian/jacobian_tests.cpp
+  jacobian/dim2/shape_functions_tests.cpp
+  jacobian/dim2/compute_locations_tests.cpp
+  jacobian/dim2/compute_jacobian_tests.cpp
+  jacobian/dim3/shape_functions_tests.cpp
+  jacobian/dim3/compute_locations_tests.cpp
+  jacobian/dim3/compute_jacobian_tests.cpp
 )
 
 target_link_libraries(
   jacobian_tests
   jacobian
+  mpi_environment
+  kokkos_environment
   gtest_main
   -lpthread -lm
 )
