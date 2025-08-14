@@ -36,4 +36,40 @@ locate_point_core(
         &control_node_coord,
     const int ngnod, const int ngllx);
 
+// 3D overloads - using different input types for overload resolution
+
+// Using the 3D coordinate layout: (nspec, iz, iy, ix, icoord)
+using MeshHostCoordinatesViewType3D =
+    Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+
+std::tuple<int, int, int, int> rough_location(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
+        &global,
+    const MeshHostCoordinatesViewType3D coord);
+
+std::vector<int> get_best_candidates(
+    const int ispec_guess,
+    const Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        index_mapping);
+
+std::tuple<type_real, type_real, type_real> get_best_location(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
+        &global,
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+        Kokkos::HostSpace> &coorg,
+    type_real xi, type_real eta, type_real gamma);
+
+// Core locate_point logic that can be tested with raw data arrays
+specfem::point::local_coordinates<specfem::dimension::type::dim3>
+locate_point_core(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
+        &coordinates,
+    const MeshHostCoordinatesViewType3D &global_coordinates,
+    const Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &index_mapping,
+    const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &control_node_coordinates,
+    const int ngnod, const int ngllx);
+
 } // namespace specfem::algorithms::locate_point_impl
