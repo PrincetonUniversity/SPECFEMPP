@@ -136,7 +136,7 @@ TEST(LOCATE_HELPERS_3D, get_best_candidates_simple) {
   EXPECT_EQ(candidates[1], 1); // Neighboring element
 }
 
-TEST(LOCATE_HELPERS_3D, get_best_location_unit_cube) {
+TEST(LOCATE_HELPERS_3D, get_local_coordinates_unit_cube) {
   // Test with a unit cube element
   const int ngnod = 8;
   const Kokkos::View<
@@ -165,7 +165,7 @@ TEST(LOCATE_HELPERS_3D, get_best_location_unit_cube) {
   type_real gamma_initial = 0.1;
 
   auto [xi_final, eta_final, gamma_final] =
-      specfem::algorithms::locate_point_impl::get_best_location(
+      specfem::algorithms::locate_point_impl::get_local_coordinates(
           target, coorg, xi_initial, eta_initial, gamma_initial);
 
   // For a unit cube, center point (0.5, 0.5, 0.5) should map to (0, 0, 0) in
@@ -177,8 +177,8 @@ TEST(LOCATE_HELPERS_3D, get_best_location_unit_cube) {
   // Test corner point (0, 0, 0) should map to (-1, -1, -1)
   target = { 0.0, 0.0, 0.0 };
   std::tie(xi_final, eta_final, gamma_final) =
-      specfem::algorithms::locate_point_impl::get_best_location(target, coorg,
-                                                                0.0, 0.0, 0.0);
+      specfem::algorithms::locate_point_impl::get_local_coordinates(
+          target, coorg, 0.0, 0.0, 0.0);
 
   EXPECT_NEAR(xi_final, -1.0, 1e-6);
   EXPECT_NEAR(eta_final, -1.0, 1e-6);
@@ -187,8 +187,8 @@ TEST(LOCATE_HELPERS_3D, get_best_location_unit_cube) {
   // Test corner point (1, 1, 1) should map to (1, 1, 1)
   target = { 1.0, 1.0, 1.0 };
   std::tie(xi_final, eta_final, gamma_final) =
-      specfem::algorithms::locate_point_impl::get_best_location(target, coorg,
-                                                                0.0, 0.0, 0.0);
+      specfem::algorithms::locate_point_impl::get_local_coordinates(
+          target, coorg, 0.0, 0.0, 0.0);
 
   EXPECT_NEAR(xi_final, 1.0, 1e-6);
   EXPECT_NEAR(eta_final, 1.0, 1e-6);
@@ -465,6 +465,13 @@ TEST(LOCATE_HELPERS_3D, locate_point_core_2x2x2_eight_elements) {
   EXPECT_TRUE(std::abs(result.xi) <= 1.01);
   EXPECT_TRUE(std::abs(result.eta) <= 1.01);
   EXPECT_TRUE(std::abs(result.gamma) <= 1.01);
+
+  // Test error handling for point outside domain
+  target = { 10.0, 10.0, 10.0 }; // Far outside the mesh
+  EXPECT_THROW(
+      specfem::algorithms::locate_point_impl::locate_point_core(
+          target, global_coords, index_mapping, control_nodes, ngnod, ngllx),
+      std::runtime_error);
 }
 
 int main(int argc, char *argv[]) {

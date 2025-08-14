@@ -3,6 +3,8 @@
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
+#include <sstream>
+#include <stdexcept>
 
 namespace specfem {
 namespace algorithms {
@@ -80,7 +82,7 @@ std::vector<int> get_best_candidates(
   return ispec_candidates;
 }
 
-std::tuple<type_real, type_real> get_best_location(
+std::tuple<type_real, type_real> get_local_coordinates(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,
     const Kokkos::View<
@@ -142,8 +144,11 @@ locate_point_core(
 
   type_real final_dist = std::numeric_limits<type_real>::max();
 
-  int ispec_selected_source;
-  type_real xi_source, gamma_source;
+  int ispec_selected = -1;
+  type_real xi_selected = -9999.0;
+  type_real gamma_selected = -9999.0;
+  specfem::point::global_coordinates<specfem::dimension::type::dim2>
+      coord_point;
 
   const Kokkos::View<
       specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
@@ -162,25 +167,45 @@ locate_point_core(
 
     // Find the best location using Newton-Raphson
     std::tie(xi_guess, gamma_guess) =
-        get_best_location(coordinates, coorg, xi_guess, gamma_guess);
+        get_local_coordinates(coordinates, coorg, xi_guess, gamma_guess);
+
+    // Compute the global coordinates from the found local coordinates
+    auto coord_computed = specfem::jacobian::compute_locations(
+        coorg, ngnod, xi_guess, gamma_guess);
 
     // Compute the distance from target to found location
-    auto [x, z] = specfem::jacobian::compute_locations(coorg, ngnod, xi_guess,
-                                                       gamma_guess);
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        cart_coord = { x, z };
+    type_real dist = specfem::point::distance(coordinates, coord_computed);
 
-    type_real dist = specfem::point::distance(coordinates, cart_coord);
-
+    // Keep the best result
     if (dist < final_dist) {
-      ispec_selected_source = ispec;
-      xi_source = xi_guess;
-      gamma_source = gamma_guess;
+      ispec_selected = ispec;
+      xi_selected = xi_guess;
+      gamma_selected = gamma_guess;
+      coord_point = coord_computed;
       final_dist = dist;
     }
   }
 
-  return { ispec_selected_source, xi_source, gamma_source };
+  // Check if the found coordinates are valid
+  bool xi_out_of_bounds = std::fabs(std::fabs(xi_selected) - 1.01) < 1e-6;
+  bool gamma_out_of_bounds = std::fabs(std::fabs(gamma_selected) - 1.01) < 1e-6;
+  bool ispec_invalid = ispec_selected < 0;
+
+  // If the found coordinates are out of bounds, throw an error
+  if (xi_out_of_bounds || gamma_out_of_bounds || ispec_invalid) {
+    std::ostringstream oss;
+    oss << "\nFailed to locate point in the mesh:\n"
+        << "  (ispec, xi, gamma)   = (" << ispec_selected << ", " << xi_selected
+        << ", " << gamma_selected << ")\n"
+        << "  (target_x, target_z) = (" << coordinates.x << ", "
+        << coordinates.z << ")\n"
+        << "   (found_x,  found_z) = (" << coord_point.x << ", "
+        << coord_point.z << ")\n"
+        << "            final_dist = " << final_dist << "\n";
+    throw std::runtime_error(oss.str());
+  }
+
+  return { ispec_selected, xi_selected, gamma_selected };
 }
 
 } // namespace locate_point_impl
