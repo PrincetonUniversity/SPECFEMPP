@@ -7,20 +7,22 @@ if (SPECFEM_ENABLE_ADIOS2)
   message(STATUS "Enabling ADIOS2 support")
   list(APPEND CMAKE_MESSAGE_INDENT "  ADIOS2: ")
 
+
+  if (CMAKE_VERSION VERSION_GREATER "3.30.0")
+  # For CMake versions > 3.30, we need to use Set the policy)
+    if (CMAKE_VERSION VERSION_LESS "3.28.0")
+      cmake_policy(SET CMP0169 OLD)
+    else()
+      cmake_policy(SET CMP0169 NEW)
+    endif()
+  endif()
+
   set(ADIOS2_VERSION 2.10.2)
   message(STATUS "Downloading and extracting ADIOS2 (${ADIOS2_VERSION}) library sources. This will take <1 min.")
   include(FetchContent)
 
-    # Fetch ADIOS2 from the Github release zip file to reduce download time
-  FetchContent_Declare(
-      ADIOS2
-      URL https://github.com/ornladios/ADIOS2/archive/refs/tags/v${ADIOS2_VERSION}.tar.gz
-      USES_TERMINAL_DOWNLOAD True
-      GIT_PROGRESS TRUE
-      DOWNLOAD_NO_EXTRACT FALSE
-      DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-      EXCLUDE_FROM_ALL
-  )
+  # Set common FetchContent parameters
+  set(ADIOS2_URL "https://github.com/ornladios/ADIOS2/archive/refs/tags/v${ADIOS2_VERSION}.tar.gz")
 
   # Setting the ADIOS2 options
   set(ADIOS2_USE_Fortran ON CACHE BOOL "Enable Fortran support" FORCE)
@@ -29,14 +31,44 @@ if (SPECFEM_ENABLE_ADIOS2)
   set(ADIOS2_USE_MPI ${SPECFEM_ENABLE_MPI} CACHE BOOL "Enable MPI support" FORCE)
   set(BUILD_TESTING OFF CACHE BOOL "Disable ADIOS2 testing" FORCE)
   set(ADIOS2_BUILD_EXAMPLES OFF CACHE BOOL "Disable ADIOS2 examples" FORCE)
-  set(ADIOS2_USE_EXTERNAL_YAMLCPP ON CACHE BOOL "Use external YAML-CPP" FORCE)
-  set(ADIOS2_USE_EXTERNAL_PUGIXML ON CACHE BOOL "Use external pugixml" FORCE)
+
+  # Use external yaml-cpp (our FetchContent version) to avoid conflicts
+  set(ADIOS2_USE_EXTERNAL_YAMLCPP ON CACHE BOOL "Use external yaml-cpp" FORCE)
 
   # Optional: Control other features based on your needs
   set(ADIOS2_USE_ZeroMQ OFF CACHE BOOL "Disable ZeroMQ" FORCE)
   set(ADIOS2_USE_SST ON CACHE BOOL "Enable SST engine" FORCE)
 
-  FetchContent_MakeAvailable(ADIOS2)
+  if (CMAKE_VERSION VERSION_LESS "3.28.0")
+      # For CMake versions < 3.28, EXCLUDE_FROM_ALL is not supported in FetchContent_Declare
+      FetchContent_Declare(
+          ADIOS2
+          URL ${ADIOS2_URL}
+          USES_TERMINAL_DOWNLOAD True
+          GIT_PROGRESS TRUE
+          DOWNLOAD_NO_EXTRACT FALSE
+          DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+      )
+
+      FetchContent_GetProperties(ADIOS2)
+      if(NOT adios2_POPULATED)
+          FetchContent_Populate(ADIOS2)
+          add_subdirectory(${adios2_SOURCE_DIR} ${adios2_BINARY_DIR} EXCLUDE_FROM_ALL)
+      endif()
+  else()
+      # For CMake versions >= 3.28, EXCLUDE_FROM_ALL is supported in FetchContent_Declare
+      FetchContent_Declare(
+          ADIOS2
+          URL ${ADIOS2_URL}
+          USES_TERMINAL_DOWNLOAD True
+          GIT_PROGRESS TRUE
+          DOWNLOAD_NO_EXTRACT FALSE
+          DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+          EXCLUDE_FROM_ALL
+      )
+
+      FetchContent_MakeAvailable(ADIOS2)
+  endif()
 
   message(STATUS "ADIOS2 downloaded and configured.")
 
