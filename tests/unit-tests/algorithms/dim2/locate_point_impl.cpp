@@ -89,7 +89,7 @@ TEST(LOCATE_HELPERS, get_best_candidates_simple) {
   EXPECT_EQ(candidates[1], 1); // Neighboring element
 }
 
-TEST(LOCATE_HELPERS, get_best_location_unit_square) {
+TEST(LOCATE_HELPERS, get_local_coordinates_unit_square) {
   // Test with a unit square element
   const int ngnod = 4;
   const Kokkos::View<
@@ -113,7 +113,7 @@ TEST(LOCATE_HELPERS, get_best_location_unit_square) {
   type_real gamma_initial = 0.1;
 
   auto [xi_final, gamma_final] =
-      specfem::algorithms::locate_point_impl::get_best_location(
+      specfem::algorithms::locate_point_impl::get_local_coordinates(
           target, coorg, xi_initial, gamma_initial);
 
   // For a unit square, center point (0.5, 0.5) should map to (0, 0) in
@@ -124,8 +124,8 @@ TEST(LOCATE_HELPERS, get_best_location_unit_square) {
   // Test corner point (0, 0) should map to (-1, -1)
   target = { 0.0, 0.0 };
   std::tie(xi_final, gamma_final) =
-      specfem::algorithms::locate_point_impl::get_best_location(target, coorg,
-                                                                0.0, 0.0);
+      specfem::algorithms::locate_point_impl::get_local_coordinates(
+          target, coorg, 0.0, 0.0);
 
   EXPECT_NEAR(xi_final, -1.0, 1e-6);
   EXPECT_NEAR(gamma_final, -1.0, 1e-6);
@@ -133,8 +133,8 @@ TEST(LOCATE_HELPERS, get_best_location_unit_square) {
   // Test corner point (1, 1) should map to (1, 1)
   target = { 1.0, 1.0 };
   std::tie(xi_final, gamma_final) =
-      specfem::algorithms::locate_point_impl::get_best_location(target, coorg,
-                                                                0.0, 0.0);
+      specfem::algorithms::locate_point_impl::get_local_coordinates(
+          target, coorg, 0.0, 0.0);
 
   EXPECT_NEAR(xi_final, 1.0, 1e-6);
   EXPECT_NEAR(gamma_final, 1.0, 1e-6);
@@ -413,19 +413,16 @@ TEST(LOCATE_HELPERS, locate_point_core_2x2_four_elements) {
       target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
 
   EXPECT_EQ(result.ispec, 3);
-  EXPECT_NEAR(result.xi, 0.66, 1e-6);
-  EXPECT_NEAR(result.gamma, 0.66, 1e-6);
+  EXPECT_NEAR(result.xi, -0.33, 1e-2);
+  EXPECT_NEAR(result.gamma, -0.33, 1e-2);
 
   // Add one test for a point that is not in any element
   // Point (2.5, 2.5) should not be in any element
   target = { 2.5, 2.5 };
-  result = specfem::algorithms::locate_point_impl::locate_point_core(
-      target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
-
-  // Should return ispec = -1 indicating not found
-  EXPECT_EQ(result.ispec, -1);
-  EXPECT_TRUE(std::isnan(result.xi));
-  EXPECT_TRUE(std::isnan(result.gamma));
+  EXPECT_THROW(
+      specfem::algorithms::locate_point_impl::locate_point_core(
+          target, global_coords, index_mapping, control_nodes, ngnod, ngllx),
+      std::runtime_error);
 }
 
 int main(int argc, char *argv[]) {

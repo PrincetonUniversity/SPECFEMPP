@@ -16,7 +16,7 @@ std::vector<int> get_best_candidates(
     const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         index_mapping);
 
-std::tuple<type_real, type_real> get_best_location(
+std::tuple<type_real, type_real> get_local_coordinates(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,
     const Kokkos::View<
@@ -52,7 +52,7 @@ std::vector<int> get_best_candidates(
     const Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
         index_mapping);
 
-std::tuple<type_real, type_real, type_real> get_best_location(
+std::tuple<type_real, type_real, type_real> get_local_coordinates(
     const specfem::point::global_coordinates<specfem::dimension::type::dim3>
         &global,
     const Kokkos::View<

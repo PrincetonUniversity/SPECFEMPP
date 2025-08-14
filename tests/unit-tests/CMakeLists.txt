@@ -344,12 +344,12 @@ target_link_libraries(
 )
 
 add_executable(
-  locate_point_impl
+  locate_point_impl_2d
   algorithms/dim2/locate_point_impl.cpp
 )
 
 target_link_libraries(
-  locate_point_impl
+  locate_point_impl_2d
   mesh
   assembly
   quadrature
@@ -580,6 +580,8 @@ if (NOT MPI_PARALLEL)
     io_tests
     jacobian_tests
     lagrange_tests
+    locate_point_impl_2d
+    locate_point_impl_3d
     mass_matrix_tests
     mesh_tests
     point_tests
