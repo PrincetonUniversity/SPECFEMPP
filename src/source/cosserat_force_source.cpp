@@ -106,10 +106,10 @@ bool specfem::sources::cosserat_force::operator==(
   }
 
   bool internal =
-      specfem::utilities::almost_equal(this->f, other_source->f) &&
-      specfem::utilities::almost_equal(this->x, other_source->x) &&
-      specfem::utilities::almost_equal(this->z, other_source->z) &&
-      specfem::utilities::almost_equal(this->angle, other_source->angle);
+      specfem::utilities::is_close(this->f, other_source->f) &&
+      specfem::utilities::is_close(this->x, other_source->x) &&
+      specfem::utilities::is_close(this->z, other_source->z) &&
+      specfem::utilities::is_close(this->angle, other_source->angle);
 
   if (!internal) {
     std::cout << "Cosserat force sources not equal" << std::endl;
