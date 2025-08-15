@@ -27,7 +27,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
 
   if (!boundary_values_view(0)) {
     throw std::runtime_error("Boundary values were not saved in the wavefield "
-                             "output, please set `for_adjoint_simulation` to "
+                             "output, please set `for_adjoint_simulations` to "
                              "true in the input file for forward simulations.");
   }
 
