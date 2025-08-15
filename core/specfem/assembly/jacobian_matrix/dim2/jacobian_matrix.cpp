@@ -43,10 +43,6 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
       h_jacobian(specfem::kokkos::create_mirror_view(jacobian)) {
 
   const int ngnod = mesh.ngnod;
-  const int ngllxz = ngllz * ngllx;
-
-  const int scratch_size =
-      specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
   for (int ispec = 0; ispec < nspec; ++ispec) {
 
