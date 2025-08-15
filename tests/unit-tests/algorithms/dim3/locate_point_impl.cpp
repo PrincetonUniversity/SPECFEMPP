@@ -1,11 +1,15 @@
 #include "algorithms/locate_point_impl.hpp"
+#include "../../test_macros.hpp"
 #include "Kokkos_Environment.hpp"
 #include "MPI_environment.hpp"
 #include "algorithms/locate_point.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/point.hpp"
+#include "utilities/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
+
+using specfem::utilities::is_close;
 
 // Test helper functions from locate_point_impl namespace
 
@@ -170,9 +174,12 @@ TEST(LOCATE_HELPERS_3D, get_local_coordinates_unit_cube) {
 
   // For a unit cube, center point (0.5, 0.5, 0.5) should map to (0, 0, 0) in
   // reference coords
-  EXPECT_NEAR(xi_final, 0.0, 1e-6);
-  EXPECT_NEAR(eta_final, 0.0, 1e-6);
-  EXPECT_NEAR(gamma_final, 0.0, 1e-6);
+  EXPECT_TRUE(is_close(xi_final, type_real{ 0.0 }))
+      << expected_got(0.0, xi_final);
+  EXPECT_TRUE(is_close(eta_final, type_real{ 0.0 }))
+      << expected_got(0.0, eta_final);
+  EXPECT_TRUE(is_close(gamma_final, type_real{ 0.0 }))
+      << expected_got(0.0, gamma_final);
 
   // Test corner point (0, 0, 0) should map to (-1, -1, -1)
   target = { 0.0, 0.0, 0.0 };
@@ -180,9 +187,12 @@ TEST(LOCATE_HELPERS_3D, get_local_coordinates_unit_cube) {
       specfem::algorithms::locate_point_impl::get_local_coordinates(
           target, coorg, 0.0, 0.0, 0.0);
 
-  EXPECT_NEAR(xi_final, -1.0, 1e-6);
-  EXPECT_NEAR(eta_final, -1.0, 1e-6);
-  EXPECT_NEAR(gamma_final, -1.0, 1e-6);
+  EXPECT_TRUE(is_close(xi_final, type_real{ -1.0 }))
+      << expected_got(-1.0, xi_final);
+  EXPECT_TRUE(is_close(eta_final, type_real{ -1.0 }))
+      << expected_got(-1.0, eta_final);
+  EXPECT_TRUE(is_close(gamma_final, type_real{ -1.0 }))
+      << expected_got(-1.0, gamma_final);
 
   // Test corner point (1, 1, 1) should map to (1, 1, 1)
   target = { 1.0, 1.0, 1.0 };
@@ -190,9 +200,12 @@ TEST(LOCATE_HELPERS_3D, get_local_coordinates_unit_cube) {
       specfem::algorithms::locate_point_impl::get_local_coordinates(
           target, coorg, 0.0, 0.0, 0.0);
 
-  EXPECT_NEAR(xi_final, 1.0, 1e-6);
-  EXPECT_NEAR(eta_final, 1.0, 1e-6);
-  EXPECT_NEAR(gamma_final, 1.0, 1e-6);
+  EXPECT_TRUE(is_close(xi_final, type_real{ 1.0 }))
+      << expected_got(1.0, xi_final);
+  EXPECT_TRUE(is_close(eta_final, type_real{ 1.0 }))
+      << expected_got(1.0, eta_final);
+  EXPECT_TRUE(is_close(gamma_final, type_real{ 1.0 }))
+      << expected_got(1.0, gamma_final);
 }
 
 TEST(LOCATE_HELPERS_3D, locate_point_core_unit_cube) {
@@ -289,9 +302,12 @@ TEST(LOCATE_HELPERS_3D, locate_point_core_unit_cube) {
   // Should find element 0 with local coordinates near (0, 0, 0) for center
   // point
   EXPECT_EQ(result.ispec, 0);
-  EXPECT_NEAR(result.xi, 0.0, 1e-6);
-  EXPECT_NEAR(result.eta, 0.0, 1e-6);
-  EXPECT_NEAR(result.gamma, 0.0, 1e-6);
+  EXPECT_TRUE(is_close(result.xi, type_real{ 0.0 }))
+      << expected_got(0.0, result.xi);
+  EXPECT_TRUE(is_close(result.eta, type_real{ 0.0 }))
+      << expected_got(0.0, result.eta);
+  EXPECT_TRUE(is_close(result.gamma, type_real{ 0.0 }))
+      << expected_got(0.0, result.gamma);
 
   // Test corner point (0, 0, 0) should map to (-1, -1, -1)
   target = { 0.0, 0.0, 0.0 };
@@ -299,9 +315,12 @@ TEST(LOCATE_HELPERS_3D, locate_point_core_unit_cube) {
       target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
 
   EXPECT_EQ(result.ispec, 0);
-  EXPECT_NEAR(result.xi, -1.0, 1e-6);
-  EXPECT_NEAR(result.eta, -1.0, 1e-6);
-  EXPECT_NEAR(result.gamma, -1.0, 1e-6);
+  EXPECT_TRUE(is_close(result.xi, type_real{ -1.0 }))
+      << expected_got(-1.0, result.xi);
+  EXPECT_TRUE(is_close(result.eta, type_real{ -1.0 }))
+      << expected_got(-1.0, result.eta);
+  EXPECT_TRUE(is_close(result.gamma, type_real{ -1.0 }))
+      << expected_got(-1.0, result.gamma);
 
   // Test corner point (1, 1, 1) should map to (1, 1, 1)
   target = { 1.0, 1.0, 1.0 };
@@ -309,9 +328,12 @@ TEST(LOCATE_HELPERS_3D, locate_point_core_unit_cube) {
       target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
 
   EXPECT_EQ(result.ispec, 0);
-  EXPECT_NEAR(result.xi, 1.0, 1e-6);
-  EXPECT_NEAR(result.eta, 1.0, 1e-6);
-  EXPECT_NEAR(result.gamma, 1.0, 1e-6);
+  EXPECT_TRUE(is_close(result.xi, type_real{ 1.0 }))
+      << expected_got(1.0, result.xi);
+  EXPECT_TRUE(is_close(result.eta, type_real{ 1.0 }))
+      << expected_got(1.0, result.eta);
+  EXPECT_TRUE(is_close(result.gamma, type_real{ 1.0 }))
+      << expected_got(1.0, result.gamma);
 }
 
 TEST(LOCATE_HELPERS_3D, locate_point_core_2x2x2_eight_elements) {

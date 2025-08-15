@@ -171,12 +171,11 @@ bool specfem::sources::moment_tensor::operator==(
     return false;
   }
 
-  bool internal =
-      specfem::utilities::almost_equal(this->Mxx, other_source->Mxx) &&
-      specfem::utilities::almost_equal(this->Mxz, other_source->Mxz) &&
-      specfem::utilities::almost_equal(this->Mzz, other_source->Mzz) &&
-      specfem::utilities::almost_equal(this->x, other_source->x) &&
-      specfem::utilities::almost_equal(this->z, other_source->z);
+  bool internal = specfem::utilities::is_close(this->Mxx, other_source->Mxx) &&
+                  specfem::utilities::is_close(this->Mxz, other_source->Mxz) &&
+                  specfem::utilities::is_close(this->Mzz, other_source->Mzz) &&
+                  specfem::utilities::is_close(this->x, other_source->x) &&
+                  specfem::utilities::is_close(this->z, other_source->z);
 
   if (!internal) {
     std::cout << "Moment tensor source not equal" << std::endl;

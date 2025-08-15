@@ -52,6 +52,7 @@ target_link_libraries(
   specfem_mpi
 )
 
+
 add_library(
   compare_arrays
   utilities/src/compare_array.cpp
@@ -63,6 +64,17 @@ target_link_libraries(
   io
 )
 
+add_executable(
+  is_close_tests
+  utilities/is_close_tests.cpp
+)
+
+target_link_libraries(
+  is_close_tests
+  utilities
+  gtest_main
+  Kokkos::kokkos
+)
 
 add_executable(
   gll_tests
@@ -585,6 +597,7 @@ if (NOT MPI_PARALLEL)
     gll_tests
     interpolate_function
     io_tests
+    is_close_tests
     jacobian_tests
     lagrange_tests
     locate_point_impl_2d

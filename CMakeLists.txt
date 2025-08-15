@@ -441,7 +441,6 @@ target_link_libraries(
         )
 
 add_library(utilities
-        src/utilities/utilities.cpp
         src/utilities/strings.cpp
 )
 

@@ -133,11 +133,6 @@ std::string specfem::sources::force::print() const {
   return message.str();
 }
 
-bool almost_equal(const type_real a, const type_real b,
-                  const type_real epsilon = 1e-6) {
-  return std::abs(a - b) < epsilon;
-}
-
 bool specfem::sources::force::operator==(
     const specfem::sources::source &other) const {
 
@@ -151,9 +146,9 @@ bool specfem::sources::force::operator==(
     return false;
   }
 
-  return specfem::utilities::almost_equal(this->x, other_source->x) &&
-         specfem::utilities::almost_equal(this->z, other_source->z) &&
-         specfem::utilities::almost_equal(this->angle, other_source->angle) &&
+  return specfem::utilities::is_close(this->x, other_source->x) &&
+         specfem::utilities::is_close(this->z, other_source->z) &&
+         specfem::utilities::is_close(this->angle, other_source->angle) &&
          *(this->forcing_function) == *(other_source->forcing_function);
 }
 bool specfem::sources::force::operator!=(
