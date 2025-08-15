@@ -59,17 +59,7 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
   }
 
   // Check that the graph is symmetric
-  for (const auto &edge : boost::make_iterator_range(boost::edges(g))) {
-    const auto source = boost::source(edge, g);
-    const auto target = boost::target(edge, g);
-    if (!boost::edge(target, source, g).second) {
-      std::ostringstream message;
-      message << "Adjacency graph is not symmetric: edge from " << source
-              << " to " << target << " exists, but not from " << target
-              << " to " << source;
-      throw std::runtime_error(message.str());
-    }
-  }
+  graph.assert_symmetry();
 
   return graph;
 }
