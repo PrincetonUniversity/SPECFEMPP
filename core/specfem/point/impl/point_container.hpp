@@ -3,7 +3,7 @@
 #include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem_setup.hpp"
-#include "utilities/simd.hpp"
+#include "utilities/interface.hpp"
 #include <Kokkos_SIMD.hpp>
 #include <boost/preprocessor.hpp>
 #include <iostream>
