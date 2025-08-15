@@ -70,13 +70,10 @@ KOKKOS_FORCEINLINE_FUNCTION void atomic_add_after_simd_dispatch(
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
       components;
 
-  constexpr static auto DataClass =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
-
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_atomic_add_accessor<on_device, DataClass>(iglob, icomp, field,
-                                                    accessors(icomp)),
+    (base_atomic_add_accessor<on_device, AccessorTypes::data_class>(
+         iglob, icomp, field, accessors(icomp)),
      ...);
   }
   return;
@@ -103,13 +100,10 @@ KOKKOS_FORCEINLINE_FUNCTION void atomic_add_after_simd_dispatch(
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
       components;
 
-  constexpr static auto DataClass =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
-
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_atomic_add_accessor<on_device, DataClass>(iglob, icomp, mask, field,
-                                                    accessors(icomp)),
+    (base_atomic_add_accessor<on_device, AccessorTypes::data_class>(
+         iglob, icomp, mask, field, accessors(icomp)),
      ...);
   }
   return;
