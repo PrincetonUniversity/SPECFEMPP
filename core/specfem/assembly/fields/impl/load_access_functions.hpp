@@ -43,14 +43,12 @@ base_load_accessor(const int *iglob, const int icomp, const MaskType &mask,
   using data_accessor =
       std::integral_constant<specfem::data_access::DataClassType, DataClass>;
 
-  const T result([&](std::size_t lane) {
+  T result([&](std::size_t lane) {
     return mask(lane) ? field.template get_value<on_device>(data_accessor(),
                                                             iglob[lane], icomp)
-                      : 0;
+                      : static_cast<type_real>(0.0);
   });
-  // remove const qualifier
-  std::remove_const_t<T> &non_const_value = value;
-  non_const_value = result;
+  value = result;
   return;
 }
 
@@ -71,14 +69,11 @@ KOKKOS_FORCEINLINE_FUNCTION void load_after_simd_dispatch(
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
       components;
 
-  constexpr static auto DataClass =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
-
   // Call load for each accessor
 
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_load_accessor<on_device, DataClass>(iglob, icomp, field,
-                                              accessors(icomp)),
+    (base_load_accessor<on_device, AccessorTypes::data_class>(
+         iglob, icomp, field, accessors(icomp)),
      ...);
   }
   return;
@@ -105,16 +100,13 @@ KOKKOS_FORCEINLINE_FUNCTION void load_after_simd_dispatch(
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
       components;
 
-  constexpr static auto DataClass =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
-
   using TagType = typename std::tuple_element_t<
       0, std::tuple<AccessorTypes...> >::simd::tag_type;
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_load_accessor<on_device, DataClass>(iglob, icomp, mask, TagType(),
-                                              field, accessors(icomp)),
+    (base_load_accessor<on_device, AccessorTypes::data_class>(
+         iglob, icomp, mask, TagType(), field, accessors(icomp)),
      ...);
   }
   return;

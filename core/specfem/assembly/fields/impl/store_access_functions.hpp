@@ -52,13 +52,10 @@ KOKKOS_FORCEINLINE_FUNCTION void store_after_simd_dispatch(
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
       components;
 
-  constexpr static auto DataClass =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
-
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_store_accessor<on_device, DataClass>(iglob, icomp, field,
-                                               accessors(icomp)),
+    (base_store_accessor<on_device, AccessorTypes::data_class>(
+         iglob, icomp, field, accessors(icomp)),
      ...);
   }
   return;
@@ -88,13 +85,10 @@ KOKKOS_FORCEINLINE_FUNCTION void store_after_simd_dispatch(
   using TagType = typename std::tuple_element_t<
       0, std::tuple<AccessorTypes...> >::simd::tag_type;
 
-  constexpr static auto DataClass =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
-
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_store_accessor<on_device, DataClass>(iglob, icomp, mask, TagType(),
-                                               field, accessors(icomp)),
+    (base_store_accessor<on_device, AccessorTypes::data_class>(
+         iglob, icomp, mask, TagType(), field, accessors(icomp)),
      ...);
   }
   return;

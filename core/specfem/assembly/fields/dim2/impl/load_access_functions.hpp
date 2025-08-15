@@ -34,20 +34,18 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
 
   const auto current_field = field.template get_field<MediumTag>();
 
-  const int iglob = field.template get_iglob<true>(index.ispec, index.iz,
-                                                   index.ix, MediumTag);
+  const int iglob = field.template get_iglob<on_device>(index.ispec, index.iz,
+                                                        index.ix, MediumTag);
 
   constexpr static int ncomponents = specfem::element::attributes<
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
       components;
 
-  constexpr static auto DataClass =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
-
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (specfem::assembly::fields_impl::base_load_accessor<on_device, DataClass>(
-         iglob, icomp, current_field, accessors(icomp)),
+    (specfem::assembly::fields_impl::base_load_accessor<
+         on_device, AccessorTypes::data_class>(iglob, icomp, current_field,
+                                               accessors(icomp)),
      ...);
   }
 
@@ -82,7 +80,7 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
   int iglob[simd_size];
   for (int lane = 0; lane < simd_size; ++lane) {
     iglob[lane] = index.mask(lane)
-                      ? field.template get_iglob<true>(
+                      ? field.template get_iglob<on_device>(
                             index.ispec + lane, index.iz, index.ix, MediumTag)
                       : field.nglob + 1;
   }
@@ -94,12 +92,10 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
       components;
 
-  constexpr static auto DataClass =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
-
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (specfem::assembly::fields_impl::base_load_accessor<on_device, DataClass>(
+    (specfem::assembly::fields_impl::base_load_accessor<
+         on_device, AccessorTypes::data_class>(
          iglob, icomp, [&](std::size_t lane) { return index.mask(lane); },
          current_field, accessors(icomp)),
      ...);
@@ -130,9 +126,6 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
 
   const auto &current_field = field.template get_field<MediumTag>();
 
-  constexpr static auto DataClass =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
-
   constexpr static int ncomponents = specfem::element::attributes<
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
@@ -144,12 +137,12 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
         const auto ielement = iterator_index.get_policy_index();
         const auto point_index = iterator_index.get_index();
 
-        const int iglob = field.template get_iglob<true>(
+        const int iglob = field.template get_iglob<on_device>(
             point_index.ispec, point_index.iz, point_index.ix, MediumTag);
 
         for (int icomp = 0; icomp < ncomponents; ++icomp) {
-          (specfem::assembly::fields_impl::base_load_accessor<on_device,
-                                                              DataClass>(
+          (specfem::assembly::fields_impl::base_load_accessor<
+               on_device, AccessorTypes::data_class>(
                iglob, icomp, current_field,
                accessors(ielement, point_index.iz, point_index.ix, icomp)),
            ...);
@@ -186,9 +179,6 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
 
   const auto &current_field = field.template get_field<MediumTag>();
 
-  constexpr static auto DataClass =
-      std::tuple_element_t<0, std::tuple<AccessorTypes...> >::data_class;
-
   constexpr static int ncomponents = specfem::element::attributes<
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
@@ -206,15 +196,15 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
         int iglob[simd_size];
         for (int lane = 0; lane < simd_size; ++lane) {
           iglob[lane] = point_index.mask(lane)
-                            ? field.template get_iglob<true>(
+                            ? field.template get_iglob<on_device>(
                                   point_index.ispec + lane, point_index.iz,
                                   point_index.ix, MediumTag)
                             : field.nglob + 1;
         }
 
         for (int icomp = 0; icomp < ncomponents; ++icomp) {
-          (specfem::assembly::fields_impl::base_load_accessor<on_device,
-                                                              DataClass>(
+          (specfem::assembly::fields_impl::base_load_accessor<
+               on_device, AccessorTypes::data_class>(
                iglob, icomp,
                [&](std::size_t lane) { return point_index.mask(lane); },
                current_field,
