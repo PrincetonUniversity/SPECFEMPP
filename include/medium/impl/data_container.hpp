@@ -64,15 +64,21 @@
   }
 
 #define _DEFINE_DOMAIN_VIEW(r, data, elem)                                     \
-  specfem::kokkos::DomainView2d<type_real, 3,                                  \
-                                Kokkos::DefaultExecutionSpace::memory_space>   \
+  specfem::kokkos::DomainView<                                                 \
+      dimension_tag, type_real,                                                \
+      specfem::dimension::dimension<dimension_tag>::dim + 1,                   \
+      Kokkos::DefaultExecutionSpace::memory_space>                             \
       BOOST_PP_SEQ_ELEM(0, elem);                                              \
   typename decltype(BOOST_PP_SEQ_ELEM(0, elem))::HostMirror BOOST_PP_CAT(      \
       h_, BOOST_PP_SEQ_ELEM(0, elem));
 
-#define _INSTANCE_DEVICE_VIEW(r, data, elem)                                   \
+#define _INSTANCE_DEVICE_VIEW2D(r, data, elem)                                 \
   BOOST_PP_SEQ_ELEM(0, elem)                                                   \
   (BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)), nspec, ngllz, ngllx)
+
+#define _INSTANCE_DEVICE_VIEW3D(r, data, elem)                                 \
+  BOOST_PP_SEQ_ELEM(0, elem)                                                   \
+  (BOOST_PP_STRINGIZE(BOOST_PP_SEQ_ELEM(0, elem)), nspec, ngllz, nglly, ngllx)
 
 #define _INSTANCE_HOST_VIEW(r, data, elem)                                     \
   BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem))                                 \
@@ -86,7 +92,7 @@
             std::enable_if_t<U == specfem::dimension::type::dim2, int> = 0>    \
   data_container(const int nspec, const int ngllz, const int ngllx)            \
       : BOOST_PP_SEQ_ENUM(                                                     \
-            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW, _, seq)),            \
+            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW2D, _, seq)),          \
         BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {}            \
   template <specfem::dimension::type U = dimension_tag,                        \
@@ -94,7 +100,7 @@
   data_container(const int nspec, const int ngllz, const int nglly,            \
                  const int ngllx)                                              \
       : BOOST_PP_SEQ_ENUM(                                                     \
-            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW, _, seq)),            \
+            BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW3D, _, seq)),          \
         BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {}
 
@@ -148,20 +154,20 @@
 
 /**
  * @brief Generate a data container where each element within the variadic
- * argument list is a DomainView2d.
+ * argument list is a DomainView.
  *
- * @param ... Variadic arguments representing the names of the DomainView2d
+ * @param ... Variadic arguments representing the names of the DomainView
  * elements.
  *
  * @details This macro creates the following structure:
- * - A data container with a set of DomainView2d elements, each named according
+ * - A data container with a set of DomainView elements, each named according
  * to the provided arguments.
- * - Data container constructor that initializes each DomainView2d with the
+ * - Data container constructor that initializes each DomainView with the
  * specified number of spectral elements (nspec), number of GLL points in z
  * (ngllz), and number of GLL points in x (ngllx).
  * - Accessor methods for iterating over the elements on both device and host.
  * - Synchronization methods to copy data between device and host views.
- * - Accessor methods to iterate over the DomainView2d elements.
+ * - Accessor methods to iterate over the DomainView elements.
  *
  * Example usage:
  * @code
@@ -169,8 +175,8 @@
  * @endcode
  * Generated code :
  * @code
- * DomainView2d rho;
- * DomainView2d kappa;
+ * DomainView rho;
+ * DomainView kappa;
  * typename decltype(rho)::HostMirror h_rho;
  * typename decltype(kappa)::HostMirror h_kappa;
  * data_container() = default;
