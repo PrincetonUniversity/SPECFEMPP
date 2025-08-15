@@ -4,7 +4,7 @@
 #include "specfem_setup.hpp"
 #include "test_helper.hpp"
 #include "test_macros.hpp"
-#include "utilities/simd.hpp"
+#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <type_traits>
