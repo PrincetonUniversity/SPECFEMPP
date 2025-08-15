@@ -9,6 +9,217 @@ namespace specfem::assembly {
  *
  */
 template <specfem::dimension::type DimensionTag> struct kernels;
+
+/**
+ * @defgroup ComputeKernelsDataAccess
+ */
+
+/**
+ * @brief Load misfit kernels for a given quadrature point on the device
+ *
+ * @ingroup ComputeKernelsDataAccess
+ *
+ * @tparam PointKernelType Point kernel type. Needs to be of @ref
+ * specfem::point::kernels
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param kernels Misfit kernels container
+ * @param point_kernels Kernels at a given quadrature point (output)
+ */
+template <typename PointKernelType, typename IndexType,
+          typename std::enable_if<IndexType::using_simd ==
+                                      PointKernelType::simd::using_simd,
+                                  int>::type = 0>
+KOKKOS_FUNCTION void
+load_on_device(const IndexType &index,
+               const kernels<PointKernelType::dimension_tag> &kernels,
+               PointKernelType &point_kernels) {
+  const int ispec = kernels.property_index_mapping(index.ispec);
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
+
+  kernels.template get_container<MediumTag, PropertyTag>().load_device_values(
+      l_index, point_kernels);
+
+  return;
+}
+
+/**
+ * @brief Load misfit kernels for a given quadrature point on the host
+ *
+ * @ingroup ComputeKernelsDataAccess
+ *
+ * @tparam PointKernelType Point kernel type. Needs to be of @ref
+ * specfem::point::kernels
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param kernels Misfit kernels container
+ * @param point_kernels Kernels at a given quadrature point (output)
+ */
+template <typename PointKernelType, typename IndexType,
+          typename std::enable_if<IndexType::using_simd ==
+                                      PointKernelType::simd::using_simd,
+                                  int>::type = 0>
+void load_on_host(const IndexType &index,
+                  const kernels<PointKernelType::dimension_tag> &kernels,
+                  PointKernelType &point_kernels) {
+  const int ispec = kernels.h_property_index_mapping(index.ispec);
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
+
+  kernels.template get_container<MediumTag, PropertyTag>().load_host_values(
+      l_index, point_kernels);
+
+  return;
+}
+
+/**
+ * @brief Store misfit kernels for a given quadrature point on the host
+ *
+ * @ingroup ComputeKernelsDataAccess
+ *
+ * @tparam PointKernelType Point kernel type. Needs to be of @ref
+ * specfem::point::kernels
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param point_kernels Kernels at a given quadrature point
+ * @param kernels Misfit kernels container
+ */
+template <typename PointKernelType, typename IndexType,
+          typename std::enable_if<IndexType::using_simd ==
+                                      PointKernelType::simd::using_simd,
+                                  int>::type = 0>
+void store_on_host(const IndexType &index, const PointKernelType &point_kernels,
+                   const kernels<PointKernelType::dimension_tag> &kernels) {
+  const int ispec = kernels.h_property_index_mapping(index.ispec);
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
+
+  kernels.template get_container<MediumTag, PropertyTag>().store_host_values(
+      l_index, point_kernels);
+
+  return;
+}
+
+/**
+ * @brief Store misfit kernels for a given quadrature point on the device
+ *
+ * @ingroup ComputeKernelsDataAccess
+ *
+ * @tparam PointKernelType Point kernel type. Needs to be of @ref
+ * specfem::point::kernels
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param point_kernels Kernels at a given quadrature point
+ * @param kernels Misfit kernels container
+ */
+template <typename PointKernelType, typename IndexType,
+          typename std::enable_if<IndexType::using_simd ==
+                                      PointKernelType::simd::using_simd,
+                                  int>::type = 0>
+KOKKOS_FUNCTION void
+store_on_device(const IndexType &index, const PointKernelType &point_kernels,
+                const kernels<PointKernelType::dimension_tag> &kernels) {
+  const int ispec = kernels.property_index_mapping(index.ispec);
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
+
+  kernels.template get_container<MediumTag, PropertyTag>().store_device_values(
+      l_index, point_kernels);
+
+  return;
+}
+
+/**
+ * @brief Add misfit kernels for a given quadrature point to the existing
+ * kernels on the device
+ *
+ * @ingroup ComputeKernelsDataAccess
+ *
+ * @tparam PointKernelType Point kernel type. Needs to be of @ref
+ * specfem::point::kernels
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param point_kernels Kernels at a given quadrature point
+ * @param kernels Misfit kernels container
+ */
+template <typename IndexType, typename PointKernelType,
+          typename std::enable_if<IndexType::using_simd ==
+                                      PointKernelType::simd::using_simd,
+                                  int>::type = 0>
+KOKKOS_FUNCTION void
+add_on_device(const IndexType &index, const PointKernelType &point_kernels,
+              const kernels<PointKernelType::dimension_tag> &kernels) {
+
+  const int ispec = kernels.property_index_mapping(index.ispec);
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
+
+  kernels.template get_container<MediumTag, PropertyTag>().add_device_values(
+      l_index, point_kernels);
+
+  return;
+}
+
+/**
+ * @brief Add misfit kernels for a given quadrature point to the existing
+ * kernels on the host
+ *
+ * @ingroup ComputeKernelsDataAccess
+ *
+ * @tparam PointKernelType Point kernel type. Needs to be of @ref
+ * specfem::point::kernels
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param point_kernels Kernels at a given quadrature point
+ * @param kernels Misfit kernels container
+ */
+template <typename IndexType, typename PointKernelType,
+          typename std::enable_if<IndexType::using_simd ==
+                                      PointKernelType::simd::using_simd,
+                                  int>::type = 0>
+void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
+                 const kernels<PointKernelType::dimension_tag> &kernels) {
+  const int ispec = kernels.h_property_index_mapping(index.ispec);
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
+
+  kernels.template get_container<MediumTag, PropertyTag>().add_host_values(
+      l_index, point_kernels);
+
+  return;
+}
+
 } // namespace specfem::assembly
 
 #include "kernels/dim2/kernels.hpp"

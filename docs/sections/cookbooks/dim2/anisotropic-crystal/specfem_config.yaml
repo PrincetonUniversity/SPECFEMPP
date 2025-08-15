@@ -5,15 +5,13 @@ parameters:
 
   header:
     ## Header information is used for logging. It is good practice to give your simulations explicit names
-    title: Heterogeneous acoustic-elastic medium with 1 acoustic-elastic interface (orientation horizontal)  # name for your simulation
+    title: Homogeneous anisotropic crystal
     # A detailed description for your simulation
     description: |
-      Material systems : Elastic domain (1), Acoustic domain (1)
-      Interfaces : Acoustic-elastic interface (1) (orientation horizontal with acoustic domain on top)
+      Material systems : Elastic Anisotropic domain
+      Interfaces : None
       Sources : Force source (1)
       Boundary conditions : Neumann BCs on all edges
-      Debugging comments: This tests checks coupling acoustic-elastic interface implementation.
-                          The orientation of the interface is horizontal with acoustic domain on top.
 
   simulation-setup:
     ## quadrature setup
