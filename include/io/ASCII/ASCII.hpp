@@ -22,6 +22,7 @@ namespace io {
  */
 template <typename OpType> class ASCII {
 public:
+  using IO_OpType = OpType; ///< Operation type (read/write)
   using File =
       specfem::io::impl::ASCII::File<OpType>; ///< ASCII file implementation
   using Group =
