@@ -5,7 +5,7 @@
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
-#include "utilities/simd.hpp"
+#include "utilities/interface.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
 
