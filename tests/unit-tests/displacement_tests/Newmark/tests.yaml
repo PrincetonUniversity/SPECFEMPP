@@ -11,4 +11,5 @@
 - "PoroelasticCoupledDomainPSV"
 # # - "TwoLayerElectromagneticDomain"
 - "HomogeneousIsotropicCosseratDomainNu0"
+- "HomogeneousIsotropicCosseratDomain2"
 - "HomogeneousIsotropicCosseratDomain"
