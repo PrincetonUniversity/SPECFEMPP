@@ -1,11 +1,15 @@
 #include "algorithms/locate_point_impl.hpp"
+#include "../../test_macros.hpp"
 #include "Kokkos_Environment.hpp"
 #include "MPI_environment.hpp"
 #include "algorithms/locate_point.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/point.hpp"
+#include "utilities/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
+
+using specfem::utilities::is_close;
 
 // Test helper functions from impl namespa
 TEST(LOCATE_HELPERS, rough_location_simple) {
@@ -118,8 +122,10 @@ TEST(LOCATE_HELPERS, get_local_coordinates_unit_square) {
 
   // For a unit square, center point (0.5, 0.5) should map to (0, 0) in
   // reference coords
-  EXPECT_NEAR(xi_final, 0.0, 1e-6);
-  EXPECT_NEAR(gamma_final, 0.0, 1e-6);
+  EXPECT_TRUE(is_close(xi_final, type_real{ 0.0 }))
+      << expected_got(0.0, xi_final);
+  EXPECT_TRUE(is_close(gamma_final, type_real{ 0.0 }))
+      << expected_got(0.0, gamma_final);
 
   // Test corner point (0, 0) should map to (-1, -1)
   target = { 0.0, 0.0 };
@@ -127,8 +133,10 @@ TEST(LOCATE_HELPERS, get_local_coordinates_unit_square) {
       specfem::algorithms::locate_point_impl::get_local_coordinates(
           target, coorg, 0.0, 0.0);
 
-  EXPECT_NEAR(xi_final, -1.0, 1e-6);
-  EXPECT_NEAR(gamma_final, -1.0, 1e-6);
+  EXPECT_TRUE(is_close(xi_final, type_real{ -1.0 }))
+      << expected_got(-1.0, xi_final);
+  EXPECT_TRUE(is_close(gamma_final, type_real{ -1.0 }))
+      << expected_got(-1.0, gamma_final);
 
   // Test corner point (1, 1) should map to (1, 1)
   target = { 1.0, 1.0 };
@@ -136,8 +144,10 @@ TEST(LOCATE_HELPERS, get_local_coordinates_unit_square) {
       specfem::algorithms::locate_point_impl::get_local_coordinates(
           target, coorg, 0.0, 0.0);
 
-  EXPECT_NEAR(xi_final, 1.0, 1e-6);
-  EXPECT_NEAR(gamma_final, 1.0, 1e-6);
+  EXPECT_TRUE(is_close(xi_final, type_real{ 1.0 }))
+      << expected_got(1.0, xi_final);
+  EXPECT_TRUE(is_close(gamma_final, type_real{ 1.0 }))
+      << expected_got(1.0, gamma_final);
 }
 
 TEST(LOCATE_HELPERS, locate_point_core_unit_square) {
@@ -197,8 +207,10 @@ TEST(LOCATE_HELPERS, locate_point_core_unit_square) {
 
   // Should find element 0 with local coordinates near (0, 0) for center point
   EXPECT_EQ(result.ispec, 0);
-  EXPECT_NEAR(result.xi, 0.0, 1e-6);
-  EXPECT_NEAR(result.gamma, 0.0, 1e-6);
+  EXPECT_TRUE(is_close(result.xi, type_real{ 0.0 }))
+      << expected_got(0.0, result.xi);
+  EXPECT_TRUE(is_close(result.gamma, type_real{ 0.0 }))
+      << expected_got(0.0, result.gamma);
 
   // Test corner point (0, 0) should map to (-1, -1)
   target = { 0.0, 0.0 };
@@ -206,8 +218,10 @@ TEST(LOCATE_HELPERS, locate_point_core_unit_square) {
       target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
 
   EXPECT_EQ(result.ispec, 0);
-  EXPECT_NEAR(result.xi, -1.0, 1e-6);
-  EXPECT_NEAR(result.gamma, -1.0, 1e-6);
+  EXPECT_TRUE(is_close(result.xi, type_real{ -1.0 }))
+      << expected_got(-1.0, result.xi);
+  EXPECT_TRUE(is_close(result.gamma, type_real{ -1.0 }))
+      << expected_got(-1.0, result.gamma);
 
   // Test corner point (1, 1) should map to (1, 1)
   target = { 1.0, 1.0 };
@@ -215,8 +229,10 @@ TEST(LOCATE_HELPERS, locate_point_core_unit_square) {
       target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
 
   EXPECT_EQ(result.ispec, 0);
-  EXPECT_NEAR(result.xi, 1.0, 1e-6);
-  EXPECT_NEAR(result.gamma, 1.0, 1e-6);
+  EXPECT_TRUE(is_close(result.xi, type_real{ 1.0 }))
+      << expected_got(1.0, result.xi);
+  EXPECT_TRUE(is_close(result.gamma, type_real{ 1.0 }))
+      << expected_got(1.0, result.gamma);
 }
 
 TEST(LOCATE_HELPERS, locate_point_core_2x2_four_elements) {
@@ -361,8 +377,10 @@ TEST(LOCATE_HELPERS, locate_point_core_2x2_four_elements) {
       target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
 
   EXPECT_EQ(result.ispec, 0);
-  EXPECT_NEAR(result.xi, 0.0, 1e-6);
-  EXPECT_NEAR(result.gamma, 0.0, 1e-6);
+  EXPECT_TRUE(is_close(result.xi, type_real{ 0.0 }))
+      << expected_got(0.0, result.xi);
+  EXPECT_TRUE(is_close(result.gamma, type_real{ 0.0 }))
+      << expected_got(0.0, result.gamma);
 
   // Test 2: Point (1.5, 0.5) should be in element 1 with local coordinates (0,
   // 0)
@@ -371,8 +389,10 @@ TEST(LOCATE_HELPERS, locate_point_core_2x2_four_elements) {
       target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
 
   EXPECT_EQ(result.ispec, 1);
-  EXPECT_NEAR(result.xi, 0.0, 1e-6);
-  EXPECT_NEAR(result.gamma, 0.0, 1e-6);
+  EXPECT_TRUE(is_close(result.xi, type_real{ 0.0 }))
+      << expected_got(0.0, result.xi);
+  EXPECT_TRUE(is_close(result.gamma, type_real{ 0.0 }))
+      << expected_got(0.0, result.gamma);
 
   // Test 3: Point (0.5, 1.5) should be in element 2 with local coordinates (0,
   // 0)
@@ -381,8 +401,10 @@ TEST(LOCATE_HELPERS, locate_point_core_2x2_four_elements) {
       target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
 
   EXPECT_EQ(result.ispec, 2);
-  EXPECT_NEAR(result.xi, 0.0, 1e-6);
-  EXPECT_NEAR(result.gamma, 0.0, 1e-6);
+  EXPECT_TRUE(is_close(result.xi, type_real{ 0.0 }))
+      << expected_got(0.0, result.xi);
+  EXPECT_TRUE(is_close(result.gamma, type_real{ 0.0 }))
+      << expected_got(0.0, result.gamma);
 
   // Test 4: Point (1.5, 1.5) should be in element 3 with local coordinates (0,
   // 0)
@@ -391,8 +413,10 @@ TEST(LOCATE_HELPERS, locate_point_core_2x2_four_elements) {
       target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
 
   EXPECT_EQ(result.ispec, 3);
-  EXPECT_NEAR(result.xi, 0.0, 1e-6);
-  EXPECT_NEAR(result.gamma, 0.0, 1e-6);
+  EXPECT_TRUE(is_close(result.xi, type_real{ 0.0 }))
+      << expected_got(0.0, result.xi);
+  EXPECT_TRUE(is_close(result.gamma, type_real{ 0.0 }))
+      << expected_got(0.0, result.gamma);
 
   // Test 5: Corner point (1, 1) - shared by all four elements, should find one
   // of them
@@ -408,13 +432,16 @@ TEST(LOCATE_HELPERS, locate_point_core_2x2_four_elements) {
 
   // One off test: point (1.33, 1.33) should be in element 3 with local
   // coordinates (0.66, 0.66)
-  target = { 1.33, 1.33 };
+  type_real one_third = type_real{ 1.0 } / type_real{ 3.0 };
+  target = { 1 + one_third, 1 + one_third };
   result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, global_coords, index_mapping, control_nodes, ngnod, ngllx);
 
   EXPECT_EQ(result.ispec, 3);
-  EXPECT_NEAR(result.xi, -0.33, 1e-2);
-  EXPECT_NEAR(result.gamma, -0.33, 1e-2);
+  EXPECT_TRUE(is_close(result.xi, -one_third))
+      << expected_got(-one_third, result.xi);
+  EXPECT_TRUE(is_close(result.gamma, -one_third))
+      << expected_got(-one_third, result.gamma);
 
   // Add one test for a point that is not in any element
   // Point (2.5, 2.5) should not be in any element
