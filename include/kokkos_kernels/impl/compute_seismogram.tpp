@@ -1,18 +1,18 @@
 #pragma once
 
 #include "algorithms/interpolate.hpp"
-#include "chunk_element/field.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/chunk_element.hpp"
 #include "compute_seismogram.hpp"
 #include "datatypes/simd.hpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
+#include "execution/for_each_level.hpp"
+#include "execution/mapped_chunked_domain_iterator.hpp"
 #include "medium/compute_wavefield.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "execution/mapped_chunked_domain_iterator.hpp"
-#include "execution/for_each_level.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -46,7 +46,9 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   const int nseismograms = seismogram_types.size();
 
   const auto &mesh = assembly.mesh;
-  const auto field = assembly.fields.template get_simulation_field<wavefield_simulation_field>();
+  const auto field =
+      assembly.fields
+          .template get_simulation_field<wavefield_simulation_field>();
 
   if (ngllz != ngll || ngllx != ngll) {
     throw std::runtime_error("The number of GLL points in z and x must match "
@@ -70,23 +72,30 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
                                              lane_size, no_simd,
                                              Kokkos::DefaultExecutionSpace>;
 
-  using ChunkElementFieldType = specfem::chunk_element::field<
-      ParallelConfig::chunk_size, ngll, dimension, medium_tag,
-      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-      true, true, true, false, using_simd>;
+  using ChunkDisplacementType =
+      specfem::chunk_element::displacement<parallel_config::chunk_size, ngll,
+                                           dimension, medium_tag, using_simd>;
+  using ChunkVelocityType =
+      specfem::chunk_element::velocity<parallel_config::chunk_size, ngll,
+                                       dimension, medium_tag, using_simd>;
+  using ChunkAccelerationType =
+      specfem::chunk_element::acceleration<parallel_config::chunk_size, ngll,
+                                           dimension, medium_tag, using_simd>;
   using ElementQuadratureType = specfem::element::quadrature<
       ngll, dimension, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
-  using ViewType = specfem::datatype::ScalarChunkViewType<
-      type_real, ParallelConfig::chunk_size, ngll, 2,
-      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-      false>;
+  using ViewType = Kokkos::View<type_real[ParallelConfig::chunk_size][ngll][ngll][2],
+                               Kokkos::LayoutLeft,
+                               specfem::kokkos::DevScratchSpace,
+                               Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
   using ResultsViewType =
       Kokkos::View<type_real[ParallelConfig::chunk_size][2], Kokkos::LayoutLeft,
                    specfem::kokkos::DevScratchSpace,
                    Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
-  int scratch_size = ChunkElementFieldType::shmem_size() +
+  int scratch_size = ChunkDisplacementType::shmem_size() +
+                     ChunkVelocityType::shmem_size() +
+                     ChunkAccelerationType::shmem_size() +
                      ElementQuadratureType::shmem_size() +
                      2 * ViewType::shmem_size() + ResultsViewType::shmem_size();
 
@@ -103,26 +112,29 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
     specfem::execution::for_each_level(
         "specfem::kokkos_kernels::compute_seismograms",
         chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-        KOKKOS_LAMBDA(const typename decltype(chunk)::index_type &chunk_index) {
+        KOKKOS_LAMBDA(const typename decltype(chunk)::index_type &chunk_iterator_index) {
+          const auto &chunk_index = chunk_iterator_index.get_index();
           const auto team = chunk_index.get_policy_index();
-          ChunkElementFieldType element_field(team);
+          ChunkDisplacementType displacement(team.team_scratch(0));
+          ChunkVelocityType velocity(team.team_scratch(0));
+          ChunkAccelerationType acceleration(team.team_scratch(0));
           ElementQuadratureType element_quadrature(team);
           ViewType wavefield(team.team_scratch(0));
           ViewType lagrange_interpolant(team.team_scratch(0));
           ResultsViewType seismogram_components(team.team_scratch(0));
 
-          specfem::assembly::load_on_device(team, mesh,
-                                           element_quadrature);
+          specfem::assembly::load_on_device(team, mesh, element_quadrature);
 
-          specfem::assembly::load_on_device(chunk_index, field, element_field);
+          specfem::assembly::load_on_device(chunk_index, field, displacement,
+                                            velocity, acceleration);
           team.team_barrier();
 
           specfem::medium::compute_wavefield<medium_tag, property_tag>(
-              chunk_index, assembly, element_quadrature, element_field,
-              wavefield_type, wavefield);
+              chunk_index, assembly, element_quadrature, displacement, velocity,
+              acceleration, wavefield_type, wavefield);
 
           specfem::assembly::load_on_device(chunk_index, receivers,
-                                           lagrange_interpolant);
+                                            lagrange_interpolant);
 
           team.team_barrier();
 
@@ -131,7 +143,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
               seismogram_components);
           team.team_barrier();
           specfem::assembly::store_on_device(chunk_index, seismogram_components,
-                                            receivers);
+                                             receivers);
         });
   }
 

@@ -1,13 +1,13 @@
 #pragma once
 
 #include "algorithms/gradient.hpp"
-#include "chunk_element/field.hpp"
 #include "compute_material_derivatives.hpp"
 #include "execution/chunked_domain_iterator.hpp"
 #include "execution/for_each_level.hpp"
 #include "medium/compute_frechet_derivatives.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/chunk_element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -52,10 +52,10 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
   using ParallelConfig = specfem::parallel_config::default_chunk_config<
       DimensionTag, simd, Kokkos::DefaultExecutionSpace>;
 
-  using ChunkElementFieldType = specfem::chunk_element::field<
-      ParallelConfig::chunk_size, NGLL, DimensionTag, MediumTag,
-      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-      true, false, false, false, using_simd>;
+  using ChunkElementFieldType =
+      specfem::chunk_element::displacement<specfem::parallel_config::chunk_size,
+                                           NGLL, DimensionTag, MediumTag,
+                                           using_simd>;
 
   using ElementQuadratureType = specfem::element::quadrature<
       NGLL, DimensionTag, specfem::kokkos::DevScratchSpace,
@@ -84,10 +84,12 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
   specfem::execution::for_each_level(
       "specfem::kokkos_kernels::compute_material_derivatives",
       chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_LAMBDA(const typename decltype(chunk)::index_type &chunk_index) {
+      KOKKOS_LAMBDA(
+          const typename decltype(chunk)::index_type &chunk_iterator_index) {
+        const auto &chunk_index = chunk_iterator_index.get_index();
         const auto team = chunk_index.get_policy_index();
-        ChunkElementFieldType adjoint_element_field(team);
-        ChunkElementFieldType backward_element_field(team);
+        ChunkElementFieldType adjoint_element_field(team.team_scratch(0));
+        ChunkElementFieldType backward_element_field(team.team_scratch(0));
         ElementQuadratureType quadrature_element(team);
         specfem::assembly::load_on_device(team, mesh, quadrature_element);
 
@@ -106,8 +108,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
 
         specfem::algorithms::gradient(
             chunk_index, jacobian_matrix, quadrature_element.hprime_gll,
-            adjoint_element_field.displacement,
-            backward_element_field.displacement,
+            adjoint_element_field, backward_element_field,
             [&](const auto &iterator_index,
                 const typename PointFieldDerivativesType::value_type &df,
                 const typename PointFieldDerivativesType::value_type &dg) {
