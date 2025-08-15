@@ -84,6 +84,7 @@ template <> struct assembly<specfem::dimension::type::dim2> {
    * @param nstep_between_samples Number of time steps between output seismogram
    * samples
    * @param simulation Type of simulation (forward, adjoint, etc.)
+   * @param write_wavefield Whether to write wavefield
    * @param property_reader Reader for GLL model (skip material property
    * assignment if exists)
    */
@@ -99,6 +100,7 @@ template <> struct assembly<specfem::dimension::type::dim2> {
       const type_real dt, const int max_timesteps, const int max_sig_step,
       const int nsteps_between_samples,
       const specfem::simulation::type simulation,
+      const bool allocate_boundary_values,
       const std::shared_ptr<specfem::io::reader> &property_reader);
 
   /**

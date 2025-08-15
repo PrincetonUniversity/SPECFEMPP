@@ -21,7 +21,7 @@ namespace io {
  *
  */
 specfem::mesh::mesh<specfem::dimension::type::dim2>
-read_2d_mesh(const std::string filename,
+read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
              const specfem::enums::electromagnetic_wave electromagnetic_wave,
              const specfem::MPI::MPI *mpi);
@@ -37,8 +37,8 @@ read_2d_mesh(const std::string filename,
  *
  */
 specfem::mesh::mesh<specfem::dimension::type::dim3>
-read_3d_mesh(const std::string mesh_parameters_file,
-             const std::string mesh_databases_file,
+read_3d_mesh(const std::string &mesh_parameters_file,
+             const std::string &mesh_databases_file,
              const specfem::MPI::MPI *mpi);
 
 /**
@@ -53,7 +53,7 @@ read_3d_mesh(const std::string mesh_parameters_file,
  */
 std::vector<std::shared_ptr<
     specfem::receivers::receiver<specfem::dimension::type::dim2> > >
-read_receivers(const std::string stations_file, const type_real angle);
+read_receivers(const std::string &stations_file, const type_real angle);
 
 /**
  * @overload
@@ -100,7 +100,7 @@ read_receivers(const YAML::Node &stations, const type_real angle);
 std::tuple<std::vector<std::shared_ptr<
                specfem::sources::source<specfem::dimension::type::dim2> > >,
            type_real>
-read_2d_sources(const std::string sources_file, const int nsteps,
+read_2d_sources(const std::string &sources_file, const int nsteps,
                 const type_real user_t0, const type_real dt,
                 const specfem::simulation::type simulation_type);
 
@@ -143,7 +143,7 @@ read_2d_sources(const YAML::Node yaml, const int nsteps,
 std::tuple<std::vector<std::shared_ptr<
                specfem::sources::source<specfem::dimension::type::dim3> > >,
            type_real>
-read_3d_sources(const std::string sources_file, const int nsteps,
+read_3d_sources(const std::string &sources_file, const int nsteps,
                 const type_real user_t0, const type_real dt,
                 const specfem::simulation::type simulation_type);
 

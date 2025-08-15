@@ -25,7 +25,7 @@ public:
    * @param output_folder Path to output location (will be an .h5 file if using
    * HDF5, and a folder if using ASCII)
    */
-  kernel_writer(const std::string output_folder);
+  kernel_writer(const std::string &output_folder);
 
   /**
    * @brief write the kernel data to disk

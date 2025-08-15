@@ -2,6 +2,7 @@
 
 #include "data_access.hpp"
 #include "dim2/simulation_field.hpp"
+#include "dim3/simulation_field.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
@@ -11,10 +12,8 @@ namespace specfem::assembly {
  * @brief Store fields within the simulation
  *
  */
-template <> struct fields<specfem::dimension::type::dim2> {
-  constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
-
+template <specfem::dimension::type DimensionTag> struct fields {
+  constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
   /**
    * @name Constructors
    *

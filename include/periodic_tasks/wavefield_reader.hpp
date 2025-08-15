@@ -17,7 +17,7 @@ private:
   specfem::io::wavefield_reader<IOLibrary<specfem::io::read> > reader;
 
 public:
-  wavefield_reader(const std::string output_folder, const int time_interval,
+  wavefield_reader(const std::string &output_folder, const int time_interval,
                    const bool include_last_step)
       : periodic_task(time_interval, include_last_step),
         reader(specfem::io::wavefield_reader<IOLibrary<specfem::io::read> >(
@@ -32,7 +32,14 @@ public:
       const int istep) override {
     std::cout << "Reading wavefield files:" << std::endl;
     std::cout << "-------------------------------" << std::endl;
-    reader.read(assembly, istep);
+    reader.run(assembly, istep);
+  }
+
+  void initialize(specfem::assembly::assembly<specfem::dimension::type::dim2>
+                      &assembly) override {
+    std::cout << "Reading coordinate files:" << std::endl;
+    std::cout << "-------------------------------" << std::endl;
+    reader.initialize(assembly);
   }
 };
 
