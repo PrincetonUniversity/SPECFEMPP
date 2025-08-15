@@ -11,7 +11,8 @@
 namespace specfem {
 namespace medium {
 
-template <typename ChunkIndexType, typename ChunkFieldType,
+template <typename ChunkIndexType, typename DisplacementFieldType,
+          typename VelocityFieldType, typename AccelerationFieldType,
           typename QuadratureType, typename WavefieldViewType>
 KOKKOS_FUNCTION void impl_compute_wavefield(
     const std::integral_constant<specfem::dimension::type,
@@ -23,7 +24,9 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         specfem::element::property_tag::isotropic_cosserat>,
     const ChunkIndexType &chunk_index,
     const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const QuadratureType &quadrature, const ChunkFieldType &field,
+    const QuadratureType &quadrature, const DisplacementFieldType &displacement,
+    const VelocityFieldType &velocity,
+    const AccelerationFieldType &acceleration,
     const specfem::wavefield::type wavefield_type,
     WavefieldViewType wavefield) {
 
@@ -40,19 +43,19 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
   const auto &active_field = [&]() {
     if (wavefield_type == specfem::wavefield::type::displacement) {
-      return field.displacement;
+      return displacement.get_field();
     } else if (wavefield_type == specfem::wavefield::type::velocity) {
-      return field.velocity;
+      return velocity.get_field();
     } else if (wavefield_type == specfem::wavefield::type::acceleration) {
-      return field.acceleration;
+      return acceleration.get_field();
     } else if (wavefield_type == specfem::wavefield::type::pressure) {
-      return field.displacement;
+      return displacement.get_field();
     } else if (wavefield_type == specfem::wavefield::type::rotation) {
-      return field.displacement;
+      return displacement.get_field();
     } else if (wavefield_type == specfem::wavefield::type::intrinsic_rotation) {
-      return field.displacement;
+      return displacement.get_field();
     } else if (wavefield_type == specfem::wavefield::type::curl) {
-      return field.displacement;
+      return displacement.get_field();
     } else {
       KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D "
                                  "elastic isotropic Cosserat P-SV-T media");
