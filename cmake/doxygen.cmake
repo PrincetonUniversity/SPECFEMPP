@@ -1,3 +1,7 @@
+message(STATUS "Configuring Doxygen documentation...")
+
+list(APPEND CMAKE_MESSAGE_INDENT "  Doxygen: ")
+
 # look for Doxygen package
 find_package(Doxygen)
 
@@ -14,11 +18,14 @@ if (DOXYGEN_FOUND)
     )
 
     # Note: do not put "ALL" - this builds docs together with application EVERY TIME!
-    add_custom_target( docs
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM )
+    # add_custom_target(docs
+    #     COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+    #     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    #     COMMENT "Generating API documentation with Doxygen"
+    #     VERBATIM )
 else (DOXYGEN_FOUND)
   message(STATUS "Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
+
+# Pop the indentation for Doxygen messages
+list(POP_BACK CMAKE_MESSAGE_INDENT)

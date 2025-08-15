@@ -5,7 +5,9 @@ project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
 set(CMAKE_CXX_STANDARD 17)
 
 # SPECFEM options
-option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" ON)
+option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" OFF)
+option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" OFF)
+option(SPECFEM_ENABLE_HDF5_FORCE_INSTALL "Force install HDF5 dependency if SPECFEM_ENABLE_HDF5 is ON even if system HDF5 is found" OFF)
 option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
 option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
 option(SPECFEM_BUILD_TESTS "Tests included" OFF)
@@ -24,7 +26,6 @@ set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
 
 # Set my default CMAKE_INSTALL_PREFIX
-
 if (SPECFEM_INSTALL)
     if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_SOURCE_DIR}/bin")
@@ -40,6 +41,10 @@ endif()
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/archive)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+
+# For the installation of dependencies
+include(FetchContent)
 
 # For external modules that need to be built suppress build output
 set(FETCHCONTENT_QUIET TRUE)
@@ -92,14 +97,18 @@ include("${CMAKE_SOURCE_DIR}/cmake/kokkos.cmake")
 # Install yaml-cpp as a dependency
 include("${CMAKE_SOURCE_DIR}/cmake/yaml.cmake")
 
-# Include VTK if available
-include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
-
 # Find or install boost library function
 include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 
 # Find HDF5
 include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
+
+# Find or install ADIOS2 library function
+include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
+
+# Include VTK if available (MUST BE AFTER ADIOS2, VTK is smarter about finding
+# the pugixml dependency than ADIOS2)
+include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 
 
 if (SPECFEM_ENABLE_SIMD)
@@ -133,9 +142,17 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
 )
 
 # Add the include directories so that the generated files can be found
-include_directories(include)
 include_directories(core)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
+
+
+message(STATUS "INCLUDE DIRECTORIES:")
+message(STATUS "    core: ${CMAKE_CURRENT_SOURCE_DIR}/core")
+message(STATUS "    include: ${CMAKE_SOURCE_DIR}/include")
+message(STATUS "    binary: ${CMAKE_BINARY_DIR}/include")
+
+
 
 # Set loglevel to STATUS if build type is debug
 if (CMAKE_BUILD_TYPE MATCHES Release)
@@ -199,30 +216,36 @@ add_library(
         src/io/mesh/impl/fortran/dim3/utilities.cpp
 )
 
+target_link_libraries(
+        io
+        mesh
+        source_class
+        specfem::receivers
+        yaml-cpp
+        ${BOOST_LIBS}
+)
+
 if (NOT SPECFEM_ENABLE_HDF5)
     target_compile_definitions(
         io
         PUBLIC -DNO_HDF5
     )
-
-    target_link_libraries(
-        io
-        mesh
-        source_class
-        specfem::receivers
-        yaml-cpp
-        ${BOOST_LIBS}
-        Kokkos::kokkos)
 else()
     target_link_libraries(
         io
-        mesh
-        source_class
-        specfem::receivers
-        Kokkos::kokkos
-        yaml-cpp
-        ${BOOST_LIBS}
         ${HDF5_LIBRARIES}
+    )
+endif()
+
+if (NOT SPECFEM_ENABLE_ADIOS2)
+    target_compile_definitions(
+        io
+        PUBLIC -DNO_ADIOS2
+    )
+else()
+    target_link_libraries(
+        io
+        adios2
     )
 endif()
 

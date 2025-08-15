@@ -1,3 +1,10 @@
+# Set policy for New find boost
+cmake_policy(SET CMP0167 NEW)
+
+message(STATUS "Configuring Boost library...")
+
+# Prepend the CMAKE_MESSAGE_INDENT variable to ensure proper indentation in messages
+list(APPEND CMAKE_MESSAGE_INDENT "  Boost: ")
 
 # Try finding boost and if not found install.
 find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
@@ -43,3 +50,6 @@ else()
     message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
     message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
 endif()
+
+# Pop the indentation for Boost messages
+list(POP_BACK CMAKE_MESSAGE_INDENT)
