@@ -22,7 +22,7 @@ specfem::runtime_configuration::quadrature::instantiate() {
 }
 
 specfem::runtime_configuration::quadrature::quadrature(
-    const std::string quadrature) {
+    const std::string &quadrature) {
 
   if (specfem::utilities::is_gll4_string(quadrature)) {
     *this = specfem::runtime_configuration::quadrature(0.0, 0.0, 5);

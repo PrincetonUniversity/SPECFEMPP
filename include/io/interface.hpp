@@ -1,10 +1,9 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "enumerations/simulation.hpp"
 #include "mesh/mesh.hpp"
-#include "receiver/interface.hpp"
 #include "source/interface.hpp"
+#include "specfem/receivers.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <yaml-cpp/yaml.h>
@@ -22,7 +21,7 @@ namespace io {
  *
  */
 specfem::mesh::mesh<specfem::dimension::type::dim2>
-read_2d_mesh(const std::string filename,
+read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
              const specfem::enums::electromagnetic_wave electromagnetic_wave,
              const specfem::MPI::MPI *mpi);
@@ -38,8 +37,8 @@ read_2d_mesh(const std::string filename,
  *
  */
 specfem::mesh::mesh<specfem::dimension::type::dim3>
-read_3d_mesh(const std::string mesh_parameters_file,
-             const std::string mesh_databases_file,
+read_3d_mesh(const std::string &mesh_parameters_file,
+             const std::string &mesh_databases_file,
              const specfem::MPI::MPI *mpi);
 
 /**
@@ -52,8 +51,9 @@ read_3d_mesh(const std::string mesh_parameters_file,
  * @param angle Angle of the receivers
  * @return vector of instantiated receiver objects
  */
-std::vector<std::shared_ptr<specfem::receivers::receiver> >
-read_receivers(const std::string stations_file, const type_real angle);
+std::vector<std::shared_ptr<
+    specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+read_receivers(const std::string &stations_file, const type_real angle);
 
 /**
  * @overload
@@ -78,7 +78,8 @@ read_receivers(const std::string stations_file, const type_real angle);
  * @param angle Angle of the receivers
  * @return vector of instantiated receiver objects
  */
-std::vector<std::shared_ptr<specfem::receivers::receiver> >
+std::vector<std::shared_ptr<
+    specfem::receivers::receiver<specfem::dimension::type::dim2> > >
 read_receivers(const YAML::Node &stations, const type_real angle);
 
 /**
@@ -97,7 +98,7 @@ read_receivers(const YAML::Node &stations, const type_real angle);
  * objects
  */
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
-read_sources(const std::string sources_file, const int nsteps,
+read_sources(const std::string &sources_file, const int nsteps,
              const type_real user_t0, const type_real dt,
              const specfem::simulation::type simulation_type);
 

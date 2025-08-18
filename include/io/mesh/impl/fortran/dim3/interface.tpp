@@ -106,7 +106,7 @@ void specfem::io::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
         for (int l = 0; l < n3; l++) {
           for (int k = 0; k < n2; k++) {
             for (int j = 0; j < n1; j++) {
-              array(i, j, k, l) = dummy_T[counter];
+              array(i, l, k, j) = dummy_T[counter];
               counter++;
             }
           }
@@ -261,7 +261,7 @@ void specfem::io::mesh::impl::fortran::dim3::read_index_array(
         for (int l = 0; l < n3; l++) {
           for (int k = 0; k < n2; k++) {
             for (int j = 0; j < n1; j++) {
-              array(i, j, k, l) = dummy_T[counter] - 1;
+              array(i, l, k, j) = dummy_T[counter] - 1;
               counter++;
             }
           }

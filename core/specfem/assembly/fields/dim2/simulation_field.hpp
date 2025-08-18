@@ -16,10 +16,15 @@ struct simulation_field<specfem::dimension::type::dim2,
                         SimulationWavefieldType> {
 
 private:
-  using ViewType =
+  using IndexViewType =
       Kokkos::View<int ***, Kokkos::LayoutLeft,
                    Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
                                                    ///< store field values
+
+  using AssemblyIndexViewType =
+      Kokkos::View<int *, Kokkos::DefaultExecutionSpace>; ///< Underlying view
+                                                          ///< type to store
+                                                          ///< assembled indices
 
 public:
   constexpr static auto dimension_tag =
@@ -73,12 +78,17 @@ public:
     this->nspec = rhs.nspec;
     this->ngllz = rhs.ngllz;
     this->ngllx = rhs.ngllx;
-    this->assembly_index_mapping = rhs.assembly_index_mapping;
-    this->h_assembly_index_mapping = rhs.h_assembly_index_mapping;
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                          POROELASTIC, ELASTIC_PSV_T)),
-        CAPTURE(field, (rhs_field, rhs.field)) { _field_ = _rhs_field_; })
+        CAPTURE(field, (rhs_field, rhs.field), assembly_index_mapping,
+                (rhs_assembly_index_mapping, rhs.assembly_index_mapping),
+                h_assembly_index_mapping,
+                (rhs_h_assembly_index_mapping, rhs.h_assembly_index_mapping)) {
+          _field_ = _rhs_field_;
+          _assembly_index_mapping_ = _rhs_assembly_index_mapping_;
+          _h_assembly_index_mapping_ = _rhs_h_assembly_index_mapping_;
+        })
   }
 
   /**
@@ -139,33 +149,47 @@ public:
   get_iglob(const int &ispec, const int &iz, const int &ix,
             const specfem::element::medium_tag MediumTag) const {
     if constexpr (on_device) {
-      return assembly_index_mapping(index_mapping(ispec, iz, ix),
-                                    static_cast<int>(MediumTag));
+      FOR_EACH_IN_PRODUCT(
+          (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                           POROELASTIC, ELASTIC_PSV_T)),
+          CAPTURE(assembly_index_mapping) {
+            if (MediumTag == _medium_tag_) {
+              return _assembly_index_mapping_(index_mapping(ispec, iz, ix));
+            }
+          })
+
     } else {
-      return h_assembly_index_mapping(h_index_mapping(ispec, iz, ix),
-                                      static_cast<int>(MediumTag));
+      FOR_EACH_IN_PRODUCT(
+          (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                           POROELASTIC, ELASTIC_PSV_T)),
+          CAPTURE(h_assembly_index_mapping) {
+            if (MediumTag == _medium_tag_) {
+              return _h_assembly_index_mapping_(h_index_mapping(ispec, iz, ix));
+            }
+          })
     }
+
+    // If we reach here, it means the medium type is not defined in the macro
+    Kokkos::abort("Medium type not defined in the macro");
+
+    return -1;
   }
 
   int nglob = 0; ///< Number of global degrees of freedom
   int nspec;     ///< Number of spectral elements
   int ngllz;     ///< Number of quadrature points in z direction
   int ngllx;     ///< Number of quadrature points in x direction
-  ViewType index_mapping;
-  ViewType::HostMirror h_index_mapping;
-  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
-               specfem::kokkos::DevMemSpace>
-      assembly_index_mapping;
-  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
-               specfem::kokkos::HostMemSpace>
-      h_assembly_index_mapping;
+  IndexViewType index_mapping;
+  IndexViewType::HostMirror h_index_mapping;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T)),
-                      DECLARE(((specfem::assembly::fields_impl::field_impl,
-                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-                               field)))
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      DECLARE(((specfem::assembly::fields_impl::field_impl,
+                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
+               field),
+              (AssemblyIndexViewType, assembly_index_mapping),
+              (AssemblyIndexViewType::HostMirror, h_assembly_index_mapping)))
 
   int get_total_degrees_of_freedom();
 
@@ -183,14 +207,20 @@ template <typename SimulationWavefieldType1, typename SimulationWavefieldType2,
 inline void deep_copy(SimulationWavefieldType1 &dst,
                       const SimulationWavefieldType2 &src) {
   dst.nglob = src.nglob;
-  Kokkos::deep_copy(dst.assembly_index_mapping, src.assembly_index_mapping);
-  Kokkos::deep_copy(dst.h_assembly_index_mapping, src.h_assembly_index_mapping);
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE((src_field, src.field), (dst_field, dst.field)) {
-        specfem::assembly::deep_copy(_dst_field_, _src_field_);
+      CAPTURE((src_assembly_index_mapping, src.assembly_index_mapping),
+              (dst_assembly_index_mapping, dst.assembly_index_mapping),
+              (src_h_assembly_index_mapping, src.h_assembly_index_mapping),
+              (dst_h_assembly_index_mapping, dst.h_assembly_index_mapping),
+              (src_field, src.field), (dst_field, dst.field)) {
+        Kokkos::deep_copy(_dst_assembly_index_mapping_,
+                          _src_assembly_index_mapping_);
+        Kokkos::deep_copy(_dst_h_assembly_index_mapping_,
+                          _src_h_assembly_index_mapping_);
+        specfem::assembly::fields_impl::deep_copy(_dst_field_, _src_field_);
       })
 }
 

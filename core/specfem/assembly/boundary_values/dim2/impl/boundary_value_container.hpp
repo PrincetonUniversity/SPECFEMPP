@@ -99,6 +99,9 @@ store_on_device(const int istep, const IndexType index,
                 const AccelerationType &acceleration,
                 const BoundaryValueContainerType &boundary_value_container) {
 
+  if (boundary_value_container.property_index_mapping.size() == 0)
+    return;
+
   constexpr static auto MediumTag = AccelerationType::medium_tag;
 
   static_assert((BoundaryValueContainerType::dimension_tag ==
@@ -117,19 +120,6 @@ store_on_device(const int istep, const IndexType index,
         }
       });
 
-  // if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
-  //   boundary_value_container.acoustic.store_on_device(istep, l_index,
-  //                                                     acceleration);
-  // } else if constexpr (MediumTag ==
-  // specfem::element::medium_tag::elastic_psv) {
-  //   boundary_value_container.elastic.store_on_device(istep, l_index,
-  //                                                    acceleration);
-  // } else if constexpr (MediumTag ==
-  // specfem::element::medium_tag::poroelastic) {
-  //   boundary_value_container.poroelastic.store_on_device(istep, l_index,
-  //                                                        acceleration);
-  // }
-
   return;
 }
 
@@ -145,6 +135,9 @@ KOKKOS_FUNCTION void
 load_on_device(const int istep, const IndexType index,
                const BoundaryValueContainerType &boundary_value_container,
                AccelerationType &acceleration) {
+
+  if (boundary_value_container.property_index_mapping.size() == 0)
+    return;
 
   constexpr static auto MediumTag = AccelerationType::medium_tag;
 
@@ -164,19 +157,6 @@ load_on_device(const int istep, const IndexType index,
           _container_.load_on_device(istep, l_index, acceleration);
         }
       });
-
-  // if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
-  //   boundary_value_container.acoustic.load_on_device(istep, l_index,
-  //                                                    acceleration);
-  // } else if constexpr (MediumTag ==
-  // specfem::element::medium_tag::elastic_psv) {
-  //   boundary_value_container.elastic.load_on_device(istep, l_index,
-  //                                                   acceleration);
-  // } else if constexpr (MediumTag ==
-  // specfem::element::medium_tag::poroelastic) {
-  //   boundary_value_container.poroelastic.load_on_device(istep, l_index,
-  //                                                       acceleration);
-  // }
 
   return;
 }

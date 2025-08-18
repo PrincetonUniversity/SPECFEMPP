@@ -26,7 +26,8 @@ public:
    * @param output_folder Path to output location (will be an .h5 file if using
    * HDF5, and a folder if using ASCII)
    */
-  wavefield_writer(const std::string output_folder);
+  wavefield_writer(const std::string &output_folder,
+                   const bool save_boundary_values);
   ///@}
 
   /**
@@ -35,16 +36,20 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void
-  write(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly);
+  void initialize(
+      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly);
 
   void
-  write(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-        const int istep);
+  run(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+      const int istep);
+
+  void finalize(
+      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly);
 
 private:
   std::string output_folder; ///< Path to output folder
   typename OutputLibrary::File file;
+  bool save_boundary_values;
 };
 } // namespace io
 } // namespace specfem

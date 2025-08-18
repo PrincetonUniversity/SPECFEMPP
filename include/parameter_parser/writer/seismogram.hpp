@@ -2,7 +2,6 @@
 #define _PARAMETER_SEISMOGRAM_HPP
 
 #include "io/seismogram/writer.hpp"
-#include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
@@ -25,7 +24,7 @@ public:
    * @param output_folder Path to folder location where seismogram will be
    * stored
    */
-  seismogram(const std::string output_format, const std::string output_folder)
+  seismogram(const std::string &output_format, const std::string &output_folder)
       : output_format(output_format), output_folder(output_folder) {};
   /**
    * @brief Construct a new seismogram object

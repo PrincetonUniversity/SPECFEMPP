@@ -29,9 +29,9 @@ public:
    * @param wavefield_type type of wavefield to plot (displacement, velocity,
    * acceleration)
    */
-  plot_wavefield(const std::string output_format,
-                 const std::string output_folder, const std::string component,
-                 const std::string wavefield_type, const int time_interval)
+  plot_wavefield(const std::string &output_format,
+                 const std::string &output_folder, const std::string &component,
+                 const std::string &wavefield_type, const int time_interval)
       : output_format(output_format), output_folder(output_folder),
         component(component), wavefield_type(wavefield_type),
         time_interval(time_interval) {}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -26,16 +27,16 @@ struct jacobian_matrix;
  */
 template <bool UseSIMD>
 struct jacobian_matrix<specfem::dimension::type::dim2, false, UseSIMD>
-    : public specfem::accessor::Accessor<
-          specfem::accessor::type::point,
-          specfem::data_class::type::jacobian_matrix,
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::jacobian_matrix,
           specfem::dimension::type::dim2, UseSIMD> {
 private:
-  using base_type =
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::jacobian_matrix,
-                                  specfem::dimension::type::dim2,
-                                  UseSIMD>; ///< Base type of the point
+  using base_type = specfem::data_access::Accessor<
+      specfem::data_access::AccessorType::point,
+      specfem::data_access::DataClassType::jacobian_matrix,
+      specfem::dimension::type::dim2,
+      UseSIMD>; ///< Base type of the point
   ///< Jacobian matrix
 public:
   /**
@@ -119,14 +120,15 @@ public:
 
 // operator*
 template <typename PointJacobianMatrixType>
-KOKKOS_FUNCTION
-    std::enable_if_t<!PointJacobianMatrixType::store_jacobian &&
-                         PointJacobianMatrixType::dimension_tag ==
-                             specfem::dimension::type::dim2 &&
-                         specfem::accessor::is_point_jacobian_matrix<
-                             PointJacobianMatrixType>::value,
-                     PointJacobianMatrixType>
-    operator*(const type_real &lhs, const PointJacobianMatrixType &rhs) {
+KOKKOS_FUNCTION std::enable_if_t<
+    !PointJacobianMatrixType::store_jacobian &&
+        PointJacobianMatrixType::dimension_tag ==
+            specfem::dimension::type::dim2 &&
+        specfem::data_access::is_point<PointJacobianMatrixType>::value &&
+        specfem::data_access::is_jacobian_matrix<
+            PointJacobianMatrixType>::value,
+    PointJacobianMatrixType>
+operator*(const type_real &lhs, const PointJacobianMatrixType &rhs) {
   return PointJacobianMatrixType(rhs.xix * lhs, rhs.gammax * lhs, rhs.xiz * lhs,
                                  rhs.gammaz * lhs);
 }
@@ -139,17 +141,17 @@ KOKKOS_FUNCTION
  */
 template <bool UseSIMD>
 struct jacobian_matrix<specfem::dimension::type::dim3, false, UseSIMD>
-    : public specfem::accessor::Accessor<
-          specfem::accessor::type::point,
-          specfem::data_class::type::jacobian_matrix,
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::jacobian_matrix,
           specfem::dimension::type::dim3, UseSIMD> {
 private:
-  using base_type =
-      specfem::accessor::Accessor<specfem::accessor::type::point,
-                                  specfem::data_class::type::jacobian_matrix,
-                                  specfem::dimension::type::dim3,
-                                  UseSIMD>; ///< Base type of the point
-                                            ///< Jacobian matrix
+  using base_type = specfem::data_access::Accessor<
+      specfem::data_access::AccessorType::point,
+      specfem::data_access::DataClassType::jacobian_matrix,
+      specfem::dimension::type::dim3,
+      UseSIMD>; ///< Base type of the point
+                ///< Jacobian matrix
 public:
   /**
    * @name Typedefs
@@ -242,12 +244,13 @@ public:
 
 // operator*
 template <typename PointJacobianMatrixType,
-          std::enable_if_t<!PointJacobianMatrixType::store_jacobian &&
-                               PointJacobianMatrixType::dimension_tag ==
-                                   specfem::dimension::type::dim3 &&
-                               PointJacobianMatrixType::data_class ==
-                                   specfem::data_class::type::jacobian_matrix,
-                           int> = 0>
+          std::enable_if_t<
+              !PointJacobianMatrixType::store_jacobian &&
+                  PointJacobianMatrixType::dimension_tag ==
+                      specfem::dimension::type::dim3 &&
+                  PointJacobianMatrixType::data_class ==
+                      specfem::data_access::DataClassType::jacobian_matrix,
+              int> = 0>
 KOKKOS_FUNCTION PointJacobianMatrixType
 operator*(const type_real &lhs, const PointJacobianMatrixType &rhs) {
   return PointJacobianMatrixType(rhs.xix * lhs, rhs.gammax * lhs, rhs.xiy * lhs,
