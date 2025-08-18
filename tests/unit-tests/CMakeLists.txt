@@ -375,6 +375,25 @@ target_link_libraries(
 )
 
 add_executable(
+  locate_point_fixture_2d
+  algorithms/dim2/locate_point_fixture.cpp
+)
+
+target_link_libraries(
+  locate_point_fixture_2d
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  jacobian
+  point
+  utilities
+  gtest_main
+)
+
+add_executable(
   locate_point_impl_3d
   algorithms/dim3/locate_point_impl.cpp
 )
@@ -596,6 +615,7 @@ if (NOT MPI_PARALLEL)
     lagrange_tests
     locate_point_impl_2d
     locate_point_impl_3d
+    locate_point_fixture_2d
     mass_matrix_tests
     mesh_tests
     point_tests

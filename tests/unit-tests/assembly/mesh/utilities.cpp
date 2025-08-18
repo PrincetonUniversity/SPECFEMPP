@@ -7,7 +7,7 @@
 #include <set>
 #include <vector>
 
-using namespace specfem::assembly::mesh_impl::dim2::utilities;
+using namespace specfem::assembly::mesh_impl::dim2;
 
 class MeshUtilitiesTest : public ::testing::Test {
 protected:
