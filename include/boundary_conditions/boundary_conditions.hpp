@@ -23,12 +23,12 @@ KOKKOS_FORCEINLINE_FUNCTION void apply_boundary_conditions(
                 "PointBoundaryType must be a PointBoundaryType");
 
   static_assert(specfem::data_access::is_point<PointVelocityType>::value &&
-                    specfem::data_access::is_field_l<PointVelocityType>::value,
+                    specfem::data_access::is_field<PointVelocityType>::value,
                 "PointFieldType must be a PointFieldType");
 
   static_assert(
       specfem::data_access::is_point<PointAccelerationType>::value &&
-          specfem::data_access::is_field_l<PointAccelerationType>::value,
+          specfem::data_access::is_field<PointAccelerationType>::value,
       "PointAccelerationType must be a PointFieldType");
 
   static_assert(
@@ -55,10 +55,9 @@ compute_mass_matrix_terms(const type_real dt, const PointBoundaryType &boundary,
                     specfem::data_access::is_boundary<PointBoundaryType>::value,
                 "PointBoundaryType must be a PointBoundaryType");
 
-  static_assert(
-      specfem::data_access::is_point<PointMassMatrixType>::value &&
-          specfem::data_access::is_field_l<PointMassMatrixType>::value,
-      "PointMassMatrixType must be a PointFieldType");
+  static_assert(specfem::data_access::is_point<PointMassMatrixType>::value &&
+                    specfem::data_access::is_field<PointMassMatrixType>::value,
+                "PointMassMatrixType must be a PointFieldType");
 
   using boundary_tag_type =
       std::integral_constant<specfem::element::boundary_tag,

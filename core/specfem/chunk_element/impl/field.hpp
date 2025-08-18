@@ -10,7 +10,7 @@ namespace specfem::chunk_element::impl {
 template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD,
           typename ValueType>
-class remove_accessor_attribute {
+class field_without_accessor {
 public:
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
@@ -26,10 +26,10 @@ private:
   value_type m_data;
 
 public:
-  KOKKOS_FORCEINLINE_FUNCTION remove_accessor_attribute() = default;
+  KOKKOS_FORCEINLINE_FUNCTION field_without_accessor() = default;
 
   KOKKOS_FORCEINLINE_FUNCTION
-  remove_accessor_attribute(const value_type &data_in) : m_data(data_in) {}
+  field_without_accessor(const value_type &data_in) : m_data(data_in) {}
 
   // Index operator for accessing components
   template <typename... Indices>
@@ -37,6 +37,15 @@ public:
   operator()(Indices... indices) const {
     return m_data(indices...);
   }
+};
+
+template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag, bool UseSIMD,
+          typename ValueType>
+class remove_accessor_attribute {
+public:
+  using type = field_without_accessor<ChunkSize, NGLL, DimensionTag, MediumTag,
+                                      UseSIMD, ValueType>;
 };
 
 template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
@@ -83,10 +92,9 @@ public:
 
   constexpr static std::size_t shmem_size() { return value_type::shmem_size(); }
 
-  KOKKOS_INLINE_FUNCTION const
-      remove_accessor_attribute<ChunkSize, NGLL, DimensionTag, MediumTag,
-                                UseSIMD, value_type>
-      get_field() const {
+  KOKKOS_INLINE_FUNCTION const typename remove_accessor_attribute<
+      ChunkSize, NGLL, DimensionTag, MediumTag, UseSIMD, value_type>::type
+  field_without_accessor() const {
     return { m_data };
   }
 };

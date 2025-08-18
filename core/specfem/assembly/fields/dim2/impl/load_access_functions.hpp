@@ -1,5 +1,6 @@
 #pragma once
 
+#include "execution/for_each_level.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/fields/impl/check_accessor_compatibility.hpp"
 #include "specfem/assembly/fields/impl/field_impl.hpp"
@@ -15,7 +16,7 @@ template <bool on_device, typename IndexType, typename ContainerType,
           typename std::enable_if_t<
               (specfem::data_access::is_index_type<IndexType>::value &&
                specfem::data_access::is_point<IndexType>::value &&
-               (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
+               (specfem::data_access::is_field<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 load_after_simd_dispatch(const std::false_type, const IndexType &index,
@@ -57,7 +58,7 @@ template <bool on_device, typename IndexType, typename ContainerType,
           typename std::enable_if_t<
               (specfem::data_access::is_index_type<IndexType>::value &&
                specfem::data_access::is_point<IndexType>::value &&
-               (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
+               (specfem::data_access::is_field<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 load_after_simd_dispatch(const std::true_type, const IndexType &index,
@@ -107,7 +108,7 @@ template <bool on_device, typename IndexType, typename ContainerType,
           typename std::enable_if_t<
               (specfem::data_access::is_chunk_element<IndexType>::value &&
                (specfem::data_access::is_index_type<IndexType>::value) &&
-               (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
+               (specfem::data_access::is_field<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 load_after_simd_dispatch(const std::false_type, const IndexType &index,
@@ -157,7 +158,7 @@ template <bool on_device, typename IndexType, typename ContainerType,
           typename std::enable_if_t<
               (specfem::data_access::is_chunk_element<IndexType>::value &&
                (specfem::data_access::is_index_type<IndexType>::value) &&
-               (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
+               (specfem::data_access::is_field<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 load_after_simd_dispatch(const std::true_type, const IndexType &index,

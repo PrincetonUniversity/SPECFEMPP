@@ -14,7 +14,7 @@ template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_index_type<IndexType>::value &&
-               (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
+               (specfem::data_access::is_field<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 store_after_simd_dispatch(const std::false_type, const IndexType &index,
@@ -55,7 +55,7 @@ template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_index_type<IndexType>::value &&
-               (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
+               (specfem::data_access::is_field<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 store_after_simd_dispatch(const std::true_type, const IndexType &index,
