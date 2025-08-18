@@ -9,7 +9,7 @@
 #include "quadrature/interface.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem_setup.hpp"
-#include "impl/utilities.tpp"
+#include "impl/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 #include <vector>
@@ -18,14 +18,18 @@ namespace {
 using point = specfem::assembly::mesh_impl::dim2::utilities::point;
 using bounding_box = specfem::assembly::mesh_impl::dim2::utilities::bounding_box;
 
-specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
-create_mesh_points(
+std::tuple<Kokkos::View<int***, Kokkos::LayoutLeft, Kokkos::HostSpace>,
+           Kokkos::View<type_real****, Kokkos::LayoutRight, Kokkos::HostSpace>,
+           int>
+create_coordinate_arrays(
     const std::vector<point>& reordered_points,
-    const bounding_box& bbox,
     int nspec, int ngll, int nglob) {
 
-  specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2> mesh_points(
-      nspec, ngll, ngll);
+  // Create coordinate arrays (host-based since assign_numbering is host-only)
+  auto index_mapping = Kokkos::View<int***, Kokkos::LayoutLeft, Kokkos::HostSpace>(
+      "index_mapping", nspec, ngll, ngll);
+  auto coord = Kokkos::View<type_real****, Kokkos::LayoutRight, Kokkos::HostSpace>(
+      "coord", 2, nspec, ngll, ngll);
 
   std::vector<int> iglob_counted(nglob, -1);
   constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
@@ -44,15 +48,15 @@ create_mesh_points(
             const type_real z_cor = reordered_points[iloc].z;
 
             iglob_counted[reordered_points[iloc].iglob] = inum;
-            mesh_points.h_index_mapping(ispec, iz, ix) = inum;
-            mesh_points.h_coord(0, ispec, iz, ix) = x_cor;
-            mesh_points.h_coord(1, ispec, iz, ix) = z_cor;
+            index_mapping(ispec, iz, ix) = inum;
+            coord(0, ispec, iz, ix) = x_cor;
+            coord(1, ispec, iz, ix) = z_cor;
             inum++;
           } else {
-            mesh_points.h_index_mapping(ispec, iz, ix) =
+            index_mapping(ispec, iz, ix) =
                 iglob_counted[reordered_points[iloc].iglob];
-            mesh_points.h_coord(0, ispec, iz, ix) = reordered_points[iloc].x;
-            mesh_points.h_coord(1, ispec, iz, ix) = reordered_points[iloc].z;
+            coord(0, ispec, iz, ix) = reordered_points[iloc].x;
+            coord(1, ispec, iz, ix) = reordered_points[iloc].z;
           }
           iloc++;
         }
@@ -60,19 +64,11 @@ create_mesh_points(
     }
   }
 
-  mesh_points.xmin = bbox.xmin;
-  mesh_points.xmax = bbox.xmax;
-  mesh_points.zmin = bbox.zmin;
-  mesh_points.zmax = bbox.zmax;
-
   int ngllxz = ngll * ngll;
   assert(nglob != (nspec * ngllxz));
   assert(inum == nglob);
 
-  Kokkos::deep_copy(mesh_points.index_mapping, mesh_points.h_index_mapping);
-  Kokkos::deep_copy(mesh_points.coord, mesh_points.h_coord);
-
-  return mesh_points;
+  return std::make_tuple(index_mapping, coord, inum);
 }
 
 specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
@@ -101,8 +97,16 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
   // Calculate bounding box using utilities
   auto bbox = specfem::assembly::mesh_impl::dim2::utilities::compute_bounding_box(reordered_points);
 
-  // Create and populate mesh points object
-  return create_mesh_points(reordered_points, bbox, nspec, ngll, nglob);
+  // Create coordinate arrays
+  auto [index_mapping, coord, nglob_actual] =
+      create_coordinate_arrays(reordered_points, nspec, ngll, nglob);
+
+  // Create mesh points object using constructor with pre-computed arrays
+  specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2> mesh_points(
+      nspec, ngll, ngll, index_mapping, coord,
+      bbox.xmin, bbox.xmax, bbox.zmin, bbox.zmax);
+
+  return mesh_points;
 }
 
 } // namespace
