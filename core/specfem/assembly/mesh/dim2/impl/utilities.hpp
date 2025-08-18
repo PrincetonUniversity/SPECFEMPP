@@ -16,7 +16,6 @@ namespace specfem {
 namespace assembly {
 namespace mesh_impl {
 namespace dim2 {
-namespace utilities {
 
 struct point {
   type_real x = 0, z = 0;
@@ -45,10 +44,13 @@ reorder_to_original_layout(const std::vector<point> &sorted_points);
 
 bounding_box compute_bounding_box(const std::vector<point> &points);
 
-} // namespace utilities
+std::tuple<Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>,
+           Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>,
+           int>
+create_coordinate_arrays(const std::vector<point> &reordered_points, int nspec,
+                         int ngll, int nglob);
+
 } // namespace dim2
 } // namespace mesh_impl
 } // namespace assembly
 } // namespace specfem
-
-#include "utilities.tpp"
