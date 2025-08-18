@@ -19,9 +19,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v1
       - name: Configure
-        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON
+        run: cmake --preset release
       - name: Build
-        run: cmake --build build
+        run: cmake --build --preset release -j 4
       - name: Run all tests
-        run: cd build/tests/unit-tests
+        run: cd build/release/tests/unit-tests
           && ctest --verbose

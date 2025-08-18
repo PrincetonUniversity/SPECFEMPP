@@ -2,14 +2,14 @@
 
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "simulation_field.hpp"
+#include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/fields/impl/field_impl.tpp"
 #include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace {
-template <typename ViewType> int compute_nglob(const ViewType index_mapping) {
+template <typename ViewType> int compute_nglob2D(const ViewType index_mapping) {
   const int nspec = index_mapping.extent(0);
   const int ngllz = index_mapping.extent(1);
   const int ngllx = index_mapping.extent(2);
@@ -34,42 +34,30 @@ specfem::assembly::simulation_field<specfem::dimension::type::dim2,
     simulation_field(const specfem::assembly::mesh<dimension_tag> &mesh,
                      const specfem::assembly::element_types<dimension_tag> &element_types) {
 
-  nglob = compute_nglob(mesh.h_index_mapping);
-
-  this->nspec = mesh.nspec;
-  this->ngllz = mesh.ngllz;
-  this->ngllx = mesh.ngllx;
+  nglob = compute_nglob2D(mesh.h_index_mapping);
   this->index_mapping = mesh.index_mapping;
   this->h_index_mapping = mesh.h_index_mapping;
-
-  assembly_index_mapping =
-      Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
-                   specfem::kokkos::DevMemSpace>(
-          "specfem::assembly::simulation_field::index_mapping", nglob);
-
-  h_assembly_index_mapping =
-      Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
-                   specfem::kokkos::HostMemSpace>(
-          Kokkos::create_mirror_view(assembly_index_mapping));
-
-  for (int iglob = 0; iglob < nglob; iglob++) {
-    for (int itype = 0; itype < specfem::element::ntypes; itype++) {
-      h_assembly_index_mapping(iglob, itype) = -1;
-    }
-  }
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE(field) {
-        auto index = Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                                     static_cast<int>(_medium_tag_));
+      CAPTURE(assembly_index_mapping, h_assembly_index_mapping, field) {
+        _assembly_index_mapping_ =
+            Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::DevMemSpace>(
+                "specfem::assembly::simulation_field::index_mapping", nglob);
+        _h_assembly_index_mapping_ = Kokkos::create_mirror_view(
+            _assembly_index_mapping_);
+
+        for (int iglob = 0; iglob < nglob; iglob++) {
+          _h_assembly_index_mapping_(iglob) = -1;
+        }
+
         _field_ = specfem::assembly::fields_impl::field_impl<_dimension_tag_,
                                                              _medium_tag_>(
-            mesh, element_types, index);
-      })
+            mesh, element_types, _h_assembly_index_mapping_);
 
-  Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
+        Kokkos::deep_copy(_assembly_index_mapping_, _h_assembly_index_mapping_);
+      })
 
   return;
 }

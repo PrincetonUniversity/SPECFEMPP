@@ -1,13 +1,15 @@
 #pragma once
 
 #include "execution/for_each_level.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem/point.hpp"
 
 namespace specfem::assembly::fields_impl {
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -54,7 +56,8 @@ impl_load(const int iglob, const WavefieldType &field, ViewType &point_field) {
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -112,7 +115,8 @@ impl_load(const typename ViewType::simd::mask_type &mask, const int *iglob,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -175,7 +179,8 @@ impl_load(const specfem::point::simd_assembly_index &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -189,7 +194,8 @@ impl_load(const specfem::point::index<ViewType::dimension_tag> &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -202,7 +208,8 @@ impl_load(const specfem::point::assembly_index<false> &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -227,7 +234,8 @@ impl_load(const specfem::point::simd_index<ViewType::dimension_tag> &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void impl_store(const int iglob,
@@ -266,7 +274,8 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_store(const int iglob,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -322,7 +331,8 @@ impl_store(const typename ViewType::simd::mask_type &mask, const int *iglob,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -384,7 +394,8 @@ impl_store(const specfem::point::simd_assembly_index &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -400,7 +411,8 @@ impl_store(const specfem::point::index<ViewType::dimension_tag> &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -416,7 +428,8 @@ impl_store(const specfem::point::assembly_index<false> &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -442,7 +455,8 @@ impl_store(const specfem::point::simd_index<ViewType::dimension_tag> &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void impl_add(const int iglob,
@@ -480,7 +494,8 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_add(const int iglob,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -536,7 +551,8 @@ impl_add(const typename ViewType::simd::mask_type &mask, const int *iglob,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -619,7 +635,8 @@ impl_add(const specfem::point::simd_assembly_index &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -634,7 +651,8 @@ impl_add(const specfem::point::index<ViewType::dimension_tag> &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -650,7 +668,8 @@ impl_add(const specfem::point::assembly_index<false> &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -676,7 +695,8 @@ impl_add(const specfem::point::simd_index<ViewType::dimension_tag> &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add(const int iglob,
@@ -718,7 +738,8 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add(const int iglob,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -779,7 +800,8 @@ impl_atomic_add(const typename ViewType::simd::mask_type &mask,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   !ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
@@ -795,7 +817,8 @@ impl_atomic_add(const specfem::point::index<ViewType::dimension_tag> &index,
 
 template <bool on_device, typename WavefieldType, typename ViewType,
           typename std::enable_if_t<
-              specfem::accessor::is_point_field<ViewType>::value &&
+              specfem::data_access::is_accessor<ViewType>::value &&
+                  specfem::data_access::is_field<ViewType>::value &&
                   ViewType::simd::using_simd,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add(

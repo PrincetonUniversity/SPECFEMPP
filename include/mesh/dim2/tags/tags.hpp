@@ -4,8 +4,8 @@
 #include "enumerations/medium.hpp"
 #include "mesh/dim2/boundaries/boundaries.hpp"
 #include "mesh/dim2/materials/materials.hpp"
+#include "mesh/impl/tags_container.hpp"
 #include "mesh/mesh_base.hpp"
-#include "tags_container.hpp"
 
 namespace specfem {
 namespace mesh {

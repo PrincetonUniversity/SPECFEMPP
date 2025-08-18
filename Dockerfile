@@ -2,13 +2,15 @@
 
 FROM gcc:9.5.0
 
-# Set up WORKDIR
-WORKDIR /usr/local/specfempp
 
-ENV SOURCE=/usr/local/specfempp/source
-ENV BUILD=/usr/local/specfempp/build
+# Install vim editor
+RUN apt-get update && apt-get install -y vim wget build-essential git
 
-COPY . ${SOURCE}
+# Install Emacs
+RUN apt-get update && apt-get install -y emacs
+
+#Install snakemake
+RUN apt-get update && apt-get install -y python3-pip && pip3 install snakemake
 
 # Build and Install CMake
 RUN echo "Installing CMake..." && \
@@ -34,18 +36,49 @@ RUN echo "cmake version:" && \
     cmake --version && \
     echo "Done."
 
+# Install HDF5
+RUN echo "Installing HDF5..." && \
+    echo "==================" && \
+    echo "" && \
+    apt-get update && \
+    apt-get install -y \
+        libhdf5-dev \
+        libhdf5-serial-dev \
+        hdf5-tools \
+        pkg-config \
+        zlib1g-dev && \
+    echo "Done."
+
+# Set HDF5 environment variables for CMake discovery
+ENV HDF5_ROOT=/usr
+ENV HDF5_DIR=/usr/lib/x86_64-linux-gnu/hdf5/serial
+ENV PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+
+# Verify HDF5 installation
+RUN echo "HDF5 version:" && \
+    h5dump --version && \
+    echo "HDF5 libraries location:" && \
+    find /usr -name "libhdf5*" -type f 2>/dev/null | head -10 && \
+    echo "Done."
+
+# Set up WORKDIR
+WORKDIR /usr/local/specfempp
+
+ENV SOURCE=/usr/local/specfempp/source
+ENV BUILD=/usr/local/specfempp/source/build
+
+COPY . ${SOURCE}
 # Install SPECFEM++
 RUN echo "Installing SPECFEM++..." && \
     echo "========================" && \
     echo "" && \
     cd ${SOURCE} && \
     rm -rf ${BUILD} && \
-    cmake -S ${SOURCE} -B ${BUILD} -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D BUILD_EXAMPLES=ON && \
-    cmake --build ${BUILD} && \
-    rm -rf ${SOURCE} && \
+    cmake --preset release-nosimd && \
+    cmake --build --preset release-nosimd && \
     echo "Done."
 
 # Set environment variables
-ENV PATH="${BUILD}/bin:${PATH}"
+ENV PATH="${SOURCE}/bin/release-nosimd:${PATH}"
 
 CMD ["/bin/bash"]
