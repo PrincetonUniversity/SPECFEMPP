@@ -35,14 +35,6 @@ struct is_jacobian_matrix<
                         specfem::data_access::DataClassType::jacobian_matrix> >
     : std::true_type {};
 
-template <typename T, typename = void> struct is_field : std::false_type {};
-
-template <typename T>
-struct is_field<T,
-                std::enable_if_t<T::data_class ==
-                                 specfem::data_access::DataClassType::field> >
-    : std::true_type {};
-
 template <typename T, typename = void>
 struct is_field_derivatives : std::false_type {};
 
@@ -86,10 +78,10 @@ struct is_stress<T,
                                   specfem::data_access::DataClassType::stress> >
     : std::true_type {};
 
-template <typename T, typename = void> struct is_field_l : std::false_type {};
+template <typename T, typename = void> struct is_field : std::false_type {};
 
 template <typename T>
-struct is_field_l<
+struct is_field<
     T, std::enable_if_t<
            T::data_class == specfem::data_access::DataClassType::displacement ||
            T::data_class == specfem::data_access::DataClassType::velocity ||

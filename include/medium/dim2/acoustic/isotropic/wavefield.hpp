@@ -43,13 +43,13 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
   const auto &active_field = [&]() {
     if (wavefield_type == specfem::wavefield::type::displacement) {
-      return displacement.get_field();
+      return displacement.field_without_accessor();
     } else if (wavefield_type == specfem::wavefield::type::velocity) {
-      return velocity.get_field();
+      return velocity.field_without_accessor();
     } else if (wavefield_type == specfem::wavefield::type::acceleration) {
-      return acceleration.get_field();
+      return acceleration.field_without_accessor();
     } else if (wavefield_type == specfem::wavefield::type::pressure) {
-      return acceleration.get_field();
+      return acceleration.field_without_accessor();
     } else {
       KOKKOS_ABORT_WITH_LOCATION(
           "Unsupported wavefield component for 2D acoustic isotropic media.");
