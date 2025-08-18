@@ -1,6 +1,5 @@
 #pragma once
 
-#include "utilities.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include <algorithm>
 #include <cmath>
@@ -11,8 +10,8 @@ namespace mesh_impl {
 namespace dim2 {
 namespace utilities {
 
-type_real compute_spatial_tolerance(const std::vector<point>& points,
-                                   int nspec, int ngllxz) {
+inline type_real compute_spatial_tolerance(const std::vector<point>& points,
+                                           int nspec, int ngllxz) {
   type_real xtypdist = std::numeric_limits<type_real>::max();
 
   for (int ispec = 0; ispec < nspec; ispec++) {
@@ -36,7 +35,7 @@ type_real compute_spatial_tolerance(const std::vector<point>& points,
   return 1e-6 * xtypdist;
 }
 
-std::vector<point> flatten_coordinates(
+inline std::vector<point> flatten_coordinates(
     const specfem::kokkos::HostView4d<double>& global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
@@ -67,7 +66,7 @@ std::vector<point> flatten_coordinates(
   return points;
 }
 
-void sort_points_spatially(std::vector<point>& points) {
+inline void sort_points_spatially(std::vector<point>& points) {
   std::sort(points.begin(), points.end(),
             [&](const point& p1, const point& p2) {
               if (p1.x != p2.x) {
@@ -77,7 +76,7 @@ void sort_points_spatially(std::vector<point>& points) {
             });
 }
 
-int assign_global_numbering(std::vector<point>& points, type_real tolerance) {
+inline int assign_global_numbering(std::vector<point>& points, type_real tolerance) {
   if (points.empty()) return 0;
 
   int ig = 0;
@@ -94,7 +93,7 @@ int assign_global_numbering(std::vector<point>& points, type_real tolerance) {
   return ig + 1;
 }
 
-std::vector<point> reorder_to_original_layout(const std::vector<point>& sorted_points) {
+inline std::vector<point> reorder_to_original_layout(const std::vector<point>& sorted_points) {
   std::vector<point> reordered(sorted_points.size());
 
   for (int i = 0; i < sorted_points.size(); i++) {
@@ -105,7 +104,7 @@ std::vector<point> reorder_to_original_layout(const std::vector<point>& sorted_p
   return reordered;
 }
 
-bounding_box compute_bounding_box(const std::vector<point>& points) {
+inline bounding_box compute_bounding_box(const std::vector<point>& points) {
   bounding_box bbox;
 
   for (const auto& p : points) {

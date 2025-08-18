@@ -1,6 +1,7 @@
 #pragma once
 
 #include "kokkos_abstractions.h"
+
 #include <limits>
 #include <vector>
 
@@ -49,3 +50,5 @@ bounding_box compute_bounding_box(const std::vector<point> &points);
 } // namespace mesh_impl
 } // namespace assembly
 } // namespace specfem
+
+#include "utilities.tpp"

@@ -45,51 +45,70 @@ protected:
   }
 };
 
-class MeshLayoutFixtures : public MeshUtilitiesTest {
+class MeshNumberingTests : public MeshUtilitiesTest {
 protected:
-  // Unit square element (2x2 GLL points)
-  std::vector<std::vector<std::pair<double, double> > > unit_square_2x2 = { {
-      { -1.0, -1.0 },
-      { 1.0, -1.0 }, // iz=0: ix=0,1
-      { -1.0, 1.0 },
-      { 1.0, 1.0 } // iz=1: ix=0,1
-  } };
+  // Helper to create unit square coordinates
+  std::vector<std::vector<std::pair<double, double> > >
+  create_unit_square(int ngll, double xmin = -1.0, double xmax = 1.0,
+                     double zmin = -1.0, double zmax = 1.0) {
+    std::vector<std::pair<double, double> > coords;
+    for (int iz = 0; iz < ngll; iz++) {
+      for (int ix = 0; ix < ngll; ix++) {
+        double x = xmin + (xmax - xmin) * ix / (ngll - 1);
+        double z = zmin + (zmax - zmin) * iz / (ngll - 1);
+        coords.push_back({ x, z });
+      }
+    }
+    return { coords };
+  }
 
-  // Unit square element (5x5 GLL points) - more realistic spectral element
-  std::vector<std::vector<std::pair<double, double> > > unit_square_5x5 = {
-    { // iz=0: ix=0,1,2,3,4
-      { -1.0, -1.0 },
-      { -0.5, -1.0 },
-      { 0.0, -1.0 },
-      { 0.5, -1.0 },
-      { 1.0, -1.0 },
-      // iz=1: ix=0,1,2,3,4
-      { -1.0, -0.5 },
-      { -0.5, -0.5 },
-      { 0.0, -0.5 },
-      { 0.5, -0.5 },
-      { 1.0, -0.5 },
-      // iz=2: ix=0,1,2,3,4
-      { -1.0, 0.0 },
-      { -0.5, 0.0 },
-      { 0.0, 0.0 },
-      { 0.5, 0.0 },
-      { 1.0, 0.0 },
-      // iz=3: ix=0,1,2,3,4
-      { -1.0, 0.5 },
-      { -0.5, 0.5 },
-      { 0.0, 0.5 },
-      { 0.5, 0.5 },
-      { 1.0, 0.5 },
-      // iz=4: ix=0,1,2,3,4
-      { -1.0, 1.0 },
-      { -0.5, 1.0 },
-      { 0.0, 1.0 },
-      { 0.5, 1.0 },
-      { 1.0, 1.0 } }
-  };
+  // Helper to create two adjacent squares sharing an edge
+  std::vector<std::vector<std::pair<double, double> > >
+  create_two_adjacent_squares_2x2() {
+    auto left_square =
+        create_unit_square(2, -2.0, 0.0, -1.0, 1.0)[0]; // Left element
+    auto right_square = create_unit_square(
+        2, 0.0, 2.0, -1.0, 1.0)[0]; // Right element (shares x=0 edge)
+    return { left_square, right_square };
+  }
 
-  // Sheared element (2x2 GLL points)
+  std::vector<std::vector<std::pair<double, double> > >
+  create_two_adjacent_squares_5x5() {
+    auto left_square =
+        create_unit_square(5, -2.0, 2.0, -1.0, 1.0)[0]; // Left element
+    auto right_square = create_unit_square(
+        5, 2.0, 6.0, -1.0, 1.0)[0]; // Right element (shares x=2 edge)
+    return { left_square, right_square };
+  }
+
+  // Pre-built geometries for convenience
+  std::vector<std::vector<std::pair<double, double> > > unit_square_2x2 =
+      create_unit_square(2);
+  std::vector<std::vector<std::pair<double, double> > > unit_square_5x5 =
+      create_unit_square(5);
+  std::vector<std::vector<std::pair<double, double> > >
+      two_adjacent_squares_2x2 = create_two_adjacent_squares_2x2();
+  std::vector<std::vector<std::pair<double, double> > >
+      two_adjacent_squares_5x5 = create_two_adjacent_squares_5x5();
+
+  // Helper to create a 2x2 grid of elements
+  std::vector<std::vector<std::pair<double, double> > >
+  create_2x2_grid(int ngll) {
+    std::vector<std::vector<std::pair<double, double> > > grid;
+    // Element layout: [2][3]
+    //                 [0][1]
+    grid.push_back(create_unit_square(ngll, 0.0, 1.0, 0.0,
+                                      1.0)[0]); // Element 0: bottom-left
+    grid.push_back(create_unit_square(ngll, 1.0, 2.0, 0.0,
+                                      1.0)[0]); // Element 1: bottom-right
+    grid.push_back(
+        create_unit_square(ngll, 0.0, 1.0, 1.0, 2.0)[0]); // Element 2: top-left
+    grid.push_back(create_unit_square(ngll, 1.0, 2.0, 1.0,
+                                      2.0)[0]); // Element 3: top-right
+    return grid;
+  }
+
+  // Sheared element coordinates (manually specified since it's non-regular)
   std::vector<std::vector<std::pair<double, double> > > sheared_element_2x2 = {
     {
         { -1.0, -1.0 },
@@ -99,127 +118,13 @@ protected:
     }
   };
 
-  // Two adjacent unit squares sharing edge (2x2 GLL points)
-  std::vector<std::vector<std::pair<double, double> > >
-      two_adjacent_squares_2x2 = {
-        // Element 0: left square
-        {
-            { -2.0, -1.0 },
-            { 0.0, -1.0 }, // iz=0: ix=0,1
-            { -2.0, 1.0 },
-            { 0.0, 1.0 } // iz=1: ix=0,1
-        },
-        // Element 1: right square (shares x=0 edge with element 0)
-        {
-            { 0.0, -1.0 },
-            { 2.0, -1.0 }, // iz=0: ix=0,1
-            { 0.0, 1.0 },
-            { 2.0, 1.0 } // iz=1: ix=0,1
-        }
-      };
-
-  // Two adjacent unit squares sharing edge (5x5 GLL points)
-  std::vector<std::vector<std::pair<double, double> > >
-      two_adjacent_squares_5x5 = {
-        // Element 0: left square
-        { // iz=0: ix=0,1,2,3,4
-          { -2.0, -1.0 },
-          { -1.0, -1.0 },
-          { 0.0, -1.0 },
-          { 1.0, -1.0 },
-          { 2.0, -1.0 },
-          // iz=1: ix=0,1,2,3,4
-          { -2.0, -0.5 },
-          { -1.0, -0.5 },
-          { 0.0, -0.5 },
-          { 1.0, -0.5 },
-          { 2.0, -0.5 },
-          // iz=2: ix=0,1,2,3,4
-          { -2.0, 0.0 },
-          { -1.0, 0.0 },
-          { 0.0, 0.0 },
-          { 1.0, 0.0 },
-          { 2.0, 0.0 },
-          // iz=3: ix=0,1,2,3,4
-          { -2.0, 0.5 },
-          { -1.0, 0.5 },
-          { 0.0, 0.5 },
-          { 1.0, 0.5 },
-          { 2.0, 0.5 },
-          // iz=4: ix=0,1,2,3,4
-          { -2.0, 1.0 },
-          { -1.0, 1.0 },
-          { 0.0, 1.0 },
-          { 1.0, 1.0 },
-          { 2.0, 1.0 } },
-        // Element 1: right square (shares x=2 edge with element 0)
-        { // iz=0: ix=0,1,2,3,4
-          { 2.0, -1.0 },
-          { 3.0, -1.0 },
-          { 4.0, -1.0 },
-          { 5.0, -1.0 },
-          { 6.0, -1.0 },
-          // iz=1: ix=0,1,2,3,4
-          { 2.0, -0.5 },
-          { 3.0, -0.5 },
-          { 4.0, -0.5 },
-          { 5.0, -0.5 },
-          { 6.0, -0.5 },
-          // iz=2: ix=0,1,2,3,4
-          { 2.0, 0.0 },
-          { 3.0, 0.0 },
-          { 4.0, 0.0 },
-          { 5.0, 0.0 },
-          { 6.0, 0.0 },
-          // iz=3: ix=0,1,2,3,4
-          { 2.0, 0.5 },
-          { 3.0, 0.5 },
-          { 4.0, 0.5 },
-          { 5.0, 0.5 },
-          { 6.0, 0.5 },
-          // iz=4: ix=0,1,2,3,4
-          { 2.0, 1.0 },
-          { 3.0, 1.0 },
-          { 4.0, 1.0 },
-          { 5.0, 1.0 },
-          { 6.0, 1.0 } }
-      };
-
-  // 2x2 grid of elements (2x2 GLL points each)
-  std::vector<std::vector<std::pair<double, double> > >
-      grid_2x2_elements_2x2 = { // Element 0: bottom-left
-                                {
-                                    { 0.0, 0.0 },
-                                    { 1.0, 0.0 }, // iz=0: ix=0,1
-                                    { 0.0, 1.0 },
-                                    { 1.0, 1.0 } // iz=1: ix=0,1
-                                },
-                                // Element 1: bottom-right
-                                {
-                                    { 1.0, 0.0 },
-                                    { 2.0, 0.0 }, // iz=0: ix=0,1
-                                    { 1.0, 1.0 },
-                                    { 2.0, 1.0 } // iz=1: ix=0,1
-                                },
-                                // Element 2: top-left
-                                {
-                                    { 0.0, 1.0 },
-                                    { 1.0, 1.0 }, // iz=0: ix=0,1
-                                    { 0.0, 2.0 },
-                                    { 1.0, 2.0 } // iz=1: ix=0,1
-                                },
-                                // Element 3: top-right
-                                {
-                                    { 1.0, 1.0 },
-                                    { 2.0, 1.0 }, // iz=0: ix=0,1
-                                    { 1.0, 2.0 },
-                                    { 2.0, 2.0 } // iz=1: ix=0,1
-                                }
-      };
+  // Pre-built grid geometry
+  std::vector<std::vector<std::pair<double, double> > > grid_2x2_elements_2x2 =
+      create_2x2_grid(2);
 };
 
 // Test flatten_coordinates function
-TEST_F(MeshLayoutFixtures, FlattenCoordinatesUnitSquare) {
+TEST_F(MeshNumberingTests, FlattenCoordinatesUnitSquare) {
   auto coords = create_coordinates(unit_square_2x2);
   auto flattened = flatten_coordinates(coords);
 
@@ -235,7 +140,7 @@ TEST_F(MeshLayoutFixtures, FlattenCoordinatesUnitSquare) {
   EXPECT_EQ(flattened[3].iloc, 3);
 }
 
-TEST_F(MeshLayoutFixtures, FlattenCoordinatesMultipleElements) {
+TEST_F(MeshNumberingTests, FlattenCoordinatesMultipleElements) {
   auto coords = create_coordinates(two_adjacent_squares_2x2);
   auto flattened = flatten_coordinates(coords);
 
@@ -255,7 +160,7 @@ TEST_F(MeshLayoutFixtures, FlattenCoordinatesMultipleElements) {
 }
 
 // Test flatten_coordinates with 5x5 GLL points
-TEST_F(MeshLayoutFixtures, FlattenCoordinatesUnitSquare5x5) {
+TEST_F(MeshNumberingTests, FlattenCoordinatesUnitSquare5x5) {
   auto coords = create_coordinates(unit_square_5x5);
   auto flattened = flatten_coordinates(coords);
 
@@ -276,7 +181,7 @@ TEST_F(MeshLayoutFixtures, FlattenCoordinatesUnitSquare5x5) {
   EXPECT_EQ(flattened[12].iloc, 12);
 }
 
-TEST_F(MeshLayoutFixtures, FlattenCoordinatesMultipleElements5x5) {
+TEST_F(MeshNumberingTests, FlattenCoordinatesMultipleElements5x5) {
   auto coords = create_coordinates(two_adjacent_squares_5x5);
   auto flattened = flatten_coordinates(coords);
 
@@ -296,7 +201,7 @@ TEST_F(MeshLayoutFixtures, FlattenCoordinatesMultipleElements5x5) {
 }
 
 // Test spatial sorting
-TEST_F(MeshLayoutFixtures, SortPointsSpatiallyUnitSquare) {
+TEST_F(MeshNumberingTests, SortPointsSpatiallyUnitSquare) {
   auto coords = create_coordinates(unit_square_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -318,7 +223,7 @@ TEST_F(MeshLayoutFixtures, SortPointsSpatiallyUnitSquare) {
 }
 
 // Test tolerance calculation
-TEST_F(MeshLayoutFixtures, ComputeSpatialToleranceUnitSquare) {
+TEST_F(MeshNumberingTests, ComputeSpatialToleranceUnitSquare) {
   auto coords = create_coordinates(unit_square_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -329,7 +234,7 @@ TEST_F(MeshLayoutFixtures, ComputeSpatialToleranceUnitSquare) {
       << expected_got(2e-6, tolerance);
 }
 
-TEST_F(MeshLayoutFixtures, ComputeSpatialToleranceSheared) {
+TEST_F(MeshNumberingTests, ComputeSpatialToleranceSheared) {
   auto coords = create_coordinates(sheared_element_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -341,7 +246,7 @@ TEST_F(MeshLayoutFixtures, ComputeSpatialToleranceSheared) {
 }
 
 // Test global numbering assignment
-TEST_F(MeshLayoutFixtures, AssignGlobalNumberingUnitSquare) {
+TEST_F(MeshNumberingTests, AssignGlobalNumberingUnitSquare) {
   auto coords = create_coordinates(unit_square_2x2);
   auto points = flatten_coordinates(coords);
   sort_points_spatially(points);
@@ -359,7 +264,7 @@ TEST_F(MeshLayoutFixtures, AssignGlobalNumberingUnitSquare) {
   EXPECT_EQ(points[3].iglob, 3);
 }
 
-TEST_F(MeshLayoutFixtures, AssignGlobalNumberingSharedPoints) {
+TEST_F(MeshNumberingTests, AssignGlobalNumberingSharedPoints) {
   auto coords = create_coordinates(two_adjacent_squares_2x2);
   auto points = flatten_coordinates(coords);
   sort_points_spatially(points);
@@ -386,7 +291,7 @@ TEST_F(MeshLayoutFixtures, AssignGlobalNumberingSharedPoints) {
 }
 
 // Critical test: Shared points with 5x5 GLL points
-TEST_F(MeshLayoutFixtures, AssignGlobalNumberingSharedPoints5x5) {
+TEST_F(MeshNumberingTests, AssignGlobalNumberingSharedPoints5x5) {
   auto coords = create_coordinates(two_adjacent_squares_5x5);
   auto points = flatten_coordinates(coords);
   sort_points_spatially(points);
@@ -417,7 +322,7 @@ TEST_F(MeshLayoutFixtures, AssignGlobalNumberingSharedPoints5x5) {
   EXPECT_EQ(shared_pairs, 5); // Five shared points along edge
 }
 
-TEST_F(MeshLayoutFixtures, AssignGlobalNumberingGrid2x2) {
+TEST_F(MeshNumberingTests, AssignGlobalNumberingGrid2x2) {
   auto coords = create_coordinates(grid_2x2_elements_2x2);
   auto points = flatten_coordinates(coords);
   sort_points_spatially(points);
@@ -430,7 +335,7 @@ TEST_F(MeshLayoutFixtures, AssignGlobalNumberingGrid2x2) {
 }
 
 // Test point reordering
-TEST_F(MeshLayoutFixtures, ReorderToOriginalLayout) {
+TEST_F(MeshNumberingTests, ReorderToOriginalLayout) {
   auto coords = create_coordinates(unit_square_2x2);
   auto points = flatten_coordinates(coords);
   auto original_order = points;
@@ -454,7 +359,7 @@ TEST_F(MeshLayoutFixtures, ReorderToOriginalLayout) {
 }
 
 // Test bounding box calculation
-TEST_F(MeshLayoutFixtures, ComputeBoundingBoxUnitSquare) {
+TEST_F(MeshNumberingTests, ComputeBoundingBoxUnitSquare) {
   auto coords = create_coordinates(unit_square_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -466,7 +371,7 @@ TEST_F(MeshLayoutFixtures, ComputeBoundingBoxUnitSquare) {
   EXPECT_DOUBLE_EQ(bbox.zmax, 1.0);
 }
 
-TEST_F(MeshLayoutFixtures, ComputeBoundingBoxSheared) {
+TEST_F(MeshNumberingTests, ComputeBoundingBoxSheared) {
   auto coords = create_coordinates(sheared_element_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -478,7 +383,7 @@ TEST_F(MeshLayoutFixtures, ComputeBoundingBoxSheared) {
   EXPECT_DOUBLE_EQ(bbox.zmax, 2.0);
 }
 
-TEST_F(MeshLayoutFixtures, ComputeBoundingBoxGrid) {
+TEST_F(MeshNumberingTests, ComputeBoundingBoxGrid) {
   auto coords = create_coordinates(grid_2x2_elements_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -490,23 +395,34 @@ TEST_F(MeshLayoutFixtures, ComputeBoundingBoxGrid) {
   EXPECT_DOUBLE_EQ(bbox.zmax, 2.0);
 }
 
-// Integration test for full workflow
-TEST_F(MeshLayoutFixtures, FullWorkflowIntegration) {
+// Integration test for full workflow - tests complete utility pipeline
+TEST_F(MeshNumberingTests, FullWorkflowIntegration) {
   auto coords = create_coordinates(two_adjacent_squares_2x2);
+  int nspec = 2;
+  int ngll = 2;
 
-  // Complete workflow
+  // Extract coordinates into testable utility functions
   auto points = flatten_coordinates(coords);
+
+  // Sort points spatially
   auto sorted_points = points;
   sort_points_spatially(sorted_points);
 
-  type_real tolerance = compute_spatial_tolerance(sorted_points, 2, 4);
+  // Compute spatial tolerance
+  type_real tolerance =
+      compute_spatial_tolerance(sorted_points, nspec, ngll * ngll);
+
+  // Assign global numbering
   int nglob = assign_global_numbering(sorted_points, tolerance);
 
+  // Reorder points to original layout
   auto reordered = reorder_to_original_layout(sorted_points);
+
+  // Calculate bounding box
   auto bbox = compute_bounding_box(reordered);
 
   // Verify end-to-end results
-  EXPECT_EQ(nglob, 6);
+  EXPECT_EQ(nglob, 6); // 8 points - 2 shared = 6 unique
   EXPECT_EQ(reordered.size(), 8);
 
   EXPECT_DOUBLE_EQ(bbox.xmin, -2.0);
@@ -515,32 +431,43 @@ TEST_F(MeshLayoutFixtures, FullWorkflowIntegration) {
   EXPECT_DOUBLE_EQ(bbox.zmax, 1.0);
 
   // Verify shared points have same iglob
-  bool found_shared = false;
+  int shared_pairs = 0;
   for (int i = 0; i < reordered.size(); i++) {
     for (int j = i + 1; j < reordered.size(); j++) {
       if (std::abs(reordered[i].x - reordered[j].x) < tolerance &&
           std::abs(reordered[i].z - reordered[j].z) < tolerance) {
         EXPECT_EQ(reordered[i].iglob, reordered[j].iglob);
-        found_shared = true;
+        shared_pairs++;
       }
     }
   }
-  EXPECT_TRUE(found_shared);
+  EXPECT_EQ(shared_pairs, 2); // Exactly 2 shared points (edge points)
 }
 
 // Integration test for 5x5 GLL points - critical for spectral elements
-TEST_F(MeshLayoutFixtures, FullWorkflowIntegration5x5) {
+TEST_F(MeshNumberingTests, FullWorkflowIntegration5x5) {
   auto coords = create_coordinates(two_adjacent_squares_5x5);
+  int nspec = 2;
+  int ngll = 5;
 
-  // Complete workflow
+  // Extract coordinates into testable utility functions
   auto points = flatten_coordinates(coords);
+
+  // Sort points spatially
   auto sorted_points = points;
   sort_points_spatially(sorted_points);
 
-  type_real tolerance = compute_spatial_tolerance(sorted_points, 2, 25);
+  // Compute spatial tolerance
+  type_real tolerance =
+      compute_spatial_tolerance(sorted_points, nspec, ngll * ngll);
+
+  // Assign global numbering
   int nglob = assign_global_numbering(sorted_points, tolerance);
 
+  // Reorder points to original layout
   auto reordered = reorder_to_original_layout(sorted_points);
+
+  // Calculate bounding box
   auto bbox = compute_bounding_box(reordered);
 
   // Verify end-to-end results for 5x5 GLL points
@@ -567,15 +494,33 @@ TEST_F(MeshLayoutFixtures, FullWorkflowIntegration5x5) {
   EXPECT_EQ(unique_iglobs_at_edge.size(),
             5); // But only 5 unique global numbers
 
-  // Verify all points have been assigned global numbers
+  // Verify all points have been assigned valid global numbers
   for (const auto &p : reordered) {
     EXPECT_GE(p.iglob, 0);
     EXPECT_LT(p.iglob, nglob);
   }
+
+  // Verify shared edge points have exactly 5 pairs
+  int shared_pairs = 0;
+  for (int i = 0; i < reordered.size(); i++) {
+    for (int j = i + 1; j < reordered.size(); j++) {
+      if (reordered[i].iglob == reordered[j].iglob) {
+        shared_pairs++;
+        // All shared points should be at x=2.0
+        EXPECT_TRUE(
+            specfem::utilities::is_close(reordered[i].x, type_real(2.0)))
+            << expected_got(2.0, reordered[i].x);
+        EXPECT_TRUE(
+            specfem::utilities::is_close(reordered[j].x, type_real(2.0)))
+            << expected_got(2.0, reordered[j].x);
+      }
+    }
+  }
+  EXPECT_EQ(shared_pairs, 5); // Exactly 5 shared points along edge
 }
 
 // Test edge cases and error conditions
-TEST_F(MeshLayoutFixtures, EdgeCaseEmptyPoints) {
+TEST_F(MeshNumberingTests, EdgeCaseEmptyPoints) {
   std::vector<point> empty_points;
 
   // Empty points should return 0 global points
@@ -589,7 +534,7 @@ TEST_F(MeshLayoutFixtures, EdgeCaseEmptyPoints) {
   EXPECT_EQ(bbox.xmax, std::numeric_limits<type_real>::min());
 }
 
-TEST_F(MeshLayoutFixtures, EdgeCaseSinglePoint) {
+TEST_F(MeshNumberingTests, EdgeCaseSinglePoint) {
   std::vector<point> single_point = { { 1.0, 2.0, 0, 0 } };
 
   type_real tolerance = 1e-6;
@@ -604,7 +549,7 @@ TEST_F(MeshLayoutFixtures, EdgeCaseSinglePoint) {
   EXPECT_DOUBLE_EQ(bbox.zmax, 2.0);
 }
 
-TEST_F(MeshLayoutFixtures, EdgeCaseIdenticalPoints) {
+TEST_F(MeshNumberingTests, EdgeCaseIdenticalPoints) {
   std::vector<point> identical_points = { { 1.0, 2.0, 0, 0 },
                                           { 1.0, 2.0, 1, 0 },
                                           { 1.0, 2.0, 2, 0 } };
