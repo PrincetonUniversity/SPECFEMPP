@@ -7,11 +7,13 @@
 
 namespace specfem::assembly::sources_impl {
 
+template <specfem::dimension::type DimensionTag>
 void locate_sources(
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > > &sources);
+    const specfem::assembly::element_types<DimensionTag> &element_types,
+    const specfem::assembly::mesh<DimensionTag> &mesh,
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+        &sources);
 
 } // namespace specfem::assembly::sources_impl
+
+#include "locate_sources.tpp"

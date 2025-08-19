@@ -36,7 +36,7 @@ struct value_containers<specfem::dimension::type::dim3, containers_type> {
     }
   }
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
                        PROPERTY_TAG(ISOTROPIC)),
                       DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_,
                                                   _PROPERTY_TAG_)),
