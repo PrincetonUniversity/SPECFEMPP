@@ -75,12 +75,24 @@ target_link_libraries(
 )
 
 add_executable(
-  test_mesh_utilities_mapping
-  mesh_utilities/test_mapping.cpp
+  test_mesh_utilities_mapping_2d
+  mesh_utilities/test_mapping_2d.cpp
 )
 
 target_link_libraries(
-  test_mesh_utilities_mapping
+  test_mesh_utilities_mapping_2d
+  mesh_utilities_mapping
+  utilities
+  gtest_main
+)
+
+add_executable(
+  test_mesh_utilities_mapping_3d
+  mesh_utilities/test_mapping_3d.cpp
+)
+
+target_link_libraries(
+  test_mesh_utilities_mapping_3d
   mesh_utilities_mapping
   utilities
   gtest_main
@@ -395,22 +407,22 @@ target_link_libraries(
   gtest_main
 )
 
+
 add_executable(
-  locate_point_impl_3d
-  algorithms/dim3/locate_point_impl.cpp
+  locate_point_fixture_3d
+  algorithms/dim3/locate_point_fixture.cpp
 )
 
 target_link_libraries(
-  locate_point_impl_3d
-  mesh
-  assembly
-  quadrature
-  mpi_environment
-  kokkos_environment
+  locate_point_fixture_3d
+  mesh_utilities_mapping
   algorithms
   jacobian
   point
-  ${GTEST_BOTH_LIBRARIES}
+  utilities
+  mpi_environment
+  kokkos_environment
+  gtest_main
 )
 
 add_executable(
@@ -615,8 +627,8 @@ if (NOT MPI_PARALLEL)
     is_close_tests
     jacobian_tests
     lagrange_tests
-    locate_point_impl_3d
     locate_point_fixture_2d
+    locate_point_fixture_3d
     mass_matrix_tests
     mesh_tests
     point_tests
@@ -625,7 +637,8 @@ if (NOT MPI_PARALLEL)
     rmass_inverse_tests
     simd_tests
     stress_tests
-    test_mesh_utilities_mapping
+    test_mesh_utilities_mapping_2d
+    test_mesh_utilities_mapping_3d
   )
   foreach(test_target IN LISTS TEST_TARGETS)
       gtest_discover_tests(${test_target})

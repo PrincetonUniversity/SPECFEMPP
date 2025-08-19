@@ -19,7 +19,8 @@ using namespace specfem::test::mesh_utilities;
 class LocatePoint2D : public ::testing::Test {
 protected:
   struct ElementGeometry {
-    specfem::kokkos::HostView4d<type_real> global_coords;
+    Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        global_coords;
     Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace> index_mapping;
     Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         control_nodes;
@@ -94,13 +95,13 @@ protected:
   }
 
   // Helper to create coordinate array from element corners and ngll points
-  specfem::kokkos::HostView4d<double> create_coordinate_array(
+  HostView4d create_coordinate_array(
       const std::vector<std::vector<std::pair<double, double> > >
           &element_coords) {
     int nspec = element_coords.size();
     int ngll = std::sqrt(element_coords[0].size());
 
-    specfem::kokkos::HostView4d<double> coords("coords", nspec, ngll, ngll, 2);
+    HostView4d coords("coords", nspec, ngll, ngll, 2);
 
     for (int ispec = 0; ispec < nspec; ispec++) {
       int idx = 0;
@@ -144,30 +145,14 @@ protected:
 
     // Use the create_coordinate_arrays function to get proper index_mapping and
     // coordinates
-    auto [index_mapping_host, coord_host, nglob_actual] =
+    auto [index_mapping, global_coords, nglob_actual] =
         create_coordinate_arrays(reordered_points, geom.nspec, geom.ngllx,
                                  nglob);
 
+    // Assign to geometry structure
+    geom.index_mapping = index_mapping;
+    geom.global_coords = global_coords;
     geom.nglob = nglob_actual;
-
-    // Convert coordinates to the format expected by locate_point (different
-    // layout)
-    geom.global_coords = specfem::kokkos::HostView4d<type_real>(
-        "global_coords", 2, geom.nspec, geom.ngllz, geom.ngllx);
-    geom.index_mapping =
-        Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>(
-            "index_mapping", geom.nspec, geom.ngllz, geom.ngllx);
-
-    // Copy data with correct layout transformation
-    for (int ispec = 0; ispec < geom.nspec; ispec++) {
-      for (int iz = 0; iz < geom.ngllz; iz++) {
-        for (int ix = 0; ix < geom.ngllx; ix++) {
-          geom.global_coords(0, ispec, iz, ix) = coord_host(0, ispec, iz, ix);
-          geom.global_coords(1, ispec, iz, ix) = coord_host(1, ispec, iz, ix);
-          geom.index_mapping(ispec, iz, ix) = index_mapping_host(ispec, iz, ix);
-        }
-      }
-    }
 
     // Set up control nodes
     geom.control_nodes =
