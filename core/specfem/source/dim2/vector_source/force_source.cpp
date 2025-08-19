@@ -103,9 +103,9 @@ bool specfem::sources::force<specfem::dimension::type::dim2>::operator==(
   const auto gcoord = this->get_global_coordinates();
   const auto other_gcoord = other_source->get_global_coordinates();
 
-  return specfem::utilities::almost_equal(gcoord.x, other_gcoord.x) &&
-         specfem::utilities::almost_equal(gcoord.z, other_gcoord.z) &&
-         specfem::utilities::almost_equal(this->angle, other_source->angle) &&
+  return specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
+         specfem::utilities::is_close(gcoord.z, other_gcoord.z) &&
+         specfem::utilities::is_close(this->angle, other_source->angle) &&
          *(this->forcing_function) == *(other_source->forcing_function);
 }
 bool specfem::sources::force<specfem::dimension::type::dim2>::operator!=(

@@ -52,6 +52,7 @@ target_link_libraries(
   specfem_mpi
 )
 
+
 add_library(
   compare_arrays
   utilities/src/compare_array.cpp
@@ -63,6 +64,17 @@ target_link_libraries(
   io
 )
 
+add_executable(
+  is_close_tests
+  utilities/is_close_tests.cpp
+)
+
+target_link_libraries(
+  is_close_tests
+  utilities
+  gtest_main
+  Kokkos::kokkos
+)
 
 add_executable(
   gll_tests
@@ -289,6 +301,7 @@ add_executable(
   assembly/sources/sources.cpp
   assembly/check_jacobian/check_jacobian.cpp
   assembly/locate/locate_point.cpp
+  assembly/mesh/utilities.cpp
   assembly/sources/locate_sources.cpp
   assembly/compute_source_array/compute_source_array_from_vector.cpp
   assembly/compute_source_array/compute_source_array_from_tensor.cpp
@@ -344,6 +357,42 @@ target_link_libraries(
   io
   Boost::filesystem
   point
+)
+
+add_executable(
+  locate_point_impl_2d
+  algorithms/dim2/locate_point_impl.cpp
+)
+
+target_link_libraries(
+  locate_point_impl_2d
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  jacobian
+  point
+  ${GTEST_BOTH_LIBRARIES}
+)
+
+add_executable(
+  locate_point_impl_3d
+  algorithms/dim3/locate_point_impl.cpp
+)
+
+target_link_libraries(
+  locate_point_impl_3d
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  jacobian
+  point
+  ${GTEST_BOTH_LIBRARIES}
 )
 
 add_executable(
@@ -566,8 +615,11 @@ if (NOT MPI_PARALLEL)
     gll_tests
     interpolate_function
     io_tests
+    is_close_tests
     jacobian_tests
     lagrange_tests
+    locate_point_impl_2d
+    locate_point_impl_3d
     mass_matrix_tests
     mesh_tests
     point_tests

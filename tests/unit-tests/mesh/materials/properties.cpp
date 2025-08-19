@@ -130,14 +130,19 @@ const static std::unordered_map<std::string, MaterialVectorType>
                 static_cast<type_real>(0.0 * 1e-3))            // sig33
         }) },
       { "Elastic Isotropic Cosserat Medium - Homogeneous",
-        MaterialVectorType({ specfem::point::properties<
-            dimension, specfem::element::medium_tag::elastic_psv_t,
-            specfem::element::property_tag::isotropic_cosserat, false>(
-            static_cast<type_real>(1e5), static_cast<type_real>(22.667 * 1e9),
-            static_cast<type_real>(4.0e9), static_cast<type_real>(2.0e9),
-            static_cast<type_real>(1e4), static_cast<type_real>(1e8),
-            static_cast<type_real>(1.936 * 1e8),
-            static_cast<type_real>(3.0464 * 1e9)) }) }
+        MaterialVectorType({
+            specfem::point::properties<
+                dimension, specfem::element::medium_tag::elastic_psv_t,
+                specfem::element::property_tag::isotropic_cosserat, false>(
+                static_cast<type_real>(2700.0),  // rho
+                static_cast<type_real>(13.5e9),  // kappa
+                static_cast<type_real>(8.1e9),   // mu
+                static_cast<type_real>(2.7e5),   // nu
+                static_cast<type_real>(2700.0),  // j
+                static_cast<type_real>(7.75e11), // lambda_c
+                static_cast<type_real>(1.5e11),  // mu_c
+                static_cast<type_real>(2.7e5))   // j
+        }) }
     };
 
 void check_property(

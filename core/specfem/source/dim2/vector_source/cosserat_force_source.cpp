@@ -78,10 +78,10 @@ operator==(const specfem::sources::source<specfem::dimension::type::dim2>
   const auto other_gcoord = other_source->get_global_coordinates();
 
   bool internal =
-      specfem::utilities::almost_equal(this->f, other_source->f) &&
-      specfem::utilities::almost_equal(gcoord.x, other_gcoord.x) &&
-      specfem::utilities::almost_equal(gcoord.z, other_gcoord.z) &&
-      specfem::utilities::almost_equal(this->angle, other_source->angle);
+      specfem::utilities::is_close(this->f, other_source->f) &&
+      specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
+      specfem::utilities::is_close(gcoord.z, other_gcoord.z) &&
+      specfem::utilities::is_close(this->angle, other_source->angle);
 
   if (!internal) {
     std::cout << "Cosserat force sources not equal" << std::endl;

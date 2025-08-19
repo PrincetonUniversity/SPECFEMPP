@@ -1,19 +1,20 @@
+#include "algorithms/locate_point_impl.hpp"
 #include "algorithms/locate_point.hpp"
-#include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
+#include <sstream>
+#include <stdexcept>
 
-namespace {
+namespace specfem {
+namespace algorithms {
+namespace locate_point_impl {
 
+// Expose helper functions from locate_point.cpp for unit testing
 std::tuple<int, int, int> rough_location(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,
     const specfem::kokkos::HostView4d<type_real> coord) {
-
-  /***
-   *  Roughly locate closest quadrature point to the source
-   ***/
 
   const int nspec = coord.extent(1);
   const int ngllz = coord.extent(2);
@@ -81,7 +82,7 @@ std::vector<int> get_best_candidates(
   return ispec_candidates;
 }
 
-std::tuple<type_real, type_real> get_best_location(
+std::tuple<type_real, type_real> get_local_coordinates(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,
     const Kokkos::View<
@@ -113,26 +114,26 @@ std::tuple<type_real, type_real> get_best_location(
       gamma = 1.01;
     if (gamma < -1.01)
       gamma = -1.01;
+
+    // Check for convergence
+    if (std::abs(dxi) < 1e-12 && std::abs(dgamma) < 1e-12)
+      break;
   }
 
   return std::make_tuple(xi, gamma);
 }
 
-} // namespace
-
+// Core locate_point logic extracted for testability
 specfem::point::local_coordinates<specfem::dimension::type::dim2>
-specfem::algorithms::locate_point(
+locate_point_core(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
-
-  const auto global_coordinates = mesh.h_coord;
-  const auto index_mapping = mesh.h_index_mapping;
-  const auto xi = mesh.h_xi;
-  const auto gamma = mesh.h_xi;
-  const auto shape2D = mesh.h_shape2D;
-  const int ngnod = mesh.ngnod;
-  const int N = mesh.ngllx;
+    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
+    const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &index_mapping,
+    const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &control_node_coord,
+    const int ngnod, const int ngllx) {
 
   int ix_guess, iz_guess, ispec_guess;
 
@@ -143,101 +144,70 @@ specfem::algorithms::locate_point(
 
   type_real final_dist = std::numeric_limits<type_real>::max();
 
-  int ispec_selected_source;
-  type_real xi_source, gamma_source;
+  int ispec_selected = -1;
+  type_real xi_selected = -9999.0;
+  type_real gamma_selected = -9999.0;
+  specfem::point::global_coordinates<specfem::dimension::type::dim2>
+      coord_point;
 
   const Kokkos::View<
-      point::global_coordinates<specfem::dimension::type::dim2> *,
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
       Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   for (auto &ispec : best_candidates) {
-    auto sv_shape2D = Kokkos::subview(shape2D, iz_guess, ix_guess, Kokkos::ALL);
+    type_real xi_guess = 0.0; // Start at element center
+    type_real gamma_guess = 0.0;
 
-    type_real xi_guess = xi(ix_guess);
-    type_real gamma_guess = gamma(iz_guess);
-
+    // Extract control node coordinates for this element
     for (int i = 0; i < ngnod; i++) {
-      coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
-      coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
+      coorg(i).x = control_node_coord(0, ispec, i);
+      coorg(i).z = control_node_coord(1, ispec, i);
     }
 
-    // find the best location
+    // Find the best location using Newton-Raphson
     std::tie(xi_guess, gamma_guess) =
-        get_best_location(coordinates, coorg, xi_guess, gamma_guess);
+        get_local_coordinates(coordinates, coorg, xi_guess, gamma_guess);
 
-    // compute the distance
-    auto [x, z] =
-        jacobian::compute_locations(coorg, mesh.ngnod, xi_guess, gamma_guess);
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        cart_coord = { x, z };
+    // Compute the global coordinates from the found local coordinates
+    auto coord_computed = specfem::jacobian::compute_locations(
+        coorg, ngnod, xi_guess, gamma_guess);
 
-    type_real dist = specfem::point::distance(coordinates, cart_coord);
+    // Compute the distance from target to found location
+    type_real dist = specfem::point::distance(coordinates, coord_computed);
 
+    // Keep the best result
     if (dist < final_dist) {
-      ispec_selected_source = ispec;
-      xi_source = xi_guess;
-      gamma_source = gamma_guess;
+      ispec_selected = ispec;
+      xi_selected = xi_guess;
+      gamma_selected = gamma_guess;
+      coord_point = coord_computed;
       final_dist = dist;
     }
-
-    ix_guess = int(N / 2.0);
-    iz_guess = int(N / 2.0);
   }
 
-  return { ispec_selected_source, xi_source, gamma_source };
-}
+  // Check if the found coordinates are valid
+  bool xi_out_of_bounds = std::fabs(std::fabs(xi_selected) - 1.01) < 1e-6;
+  bool gamma_out_of_bounds = std::fabs(std::fabs(gamma_selected) - 1.01) < 1e-6;
+  bool ispec_invalid = ispec_selected < 0;
 
-specfem::point::global_coordinates<specfem::dimension::type::dim2>
-specfem::algorithms::locate_point(
-    const specfem::point::local_coordinates<specfem::dimension::type::dim2>
-        &coordinate,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
-
-  const int ispec = coordinate.ispec;
-  const type_real xi = coordinate.xi;
-  const type_real gamma = coordinate.gamma;
-
-  const int ngnod = mesh.ngnod;
-
-  const Kokkos::View<
-      point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  for (int i = 0; i < ngnod; i++) {
-    coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
-    coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
+  // If the found coordinates are out of bounds, throw an error
+  if (xi_out_of_bounds || gamma_out_of_bounds || ispec_invalid) {
+    std::ostringstream oss;
+    oss << "\nFailed to locate point in the mesh:\n"
+        << "  (ispec, xi, gamma)   = (" << ispec_selected << ", " << xi_selected
+        << ", " << gamma_selected << ")\n"
+        << "  (target_x, target_z) = (" << coordinates.x << ", "
+        << coordinates.z << ")\n"
+        << "   (found_x,  found_z) = (" << coord_point.x << ", "
+        << coord_point.z << ")\n"
+        << "            final_dist = " << final_dist << "\n";
+    throw std::runtime_error(oss.str());
   }
 
-  return jacobian::compute_locations(coorg, ngnod, xi, gamma);
+  return { ispec_selected, xi_selected, gamma_selected };
 }
 
-specfem::point::global_coordinates<specfem::dimension::type::dim2>
-specfem::algorithms::locate_point(
-    const specfem::kokkos::HostTeam::member_type &team_member,
-    const specfem::point::local_coordinates<specfem::dimension::type::dim2>
-        &coordinate,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
-
-  const int ispec = coordinate.ispec;
-  const type_real xi = coordinate.xi;
-  const type_real gamma = coordinate.gamma;
-
-  const int ngnod = mesh.ngnod;
-
-  const Kokkos::View<
-      point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, ngnod),
-                       [&](const int i) {
-                         coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
-                         coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
-                       });
-
-  team_member.team_barrier();
-
-  return jacobian::compute_locations(coorg, ngnod, xi, gamma);
-}
+} // namespace locate_point_impl
+} // namespace algorithms
+} // namespace specfem
