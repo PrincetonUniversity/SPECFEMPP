@@ -6,4 +6,3 @@ Velocity
 
 .. doxygenclass:: specfem::chunk_element::velocity
     :members:
-    :inherited-members:

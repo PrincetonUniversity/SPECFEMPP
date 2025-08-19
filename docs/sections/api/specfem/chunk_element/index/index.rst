@@ -6,4 +6,3 @@ Chunk Element Index
 
 .. doxygenclass:: specfem::chunk_element::Index
     :members:
-    :inherited-members:

@@ -6,5 +6,5 @@ Acceleration
 
 Datatype used to store acceleration field values at a quadrature point.
 
-.. doxygenstruct:: specfem::point::acceleration
+.. doxygenclass:: specfem::point::acceleration
     :members:

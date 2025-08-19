@@ -23,9 +23,6 @@ namespace specfem::point {
  * @tparam UseSIMD Whether to enable SIMD vectorization for performance
  * optimization
  *
- * @note This class inherits all constructors and methods from impl::field,
- * providing component access through operator() and various initialization
- * options.
  *
  * @code{.cpp}
  * // Example: Creating 2D acoustic velocity field accessor
@@ -65,7 +62,6 @@ namespace specfem::point {
  * specfem::assembly::store_on_device(index, fields, velocity_new);
  * @endcode
  *
- * @see impl::field for inherited functionality
  * @see specfem::point::displacement for displacement field accessor
  * @see specfem::point::acceleration for acceleration field accessor
  */

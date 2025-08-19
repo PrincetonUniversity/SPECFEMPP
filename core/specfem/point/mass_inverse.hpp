@@ -25,9 +25,6 @@ namespace specfem::point {
  * @tparam UseSIMD Whether to enable SIMD vectorization for performance
  * optimization
  *
- * @note This class inherits all constructors and methods from impl::field,
- * providing component access through operator() and various initialization
- * options.
  *
  * @code{.cpp}
  * // Example: Creating 2D elastic inverse mass matrix accessor
@@ -68,7 +65,6 @@ namespace specfem::point {
  * specfem::assembly::store_on_device(index, fields, acceleration);
  * @endcode
  *
- * @see impl::field for inherited functionality
  * @see specfem::point::acceleration for acceleration field accessor
  * @see specfem::point::velocity for velocity field accessor
  */

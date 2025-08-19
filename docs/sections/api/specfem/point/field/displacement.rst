@@ -6,5 +6,5 @@ Displacement
 
 Datatype used to store displacement field values at a quadrature point.
 
-.. doxygenstruct:: specfem::point::displacement
+.. doxygenclass:: specfem::point::displacement
     :members:

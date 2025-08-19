@@ -6,4 +6,3 @@ Displacement
 
 .. doxygenclass:: specfem::chunk_element::displacement
     :members:
-    :inherited-members:

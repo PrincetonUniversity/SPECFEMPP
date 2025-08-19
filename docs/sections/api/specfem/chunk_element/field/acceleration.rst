@@ -6,4 +6,3 @@ Acceleration
 
 .. doxygenclass:: specfem::chunk_element::acceleration
     :members:
-    :inherited-members:
