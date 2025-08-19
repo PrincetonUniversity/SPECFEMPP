@@ -73,11 +73,11 @@ compute_coupling(const type_real &factor, const NormalViewType &normal,
                 "NormalViewType must have dimension 2");
 
   static_assert(specfem::data_access::is_point<SelfFieldType>::value &&
-                    specfem::data_access::is_field_l<SelfFieldType>::value,
+                    specfem::data_access::is_field<SelfFieldType>::value,
                 "SelfFieldType must be a point field");
 
   static_assert(specfem::data_access::is_point<CoupledFieldType>::value &&
-                    specfem::data_access::is_field_l<CoupledFieldType>::value,
+                    specfem::data_access::is_field<CoupledFieldType>::value,
                 "CoupledFieldType must be a point field");
 
   impl_compute_coupling(self_type(), coupled_type(), factor, normal,

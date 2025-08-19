@@ -14,7 +14,7 @@ class MappedIndex : public specfem::execution::MappedChunkElementIndex<
                     public specfem::data_access::Accessor<
                         specfem::data_access::AccessorType::chunk_element,
                         specfem::data_access::DataClassType::mapped_index,
-                        DimensionTag, SIMD::value> {
+                        DimensionTag, SIMD::using_simd> {
 private:
   using base_type =
       specfem::execution::MappedChunkElementIndex<DimensionTag, SIMD, ViewType,
@@ -24,10 +24,6 @@ private:
                                                                    ///< chunk
                                                                    ///< element
                                                                    ///< index
-  using accessor_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::chunk_element,
-      specfem::data_access::DataClassType::mapped_index, DimensionTag,
-      SIMD::value>; ///< Accessor type
 public:
   using iterator_type = typename base_type::iterator_type;
 

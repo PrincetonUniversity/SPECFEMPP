@@ -9,7 +9,6 @@ enum DataClassType {
   kernels,
   jacobian_matrix,
   field_derivatives,
-  field,
   displacement,
   velocity,
   acceleration,
