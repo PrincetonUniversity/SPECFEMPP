@@ -90,13 +90,12 @@ bool specfem::forcing_function::Dirac::operator==(
   if (!other_dirac)
     return false;
 
-  return (specfem::utilities::almost_equal(this->__f0, other_dirac->get_f0()) &&
-          specfem::utilities::almost_equal(this->__tshift,
-                                           other_dirac->get_tshift()) &&
-          specfem::utilities::almost_equal(this->__factor,
-                                           other_dirac->get_factor()) &&
-          this->__use_trick_for_better_pressure ==
-              other_dirac->get_use_trick_for_better_pressure());
+  return (
+      specfem::utilities::is_close(this->__f0, other_dirac->get_f0()) &&
+      specfem::utilities::is_close(this->__tshift, other_dirac->get_tshift()) &&
+      specfem::utilities::is_close(this->__factor, other_dirac->get_factor()) &&
+      this->__use_trick_for_better_pressure ==
+          other_dirac->get_use_trick_for_better_pressure());
 };
 
 bool specfem::forcing_function::Dirac::operator!=(

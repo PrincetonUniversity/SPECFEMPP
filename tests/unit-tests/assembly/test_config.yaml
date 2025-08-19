@@ -163,7 +163,7 @@ Tests:
         ispec: 724
         medium_tag: poroelastic
 
-  # THE STATIONS AND SOURCE FILES FOR THIS HAVE NOT BEEN CHECKED/TESTED
+  # THE STATIONS FOR THIS HAVE NOT BEEN CHECKED/TESTED
   - name : "Test 10: Cosserat Isotropic Homogeneous Material (P_SV wave)"
     description: >
       Testing the reading of a homogeneous elastic isotropic cosserat material.
@@ -177,7 +177,7 @@ Tests:
     suffix: "cosserat_isotropic_homogeneous"
     solutions:
       source:
-        xi: -0.99379998
-        gamma: -0.63635504
-        ispec: 2240
+        xi: -0.99767500162124634
+        gamma: -0.99767500162124634
+        ispec: 0
         medium_tag: elastic_psv_t

@@ -26,14 +26,14 @@ TEST_F(ASSEMBLY, locate_sources) {
     EXPECT_REAL_EQ(sources.size(), 1);
 
     // Check xi
-    EXPECT_TRUE(specfem::utilities::almost_equal(
-        sources[0]->get_local_coordinates().xi, source_solution.xi, 1e-4))
+    EXPECT_TRUE(specfem::utilities::is_close(
+        sources[0]->get_local_coordinates().xi, source_solution.xi))
         << ExpectedGot(source_solution.xi,
                        sources[0]->get_local_coordinates().xi);
 
     // Check gamma
-    EXPECT_TRUE(specfem::utilities::almost_equal(
-        sources[0]->get_local_coordinates().gamma, source_solution.gamma, 1e-4))
+    EXPECT_TRUE(specfem::utilities::is_close(
+        sources[0]->get_local_coordinates().gamma, source_solution.gamma))
         << ExpectedGot(source_solution.gamma,
                        sources[0]->get_local_coordinates().gamma);
 

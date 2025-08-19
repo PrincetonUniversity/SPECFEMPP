@@ -85,15 +85,14 @@ operator==(const specfem::sources::source<specfem::dimension::type::dim3>
   const auto gcoord = this->get_global_coordinates();
   const auto other_gcoord = other_source->get_global_coordinates();
 
-  bool internal =
-      specfem::utilities::almost_equal(this->Mxx, other_source->Mxx) &&
-      specfem::utilities::almost_equal(this->Myy, other_source->Myy) &&
-      specfem::utilities::almost_equal(this->Mzz, other_source->Mzz) &&
-      specfem::utilities::almost_equal(this->Mxy, other_source->Mxy) &&
-      specfem::utilities::almost_equal(this->Mxz, other_source->Mxz) &&
-      specfem::utilities::almost_equal(this->Myz, other_source->Myz) &&
-      specfem::utilities::almost_equal(gcoord.x, other_gcoord.x) &&
-      specfem::utilities::almost_equal(gcoord.z, other_gcoord.z);
+  bool internal = specfem::utilities::is_close(this->Mxx, other_source->Mxx) &&
+                  specfem::utilities::is_close(this->Myy, other_source->Myy) &&
+                  specfem::utilities::is_close(this->Mzz, other_source->Mzz) &&
+                  specfem::utilities::is_close(this->Mxy, other_source->Mxy) &&
+                  specfem::utilities::is_close(this->Mxz, other_source->Mxz) &&
+                  specfem::utilities::is_close(this->Myz, other_source->Myz) &&
+                  specfem::utilities::is_close(gcoord.x, other_gcoord.x) &&
+                  specfem::utilities::is_close(gcoord.z, other_gcoord.z);
 
   if (!internal) {
     std::cout << "3-D moment tensor source not equal" << std::endl;

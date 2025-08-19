@@ -1,0 +1,52 @@
+parameters:
+
+  header:
+    title: Homogeneous Isotropic Cosserat medium simulation
+    # A detailed description for your simulation
+    description: |
+      Material systems : Cosserat medium (1)
+      Interfaces : None
+      Sources : Cosserat source (1)
+      Boundary conditions : Neumann BCs on all edges
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      quadrature-type: GLL4
+
+    ## Solver setup
+    solver:
+      time-marching:
+        time-scheme:
+          type: Newmark
+          dt: 5.0e-4
+          nstep: 1000
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: "ascii"
+            directory: "OUTPUT_FILES/results"
+
+  receivers:
+    stations: "OUTPUT_FILES/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - rotation
+      - intrinsic_rotation
+      - curl
+    nstep_between_samples: 1
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "OUTPUT_FILES/database.bin"
+
+  ## sources
+  sources: "source.yaml"
