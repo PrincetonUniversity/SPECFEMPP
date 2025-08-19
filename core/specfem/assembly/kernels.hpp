@@ -223,3 +223,4 @@ void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
 } // namespace specfem::assembly
 
 #include "kernels/dim2/kernels.hpp"
+#include "kernels/dim3/kernels.hpp"
