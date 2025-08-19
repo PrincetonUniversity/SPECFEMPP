@@ -54,7 +54,7 @@ public:
   KOKKOS_FORCEINLINE_FUNCTION constexpr field(Args &&...args)
       : m_data(std::forward<Args>(args)...) {}
 
-  KOKKOS_FORCEINLINE_FUNCTION typename value_type::value_type
+  KOKKOS_FORCEINLINE_FUNCTION const typename value_type::value_type &
   operator()(const std::size_t icomp) const {
     return m_data(icomp);
   }

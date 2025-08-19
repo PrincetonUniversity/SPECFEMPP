@@ -7,50 +7,36 @@
 
 namespace specfem::assembly::fields_impl {
 
-template <bool on_device, typename ContainerType, typename AccessorType>
+template <bool on_device, specfem::data_access::DataClassType DataClass,
+          typename ContainerType, typename T>
 KOKKOS_FORCEINLINE_FUNCTION void
 base_add_accessor(const int iglob, const int icomp, const ContainerType &field,
-                  AccessorType &accessor) {
-
-  static_assert(
-      !AccessorType::simd::using_simd,
-      "This function is only for non-SIMD accessors. Use the other overload.");
+                  T &value) {
 
   using data_accessor =
-      std::integral_constant<specfem::data_access::DataClassType,
-                             AccessorType::data_class>;
-  field.template get_value<on_device>(data_accessor(), iglob, icomp) +=
-      accessor(icomp);
+      std::integral_constant<specfem::data_access::DataClassType, DataClass>;
+  field.template get_value<on_device>(data_accessor(), iglob, icomp) += value;
 }
 
-template <bool on_device, typename MaskType, typename ContainerType,
-          typename AccessorType>
+template <bool on_device, specfem::data_access::DataClassType DataClass,
+          typename MaskType, typename TagType, typename ContainerType,
+          typename T>
 KOKKOS_FORCEINLINE_FUNCTION void
 base_add_accessor(const int iglob, const int icomp, const MaskType &mask,
-                  const ContainerType &field, AccessorType &accessor) {
-
-  static_assert(
-      AccessorType::simd::using_simd,
-      "This function is only for SIMD accessors. Use the other overload.");
-
-  constexpr static int ncomponents =
-      specfem::element::attributes<AccessorType::dimension_tag,
-                                   AccessorType::medium_tag>::components;
+                  const TagType tag_type, const ContainerType &field,
+                  T &value) {
 
   using data_accessor =
-      std::integral_constant<specfem::data_access::DataClassType,
-                             AccessorType::data_class>;
+      std::integral_constant<specfem::data_access::DataClassType, DataClass>;
 
-  using simd_type = typename AccessorType::simd::datatype;
-
-  simd_type lhs;
+  T lhs;
   Kokkos::Experimental::where(mask, lhs).copy_from(
       &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
-      typename AccessorType::simd::tag_type());
-  lhs = lhs + accessor(icomp);
+      tag_type);
+  lhs = lhs + value;
   Kokkos::Experimental::where(mask, lhs).copy_to(
       &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
-      typename AccessorType::simd::tag_type());
+      tag_type);
 }
 
 template <bool on_device, typename ContainerType, typename... AccessorTypes,
@@ -72,7 +58,9 @@ KOKKOS_FORCEINLINE_FUNCTION void add_after_simd_dispatch(
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_add_accessor<on_device>(iglob, icomp, field, accessors), ...);
+    (base_add_accessor<on_device, AccessorTypes::data_class>(
+         iglob, icomp, field, accessors(icomp)),
+     ...);
   }
   return;
 }
@@ -98,21 +86,27 @@ KOKKOS_FORCEINLINE_FUNCTION void add_after_simd_dispatch(
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::medium_tag>::
       components;
 
+  using TagType = typename std::tuple_element_t<
+      0, std::tuple<AccessorTypes...> >::simd::tag_type;
+
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_add_accessor<on_device>(iglob, icomp, mask, field, accessors), ...);
+    (base_add_accessor<on_device, AccessorTypes::data_class>(
+         iglob, icomp, mask, TagType(), field, accessors),
+     ...);
   }
   return;
 }
 
-template <typename IndexType, typename ContainerType, typename... AccessorTypes,
+template <bool on_device, typename IndexType, typename ContainerType,
+          typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_assembly_index<IndexType>::value &&
                (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
               int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void add_on_device(const IndexType &index,
-                                               const ContainerType &field,
-                                               AccessorTypes &...accessors) {
+KOKKOS_FORCEINLINE_FUNCTION void
+add_after_field_access(const IndexType &index, const ContainerType &field,
+                       AccessorTypes &...accessors) {
 
   check_accessor_compatibility<AccessorTypes...>();
 
@@ -120,27 +114,8 @@ KOKKOS_FORCEINLINE_FUNCTION void add_on_device(const IndexType &index,
       std::integral_constant<bool, IndexType::using_simd>;
 
   // Call load for each accessor
-  add_after_simd_dispatch<true>(simd_accessor_type(), index, field,
-                                accessors...);
-  return;
-}
-
-template <typename IndexType, typename ContainerType, typename... AccessorTypes,
-          typename std::enable_if_t<
-              (specfem::data_access::is_assembly_index<IndexType>::value &&
-               (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
-              int> = 0>
-void add_on_host(const IndexType &index, const ContainerType &field,
-                 AccessorTypes &...accessors) {
-
-  check_accessor_compatibility<AccessorTypes...>();
-
-  using simd_accessor_type =
-      std::integral_constant<bool, IndexType::using_simd>;
-
-  // Call load for each accessor
-  add_after_simd_dispatch<false>(simd_accessor_type(), index, field,
-                                 accessors...);
+  add_after_simd_dispatch<on_device>(simd_accessor_type(), index, field,
+                                     accessors...);
   return;
 }
 

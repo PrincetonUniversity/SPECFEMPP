@@ -8,63 +8,46 @@
 
 namespace specfem::assembly::fields_impl {
 
-template <bool on_device, typename ContainerType, typename AccessorType>
+template <bool on_device, specfem::data_access::DataClassType DataClass,
+          typename ContainerType, typename T>
 KOKKOS_FORCEINLINE_FUNCTION void
 base_atomic_add_accessor(const int iglob, const int icomp,
-                         const ContainerType &field, AccessorType &accessor) {
-
-  static_assert(
-      !AccessorType::simd::using_simd,
-      "This function is only for non-SIMD accessors. Use the other overload.");
-
-  constexpr static int ncomponents =
-      specfem::element::attributes<AccessorType::dimension_tag,
-                                   AccessorType::medium_tag>::components;
+                         const ContainerType &field, T &value) {
 
   using data_accessor =
-      std::integral_constant<specfem::data_access::DataClassType,
-                             AccessorType::data_class>;
+      std::integral_constant<specfem::data_access::DataClassType, DataClass>;
   Kokkos::atomic_add(
       &(field.template get_value<on_device>(data_accessor(), iglob, icomp)),
-      accessor(icomp));
+      value);
 }
 
-template <bool on_device, typename MaskType, typename ContainerType,
-          typename AccessorType>
+template <bool on_device, specfem::data_access::DataClassType DataClass,
+          typename MaskType, typename ContainerType, typename AccessorType>
 KOKKOS_FORCEINLINE_FUNCTION void
 base_atomic_add_accessor(const int iglob, const int icomp, const MaskType &mask,
-                         const ContainerType &field, AccessorType &accessor) {
+                         const ContainerType &field, AccessorType &value) {
 
   KOKKOS_ABORT_WITH_LOCATION(
       "This function is not implemented for SIMD accessors. Use the other "
       "overload.");
 }
 
-template <bool on_device, typename MaskType, typename ContainerType,
-          typename AccessorType>
+template <bool on_device, specfem::data_access::DataClassType DataClass,
+          typename MaskType, typename ContainerType, typename T>
 KOKKOS_FORCEINLINE_FUNCTION void
 base_atomic_add_accessor(const int *iglob, const int icomp,
                          const MaskType &mask, const ContainerType &field,
-                         AccessorType &accessor) {
+                         T &value) {
 
-  static_assert(
-      AccessorType::simd::using_simd,
-      "This function is only for SIMD accessors. Use the other overload.");
-
-  constexpr static int ncomponents =
-      specfem::element::attributes<AccessorType::dimension_tag,
-                                   AccessorType::medium_tag>::components;
-
-  using simd_type = typename AccessorType::simd::datatype;
   using data_accessor =
-      std::integral_constant<specfem::data_access::DataClassType,
-                             AccessorType::data_class>;
+      std::integral_constant<specfem::data_access::DataClassType, DataClass>;
+  constexpr static std::size_t simd_size = T::size();
 
-  for (int lane = 0; lane < AccessorType::simd::size(); ++lane) {
+  for (int lane = 0; lane < simd_size; ++lane) {
     if (mask(lane)) {
       Kokkos::atomic_add(&(field.template get_value<on_device>(
                              data_accessor(), iglob[lane], icomp)),
-                         accessor(icomp)[lane]);
+                         value[lane]);
     }
   }
   return;
@@ -89,7 +72,9 @@ KOKKOS_FORCEINLINE_FUNCTION void atomic_add_after_simd_dispatch(
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_atomic_add_accessor<on_device>(iglob, icomp, field, accessors), ...);
+    (base_atomic_add_accessor<on_device, AccessorTypes::data_class>(
+         iglob, icomp, field, accessors(icomp)),
+     ...);
   }
   return;
 }
@@ -117,20 +102,23 @@ KOKKOS_FORCEINLINE_FUNCTION void atomic_add_after_simd_dispatch(
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (base_atomic_add_accessor<on_device>(iglob, icomp, mask, field, accessors),
+    (base_atomic_add_accessor<on_device, AccessorTypes::data_class>(
+         iglob, icomp, mask, field, accessors(icomp)),
      ...);
   }
   return;
 }
 
-template <typename IndexType, typename ContainerType, typename... AccessorTypes,
+template <bool on_device, typename IndexType, typename ContainerType,
+          typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_assembly_index<IndexType>::value &&
                (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-atomic_add_on_device(const IndexType &index, const ContainerType &field,
-                     AccessorTypes &...accessors) {
+atomic_add_after_field_access(const IndexType &index,
+                              const ContainerType &field,
+                              AccessorTypes &...accessors) {
 
   check_accessor_compatibility<AccessorTypes...>();
 
@@ -138,26 +126,8 @@ atomic_add_on_device(const IndexType &index, const ContainerType &field,
       std::integral_constant<bool, IndexType::using_simd>;
 
   // Call load for each accessor
-  atomic_add_after_simd_dispatch<true>(simd_accessor_type(), index, field,
-                                       accessors...);
-  return;
-}
-
-template <typename IndexType, typename ContainerType, typename... AccessorTypes,
-          typename std::enable_if_t<
-              (specfem::data_access::is_field_l<AccessorTypes>::value && ...),
-              int> = 0>
-void atomic_add_on_host(const IndexType &index, const ContainerType &field,
-                        AccessorTypes &...accessors) {
-
-  check_accessor_compatibility<AccessorTypes...>();
-
-  using simd_accessor_type =
-      std::integral_constant<bool, IndexType::using_simd>;
-
-  // Call load for each accessor
-  atomic_add_after_simd_dispatch<false>(simd_accessor_type(), index, field,
-                                        accessors...);
+  atomic_add_after_simd_dispatch<on_device>(simd_accessor_type(), index, field,
+                                            accessors...);
   return;
 }
 
