@@ -1,11 +1,10 @@
+#include "../../mesh_utilities/mapping.hpp"
 #include "../../test_macros.hpp"
 #include "Kokkos_Environment.hpp"
 #include "MPI_environment.hpp"
 #include "algorithms/locate_point.hpp"
 #include "algorithms/locate_point_impl.hpp"
 #include "kokkos_abstractions.h"
-#include "parallel_configuration/chunk_config.hpp"
-#include "specfem/assembly/mesh/dim2/impl/utilities.hpp"
 #include "specfem/point.hpp"
 #include "utilities/utilities.hpp"
 #include <Kokkos_Core.hpp>
@@ -13,8 +12,8 @@
 
 using specfem::utilities::is_close;
 
-// Use tested mesh utilities for coordinate generation
-using namespace specfem::assembly::mesh_impl::dim2;
+// Use test-specific mesh utilities for coordinate generation
+using namespace specfem::test::mesh_utilities;
 
 // Test fixture for 2D locate_point algorithms using tested mesh utilities
 class LocatePoint2D : public ::testing::Test {
