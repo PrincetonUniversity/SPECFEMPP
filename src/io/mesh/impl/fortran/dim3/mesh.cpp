@@ -471,7 +471,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
                        mesh.boundaries.acoustic_free_surface.ijk);
   try_read_array("free_surface_jacobian2Dw", stream,
                  mesh.boundaries.acoustic_free_surface.jacobian2Dw);
-  try_read_array("free_surface_normal", stream,
+  try_read_array("acoustic_free_surface_normal", stream,
                  mesh.boundaries.acoustic_free_surface.normal);
 
 #ifndef NDEBUG
