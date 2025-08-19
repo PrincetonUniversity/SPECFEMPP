@@ -2,14 +2,14 @@ parameters:
 
   header:
     ## Header information is used for logging. It is good practice to give your simulations explicit names
-    title: Isotropic Elastic simulation # name for your simulation
+    title: Isotropic Elastic simulation with adjacency map # name for your simulation
     # A detailed description for your simulation
     description: |
       Material systems : Elastic domain (1)
       Interfaces : None
       Sources : Force source (1)
       Boundary conditions : Neumann BCs on all edges
-      Debugging comment : This test tests elastic compute_forces routine
+      Debugging comment : The database contains an adjacency map for the domain.
 
   simulation-setup:
     ## quadrature setup
