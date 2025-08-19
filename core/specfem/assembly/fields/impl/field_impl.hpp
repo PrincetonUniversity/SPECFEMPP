@@ -54,7 +54,9 @@ private:
 
 protected:
   template <bool on_device>
-  KOKKOS_FORCEINLINE_FUNCTION ViewType get_base_field_view() const {
+  KOKKOS_FORCEINLINE_FUNCTION
+      std::conditional_t<on_device, ViewType, ViewType::HostMirror>
+      get_base_field_view() const {
     if constexpr (on_device) {
       return data;
     } else {
