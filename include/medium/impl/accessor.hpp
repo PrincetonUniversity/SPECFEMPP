@@ -7,10 +7,11 @@ namespace specfem {
 namespace medium {
 namespace impl {
 
-template <typename DataContainer> class Accessor {
+template <specfem::dimension::type DimensionTag, typename DataContainer>
+class Accessor {
 
 private:
-  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto dimension = DimensionTag;
 
   template <typename PointValues>
   KOKKOS_INLINE_FUNCTION void
