@@ -33,8 +33,8 @@ store_after_simd_dispatch(const std::false_type, const IndexType &index,
 
   const auto current_field = field.template get_field<MediumTag>();
 
-  const int iglob = field.template get_iglob<true>(index.ispec, index.iz,
-                                                   index.ix, MediumTag);
+  const int iglob = field.template get_iglob<on_device>(index.ispec, index.iz,
+                                                        index.ix, MediumTag);
 
   constexpr static int ncomponents = specfem::element::attributes<
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
@@ -42,8 +42,9 @@ store_after_simd_dispatch(const std::false_type, const IndexType &index,
       components;
 
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (specfem::assembly::fields_impl::base_store_accessor<on_device>(
-         iglob, icomp, current_field, accessors),
+    (specfem::assembly::fields_impl::base_store_accessor<
+         on_device, AccessorTypes::data_class>(iglob, icomp, current_field,
+                                               accessors(icomp)),
      ...);
   }
 
@@ -77,7 +78,7 @@ store_after_simd_dispatch(const std::true_type, const IndexType &index,
   int iglob[simd_size];
   for (int lane = 0; lane < simd_size; ++lane) {
     iglob[lane] = index.mask(lane)
-                      ? field.template get_iglob<true>(
+                      ? field.template get_iglob<on_device>(
                             index.ispec + lane, index.iz, index.ix, MediumTag)
                       : field.nglob + 1;
   }
@@ -91,9 +92,10 @@ store_after_simd_dispatch(const std::true_type, const IndexType &index,
 
   // Call load for each accessor
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    (specfem::assembly::fields_impl::base_store_accessor<on_device>(
+    (specfem::assembly::fields_impl::base_store_accessor<
+         on_device, AccessorTypes::data_class>(
          iglob, icomp, [&](std::size_t lane) { return index.mask(lane); },
-         current_field, accessors),
+         current_field, accessors(icomp)),
      ...);
   }
 }

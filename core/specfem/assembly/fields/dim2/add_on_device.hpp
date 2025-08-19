@@ -25,7 +25,7 @@ KOKKOS_FORCEINLINE_FUNCTION void add_on_device(const IndexType &index,
 
   const auto &current_field = field.template get_field<MediumTag>();
 
-  fields_impl::add_on_device(index, current_field, accessors...);
+  fields_impl::add_after_field_access<true>(index, current_field, accessors...);
 
   return;
 }
