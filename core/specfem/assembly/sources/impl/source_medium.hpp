@@ -166,4 +166,47 @@ public:
     }
   }
 };
+
+/** @brief Sort sources per medium
+ * @tparam DimensionTag Dimension tag (e.g., dim2)
+ * @tparam MediumTag Medium tag (e.g., elastic_psv, acoustic, etc.)
+ * @param sources Vector of sources to be sorted
+ * @param element_types Element types for every spectral element
+ * @param mesh Finite element mesh information
+ * @return Tuple containing sorted sources and their indices
+ */
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag>
+std::tuple<
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >,
+    std::vector<int> >
+sort_sources_per_medium(
+    const std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+        &sources,
+    const specfem::assembly::element_types<DimensionTag> &element_types,
+    const specfem::assembly::mesh<DimensionTag> &mesh) {
+
+  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+      sorted_sources;
+  std::vector<int> source_indices;
+
+  // Loop over all sources
+  for (int isource = 0; isource < sources.size(); isource++) {
+
+    // Get the source
+    const auto &source = sources[isource];
+
+    // Get the medium tag for the source
+    const specfem::element::medium_tag medium_tag = source->get_medium_tag();
+
+    // Check if the element is in currently checked medium and add to
+    // the list of sources and indices if it is.
+    if (medium_tag == MediumTag) {
+      sorted_sources.push_back(source);
+      source_indices.push_back(isource);
+    }
+  }
+  return std::make_tuple(sorted_sources, source_indices);
+}
+
 } // namespace specfem::assembly::sources_impl
