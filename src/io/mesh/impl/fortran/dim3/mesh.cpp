@@ -465,7 +465,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
           mesh.parameters.num_free_surface_faces, mesh.parameters.ngllsquare);
 
   // Read the free surface ispec
-  try_read_index_array("free_surface_ispec", stream,
+  try_read_index_array("acoustic_free_surface_ispec", stream,
                        mesh.boundaries.acoustic_free_surface.ispec);
   try_read_index_array("free_surface_ijk", stream,
                        mesh.boundaries.acoustic_free_surface.ijk);
