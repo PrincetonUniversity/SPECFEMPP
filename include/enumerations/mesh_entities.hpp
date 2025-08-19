@@ -1,0 +1,127 @@
+#pragma once
+
+#include <algorithm>
+#include <list>
+
+/**
+ * @namespace specfem::mesh_entity
+ * @brief Defines mesh entity types and utilities for spectral element method
+ *
+ * This namespace provides enumerations and utility functions for working with
+ * mesh entities in 2D spectral element grids, including edges and corners
+ * of quadrilateral elements.
+ */
+namespace specfem::mesh_entity {
+
+/**
+ * @brief Enumeration of mesh entity types for 2D quadrilateral elements
+ *
+ * Defines the different types of mesh entities that can exist on the boundary
+ * of a quadrilateral element in a 2D spectral element mesh. The numbering
+ * follows the convention:
+ *
+ * @code
+ * 8 --- 3 --- 7
+ * |           |
+ * 4           2
+ * |           |
+ * 5 --- 1 --- 6
+ * @endcode
+ *
+ * Where:
+ * - 1 = bottom edge, 2 = top edge, 3 = left edge, 4 = right edge
+ * - 5 = bottom_left, 6 = bottom_right, 7 = top_right, 8 = top_left corners
+ */
+enum class type : int {
+  bottom = 1,       ///< Bottom edge of the element
+  right = 2,        ///< Top edge of the element
+  top = 3,          ///< Left edge of the element
+  left = 4,         ///< Right edge of the element
+  bottom_left = 5,  ///< Bottom-left corner of the element
+  bottom_right = 6, ///< Bottom-right corner of the element
+  top_right = 7,    ///< Top-right corner of the element
+  top_left = 8      ///< Top-left corner of the element
+};
+
+/**
+ * @brief List of all edge types in a quadrilateral element
+ *
+ * Contains all edge mesh entities in counter-clockwise order starting from the
+ * top edge. This list is useful for iterating over all edges of an element.
+ */
+const std::list<type> edges = { type::top, type::right, type::bottom,
+                                type::left };
+
+/**
+ * @brief List of all corner types in a quadrilateral element
+ *
+ * Contains all corner mesh entities in counter-clockwise order starting from
+ * the top-left corner. This list is useful for iterating over all corners of an
+ * element.
+ */
+const std::list<type> corners = { type::top_left, type::top_right,
+                                  type::bottom_right, type::bottom_left };
+
+/**
+ * @brief Generic utility function to check if a container contains a specific
+ * mesh entity type
+ *
+ * @tparam T Container type that supports begin() and end() iterators
+ * @param list The container to search in
+ * @param value The mesh entity type to search for
+ * @return bool True if the value is found in the container, false otherwise
+ *
+ * This template function provides a generic way to check membership in any
+ * container of mesh entity types. It's commonly used with the predefined
+ * edges and corners lists.
+ *
+ * @code
+ * if (contains(edges, type::top)) {
+ *     // Handle edge case
+ * }
+ * @endcode
+ */
+template <typename T> bool contains(const T &list, const type &value) {
+  return std::find(list.begin(), list.end(), value) != list.end();
+}
+
+/**
+ * @brief Returns the edges that form a given corner
+ *
+ * @param corner The corner mesh entity type
+ * @return std::list<type> List of edge types that meet at the specified corner
+ *
+ * For each corner of a quadrilateral element, this function returns the two
+ * edges that meet at that corner. The edges are returned in a consistent order.
+ *
+ * Corner-to-edge mappings:
+ * - top_left: [top, left]
+ * - top_right: [top, right]
+ * - bottom_right: [bottom, right]
+ * - bottom_left: [bottom, left]
+ *
+ * @throws std::runtime_error if the input is not a valid corner type
+ */
+std::list<type> edges_of_corner(const type &corner);
+
+/**
+ * @brief Returns the corners that are adjacent to a given edge.
+ *
+ * For a specified edge of a quadrilateral element, this function returns the
+ * two corners that are connected to that edge. The corners are returned in a
+ * consistent order.
+ *
+ * Edge-to-corner mappings:
+ * - top: [top_left, top_right]
+ * - right: [top_right, bottom_right]
+ * - bottom: [bottom_right, bottom_left]
+ * - left: [bottom_left, top_left]
+ *
+ * @param edge The edge mesh entity type.
+ * @return std::list<type> List of corner types adjacent to the specified edge.
+ *
+ * @throws std::runtime_error if the input is not a valid edge type.
+ */
+std::list<type> corners_of_edge(const type &edge);
+
+} // namespace specfem::mesh_entity

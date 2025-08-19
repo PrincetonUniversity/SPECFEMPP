@@ -87,7 +87,7 @@ TEST(ASSEMBLY_MESH, compute_ibool) {
   // Setup compute structs
   specfem::assembly::mesh<specfem::dimension::type::dim2> compute_mesh(
       mesh.tags, mesh.control_nodes, quadratures,
-      mesh.adjacency_map); // mesh assembly
+      mesh.adjacency_graph); // mesh assembly
 
   const auto h_index_mapping = compute_mesh.h_index_mapping;
   const auto h_coord = compute_mesh.h_coord;

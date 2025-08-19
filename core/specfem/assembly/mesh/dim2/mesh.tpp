@@ -19,6 +19,24 @@ struct qp {
   int iloc = 0, iglob = 0;
 };
 
+template <typename ViewType> int compute_nglob2D(const ViewType index_mapping) {
+  const int nspec = index_mapping.extent(0);
+  const int ngllz = index_mapping.extent(1);
+  const int ngllx = index_mapping.extent(2);
+
+  int nglob = -1;
+  // compute max value stored in index_mapping
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int igllz = 0; igllz < ngllz; igllz++) {
+      for (int igllx = 0; igllx < ngllx; igllx++) {
+        nglob = std::max(nglob, index_mapping(ispec, igllz, igllx));
+      }
+    }
+  }
+
+  return nglob + 1;
+}
+
 type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
                         const int ngllxz) {
 
@@ -47,8 +65,6 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
 
 specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
 assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
-                 const specfem::mesh::adjacency_map::adjacency_map<
-                     specfem::dimension::type::dim2> &adjacency_map,
                  specfem::assembly::mesh_impl::mesh_to_compute_mapping<
                      specfem::dimension::type::dim2> &mapping) {
 
@@ -78,57 +94,34 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
   }
 
   int nglob;
-  if (adjacency_map.was_initialized()) {
-    iloc = 0;
-    specfem::kokkos::HostView3d<int> adjmap_index_mapping;
-    std::tie(adjmap_index_mapping, nglob) =
-        adjacency_map.generate_assembly_mapping(ngll);
-    // const auto [adjmap_index_mapping, nglob_] =
-    //     adjacency_map.generate_assembly_mapping(ngll);
-    // nglob = nglob_;
-    for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
-      for (int iz = 0; iz < ngll; iz++) {
-        for (int ix = 0; ix < ngll; ix++) {
-          for (int ielement = 0; ielement < chunk_size; ielement++) {
-            int ispec = ichunk + ielement;
-            if (ispec >= nspec)
-              break;
-            const int ispec_mesh = mapping.compute_to_mesh(ispec);
-            cart_cord[iloc].iglob = adjmap_index_mapping(ispec_mesh, iz, ix);
-            iloc++;
-          }
-        }
-      }
+
+  // Sort cartesian coordinates in ascending order i.e.
+  // cart_cord = [{0,0}, {0, 25}, {0, 50}, ..., {50, 0}, {50, 25}, {50, 50}]
+  std::sort(cart_cord.begin(), cart_cord.end(),
+            [&](const qp qp1, const qp qp2) {
+              if (qp1.x != qp2.x) {
+                return qp1.x < qp2.x;
+              }
+
+              return qp1.z < qp2.z;
+            });
+
+  // Setup numbering
+  int ig = 0;
+  cart_cord[0].iglob = ig;
+
+  type_real xtol = get_tolerance(cart_cord, nspec, ngllxz);
+
+  for (int iloc = 1; iloc < cart_cord.size(); iloc++) {
+    // check if the previous point is same as current
+    if ((std::abs(cart_cord[iloc].x - cart_cord[iloc - 1].x) > xtol) ||
+        (std::abs(cart_cord[iloc].z - cart_cord[iloc - 1].z) > xtol)) {
+      ig++;
     }
-  } else {
-    // Sort cartesian coordinates in ascending order i.e.
-    // cart_cord = [{0,0}, {0, 25}, {0, 50}, ..., {50, 0}, {50, 25}, {50, 50}]
-    std::sort(cart_cord.begin(), cart_cord.end(),
-              [&](const qp qp1, const qp qp2) {
-                if (qp1.x != qp2.x) {
-                  return qp1.x < qp2.x;
-                }
-
-                return qp1.z < qp2.z;
-              });
-
-    // Setup numbering
-    int ig = 0;
-    cart_cord[0].iglob = ig;
-
-    type_real xtol = get_tolerance(cart_cord, nspec, ngllxz);
-
-    for (int iloc = 1; iloc < cart_cord.size(); iloc++) {
-      // check if the previous point is same as current
-      if ((std::abs(cart_cord[iloc].x - cart_cord[iloc - 1].x) > xtol) ||
-          (std::abs(cart_cord[iloc].z - cart_cord[iloc - 1].z) > xtol)) {
-        ig++;
-      }
-      cart_cord[iloc].iglob = ig;
-    }
-
-    nglob = ig + 1;
+    cart_cord[iloc].iglob = ig;
   }
+
+  nglob = ig + 1;
 
   std::vector<qp> copy_cart_cord(nspec * ngllxz);
 
@@ -209,8 +202,8 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
     const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
         &control_nodes_in,
     const specfem::quadrature::quadratures &quadratures,
-    const specfem::mesh::adjacency_map::adjacency_map<
-        specfem::dimension::type::dim2> &adjacency_map) {
+    const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
+        &adjacency_graph) {
   nspec = tags.nspec;
   ngllz = quadratures.gll.get_N();
   ngllx = quadratures.gll.get_N();
@@ -243,12 +236,17 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       quadratures.gll.get_hxi(), quadratures.gll.get_hxi(),
       quadratures.gll.get_N(), control_nodes_in.ngnod);
 
-  this->assemble(adjacency_map);
+  if (adjacency_graph.empty()) {
+    this->assemble();
+  } else {
+    // If the adjacency graph is not empty, we use it to assemble the mesh
+    this->assemble(adjacency_graph);
+  }
+
+  this->nglob = compute_nglob2D(this->h_index_mapping);
 }
 
-void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
-    const specfem::mesh::adjacency_map::adjacency_map<
-        specfem::dimension::type::dim2> &adjacency_map) {
+void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
 
   const int ngnod = this->ngnod;
   const int nspec = this->nspec;
@@ -271,7 +269,8 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
-        auto shape_functions = Kokkos::subview(h_shape2D, iz, ix, Kokkos::ALL());
+        auto shape_functions =
+            Kokkos::subview(h_shape2D, iz, ix, Kokkos::ALL());
 
         double xcor = 0.0;
         double zcor = 0.0;
@@ -291,5 +290,5 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
       specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2> &>(
       *this);
 
-  points = assign_numbering(global_coordinates, adjacency_map, *this);
+  points = assign_numbering(global_coordinates, *this);
 }
