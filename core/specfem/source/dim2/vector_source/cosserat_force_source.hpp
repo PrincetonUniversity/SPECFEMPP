@@ -1,0 +1,114 @@
+#pragma once
+
+#include "enumerations/interface.hpp"
+#include "kokkos_abstractions.h"
+#include "quadrature/interface.hpp"
+#include "source_time_function/interface.hpp"
+#include "specfem/source.hpp"
+#include "specfem_mpi/interface.hpp"
+#include "specfem_setup.hpp"
+#include "utilities/interface.hpp"
+#include "yaml-cpp/yaml.h"
+#include <Kokkos_Core.hpp>
+
+namespace specfem {
+namespace sources {
+/**
+ * @brief Collocated force source
+ *
+ */
+template <>
+class cosserat_force<specfem::dimension::type::dim2>
+    : public vector_source<specfem::dimension::type::dim2> {
+
+public:
+  /**
+   * @brief Default source constructor
+   *
+   */
+  cosserat_force() {};
+  /**
+   * @brief Construct a new cosserat force object
+   *
+   * @param cosserat_source A YAML node defining cosserat force source
+   * @param dt Time increment in the simulation. Used to calculate dominant
+   * frequecy of Dirac source.
+   */
+  cosserat_force(YAML::Node &Node, const int nsteps, const type_real dt,
+                 const specfem::wavefield::simulation_field wavefield_type)
+      : angle([](YAML::Node &Node) -> type_real {
+          if (Node["angle"]) {
+            return Node["angle"].as<type_real>();
+          } else {
+            return 0.0;
+          }
+        }(Node)),
+        f(Node["f"].as<type_real>()), fc(Node["fc"].as<type_real>()),
+        wavefield_type(wavefield_type), vector_source(Node, nsteps, dt) {};
+
+  type_real get_angle() const { return angle; }
+  type_real get_f() const { return f; }
+  type_real get_fc() const { return fc; }
+  /**
+   * @brief Construct a new cosserat force object
+   *
+   * @param x x-coordinate of source
+   * @param z z-coordinate of source
+   * @param f Factor to scale the elastic force
+   * @param fc Factor to scale the rotational force
+   * @param angle Angle of the elastic force source
+   * @param forcing_function Pointer to source time function
+   * @param wavefield_type Type of wavefield on which the source acts
+   */
+  cosserat_force(
+      type_real x, type_real z, type_real f, type_real fc, type_real angle,
+      std::unique_ptr<specfem::forcing_function::stf> forcing_function,
+      const specfem::wavefield::simulation_field wavefield_type)
+      : f(f), fc(fc), angle(angle), wavefield_type(wavefield_type),
+        vector_source(x, z, std::move(forcing_function)) {};
+  /**
+   * @brief User output
+   *
+   */
+  std::string print() const override;
+
+  specfem::wavefield::simulation_field get_wavefield_type() const override {
+    return wavefield_type;
+  }
+
+  bool operator==(const specfem::sources::source<specfem::dimension::type::dim2>
+                      &other) const override;
+  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
+                      &other) const override;
+
+  /**
+   * @brief Get the force vector
+   *
+   * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * Force vector
+   */
+  specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
+
+  /**
+   * @brief Get the list of supported media for this source type
+   *
+   * @return std::vector<specfem::element::medium_tag> list of supported media
+   */
+  std::vector<specfem::element::medium_tag>
+  get_supported_media() const override;
+
+public:
+  static constexpr const char *name = "2-D Cosserat force";
+
+private:
+  type_real angle; ///< Angle of the elastic force source
+  type_real f;     ///< Factor to scale the elastic force
+  type_real fc;    ///< Factor to scale the rotational force
+  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
+                                                       ///< which the source
+                                                       ///< acts
+  const static std::vector<specfem::element::medium_tag> supported_media;
+};
+
+} // namespace sources
+} // namespace specfem

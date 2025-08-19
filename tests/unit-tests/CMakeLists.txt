@@ -302,6 +302,9 @@ add_executable(
   assembly/check_jacobian/check_jacobian.cpp
   assembly/locate/locate_point.cpp
   assembly/mesh/utilities.cpp
+  assembly/sources/locate_sources.cpp
+  assembly/compute_source_array/compute_source_array_from_vector.cpp
+  assembly/compute_source_array/compute_source_array_from_tensor.cpp
 )
 
 target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
@@ -439,6 +442,27 @@ target_link_libraries(
   gtest_main
 )
 
+add_executable(
+  source_class_tests
+  source/source.cpp
+  source/base_source_tests.cpp
+  source/typed_source_tests.cpp
+  # source/dim2/vector_sources/force_source.cpp
+  # source/dim2/vector_sources/cosserat_force_source.cpp
+  # source/dim2/vector_sources/adjoint_source.cpp
+  # source/dim2/vector_sources/external_source.cpp
+  # source/dim2/tensor_sources/moment_tensor_source.cpp
+  # source/dim3/vector_sources/force_source.cpp
+  # source/dim3/tensor_sources/moment_tensor_source.cpp
+)
+target_link_libraries(
+  source_class_tests
+  source_class
+  source_time_function
+  mpi_environment
+  kokkos_environment
+  -lpthread -lm
+)
 
 # # add_executable(
 # #   source_location_tests
@@ -603,6 +627,7 @@ if (NOT MPI_PARALLEL)
     receivers_tests
     rmass_inverse_tests
     simd_tests
+    source_class_tests
     stress_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
