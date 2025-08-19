@@ -16,7 +16,7 @@ const static std::unordered_map<std::string, std::string> mesh_files = {
 };
 
 const static std::unordered_map<std::string, std::map<int, std::vector<int> > >
-    expected_adjacency_maps = {
+    expected_adjacency_graph = {
       { "Circular mesh", { { 37, { 39, 38, 64, 63, 36, 83, 2, 3, 1 } } } }
     };
 
@@ -46,7 +46,7 @@ TEST_P(CheckConnections, Test) {
 
   EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
 
-  const auto expected_adjacency = expected_adjacency_maps.at(mesh_name);
+  const auto expected_adjacency = expected_adjacency_graph.at(mesh_name);
 
   for (const auto &[ispec, expected_neighbors] : expected_adjacency) {
     const auto out_edges = boost::out_edges(ispec, g);
