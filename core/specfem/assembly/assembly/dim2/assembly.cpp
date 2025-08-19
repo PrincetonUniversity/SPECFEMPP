@@ -16,7 +16,7 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
     const specfem::simulation::type simulation,
     const bool allocate_boundary_values,
     const std::shared_ptr<specfem::io::reader> &property_reader) {
-  this->mesh = { mesh.tags, mesh.control_nodes, quadratures, mesh.adjacency_map,
+  this->mesh = { mesh.tags, mesh.control_nodes, quadratures,
                  mesh.adjacency_graph };
   this->element_types = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
                           this->mesh, mesh.tags };

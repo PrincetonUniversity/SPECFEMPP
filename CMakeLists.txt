@@ -311,7 +311,6 @@ add_library(
         src/io/mesh/impl/fortran/dim2/read_mesh_database.cpp
         src/io/mesh/impl/fortran/dim2/read_interfaces.cpp
         src/io/mesh/impl/fortran/dim2/read_parameters.cpp
-        src/io/mesh/impl/fortran/dim2/read_adjacency_map.cpp
         src/io/mesh/impl/fortran/dim2/read_adjacency_graph.cpp
         # Fortran 3D part
         src/io/mesh/impl/fortran/dim3/mesh.cpp
@@ -412,7 +411,6 @@ add_library(
         src/mesh/dim2/coupled_interfaces/interface_container.cpp
         src/mesh/dim2/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/dim2/tags/tags.cpp
-        src/mesh/dim2/adjacency_map/adjacency_map.cpp
         src/mesh/dim2/adjacency_graph/assert_symmetry.cpp
         # 3-D
         src/mesh/dim3/mesh.cpp
