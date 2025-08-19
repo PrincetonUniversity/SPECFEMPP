@@ -433,18 +433,6 @@ target_link_libraries(
 )
 
 add_library(
-        jacobian
-        src/jacobian/jacobian.cpp
-)
-
-target_link_libraries(
-        jacobian
-        Kokkos::kokkos
-        point
-        shape_functions
-)
-
-add_library(
         read_seismogram
         src/io/seismogram/reader.cpp
 )

@@ -24,7 +24,7 @@ public:
    * @param output_folder Path to output location (will be an .h5 file if using
    * HDF5, and a folder if using ASCII)
    */
-  property_writer(const std::string output_folder);
+  property_writer(const std::string &output_folder);
 
   /**
    * @brief write the property data to disk
