@@ -16,6 +16,7 @@ public:
   int nspec;                          ///< Number of spectral elements
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
+  int nglob; ///< Number of global quadrature points
 
   using IndexMappingViewType =
       Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;

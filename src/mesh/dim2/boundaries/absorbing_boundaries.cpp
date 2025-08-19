@@ -11,9 +11,8 @@ specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>::
     this->index_mapping = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::absorbing_boundary::index_mapping",
         num_abs_boundary_faces);
-    this->type =
-        Kokkos::View<specfem::enums::boundaries::type *, Kokkos::HostSpace>(
-            "specfem::mesh::absorbing_boundary::type", num_abs_boundary_faces);
+    this->type = Kokkos::View<specfem::mesh_entity::type *, Kokkos::HostSpace>(
+        "specfem::mesh::absorbing_boundary::type", num_abs_boundary_faces);
   } else {
     this->nelements = 0;
   }

@@ -188,6 +188,9 @@ add_executable(
   mesh/materials/materials.cpp
   mesh/materials/properties.cpp
   mesh/runner.cpp
+  mesh/adjacency_graph/adjacency_graph.cpp
+  mesh/adjacency_graph/adjacency_graph_regular_mesh.cpp
+  mesh/adjacency_graph/adjacency_graph_irregular_mesh.cpp
 )
 
 target_link_libraries(
@@ -199,28 +202,6 @@ target_link_libraries(
   yaml-cpp
   io
   utilities
-  # material_class
-  -lpthread -lm
-)
-
-
-add_executable(
-  mortar_tests
-  mortar/adjacency_map/adjtest_2d.cpp
-  mortar/fixture/mortar_fixtures.cpp
-  mortar/runner.cpp
-)
-
-target_link_libraries(
-  mortar_tests
-  gtest_main
-  mpi_environment
-  kokkos_environment
-  mesh
-  assembly
-  yaml-cpp
-  io
-  # utilities
   # material_class
   -lpthread -lm
 )
@@ -568,7 +549,6 @@ if (NOT MPI_PARALLEL)
     lagrange_tests
     mass_matrix_tests
     mesh_tests
-    mortar_tests
     point_tests
     policies_tests
     receivers_tests

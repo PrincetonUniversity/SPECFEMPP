@@ -8,33 +8,13 @@
 #include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace {
-template <typename ViewType> int compute_nglob2D(const ViewType index_mapping) {
-  const int nspec = index_mapping.extent(0);
-  const int ngllz = index_mapping.extent(1);
-  const int ngllx = index_mapping.extent(2);
-
-  int nglob = -1;
-  // compute max value stored in index_mapping
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    for (int igllz = 0; igllz < ngllz; igllz++) {
-      for (int igllx = 0; igllx < ngllx; igllx++) {
-        nglob = std::max(nglob, index_mapping(ispec, igllz, igllx));
-      }
-    }
-  }
-
-  return nglob + 1;
-}
-} // namespace
-
 template <specfem::wavefield::simulation_field WavefieldType>
 specfem::assembly::simulation_field<specfem::dimension::type::dim2,
                                     WavefieldType>::
     simulation_field(const specfem::assembly::mesh<dimension_tag> &mesh,
                      const specfem::assembly::element_types<dimension_tag> &element_types) {
 
-  nglob = compute_nglob2D(mesh.h_index_mapping);
+  this->nglob = mesh.nglob;
   this->index_mapping = mesh.index_mapping;
   this->h_index_mapping = mesh.h_index_mapping;
 
