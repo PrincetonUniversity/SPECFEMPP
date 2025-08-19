@@ -10,22 +10,27 @@ namespace specfem::assembly {
 namespace fields_impl {
 
 template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag,
+          specfem::data_access::DataClassType DataClass>
 class base_field {
 private:
   int nglob;
 
-protected:
+public:
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
+  constexpr static auto data_class = DataClass;
   base_field() = default;
   base_field(const int nglob, std::string name)
       : nglob(nglob), data(name, nglob, components),
         h_data(Kokkos::create_mirror_view(data)) {}
 
-  template <bool on_device>
-  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &
-  get_base_field(const int &iglob, const int &icomp) const {
+  template <bool on_device, specfem::data_access::DataClassType U,
+            typename std::enable_if_t<U == data_class, int> = 0>
+  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
+      const std::integral_constant<specfem::data_access::DataClassType, U>,
+      const int &iglob, const int &icomp) const {
+
     if constexpr (on_device) {
       return data(iglob, icomp);
     } else {
@@ -48,153 +53,51 @@ private:
   ViewType::HostMirror h_data;
 
 protected:
-  ViewType get_data() const { return data; }
-  ViewType::HostMirror get_host_data() const { return h_data; }
-};
-
-template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag>
-class field : public base_field<DimensionTag, MediumTag> {
-public:
-  constexpr static auto data_class =
-      specfem::data_access::DataClassType::displacement;
-  field() = default;
-  field(int nglob)
-      : base_field<DimensionTag, MediumTag>(
-            nglob, "specfem::assembly::fields::field") {}
-
   template <bool on_device>
-  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &
-  get_field(const int &iglob, const int &icomp) const {
-    return this->template get_base_field<on_device>(iglob, icomp);
-  }
-
-  template <bool on_device, specfem::data_access::DataClassType U,
-            typename std::enable_if_t<U == data_class, int> = 0>
-  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
-      const std::integral_constant<specfem::data_access::DataClassType, U>,
-      const int &iglob, const int &icomp) const {
-    return this->template get_base_field<on_device>(iglob, icomp);
-  }
-  auto get_field() const { return this->get_data(); }
-  auto get_host_field() const { return this->get_host_data(); }
-
-  template <specfem::sync::kind SyncType> void sync() const {
-    base_field<DimensionTag, MediumTag>::template sync<SyncType>();
+  KOKKOS_FORCEINLINE_FUNCTION ViewType get_base_field_view() const {
+    if constexpr (on_device) {
+      return data;
+    } else {
+      return h_data;
+    }
   }
 };
 
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
-class field_dot : public base_field<DimensionTag, MediumTag> {
-public:
-  constexpr static auto data_class =
-      specfem::data_access::DataClassType::velocity;
-  field_dot() = default;
-  field_dot(int nglob)
-      : base_field<DimensionTag, MediumTag>(
-            nglob, "specfem::assembly::fields::field_dot") {}
+class field_impl
+    : public base_field<DimensionTag, MediumTag,
+                        specfem::data_access::DataClassType::displacement>,
+      public base_field<DimensionTag, MediumTag,
+                        specfem::data_access::DataClassType::velocity>,
+      public base_field<DimensionTag, MediumTag,
+                        specfem::data_access::DataClassType::acceleration>,
+      public base_field<DimensionTag, MediumTag,
+                        specfem::data_access::DataClassType::mass_matrix> {
+private:
+  using displacement_base_type =
+      base_field<DimensionTag, MediumTag,
+                 specfem::data_access::DataClassType::displacement>;
+  using velocity_base_type =
+      base_field<DimensionTag, MediumTag,
+                 specfem::data_access::DataClassType::velocity>;
+  using acceleration_base_type =
+      base_field<DimensionTag, MediumTag,
+                 specfem::data_access::DataClassType::acceleration>;
+  using mass_inverse_base_type =
+      base_field<DimensionTag, MediumTag,
+                 specfem::data_access::DataClassType::mass_matrix>;
 
-  template <bool on_device>
-  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &
-  get_field_dot(const int &iglob, const int &icomp) const {
-    return this->template get_base_field<on_device>(iglob, icomp);
-  }
-
-  template <bool on_device, specfem::data_access::DataClassType U,
-            typename std::enable_if_t<U == data_class, int> = 0>
-  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
-      const std::integral_constant<specfem::data_access::DataClassType, U>,
-      const int &iglob, const int &icomp) const {
-    return this->template get_base_field<on_device>(iglob, icomp);
-  }
-
-  auto get_field_dot() const { return this->get_data(); }
-  auto get_host_field_dot() const { return this->get_host_data(); }
-
-  template <specfem::sync::kind SyncType> void sync() const {
-    base_field<DimensionTag, MediumTag>::template sync<SyncType>();
-  }
-};
-
-template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag>
-class field_dot_dot : public base_field<DimensionTag, MediumTag> {
-public:
-  constexpr static auto data_class =
-      specfem::data_access::DataClassType::acceleration;
-  field_dot_dot() = default;
-  field_dot_dot(int nglob)
-      : base_field<DimensionTag, MediumTag>(
-            nglob, "specfem::assembly::fields::field_dot_dot") {}
-
-  template <bool on_device>
-  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &
-  get_field_dot_dot(const int &iglob, const int &icomp) const {
-    return this->template get_base_field<on_device>(iglob, icomp);
-  }
-
-  template <bool on_device, specfem::data_access::DataClassType U,
-            typename std::enable_if_t<U == data_class, int> = 0>
-  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
-      const std::integral_constant<specfem::data_access::DataClassType, U>,
-      const int &iglob, const int &icomp) const {
-    return this->template get_base_field<on_device>(iglob, icomp);
-  }
-
-  auto get_field_dot_dot() const { return this->get_data(); }
-  auto get_host_field_dot_dot() const { return this->get_host_data(); }
-
-  template <specfem::sync::kind SyncType> void sync() const {
-    base_field<DimensionTag, MediumTag>::template sync<SyncType>();
-  }
-};
-
-template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag>
-class mass_inverse : public base_field<DimensionTag, MediumTag> {
-public:
-  constexpr static auto data_class =
-      specfem::data_access::DataClassType::mass_matrix;
-  mass_inverse() = default;
-  mass_inverse(int nglob)
-      : base_field<DimensionTag, MediumTag>(
-            nglob, "specfem::assembly::fields::mass_inverse") {}
-
-  auto get_mass_inverse() const { return this->get_data(); }
-  auto get_host_mass_inverse() const { return this->get_host_data(); }
-
-  template <bool on_device, specfem::data_access::DataClassType U,
-            typename std::enable_if_t<U == data_class, int> = 0>
-  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &get_value(
-      const std::integral_constant<specfem::data_access::DataClassType, U>,
-      const int &iglob, const int &icomp) const {
-    return this->template get_base_field<on_device>(iglob, icomp);
-  }
-
-  template <bool on_device>
-  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &
-  get_mass_inverse(const int &iglob, const int &icomp) const {
-    return this->template get_base_field<on_device>(iglob, icomp);
-  }
-};
-
-template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag>
-class field_impl : public field<DimensionTag, MediumTag>,
-                   public field_dot<DimensionTag, MediumTag>,
-                   public field_dot_dot<DimensionTag, MediumTag>,
-                   public mass_inverse<DimensionTag, MediumTag> {
 public:
   constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto medium_tag = MediumTag;
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
-  using field<DimensionTag, MediumTag>::get_value;
-  using field_dot<DimensionTag, MediumTag>::get_value;
-  using field_dot_dot<DimensionTag, MediumTag>::get_value;
-  using mass_inverse<DimensionTag, MediumTag>::get_value;
+  using acceleration_base_type::get_value;
+  using displacement_base_type::get_value;
+  using mass_inverse_base_type::get_value;
+  using velocity_base_type::get_value;
 
   field_impl() = default;
 
@@ -209,6 +112,54 @@ public:
   template <specfem::sync::kind sync> void sync_fields() const;
 
   int nglob;
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+  get_field() const {
+    return displacement_base_type::template get_base_field_view<true>();
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+  get_field_dot() const {
+    return velocity_base_type::template get_base_field_view<true>();
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+  get_field_dot_dot() const {
+    return acceleration_base_type::template get_base_field_view<true>();
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+  get_mass_inverse() const {
+    return mass_inverse_base_type::template get_base_field_view<true>();
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  get_host_field() const {
+    return displacement_base_type::template get_base_field_view<false>();
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  get_host_field_dot() const {
+    return velocity_base_type::template get_base_field_view<false>();
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  get_host_field_dot_dot() const {
+    return acceleration_base_type::template get_base_field_view<false>();
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  get_host_mass_inverse() const {
+    return mass_inverse_base_type::template get_base_field_view<false>();
+  }
 };
 
 template <specfem::dimension::type DimensionTag,

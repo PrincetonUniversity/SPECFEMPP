@@ -36,18 +36,17 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
 
   static_assert(
       specfem::data_access::is_point<AdjointPointVelocityType>::value &&
-          specfem::data_access::is_field_l<AdjointPointVelocityType>::value,
+          specfem::data_access::is_field<AdjointPointVelocityType>::value,
       "adjoint_velocity is not a point field type");
 
   static_assert(
       specfem::data_access::is_point<AdjointPointAccelerationType>::value &&
-          specfem::data_access::is_field_l<AdjointPointAccelerationType>::value,
+          specfem::data_access::is_field<AdjointPointAccelerationType>::value,
       "adjoint_acceleration is not a point field type");
 
   static_assert(
       specfem::data_access::is_point<BackwardPointDisplacementType>::value &&
-          specfem::data_access::is_field_l<
-              BackwardPointDisplacementType>::value,
+          specfem::data_access::is_field<BackwardPointDisplacementType>::value,
       "backward_displacement is not a point field type");
 
   constexpr auto dimension = PointPropertiesType::dimension_tag;
