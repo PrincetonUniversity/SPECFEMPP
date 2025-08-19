@@ -9,7 +9,7 @@ namespace specfem {
 namespace runtime_configuration {
 class kernel {
 public:
-  kernel(const std::string output_format, const std::string output_folder,
+  kernel(const std::string &output_format, const std::string &output_folder,
          const specfem::simulation::type type)
       : output_format(output_format), output_folder(output_folder),
         simulation_type(type) {}
