@@ -48,8 +48,6 @@ namespace chunk_element {
  * @endcode
  *
  * @see specfem::execution::ChunkElementIndex for iteration functionality
- * @see specfem::data_access::Accessor for data access layer integration
- * @see specfem::chunk_element::field for field accessors used with this index
  */
 // clang-format on
 template <specfem::dimension::type DimensionTag, typename SIMD,

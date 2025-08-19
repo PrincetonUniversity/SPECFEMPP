@@ -40,12 +40,7 @@ namespace specfem::chunk_element {
  * @tparam UseSIMD Whether to enable SIMD vectorization for performance
  * optimization
  *
- * @note This class inherits all constructors and methods from impl::field,
- * providing multi-dimensional indexing, scratch memory support, and conversion
- * capabilities.
  *
- * @see impl::field for inherited functionality and detailed method
- * documentation
  * @see specfem::chunk_element::velocity for velocity field accessor
  * @see specfem::chunk_element::displacement for displacement field accessor
  */

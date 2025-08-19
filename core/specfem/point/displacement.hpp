@@ -24,9 +24,6 @@ namespace specfem::point {
  * @tparam UseSIMD Whether to enable SIMD vectorization for performance
  * optimization
  *
- * @note This class inherits all constructors and methods from impl::field,
- * providing component access through operator() and various initialization
- * options.
  *
  * @code{.cpp}
  * // Example: Creating 3D elastic displacement field accessor
@@ -59,9 +56,8 @@ namespace specfem::point {
  *
  * // Strain components would be computed from spatial derivatives
  * // (implementation depends on quadrature and differentiation operators)
- * @endcode
+ * @endcode'
  *
- * @see impl::field for inherited functionality
  * @see specfem::point::velocity for velocity field accessor
  * @see specfem::point::acceleration for acceleration field accessor
  */

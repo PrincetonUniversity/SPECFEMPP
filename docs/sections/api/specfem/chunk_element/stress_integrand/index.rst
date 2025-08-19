@@ -6,4 +6,3 @@ Stress Integrand
 
 .. doxygenclass:: specfem::chunk_element::stress_integrand
     :members:
-    :inherited-members:
