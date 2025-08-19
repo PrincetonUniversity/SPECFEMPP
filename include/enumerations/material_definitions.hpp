@@ -92,9 +92,11 @@
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH,         \
                             PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,                           \
+       PROPERTY_TAG_ISOTROPIC_COSSERAT, BOUNDARY_TAG_NONE))(                   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,                           \
        PROPERTY_TAG_ISOTROPIC_COSSERAT,                                        \
-       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,           \
-                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))(       \
+       BOUNDARY_TAG_STACEY))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,         \
+                              PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))(     \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
        BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE))(                                   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
@@ -199,13 +201,26 @@ namespace element {
  *
  * @return constexpr auto list of medium types
  */
-constexpr auto medium_types() {
+template <specfem::dimension::type DimensionTag> constexpr auto medium_types();
+
+template <> constexpr auto medium_types<specfem::dimension::type::dim2>() {
   // Use boost preprocessor library to generate a list of medium
   // types
-  constexpr int total_medium_types = BOOST_PP_SEQ_SIZE(MEDIUM_TAGS);
+  constexpr int total_medium_types = BOOST_PP_SEQ_SIZE(MEDIUM_TAGS_DIM2);
   constexpr std::array<std::tuple<specfem::dimension::type, medium_tag>,
                        total_medium_types>
-      medium_types{ _MAKE_CONSTEXPR_ARRAY(MEDIUM_TAGS) };
+      medium_types{ _MAKE_CONSTEXPR_ARRAY(MEDIUM_TAGS_DIM2) };
+
+  return medium_types;
+}
+
+template <> constexpr auto medium_types<specfem::dimension::type::dim3>() {
+  // Use boost preprocessor library to generate a list of medium
+  // types
+  constexpr int total_medium_types = BOOST_PP_SEQ_SIZE(MEDIUM_TAGS_DIM3);
+  constexpr std::array<std::tuple<specfem::dimension::type, medium_tag>,
+                       total_medium_types>
+      medium_types{ _MAKE_CONSTEXPR_ARRAY(MEDIUM_TAGS_DIM3) };
 
   return medium_types;
 }
@@ -236,6 +251,20 @@ template <> constexpr auto material_systems<specfem::dimension::type::dim2>() {
   return material_systems;
 }
 
+template <> constexpr auto material_systems<specfem::dimension::type::dim3>() {
+  // Use boost preprocessor library to generate a list of
+  // material systems
+  constexpr int total_material_systems =
+      BOOST_PP_SEQ_SIZE(MATERIAL_SYSTEMS_DIM3);
+  constexpr std::array<
+      std::tuple<specfem::dimension::type, specfem::element::medium_tag,
+                 specfem::element::property_tag>,
+      total_material_systems>
+      material_systems{ _MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS_DIM3) };
+
+  return material_systems;
+}
+
 /**
  * @brief A constexpr function to generate a list of element types within the
  * simulation
@@ -257,6 +286,20 @@ template <> constexpr auto element_types<specfem::dimension::type::dim2>() {
                  specfem::element::boundary_tag>,
       total_element_types>
       material_systems{ _MAKE_CONSTEXPR_ARRAY(ELEMENT_TYPES_DIM2) };
+
+  return material_systems;
+}
+
+template <> constexpr auto element_types<specfem::dimension::type::dim3>() {
+  // Use boost preprocessor library to generate a list of
+  // material systems
+  constexpr int total_element_types = BOOST_PP_SEQ_SIZE(ELEMENT_TYPES_DIM3);
+  constexpr std::array<
+      std::tuple<specfem::dimension::type, specfem::element::medium_tag,
+                 specfem::element::property_tag,
+                 specfem::element::boundary_tag>,
+      total_element_types>
+      material_systems{ _MAKE_CONSTEXPR_ARRAY(ELEMENT_TYPES_DIM3) };
 
   return material_systems;
 }

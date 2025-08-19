@@ -13,7 +13,7 @@
 
 std::vector<std::shared_ptr<
     specfem::receivers::receiver<specfem::dimension::type::dim2> > >
-specfem::io::read_receivers(const std::string stations_file,
+specfem::io::read_receivers(const std::string &stations_file,
                             const type_real angle) {
 
   boost::char_separator<char> sep(" ");

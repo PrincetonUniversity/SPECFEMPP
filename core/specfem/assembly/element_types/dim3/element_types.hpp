@@ -35,8 +35,8 @@ protected:
 public:
   int nspec; ///< total number of spectral elements
   int ngllz; ///< number of quadrature points in z dimension
-  int ngllx; ///< number of quadrature points in x dimension
   int nglly; ///< number of quadrature points in y dimension
+  int ngllx; ///< number of quadrature points in x dimension
 
   constexpr static auto dimension_tag =
       specfem::dimension::type::dim3; ///< Dimension tag
@@ -56,8 +56,8 @@ public:
    *
    * @param nspec Number of spectral elements
    * @param ngllz Number of quadrature points in z direction
-   * @param ngllx Number of quadrature points in x direction
    * @param nglly Number of quadrature points in y direction
+   * @param ngllx Number of quadrature points in x direction
    * @param mesh Mesh information
    * @param tags Element Tags for every spectral element
    */
@@ -120,17 +120,17 @@ public:
   }
 
 private:
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
                       DECLARE((IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
                        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
                                     ISOTROPIC_COSSERAT)),
                       DECLARE((IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       DECLARE((IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))

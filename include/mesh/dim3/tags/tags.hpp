@@ -40,7 +40,20 @@ template <> struct tags<specfem::dimension::type::dim3> {
    * @param materials Material properties
    * @param boundaries Boundary information
    */
-  tags();
+  tags() = default;
+
+  /**
+   * @brief Construct tags from mesh data
+   *
+   * @param materials Material properties
+   * @param boundaries Boundary information
+   */
+  tags(const specfem::mesh::element_types<specfem::dimension::type::dim3>
+           &element_types,
+       const specfem::mesh::boundaries<specfem::dimension::type::dim3>
+           &boundaries,
+       const specfem::mesh::parameters<specfem::dimension::type::dim3>
+           &parameters);
   ///@}
 };
 } // namespace mesh

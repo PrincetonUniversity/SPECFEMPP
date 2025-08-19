@@ -25,11 +25,11 @@ The online documentation for SPECFEM++ is located [here](https://specfem2d-kokko
 
 ## Getting Started with SPECFEM++
 
-Follow the [Getting Started Guide](https://specfem2d-kokkos.readthedocs.io/en/latest/getting_started/index.html) to install SPECFEM++ on your system and run the solver.
+Follow the [Getting Started Guide](https://specfem2d-kokkos.readthedocs.io/en/latest/sections/getting_started/index.html) to install SPECFEM++ on your system and run the solver.
 
 ## Examples
 
-We recommend starting with the [cookbook examples](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/index.html) to learn how to customize the solver for your use case.
+We recommend starting with the [cookbook examples](https://specfem2d-kokkos.readthedocs.io/en/latest/sections/cookbooks/index.html) to learn how to customize the solver for your use case.
 
 ## Contributing to SPECFEM++
 

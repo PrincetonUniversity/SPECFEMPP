@@ -16,7 +16,7 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
        BOUNDARY_TAG(NONE)),
       CAPTURE(elements, h_elements) {
         int count = 0;
@@ -39,7 +39,7 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
       })
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
        BOUNDARY_TAG(NONE)),
       CAPTURE(elements, h_elements) {
         int count = 0;
@@ -68,7 +68,7 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
       })
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
        BOUNDARY_TAG(NONE)),
       CAPTURE(elements, h_elements) {
         int count = 0;
@@ -102,7 +102,7 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::element_types(
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
 specfem::assembly::element_types<specfem::dimension::type::dim3>::
     get_elements_on_host(const specfem::element::medium_tag medium_tag) const {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       CAPTURE(h_elements) {
                         if (_medium_tag_ == medium_tag) {
@@ -116,7 +116,7 @@ specfem::assembly::element_types<specfem::dimension::type::dim3>::
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
     element_types<specfem::dimension::type::dim3>::get_elements_on_device(
         const specfem::element::medium_tag medium_tag) const {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       CAPTURE(elements) {
                         if (_medium_tag_ == medium_tag) {
@@ -132,7 +132,7 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag) const {
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       CAPTURE(h_elements) {
                         if (_medium_tag_ == medium_tag &&
@@ -149,7 +149,7 @@ Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag) const {
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       CAPTURE(elements) {
                         if (_medium_tag_ == medium_tag &&
@@ -166,7 +166,7 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       CAPTURE(h_elements) {
                         if (_medium_tag_ == medium_tag &&
@@ -186,7 +186,7 @@ Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       CAPTURE(elements) {
                         if (_medium_tag_ == medium_tag &&

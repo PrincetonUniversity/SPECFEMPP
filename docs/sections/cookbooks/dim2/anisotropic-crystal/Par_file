@@ -22,7 +22,7 @@ OUTPUT_FILES                   = OUTPUT_FILES
 PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
-NGNOD                           = 9
+NGNOD                           = 4
 
 # location to store the mesh
 database_filename               = ./OUTPUT_FILES/database.bin

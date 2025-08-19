@@ -15,7 +15,6 @@ namespace specfem {
 namespace io {
 namespace impl {
 namespace ASCII {
-
 template <typename OpType> class DatasetBase;
 
 template <> class DatasetBase<specfem::io::write> {

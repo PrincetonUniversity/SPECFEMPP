@@ -109,7 +109,7 @@ public:
 
   field_impl(const int nglob);
 
-  template <specfem::sync::kind sync> void sync_fields() const;
+  template <specfem::sync::kind SyncField> void sync_fields() const;
 
   int nglob;
 

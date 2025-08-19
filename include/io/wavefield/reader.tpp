@@ -8,15 +8,56 @@
 template <typename IOLibrary>
 specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
     const std::string &output_folder)
-    : output_folder(output_folder) {}
+    : output_folder(output_folder),
+      file(typename IOLibrary::File(output_folder + "/ForwardWavefield")) {}
 
 template <typename IOLibrary>
-void specfem::io::wavefield_reader<IOLibrary>::read(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly, const int istep) {
-  auto &buffer = assembly.fields.buffer;
+void specfem::io::wavefield_reader<IOLibrary>::initialize(
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+
   auto &boundary_values = assembly.boundary_values;
 
-  typename IOLibrary::File file(output_folder + "/ForwardWavefield");
+  typename IOLibrary::Group boundary_group = file.openGroup("/BoundaryValues");
+
+  Kokkos::View<bool *, Kokkos::HostSpace> boundary_values_view(
+      "save_boundary_values", 1);
+
+  boundary_group.openDataset("save_boundary_values", boundary_values_view)
+      .read();
+
+  if (!boundary_values_view(0)) {
+    throw std::runtime_error("Boundary values were not saved in the wavefield "
+                             "output, please set `for_adjoint_simulations` to "
+                             "true in the input file for forward simulations.");
+  }
+
+  typename IOLibrary::Group stacey = boundary_group.openGroup("Stacey");
+
+  stacey
+      .openDataset("IndexMapping",
+                   boundary_values.stacey.h_property_index_mapping)
+      .read();
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
+      CAPTURE((container, boundary_values.stacey.container)) {
+        const std::string dataset_name =
+            specfem::element::to_string(_medium_tag_) + "Acceleration";
+        stacey.openDataset(dataset_name, _container_.h_values).read();
+      });
+
+  boundary_values.copy_to_device();
+
+  return;
+}
+
+template <typename IOLibrary>
+void specfem::io::wavefield_reader<IOLibrary>::run(
+    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const int istep) {
+  auto &buffer = assembly.fields.buffer;
+  auto &boundary_values = assembly.boundary_values;
 
   typename IOLibrary::Group base_group = file.openGroup(
       std::string("/Step") + specfem::utilities::to_zero_lead(istep, 6));
@@ -40,36 +81,5 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
         }
       });
 
-  typename IOLibrary::Group boundary = base_group.openGroup("Boundary");
-  typename IOLibrary::Group stacey = boundary.openGroup("Stacey");
-
-  stacey
-      .openDataset("IndexMapping",
-                   boundary_values.stacey.h_property_index_mapping)
-      .read();
-
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE((container, boundary_values.stacey.container)) {
-        const std::string dataset_name =
-            specfem::element::to_string(_medium_tag_) + "Acceleration";
-        stacey.openDataset(dataset_name, _container_.h_values).read();
-      });
-
-  //   stacey
-  //       .openDataset("ElasticAcceleration",
-  //                    boundary_values.stacey.elastic.h_values)
-  //       .read();
-  //   stacey
-  //       .openDataset("AcousticAcceleration",
-  //                    boundary_values.stacey.acoustic.h_values)
-  //       .read();
-  //   stacey
-  //       .openDataset("PoroelasticAcceleration",
-  //                    boundary_values.stacey.poroelastic.h_values)
-  //       .read();
-
   buffer.copy_to_device();
-  boundary_values.copy_to_device();
 }
