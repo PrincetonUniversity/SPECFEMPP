@@ -1,7 +1,7 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
-#include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
+#include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -43,51 +43,45 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
       h_jacobian(specfem::kokkos::create_mirror_view(jacobian)) {
 
   const int ngnod = mesh.ngnod;
-  const int ngllxz = ngllz * ngllx;
 
-  const int scratch_size =
-      specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
+  for (int ispec = 0; ispec < nspec; ++ispec) {
 
-  Kokkos::parallel_for(
-      specfem::kokkos::HostTeam(nspec, Kokkos::AUTO, Kokkos::AUTO)
-          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      [=](const specfem::kokkos::HostTeam::member_type &teamMember) {
-        const int ispec = teamMember.league_rank();
+    //----- Load coorgx, coorgz in level 0 cache to be utilized later
+    Kokkos::View<point::global_coordinates<specfem::dimension::type::dim2> *,
+                 Kokkos::HostSpace>
+        coorg("coorg", ngnod);
 
-        //----- Load coorgx, coorgz in level 0 cache to be utilized later
-        specfem::kokkos::HostScratchView2d<type_real> s_coorg(
-            teamMember.team_scratch(0), ndim, ngnod);
+    // This loop is not vectorizable because access to coorg via
+    // knods(ispec, in) is not vectorizable
+    for (int in = 0; in < ngnod; ++in) {
+      coorg(in).x = mesh.h_control_node_coord(0, ispec, in);
+      coorg(in).z = mesh.h_control_node_coord(1, ispec, in);
+    }
 
-        // This loop is not vectorizable because access to coorg via
-        // knods(ispec, in) is not vectorizable
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(teamMember, ngnod), [&](const int in) {
-              s_coorg(0, in) = mesh.h_control_node_coord(0, ispec, in);
-              s_coorg(1, in) = mesh.h_control_node_coord(1, ispec, in);
-            });
+    //-----
 
-        teamMember.team_barrier();
-        //-----
+    for (int iz = 0; iz < ngllz; ++iz) {
+      for (int ix = 0; ix < ngllx; ++ix) {
 
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
-              int ix, iz;
-              sub2ind(xz, ngllx, iz, ix);
+        // compute Jacobian matrix
+        std::vector<std::vector<type_real> > sv_dershape2D(
+            2, std::vector<type_real>(ngnod));
+        for (int in = 0; in < ngnod; ++in) {
+          for (int idim = 0; idim < ndim; ++idim) {
+            sv_dershape2D[idim][in] = mesh.h_dshape2D(iz, ix, idim, in);
+          }
+        }
 
-              // compute Jacobian matrix
-              auto sv_dershape2D = Kokkos::subview(mesh.h_dshape2D, iz, ix,
-                                                   Kokkos::ALL, Kokkos::ALL);
+        auto jacobian = jacobian::compute_jacobian(coorg, ngnod, sv_dershape2D);
 
-              auto derivatives = jacobian::compute_derivatives(
-                  teamMember, s_coorg, ngnod, sv_dershape2D);
-
-              this->h_xix(ispec, iz, ix) = derivatives.xix;
-              this->h_gammax(ispec, iz, ix) = derivatives.gammax;
-              this->h_xiz(ispec, iz, ix) = derivatives.xiz;
-              this->h_gammaz(ispec, iz, ix) = derivatives.gammaz;
-              this->h_jacobian(ispec, iz, ix) = derivatives.jacobian;
-            });
-      });
+        this->h_xix(ispec, iz, ix) = jacobian.xix;
+        this->h_gammax(ispec, iz, ix) = jacobian.gammax;
+        this->h_xiz(ispec, iz, ix) = jacobian.xiz;
+        this->h_gammaz(ispec, iz, ix) = jacobian.gammaz;
+        this->h_jacobian(ispec, iz, ix) = jacobian.jacobian;
+      }
+    }
+  };
 
   specfem::kokkos::deep_copy(xix, h_xix);
   specfem::kokkos::deep_copy(xiz, h_xiz);

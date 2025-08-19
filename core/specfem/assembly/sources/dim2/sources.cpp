@@ -96,9 +96,6 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
       wavefield_types("specfem::sources::wavefield_types", sources.size()),
       h_wavefield_types(Kokkos::create_mirror_view(wavefield_types)) {
 
-  // THERE SHOULD BE LOCATE SOURCES HERE, AND SOURCE SHOULD BE POPULATED
-  // WITH THE LOCAL COORDINATES AND THE GLOBAL ELEMENT INDEX
-
   // Here we sort the sources by the different media and create
   // a vector of sources for each medium named source_<dim>_<medium>
   // and a vector of indices of the sources in the original sources vector
