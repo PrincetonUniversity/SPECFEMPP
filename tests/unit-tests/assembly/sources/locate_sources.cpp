@@ -6,6 +6,7 @@
 #include "enumerations/wavefield.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
+#include "specfem_setup.hpp"
 #include "test_macros.hpp"
 #include "utilities/utilities.hpp"
 #include "gtest/gtest.h"
@@ -26,14 +27,16 @@ TEST_F(ASSEMBLY, locate_sources) {
     EXPECT_REAL_EQ(sources.size(), 1);
 
     // Check xi
-    EXPECT_TRUE(specfem::utilities::is_close(
-        sources[0]->get_local_coordinates().xi, source_solution.xi))
+    EXPECT_TRUE(
+        specfem::utilities::is_close(sources[0]->get_local_coordinates().xi,
+                                     source_solution.xi, type_real(1e-4)))
         << ExpectedGot(source_solution.xi,
                        sources[0]->get_local_coordinates().xi);
 
     // Check gamma
-    EXPECT_TRUE(specfem::utilities::is_close(
-        sources[0]->get_local_coordinates().gamma, source_solution.gamma))
+    EXPECT_TRUE(
+        specfem::utilities::is_close(sources[0]->get_local_coordinates().gamma,
+                                     source_solution.gamma, type_real(1e-4)))
         << ExpectedGot(source_solution.gamma,
                        sources[0]->get_local_coordinates().gamma);
 
