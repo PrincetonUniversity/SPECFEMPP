@@ -297,7 +297,8 @@ target_link_libraries(
 add_library(
         io
         src/io/fortranio/fortran_io.cpp
-        src/io/sources.cpp
+        src/io/sources/dim2/read_sources.cpp
+        src/io/sources/dim3/read_sources.cpp
         src/io/receivers.cpp
         # Fortran 2D part
         src/io/mesh/impl/fortran/dim2/mesh.cpp
@@ -498,32 +499,6 @@ target_link_libraries(
 
 # Disable unity build for source_time_function due to KOKKOS_INLINE_FUNCTION issues
 set_target_properties(source_time_function PROPERTIES UNITY_BUILD OFF)
-
-
-
-add_library(
-        source_class
-        src/source/source.cpp
-        src/source/force_source.cpp
-        src/source/cosserat_force_source.cpp
-        src/source/moment_tensor_source.cpp
-        src/source/adjoint_source.cpp
-        src/source/external.cpp
-)
-
-target_link_libraries(
-        source_class
-        Kokkos::kokkos
-        specfem_mpi
-        utilities
-        quadrature
-        source_time_function
-        yaml-cpp
-        point
-        enumerations
-        algorithms
-        ${BOOST_LIBS}
-)
 
 
 add_library(coupled_interface
