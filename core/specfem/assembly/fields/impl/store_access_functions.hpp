@@ -35,10 +35,10 @@ base_store_accessor(const int iglob, const int icomp, const MaskType &mask,
           tag_type);
 }
 
-template <bool on_device, typename ContainerType, typename... AccessorTypes,
-          typename std::enable_if_t<
-              (specfem::data_access::is_field_l<AccessorTypes>::value && ...),
-              int> = 0>
+template <
+    bool on_device, typename ContainerType, typename... AccessorTypes,
+    typename std::enable_if_t<
+        (specfem::data_access::is_field<AccessorTypes>::value && ...), int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void store_after_simd_dispatch(
     const std::false_type, const specfem::point::assembly_index<false> index,
     const ContainerType &field, AccessorTypes &...accessors) {
@@ -61,10 +61,10 @@ KOKKOS_FORCEINLINE_FUNCTION void store_after_simd_dispatch(
   return;
 }
 
-template <bool on_device, typename ContainerType, typename... AccessorTypes,
-          typename std::enable_if_t<
-              (specfem::data_access::is_field_l<AccessorTypes>::value && ...),
-              int> = 0>
+template <
+    bool on_device, typename ContainerType, typename... AccessorTypes,
+    typename std::enable_if_t<
+        (specfem::data_access::is_field<AccessorTypes>::value && ...), int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void store_after_simd_dispatch(
     std::true_type, const specfem::point::assembly_index<true> index,
     const ContainerType &field, AccessorTypes &...accessors) {
@@ -98,7 +98,7 @@ template <bool on_device, typename IndexType, typename ContainerType,
           typename... AccessorTypes,
           typename std::enable_if_t<
               (specfem::data_access::is_assembly_index<IndexType>::value &&
-               (specfem::data_access::is_field_l<AccessorTypes>::value && ...)),
+               (specfem::data_access::is_field<AccessorTypes>::value && ...)),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 store_after_field_access(const IndexType &index, const ContainerType &field,

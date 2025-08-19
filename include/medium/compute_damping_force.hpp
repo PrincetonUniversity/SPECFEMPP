@@ -25,12 +25,12 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
                 "factor must have the same SIMD type as point_properties");
 
   static_assert(specfem::data_access::is_point<PointVelocityType>::value &&
-                    specfem::data_access::is_field_l<PointVelocityType>::value,
+                    specfem::data_access::is_field<PointVelocityType>::value,
                 "velocity is not a point field type");
 
   static_assert(
       specfem::data_access::is_point<PointAccelerationType>::value &&
-          specfem::data_access::is_field_l<PointAccelerationType>::value,
+          specfem::data_access::is_field<PointAccelerationType>::value,
       "acceleration is not a point field type");
 
   static_assert(PointPropertiesType::dimension_tag ==
