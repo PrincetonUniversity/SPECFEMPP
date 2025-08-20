@@ -3,8 +3,8 @@ import numpy as np
 dx = 1.0
 dz = 1.0
 
-nx = int(4000 / dx) + 1
-nz = int(4000 / dz) + 1
+nx = int(400 / dx) + 1
+nz = int(400 / dz) + 1
 
 n = nx * nz
 
@@ -37,7 +37,7 @@ for i in range(nx):
 npt = np.array([n], dtype="int32")
 
 for m in model:
-    with open(f"./examples/spin_wave/model/proc000000_{m}.bin", "w") as f:
+    with open(f"./examples/spin2/model/proc000000_{m}.bin", "w") as f:
         f.seek(0)
         npt.tofile(f)
         f.seek(4)
