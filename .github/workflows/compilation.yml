@@ -32,4 +32,4 @@ jobs:
       - name: Configure Serial build
         run: cmake --preset release
       - name: Build
-        run: cmake --build --preset release -j 4
+        run: cmake --build --preset release -j 2

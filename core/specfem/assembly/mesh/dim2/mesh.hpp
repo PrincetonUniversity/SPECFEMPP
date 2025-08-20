@@ -48,9 +48,12 @@ public:
 
   mesh(const specfem::mesh::tags<dimension_tag> &tags,
        const specfem::mesh::control_nodes<dimension_tag> &control_nodes,
-       const specfem::quadrature::quadratures &quadratures);
+       const specfem::quadrature::quadratures &quadratures,
+       const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph);
 
   void assemble();
+
+  void assemble(const specfem::mesh::adjacency_graph<dimension_tag> &graph);
 };
 
 /**

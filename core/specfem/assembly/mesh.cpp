@@ -1,4 +1,5 @@
 #include "mesh.hpp"
+#include "mesh/dim2/impl/assemble.tpp"
 #include "mesh/dim2/impl/control_nodes.tpp"
 #include "mesh/dim2/impl/mesh_to_compute_mapping.tpp"
 #include "mesh/dim2/impl/shape_functions.tpp"

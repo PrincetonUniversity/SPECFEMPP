@@ -188,6 +188,9 @@ add_executable(
   mesh/materials/materials.cpp
   mesh/materials/properties.cpp
   mesh/runner.cpp
+  mesh/adjacency_graph/adjacency_graph.cpp
+  mesh/adjacency_graph/adjacency_graph_regular_mesh.cpp
+  mesh/adjacency_graph/adjacency_graph_irregular_mesh.cpp
 )
 
 target_link_libraries(
@@ -572,6 +575,7 @@ if (NOT MPI_PARALLEL)
     io
     mesh
     policies
+    mortar
   )
 
   foreach(dir_name IN LISTS LINK_DIRS)
