@@ -9,7 +9,7 @@
 namespace specfem {
 namespace mesh {
 
-template <> struct free_surface<specfem::dimension::type::dim3> {
+template <> struct acoustic_free_surface<specfem::dimension::type::dim3> {
 
   constexpr static auto dimension =
       specfem::dimension::type::dim3; ///< Dimension type
@@ -36,25 +36,25 @@ template <> struct free_surface<specfem::dimension::type::dim3> {
    * @brief Default constructor
    *
    */
-  free_surface() {};
+  acoustic_free_surface() {};
 
   /**
    * @brief Constructor
    *
-   * Constructor for the free_surface struct that initializes the number of
-   * the underlying arrays with the given parameters
+   * Constructor for the acoustic_free_surface struct that initializes the
+   * number of the underlying arrays with the given parameters
    *
    * @param num_free_surface_faces Number of free surface faces
    * @param ngllsquare Number of GLL points squared
    *
    * @code{.cpp}
    * // Example of how to use this constructor
-   * specfem::mesh::free_surface<specfem::dimension::type::dim3> free_surface(
-   *    num_free_surface_faces, ngllsquare);
+   * specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim3>
+   * acoustic_free_surface( num_free_surface_faces, ngllsquare);
    * @endcode
    *
    */
-  free_surface(const int num_free_surface_faces, const int ngllsquare)
+  acoustic_free_surface(const int num_free_surface_faces, const int ngllsquare)
       : nelements(num_free_surface_faces), ngllsquare(ngllsquare),
         num_free_surface_faces(num_free_surface_faces) {
 
@@ -71,13 +71,13 @@ template <> struct free_surface<specfem::dimension::type::dim3> {
   ///@}
 
   /**
-   * @brief Print the free_surface struct
+   * @brief Print the acoustic_free_surface struct
    *
-   * Print the free_surface struct to the console
+   * Print the acoustic_free_surface struct to the console
    *
    * @code{.cpp}
    * // Example of how to use this function
-   * free_surface.print();
+   * acoustic_free_surface.print();
    * @endcode
    *
    */
@@ -92,7 +92,7 @@ template <> struct free_surface<specfem::dimension::type::dim3> {
    *
    * @code{.cpp}
    * // Example of how to use this function
-   * free_surface.print_ijk(iface);
+   * acoustic_free_surface.print_ijk(iface);
    * @endcode
    *
    */
