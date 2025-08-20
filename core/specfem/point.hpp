@@ -1,17 +1,21 @@
 #pragma once
 
+#include "point/acceleration.hpp"
 #include "point/assembly_index.hpp"
 #include "point/boundary.hpp"
 #include "point/coordinates.hpp"
+#include "point/displacement.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/index.hpp"
 #include "point/jacobian_matrix.hpp"
 #include "point/kernels.hpp"
 #include "point/mapped_index.hpp"
+#include "point/mass_inverse.hpp"
 #include "point/properties.hpp"
 #include "point/source.hpp"
 #include "point/stress.hpp"
 #include "point/stress_integrand.hpp"
+#include "point/velocity.hpp"
 
 /**
  * @namespace specfem::point
