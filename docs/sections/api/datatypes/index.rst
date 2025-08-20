@@ -19,5 +19,3 @@ SPECFEM++ datatypes
 
     base_datatypes/index
     quadrature/element
-    field/index
-    stress_integrands/index

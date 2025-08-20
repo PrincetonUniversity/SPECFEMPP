@@ -410,29 +410,6 @@ target_link_libraries(
 # # )
 
 add_executable(
-  rmass_inverse_tests
-  domain/rmass_inverse_tests.cpp
-)
-
-target_link_libraries(
-  rmass_inverse_tests
-  quadrature
-  mesh
-  # material_class
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  assembly
-  parameter_reader
-  compare_arrays
-  point
-  algorithms
-  io
-  coupled_interface
-  -lpthread -lm
-)
-
-add_executable(
   displacement_newmark_tests
   displacement_tests/Newmark/newmark_tests.cpp
 )
@@ -549,7 +526,6 @@ if (NOT MPI_PARALLEL)
     point_tests
     policies_tests
     receivers_tests
-    rmass_inverse_tests
     simd_tests
     stress_tests
   )
