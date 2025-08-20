@@ -159,7 +159,7 @@ endif()
 
 
 # Try finding boost and if not found install.
-find_package(Boost 1.85.0 COMPONENTS program_options filesystem system algorithm tokenizer preprocessor vmd graph)
+find_package(Boost 1.85.0 COMPONENTS program_options filesystem system graph)
 
 if (NOT ${Boost_FOUND})
     set(SPECFEMPP_SAVE_UNITY_BUILD ${CMAKE_UNITY_BUILD})
@@ -201,7 +201,7 @@ if (NOT ${Boost_FOUND})
 
 else()
     # Check which boost LIBRARY_DIRS to use
-    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd Boost::graph)
+    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system Boost::graph)
     message(STATUS "Boost libs/ and incs/:")
     message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
     message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
