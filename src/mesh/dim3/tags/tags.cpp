@@ -27,9 +27,9 @@ specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
     boundary_tag[ispec] += specfem::element::boundary_tag::stacey;
   }
 
-  const auto &free_surface = boundaries.free_surface;
-  for (int i = 0; i < free_surface.nelements; ++i) {
-    const int ispec = free_surface.ispec(i);
+  const auto &acoustic_free_surface = boundaries.acoustic_free_surface;
+  for (int i = 0; i < acoustic_free_surface.nelements; ++i) {
+    const int ispec = acoustic_free_surface.ispec(i);
     if (element_types.ispec_type(ispec) !=
         specfem::element::medium_tag::acoustic) {
       throw std::invalid_argument(
