@@ -31,26 +31,33 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   const auto &gammaz = point_jacobian_matrix.gammaz;
   const auto &jacobian = point_jacobian_matrix.jacobian;
 
-  // Compute inverse Jacobian elements
-  const auto invD = static_cast<T>(1.0) / (xix * gammaz - xiz * gammax);
-  const auto xxi = gammaz * invD;
-  const auto xgamma = -gammax * invD;
-  const auto zxi = -xiz * invD;
-  const auto zgamma = xix * invD;
+  // Compute inverse Jacobian elements (standard 2x2 matrix inversion)
+  const auto det = xix * gammaz - xiz * gammax;
+  const auto invD = static_cast<T>(1.0) / det;
 
-  // Compute transformed stresses
-  // F(i, k) = F_{x_i, \xi_k} and x_i = [x,z], \xi_k = [\xi, \gamma]
-  // t_{ij} = F_{i,k} * \partial x_j / \partial \xi_k
-  const auto t_00 = (F(0, 0) * xxi + F(0, 1) * xgamma) / jacobian;
-  const auto t_10 = (F(1, 0) * xxi + F(1, 1) * xgamma) / jacobian;
-  const auto t_01 = (F(0, 0) * zxi + F(0, 1) * zgamma) / jacobian;
-  const auto t_11 = (F(1, 0) * zxi + F(1, 1) * zgamma) / jacobian;
+  // Standard 2x2 matrix inverse: inv([a b; c d]) = (1/det) * [d -b; -c a]
+  //   J = [xix     xiz    ]
+  //       [gammax  gammaz ]
+  // Then the inverse Jacobian matrix is:
+  //   J^-1 = [∂x/∂ξ ∂x/∂γ]  = (1/det) * [gammaz  -xiz ]
+  //          [∂z/∂ξ ∂z/∂γ]              [-gammax  xix ]
+  const auto xxi = gammaz * invD;  // ∂x/∂ξ
+  const auto xgamma = -xiz * invD; // ∂x/∂γ
+  const auto zxi = -gammax * invD; // ∂z/∂ξ
+  const auto zgamma = xix * invD;  // ∂z/∂γ
 
+  // Transform Stress integrand F to stress tensor T
+  // const auto t_00 = (F(0, 0) * xxi + F(0, 1) * xgamma); // σ_xx
+  const auto t_10 = F(1, 0) * xxi + F(1, 1) * xgamma; // σ_xz
+  const auto t_01 = F(0, 0) * zxi + F(0, 1) * zgamma; // σ_zx
+  // const auto t_11 = (F(1, 0) * zxi + F(1, 1) * zgamma); // σ_zz
+
+  // Reassign stress components due to transpose in its original definition
   const auto sigma_xz = t_10;
   const auto sigma_zx = t_01;
 
   // Add to acceleration
-  acceleration.acceleration(2) -= (sigma_xz - sigma_zx) * factor;
+  acceleration.acceleration(2) -= (sigma_xz - sigma_zx) * factor / jacobian;
 };
 
 } // namespace medium
