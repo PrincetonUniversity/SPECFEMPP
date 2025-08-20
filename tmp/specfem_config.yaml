@@ -28,10 +28,10 @@ parameters:
         writer:
           seismogram:
             format: "ascii"
-            directory: "."
+            directory: "OUTPUT_FILES/results"
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/HomogeneousIsotropicCosseratDomainHighFrequency/STATIONS"
+    stations: "OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -45,7 +45,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/HomogeneousIsotropicCosseratDomainHighFrequency/database.bin"
+    mesh-database: "OUTPUT_FILES/database.bin"
 
   ## sources
-  sources: "displacement_tests/Newmark/serial/HomogeneousIsotropicCosseratDomainHighFrequency/source.yaml"
+  sources: "source.yaml"
