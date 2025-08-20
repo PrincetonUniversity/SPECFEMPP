@@ -159,10 +159,11 @@ endif()
 
 
 # Try finding boost and if not found install.
-find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
-
+find_package(Boost 1.85.0 COMPONENTS program_options filesystem system algorithm tokenizer preprocessor vmd graph)
 
 if (NOT ${Boost_FOUND})
+    set(SPECFEMPP_SAVE_UNITY_BUILD ${CMAKE_UNITY_BUILD})
+    set(CMAKE_UNITY_BUILD OFF)
     # Add boost lib sources
     set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd graph)
     set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
@@ -195,9 +196,12 @@ if (NOT ${Boost_FOUND})
 
     FetchContent_MakeAvailable(Boost)
 
+    set(CMAKE_UNITY_BUILD ${SPECFEMPP_SAVE_UNITY_BUILD})
+    unset(SPECFEMPP_SAVE_UNITY_BUILD)
+
 else()
     # Check which boost LIBRARY_DIRS to use
-    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system)
+    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd Boost::graph)
     message(STATUS "Boost libs/ and incs/:")
     message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
     message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
@@ -307,6 +311,7 @@ add_library(
         src/io/mesh/impl/fortran/dim2/read_mesh_database.cpp
         src/io/mesh/impl/fortran/dim2/read_interfaces.cpp
         src/io/mesh/impl/fortran/dim2/read_parameters.cpp
+        src/io/mesh/impl/fortran/dim2/read_adjacency_graph.cpp
         # Fortran 3D part
         src/io/mesh/impl/fortran/dim3/mesh.cpp
         src/io/mesh/impl/fortran/dim3/read_parameters.cpp
@@ -346,6 +351,8 @@ add_library(
         enumerations
         src/enumerations/medium.cpp
         src/enumerations/wavefield.cpp
+        src/enumerations/connections.cpp
+        src/enumerations/mesh_entities.cpp
 )
 
 target_link_libraries(
@@ -404,6 +411,7 @@ add_library(
         src/mesh/dim2/coupled_interfaces/interface_container.cpp
         src/mesh/dim2/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/dim2/tags/tags.cpp
+        src/mesh/dim2/adjacency_graph/assert_symmetry.cpp
         # 3-D
         src/mesh/dim3/mesh.cpp
         src/mesh/dim3/boundaries/absorbing_boundary.cpp
@@ -428,18 +436,6 @@ target_link_libraries(
         # material_class
         yaml-cpp
         ${BOOST_LIBS}
-)
-
-add_library(
-        jacobian
-        src/jacobian/jacobian.cpp
-)
-
-target_link_libraries(
-        jacobian
-        Kokkos::kokkos
-        point
-        shape_functions
 )
 
 add_library(
