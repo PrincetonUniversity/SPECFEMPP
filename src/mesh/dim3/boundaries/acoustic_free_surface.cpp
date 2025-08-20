@@ -3,7 +3,8 @@
 #include <sstream>
 
 std::string
-specfem::mesh::free_surface<specfem::dimension::type::dim3>::print() const {
+specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim3>::print()
+    const {
 
   std::ostringstream message;
 
@@ -33,7 +34,7 @@ specfem::mesh::free_surface<specfem::dimension::type::dim3>::print() const {
 }
 
 std::string
-specfem::mesh::free_surface<specfem::dimension::type::dim3>::print_ijk(
+specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim3>::print_ijk(
     const int iface) const {
   std::string name = "ijk";
   std::ostringstream message;
