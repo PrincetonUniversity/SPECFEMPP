@@ -5,15 +5,15 @@ from scipy.interpolate import griddata
 
 # Load the kernels
 def load_data(directory):
-    X = np.loadtxt(directory + "/elastic_psv_isotropic/X.txt")
-    Z = np.loadtxt(directory + "/elastic_psv_isotropic/Z.txt")
+    X = np.load(directory + "/elastic_psv_isotropic/X.npy")
+    Z = np.load(directory + "/elastic_psv_isotropic/Z.npy")
 
-    rho = np.loadtxt(directory + "/elastic_psv_isotropic/rho.txt")
-    mu = np.loadtxt(directory + "/elastic_psv_isotropic/mu.txt")
-    kappa = np.loadtxt(directory + "/elastic_psv_isotropic/kappa.txt")
-    rhop = np.loadtxt(directory + "/elastic_psv_isotropic/rhop.txt")
-    alpha = np.loadtxt(directory + "/elastic_psv_isotropic/alpha.txt")
-    beta = np.loadtxt(directory + "/elastic_psv_isotropic/beta.txt")
+    rho = np.load(directory + "/elastic_psv_isotropic/rho.npy")
+    mu = np.load(directory + "/elastic_psv_isotropic/mu.npy")
+    kappa = np.load(directory + "/elastic_psv_isotropic/kappa.npy")
+    rhop = np.load(directory + "/elastic_psv_isotropic/rhop.npy")
+    alpha = np.load(directory + "/elastic_psv_isotropic/alpha.npy")
+    beta = np.load(directory + "/elastic_psv_isotropic/beta.npy")
 
     return X, Z, rho, kappa, mu, rhop, alpha, beta
 
