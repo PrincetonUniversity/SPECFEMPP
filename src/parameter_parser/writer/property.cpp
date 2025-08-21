@@ -1,6 +1,7 @@
 #include "parameter_parser/writer/property.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
+#include "io/Npy/Npy.hpp"
 #include "io/property/reader.hpp"
 #include "io/property/writer.hpp"
 #include "utilities/strings.hpp"
@@ -52,6 +53,10 @@ specfem::runtime_configuration::property::instantiate_property_writer() const {
     } else if (specfem::utilities::is_ascii_string(this->output_format)) {
       return std::make_shared<specfem::io::property_writer<
           specfem::io::ASCII<specfem::io::write> > >(this->output_folder);
+    } else if (specfem::utilities::is_npy_string(this->output_format)) {
+      return std::make_shared<
+          specfem::io::property_writer<specfem::io::Npy<specfem::io::write> > >(
+          this->output_folder);
     } else {
       throw std::runtime_error("Unknown model format");
     }
@@ -75,6 +80,10 @@ specfem::runtime_configuration::property::instantiate_property_reader() const {
     } else if (specfem::utilities::is_ascii_string(this->output_format)) {
       return std::make_shared<specfem::io::property_reader<
           specfem::io::ASCII<specfem::io::read> > >(this->output_folder);
+    } else if (specfem::utilities::is_npy_string(this->output_format)) {
+      return std::make_shared<
+          specfem::io::property_reader<specfem::io::Npy<specfem::io::read> > >(
+          this->output_folder);
     } else {
       throw std::runtime_error("Unknown model format");
     }

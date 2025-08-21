@@ -4,6 +4,7 @@
 #define CONFIG_STRINGS \
  ((hdf5, h5)) \
  ((ascii, txt)) \
+ ((npy, numpy)) \
  ((psv, p_sv, p-sv)) \
  ((sh)) \
  ((te)) \

@@ -1,6 +1,7 @@
 #include "parameter_parser/writer/kernel.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
+#include "io/Npy/Npy.hpp"
 #include "io/kernel/writer.hpp"
 #include "utilities/strings.hpp"
 #include <boost/filesystem.hpp>
@@ -49,6 +50,10 @@ specfem::runtime_configuration::kernel::instantiate_kernel_writer() const {
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<specfem::io::kernel_writer<
             specfem::io::ASCII<specfem::io::write> > >(this->output_folder);
+      } else if (specfem::utilities::is_npy_string(this->output_format)) {
+        return std::make_shared<
+            specfem::io::kernel_writer<specfem::io::Npy<specfem::io::write> > >(
+            this->output_folder);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }
