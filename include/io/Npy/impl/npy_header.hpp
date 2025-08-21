@@ -158,14 +158,11 @@ std::vector<char> create_npy_header(const std::vector<size_t> &shape,
 template <typename value_type>
 std::vector<size_t> parse_npy_header(std::ifstream &file,
                                      bool fortran_order = true) {
-  char buffer[256];
+  char buffer[11];
   file.read(buffer, 11 * sizeof(char));
   // Read the header into a string
-  file.getline(buffer, 256);
-  std::string header(buffer);
-  if (header.size() == 256) {
-    throw std::runtime_error("parse_npy_header: header size out of range");
-  }
+  std::string header;
+  std::getline(file, header);
 
   size_t loc1, loc2;
 
