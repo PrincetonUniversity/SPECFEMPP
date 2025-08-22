@@ -19,11 +19,9 @@ void print_view_info(const ViewType& view, const std::string& name) {
     std::cout << std::endl;
 }
 
-// 2D-specific template implementations
-
 // 2D Constructor
 /*
-// Future C++20 version:
+// CPP20_CHANGE
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename... Args>
 requires (DimensionTag == specfem::dimension::type::dim2)

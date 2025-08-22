@@ -6,8 +6,6 @@
 #include "specfem/assembly/compute_source_array.hpp"
 #include <Kokkos_Core.hpp>
 
-// 3D-specific template implementations
-
 // 3D Constructor
 /*
 // CPP20_CHANGE
