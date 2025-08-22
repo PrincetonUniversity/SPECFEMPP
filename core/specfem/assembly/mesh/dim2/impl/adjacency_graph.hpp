@@ -1,5 +1,7 @@
 #pragma once
 
+#include "mesh/mesh.hpp"
+
 namespace specfem::assembly::mesh_impl {
 
 template <>

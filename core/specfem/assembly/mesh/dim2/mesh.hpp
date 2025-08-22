@@ -86,7 +86,8 @@ public:
 template <bool on_device, typename MemberType, typename ViewType>
 KOKKOS_INLINE_FUNCTION void
 impl_load(const MemberType &team,
-          const specfem::assembly::mesh<specfem::dimension::type::dim2> mesh,
+          const specfem::assembly::mesh_impl::quadrature<
+              specfem::dimension::type::dim2> &quadrature,
           ViewType &element_quadrature) {
 
   constexpr bool store_hprime_gll = ViewType::store_hprime_gll;
@@ -94,10 +95,6 @@ impl_load(const MemberType &team,
   constexpr bool store_weight_times_hprime_gll =
       ViewType::store_weight_times_hprime_gll;
   constexpr int NGLL = ViewType::ngll;
-
-  const auto &quadrature =
-      static_cast<const specfem::assembly::mesh_impl::quadrature<
-          specfem::dimension::type::dim2> &>(mesh);
 
   static_assert(std::is_same_v<typename MemberType::execution_space,
                                Kokkos::DefaultExecutionSpace>,
@@ -143,12 +140,13 @@ impl_load(const MemberType &team,
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <typename MemberType, typename ViewType>
-KOKKOS_FUNCTION void load_on_device(
-    const MemberType &team,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    ViewType &element_quadrature) {
+KOKKOS_FUNCTION void
+load_on_device(const MemberType &team,
+               const specfem::assembly::mesh_impl::quadrature<
+                   specfem::dimension::type::dim2> &quadrature,
+               ViewType &element_quadrature) {
 
-  impl_load<true>(team, mesh, element_quadrature);
+  impl_load<true>(team, quadrature, element_quadrature);
 }
 
 /**
@@ -163,11 +161,11 @@ KOKKOS_FUNCTION void load_on_device(
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <typename MemberType, typename ViewType>
-void load_on_host(
-    const MemberType &team,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    ViewType &element_quadrature) {
-  impl_load<false>(team, mesh, element_quadrature);
+void load_on_host(const MemberType &team,
+                  const specfem::assembly::mesh_impl::quadrature<
+                      specfem::dimension::type::dim2> &quadrature,
+                  ViewType &element_quadrature) {
+  impl_load<false>(team, quadrature, element_quadrature);
 }
 
 } // namespace specfem::assembly
