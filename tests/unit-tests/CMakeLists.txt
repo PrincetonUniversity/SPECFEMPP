@@ -534,6 +534,7 @@ if (NOT MPI_PARALLEL)
     gll_tests
     interpolate_function
     io_tests
+    io_framework_tests
     jacobian_tests
     lagrange_tests
     mass_matrix_tests
