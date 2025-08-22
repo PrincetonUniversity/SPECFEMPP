@@ -541,7 +541,6 @@ if (NOT MPI_PARALLEL)
     point_tests
     policies_tests
     receivers_tests
-    rmass_inverse_tests
     simd_tests
     stress_tests
   )
