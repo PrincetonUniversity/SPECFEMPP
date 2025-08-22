@@ -9,11 +9,13 @@
 #include "specfem/point.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
+#include <Kokkos_Core.hpp>
 
 void specfem::assembly::compute_source_array_impl::from_vector(
     const specfem::sources::vector_source<specfem::dimension::type::dim3>
         &vector_source,
-    specfem::kokkos::HostView4d<type_real> source_array) {
+    Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_array) {
 
   const int ngllz = source_array.extent(1);
   const int nglly = source_array.extent(2);

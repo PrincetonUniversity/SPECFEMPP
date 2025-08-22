@@ -1,7 +1,7 @@
 #include "specfem/assembly/sources.hpp"
+#include "../impl/dim2/source_medium.tpp"
 #include "../impl/locate_sources.hpp"
 #include "../impl/source_medium.hpp"
-#include "../impl/source_medium.tpp"
 #include "algorithms/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"

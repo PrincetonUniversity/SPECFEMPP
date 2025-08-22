@@ -10,6 +10,7 @@
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 
+/*
 // Local namespace for implementation details
 namespace specfem::assembly::compute_source_array_impl {
 
@@ -124,8 +125,8 @@ void specfem::assembly::compute_source_array_impl::from_tensor(
   using PointJacobianMatrix =
       specfem::point::jacobian_matrix<specfem::dimension::type::dim3, false,
                                       false>;
-  specfem::kokkos::HostView2d<PointJacobianMatrix> element_jacobian(
-      "element_jacobian", ngllz, nglly, ngllx);
+  Kokkos::View<PointJacobianMatrix ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+element_jacobian( "element_jacobian", ngllz, nglly, ngllx);
 
   // Extract jacobian data from jacobian_matrix
   for (int iz = 0; iz < ngllz; ++iz) {
@@ -148,3 +149,4 @@ void specfem::assembly::compute_source_array_impl::from_tensor(
           tensor_source, element_jacobian, quadrature, source_array);
   return;
 }
+*/

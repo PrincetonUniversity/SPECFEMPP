@@ -25,8 +25,8 @@ void test_vector_source(const std::string &source_name, SourceType &source,
   int ncomponents = force_vector.extent(0);
 
   // Create source array for testing
-  specfem::kokkos::HostView3d<type_real> source_array("source_array",
-                                                      ncomponents, ngll, ngll);
+  Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+      source_array("source_array", ncomponents, ngll, ngll);
 
   // Loop over all GLL points
   for (int iz = 0; iz < ngll; ++iz) {
