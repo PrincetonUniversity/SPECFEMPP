@@ -188,6 +188,9 @@ add_executable(
   mesh/materials/materials.cpp
   mesh/materials/properties.cpp
   mesh/runner.cpp
+  mesh/adjacency_graph/adjacency_graph.cpp
+  mesh/adjacency_graph/adjacency_graph_regular_mesh.cpp
+  mesh/adjacency_graph/adjacency_graph_irregular_mesh.cpp
 )
 
 target_link_libraries(
@@ -571,7 +574,6 @@ if (NOT MPI_PARALLEL)
     lagrange_tests
     mass_matrix_tests
     mesh_tests
-    mortar_tests
     point_tests
     policies_tests
     receivers_tests

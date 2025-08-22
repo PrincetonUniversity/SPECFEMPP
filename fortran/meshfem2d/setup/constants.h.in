@@ -382,6 +382,15 @@
   integer, parameter :: IDOMAIN_GRAVITOACOUSTIC = 4
   integer, parameter :: IDOMAIN_ELECTROMAGNETIC = 5
 
+! flag to indicate a adjacency type
+
+  integer, parameter :: ISTRONGLY_CONFORMING = 1
+
+! flag to indicate corners
+  integer, parameter :: IBOTTOM_LEFT = 5
+  integer, parameter :: IBOTTOM_RIGHT = 6
+  integer, parameter :: ITOP_RIGHT = 7
+  integer, parameter :: ITOP_LEFT = 8
 
 !!-----------------------------------------------------------
 !!

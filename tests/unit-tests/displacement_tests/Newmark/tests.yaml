@@ -13,3 +13,4 @@
 # # - "TwoLayerElectromagneticDomain"
 - "HomogeneousIsotropicCosseratDomainNu0"
 - "HomogeneousIsotropicCosseratDomain"
+- "HomogeneousElasticDomainWAdjacencyMap"
