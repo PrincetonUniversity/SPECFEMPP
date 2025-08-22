@@ -7,7 +7,6 @@
 - "HomogeneousElasticDomainStaceyDirichletBC"
 - "HomogeneousAcousticDomainCompositeStaceyDirichletBC"
 - "HomogeneousElasticAnisotropicDomain"
-- "HomogeneousElasticAnisotropicDomainAdjmapAssembly"
 - "HomogeneousElasticIsotropicDomainSH"
 - "PoroelasticCoupledDomainPSV"
 # # - "TwoLayerElectromagneticDomain"
