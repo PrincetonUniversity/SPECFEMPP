@@ -1,7 +1,6 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "field.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 

@@ -17,11 +17,12 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
                                  specfem::element::property_tag::anisotropic>,
     const PointSourceType &point_source,
     const PointPropertiesType &point_properties) {
+  constexpr bool using_simd = PointPropertiesType::simd::using_simd;
 
   using PointAccelerationType =
-      specfem::point::field<PointPropertiesType::dimension_tag,
-                            PointPropertiesType::medium_tag, false, false, true,
-                            false, PointPropertiesType::simd::using_simd>;
+      specfem::point::acceleration<specfem::dimension::type::dim2,
+                                   specfem::element::medium_tag::elastic_psv,
+                                   using_simd>;
 
   PointAccelerationType result;
 
@@ -42,10 +43,12 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
     const PointSourceType &point_source,
     const PointPropertiesType &point_properties) {
 
+  constexpr bool using_simd = PointPropertiesType::simd::using_simd;
+
   using PointAccelerationType =
-      specfem::point::field<PointPropertiesType::dimension_tag,
-                            PointPropertiesType::medium_tag, false, false, true,
-                            false, PointPropertiesType::simd::using_simd>;
+      specfem::point::acceleration<specfem::dimension::type::dim2,
+                                   specfem::element::medium_tag::elastic_sh,
+                                   using_simd>;
 
   PointAccelerationType result;
 

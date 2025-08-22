@@ -10,7 +10,7 @@
 
 template <typename InputLibrary>
 specfem::io::property_reader<InputLibrary>::property_reader(
-    const std::string input_folder)
+    const std::string &input_folder)
     : input_folder(input_folder) {}
 
 template <typename InputLibrary>

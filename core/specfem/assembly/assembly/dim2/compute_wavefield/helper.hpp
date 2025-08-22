@@ -1,12 +1,12 @@
 #pragma once
 
-#include "chunk_element/field.hpp"
 #include "enumerations/interface.hpp"
 #include "execution/chunked_domain_iterator.hpp"
 #include "execution/for_each_level.hpp"
 #include "medium/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/chunk_element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -16,9 +16,11 @@ template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, int NGLL>
 class helper {
 public:
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto medium_tag = MediumTag;
   constexpr static auto property_tag = PropertyTag;
   constexpr static auto ngll = NGLL;
+  constexpr static bool using_simd = false;
 
   helper(specfem::assembly::assembly<specfem::dimension::type::dim2> assembly,
          Kokkos::View<type_real ****, Kokkos::LayoutLeft,
@@ -50,11 +52,16 @@ public:
         specfem::datatype::simd<type_real, false>,
         Kokkos::DefaultExecutionSpace>;
 
-    using ChunkElementFieldType = specfem::chunk_element::field<
-        ParallelConfig::chunk_size, ngll, specfem::dimension::type::dim2,
-        medium_tag, specfem::kokkos::DevScratchSpace,
-        Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false,
-        false>;
+    using ChunkDisplacementType = specfem::chunk_element::displacement<
+        specfem::parallel_config::chunk_size, ngll, dimension, medium_tag,
+        using_simd>;
+    using ChunkVelocityType =
+        specfem::chunk_element::velocity<specfem::parallel_config::chunk_size,
+                                         ngll, dimension, medium_tag,
+                                         using_simd>;
+    using ChunkAccelerationType = specfem::chunk_element::acceleration<
+        specfem::parallel_config::chunk_size, ngll, dimension, medium_tag,
+        using_simd>;
 
     using QuadratureType = specfem::element::quadrature<
         ngll, specfem::dimension::type::dim2, specfem::kokkos::DevScratchSpace,
@@ -69,7 +76,8 @@ public:
                                           medium_tag, false>;
 
     int scratch_size =
-        ChunkElementFieldType::shmem_size() + QuadratureType::shmem_size();
+        ChunkDisplacementType::shmem_size() + ChunkVelocityType::shmem_size() +
+        ChunkAccelerationType::shmem_size() + QuadratureType::shmem_size();
 
     specfem::execution::ChunkedDomainIterator chunk(ParallelConfig(), elements,
                                                     ngllz, ngllx);
@@ -78,14 +86,18 @@ public:
         "specfem::assembly::assembly::compute_wavefield",
         chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
         KOKKOS_CLASS_LAMBDA(
-            const typename decltype(chunk)::index_type chunk_index) {
+            const typename decltype(chunk)::index_type chunk_iterator_index) {
+          const auto &chunk_index = chunk_iterator_index.get_index();
           const auto team = chunk_index.get_policy_index();
           QuadratureType quadrature(team);
-          ChunkElementFieldType field(team);
+          ChunkDisplacementType displacement(team.team_scratch(0));
+          ChunkVelocityType velocity(team.team_scratch(0));
+          ChunkAccelerationType acceleration(team.team_scratch(0));
 
           specfem::assembly::load_on_device(team, assembly.mesh, quadrature);
 
-          specfem::assembly::load_on_device(chunk_index, buffer, field);
+          specfem::assembly::load_on_device(chunk_index, buffer, displacement,
+                                            velocity, acceleration);
           team.team_barrier();
 
           const auto wavefield =
@@ -93,8 +105,8 @@ public:
                               Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
 
           specfem::medium::compute_wavefield<MediumTag, PropertyTag>(
-              chunk_index, assembly, quadrature, field, wavefield_type,
-              wavefield);
+              chunk_index, assembly, quadrature, displacement, velocity,
+              acceleration, wavefield_type, wavefield);
         });
 
     return;
