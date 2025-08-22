@@ -19,6 +19,7 @@ New structure
 
     specfem/point/index
     specfem/receivers/index
+    specfem/chunk_element/index
 
 
 Old structure
