@@ -26,14 +26,14 @@ namespace specfem::assembly {
  * @param source_array The output source array to be filled.
  *
  */
+template <typename SourceArrayViewType>
 void compute_source_array(
     const std::shared_ptr<
         specfem::sources::source<specfem::dimension::type::dim2> > &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
-    Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
-        source_array);
+    SourceArrayViewType &source_array);
 
 /**
  * @brief Compute the lagrange interpolants for a specific 3d source location
@@ -47,13 +47,16 @@ void compute_source_array(
  * @param jacobian_matrix The Jacobian matrix for the mesh.
  * @param source_array The output source array to be filled.
  */
+template <typename SourceArrayViewType>
 void compute_source_array(
     const std::shared_ptr<
         specfem::sources::source<specfem::dimension::type::dim3> > &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>
         &jacobian_matrix,
-    Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
-        source_array);
+    SourceArrayViewType &source_array);
 
 } // namespace specfem::assembly
+
+#include "specfem/assembly/compute_source_array/dim2/compute_source_array.tpp"
+#include "specfem/assembly/compute_source_array/dim3/compute_source_array.tpp"
