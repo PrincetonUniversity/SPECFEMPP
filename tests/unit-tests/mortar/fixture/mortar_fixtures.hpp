@@ -8,7 +8,6 @@
 #include "../../MPI_environment.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "mesh/dim2/adjacency_map/adjacency_map.hpp"
 #include "mesh/mesh.hpp"
 
 namespace test_configuration {
@@ -28,15 +27,6 @@ public:
   int nspec;
   int nmat;
   double characteristic_length;
-
-  // temporarily store interfaces in file while adjacency_graph is WIP
-  std::string interface_file;
-  bool interface_fluid_2d;
-  bool interface_solid_2d;
-  bool interface_fluid_fluid_2d;
-  bool interface_fluid_solid_2d;
-  bool interface_solid_fluid_2d;
-  bool interface_solid_solid_2d;
 
 private:
   specfem::mesh::mesh<specfem::dimension::type::dim2> mesh_instance;

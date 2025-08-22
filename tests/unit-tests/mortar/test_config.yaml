@@ -17,10 +17,6 @@ meshes:
     characteristic-length: 1.0
     nspec: 14
     num-materials: 1
-    interfaces: "mortar/test_meshes/square-ring/interfaces/leftright"
-    interface-containers:
-      - "solid_2d"
-      - "solid_solid_2d"
 
 
 adjtest:

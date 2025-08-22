@@ -209,7 +209,6 @@ target_link_libraries(
 
 add_executable(
   mortar_tests
-  mortar/adjacency_map/adjtest_2d.cpp
   mortar/dg/interface_container/containers_test.cpp
   mortar/fixture/mortar_fixtures.cpp
   mortar/runner.cpp

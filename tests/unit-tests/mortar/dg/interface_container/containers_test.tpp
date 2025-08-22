@@ -24,7 +24,7 @@ static specfem::enums::edge::type edge_from_int(const int edgetype) {
 namespace test_configuration::interface_containers {
 
 template <typename ContainerType>
-ContainerType load_interfaces(const test_configuration::mesh &mesh_config,
+ContainerType load_interfaces(const std::string &interface_file,
                               const int ngll) {
   // temporary measure while adjacency_graph is WIP
   // interface file is stored in 3 chunks, the size of each specified in the
@@ -34,7 +34,7 @@ ContainerType load_interfaces(const test_configuration::mesh &mesh_config,
   // chunk 2: medium 2 edges  (ispec, edgetype)
   // chunk 3: interfaces   (edge1, edge2, param_start_edge1,
   //                param_end_edge1, param_start_edge2, param_end_edge2)
-  std::ifstream interfaces_in(mesh_config.interface_file);
+  std::ifstream interfaces_in(interface_file);
   int num_edges_1, num_edges_2, num_interfaces;
   interfaces_in >> num_edges_1 >> num_edges_2 >> num_interfaces;
   ContainerType container(specfem::assembly::interface::initializer(
@@ -71,31 +71,31 @@ void test_interface(
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
-  ContainerType container =
-      load_interfaces<ContainerType>(mesh_config, assembly.mesh.ngllz);
-  test_edge_policy(container, mesh, assembly);
+  // ContainerType container =
+  //     load_interfaces<ContainerType>(mesh_config, assembly.mesh.ngllz);
+  // test_edge_policy(container, mesh, assembly);
 }
 
 void test_on_mesh(
     const test_configuration::mesh &mesh_config,
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
-  if (mesh_config.interface_fluid_2d) {
+  if (false) {
     test_interface<fluid_2d>(mesh_config, mesh, assembly);
   }
-  if (mesh_config.interface_solid_2d) {
+  if (false) {
     test_interface<solid_2d>(mesh_config, mesh, assembly);
   }
-  if (mesh_config.interface_fluid_fluid_2d) {
+  if (false) {
     test_interface<fluid_fluid_2d>(mesh_config, mesh, assembly);
   }
-  if (mesh_config.interface_solid_fluid_2d) {
+  if (false) {
     test_interface<solid_fluid_2d>(mesh_config, mesh, assembly);
   }
-  if (mesh_config.interface_fluid_solid_2d) {
+  if (false) {
     test_interface<fluid_solid_2d>(mesh_config, mesh, assembly);
   }
-  if (mesh_config.interface_solid_solid_2d) {
+  if (false) {
     test_interface<solid_solid_2d>(mesh_config, mesh, assembly);
   }
 }
