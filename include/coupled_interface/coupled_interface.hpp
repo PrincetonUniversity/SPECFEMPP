@@ -18,28 +18,21 @@ template <specfem::dimension::type DimensionTag>
 class coupled_interface<DimensionTag, specfem::element::medium_tag::acoustic,
                         specfem::element::medium_tag::elastic_psv> {
 public:
-  using CoupledPointFieldType =
-      specfem::point::field<DimensionTag,
-                            specfem::element::medium_tag::elastic_psv, true,
-                            false, false, false, false>;
-  using SelfPointFieldType =
-      specfem::point::field<DimensionTag,
-                            specfem::element::medium_tag::acoustic, false,
-                            false, true, false, false>;
+  using CoupledPointFieldType = specfem::point::displacement<
+      DimensionTag, specfem::element::medium_tag::elastic_psv, false>;
+
+  using SelfPointFieldType = specfem::point::acceleration<
+      DimensionTag, specfem::element::medium_tag::acoustic, false>;
 };
 
 template <specfem::dimension::type DimensionTag>
 class coupled_interface<DimensionTag, specfem::element::medium_tag::elastic_psv,
                         specfem::element::medium_tag::acoustic> {
 public:
-  using CoupledPointFieldType =
-      specfem::point::field<DimensionTag,
-                            specfem::element::medium_tag::acoustic, false,
-                            false, true, false, false>;
-  using SelfPointFieldType =
-      specfem::point::field<DimensionTag,
-                            specfem::element::medium_tag::elastic_psv, false,
-                            false, true, false, false>;
+  using CoupledPointFieldType = specfem::point::acceleration<
+      DimensionTag, specfem::element::medium_tag::acoustic, false>;
+  using SelfPointFieldType = specfem::point::acceleration<
+      DimensionTag, specfem::element::medium_tag::elastic_psv, false>;
 };
 
 } // namespace impl

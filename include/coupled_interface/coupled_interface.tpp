@@ -80,8 +80,8 @@ void specfem::coupled_interface::coupled_interface<
               specfem::coupled_interface::impl::compute_coupling(
                   factor, normal, coupled_field, acceleration);
 
-              specfem::assembly::atomic_add_on_device(self_index, acceleration,
-                                                     this->field);
+              specfem::assembly::atomic_add_on_device(self_index, this->field,
+                                                      acceleration);
             });
       });
 }
