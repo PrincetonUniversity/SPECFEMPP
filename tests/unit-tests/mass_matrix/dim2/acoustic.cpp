@@ -14,8 +14,7 @@ TEST(MassMatrix, AcousticIsotropic2D) {
   using PointPropertiesType =
       specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointMassMatrixType =
-      specfem::point::field<dimension, medium_tag, false, false, false, true,
-                            false>;
+      specfem::point::mass_inverse<dimension, medium_tag, false>;
 
   const type_real kappa = 10.0;
 

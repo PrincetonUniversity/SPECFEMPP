@@ -66,7 +66,7 @@ public:
 #pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {
-      acceleration.acceleration(icomp) = values(ispec, iz, ix, istep, icomp);
+      acceleration(icomp) = values(ispec, iz, ix, istep, icomp);
     }
 
     return;
@@ -91,7 +91,7 @@ public:
 #pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {
-      values(ispec, iz, ix, istep, icomp) = acceleration.acceleration(icomp);
+      values(ispec, iz, ix, istep, icomp) = acceleration(icomp);
     }
 
     return;
@@ -119,7 +119,7 @@ public:
     mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
     for (int icomp = 0; icomp < components; ++icomp)
-      Kokkos::Experimental::where(mask, acceleration.acceleration(icomp))
+      Kokkos::Experimental::where(mask, acceleration(icomp))
           .copy_from(&values(ispec, iz, ix, istep, icomp), tag_type());
 
     return;
@@ -147,7 +147,7 @@ public:
     mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
     for (int icomp = 0; icomp < components; ++icomp)
-      Kokkos::Experimental::where(mask, acceleration.acceleration(icomp))
+      Kokkos::Experimental::where(mask, acceleration(icomp))
           .copy_to(&values(ispec, iz, ix, istep, icomp), tag_type());
 
     return;

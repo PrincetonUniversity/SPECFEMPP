@@ -17,14 +17,18 @@ constexpr int serial_chunk_size = 1;
 
 #if defined(KOKKOS_ENABLE_CUDA)
 constexpr int storage_chunk_size = impl::cuda_chunk_size;
+constexpr int chunk_size = impl::cuda_chunk_size;
 #elif defined(KOKKOS_ENABLE_HIP)
 constexpr int storage_chunk_size = impl::hip_chunk_size;
+constexpr int chunk_size = impl::hip_chunk_size;
 #elif defined(KOKKOS_ENABLE_OPENMP)
 constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
 constexpr int storage_chunk_size = impl::openmp_chunk_size * simd_size;
+constexpr int chunk_size = impl::openmp_chunk_size;
 #else
 constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
 constexpr int storage_chunk_size = impl::serial_chunk_size * simd_size;
+constexpr int chunk_size = impl::serial_chunk_size;
 #endif
 
 /**
