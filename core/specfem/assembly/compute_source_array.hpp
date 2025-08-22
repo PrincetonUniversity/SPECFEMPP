@@ -7,6 +7,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
 
@@ -31,7 +32,8 @@ void compute_source_array(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
-    specfem::kokkos::HostView3d<type_real> source_array);
+    Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_array);
 
 /**
  * @brief Compute the lagrange interpolants for a specific 3d source location
@@ -51,6 +53,7 @@ void compute_source_array(
     const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>
         &jacobian_matrix,
-    specfem::kokkos::HostView4d<type_real> source_array);
+    Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_array);
 
 } // namespace specfem::assembly

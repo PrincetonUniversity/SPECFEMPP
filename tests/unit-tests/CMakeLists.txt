@@ -631,7 +631,10 @@ if (NOT MPI_PARALLEL)
     stress_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
-      gtest_discover_tests(${test_target})
+      gtest_discover_tests(${test_target}
+        DISCOVERY POST_BUILD
+        DISCOVERY_TIMEOUT 300
+        )
   endforeach()
 
   # For tests that require data files from the tests directory,
