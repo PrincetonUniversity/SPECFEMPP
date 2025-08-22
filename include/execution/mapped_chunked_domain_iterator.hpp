@@ -106,14 +106,20 @@ class MappedChunkElementIndex
 private:
   using base_type =
       ChunkElementIndex<DimensionTag, SIMD, ViewType, TeamMemberType>;
-  using index_type = MappedChunkElementIndex;
+  using index_type =
+      specfem::chunk_element::MappedIndex<DimensionTag, SIMD, ViewType,
+                                          TeamMemberType>; ///< Underlying index
+                                                           ///< type used to
+                                                           ///< store the
+                                                           ///< indices within
+                                                           ///< the chunk.
 
 public:
   using iterator_type =
       MappedChunkElementIterator<DimensionTag, SIMD, ViewType, TeamMemberType>;
 
   KOKKOS_INLINE_FUNCTION
-  constexpr const index_type get_index() const { return *this; }
+  constexpr const index_type get_index() const { return { *this }; }
 
   KOKKOS_INLINE_FUNCTION
   constexpr const iterator_type get_iterator() const { return this->iterator; }
@@ -186,4 +192,4 @@ private:
 } // namespace execution
 } // namespace specfem
 
-#include "chunk_element/mapped_index.hpp"
+#include "specfem/chunk_element/mapped_index.hpp"
