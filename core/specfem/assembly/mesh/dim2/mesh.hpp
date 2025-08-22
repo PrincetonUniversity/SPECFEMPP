@@ -1,6 +1,7 @@
 #pragma once
 
 #include "element/quadrature.hpp"
+#include "impl/adjacency_graph.hpp"
 #include "impl/control_nodes.hpp"
 #include "impl/mesh_to_compute_mapping.hpp"
 #include "impl/points.hpp"
@@ -30,6 +31,8 @@ struct mesh<specfem::dimension::type::dim2>
       public specfem::assembly::mesh_impl::mesh_to_compute_mapping<
           specfem::dimension::type::dim2>,
       public specfem::assembly::mesh_impl::shape_functions<
+          specfem::dimension::type::dim2>,
+      public specfem::assembly::mesh_impl::adjacency_graph<
           specfem::dimension::type::dim2> {
 
 public:
@@ -51,9 +54,17 @@ public:
        const specfem::quadrature::quadratures &quadratures,
        const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph);
 
+  void assemble_legacy();
+
   void assemble();
 
-  void assemble(const specfem::mesh::adjacency_graph<dimension_tag> &graph);
+  bool adjacency_graph_empty() const {
+    return static_cast<const specfem::assembly::mesh_impl::adjacency_graph<
+        dimension_tag> &>(*this)
+        .empty();
+  }
+
+  bool empty() = delete;
 };
 
 /**

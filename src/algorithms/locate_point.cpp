@@ -81,6 +81,24 @@ std::vector<int> get_best_candidates(
   return ispec_candidates;
 }
 
+template <typename GraphType>
+std::vector<int> get_best_candidates_from_graph(const int ispec_guess,
+                                                const GraphType &graph) {
+
+  std::vector<int> ispec_candidates;
+  ispec_candidates.push_back(ispec_guess);
+
+  for (auto edge :
+       boost::make_iterator_range(boost::out_edges(ispec_guess, graph))) {
+    const int ispec = boost::target(edge, graph);
+    if (std::find(ispec_candidates.begin(), ispec_candidates.end(), ispec) ==
+        ispec_candidates.end()) {
+      ispec_candidates.push_back(ispec);
+    }
+  }
+  return ispec_candidates;
+}
+
 std::tuple<type_real, type_real> get_best_location(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,
@@ -139,7 +157,10 @@ specfem::algorithms::locate_point(
   std::tie(ix_guess, iz_guess, ispec_guess) =
       rough_location(coordinates, global_coordinates);
 
-  const auto best_candidates = get_best_candidates(ispec_guess, index_mapping);
+  const auto best_candidates =
+      (mesh.adjacency_graph_empty())
+          ? get_best_candidates(ispec_guess, index_mapping)
+          : get_best_candidates_from_graph(ispec_guess, mesh.graph());
 
   type_real final_dist = std::numeric_limits<type_real>::max();
 

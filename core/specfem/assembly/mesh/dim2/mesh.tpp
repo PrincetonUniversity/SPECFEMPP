@@ -2,12 +2,12 @@
 
 #include "enumerations/interface.hpp"
 #include "enumerations/material_definitions.hpp"
-#include "specfem/jacobian.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/jacobian.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
@@ -195,6 +195,50 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
   return points;
 }
 
+// We need to build a new graph since the element numbering may have changed
+// after the mesh assembly
+specfem::assembly::mesh_impl::adjacency_graph<specfem::dimension::type::dim2>
+build_assembly_adjacency_graph(
+    const int nspec,
+    const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
+        specfem::dimension::type::dim2> &mapping,
+    const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
+        &mesh_adjacency_graph) {
+
+  if (mesh_adjacency_graph.empty()) {
+    return specfem::assembly::mesh_impl::adjacency_graph<
+        specfem::dimension::type::dim2>();
+  }
+
+  specfem::assembly::mesh_impl::adjacency_graph<specfem::dimension::type::dim2>
+      adjacency_graph(nspec);
+
+  auto &g = adjacency_graph.graph();
+  const auto &mesh_g = mesh_adjacency_graph.graph();
+
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    // Get mesh index
+    const int ispec_mesh = mapping.compute_to_mesh(ispec);
+    // Iterate over all outgoing edges
+    for (auto iedge :
+         boost::make_iterator_range(boost::out_edges(ispec_mesh, mesh_g))) {
+      // Get the target mesh index
+      const int target_ispec_mesh = boost::target(iedge, mesh_g);
+      // Get the target specfem index
+      const int target_ispec = mapping.mesh_to_compute(target_ispec_mesh);
+      // Get edge property
+      const auto edge_property = mesh_g[iedge];
+      // Add the edge to the adjacency graph
+      boost::add_edge(ispec, target_ispec, edge_property, g);
+    }
+  }
+
+  // Check that the graph is symmetric
+  adjacency_graph.assert_symmetry();
+
+  return adjacency_graph;
+}
+
 } // namespace
 
 specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
@@ -203,7 +247,7 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
         &control_nodes_in,
     const specfem::quadrature::quadratures &quadratures,
     const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
-        &adjacency_graph) {
+        &mesh_adjacency_graph) {
   nspec = tags.nspec;
   ngllz = quadratures.gll.get_N();
   ngllx = quadratures.gll.get_N();
@@ -218,6 +262,9 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       specfem::dimension::type::dim2> &>(*this);
   auto &shape_functions =
       static_cast<specfem::assembly::mesh_impl::shape_functions<
+          specfem::dimension::type::dim2> &>(*this);
+  auto &adjacency_graph =
+      static_cast<specfem::assembly::mesh_impl::adjacency_graph<
           specfem::dimension::type::dim2> &>(*this);
 
   mapping = specfem::assembly::mesh_impl::mesh_to_compute_mapping<
@@ -236,17 +283,22 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       quadratures.gll.get_hxi(), quadratures.gll.get_hxi(),
       quadratures.gll.get_N(), control_nodes_in.ngnod);
 
+  adjacency_graph =
+      build_assembly_adjacency_graph(nspec, mapping, mesh_adjacency_graph);
+
   if (adjacency_graph.empty()) {
-    this->assemble();
+    this->assemble_legacy(); /// This functions needs to be deprecated after we
+                             /// update all databases with adjacency graph
   } else {
     // If the adjacency graph is not empty, we use it to assemble the mesh
-    this->assemble(adjacency_graph);
+    this->assemble();
   }
 
   this->nglob = compute_nglob2D(this->h_index_mapping);
 }
 
-void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
+void specfem::assembly::mesh<
+    specfem::dimension::type::dim2>::assemble_legacy() {
 
   const int ngnod = this->ngnod;
   const int nspec = this->nspec;
