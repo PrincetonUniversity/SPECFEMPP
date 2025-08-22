@@ -45,3 +45,39 @@ specfem::medium::properties_container<specfem::dimension::type::dim2, MediumTag,
 
   return;
 }
+
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+specfem::medium::properties_container<specfem::dimension::type::dim3, MediumTag, PropertyTag>::
+    properties_container(
+        const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
+        const specfem::assembly::mesh<dimension_tag> &mesh,
+        const int ngllz, const int nglly, const int ngllx,
+        const specfem::mesh::materials<dimension_tag> &materials,
+        const specfem::kokkos::HostView1d<int> property_index_mapping)
+    : base_type(elements.extent(0), ngllz, nglly, ngllx) {
+
+  const int nelement = elements.extent(0);
+  int count = 0;
+  for (int i = 0; i < nelement; ++i) {
+    const int ispec = elements(i);
+    property_index_mapping(ispec) = count;
+      if (medium_tag == specfem::element::medium_tag::elastic && property_tag == specfem::element::property_tag::isotropic) {
+        // Handle the specific case for 3D elastic isotropic materials
+        for (int iz = 0; iz < ngllz; ++iz) {
+         for (int iy = 0; iy < ngllx; ++iy) {
+           for (int ix = 0; ix < ngllx; ++ix) {
+             this->rho(count, iz, iy, ix) = materials.rho(ispec, iz, iy, ix);
+             this->kappa(count, iz, iy, ix) = materials.kappa(ispec, iz, iy, ix);
+             this->mu(count, iz, iy, ix) = materials.mu(ispec, iz, iy, ix);
+           }
+         }
+       }
+    }
+    count++;
+  }
+
+  this->copy_to_device();
+
+  return;
+}

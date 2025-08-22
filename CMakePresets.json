@@ -116,6 +116,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/debug",
+        "BUILD_TESTS": "ON",
+        "ENABLE_SIMD": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",

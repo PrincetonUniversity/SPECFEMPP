@@ -18,16 +18,17 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
     const PointSourceType &point_source,
     const PointPropertiesType &point_properties) {
 
+  constexpr bool using_simd = PointPropertiesType::simd::using_simd;
+
   using PointAccelerationType =
-      specfem::point::field<PointPropertiesType::dimension_tag,
-                            PointPropertiesType::medium_tag, false, false, true,
-                            false, PointPropertiesType::simd::using_simd>;
+      specfem::point::acceleration<specfem::dimension::type::dim2,
+                                   specfem::element::medium_tag::acoustic,
+                                   using_simd>;
 
   PointAccelerationType result;
 
-  result.acceleration(0) = point_source.stf(0) *
-                           point_source.lagrange_interpolant(0) /
-                           point_properties.kappa();
+  result(0) = point_source.stf(0) * point_source.lagrange_interpolant(0) /
+              point_properties.kappa();
 
   return result;
 }

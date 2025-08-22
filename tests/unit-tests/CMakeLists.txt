@@ -425,29 +425,6 @@ target_link_libraries(
 # # )
 
 add_executable(
-  rmass_inverse_tests
-  domain/rmass_inverse_tests.cpp
-)
-
-target_link_libraries(
-  rmass_inverse_tests
-  quadrature
-  mesh
-  # material_class
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  assembly
-  parameter_reader
-  compare_arrays
-  point
-  algorithms
-  io
-  coupled_interface
-  -lpthread -lm
-)
-
-add_executable(
   displacement_newmark_tests
   displacement_tests/Newmark/newmark_tests.cpp
 )
@@ -546,28 +523,27 @@ target_link_libraries(
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
   set(TEST_TARGETS
-  assembly_tests
-  # compute_acoustic_tests
-  # compute_coupled_interfaces_tests
-  # compute_elastic_tests
-  compute_jacobian_matrix_tests
-  compute_tests
-  displacement_newmark_tests
-  fortranio_test
-  gll_tests
-  interpolate_function
-  io_framework_tests
-  io_tests
-  jacobian_tests
-  lagrange_tests
-  mass_matrix_tests
-  mesh_tests
-  point_tests
-  policies_tests
-  receivers_tests
-  rmass_inverse_tests
-  simd_tests
-  stress_tests
+    assembly_tests
+    # compute_acoustic_tests
+    # compute_coupled_interfaces_tests
+    # compute_elastic_tests
+    compute_jacobian_matrix_tests
+    compute_tests
+    displacement_newmark_tests
+    fortranio_test
+    gll_tests
+    interpolate_function
+    io_tests
+    jacobian_tests
+    lagrange_tests
+    mass_matrix_tests
+    mesh_tests
+    point_tests
+    policies_tests
+    receivers_tests
+    rmass_inverse_tests
+    simd_tests
+    stress_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
       gtest_discover_tests(${test_target})
