@@ -16,8 +16,8 @@ Absorbing Boundaries
 
 
 
-Free surface boundary
+Acoustic Free Surface
 =====================
 
-.. doxygenstruct:: specfem::mesh::free_surface< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::mesh::acoustic_free_surface< specfem::dimension::type::dim3 >
     :members:

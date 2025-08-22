@@ -107,12 +107,11 @@ template <specfem::dimension::type DimensionTag,
 specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
     const int nglob)
     : nglob(nglob),
-      specfem::assembly::fields_impl::field<DimensionTag, MediumTag>(nglob),
-      specfem::assembly::fields_impl::field_dot<DimensionTag, MediumTag>(nglob),
-      specfem::assembly::fields_impl::field_dot_dot<DimensionTag, MediumTag>(
-          nglob),
-      specfem::assembly::fields_impl::mass_inverse<DimensionTag, MediumTag>(
-          nglob) {}
+      displacement_base_type(nglob, "specfem::assembly::fields::displacement"),
+      velocity_base_type(nglob, "specfem::assembly::fields::velocity"),
+      acceleration_base_type(nglob, "specfem::assembly::fields::acceleration"),
+      mass_inverse_base_type(nglob, "specfem::assembly::fields::mass_inverse") {
+}
 
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
@@ -125,23 +124,14 @@ specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
   assign_assembly_index_mapping(mesh, element_types, assembly_index_mapping,
                                 nglob, MediumTag);
 
-  static_cast<specfem::assembly::fields_impl::field<DimensionTag, MediumTag> &>(
-      *this) =
-      specfem::assembly::fields_impl::field<DimensionTag, MediumTag>(nglob);
-  static_cast<
-      specfem::assembly::fields_impl::field_dot<DimensionTag, MediumTag> &>(
-      *this) =
-      specfem::assembly::fields_impl::field_dot<DimensionTag, MediumTag>(nglob);
-  static_cast<
-      specfem::assembly::fields_impl::field_dot_dot<DimensionTag, MediumTag> &>(
-      *this) =
-      specfem::assembly::fields_impl::field_dot_dot<DimensionTag, MediumTag>(
-          nglob);
-  static_cast<
-      specfem::assembly::fields_impl::mass_inverse<DimensionTag, MediumTag> &>(
-      *this) =
-      specfem::assembly::fields_impl::mass_inverse<DimensionTag, MediumTag>(
-          nglob);
+  static_cast<displacement_base_type &>(*this) =
+      displacement_base_type(nglob, "specfem::assembly::fields::displacement");
+  static_cast<velocity_base_type &>(*this) =
+      velocity_base_type(nglob, "specfem::assembly::fields::velocity");
+  static_cast<acceleration_base_type &>(*this) =
+      acceleration_base_type(nglob, "specfem::assembly::fields::acceleration");
+  static_cast<mass_inverse_base_type &>(*this) =
+      mass_inverse_base_type(nglob, "specfem::assembly::fields::mass_inverse");
 
   return;
 }
@@ -151,16 +141,7 @@ template <specfem::dimension::type DimensionTag,
 template <specfem::sync::kind sync>
 void specfem::assembly::fields_impl::field_impl<
     DimensionTag, MediumTag>::sync_fields() const {
-  static_cast<
-      const specfem::assembly::fields_impl::field<DimensionTag, MediumTag> &>(
-      *this)
-      .template sync<sync>();
-  static_cast<const specfem::assembly::fields_impl::field_dot<DimensionTag,
-                                                             MediumTag> &>(
-      *this)
-      .template sync<sync>();
-  static_cast<const specfem::assembly::fields_impl::field_dot_dot<DimensionTag,
-                                                                 MediumTag> &>(
-      *this)
-      .template sync<sync>();
+  displacement_base_type::template sync<sync>();
+  velocity_base_type::template sync<sync>();
+  acceleration_base_type::template sync<sync>();
 }

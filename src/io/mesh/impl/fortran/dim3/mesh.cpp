@@ -460,28 +460,29 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
                mesh.parameters.num_free_surface_faces);
 
   // Create the free surface object
-  mesh.boundaries.free_surface =
-      specfem::mesh::free_surface<specfem::dimension::type::dim3>(
+  mesh.boundaries.acoustic_free_surface =
+      specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim3>(
           mesh.parameters.num_free_surface_faces, mesh.parameters.ngllsquare);
 
   // Read the free surface ispec
-  try_read_index_array("free_surface_ispec", stream,
-                       mesh.boundaries.free_surface.ispec);
-  try_read_index_array("free_surface_ijk", stream,
-                       mesh.boundaries.free_surface.ijk);
-  try_read_array("free_surface_jacobian2Dw", stream,
-                 mesh.boundaries.free_surface.jacobian2Dw);
-  try_read_array("free_surface_normal", stream,
-                 mesh.boundaries.free_surface.normal);
+  try_read_index_array("acoustic_free_surface_ispec", stream,
+                       mesh.boundaries.acoustic_free_surface.ispec);
+  try_read_index_array("acoustic_free_surface_ijk", stream,
+                       mesh.boundaries.acoustic_free_surface.ijk);
+  try_read_array("acoustic_free_surface_jacobian2Dw", stream,
+                 mesh.boundaries.acoustic_free_surface.jacobian2Dw);
+  try_read_array("acoustic_free_surface_normal", stream,
+                 mesh.boundaries.acoustic_free_surface.normal);
 
 #ifndef NDEBUG
   // Print the free surface
-  mpi->cout(mesh.boundaries.free_surface.print());
+  mpi->cout(mesh.boundaries.acoustic_free_surface.print());
 
   // Print the free surface for the first face
   // for debugging the array layout (Fortran v. C)
-  // mpi->cout(mesh.free_surface.print_ijk(0));
-  // mpi->cout(mesh.free_surface.print_ijk(num_free_surface_faces - 1));
+  // mpi->cout(mesh.acoustic_free_surface.print_ijk(0));
+  // mpi->cout(mesh.acoustic_free_surface.print_ijk(num_free_surface_faces -
+  // 1));
 #endif
 
   // Create the coupled interfaces object
