@@ -26,8 +26,8 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
   constexpr bool using_simd = true;
 #endif
 
-  using PointFieldType = specfem::point::field<dimension, medium_tag, false,
-                                               false, false, true, using_simd>;
+  using PointMassType =
+      specfem::point::mass_inverse<dimension, medium_tag, using_simd>;
 
   using parallel_config = specfem::parallel_config::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,
@@ -40,10 +40,13 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
   specfem::execution::for_all(
       "specfem::kokkos_kernels::divide_mass_matrix", range,
       KOKKOS_LAMBDA(const IndexType &index) {
-        PointFieldType load_field;
-        specfem::assembly::load_on_device(index, field, load_field);
-        PointFieldType store_field(load_field.invert_mass_matrix());
-        specfem::assembly::store_on_device(index, store_field, field);
+        PointMassType mass;
+        specfem::assembly::load_on_device(index, field, mass);
+        for (int icomp = 0; icomp < PointMassType::components;
+             ++icomp) {
+          mass(icomp) = static_cast<type_real>(1.0) / mass(icomp);
+        }
+        specfem::assembly::store_on_device(index, field, mass);
       });
 
   // Kokkos::fence();

@@ -2,16 +2,16 @@
 
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "boundary_conditions/boundary_conditions.tpp"
-#include "specfem/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "medium/compute_mass_matrix.hpp"
-#include "parallel_configuration/chunk_config.hpp"
 #include "execution/chunked_domain_iterator.hpp"
 #include "execution/for_all.hpp"
+#include "medium/compute_mass_matrix.hpp"
+#include "parallel_configuration/chunk_config.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -21,7 +21,8 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
 void specfem::kokkos_kernels::impl::compute_mass_matrix(
-    const type_real &dt, const specfem::assembly::assembly<DimensionTag> &assembly) {
+    const type_real &dt,
+    const specfem::assembly::assembly<DimensionTag> &assembly) {
 
   constexpr auto dimension = DimensionTag;
   constexpr auto wavefield = WavefieldType;
@@ -52,8 +53,8 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   using parallel_config = specfem::parallel_config::default_chunk_config<
       dimension, simd, Kokkos::DefaultExecutionSpace>;
 
-  using PointMassType = specfem::point::field<dimension, medium_tag, false,
-                                              false, false, true, using_simd>;
+  using PointMassType =
+      specfem::point::mass_inverse<dimension, medium_tag, using_simd>;
 
   using PointPropertyType =
       specfem::point::properties<dimension, medium_tag, property_tag,
@@ -75,7 +76,8 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
 
   const auto wgll = mesh.weights;
 
-  specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements, ngllz, ngllx);
+  specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements,
+                                                  ngllz, ngllx);
 
   specfem::execution::for_all(
       "specfem::kokkos_kernels::compute_mass_matrix", chunk,
@@ -93,7 +95,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
         const auto jacobian = [&]() {
           PointJacobianMatrixType point_jacobian_matrix;
           specfem::assembly::load_on_device(index, jacobian_matrix,
-                                           point_jacobian_matrix);
+                                            point_jacobian_matrix);
           return point_jacobian_matrix.jacobian;
         }();
 
@@ -101,7 +103,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
             specfem::medium::mass_matrix_component(point_property);
 
         for (int icomp = 0; icomp < components; icomp++) {
-          mass_matrix.mass_matrix(icomp) *= wgll(ix) * wgll(iz) * jacobian;
+          mass_matrix(icomp) *= wgll(ix) * wgll(iz) * jacobian;
         }
 
         PointBoundaryType point_boundary;
@@ -110,6 +112,6 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
         specfem::boundary_conditions::compute_mass_matrix_terms(
             dt, point_boundary, point_property, mass_matrix);
 
-        specfem::assembly::atomic_add_on_device(index, mass_matrix, field);
+        specfem::assembly::atomic_add_on_device(index, field, mass_matrix);
       });
 }
