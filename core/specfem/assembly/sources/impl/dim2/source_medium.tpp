@@ -46,29 +46,25 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
 
   for (int isource = 0; isource < sources.size(); isource++) {
 
-    std::cout << "Getting subview of h_source_array: " <<  specfem::element::to_string(MediumTag) << std::endl;
-    // print layout of h_source_array
-    print_view_info(this->h_source_array, "h_source_array");
-
-
+    // Get source array for a single source
     auto sv_source_array = Kokkos::subview(this->h_source_array, isource, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
 
-
-    print_view_info(sv_source_array, "sv_source_array");
-    std::cout << "Got subview of h_source_array:     " <<  specfem::element::to_string(MediumTag) << std::endl;
-
-
+    // Compute source contribution on the element
     specfem::assembly::compute_source_array(sources[isource], mesh, jacobian_matrix, sv_source_array);
 
-    std::cout << "computed source array:             " <<  specfem::element::to_string(MediumTag) << std::endl;
-    std::cout << "Getting sv of h_stf:               " <<  specfem::element::to_string(MediumTag) << std::endl;
+    // Get source time function array for this source
     auto sv_stf_array = Kokkos::subview(this->h_source_time_function, Kokkos::ALL, isource, Kokkos::ALL);
-    std::cout << "Got subview of h_stf:              " <<  specfem::element::to_string(MediumTag) << std::endl;
-    sources[isource]->compute_source_time_function(t0, dt, nsteps, sv_stf_array);
-    std::cout << "Computed source time function:     " <<  specfem::element::to_string(MediumTag) << std::endl;
 
+    // Compute source time function array for this source
+    sources[isource]->compute_source_time_function(t0, dt, nsteps, sv_stf_array);
+
+    // Get global coordinates for this source
     const auto coord = sources[isource]->get_global_coordinates();
-    auto lcoord = specfem::algorithms::locate_point(coord, mesh);
+
+    // Get local coordinates for this source
+    auto lcoord = sources[isource]->get_local_coordinates();
+
+    // Assign local spectral element index to the mapping
     this->h_source_index_mapping(isource) = lcoord.ispec;
   }
 
