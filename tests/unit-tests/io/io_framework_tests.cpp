@@ -395,19 +395,31 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
   const size_t small_data_size = 25;
   const size_t large_data_size = 200;
 
+  std::cout << "==============================================================="
+            << std::endl;
+  std::cout << "START" << std::endl;
+  std::cout << "==============================================================="
+            << std::endl;
   if constexpr (std::is_same_v<typename IOType::IO_OpType,
                                specfem::io::write>) {
     typename IOType::File file(this->getTestFile());
+
+    // Print file name
+    std::cout << "WRITE: File name: " << this->getTestFile() << std::endl;
 
     // Create hierarchical structure
     auto physics_group = file.createGroup("physics");
     auto mesh_group = file.createGroup("mesh");
     auto results_group = physics_group.createGroup("results");
 
+    std::cout << "WRITE: Created groups." << std::endl;
+
     // Create various datasets in different groups
     auto int_data = this->template generateTestData<int>(small_data_size);
     auto double_data = this->template generateTestData<double>(large_data_size);
     auto bool_data = this->template generateTestData<bool>(small_data_size);
+
+    std::cout << "WRITE: Created test data." << std::endl;
 
     Kokkos::View<int *, Kokkos::HostSpace> int_view("mesh_ids",
                                                     small_data_size);
@@ -415,6 +427,8 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
                                                           large_data_size);
     Kokkos::View<bool *, Kokkos::HostSpace> bool_view("active_elements",
                                                       small_data_size);
+
+    std::cout << "WRITE: Created views." << std::endl;
 
     for (size_t i = 0; i < small_data_size; ++i) {
       int_view(i) = int_data[i];
@@ -424,11 +438,14 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
       double_view(i) = double_data[i];
     }
 
+    std::cout << "WRITE: Populated views." << std::endl;
+
     // Write datasets to different groups
     auto mesh_ids_dataset =
         mesh_group
             .template createDataset<Kokkos::View<int *, Kokkos::HostSpace> >(
                 "element_ids", int_view);
+
     auto coordinates_dataset =
         mesh_group
             .template createDataset<Kokkos::View<double *, Kokkos::HostSpace> >(
@@ -438,25 +455,39 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
             .template createDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
                 "active_elements", bool_view);
 
+    std::cout << "Created datasets." << std::endl;
+
     EXPECT_NO_THROW(mesh_ids_dataset.write());
     EXPECT_NO_THROW(coordinates_dataset.write());
     EXPECT_NO_THROW(active_dataset.write());
 
+    std::cout << "WRITE: Wrote datasets." << std::endl;
+
     EXPECT_NO_THROW(file.flush());
+
+    std::cout << "WRITE: Flushed file." << std::endl;
+
   } else {
     // Create the complex structure first
     {
       using WriteIOType = typename GetWriteType<IOType>::type;
       typename WriteIOType::File write_file(this->getTestFile());
 
+      std::cout << "READ: Creating complex structure in file: "
+                << this->getTestFile() << std::endl;
+
       auto physics_group = write_file.createGroup("physics");
       auto mesh_group = write_file.createGroup("mesh");
       auto results_group = physics_group.createGroup("results");
+
+      std::cout << "READ: Created groups." << std::endl;
 
       auto int_data = this->template generateTestData<int>(small_data_size);
       auto double_data =
           this->template generateTestData<double>(large_data_size);
       auto bool_data = this->template generateTestData<bool>(small_data_size);
+
+      std::cout << "READ: Created test data." << std::endl;
 
       Kokkos::View<int *, Kokkos::HostSpace> int_view("mesh_ids",
                                                       small_data_size);
@@ -465,6 +496,8 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
       Kokkos::View<bool *, Kokkos::HostSpace> bool_view("active_elements",
                                                         small_data_size);
 
+      std::cout << "READ: Created views." << std::endl;
+
       for (size_t i = 0; i < small_data_size; ++i) {
         int_view(i) = int_data[i];
         bool_view(i) = bool_data[i];
@@ -472,6 +505,8 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
       for (size_t i = 0; i < large_data_size; ++i) {
         double_view(i) = double_data[i];
       }
+
+      std::cout << "READ: Populated views." << std::endl;
 
       auto mesh_ids_dataset =
           mesh_group
@@ -485,19 +520,27 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
               .template createDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
                   "active_elements", bool_view);
 
+      std::cout << "READ: Created datasets." << std::endl;
+
       mesh_ids_dataset.write();
       coordinates_dataset.write();
       active_dataset.write();
       write_file.flush();
+
+      std::cout << "Wrote datasets and flushed file." << std::endl;
     }
 
     // Read back the complex structure
     auto should_not_throw = [this]() {
       typename IOType::File file(this->getTestFile());
 
+      std::cout << "READ: Opening file: " << this->getTestFile() << std::endl;
+
       auto physics_group = file.openGroup("physics");
       auto mesh_group = file.openGroup("mesh");
       auto results_group = physics_group.openGroup("results");
+
+      std::cout << "READ: Opened groups." << std::endl;
 
       Kokkos::View<int *, Kokkos::HostSpace> read_int_view("read_mesh_ids",
                                                            small_data_size);
@@ -505,6 +548,8 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
           "read_coordinates", large_data_size);
       Kokkos::View<bool *, Kokkos::HostSpace> read_bool_view("read_active",
                                                              small_data_size);
+
+      std::cout << "READ: Created views." << std::endl;
 
       auto mesh_ids_dataset =
           mesh_group
@@ -519,19 +564,31 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
               .template openDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
                   "active_elements", read_bool_view);
 
+      std::cout << "READ: Opened datasets." << std::endl;
+
       mesh_ids_dataset.read();
       coordinates_dataset.read();
       active_dataset.read();
+
+      std::cout << "READ: Read datasets." << std::endl;
 
       // Basic verification that read succeeded
       EXPECT_GT(read_int_view.extent(0), 0);
       EXPECT_GT(read_double_view.extent(0), 0);
       EXPECT_GT(read_bool_view.extent(0), 0);
+
+      std::cout << "READ: Finished reading datasets." << std::endl;
     };
 
     // Ensure no exceptions are thrown during read
     EXPECT_NO_THROW(should_not_throw());
   }
+
+  std::cout << "==============================================================="
+            << std::endl;
+  std::cout << "FINISHED" << std::endl;
+  std::cout << "==============================================================="
+            << std::endl;
 }
 
 // Main test runner
