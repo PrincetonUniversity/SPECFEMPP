@@ -280,6 +280,8 @@ module shared_input_parameters
    character(len=MAX_STRING_LEN) :: axial_elements_file
    character(len=MAX_STRING_LEN) :: absorbing_cpml_file
    character(len=MAX_STRING_LEN) :: tangential_detection_curve_file
+   character(len=MAX_STRING_LEN) :: nonconforming_adjacencies_file
+   logical :: should_read_nonconforming_adjacencies_file
 
    !#-----------------------------------------------------------------------------
    !#
