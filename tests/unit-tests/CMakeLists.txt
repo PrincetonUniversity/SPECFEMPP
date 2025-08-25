@@ -641,7 +641,10 @@ if (NOT MPI_PARALLEL)
     test_mesh_utilities_mapping_3d
   )
   foreach(test_target IN LISTS TEST_TARGETS)
-      gtest_discover_tests(${test_target})
+      gtest_discover_tests(${test_target}
+        DISCOVERY_MODE POST_BUILD
+        DISCOVERY_TIMEOUT 300
+      )
   endforeach()
 
   # For tests that require data files from the tests directory,

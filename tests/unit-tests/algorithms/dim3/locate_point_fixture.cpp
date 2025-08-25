@@ -34,16 +34,9 @@ protected:
     type_real xmin, xmax, ymin, ymax, zmin, zmax;
   };
 
-  void SetUp() override {
-    // Initialize Kokkos if not already done
-    if (!Kokkos::is_initialized()) {
-      Kokkos::initialize();
-    }
-  }
+  void SetUp() override {}
 
-  void TearDown() override {
-    // Kokkos cleanup handled by test environment
-  }
+  void TearDown() override {}
 
   // Helper to create unit cube coordinates programmatically
   std::vector<std::vector<std::tuple<double, double, double> > >
