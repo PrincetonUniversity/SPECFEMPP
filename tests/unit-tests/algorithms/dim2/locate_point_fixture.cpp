@@ -32,16 +32,9 @@ protected:
     type_real xmin, xmax, zmin, zmax;
   };
 
-  void SetUp() override {
-    // Initialize Kokkos if not already done
-    if (!Kokkos::is_initialized()) {
-      Kokkos::initialize();
-    }
-  }
+  void SetUp() override {}
 
-  void TearDown() override {
-    // Kokkos cleanup handled by test environment
-  }
+  void TearDown() override {}
 
   // Helper to create unit square coordinates programmatically
   std::vector<std::vector<std::pair<double, double> > >
