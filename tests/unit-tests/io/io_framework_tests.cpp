@@ -432,13 +432,14 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 
     for (size_t i = 0; i < small_data_size; ++i) {
       int_view(i) = int_data[i];
-      bool_view(i) = bool_data[i];
-    }
-    for (size_t i = 0; i < large_data_size; ++i) {
       double_view(i) = double_data[i];
     }
+    std::cout << "WRITE: Populated int/double view." << std::endl;
 
-    std::cout << "WRITE: Populated views." << std::endl;
+    for (volatile size_t i = 0; i < small_data_size; ++i) {
+      bool_view(i) = bool_data[i];
+    }
+    std::cout << "WRITE: Populated bool view." << std::endl;
 
     // Write datasets to different groups
     auto mesh_ids_dataset =
@@ -500,13 +501,16 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 
       for (size_t i = 0; i < small_data_size; ++i) {
         int_view(i) = int_data[i];
-        bool_view(i) = bool_data[i];
-      }
-      for (size_t i = 0; i < large_data_size; ++i) {
         double_view(i) = double_data[i];
       }
 
-      std::cout << "READ: Populated views." << std::endl;
+      std::cout << "READ: Populated int/double view." << std::endl;
+
+      for (volatile size_t i = 0; i < small_data_size; ++i) {
+        bool_view(i) = bool_data[i];
+      }
+
+      std::cout << "READ: Populated bool view." << std::endl;
 
       auto mesh_ids_dataset =
           mesh_group
