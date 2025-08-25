@@ -9,31 +9,56 @@
 namespace specfem {
 namespace algorithms {
 
-template <typename PolynomialView, typename FunctionView,
-          std::enable_if_t<((PolynomialView::rank() == 2) &&
-                            (FunctionView::rank() == 2)),
+namespace impl {
+template <typename PolynomialViewType, typename FunctionViewType>
+struct InterpolateFunctor {
+  const PolynomialViewType polynomial;
+  const FunctionViewType function;
+
+  constexpr static int rank = PolynomialViewType::rank();
+
+  InterpolateFunctor(const PolynomialViewType &polynomial,
+                     const FunctionViewType &function)
+      : polynomial(polynomial), function(function) {}
+
+  template <typename T, int U = rank, std::enable_if_t<U == 2, int> = 0>
+  KOKKOS_INLINE_FUNCTION void operator()(const int &iz, const int &ix,
+                                         T &sum) const {
+    sum += polynomial(iz, ix) * function(iz, ix);
+  }
+
+  template <typename T, int U = rank, std::enable_if_t<U == 3, int> = 0>
+  KOKKOS_INLINE_FUNCTION void operator()(const int &iz, const int &iy,
+                                         const int &ix, T &sum) const {
+    sum += polynomial(iz, iy, ix) * function(iz, iy, ix);
+  }
+};
+} // namespace impl
+
+template <typename PolynomialViewType, typename FunctionViewType,
+          std::enable_if_t<((PolynomialViewType::rank() == 2) &&
+                            (FunctionViewType::rank() == 2)),
                            int> = 0>
-typename FunctionView::value_type
-interpolate_function(const PolynomialView &polynomial,
-                     const FunctionView &function) {
+typename FunctionViewType::value_type
+interpolate_function(const PolynomialViewType &polynomial,
+                     const FunctionViewType &function) {
 
-  using ExecSpace = typename PolynomialView::execution_space;
+  using ExecSpace = typename PolynomialViewType::execution_space;
 
-  static_assert(std::is_same<typename PolynomialView::execution_space,
-                             typename FunctionView::execution_space>::value,
+  static_assert(std::is_same<typename PolynomialViewType::execution_space,
+                             typename FunctionViewType::execution_space>::value,
                 "Polynomial and function must have the same execution space");
 
   const int N = polynomial.extent(0);
-  using T = typename FunctionView::value_type;
+  using T = typename FunctionViewType::value_type;
 
   T result(0.0);
 
+  impl::InterpolateFunctor functor(polynomial, function);
+
   Kokkos::parallel_reduce(
       Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2> >({ 0, 0 }, { N, N }),
-      [=](const int iz, const int ix, T &sum) {
-        sum += polynomial(iz, ix) * function(iz, ix);
-      },
-      Kokkos::Sum<T>(result));
+      functor, Kokkos::Sum<T>(result));
 
   return result;
 }
@@ -56,14 +81,11 @@ interpolate_function(const PolynomialViewType &polynomial,
   using T = typename FunctionViewType::value_type;
 
   T result(0.0);
+  impl::InterpolateFunctor functor(polynomial, function);
 
-  Kokkos::parallel_reduce(
-      Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<3> >({ 0, 0, 0 },
-                                                         { N, N, N }),
-      [=](const int iz, const int iy, const int ix, T &sum) {
-        sum += polynomial(iz, iy, ix) * function(iz, iy, ix);
-      },
-      Kokkos::Sum<T>(result));
+  Kokkos::parallel_reduce(Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<3> >(
+                              { 0, 0, 0 }, { N, N, N }),
+                          functor, Kokkos::Sum<T>(result));
 
   return result;
 }
