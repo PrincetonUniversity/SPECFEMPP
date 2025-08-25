@@ -5,9 +5,9 @@
 #include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/quadratures.hpp"
-#include "source/source.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/receivers.hpp"
+#include "specfem/source.hpp"
 #include "utilities/strings.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
@@ -39,6 +39,39 @@ public:
   std::string mesh;
   std::string sources;
   std::string stations;
+};
+
+struct source_solution {
+public:
+  source_solution() {};
+  source_solution(type_real xi, type_real gamma, int ispec,
+                  specfem::element::medium_tag medium_tag)
+      : xi(xi), gamma(gamma), ispec(ispec), medium_tag(medium_tag) {};
+
+  source_solution(const YAML::Node &Node) {
+    this->xi = Node["xi"].as<type_real>();
+    this->gamma = Node["gamma"].as<type_real>();
+    this->ispec = Node["ispec"].as<int>();
+    this->medium_tag =
+        specfem::element::from_string(Node["medium_tag"].as<std::string>());
+  };
+
+  type_real xi;
+  type_real gamma;
+  int ispec;
+  specfem::element::medium_tag medium_tag;
+};
+
+struct solutions {
+public:
+  solutions() = default;
+  solutions(const YAML::Node &Node) {
+    if (Node["source"].IsDefined()) {
+      auto source_node = Node["source"];
+      this->source = source_solution(source_node);
+    }
+  }
+  source_solution source;
 };
 
 struct config {
@@ -89,6 +122,8 @@ public:
     suffix = Node["suffix"].as<std::string>();
     YAML::Node databases = Node["databases"];
     YAML::Node configuration = Node["config"];
+    YAML::Node solutions_node = Node["solutions"];
+
     try {
       database = test_configuration::database(databases);
     } catch (std::runtime_error &e) {
@@ -97,6 +132,13 @@ public:
     }
     try {
       config = test_configuration::config(configuration);
+    } catch (std::runtime_error &e) {
+      throw std::runtime_error("Error in test configuration: " + name + "\n" +
+                               e.what());
+    }
+
+    try {
+      solutions = test_configuration::solutions(solutions_node);
     } catch (std::runtime_error &e) {
       throw std::runtime_error("Error in test configuration: " + name + "\n" +
                                e.what());
@@ -125,6 +167,7 @@ public:
   std::string suffix;
   test_configuration::database database;
   test_configuration::config config;
+  test_configuration::solutions solutions;
 };
 } // namespace test_configuration
 
@@ -138,7 +181,9 @@ protected:
     Iterator(
         test_configuration::Test *p_Test,
         specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh,
-        std::vector<std::shared_ptr<specfem::sources::source> > *p_sources,
+        std::vector<std::shared_ptr<
+            specfem::sources::source<specfem::dimension::type::dim2> > >
+            *p_sources,
         std::vector<std::shared_ptr<
             specfem::receivers::receiver<specfem::dimension::type::dim2> > >
             *p_stations,
@@ -150,7 +195,8 @@ protected:
 
     std::tuple<test_configuration::Test,
                specfem::mesh::mesh<specfem::dimension::type::dim2>,
-               std::vector<std::shared_ptr<specfem::sources::source> >,
+               std::vector<std::shared_ptr<
+                   specfem::sources::source<specfem::dimension::type::dim2> > >,
                std::vector<std::shared_ptr<specfem::receivers::receiver<
                    specfem::dimension::type::dim2> > >,
                std::string,
@@ -181,7 +227,8 @@ protected:
   private:
     test_configuration::Test *p_Test;
     specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh;
-    std::vector<std::shared_ptr<specfem::sources::source> > *p_sources;
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > > *p_sources;
     std::vector<std::shared_ptr<
         specfem::receivers::receiver<specfem::dimension::type::dim2> > >
         *p_stations;
@@ -204,7 +251,9 @@ protected:
 
   std::vector<test_configuration::Test> Tests;
   std::vector<specfem::mesh::mesh<specfem::dimension::type::dim2> > Meshes;
-  std::vector<std::vector<std::shared_ptr<specfem::sources::source> > > Sources;
+  std::vector<std::vector<std::shared_ptr<
+      specfem::sources::source<specfem::dimension::type::dim2> > > >
+      Sources;
   std::vector<std::vector<std::shared_ptr<
       specfem::receivers::receiver<specfem::dimension::type::dim2> > > >
       Stations;
