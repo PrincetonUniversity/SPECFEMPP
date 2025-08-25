@@ -1,0 +1,7 @@
+meshes:
+  - name: "2 staggered elements"
+    description: "two cells next to each other, nonconforming"
+    database: "mortar/test_meshes/two_staggered_elements/database.bin"
+    characteristic-length: 1
+    nspec: 2
+    num-materials: 1

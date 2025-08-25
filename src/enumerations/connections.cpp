@@ -3,8 +3,26 @@
 #include "enumerations/mesh_entities.hpp"
 #include <functional>
 #include <stdexcept>
+#include <string>
 #include <tuple>
 #include <unordered_map>
+
+const std::string
+specfem::connections::to_string(const specfem::connections::type &conn) {
+  switch (conn) {
+  case type::strongly_conforming:
+    return "strongly_conforming";
+  case type::weakly_conforming:
+    return "weakly_conforming";
+  case type::nonconforming:
+    return "nonconforming";
+  default:
+    throw std::runtime_error(
+        std::string("specfem::connections::to_string does not handle ") +
+        std::to_string(static_cast<int>(conn)));
+    return "!ERR";
+  }
+}
 
 /**
  * @brief Helper function to determine if orientation mapping requires

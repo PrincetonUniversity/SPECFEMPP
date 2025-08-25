@@ -206,6 +206,30 @@ target_link_libraries(
   -lpthread -lm
 )
 
+
+add_executable(
+  mortar_tests
+  mortar/adjacency_read_nonconforming/read_test.cpp
+  mortar/fixture/mortar_fixtures.cpp
+  mortar/runner.cpp
+)
+
+target_link_libraries(
+  mortar_tests
+  gtest_main
+  mpi_environment
+  kokkos_environment
+  mesh
+  assembly
+  yaml-cpp
+  io
+  point
+  edge
+  # utilities
+  # material_class
+  -lpthread -lm
+)
+
 add_executable(
   compute_jacobian_matrix_tests
   assembly_mesh/jacobian_matrix/compute_jacobian_matrix_tests.cpp
