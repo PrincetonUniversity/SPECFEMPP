@@ -2,8 +2,8 @@
 
 #include "adjacency/adjacency.hpp"
 #include "boundaries/absorbing_boundary.hpp"
+#include "boundaries/acoustic_free_surface.hpp"
 #include "boundaries/boundaries.hpp"
-#include "boundaries/free_surface.hpp"
 #include "coloring/coloring.hpp"
 #include "control_nodes/control_nodes.hpp"
 #include "coordinates/coordinates.hpp"

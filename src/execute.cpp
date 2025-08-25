@@ -53,8 +53,8 @@ void execute(
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
   auto [sources, t0] =
-      specfem::io::read_sources(setup.get_sources(), nsteps, setup.get_t0(),
-                                setup.get_dt(), simulation_type);
+      specfem::io::read_2d_sources(setup.get_sources(), nsteps, setup.get_t0(),
+                                   setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_node = setup.get_stations();

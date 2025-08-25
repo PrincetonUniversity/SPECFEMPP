@@ -26,17 +26,17 @@ namespace medium {
  * @param properties Material properties at the quadrature point
  * @param jacobian_matrix Spatial derivatives of basis functions at the
  * quadrature point
- * @return specfem::point::field<DimensionTag, MediumTag, false, false, false,
- * true, UseSIMD> Contribution to mass matrix at the quadrature point
+ * @return specfem::point::mass_matrix<DimensionTag, MediumTag,
+ * UseSIMD> Contribution to mass matrix at the quadrature point
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
-KOKKOS_INLINE_FUNCTION specfem::point::field<DimensionTag, MediumTag, false,
-                                             false, false, true, UseSIMD>
-mass_matrix_component(
-    const specfem::point::properties<DimensionTag, MediumTag, PropertyTag,
-                                     UseSIMD> &properties) {
+KOKKOS_INLINE_FUNCTION
+    specfem::point::mass_inverse<DimensionTag, MediumTag, UseSIMD>
+    mass_matrix_component(
+        const specfem::point::properties<DimensionTag, MediumTag, PropertyTag,
+                                         UseSIMD> &properties) {
   return impl_mass_matrix_component(properties);
 }
 

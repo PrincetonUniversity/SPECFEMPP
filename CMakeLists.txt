@@ -103,7 +103,7 @@ set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
         kokkos
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.6.01.zip
+        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.7.00.zip
 )
 
 # Using this instead of FetchContent_MakeAvailable to be backwards compatible
@@ -301,7 +301,8 @@ target_link_libraries(
 add_library(
         io
         src/io/fortranio/fortran_io.cpp
-        src/io/sources.cpp
+        src/io/sources/dim2/read_sources.cpp
+        src/io/sources/dim3/read_sources.cpp
         src/io/receivers.cpp
         # Fortran 2D part
         src/io/mesh/impl/fortran/dim2/mesh.cpp
@@ -415,7 +416,7 @@ add_library(
         # 3-D
         src/mesh/dim3/mesh.cpp
         src/mesh/dim3/boundaries/absorbing_boundary.cpp
-        src/mesh/dim3/boundaries/free_surface.cpp
+        src/mesh/dim3/boundaries/acoustic_free_surface.cpp
         src/mesh/dim3/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/dim3/element_types/element_types.cpp
         src/mesh/dim3/parameters/parameters.cpp
@@ -449,7 +450,6 @@ target_link_libraries(
         )
 
 add_library(utilities
-        src/utilities/utilities.cpp
         src/utilities/strings.cpp
 )
 
@@ -475,7 +475,10 @@ target_link_libraries(
 
 add_library(
         algorithms
-        src/algorithms/locate_point.cpp
+        src/algorithms/dim2/locate_point.cpp
+        src/algorithms/dim2/locate_point_impl.cpp
+        src/algorithms/dim3/locate_point.cpp
+        src/algorithms/dim3/locate_point_impl.cpp
 )
 
 target_link_libraries(
@@ -504,32 +507,6 @@ target_link_libraries(
 
 # Disable unity build for source_time_function due to KOKKOS_INLINE_FUNCTION issues
 set_target_properties(source_time_function PROPERTIES UNITY_BUILD OFF)
-
-
-
-add_library(
-        source_class
-        src/source/source.cpp
-        src/source/force_source.cpp
-        src/source/cosserat_force_source.cpp
-        src/source/moment_tensor_source.cpp
-        src/source/adjoint_source.cpp
-        src/source/external.cpp
-)
-
-target_link_libraries(
-        source_class
-        Kokkos::kokkos
-        specfem_mpi
-        utilities
-        quadrature
-        source_time_function
-        yaml-cpp
-        point
-        enumerations
-        algorithms
-        ${BOOST_LIBS}
-)
 
 
 add_library(coupled_interface

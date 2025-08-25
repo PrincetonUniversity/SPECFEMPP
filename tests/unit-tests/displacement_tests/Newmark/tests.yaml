@@ -11,5 +11,6 @@
 - "PoroelasticCoupledDomainPSV"
 # # - "TwoLayerElectromagneticDomain"
 - "HomogeneousIsotropicCosseratDomainNu0"
+- "HomogeneousIsotropicCosseratDomainHighFrequency"
 - "HomogeneousIsotropicCosseratDomain"
 - "HomogeneousElasticDomainWAdjacencyMap"

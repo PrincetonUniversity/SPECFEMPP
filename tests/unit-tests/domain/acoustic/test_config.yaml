@@ -1,5 +1,0 @@
-Tests:
-
-  serial:
-    specfem_config: "domain/acoustic/serial/specfem_config.yaml"
-    solutions_file: "domain/acoustic/serial/rmass_inverse_acoustic_00000.bin"
