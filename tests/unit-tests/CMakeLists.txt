@@ -52,6 +52,7 @@ target_link_libraries(
   specfem_mpi
 )
 
+
 add_library(
   compare_arrays
   utilities/src/compare_array.cpp
@@ -63,6 +64,17 @@ target_link_libraries(
   io
 )
 
+add_executable(
+  is_close_tests
+  utilities/is_close_tests.cpp
+)
+
+target_link_libraries(
+  is_close_tests
+  utilities
+  gtest_main
+  Kokkos::kokkos
+)
 
 add_executable(
   gll_tests
@@ -93,13 +105,20 @@ target_link_libraries(
 
 add_executable(
   jacobian_tests
-  jacobian/shape_functions2d.cpp
-  jacobian/shape_functions3d.cpp
+  jacobian/jacobian_tests.cpp
+  jacobian/dim2/shape_functions_tests.cpp
+  jacobian/dim2/compute_locations_tests.cpp
+  jacobian/dim2/compute_jacobian_tests.cpp
+  jacobian/dim3/shape_functions_tests.cpp
+  jacobian/dim3/compute_locations_tests.cpp
+  jacobian/dim3/compute_jacobian_tests.cpp
 )
 
 target_link_libraries(
   jacobian_tests
   jacobian
+  mpi_environment
+  kokkos_environment
   gtest_main
   -lpthread -lm
 )
@@ -289,6 +308,10 @@ add_executable(
   assembly/sources/sources.cpp
   assembly/check_jacobian/check_jacobian.cpp
   assembly/locate/locate_point.cpp
+  assembly/mesh/utilities.cpp
+  assembly/sources/locate_sources.cpp
+  assembly/compute_source_array/compute_source_array_from_vector.cpp
+  assembly/compute_source_array/compute_source_array_from_tensor.cpp
 )
 
 target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
@@ -344,6 +367,42 @@ target_link_libraries(
 )
 
 add_executable(
+  locate_point_impl_2d
+  algorithms/dim2/locate_point_impl.cpp
+)
+
+target_link_libraries(
+  locate_point_impl_2d
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  jacobian
+  point
+  ${GTEST_BOTH_LIBRARIES}
+)
+
+add_executable(
+  locate_point_impl_3d
+  algorithms/dim3/locate_point_impl.cpp
+)
+
+target_link_libraries(
+  locate_point_impl_3d
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  jacobian
+  point
+  ${GTEST_BOTH_LIBRARIES}
+)
+
+add_executable(
   policies_tests
   policies/policies.cpp
 )
@@ -390,6 +449,27 @@ target_link_libraries(
   gtest_main
 )
 
+add_executable(
+  source_class_tests
+  source/source.cpp
+  source/base_source_tests.cpp
+  source/typed_source_tests.cpp
+  # source/dim2/vector_sources/force_source.cpp
+  # source/dim2/vector_sources/cosserat_force_source.cpp
+  # source/dim2/vector_sources/adjoint_source.cpp
+  # source/dim2/vector_sources/external_source.cpp
+  # source/dim2/tensor_sources/moment_tensor_source.cpp
+  # source/dim3/vector_sources/force_source.cpp
+  # source/dim3/tensor_sources/moment_tensor_source.cpp
+)
+target_link_libraries(
+  source_class_tests
+  source_class
+  source_time_function
+  mpi_environment
+  kokkos_environment
+  -lpthread -lm
+)
 
 # # add_executable(
 # #   source_location_tests
@@ -519,14 +599,18 @@ if (NOT MPI_PARALLEL)
     gll_tests
     interpolate_function
     io_tests
+    is_close_tests
     jacobian_tests
     lagrange_tests
+    locate_point_impl_2d
+    locate_point_impl_3d
     mass_matrix_tests
     mesh_tests
     point_tests
     policies_tests
     receivers_tests
     simd_tests
+    source_class_tests
     stress_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
