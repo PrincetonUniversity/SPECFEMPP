@@ -30,10 +30,10 @@ interpolate_function(const PolynomialView &polynomial,
 
   Kokkos::parallel_reduce(
       Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<2> >({ 0, 0 }, { N, N }),
-      KOKKOS_LAMBDA(const int iz, const int ix, T &sum) {
+      [=](const int iz, const int ix, T &sum) {
         sum += polynomial(iz, ix) * function(iz, ix);
       },
-      result);
+      Kokkos::Sum<T>(result));
 
   return result;
 }
@@ -60,10 +60,10 @@ interpolate_function(const PolynomialViewType &polynomial,
   Kokkos::parallel_reduce(
       Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<3> >({ 0, 0, 0 },
                                                          { N, N, N }),
-      KOKKOS_LAMBDA(const int iz, const int iy, const int ix, T &sum) {
+      [=](const int iz, const int iy, const int ix, T &sum) {
         sum += polynomial(iz, iy, ix) * function(iz, iy, ix);
       },
-      result);
+      Kokkos::Sum<T>(result));
 
   return result;
 }
