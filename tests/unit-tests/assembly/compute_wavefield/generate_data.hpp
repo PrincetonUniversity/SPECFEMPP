@@ -26,9 +26,14 @@ void generate_data(
       specfem::element::attributes<specfem::dimension::type::dim2,
                                    medium>::components;
 
-  using PointFieldType =
-      specfem::point::field<specfem::dimension::type::dim2, medium, true, true,
-                            true, false, false>;
+  using PointDisplacementType =
+      specfem::point::displacement<specfem::dimension::type::dim2, medium,
+                                   false>;
+  using PointVelocityType =
+      specfem::point::velocity<specfem::dimension ::type::dim2, medium, false>;
+  using PointAccelerationType =
+      specfem::point::acceleration<specfem::dimension::type::dim2, medium,
+                                   false>;
 
   using IndexType =
       specfem::point::index<specfem::dimension::type::dim2, false>;
@@ -45,15 +50,12 @@ void generate_data(
     for (int ix = 0; ix < ngllx; ix++) {
       const IndexType index(ispec, iz, ix);
 
-      PointFieldType point_field;
+      PointDisplacementType displacement(1.0);
+      PointVelocityType velocity(1.0);
+      PointAccelerationType acceleration(1.0);
 
-      for (int ic = 0; ic < num_components; ic++) {
-        point_field.displacement(ic) = 1.0;
-        point_field.velocity(ic) = 1.0;
-        point_field.acceleration(ic) = 1.0;
-      }
-
-      specfem::assembly::store_on_host(index, point_field, field);
+      specfem::assembly::store_on_host(index, field, displacement, velocity,
+                                       acceleration);
     }
   }
 

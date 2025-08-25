@@ -13,6 +13,7 @@ template <> struct points<specfem::dimension::type::dim2> {
 public:
   constexpr static auto dimension =
       specfem::dimension::type::dim2; ///< Dimension
+  constexpr static int ndim = 2;      ///< Number of dimensions
   int nspec;                          ///< Number of spectral elements
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
@@ -46,6 +47,22 @@ public:
         coord("specfem::assembly::points::coord", ndim, nspec, ngllz, ngllx),
         h_index_mapping(Kokkos::create_mirror_view(index_mapping)),
         h_coord(Kokkos::create_mirror_view(coord)) {}
+
+  // Constructor that takes pre-computed coordinate arrays
+  points(const int &nspec, const int &ngllz, const int &ngllx, const int &nglob,
+         IndexMappingViewType::HostMirror h_index_mapping_in,
+         CoordViewType::HostMirror h_coord_in, type_real xmin_in,
+         type_real xmax_in, type_real zmin_in, type_real zmax_in)
+      : nspec(nspec), ngllz(ngllz), ngllx(ngllx), nglob(nglob),
+        index_mapping("specfem::assembly::points::index_mapping", nspec, ngllz,
+                      ngllx),
+        coord("specfem::assembly::points::coord", ndim, nspec, ngllz, ngllx),
+        h_index_mapping(h_index_mapping_in), h_coord(h_coord_in), xmin(xmin_in),
+        xmax(xmax_in), zmin(zmin_in), zmax(zmax_in) {
+    // Copy host data to device
+    Kokkos::deep_copy(index_mapping, h_index_mapping);
+    Kokkos::deep_copy(coord, h_coord);
+  }
 };
 
 } // namespace specfem::assembly::mesh_impl
