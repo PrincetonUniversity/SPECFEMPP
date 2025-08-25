@@ -9,20 +9,22 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
-    const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
-    const type_real dt, const type_real t0, const int nsteps_between_samples,
+specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
+    const int nspec, const int nglly, const int ngllz, const int ngllx,
+    const int max_sig_step, const type_real dt, const type_real t0,
+    const int nsteps_between_samples,
     const std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+        specfem::receivers::receiver<specfem::dimension::type::dim3> > >
         &receivers,
     const std::vector<specfem::wavefield::type> &stypes,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
+    const specfem::mesh::tags<specfem::dimension::type::dim3> &tags,
+    const specfem::assembly::element_types<specfem::dimension::type::dim3>
         &element_types)
     : nspec(nspec),
       lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
-                           receivers.size(), mesh.ngllz, mesh.ngllx),
+                           receivers.size(), mesh.nglly, mesh.ngllz, mesh.ngllx,
+                           3),
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
       elements("specfem::assembly::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
@@ -30,7 +32,7 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
       specfem::assembly::receivers_impl::StationIterator(receivers.size(),
                                                          stypes),
       specfem::assembly::receivers_impl::SeismogramIterator<
-          specfem::dimension::type::dim2>(receivers.size(), stypes.size(),
+          specfem::dimension::type::dim3>(receivers.size(), stypes.size(),
                                           max_sig_step, dt, t0,
                                           nsteps_between_samples) {
 
@@ -68,46 +70,55 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
     station_names_.push_back(station_name);
     network_names_.push_back(network_name);
     station_network_map[station_name][network_name] = ireceiver;
+
     const auto gcoord =
-        specfem::point::global_coordinates<specfem::dimension::type::dim2>{
-          receiver->get_x(), receiver->get_z()
+        specfem::point::global_coordinates<specfem::dimension::type::dim3>{
+          receiver->get_x(), receiver->get_y(), receiver->get_z()
         };
     const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
 
     h_elements(ireceiver) = lcoord.ispec;
 
     const auto xi = mesh.h_xi;
-    const auto gamma = mesh.h_xi;
+    const auto eta = mesh.h_xi;   // Use same as dim2 pattern
+    const auto gamma = mesh.h_xi; // Use same as dim2 pattern
 
     auto [hxi_receiver, hpxi_receiver] =
         specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
             lcoord.xi, mesh.ngllx, xi);
 
+    auto [heta_receiver, hpeta_receiver] =
+        specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+            lcoord.eta, mesh.nglly, eta);
+
     auto [hgamma_receiver, hpgamma_receiver] =
         specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-            lcoord.gamma, mesh.ngllx, gamma);
+            lcoord.gamma, mesh.ngllz, gamma);
 
     for (int iz = 0; iz < mesh.ngllz; ++iz) {
-      for (int ix = 0; ix < mesh.ngllx; ++ix) {
-        type_real hlagrange = hxi_receiver(ix) * hgamma_receiver(iz);
+      for (int iy = 0; iy < mesh.nglly; ++iy) {
+        for (int ix = 0; ix < mesh.ngllx; ++ix) {
+          type_real hlagrange =
+              hxi_receiver(ix) * heta_receiver(iy) * hgamma_receiver(iz);
 
-        h_lagrange_interpolant(ireceiver, iz, ix, 0) = hlagrange;
-        h_lagrange_interpolant(ireceiver, iz, ix, 1) = hlagrange;
-
-        h_sine_receiver_angle(ireceiver) = std::sin(
-            Kokkos::numbers::pi_v<type_real> / 180 * receiver->get_angle());
-
-        h_cosine_receiver_angle(ireceiver) = std::cos(
-            Kokkos::numbers::pi_v<type_real> / 180 * receiver->get_angle());
+          h_lagrange_interpolant(ireceiver, iz, iy, ix, 0) = hlagrange;
+          h_lagrange_interpolant(ireceiver, iz, iy, ix, 1) = hlagrange;
+          h_lagrange_interpolant(ireceiver, iz, iy, ix, 2) = hlagrange;
+        }
       }
     }
+
+    // Initialize rotation matrix to identity for this receiver
+    // In the future, this could be set based on surface normal or user
+    // specification
+    std::array<std::array<type_real, 3>, 3> identity_matrix = {
+      { { { 1.0, 0.0, 0.0 } }, { { 0.0, 1.0, 0.0 } }, { { 0.0, 0.0, 1.0 } } }
+    };
+    this->set_rotation_matrix(ireceiver, identity_matrix);
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)),
       CAPTURE(elements, h_elements, receiver_indices, h_receiver_indices) {
         int count = 0;
         int index = 0;
@@ -149,15 +160,13 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::receivers<specfem::dimension::type::dim2>::
+specfem::assembly::receivers<specfem::dimension::type::dim3>::
     get_indices_on_host(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, POROELASTIC),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       CAPTURE(h_elements, h_receiver_indices) {
         if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
@@ -174,15 +183,13 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::receivers<specfem::dimension::type::dim2>::
+specfem::assembly::receivers<specfem::dimension::type::dim3>::
     get_indices_on_device(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag) const {
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, POROELASTIC),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       CAPTURE(elements, receiver_indices) {
         if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
