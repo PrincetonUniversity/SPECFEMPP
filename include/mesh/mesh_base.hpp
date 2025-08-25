@@ -88,7 +88,7 @@ template <specfem::dimension::type DimensionTag> struct acoustic_free_surface;
  *
  * @tparam DimensionTag Dimension type
  */
-template <specfem::dimension::type DimensionTag> struct free_surface;
+template <specfem::dimension::type DimensionTag> struct acoustic_free_surface;
 
 /**
  * @brief Struct to store forcing boundaries

@@ -41,6 +41,7 @@ target_link_libraries(
   specfem_mpi
 )
 
+
 add_library(
   compare_arrays
   utilities/src/compare_array.cpp
@@ -79,6 +80,19 @@ if (NOT SPECFEM_ENABLE_ADIOS2)
     )
 endif()
 
+
+add_executable(
+  is_close_tests
+  utilities/is_close_tests.cpp
+)
+
+target_link_libraries(
+  is_close_tests
+  utilities
+  gtest_main
+  Kokkos::kokkos
+)
+
 add_executable(
   gll_tests
   gll/gll_tests.cpp
@@ -108,13 +122,20 @@ target_link_libraries(
 
 add_executable(
   jacobian_tests
-  jacobian/shape_functions2d.cpp
-  jacobian/shape_functions3d.cpp
+  jacobian/jacobian_tests.cpp
+  jacobian/dim2/shape_functions_tests.cpp
+  jacobian/dim2/compute_locations_tests.cpp
+  jacobian/dim2/compute_jacobian_tests.cpp
+  jacobian/dim3/shape_functions_tests.cpp
+  jacobian/dim3/compute_locations_tests.cpp
+  jacobian/dim3/compute_jacobian_tests.cpp
 )
 
 target_link_libraries(
   jacobian_tests
   jacobian
+  mpi_environment
+  kokkos_environment
   gtest_main
   -lpthread -lm
 )
@@ -304,6 +325,10 @@ add_executable(
   assembly/sources/sources.cpp
   assembly/check_jacobian/check_jacobian.cpp
   assembly/locate/locate_point.cpp
+  assembly/mesh/utilities.cpp
+  assembly/sources/locate_sources.cpp
+  assembly/compute_source_array/compute_source_array_from_vector.cpp
+  assembly/compute_source_array/compute_source_array_from_tensor.cpp
 )
 
 target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
@@ -359,6 +384,42 @@ target_link_libraries(
 )
 
 add_executable(
+  locate_point_impl_2d
+  algorithms/dim2/locate_point_impl.cpp
+)
+
+target_link_libraries(
+  locate_point_impl_2d
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  jacobian
+  point
+  ${GTEST_BOTH_LIBRARIES}
+)
+
+add_executable(
+  locate_point_impl_3d
+  algorithms/dim3/locate_point_impl.cpp
+)
+
+target_link_libraries(
+  locate_point_impl_3d
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  jacobian
+  point
+  ${GTEST_BOTH_LIBRARIES}
+)
+
+add_executable(
   policies_tests
   policies/policies.cpp
 )
@@ -405,6 +466,27 @@ target_link_libraries(
   gtest_main
 )
 
+add_executable(
+  source_class_tests
+  source/source.cpp
+  source/base_source_tests.cpp
+  source/typed_source_tests.cpp
+  # source/dim2/vector_sources/force_source.cpp
+  # source/dim2/vector_sources/cosserat_force_source.cpp
+  # source/dim2/vector_sources/adjoint_source.cpp
+  # source/dim2/vector_sources/external_source.cpp
+  # source/dim2/tensor_sources/moment_tensor_source.cpp
+  # source/dim3/vector_sources/force_source.cpp
+  # source/dim3/tensor_sources/moment_tensor_source.cpp
+)
+target_link_libraries(
+  source_class_tests
+  source_class
+  source_time_function
+  mpi_environment
+  kokkos_environment
+  -lpthread -lm
+)
 
 # # add_executable(
 # #   source_location_tests
@@ -423,29 +505,6 @@ target_link_libraries(
 # #   source_class
 # #   -lpthread -lm
 # # )
-
-add_executable(
-  rmass_inverse_tests
-  domain/rmass_inverse_tests.cpp
-)
-
-target_link_libraries(
-  rmass_inverse_tests
-  quadrature
-  mesh
-  # material_class
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  assembly
-  parameter_reader
-  compare_arrays
-  point
-  algorithms
-  io
-  coupled_interface
-  -lpthread -lm
-)
 
 add_executable(
   displacement_newmark_tests
@@ -546,31 +605,37 @@ target_link_libraries(
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
   set(TEST_TARGETS
-  assembly_tests
-  # compute_acoustic_tests
-  # compute_coupled_interfaces_tests
-  # compute_elastic_tests
-  compute_jacobian_matrix_tests
-  compute_tests
-  displacement_newmark_tests
-  fortranio_test
-  gll_tests
-  interpolate_function
-  io_framework_tests
-  io_tests
-  jacobian_tests
-  lagrange_tests
-  mass_matrix_tests
-  mesh_tests
-  point_tests
-  policies_tests
-  receivers_tests
-  rmass_inverse_tests
-  simd_tests
-  stress_tests
+    assembly_tests
+    # compute_acoustic_tests
+    # compute_coupled_interfaces_tests
+    # compute_elastic_tests
+    compute_jacobian_matrix_tests
+    compute_tests
+    displacement_newmark_tests
+    fortranio_test
+    gll_tests
+    interpolate_function
+    io_framework_tests
+    io_tests
+    is_close_tests
+    jacobian_tests
+    lagrange_tests
+    locate_point_impl_2d
+    locate_point_impl_3d
+    mass_matrix_tests
+    mesh_tests
+    point_tests
+    policies_tests
+    receivers_tests
+    simd_tests
+    source_class_tests
+    stress_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
-      gtest_discover_tests(${test_target})
+      gtest_discover_tests(${test_target}
+        DISCOVERY_MODE POST_BUILD
+        DISCOVERY_TIMEOUT 300
+      )
   endforeach()
 
   # For tests that require data files from the tests directory,

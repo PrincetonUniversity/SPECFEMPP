@@ -24,7 +24,7 @@
 #include <vector>
 
 specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
-    const std::string filename, const specfem::enums::elastic_wave elastic_wave,
+    const std::string &filename, const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
     const specfem::MPI::MPI *mpi) {
 

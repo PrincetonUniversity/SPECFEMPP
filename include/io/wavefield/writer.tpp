@@ -7,7 +7,7 @@
 
 template <typename OutputLibrary>
 specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
-    const std::string output_folder, const bool save_boundary_values)
+    const std::string &output_folder, const bool save_boundary_values)
     : output_folder(output_folder), save_boundary_values(save_boundary_values),
       file(typename OutputLibrary::File(output_folder + "/ForwardWavefield")) {}
 

@@ -27,8 +27,10 @@ if (CMAKE_VERSION VERSION_GREATER "3.30.0")
     endif()
 endif()
 
+set(KOKKOS_VERSION "4.7.00")
+
 # Set common FetchContent parameters
-set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/4.6.01.zip")
+set(KOKKOS_URL "https://github.com/kokkos/kokkos/archive/refs/tags/${KOKKOS_VERSION}.zip")
 
 # For CMake versions < 3.28, EXCLUDE_FROM_ALL is not supported in FetchContent_Declare
 if (CMAKE_VERSION VERSION_LESS "3.28.0")
