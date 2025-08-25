@@ -58,6 +58,10 @@ private:
       return *this;
     }
 
+    bool operator==(const Iterator &other) const {
+      return seis_step == other.seis_step;
+    }
+
     bool operator!=(const Iterator &other) const {
       return seis_step != other.seis_step;
     }
@@ -126,6 +130,12 @@ public:
 
   void sync_seismograms() {
     Kokkos::deep_copy(h_seismogram_components, seismogram_components);
+  }
+
+  // Set receiver angle for a receiver
+  void set_receiver_angle(int irec, type_real angle) {
+    h_sine_receiver_angle(irec) = std::sin(angle);
+    h_cosine_receiver_angle(irec) = std::cos(angle);
   }
 
 private:

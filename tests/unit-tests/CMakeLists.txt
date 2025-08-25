@@ -335,6 +335,31 @@ target_link_libraries(
 )
 
 add_executable(
+  assembly_receivers_tests
+  assembly/receivers/receivers_tests.cpp
+  assembly/receivers/dim2/receivers_tests.cpp
+  assembly/receivers/dim3/receivers_tests.cpp
+  assembly/receivers/impl/receiver_iterator_tests.cpp
+  assembly/receivers/impl/dim2/seismogram_iterator_tests.cpp
+  assembly/receivers/impl/dim3/seismogram_iterator_tests.cpp
+)
+
+target_link_libraries(
+  assembly_receivers_tests
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  yaml-cpp
+  io
+  Boost::filesystem
+  gtest
+  gtest_main
+  -lpthread -lm
+)
+
+add_executable(
   io_tests
   io/sources/test_read_sources.cpp
 )
@@ -589,6 +614,7 @@ target_link_libraries(
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
   set(TEST_TARGETS
+    assembly_receivers_tests
     assembly_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests

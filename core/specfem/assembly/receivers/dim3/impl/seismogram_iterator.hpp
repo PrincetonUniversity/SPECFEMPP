@@ -54,6 +54,10 @@ private:
       return *this;
     }
 
+    bool operator==(const Iterator &other) const {
+      return seis_step == other.seis_step;
+    }
+
     bool operator!=(const Iterator &other) const {
       return seis_step != other.seis_step;
     }
