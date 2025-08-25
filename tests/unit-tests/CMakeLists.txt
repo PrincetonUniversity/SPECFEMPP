@@ -188,6 +188,7 @@ target_link_libraries(
 add_executable(
   receivers_tests
   receivers/dim2/receiver_tests.cpp
+  receivers/dim3/receiver_tests.cpp
 )
 
 target_link_libraries(
