@@ -6,7 +6,7 @@
 #include "specfem_setup.hpp"
 #include "test_helper.hpp"
 #include "test_macros.hpp"
-#include "utilities/simd.hpp"
+#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <type_traits>
@@ -412,6 +412,15 @@ TYPED_TEST(PointJacobianMatrixTest,
   typename specfem::datatype::simd<type_real, using_simd>::datatype seven_val{
     7.0
   };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype eight_val{
+    8.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype nine_val{
+    9.0
+  };
+  typename specfem::datatype::simd<type_real, using_simd>::datatype ten_val{
+    10.0
+  };
   typename specfem::datatype::simd<type_real, using_simd>::datatype const_val{
     8.8
   };
@@ -424,107 +433,97 @@ TYPED_TEST(PointJacobianMatrixTest,
 
   EXPECT_TRUE(specfem::utilities::is_close(pd1.xix, zero_val))
       << ExpectedGot(zero_val, pd1.xix);
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.etax, zero_val))
+      << ExpectedGot(zero_val, pd1.etax);
   EXPECT_TRUE(specfem::utilities::is_close(pd1.gammax, zero_val))
       << ExpectedGot(zero_val, pd1.gammax);
   EXPECT_TRUE(specfem::utilities::is_close(pd1.xiy, zero_val))
       << ExpectedGot(zero_val, pd1.xiy);
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.etay, zero_val))
+      << ExpectedGot(zero_val, pd1.etay);
   EXPECT_TRUE(specfem::utilities::is_close(pd1.gammay, zero_val))
       << ExpectedGot(zero_val, pd1.gammay);
   EXPECT_TRUE(specfem::utilities::is_close(pd1.xiz, zero_val))
       << ExpectedGot(zero_val, pd1.xiz);
+  EXPECT_TRUE(specfem::utilities::is_close(pd1.etaz, zero_val))
+      << ExpectedGot(zero_val, pd1.etaz);
   EXPECT_TRUE(specfem::utilities::is_close(pd1.gammaz, zero_val))
       << ExpectedGot(zero_val, pd1.gammaz);
   EXPECT_TRUE(specfem::utilities::is_close(pd1.jacobian, zero_val))
       << ExpectedGot(zero_val, pd1.jacobian);
 
   // Value constructor
-  PD pd2(one_val, two_val, three_val, four_val, five_val, six_val, seven_val);
+  PD pd2(one_val, two_val, three_val, four_val, five_val, six_val, seven_val,
+         eight_val, nine_val, ten_val);
 
   EXPECT_TRUE(specfem::utilities::is_close(pd2.xix, one_val))
       << ExpectedGot(one_val, pd2.xix);
-  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammax, two_val))
-      << ExpectedGot(two_val, pd2.gammax);
-  EXPECT_TRUE(specfem::utilities::is_close(pd2.xiy, three_val))
-      << ExpectedGot(three_val, pd2.xiy);
-  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammay, four_val))
-      << ExpectedGot(four_val, pd2.gammay);
-  EXPECT_TRUE(specfem::utilities::is_close(pd2.xiz, five_val))
-      << ExpectedGot(five_val, pd2.xiz);
-  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammaz, six_val))
-      << ExpectedGot(six_val, pd2.gammaz);
-  EXPECT_TRUE(specfem::utilities::is_close(pd2.jacobian, seven_val))
-      << ExpectedGot(seven_val, pd2.jacobian);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.etax, two_val))
+      << ExpectedGot(two_val, pd2.etax);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammax, three_val))
+      << ExpectedGot(three_val, pd2.gammax);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.xiy, four_val))
+      << ExpectedGot(four_val, pd2.xiy);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.etay, five_val))
+      << ExpectedGot(five_val, pd2.etay);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammay, six_val))
+      << ExpectedGot(six_val, pd2.gammay);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.xiz, seven_val))
+      << ExpectedGot(seven_val, pd2.xiz);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.etaz, eight_val))
+      << ExpectedGot(eight_val, pd2.etaz);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammaz, nine_val))
+      << ExpectedGot(nine_val, pd2.gammaz);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.jacobian, ten_val))
+      << ExpectedGot(ten_val, pd2.jacobian);
 
   // Constant constructor
   PD pd3(const_val);
 
   EXPECT_TRUE(specfem::utilities::is_close(pd3.xix, const_val))
       << ExpectedGot(const_val, pd3.xix);
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.etax, const_val))
+      << ExpectedGot(const_val, pd3.etax);
   EXPECT_TRUE(specfem::utilities::is_close(pd3.gammax, const_val))
       << ExpectedGot(const_val, pd3.gammax);
   EXPECT_TRUE(specfem::utilities::is_close(pd3.xiy, const_val))
       << ExpectedGot(const_val, pd3.xiy);
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.etay, const_val))
+      << ExpectedGot(const_val, pd3.etay);
   EXPECT_TRUE(specfem::utilities::is_close(pd3.gammay, const_val))
       << ExpectedGot(const_val, pd3.gammay);
   EXPECT_TRUE(specfem::utilities::is_close(pd3.xiz, const_val))
       << ExpectedGot(const_val, pd3.xiz);
+  EXPECT_TRUE(specfem::utilities::is_close(pd3.etaz, const_val))
+      << ExpectedGot(const_val, pd3.etaz);
   EXPECT_TRUE(specfem::utilities::is_close(pd3.gammaz, const_val))
       << ExpectedGot(const_val, pd3.gammaz);
   EXPECT_TRUE(specfem::utilities::is_close(pd3.jacobian, const_val))
       << ExpectedGot(const_val, pd3.jacobian);
-}
 
-TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix3D_WithJacobian_Init) {
-  constexpr bool using_simd = TypeParam::value;
+  // re-initialize pd2 to check init functionality
+  pd2.init();
 
-  // Get the SIMD size
-  constexpr int simd_size =
-      specfem::datatype::simd<type_real, using_simd>::size();
-
-  // Values to use in constructor
-  typename specfem::datatype::simd<type_real, using_simd>::datatype zero_val{
-    0.0
-  };
-  typename specfem::datatype::simd<type_real, using_simd>::datatype one_val{
-    1.0
-  };
-  typename specfem::datatype::simd<type_real, using_simd>::datatype two_val{
-    2.0
-  };
-  typename specfem::datatype::simd<type_real, using_simd>::datatype three_val{
-    3.0
-  };
-  typename specfem::datatype::simd<type_real, using_simd>::datatype four_val{
-    4.0
-  };
-  typename specfem::datatype::simd<type_real, using_simd>::datatype five_val{
-    5.0
-  };
-  typename specfem::datatype::simd<type_real, using_simd>::datatype six_val{
-    6.0
-  };
-  typename specfem::datatype::simd<type_real, using_simd>::datatype seven_val{
-    7.0
-  };
-
-  using PD = point::jacobian_matrix<dimension::type::dim3, true, using_simd>;
-  PD pd(one_val, two_val, three_val, four_val, five_val, six_val, seven_val);
-  pd.init();
-
-  EXPECT_TRUE(specfem::utilities::is_close(pd.xix, zero_val))
-      << ExpectedGot(zero_val, pd.xix);
-  EXPECT_TRUE(specfem::utilities::is_close(pd.gammax, zero_val))
-      << ExpectedGot(zero_val, pd.gammax);
-  EXPECT_TRUE(specfem::utilities::is_close(pd.xiy, zero_val))
-      << ExpectedGot(zero_val, pd.xiy);
-  EXPECT_TRUE(specfem::utilities::is_close(pd.gammay, zero_val))
-      << ExpectedGot(zero_val, pd.gammay);
-  EXPECT_TRUE(specfem::utilities::is_close(pd.xiz, zero_val))
-      << ExpectedGot(zero_val, pd.xiz);
-  EXPECT_TRUE(specfem::utilities::is_close(pd.gammaz, zero_val))
-      << ExpectedGot(zero_val, pd.gammaz);
-  EXPECT_TRUE(specfem::utilities::is_close(pd.jacobian, zero_val))
-      << ExpectedGot(zero_val, pd.jacobian);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.xix, zero_val))
+      << ExpectedGot(zero_val, pd2.xix);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.etax, zero_val))
+      << ExpectedGot(zero_val, pd2.etax);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammax, zero_val))
+      << ExpectedGot(zero_val, pd2.gammax);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.xiy, zero_val))
+      << ExpectedGot(zero_val, pd2.xiy);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.etay, zero_val))
+      << ExpectedGot(zero_val, pd2.etay);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammay, zero_val))
+      << ExpectedGot(zero_val, pd2.gammay);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.xiz, zero_val))
+      << ExpectedGot(zero_val, pd2.xiz);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.etaz, zero_val))
+      << ExpectedGot(zero_val, pd2.etaz);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.gammaz, zero_val))
+      << ExpectedGot(zero_val, pd2.gammaz);
+  EXPECT_TRUE(specfem::utilities::is_close(pd2.jacobian, zero_val))
+      << ExpectedGot(zero_val, pd2.jacobian);
 }
 
 // ===============================

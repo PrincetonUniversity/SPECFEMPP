@@ -218,7 +218,7 @@ with a single source and neumann boundary conditions.
 
 .. code-block:: bash
 
-  cd examples/homogeneous-medium-flat-topography
+  cd examples/dim2/homogeneous-elastic
   mkdir -p OUTPUT_FILES
   xmeshfem2D -p Par_File
 

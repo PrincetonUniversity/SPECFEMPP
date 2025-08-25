@@ -21,7 +21,7 @@ jobs:
       - name: Configure
         run: cmake --preset release
       - name: Build
-        run: cmake --build --preset release -j 4
+        run: cmake --build --preset release -j 2
       - name: Run all tests
         run: cd build/release/tests/unit-tests
           && ctest --verbose

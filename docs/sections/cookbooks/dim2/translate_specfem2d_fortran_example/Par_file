@@ -1,0 +1,53 @@
+# Title and output directory (required in SPECFEM++)
+title = Anisotropic Crystal
+
+# Mesh parameters
+NPROC = 1
+PARTITIONING_TYPE = 3
+NGNOD = 4
+
+
+# Receiver parameters
+use_existing_STATIONS           = .false.
+nreceiversets                   = 1
+anglerec                        = 0.d0           # angle to rotate components at receivers
+rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
+nrec                            = 50             # number of receivers
+xdeb                            = 0.05           # first receiver x in meters
+zdeb                            = 0.2640         # first receiver z in meters
+xfin                            = 0.28           # last receiver x in meters (ignored if only one receiver)
+zfin                            = 0.2640         # last receiver z in meters (ignored if only one receiver)
+record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
+stations_filename              = ./OUTPUT_FILES/STATIONS
+
+
+# Boundary conditions
+STACEY_ABSORBING_CONDITIONS = .false.
+absorbbottom = .false.
+absorbright = .false.
+absorbtop = .false.
+absorbleft = .false.
+
+# Material and mesh geometry
+nbmodels = 1
+# anisotropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
+1 2 7100. 16.5d10 5.d10 0 6.2d10 0 3.96d10 0 0 0 0 0 0
+
+# External files
+TOMOGRAPHY_FILE = ./DATA/tomo_file.xyz
+read_external_mesh = .false.
+interfacesfile = topoaniso.dat
+
+# Domain geometry
+xmin = 0.d0
+xmax = 0.33
+nx = 60
+
+# Regions
+nbregions = 1
+# format: nxmin nxmax nzmin nzmax material_number
+1 60 1 60 1
+
+# Display parameters (for meshing output)
+output_grid_Gnuplot = .false.
+output_grid_ASCII = .false.

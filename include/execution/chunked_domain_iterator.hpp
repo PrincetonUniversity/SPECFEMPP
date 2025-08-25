@@ -432,4 +432,4 @@ protected:
 } // namespace execution
 } // namespace specfem
 
-#include "chunk_element/index.hpp"
+#include "specfem/chunk_element/index.hpp"
