@@ -18,15 +18,13 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_stress(
     const std::integral_constant<
         specfem::element::property_tag,
         specfem::element::property_tag::isotropic_cosserat>,
-    const PointPropertiesType &properties,
-    const PointDisplacementType &point_displacement,
+    const PointPropertiesType &properties, const PointDisplacementType &u,
     PointStressType &point_stress) {
 
   using value_type = typename PointStressType::simd::datatype;
 
   // Stress and diplacement alias
   auto &T = point_stress.T;
-  const auto &u = point_displacement.displacement;
 
   const value_type factor =
       static_cast<type_real>(2.0) * properties.nu() * u(2);

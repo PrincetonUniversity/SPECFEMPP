@@ -3,9 +3,9 @@
 #include "mass_matrix.hpp"
 
 template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
-                                      specfem::element::medium_tag::poroelastic,
-                                      false, false, false, true, UseSIMD>
+KOKKOS_FUNCTION specfem::point::mass_inverse<
+    specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
+    UseSIMD>
 specfem::medium::impl_mass_matrix_component(
     const specfem::point::properties<specfem::dimension::type::dim2,
                                      specfem::element::medium_tag::poroelastic,
@@ -20,6 +20,5 @@ specfem::medium::impl_mass_matrix_component(
        properties.phi() * properties.rho_f() * properties.rho_f()) /
       (properties.phi() * properties.rho_bar());
 
-  return specfem::datatype::VectorPointViewType<type_real, 4, UseSIMD>(
-      solid_component, solid_component, fluid_component, fluid_component);
+  return { solid_component, solid_component, fluid_component, fluid_component };
 }

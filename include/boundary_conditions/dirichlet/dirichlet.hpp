@@ -33,7 +33,7 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_apply_boundary_conditions(
   constexpr int components = PointFieldType::components;
 
   for (int icomp = 0; icomp < components; ++icomp)
-    acceleration.acceleration(icomp) = 0.0;
+    acceleration(icomp) = 0.0;
 
   return;
 };
@@ -60,12 +60,10 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_apply_boundary_conditions(
 
   for (std::size_t icomp = 0; icomp < components; ++icomp) {
     simd_type result([&](std::size_t lane) {
-      return (boundary.tag[lane] == tag)
-                 ? 0.0
-                 : acceleration.acceleration(icomp)[lane];
+      return (boundary.tag[lane] == tag) ? 0.0 : acceleration(icomp)[lane];
     });
 
-    acceleration.acceleration(icomp) = result;
+    acceleration(icomp) = result;
   }
 
   return;
