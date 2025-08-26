@@ -421,11 +421,14 @@ target_link_libraries(
 
 add_executable(
   mass_matrix_tests
-  mass_matrix/dim2/main.cpp
+  mass_matrix/main.cpp
+  # 2D mass matrix tests
   mass_matrix/dim2/elastic_isotropic.cpp
   mass_matrix/dim2/elastic_anisotropic.cpp
   mass_matrix/dim2/acoustic.cpp
   mass_matrix/dim2/poroelastic.cpp
+  # 3D mass matrix tests
+  mass_matrix/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
@@ -436,6 +439,7 @@ target_link_libraries(
 
 add_executable(
   stress_tests
+  stress/main.cpp
   # 2D stress tests
   stress/dim2/acoustic.cpp
   stress/dim2/elastic_isotropic.cpp
