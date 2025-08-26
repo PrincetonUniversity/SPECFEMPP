@@ -1,8 +1,9 @@
 #pragma once
 
-#include "source/source.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -50,9 +51,8 @@ private:
                                                    ///< functions
 
   using SourceArrayView =
-      Kokkos::View<type_real ****, Kokkos::LayoutRight,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store source arrays
+      specfem::kokkos::DeviceView4d<type_real>; ///< Underlying view type to
+                                                ///< store source arrays
 
   constexpr static int components =
       specfem::element::attributes<dimension_tag,
@@ -86,7 +86,8 @@ public:
    * @param nsteps Number of time steps
    */
   source_medium(
-      const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+      const std::vector<
+          std::shared_ptr<specfem::sources::source<dimension_tag> > > &sources,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::element_types<dimension_tag> &element_types,

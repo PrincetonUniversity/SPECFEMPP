@@ -4,8 +4,6 @@
 #include "algorithms/gradient.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "boundary_conditions/boundary_conditions.tpp"
-#include "chunk_element/field.hpp"
-#include "chunk_element/stress_integrand.hpp"
 #include "datatypes/simd.hpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
@@ -21,6 +19,7 @@
 #include "parallel_configuration/chunk_config.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
+#include "specfem/chunk_element.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionTag,
@@ -77,10 +76,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   constexpr int num_dimensions =
       specfem::element::attributes<dimension, medium_tag>::dimension;
 
-  using ChunkElementFieldType = specfem::chunk_element::field<
-      parallel_config::chunk_size, ngll, dimension, medium_tag,
-      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-      true, false, false, false, using_simd>;
+  using ChunkElementFieldType = specfem::chunk_element::displacement<
+        parallel_config::chunk_size, ngll, dimension, medium_tag, using_simd>;
   using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
       parallel_config::chunk_size, ngll, dimension, medium_tag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
@@ -92,14 +89,11 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   using PointBoundaryType =
       specfem::point::boundary<boundary_tag, dimension, using_simd>;
   using PointDisplacementType =
-      specfem::point::field<dimension, medium_tag, true, false, false, false,
-                            using_simd>;
+      specfem::point::displacement<dimension, medium_tag, using_simd>;
   using PointVelocityType =
-      specfem::point::field<dimension, medium_tag, false, true, false, false,
-                            using_simd>;
+      specfem::point::velocity<dimension, medium_tag, using_simd>;
   using PointAccelerationType =
-      specfem::point::field<dimension, medium_tag, false, false, true, false,
-                            using_simd>;
+      specfem::point::acceleration<dimension, medium_tag, using_simd>;
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension, true, using_simd>;
   using PointPropertyType =
@@ -129,16 +123,17 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
           specfem::assembly::load_on_device(istep, index, boundary_values,
                                             acceleration);
 
-          specfem::assembly::atomic_add_on_device(index, acceleration, field);
+          specfem::assembly::atomic_add_on_device(index, field, acceleration);
         });
   } else {
 
     specfem::execution::for_each_level(
         "specfem::kokkos_kernels::compute_stiffness_interaction",
         chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-        KOKKOS_LAMBDA(const typename decltype(chunk)::index_type &chunk_index) {
+        KOKKOS_LAMBDA(const typename decltype(chunk)::index_type &chunk_iterator_index) {
+          const auto &chunk_index = chunk_iterator_index.get_index();
           const auto team = chunk_index.get_policy_index();
-          ChunkElementFieldType element_field(team);
+          ChunkElementFieldType element_field(team.team_scratch(0));
           ElementQuadratureType element_quadrature(team);
           ChunkStressIntegrandType stress_integrand(team);
           specfem::assembly::load_on_device(team, mesh, element_quadrature);
@@ -148,7 +143,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
           specfem::algorithms::gradient(
               chunk_index, jacobian_matrix, element_quadrature.hprime_gll,
-              element_field.displacement,
+              element_field,
               [&](const auto &iterator_index,
                   const typename PointFieldDerivativesType::value_type &du) {
                 const auto &index = iterator_index.get_index();
@@ -197,7 +192,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
                 for (int icomponent = 0; icomponent < components;
                      ++icomponent) {
-                  acceleration.acceleration(icomponent) *=
+                  acceleration(icomponent) *=
                       static_cast<type_real>(-1.0);
                 }
 
@@ -245,8 +240,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                                                      boundary_values);
                 }
 
-                specfem::assembly::atomic_add_on_device(index, acceleration,
-                                                        field);
+                specfem::assembly::atomic_add_on_device(index, field,
+                                                        acceleration);
               });
         });
   }
