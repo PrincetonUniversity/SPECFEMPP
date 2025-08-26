@@ -20,21 +20,82 @@ protected:
   void TearDown() override {
     // Common test cleanup can go here
   }
+
+  // Helper to create unit square element [0,1] x [0,1]
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+  create_unit_square_4node() {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 4);
+    coorg(0) = { 0.0, 0.0 }; // Bottom-left
+    coorg(1) = { 1.0, 0.0 }; // Bottom-right
+    coorg(2) = { 1.0, 1.0 }; // Top-right
+    coorg(3) = { 0.0, 1.0 }; // Top-left
+    return coorg;
+  }
+
+  // Helper to create scaled and translated square element
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+  create_scaled_translated_square_4node(type_real xmin, type_real xmax,
+                                        type_real zmin, type_real zmax) {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 4);
+    coorg(0) = { xmin, zmin }; // Bottom-left
+    coorg(1) = { xmax, zmin }; // Bottom-right
+    coorg(2) = { xmax, zmax }; // Top-right
+    coorg(3) = { xmin, zmax }; // Top-left
+    return coorg;
+  }
+
+  // Helper to create arbitrary quadrilateral element
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+  create_quadrilateral_4node(
+      const std::array<std::array<type_real, 2>, 4> &corners) {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 4);
+    for (int i = 0; i < 4; ++i) {
+      coorg(i) = { corners[i][0], corners[i][1] };
+    }
+    return coorg;
+  }
+
+  // Helper to create 9-node unit square element
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+  create_unit_square_9node() {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 9);
+    coorg(0) = { 0.0, 0.0 }; // Corner 0: (0,0)
+    coorg(1) = { 1.0, 0.0 }; // Corner 1: (1,0)
+    coorg(2) = { 1.0, 1.0 }; // Corner 2: (1,1)
+    coorg(3) = { 0.0, 1.0 }; // Corner 3: (0,1)
+    coorg(4) = { 0.5, 0.0 }; // Mid-edge 4: (0.5,0)
+    coorg(5) = { 1.0, 0.5 }; // Mid-edge 5: (1,0.5)
+    coorg(6) = { 0.5, 1.0 }; // Mid-edge 6: (0.5,1)
+    coorg(7) = { 0.0, 0.5 }; // Mid-edge 7: (0,0.5)
+    coorg(8) = { 0.5, 0.5 }; // Center 8: (0.5,0.5)
+    return coorg;
+  }
 };
 
 TEST_F(ComputeLocationsDim2Test, UnitSquareCornerNodes) {
   // Test with a unit square element using 4 corner nodes
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  // Unit square control nodes (corners)
-  coorg(0) = { 0.0, 0.0 }; // Bottom-left
-  coorg(1) = { 1.0, 0.0 }; // Bottom-right
-  coorg(2) = { 1.0, 1.0 }; // Top-right
-  coorg(3) = { 0.0, 1.0 }; // Top-left
+  auto coorg = create_unit_square_4node();
 
   // Test center point (0, 0) in reference coordinates -> (0.5, 0.5) in physical
   auto result = compute_locations(coorg, ngnod, 0.0, 0.0);
@@ -85,16 +146,8 @@ TEST_F(ComputeLocationsDim2Test, UnitSquareCornerNodes) {
 TEST_F(ComputeLocationsDim2Test, ScaledAndTranslatedSquare) {
   // Test with a scaled and translated square element
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  // Square with corner at (2,3) and side length 4
-  coorg(0) = { 2.0, 3.0 }; // Bottom-left
-  coorg(1) = { 6.0, 3.0 }; // Bottom-right
-  coorg(2) = { 6.0, 7.0 }; // Top-right
-  coorg(3) = { 2.0, 7.0 }; // Top-left
+  // Square with corner at (2,3) and side length 4: from (2,3) to (6,7)
+  auto coorg = create_scaled_translated_square_4node(2.0, 6.0, 3.0, 7.0);
 
   // Test center point (0, 0) in reference -> (4, 5) in physical
   auto result = compute_locations(coorg, ngnod, 0.0, 0.0);
@@ -127,16 +180,13 @@ TEST_F(ComputeLocationsDim2Test, ScaledAndTranslatedSquare) {
 TEST_F(ComputeLocationsDim2Test, QuadrilateralElement) {
   // Test with a non-square quadrilateral element
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
   // Arbitrary quadrilateral
-  coorg(0) = { 0.0, 0.0 };  // Bottom-left
-  coorg(1) = { 2.0, 0.5 };  // Bottom-right
-  coorg(2) = { 1.8, 2.2 };  // Top-right
-  coorg(3) = { -0.2, 1.8 }; // Top-left
+  auto coorg = create_quadrilateral_4node({ {
+      { { 0.0, 0.0 } }, // Bottom-left
+      { { 2.0, 0.5 } }, // Bottom-right
+      { { 1.8, 2.2 } }, // Top-right
+      { { -0.2, 1.8 } } // Top-left
+  } });
 
   // Test center point (0, 0) in reference coordinates
   auto result = compute_locations(coorg, ngnod, 0.0, 0.0);
@@ -162,25 +212,7 @@ TEST_F(ComputeLocationsDim2Test, QuadrilateralElement) {
 TEST_F(ComputeLocationsDim2Test, NineNodeElement) {
   // Test with a 9-node quadrilateral element
   const int ngnod = 9;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  // 3x3 unit square grid: 9 nodes at regular positions
-  // Node ordering follows standard spectral element convention
-  // Bottom row: nodes 0, 4, 1
-  // Middle row: nodes 7, 8, 5
-  // Top row:    nodes 3, 6, 2
-  coorg(0) = { 0.0, 0.0 }; // Bottom-left corner
-  coorg(1) = { 1.0, 0.0 }; // Bottom-right corner
-  coorg(2) = { 1.0, 1.0 }; // Top-right corner
-  coorg(3) = { 0.0, 1.0 }; // Top-left corner
-  coorg(4) = { 0.5, 0.0 }; // Bottom-middle
-  coorg(5) = { 1.0, 0.5 }; // Right-middle
-  coorg(6) = { 0.5, 1.0 }; // Top-middle
-  coorg(7) = { 0.0, 0.5 }; // Left-middle
-  coorg(8) = { 0.5, 0.5 }; // Center
+  auto coorg = create_unit_square_9node();
 
   // Test center point (0, 0) in reference -> should map to center node
   auto result = compute_locations(coorg, ngnod, 0.0, 0.0);

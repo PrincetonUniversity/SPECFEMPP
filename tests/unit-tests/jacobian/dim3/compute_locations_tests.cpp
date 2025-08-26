@@ -20,25 +20,118 @@ protected:
   void TearDown() override {
     // Common test cleanup can go here
   }
+
+  // Helper to create unit cube element [0,1] x [0,1] x [0,1]
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+      Kokkos::HostSpace>
+  create_unit_cube_8node() {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 8);
+    coorg(0) = { 0.0, 0.0, 0.0 }; // Corner 0: (0,0,0)
+    coorg(1) = { 1.0, 0.0, 0.0 }; // Corner 1: (1,0,0)
+    coorg(2) = { 1.0, 1.0, 0.0 }; // Corner 2: (1,1,0)
+    coorg(3) = { 0.0, 1.0, 0.0 }; // Corner 3: (0,1,0)
+    coorg(4) = { 0.0, 0.0, 1.0 }; // Corner 4: (0,0,1)
+    coorg(5) = { 1.0, 0.0, 1.0 }; // Corner 5: (1,0,1)
+    coorg(6) = { 1.0, 1.0, 1.0 }; // Corner 6: (1,1,1)
+    coorg(7) = { 0.0, 1.0, 1.0 }; // Corner 7: (0,1,1)
+    return coorg;
+  }
+
+  // Helper to create scaled and translated cube element
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+      Kokkos::HostSpace>
+  create_scaled_translated_cube_8node(type_real xmin, type_real xmax,
+                                      type_real ymin, type_real ymax,
+                                      type_real zmin, type_real zmax) {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 8);
+    coorg(0) = { xmin, ymin, zmin }; // Corner 0: (xmin,ymin,zmin)
+    coorg(1) = { xmax, ymin, zmin }; // Corner 1: (xmax,ymin,zmin)
+    coorg(2) = { xmax, ymax, zmin }; // Corner 2: (xmax,ymax,zmin)
+    coorg(3) = { xmin, ymax, zmin }; // Corner 3: (xmin,ymax,zmin)
+    coorg(4) = { xmin, ymin, zmax }; // Corner 4: (xmin,ymin,zmax)
+    coorg(5) = { xmax, ymin, zmax }; // Corner 5: (xmax,ymin,zmax)
+    coorg(6) = { xmax, ymax, zmax }; // Corner 6: (xmax,ymax,zmax)
+    coorg(7) = { xmin, ymax, zmax }; // Corner 7: (xmin,ymax,zmax)
+    return coorg;
+  }
+
+  // Helper to create arbitrary hexahedral element
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+      Kokkos::HostSpace>
+  create_hexahedron_8node(
+      const std::array<std::array<type_real, 3>, 8> &corners) {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 8);
+    for (int i = 0; i < 8; ++i) {
+      coorg(i) = { corners[i][0], corners[i][1], corners[i][2] };
+    }
+    return coorg;
+  }
+
+  // Helper to create 27-node unit cube element
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+      Kokkos::HostSpace>
+  create_unit_cube_27node() {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 27);
+
+    // Corner nodes (0-7)
+    coorg(0) = { 0.0, 0.0, 0.0 };
+    coorg(1) = { 1.0, 0.0, 0.0 };
+    coorg(2) = { 1.0, 1.0, 0.0 };
+    coorg(3) = { 0.0, 1.0, 0.0 };
+    coorg(4) = { 0.0, 0.0, 1.0 };
+    coorg(5) = { 1.0, 0.0, 1.0 };
+    coorg(6) = { 1.0, 1.0, 1.0 };
+    coorg(7) = { 0.0, 1.0, 1.0 };
+
+    // Mid-edge nodes (8-19)
+    coorg(8) = { 0.5, 0.0, 0.0 };
+    coorg(9) = { 1.0, 0.5, 0.0 };
+    coorg(10) = { 0.5, 1.0, 0.0 };
+    coorg(11) = { 0.0, 0.5, 0.0 };
+    coorg(12) = { 0.0, 0.0, 0.5 };
+    coorg(13) = { 1.0, 0.0, 0.5 };
+    coorg(14) = { 1.0, 1.0, 0.5 };
+    coorg(15) = { 0.0, 1.0, 0.5 };
+    coorg(16) = { 0.5, 0.0, 1.0 };
+    coorg(17) = { 1.0, 0.5, 1.0 };
+    coorg(18) = { 0.5, 1.0, 1.0 };
+    coorg(19) = { 0.0, 0.5, 1.0 };
+
+    // Face center nodes (20-25)
+    coorg(20) = { 0.5, 0.5, 0.0 };
+    coorg(21) = { 0.5, 0.0, 0.5 };
+    coorg(22) = { 1.0, 0.5, 0.5 };
+    coorg(23) = { 0.5, 1.0, 0.5 };
+    coorg(24) = { 0.0, 0.5, 0.5 };
+    coorg(25) = { 0.5, 0.5, 1.0 };
+
+    // Center node (26)
+    coorg(26) = { 0.5, 0.5, 0.5 };
+
+    return coorg;
+  }
 };
 
 TEST_F(ComputeLocationsDim3Test, UnitCubeCornerNodes) {
   // Test with a unit cube element using 8 corner nodes
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  // Unit cube control nodes (corners) - standard spectral element ordering
-  coorg(0) = { 0.0, 0.0, 0.0 }; // Corner 0: (0,0,0)
-  coorg(1) = { 1.0, 0.0, 0.0 }; // Corner 1: (1,0,0)
-  coorg(2) = { 1.0, 1.0, 0.0 }; // Corner 2: (1,1,0)
-  coorg(3) = { 0.0, 1.0, 0.0 }; // Corner 3: (0,1,0)
-  coorg(4) = { 0.0, 0.0, 1.0 }; // Corner 4: (0,0,1)
-  coorg(5) = { 1.0, 0.0, 1.0 }; // Corner 5: (1,0,1)
-  coorg(6) = { 1.0, 1.0, 1.0 }; // Corner 6: (1,1,1)
-  coorg(7) = { 0.0, 1.0, 1.0 }; // Corner 7: (0,1,1)
+  auto coorg = create_unit_cube_8node();
 
   // Test center point (0, 0, 0) in reference coordinates -> (0.5, 0.5, 0.5) in
   // physical
@@ -105,20 +198,9 @@ TEST_F(ComputeLocationsDim3Test, UnitCubeCornerNodes) {
 TEST_F(ComputeLocationsDim3Test, ScaledAndTranslatedCube) {
   // Test with a scaled and translated cube element
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  // Cube with corner at (2,3,4) and side length 2
-  coorg(0) = { 2.0, 3.0, 4.0 }; // Corner 0: (2,3,4)
-  coorg(1) = { 4.0, 3.0, 4.0 }; // Corner 1: (4,3,4)
-  coorg(2) = { 4.0, 5.0, 4.0 }; // Corner 2: (4,5,4)
-  coorg(3) = { 2.0, 5.0, 4.0 }; // Corner 3: (2,5,4)
-  coorg(4) = { 2.0, 3.0, 6.0 }; // Corner 4: (2,3,6)
-  coorg(5) = { 4.0, 3.0, 6.0 }; // Corner 5: (4,3,6)
-  coorg(6) = { 4.0, 5.0, 6.0 }; // Corner 6: (4,5,6)
-  coorg(7) = { 2.0, 5.0, 6.0 }; // Corner 7: (2,5,6)
+  // Cube with corner at (2,3,4) and side length 2: from (2,3,4) to (4,5,6)
+  auto coorg =
+      create_scaled_translated_cube_8node(2.0, 4.0, 3.0, 5.0, 4.0, 6.0);
 
   // Test center point (0, 0, 0) in reference -> (3, 4, 5) in physical
   auto result = compute_locations(coorg, ngnod, 0.0, 0.0, 0.0);
@@ -160,20 +242,15 @@ TEST_F(ComputeLocationsDim3Test, ScaledAndTranslatedCube) {
 TEST_F(ComputeLocationsDim3Test, HexahedralElement) {
   // Test with a non-cube hexahedral element
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
   // Arbitrary hexahedron
-  coorg(0) = { 0.0, 0.0, 0.0 };
-  coorg(1) = { 2.0, 0.5, 0.0 };
-  coorg(2) = { 1.8, 2.2, 0.2 };
-  coorg(3) = { -0.2, 1.8, 0.1 };
-  coorg(4) = { 0.1, 0.1, 3.0 };
-  coorg(5) = { 2.1, 0.6, 2.8 };
-  coorg(6) = { 1.9, 2.3, 3.2 };
-  coorg(7) = { -0.1, 1.9, 3.1 };
+  auto coorg = create_hexahedron_8node({ { { { 0.0, 0.0, 0.0 } },
+                                           { { 2.0, 0.5, 0.0 } },
+                                           { { 1.8, 2.2, 0.2 } },
+                                           { { -0.2, 1.8, 0.1 } },
+                                           { { 0.1, 0.1, 3.0 } },
+                                           { { 2.1, 0.6, 2.8 } },
+                                           { { 1.9, 2.3, 3.2 } },
+                                           { { -0.1, 1.9, 3.1 } } } });
 
   // Test center point (0, 0, 0) in reference coordinates
   auto result = compute_locations(coorg, ngnod, 0.0, 0.0, 0.0);
