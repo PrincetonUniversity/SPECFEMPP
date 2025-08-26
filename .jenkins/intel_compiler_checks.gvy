@@ -18,7 +18,7 @@ pipeline{
                     }
                     axis{
                         name 'SIMD'
-                        values 'SIMD_NONE;-DENABLE_SIMD=OFF', 'SIMD_NATIVE;-DENABLE_SIMD=ON -DKokkos_ARCH_NATIVE=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
+                        values 'SIMD_NONE;-DSPECFEM_ENABLE_SIMD=OFF', 'SIMD_NATIVE;-DSPECFEM_ENABLE_SIMD=ON -DKokkos_ARCH_NATIVE=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
                     }
                 }
                 stages {
@@ -63,7 +63,7 @@ pipeline{
                                         module load ${INTEL_MODULE}
                                         export CC=icx
                                         export CXX=icpx
-                                        cmake3 -S . -B build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} -D BUILD_TESTS=ON -D BUILD_BENCHMARKS=OFF
+                                        cmake3 -S . -B build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} -D SPECFEM_BUILD_TESTS=ON -D SPECFEM_BUILD_BENCHMARKS=OFF
                                         cmake3 --build build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                     """
                                     echo ' Build completed '
