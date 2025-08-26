@@ -41,13 +41,11 @@ type_real specfem::forcing_function::Ricker::compute(type_real t) {
   type_real val;
 
   if (this->__use_trick_for_better_pressure) {
-    val = -1.0 * this->__factor *
-          specfem::forcing_function::impl::d4gaussian(t - this->__tshift,
-                                                      this->__f0);
+    val = this->__factor * specfem::forcing_function::impl::d4gaussian(
+                               t - this->__tshift, this->__f0);
   } else {
-    val = -1.0 * this->__factor *
-          specfem::forcing_function::impl::d2gaussian(t - this->__tshift,
-                                                      this->__f0);
+    val = this->__factor * specfem::forcing_function::impl::d2gaussian(
+                               t - this->__tshift, this->__f0);
   }
 
   return val;
