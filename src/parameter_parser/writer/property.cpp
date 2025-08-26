@@ -1,4 +1,5 @@
 #include "parameter_parser/writer/property.hpp"
+#include "io/ADIOS2/ADIOS2.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
 #include "io/property/reader.hpp"
@@ -49,6 +50,9 @@ specfem::runtime_configuration::property::instantiate_property_writer() const {
     if (specfem::utilities::is_hdf5_string(this->output_format)) {
       return std::make_shared<specfem::io::property_writer<
           specfem::io::HDF5<specfem::io::write> > >(this->output_folder);
+    } else if (specfem::utilities::is_adios2_string(this->output_format)) {
+      return std::make_shared<specfem::io::property_writer<
+          specfem::io::ADIOS2<specfem::io::write> > >(this->output_folder);
     } else if (specfem::utilities::is_ascii_string(this->output_format)) {
       return std::make_shared<specfem::io::property_writer<
           specfem::io::ASCII<specfem::io::write> > >(this->output_folder);
@@ -72,6 +76,9 @@ specfem::runtime_configuration::property::instantiate_property_reader() const {
       return std::make_shared<
           specfem::io::property_reader<specfem::io::HDF5<specfem::io::read> > >(
           this->output_folder);
+    } else if (specfem::utilities::is_adios2_string(this->output_format)) {
+      return std::make_shared<specfem::io::property_reader<
+          specfem::io::ADIOS2<specfem::io::read> > >(this->output_folder);
     } else if (specfem::utilities::is_ascii_string(this->output_format)) {
       return std::make_shared<specfem::io::property_reader<
           specfem::io::ASCII<specfem::io::read> > >(this->output_folder);

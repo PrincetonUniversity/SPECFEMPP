@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace specfem {
 namespace io {
@@ -20,7 +21,8 @@ template <typename OpType> class DatasetBase;
 template <> class DatasetBase<specfem::io::write> {
 protected:
   DatasetBase(const boost::filesystem::path &folder_path,
-              const std::string &name, const int rank, const int *dims)
+              const std::string &name, const int rank,
+              const std::vector<int> &dims)
       : file_path(folder_path / boost::filesystem::path(name + ".txt")),
         rank(rank), dims(dims) {
 
@@ -79,13 +81,14 @@ protected:
 private:
   boost::filesystem::path file_path;
   const int rank;
-  const int *dims;
+  const std::vector<int> dims;
 };
 
 template <> class DatasetBase<specfem::io::read> {
 protected:
   DatasetBase(const boost::filesystem::path &folder_path,
-              const std::string &name, const int rank, const int *dims)
+              const std::string &name, const int rank,
+              const std::vector<int> &dims)
       : file_path(folder_path / boost::filesystem::path(name + ".txt")),
         rank(rank), dims(dims) {
     // Read meta data file and check if the dimensions match
@@ -170,7 +173,7 @@ protected:
 private:
   boost::filesystem::path file_path;
   const int rank;
-  const int *dims;
+  const std::vector<int> dims;
 };
 
 } // namespace ASCII

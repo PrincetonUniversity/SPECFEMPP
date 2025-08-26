@@ -3,22 +3,11 @@ cmake_minimum_required(VERSION 3.17.5)
 # GoogleTest requires at least C++17
 set(CMAKE_CXX_STANDARD 17)
 
-# Make sure that GTEST is not installed later in the process
-set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+# Include the GoogleTest framework
+include("${CMAKE_SOURCE_DIR}/cmake/googletest.cmake")
 
 # Explicitly set binary output directory for tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
-
 
 include_directories(.)
 
@@ -63,6 +52,34 @@ target_link_libraries(
   Kokkos::kokkos
   io
 )
+
+add_executable(
+  io_framework_tests
+  io/io_framework_tests.cpp
+)
+
+target_link_libraries(io_framework_tests PRIVATE
+  io
+  ${BOOST_LIBS}
+  gtest_main
+  Kokkos::kokkos
+  kokkos_environment
+)
+
+if (NOT SPECFEM_ENABLE_HDF5)
+    target_compile_definitions(
+        io_framework_tests
+        PUBLIC -DNO_HDF5
+    )
+endif()
+
+if (NOT SPECFEM_ENABLE_ADIOS2)
+    target_compile_definitions(
+        io_framework_tests
+        PUBLIC -DNO_ADIOS2
+    )
+endif()
+
 
 add_executable(
   is_close_tests
@@ -598,6 +615,7 @@ if (NOT MPI_PARALLEL)
     fortranio_test
     gll_tests
     interpolate_function
+    io_framework_tests
     io_tests
     is_close_tests
     jacobian_tests
@@ -614,7 +632,10 @@ if (NOT MPI_PARALLEL)
     stress_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
-      gtest_discover_tests(${test_target})
+      gtest_discover_tests(${test_target}
+        DISCOVERY_MODE POST_BUILD
+        DISCOVERY_TIMEOUT 300
+      )
   endforeach()
 
   # For tests that require data files from the tests directory,
@@ -640,8 +661,6 @@ if (NOT MPI_PARALLEL)
           ${CMAKE_CURRENT_BINARY_DIR}/${dir_name}
           SYMBOLIC)
   endforeach()
-
-
 
 
   # gtest_discover_tests(seismogram_elastic_tests)

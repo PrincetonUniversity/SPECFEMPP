@@ -12,7 +12,7 @@ protected:
 
   static constexpr int expected_size =
       UseSIMD ?
-#ifdef ENABLE_SIMD
+#ifdef SPECFEM_ENABLE_SIMD
               Kokkos::Experimental::simd<type_real>::size()
 #else
               1
