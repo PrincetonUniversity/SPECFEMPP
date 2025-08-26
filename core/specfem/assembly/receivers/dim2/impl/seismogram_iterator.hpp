@@ -89,9 +89,9 @@ public:
   SeismogramIterator(const int nreceivers, const int nseismograms,
                      const int max_sig_step, type_real dt, type_real t0,
                      int nstep_between_samples)
-      : nreceivers(nreceivers), nseismograms(nseismograms), dt(dt), t0(t0),
+      : nreceivers(nreceivers), nseismograms(nseismograms), irec(0), iseis(0),
         nstep_between_samples(nstep_between_samples),
-        max_sig_step(max_sig_step),
+        max_sig_step(max_sig_step), dt(dt), t0(t0),
         h_sine_receiver_angle(
             "specfem::assembly::receivers::sine_receiver_angle", nreceivers),
         h_cosine_receiver_angle(
