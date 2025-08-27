@@ -140,7 +140,7 @@ Below are the recommended build recipes for different architectures:
 .. code-block:: bash
 
     # cd into SPECFEM root directory
-    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D ENABLE_SIMD=ON -D Kokkos_ARCH_NATIVE=ON -D Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON -D Kokkos_ENABLE_ATOMICS_BYPASS=ON
+    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D SPECFEM_BUILD_TESTS=ON -D SPECFEM_ENABLE_SIMD=ON -D Kokkos_ARCH_NATIVE=ON -D Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON -D Kokkos_ENABLE_ATOMICS_BYPASS=ON
     cmake --build build
 
 * CPU OpenMP version
@@ -148,7 +148,7 @@ Below are the recommended build recipes for different architectures:
 .. code-block:: bash
 
     # cd into SPECFEM root directory
-    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D ENABLE_SIMD=ON -D Kokkos_ENABLE_OPENMP=ON -D Kokkos_ARCH_NATIVE=ON -D Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON
+    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D SPECFEM_BUILD_TESTS=ON -D SPECFEM_ENABLE_SIMD=ON -D Kokkos_ENABLE_OPENMP=ON -D Kokkos_ARCH_NATIVE=ON -D Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON
     cmake --build build
 
 * CUDA version (needs cudatoolkit >= 11.7)
@@ -156,7 +156,7 @@ Below are the recommended build recipes for different architectures:
 .. code-block:: bash
 
     # cd into SPECFEM root directory
-    cmake3 -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D Kokkos_ENABLE_CUDA=ON -D Kokkos_ARCH_<architecture>=ON
+    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D SPECFEM_BUILD_TESTS=ON -D Kokkos_ENABLE_CUDA=ON -D Kokkos_ARCH_<architecture>=ON
     cmake --build build
 
 .. note::
