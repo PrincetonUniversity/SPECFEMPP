@@ -63,6 +63,22 @@ def interfaces_from_boundaryspec_entities(
     node_locs: np.ndarray,
     element_nodes: np.ndarray,
 ) -> NonconformingInterfaces:
+    """Finds intersecting edges between two boundary segments,
+    returning a NonconformingInterfaces instance storing the results.
+
+    Args:
+        bdspec (BoundarySpec): Boundary data
+        entity1 (int | BoundarySpec.EntityKey): first boundary segment
+        entity2 (int | BoundarySpec.EntityKey): second boundary segment
+        node_locs (np.ndarray): array of locations for each node
+        element_nodes (np.ndarray): node indices for each element
+
+    Returns:
+        NonconformingInterfaces: The resulting interfaces, with `a`
+            from entity1 and `b` from entity2.
+    """
+
+    # result arrays to build up
     nonconform_ispec = []
     nonconform_jspec = []
     nonconform_iedge = []

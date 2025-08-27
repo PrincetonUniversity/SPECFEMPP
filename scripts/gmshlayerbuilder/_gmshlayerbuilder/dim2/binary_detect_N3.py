@@ -10,6 +10,13 @@ maxfind_coefs_b = Lp[:, 0]
 
 
 def _union_intersections(intersectlo, intersecthi, delta):
+    """Helper: takes the union of two intersections.
+
+    intersections are given by a list of points [a1,a2,...,an]
+    with even n. The intervals are (a1,a2) union (a3,a4) union ... union (a[n-1],an)
+
+    delta specifies tolerance (intervals smaller than this are truncated)
+    """
     if len(intersecthi) == 0:
         return intersectlo
     if len(intersectlo) == 0:
@@ -55,6 +62,9 @@ def _union_intersections(intersectlo, intersecthi, delta):
 
 
 def _concat_intersections(intersectlo, intersecthi, delta):
+    """Helper: takes the union of two intersections, but all points of
+    intersectlo are guaranteed to be less than all points of intersecthi.
+    """
     # empty on one side, trivial append
     if len(intersecthi) == 0:
         return intersectlo
@@ -68,6 +78,7 @@ def _concat_intersections(intersectlo, intersecthi, delta):
 
 
 def find_bbox(edge, t0, t1, compute_extrema: bool = True):
+    # quadratics have 1 possible interior extreme value. should we ignore it?
     if compute_extrema:
         bd_params = np.clip(
             np.einsum("k,kd->d", maxfind_coefs_b, edge)
@@ -307,7 +318,7 @@ def quadratic_beziers_intersect(
         eps2 = eps1 * 4
 
     # subdivide at the extrema so that bounding box calculation can ignore it
-    with np.errstate(divide="ignore",invalid="ignore"):
+    with np.errstate(divide="ignore", invalid="ignore"):
         extrema_points_1 = [
             -1,
             1,

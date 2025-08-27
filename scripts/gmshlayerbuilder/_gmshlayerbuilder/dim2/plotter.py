@@ -1,6 +1,7 @@
 from typing import Any
 
-from _gmshlayerbuilder.dim2.layer_builder.model import Model, EdgeType
+from _gmshlayerbuilder.dim2.layer_builder.model import Model
+from _gmshlayerbuilder.dim2.layer_builder.model.edges import EdgeType
 
 
 try:
