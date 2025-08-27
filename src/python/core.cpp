@@ -1,4 +1,5 @@
-#include "execute.hpp"
+#include "specfem/core.hpp"
+#include "specfem/execute.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #define STRINGIFY(x) #x
@@ -7,45 +8,27 @@
 
 namespace py = pybind11;
 
-// global MPI variable for Python
-specfem::MPI::MPI *_py_mpi = NULL;
-
 bool _initialize(py::list py_argv) {
-  if (_py_mpi != NULL) {
-    return false;
-  }
-  // parse argc and argv from Python
-  int argc = py_argv.size();
-  char **argv = new char *[argc + 1];
+  auto &core = specfem::Core::instance();
 
-  for (size_t i = 0; i < argc; i++) {
-    std::string str =
-        py_argv[i].cast<std::string>(); // Convert Python string to std::string
-    argv[i] =
-        new char[str.length() + 1]; // Allocate memory for each C-style string
-    std::strcpy(argv[i], str.c_str()); // Copy the string content
+  if (core.is_initialized()) {
+    return false; // Already initialized
   }
 
-  // Null-terminate argv following the specification
-  argv[argc] = nullptr;
-  // Initialize MPI
-  _py_mpi = new specfem::MPI::MPI(&argc, &argv);
-  // Initialize Kokkos
-  Kokkos::initialize(argc, argv);
-
-  // free argv
-  for (int i = 0; i < argc; i++) {
-    delete[] argv[i]; // Free each individual string
+  // Convert Python list to C++ string vector
+  std::vector<std::string> args;
+  for (const auto &item : py_argv) {
+    args.push_back(item.cast<std::string>());
   }
 
-  delete[] argv;
-
-  return true;
+  return core.initialize_from_python(args);
 }
 
 bool _execute(const std::string &parameter_string,
               const std::string &default_string) {
-  if (_py_mpi == NULL) {
+  auto &core = specfem::Core::instance();
+
+  if (!core.is_initialized()) {
     return false;
   }
 
@@ -55,26 +38,22 @@ bool _execute(const std::string &parameter_string,
   const auto signal_task =
       std::make_shared<specfem::periodic_tasks::check_signal>(10);
   tasks.push_back(signal_task);
+
   // Releasing the GIL in a scoped section
   // is needed for long running tasks, such as a
   // simulation.
   {
     py::gil_scoped_release release;
-    execute(parameter_dict, default_dict, tasks, _py_mpi);
+    // For now, default to 2D execution for backward compatibility
+    // Later we can add a dimension parameter to the Python interface
+    core.execute_with_dimension("2d", parameter_dict, default_dict, tasks);
   }
   return true;
 }
 
 bool _finalize() {
-  if (_py_mpi != NULL) {
-    // Finalize Kokkos
-    Kokkos::finalize();
-    // Finalize MPI
-    delete _py_mpi;
-    _py_mpi = NULL;
-    return true;
-  }
-  return false;
+  auto &core = specfem::Core::instance();
+  return core.finalize();
 }
 
 PYBIND11_MODULE(_core, m) {
