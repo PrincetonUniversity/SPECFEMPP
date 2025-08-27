@@ -548,8 +548,6 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
-
-
 # Include tests
 if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
@@ -617,4 +615,4 @@ if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
         ${CMAKE_INSTALL_PREFIX}
     )
 
-endif(SPECFEM_INSTALL)
+endif(SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)

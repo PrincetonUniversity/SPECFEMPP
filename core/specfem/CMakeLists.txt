@@ -11,6 +11,7 @@ add_library(specfem_core STATIC core.cpp)
 target_include_directories(specfem_core PUBLIC ${CMAKE_SOURCE_DIR}/core)
 target_link_libraries(specfem_core
     PUBLIC
+        specfem_execute
         Kokkos::kokkos
         yaml-cpp::yaml-cpp
         ${BOOST_LIBS}
@@ -23,7 +24,6 @@ add_library(specfem_execute STATIC execute.cpp)
 target_include_directories(specfem_execute PUBLIC ${CMAKE_SOURCE_DIR}/core)
 target_link_libraries(specfem_execute
     PUBLIC
-        specfem_core
         yaml-cpp::yaml-cpp
         ${BOOST_LIBS}
         # All the dependencies from the original execute library
