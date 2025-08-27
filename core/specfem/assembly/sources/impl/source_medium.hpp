@@ -18,6 +18,8 @@ specfem::point::local_coordinates<DimensionTag> locate_point(
 } // namespace specfem
 
 // EXTENT_IMPL_CHANGE
+
+namespace {
 template <typename T, int Rank> struct ExtentImpl {
   using type = typename ExtentImpl<T, Rank - 1>::type *;
 };
@@ -25,6 +27,8 @@ template <typename T, int Rank> struct ExtentImpl {
 template <typename T> struct ExtentImpl<T, 0> {
   using type = T;
 };
+
+} // namespace
 
 namespace specfem::assembly::sources_impl {
 /**
