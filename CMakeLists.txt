@@ -13,7 +13,7 @@ option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
 option(SPECFEM_BUILD_TESTS "Tests included" OFF)
 option(SPECFEM_ENABLE_SIMD "Enable SIMD" OFF)
 option(SPECFEM_ENABLE_PROFILING "Enable profiling" OFF)
-option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
+option(SPECFEM_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
@@ -61,7 +61,7 @@ if(SPECFEM_ENABLE_UNITY_BUILD)
     endif()
 endif()
 
-if (SPECFEMPP_BINDING_PYTHON)
+if (SPECFEM_BINDING_PYTHON)
     message(STATUS "Adding -fPIC flag for Python binding.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             set(CMAKE_CXX_FLAGS "-fp-model=precise -fPIC")
@@ -72,7 +72,7 @@ if (SPECFEMPP_BINDING_PYTHON)
     else()
             set(CMAKE_CXX_FLAGS "-fPIC")
     endif()
-else (SPECFEMPP_BINDING_PYTHON)
+else (SPECFEM_BINDING_PYTHON)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             set(CMAKE_CXX_FLAGS "-fp-model=precise")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
@@ -80,7 +80,7 @@ else (SPECFEMPP_BINDING_PYTHON)
             message(STATUS "It is recommended you use IntelLLVM compiler.")
             set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
     endif()
-endif (SPECFEMPP_BINDING_PYTHON)
+endif (SPECFEM_BINDING_PYTHON)
 
 # Check if MacOS
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -178,7 +178,7 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
 # Add module subdirectories
-add_subdirectory(core/specfem)
+add_subdirectory(core)
 
 # Build specfem2d libraries
 add_library(
@@ -548,67 +548,6 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
-add_library(
-        execute
-        src/execute.cpp
-)
-
-target_link_libraries(
-        execute
-        specfem_mpi
-        Kokkos::kokkos
-        mesh
-        quadrature
-        assembly
-        source_class
-        parameter_reader
-        specfem::receivers
-        writer
-        periodic_tasks
-        reader
-        coupled_interface
-        kokkos_kernels
-        solver
-        ${BOOST_LIBS}
-)
-
-add_executable(
-        specfem2d
-        src/specfem2d.cpp
-)
-
-target_link_libraries(
-        specfem2d
-        execute
-)
-
-add_executable(
-        specfem3d
-        src/specfem3d.cpp
-)
-
-target_link_libraries(
-        specfem3d
-        specfem_mpi
-        io
-        Kokkos::kokkos
-        mesh
-        quadrature
-        assembly
-        source_class
-        parameter_reader
-        specfem::receivers
-        writer
-        periodic_tasks
-        reader
-        coupled_interface
-        kokkos_kernels
-        solver
-        ${BOOST_LIBS}
-        yaml-cpp
-)
-
-
 # Include tests
 if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
@@ -635,30 +574,30 @@ endif()
 # Include Doxygen
 include("${CMAKE_SOURCE_DIR}/cmake/doxygen.cmake")
 
-if (SPECFEMPP_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})
-    install(TARGETS specfem2d DESTINATION ${SKBUILD_SCRIPTS_DIR})
+if (SPECFEM_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})
+    install(TARGETS specfem DESTINATION ${SKBUILD_SCRIPTS_DIR})
     install(FILES ${CMAKE_BINARY_DIR}/bin/xmeshfem2D DESTINATION ${SKBUILD_SCRIPTS_DIR} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
 endif ()
 
-if (SPECFEMPP_BINDING_PYTHON)
+if (SPECFEM_BINDING_PYTHON)
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
     find_package(pybind11 CONFIG REQUIRED)
     python_add_library(_core MODULE src/python/core.cpp WITH_SOABI)
     target_link_libraries(
         _core PRIVATE
-        execute
+        specfem_unified
         periodic_tasks
         ${BOOST_LIBS}
         pybind11::headers
     )
     target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
     install(TARGETS _core DESTINATION specfempp_core)
-endif (SPECFEMPP_BINDING_PYTHON)
+endif (SPECFEM_BINDING_PYTHON)
 
 
-if (SPECFEM_INSTALL)
+if (SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)
     install(
-        TARGETS specfem2d specfem3d
+        TARGETS specfem
         RUNTIME DESTINATION .
     )
 
@@ -668,7 +607,7 @@ if (SPECFEM_INSTALL)
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Organizing specfem++ executables into: ${CMAKE_INSTALL_PREFIX}"
         # Make this run after your main targets
-        DEPENDS specfem2d specfem3d xmeshfem2D xmeshfem3D xadj_seismogram xgenerate_databases # list all your targets here
+        DEPENDS specfem xmeshfem2D xmeshfem3D xadj_seismogram xgenerate_databases # list all your targets here
     )
 
     # Add the prefix directory to the clean target
@@ -676,4 +615,4 @@ if (SPECFEM_INSTALL)
         ${CMAKE_INSTALL_PREFIX}
     )
 
-endif(SPECFEM_INSTALL)
+endif(SPECFEM_INSTALL AND NOT SPECFEM_USE_SKBUILD)

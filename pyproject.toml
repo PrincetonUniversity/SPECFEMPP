@@ -63,8 +63,8 @@ examples = [
 
 [tool.scikit-build]
 cmake.define.CMAKE_BUILD_TYPE = "Release"
-cmake.define.BUILD_TESTS = "ON"
-cmake.define.SPECFEMPP_USE_SKBUILD = "ON"
-cmake.define.SPECFEMPP_BINDING_PYTHON = "ON"
-build-dir = "./build"
+cmake.define.SPECFEM_BUILD_TESTS = "ON"
+cmake.define.SPECFEM_USE_SKBUILD = "ON"
+cmake.define.SPECFEM_BINDING_PYTHON = "ON"
+build-dir = "./build/python"
 build.tool-args = ["-j4"]
