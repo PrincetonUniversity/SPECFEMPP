@@ -3,7 +3,8 @@ import os
 
 import numpy as np
 
-from _gmshlayerbuilder.dim2.layer_builder.model import Model, EdgeType
+from _gmshlayerbuilder.dim2.layer_builder.model import Model
+from _gmshlayerbuilder.dim2.layer_builder.model.edges import EdgeType
 
 
 NONCONFORMING_CONNECTION_TYPE = 3
@@ -129,6 +130,9 @@ class Exporter2D:
         if not self.destination_folder.exists():
             self.destination_folder.mkdir()
 
+        # =========================
+        # node coords
+        # =========================
         with (self.destination_folder / self.node_coords_file).open("w") as f:
             nodes_arr = self.model.nodes
 
@@ -147,6 +151,9 @@ class Exporter2D:
 
         nelem = self.model.elements.shape[0]
 
+        # =========================
+        # elements
+        # =========================
         with (self.destination_folder / self.mesh_file).open("w") as f:
             elem_arr = self.model.elements
 
@@ -154,18 +161,30 @@ class Exporter2D:
             for ielem in range(nelem):
                 f.write("\n " + " ".join(f"{k + 1:d}" for k in elem_arr[ielem, :]))
 
+        # =========================
+        # materials
+        # =========================
         with (self.destination_folder / self.materials_file).open("w") as f:
             f.write("\n".join(str(mat) for mat in self.model.materials))
 
+        # =========================
+        # free surface
+        # =========================
         with (self.destination_folder / self.free_surface_file).open("w") as f:
             # NotImplemented
             f.write(str(0))
 
+        # =========================
+        # absorbing bdries (if needed)
+        # =========================
         if self.absorbing_surface_file is not None:
             with (self.destination_folder / self.absorbing_surface_file).open("w") as f:
                 # NotImplemented
                 f.write(str(0))
 
+        # =========================
+        # acoustic forcing (if needed)
+        # =========================
         if self.acoustic_forcing_surface_file is not None:
             with (self.destination_folder / self.acoustic_forcing_surface_file).open(
                 "w"
@@ -173,11 +192,17 @@ class Exporter2D:
                 # NotImplemented
                 f.write(str(0))
 
+        # =========================
+        # absorbing cpml (if needed)
+        # =========================
         if self.absorbing_cpml_file is not None:
             with (self.destination_folder / self.absorbing_cpml_file).open("w") as f:
                 # NotImplemented
                 f.write(str(0))
 
+        # =========================
+        # tangential curve (if needed)
+        # =========================
         if self.tangential_detection_curve_file is not None:
             with (self.destination_folder / self.tangential_detection_curve_file).open(
                 "w"
@@ -185,6 +210,9 @@ class Exporter2D:
                 # NotImplemented
                 f.write(str(0))
 
+        # =========================
+        # nonconforming adjacencies (if needed)
+        # =========================
         if self.nonconforming_adjacencies_file is not None:
             with (self.destination_folder / self.nonconforming_adjacencies_file).open(
                 "w"

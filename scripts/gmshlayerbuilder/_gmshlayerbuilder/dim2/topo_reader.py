@@ -31,10 +31,15 @@ def builder_from_topo_file(
     with Path(file).open("r") as f:
         ninterfaces = int(_file_get_line(f))
         layer_boundaries = []
+
+        # keep a tally on smallest and largest x values
         xmin = float("inf")
         xmax = float("-inf")
+
         for iinterface in range(ninterfaces):
+            # each interface gives a set of points. Read those into bd:
             bd = LerpLayerBoundary()
+
             npoints = int(_file_get_line(f))
             for ipoint in range(npoints):
                 read_in = _file_get_line(f).split()
