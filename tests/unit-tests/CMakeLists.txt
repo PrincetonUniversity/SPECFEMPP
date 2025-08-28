@@ -361,8 +361,9 @@ add_executable(
   assembly/locate/locate_point.cpp
   assembly/mesh/utilities.cpp
   assembly/sources/locate_sources.cpp
-  assembly/compute_source_array/compute_source_array_from_vector.cpp
-  assembly/compute_source_array/compute_source_array_from_tensor.cpp
+  assembly/compute_source_array/dim2/compute_source_array_from_vector.cpp
+  assembly/compute_source_array/dim2/compute_source_array_from_tensor.cpp
+  assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
 )
 
 target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})

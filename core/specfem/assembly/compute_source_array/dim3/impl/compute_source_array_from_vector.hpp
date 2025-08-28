@@ -7,9 +7,9 @@
 namespace specfem::assembly::compute_source_array_impl {
 
 void from_vector(
-    const specfem::sources::vector_source<specfem::dimension::type::dim2>
+    const specfem::sources::vector_source<specfem::dimension::type::dim3>
         &source,
-    Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+    Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
         source_array);
 
 } // namespace specfem::assembly::compute_source_array_impl

@@ -105,6 +105,7 @@ void execute(
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader());
+
   time_scheme->link_assembly(assembly);
   // --------------------------------------------------------------
 
