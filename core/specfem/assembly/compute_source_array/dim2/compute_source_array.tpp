@@ -1,3 +1,5 @@
+#pragma once
+
 #include "specfem/assembly/compute_source_array.hpp"
 #include "enumerations/dimension.hpp"
 #include "impl/compute_source_array_from_tensor.hpp"
@@ -6,14 +8,19 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
+#include <Kokkos_Core.hpp>
 
+template<typename SourceArrayViewType>
 void specfem::assembly::compute_source_array(
     const std::shared_ptr<
         specfem::sources::source<specfem::dimension::type::dim2> > &source,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
-    specfem::kokkos::HostView3d<type_real> source_array) {
+    SourceArrayViewType &source_array) {
+
+  // Ensure source_array is a 3D view
+  static_assert(SourceArrayViewType::rank == 3, "Source array must be in rank 3.");
 
   switch (source->get_source_type()) {
   case specfem::sources::source_type::vector_source: {
@@ -27,9 +34,10 @@ void specfem::assembly::compute_source_array(
           "Source is not of vector type. Cannot compute vector source "
           "array.");
     }
-
+    std::cout << "computing for vector" << std::endl;
     specfem::assembly::compute_source_array_impl::from_vector(*vector_source,
                                                               source_array);
+    std::cout << "computed for vector: " << std::endl;
     break;
   }
   case specfem::sources::source_type::tensor_source: {
