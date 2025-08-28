@@ -15,7 +15,7 @@ def build_lagrange_polys(knots: npt.ArrayLike) -> np.ndarray:
         np.ndarray: The coefficient array.
     """
     knots = np.array(knots)
-    if len(knots.shape) > 1:
+    if len(knots.shape) != 1:
         raise ValueError(
             f"knots must be ArrayLike with shape (N,). Found {knots.shape}."
         )
@@ -58,7 +58,7 @@ def lagrange_deriv_at_knots(knots: npt.ArrayLike) -> np.ndarray:
         np.ndarray: The evaluated derivatives
     """
     knots = np.array(knots)
-    if len(knots.shape) > 1:
+    if len(knots.shape) != 1:
         raise ValueError(
             f"knots must be ArrayLike with shape (N,). Found {knots.shape}."
         )

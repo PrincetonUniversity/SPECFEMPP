@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
-from _gmshlayerbuilder.gmsh_dep import GmshContext
+from _gmsh2meshfem.gmsh_dep import GmshContext
 
 
 @dataclass

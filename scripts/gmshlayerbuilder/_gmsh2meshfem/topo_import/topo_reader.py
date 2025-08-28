@@ -70,7 +70,8 @@ def builder_from_topo_file(
             zavg_above = sum(z for x, z in layer_boundaries[ilayer + 1].points) / len(
                 layer_boundaries[ilayer + 1].points
             )
-            nx = round(nz / (zavg_above - zavg_below) * (xmax - xmin))
+            layer_aspect_ratio = (xmax - xmin) / (zavg_above - zavg_below)
+            nx = max(1,round(nz * layer_aspect_ratio))
             layers.append(Layer(nx,nz))
 
         builder = LayeredBuilder(xmin, xmax)

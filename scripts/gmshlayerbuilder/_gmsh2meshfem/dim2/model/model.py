@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from dataclasses import replace as dataclass_replace
 
 import numpy as np
-from _gmshlayerbuilder.gmsh_dep import GmshContext
+from _gmsh2meshfem.gmsh_dep import GmshContext
 
 from .boundary import BoundarySpec
 from .edges import ConformingInterfaces
@@ -10,6 +10,7 @@ from .index_mapping import IndexMapping
 from .nonconforming_interfaces import (
     NonconformingInterfaces,
 )
+from .plotter import plot_model
 
 @dataclass
 class Model:
@@ -26,6 +27,11 @@ class Model:
     nonconforming_interfaces: NonconformingInterfaces = field(
         default_factory=NonconformingInterfaces
     )
+
+    def plot(self):
+        """Displays, using matplotlib, the mesh corresponding to this model.
+        """
+        plot_model(self.nodes, self.elements)
 
     @staticmethod
     def union(model1: "Model", model2: "Model") -> "Model":
@@ -135,6 +141,9 @@ class Model:
             meshnodes = gmsh.model.mesh.get_nodes()
             node_indexing = IndexMapping(meshnodes[0])
             node_locs = np.reshape(meshnodes[1], (-1, 3))
+
+            # gmsh.model.mesh.get_elements gives elements of different types.
+            # each of these captures a case:
 
             def on_mesh_tri(triname):
                 msg = f"Cannot mesh {triname}. Must be quad."
