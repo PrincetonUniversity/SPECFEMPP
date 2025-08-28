@@ -229,10 +229,10 @@ class Exporter:
                     f.write(
                         f"\n{ispec_a + 1:d} {ispec_b + 1:d} "
                         f"{NONCONFORMING_CONNECTION_TYPE:d} "
-                        f"{model_edge_to_meshfem_edge(edge_b):d}"
+                        f"{model_edge_to_meshfem_edge(edge_a):d}"
                     )
                     f.write(
                         f"\n{ispec_b + 1:d} {ispec_a + 1:d} "
                         f"{NONCONFORMING_CONNECTION_TYPE:d} "
-                        f"{model_edge_to_meshfem_edge(edge_a):d}"
+                        f"{model_edge_to_meshfem_edge(edge_b):d}"
                     )
