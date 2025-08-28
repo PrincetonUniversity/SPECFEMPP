@@ -56,7 +56,7 @@ pipeline {
                                     sh """
                                         module load boost/1.73.0
                                         module load ${CUDA_MODULE}
-                                        cmake3 -S . -B build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} -DBUILD_TESTS=ON
+                                        cmake3 -S . -B build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} -DSPECFEM_BUILD_TESTS=ON -DSPECFEM_BUILD_BENCHMARKS=OFF
                                         cmake3 --build build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT}
                                     """
                                     echo ' Build completed '
@@ -134,7 +134,7 @@ pipeline {
                                         module load boost/1.73.0
                                         export CC=icx
                                         export CXX=icpx
-                                        cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} -DBUILD_TESTS=ON
+                                        cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} -DSPECFEM_BUILD_TESTS=ON -DSPECFEM_BUILD_BENCHMARKS=OFF
                                         cmake3 --build build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT}
                                     """
                                     echo ' Build completed '
