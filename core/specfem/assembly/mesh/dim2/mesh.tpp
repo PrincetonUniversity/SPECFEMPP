@@ -9,42 +9,15 @@
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/shape_functions.hpp"
+#include "impl/utilities.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 #include <vector>
 
 namespace {
-struct qp {
-  type_real x = 0, z = 0;
-  int iloc = 0, iglob = 0;
-};
-
-type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
-                        const int ngllxz) {
-
-  assert(cart_cord.size() == ngllxz * nspec);
-
-  type_real xtypdist = std::numeric_limits<type_real>::max();
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    type_real xmax = std::numeric_limits<type_real>::min();
-    type_real xmin = std::numeric_limits<type_real>::max();
-    type_real ymax = std::numeric_limits<type_real>::min();
-    type_real ymin = std::numeric_limits<type_real>::max();
-    for (int xz = 0; xz < ngllxz; xz++) {
-      int iloc = ispec * (ngllxz) + xz;
-      xmax = std::max(xmax, cart_cord[iloc].x);
-      xmin = std::min(xmin, cart_cord[iloc].x);
-      ymax = std::max(ymax, cart_cord[iloc].z);
-      ymin = std::min(ymin, cart_cord[iloc].z);
-    }
-
-    xtypdist = std::min(xtypdist, xmax - xmin);
-    xtypdist = std::min(xtypdist, ymax - ymin);
-  }
-
-  return 1e-6 * xtypdist;
-}
+using point = specfem::assembly::mesh_impl::dim2::point;
+using bounding_box = specfem::assembly::mesh_impl::dim2::bounding_box;
 
 specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
 assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
@@ -53,125 +26,42 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
   int ngll = global_coordinates.extent(1);
   int ngllxz = ngll * ngll;
 
-  std::vector<qp> cart_cord(nspec * ngllxz);
+  // Extract coordinates into testable utility functions
+  auto points = specfem::assembly::mesh_impl::dim2::flatten_coordinates(
+      global_coordinates);
 
-  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
+  // Sort points spatially
+  auto sorted_points = points;
+  specfem::assembly::mesh_impl::dim2::sort_points_spatially(sorted_points);
 
-  int iloc = 0;
-  for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
-    for (int iz = 0; iz < ngll; iz++) {
-      for (int ix = 0; ix < ngll; ix++) {
-        for (int ielement = 0; ielement < chunk_size; ielement++) {
-          int ispec = ichunk + ielement;
-          if (ispec >= nspec)
-            break;
-          cart_cord[iloc].x = global_coordinates(ispec, iz, ix, 0);
-          cart_cord[iloc].z = global_coordinates(ispec, iz, ix, 1);
-          cart_cord[iloc].iloc = iloc;
-          iloc++;
-        }
-      }
-    }
-  }
+  // Compute spatial tolerance
+  type_real tolerance =
+      specfem::assembly::mesh_impl::dim2::compute_spatial_tolerance(
+          sorted_points, nspec, ngllxz);
 
-  // Sort cartesian coordinates in ascending order i.e.
-  // cart_cord = [{0,0}, {0, 25}, {0, 50}, ..., {50, 0}, {50, 25}, {50, 50}]
-  std::sort(cart_cord.begin(), cart_cord.end(),
-            [&](const qp qp1, const qp qp2) {
-              if (qp1.x != qp2.x) {
-                return qp1.x < qp2.x;
-              }
+  // Assign global numbering
+  int nglob = specfem::assembly::mesh_impl::dim2::assign_global_numbering(
+      sorted_points, tolerance);
 
-              return qp1.z < qp2.z;
-            });
+  // Reorder points to original layout
+  auto reordered_points =
+      specfem::assembly::mesh_impl::dim2::reorder_to_original_layout(
+          sorted_points);
 
-  // Setup numbering
-  int ig = 0;
-  cart_cord[0].iglob = ig;
+  // Calculate bounding box using utilities
+  auto bbox = specfem::assembly::mesh_impl::dim2::compute_bounding_box(
+      reordered_points);
 
-  type_real xtol = get_tolerance(cart_cord, nspec, ngllxz);
+  // Create coordinate arrays
+  auto [index_mapping, coord, nglob_actual] =
+      specfem::assembly::mesh_impl::dim2::create_coordinate_arrays(
+          reordered_points, nspec, ngll, nglob);
 
-  for (int iloc = 1; iloc < cart_cord.size(); iloc++) {
-    // check if the previous point is same as current
-    if ((std::abs(cart_cord[iloc].x - cart_cord[iloc - 1].x) > xtol) ||
-        (std::abs(cart_cord[iloc].z - cart_cord[iloc - 1].z) > xtol)) {
-      ig++;
-    }
-    cart_cord[iloc].iglob = ig;
-  }
-
-  std::vector<qp> copy_cart_cord(nspec * ngllxz);
-
-  // reorder cart cord in original format
-  for (int i = 0; i < cart_cord.size(); i++) {
-    int iloc = cart_cord[i].iloc;
-    copy_cart_cord[iloc] = cart_cord[i];
-  }
-
-  int nglob = ig + 1;
-
-  specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2> points(
-      nspec, ngll, ngll, nglob);
-
-  // Assign numbering to corresponding ispec, iz, ix
-  std::vector<int> iglob_counted(nglob, -1);
-  iloc = 0;
-  int inum = 0;
-  type_real xmin = std::numeric_limits<type_real>::max();
-  type_real xmax = std::numeric_limits<type_real>::min();
-  type_real zmin = std::numeric_limits<type_real>::max();
-  type_real zmax = std::numeric_limits<type_real>::min();
-
-  for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
-    for (int iz = 0; iz < ngll; iz++) {
-      for (int ix = 0; ix < ngll; ix++) {
-        for (int ielement = 0; ielement < chunk_size; ielement++) {
-          int ispec = ichunk + ielement;
-          if (ispec >= nspec)
-            break;
-          if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
-
-            const type_real x_cor = copy_cart_cord[iloc].x;
-            const type_real z_cor = copy_cart_cord[iloc].z;
-            if (xmin > x_cor)
-              xmin = x_cor;
-            if (zmin > z_cor)
-              zmin = z_cor;
-            if (xmax < x_cor)
-              xmax = x_cor;
-            if (zmax < z_cor)
-              zmax = z_cor;
-
-            iglob_counted[copy_cart_cord[iloc].iglob] = inum;
-            points.h_index_mapping(ispec, iz, ix) = inum;
-            points.h_coord(0, ispec, iz, ix) = x_cor;
-            points.h_coord(1, ispec, iz, ix) = z_cor;
-            inum++;
-          } else {
-            points.h_index_mapping(ispec, iz, ix) =
-                iglob_counted[copy_cart_cord[iloc].iglob];
-            points.h_coord(0, ispec, iz, ix) = copy_cart_cord[iloc].x;
-            points.h_coord(1, ispec, iz, ix) = copy_cart_cord[iloc].z;
-          }
-          iloc++;
-        }
-      }
-    }
-  }
-
-  points.xmin = xmin;
-  points.xmax = xmax;
-  points.zmin = zmin;
-  points.zmax = zmax;
-
-  assert(nglob != (nspec * ngllxz));
-
-  assert(inum == nglob);
-
-  Kokkos::deep_copy(points.index_mapping, points.h_index_mapping);
-  Kokkos::deep_copy(points.coord, points.h_coord);
-
-  return points;
+  // Create mesh points object using constructor with pre-computed arrays
+  specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
+      mesh_points(nspec, ngll, ngll, nglob_actual, index_mapping, coord,
+                  bbox.xmin, bbox.xmax, bbox.zmin, bbox.zmax);
+  return mesh_points;
 }
 
 // We need to build a new graph since the element numbering may have changed
@@ -217,7 +107,6 @@ build_assembly_adjacency_graph(
 
   return adjacency_graph;
 }
-
 } // namespace
 
 specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
