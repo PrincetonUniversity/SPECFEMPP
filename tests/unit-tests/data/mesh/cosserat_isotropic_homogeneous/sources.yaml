@@ -1,8 +1,8 @@
 number-of-sources: 1
 sources:
   - cosserat-force:
-      x : 2500.0
-      z : 2500.0
+      x : 0.155
+      z : 0.155
       source_surf: false
       angle : 0.0
       vx : 0.0

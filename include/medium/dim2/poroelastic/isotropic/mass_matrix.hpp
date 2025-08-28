@@ -9,9 +9,9 @@ namespace specfem {
 namespace medium {
 
 template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
-                                      specfem::element::medium_tag::poroelastic,
-                                      false, false, false, true, UseSIMD>
+KOKKOS_FUNCTION specfem::point::mass_inverse<
+    specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
+    UseSIMD>
 impl_mass_matrix_component(
     const specfem::point::properties<specfem::dimension::type::dim2,
                                      specfem::element::medium_tag::poroelastic,

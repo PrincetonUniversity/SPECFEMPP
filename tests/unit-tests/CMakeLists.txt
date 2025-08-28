@@ -3,22 +3,11 @@ cmake_minimum_required(VERSION 3.17.5)
 # GoogleTest requires at least C++17
 set(CMAKE_CXX_STANDARD 17)
 
-# Make sure that GTEST is not installed later in the process
-set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+# Include the GoogleTest framework
+include("${CMAKE_SOURCE_DIR}/cmake/googletest.cmake")
 
 # Explicitly set binary output directory for tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
-
 
 include_directories(.)
 
@@ -52,6 +41,7 @@ target_link_libraries(
   specfem_mpi
 )
 
+
 add_library(
   compare_arrays
   utilities/src/compare_array.cpp
@@ -63,6 +53,45 @@ target_link_libraries(
   io
 )
 
+add_executable(
+  io_framework_tests
+  io/io_framework_tests.cpp
+)
+
+target_link_libraries(io_framework_tests PRIVATE
+  io
+  ${BOOST_LIBS}
+  gtest_main
+  Kokkos::kokkos
+  kokkos_environment
+)
+
+if (NOT SPECFEM_ENABLE_HDF5)
+    target_compile_definitions(
+        io_framework_tests
+        PUBLIC -DNO_HDF5
+    )
+endif()
+
+if (NOT SPECFEM_ENABLE_ADIOS2)
+    target_compile_definitions(
+        io_framework_tests
+        PUBLIC -DNO_ADIOS2
+    )
+endif()
+
+
+add_executable(
+  is_close_tests
+  utilities/is_close_tests.cpp
+)
+
+target_link_libraries(
+  is_close_tests
+  utilities
+  gtest_main
+  Kokkos::kokkos
+)
 
 add_executable(
   gll_tests
@@ -93,13 +122,20 @@ target_link_libraries(
 
 add_executable(
   jacobian_tests
-  jacobian/shape_functions2d.cpp
-  jacobian/shape_functions3d.cpp
+  jacobian/jacobian_tests.cpp
+  jacobian/dim2/shape_functions_tests.cpp
+  jacobian/dim2/compute_locations_tests.cpp
+  jacobian/dim2/compute_jacobian_tests.cpp
+  jacobian/dim3/shape_functions_tests.cpp
+  jacobian/dim3/compute_locations_tests.cpp
+  jacobian/dim3/compute_jacobian_tests.cpp
 )
 
 target_link_libraries(
   jacobian_tests
   jacobian
+  mpi_environment
+  kokkos_environment
   gtest_main
   -lpthread -lm
 )
@@ -289,6 +325,10 @@ add_executable(
   assembly/sources/sources.cpp
   assembly/check_jacobian/check_jacobian.cpp
   assembly/locate/locate_point.cpp
+  assembly/mesh/utilities.cpp
+  assembly/sources/locate_sources.cpp
+  assembly/compute_source_array/compute_source_array_from_vector.cpp
+  assembly/compute_source_array/compute_source_array_from_tensor.cpp
 )
 
 target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
@@ -344,6 +384,42 @@ target_link_libraries(
 )
 
 add_executable(
+  locate_point_impl_2d
+  algorithms/dim2/locate_point_impl.cpp
+)
+
+target_link_libraries(
+  locate_point_impl_2d
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  jacobian
+  point
+  ${GTEST_BOTH_LIBRARIES}
+)
+
+add_executable(
+  locate_point_impl_3d
+  algorithms/dim3/locate_point_impl.cpp
+)
+
+target_link_libraries(
+  locate_point_impl_3d
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  jacobian
+  point
+  ${GTEST_BOTH_LIBRARIES}
+)
+
+add_executable(
   policies_tests
   policies/policies.cpp
 )
@@ -390,6 +466,27 @@ target_link_libraries(
   gtest_main
 )
 
+add_executable(
+  source_class_tests
+  source/source.cpp
+  source/base_source_tests.cpp
+  source/typed_source_tests.cpp
+  # source/dim2/vector_sources/force_source.cpp
+  # source/dim2/vector_sources/cosserat_force_source.cpp
+  # source/dim2/vector_sources/adjoint_source.cpp
+  # source/dim2/vector_sources/external_source.cpp
+  # source/dim2/tensor_sources/moment_tensor_source.cpp
+  # source/dim3/vector_sources/force_source.cpp
+  # source/dim3/tensor_sources/moment_tensor_source.cpp
+)
+target_link_libraries(
+  source_class_tests
+  source_class
+  source_time_function
+  mpi_environment
+  kokkos_environment
+  -lpthread -lm
+)
 
 # # add_executable(
 # #   source_location_tests
@@ -408,29 +505,6 @@ target_link_libraries(
 # #   source_class
 # #   -lpthread -lm
 # # )
-
-add_executable(
-  rmass_inverse_tests
-  domain/rmass_inverse_tests.cpp
-)
-
-target_link_libraries(
-  rmass_inverse_tests
-  quadrature
-  mesh
-  # material_class
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  assembly
-  parameter_reader
-  compare_arrays
-  point
-  algorithms
-  io
-  coupled_interface
-  -lpthread -lm
-)
 
 add_executable(
   displacement_newmark_tests
@@ -541,20 +615,27 @@ if (NOT MPI_PARALLEL)
     fortranio_test
     gll_tests
     interpolate_function
+    io_framework_tests
     io_tests
+    is_close_tests
     jacobian_tests
     lagrange_tests
+    locate_point_impl_2d
+    locate_point_impl_3d
     mass_matrix_tests
     mesh_tests
     point_tests
     policies_tests
     receivers_tests
-    rmass_inverse_tests
     simd_tests
+    source_class_tests
     stress_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
-      gtest_discover_tests(${test_target})
+      gtest_discover_tests(${test_target}
+        DISCOVERY_MODE POST_BUILD
+        DISCOVERY_TIMEOUT 300
+      )
   endforeach()
 
   # For tests that require data files from the tests directory,
@@ -580,8 +661,6 @@ if (NOT MPI_PARALLEL)
           ${CMAKE_CURRENT_BINARY_DIR}/${dir_name}
           SYMBOLIC)
   endforeach()
-
-
 
 
   # gtest_discover_tests(seismogram_elastic_tests)

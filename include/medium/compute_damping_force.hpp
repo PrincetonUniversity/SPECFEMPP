@@ -33,14 +33,7 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::true_type) {
           specfem::data_access::is_field<PointAccelerationType>::value,
       "acceleration is not a point field type");
 
-  static_assert(PointVelocityType::store_velocity,
-                "velocity must store velocity");
-
-  static_assert(PointAccelerationType::store_acceleration,
-                "acceleration must store acceleration");
-
   static_assert(PointPropertiesType::dimension_tag ==
-
                     PointVelocityType::dimension_tag,
                 "point_properties and velocity have different dimensions");
 
