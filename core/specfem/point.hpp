@@ -7,6 +7,7 @@
 #include "point/displacement.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/index.hpp"
+#include "point/interface_index.hpp"
 #include "point/jacobian_matrix.hpp"
 #include "point/kernels.hpp"
 #include "point/mapped_index.hpp"

@@ -358,6 +358,15 @@ public:
                           ///< specfem::execution::for_each_level
   using execution_space =
       typename base_type::execution_space; ///< Execution space type.
+  using base_index_type = specfem::point::index<
+      ParallelConfig::dimension,
+      ParallelConfig::simd::using_simd>; ///< Index type
+                                         ///< to be used
+                                         ///< when calling
+                                         ///< @ref
+                                         ///< specfem::execution::for_all
+                                         ///< with this
+                                         ///< iterator.
 
   /**
    * @brief Construct a new Chunked Domain Iterator object
