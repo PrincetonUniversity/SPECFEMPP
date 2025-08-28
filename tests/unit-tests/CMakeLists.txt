@@ -487,11 +487,14 @@ target_link_libraries(
 
 add_executable(
   stress_tests
+  # 2D stress tests
   stress/dim2/acoustic.cpp
   stress/dim2/elastic_isotropic.cpp
   stress/dim2/elastic_anisotropic.cpp
   stress/dim2/elastic_isotropic_cosserat.cpp
   stress/dim2/poroelastic_isotropic.cpp
+  # 3D stress tests
+  stress/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
