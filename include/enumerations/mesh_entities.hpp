@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <list>
 
@@ -123,5 +124,20 @@ std::list<type> edges_of_corner(const type &corner);
  * @throws std::runtime_error if the input is not a valid edge type.
  */
 std::list<type> corners_of_edge(const type &edge);
+
+struct edge {
+  specfem::mesh_entity::type edge_type;
+  int ispec;
+  bool reverse_orientation;
+
+  KOKKOS_INLINE_FUNCTION
+  edge(const int ispec, const specfem::mesh_entity::type edge_type,
+       const bool reverse_orientation = false)
+      : edge_type(edge_type), ispec(ispec),
+        reverse_orientation(reverse_orientation) {}
+
+  KOKKOS_INLINE_FUNCTION
+  edge() = default;
+};
 
 } // namespace specfem::mesh_entity
