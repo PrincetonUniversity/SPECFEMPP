@@ -1,15 +1,13 @@
-#include "specfem/assembly/mesh/dim2/impl/utilities.hpp"
-#include "kokkos_abstractions.h"
-#include "parallel_configuration/chunk_config.hpp"
-#include "test_macros.hpp"
+#include "../test_macros.hpp"
+#include "mapping.hpp"
 #include "utilities/utilities.hpp"
 #include <gtest/gtest.h>
 #include <set>
 #include <vector>
 
-using namespace specfem::assembly::mesh_impl::dim2;
+using namespace specfem::test::mesh_utilities;
 
-class MeshUtilitiesTest : public ::testing::Test {
+class TestMeshUtilitiesTest : public ::testing::Test {
 protected:
   void SetUp() override {
     // Initialize Kokkos if not already done
@@ -23,13 +21,13 @@ protected:
   }
 
   // Helper to create 4D coordinate array
-  specfem::kokkos::HostView4d<double>
+  HostView4d
   create_coordinates(const std::vector<std::vector<std::pair<double, double> > >
                          &element_coords) {
     int nspec = element_coords.size();
     int ngll = std::sqrt(element_coords[0].size());
 
-    specfem::kokkos::HostView4d<double> coords("coords", nspec, ngll, ngll, 2);
+    HostView4d coords("coords", nspec, ngll, ngll, 2);
 
     for (int ispec = 0; ispec < nspec; ispec++) {
       int idx = 0;
@@ -45,7 +43,7 @@ protected:
   }
 };
 
-class MeshNumberingTests : public MeshUtilitiesTest {
+class TestMeshNumberingTests : public TestMeshUtilitiesTest {
 protected:
   // Helper to create unit square coordinates
   std::vector<std::vector<std::pair<double, double> > >
@@ -124,7 +122,7 @@ protected:
 };
 
 // Test flatten_coordinates function
-TEST_F(MeshNumberingTests, FlattenCoordinatesUnitSquare) {
+TEST_F(TestMeshNumberingTests, FlattenCoordinatesUnitSquare) {
   auto coords = create_coordinates(unit_square_2x2);
   auto flattened = flatten_coordinates(coords);
 
@@ -140,7 +138,7 @@ TEST_F(MeshNumberingTests, FlattenCoordinatesUnitSquare) {
   EXPECT_EQ(flattened[3].iloc, 3);
 }
 
-TEST_F(MeshNumberingTests, FlattenCoordinatesMultipleElements) {
+TEST_F(TestMeshNumberingTests, FlattenCoordinatesMultipleElements) {
   auto coords = create_coordinates(two_adjacent_squares_2x2);
   auto flattened = flatten_coordinates(coords);
 
@@ -160,7 +158,7 @@ TEST_F(MeshNumberingTests, FlattenCoordinatesMultipleElements) {
 }
 
 // Test flatten_coordinates with 5x5 GLL points
-TEST_F(MeshNumberingTests, FlattenCoordinatesUnitSquare5x5) {
+TEST_F(TestMeshNumberingTests, FlattenCoordinatesUnitSquare5x5) {
   auto coords = create_coordinates(unit_square_5x5);
   auto flattened = flatten_coordinates(coords);
 
@@ -181,7 +179,7 @@ TEST_F(MeshNumberingTests, FlattenCoordinatesUnitSquare5x5) {
   EXPECT_EQ(flattened[12].iloc, 12);
 }
 
-TEST_F(MeshNumberingTests, FlattenCoordinatesMultipleElements5x5) {
+TEST_F(TestMeshNumberingTests, FlattenCoordinatesMultipleElements5x5) {
   auto coords = create_coordinates(two_adjacent_squares_5x5);
   auto flattened = flatten_coordinates(coords);
 
@@ -201,7 +199,7 @@ TEST_F(MeshNumberingTests, FlattenCoordinatesMultipleElements5x5) {
 }
 
 // Test spatial sorting
-TEST_F(MeshNumberingTests, SortPointsSpatiallyUnitSquare) {
+TEST_F(TestMeshNumberingTests, SortPointsSpatiallyUnitSquare) {
   auto coords = create_coordinates(unit_square_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -223,7 +221,7 @@ TEST_F(MeshNumberingTests, SortPointsSpatiallyUnitSquare) {
 }
 
 // Test tolerance calculation
-TEST_F(MeshNumberingTests, ComputeSpatialToleranceUnitSquare) {
+TEST_F(TestMeshNumberingTests, ComputeSpatialToleranceUnitSquare) {
   auto coords = create_coordinates(unit_square_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -234,7 +232,7 @@ TEST_F(MeshNumberingTests, ComputeSpatialToleranceUnitSquare) {
       << expected_got(2e-6, tolerance);
 }
 
-TEST_F(MeshNumberingTests, ComputeSpatialToleranceSheared) {
+TEST_F(TestMeshNumberingTests, ComputeSpatialToleranceSheared) {
   auto coords = create_coordinates(sheared_element_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -246,7 +244,7 @@ TEST_F(MeshNumberingTests, ComputeSpatialToleranceSheared) {
 }
 
 // Test global numbering assignment
-TEST_F(MeshNumberingTests, AssignGlobalNumberingUnitSquare) {
+TEST_F(TestMeshNumberingTests, AssignGlobalNumberingUnitSquare) {
   auto coords = create_coordinates(unit_square_2x2);
   auto points = flatten_coordinates(coords);
   sort_points_spatially(points);
@@ -264,7 +262,7 @@ TEST_F(MeshNumberingTests, AssignGlobalNumberingUnitSquare) {
   EXPECT_EQ(points[3].iglob, 3);
 }
 
-TEST_F(MeshNumberingTests, AssignGlobalNumberingSharedPoints) {
+TEST_F(TestMeshNumberingTests, AssignGlobalNumberingSharedPoints) {
   auto coords = create_coordinates(two_adjacent_squares_2x2);
   auto points = flatten_coordinates(coords);
   sort_points_spatially(points);
@@ -291,7 +289,7 @@ TEST_F(MeshNumberingTests, AssignGlobalNumberingSharedPoints) {
 }
 
 // Critical test: Shared points with 5x5 GLL points
-TEST_F(MeshNumberingTests, AssignGlobalNumberingSharedPoints5x5) {
+TEST_F(TestMeshNumberingTests, AssignGlobalNumberingSharedPoints5x5) {
   auto coords = create_coordinates(two_adjacent_squares_5x5);
   auto points = flatten_coordinates(coords);
   sort_points_spatially(points);
@@ -322,7 +320,7 @@ TEST_F(MeshNumberingTests, AssignGlobalNumberingSharedPoints5x5) {
   EXPECT_EQ(shared_pairs, 5); // Five shared points along edge
 }
 
-TEST_F(MeshNumberingTests, AssignGlobalNumberingGrid2x2) {
+TEST_F(TestMeshNumberingTests, AssignGlobalNumberingGrid2x2) {
   auto coords = create_coordinates(grid_2x2_elements_2x2);
   auto points = flatten_coordinates(coords);
   sort_points_spatially(points);
@@ -335,7 +333,7 @@ TEST_F(MeshNumberingTests, AssignGlobalNumberingGrid2x2) {
 }
 
 // Test point reordering
-TEST_F(MeshNumberingTests, ReorderToOriginalLayout) {
+TEST_F(TestMeshNumberingTests, ReorderToOriginalLayout) {
   auto coords = create_coordinates(unit_square_2x2);
   auto points = flatten_coordinates(coords);
   auto original_order = points;
@@ -359,7 +357,7 @@ TEST_F(MeshNumberingTests, ReorderToOriginalLayout) {
 }
 
 // Test bounding box calculation
-TEST_F(MeshNumberingTests, ComputeBoundingBoxUnitSquare) {
+TEST_F(TestMeshNumberingTests, ComputeBoundingBoxUnitSquare) {
   auto coords = create_coordinates(unit_square_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -371,7 +369,7 @@ TEST_F(MeshNumberingTests, ComputeBoundingBoxUnitSquare) {
   EXPECT_DOUBLE_EQ(bbox.zmax, 1.0);
 }
 
-TEST_F(MeshNumberingTests, ComputeBoundingBoxSheared) {
+TEST_F(TestMeshNumberingTests, ComputeBoundingBoxSheared) {
   auto coords = create_coordinates(sheared_element_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -383,7 +381,7 @@ TEST_F(MeshNumberingTests, ComputeBoundingBoxSheared) {
   EXPECT_DOUBLE_EQ(bbox.zmax, 2.0);
 }
 
-TEST_F(MeshNumberingTests, ComputeBoundingBoxGrid) {
+TEST_F(TestMeshNumberingTests, ComputeBoundingBoxGrid) {
   auto coords = create_coordinates(grid_2x2_elements_2x2);
   auto points = flatten_coordinates(coords);
 
@@ -396,7 +394,7 @@ TEST_F(MeshNumberingTests, ComputeBoundingBoxGrid) {
 }
 
 // Integration test for full workflow - tests complete utility pipeline
-TEST_F(MeshNumberingTests, FullWorkflowIntegration) {
+TEST_F(TestMeshNumberingTests, FullWorkflowIntegration) {
   auto coords = create_coordinates(two_adjacent_squares_2x2);
   int nspec = 2;
   int ngll = 2;
@@ -445,7 +443,7 @@ TEST_F(MeshNumberingTests, FullWorkflowIntegration) {
 }
 
 // Integration test for 5x5 GLL points - critical for spectral elements
-TEST_F(MeshNumberingTests, FullWorkflowIntegration5x5) {
+TEST_F(TestMeshNumberingTests, FullWorkflowIntegration5x5) {
   auto coords = create_coordinates(two_adjacent_squares_5x5);
   int nspec = 2;
   int ngll = 5;
@@ -520,8 +518,8 @@ TEST_F(MeshNumberingTests, FullWorkflowIntegration5x5) {
 }
 
 // Test edge cases and error conditions
-TEST_F(MeshNumberingTests, EdgeCaseEmptyPoints) {
-  std::vector<point> empty_points;
+TEST_F(TestMeshNumberingTests, EdgeCaseEmptyPoints) {
+  std::vector<point_2d> empty_points;
 
   // Empty points should return 0 global points
   type_real tolerance = 1e-6;
@@ -534,8 +532,8 @@ TEST_F(MeshNumberingTests, EdgeCaseEmptyPoints) {
   EXPECT_EQ(bbox.xmax, std::numeric_limits<type_real>::min());
 }
 
-TEST_F(MeshNumberingTests, EdgeCaseSinglePoint) {
-  std::vector<point> single_point = { { 1.0, 2.0, 0, 0 } };
+TEST_F(TestMeshNumberingTests, EdgeCaseSinglePoint) {
+  std::vector<point_2d> single_point = { { 1.0, 2.0, 0, 0 } };
 
   type_real tolerance = 1e-6;
   int nglob = assign_global_numbering(single_point, tolerance);
@@ -549,10 +547,10 @@ TEST_F(MeshNumberingTests, EdgeCaseSinglePoint) {
   EXPECT_DOUBLE_EQ(bbox.zmax, 2.0);
 }
 
-TEST_F(MeshNumberingTests, EdgeCaseIdenticalPoints) {
-  std::vector<point> identical_points = { { 1.0, 2.0, 0, 0 },
-                                          { 1.0, 2.0, 1, 0 },
-                                          { 1.0, 2.0, 2, 0 } };
+TEST_F(TestMeshNumberingTests, EdgeCaseIdenticalPoints) {
+  std::vector<point_2d> identical_points = { { 1.0, 2.0, 0, 0 },
+                                             { 1.0, 2.0, 1, 0 },
+                                             { 1.0, 2.0, 2, 0 } };
 
   sort_points_spatially(identical_points);
 
@@ -564,4 +562,281 @@ TEST_F(MeshNumberingTests, EdgeCaseIdenticalPoints) {
   for (const auto &p : identical_points) {
     EXPECT_EQ(p.iglob, 0);
   }
+}
+
+//-------------------------- create_coordinate_arrays Tests
+//----------------------//
+
+// Test create_coordinate_arrays with simple 2D single element
+TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysSingleElement2D) {
+  // Create a simple single element with 2x2 GLL points
+  std::vector<std::vector<std::pair<double, double> > > element_coords = {
+    { { 0.0, 0.0 }, { 1.0, 0.0 }, { 0.0, 1.0 }, { 1.0, 1.0 } } // Single unit
+                                                               // square element
+  };
+
+  auto coords = create_coordinates(element_coords);
+  auto points = flatten_coordinates(coords);
+
+  // Process points through the mapping pipeline
+  sort_points_spatially(points);
+  int nglob = assign_global_numbering(points, 1e-6);
+  auto reordered_points = reorder_to_original_layout(points);
+
+  // Test create_coordinate_arrays
+  int nspec = 1;
+  int ngll = 2;
+
+  auto [index_mapping, coord, actual_nglob] =
+      create_coordinate_arrays(reordered_points, nspec, ngll, nglob);
+
+  // Verify dimensions
+  EXPECT_EQ(index_mapping.extent(0), nspec);
+  EXPECT_EQ(index_mapping.extent(1), ngll);
+  EXPECT_EQ(index_mapping.extent(2), ngll);
+
+  EXPECT_EQ(coord.extent(0), 2); // 2 coordinates (x, z)
+  EXPECT_EQ(coord.extent(1), nspec);
+  EXPECT_EQ(coord.extent(2), ngll);
+  EXPECT_EQ(coord.extent(3), ngll);
+
+  EXPECT_EQ(actual_nglob, nglob);
+  EXPECT_EQ(actual_nglob, 4); // 4 unique points for single element
+
+  // Verify coordinate values
+  EXPECT_EQ(coord(0, 0, 0, 0), 0.0); // x-coord at (0,0)
+  EXPECT_EQ(coord(1, 0, 0, 0), 0.0); // z-coord at (0,0)
+
+  EXPECT_EQ(coord(0, 0, 0, 1), 1.0); // x-coord at (0,1)
+  EXPECT_EQ(coord(1, 0, 0, 1), 0.0); // z-coord at (0,1)
+
+  EXPECT_EQ(coord(0, 0, 1, 0), 0.0); // x-coord at (1,0)
+  EXPECT_EQ(coord(1, 0, 1, 0), 1.0); // z-coord at (1,0)
+
+  EXPECT_EQ(coord(0, 0, 1, 1), 1.0); // x-coord at (1,1)
+  EXPECT_EQ(coord(1, 0, 1, 1), 1.0); // z-coord at (1,1)
+
+  // Verify all global indices are unique for single element
+  std::set<int> unique_indices;
+  for (int iz = 0; iz < ngll; iz++) {
+    for (int ix = 0; ix < ngll; ix++) {
+      unique_indices.insert(index_mapping(0, iz, ix));
+    }
+  }
+  EXPECT_EQ(unique_indices.size(), 4);
+}
+
+// Test create_coordinate_arrays with two adjacent elements
+TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysTwoAdjacentElements2D) {
+  // Create two adjacent elements sharing an edge
+  std::vector<std::vector<std::pair<double, double> > > element_coords = {
+    { { 0.0, 0.0 }, { 0.5, 0.0 }, { 0.0, 0.5 }, { 0.5, 0.5 } }, // Left element
+    { { 0.5, 0.0 }, { 1.0, 0.0 }, { 0.5, 0.5 }, { 1.0, 0.5 } }  // Right element
+  };
+
+  auto coords = create_coordinates(element_coords);
+  auto points = flatten_coordinates(coords);
+
+  // Process points
+  sort_points_spatially(points);
+  int nglob = assign_global_numbering(points, 1e-6);
+  auto reordered_points = reorder_to_original_layout(points);
+
+  // Test create_coordinate_arrays
+  int nspec = 2;
+  int ngll = 2;
+
+  auto [index_mapping, coord, actual_nglob] =
+      create_coordinate_arrays(reordered_points, nspec, ngll, nglob);
+
+  // Verify dimensions
+  EXPECT_EQ(index_mapping.extent(0), nspec);
+  EXPECT_EQ(index_mapping.extent(1), ngll);
+  EXPECT_EQ(index_mapping.extent(2), ngll);
+
+  EXPECT_EQ(coord.extent(0), 2);
+  EXPECT_EQ(coord.extent(1), nspec);
+  EXPECT_EQ(coord.extent(2), ngll);
+  EXPECT_EQ(coord.extent(3), ngll);
+
+  EXPECT_EQ(actual_nglob, nglob);
+
+  // Should have 6 unique points (8 total - 2 shared on edge)
+  EXPECT_EQ(nglob, 6);
+
+  // Check that adjacent elements share edge points
+  EXPECT_EQ(index_mapping(0, 0, 1), index_mapping(1, 0, 0)); // Point (0.5, 0.0)
+  EXPECT_EQ(index_mapping(0, 1, 1), index_mapping(1, 1, 0)); // Point (0.5, 0.5)
+
+  // Verify coordinate values for shared points
+  int shared_idx1 = index_mapping(0, 0, 1);
+  int shared_idx2 = index_mapping(0, 1, 1);
+
+  // Find coordinates of shared points by checking both elements
+  type_real x1_elem0 = coord(0, 0, 0, 1);
+  type_real z1_elem0 = coord(1, 0, 0, 1);
+  type_real x1_elem1 = coord(0, 1, 0, 0);
+  type_real z1_elem1 = coord(1, 1, 0, 0);
+
+  EXPECT_NEAR(x1_elem0, x1_elem1, 1e-12); // Should be same x coordinate
+  EXPECT_NEAR(z1_elem0, z1_elem1, 1e-12); // Should be same z coordinate
+  EXPECT_NEAR(x1_elem0, 0.5, 1e-12);      // Should be at x=0.5
+}
+
+// Test create_coordinate_arrays with higher order elements (3x3 GLL points)
+TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysHigherOrder2D) {
+  // Create single element with 3x3 GLL points
+  std::vector<std::vector<std::pair<double, double> > > element_coords = { {
+      { 0.0, 0.0 },
+      { 0.5, 0.0 },
+      { 1.0, 0.0 }, // Bottom row
+      { 0.0, 0.5 },
+      { 0.5, 0.5 },
+      { 1.0, 0.5 }, // Middle row
+      { 0.0, 1.0 },
+      { 0.5, 1.0 },
+      { 1.0, 1.0 } // Top row
+  } };
+
+  auto coords = create_coordinates(element_coords);
+  auto points = flatten_coordinates(coords);
+
+  sort_points_spatially(points);
+  int nglob = assign_global_numbering(points, 1e-6);
+  auto reordered_points = reorder_to_original_layout(points);
+
+  int nspec = 1;
+  int ngll = 3;
+
+  auto [index_mapping, coord, actual_nglob] =
+      create_coordinate_arrays(reordered_points, nspec, ngll, nglob);
+
+  // Verify dimensions
+  EXPECT_EQ(index_mapping.extent(0), nspec);
+  EXPECT_EQ(index_mapping.extent(1), ngll);
+  EXPECT_EQ(index_mapping.extent(2), ngll);
+
+  EXPECT_EQ(coord.extent(0), 2);
+  EXPECT_EQ(coord.extent(1), nspec);
+  EXPECT_EQ(coord.extent(2), ngll);
+  EXPECT_EQ(coord.extent(3), ngll);
+
+  EXPECT_EQ(actual_nglob, nglob);
+  EXPECT_EQ(actual_nglob, 9); // All 9 points should be unique
+
+  // Check corner coordinates
+  EXPECT_EQ(coord(0, 0, 0, 0), 0.0); // Bottom-left x
+  EXPECT_EQ(coord(1, 0, 0, 0), 0.0); // Bottom-left z
+
+  EXPECT_EQ(coord(0, 0, 0, 2), 1.0); // Bottom-right x
+  EXPECT_EQ(coord(1, 0, 0, 2), 0.0); // Bottom-right z
+
+  EXPECT_EQ(coord(0, 0, 2, 0), 0.0); // Top-left x
+  EXPECT_EQ(coord(1, 0, 2, 0), 1.0); // Top-left z
+
+  EXPECT_EQ(coord(0, 0, 2, 2), 1.0); // Top-right x
+  EXPECT_EQ(coord(1, 0, 2, 2), 1.0); // Top-right z
+
+  // Check center point
+  EXPECT_EQ(coord(0, 0, 1, 1), 0.5); // Center x
+  EXPECT_EQ(coord(1, 0, 1, 1), 0.5); // Center z
+}
+
+// Test create_coordinate_arrays layout consistency
+TEST_F(TestMeshUtilitiesTest, CreateCoordinateArraysLayoutConsistency2D) {
+  std::vector<std::vector<std::pair<double, double> > > element_coords = {
+    { { 0.0, 0.0 }, { 1.0, 0.0 }, { 0.0, 1.0 }, { 1.0, 1.0 } }
+  };
+
+  auto coords = create_coordinates(element_coords);
+  auto points = flatten_coordinates(coords);
+
+  sort_points_spatially(points);
+  int nglob = assign_global_numbering(points, 1e-6);
+  auto reordered_points = reorder_to_original_layout(points);
+
+  int nspec = 1;
+  int ngll = 2;
+
+  auto [index_mapping, coord, actual_nglob] =
+      create_coordinate_arrays(reordered_points, nspec, ngll, nglob);
+
+  // Test coordinate access pattern (should not throw)
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int iz = 0; iz < ngll; iz++) {
+      for (int ix = 0; ix < ngll; ix++) {
+        type_real x = coord(0, ispec, iz, ix);
+        type_real z = coord(1, ispec, iz, ix);
+
+        // Verify coordinates are reasonable
+        EXPECT_GE(x, 0.0);
+        EXPECT_LE(x, 1.0);
+        EXPECT_GE(z, 0.0);
+        EXPECT_LE(z, 1.0);
+      }
+    }
+  }
+}
+
+// Test create_coordinate_arrays with 2x2 grid of elements
+TEST_F(TestMeshUtilitiesTest, CreateCoordinateArrays2x2Grid2D) {
+  // Create 4 elements in a 2x2 grid, each with 3x3 GLL points
+  std::vector<std::vector<std::pair<double, double> > > element_coords;
+
+  int ngll = 3;
+  for (int elem_row = 0; elem_row < 2; elem_row++) {
+    for (int elem_col = 0; elem_col < 2; elem_col++) {
+      std::vector<std::pair<double, double> > elem_points;
+
+      for (int iz = 0; iz < ngll; iz++) {
+        for (int ix = 0; ix < ngll; ix++) {
+          double x = elem_col + static_cast<double>(ix) / (ngll - 1);
+          double z = elem_row + static_cast<double>(iz) / (ngll - 1);
+          elem_points.push_back({ x, z });
+        }
+      }
+      element_coords.push_back(elem_points);
+    }
+  }
+
+  auto coords = create_coordinates(element_coords);
+  auto points = flatten_coordinates(coords);
+
+  sort_points_spatially(points);
+  int nglob = assign_global_numbering(points, 1e-6);
+  auto reordered_points = reorder_to_original_layout(points);
+
+  int nspec = 4;
+
+  auto [index_mapping, coord, actual_nglob] =
+      create_coordinate_arrays(reordered_points, nspec, ngll, nglob);
+
+  // Verify dimensions
+  EXPECT_EQ(index_mapping.extent(0), nspec);
+  EXPECT_EQ(index_mapping.extent(1), ngll);
+  EXPECT_EQ(index_mapping.extent(2), ngll);
+
+  EXPECT_EQ(actual_nglob, nglob);
+
+  // For a 2x2 grid of 3x3 elements, total unique points should be:
+  // (2*(3-1)+1) * (2*(3-1)+1) = 5 * 5 = 25
+  EXPECT_EQ(nglob, 25);
+
+  // Check that adjacent elements share edges
+  // Elements 0 and 1 should share their right/left edge
+  for (int iz = 0; iz < ngll; iz++) {
+    EXPECT_EQ(index_mapping(0, iz, ngll - 1), index_mapping(1, iz, 0));
+  }
+
+  // Elements 0 and 2 should share their top/bottom edge
+  for (int ix = 0; ix < ngll; ix++) {
+    EXPECT_EQ(index_mapping(0, ngll - 1, ix), index_mapping(2, 0, ix));
+  }
+
+  // All 4 elements should share the center corner point
+  EXPECT_EQ(index_mapping(0, ngll - 1, ngll - 1),
+            index_mapping(1, ngll - 1, 0));
+  EXPECT_EQ(index_mapping(0, ngll - 1, ngll - 1),
+            index_mapping(2, 0, ngll - 1));
+  EXPECT_EQ(index_mapping(0, ngll - 1, ngll - 1), index_mapping(3, 0, 0));
 }
