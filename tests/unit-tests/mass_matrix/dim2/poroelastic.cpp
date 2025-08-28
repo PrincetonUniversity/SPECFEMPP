@@ -15,8 +15,7 @@ TEST(MassMatrix, PoroelasticIsotropic2DZeroPorosity) {
   using PointPropertiesType =
       specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointMassMatrixType =
-      specfem::point::field<dimension, medium_tag, false, false, false, true,
-                            false>;
+      specfem::point::mass_inverse<dimension, medium_tag, false>;
 
   const type_real rho_s = 2.0;
   const type_real phi = 0.0;
@@ -54,8 +53,7 @@ TEST(MassMatrix, PoroelasticIsotropic2D) {
   using PointPropertiesType =
       specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointMassMatrixType =
-      specfem::point::field<dimension, medium_tag, false, false, false, true,
-                            false>;
+      specfem::point::mass_inverse<dimension, medium_tag, false>;
 
   const type_real rho_s = 2.0;
   const type_real phi = 0.5;

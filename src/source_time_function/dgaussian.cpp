@@ -92,17 +92,16 @@ bool specfem::forcing_function::dGaussian::operator==(
   if (!other_dgaussian)
     return false;
 
-  return (
-      specfem::utilities::almost_equal(this->__t0, other_dgaussian->get_t0()) &&
-      specfem::utilities::almost_equal(this->__dt, other_dgaussian->get_dt()) &&
-      specfem::utilities::almost_equal(this->__f0, other_dgaussian->get_f0()) &&
-      this->__nsteps == other_dgaussian->get_nsteps() &&
-      specfem::utilities::almost_equal(this->__tshift,
+  return (specfem::utilities::is_close(this->__t0, other_dgaussian->get_t0()) &&
+          specfem::utilities::is_close(this->__dt, other_dgaussian->get_dt()) &&
+          specfem::utilities::is_close(this->__f0, other_dgaussian->get_f0()) &&
+          this->__nsteps == other_dgaussian->get_nsteps() &&
+          specfem::utilities::is_close(this->__tshift,
                                        other_dgaussian->get_tshift()) &&
-      specfem::utilities::almost_equal(this->__factor,
+          specfem::utilities::is_close(this->__factor,
                                        other_dgaussian->get_factor()) &&
-      this->__use_trick_for_better_pressure ==
-          other_dgaussian->get_use_trick_for_better_pressure());
+          this->__use_trick_for_better_pressure ==
+              other_dgaussian->get_use_trick_for_better_pressure());
 }
 
 bool specfem::forcing_function::dGaussian::operator!=(

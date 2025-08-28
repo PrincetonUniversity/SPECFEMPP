@@ -44,7 +44,7 @@
 #endif // NDEBUG
 
 // if intel compiler
-#ifndef ENABLE_PROFILING
+#ifndef SPECFEM_ENABLE_PROFILING
 #ifdef __INTEL_COMPILER
 #define NOINLINE __declspec(noinline)
 #elif __GNUC__

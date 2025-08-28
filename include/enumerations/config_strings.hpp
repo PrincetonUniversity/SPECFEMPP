@@ -3,6 +3,7 @@
 // clang-format off
 #define CONFIG_STRINGS \
  ((hdf5, h5)) \
+ ((adios2, bp)) \
  ((ascii, txt)) \
  ((psv, p_sv, p-sv)) \
  ((sh)) \

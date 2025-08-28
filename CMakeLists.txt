@@ -3,17 +3,21 @@ cmake_minimum_required(VERSION 3.17.5)
 project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
 
 set(CMAKE_CXX_STANDARD 17)
-option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
-option(VTK_CXX_BUILD "Build VTK C++" ON)
-option(MPI_PARALLEL "MPI enabled" OFF)
-option(BUILD_TESTS "Tests included" OFF)
-option(ENABLE_SIMD "Enable SIMD" OFF)
-option(ENABLE_PROFILING "Enable profiling" OFF)
+
+# SPECFEM options
+option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" OFF)
+option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" OFF)
+option(SPECFEM_ENABLE_HDF5_FORCE_INSTALL "Force install HDF5 dependency if SPECFEM_ENABLE_HDF5 is ON even if system HDF5 is found" OFF)
+option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
+option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
+option(SPECFEM_BUILD_TESTS "Tests included" OFF)
+option(SPECFEM_ENABLE_SIMD "Enable SIMD" OFF)
+option(SPECFEM_ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(SPECFEM_INSTALL "Creates clean executable directory. Location Controlled by CMAKE_INSTALL_PREFIX" ON)
-option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
-option(BUILD_BENCHMARKS "Benchmarks included" ON)
-option(ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
+option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+option(SPECFEM_BUILD_BENCHMARKS "Benchmarks included" ON)
+option(SPECFEM_ENABLE_UNITY_BUILD "Enable unity build to speed up compilation" ON)
 
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
@@ -22,7 +26,6 @@ set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
 
 # Set my default CMAKE_INSTALL_PREFIX
-
 if (SPECFEM_INSTALL)
     if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_SOURCE_DIR}/bin")
@@ -39,11 +42,15 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/archive)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+
+# For the installation of dependencies
+include(FetchContent)
+
 # For external modules that need to be built suppress build output
 set(FETCHCONTENT_QUIET TRUE)
 
 # Enable unity build for faster compilation
-if(ENABLE_UNITY_BUILD)
+if(SPECFEM_ENABLE_UNITY_BUILD)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(STATUS "Unity build disabled for Debug build type.")
         set(CMAKE_UNITY_BUILD OFF)
@@ -84,49 +91,24 @@ else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message(STATUS "macOS not detected -- setting __APPLE__ FALSE")
 endif()
 
-if (DEFINED Kokkos_ENABLE_CUDA)
-    if (Kokkos_ENABLE_CUDA)
-        # message(STATUS "Setting CUDA variables")
-        set(Kokkos_ENABLE_CUDA_LAMBDA ON CACHE BOOL "Using CUDA Lambda by default")
-        set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON CACHE BOOL "Using CUDA Relocatable device by default")
-        set(Kokkos_ENABLE_CUDA_CONSTEXPR ON CACHE BOOL "Using CUDA Constexpr by default")
-    endif()
-endif()
-
-# For the installation of dependencies
-include(FetchContent)
-
 # Install Kokkos as a dependency
-# Set Kokkos options before fetching
-set(KOKKOS_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+include("${CMAKE_SOURCE_DIR}/cmake/kokkos.cmake")
 
-FetchContent_Declare(
-        kokkos
-        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-        URL https://github.com/kokkos/kokkos/archive/refs/tags/4.6.01.zip
-)
+# Install yaml-cpp as a dependency
+include("${CMAKE_SOURCE_DIR}/cmake/yaml.cmake")
 
-# Using this instead of FetchContent_MakeAvailable to be backwards compatible
-# with older CMake versions
-FetchContent_GetProperties(kokkos)
-if(NOT kokkos_POPULATED)
-  FetchContent_Populate(kokkos)
-  add_subdirectory(${kokkos_SOURCE_DIR} ${kokkos_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
+# Find or install boost library function
+include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 
-# Install yaml content
-FetchContent_Declare(
-        yaml
-        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-        GIT_TAG 2f86d13775d119edbb69af52e5f566fd65c6953b
-)
+# Find HDF5
+include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
 
-# Disable yaml-cpp installation
-set(YAML_CPP_BUILD_INSTALL OFF CACHE BOOL "Disable yaml-cpp installation" FORCE)
+# Find or install ADIOS2 library function
+include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 
-FetchContent_MakeAvailable(yaml)
-
-include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
+# Include VTK if available (MUST BE AFTER ADIOS2, VTK is smarter about finding
+# the pugixml dependency than ADIOS2)
+include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 
 
 if (VTK_CXX_BUILD)
@@ -222,23 +204,23 @@ else()
 endif()
 
 
-if (ENABLE_SIMD)
+if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
-    add_definitions(-DENABLE_SIMD)
+    add_definitions(-DSPECFEM_ENABLE_SIMD)
 endif()
 
-if (ENABLE_PROFILING)
+if (SPECFEM_ENABLE_PROFILING)
     message(STATUS "Enabling profiling")
-    add_definitions(-DENABLE_PROFILING)
+    add_definitions(-DSPECFEM_ENABLE_PROFILING)
 endif()
 
-if (ENABLE_DOUBLE_PRECISION)
+if (SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling double precision")
     set(TYPE_REAL "double")
-else(ENABLE_DOUBLE_PRECISION)
+else(SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling single precision")
     set(TYPE_REAL "float")
-endif(ENABLE_DOUBLE_PRECISION)
+endif(SPECFEM_ENABLE_DOUBLE_PRECISION)
 
 # Configure the setup headers
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
@@ -253,9 +235,17 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
 )
 
 # Add the include directories so that the generated files can be found
-include_directories(include)
 include_directories(core)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
+
+
+message(STATUS "INCLUDE DIRECTORIES:")
+message(STATUS "    core: ${CMAKE_CURRENT_SOURCE_DIR}/core")
+message(STATUS "    include: ${CMAKE_SOURCE_DIR}/include")
+message(STATUS "    binary: ${CMAKE_BINARY_DIR}/include")
+
+
 
 # Set loglevel to STATUS if build type is debug
 if (CMAKE_BUILD_TYPE MATCHES Release)
@@ -301,7 +291,8 @@ target_link_libraries(
 add_library(
         io
         src/io/fortranio/fortran_io.cpp
-        src/io/sources.cpp
+        src/io/sources/dim2/read_sources.cpp
+        src/io/sources/dim3/read_sources.cpp
         src/io/receivers.cpp
         # Fortran 2D part
         src/io/mesh/impl/fortran/dim2/mesh.cpp
@@ -320,30 +311,36 @@ add_library(
         src/io/mesh/impl/fortran/dim3/utilities.cpp
 )
 
-if (NOT HDF5_CXX_BUILD)
+target_link_libraries(
+        io
+        mesh
+        source_class
+        specfem::receivers
+        yaml-cpp
+        ${BOOST_LIBS}
+)
+
+if (NOT SPECFEM_ENABLE_HDF5)
     target_compile_definitions(
         io
         PUBLIC -DNO_HDF5
     )
-
-    target_link_libraries(
-        io
-        mesh
-        source_class
-        specfem::receivers
-        yaml-cpp
-        ${BOOST_LIBS}
-        Kokkos::kokkos)
 else()
     target_link_libraries(
         io
-        mesh
-        source_class
-        specfem::receivers
-        Kokkos::kokkos
-        yaml-cpp
-        ${BOOST_LIBS}
         ${HDF5_LIBRARIES}
+    )
+endif()
+
+if (NOT SPECFEM_ENABLE_ADIOS2)
+    target_compile_definitions(
+        io
+        PUBLIC -DNO_ADIOS2
+    )
+else()
+    target_link_libraries(
+        io
+        adios2
     )
 endif()
 
@@ -376,7 +373,7 @@ add_library(
         src/specfem_mpi/specfem_mpi.cpp
 )
 
-if (MPI_PARALLEL)
+if (SPECFEM_ENABLE_MPI)
         target_compile_definitions(
                 specfem_mpi
                 PUBLIC -DMPI_PARALLEL
@@ -384,7 +381,7 @@ if (MPI_PARALLEL)
         message(STATUS "Compiling SPECFEM with MPI")
 else()
         message(STATUS "Compiling SPECFEM without MPI")
-endif(MPI_PARALLEL)
+endif(SPECFEM_ENABLE_MPI)
 
 # add_library(
 #         material_class
@@ -415,7 +412,7 @@ add_library(
         # 3-D
         src/mesh/dim3/mesh.cpp
         src/mesh/dim3/boundaries/absorbing_boundary.cpp
-        src/mesh/dim3/boundaries/free_surface.cpp
+        src/mesh/dim3/boundaries/acoustic_free_surface.cpp
         src/mesh/dim3/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/dim3/element_types/element_types.cpp
         src/mesh/dim3/parameters/parameters.cpp
@@ -449,7 +446,6 @@ target_link_libraries(
         )
 
 add_library(utilities
-        src/utilities/utilities.cpp
         src/utilities/strings.cpp
 )
 
@@ -475,7 +471,10 @@ target_link_libraries(
 
 add_library(
         algorithms
-        src/algorithms/locate_point.cpp
+        src/algorithms/dim2/locate_point.cpp
+        src/algorithms/dim2/locate_point_impl.cpp
+        src/algorithms/dim3/locate_point.cpp
+        src/algorithms/dim3/locate_point_impl.cpp
 )
 
 target_link_libraries(
@@ -504,32 +503,6 @@ target_link_libraries(
 
 # Disable unity build for source_time_function due to KOKKOS_INLINE_FUNCTION issues
 set_target_properties(source_time_function PROPERTIES UNITY_BUILD OFF)
-
-
-
-add_library(
-        source_class
-        src/source/source.cpp
-        src/source/force_source.cpp
-        src/source/cosserat_force_source.cpp
-        src/source/moment_tensor_source.cpp
-        src/source/adjoint_source.cpp
-        src/source/external.cpp
-)
-
-target_link_libraries(
-        source_class
-        Kokkos::kokkos
-        specfem_mpi
-        utilities
-        quadrature
-        source_time_function
-        yaml-cpp
-        point
-        enumerations
-        algorithms
-        ${BOOST_LIBS}
-)
 
 
 add_library(coupled_interface
@@ -616,7 +589,7 @@ target_link_libraries(
         writer
 )
 
-if (NOT VTK_CXX_BUILD)
+if (NOT SPECFEM_ENABLE_VTK)
         target_compile_definitions(
                 periodic_tasks
                 PUBLIC -DNO_VTK
@@ -734,19 +707,19 @@ target_link_libraries(
 
 
 # Include tests
-if (BUILD_TESTS)
+if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
         add_subdirectory(tests/unit-tests)
 endif()
 
-if (BUILD_BENCHMARKS)
+if (SPECFEM_BUILD_BENCHMARKS)
     # Define option with default value
 
-    if(DEFINED BENCHMARKS_BUILD_DIR)
-        message(STATUS "BENCHMARKS_BUILD_DIR was defined as: ${BENCHMARKS_BUILD_DIR}")
+    if(DEFINED SPECFEM_BENCHMARKS_BUILD_DIR)
+        message(STATUS "SPECFEM_BENCHMARKS_BUILD_DIR was defined as: ${SPECFEM_BENCHMARKS_BUILD_DIR}")
     else()
-        set(BENCHMARKS_BUILD_DIR ${CMAKE_SOURCE_DIR}/benchmarks/build)
-        message(STATUS "BENCHMARKS_BUILD_DIR was not defined, using default: ${BENCHMARKS_BUILD_DIR}")
+        set(SPECFEM_BENCHMARKS_BUILD_DIR ${CMAKE_SOURCE_DIR}/benchmarks/build)
+        message(STATUS "SPECFEM_BENCHMARKS_BUILD_DIR was not defined, using default: ${SPECFEM_BENCHMARKS_BUILD_DIR}")
     endif()
 
     # Create the benchmarks build directory if it does not exist
@@ -755,32 +728,9 @@ if (BUILD_BENCHMARKS)
     message(STATUS "Benchmarks built.")
 endif()
 
-# Doxygen
 
-# look for Doxygen package
-find_package(Doxygen)
-
-if (DOXYGEN_FOUND)
-    # set input and output files
-    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile.in)
-    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.out)
-
-    # request to configure the file
-    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-    message(STATUS "Doxygen build started")
-    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
-        ${DOXYGEN_OUT}
-    )
-
-    # Note: do not put "ALL" - this builds docs together with application EVERY TIME!
-    add_custom_target( docs
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM )
-else (DOXYGEN_FOUND)
-  message(STATUS "Doxygen need to be installed to generate the doxygen documentation")
-endif (DOXYGEN_FOUND)
+# Include Doxygen
+include("${CMAKE_SOURCE_DIR}/cmake/doxygen.cmake")
 
 if (SPECFEMPP_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})
     install(TARGETS specfem2d DESTINATION ${SKBUILD_SCRIPTS_DIR})

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -19,7 +20,12 @@ template <bool using_simd = false> struct assembly_index;
  * quadrature point within the mesh.
  *
  */
-template <> struct assembly_index<false> {
+template <>
+struct assembly_index<false>
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::assembly_index,
+          specfem::dimension::type::dim2, false> {
   int iglob; ///< Global index number of the quadrature point
 
   /**
@@ -52,7 +58,12 @@ template <> struct assembly_index<false> {
  * using SIMD instructions.
  *
  */
-template <> struct assembly_index<true> {
+template <>
+struct assembly_index<true>
+    : public specfem::data_access::Accessor<
+          specfem::data_access::AccessorType::point,
+          specfem::data_access::DataClassType::assembly_index,
+          specfem::dimension::type::dim2, true> {
   int number_points; ///< Number of points in the SIMD vector
   int iglob;         ///< Global index number of the quadrature point
 

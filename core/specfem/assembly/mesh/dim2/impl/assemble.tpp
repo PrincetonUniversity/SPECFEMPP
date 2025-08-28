@@ -289,4 +289,6 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
       }
     }
   }
+
+  this->nglob = iglob;
 }

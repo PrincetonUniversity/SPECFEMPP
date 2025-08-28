@@ -23,23 +23,23 @@ KOKKOS_FUNCTION void impl_compute_damping_force(
   // viscous damping
   const auto viscx =
       factor * ((point_properties.eta_f() * point_properties.inverse_permxx() *
-                 velocity.velocity(2)) +
+                 velocity(2)) +
                 (point_properties.eta_f() * point_properties.inverse_permxz() *
-                 velocity.velocity(3)));
+                 velocity(3)));
 
   const auto viscz =
       factor * ((point_properties.eta_f() * point_properties.inverse_permxz() *
-                 velocity.velocity(2)) +
+                 velocity(2)) +
                 (point_properties.eta_f() * point_properties.inverse_permzz() *
-                 velocity.velocity(3)));
+                 velocity(3)));
 
-  acceleration.acceleration(0) +=
+  acceleration(0) +=
       point_properties.phi() / point_properties.tortuosity() * viscx;
-  acceleration.acceleration(1) +=
+  acceleration(1) +=
       point_properties.phi() / point_properties.tortuosity() * viscz;
 
-  acceleration.acceleration(2) -= viscx;
-  acceleration.acceleration(3) -= viscz;
+  acceleration(2) -= viscx;
+  acceleration(3) -= viscz;
 }
 } // namespace medium
 } // namespace specfem

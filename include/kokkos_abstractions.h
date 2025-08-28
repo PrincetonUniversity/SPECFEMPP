@@ -176,6 +176,7 @@ using DeviceView4d = Kokkos::View<T ****, L, DevMemSpace, Args...>;
  */
 template <typename T, typename L = LayoutWrapper, typename... Args>
 using DeviceView5d = Kokkos::View<T *****, L, DevMemSpace, Args...>;
+///@}
 /**
  * @brief 6d device view
  *
@@ -224,6 +225,14 @@ using HostView3d = Kokkos::View<T ***, L, HostMemSpace, Args...>;
  */
 template <typename T, typename L = LayoutWrapper, typename... Args>
 using HostView4d = Kokkos::View<T ****, L, HostMemSpace, Args...>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostView5d = Kokkos::View<T *****, L, HostMemSpace, Args...>;
 ///@}
 
 /** @name Host Scatter Views

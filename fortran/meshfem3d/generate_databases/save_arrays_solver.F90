@@ -1111,7 +1111,7 @@ end module save_arrays_module
                                   free_surface_ispec(i) )
         enddo
       enddo
-      filename = prname(1:len_trim(prname))//'free_surface'
+      filename = prname(1:len_trim(prname))//'acoustic_free_surface'
       call write_VTK_data_points(nglob_unique, &
                                  xstore_unique,ystore_unique,zstore_unique, &
                                  iglob_tmp,NGLLSQUARE*num_free_surface_faces, &
