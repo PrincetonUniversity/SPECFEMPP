@@ -222,13 +222,16 @@ void check_assembly_source_construction(
       continue;
     }
 
-    Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace> source_array(
-        "source_array", components, assembly.mesh.ngllz, assembly.mesh.ngllx);
+    Kokkos::View<type_real ***, Kokkos::LayoutRight,
+                 Kokkos::DefaultHostExecutionSpace>
+        source_array("source_array", components, assembly.mesh.ngllz,
+                     assembly.mesh.ngllx);
 
     specfem::assembly::compute_source_array(
         source, assembly.mesh, assembly.jacobian_matrix, source_array);
-    Kokkos::View<type_real **, Kokkos::DefaultHostExecutionSpace> stf(
-        "stf", 1, components);
+    Kokkos::View<type_real **, Kokkos::LayoutRight,
+                 Kokkos::DefaultHostExecutionSpace>
+        stf("stf", 1, components);
 
     source->compute_source_time_function(1.0, 0.0, 1, stf);
     using mapped_chunk_index_type =

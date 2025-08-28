@@ -1,5 +1,5 @@
 #include "specfem/assembly/sources.hpp"
-#include "../impl/dim2/source_medium.tpp"
+#include "../impl/dim3/source_medium.tpp"
 #include "../impl/locate_sources.hpp"
 #include "../impl/source_medium.hpp"
 #include "algorithms/interface.hpp"
@@ -15,25 +15,15 @@
 #include <vector>
 
 template class specfem::assembly::sources_impl::source_medium<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
+    specfem::dimension::type::dim3, specfem::element::medium_tag::elastic>;
 
-template class specfem::assembly::sources_impl::source_medium<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv>;
-
-template class specfem::assembly::sources_impl::source_medium<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic>;
-
-template class specfem::assembly::sources_impl::source_medium<
-    specfem::dimension::type::dim2,
-    specfem::element::medium_tag::elastic_psv_t>;
-
-specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
+specfem::assembly::sources<specfem::dimension::type::dim3>::sources(
     std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        specfem::sources::source<specfem::dimension::type::dim3> > > &sources,
+    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>
         &jacobian_matrix,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+    const specfem::assembly::element_types<specfem::dimension::type::dim3>
         &element_types,
     const type_real t0, const type_real dt, const int nsteps)
     : timestep(0), nspec(mesh.nspec),
@@ -62,45 +52,39 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
   // global element index, and medium that the source is located in
   specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
-      CAPTURE(source) {
-        auto [sorted_sources, source_indices] =
-            specfem::assembly::sources_impl::sort_sources_per_medium<
-                _dimension_tag_, _medium_tag_>(sources, element_types, mesh);
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)), CAPTURE(
+                                                                      source) {
+    auto [sorted_sources, source_indices] =
+        specfem::assembly::sources_impl::sort_sources_per_medium<
+            _dimension_tag_, _medium_tag_>(sources, element_types, mesh);
 
-        /** For a sanity check we count the number of sources and source indices
-         * for each medium and dimension
-         */
-        nsources += sorted_sources.size();
-        nsource_indices += source_indices.size();
+    /** For a sanity check we count the number of sources and source indices
+     * for each medium and dimension
+     */
+    nsources += sorted_sources.size();
+    nsource_indices += source_indices.size();
 
-        /* Loops over the current source*/
-        for (int isource = 0; isource < sorted_sources.size(); isource++) {
-          const auto &source = sorted_sources[isource];
-          const auto lcoord = source->get_local_coordinates();
+    /* Loops over the current source*/
+    for (int isource = 0; isource < sorted_sources.size(); isource++) {
+      const auto &source = sorted_sources[isource];
+      const auto lcoord = source->get_local_coordinates();
 
-          int ispec = lcoord.ispec;
-          const int global_isource = source_indices[isource];
+      int ispec = lcoord.ispec;
+      const int global_isource = source_indices[isource];
 
-          /* setting local source to global element mapping */
-          h_element_indices(global_isource) = ispec;
-          assert(element_types.get_medium_tag(ispec) == _medium_tag_);
-          h_medium_types(global_isource) = _medium_tag_;
-          h_property_types(global_isource) =
-              element_types.get_property_tag(ispec);
-          h_boundary_types(global_isource) =
-              element_types.get_boundary_tag(ispec);
-          h_wavefield_types(global_isource) = source->get_wavefield_type();
-        }
+      /* setting local source to global element mapping */
+      h_element_indices(global_isource) = ispec;
+      assert(element_types.get_medium_tag(ispec) == _medium_tag_);
+      h_medium_types(global_isource) = _medium_tag_;
+      h_property_types(global_isource) = element_types.get_property_tag(ispec);
+      h_boundary_types(global_isource) = element_types.get_boundary_tag(ispec);
+      h_wavefield_types(global_isource) = source->get_wavefield_type();
+    }
 
-        _source_ =
-            specfem::assembly::sources_impl::source_medium<_dimension_tag_,
-                                                           _medium_tag_>(
-                sorted_sources, mesh, jacobian_matrix, element_types, t0, dt,
-                nsteps);
-      })
+    _source_ = specfem::assembly::sources_impl::source_medium<_dimension_tag_,
+                                                              _medium_tag_>(
+        sorted_sources, mesh, jacobian_matrix, element_types, t0, dt, nsteps);
+  })
 
   // if the number of sources is not equal to the number of sources
   if (nsources != sources.size()) {
@@ -111,12 +95,8 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
+       BOUNDARY_TAG(NONE)),
       CAPTURE(element_indices_forward, element_indices_backward,
               element_indices_adjoint, source_indices_forward,
               source_indices_backward, source_indices_adjoint,
@@ -247,18 +227,14 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::sources<specfem::dimension::type::dim2>::get_sources_on_host(
+specfem::assembly::sources<specfem::dimension::type::dim3>::get_sources_on_host(
     const specfem::element::medium_tag medium,
     const specfem::element::property_tag property,
     const specfem::element::boundary_tag boundary,
     const specfem::wavefield::simulation_field wavefield) const {
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
+       BOUNDARY_TAG(NONE)),
       CAPTURE(h_element_indices_forward, h_element_indices_backward,
               h_element_indices_adjoint, h_source_indices_forward,
               h_source_indices_backward, h_source_indices_adjoint) {
@@ -294,19 +270,15 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::get_sources_on_host(
 // and the source indices for the wavefield type.
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::sources<specfem::dimension::type::dim2>::
+specfem::assembly::sources<specfem::dimension::type::dim3>::
     get_sources_on_device(
         const specfem::element::medium_tag medium,
         const specfem::element::property_tag property,
         const specfem::element::boundary_tag boundary,
         const specfem::wavefield::simulation_field wavefield) const {
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
+       BOUNDARY_TAG(NONE)),
       CAPTURE(element_indices_forward, element_indices_backward,
               element_indices_adjoint, source_indices_forward,
               source_indices_backward, source_indices_adjoint) {
