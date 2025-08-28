@@ -191,6 +191,7 @@ add_executable(
   mesh/adjacency_graph/adjacency_graph.cpp
   mesh/adjacency_graph/adjacency_graph_regular_mesh.cpp
   mesh/adjacency_graph/adjacency_graph_irregular_mesh.cpp
+  mesh/adjacency_graph/adjacency_graph_nonconforming.cpp
 )
 
 target_link_libraries(
@@ -202,30 +203,6 @@ target_link_libraries(
   yaml-cpp
   io
   utilities
-  # material_class
-  -lpthread -lm
-)
-
-
-add_executable(
-  mortar_tests
-  mortar/adjacency_read_nonconforming/read_test.cpp
-  mortar/fixture/mortar_fixtures.cpp
-  mortar/runner.cpp
-)
-
-target_link_libraries(
-  mortar_tests
-  gtest_main
-  mpi_environment
-  kokkos_environment
-  mesh
-  assembly
-  yaml-cpp
-  io
-  point
-  edge
-  # utilities
   # material_class
   -lpthread -lm
 )
@@ -599,7 +576,6 @@ if (NOT MPI_PARALLEL)
     io
     mesh
     policies
-    mortar
   )
 
   foreach(dir_name IN LISTS LINK_DIRS)
