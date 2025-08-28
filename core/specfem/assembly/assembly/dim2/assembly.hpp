@@ -3,9 +3,9 @@
 #include "enumerations/interface.hpp"
 #include "io/reader.hpp"
 #include "mesh/mesh.hpp"
-#include "source/interface.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
+#include "specfem/assembly/compute_source_array.hpp"
 #include "specfem/assembly/coupled_interfaces.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
@@ -15,6 +15,7 @@
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
 #include "specfem/receivers.hpp"
+#include "specfem/source.hpp"
 
 /**
  * @brief Assembly namespace defines data structures used to store data related
@@ -90,7 +91,8 @@ template <> struct assembly<specfem::dimension::type::dim2> {
   assembly(
       const specfem::mesh::mesh<dimension_tag> &mesh,
       const specfem::quadrature::quadratures &quadratures,
-      const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+      std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
+          &sources,
       const std::vector<
           std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
           &receivers,

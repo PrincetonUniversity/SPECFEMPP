@@ -3,12 +3,12 @@
 #include "algorithms/locate_point.hpp"
 #include "specfem/point.hpp"
 #include "source_medium.hpp"
+#include "specfem/assembly/compute_source_array.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag>
+template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_medium(
-    const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    const std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > > &sources,
     const specfem::assembly::mesh<dimension_tag> &mesh,
     const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
     const specfem::assembly::element_types<dimension_tag> &element_types, const type_real t0,
@@ -26,14 +26,16 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
   for (int isource = 0; isource < sources.size(); isource++) {
     auto sv_source_array = Kokkos::subview(
         this->h_source_array, isource, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-    sources[isource]->compute_source_array(mesh, jacobian_matrix,
-                                           element_types, sv_source_array);
+
+    // Pre overload setup.
+    specfem::assembly::compute_source_array(
+      sources[isource], mesh, jacobian_matrix, sv_source_array);
+
     auto sv_stf_array = Kokkos::subview(this->h_source_time_function,
                                         Kokkos::ALL, isource, Kokkos::ALL);
     sources[isource]->compute_source_time_function(t0, dt, nsteps,
                                                    sv_stf_array);
-    specfem::point::global_coordinates<dimension_tag> coord(
-        sources[isource]->get_x(), sources[isource]->get_z());
+    const auto coord = sources[isource]->get_global_coordinates();
 
     auto lcoord = specfem::algorithms::locate_point(coord, mesh);
     this->h_source_index_mapping(isource) = lcoord.ispec;
