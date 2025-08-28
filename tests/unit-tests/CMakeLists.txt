@@ -53,6 +53,40 @@ target_link_libraries(
   io
 )
 
+add_library(
+  mesh_utilities_mapping
+  mesh_utilities/mapping.cpp
+)
+
+target_link_libraries(
+  mesh_utilities_mapping
+  Kokkos::kokkos
+)
+
+add_executable(
+  test_mesh_utilities_mapping_2d
+  mesh_utilities/test_mapping_2d.cpp
+)
+
+target_link_libraries(
+  test_mesh_utilities_mapping_2d
+  mesh_utilities_mapping
+  utilities
+  gtest_main
+)
+
+add_executable(
+  test_mesh_utilities_mapping_3d
+  mesh_utilities/test_mapping_3d.cpp
+)
+
+target_link_libraries(
+  test_mesh_utilities_mapping_3d
+  mesh_utilities_mapping
+  utilities
+  gtest_main
+)
+
 add_executable(
   io_framework_tests
   io/io_framework_tests.cpp
@@ -330,8 +364,9 @@ add_executable(
   assembly/locate/locate_point.cpp
   assembly/mesh/utilities.cpp
   assembly/sources/locate_sources.cpp
-  assembly/compute_source_array/compute_source_array_from_vector.cpp
-  assembly/compute_source_array/compute_source_array_from_tensor.cpp
+  assembly/compute_source_array/dim2/compute_source_array_from_vector.cpp
+  assembly/compute_source_array/dim2/compute_source_array_from_tensor.cpp
+  assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
 )
 
 target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
@@ -387,39 +422,38 @@ target_link_libraries(
 )
 
 add_executable(
-  locate_point_impl_2d
-  algorithms/dim2/locate_point_impl.cpp
+  locate_point_fixture_2d
+  algorithms/dim2/locate_point_fixture.cpp
 )
 
 target_link_libraries(
-  locate_point_impl_2d
-  mesh
-  assembly
-  quadrature
-  mpi_environment
-  kokkos_environment
+  locate_point_fixture_2d
+  mesh_utilities_mapping
   algorithms
   jacobian
   point
-  ${GTEST_BOTH_LIBRARIES}
+  utilities
+  mpi_environment
+  kokkos_environment
+  gtest_main
 )
+
 
 add_executable(
-  locate_point_impl_3d
-  algorithms/dim3/locate_point_impl.cpp
+  locate_point_fixture_3d
+  algorithms/dim3/locate_point_fixture.cpp
 )
 
 target_link_libraries(
-  locate_point_impl_3d
-  mesh
-  assembly
-  quadrature
-  mpi_environment
-  kokkos_environment
+  locate_point_fixture_3d
+  mesh_utilities_mapping
   algorithms
   jacobian
   point
-  ${GTEST_BOTH_LIBRARIES}
+  utilities
+  mpi_environment
+  kokkos_environment
+  gtest_main
 )
 
 add_executable(
@@ -441,11 +475,14 @@ target_link_libraries(
 
 add_executable(
   mass_matrix_tests
-  mass_matrix/dim2/main.cpp
+  mass_matrix/main.cpp
+  # 2D mass matrix tests
   mass_matrix/dim2/elastic_isotropic.cpp
   mass_matrix/dim2/elastic_anisotropic.cpp
   mass_matrix/dim2/acoustic.cpp
   mass_matrix/dim2/poroelastic.cpp
+  # 3D mass matrix tests
+  mass_matrix/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
@@ -456,11 +493,15 @@ target_link_libraries(
 
 add_executable(
   stress_tests
+  stress/main.cpp
+  # 2D stress tests
   stress/dim2/acoustic.cpp
   stress/dim2/elastic_isotropic.cpp
   stress/dim2/elastic_anisotropic.cpp
   stress/dim2/elastic_isotropic_cosserat.cpp
   stress/dim2/poroelastic_isotropic.cpp
+  # 3D stress tests
+  stress/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
@@ -623,8 +664,8 @@ if (NOT MPI_PARALLEL)
     is_close_tests
     jacobian_tests
     lagrange_tests
-    locate_point_impl_2d
-    locate_point_impl_3d
+    locate_point_fixture_2d
+    locate_point_fixture_3d
     mass_matrix_tests
     mesh_tests
     point_tests
@@ -633,6 +674,8 @@ if (NOT MPI_PARALLEL)
     simd_tests
     source_class_tests
     stress_tests
+    test_mesh_utilities_mapping_2d
+    test_mesh_utilities_mapping_3d
   )
   foreach(test_target IN LISTS TEST_TARGETS)
       gtest_discover_tests(${test_target}

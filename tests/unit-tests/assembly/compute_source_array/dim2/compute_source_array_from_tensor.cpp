@@ -1,10 +1,11 @@
 #include "specfem/assembly/compute_source_array/dim2/impl/compute_source_array_from_tensor.hpp"
-#include "../test_fixture/test_fixture.hpp"
+#include "../../test_fixture/test_fixture.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
 #include "specfem/source.hpp"
 #include "test_macros.hpp"
+#include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
@@ -31,8 +32,8 @@ void test_tensor_source(const std::string &source_name, SourceType &source,
   int ncomponents = source_tensor.extent(0);
 
   // Create source array for testing
-  specfem::kokkos::HostView3d<type_real> source_array("source_array",
-                                                      ncomponents, ngll, ngll);
+  Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+      source_array("source_array", ncomponents, ngll, ngll);
 
   // Create simplified jacobian matrix with all derivatives set to 1.0
   using PointJacobianMatrix =
@@ -137,8 +138,8 @@ void test_tensor_source_off_gll(const std::string &source_name,
   int ncomponents = source_tensor.extent(0);
 
   // Create source array for testing
-  specfem::kokkos::HostView3d<type_real> source_array("source_array",
-                                                      ncomponents, ngll, ngll);
+  Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+      source_array("source_array", ncomponents, ngll, ngll);
 
   // Create simplified jacobian matrix with all derivatives set to 1.0
   using PointJacobianMatrix =
