@@ -1,0 +1,80 @@
+#include "algorithms/locate_point.hpp"
+#include "algorithms/locate_point_impl.hpp"
+#include "algorithms/locate_point_impl.tpp"
+#include "specfem/assembly.hpp"
+#include "specfem/jacobian.hpp"
+#include "specfem/point.hpp"
+#include <Kokkos_Core.hpp>
+
+specfem::point::local_coordinates<specfem::dimension::type::dim2>
+specfem::algorithms::locate_point(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &coordinates,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
+
+  // Extract mesh data and delegate to core implementation
+  if (mesh.adjacency_graph_empty()) {
+    return specfem::algorithms::locate_point_impl::locate_point_core(
+        coordinates, mesh.h_coord, mesh.h_index_mapping,
+        mesh.h_control_node_coord, mesh.ngnod, mesh.ngllx);
+  } else {
+    return specfem::algorithms::locate_point_impl::locate_point_core(
+        mesh.graph(), coordinates, mesh.h_coord, mesh.h_control_node_coord,
+        mesh.ngnod);
+  }
+}
+
+specfem::point::global_coordinates<specfem::dimension::type::dim2>
+specfem::algorithms::locate_point(
+    const specfem::point::local_coordinates<specfem::dimension::type::dim2>
+        &coordinate,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
+
+  const int ispec = coordinate.ispec;
+  const type_real xi = coordinate.xi;
+  const type_real gamma = coordinate.gamma;
+
+  const int ngnod = mesh.ngnod;
+
+  const Kokkos::View<
+      point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+      coorg("coorg", ngnod);
+
+  for (int i = 0; i < ngnod; i++) {
+    coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
+    coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
+  }
+
+  return jacobian::compute_locations(coorg, ngnod, xi, gamma);
+}
+
+// Except for the tests this function is not used in the codebase.
+specfem::point::global_coordinates<specfem::dimension::type::dim2>
+specfem::algorithms::locate_point(
+    const specfem::kokkos::HostTeam::member_type &team_member,
+    const specfem::point::local_coordinates<specfem::dimension::type::dim2>
+        &coordinate,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
+
+  const int ispec = coordinate.ispec;
+  const type_real xi = coordinate.xi;
+  const type_real gamma = coordinate.gamma;
+
+  const int ngnod = mesh.ngnod;
+
+  const Kokkos::View<
+      point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+      coorg("coorg", ngnod);
+
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, ngnod),
+                       [&](const int i) {
+                         coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
+                         coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
+                       });
+
+  team_member.team_barrier();
+
+  return jacobian::compute_locations(coorg, ngnod, xi, gamma);
+}

@@ -8,6 +8,7 @@
 #include "quadrature/interface.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
+#include "specfem/shape_functions.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
@@ -18,24 +19,6 @@ struct qp {
   type_real x = 0, z = 0;
   int iloc = 0, iglob = 0;
 };
-
-template <typename ViewType> int compute_nglob2D(const ViewType index_mapping) {
-  const int nspec = index_mapping.extent(0);
-  const int ngllz = index_mapping.extent(1);
-  const int ngllx = index_mapping.extent(2);
-
-  int nglob = -1;
-  // compute max value stored in index_mapping
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    for (int igllz = 0; igllz < ngllz; igllz++) {
-      for (int igllx = 0; igllx < ngllx; igllx++) {
-        nglob = std::max(nglob, index_mapping(ispec, igllz, igllx));
-      }
-    }
-  }
-
-  return nglob + 1;
-}
 
 type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
                         const int ngllxz) {
@@ -64,9 +47,7 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
 }
 
 specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
-assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
-                 specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-                     specfem::dimension::type::dim2> &mapping) {
+assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
@@ -92,8 +73,6 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
       }
     }
   }
-
-  int nglob;
 
   // Sort cartesian coordinates in ascending order i.e.
   // cart_cord = [{0,0}, {0, 25}, {0, 50}, ..., {50, 0}, {50, 25}, {50, 50}]
@@ -121,8 +100,6 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
     cart_cord[iloc].iglob = ig;
   }
 
-  nglob = ig + 1;
-
   std::vector<qp> copy_cart_cord(nspec * ngllxz);
 
   // reorder cart cord in original format
@@ -131,8 +108,10 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates,
     copy_cart_cord[iloc] = cart_cord[i];
   }
 
+  int nglob = ig + 1;
+
   specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2> points(
-      nspec, ngll, ngll);
+      nspec, ngll, ngll, nglob);
 
   // Assign numbering to corresponding ispec, iz, ix
   std::vector<int> iglob_counted(nglob, -1);
@@ -256,8 +235,6 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
   auto &mapping =
       static_cast<specfem::assembly::mesh_impl::mesh_to_compute_mapping<
           specfem::dimension::type::dim2> &>(*this);
-  auto &control_nodes = static_cast<specfem::assembly::mesh_impl::control_nodes<
-      specfem::dimension::type::dim2> &>(*this);
   auto &quadrature = static_cast<specfem::assembly::mesh_impl::quadrature<
       specfem::dimension::type::dim2> &>(*this);
   auto &shape_functions =
@@ -267,13 +244,14 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       static_cast<specfem::assembly::mesh_impl::adjacency_graph<
           specfem::dimension::type::dim2> &>(*this);
 
+  auto &control_nodes =
+      static_cast<specfem::assembly::mesh_impl::control_nodes<
+          specfem::dimension::type::dim2> &>(*this);
+
   mapping = specfem::assembly::mesh_impl::mesh_to_compute_mapping<
       specfem::dimension::type::dim2>(tags);
   control_nodes = specfem::assembly::mesh_impl::control_nodes<
-      specfem::dimension::type::dim2>(
-      *static_cast<const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-          specfem::dimension::type::dim2> *>(this),
-      control_nodes_in);
+      specfem::dimension::type::dim2>(mapping, control_nodes_in);
   quadrature =
       specfem::assembly::mesh_impl::quadrature<specfem::dimension::type::dim2>(
           quadratures);
@@ -294,7 +272,6 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
     this->assemble();
   }
 
-  this->nglob = compute_nglob2D(this->h_index_mapping);
 }
 
 void specfem::assembly::mesh<
@@ -322,7 +299,7 @@ void specfem::assembly::mesh<
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
         auto shape_functions =
-            Kokkos::subview(h_shape2D, iz, ix, Kokkos::ALL());
+            specfem::shape_function::shape_function(xi(ix), gamma(iz), ngnod);
 
         double xcor = 0.0;
         double zcor = 0.0;
@@ -342,5 +319,5 @@ void specfem::assembly::mesh<
       specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2> &>(
       *this);
 
-  points = assign_numbering(global_coordinates, *this);
+  points = assign_numbering(global_coordinates);
 }
