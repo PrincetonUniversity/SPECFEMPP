@@ -1,12 +1,10 @@
 from dataclasses import dataclass, field
 
-from _gmshlayerbuilder.gmsh_dep import GmshContext
 import numpy as np
 
-from _gmshlayerbuilder.dim2.binary_detect_N3 import quadratic_beziers_intersect
+from _gmsh2meshfem.dim2.binary_detect_N3 import quadratic_beziers_intersect
 from .boundary import BoundarySpec
-from .index_mapping import IndexMapping
-from .edges import edges_of_all_elements, EdgeType
+from .edges import edges_of_all_elements
 
 
 @dataclass

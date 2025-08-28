@@ -3,8 +3,8 @@ import os
 
 import numpy as np
 
-from _gmshlayerbuilder.dim2.layer_builder.model import Model
-from _gmshlayerbuilder.dim2.layer_builder.model.edges import EdgeType
+from .model import Model
+from .model.edges import EdgeType
 
 
 NONCONFORMING_CONNECTION_TYPE = 3
@@ -28,7 +28,7 @@ def model_edge_to_meshfem_edge(value: EdgeType):
     raise err
 
 
-class Exporter2D:
+class Exporter:
     destination_folder: Path
     mesh_file: PurePath
     node_coords_file: PurePath

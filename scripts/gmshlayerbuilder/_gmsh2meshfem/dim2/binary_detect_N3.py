@@ -1,6 +1,6 @@
 import numpy as np
 
-from _gmshlayerbuilder import lagrange
+from _gmsh2meshfem import lagrange
 
 L = lagrange.build_lagrange_polys([-1, 0, 1])
 Lp = lagrange.differentiate_polys(L)

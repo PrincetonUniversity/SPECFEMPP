@@ -1,9 +1,9 @@
 import itertools
 
-from _gmshlayerbuilder.gmsh_dep import GmshContext
+from _gmsh2meshfem.gmsh_dep import GmshContext
+from _gmsh2meshfem.dim2.model import Model
 
 from .layer import Layer, LayerBoundary
-from .model import Model
 
 
 class LayeredBuilder:

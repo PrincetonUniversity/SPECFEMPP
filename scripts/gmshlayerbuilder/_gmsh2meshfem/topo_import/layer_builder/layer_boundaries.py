@@ -1,8 +1,8 @@
 import functools
 from typing import override
 
-from _gmshlayerbuilder.dim2.layer_builder.layer import LayerBoundary, EPS
-from _gmshlayerbuilder.gmsh_dep import GmshContext
+from .layer import LayerBoundary, EPS
+from _gmsh2meshfem.gmsh_dep import GmshContext
 
 
 class LerpLayerBoundary(LayerBoundary):

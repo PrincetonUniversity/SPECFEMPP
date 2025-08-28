@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 import numpy as np
-from _gmshlayerbuilder.gmsh_dep import GmshContext
+from _gmsh2meshfem.gmsh_dep import GmshContext
 
 from .edges import EdgeType
 
