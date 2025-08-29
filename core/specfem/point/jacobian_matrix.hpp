@@ -64,7 +64,10 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  jacobian_matrix() = default;
+  jacobian_matrix() {
+    this->init();
+    return;
+  }
 
   /**
    * @brief Constructor with values
@@ -183,7 +186,10 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  jacobian_matrix() = default;
+  jacobian_matrix() {
+    this->init();
+    return;
+  }
 
   /**
    * @brief Constructor with values
@@ -314,7 +320,10 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  jacobian_matrix() = default;
+  jacobian_matrix() {
+    this->init();
+    return;
+  }
 
   /**
    * @brief Constructor with values
@@ -450,7 +459,10 @@ public:
    *
    */
   KOKKOS_FUNCTION
-  jacobian_matrix() = default;
+  jacobian_matrix() {
+    this->init();
+    return;
+  }
 
   /**
    * @brief Constructor with values
@@ -569,3 +581,15 @@ public:
 
 } // namespace point
 } // namespace specfem
+
+namespace Kokkos { // reduction identity must be defined in Kokkos namespace
+template <typename T> struct reduction_identity {
+  KOKKOS_FORCEINLINE_FUNCTION static std::enable_if_t<
+      ((specfem::data_access::is_point<T>::value) &&
+       (specfem::data_access::is_jacobian_matrix<T>::value)),
+      T>
+  sum() {
+    return T();
+  }
+};
+} // namespace Kokkos

@@ -402,13 +402,13 @@ target_link_libraries(
 
 add_executable(
   interpolate_function
-  algorithms/interpolate_function.cpp
+  algorithms/interpolate_function/dim2/interpolate_function.cpp
+  algorithms/interpolate_function/dim3/interpolate_function.cpp
+  algorithms/interpolate_function/runner.cpp
 )
 
 target_link_libraries(
   interpolate_function
-  mesh
-  assembly
   quadrature
   mpi_environment
   kokkos_environment
