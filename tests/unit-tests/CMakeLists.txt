@@ -485,6 +485,7 @@ target_link_libraries(
   Kokkos::kokkos
   mpi_environment
   kokkos_environment
+  ${BOOST_LIBS}
   -lpthread -lm
 )
 
