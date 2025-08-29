@@ -4,7 +4,7 @@
 #include "impl/field.hpp"
 #include "specfem/data_access.hpp"
 
-namespace specfem::chunk_element {
+namespace specfem::chunk_edge {
 
 /**
  * @brief Chunk edge velocity field accessor for high-performance spectral
@@ -54,4 +54,4 @@ public:
   using base_type::base_type;
 };
 
-} // namespace specfem::chunk_element
+} // namespace specfem::chunk_edge
