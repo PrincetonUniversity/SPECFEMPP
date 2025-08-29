@@ -1,7 +1,7 @@
 pipeline{
     agent {
         node {
-            label 'della_rk9481'
+            label 'della-rse_specfempp'
         }
     }
     stages{
