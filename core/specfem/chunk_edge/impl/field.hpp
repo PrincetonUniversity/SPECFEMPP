@@ -33,7 +33,7 @@ namespace specfem::chunk_edge::impl {
  * @note Note that this class is used internally and external references to it
  *       should be made using @c auto keyword.
  *
- * @tparam ChunkSize Number of elements processed together in a chunk
+ * @tparam ChunkSize Number of edges processed together in a chunk
  * @tparam NGLL Number of Gauss-Lobatto-Legendre points per spatial dimension
  * @tparam DimensionTag Spatial dimension (dim2 or dim3) of the field
  * @tparam MediumTag Medium type (acoustic, elastic, poroelastic, etc.)
@@ -49,8 +49,8 @@ public:
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
-  /// @brief Number of elements in the chunk
-  constexpr static int nelements = ChunkSize;
+  /// @brief Number of edges in the chunk
+  constexpr static int nedges = ChunkSize;
 
   /// @brief Number of Gauss-Lobatto-Legendre points per spatial dimension
   constexpr static int ngll = NGLL;
@@ -91,7 +91,7 @@ public:
    *
    * Provides access to individual field values using multi-dimensional
    * indexing. The exact indexing scheme depends on the ValueType
-   * implementation, but typically follows the pattern: (element_id,
+   * implementation, but typically follows the pattern: (edge_id,
    * gll_indices..., component_id).
    *
    * @tparam Indices Parameter pack for multi-dimensional indices
@@ -114,7 +114,7 @@ public:
  * field_without_accessor type. It is used for type transformations when the
  * accessor interface overhead is not needed.
  *
- * @tparam ChunkSize Number of elements processed together in a chunk
+ * @tparam ChunkSize Number of edges processed together in a chunk
  * @tparam NGLL Number of Gauss-Lobatto-Legendre points per spatial dimension
  * @tparam DimensionTag Spatial dimension (dim2 or dim3) of the field
  * @tparam MediumTag Medium type (acoustic, elastic, poroelastic, etc.)
@@ -134,7 +134,6 @@ public:
                                       UseSIMD, ValueType>;
 };
 
-// clang-format off
 /**
  * @brief Chunk edge field accessor for storing field values at all
  *        quadrature points within a chunk.
@@ -145,8 +144,9 @@ public:
  * It is designed for use in chunk execution policies where spacial locality of
  * data is critical for performance. An example usage is shown below:
  *
- * @tparam ChunkSize     Number of elements processed together in a chunk.
- * @tparam NGLL          Number of Gauss-Lobatto-Legendre points per spatial dimension.
+ * @tparam ChunkSize     Number of edges processed together in a chunk.
+ * @tparam NGLL          Number of Gauss-Lobatto-Legendre points per spatial
+ * dimension.
  * @tparam DimensionTag  Spatial dimension (dim2 or dim3) of the field.
  * @tparam MediumTag     Medium type (acoustic, elastic, poroelastic, etc.).
  * @tparam DataClass     Data class type for access control and memory traits.
@@ -154,7 +154,6 @@ public:
  *
  * @see remove_accessor_attribute for type trait to strip accessor attributes.
  */
-// clang-format on
 template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::data_access::DataClassType DataClass, bool UseSIMD>
@@ -172,8 +171,8 @@ public:
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
-  /// @brief Number of elements in the chunk
-  constexpr static int nelements = ChunkSize;
+  /// @brief Number of edges in the chunk
+  constexpr static int nedges = ChunkSize;
 
   /// @brief Number of Gauss-Lobatto-Legendre points per spatial dimension
   constexpr static int ngll = NGLL;
@@ -182,9 +181,8 @@ public:
   using simd = typename base_type::template simd<type_real>;
 
   /// @brief Vector type for storing chunk field data with optimized layout
-  using value_type =
-      typename base_type::template vector_type<type_real, nelements, ngll,
-                                               components>;
+  using value_type = typename base_type::template vector_type<type_real, nedges,
+                                                              ngll, components>;
 
   /// @brief Medium tag identifying the physical medium type
   constexpr static auto medium_tag = MediumTag;
@@ -226,15 +224,15 @@ public:
    * @brief Multi-dimensional index operator for accessing field components.
    *
    * Provides access to individual field values using multi-dimensional
-   * indexing. For chunk element fields, the indexing typically follows the
-   * pattern: (element_id, gll_indices..., component_id).
+   * indexing. For chunk edge fields, the indexing typically follows the
+   * pattern: (edge_id, gll_indices..., component_id).
    *
    * @tparam Indices Parameter pack for multi-dimensional indices
    * @param indices The indices specifying the location and component to access
    * @return Reference to the field value at the specified location
    *
    * @code{.cpp}
-   * // For 2D fields: (element, point_on_edge, component)
+   * // For 2D fields: (edge, point_on_edge, component)
    * auto disp_x = field(ielem, ipoint, 0);  // x-component
    * auto disp_z = field(ielem, ipoint, 1);  // z-component
    * field(ielem, ipoint, 0) = new_value;

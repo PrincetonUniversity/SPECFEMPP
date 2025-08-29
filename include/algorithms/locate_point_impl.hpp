@@ -36,6 +36,26 @@ locate_point_core(
         &control_node_coord,
     const int ngnod, const int ngllx);
 
+template <typename GraphType>
+specfem::point::local_coordinates<specfem::dimension::type::dim2>
+locate_point_core(
+    const GraphType &graph,
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &coordinates,
+    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
+    const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &control_node_coord,
+    const int ngnod);
+
+specfem::point::local_coordinates<specfem::dimension::type::dim2>
+locate_point_from_best_candidates(
+    const std::vector<int> &best_candidates,
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &coordinates,
+    const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &control_node_coord,
+    const int ngnod);
+
 // 3D overloads - using different input types for overload resolution
 
 // Using the 3D coordinate layout: (nspec, iz, iy, ix, icoord)

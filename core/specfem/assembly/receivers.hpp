@@ -21,3 +21,4 @@ template <specfem::dimension::type DimensionTag> struct receivers;
 } // namespace specfem::assembly
 
 #include "receivers/dim2/receivers.hpp"
+#include "receivers/dim3/receivers.hpp"
