@@ -40,8 +40,8 @@ public:
 
   points() = default;
 
-  points(const int &nspec, const int &ngllz, const int &ngllx)
-      : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
+  points(const int &nspec, const int &ngllz, const int &ngllx, const int &nglob)
+      : nspec(nspec), ngllz(ngllz), ngllx(ngllx), nglob(nglob),
         index_mapping("specfem::assembly::points::index_mapping", nspec, ngllz,
                       ngllx),
         coord("specfem::assembly::points::coord", ndim, nspec, ngllz, ngllx),

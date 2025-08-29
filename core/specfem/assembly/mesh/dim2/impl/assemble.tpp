@@ -6,9 +6,7 @@
 #include "specfem/point.hpp"
 #include <boost/graph/filtered_graph.hpp>
 
-void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
-    const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
-        &graph) {
+void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
 
   const int nspec = this->nspec;
   const int ngllx = this->ngllx;
@@ -65,6 +63,9 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
   }
 
   const type_real tolerance = std::min(xmax - xmin, zmax - zmin) * 1e-6;
+
+  const auto &graph = this->graph();
+
   // ----
 
   constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
@@ -96,10 +97,6 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
           int ispec = ichunk + ielement;
           if (ispec >= nspec)
             break;
-          const int ispec_mesh =
-              static_cast<specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-                  specfem::dimension::type::dim2> &>(*this)
-                  .compute_to_mesh(ispec);
           // Interior points are unique, assign unique global number
           this->h_index_mapping(ispec, iz, ix) = iglob;
           this->h_coord(0, ispec, iz, ix) = global_coordinates(ispec, iz, ix).x;
@@ -110,15 +107,14 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
     }
   }
 
-  const auto &g = graph.graph();
   // Filter out strongly conforming connections
-  auto filter = [&g](const auto &edge) {
-    return g[edge].connection ==
+  auto filter = [&graph](const auto &edge) {
+    return graph[edge].connection ==
            specfem::connections::type::strongly_conforming;
   };
 
   // Create a filtered graph view
-  const auto fg = boost::make_filtered_graph(g, filter);
+  const auto fg = boost::make_filtered_graph(graph, filter);
 
   const auto element_connections =
       specfem::connections::connection_mapping(ngllx, ngllz);
@@ -135,11 +131,6 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
           int ispec = ichunk + ielement;
           if (ispec >= nspec)
             break;
-          const int ispec_mesh =
-              static_cast<specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-                  specfem::dimension::type::dim2> &>(*this)
-                  .compute_to_mesh(ispec);
-
           // Check if this point has already been assigned
           // ----
           bool previously_assigned = false;
@@ -148,19 +139,13 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
 
           // get all connections for this element
           for (auto edge :
-               boost::make_iterator_range(boost::out_edges(ispec_mesh, fg))) {
+               boost::make_iterator_range(boost::out_edges(ispec, fg))) {
             // Only consider the outgoing edges that match what we are looking
             // for
             if (fg[edge].orientation == iedge) {
-              const int jspec_mesh = boost::target(edge, fg);
-              const int jspec =
-                  static_cast<
-                      specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-                          specfem::dimension::type::dim2> &>(*this)
-                      .mesh_to_compute(jspec_mesh);
+              const int jspec = boost::target(edge, fg);
               // Return edge
-              const auto other_edge =
-                  boost::edge(jspec_mesh, ispec_mesh, fg).first;
+              const auto other_edge = boost::edge(jspec, ispec, fg).first;
               const auto mapped_iedge = fg[other_edge].orientation;
 
               // Get the correct coordinates for the edge point on the other
@@ -207,10 +192,6 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
         int ispec = ichunk + ielement;
         if (ispec >= nspec)
           break;
-        const int ispec_mesh =
-            static_cast<specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-                specfem::dimension::type::dim2> &>(*this)
-                .compute_to_mesh(ispec);
 
         const auto [iz, ix] = element_connections.coordinates_at_corner(corner);
 
@@ -225,20 +206,14 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble(
 
         // get all connections for this element
         for (auto edge :
-             boost::make_iterator_range(boost::out_edges(ispec_mesh, fg))) {
+             boost::make_iterator_range(boost::out_edges(ispec, fg))) {
           // Only consider edges that contain the corner
           if (specfem::mesh_entity::contains(valid_connections,
                                              fg[edge].orientation)) {
-            const int jspec_mesh = boost::target(edge, fg);
-            const int jspec =
-                static_cast<
-                    specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-                        specfem::dimension::type::dim2> &>(*this)
-                    .mesh_to_compute(jspec_mesh);
+            const int jspec = boost::target(edge, fg);
 
             // Return edge
-            const auto other_edge =
-                boost::edge(jspec_mesh, ispec_mesh, fg).first;
+            const auto other_edge = boost::edge(jspec, ispec, fg).first;
             const auto mapped_iedge = fg[other_edge].orientation;
 
             // Check if the connection is an edge connection
