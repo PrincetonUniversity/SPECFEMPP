@@ -362,6 +362,7 @@ add_executable(
   assembly/sources/sources.cpp
   assembly/check_jacobian/check_jacobian.cpp
   assembly/locate/locate_point.cpp
+  assembly/locate/locate_point_on_edge.cpp
   assembly/mesh/utilities.cpp
   assembly/sources/locate_sources.cpp
   assembly/compute_source_array/dim2/compute_source_array_from_vector.cpp
