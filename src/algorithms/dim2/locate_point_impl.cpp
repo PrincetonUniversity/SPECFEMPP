@@ -123,6 +123,71 @@ std::tuple<type_real, type_real> get_local_coordinates(
   return std::make_tuple(xi, gamma);
 }
 
+type_real get_local_edge_coordinate(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &global,
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &coorg,
+    const specfem::mesh_entity::type &mesh_entity, type_real coord) {
+
+  const int ngnod = coorg.extent(0);
+
+  type_real xi, gamma;
+  if (mesh_entity == specfem::mesh_entity::type::bottom) {
+    gamma = -1;
+  } else if (mesh_entity == specfem::mesh_entity::type::right) {
+    xi = 1;
+  } else if (mesh_entity == specfem::mesh_entity::type::top) {
+    gamma = 1;
+  } else {
+    xi = -1;
+  }
+
+  for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
+    // we may want a dim1 type? for now, just constrain on dim2
+    if (mesh_entity == specfem::mesh_entity::type::bottom) {
+      xi = coord;
+    } else if (mesh_entity == specfem::mesh_entity::type::right) {
+      gamma = coord;
+    } else if (mesh_entity == specfem::mesh_entity::type::top) {
+      xi = coord;
+    } else {
+      gamma = coord;
+    }
+    auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma);
+    auto jacobian =
+        specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma);
+
+    type_real dx = -(loc.x - global.x);
+    type_real dz = -(loc.z - global.z);
+
+    type_real dcoord;
+    if (mesh_entity == specfem::mesh_entity::type::bottom) {
+      dcoord = jacobian.xix * dx + jacobian.xiz * dz;
+    } else if (mesh_entity == specfem::mesh_entity::type::right) {
+      dcoord = jacobian.gammax * dx + jacobian.gammaz * dz;
+    } else if (mesh_entity == specfem::mesh_entity::type::top) {
+      dcoord = jacobian.xix * dx + jacobian.xiz * dz;
+    } else {
+      dcoord = jacobian.gammax * dx + jacobian.gammaz * dz;
+    }
+
+    coord += dcoord;
+
+    if (coord > 1.01)
+      coord = 1.01;
+    if (coord < -1.01)
+      coord = -1.01;
+
+    // Check for convergence
+    if (std::abs(dcoord) < 1e-12)
+      break;
+  }
+
+  return coord;
+}
+
 template <typename GraphType>
 std::vector<int> get_best_candidates_from_graph(const int ispec_guess,
                                                 const GraphType &graph) {
