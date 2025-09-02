@@ -20,6 +20,7 @@ New structure
     specfem/point/index
     specfem/receivers/index
     specfem/chunk_element/index
+    specfem/sources/index
 
 
 Old structure
@@ -33,7 +34,6 @@ Old structure
     quadrature/index
     material/index
     mesh/index
-    sources/index
     datatypes/index
     assembly/index
     execution/index
