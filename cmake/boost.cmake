@@ -1,5 +1,7 @@
-# Set policy for New find boost
-cmake_policy(SET CMP0167 NEW)
+# Set policy for new find boost
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.30")
+    cmake_policy(SET CMP0167 NEW)
+endif()
 
 message(STATUS "Configuring Boost library...")
 
