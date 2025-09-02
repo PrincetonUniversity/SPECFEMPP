@@ -508,6 +508,25 @@ target_link_libraries(
 )
 
 add_executable(
+  source_tests
+  medium/source/main.cpp
+  # 2D source tests
+  medium/source/dim2/acoustic.cpp
+  medium/source/dim2/elastic_isotropic.cpp
+  medium/source/dim2/elastic_anisotropic.cpp
+  medium/source/dim2/elastic_isotropic_cosserat.cpp
+  medium/source/dim2/poroelastic.cpp
+  # 3D source tests
+  medium/source/dim3/elastic_isotropic.cpp
+)
+
+target_link_libraries(
+  source_tests
+  point
+  gtest_main
+)
+
+add_executable(
   source_class_tests
   source/source.cpp
   source/base_source_tests.cpp
@@ -670,6 +689,7 @@ if (NOT MPI_PARALLEL)
     receivers_tests
     simd_tests
     source_class_tests
+    source_tests
     stress_tests
     test_mesh_utilities_mapping_2d
     test_mesh_utilities_mapping_3d
