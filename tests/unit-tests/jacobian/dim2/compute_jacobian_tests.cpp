@@ -20,22 +20,83 @@ protected:
   void TearDown() override {
     // Common test cleanup can go here
   }
+
+  // Helper to create unit square element [0,1] x [0,1]
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+  create_unit_square_4node() {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 4);
+    coorg(0) = { 0.0, 0.0 }; // Bottom-left
+    coorg(1) = { 1.0, 0.0 }; // Bottom-right
+    coorg(2) = { 1.0, 1.0 }; // Top-right
+    coorg(3) = { 0.0, 1.0 }; // Top-left
+    return coorg;
+  }
+
+  // Helper to create scaled square element
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+  create_scaled_square_4node(type_real scale) {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 4);
+    coorg(0) = { 0.0, 0.0 };
+    coorg(1) = { scale, 0.0 };
+    coorg(2) = { scale, scale };
+    coorg(3) = { 0.0, scale };
+    return coorg;
+  }
+
+  // Helper to create translated square element
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+  create_translated_unit_square_4node(type_real dx, type_real dz) {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 4);
+    coorg(0) = { dx, dz };
+    coorg(1) = { static_cast<type_real>(1.0) + dx, dz };
+    coorg(2) = { static_cast<type_real>(1.0) + dx,
+                 static_cast<type_real>(1.0) + dz };
+    coorg(3) = { dx, static_cast<type_real>(1.0) + dz };
+    return coorg;
+  }
+
+  // Helper to create 9-node unit square element
+  Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+  create_unit_square_9node() {
+    Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace>
+        coorg("coorg", 9);
+    coorg(0) = { 0.0, 0.0 }; // Corner 0: (0,0)
+    coorg(1) = { 1.0, 0.0 }; // Corner 1: (1,0)
+    coorg(2) = { 1.0, 1.0 }; // Corner 2: (1,1)
+    coorg(3) = { 0.0, 1.0 }; // Corner 3: (0,1)
+    coorg(4) = { 0.5, 0.0 }; // Mid-edge 4: (0.5,0)
+    coorg(5) = { 1.0, 0.5 }; // Mid-edge 5: (1,0.5)
+    coorg(6) = { 0.5, 1.0 }; // Mid-edge 6: (0.5,1)
+    coorg(7) = { 0.0, 0.5 }; // Mid-edge 7: (0,0.5)
+    coorg(8) = { 0.5, 0.5 }; // Center 8: (0.5,0.5)
+    return coorg;
+  }
 };
 
 TEST_F(ComputeJacobianDim2Test, UnitSquareIdentityMapping) {
   // Test with a unit square element using 4 corner nodes
   // This should give identity-like jacobian mapping
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  // Unit square control nodes (corners)
-  coorg(0) = { 0.0, 0.0 }; // Bottom-left
-  coorg(1) = { 1.0, 0.0 }; // Bottom-right
-  coorg(2) = { 1.0, 1.0 }; // Top-right
-  coorg(3) = { 0.0, 1.0 }; // Top-left
+  auto coorg = create_unit_square_4node();
 
   // Test at center point (0, 0) in reference coordinates
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0);
@@ -64,16 +125,7 @@ TEST_F(ComputeJacobianDim2Test, UnitSquareIdentityMapping) {
 TEST_F(ComputeJacobianDim2Test, ScaledSquareMapping) {
   // Test with a scaled square (side length 2)
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  // Square with side length 2
-  coorg(0) = { 0.0, 0.0 }; // Bottom-left
-  coorg(1) = { 2.0, 0.0 }; // Bottom-right
-  coorg(2) = { 2.0, 2.0 }; // Top-right
-  coorg(3) = { 0.0, 2.0 }; // Top-left
+  auto coorg = create_scaled_square_4node(2.0);
 
   // Test at center point (0, 0) in reference coordinates
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0);
@@ -102,16 +154,7 @@ TEST_F(ComputeJacobianDim2Test, ScaledSquareMapping) {
 TEST_F(ComputeJacobianDim2Test, TranslatedSquareMapping) {
   // Test with a translated square (translation shouldn't affect jacobian)
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  // Unit square translated by (5, 3)
-  coorg(0) = { 5.0, 3.0 }; // Bottom-left
-  coorg(1) = { 6.0, 3.0 }; // Bottom-right
-  coorg(2) = { 6.0, 4.0 }; // Top-right
-  coorg(3) = { 5.0, 4.0 }; // Top-left
+  auto coorg = create_translated_unit_square_4node(5.0, 3.0);
 
   // Test at center point (0, 0) in reference coordinates
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0);
@@ -366,21 +409,7 @@ TEST_F(ComputeJacobianDim2Test, OverloadedFunction) {
 TEST_F(ComputeJacobianDim2Test, NineNodeUnitSquareMapping) {
   // Test with a 9-node unit square element
   const int ngnod = 9;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
-      coorg("coorg", ngnod);
-
-  // 9-node unit square control nodes (corners + mid-edge + center)
-  coorg(0) = { 0.0, 0.0 }; // Corner 0: (0,0)
-  coorg(1) = { 1.0, 0.0 }; // Corner 1: (1,0)
-  coorg(2) = { 1.0, 1.0 }; // Corner 2: (1,1)
-  coorg(3) = { 0.0, 1.0 }; // Corner 3: (0,1)
-  coorg(4) = { 0.5, 0.0 }; // Mid-edge 4: (0.5,0)
-  coorg(5) = { 1.0, 0.5 }; // Mid-edge 5: (1,0.5)
-  coorg(6) = { 0.5, 1.0 }; // Mid-edge 6: (0.5,1)
-  coorg(7) = { 0.0, 0.5 }; // Mid-edge 7: (0,0.5)
-  coorg(8) = { 0.5, 0.5 }; // Center 8: (0.5,0.5)
+  auto coorg = create_unit_square_9node();
 
   // Test at center point (0, 0) in reference coordinates
   auto result = compute_jacobian(coorg, ngnod, 0.0, 0.0);
