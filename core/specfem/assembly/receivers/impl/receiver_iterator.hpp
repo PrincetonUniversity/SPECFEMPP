@@ -63,6 +63,10 @@ private:
       return *this;
     }
 
+    bool operator==(const Iterator &other) const {
+      return index_ == other.index_;
+    }
+
     bool operator!=(const Iterator &other) const {
       return index_ != other.index_;
     }
