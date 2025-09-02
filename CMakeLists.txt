@@ -113,12 +113,12 @@ include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
-    add_definitions(-DSPECFEM_ENABLE_SIMD)
+    add_compile_definitions(SPECFEM_ENABLE_SIMD)
 endif()
 
 if (SPECFEM_ENABLE_PROFILING)
     message(STATUS "Enabling profiling")
-    add_definitions(-DSPECFEM_ENABLE_PROFILING)
+    add_compile_definitions(SPECFEM_ENABLE_PROFILING)
 endif()
 
 if (SPECFEM_ENABLE_DOUBLE_PRECISION)
@@ -223,32 +223,17 @@ target_link_libraries(
         source_class
         specfem::receivers
         yaml-cpp
-        ${BOOST_LIBS}
+        boost
+        $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
+        $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
 
-if (NOT SPECFEM_ENABLE_HDF5)
-    target_compile_definitions(
+target_compile_definitions(
         io
-        PUBLIC -DNO_HDF5
-    )
-else()
-    target_link_libraries(
-        io
-        ${HDF5_LIBRARIES}
-    )
-endif()
-
-if (NOT SPECFEM_ENABLE_ADIOS2)
-    target_compile_definitions(
-        io
-        PUBLIC -DNO_ADIOS2
-    )
-else()
-    target_link_libraries(
-        io
-        adios2
-    )
-endif()
+        PUBLIC
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
+)
 
 add_library(
         enumerations
@@ -277,15 +262,17 @@ add_library(
         src/specfem_mpi/specfem_mpi.cpp
 )
 
+target_compile_definitions(
+        specfem_mpi
+        PUBLIC
+        $<$<BOOL:${SPECFEM_ENABLE_MPI}>:-DMPI_PARALLEL>
+)
+
 if (SPECFEM_ENABLE_MPI)
-        target_compile_definitions(
-                specfem_mpi
-                PUBLIC -DMPI_PARALLEL
-        )
-        message(STATUS "Compiling SPECFEM with MPI")
+    message(STATUS "Compiling SPECFEM with MPI")
 else()
-        message(STATUS "Compiling SPECFEM without MPI")
-endif(SPECFEM_ENABLE_MPI)
+    message(STATUS "Compiling SPECFEM without MPI")
+endif()
 
 # add_library(
 #         material_class
@@ -492,28 +479,18 @@ target_link_libraries(
         writer
 )
 
-if (NOT SPECFEM_ENABLE_VTK)
-        target_compile_definitions(
-                periodic_tasks
-                PUBLIC -DNO_VTK
-        )
+target_compile_definitions(
+        periodic_tasks
+        PUBLIC
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_VTK}>>:-DNO_VTK>
+        $<$<BOOL:${__APPLE__}>:__APPLE__>
+)
 
-        target_link_libraries(
-                periodic_tasks
-                assembly
-        )
-else ()
-        target_link_libraries(
-                periodic_tasks
-                assembly
-                ${VTK_LIBRARIES}
-                )
-
-        # Only define the __APPLE__ compile definition if it is defined
-        if (__APPLE__)
-        target_compile_definitions(periodic_tasks PRIVATE __APPLE__)
-        endif(__APPLE__)
-endif()
+target_link_libraries(
+        periodic_tasks
+        assembly
+        $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
+)
 
 add_library(
         parameter_reader

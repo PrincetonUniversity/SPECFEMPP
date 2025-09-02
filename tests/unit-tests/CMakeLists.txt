@@ -94,25 +94,20 @@ add_executable(
 
 target_link_libraries(io_framework_tests PRIVATE
   io
-  ${BOOST_LIBS}
+  boost
   gtest_main
   Kokkos::kokkos
   kokkos_environment
+  $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
+  $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
 
-if (NOT SPECFEM_ENABLE_HDF5)
-    target_compile_definitions(
-        io_framework_tests
-        PUBLIC -DNO_HDF5
-    )
-endif()
-
-if (NOT SPECFEM_ENABLE_ADIOS2)
-    target_compile_definitions(
-        io_framework_tests
-        PUBLIC -DNO_ADIOS2
-    )
-endif()
+target_compile_definitions(
+    io_framework_tests
+    PUBLIC
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
+)
 
 
 add_executable(
@@ -249,7 +244,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   yaml-cpp
-  Boost::filesystem
+  boost
   -lpthread -lm
 )
 
@@ -288,7 +283,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
-  Boost::filesystem
+  boost
   # material_class
   -lpthread -lm
 )
@@ -307,7 +302,7 @@ target_link_libraries(
 #   kokkos_environment
 #   yaml-cpp
 #   compare_arrays
-#   Boost::filesystem
+#   boost
 #   # material_class
 #   -lpthread -lm
 # )
@@ -345,7 +340,7 @@ target_link_libraries(
   yaml-cpp
   compare_arrays
   io
-  Boost::filesystem
+  boost
   # material_class
   -lpthread -lm
 )
@@ -381,7 +376,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   utilities
-  Boost::filesystem
+  boost
   -lpthread -lm
   gtest_main
 )
@@ -405,7 +400,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   io
-  Boost::filesystem
+  boost
   gtest
   gtest_main
   -lpthread -lm
@@ -423,7 +418,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   enumerations
-  Boost::filesystem
+  boost
 )
 
 add_executable(
@@ -440,7 +435,7 @@ target_link_libraries(
   kokkos_environment
   algorithms
   io
-  Boost::filesystem
+  boost
   point
 )
 
@@ -492,7 +487,7 @@ target_link_libraries(
   kokkos_environment
   mpi_environment
   yaml-cpp
-  Boost::filesystem
+  boost
   -lpthread -lm
 )
 
@@ -597,7 +592,7 @@ target_link_libraries(
   kokkos_kernels
   solver
   periodic_tasks
-  Boost::filesystem
+  boost
   -lpthread -lm
 )
 
@@ -661,7 +656,7 @@ target_link_libraries(
 #   compare_arrays
 #   point
 #   edge
-#   Boost::filesystem
+#   boost
 #   -lpthread -lm
 # )
 
@@ -669,7 +664,7 @@ target_link_libraries(
 
 
 # Link to gtest only if MPI is disabled
-if (NOT MPI_PARALLEL)
+if(NOT MPI_PARALLEL)
   include(GoogleTest)
   set(TEST_TARGETS
     assembly_receivers_tests
@@ -735,4 +730,4 @@ if (NOT MPI_PARALLEL)
 
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
-endif(NOT MPI_PARALLEL)
+endif()
