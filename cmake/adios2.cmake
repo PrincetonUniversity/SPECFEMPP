@@ -72,6 +72,11 @@ if (SPECFEM_ENABLE_ADIOS2)
 
   message(STATUS "ADIOS2 downloaded and configured.")
 
+  # Create alias target for modern CMake usage
+  if(NOT TARGET adios2)
+      add_library(adios2 ALIAS adios2::adios2)
+  endif()
+
   unset(BUILD_TESTING)
 
   list(POP_BACK CMAKE_MESSAGE_INDENT)
