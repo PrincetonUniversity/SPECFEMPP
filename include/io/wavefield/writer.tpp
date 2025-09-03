@@ -35,54 +35,56 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
                                        ACOUSTIC, POROELASTIC)),
       {
-        const auto &field = forward.get_field<_medium_tag_>();
-
-        typename OutputLibrary::Group group =
-            base_group.createGroup(specfem::element::to_string(_medium_tag_));
-
-        // Get the elements of the medium and their total
-        const auto element_indices =
-            element_types.get_elements_on_host(_medium_tag_);
-        const int n_elements = element_indices.size();
-
         // Get the number of GLL points in the medium
         int nglob_medium = forward.get_nglob<_medium_tag_>();
 
-        // Initialize the views
-        DomainView x("xcoordinates", nglob_medium);
-        DomainView z("zcoordinates", nglob_medium);
-        MappingView mapping("mapping", n_elements, ngllz, ngllx);
+        if (nglob_medium > 0) {
+          const auto &field = forward.get_field<_medium_tag_>();
 
-        int ispec = 0;
+          typename OutputLibrary::Group group =
+              base_group.createGroup(specfem::element::to_string(_medium_tag_));
 
-        // Loop over the elements of the medium
-        for (int iel = 0; iel < n_elements; iel++) {
+          // Get the elements of the medium and their total
+          const auto element_indices =
+              element_types.get_elements_on_host(_medium_tag_);
+          const int n_elements = element_indices.size();
 
-          // Get the global element index
-          ispec = element_indices(iel);
+          // Initialize the views
+          DomainView x("xcoordinates", nglob_medium);
+          DomainView z("zcoordinates", nglob_medium);
+          MappingView mapping("mapping", n_elements, ngllz, ngllx);
 
-          for (int iz = 0; iz < ngllz; iz++) {
-            for (int ix = 0; ix < ngllx; ix++) {
+          int ispec = 0;
 
-              // This is the local medium iglob
-              // see: ``count`` in specfem::assembly::simulation_field<dim2,
-              // medium>
-              const int iglob = forward.template get_iglob<false>(ispec, iz, ix,
-                                                                  _medium_tag_);
+          // Loop over the elements of the medium
+          for (int iel = 0; iel < n_elements; iel++) {
 
-              // Set the mapping for the medium element
-              mapping(iel, iz, ix) = iglob;
+            // Get the global element index
+            ispec = element_indices(iel);
 
-              // Assign the coordinates to the local iglob
-              x(iglob) = mesh.h_coord(0, ispec, iz, ix);
-              z(iglob) = mesh.h_coord(1, ispec, iz, ix);
+            for (int iz = 0; iz < ngllz; iz++) {
+              for (int ix = 0; ix < ngllx; ix++) {
+
+                // This is the local medium iglob
+                // see: ``count`` in specfem::assembly::simulation_field<dim2,
+                // medium>
+                const int iglob = forward.template get_iglob<false>(
+                    ispec, iz, ix, _medium_tag_);
+
+                // Set the mapping for the medium element
+                mapping(iel, iz, ix) = iglob;
+
+                // Assign the coordinates to the local iglob
+                x(iglob) = mesh.h_coord(0, ispec, iz, ix);
+                z(iglob) = mesh.h_coord(1, ispec, iz, ix);
+              }
             }
           }
-        }
 
-        group.createDataset("X", x).write();
-        group.createDataset("Z", z).write();
-        group.createDataset("mapping", mapping).write();
+          group.createDataset("X", x).write();
+          group.createDataset("Z", z).write();
+          group.createDataset("mapping", mapping).write();
+        }
       });
 
   file.flush();
@@ -106,19 +108,29 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
       {
-        const auto &field = forward.get_field<_medium_tag_>();
+        // Get the number of GLL points in the medium
+        int nglob_medium = forward.get_nglob<_medium_tag_>();
 
-        typename OutputLibrary::Group group =
-            base_group.createGroup(specfem::element::to_string(_medium_tag_));
+        if (nglob_medium > 0) {
+          const auto &field = forward.get_field<_medium_tag_>();
 
-        if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
-          group.createDataset("Potential", field.get_host_field()).write();
-          group.createDataset("PotentialDot", field.get_host_field_dot()).write();
-          group.createDataset("PotentialDotDot", field.get_host_field_dot_dot()).write();
-        } else {
-          group.createDataset("Displacement", field.get_host_field()).write();
-          group.createDataset("Velocity", field.get_host_field_dot()).write();
-          group.createDataset("Acceleration", field.get_host_field_dot_dot()).write();
+          typename OutputLibrary::Group group =
+              base_group.createGroup(specfem::element::to_string(_medium_tag_));
+
+          if (_medium_tag_ == specfem::element::medium_tag::acoustic) {
+            group.createDataset("Potential", field.get_host_field()).write();
+            group.createDataset("PotentialDot", field.get_host_field_dot())
+                .write();
+            group
+                .createDataset("PotentialDotDot",
+                               field.get_host_field_dot_dot())
+                .write();
+          } else {
+            group.createDataset("Displacement", field.get_host_field()).write();
+            group.createDataset("Velocity", field.get_host_field_dot()).write();
+            group.createDataset("Acceleration", field.get_host_field_dot_dot())
+                .write();
+          }
         }
       });
 
@@ -132,7 +144,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::finalize(
   typename OutputLibrary::Group boundary_group =
       file.createGroup(std::string("/BoundaryValues"));
 
-  Kokkos::View<bool*, Kokkos::HostSpace> boundary_values_view(
+  Kokkos::View<bool *, Kokkos::HostSpace> boundary_values_view(
       "save_boundary_values", 1);
 
   boundary_values_view(0) = this->save_boundary_values;
@@ -155,10 +167,14 @@ void specfem::io::wavefield_writer<OutputLibrary>::finalize(
         (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                          POROELASTIC, ELASTIC_PSV_T)),
         CAPTURE((container, boundary_values.stacey.container)) {
+
+        // Get the number of GLL points in the medium
+        if (_container_.h_values.size() > 0) {
           const std::string dataset_name =
               specfem::element::to_string(_medium_tag_) + "Acceleration";
           stacey.createDataset(dataset_name, _container_.h_values).write();
-        });
+        }
+      });
     file.flush();
   }
 
