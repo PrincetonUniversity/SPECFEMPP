@@ -84,6 +84,13 @@ if (SPECFEM_ENABLE_HDF5)
         set(HDF5_LIBRARIES hdf5-static hdf5_cpp-static)
         set(HDF5_INCLUDE_DIRS ${hdf5_SOURCE_DIR}/src ${hdf5_SOURCE_DIR}/c++/src ${hdf5_BINARY_DIR})
 
+        # Create alias target for modern CMake usage
+        if(NOT TARGET hdf5)
+            add_library(hdf5 INTERFACE)
+            target_link_libraries(hdf5 INTERFACE hdf5-static hdf5_cpp-static)
+            target_include_directories(hdf5 INTERFACE ${HDF5_INCLUDE_DIRS})
+        endif()
+
         message(STATUS "HDF5 configured from source")
 
         # Restore the original unity build setting
@@ -95,6 +102,13 @@ if (SPECFEM_ENABLE_HDF5)
         message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
         message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
         message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
+
+        # Create alias target for modern CMake usage with system HDF5
+        if(NOT TARGET hdf5)
+            add_library(hdf5 INTERFACE)
+            target_link_libraries(hdf5 INTERFACE ${HDF5_LIBRARIES})
+            target_include_directories(hdf5 INTERFACE ${HDF5_INCLUDE_DIRS})
+        endif()
     else ()
         message(STATUS "HDF5 not found.")
         set(SPECFEM_ENABLE_HDF5 OFF CACHE BOOL "Disable HDF5 support" FORCE)

@@ -58,6 +58,10 @@ private:
       return *this;
     }
 
+    bool operator==(const Iterator &other) const {
+      return seis_step == other.seis_step;
+    }
+
     bool operator!=(const Iterator &other) const {
       return seis_step != other.seis_step;
     }
@@ -85,9 +89,9 @@ public:
   SeismogramIterator(const int nreceivers, const int nseismograms,
                      const int max_sig_step, type_real dt, type_real t0,
                      int nstep_between_samples)
-      : nreceivers(nreceivers), nseismograms(nseismograms), dt(dt), t0(t0),
+      : nreceivers(nreceivers), nseismograms(nseismograms), irec(0), iseis(0),
         nstep_between_samples(nstep_between_samples),
-        max_sig_step(max_sig_step),
+        max_sig_step(max_sig_step), dt(dt), t0(t0),
         h_sine_receiver_angle(
             "specfem::assembly::receivers::sine_receiver_angle", nreceivers),
         h_cosine_receiver_angle(
@@ -126,6 +130,12 @@ public:
 
   void sync_seismograms() {
     Kokkos::deep_copy(h_seismogram_components, seismogram_components);
+  }
+
+  // Set receiver angle for a receiver
+  void set_receiver_angle(int irec, type_real angle) {
+    h_sine_receiver_angle(irec) = std::sin(angle);
+    h_cosine_receiver_angle(irec) = std::cos(angle);
   }
 
 private:
