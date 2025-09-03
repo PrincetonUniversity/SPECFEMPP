@@ -84,10 +84,16 @@ template <typename value_type> char map_type() {
  * @param shape Vector containing the dimensions of the array
  * @param fortran_order Boolean indicating whether the array uses Fortran-style
  * ordering
+ *
  * @return std::vector<char> The generated header as a vector of characters
  *
  * @note Modified from cnpy library (MIT License)
  * https://github.com/rogersce/cnpy
+ *
+ * @example
+ * For a 3x4 float array using Fortran ordering on a little-endian system,
+ * the header dictionary might look like:
+ * {'descr': '<f4', 'fortran_order': True, 'shape': (3, 4), }
  */
 template <typename value_type>
 std::vector<char> create_npy_header(const std::vector<size_t> &shape,
