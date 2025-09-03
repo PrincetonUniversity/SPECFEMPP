@@ -33,7 +33,7 @@ protected:
       total_elements *= dims[i];
     }
 
-    std::vector<char> header = create_npy_header<value_type>(dims);
+    std::string header = create_npy_header<value_type>(dims);
 
     std::ofstream file(data_path.string(), std::ios::out | std::ios::binary);
     if (!file.is_open()) {

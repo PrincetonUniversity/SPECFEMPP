@@ -28,49 +28,35 @@ namespace specfem::io::impl::NPY {
  * @note Modified from cnpy library (MIT License)
  * https://github.com/rogersce/cnpy
  */
-
 template <typename value_type> char map_type() {
-  if (typeid(value_type) == typeid(float))
-    return 'f';
-  if (typeid(value_type) == typeid(double))
-    return 'f';
-  if (typeid(value_type) == typeid(long double))
+  if constexpr (std::is_same_v<value_type, float> ||
+                std::is_same_v<value_type, double> ||
+                std::is_same_v<value_type, long double>)
     return 'f';
 
-  if (typeid(value_type) == typeid(int))
-    return 'i';
-  if (typeid(value_type) == typeid(char))
-    return 'i';
-  if (typeid(value_type) == typeid(short))
-    return 'i';
-  if (typeid(value_type) == typeid(long))
-    return 'i';
-  if (typeid(value_type) == typeid(long long))
+  if constexpr (std::is_same_v<value_type, int> ||
+                std::is_same_v<value_type, char> ||
+                std::is_same_v<value_type, short> ||
+                std::is_same_v<value_type, long> ||
+                std::is_same_v<value_type, long long>)
     return 'i';
 
-  if (typeid(value_type) == typeid(unsigned char))
-    return 'u';
-  if (typeid(value_type) == typeid(unsigned short))
-    return 'u';
-  if (typeid(value_type) == typeid(unsigned long))
-    return 'u';
-  if (typeid(value_type) == typeid(unsigned long long))
-    return 'u';
-  if (typeid(value_type) == typeid(unsigned int))
+  if constexpr (std::is_same_v<value_type, unsigned char> ||
+                std::is_same_v<value_type, unsigned short> ||
+                std::is_same_v<value_type, unsigned long> ||
+                std::is_same_v<value_type, unsigned long long> ||
+                std::is_same_v<value_type, unsigned int>)
     return 'u';
 
-  if (typeid(value_type) == typeid(bool))
+  if constexpr (std::is_same_v<value_type, bool>)
     return 'b';
 
-  if (typeid(value_type) == typeid(std::complex<float>))
-    return 'c';
-  if (typeid(value_type) == typeid(std::complex<double>))
-    return 'c';
-  if (typeid(value_type) == typeid(std::complex<long double>))
+  if constexpr (std::is_same_v<value_type, std::complex<float> > ||
+                std::is_same_v<value_type, std::complex<double> > ||
+                std::is_same_v<value_type, std::complex<long double> >)
     return 'c';
 
-  else
-    return '?';
+  return '?';
 }
 
 /**
@@ -85,7 +71,7 @@ template <typename value_type> char map_type() {
  * @param fortran_order Boolean indicating whether the array uses Fortran-style
  * ordering
  *
- * @return std::vector<char> The generated header as a vector of characters
+ * @return std::string The generated header as a vector of characters
  *
  * @note Modified from cnpy library (MIT License)
  * https://github.com/rogersce/cnpy
@@ -96,8 +82,8 @@ template <typename value_type> char map_type() {
  * {'descr': '<f4', 'fortran_order': True, 'shape': (3, 4), }
  */
 template <typename value_type>
-std::vector<char> create_npy_header(const std::vector<size_t> &shape,
-                                    bool fortran_order = true) {
+std::string create_npy_header(const std::vector<size_t> &shape,
+                              bool fortran_order = true) {
   std::string dict;
   dict += "{'descr': '";
   dict += []() {
@@ -123,7 +109,7 @@ std::vector<char> create_npy_header(const std::vector<size_t> &shape,
   dict.insert(dict.end(), remainder, ' ');
   dict.back() = '\n';
 
-  std::vector<char> header;
+  std::string header;
   header.push_back((char)0x93);
 
   // Add "NUMPY" string
