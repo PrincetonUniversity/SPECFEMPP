@@ -53,8 +53,8 @@ void execute(
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
   auto [sources, t0] =
-      specfem::io::read_sources(setup.get_sources(), nsteps, setup.get_t0(),
-                                setup.get_dt(), simulation_type);
+      specfem::io::read_2d_sources(setup.get_sources(), nsteps, setup.get_t0(),
+                                   setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_node = setup.get_stations();
@@ -105,6 +105,7 @@ void execute(
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader());
+
   time_scheme->link_assembly(assembly);
   // --------------------------------------------------------------
 

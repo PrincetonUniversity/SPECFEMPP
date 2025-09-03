@@ -95,8 +95,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
         MaterialVectorType({ specfem::medium::material<
             specfem::element::medium_tag::elastic_psv_t,
             specfem::element::property_tag::isotropic_cosserat>(
-            1.0e5, 22.667 * 1e9, 4e9, 2e9, 1e4, 1e8, 1.936 * 1e8,
-            3.0464 * 1e9) }) }
+            2700.0, 13.5e9, 8.1e9, 2.7e5, 2700.0, 7.75e11, 1.5e11, 2.7e5) }) }
     };
 
 void check_material(

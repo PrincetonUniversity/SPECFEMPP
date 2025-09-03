@@ -3,22 +3,11 @@ cmake_minimum_required(VERSION 3.17.5)
 # GoogleTest requires at least C++17
 set(CMAKE_CXX_STANDARD 17)
 
-# Make sure that GTEST is not installed later in the process
-set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-  URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+# Include the GoogleTest framework
+include("${CMAKE_SOURCE_DIR}/cmake/googletest.cmake")
 
 # Explicitly set binary output directory for tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
-
 
 include_directories(.)
 
@@ -52,6 +41,7 @@ target_link_libraries(
   specfem_mpi
 )
 
+
 add_library(
   compare_arrays
   utilities/src/compare_array.cpp
@@ -63,6 +53,74 @@ target_link_libraries(
   io
 )
 
+add_library(
+  mesh_utilities_mapping
+  mesh_utilities/mapping.cpp
+)
+
+target_link_libraries(
+  mesh_utilities_mapping
+  Kokkos::kokkos
+)
+
+add_executable(
+  test_mesh_utilities_mapping_2d
+  mesh_utilities/test_mapping_2d.cpp
+)
+
+target_link_libraries(
+  test_mesh_utilities_mapping_2d
+  mesh_utilities_mapping
+  utilities
+  gtest_main
+)
+
+add_executable(
+  test_mesh_utilities_mapping_3d
+  mesh_utilities/test_mapping_3d.cpp
+)
+
+target_link_libraries(
+  test_mesh_utilities_mapping_3d
+  mesh_utilities_mapping
+  utilities
+  gtest_main
+)
+
+add_executable(
+  io_framework_tests
+  io/io_framework_tests.cpp
+)
+
+target_link_libraries(io_framework_tests PRIVATE
+  io
+  boost
+  gtest_main
+  Kokkos::kokkos
+  kokkos_environment
+  $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
+  $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
+)
+
+target_compile_definitions(
+    io_framework_tests
+    PUBLIC
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
+)
+
+
+add_executable(
+  is_close_tests
+  utilities/is_close_tests.cpp
+)
+
+target_link_libraries(
+  is_close_tests
+  utilities
+  gtest_main
+  Kokkos::kokkos
+)
 
 add_executable(
   gll_tests
@@ -93,13 +151,20 @@ target_link_libraries(
 
 add_executable(
   jacobian_tests
-  jacobian/shape_functions2d.cpp
-  jacobian/shape_functions3d.cpp
+  jacobian/jacobian_tests.cpp
+  jacobian/dim2/shape_functions_tests.cpp
+  jacobian/dim2/compute_locations_tests.cpp
+  jacobian/dim2/compute_jacobian_tests.cpp
+  jacobian/dim3/shape_functions_tests.cpp
+  jacobian/dim3/compute_locations_tests.cpp
+  jacobian/dim3/compute_jacobian_tests.cpp
 )
 
 target_link_libraries(
   jacobian_tests
   jacobian
+  mpi_environment
+  kokkos_environment
   gtest_main
   -lpthread -lm
 )
@@ -169,6 +234,7 @@ target_link_libraries(
 add_executable(
   receivers_tests
   receivers/dim2/receiver_tests.cpp
+  receivers/dim3/receiver_tests.cpp
 )
 
 target_link_libraries(
@@ -178,7 +244,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   yaml-cpp
-  Boost::filesystem
+  boost
   -lpthread -lm
 )
 
@@ -217,7 +283,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
-  Boost::filesystem
+  boost
   # material_class
   -lpthread -lm
 )
@@ -236,7 +302,7 @@ target_link_libraries(
 #   kokkos_environment
 #   yaml-cpp
 #   compare_arrays
-#   Boost::filesystem
+#   boost
 #   # material_class
 #   -lpthread -lm
 # )
@@ -274,7 +340,7 @@ target_link_libraries(
   yaml-cpp
   compare_arrays
   io
-  Boost::filesystem
+  boost
   # material_class
   -lpthread -lm
 )
@@ -289,6 +355,11 @@ add_executable(
   assembly/sources/sources.cpp
   assembly/check_jacobian/check_jacobian.cpp
   assembly/locate/locate_point.cpp
+  assembly/mesh/utilities.cpp
+  assembly/sources/locate_sources.cpp
+  assembly/compute_source_array/dim2/compute_source_array_from_vector.cpp
+  assembly/compute_source_array/dim2/compute_source_array_from_tensor.cpp
+  assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
 )
 
 target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
@@ -305,9 +376,34 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   utilities
-  Boost::filesystem
+  boost
   -lpthread -lm
   gtest_main
+)
+
+add_executable(
+  assembly_receivers_tests
+  assembly/receivers/receivers_tests.cpp
+  assembly/receivers/dim2/receivers_tests.cpp
+  assembly/receivers/dim3/receivers_tests.cpp
+  assembly/receivers/impl/receiver_iterator_tests.cpp
+  assembly/receivers/impl/dim2/seismogram_iterator_tests.cpp
+  assembly/receivers/impl/dim3/seismogram_iterator_tests.cpp
+)
+
+target_link_libraries(
+  assembly_receivers_tests
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  yaml-cpp
+  io
+  boost
+  gtest
+  gtest_main
+  -lpthread -lm
 )
 
 add_executable(
@@ -322,25 +418,60 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   enumerations
-  Boost::filesystem
+  boost
 )
 
 add_executable(
   interpolate_function
-  algorithms/interpolate_function.cpp
+  algorithms/interpolate_function/dim2/interpolate_function.cpp
+  algorithms/interpolate_function/dim3/interpolate_function.cpp
+  algorithms/interpolate_function/runner.cpp
 )
 
 target_link_libraries(
   interpolate_function
-  mesh
-  assembly
   quadrature
   mpi_environment
   kokkos_environment
   algorithms
   io
-  Boost::filesystem
+  boost
   point
+)
+
+add_executable(
+  locate_point_fixture_2d
+  algorithms/dim2/locate_point_fixture.cpp
+)
+
+target_link_libraries(
+  locate_point_fixture_2d
+  mesh_utilities_mapping
+  algorithms
+  jacobian
+  point
+  utilities
+  mpi_environment
+  kokkos_environment
+  gtest_main
+)
+
+
+add_executable(
+  locate_point_fixture_3d
+  algorithms/dim3/locate_point_fixture.cpp
+)
+
+target_link_libraries(
+  locate_point_fixture_3d
+  mesh_utilities_mapping
+  algorithms
+  jacobian
+  point
+  utilities
+  mpi_environment
+  kokkos_environment
+  gtest_main
 )
 
 add_executable(
@@ -356,17 +487,20 @@ target_link_libraries(
   kokkos_environment
   mpi_environment
   yaml-cpp
-  Boost::filesystem
+  boost
   -lpthread -lm
 )
 
 add_executable(
   mass_matrix_tests
-  mass_matrix/dim2/main.cpp
+  mass_matrix/main.cpp
+  # 2D mass matrix tests
   mass_matrix/dim2/elastic_isotropic.cpp
   mass_matrix/dim2/elastic_anisotropic.cpp
   mass_matrix/dim2/acoustic.cpp
   mass_matrix/dim2/poroelastic.cpp
+  # 3D mass matrix tests
+  mass_matrix/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
@@ -377,11 +511,15 @@ target_link_libraries(
 
 add_executable(
   stress_tests
+  stress/main.cpp
+  # 2D stress tests
   stress/dim2/acoustic.cpp
   stress/dim2/elastic_isotropic.cpp
   stress/dim2/elastic_anisotropic.cpp
   stress/dim2/elastic_isotropic_cosserat.cpp
   stress/dim2/poroelastic_isotropic.cpp
+  # 3D stress tests
+  stress/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
@@ -390,6 +528,27 @@ target_link_libraries(
   gtest_main
 )
 
+add_executable(
+  source_class_tests
+  source/source.cpp
+  source/base_source_tests.cpp
+  source/typed_source_tests.cpp
+  # source/dim2/vector_sources/force_source.cpp
+  # source/dim2/vector_sources/cosserat_force_source.cpp
+  # source/dim2/vector_sources/adjoint_source.cpp
+  # source/dim2/vector_sources/external_source.cpp
+  # source/dim2/tensor_sources/moment_tensor_source.cpp
+  # source/dim3/vector_sources/force_source.cpp
+  # source/dim3/tensor_sources/moment_tensor_source.cpp
+)
+target_link_libraries(
+  source_class_tests
+  source_class
+  source_time_function
+  mpi_environment
+  kokkos_environment
+  -lpthread -lm
+)
 
 # # add_executable(
 # #   source_location_tests
@@ -433,7 +592,7 @@ target_link_libraries(
   kokkos_kernels
   solver
   periodic_tasks
-  Boost::filesystem
+  boost
   -lpthread -lm
 )
 
@@ -497,7 +656,7 @@ target_link_libraries(
 #   compare_arrays
 #   point
 #   edge
-#   Boost::filesystem
+#   boost
 #   -lpthread -lm
 # )
 
@@ -505,9 +664,10 @@ target_link_libraries(
 
 
 # Link to gtest only if MPI is disabled
-if (NOT MPI_PARALLEL)
+if(NOT MPI_PARALLEL)
   include(GoogleTest)
   set(TEST_TARGETS
+    assembly_receivers_tests
     assembly_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests
@@ -518,19 +678,29 @@ if (NOT MPI_PARALLEL)
     fortranio_test
     gll_tests
     interpolate_function
+    io_framework_tests
     io_tests
+    is_close_tests
     jacobian_tests
     lagrange_tests
+    locate_point_fixture_2d
+    locate_point_fixture_3d
     mass_matrix_tests
     mesh_tests
     point_tests
     policies_tests
     receivers_tests
     simd_tests
+    source_class_tests
     stress_tests
+    test_mesh_utilities_mapping_2d
+    test_mesh_utilities_mapping_3d
   )
   foreach(test_target IN LISTS TEST_TARGETS)
-      gtest_discover_tests(${test_target})
+      gtest_discover_tests(${test_target}
+        DISCOVERY_MODE POST_BUILD
+        DISCOVERY_TIMEOUT 300
+      )
   endforeach()
 
   # For tests that require data files from the tests directory,
@@ -558,8 +728,6 @@ if (NOT MPI_PARALLEL)
   endforeach()
 
 
-
-
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
-endif(NOT MPI_PARALLEL)
+endif()

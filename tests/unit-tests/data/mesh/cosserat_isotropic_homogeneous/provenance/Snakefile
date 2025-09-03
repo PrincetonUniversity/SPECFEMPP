@@ -1,0 +1,112 @@
+SPECFEM_BIN = "/Users/lsawade/SPECFEMPP/build/release/bin/specfem2d"
+MESHFEM_BIN = "/Users/lsawade/SPECFEMPP/build/release/bin/xmeshfem2D"
+
+rule all:
+    input:
+        unified_plot="OUTPUT_FILES/results/unified_traces.png",
+        geometry_plot="OUTPUT_FILES/results/geometry.png",
+        comparison_plot="OUTPUT_FILES/results/reference_comparison.png"
+    localrule: True
+
+
+rule generate_mesh:
+    input:
+        "Par_File",
+    output:
+        database="OUTPUT_FILES/database.bin",
+        stations="OUTPUT_FILES/STATIONS",
+    localrule: True
+    shell:
+        """
+            mkdir -p OUTPUT_FILES
+            {MESHFEM_BIN} -p {input}
+        """
+
+
+
+rule run_solver:
+    input:
+        database="OUTPUT_FILES/database.bin",
+        stations="OUTPUT_FILES/STATIONS",
+        source="source.yaml",
+        config="specfem_config.yaml",
+    output:
+        seismograms=expand(
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}",
+            station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006", "S0007", "S0008"],
+            network_name=["AA"],
+            component=["BXX.semd", "BXZ.semd", "BXY.semr", "BXY.semir", "BXY.semc"],
+        ),
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=10,
+    shell:
+        """
+            # module purge
+            # module load boost/1.73.0
+            mkdir -p OUTPUT_FILES/results
+            echo "Hostname: $(hostname)" > output.log
+            {SPECFEM_BIN} -p {input.config} >> output.log
+        """
+
+
+rule plot_seismogram:
+    input:
+        trace_files=expand(
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}",
+            station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006", "S0007", "S0008"],
+            network_name=["AA"],
+            component=["BXX.semd", "BXZ.semd", "BXY.semr", "BXY.semir", "BXY.semc"],
+        ),
+        plot_script="plot_seismograms.py",
+        stations="OUTPUT_FILES/STATIONS",
+        source="source.yaml"
+    output:
+        unified_plot="OUTPUT_FILES/results/unified_traces.png"
+    localrule: True
+    shell:
+        "python {input.plot_script} {output.unified_plot}"
+
+
+rule plot_geometry:
+    input:
+        plot_script="plot_geometry.py",
+        stations="OUTPUT_FILES/STATIONS",
+        source="source.yaml",
+        topography="topography.dat"
+    output:
+        geometry_plot="OUTPUT_FILES/results/geometry.png"
+    localrule: True
+    shell:
+        "python {input.plot_script} {output.geometry_plot}"
+
+
+rule plot_reference_comparison:
+    input:
+        plot_script="plot_reference_comparison.py",
+        stations="OUTPUT_FILES/STATIONS",
+        source="source.yaml",
+        seismograms=expand(
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}",
+            station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006", "S0007", "S0008"],
+            network_name=["AA"],
+            component=["BXX.semd", "BXZ.semd", "BXY.semr"],
+        ),
+        reference_ux="reference/traces_fd/ux.npy",
+        reference_uz="reference/traces_fd/uz.npy",
+        reference_ry="reference/traces_fd/ry.npy"
+    output:
+        comparison_plot="OUTPUT_FILES/results/reference_comparison.png"
+    localrule: True
+    shell:
+        "python {input.plot_script} {output.comparison_plot}"
+
+
+rule clean:
+    localrule: True
+    shell:
+        """
+            rm -rf OUTPUT_FILES
+        """

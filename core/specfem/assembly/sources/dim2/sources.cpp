@@ -1,66 +1,18 @@
 #include "specfem/assembly/sources.hpp"
+#include "../impl/dim2/source_medium.tpp"
+#include "../impl/locate_sources.hpp"
 #include "../impl/source_medium.hpp"
-#include "../impl/source_medium.tpp"
 #include "algorithms/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "source/interface.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/source.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <vector>
-
-// Forward declarations
-namespace {
-
-/* THIS FUNCTION WILL HAVE TO CHANGE. IF YOU HAVE MANY SOURCES IN
- * MULTIPLE DOMAINS THE SOURCES ARE BEING LOCATED MULTIPLE TIMES
- * FOR ONE SOURCE, THIS WILL NOT HAVE AN IMPACT AT ALL, BUT FOR MANY SOURCES
- * THIS WILL BECOME A BOTTLENECK.
- *
- * The function runs for every material type and returns a tuple of two vectors
- * - the first vector contains the sources that fall into that material domain
- * - the second vector contains the global indices of the sources that
- */
-template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag>
-std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >,
-           std::vector<int> >
-sort_sources_per_medium(
-    const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
-
-  std::vector<std::shared_ptr<specfem::sources::source> > sorted_sources;
-  std::vector<int> source_indices;
-
-  // Loop over all sources
-  for (int isource = 0; isource < sources.size(); isource++) {
-
-    // Get the source coordinates
-    const auto &source = sources[isource];
-    const type_real x = source->get_x();
-    const type_real z = source->get_z();
-
-    // Get element that the source is located in
-    const specfem::point::global_coordinates<DimensionTag> coord(x, z);
-    const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
-
-    // Check if the element is in currently checked medium and add to
-    // the list of sources and indices if it is.
-    if (element_types.get_medium_tag(lcoord.ispec) == MediumTag) {
-      sorted_sources.push_back(source);
-      source_indices.push_back(isource);
-    }
-  }
-
-  return std::make_tuple(sorted_sources, source_indices);
-}
-} // namespace
 
 template class specfem::assembly::sources_impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
@@ -76,7 +28,8 @@ template class specfem::assembly::sources_impl::source_medium<
     specfem::element::medium_tag::elastic_psv_t>;
 
 specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
-    const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
@@ -97,9 +50,6 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
       wavefield_types("specfem::sources::wavefield_types", sources.size()),
       h_wavefield_types(Kokkos::create_mirror_view(wavefield_types)) {
 
-  // THERE SHOULD BE LOCATE SOURCES HERE, AND SOURCE SHOULD BE POPULATED
-  // WITH THE LOCAL COORDINATES AND THE GLOBAL ELEMENT INDEX
-
   // Here we sort the sources by the different media and create
   // a vector of sources for each medium named source_<dim>_<medium>
   // and a vector of indices of the sources in the original sources vector
@@ -108,13 +58,17 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
   int nsources = 0;
   int nsource_indices = 0;
 
+  // Locate all sources in the mesh and set their local coordinates,
+  // global element index, and medium that the source is located in
+  specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
+
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE(source) {
         auto [sorted_sources, source_indices] =
-            sort_sources_per_medium<_dimension_tag_, _medium_tag_>(
-                sources, element_types, mesh);
+            specfem::assembly::sources_impl::sort_sources_per_medium<
+                _dimension_tag_, _medium_tag_>(sources, element_types, mesh);
 
         /** For a sanity check we count the number of sources and source indices
          * for each medium and dimension
@@ -125,15 +79,8 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
         /* Loops over the current source*/
         for (int isource = 0; isource < sorted_sources.size(); isource++) {
           const auto &source = sorted_sources[isource];
-          const type_real x = source->get_x();
-          const type_real z = source->get_z();
-          const specfem::point::global_coordinates<_dimension_tag_> coord(x, z);
+          const auto lcoord = source->get_local_coordinates();
 
-          /* Locates the source in the mesh. Should have been stored already. */
-          const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
-          if (lcoord.ispec < 0) {
-            throw std::runtime_error("Source is outside of the domain");
-          }
           int ispec = lcoord.ispec;
           const int global_isource = source_indices[isource];
 

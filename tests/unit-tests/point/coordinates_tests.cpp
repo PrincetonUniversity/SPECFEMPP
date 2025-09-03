@@ -253,3 +253,212 @@ TEST_F(PointCoordinatesTest, NegativeCoordinates3D) {
   type_real expected = std::sqrt(3.0 * 3.0 + 3.0 * 3.0 + 3.0 * 3.0);
   EXPECT_REAL_EQ(dist, expected);
 }
+
+// ======================= Array Constructor Tests =======================
+
+// Test 2D global coordinates array constructor
+TEST_F(PointCoordinatesTest, GlobalCoordinates2D_ArrayConstructor) {
+  Kokkos::View<type_real[2], Kokkos::HostSpace> coord_array("coords");
+  coord_array[0] = 3.14;
+  coord_array[1] = 2.71;
+
+  specfem::point::global_coordinates<specfem::dimension::type::dim2> coords(
+      coord_array);
+
+  EXPECT_REAL_EQ(coords.x, 3.14);
+  EXPECT_REAL_EQ(coords.z, 2.71);
+}
+
+// Test 3D global coordinates array constructor
+TEST_F(PointCoordinatesTest, GlobalCoordinates3D_ArrayConstructor) {
+  Kokkos::View<type_real[3], Kokkos::HostSpace> coord_array("coords");
+  coord_array[0] = 3.14;
+  coord_array[1] = 1.41;
+  coord_array[2] = 2.71;
+
+  specfem::point::global_coordinates<specfem::dimension::type::dim3> coords(
+      coord_array);
+
+  EXPECT_REAL_EQ(coords.x, 3.14);
+  EXPECT_REAL_EQ(coords.y, 1.41);
+  EXPECT_REAL_EQ(coords.z, 2.71);
+}
+
+// Test 2D local coordinates array constructor
+TEST_F(PointCoordinatesTest, LocalCoordinates2D_ArrayConstructor) {
+  int ispec = 123;
+  Kokkos::View<type_real[2], Kokkos::HostSpace> coord_array("coords");
+  coord_array[0] = -0.3;
+  coord_array[1] = 0.7;
+
+  specfem::point::local_coordinates<specfem::dimension::type::dim2> coords(
+      ispec, coord_array);
+
+  EXPECT_EQ(coords.ispec, ispec);
+  EXPECT_REAL_EQ(coords.xi, -0.3);
+  EXPECT_REAL_EQ(coords.gamma, 0.7);
+}
+
+// Test 3D local coordinates array constructor
+TEST_F(PointCoordinatesTest, LocalCoordinates3D_ArrayConstructor) {
+  int ispec = 456;
+  Kokkos::View<type_real[3], Kokkos::HostSpace> coord_array("coords");
+  coord_array[0] = -0.3;
+  coord_array[1] = 0.1;
+  coord_array[2] = 0.7;
+
+  specfem::point::local_coordinates<specfem::dimension::type::dim3> coords(
+      ispec, coord_array);
+
+  EXPECT_EQ(coords.ispec, ispec);
+  EXPECT_REAL_EQ(coords.xi, -0.3);
+  EXPECT_REAL_EQ(coords.eta, 0.1);
+  EXPECT_REAL_EQ(coords.gamma, 0.7);
+}
+
+// Test equivalence between array and value constructors for 2D global
+TEST_F(PointCoordinatesTest, GlobalCoordinates2D_ArrayValueEquivalence) {
+  type_real x = 5.5;
+  type_real z = -2.3;
+
+  // Value constructor
+  specfem::point::global_coordinates<specfem::dimension::type::dim2>
+      coords_value(x, z);
+
+  // Array constructor
+  Kokkos::View<type_real[2], Kokkos::HostSpace> coord_array("coords");
+  coord_array[0] = x;
+  coord_array[1] = z;
+  specfem::point::global_coordinates<specfem::dimension::type::dim2>
+      coords_array(coord_array);
+
+  // Check equivalence
+  EXPECT_REAL_EQ(coords_value.x, coords_array.x);
+  EXPECT_REAL_EQ(coords_value.z, coords_array.z);
+}
+
+// Test equivalence between array and value constructors for 3D global
+TEST_F(PointCoordinatesTest, GlobalCoordinates3D_ArrayValueEquivalence) {
+  type_real x = 5.5;
+  type_real y = 1.2;
+  type_real z = -2.3;
+
+  // Value constructor
+  specfem::point::global_coordinates<specfem::dimension::type::dim3>
+      coords_value(x, y, z);
+
+  // Array constructor
+  Kokkos::View<type_real[3], Kokkos::HostSpace> coord_array("coords");
+  coord_array[0] = x;
+  coord_array[1] = y;
+  coord_array[2] = z;
+  specfem::point::global_coordinates<specfem::dimension::type::dim3>
+      coords_array(coord_array);
+
+  // Check equivalence
+  EXPECT_REAL_EQ(coords_value.x, coords_array.x);
+  EXPECT_REAL_EQ(coords_value.y, coords_array.y);
+  EXPECT_REAL_EQ(coords_value.z, coords_array.z);
+}
+
+// Test equivalence between array and value constructors for 2D local
+TEST_F(PointCoordinatesTest, LocalCoordinates2D_ArrayValueEquivalence) {
+  int ispec = 789;
+  type_real xi = 0.8;
+  type_real gamma = -0.6;
+
+  // Value constructor
+  specfem::point::local_coordinates<specfem::dimension::type::dim2>
+      coords_value(ispec, xi, gamma);
+
+  // Array constructor
+  Kokkos::View<type_real[2], Kokkos::HostSpace> coord_array("coords");
+  coord_array[0] = xi;
+  coord_array[1] = gamma;
+  specfem::point::local_coordinates<specfem::dimension::type::dim2>
+      coords_array(ispec, coord_array);
+
+  // Check equivalence
+  EXPECT_EQ(coords_value.ispec, coords_array.ispec);
+  EXPECT_REAL_EQ(coords_value.xi, coords_array.xi);
+  EXPECT_REAL_EQ(coords_value.gamma, coords_array.gamma);
+}
+
+// Test equivalence between array and value constructors for 3D local
+TEST_F(PointCoordinatesTest, LocalCoordinates3D_ArrayValueEquivalence) {
+  int ispec = 999;
+  type_real xi = 0.8;
+  type_real eta = -0.2;
+  type_real gamma = -0.6;
+
+  // Value constructor
+  specfem::point::local_coordinates<specfem::dimension::type::dim3>
+      coords_value(ispec, xi, eta, gamma);
+
+  // Array constructor
+  Kokkos::View<type_real[3], Kokkos::HostSpace> coord_array("coords");
+  coord_array[0] = xi;
+  coord_array[1] = eta;
+  coord_array[2] = gamma;
+  specfem::point::local_coordinates<specfem::dimension::type::dim3>
+      coords_array(ispec, coord_array);
+
+  // Check equivalence
+  EXPECT_EQ(coords_value.ispec, coords_array.ispec);
+  EXPECT_REAL_EQ(coords_value.xi, coords_array.xi);
+  EXPECT_REAL_EQ(coords_value.eta, coords_array.eta);
+  EXPECT_REAL_EQ(coords_value.gamma, coords_array.gamma);
+}
+
+// Test with zero values using array constructor
+TEST_F(PointCoordinatesTest, ArrayConstructor_ZeroValues) {
+  type_real zero = 0.0;
+
+  // 2D global with zeros
+  Kokkos::View<type_real[2], Kokkos::HostSpace> coord_array_2d("coords_2d");
+  coord_array_2d[0] = zero;
+  coord_array_2d[1] = zero;
+  specfem::point::global_coordinates<specfem::dimension::type::dim2> global_2d(
+      coord_array_2d);
+
+  // 3D global with zeros
+  Kokkos::View<type_real[3], Kokkos::HostSpace> coord_array_3d("coords_3d");
+  coord_array_3d[0] = zero;
+  coord_array_3d[1] = zero;
+  coord_array_3d[2] = zero;
+  specfem::point::global_coordinates<specfem::dimension::type::dim3> global_3d(
+      coord_array_3d);
+
+  EXPECT_REAL_EQ(global_2d.x, zero);
+  EXPECT_REAL_EQ(global_2d.z, zero);
+  EXPECT_REAL_EQ(global_3d.x, zero);
+  EXPECT_REAL_EQ(global_3d.y, zero);
+  EXPECT_REAL_EQ(global_3d.z, zero);
+}
+
+// Test with extreme values using array constructor
+TEST_F(PointCoordinatesTest, ArrayConstructor_ExtremeValues) {
+  type_real large = 1e10;
+  type_real small = -1e10;
+  int large_int = 999999;
+
+  // 2D global with extreme values
+  Kokkos::View<type_real[2], Kokkos::HostSpace> coord_array_2d("coords_2d");
+  coord_array_2d[0] = large;
+  coord_array_2d[1] = small;
+  specfem::point::global_coordinates<specfem::dimension::type::dim2> global_2d(
+      coord_array_2d);
+
+  // 2D local with extreme values
+  Kokkos::View<type_real[2], Kokkos::HostSpace> local_array_2d("local_2d");
+  local_array_2d[0] = small;
+  local_array_2d[1] = large;
+  specfem::point::local_coordinates<specfem::dimension::type::dim2> local_2d(
+      large_int, local_array_2d);
+
+  EXPECT_REAL_EQ(global_2d.x, large);
+  EXPECT_REAL_EQ(global_2d.z, small);
+  EXPECT_EQ(local_2d.ispec, large_int);
+  EXPECT_REAL_EQ(local_2d.xi, small);
+  EXPECT_REAL_EQ(local_2d.gamma, large);
+}

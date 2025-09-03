@@ -4,7 +4,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "io/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "source/source.hpp"
+#include "specfem/source.hpp"
 #include "utilities/strings.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
