@@ -194,7 +194,8 @@ void check_load(
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 void check_assembly_source_construction(
-    std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
   const int ngllz = assembly.mesh.ngllz;
@@ -210,22 +211,27 @@ void check_assembly_source_construction(
   const int nsources = sources.size();
   for (int isource = 0; isource < nsources; isource++) {
     const auto &source = sources[isource];
-    specfem::point::global_coordinates<DimensionTag> coord(source->get_x(),
-                                                           source->get_z());
+    const auto coord = source->get_global_coordinates();
 
     const auto lcoord = specfem::algorithms::locate_point(coord, assembly.mesh);
+
+    source->set_local_coordinates(lcoord);
+    source->set_medium_tag(assembly.element_types.get_medium_tag(lcoord.ispec));
 
     if (assembly.element_types.get_medium_tag(lcoord.ispec) != MediumTag) {
       continue;
     }
 
-    Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace> source_array(
-        "source_array", components, assembly.mesh.ngllz, assembly.mesh.ngllx);
+    Kokkos::View<type_real ***, Kokkos::LayoutRight,
+                 Kokkos::DefaultHostExecutionSpace>
+        source_array("source_array", components, assembly.mesh.ngllz,
+                     assembly.mesh.ngllx);
 
-    source->compute_source_array(assembly.mesh, assembly.jacobian_matrix,
-                                 assembly.element_types, source_array);
-    Kokkos::View<type_real **, Kokkos::DefaultHostExecutionSpace> stf(
-        "stf", 1, components);
+    specfem::assembly::compute_source_array(
+        source, assembly.mesh, assembly.jacobian_matrix, source_array);
+    Kokkos::View<type_real **, Kokkos::LayoutRight,
+                 Kokkos::DefaultHostExecutionSpace>
+        stf("stf", 1, components);
 
     source->compute_source_time_function(1.0, 0.0, 1, stf);
     using mapped_chunk_index_type =
@@ -277,7 +283,8 @@ void check_assembly_source_construction(
 }
 
 void test_assembly_source_construction(
-    std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,

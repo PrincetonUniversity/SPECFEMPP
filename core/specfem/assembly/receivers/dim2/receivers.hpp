@@ -9,7 +9,8 @@ namespace specfem::assembly {
 template <>
 struct receivers<specfem::dimension::type::dim2>
     : public receivers_impl::StationIterator,
-      public receivers_impl::SeismogramIterator {
+      public receivers_impl::SeismogramIterator<
+          specfem::dimension::type::dim2> {
 
 public:
   constexpr static specfem::dimension::type dimension_tag =

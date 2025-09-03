@@ -1,4 +1,5 @@
 #include "io/property/writer.hpp"
+#include "io/ADIOS2/ADIOS2.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
 #include "io/Npy/Npy.hpp"
@@ -9,6 +10,9 @@
 
 template class specfem::io::property_writer<
     specfem::io::HDF5<specfem::io::write> >;
+
+template class specfem::io::property_writer<
+    specfem::io::ADIOS2<specfem::io::write> >;
 
 template class specfem::io::property_writer<
     specfem::io::ASCII<specfem::io::write> >;

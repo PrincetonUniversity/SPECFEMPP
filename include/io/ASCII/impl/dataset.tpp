@@ -12,8 +12,8 @@ specfem::io::impl::ASCII::Dataset<ViewType, OpType>::Dataset(
     const ViewType data)
     : data(data), DatasetBase<OpType>(
                       folder_name, name, rank,
-                      [&data]() -> int * {
-                        int *dims = new int[rank];
+                      [&data]() -> std::vector<int> {
+                        std::vector<int> dims(rank);
                         for (int i = 0; i < rank; i++) {
                           dims[i] = data.extent(i);
                         }

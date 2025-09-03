@@ -37,7 +37,7 @@ template <typename T> struct simd<T, false> {
 
 template <typename T> struct simd<T, true> {
   using base_type = T; ///< The base type of the SIMD vector.
-#ifdef ENABLE_SIMD
+#ifdef SPECFEM_ENABLE_SIMD
   using datatype = Kokkos::Experimental::simd<T>; ///< The type of the
                                                   ///< SIMD vector.
 #else
@@ -53,7 +53,7 @@ template <typename T> struct simd<T, true> {
    * @return constexpr static int The size of the SIMD vector.
    */
   KOKKOS_FUNCTION constexpr static int size() {
-#ifdef ENABLE_SIMD
+#ifdef SPECFEM_ENABLE_SIMD
     return Kokkos::Experimental::simd<T>::size();
 #else
     return Kokkos::Experimental::basic_simd<

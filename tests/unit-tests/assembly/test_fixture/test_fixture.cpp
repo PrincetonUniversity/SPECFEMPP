@@ -42,7 +42,7 @@ ASSEMBLY::ASSEMBLY() {
 
     std::cout << sources_file << std::endl;
 
-    const auto [sources, t0] = specfem::io::read_sources(
+    auto [sources, t0] = specfem::io::read_2d_sources(
         sources_file, 1, 0, 0, specfem::simulation::type::forward);
 
     this->Sources.push_back(sources);

@@ -5,6 +5,7 @@
 #include "dim2/elastic/isotropic/mass_matrix.tpp"
 #include "dim2/elastic/isotropic_cosserat/mass_matrix.tpp"
 #include "dim2/poroelastic/isotropic/mass_matrix.tpp"
+#include "dim3/elastic/isotropic/mass_matrix.tpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
