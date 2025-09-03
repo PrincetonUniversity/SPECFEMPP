@@ -15,6 +15,40 @@ template <typename IOLibrary>
 void specfem::io::wavefield_reader<IOLibrary>::initialize(
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
+  auto &buffer = assembly.fields.buffer;
+  int ngroups = 0;
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
+                                       ACOUSTIC, POROELASTIC)),
+      {
+        if (buffer.get_nglob<_medium_tag_>() > 0) {
+          ngroups++;
+        }
+      });
+
+  Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags", ngroups);
+  file.openDataset("medium_tags", medium_tags).read();
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
+                                       ACOUSTIC, POROELASTIC)),
+      {
+        if (buffer.get_nglob<_medium_tag_>() > 0) {
+          std::string current_tag = specfem::element::to_string(_medium_tag_);
+          bool found = false;
+          for (int i = 0; i < medium_tags.extent(0); ++i) {
+            if (medium_tags(i) == current_tag) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            throw std::runtime_error("Medium tag " + current_tag + " not found in wavefield file");
+          }
+        }
+      });
+
   auto &boundary_values = assembly.boundary_values;
 
   typename IOLibrary::Group boundary_group = file.openGroup("/BoundaryValues");

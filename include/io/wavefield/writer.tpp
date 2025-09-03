@@ -28,8 +28,22 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
   const int ngllx = mesh.ngllx;
   // const int nspec = mesh.points.nspec;
 
+  int ngroups = 0;
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
+                                       ACOUSTIC, POROELASTIC)),
+      {
+        if (forward.get_nglob<_medium_tag_>() > 0) {
+          ngroups++;
+        }
+      });
+
+  Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags", ngroups);
+
   typename OutputLibrary::Group base_group =
       file.createGroup(std::string("/Coordinates"));
+
+  int igroup = 0;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
@@ -39,6 +53,9 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
         int nglob_medium = forward.get_nglob<_medium_tag_>();
 
         if (nglob_medium > 0) {
+          medium_tags(igroup) = specfem::element::to_string(_medium_tag_);
+          igroup++;
+
           const auto &field = forward.get_field<_medium_tag_>();
 
           typename OutputLibrary::Group group =
@@ -87,6 +104,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
         }
       });
 
+  file.createDataset("medium_tags", medium_tags).write();
   file.flush();
 
   std::cout << "Coordinates written to " << output_folder + "/ForwardWavefield"
