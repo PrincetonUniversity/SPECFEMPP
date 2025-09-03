@@ -1,5 +1,4 @@
-#ifndef SPECFEM_IO_HDF5_IMPL_NATIVE_TYPE_TPP
-#define SPECFEM_IO_HDF5_IMPL_NATIVE_TYPE_TPP
+#pragma once
 
 #ifndef NO_HDF5
 #include "H5Cpp.h"
@@ -112,6 +111,5 @@ template <> struct specfem::io::impl::HDF5::native_type<bool> {
     return type;
   }
 };
-#endif
 
 #endif
