@@ -1,0 +1,10 @@
+id : "HomogeneousElasticDomainWAdjacencyMap"
+name : "Homogeneous elastic domain with adjacency map"
+description: >
+  Testing index mapping computation using adjacency map on a homogeneous elastic domain with no interfaces. Test is run on a single MPI process.
+config:
+  nproc : 1
+  tolerance : 1e-3
+databases:
+  specfem_config: "specfem_config.yaml"
+  traces: "traces"

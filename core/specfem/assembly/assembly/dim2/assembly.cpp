@@ -17,7 +17,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
     const specfem::simulation::type simulation,
     const bool allocate_boundary_values,
     const std::shared_ptr<specfem::io::reader> &property_reader) {
-  this->mesh = { mesh.tags, mesh.control_nodes, quadratures };
+  this->mesh = { mesh.tags, mesh.control_nodes, quadratures,
+                 mesh.adjacency_graph };
   this->element_types = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
                           this->mesh, mesh.tags };
   this->jacobian_matrix = { this->mesh };
@@ -83,7 +84,9 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
   message << "Assembly information:\n"
           << "------------------------------\n"
           << "Total number of spectral elements : " << this->mesh.nspec << "\n"
-          << "Total number of geometric points : " << this->mesh.ngllz << "\n";
+          << "Total number of geometric points : " << this->mesh.ngllz << "\n"
+          << "Total number of distinct quadrature points : " << this->mesh.nglob
+          << "\n";
 
   int total_elements = 0;
 

@@ -3,6 +3,7 @@
 #include "enumerations/interface.hpp"
 #include "io/fortranio/interface.hpp"
 #include "io/interface.hpp"
+#include "io/mesh/impl/fortran/dim2/read_adjacency_graph.hpp"
 #include "io/mesh/impl/fortran/dim2/read_boundaries.hpp"
 #include "io/mesh/impl/fortran/dim2/read_elements.hpp"
 #include "io/mesh/impl/fortran/dim2/read_interfaces.hpp"
@@ -136,6 +137,14 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
     throw;
   }
 
+  try {
+    mesh.adjacency_graph =
+        specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(mesh.nspec,
+                                                                     stream);
+  } catch (std::runtime_error &e) {
+    throw;
+  }
+
   // Check if database file was read completely
   if (stream.get() && !stream.eof()) {
     throw std::runtime_error("The Database file wasn't fully read. Is there "
@@ -190,6 +199,8 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
 
   mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
       mesh.materials, mesh.boundaries);
+
+  mesh.check_consistency();
 
   return mesh;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "adjacency_graph/adjacency_graph.hpp"
 #include "boundaries/boundaries.hpp"
 #include "control_nodes/control_nodes.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
@@ -62,6 +63,8 @@ template <> struct mesh<specfem::dimension::type::dim2> {
                                                                   ///< used)
   specfem::mesh::materials<dimension> materials; ///< Defines material
                                                  ///< properties
+
+  specfem::mesh::adjacency_graph<dimension> adjacency_graph;
 
   /**
    * @name Constructors
@@ -132,6 +135,20 @@ template <> struct mesh<specfem::dimension::type::dim2> {
    * @endcode
    */
   std::string print() const;
+
+  /**
+   * @brief Checks the consistency of the mesh data structure.
+   *
+   * This function verifies the internal consistency of the mesh, ensuring that
+   * all mesh components (such as control nodes, boundaries, materials, etc.)
+   * are correctly initialized and compatible with each other. It is intended
+   * to catch configuration or initialization errors before running simulations.
+   *
+   * @throws std::runtime_error if any inconsistency is detected within the
+   * mesh.
+   *
+   */
+  void check_consistency() const;
 };
 } // namespace mesh
 } // namespace specfem
