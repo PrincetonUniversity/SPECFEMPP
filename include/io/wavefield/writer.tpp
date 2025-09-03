@@ -38,7 +38,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
         }
       });
 
-  Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags", ngroups);
+  Kokkos::View<int *, Kokkos::HostSpace> medium_tags("medium_tags", ngroups);
 
   typename OutputLibrary::Group base_group =
       file.createGroup(std::string("/Coordinates"));
@@ -53,7 +53,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
         int nglob_medium = forward.get_nglob<_medium_tag_>();
 
         if (nglob_medium > 0) {
-          medium_tags(igroup) = specfem::element::to_string(_medium_tag_);
+          medium_tags(igroup) = static_cast<int>(_medium_tag_);
           igroup++;
 
           const auto &field = forward.get_field<_medium_tag_>();
