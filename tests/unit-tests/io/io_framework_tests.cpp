@@ -195,9 +195,6 @@ TYPED_TEST(IOFrameworkTest, BasicFileOperations) {
     } else if constexpr (std::is_same_v<IOType, specfem::io::ADIOS2<
                                                     specfem::io::write> >) {
       expected_name += ".bp";
-    } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::NPY<specfem::io::write> >) {
-      expected_name += ".npy";
     }
 
     EXPECT_TRUE(fs::exists(expected_name));
