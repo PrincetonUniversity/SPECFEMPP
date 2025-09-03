@@ -2,6 +2,7 @@ CMakeUserPresets.json
 .vscode/
 .DS_Store
 build*/*
+build
 _build/
 _templates/
 public/
@@ -35,3 +36,6 @@ test*.hpp
 include/specfem_setup.hpp
 install
 bin
+
+
+**/__pycache__
