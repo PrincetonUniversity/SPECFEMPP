@@ -6,7 +6,7 @@
 #include "kokkos_abstractions.h"
 
 template <typename ViewType, typename OpType>
-specfem::io::impl::Npy::Dataset<ViewType, OpType>::Dataset(
+specfem::io::impl::NPY::Dataset<ViewType, OpType>::Dataset(
     boost::filesystem::path &folder_name, const std::string &name,
     const ViewType data)
     : data(data), DatasetBase<OpType>(
@@ -20,7 +20,7 @@ specfem::io::impl::Npy::Dataset<ViewType, OpType>::Dataset(
                       }()) {}
 
 template <typename ViewType, typename OpType>
-void specfem::io::impl::Npy::Dataset<ViewType, OpType>::write() {
+void specfem::io::impl::NPY::Dataset<ViewType, OpType>::write() {
   if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
     DatasetBase<OpType>::write(data.data());
   } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
@@ -34,7 +34,7 @@ void specfem::io::impl::Npy::Dataset<ViewType, OpType>::write() {
 }
 
 template <typename ViewType, typename OpType>
-void specfem::io::impl::Npy::Dataset<ViewType, OpType>::read() {
+void specfem::io::impl::NPY::Dataset<ViewType, OpType>::read() {
   if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
     DatasetBase<OpType>::read(data.data());
   } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {

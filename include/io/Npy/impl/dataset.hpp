@@ -4,13 +4,13 @@
 #include <boost/filesystem.hpp>
 #include <string>
 
-namespace specfem::io::impl::Npy {
+namespace specfem::io::impl::NPY {
 
 // Forward declaration
 template <typename OpType> class Group;
 template <typename OpType> class File;
 /**
- * @brief Dataset class for Npy IO
+ * @brief Dataset class for NPY IO
  *
  * @tparam OpType Operation type (read/write)
  */
@@ -31,7 +31,7 @@ public:
    */
   ///@{
   /**
-   * @brief Construct a new npy Dataset object within an Npy file with the
+   * @brief Construct a new npy Dataset object within an NPY file with the
    * given name
    *
    * @param file npy file object to create the dataset in
@@ -60,4 +60,4 @@ private:
   ViewType data; ///< Data to write
 };
 
-} // namespace specfem::io::impl::Npy
+} // namespace specfem::io::impl::NPY
