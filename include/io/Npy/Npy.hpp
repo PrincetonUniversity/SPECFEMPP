@@ -20,6 +20,7 @@ namespace specfem::io {
  */
 template <typename OpType> class NPY {
 public:
+  using IO_OpType = OpType;               ///< Operation type (read/write)
   using File = impl::NPY::File<OpType>;   ///< NPY file implementation
   using Group = impl::NPY::Group<OpType>; ///< NPY group implementation
   template <typename ViewType>
