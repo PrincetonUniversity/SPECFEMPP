@@ -7,7 +7,7 @@
 #include <typeinfo>
 #include <vector>
 
-namespace specfem::io::impl::Npy {
+namespace specfem::io::impl::NPY {
 /**
  * @brief Maps C++ types to NumPy type characters
  *
@@ -219,4 +219,4 @@ std::vector<size_t> parse_npy_header(std::ifstream &file,
   return shape;
 }
 
-} // namespace specfem::io::impl::Npy
+} // namespace specfem::io::impl::NPY

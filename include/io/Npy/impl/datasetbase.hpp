@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace specfem::io::impl::Npy {
+namespace specfem::io::impl::NPY {
 template <typename OpType> class DatasetBase;
 
 template <> class DatasetBase<specfem::io::write> {
@@ -106,4 +106,4 @@ private:
   const std::vector<size_t> dims;
 };
 
-} // namespace specfem::io::impl::Npy
+} // namespace specfem::io::impl::NPY

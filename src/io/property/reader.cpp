@@ -2,7 +2,7 @@
 #include "io/ADIOS2/ADIOS2.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
-#include "io/Npy/Npy.hpp"
+#include "io/NPY/NPY.hpp"
 #include "io/property/reader.tpp"
 #include "io/reader.hpp"
 
@@ -17,4 +17,4 @@ template class specfem::io::property_reader<
     specfem::io::ASCII<specfem::io::read> >;
 
 template class specfem::io::property_reader<
-    specfem::io::Npy<specfem::io::read> >;
+    specfem::io::NPY<specfem::io::read> >;

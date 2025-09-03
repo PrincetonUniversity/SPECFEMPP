@@ -2,7 +2,7 @@
 #include "io/ADIOS2/ADIOS2.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
-#include "io/Npy/Npy.hpp"
+#include "io/NPY/NPY.hpp"
 #include "io/property/reader.hpp"
 #include "io/property/writer.hpp"
 #include "utilities/strings.hpp"
@@ -59,7 +59,7 @@ specfem::runtime_configuration::property::instantiate_property_writer() const {
           specfem::io::ASCII<specfem::io::write> > >(this->output_folder);
     } else if (specfem::utilities::is_npy_string(this->output_format)) {
       return std::make_shared<
-          specfem::io::property_writer<specfem::io::Npy<specfem::io::write> > >(
+          specfem::io::property_writer<specfem::io::NPY<specfem::io::write> > >(
           this->output_folder);
     } else {
       throw std::runtime_error("Unknown model format");
@@ -89,7 +89,7 @@ specfem::runtime_configuration::property::instantiate_property_reader() const {
           specfem::io::ASCII<specfem::io::read> > >(this->output_folder);
     } else if (specfem::utilities::is_npy_string(this->output_format)) {
       return std::make_shared<
-          specfem::io::property_reader<specfem::io::Npy<specfem::io::read> > >(
+          specfem::io::property_reader<specfem::io::NPY<specfem::io::read> > >(
           this->output_folder);
     } else {
       throw std::runtime_error("Unknown model format");

@@ -1,11 +1,11 @@
 #include "periodic_tasks/wavefield_reader.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
-#include "io/Npy/Npy.hpp"
+#include "io/NPY/NPY.hpp"
 
 // Explicit instantiation
 template class specfem::periodic_tasks::wavefield_reader<specfem::io::HDF5>;
 
 template class specfem::periodic_tasks::wavefield_reader<specfem::io::ASCII>;
 
-template class specfem::periodic_tasks::wavefield_reader<specfem::io::Npy>;
+template class specfem::periodic_tasks::wavefield_reader<specfem::io::NPY>;

@@ -18,12 +18,12 @@ namespace specfem::io {
  *
  * @tparam OpType Operation type (read/write)
  */
-template <typename OpType> class Npy {
+template <typename OpType> class NPY {
 public:
-  using File = impl::Npy::File<OpType>;   ///< NPY file implementation
-  using Group = impl::Npy::Group<OpType>; ///< NPY group implementation
+  using File = impl::NPY::File<OpType>;   ///< NPY file implementation
+  using Group = impl::NPY::Group<OpType>; ///< NPY group implementation
   template <typename ViewType>
-  using Dataset = impl::Npy::Dataset<ViewType, OpType>; ///< NPY dataset
+  using Dataset = impl::NPY::Dataset<ViewType, OpType>; ///< NPY dataset
                                                         ///< implementation
 };
 

@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace specfem::io::impl::Npy {
+namespace specfem::io::impl::NPY {
 
 // Forward declaration
 template <typename OpType> class Group;
@@ -72,12 +72,12 @@ public:
    * @tparam ViewType Kokkos view type of the data
    * @param name Name of the dataset
    * @param data Data to write
-   * @return specfem::io::impl::Npy::Dataset<ViewType, OpType> Dataset object
+   * @return specfem::io::impl::NPY::Dataset<ViewType, OpType> Dataset object
    */
   template <typename ViewType>
-  specfem::io::impl::Npy::Dataset<ViewType, OpType>
+  specfem::io::impl::NPY::Dataset<ViewType, OpType>
   createDataset(const std::string &name, const ViewType data) {
-    return specfem::io::impl::Npy::Dataset<ViewType, OpType>(folder_path, name,
+    return specfem::io::impl::NPY::Dataset<ViewType, OpType>(folder_path, name,
                                                              data);
   }
 
@@ -85,10 +85,10 @@ public:
    * @brief Create a new group within the file
    *
    * @param name Name of the group
-   * @return specfem::io::impl::Npy::Group<OpType> Group object
+   * @return specfem::io::impl::NPY::Group<OpType> Group object
    */
-  specfem::io::impl::Npy::Group<OpType> createGroup(const std::string &name) {
-    return specfem::io::impl::Npy::Group<OpType>(folder_path, name);
+  specfem::io::impl::NPY::Group<OpType> createGroup(const std::string &name) {
+    return specfem::io::impl::NPY::Group<OpType>(folder_path, name);
   }
 
   void flush() {};
@@ -136,12 +136,12 @@ public:
    * @tparam ViewType Kokkos view type of the data
    * @param name Name of the dataset
    * @param data Data to be read
-   * @return specfem::io::impl::Npy::Dataset<ViewType, OpType> Dataset object
+   * @return specfem::io::impl::NPY::Dataset<ViewType, OpType> Dataset object
    */
   template <typename ViewType>
-  specfem::io::impl::Npy::Dataset<ViewType, OpType>
+  specfem::io::impl::NPY::Dataset<ViewType, OpType>
   openDataset(const std::string &name, const ViewType data) {
-    return specfem::io::impl::Npy::Dataset<ViewType, OpType>(folder_path, name,
+    return specfem::io::impl::NPY::Dataset<ViewType, OpType>(folder_path, name,
                                                              data);
   }
 
@@ -149,10 +149,10 @@ public:
    * @brief Open an existing group within the file
    *
    * @param name Name of the group
-   * @return specfem::io::impl::Npy::Group<OpType> Group object
+   * @return specfem::io::impl::NPY::Group<OpType> Group object
    */
-  specfem::io::impl::Npy::Group<OpType> openGroup(const std::string &name) {
-    return specfem::io::impl::Npy::Group<OpType>(folder_path, name);
+  specfem::io::impl::NPY::Group<OpType> openGroup(const std::string &name) {
+    return specfem::io::impl::NPY::Group<OpType>(folder_path, name);
   }
 
   ~File() {}
@@ -160,4 +160,4 @@ public:
 private:
   boost::filesystem::path folder_path; ///< Path to the folder
 };
-} // namespace specfem::io::impl::Npy
+} // namespace specfem::io::impl::NPY
