@@ -81,19 +81,17 @@ specfem::algorithms::locate_point(
   return jacobian::compute_locations(coorg, ngnod, xi, gamma);
 }
 
-type_real specfem::algorithms::locate_point_on_edge(
+std::pair<type_real, bool> specfem::algorithms::locate_point_on_edge(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const int &ispec, const specfem::mesh_entity::type &mesh_entity) {
 
-  if (mesh_entity == specfem::mesh_entity::type::bottom_left ||
-      mesh_entity == specfem::mesh_entity::type::bottom_right ||
-      mesh_entity == specfem::mesh_entity::type::top_left ||
-      mesh_entity == specfem::mesh_entity::type::top_right) {
+  if (specfem::mesh_entity::contains(specfem::mesh_entity::corners,
+                                     mesh_entity)) {
     throw std::runtime_error(
         "locate_point_on_edge mesh_entity must be an edge. Found a corner.");
-    return 0;
+    return { 0, false };
   }
   const Kokkos::View<
       specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
@@ -104,10 +102,7 @@ type_real specfem::algorithms::locate_point_on_edge(
     coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
   }
 
-  type_real coord_guess = 0;
-  coord_guess =
-      specfem::algorithms::locate_point_impl::get_local_edge_coordinate(
-          coordinates, coorg, mesh_entity, coord_guess);
-
-  return coord_guess;
+  // initial guess of 0 (center of edge)
+  return specfem::algorithms::locate_point_impl::get_local_edge_coordinate(
+      coordinates, coorg, mesh_entity, 0);
 }

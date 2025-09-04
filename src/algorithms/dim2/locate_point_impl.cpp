@@ -123,69 +123,103 @@ std::tuple<type_real, type_real> get_local_coordinates(
   return std::make_tuple(xi, gamma);
 }
 
-type_real get_local_edge_coordinate(
+std::pair<type_real, bool> get_local_edge_coordinate(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,
     const Kokkos::View<
         specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
         Kokkos::HostSpace> &coorg,
     const specfem::mesh_entity::type &mesh_entity, type_real coord) {
-
+  constexpr type_real local_deriv_eps = 1e-12;
+  constexpr type_real global_coord_eps = 1e-2;
   const int ngnod = coorg.extent(0);
 
+  // full local coords
   type_real xi, gamma;
-  if (mesh_entity == specfem::mesh_entity::type::bottom) {
-    gamma = -1;
-  } else if (mesh_entity == specfem::mesh_entity::type::right) {
-    xi = 1;
-  } else if (mesh_entity == specfem::mesh_entity::type::top) {
-    gamma = 1;
-  } else {
-    xi = -1;
-  }
+  specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true, false>
+      jacobian;
+
+  /* coordinate of edge, references either xi or gamma. Other coord is
+   * edge-constrained.
+   *
+   * Additionally, we can reference the coordinate of the jacobian matrix.
+   */
+  auto [edgecoord, jacobian_edgecoordx, jacobian_edgecoordz] =
+      [&xi, &gamma, &mesh_entity,
+       &jacobian]() -> std::tuple<type_real &, type_real &, type_real &> {
+    if (mesh_entity == specfem::mesh_entity::type::bottom) {
+      gamma = -1;
+      return { xi, jacobian.xix, jacobian.xiz };
+    } else if (mesh_entity == specfem::mesh_entity::type::right) {
+      xi = 1;
+      return { gamma, jacobian.gammax, jacobian.gammaz };
+    } else if (mesh_entity == specfem::mesh_entity::type::top) {
+      gamma = 1;
+      return { xi, jacobian.xix, jacobian.xiz };
+    } else {
+      xi = -1;
+      return { gamma, jacobian.gammax, jacobian.gammaz };
+    }
+  }();
+  edgecoord = coord;
 
   for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
-    // we may want a dim1 type? for now, just constrain on dim2
-    if (mesh_entity == specfem::mesh_entity::type::bottom) {
-      xi = coord;
-    } else if (mesh_entity == specfem::mesh_entity::type::right) {
-      gamma = coord;
-    } else if (mesh_entity == specfem::mesh_entity::type::top) {
-      xi = coord;
-    } else {
-      gamma = coord;
-    }
+    // we may want a dim1 type? for now, just constrain on dim2. update location
+    // and jacobian matrix
     auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma);
-    auto jacobian =
-        specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma);
+    jacobian = specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma);
 
     type_real dx = -(loc.x - global.x);
     type_real dz = -(loc.z - global.z);
 
-    type_real dcoord;
-    if (mesh_entity == specfem::mesh_entity::type::bottom) {
-      dcoord = jacobian.xix * dx + jacobian.xiz * dz;
-    } else if (mesh_entity == specfem::mesh_entity::type::right) {
-      dcoord = jacobian.gammax * dx + jacobian.gammaz * dz;
-    } else if (mesh_entity == specfem::mesh_entity::type::top) {
-      dcoord = jacobian.xix * dx + jacobian.xiz * dz;
-    } else {
-      dcoord = jacobian.gammax * dx + jacobian.gammaz * dz;
+    // step direction:
+    type_real dedgecoord = jacobian_edgecoordx * dx + jacobian_edgecoordz * dz;
+
+    // are we on the corner and pointing outside?
+    if (edgecoord == -1 && dedgecoord < -local_deriv_eps) {
+      return { -1, false };
+    }
+    if (edgecoord == 1 && dedgecoord > local_deriv_eps) {
+      return { 1, false };
     }
 
-    coord += dcoord;
+    // no out-of-bounds. keep going
+    edgecoord += dedgecoord;
 
-    if (coord > 1.01)
-      coord = 1.01;
-    if (coord < -1.01)
-      coord = -1.01;
-
+    // clamp exactly to bounds
+    if (edgecoord > 1) {
+      edgecoord = 1;
+    } else if (edgecoord < -1) {
+      edgecoord = -1;
+    }
     // Check for convergence
-    if (std::abs(dcoord) < 1e-12)
+    if (std::abs(dedgecoord) < local_deriv_eps)
       break;
   }
 
-  return coord;
+  // verify point proximity: first get the distance
+  auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma);
+  const type_real distance = specfem::point::distance(global, loc);
+
+  // find some characteristic length. We can use the max diagonal.
+  // corner control nodes are always [0,4)
+  const type_real mesh_charlen =
+      std::max(specfem::point::distance(coorg(0), coorg(2)),
+               specfem::point::distance(coorg(1), coorg(3)));
+
+  if (distance > mesh_charlen * global_coord_eps) {
+    std::ostringstream oss;
+    oss << "\nFailed to locate point along edge:\n"
+        << "  (xi, gamma)   = (" << xi << ", " << gamma << ")\n"
+        << "  (target_x, target_z) = (" << global.x << ", " << global.z << ")\n"
+        << "   (found_x,  found_z) = (" << loc.x << ", " << loc.z << ")\n"
+        << "            final_dist = " << distance << "\n"
+        << "This may have been caused by improper meshing along a "
+           "nonconforming interface.\n";
+    throw std::runtime_error(oss.str());
+  }
+
+  return { edgecoord, true };
 }
 
 template <typename GraphType>
