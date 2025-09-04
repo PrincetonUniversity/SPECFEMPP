@@ -4,9 +4,12 @@
 ``specfem::receivers``
 ======================
 
+.. doxygennamespace:: specfem::receivers
+    :desc-only:
 
 
-The ``receiver`` class provides methods to read, store and process seismogram station data.
+``specfem::receivers::receiver``
+++++++++++++++++++++++++++++++++
 
 .. doxygenclass:: specfem::receivers::receiver
    :members:
