@@ -4,7 +4,7 @@
 Boundary Conditions
 ===================
 
-.. doxygenstruct:: specfem::assembly::boundaries
+.. doxygenclass:: specfem::assembly::boundaries
     :members:
 
 Data Access Functions

@@ -1,14 +1,15 @@
 
 .. _assembly_index:
 
-Finite Element Assembly
------------------------
+``specfem::assembly``
+=====================
 
 .. doxygennamespace:: specfem::assembly
     :desc-only:
 
-.. doxygenstruct:: specfem::assembly::assembly
-    :members:
+
+``specfem::assembly::assembly``
+-------------------------------
 
 .. admonition:: Feature request
     :class: hint
@@ -33,3 +34,7 @@ Finite Element Assembly
     sources/sources
     receivers/receivers
     kernels/kernels
+
+
+.. doxygenclass:: specfem::assembly::assembly
+    :members:
