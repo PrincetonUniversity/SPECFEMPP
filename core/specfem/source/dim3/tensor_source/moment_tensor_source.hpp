@@ -163,8 +163,25 @@ public:
   /**
    * @brief Get the source tensor
    *
+   * Returns the full 3D seismic moment tensor for this source:
+   *
+   * \f[
+   * \mathbf{M}_{3D} = \begin{pmatrix}
+   * M_{xx} & M_{xy} & M_{xz} \\
+   * M_{xy} & M_{yy} & M_{yz} \\
+   * M_{xz} & M_{yz} & M_{zz}
+   * \end{pmatrix}
+   * \f]
+   *
+   * Where the six independent components represent:
+   * - \f$M_{xx}, M_{yy}, M_{zz}\f$: Normal stress components (diagonal)
+   * - \f$M_{xy}, M_{xz}, M_{yz}\f$: Shear stress components (off-diagonal)
+   *
+   * The tensor format is a 3×3 symmetric matrix for elastic media, representing
+   * the complete seismic moment tensor used in earthquake source modeling.
+   *
    * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Source tensor with dimensions [ncomponents][2] where each row contains
+   * Source tensor with dimensions [ncomponents][3] where each row contains
    * [Mxx, Mxy, Mxz], [Mxy, Myy, Myz], [Mxz, Myz, Mzz] etc, depending on the
    * medium type
    */

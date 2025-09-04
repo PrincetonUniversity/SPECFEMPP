@@ -133,6 +133,57 @@ public:
   /**
    * @brief Get the source tensor
    *
+   * Returns the 2D seismic moment tensor for this source:
+   *
+   * \f[
+   * \mathbf{M}_{2D} = \begin{pmatrix}
+   * M_{xx} & M_{xz} \\
+   * M_{xz} & M_{zz}
+   * \end{pmatrix}
+   * \f]
+   *
+   * Where the components represent:
+   * - \f$M_{xx}\f$: Normal stress component in x-direction
+   * - \f$M_{zz}\f$: Normal stress component in z-direction
+   * - \f$M_{xz}\f$: Shear stress component in x-z plane
+   *
+   * The tensor format depends on the medium type:
+   *
+   * **Elastic PSV** (2×2 matrix):
+   * \f[
+   * \begin{pmatrix}
+   * M_{xx} & M_{xz} \\
+   * M_{xz} & M_{zz}
+   * \end{pmatrix}
+   * \f]
+   *
+   * **Elastic PSV-T (Cosserat)** (3×2 matrix):
+   * \f[
+   * \begin{pmatrix}
+   * M_{xx} & M_{xz} \\
+   * M_{xz} & M_{zz} \\
+   * 0.0 & 0.0
+   * \end{pmatrix}
+   * \f]
+   *
+   * **Poroelastic** (4×2 matrix - duplicated for solid/fluid phases):
+   * \f[
+   * \begin{pmatrix}
+   * M_{xx} & M_{xz} \\
+   * M_{xz} & M_{zz} \\
+   * M_{xx} & M_{xz} \\
+   * M_{xz} & M_{zz}
+   * \end{pmatrix}
+   * \f]
+   *
+   * **Electromagnetic TE** (2×2 matrix - same as elastic PSV):
+   * \f[
+   * \begin{pmatrix}
+   * M_{xx} & M_{xz} \\
+   * M_{xz} & M_{zz}
+   * \end{pmatrix}
+   * \f]
+   *
    * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
    * Source tensor with dimensions [ncomponents][2] where each row contains
    * [Mxx, Mxz], [Mxz, Mzz] etc, depending on the medium type

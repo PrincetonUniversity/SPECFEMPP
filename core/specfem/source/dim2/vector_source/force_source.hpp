@@ -120,8 +120,26 @@ public:
   /**
    * @brief Get the force vector
    *
+   * Returns the 2D force vector for this directional force source:
+   *
+   * \f[
+   * \mathbf{f}_{2D} = \begin{cases}
+   * [\sin(\theta), -\cos(\theta)] & \text{elastic PSV: x,z components} \\
+   * [1.0] & \text{elastic SH: out-of-plane component} \\
+   * [1.0] & \text{acoustic: pressure amplitude} \\
+   * [\sin(\theta), -\cos(\theta), \sin(\theta), -\cos(\theta)] &
+   * \text{poroelastic} \\
+   * [\sin(\theta), -\cos(\theta), 0.0] & \text{elastic PSV-T}
+   * \end{cases}
+   * \f]
+   *
+   * Where:
+   * - \f$f\f$ is the force magnitude (normalized to 1.0)
+   * - \f$\theta\f$ is the force angle in degrees from horizontal
+   * - Components depend on the medium and wave field type
+   *
    * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Force vector
+   * Force vector with size depending on medium type
    */
   specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
 

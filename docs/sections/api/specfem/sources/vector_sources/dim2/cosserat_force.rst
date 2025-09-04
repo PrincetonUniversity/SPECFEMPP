@@ -1,5 +1,5 @@
 2D ``specfem::sources::cosserat_force``
-======================================
+=======================================
 
 Cosserat force source implementation for 2D simulations
 

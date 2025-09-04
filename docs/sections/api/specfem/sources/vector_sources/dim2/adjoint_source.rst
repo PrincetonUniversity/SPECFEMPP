@@ -1,5 +1,5 @@
 2D ``specfem::sources::adjoint_source``
-======================================
+=======================================
 
 Adjoint source implementation for 2D simulations
 

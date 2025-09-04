@@ -114,8 +114,27 @@ public:
   /**
    * @brief Get the force vector
    *
+   * Returns the 3D force vector for this source:
+   *
+   * \f[
+   * \mathbf{f}_{3D} = \begin{cases}
+   * [f_x] & \text{acoustic: pressure amplitude} \\
+   * \begin{pmatrix} f_x \\ f_y \\ f_z \end{pmatrix} & \text{elastic: force
+   * components}
+   * \end{cases}
+   * \f]
+   *
+   * Where:
+   * - \f$f_x, f_y, f_z\f$ are the user-specified force components
+   * - For acoustic media, only the \f$f_x\f$ component is used as pressure
+   * source
+   * - For elastic media, all three components define the force vector
+   *
+   * The force components are applied directly as body forces, representing
+   * point sources with user-specified directional amplitudes.
+   *
    * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Force vector
+   * Force vector with 3 components [fx, fy, fz]
    */
   specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
 
