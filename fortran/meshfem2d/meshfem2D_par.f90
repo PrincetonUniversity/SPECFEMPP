@@ -146,4 +146,10 @@
   integer :: npgeo
   integer :: iproc
 
+  ! adjacency graph variables
+  integer, dimension(:,:), allocatable :: adjacent_elements ! For every element, store the list of adjacent elements
+  integer, dimension(:,:), allocatable :: adjacency_type ! For every adjacent element, store the type of adjacency (edge or corner)
+  integer, dimension(:,:), allocatable :: adjacency_id ! For every adjacent element, store the edge or corner id
+  integer, dimension(:), allocatable :: num_adjacent ! number of adjacent elements for every element
+
   end module part_unstruct_par

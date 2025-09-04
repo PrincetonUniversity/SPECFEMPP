@@ -1,5 +1,6 @@
 #include "algorithms/locate_point.hpp"
 #include "algorithms/locate_point_impl.hpp"
+#include "algorithms/locate_point_impl.tpp"
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
@@ -12,9 +13,15 @@ specfem::algorithms::locate_point(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
 
   // Extract mesh data and delegate to core implementation
-  return specfem::algorithms::locate_point_impl::locate_point_core(
-      coordinates, mesh.h_coord, mesh.h_index_mapping,
-      mesh.h_control_node_coord, mesh.ngnod, mesh.ngllx);
+  if (mesh.adjacency_graph_empty()) {
+    return specfem::algorithms::locate_point_impl::locate_point_core(
+        coordinates, mesh.h_coord, mesh.h_index_mapping,
+        mesh.h_control_node_coord, mesh.ngnod, mesh.ngllx);
+  } else {
+    return specfem::algorithms::locate_point_impl::locate_point_core(
+        mesh.graph(), coordinates, mesh.h_coord, mesh.h_control_node_coord,
+        mesh.ngnod);
+  }
 }
 
 specfem::point::global_coordinates<specfem::dimension::type::dim2>
