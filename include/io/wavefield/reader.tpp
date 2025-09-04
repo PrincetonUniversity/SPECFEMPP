@@ -27,7 +27,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
         }
       });
 
-  Kokkos::View<int *, Kokkos::HostSpace> medium_tags("medium_tags", ngroups);
+  Kokkos::View<std::string *, Kokkos::HostSpace> medium_tags("medium_tags", ngroups);
   file.openDataset("medium_tags", medium_tags).read();
 
   FOR_EACH_IN_PRODUCT(
@@ -35,7 +35,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
                                        ACOUSTIC, POROELASTIC)),
       {
         if (buffer.get_nglob<_medium_tag_>() > 0) {
-          int current_tag = static_cast<int>(_medium_tag_);
+          const std::string current_tag = specfem::element::to_string(_medium_tag_);
           bool found = false;
           for (int i = 0; i < medium_tags.extent(0); ++i) {
             if (current_tag == medium_tags(i)) {
