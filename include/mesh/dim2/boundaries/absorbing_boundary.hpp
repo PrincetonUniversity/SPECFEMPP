@@ -1,7 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "mesh/mesh_base.hpp"
 #include "specfem_mpi/specfem_mpi.hpp"
 
@@ -31,7 +30,7 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim2> {
                                                         ///< on the absorbing
                                                         ///< boundary
 
-  Kokkos::View<specfem::enums::boundaries::type *, Kokkos::HostSpace>
+  Kokkos::View<specfem::mesh_entity::type *, Kokkos::HostSpace>
       type; ///< Which edge of the element is on the absorbing boundary
 
   /**
