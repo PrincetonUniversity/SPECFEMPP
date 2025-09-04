@@ -191,7 +191,6 @@ add_executable(
   mesh/adjacency_graph/adjacency_graph.cpp
   mesh/adjacency_graph/adjacency_graph_regular_mesh.cpp
   mesh/adjacency_graph/adjacency_graph_irregular_mesh.cpp
-  mesh/adjacency_graph/adjacency_graph_nonconforming.cpp
 )
 
 target_link_libraries(
