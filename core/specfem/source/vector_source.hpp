@@ -6,6 +6,28 @@
 namespace specfem {
 namespace sources {
 
+/**
+ * @brief Class representing a vector source
+ *
+ * The vector source class is a base class for all vector sources in the
+ * simulation. It provides the common interface and functionality for
+ * manipulating vector sources. The main functionality being the return of a
+ * vector that can be used to compute the GLL level source array, which is
+ * applied in the simulation.
+ *
+ * The main differences between 2D and 3D vector sources are the dimensions and
+ * global and local coordinates for the point sources.
+ *
+ * @tparam DimensionTag
+ *
+ * @par Examples of vector sources:
+ * - @ref specfem::sources::force
+ * - @ref specfem::sources::external
+ * - @ref specfem::sources::adjoint_source
+ * - @ref specfem::sources::cosserat_force
+ *
+ * @note This class inherits from @ref specfem::sources::source
+ */
 template <specfem::dimension::type DimensionTag>
 class vector_source : public source<DimensionTag> {
 

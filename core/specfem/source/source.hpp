@@ -14,6 +14,18 @@
 
 namespace specfem::sources {
 
+/**
+ * @brief Base class for all source types
+ *
+ * It is a container for source time functions, coordinates, and the medium
+ * that the source is located in.
+ *
+ * @tparam DimensionTag
+ *
+ * @par Sources that inherit from this class:
+ * - @ref specfem::sources::vector_source
+ * - @ref specfem::sources::tensor_source
+ */
 template <specfem::dimension::type DimensionTag> class source {
 
 public:
@@ -24,13 +36,16 @@ public:
    */
   source() {};
 
+  /** @name 2D Constructors
+   * @{
+   */
+
   /**
-   * @brief Construct a new source object using the forcing function
+   * @brief Construct a new 2D source object using the forcing function
    *
    * @param x x-coordinate of source
    * @param z z-coordinate of source
    * @param forcing_function pointer to source time function
-   * @param wavefield_type type of wavefield
    */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim2>::type
@@ -41,30 +56,42 @@ public:
         forcing_function(std::move(forcing_function)){};
 
   /**
-   * @brief Construct a new source object from a YAML node and time steps
+   * @brief Construct a new 2D source object from a YAML node and time steps
    *
-   * @param Node
-   * @param nsteps
-   * @param dt
+   * @param Node YAML node containing source configuration
+   * @param nsteps number of time steps
+   * @param dt time step size
    */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim2>::type
                 * = nullptr>
   source(YAML::Node &Node, const int nsteps, const type_real dt);
 
+  /** @} */
+
+  /** @name 3D Constructors
+   * @{
+   */
+
+  /**
+   * @brief Construct a new 3D source object from a YAML node and time steps
+   *
+   * @param Node YAML node containing source configuration
+   * @param nsteps number of time steps
+   * @param dt time step size
+   */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim3>::type
                 * = nullptr>
   source(YAML::Node &Node, const int nsteps, const type_real dt);
 
   /**
-   * @brief Construct a new source object using the forcing function
+   * @brief Construct a new 3D source object using the forcing function
    *
    * @param x x-coordinate of source
    * @param y y-coordinate of source
    * @param z z-coordinate of source
    * @param forcing_function pointer to source time function
-   * @param wavefield_type type of wavefield
    */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim3>::type
@@ -73,6 +100,8 @@ public:
          std::unique_ptr<specfem::forcing_function::stf> forcing_function)
       : global_coordinates(x, y, z),
         forcing_function(std::move(forcing_function)){};
+
+  /** @} */
 
   /**
    * @brief Get the value of t0 from the specfem::stf::stf object
