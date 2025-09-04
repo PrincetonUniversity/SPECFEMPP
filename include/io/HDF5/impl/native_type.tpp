@@ -112,4 +112,12 @@ template <> struct specfem::io::impl::HDF5::native_type<bool> {
   }
 };
 
+template <> struct specfem::io::impl::HDF5::native_type<std::string> {
+  static H5::StrType& type() {
+    static H5::StrType type(H5::PredType::C_S1, H5T_VARIABLE);
+    type.setOrder(H5T_ORDER_LE);
+    return type;
+  }
+};
+
 #endif

@@ -41,6 +41,16 @@ protected:
                    specfem::io::impl::HDF5::native_type<value_type>::type());
   }
 
+  template <> void write(const std::string *data) {
+    static H5::StrType type(H5::PredType::C_S1, H5T_VARIABLE);
+    type.setOrder(H5T_ORDER_LE);
+    hsize_t num_elements = dataspace->getSimpleExtentNpoints();
+    std::vector<const char *> cstrs(num_elements);
+    for (size_t i = 0; i < cstrs.size(); ++i)
+      cstrs[i] = data[i].c_str();
+    dataset->write(cstrs.data(), type);
+  }
+
   void close() {
     dataset->close();
     dataspace->close();
@@ -95,6 +105,18 @@ protected:
   template <typename value_type> void read(value_type *data) {
     dataset->read(data,
                   specfem::io::impl::HDF5::native_type<value_type>::type());
+  }
+
+  template <> void read(std::string *data) {
+    static H5::StrType type(H5::PredType::C_S1, H5T_VARIABLE);
+    type.setOrder(H5T_ORDER_LE);
+    hsize_t num_elements = dataspace->getSimpleExtentNpoints();
+    char **buffer = new char *[num_elements];
+    dataset->read(buffer, type);
+    for (int i = 0; i < num_elements; i++) {
+      data[i].assign(buffer[i]);
+    }
+    delete[] buffer;
   }
 
   void close() {
