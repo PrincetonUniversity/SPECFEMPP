@@ -1,5 +1,4 @@
 #include "mesh/mesh.hpp"
-#include "enumerations/connections.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
@@ -107,14 +106,6 @@ void check_adjacency_graph(
       const auto returned_edge = boost::edge(jspec_mesh, ispec_mesh, fg).first;
       const auto jedge = g[returned_edge].orientation;
 
-      // This check is performed only on strongly conforming edges -- only then
-      // do we expect nodes to match.
-
-      if (g[returned_edge].connection !=
-          specfem::connections::type::strongly_conforming) {
-        continue;
-      }
-
       const auto corners1 = convert_corners_to_mesher_index(
           specfem::mesh_entity::corners_of_edge(iedge));
       const auto corners2 = convert_corners_to_mesher_index(
@@ -135,8 +126,6 @@ void check_adjacency_graph(
         // If both edges are on the domain edge, we can skip the check
         // Periodic boundaries may have strongly conforming edges that do not
         // match. But both the edges will be on the domain boundary.
-
-        // We may decide to include this case into a different connection type.
         continue;
       }
 
