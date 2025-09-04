@@ -18,7 +18,7 @@ enum class type : int {
   /// @brief Strongly conforming connection where nodes match exactly
   strongly_conforming = 1,
   /// @brief Weakly conforming connection where nodes match, but the shape
-  /// function can be discontinuous.
+  /// function can be discontinuous. (example: coupling across different media, kinematic faults).
   weakly_conforming = 2,
   /// @brief Nonconforming connections have no matching nodes, but are
   /// geometrically (spatially) adjacent
