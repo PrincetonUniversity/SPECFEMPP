@@ -180,6 +180,7 @@ add_library(meshfem2D_mesh
     get_node_number.f90
     repartition_coupling.f90
     rotate_mesh.f90
+    adjacency_graph.f90
     save_databases.f90
     save_gnuplot_file.f90
     save_stations_file.f90

@@ -8,14 +8,17 @@ message(STATUS "Configuring Boost library...")
 # Prepend the CMAKE_MESSAGE_INDENT variable to ensure proper indentation in messages
 list(APPEND CMAKE_MESSAGE_INDENT "  Boost: ")
 
+set(SAVE_UNITY_BUILD ${CMAKE_UNITY_BUILD})
+set(CMAKE_UNITY_BUILD OFF)
+
 # Try finding boost and if not found install.
-find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
+find_package(Boost 1.85.0 COMPONENTS program_options filesystem system graph)
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd)
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd graph)
     set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
-                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd)
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd Boost::graph)
     set(BOOST_ENABLE_CMAKE ON)
     set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch")
     set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch")
@@ -46,7 +49,7 @@ if (NOT ${Boost_FOUND})
 
 else()
     # Check which boost LIBRARY_DIRS to use
-    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system)
+    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system Boost::graph)
     message(STATUS "Boost libs/ and incs/:")
     message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
     message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
@@ -61,3 +64,6 @@ endif()
 
 # Pop the indentation for Boost messages
 list(POP_BACK CMAKE_MESSAGE_INDENT)
+
+set(CMAKE_UNITY_BUILD ${SAVE_UNITY_BUILD})
+unset(SAVE_UNITY_BUILD)

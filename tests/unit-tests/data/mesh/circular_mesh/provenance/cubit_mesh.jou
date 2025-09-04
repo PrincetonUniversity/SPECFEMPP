@@ -1,0 +1,9 @@
+undo group begin
+create surface circle radius 50 yplane
+undo group end
+surface 1 scheme pave
+mesh surface 1
+block 1 face in surf 1
+block 1 name 'Granit'
+block 1 element type QUAD4
+block 1 attribute count 1

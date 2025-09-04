@@ -123,24 +123,73 @@ std::tuple<type_real, type_real> get_local_coordinates(
   return std::make_tuple(xi, gamma);
 }
 
-// Core locate_point logic extracted for testability
+template <typename GraphType>
+std::vector<int> get_best_candidates_from_graph(const int ispec_guess,
+                                                const GraphType &graph) {
+
+  std::vector<int> ispec_candidates;
+  ispec_candidates.push_back(ispec_guess);
+
+  for (auto edge :
+       boost::make_iterator_range(boost::out_edges(ispec_guess, graph))) {
+    const int ispec = boost::target(edge, graph);
+    if (std::find(ispec_candidates.begin(), ispec_candidates.end(), ispec) ==
+        ispec_candidates.end()) {
+      ispec_candidates.push_back(ispec);
+    }
+  }
+  return ispec_candidates;
+}
+
+std::tuple<type_real, type_real> get_best_location(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &global,
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &coorg,
+    type_real xi, type_real gamma) {
+
+  const int ngnod = coorg.extent(0);
+
+  for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
+    auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma);
+    auto jacobian =
+        specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma);
+
+    type_real dx = -(loc.x - global.x);
+    type_real dz = -(loc.z - global.z);
+
+    type_real dxi = jacobian.xix * dx + jacobian.xiz * dz;
+    type_real dgamma = jacobian.gammax * dx + jacobian.gammaz * dz;
+
+    xi += dxi;
+    gamma += dgamma;
+
+    if (xi > 1.01)
+      xi = 1.01;
+    if (xi < -1.01)
+      xi = -1.01;
+    if (gamma > 1.01)
+      gamma = 1.01;
+    if (gamma < -1.01)
+      gamma = -1.01;
+
+    // Check for convergence
+    if (std::abs(dxi) < 1e-12 && std::abs(dgamma) < 1e-12)
+      break;
+  }
+
+  return std::make_tuple(xi, gamma);
+}
+
 specfem::point::local_coordinates<specfem::dimension::type::dim2>
-locate_point_core(
+locate_point_from_best_candidates(
+    const std::vector<int> &best_candidates,
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
-    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
-    const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
-        &index_mapping,
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coord,
-    const int ngnod, const int ngllx) {
-
-  int ix_guess, iz_guess, ispec_guess;
-
-  std::tie(ix_guess, iz_guess, ispec_guess) =
-      rough_location(coordinates, global_coordinates);
-
-  const auto best_candidates = get_best_candidates(ispec_guess, index_mapping);
+    const int ngnod) {
 
   type_real final_dist = std::numeric_limits<type_real>::max();
 
@@ -206,6 +255,29 @@ locate_point_core(
   }
 
   return { ispec_selected, xi_selected, gamma_selected };
+}
+
+// Core locate_point logic extracted for testability
+specfem::point::local_coordinates<specfem::dimension::type::dim2>
+locate_point_core(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &coordinates,
+    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
+    const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &index_mapping,
+    const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &control_node_coord,
+    const int ngnod, const int ngllx) {
+
+  int ix_guess, iz_guess, ispec_guess;
+
+  std::tie(ix_guess, iz_guess, ispec_guess) =
+      rough_location(coordinates, global_coordinates);
+
+  const auto best_candidates = get_best_candidates(ispec_guess, index_mapping);
+
+  return locate_point_from_best_candidates(best_candidates, coordinates,
+                                           control_node_coord, ngnod);
 }
 
 } // namespace locate_point_impl

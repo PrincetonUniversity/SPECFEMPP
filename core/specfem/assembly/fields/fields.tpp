@@ -1,10 +1,9 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "fields.hpp"
 #include "dim2/simulation_field.tpp"
 #include "dim3/simulation_field.tpp"
-#include "specfem/assembly/mesh.hpp"
+#include "enumerations/interface.hpp"
+#include "fields.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 
@@ -14,7 +13,8 @@ specfem::assembly::fields<DimensionTag>::fields(
     const specfem::assembly::element_types<dimension_tag> &element_types,
     const specfem::simulation::type simulation)
     : // Initialize the forward field only if the simulation type is forward
-      forward([&]() -> specfem::assembly::simulation_field<dimension_tag,
+      forward([&]() -> specfem::assembly::simulation_field<
+                        dimension_tag,
                         specfem::wavefield::simulation_field::forward> {
         if (simulation == specfem::simulation::type::forward) {
           return { mesh, element_types };
@@ -25,7 +25,8 @@ specfem::assembly::fields<DimensionTag>::fields(
         }
       }()),
       // Initiaze the adjoint field only if the simulation type is adjoint
-      adjoint([&]() -> specfem::assembly::simulation_field<dimension_tag,
+      adjoint([&]() -> specfem::assembly::simulation_field<
+                        dimension_tag,
                         specfem::wavefield::simulation_field::adjoint> {
         if (simulation == specfem::simulation::type::forward) {
           return {};
@@ -36,7 +37,8 @@ specfem::assembly::fields<DimensionTag>::fields(
         }
       }()),
       // Initialize the backward field only if the simulation type is adjoint
-      backward([&]() -> specfem::assembly::simulation_field<dimension_tag,
+      backward([&]() -> specfem::assembly::simulation_field<
+                         dimension_tag,
                          specfem::wavefield::simulation_field::backward> {
         if (simulation == specfem::simulation::type::forward) {
           return {};
