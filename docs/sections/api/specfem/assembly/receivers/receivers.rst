@@ -1,8 +1,8 @@
 
 .. _assembly_receivers:
 
-Receivers
-=========
+``specfem::assembly::receivers``
+================================
 
 .. doxygenstruct:: specfem::assembly::receivers
     :members:

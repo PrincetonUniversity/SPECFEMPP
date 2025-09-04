@@ -1,11 +1,23 @@
 
 .. _assembly_mesh:
 
-2D Mesh assembly
-================
+``specfem::assembly::mesh``
+===========================
+
+.. doxygenstruct:: specfem::assembly::mesh
+    :members:
+
+2D Specialization
+-----------------
 
 .. doxygenstruct:: specfem::assembly::mesh< specfem::dimension::type::dim2 >
     :members:
+
+3D Specialization
+-----------------
+
+.. doxygenstruct:: specfem::assembly::mesh< specfem::dimension::type::dim3 >
+    :members-only:
 
 Data Access Functions
 #####################

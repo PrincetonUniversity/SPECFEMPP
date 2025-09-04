@@ -1,8 +1,8 @@
 
 .. _assembly_fields:
 
-Fields
-======
+``specfem::assembly::fields``
+=============================
 
 .. doxygenstruct:: specfem::assembly::fields
     :members:

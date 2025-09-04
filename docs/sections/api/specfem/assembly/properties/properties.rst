@@ -1,8 +1,8 @@
 
 .. _assembly_properties:
 
-Material Properties
-===================
+``specfem::assembly::properties``
+=================================
 
 .. doxygenstruct:: specfem::assembly::properties
     :members:

@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include "enumerations/interface.hpp"
 
 namespace specfem::assembly::mesh_impl {
@@ -22,5 +20,6 @@ template <specfem::dimension::type Dimension> struct mesh;
 
 // Include dim2 declarations
 #include "mesh/dim2/mesh.hpp"
+
 // Include dim3 declarations
 #include "mesh/dim3/mesh.hpp"
