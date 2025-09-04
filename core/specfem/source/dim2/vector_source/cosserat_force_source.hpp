@@ -115,8 +115,28 @@ public:
   /**
    * @brief Get the force vector
    *
+   * Returns the 2D Cosserat force vector combining elastic and rotational
+   * components:
+   *
+   * \f[
+   * \mathbf{f}_{Cosserat} = \begin{pmatrix}
+   * f \sin(\theta) \\
+   * -f \cos(\theta) \\
+   * f_c
+   * \end{pmatrix}
+   * \f]
+   *
+   * Where:
+   * - \f$f \sin(\theta)\f$: Elastic force component in x-direction
+   * - \f$-f \cos(\theta)\f$: Elastic force component in z-direction
+   * - \f$f_c\f$: Rotational (Cosserat) force component (couple stress)
+   * - \f$\theta\f$ is the force angle
+   *
+   * This formulation is specific to Cosserat elastic media which include both
+   * translational and rotational degrees of freedom.
+   *
    * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Force vector
+   * Force vector with 3 components [fx, fz, fc]
    */
   specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
 

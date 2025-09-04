@@ -75,8 +75,25 @@ public:
   /**
    * @brief Get the force vector
    *
+   * Returns a unit force vector for adjoint source computations:
+   *
+   * \f[
+   * \mathbf{f}_{adjoint} = \begin{cases}
+   * [1.0] & \text{acoustic: unit pressure amplitude} \\
+   * [1.0] & \text{elastic SH: unit force out-of-plane} \\
+   * [1.0, 1.0] & \text{elastic PSV: unit forces in x,z directions} \\
+   * [1.0, 1.0, 1.0, 1.0] & \text{poroelastic: solid/fluid phases} \\
+   * [1.0, 1.0] & \text{electromagnetic TE} \\
+   * [1.0, 1.0, 0.0] & \text{elastic PSV-T: no rotation component}
+   * \end{cases}
+   * \f]
+   *
+   * Where the unit components provide the basis for adjoint computations
+   * in full waveform inversion. The adjoint source acts as a time-reversed
+   * receiver that backpropagates data residuals through the medium.
+   *
    * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Force vector
+   * Unit force vector with size depending on medium type
    */
   specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
 
