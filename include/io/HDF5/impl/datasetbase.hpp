@@ -40,7 +40,7 @@ protected:
                    specfem::io::impl::HDF5::native_type<value_type>::type());
   }
 
-  template <> void write(const std::string *data) {
+  void write(const std::string *data) {
     hsize_t num_elements = dataspace->getSimpleExtentNpoints();
     std::vector<const char *> cstrs(num_elements);
     for (size_t i = 0; i < cstrs.size(); ++i)
@@ -105,7 +105,7 @@ protected:
                   specfem::io::impl::HDF5::native_type<value_type>::type());
   }
 
-  template <> void read(std::string *data) {
+  void read(std::string *data) {
     hsize_t num_elements = dataspace->getSimpleExtentNpoints();
     char **buffer = new char *[num_elements];
     dataset->read(buffer,
