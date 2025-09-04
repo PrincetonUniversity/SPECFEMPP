@@ -1,8 +1,8 @@
 
 .. _assembly_jacobian_matrix:
 
-Jacobian Matrix
-===============
+``specfem::assembly::jacobian_matrix``
+======================================
 
 .. doxygenstruct:: specfem::assembly::jacobian_matrix
     :members:

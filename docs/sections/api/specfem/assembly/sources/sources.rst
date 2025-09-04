@@ -1,8 +1,8 @@
 
 .. _assembly_sources:
 
-Sources
-=======
+``specfem::assembly::sources``
+==============================
 
 .. doxygenstruct:: specfem::assembly::sources
     :members:
@@ -10,7 +10,7 @@ Sources
 Source Medium Container
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::assembly::impl::source_medium
+.. doxygenstruct:: specfem::assembly::sources_impl::source_medium
     :members:
 
 Data Access Functions

@@ -1,8 +1,8 @@
 
 .. _assembly_kernels:
 
-Misfit Kernels (Frechet Derivatives)
-=====================================
+``specfem::assembly::kernels``
+==============================
 
 .. doxygenstruct:: specfem::assembly::kernels
     :members:

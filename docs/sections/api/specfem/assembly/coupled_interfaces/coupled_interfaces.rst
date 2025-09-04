@@ -1,8 +1,8 @@
 
 .. _assembly_coupled_interfaces:
 
-Coupled Interfaces
-==================
+``specfem::assembly::coupled_interfaces``
+=========================================
 
 .. doxygenstruct:: specfem::assembly::coupled_interfaces
     :members:
