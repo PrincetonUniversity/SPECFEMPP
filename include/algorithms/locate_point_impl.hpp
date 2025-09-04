@@ -24,7 +24,7 @@ std::tuple<type_real, type_real> get_local_coordinates(
         Kokkos::HostSpace> &coorg,
     type_real xi, type_real gamma);
 
-type_real get_local_edge_coordinate(
+std::pair<type_real, bool> get_local_edge_coordinate(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,
     const Kokkos::View<

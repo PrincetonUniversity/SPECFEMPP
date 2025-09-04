@@ -39,7 +39,19 @@ specfem::point::global_coordinates<specfem::dimension::type::dim3> locate_point(
         &coordinates,
     const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh);
 
-type_real locate_point_on_edge(
+/**
+ * @brief Given an edge (ispec, constraint), finds the best fit local coordinate
+ * on that edge to the given global coordinates.
+ *
+ * @param coordinates - global coordinates to match to
+ * @param mesh - assembly::mesh struct
+ * @param ispec - element index whose local coordinates to find
+ * @param constraint - edge to compute for
+ * @return std::pair<type_real,bool> - the edge local coordinate and whether or
+ * not the minimum found is a critical point (false is returned if the best fit
+ * coordinate is out of bounds).
+ */
+std::pair<type_real, bool> locate_point_on_edge(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
