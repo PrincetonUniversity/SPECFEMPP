@@ -7,6 +7,46 @@
 
 namespace specfem {
 namespace sources {
+/**
+ * @brief Adjoint source
+ *
+ * This class implements an adjoint source in 2D, which is used in adjoint
+ * simulations for seismic inversion and sensitivity analysis. Adjoint sources
+ * are typically placed at receiver locations and represent data residuals.
+ *
+ * @par Usage Example
+ * @code
+ * // Create a Ricker wavelet source time function for the adjoint source
+ * auto stf = std::make_unique<specfem::forcing_function::Ricker>(
+ *     20.0,  // dominant frequency (Hz)
+ *     0.01,  // time factor
+ *     1.0,   // amplitude
+ *     0.0,   // time shift
+ *     1.0,   // normalization factor
+ *     false  // do not reverse
+ * );
+ *
+ * // Create a 2D adjoint source at receiver location (12.5, 8.3)
+ * auto adj_source =
+ * specfem::sources::adjoint_source<specfem::dimension::type::dim2>( 12.5,  //
+ * x-coordinate (receiver location) 8.3,   // z-coordinate (receiver location)
+ *     std::move(stf),
+ *     "STA01",    // station name
+ *     "NETWORK"   // network name
+ * );
+ *
+ * // Set the medium type where the adjoint source is located
+ * adj_source.set_medium_tag(specfem::element::medium_tag::elastic_psv);
+ *
+ * // Get the force vector (unit vector components based on medium)
+ * auto force_vector = adj_source.get_force_vector();
+ *
+ * // Adjoint sources always return adjoint wavefield type
+ * assert(adj_source.get_wavefield_type() ==
+ *        specfem::wavefield::simulation_field::adjoint);
+ * @endcode
+ *
+ */
 template <>
 class adjoint_source<specfem::dimension::type::dim2>
     : public vector_source<specfem::dimension::type::dim2> {

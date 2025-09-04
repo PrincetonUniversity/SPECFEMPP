@@ -7,6 +7,41 @@
 
 namespace specfem {
 namespace sources {
+/**
+ * @brief External source
+ *
+ * This class implements an external source in 2D, which is used for
+ * coupling with external data or boundary conditions. External sources
+ * provide a flexible interface for incorporating external forcing terms.
+ *
+ * @par Usage Example
+ * @code
+ * // Create a Ricker wavelet source time function
+ * auto stf = std::make_unique<specfem::forcing_function::Ricker>(
+ *     25.0,  // dominant frequency (Hz)
+ *     0.01,  // time factor
+ *     1.0,   // amplitude
+ *     0.0,   // time shift
+ *     1.0,   // normalization factor
+ *     false  // do not reverse
+ * );
+ *
+ * // Create a 2D external source at boundary location (0.0, 5.0)
+ * auto ext_source = specfem::sources::external<specfem::dimension::type::dim2>(
+ *     0.0,  // x-coordinate (at boundary)
+ *     5.0,  // z-coordinate
+ *     std::move(stf),
+ *     specfem::wavefield::simulation_field::forward
+ * );
+ *
+ * // Set the medium type where the external source is located
+ * ext_source.set_medium_tag(specfem::element::medium_tag::acoustic);
+ *
+ * // Get the force vector (unit vector components based on medium)
+ * auto force_vector = ext_source.get_force_vector();
+ * @endcode
+ *
+ */
 template <>
 class external<specfem::dimension::type::dim2>
     : public vector_source<specfem::dimension::type::dim2> {

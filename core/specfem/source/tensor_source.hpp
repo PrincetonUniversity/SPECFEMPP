@@ -8,6 +8,20 @@
 namespace specfem {
 namespace sources {
 
+/**
+ * @brief Class representing a tensor source
+ *
+ * The tensor source class is a base class for all tensor sources in the
+ * simulation. It provides the common interface and functionality for
+ * manipulating tensor sources. The main functionality being the return of a
+ * tensor that can be used to compute the GLL level source array, which is
+ * applied in the simulation.
+ *
+ * The main differences between 2D and 3D tensor sources are the dimensions and
+ * global and local coordinates for the point sources.
+ *
+ * @tparam DimensionTag Dimension of the tensor source
+ */
 template <specfem::dimension::type DimensionTag>
 class tensor_source : public source<DimensionTag> {
 
@@ -63,8 +77,9 @@ public:
    * @brief Get the source tensor
    *
    * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Source tensor with dimensions [ncomponents][2] where each row contains
-   * [Mxx, Mxz], [Mxz, Mzz] etc, depending on the medium type
+   * Source tensor with dimensions [ncomponents][2] where -- in the case of the
+   * moment tensor, each row contains [Mxx, Mxz], [Mxz, Mzz] etc, depending on
+   * the medium type
    *
    * or in 3D
    *

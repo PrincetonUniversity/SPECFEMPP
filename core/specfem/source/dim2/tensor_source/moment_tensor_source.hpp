@@ -17,6 +17,40 @@ namespace sources {
 /**
  * @brief Moment-tensor source
  *
+ * This class implements a moment tensor source in 2D, which represents
+ * seismic sources like earthquakes through a symmetric stress tensor.
+ * The moment tensor components Mxx, Mzz, and Mxz define the source mechanism.
+ *
+ * @par Usage Example
+ * @code
+ * // Create a Ricker wavelet source time function
+ * auto stf = std::make_unique<specfem::forcing_function::Ricker>(
+ *     8.0,   // dominant frequency (Hz)
+ *     0.01,  // time factor
+ *     1.0,   // amplitude
+ *     0.0,   // time shift
+ *     1.0,   // normalization factor
+ *     false  // do not reverse
+ * );
+ *
+ * // Create a 2D moment tensor source at (5.0, 8.0)
+ * auto mt_source =
+ * specfem::sources::moment_tensor<specfem::dimension::type::dim2>( 5.0,  //
+ * x-coordinate 8.0,  // z-coordinate 1.0,  // Mxx - normal double couple in x
+ * direction 2.0,  // Mzz - normal double couple in z direction 0.5,  // Mxz -
+ * shear double couple in x-z plane std::move(stf),
+ *     specfem::wavefield::simulation_field::forward
+ * );
+ *
+ * // Set the medium type (moment tensors work with elastic media)
+ * mt_source.set_medium_tag(specfem::element::medium_tag::elastic_psv);
+ *
+ * // Get the source tensor (2x2 symmetric matrix for 2D)
+ * auto source_tensor = mt_source.get_source_tensor();
+ * // source_tensor(0,0) = Mxx, source_tensor(0,1) = Mxz
+ * // source_tensor(1,0) = Mxz, source_tensor(1,1) = Mzz
+ * @endcode
+ *
  */
 template <>
 class moment_tensor<specfem::dimension::type::dim2>

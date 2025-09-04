@@ -1,21 +1,24 @@
 
 .. _sources_api:
 
-Sources API
-=================
+``specfem::sources``
+====================
 
-Sources module provides methods and classes used to read, store and process data for various sources.
+
+.. doxygennamespace:: specfem::sources
+    :desc-only:
+
+
+``specfem::sources::source``
+----------------------------
 
 .. doxygenclass:: specfem::sources::source
     :members:
-    :undoc-members:
     :private-members:
 
-Types of sources
-----------------
 
 .. toctree::
-    :maxdepth: 1
+   :maxdepth: 1
 
-    force_source
-    moment_tensor_source
+   vector_sources/index
+   tensor_sources/index
