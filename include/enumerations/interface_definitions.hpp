@@ -1,0 +1,89 @@
+#pragma once
+
+#include "enum_tags.hpp"
+
+#define CONNECTION_TAG_STRONGLY_CONFORMING                                     \
+  (0, specfem::connections::type::strongly_conforming, strongly_conforming,    \
+   _ENUM_ID_CONNECTION_TAG)
+
+#define INTERFACE_TAG_ELASTIC_ACOUSTIC                                         \
+  (0, specfem::interface::interface_tag::elastic_acoustic, elastic_acoustic,   \
+   _ENUM_ID_INTERFACE_TAG)
+#define INTERFACE_TAG_ACOUSTIC_ELASTIC                                         \
+  (0, specfem::interface::interface_tag::acoustic_elastic, acoustic_elastic,   \
+   _ENUM_ID_INTERFACE_TAG)
+
+#define _MAKE_INTERFACE_TUPLE(r, product) BOOST_PP_SEQ_TO_TUPLE(product)
+
+#define _GENERATE_INTERFACE(seqs)                                              \
+  (BOOST_PP_SEQ_FOR_EACH_PRODUCT(_MAKE_INTERFACE_TUPLE, seqs))
+
+#define INTERFACE_TAG(...)                                                     \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, INTERFACE_TAG,                       \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define CONNECTION_TAG(...)                                                    \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, CONNECTION_TAG,                      \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define INTERFACE_SYSTEMS                                                      \
+  ((DIMENSION_TAG_DIM2, CONNECTION_TAG_STRONGLY_CONFORMING,                    \
+    INTERFACE_TAG_ELASTIC_ACOUSTIC))((DIMENSION_TAG_DIM2,                      \
+                                      CONNECTION_TAG_STRONGLY_CONFORMING,      \
+                                      INTERFACE_TAG_ACOUSTIC_ELASTIC))
+
+#define EDGES                                                                  \
+  ((DIMENSION_TAG_DIM2, CONNECTION_TAG_STRONGLY_CONFORMING,                    \
+    INTERFACE_TAG_ELASTIC_ACOUSTIC, BOUNDARY_TAG_NONE))
+
+namespace specfem::interface {
+
+enum class interface_tag {
+  elastic_acoustic, ///< Elastic to acoustic interface
+  acoustic_elastic  ///< Acoustic to elastic interface
+};
+
+template <specfem::dimension::type DimensionTag,
+          specfem::interface::interface_tag InterfaceTag>
+class attributes;
+
+template <>
+class attributes<specfem::dimension::type::dim2,
+                 specfem::interface::interface_tag::elastic_acoustic> {
+public:
+  static constexpr specfem::element::medium_tag self_medium() {
+    return specfem::element::medium_tag::elastic_psv;
+  }
+
+  static constexpr specfem::element::medium_tag coupled_medium() {
+    return specfem::element::medium_tag::acoustic;
+  }
+};
+
+template <>
+class attributes<specfem::dimension::type::dim2,
+                 specfem::interface::interface_tag::acoustic_elastic> {
+public:
+  static constexpr specfem::element::medium_tag self_medium() {
+    return specfem::element::medium_tag::acoustic;
+  }
+
+  static constexpr specfem::element::medium_tag coupled_medium() {
+    return specfem::element::medium_tag::elastic_psv;
+  }
+};
+
+template <specfem::dimension::type DimensionTag> constexpr auto edges();
+
+template <> constexpr auto edges<specfem::dimension::type::dim2>() {
+  constexpr int total_edges = BOOST_PP_SEQ_SIZE(EDGES);
+  constexpr std::array<
+      std::tuple<specfem::dimension::type, specfem::connections::type,
+                 specfem::interface::interface_tag,
+                 specfem::element::boundary_tag>,
+      total_edges>
+      edges{ _MAKE_CONSTEXPR_ARRAY(EDGES) };
+  return edges;
+}
+
+} // namespace specfem::interface
