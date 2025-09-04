@@ -35,7 +35,7 @@
 
 #define _SEQ_FOR_TAGS_3 MATERIAL_SYSTEMS
 
-#define _SEQ_FOR_TAGS_4 ELEMENT_TYPES
+#define _SEQ_FOR_TAGS_4 ELEMENT_TYPES EDGES
 
 /**
  * @brief Declare a variable or instantiante a template based on the type
