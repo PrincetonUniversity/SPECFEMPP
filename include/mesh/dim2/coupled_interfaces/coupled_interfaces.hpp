@@ -57,16 +57,7 @@ public:
    */
   template <specfem::element::medium_tag Medium1,
             specfem::element::medium_tag Medium2>
-  std::variant<specfem::mesh::interface_container<
-                   dimension, specfem::element::medium_tag::elastic_psv,
-                   specfem::element::medium_tag::acoustic>,
-               specfem::mesh::interface_container<
-                   dimension, specfem::element::medium_tag::acoustic,
-                   specfem::element::medium_tag::poroelastic>,
-               specfem::mesh::interface_container<
-                   dimension, specfem::element::medium_tag::elastic_psv,
-                   specfem::element::medium_tag::poroelastic> >
-  get() const;
+  specfem::mesh::interface_container<dimension, Medium1, Medium2> get() const;
 
   specfem::mesh::interface_container<dimension,
                                      specfem::element::medium_tag::elastic_psv,
