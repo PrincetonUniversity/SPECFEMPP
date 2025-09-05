@@ -12,6 +12,7 @@ Source Medium Container
 
 .. doxygenstruct:: specfem::assembly::sources_impl::source_medium
     :members:
+    :no-link:
 
 Data Access Functions
 ^^^^^^^^^^^^^^^^^^^^^

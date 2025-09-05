@@ -7,13 +7,15 @@
 .. doxygenstruct:: specfem::assembly::fields
     :members:
 
+
 .. _assembly_simulation_field:
 
-Simulation Field
-^^^^^^^^^^^^^^^^
+``specfem::assembly::fields``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenstruct:: specfem::assembly::simulation_field
     :members:
+
 
 Data Access Functions
 ^^^^^^^^^^^^^^^^^^^^^

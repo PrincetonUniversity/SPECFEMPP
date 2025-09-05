@@ -177,7 +177,6 @@ private:
  * @tparam ViewType Lagrange interpolant associated with the receivers in the
  * iterator
  *
- * @param team_member Kokkos team member
  * @param chunk_index Chunk index
  * @param receivers Receivers object containing the receiver information
  * @param lagrange_interpolant Lagrange interpolant associated with the
