@@ -11,6 +11,9 @@
 namespace specfem {
 namespace mesh {
 
+// TODO(Rohit: ADJ_GRAPH_DEFAULT)
+// Remove coupled_interfaces functionality when adjacency graph is the default
+// Coupled interfaces should be saved as weakly conforming adjacency graph edges
 /**
  * @brief Struct to store coupled interfaces for the 2D mesh
  *
