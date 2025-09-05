@@ -290,6 +290,9 @@ target_link_libraries(
 
 add_library(
         io
+        # IO libraries
+        src/io/NPY/impl/npy_header.cpp
+        # SPECFEM IO
         src/io/fortranio/fortran_io.cpp
         src/io/sources/dim2/read_sources.cpp
         src/io/sources/dim3/read_sources.cpp
@@ -574,6 +577,7 @@ target_link_libraries(
         periodic_tasks
         reader
         writer
+        io
 )
 
 target_compile_definitions(

@@ -29,7 +29,7 @@ parameters:
             format: ASCII
           wavefield:
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
-            format: HDF5
+            format: npy
             for_adjoint_simulations: true
 
     solver:
