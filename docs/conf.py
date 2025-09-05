@@ -127,8 +127,8 @@ html_css_files = [
 
 # -- Breathe configuration -------------------------------------------------
 
-breathe_projects = {"SPECFEM KOKKOS IMPLEMENTATION": "_build/doxygen/xml"}
-breathe_default_project = "SPECFEM KOKKOS IMPLEMENTATION"
+breathe_projects = {"specfem++": "_build/doxygen/xml"}
+breathe_default_project = "specfem++"
 breathe_default_members = ()
 breathe_doxygen_config_options = {"PREDEFINED": "KOKKOS_INLINE_FUNCTION="}
 breathe_show_define_initializer = True
