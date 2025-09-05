@@ -495,6 +495,22 @@ target_link_libraries(
 )
 
 add_executable(
+  chunked_edge_tests
+  policies/chunked_edge.cpp
+)
+
+target_link_libraries(
+  chunked_edge_tests
+  kokkos_environment
+  gtest_main
+  Kokkos::kokkos
+  mpi_environment
+  kokkos_environment
+  ${BOOST_LIBS}
+  -lpthread -lm
+)
+
+add_executable(
   mass_matrix_tests
   mass_matrix/main.cpp
   # 2D mass matrix tests
@@ -692,6 +708,7 @@ if(NOT MPI_PARALLEL)
     mesh_tests
     point_tests
     policies_tests
+    chunked_edge_tests
     receivers_tests
     simd_tests
     source_class_tests

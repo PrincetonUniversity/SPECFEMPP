@@ -114,7 +114,7 @@ public:
    *
    * @return true if the graph has no vertices, false otherwise
    */
-  const bool empty() const { return boost::num_vertices(graph_) == 0; }
+  bool empty() const { return boost::num_vertices(graph_) == 0; }
 
   /**
    * @brief Assert that the adjacency graph is symmetric

@@ -29,17 +29,9 @@ template <specfem::dimension::type DimensionTag, bool UseSIMD>
 struct mapped_index : public index<DimensionTag, UseSIMD> {
 private:
   using base_type = index<DimensionTag, UseSIMD>;
-  using accessor_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
-      specfem::data_access::DataClassType::mapped_index, DimensionTag,
-      UseSIMD>; ///< Accessor type for
-                ///< mapped index
 
 public:
   int imap; ///< Index of the mapped element
-
-  constexpr static auto data_class =
-      accessor_type::data_class; ///< Data class of the mapped index
 
   /**
    * @brief Constructor for the mapped index

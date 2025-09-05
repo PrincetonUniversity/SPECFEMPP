@@ -340,6 +340,7 @@ add_library(
 target_link_libraries(
         enumerations
         ${BOOST_LIBS}
+        Kokkos::kokkos
 )
 
 
