@@ -5,4 +5,4 @@
 #include <string>
 #include <vector>
 
-namespace specfem::io::impl::NPZ {} // namespace specfem::io::impl::NPZ
+// specfem::io::impl::NPZ::File::read
