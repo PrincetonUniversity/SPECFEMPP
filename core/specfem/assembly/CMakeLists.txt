@@ -16,6 +16,7 @@ target_link_libraries(
         specfem::receivers
         shape_functions
         Kokkos::kokkos
+        enumerations
         ${BOOST_LIBS}
 )
 

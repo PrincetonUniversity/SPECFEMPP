@@ -94,25 +94,20 @@ add_executable(
 
 target_link_libraries(io_framework_tests PRIVATE
   io
-  ${BOOST_LIBS}
+  boost
   gtest_main
   Kokkos::kokkos
   kokkos_environment
+  $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
+  $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
 
-if (NOT SPECFEM_ENABLE_HDF5)
-    target_compile_definitions(
-        io_framework_tests
-        PUBLIC -DNO_HDF5
-    )
-endif()
-
-if (NOT SPECFEM_ENABLE_ADIOS2)
-    target_compile_definitions(
-        io_framework_tests
-        PUBLIC -DNO_ADIOS2
-    )
-endif()
+target_compile_definitions(
+    io_framework_tests
+    PUBLIC
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
+)
 
 
 add_executable(
@@ -249,7 +244,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   yaml-cpp
-  Boost::filesystem
+  boost
   -lpthread -lm
 )
 
@@ -259,6 +254,9 @@ add_executable(
   mesh/materials/materials.cpp
   mesh/materials/properties.cpp
   mesh/runner.cpp
+  mesh/adjacency_graph/adjacency_graph.cpp
+  mesh/adjacency_graph/adjacency_graph_regular_mesh.cpp
+  mesh/adjacency_graph/adjacency_graph_irregular_mesh.cpp
 )
 
 target_link_libraries(
@@ -288,7 +286,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
-  Boost::filesystem
+  boost
   # material_class
   -lpthread -lm
 )
@@ -307,7 +305,7 @@ target_link_libraries(
 #   kokkos_environment
 #   yaml-cpp
 #   compare_arrays
-#   Boost::filesystem
+#   boost
 #   # material_class
 #   -lpthread -lm
 # )
@@ -345,7 +343,7 @@ target_link_libraries(
   yaml-cpp
   compare_arrays
   io
-  Boost::filesystem
+  boost
   # material_class
   -lpthread -lm
 )
@@ -381,7 +379,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   utilities
-  Boost::filesystem
+  boost
   -lpthread -lm
   gtest_main
 )
@@ -405,7 +403,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   io
-  Boost::filesystem
+  boost
   gtest
   gtest_main
   -lpthread -lm
@@ -423,7 +421,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   enumerations
-  Boost::filesystem
+  boost
 )
 
 add_executable(
@@ -440,7 +438,7 @@ target_link_libraries(
   kokkos_environment
   algorithms
   io
-  Boost::filesystem
+  boost
   point
 )
 
@@ -492,20 +490,20 @@ target_link_libraries(
   kokkos_environment
   mpi_environment
   yaml-cpp
-  Boost::filesystem
+  boost
   -lpthread -lm
 )
 
 add_executable(
   mass_matrix_tests
-  mass_matrix/main.cpp
+  medium/mass_matrix/main.cpp
   # 2D mass matrix tests
-  mass_matrix/dim2/elastic_isotropic.cpp
-  mass_matrix/dim2/elastic_anisotropic.cpp
-  mass_matrix/dim2/acoustic.cpp
-  mass_matrix/dim2/poroelastic.cpp
+  medium/mass_matrix/dim2/elastic_isotropic.cpp
+  medium/mass_matrix/dim2/elastic_anisotropic.cpp
+  medium/mass_matrix/dim2/acoustic.cpp
+  medium/mass_matrix/dim2/poroelastic.cpp
   # 3D mass matrix tests
-  mass_matrix/dim3/elastic_isotropic.cpp
+  medium/mass_matrix/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
@@ -516,19 +514,38 @@ target_link_libraries(
 
 add_executable(
   stress_tests
-  stress/main.cpp
+  medium/stress/main.cpp
   # 2D stress tests
-  stress/dim2/acoustic.cpp
-  stress/dim2/elastic_isotropic.cpp
-  stress/dim2/elastic_anisotropic.cpp
-  stress/dim2/elastic_isotropic_cosserat.cpp
-  stress/dim2/poroelastic_isotropic.cpp
+  medium/stress/dim2/acoustic.cpp
+  medium/stress/dim2/elastic_isotropic.cpp
+  medium/stress/dim2/elastic_anisotropic.cpp
+  medium/stress/dim2/elastic_isotropic_cosserat.cpp
+  medium/stress/dim2/poroelastic_isotropic.cpp
   # 3D stress tests
-  stress/dim3/elastic_isotropic.cpp
+  medium/stress/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
   stress_tests
+  point
+  gtest_main
+)
+
+add_executable(
+  source_tests
+  medium/source/main.cpp
+  # 2D source tests
+  medium/source/dim2/acoustic.cpp
+  medium/source/dim2/elastic_isotropic.cpp
+  medium/source/dim2/elastic_anisotropic.cpp
+  medium/source/dim2/elastic_isotropic_cosserat.cpp
+  medium/source/dim2/poroelastic.cpp
+  # 3D source tests
+  medium/source/dim3/elastic_isotropic.cpp
+)
+
+target_link_libraries(
+  source_tests
   point
   gtest_main
 )
@@ -597,7 +614,7 @@ target_link_libraries(
   kokkos_kernels
   solver
   periodic_tasks
-  Boost::filesystem
+  boost
   -lpthread -lm
 )
 
@@ -661,7 +678,7 @@ target_link_libraries(
 #   compare_arrays
 #   point
 #   edge
-#   Boost::filesystem
+#   boost
 #   -lpthread -lm
 # )
 
@@ -669,7 +686,7 @@ target_link_libraries(
 
 
 # Link to gtest only if MPI is disabled
-if (NOT MPI_PARALLEL)
+if(NOT MPI_PARALLEL)
   include(GoogleTest)
   set(TEST_TARGETS
     assembly_receivers_tests
@@ -697,6 +714,7 @@ if (NOT MPI_PARALLEL)
     receivers_tests
     simd_tests
     source_class_tests
+    source_tests
     stress_tests
     test_mesh_utilities_mapping_2d
     test_mesh_utilities_mapping_3d
@@ -723,6 +741,7 @@ if (NOT MPI_PARALLEL)
     io
     mesh
     policies
+    mortar
   )
 
   foreach(dir_name IN LISTS LINK_DIRS)
@@ -735,4 +754,4 @@ if (NOT MPI_PARALLEL)
 
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
-endif(NOT MPI_PARALLEL)
+endif()
