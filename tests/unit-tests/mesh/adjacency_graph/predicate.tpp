@@ -8,7 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace predicate {
+namespace specfem::testing::predicate {
 std::string connects::ispec_to_jspec_string() const {
   std::stringstream str;
   str << "[" << ispec << " -> " << jspec << "]";
