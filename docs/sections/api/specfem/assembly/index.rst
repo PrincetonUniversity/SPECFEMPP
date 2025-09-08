@@ -4,6 +4,7 @@
 ``specfem::assembly``
 =====================
 
+
 .. doxygennamespace:: specfem::assembly
     :desc-only:
 
