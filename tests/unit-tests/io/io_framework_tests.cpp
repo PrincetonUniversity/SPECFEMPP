@@ -207,7 +207,7 @@ TYPED_TEST(IOFrameworkTest, BasicFileOperations) {
                                                     specfem::io::write> >) {
       expected_name += ".bp";
     } else if constexpr (std::is_same_v<
-                             IOType, specfem::io::NPY<specfem::io::write> >) {
+                             IOType, specfem::io::NPZ<specfem::io::write> >) {
       expected_name += ".npz";
     }
 
