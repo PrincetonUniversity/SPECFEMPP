@@ -7,6 +7,7 @@
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
 #include "io/NPY/NPY.hpp"
+#include "io/NPZ/NPZ.hpp"
 #include "io/operators.hpp"
 
 // Test utilities
@@ -29,6 +30,9 @@ template <> struct GetWriteType<specfem::io::ADIOS2<specfem::io::read> > {
 };
 template <> struct GetWriteType<specfem::io::NPY<specfem::io::read> > {
   using type = specfem::io::NPY<specfem::io::write>;
+};
+template <> struct GetWriteType<specfem::io::NPZ<specfem::io::read> > {
+  using type = specfem::io::NPZ<specfem::io::write>;
 };
 
 // Base test class
@@ -63,6 +67,12 @@ protected:
     } else if constexpr (std::is_same_v<IOType,
                                         specfem::io::NPY<specfem::io::read> >) {
       base_name = "test_npy_read";
+    } else if constexpr (std::is_same_v<
+                             IOType, specfem::io::NPZ<specfem::io::write> >) {
+      base_name = "test_npz_write";
+    } else if constexpr (std::is_same_v<IOType,
+                                        specfem::io::NPZ<specfem::io::read> >) {
+      base_name = "test_npz_read";
     } else {
       base_name = "test_unknown";
     }
@@ -163,7 +173,8 @@ private:
 using IOTypes = ::testing::Types<
     specfem::io::ASCII<specfem::io::write>,
     specfem::io::ASCII<specfem::io::read>, specfem::io::NPY<specfem::io::write>,
-    specfem::io::NPY<specfem::io::read>
+    specfem::io::NPY<specfem::io::read>, specfem::io::NPZ<specfem::io::write>,
+    specfem::io::NPZ<specfem::io::read>
 #ifndef NO_HDF5
     ,
     specfem::io::HDF5<specfem::io::write>, specfem::io::HDF5<specfem::io::read>
@@ -195,6 +206,9 @@ TYPED_TEST(IOFrameworkTest, BasicFileOperations) {
     } else if constexpr (std::is_same_v<IOType, specfem::io::ADIOS2<
                                                     specfem::io::write> >) {
       expected_name += ".bp";
+    } else if constexpr (std::is_same_v<
+                             IOType, specfem::io::NPY<specfem::io::write> >) {
+      expected_name += ".npz";
     }
 
     EXPECT_TRUE(fs::exists(expected_name));

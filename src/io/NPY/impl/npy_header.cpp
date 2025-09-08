@@ -30,9 +30,9 @@ namespace specfem::io::impl::NPY {
  * the header dictionary might look like:
  * {'descr': '<f4', 'fortran_order': True, 'shape': (3, 4), }
  */
-std::string impl_create_npy_header(const std::vector<size_t> &shape,
-                                   const char type_char, const size_t type_size,
-                                   bool fortran_order) {
+std::string create_npy_header(const std::vector<size_t> &shape,
+                              const char type_char, const size_t type_size,
+                              bool fortran_order) {
   std::string dict;
   dict += "{'descr': '";
   dict += []() {
@@ -96,10 +96,9 @@ std::string impl_create_npy_header(const std::vector<size_t> &shape,
  * @note Modified from cnpy library (MIT License)
  * https://github.com/rogersce/cnpy
  */
-std::vector<size_t> impl_parse_npy_header(std::ifstream &file,
-                                          const char type_char,
-                                          const size_t type_size,
-                                          bool fortran_order) {
+std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
+                                     const size_t type_size,
+                                     bool fortran_order) {
   char buffer[11];
   file.read(buffer, 11 * sizeof(char));
   // Read the header into a string

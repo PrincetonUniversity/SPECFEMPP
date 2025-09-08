@@ -32,15 +32,15 @@ namespace specfem::io::impl::NPY {
  * the header dictionary might look like:
  * {'descr': '<f4', 'fortran_order': True, 'shape': (3, 4), }
  */
-std::string impl_create_npy_header(const std::vector<size_t> &shape,
-                                   const char type_char, const size_t type_size,
-                                   bool fortran_order);
+std::string create_npy_header(const std::vector<size_t> &shape,
+                              const char type_char, const size_t type_size,
+                              bool fortran_order);
 
 template <typename value_type>
 std::string create_npy_header(const std::vector<size_t> &shape,
                               bool fortran_order = true) {
-  return impl_create_npy_header(shape, map_type<value_type>(),
-                                sizeof(value_type), fortran_order);
+  return create_npy_header(shape, map_type<value_type>(), sizeof(value_type),
+                           fortran_order);
 }
 
 /**
@@ -61,16 +61,15 @@ std::string create_npy_header(const std::vector<size_t> &shape,
  * @note Modified from cnpy library (MIT License)
  * https://github.com/rogersce/cnpy
  */
-std::vector<size_t> impl_parse_npy_header(std::ifstream &file,
-                                          const char type_char,
-                                          const size_t type_size,
-                                          bool fortran_order);
+std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
+                                     const size_t type_size,
+                                     bool fortran_order);
 
 template <typename value_type>
 std::vector<size_t> parse_npy_header(std::ifstream &file,
                                      bool fortran_order = true) {
-  return impl_parse_npy_header(file, map_type<value_type>(), sizeof(value_type),
-                               fortran_order);
+  return parse_npy_header(file, map_type<value_type>(), sizeof(value_type),
+                          fortran_order);
 }
 
 } // namespace specfem::io::impl::NPY
