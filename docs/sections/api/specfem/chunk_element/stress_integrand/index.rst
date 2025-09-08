@@ -4,5 +4,5 @@
 Stress Integrand
 ================
 
-.. doxygenclass:: specfem::chunk_element::stress_integrand
+.. doxygenstruct:: specfem::chunk_element::stress_integrand
     :members:
