@@ -17,9 +17,10 @@ New structure
     :maxdepth: 2
     :glob:
 
+    specfem/assembly/index
+    specfem/chunk_element/index
     specfem/point/index
     specfem/receivers/index
-    specfem/chunk_element/index
     specfem/sources/index
 
 
@@ -35,7 +36,6 @@ Old structure
     material/index
     mesh/index
     datatypes/index
-    assembly/index
     execution/index
     IO/index
     operators/index

@@ -1,8 +1,9 @@
 #pragma once
 
-/*
-  @defgroup FieldDataAccess
-*/
+/**
+ * @defgroup FieldDataAccess Field Data Access Functions
+ * @brief Data access functions for field operations
+ */
 
 #include "dim2/add_on_device.hpp"
 #include "dim2/atomic_add_on_device.hpp"

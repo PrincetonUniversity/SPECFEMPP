@@ -37,7 +37,7 @@ Anatomically the view contains 2 elements:
 
 
 Adding new data to ``assembly`` namespace
-----------------------------------------
+-----------------------------------------
 
 Idea behind ``assembly`` namespace is to provide a data layer to access simulation data during or at the end of simulation. Thus it makes sense to extend the namespace with new data when implemeting new features. A few things to keep in mind while adding new data to ``assembly`` namespace:
 

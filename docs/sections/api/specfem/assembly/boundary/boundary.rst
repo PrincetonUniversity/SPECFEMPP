@@ -1,10 +1,10 @@
 
 .. _assembly_boundary:
 
-Boundary Conditions
-===================
+``specfem::assembly::boundaries``
+=================================
 
-.. doxygenstruct:: specfem::assembly::boundaries
+.. doxygenclass:: specfem::assembly::boundaries
     :members:
 
 Data Access Functions
