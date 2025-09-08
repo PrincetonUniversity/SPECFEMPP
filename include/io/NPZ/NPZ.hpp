@@ -3,6 +3,7 @@
 #include "impl/dataset.hpp"
 #include "impl/dataset.tpp"
 #include "impl/file.hpp"
+#include "impl/file.tpp"
 #include "impl/group.hpp"
 
 namespace specfem::io {
