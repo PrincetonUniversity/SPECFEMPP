@@ -1,10 +1,12 @@
 #include "algorithms/locate_point.hpp"
+#include "Serial/Kokkos_Serial_Parallel_Range.hpp"
 #include "algorithms/locate_point_impl.hpp"
 #include "algorithms/locate_point_impl.tpp"
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
+#include <stdexcept>
 
 specfem::point::local_coordinates<specfem::dimension::type::dim2>
 specfem::algorithms::locate_point(
@@ -77,4 +79,30 @@ specfem::algorithms::locate_point(
   team_member.team_barrier();
 
   return jacobian::compute_locations(coorg, ngnod, xi, gamma);
+}
+
+std::pair<type_real, bool> specfem::algorithms::locate_point_on_edge(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &coordinates,
+    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const int &ispec, const specfem::mesh_entity::type &mesh_entity) {
+
+  if (specfem::mesh_entity::contains(specfem::mesh_entity::corners,
+                                     mesh_entity)) {
+    throw std::runtime_error(
+        "locate_point_on_edge mesh_entity must be an edge. Found a corner.");
+    return { 0, false };
+  }
+  const Kokkos::View<
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      Kokkos::HostSpace>
+      coorg("coorg", mesh.ngnod);
+  for (int i = 0; i < mesh.ngnod; i++) {
+    coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
+    coorg(i).z = mesh.h_control_node_coord(1, ispec, i);
+  }
+
+  // initial guess of 0 (center of edge)
+  return specfem::algorithms::locate_point_impl::get_local_edge_coordinate(
+      coordinates, coorg, mesh_entity, 0);
 }
