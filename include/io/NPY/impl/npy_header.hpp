@@ -11,6 +11,38 @@
 
 namespace specfem::io::impl::NPY {
 /**
+ * @brief A class wrapping a vector of char to facilitate building npy headers.
+ */
+class NPYString : public std::vector<char> {
+public:
+  using std::vector<char>::vector;
+
+  template <typename T> NPYString &operator+=(const T rhs) {
+    // write in little endian
+    for (size_t byte = 0; byte < sizeof(T); byte++) {
+      char val = *((char *)&rhs + byte);
+      this->push_back(val);
+    }
+    return *this;
+  }
+
+  template <> NPYString &operator+=(const std::string rhs) {
+    this->insert(this->end(), rhs.begin(), rhs.end());
+    return *this;
+  }
+
+  template <> NPYString &operator+=(const char *rhs) {
+    // write in little endian
+    size_t len = strlen(rhs);
+    this->reserve(len);
+    for (size_t byte = 0; byte < len; byte++) {
+      this->push_back(rhs[byte]);
+    }
+    return *this;
+  }
+};
+
+/**
  * @brief Create a NumPy .npy file header
  *
  * This function generates the header for a NumPy .npy file based on the
@@ -32,13 +64,13 @@ namespace specfem::io::impl::NPY {
  * the header dictionary might look like:
  * {'descr': '<f4', 'fortran_order': True, 'shape': (3, 4), }
  */
-std::string create_npy_header(const std::vector<size_t> &shape,
-                              const char type_char, const size_t type_size,
-                              bool fortran_order);
+NPYString create_npy_header(const std::vector<size_t> &shape,
+                            const char type_char, const size_t type_size,
+                            bool fortran_order);
 
 template <typename value_type>
-std::string create_npy_header(const std::vector<size_t> &shape,
-                              bool fortran_order = true) {
+NPYString create_npy_header(const std::vector<size_t> &shape,
+                            bool fortran_order = true) {
   return create_npy_header(shape, map_type<value_type>(), sizeof(value_type),
                            fortran_order);
 }
@@ -62,14 +94,11 @@ std::string create_npy_header(const std::vector<size_t> &shape,
  * https://github.com/rogersce/cnpy
  */
 std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
-                                     const size_t type_size,
-                                     bool fortran_order);
+                                     const size_t type_size);
 
 template <typename value_type>
-std::vector<size_t> parse_npy_header(std::ifstream &file,
-                                     bool fortran_order = true) {
-  return parse_npy_header(file, map_type<value_type>(), sizeof(value_type),
-                          fortran_order);
+std::vector<size_t> parse_npy_header(std::ifstream &file) {
+  return parse_npy_header(file, map_type<value_type>(), sizeof(value_type));
 }
 
 } // namespace specfem::io::impl::NPY

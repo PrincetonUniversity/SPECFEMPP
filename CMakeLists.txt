@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" OFF)
 option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" OFF)
 option(SPECFEM_ENABLE_HDF5_FORCE_INSTALL "Force install HDF5 dependency if SPECFEM_ENABLE_HDF5 is ON even if system HDF5 is found" OFF)
+option(SPECFEM_ENABLE_ZLIB_FORCE_INSTALL "Force install ZLIB dependency even if system ZLIB is found" OFF)
 option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
 option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
 option(SPECFEM_BUILD_TESTS "Tests included" OFF)
@@ -102,6 +103,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 
 # Find HDF5
 include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
+
+# Find or install ZLIB library function
+include("${CMAKE_SOURCE_DIR}/cmake/zlib.cmake")
 
 # Find or install ADIOS2 library function
 include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
@@ -322,6 +326,7 @@ target_link_libraries(
         specfem::receivers
         yaml-cpp
         boost
+        ZLIB::ZLIB
         $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
         $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
