@@ -40,12 +40,12 @@ parameters:
         reader:
           wavefield:
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
-            format: npy
+            format: npz
 
         writer:
           kernels:
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
-            format: npy
+            format: npz
 
     solver:
       time-marching:

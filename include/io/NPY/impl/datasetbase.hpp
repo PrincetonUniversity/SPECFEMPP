@@ -40,8 +40,8 @@ protected:
       total_elements *= dims[i];
     }
 
-    std::string header = create_npy_header<value_type>(dims);
-    file.write(reinterpret_cast<const char *>(&header[0]), header.size());
+    NPYString header = create_npy_header<value_type>(dims);
+    file.write(&header[0], header.size());
     file.write(reinterpret_cast<const char *>(data),
                total_elements * sizeof(value_type));
 
