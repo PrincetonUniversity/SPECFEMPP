@@ -2,7 +2,6 @@
 #include "../../MPI_environment.hpp"
 #include "enumerations/mesh_entities.hpp"
 #include "io/interface.hpp"
-#include "mesh/adjacency_graph/predicate.hpp"
 #include "mesh/mesh.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
@@ -21,34 +20,37 @@ const static std::unordered_map<std::string, std::string> mesh_files = {
     "data/mesh/3_elem_nonconforming/database.bin" }
 };
 
-const static std::unordered_map<std::string, std::vector<predicate::variant> >
+const static std::unordered_map<
+    std::string, std::vector<specfem::testing::predicate::variant> >
     expected_adjacency_rules = {
       { "Circular mesh",
         {
-            predicate::connects(37, 39),
-            predicate::connects(37, 38),
-            predicate::connects(37, 64),
-            predicate::connects(37, 63),
-            predicate::connects(37, 36),
-            predicate::connects(37, 83),
-            predicate::connects(37, 2),
-            predicate::connects(37, 3),
-            predicate::connects(37, 1),
-            predicate::number_of_out_edges(37, 9),
+            specfem::testing::predicate::connects(37, 39),
+            specfem::testing::predicate::connects(37, 38),
+            specfem::testing::predicate::connects(37, 64),
+            specfem::testing::predicate::connects(37, 63),
+            specfem::testing::predicate::connects(37, 36),
+            specfem::testing::predicate::connects(37, 83),
+            specfem::testing::predicate::connects(37, 2),
+            specfem::testing::predicate::connects(37, 3),
+            specfem::testing::predicate::connects(37, 1),
+            specfem::testing::predicate::number_of_out_edges(37, 9),
         } },
       { "3 Element Nonconforming",
         {
-            predicate::connects(0, specfem::mesh_entity::type::top, 1,
-                                specfem::mesh_entity::type::bottom)
+            specfem::testing::predicate::connects(
+                0, specfem::mesh_entity::type::top, 1,
+                specfem::mesh_entity::type::bottom)
                 .with(specfem::connections::type::nonconforming),
-            predicate::connects(0, specfem::mesh_entity::type::top, 2,
-                                specfem::mesh_entity::type::bottom)
+            specfem::testing::predicate::connects(
+                0, specfem::mesh_entity::type::top, 2,
+                specfem::mesh_entity::type::bottom)
                 .with(specfem::connections::type::nonconforming),
-            predicate::connects(1, 2).with(
+            specfem::testing::predicate::connects(1, 2).with(
                 specfem::connections::type::strongly_conforming),
-            predicate::number_of_out_edges(0, 2),
-            predicate::number_of_out_edges(1, 2),
-            predicate::number_of_out_edges(2, 2),
+            specfem::testing::predicate::number_of_out_edges(0, 2),
+            specfem::testing::predicate::number_of_out_edges(1, 2),
+            specfem::testing::predicate::number_of_out_edges(2, 2),
         } }
     };
 
@@ -76,7 +78,7 @@ TEST_P(CheckConnections, Test) {
   EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
 
   for (const auto &rule : expected_adjacency_rules.at(mesh_name)) {
-    predicate::verify(rule, adjacency_graph);
+    specfem::testing::predicate::verify(rule, adjacency_graph);
   }
 }
 
