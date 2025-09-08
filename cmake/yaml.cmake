@@ -31,6 +31,11 @@ set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "Disable yaml-cpp tools" FORCE)
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "Disable yaml-cpp tests" FORCE)
 set(YAML_MSVC_SHARED_RT OFF CACHE BOOL "Use shared runtime for MSVC" FORCE)
 
+## Set CMake Policy Version minimum to 3.5
+## CMake 3.5 is deprecated for CMake version >= 4.0.
+## We force cmake to support at least 3.5 to avoid warnings from CMake >= 4.0
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 if (CMAKE_VERSION VERSION_LESS "3.28.0")
   # For CMake versions < 3.28, EXCLUDE_FROM_ALL is not supported in FetchContent_Declare
   FetchContent_Declare(
@@ -87,3 +92,5 @@ message(STATUS "yaml-cpp include directory set to: ${YAML_CPP_INCLUDE_DIR}")
 
 # pop the indentation for YAML messages
 list(POP_BACK CMAKE_MESSAGE_INDENT)
+
+unset(CMAKE_POLICY_VERSION_MINIMUM)

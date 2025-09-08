@@ -12,6 +12,8 @@ template <specfem::dimension::type Dimension> struct points;
 template <specfem::dimension::type Dimension> struct shape_functions;
 
 template <specfem::dimension::type Dimension> struct quadrature;
+
+template <specfem::dimension::type Dimension> struct adjacency_graph;
 } // namespace specfem::assembly::mesh_impl
 
 namespace specfem::assembly {

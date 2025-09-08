@@ -76,6 +76,7 @@ template <specfem::dimension::type DimensionTag> struct fields {
    */
   void copy_to_host();
 
+  int nglob;
   specfem::assembly::simulation_field<
       dimension_tag,
       specfem::wavefield::simulation_field::buffer>

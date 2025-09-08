@@ -111,14 +111,107 @@ include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 
 
+if (VTK_CXX_BUILD)
+
+    find_package(VTK COMPONENTS
+        CommonColor
+        CommonCore
+        FiltersSources
+        InteractionStyle
+        RenderingContextOpenGL2
+        RenderingCore
+        RenderingFreeType
+        RenderingGL2PSOpenGL2
+        RenderingOpenGL2
+    )
+
+    if (VTK_FOUND)
+        message(STATUS "VTK libs/ and incs/:")
+        message(STATUS "    LIB:   ${VTK_LIBRARY_DIRS}")
+        message(STATUS "    INC:   ${VTK_INCLUDE_DIRS}")
+        message(STATUS "    LIBSO: ${VTK_LIBRARIES}")
+    else(NOT VTK_FOUND)
+        message(STATUS "VTK not found. Building without VTK.")
+        set(VTK_CXX_BUILD OFF)
+    endif()
+else ()
+    set(VTK_FOUND OFF)
+    message(STATUS "Building without VTK.")
+endif()
+
+
+# Try finding boost and if not found install.
+find_package(Boost 1.85.0 COMPONENTS program_options filesystem system graph)
+
+if (NOT ${Boost_FOUND})
+    set(SPECFEMPP_SAVE_UNITY_BUILD ${CMAKE_UNITY_BUILD})
+    set(CMAKE_UNITY_BUILD OFF)
+    # Add boost lib sources
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd graph)
+    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd Boost::graph)
+    set(BOOST_ENABLE_CMAKE ON)
+    set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
+    set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
+    set(BOOST_BUILD_TESTING OFF CACHE BOOL INTERNAL "Boost Test Switch") # Disable testing for boost
+    # The test flag is not really working... added it for completeness
+
+    # Download and extract the boost library from GitHub
+    set(BOOST_VERSION 1.87.0)
+    message(STATUS "Downloading and extracting boost (${BOOST_VERSION}) library sources. This will take <1 min.")
+    include(FetchContent)
+
+    # Fetch boost from the Github release zip file to reduce download time
+    FetchContent_Declare(
+        Boost
+        URL https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.gz # downloading a zip release speeds up the download
+        USES_TERMINAL_DOWNLOAD True
+        GIT_PROGRESS TRUE
+        DOWNLOAD_NO_EXTRACT FALSE
+        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+    )
+
+    # Disable Boost installation
+    set(BOOST_INSTALL OFF CACHE BOOL "Don't install Boost" FORCE)
+    set(BOOST_INSTALL_LIBRARIES OFF CACHE BOOL "Don't install Boost libraries" FORCE)
+    set(BOOST_SKIP_INSTALL_RULES ON CACHE BOOL "Skip Boost install rules" FORCE)
+
+    FetchContent_MakeAvailable(Boost)
+
+    set(CMAKE_UNITY_BUILD ${SPECFEMPP_SAVE_UNITY_BUILD})
+    unset(SPECFEMPP_SAVE_UNITY_BUILD)
+
+else()
+    # Check which boost LIBRARY_DIRS to use
+    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system Boost::graph)
+    message(STATUS "Boost libs/ and incs/:")
+    message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
+    message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
+    message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
+endif()
+
+# Install HDF5 as a dependency if not found
+find_package(HDF5 COMPONENTS CXX)
+
+if (NOT ${HDF5_FOUND})
+    message(STATUS "HDF5 not found. Building without HDF5.")
+    set(HDF5_CXX_BUILD OFF)
+else()
+    message(STATUS "HDF5 libs/ and incs/:.")
+    message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
+    message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
+    message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
+endif()
+
+
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
-    add_definitions(-DSPECFEM_ENABLE_SIMD)
+    add_compile_definitions(SPECFEM_ENABLE_SIMD)
 endif()
 
 if (SPECFEM_ENABLE_PROFILING)
     message(STATUS "Enabling profiling")
-    add_definitions(-DSPECFEM_ENABLE_PROFILING)
+    add_compile_definitions(SPECFEM_ENABLE_PROFILING)
 endif()
 
 if (SPECFEM_ENABLE_DOUBLE_PRECISION)
@@ -209,6 +302,7 @@ add_library(
         src/io/mesh/impl/fortran/dim2/read_mesh_database.cpp
         src/io/mesh/impl/fortran/dim2/read_interfaces.cpp
         src/io/mesh/impl/fortran/dim2/read_parameters.cpp
+        src/io/mesh/impl/fortran/dim2/read_adjacency_graph.cpp
         # Fortran 3D part
         src/io/mesh/impl/fortran/dim3/mesh.cpp
         src/io/mesh/impl/fortran/dim3/read_parameters.cpp
@@ -223,37 +317,24 @@ target_link_libraries(
         source_class
         specfem::receivers
         yaml-cpp
-        ${BOOST_LIBS}
+        boost
+        $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
+        $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
 
-if (NOT SPECFEM_ENABLE_HDF5)
-    target_compile_definitions(
+target_compile_definitions(
         io
-        PUBLIC -DNO_HDF5
-    )
-else()
-    target_link_libraries(
-        io
-        ${HDF5_LIBRARIES}
-    )
-endif()
-
-if (NOT SPECFEM_ENABLE_ADIOS2)
-    target_compile_definitions(
-        io
-        PUBLIC -DNO_ADIOS2
-    )
-else()
-    target_link_libraries(
-        io
-        adios2
-    )
-endif()
+        PUBLIC
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
+)
 
 add_library(
         enumerations
         src/enumerations/medium.cpp
         src/enumerations/wavefield.cpp
+        src/enumerations/connections.cpp
+        src/enumerations/mesh_entities.cpp
 )
 
 target_link_libraries(
@@ -277,15 +358,17 @@ add_library(
         src/specfem_mpi/specfem_mpi.cpp
 )
 
+target_compile_definitions(
+        specfem_mpi
+        PUBLIC
+        $<$<BOOL:${SPECFEM_ENABLE_MPI}>:-DMPI_PARALLEL>
+)
+
 if (SPECFEM_ENABLE_MPI)
-        target_compile_definitions(
-                specfem_mpi
-                PUBLIC -DMPI_PARALLEL
-        )
-        message(STATUS "Compiling SPECFEM with MPI")
+    message(STATUS "Compiling SPECFEM with MPI")
 else()
-        message(STATUS "Compiling SPECFEM without MPI")
-endif(SPECFEM_ENABLE_MPI)
+    message(STATUS "Compiling SPECFEM without MPI")
+endif()
 
 # add_library(
 #         material_class
@@ -312,6 +395,7 @@ add_library(
         src/mesh/dim2/coupled_interfaces/interface_container.cpp
         src/mesh/dim2/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/dim2/tags/tags.cpp
+        src/mesh/dim2/adjacency_graph/assert_symmetry.cpp
         # 3-D
         src/mesh/dim3/mesh.cpp
         src/mesh/dim3/boundaries/absorbing_boundary.cpp
@@ -492,28 +576,18 @@ target_link_libraries(
         writer
 )
 
-if (NOT SPECFEM_ENABLE_VTK)
-        target_compile_definitions(
-                periodic_tasks
-                PUBLIC -DNO_VTK
-        )
+target_compile_definitions(
+        periodic_tasks
+        PUBLIC
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_VTK}>>:-DNO_VTK>
+        $<$<BOOL:${__APPLE__}>:__APPLE__>
+)
 
-        target_link_libraries(
-                periodic_tasks
-                assembly
-        )
-else ()
-        target_link_libraries(
-                periodic_tasks
-                assembly
-                ${VTK_LIBRARIES}
-                )
-
-        # Only define the __APPLE__ compile definition if it is defined
-        if (__APPLE__)
-        target_compile_definitions(periodic_tasks PRIVATE __APPLE__)
-        endif(__APPLE__)
-endif()
+target_link_libraries(
+        periodic_tasks
+        assembly
+        $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
+)
 
 add_library(
         parameter_reader
