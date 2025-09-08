@@ -8,18 +8,21 @@ message(STATUS "Configuring Boost library...")
 # Prepend the CMAKE_MESSAGE_INDENT variable to ensure proper indentation in messages
 list(APPEND CMAKE_MESSAGE_INDENT "  Boost: ")
 
+set(SAVE_UNITY_BUILD ${CMAKE_UNITY_BUILD})
+set(CMAKE_UNITY_BUILD OFF)
+
 # Try finding boost and if not found install.
-find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
+find_package(Boost 1.85.0 COMPONENTS program_options filesystem system graph)
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd)
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd graph)
     set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
-                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd)
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd Boost::graph)
     set(BOOST_ENABLE_CMAKE ON)
-    set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
-    set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
-    set(BOOST_BUILD_TESTING OFF CACHE BOOL INTERNAL "Boost Test Switch") # Disable testing for boost
+    set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch")
+    set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch")
+    set(BOOST_BUILD_TESTING OFF CACHE INTERNAL "Boost Test Switch")
     # The test flag is not really working... added it for completeness
 
     # Download and extract the boost library from GitHub
@@ -46,12 +49,21 @@ if (NOT ${Boost_FOUND})
 
 else()
     # Check which boost LIBRARY_DIRS to use
-    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system)
+    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system Boost::graph)
     message(STATUS "Boost libs/ and incs/:")
     message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
     message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
     message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
 endif()
 
+# Create unified boost target for modern CMake usage
+if(NOT TARGET boost)
+    add_library(boost INTERFACE)
+    target_link_libraries(boost INTERFACE ${BOOST_LIBS})
+endif()
+
 # Pop the indentation for Boost messages
 list(POP_BACK CMAKE_MESSAGE_INDENT)
+
+set(CMAKE_UNITY_BUILD ${SAVE_UNITY_BUILD})
+unset(SAVE_UNITY_BUILD)
