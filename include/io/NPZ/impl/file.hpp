@@ -2,6 +2,7 @@
 
 #include "enumerations/interface.hpp"
 #include "group.hpp"
+#include "io/NPY/impl/npy_header.hpp"
 #include <fstream>
 #include <stdexcept>
 #include <string>

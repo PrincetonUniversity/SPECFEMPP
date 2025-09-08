@@ -296,7 +296,6 @@ add_library(
         io
         # IO libraries
         src/io/NPY/impl/npy_header.cpp
-        src/io/NPZ/impl/npz_header.cpp
         # SPECFEM IO
         src/io/fortranio/fortran_io.cpp
         src/io/sources/dim2/read_sources.cpp
