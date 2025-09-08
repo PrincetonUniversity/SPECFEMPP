@@ -15,15 +15,15 @@
 .. toctree::
     :maxdepth: 1
 
-    mesh/index
-    jacobian_matrix/jacobian_matrix
-    properties/properties
     boundary/boundary
-    fields/fields
     coupled_interfaces/coupled_interfaces
-    sources/sources
-    receivers/receivers
+    fields/fields
+    jacobian_matrix/jacobian_matrix
     kernels/kernels
+    mesh/index
+    properties/properties
+    receivers/index
+    sources/index
 
 
 .. doxygenclass:: specfem::assembly::assembly

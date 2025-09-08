@@ -6,6 +6,26 @@
 
 namespace specfem::assembly {
 
+/**
+ * @brief 3D assembly receiver specialization for seismic simulations
+ *
+ * Specialized implementation of receivers for 3D spectral element simulations.
+ * This class manages seismic receivers located within 3D finite element meshes,
+ * handling Lagrange interpolation for accurate field sampling and coordinate
+ * transformations using full 3x3 rotation matrices for proper seismogram
+ * orientation in three-dimensional space.
+ *
+ * Key features for 3D:
+ * - Currently supports elastic medium type only
+ * - Uses full 3x3 rotation matrices for coordinate transformations
+ * - Records 3-component seismograms (X, Y, Z or North, East, Up)
+ * - Advanced rotation capabilities for arbitrary receiver orientations
+ * - Efficient Kokkos-based data structures for GPU computations
+ *
+ * The class inherits from both StationIterator (for station metadata) and
+ * SeismogramIterator (for time-series data access), providing a unified
+ * interface for receiver management and seismogram recording.
+ */
 template <>
 struct receivers<specfem::dimension::type::dim3>
     : public receivers_impl::StationIterator,
@@ -163,14 +183,20 @@ private:
 };
 
 /**
- * @defgroup ComputeReceiversDataAccess
+ * @defgroup ComputeReceiversDataAccess3D
+ * @brief 3D receiver data access functions for device computations
+ *
+ * These functions provide efficient access to receiver data during GPU kernel
+ * execution for 3D spectral element simulations. They handle loading of
+ * Lagrange interpolants and storing of seismogram components with proper
+ * indexing for three-dimensional computations.
  */
 
 /**
  * @brief Load the Lagrange interpolant for receivers associated with the
  * iterator on the device
  *
- * @ingroup ComputeReceiversDataAccess
+ * @ingroup ComputeReceiversDataAccess3D
  *
  * @tparam ChunkIndexType Chunk index type @ref
  * specfem::execution::ChunkElementIndex
@@ -231,7 +257,7 @@ load_on_device(const ChunkIndexType &chunk_index,
  * @c receivers.set_seismogram_step(isig_step);
  * @c receivers.set_seismogram_type(iseis);
  *
- * @ingroup ComputeReceiversDataAccess
+ * @ingroup ComputeReceiversDataAccess3D
  * @tparam ChunkIndexType Chunk index type
  * @tparam SeismogramViewType View of the seismogram components
  * @param receivers Receivers object containing the receiver information

@@ -92,6 +92,7 @@ public:
 
   /**
    * @brief Compute source information for 2D case
+   * @details Constructs source information for 2D spectral elements
    */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim2>::type
@@ -105,7 +106,9 @@ public:
       const type_real t0, const type_real dt, const int nsteps);
 
   /**
+   * @overload
    * @brief Compute source information for 3D case
+   * @details Constructs source information for 3D spectral elements
    */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim3>::type
