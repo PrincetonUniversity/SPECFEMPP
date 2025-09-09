@@ -40,26 +40,31 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   const auto elements = assembly.element_types.get_elements_on_device(
       MediumTag, PropertyTag, BoundaryTag);
 
+  // Get the number of elements that match the specified tags
   const int nelements = elements.extent(0);
 
-  const int ngllz = assembly.mesh.ngllz;
-  const int ngllx = assembly.mesh.ngllx;
+  // Get the element grid information (ngll, ngllx, ngllz, order)
+  const auto element_grid = assembly.mesh.get_element();
 
+  // Return if there are no elements matching the tag combination
   if (nelements == 0)
     return 0;
 
+  if (element_grid.ngll != NGLL) {
+    throw std::runtime_error("The number of GLL points in the mesh elements must match "
+                             "the template parameter NGLL.");
+  }
+
+  // Alias some assembly members for easier acces
   const auto &mesh = assembly.mesh;
   const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &properties = assembly.properties;
-  const auto field = assembly.fields.template get_simulation_field<wavefield>();
   const auto &boundaries = assembly.boundaries;
+
+  // Get the simulation field and boundary values
+  const auto field = assembly.fields.template get_simulation_field<wavefield>();
   const auto boundary_values =
       assembly.boundary_values.template get_container<boundary_tag>();
-
-  if (ngllz != NGLL || ngllx != NGLL) {
-    throw std::runtime_error("The number of GLL points in z and x must match "
-                             "the template parameter NGLL.");
-  }
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
@@ -109,7 +114,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                      ElementQuadratureType::shmem_size();
 
   specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements,
-                                                  ngllz, ngllx);
+                                                  element_grid.ngllz, element_grid.ngllx);
 
   if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey &&
                 WavefieldType ==
