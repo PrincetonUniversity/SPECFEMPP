@@ -113,8 +113,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                      ChunkStressIntegrandType::shmem_size() +
                      ElementQuadratureType::shmem_size();
 
-  specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements,
-                                                  element_grid.ngllz, element_grid.ngllx);
+  specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements, element_grid);
 
   if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey &&
                 WavefieldType ==

@@ -102,7 +102,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   receivers.set_seismogram_step(isig_step);
 
   specfem::execution::MappedChunkedDomainIterator chunk(
-      ParallelConfig(), elements, receiver_indices, element_grid.ngllz, element_grid.ngllx);
+      ParallelConfig(), elements, receiver_indices, element_grid);
 
   for (int iseis = 0; iseis < nseismograms; ++iseis) {
 

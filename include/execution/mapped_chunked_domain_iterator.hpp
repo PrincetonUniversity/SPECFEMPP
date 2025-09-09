@@ -136,11 +136,13 @@ private:
   iterator_type iterator;
 };
 
-template <typename ParallelConfig, typename ViewType>
+template <specfem::dimension::type DimensionTag, typename ParallelConfig,
+          typename ViewType>
 class MappedChunkedDomainIterator
-    : public ChunkedDomainIterator<ParallelConfig, ViewType> {
+    : public ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType> {
 private:
-  using base_type = ChunkedDomainIterator<ParallelConfig, ViewType>;
+  using base_type =
+      ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType>;
   constexpr static auto simd_size = ParallelConfig::simd::size();
   constexpr static auto chunk_size = ParallelConfig::chunk_size;
 
@@ -155,13 +157,15 @@ public:
   using execution_space =
       typename base_type::execution_space; ///< Execution space type
 
-  MappedChunkedDomainIterator(const ViewType indices, const ViewType mapping,
-                              int ngllz, int ngllx)
-      : base_type(indices, ngllz, ngllx), mapping(mapping) {}
+  MappedChunkedDomainIterator(
+      const ViewType indices, const ViewType mapping,
+      const specfem::mesh_entity::element<DimensionTag> &element_grid)
+      : base_type(indices, element_grid), mapping(mapping) {}
 
-  MappedChunkedDomainIterator(const ParallelConfig, const ViewType indices,
-                              const ViewType mapping, int ngllz, int ngllx)
-      : MappedChunkedDomainIterator(indices, mapping, ngllz, ngllx) {}
+  MappedChunkedDomainIterator(
+      const ParallelConfig, const ViewType indices, const ViewType mapping,
+      const specfem::mesh_entity::element<DimensionTag> &element_grid)
+      : MappedChunkedDomainIterator(indices, mapping, element_grid) {}
 
   KOKKOS_INLINE_FUNCTION
   const index_type operator()(const policy_index_type &team) const {
@@ -175,8 +179,8 @@ public:
         Kokkos::subview(base_type::indices, Kokkos::make_pair(start, end));
     const auto my_mapping =
         Kokkos::subview(mapping, Kokkos::make_pair(start, end));
-    return index_type(my_indices, my_mapping, base_type::ngllz,
-                      base_type::ngllx, team);
+    return index_type(my_indices, my_mapping, base_type::element_grid.ngllz,
+                      base_type::element_grid.ngllx, team);
   }
 
   template <typename... Args>
@@ -188,6 +192,20 @@ public:
 private:
   ViewType mapping;
 };
+
+// Template argument deduction guides
+template <typename ParallelConfig, typename ViewType,
+          specfem::dimension::type DimensionTag>
+MappedChunkedDomainIterator(ParallelConfig, ViewType, ViewType,
+                            const specfem::mesh_entity::element<DimensionTag> &)
+    -> MappedChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType>;
+
+template <typename ViewType, specfem::dimension::type DimensionTag>
+MappedChunkedDomainIterator(ViewType, ViewType,
+                            const specfem::mesh_entity::element<DimensionTag> &)
+    -> MappedChunkedDomainIterator<
+        DimensionTag,
+        decltype(std::declval<typename ViewType::execution_space>()), ViewType>;
 
 } // namespace execution
 } // namespace specfem
