@@ -27,7 +27,8 @@ public:
                       Kokkos::DefaultExecutionSpace>
              wavefield_on_entire_grid)
       : assembly(assembly), wavefield_on_entire_grid(wavefield_on_entire_grid) {
-    if (assembly.mesh.ngllz != ngll || assembly.mesh.ngllx != ngll) {
+    const auto element_grid = assembly.mesh.get_element();
+    if (element_grid.ngllz != ngll || element_grid.ngllx != ngll) {
       throw std::runtime_error("Number of quadrature points not supported");
     }
   }
@@ -35,8 +36,8 @@ public:
   void operator()(const specfem::wavefield::type wavefield_type) {
     const auto buffer = assembly.fields.buffer;
 
-    const int ngllz = assembly.mesh.ngllz;
-    const int ngllx = assembly.mesh.ngllx;
+    // Get the element grid (ngllx, ngllz)
+    const auto element_grid = assembly.mesh.get_element();
 
     const auto elements =
         assembly.element_types.get_elements_on_device(medium_tag, property_tag);
@@ -80,7 +81,7 @@ public:
         ChunkAccelerationType::shmem_size() + QuadratureType::shmem_size();
 
     specfem::execution::ChunkedDomainIterator chunk(ParallelConfig(), elements,
-                                                    ngllz, ngllx);
+                                                    element_grid);
 
     specfem::execution::for_each_level(
         "specfem::assembly::assembly::compute_wavefield",

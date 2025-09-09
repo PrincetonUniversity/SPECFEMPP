@@ -329,15 +329,22 @@ private:
  *
  * The iterator divides the elements into chunks of size
  * `ParallelConfig::chunk_size` and iterates over them in parallel.
- *
+ * @tparam DimensionTag The dimension tag for the elements.
  * @tparam ParallelConfig Configuration for parallel execution. @ref
  * specfem::parallel_configuration::chunk_config
  * @tparam ViewType Type of the view containing indices of elements.
  */
+template <specfem::dimension::type DimensionTag, typename ParallelConfig,
+          typename ViewType>
+class ChunkedDomainIterator;
+
 template <typename ParallelConfig, typename ViewType>
-class ChunkedDomainIterator : public TeamPolicy<ParallelConfig> {
+class ChunkedDomainIterator<specfem::dimension::type::dim2, ParallelConfig,
+                            ViewType> : public TeamPolicy<ParallelConfig> {
 private:
   using base_type = TeamPolicy<ParallelConfig>; ///< Base policy type
+  constexpr static auto dimension_tag =
+      specfem::dimension::type::dim2;                             ///< Dimension
   constexpr static auto simd_size = ParallelConfig::simd::size(); ///< SIMD size
   constexpr static auto chunk_size = ParallelConfig::chunk_size; ///< Chunk size
 
@@ -363,11 +370,13 @@ public:
    * @brief Construct a new Chunked Domain Iterator object
    *
    * @param indices View of indices of elements within this iterator.
-   * @param ngllz Number of GLL points in the z-direction.
-   * @param ngllx Number of GLL points in the x-direction.
+   * @param element_grid specfem::mesh_entity::element which defines the number
+   *                     of GLL points etc.
    */
-  ChunkedDomainIterator(const ViewType indices, int ngllz, int ngllx)
-      : indices(indices), ngllz(ngllz), ngllx(ngllx),
+  ChunkedDomainIterator(
+      const ViewType indices,
+      const specfem::mesh_entity::element<dimension_tag> &element_grid)
+      : indices(indices), element_grid(element_grid),
         base_type(((indices.extent(0) / (chunk_size * simd_size)) +
                    ((indices.extent(0) % (chunk_size * simd_size)) != 0)),
                   Kokkos::AUTO, Kokkos::AUTO) {}
@@ -378,12 +387,13 @@ public:
    *
    * @param ParallelConfig Configuration for parallel execution.
    * @param indices View of indices of elements within this iterator.
-   * @param ngllz Number of GLL points in the z-direction.
-   * @param ngllx Number of GLL points in the x-direction.
+   * @param element_grid specfem::mesh_entity::element which defines the number
+   *                     of GLL points etc.
    */
-  ChunkedDomainIterator(const ParallelConfig, const ViewType indices, int ngllz,
-                        int ngllx)
-      : ChunkedDomainIterator(indices, ngllz, ngllx) {}
+  ChunkedDomainIterator(
+      const ParallelConfig, const ViewType indices,
+      const specfem::mesh_entity::element<dimension_tag> &element_grid)
+      : ChunkedDomainIterator(indices, element_grid) {}
 
   /**
    * @brief Compute the index for a given policy index.
@@ -402,7 +412,7 @@ public:
                         : start + chunk_size * simd_size;
     const auto my_indices =
         Kokkos::subview(indices, Kokkos::make_pair(start, end));
-    return index_type(my_indices, ngllz, ngllx, team);
+    return index_type(my_indices, element_grid.ngllz, element_grid.ngllx, team);
   }
 
   /**
@@ -425,9 +435,23 @@ public:
 
 protected:
   ViewType indices; ///< View of indices of elements within this iterator
-  int ngllz;        ///< Number of GLL points in the z-direction
-  int ngllx;        ///< Number of GLL points in the x-direction
+  specfem::mesh_entity::element<dimension_tag> element_grid; ///< Element grid
+                                                             ///< information
 };
+
+// Template argument deduction guides
+template <typename ParallelConfig, typename ViewType,
+          specfem::dimension::type DimensionTag>
+ChunkedDomainIterator(ParallelConfig, ViewType,
+                      const specfem::mesh_entity::element<DimensionTag> &)
+    -> ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType>;
+
+template <typename ViewType, specfem::dimension::type DimensionTag>
+ChunkedDomainIterator(ViewType,
+                      const specfem::mesh_entity::element<DimensionTag> &)
+    -> ChunkedDomainIterator<
+        DimensionTag,
+        decltype(std::declval<typename ViewType::execution_space>()), ViewType>;
 
 } // namespace execution
 } // namespace specfem

@@ -79,7 +79,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
                      ElementQuadratureType::shmem_size();
 
   specfem::execution::ChunkedDomainIterator chunk(ParallelConfig(), elements,
-                                                  element_grid.ngllz, element_grid.ngllx);
+                                                  element_grid);
 
   specfem::execution::for_each_level(
       "specfem::kokkos_kernels::compute_material_derivatives",

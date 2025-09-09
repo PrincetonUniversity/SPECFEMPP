@@ -140,7 +140,7 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
           specfem::dimension::type::dim2> &>(*this);
 
   element = specfem::mesh_entity::element<
-      specfem::dimension::type::dim2>(ngllx); // ngllx = ngllz
+      specfem::dimension::type::dim2>(ngllx, ngllz, ngllx);
   mapping = specfem::assembly::mesh_impl::mesh_to_compute_mapping<
       specfem::dimension::type::dim2>(tags);
   control_nodes = specfem::assembly::mesh_impl::control_nodes<
@@ -215,5 +215,5 @@ void specfem::assembly::mesh<
 
 
 specfem::mesh_entity::element<specfem::dimension::type::dim2> specfem::assembly::mesh<specfem::dimension::type::dim2>::get_element() const {
-  return specfem::mesh_entity::element<specfem::dimension::type::dim2>(this->ngll);
+  return specfem::mesh_entity::element<specfem::dimension::type::dim2>(this->ngll, this->ngllz, this->ngllx);
 }

@@ -140,8 +140,8 @@ template <> struct element<specfem::dimension::type::dim2> {
    *
    * @param ngll The number of Gauss-Lobatto-Legendre points
    */
-  element(const int ngll)
-      : ngll(ngll), ngllx(ngll), ngllz(ngll), order(ngll - 1) {};
+  element(const int ngll, const int ngllz, const int ngllx)
+      : ngll(ngll), ngllz(ngllz), ngllx(ngllx), order(ngll - 1) {};
 
 public:
   int order; ///< Polynomial order of the element

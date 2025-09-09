@@ -80,7 +80,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   const auto wgll = mesh.weights;
 
   specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements,
-                                                  element_grid.ngllz, element_grid.ngllx);
+                                                  element_grid);
 
   specfem::execution::for_all(
       "specfem::kokkos_kernels::compute_mass_matrix", chunk,
