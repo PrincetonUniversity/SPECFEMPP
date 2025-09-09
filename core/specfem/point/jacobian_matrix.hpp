@@ -389,7 +389,7 @@ public:
    * Normal vector
    */
   specfem::datatype::VectorPointViewType<type_real, 2, UseSIMD>
-  compute_normal(const specfem::enums::edge::type &type) const;
+  compute_normal(const specfem::mesh_entity::type &type) const;
   ///@}
 
 private:
