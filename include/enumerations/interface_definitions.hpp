@@ -32,6 +32,13 @@
   BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, CONNECTION_TAG_,                     \
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
+/**
+ * @brief Tag getters. The macros are intended to be used only in @ref DECLARE
+ * and @ref INSTANTIATE.
+ */
+#define _CONNECTION_TAG_ BOOST_PP_SEQ_TO_LIST((1))
+#define _INTERFACE_TAG_ BOOST_PP_SEQ_TO_LIST((2))
+
 #define INTERFACE_SYSTEMS                                                      \
   ((DIMENSION_TAG_DIM2, CONNECTION_TAG_WEAKLY_CONFORMING,                      \
     INTERFACE_TAG_ELASTIC_ACOUSTIC))((DIMENSION_TAG_DIM2,                      \
@@ -54,11 +61,6 @@
        BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 namespace specfem::interface {
-
-enum class interface_tag {
-  elastic_acoustic, ///< Elastic to acoustic interface
-  acoustic_elastic  ///< Acoustic to elastic interface
-};
 
 template <specfem::dimension::type DimensionTag,
           specfem::interface::interface_tag InterfaceTag>

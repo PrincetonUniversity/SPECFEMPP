@@ -7,7 +7,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem::data_access {
-enum class ContainerType { boundary, interface, domain };
+enum class ContainerType { boundary, edge, domain };
 
 namespace impl {
 template <specfem::data_access::ContainerType ContainerType,
@@ -34,6 +34,17 @@ struct ContainerValueType<specfem::data_access::ContainerType::domain,
   using vector_type = Kokkos::View<T *****, Kokkos::LayoutLeft, MemorySpace>;
   template <typename T, typename MemorySpace>
   using tensor_type = Kokkos::View<T ******, Kokkos::LayoutLeft, MemorySpace>;
+};
+
+template <>
+struct ContainerValueType<specfem::data_access::ContainerType::edge,
+                          specfem::dimension::type::dim2> {
+  template <typename T, typename MemorySpace>
+  using scalar_type = Kokkos::View<T **, Kokkos::LayoutLeft, MemorySpace>;
+  template <typename T, typename MemorySpace>
+  using vector_type = Kokkos::View<T ***, Kokkos::LayoutLeft, MemorySpace>;
+  template <typename T, typename MemorySpace>
+  using tensor_type = Kokkos::View<T ****, Kokkos::LayoutLeft, MemorySpace>;
 };
 } // namespace impl
 

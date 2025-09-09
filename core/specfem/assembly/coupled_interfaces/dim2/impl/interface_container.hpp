@@ -7,6 +7,7 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 
+// This file will get deprecated in coming PRs
 namespace specfem::assembly {
 
 /**
@@ -40,7 +41,7 @@ private:
                                                           ///< type to store
                                                           ///< indices
   using EdgeTypeView =
-      Kokkos::View<specfem::enums::edge::type *,
+      Kokkos::View<specfem::mesh_entity::type *,
                    Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
                                                    ///< store edge types
   using EdgeFactorView =

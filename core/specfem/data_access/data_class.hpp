@@ -3,6 +3,7 @@
 namespace specfem::data_access {
 enum DataClassType {
   index,
+  edge_index,
   assembly_index,
   mapped_index,
   properties,
@@ -16,6 +17,7 @@ enum DataClassType {
   source,
   stress,
   stress_integrand,
-  boundary
+  boundary,
+  coupled_interface
 };
 } // namespace specfem::data_access
