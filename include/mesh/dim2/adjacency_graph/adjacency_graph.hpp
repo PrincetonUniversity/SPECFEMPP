@@ -50,7 +50,6 @@ public:
         : connection(conn), orientation(orient) {}
   };
 
-private:
   /**
    * @brief Boost graph type definition
    *
@@ -61,12 +60,13 @@ private:
    * - No vertex properties
    * - EdgeProperties for edge data
    */
-  using Graph =
+  using GraphType =
       boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
                             boost::no_property, EdgeProperties>;
 
+private:
   /** @brief The underlying Boost graph storing adjacency relationships */
-  Graph graph_;
+  GraphType graph_;
 
 public:
   /**
@@ -94,7 +94,7 @@ public:
    *
    * @return Mutable reference to the Boost adjacency_list graph
    */
-  Graph &graph() { return graph_; }
+  GraphType &graph() { return graph_; }
 
   /**
    * @brief Get const reference to the underlying graph
@@ -104,7 +104,7 @@ public:
    *
    * @return Const reference to the Boost adjacency_list graph
    */
-  const Graph &graph() const { return graph_; }
+  const GraphType &graph() const { return graph_; }
 
   /**
    * @brief Check if the adjacency graph is empty
