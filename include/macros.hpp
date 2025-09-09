@@ -57,3 +57,5 @@
 #else
 #define NOINLINE
 #endif
+
+#define DEPRECATE(msg) [[deprecated(msg)]]
