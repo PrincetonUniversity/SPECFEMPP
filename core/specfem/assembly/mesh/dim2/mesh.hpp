@@ -22,7 +22,8 @@ namespace specfem::assembly {
  */
 template <>
 struct mesh<specfem::dimension::type::dim2>
-    : public specfem::assembly::mesh_impl::points<
+    : public specfem::mesh_entity::element<specfem::dimension::type::dim2>,
+      public specfem::assembly::mesh_impl::points<
           specfem::dimension::type::dim2>,
       public specfem::assembly::mesh_impl::quadrature<
           specfem::dimension::type::dim2>,
@@ -57,6 +58,9 @@ public:
   void assemble_legacy();
 
   void assemble();
+
+  specfem::mesh_entity::element<specfem::dimension::type::dim2>
+  get_element() const;
 
   bool adjacency_graph_empty() const {
     return static_cast<const specfem::assembly::mesh_impl::adjacency_graph<

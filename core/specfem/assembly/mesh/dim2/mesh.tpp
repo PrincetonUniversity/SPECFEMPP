@@ -121,6 +121,8 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
   ngllx = quadratures.gll.get_N();
   ngnod = control_nodes_in.ngnod;
 
+  auto &element = static_cast<specfem::mesh_entity::element<
+      specfem::dimension::type::dim2> &>(*this);
   auto &mapping =
       static_cast<specfem::assembly::mesh_impl::mesh_to_compute_mapping<
           specfem::dimension::type::dim2> &>(*this);
@@ -137,6 +139,8 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       static_cast<specfem::assembly::mesh_impl::control_nodes<
           specfem::dimension::type::dim2> &>(*this);
 
+  element = specfem::mesh_entity::element<
+      specfem::dimension::type::dim2>(ngllx); // ngllx = ngllz
   mapping = specfem::assembly::mesh_impl::mesh_to_compute_mapping<
       specfem::dimension::type::dim2>(tags);
   control_nodes = specfem::assembly::mesh_impl::control_nodes<
@@ -168,8 +172,6 @@ void specfem::assembly::mesh<
 
   const int ngnod = this->ngnod;
   const int nspec = this->nspec;
-
-  const int ngll = this->ngllx; // = ngllz
 
   const auto xi = this->h_xi;
   const auto gamma = this->h_xi;
@@ -209,4 +211,9 @@ void specfem::assembly::mesh<
       *this);
 
   points = assign_numbering(global_coordinates);
+}
+
+
+specfem::mesh_entity::element<specfem::dimension::type::dim2> specfem::assembly::mesh<specfem::dimension::type::dim2>::get_element() const {
+  return specfem::mesh_entity::element<specfem::dimension::type::dim2>(this->ngll);
 }
