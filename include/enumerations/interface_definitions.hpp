@@ -1,6 +1,8 @@
 #pragma once
 
 #include "enum_tags.hpp"
+#include "macros_impl/array.hpp"
+#include "macros_impl/utils.hpp"
 
 #define CONNECTION_TAG_STRONGLY_CONFORMING                                     \
   (0, specfem::connections::type::strongly_conforming, strongly_conforming,    \
@@ -14,7 +16,7 @@
   (0, specfem::interface::interface_tag::elastic_acoustic, elastic_acoustic,   \
    _ENUM_ID_INTERFACE_TAG)
 #define INTERFACE_TAG_ACOUSTIC_ELASTIC                                         \
-  (0, specfem::interface::interface_tag::acoustic_elastic, acoustic_elastic,   \
+  (1, specfem::interface::interface_tag::acoustic_elastic, acoustic_elastic,   \
    _ENUM_ID_INTERFACE_TAG)
 
 #define _MAKE_INTERFACE_TUPLE(r, product) BOOST_PP_SEQ_TO_TUPLE(product)
@@ -23,11 +25,11 @@
   (BOOST_PP_SEQ_FOR_EACH_PRODUCT(_MAKE_INTERFACE_TUPLE, seqs))
 
 #define INTERFACE_TAG(...)                                                     \
-  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, INTERFACE_TAG,                       \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, INTERFACE_TAG_,                      \
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 #define CONNECTION_TAG(...)                                                    \
-  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, CONNECTION_TAG,                      \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, CONNECTION_TAG_,                     \
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 #define INTERFACE_SYSTEMS                                                      \
