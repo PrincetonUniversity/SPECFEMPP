@@ -30,19 +30,22 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   constexpr auto property_tag = PropertyTag;
   constexpr auto boundary_tag = BoundaryTag;
 
-  const auto elements = assembly.element_types.get_elements_on_device(
-      MediumTag, PropertyTag, BoundaryTag);
-
+  // Get the number of components for the element
   constexpr int components =
       specfem::element::attributes<dimension, medium_tag>::components;
 
-  const int ngllz = assembly.mesh.ngllz;
-  const int ngllx = assembly.mesh.ngllx;
+  const auto elements = assembly.element_types.get_elements_on_device(
+      MediumTag, PropertyTag, BoundaryTag);
 
+  // Get number of elements matching the tag combinations
   const int nelements = elements.extent(0);
 
+  // Return if no elements match the tag combination
   if (nelements == 0)
     return;
+
+  // Get the element grid (ngllx, ngllz)
+  const auto element_grid = assembly.mesh.get_element();
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
@@ -77,7 +80,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   const auto wgll = mesh.weights;
 
   specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements,
-                                                  ngllz, ngllx);
+                                                  element_grid.ngllz, element_grid.ngllx);
 
   specfem::execution::for_all(
       "specfem::kokkos_kernels::compute_mass_matrix", chunk,
