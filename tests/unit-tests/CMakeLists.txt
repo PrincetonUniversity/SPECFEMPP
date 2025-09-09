@@ -273,6 +273,27 @@ target_link_libraries(
 )
 
 add_executable(
+  nonconforming_tests
+  nonconforming/interfacial_assembly/interfacial_assembly.cpp
+  nonconforming/reparameterizations/compute_intersection_test.cpp
+  nonconforming/runner.cpp
+)
+
+target_link_libraries(
+  nonconforming_tests
+  mesh
+  assembly
+  quadrature
+  mpi_environment
+  kokkos_environment
+  yaml-cpp
+  utilities
+  boost
+  -lpthread -lm
+  gtest_main
+)
+
+add_executable(
   compute_jacobian_matrix_tests
   assembly_mesh/jacobian_matrix/compute_jacobian_matrix_tests.cpp
 )
@@ -691,6 +712,7 @@ if(NOT MPI_PARALLEL)
     locate_point_fixture_3d
     mass_matrix_tests
     mesh_tests
+    nonconforming_tests
     point_tests
     policies_tests
     receivers_tests
