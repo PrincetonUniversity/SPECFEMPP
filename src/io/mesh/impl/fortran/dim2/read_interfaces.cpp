@@ -5,6 +5,18 @@
 
 namespace {
 
+std::vector<int> get_common_nodes(std::vector<int> element1_nodes,
+                                  std::vector<int> element2_nodes) {
+  std::sort(element1_nodes.begin(), element1_nodes.end());
+  std::sort(element2_nodes.begin(), element2_nodes.end());
+
+  std::vector<int> common_nodes;
+  std::set_intersection(element1_nodes.begin(), element1_nodes.end(),
+                        element2_nodes.begin(), element2_nodes.end(),
+                        std::back_inserter(common_nodes));
+  return common_nodes;
+}
+
 std::tuple<specfem::mesh_entity::type, specfem::mesh_entity::type>
 compute_connected_edges(Kokkos::View<int **, Kokkos::HostSpace> knods,
                         const int ispec1, const int ispec2) {
@@ -15,10 +27,7 @@ compute_connected_edges(Kokkos::View<int **, Kokkos::HostSpace> knods,
                                    knods(2, ispec2), knods(3, ispec2) };
 
   // Find the common nodes between 2 elements
-  std::vector<int> common_nodes;
-  std::set_intersection(element1_nodes.begin(), element1_nodes.end(),
-                        element2_nodes.begin(), element2_nodes.end(),
-                        std::back_inserter(common_nodes));
+  const auto common_nodes = get_common_nodes(element1_nodes, element2_nodes);
 
   if (common_nodes.size() != 2)
     throw std::runtime_error("Error: Elements " + std::to_string(ispec1) +
