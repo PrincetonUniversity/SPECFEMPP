@@ -32,8 +32,8 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   const auto [elements, receiver_indices] =
       assembly.receivers.get_indices_on_device(medium_tag, property_tag);
 
-  const int ngllz = assembly.mesh.ngllz;
-  const int ngllx = assembly.mesh.ngllx;
+  // Get the element grid (ngllx, ngllz)
+  const auto element_grid = assembly.mesh.get_element();
 
   const int nreceivers = receiver_indices.extent(0);
 
@@ -50,7 +50,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
       assembly.fields
           .template get_simulation_field<wavefield_simulation_field>();
 
-  if (ngllz != ngll || ngllx != ngll) {
+  if (element_grid.ngllz != ngll || element_grid.ngllx != ngll) {
     throw std::runtime_error("The number of GLL points in z and x must match "
                              "the template parameter NGLL.");
   }
@@ -102,7 +102,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   receivers.set_seismogram_step(isig_step);
 
   specfem::execution::MappedChunkedDomainIterator chunk(
-      ParallelConfig(), elements, receiver_indices, ngllz, ngllx);
+      ParallelConfig(), elements, receiver_indices, element_grid.ngllz, element_grid.ngllx);
 
   for (int iseis = 0; iseis < nseismograms; ++iseis) {
 

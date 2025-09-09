@@ -32,8 +32,8 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
       assembly.sources.get_sources_on_device(MediumTag, PropertyTag,
                                              BoundaryTag, WavefieldType);
 
-  const int ngllz = assembly.mesh.ngllz;
-  const int ngllx = assembly.mesh.ngllx;
+  // Get the element grid (ngllx, ngllz)
+  const auto element_grid = assembly.mesh.get_element();
 
   auto &sources = assembly.sources;
 
@@ -72,7 +72,7 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
                                              Kokkos::DefaultExecutionSpace>;
 
   specfem::execution::MappedChunkedDomainIterator mapped_policy(
-      ParallelConfig(), element_indices, source_indices, ngllz, ngllx);
+      ParallelConfig(), element_indices, source_indices, element_grid.ngllz, element_grid.ngllx);
 
   specfem::execution::for_all(
       "specfem::kokkos_kernels::compute_source_interaction", mapped_policy,
