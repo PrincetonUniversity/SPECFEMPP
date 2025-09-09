@@ -96,7 +96,7 @@ class GmshContext:
         try:
             return super().__getattribute__(name)
         except AttributeError as e:
-            if self == _ACTIVE_ENVIRONMENT:
+            if self.is_active():
                 # override gmsh behavior
 
                 # context manager already handles initialize and finalize
