@@ -91,9 +91,11 @@ public:
   }
 
   KOKKOS_INLINE_FUNCTION
-  MappedChunkElementIterator(const TeamMemberType &team, const ViewType indices,
-                             const ViewType mapping, int ngllz, int ngllx)
-      : base_type(team, indices, ngllz, ngllx), mapping(mapping) {}
+  MappedChunkElementIterator(
+      const TeamMemberType &team, const ViewType indices,
+      const ViewType mapping,
+      const specfem::mesh_entity::element<DimensionTag> &element_grid)
+      : base_type(team, indices, element_grid), mapping(mapping) {}
 
 private:
   ViewType mapping;
@@ -125,11 +127,12 @@ public:
   constexpr const iterator_type get_iterator() const { return this->iterator; }
 
   KOKKOS_INLINE_FUNCTION
-  MappedChunkElementIndex(const ViewType indices, const ViewType mapping,
-                          const int &ngllz, const int &ngllx,
-                          const TeamMemberType &kokkos_index)
-      : base_type(indices, ngllz, ngllx, kokkos_index), mapping(mapping),
-        iterator(kokkos_index, indices, mapping, ngllz, ngllx) {}
+  MappedChunkElementIndex(
+      const ViewType indices, const ViewType mapping,
+      const specfem::mesh_entity::element<DimensionTag> &element_grid,
+      const TeamMemberType &kokkos_index)
+      : base_type(indices, element_grid, kokkos_index), mapping(mapping),
+        iterator(kokkos_index, indices, mapping, element_grid) {}
 
 private:
   ViewType mapping;
@@ -179,8 +182,7 @@ public:
         Kokkos::subview(base_type::indices, Kokkos::make_pair(start, end));
     const auto my_mapping =
         Kokkos::subview(mapping, Kokkos::make_pair(start, end));
-    return index_type(my_indices, my_mapping, base_type::element_grid.ngllz,
-                      base_type::element_grid.ngllx, team);
+    return index_type(my_indices, my_mapping, base_type::element_grid, team);
   }
 
   template <typename... Args>
