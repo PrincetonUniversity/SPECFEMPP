@@ -150,4 +150,28 @@ public:
   int ngllx; ///< Number of Gauss-Lobatto-Legendre points in the x-direction
 };
 
+template <> struct element<specfem::dimension::type::dim3> {
+
+  /**
+   * @brief Default constructor for the element struct
+   */
+  element() = default;
+
+  /**
+   * @brief Constructs an element entity given the number of
+   * Gauss-Lobatto-Legendre points
+   *
+   * @param ngll The number of Gauss-Lobatto-Legendre points
+   */
+  element(const int ngll)
+      : ngll(ngll), ngllx(ngll), nglly(ngll), ngllz(ngll), order(ngll - 1) {};
+
+public:
+  int order; ///< Polynomial order of the element
+  int ngll;  ///< Number of Gauss-Lobatto-Legendre points in the element
+  int ngllz; ///< Number of Gauss-Lobatto-Legendre points in the z-direction
+  int nglly; ///< Number of Gauss-Lobatto-Legendre points in the y-direction
+  int ngllx; ///< Number of Gauss-Lobatto-Legendre points in the x-direction
+};
+
 } // namespace specfem::mesh_entity
