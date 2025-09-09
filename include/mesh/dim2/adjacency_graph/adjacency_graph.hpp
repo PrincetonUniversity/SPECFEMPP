@@ -106,6 +106,8 @@ public:
    */
   const Graph &graph() const { return graph_; }
 
+  // TODO(Rohit: ADJ_GRAPH_DEFAULT)
+  // Graph should never be empty after it is made as default
   /**
    * @brief Check if the adjacency graph is empty
    *

@@ -110,8 +110,9 @@ bool check_if_edges_are_connected(
 std::tuple<std::vector<type_real>, std::vector<std::array<type_real, 2> > >
 compute_edge_factors_and_normals(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2> &jacobian_matrix, const int ispec1,
-    const int ispec2, const specfem::enums::edge::type edge1,
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        &jacobian_matrix,
+    const int ispec1, const int ispec2, const specfem::enums::edge::type edge1,
     const specfem::enums::edge::type edge2) {
 
   const int ngll = mesh.ngllx;
@@ -193,8 +194,9 @@ std::tuple<specfem::enums::edge::type, specfem::enums::edge::type,
            std::vector<type_real>, std::vector<std::array<type_real, 2> > >
 compute_edge_factors_and_normals(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2> &jacobian_matrix, const int ispec1,
-    const int ispec2) {
+    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        &jacobian_matrix,
+    const int ispec1, const int ispec2) {
 
   const std::array<specfem::enums::edge::type, 4> edges{
     specfem::enums::edge::type::BOTTOM, specfem::enums::edge::type::TOP,
@@ -229,9 +231,9 @@ compute_edge_factors_and_normals(
 
 template <specfem::element::medium_tag MediumTag1,
           specfem::element::medium_tag MediumTag2>
-specfem::assembly::interface_container<specfem::dimension::type::dim2,
-    MediumTag1, MediumTag2>::interface_container(const int num_interfaces,
-                                                 const int ngll)
+specfem::assembly::interface_container<
+    specfem::dimension::type::dim2, MediumTag1,
+    MediumTag2>::interface_container(const int num_interfaces, const int ngll)
     : num_interfaces(num_interfaces), num_points(ngll),
       medium1_index_mapping(
           "specfem::compute_interface_container::medium1_index_mapping",
@@ -272,17 +274,19 @@ specfem::assembly::interface_container<specfem::dimension::type::dim2,
 
 template <specfem::element::medium_tag MediumTag1,
           specfem::element::medium_tag MediumTag2>
-specfem::assembly::interface_container<specfem::dimension::type::dim2, MediumTag1, MediumTag2>::
+specfem::assembly::interface_container<specfem::dimension::type::dim2,
+                                       MediumTag1, MediumTag2>::
     interface_container(
         const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
         const specfem::assembly::mesh<specfem::dimension::type::dim2>
             &mesh_assembly,
-        const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2> &jacobian_matrix,
-        const specfem::assembly::element_types<specfem::dimension::type::dim2> &element_types) {
+        const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+            &jacobian_matrix,
+        const specfem::assembly::element_types<specfem::dimension::type::dim2>
+            &element_types) {
 
-  const auto interface_container = std::get<specfem::mesh::interface_container<
-      specfem::dimension::type::dim2, MediumTag1, MediumTag2> >(
-      mesh.coupled_interfaces.get<MediumTag1, MediumTag2>());
+  const auto interface_container =
+      mesh.coupled_interfaces.get<MediumTag1, MediumTag2>();
 
   int num_interfaces = interface_container.num_interfaces;
   const int ngll = mesh_assembly.ngllx;
@@ -292,7 +296,8 @@ specfem::assembly::interface_container<specfem::dimension::type::dim2, MediumTag
     return;
   }
 
-  *this = specfem::assembly::interface_container<specfem::dimension::type::dim2, MediumTag1, MediumTag2>(
+  *this = specfem::assembly::interface_container<specfem::dimension::type::dim2,
+                                                 MediumTag1, MediumTag2>(
       num_interfaces, ngll);
 
   for (int iedge = 0; iedge < num_interfaces; ++iedge) {

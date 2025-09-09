@@ -54,6 +54,10 @@ private:
       return *this;
     }
 
+    bool operator==(const Iterator &other) const {
+      return seis_step == other.seis_step;
+    }
+
     bool operator!=(const Iterator &other) const {
       return seis_step != other.seis_step;
     }
@@ -79,9 +83,9 @@ public:
   SeismogramIterator(const int nreceivers, const int nseismograms,
                      const int max_sig_step, type_real dt, type_real t0,
                      int nstep_between_samples)
-      : nreceivers(nreceivers), nseismograms(nseismograms), dt(dt), t0(t0),
+      : nreceivers(nreceivers), nseismograms(nseismograms), irec(0), iseis(0),
         nstep_between_samples(nstep_between_samples),
-        max_sig_step(max_sig_step),
+        max_sig_step(max_sig_step), dt(dt), t0(t0),
         h_rotation_matrices("specfem::assembly::receivers::rotation_matrices",
                             nreceivers, 3, 3),
         seismogram_components(
