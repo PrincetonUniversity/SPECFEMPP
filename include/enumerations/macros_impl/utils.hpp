@@ -11,6 +11,8 @@
 
 #define _GET_NAME(elem) BOOST_PP_TUPLE_ELEM(2, elem)
 
+#define _GET_ENUM_ID(elem) BOOST_PP_TUPLE_ELEM(3, elem)
+
 #define _EMPTY_MACRO(...)
 
 #define _EMPTY_SEQ(...) ()
@@ -33,7 +35,7 @@
 
 #define _SEQ_FOR_TAGS_3 MATERIAL_SYSTEMS
 
-#define _SEQ_FOR_TAGS_4 ELEMENT_TYPES
+#define _SEQ_FOR_TAGS_4 ELEMENT_TYPES EDGES
 
 /**
  * @brief Declare a variable or instantiante a template based on the type
@@ -155,8 +157,8 @@
 
 // clang-format off
 #define _WRITE_TAGS_1(data) _WRITE_TAG(_dimension_tag_, data, 0)
-#define _WRITE_TAGS_2(data) _WRITE_TAGS_1(data) _WRITE_TAG(_medium_tag_, data, 1)
-#define _WRITE_TAGS_3(data) _WRITE_TAGS_2(data) _WRITE_TAG(_property_tag_, data, 2)
+#define _WRITE_TAGS_2(data) _WRITE_TAGS_1(data) _WRITE_TAG(_medium_tag_, data, 1) _WRITE_TAG(_connection_tag_, data, 1)
+#define _WRITE_TAGS_3(data) _WRITE_TAGS_2(data) _WRITE_TAG(_property_tag_, data, 2) _WRITE_TAG(_interface_tag_, data, 2)
 #define _WRITE_TAGS_4(data) _WRITE_TAGS_3(data) _WRITE_TAG(_boundary_tag_, data, 3)
 // clang-format on
 
@@ -194,6 +196,11 @@
   BOOST_PP_IF(BOOST_VMD_IS_SEQ(BOOST_PP_SEQ_HEAD(code)),                       \
               _WRITE_DECLARE_AND_BLOCK, _WRITE_BLOCK)(data, (), code)
 
+#define _CHECK_ENUM(enum1, enum2)                                              \
+  BOOST_PP_IF(                                                                 \
+      BOOST_PP_EQUAL(_GET_ENUM_ID(enum1), _GET_ENUM_ID(enum2)),                \
+      BOOST_PP_IF(BOOST_PP_EQUAL(_GET_ID(enum1), _GET_ID(enum2)), 1, 0), 0)
+
 /**
  * @brief Compare each item in the sequence for a sequence pair of length 2, 3
  * and 4.
@@ -201,26 +208,24 @@
 #define _IN_TUPLE_2(s, elem, tuple)                                            \
   BOOST_PP_IF(                                                                 \
       BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 2),                           \
-      BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),               \
-                         _GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),               \
-          BOOST_PP_IF(BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),   \
-                                     _GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),   \
-                      1, 0),                                                   \
-          0),                                                                  \
+      BOOST_PP_IF(_CHECK_ENUM(BOOST_PP_TUPLE_ELEM(0, tuple),                   \
+                              BOOST_PP_TUPLE_ELEM(0, elem)),                   \
+                  BOOST_PP_IF(_CHECK_ENUM(BOOST_PP_TUPLE_ELEM(1, tuple),       \
+                                          BOOST_PP_TUPLE_ELEM(1, elem)),       \
+                              1, 0),                                           \
+                  0),                                                          \
       0)
 
 #define _IN_TUPLE_3(s, elem, tuple)                                            \
   BOOST_PP_IF(                                                                 \
       BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 3),                           \
       BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),               \
-                         _GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),               \
-          BOOST_PP_IF(BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),   \
-                                     _GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),   \
-                      BOOST_PP_IF(BOOST_PP_EQUAL(                              \
-                                      _GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),  \
-                                      _GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),  \
+          _CHECK_ENUM(BOOST_PP_TUPLE_ELEM(0, tuple),                           \
+                      BOOST_PP_TUPLE_ELEM(0, elem)),                           \
+          BOOST_PP_IF(_CHECK_ENUM(BOOST_PP_TUPLE_ELEM(1, tuple),               \
+                                  BOOST_PP_TUPLE_ELEM(1, elem)),               \
+                      BOOST_PP_IF(_CHECK_ENUM(BOOST_PP_TUPLE_ELEM(2, tuple),   \
+                                              BOOST_PP_TUPLE_ELEM(2, elem)),   \
                                   1, 0),                                       \
                       0),                                                      \
           0),                                                                  \
@@ -230,18 +235,17 @@
   BOOST_PP_IF(                                                                 \
       BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 4),                           \
       BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),               \
-                         _GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),               \
+          _CHECK_ENUM(BOOST_PP_TUPLE_ELEM(0, tuple),                           \
+                      BOOST_PP_TUPLE_ELEM(0, elem)),                           \
           BOOST_PP_IF(                                                         \
-              BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),           \
-                             _GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),           \
+              _CHECK_ENUM(BOOST_PP_TUPLE_ELEM(1, tuple),                       \
+                          BOOST_PP_TUPLE_ELEM(1, elem)),                       \
               BOOST_PP_IF(                                                     \
-                  BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),       \
-                                 _GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),       \
-                  BOOST_PP_IF(                                                 \
-                      BOOST_PP_EQUAL(_GET_ID(BOOST_PP_TUPLE_ELEM(3, tuple)),   \
-                                     _GET_ID(BOOST_PP_TUPLE_ELEM(3, elem))),   \
-                      1, 0),                                                   \
+                  _CHECK_ENUM(BOOST_PP_TUPLE_ELEM(2, tuple),                   \
+                              BOOST_PP_TUPLE_ELEM(2, elem)),                   \
+                  BOOST_PP_IF(_CHECK_ENUM(BOOST_PP_TUPLE_ELEM(3, tuple),       \
+                                          BOOST_PP_TUPLE_ELEM(3, elem)),       \
+                              1, 0),                                           \
                   0),                                                          \
               0),                                                              \
           0),                                                                  \
@@ -264,4 +268,5 @@
 #define _FOR_ONE_TAG_SEQ(s, code, elem)                                        \
   BOOST_PP_IF(                                                                 \
       _IN_SEQUENCE(BOOST_PP_SEQ_SIZE(elem), BOOST_PP_SEQ_TO_TUPLE(elem)),      \
-      _CHECK_DECLARE, _EMPTY_MACRO)(BOOST_PP_SEQ_TO_TUPLE(elem), code)
+      _CHECK_DECLARE, _EMPTY_MACRO)                                            \
+  (BOOST_PP_SEQ_TO_TUPLE(elem), code)
