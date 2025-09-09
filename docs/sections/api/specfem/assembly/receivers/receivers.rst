@@ -1,0 +1,15 @@
+
+.. _assembly_receivers:
+
+``specfem::assembly::receivers``
+================================
+
+.. doxygenstruct:: specfem::assembly::receivers
+    :members:
+
+Data Access Functions
+^^^^^^^^^^^^^^^^^^^^^
+
+.. note::
+
+    Data access functions (``load_on_device``, ``load_on_host``, etc.) are yet to be implemented for sources.

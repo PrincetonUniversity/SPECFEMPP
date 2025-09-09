@@ -14,7 +14,38 @@
 namespace specfem {
 namespace sources {
 /**
- * @brief Collocated force source
+ * @brief Cosserat force source
+ *
+ * This class implements a Cosserat force source in 2D, which is used for
+ * simulations in Cosserat elastic media. It combines both elastic and
+ * rotational force components with separate scaling factors.
+ *
+ * @par Usage Example
+ * @code
+ * // Create a Ricker wavelet source time function
+ * auto stf = std::make_unique<specfem::forcing_function::Ricker>(
+ *     15.0,  // dominant frequency (Hz)
+ *     0.01,  // time factor
+ *     1.0,   // amplitude
+ *     0.0,   // time shift
+ *     1.0,   // normalization factor
+ *     false  // do not reverse
+ * );
+ *
+ * // Create a 2D Cosserat force source at (3.2, 4.8)
+ * auto cosserat_source =
+ * specfem::sources::cosserat_force<specfem::dimension::type::dim2>( 3.2,   //
+ * x-coordinate 4.8,   // z-coordinate 1.5,   // f - elastic force scaling
+ * factor 0.8,   // fc - rotational force scaling factor 30.0,  // angle in
+ * degrees std::move(stf), specfem::wavefield::simulation_field::forward
+ * );
+ *
+ * // Set the medium type (only works with Cosserat elastic media)
+ * cosserat_source.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
+ *
+ * // Get the force vector (includes elastic and rotational components)
+ * auto force_vector = cosserat_source.get_force_vector();
+ * @endcode
  *
  */
 template <>
@@ -84,8 +115,28 @@ public:
   /**
    * @brief Get the force vector
    *
+   * Returns the 2D Cosserat force vector combining elastic and rotational
+   * components:
+   *
+   * \f[
+   * \mathbf{f}_{Cosserat} = \begin{pmatrix}
+   * f \sin(\theta) \\
+   * -f \cos(\theta) \\
+   * f_c
+   * \end{pmatrix}
+   * \f]
+   *
+   * Where:
+   * - \f$f \sin(\theta)\f$: Elastic force component in x-direction
+   * - \f$-f \cos(\theta)\f$: Elastic force component in z-direction
+   * - \f$f_c\f$: Rotational (Cosserat) force component (couple stress)
+   * - \f$\theta\f$ is the force angle
+   *
+   * This formulation is specific to Cosserat elastic media which include both
+   * translational and rotational degrees of freedom.
+   *
    * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Force vector
+   * Force vector with 3 components [fx, fz, fc]
    */
   specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
 

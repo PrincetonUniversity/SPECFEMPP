@@ -8,6 +8,61 @@
 namespace specfem {
 namespace sources {
 
+/**
+ * @brief Class representing a tensor source
+ *
+ * The tensor source class is a base class for all tensor sources in the
+ * simulation. It provides the common interface and functionality for
+ * manipulating tensor sources. The main functionality being the return of a
+ * tensor that can be used to compute the GLL level source array, which is
+ * applied in the simulation.
+ *
+ * Tensor sources represent stress or moment tensor sources, typically used
+ * for earthquake simulations. They provide a symmetric tensor representation
+ * of the source mechanism.
+ *
+ * The main differences between 2D and 3D tensor sources are the dimensions and
+ * global and local coordinates for the point sources.
+ *
+ * @tparam DimensionTag Dimension of the tensor source (dim2 or dim3)
+ *
+ * @par Examples of tensor sources:
+ * - @ref specfem::sources::moment_tensor - Seismic moment tensor sources
+ *
+ * @par Tensor Source Usage Pattern
+ * @code
+ * // Example: Creating and using a tensor source (2D moment tensor)
+ * auto stf = std::make_unique<specfem::forcing_function::Ricker>(
+ *     8.0, 0.01, 1.0, 0.0, 1.0, false
+ * );
+ *
+ * auto tensor_src =
+ * specfem::sources::moment_tensor<specfem::dimension::type::dim2>( 12.5, 8.0,
+ * // coordinates (x, z) 1.5,        // Mxx - normal stress in x direction 2.1,
+ * // Mzz - normal stress in z direction 0.7,        // Mxz - shear stress
+ * component std::move(stf), specfem::wavefield::simulation_field::forward
+ * );
+ *
+ * // Set the medium (tensor sources work with elastic media)
+ * tensor_src.set_medium_tag(specfem::element::medium_tag::elastic_psv);
+ *
+ * // Get the source tensor - dimensions depend on simulation:
+ * // - 2D: 2x2 symmetric matrix [[Mxx, Mxz], [Mxz, Mzz]]
+ * // - 3D: 3x3 symmetric matrix with 6 independent components
+ * auto source_tensor = tensor_src.get_source_tensor();
+ *
+ * // All tensor sources return tensor_source type
+ * assert(tensor_src.get_source_type() ==
+ *        specfem::sources::source_type::tensor_source);
+ *
+ * // Access individual tensor components (for moment tensors)
+ * type_real mxx = tensor_src.get_Mxx();
+ * type_real mzz = tensor_src.get_Mzz();
+ * type_real mxz = tensor_src.get_Mxz();
+ * @endcode
+ *
+ * @note This class inherits from @ref specfem::sources::source
+ */
 template <specfem::dimension::type DimensionTag>
 class tensor_source : public source<DimensionTag> {
 
@@ -62,16 +117,49 @@ public:
   /**
    * @brief Get the source tensor
    *
-   * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Source tensor with dimensions [ncomponents][2] where each row contains
-   * [Mxx, Mxz], [Mxz, Mzz] etc, depending on the medium type
+   * Returns the source tensor \f$\mathbf{M}\f$ representing the stress or
+   * moment tensor applied by this tensor source. The tensor is symmetric and
+   * its dimensionality depends on the simulation dimension and medium type.
    *
-   * or in 3D
+   * @par Mathematical Definition
+   * The source tensor represents the symmetric stress/moment tensor:
+   *
+   * **2D Case:**
+   * \f[
+   * \mathbf{M}_{2D} = \begin{pmatrix}
+   * M_{xx} & M_{xz} \\
+   * M_{xz} & M_{zz}
+   * \end{pmatrix}
+   * \f]
+   *
+   * **3D Case:**
+   * \f[
+   * \mathbf{M}_{3D} = \begin{pmatrix}
+   * M_{xx} & M_{xy} & M_{xz} \\
+   * M_{xy} & M_{yy} & M_{yz} \\
+   * M_{xz} & M_{yz} & M_{zz}
+   * \end{pmatrix}
+   * \f]
+   *
+   * The returned tensor format depends on the medium:
+   * - **Elastic PSV (2D)**: 2×2 matrix \f$[[M_{xx}, M_{xz}], [M_{xz},
+   * M_{zz}]]\f$
+   * - **Elastic PSV-T (2D)**: 3×2 matrix with additional rotational component
+   * - **Poroelastic (2D)**: 4×2 matrix (elastic tensor repeated for
+   * solid/fluid)
+   * - **Elastic (3D)**: 3×3 full moment tensor
+   * - **Electromagnetic**: Modified tensor for Maxwell equations
+   *
+   * where \f$M_{ij}\f$ are the independent components of the symmetric tensor,
+   * representing seismic moment, stress, or equivalent source mechanisms.
+   *
+   * @note The actual tensor values and their physical meaning depend on the
+   * specific source type implementation. See individual source classes for
+   * detailed mathematical definitions of their tensor components.
    *
    * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Source tensor with dimensions [ncomponents][3] where each row contains
-   * [Mxx, Mxy, Mxz], [Mxy, Myy, Myz], [Mxz, Myz, Mzz] etc, depending on the
-   * medium type
+   * Source tensor matrix with dimensions [ncomponents][ndim] where ncomponents
+   * depends on medium type and ndim is spatial dimension
    */
   virtual specfem::kokkos::HostView2d<type_real> get_source_tensor() const = 0;
 
