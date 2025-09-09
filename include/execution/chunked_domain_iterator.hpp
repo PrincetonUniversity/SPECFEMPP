@@ -205,18 +205,18 @@ public:
    *
    * @param team The Kokkos team member type.
    * @param indices View of indices of elements within this chunk.
-   * @param ngllz Number of GLL points in the z-direction.
-   * @param ngllx Number of GLL points in the x-direction.
+   * @param element_grid Element grid information containing ngll, ngllx, ngllz,
+   * etc.
    */
-  KOKKOS_INLINE_FUNCTION ChunkElementIterator(const TeamMemberType &team,
-                                              const ViewType indices, int ngllz,
-                                              int ngllx)
-      : indices(indices), ngllz(ngllz), ngllx(ngllx),
+  KOKKOS_INLINE_FUNCTION ChunkElementIterator(
+      const TeamMemberType &team, const ViewType indices,
+      const specfem::mesh_entity::element<DimensionTag> &element_grid)
+      : indices(indices), ngllz(element_grid.ngllz), ngllx(element_grid.ngllx),
         num_elements((indices.extent(0) / simd_size) +
                      ((indices.extent(0) % simd_size) != 0)),
         base_type(team, (((indices.extent(0) / simd_size) +
                           (indices.extent(0) % simd_size != 0)) *
-                         ngllz * ngllx)) {}
+                         element_grid.ngllz * element_grid.ngllx)) {}
 
 private:
   ViewType indices; ///< View of indices of elements within this chunk
@@ -286,18 +286,19 @@ public:
   /**
    * @brief Constructor for ChunkElementIndex.
    *
-   *
    * @param indices View of indices of elements within this chunk.
-   * @param ngllz Number of GLL points in the z-direction.
-   * @param ngllx Number of GLL points in the x-direction.
+   * @param element_grid Element grid information containing ngll, ngllx, ngllz,
+   * etc.
    * @param kokkos_index Kokkos index type.
    */
   KOKKOS_INLINE_FUNCTION
-  ChunkElementIndex(const ViewType indices, const int &ngllz, const int &ngllx,
-                    const TeamMemberType &kokkos_index)
-      : indices(indices), ngllz(ngllz), ngllx(ngllx),
+  ChunkElementIndex(
+      const ViewType indices,
+      const specfem::mesh_entity::element<DimensionTag> &element_grid,
+      const TeamMemberType &kokkos_index)
+      : indices(indices), ngllz(element_grid.ngllz), ngllx(element_grid.ngllx),
         kokkos_index(kokkos_index),
-        iterator(kokkos_index, indices, ngllz, ngllx) {}
+        iterator(kokkos_index, indices, element_grid) {}
 
   /**
    * @brief Get a pair representing the range of indices in this chunk.
@@ -412,7 +413,7 @@ public:
                         : start + chunk_size * simd_size;
     const auto my_indices =
         Kokkos::subview(indices, Kokkos::make_pair(start, end));
-    return index_type(my_indices, element_grid.ngllz, element_grid.ngllx, team);
+    return index_type(my_indices, element_grid, team);
   }
 
   /**
