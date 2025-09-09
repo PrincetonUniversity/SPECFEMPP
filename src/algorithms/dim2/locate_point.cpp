@@ -1,5 +1,4 @@
 #include "algorithms/locate_point.hpp"
-#include "Serial/Kokkos_Serial_Parallel_Range.hpp"
 #include "algorithms/locate_point_impl.hpp"
 #include "algorithms/locate_point_impl.tpp"
 #include "specfem/assembly.hpp"
