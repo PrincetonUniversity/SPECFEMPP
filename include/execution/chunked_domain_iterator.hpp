@@ -296,7 +296,7 @@ public:
       const ViewType indices,
       const specfem::mesh_entity::element<DimensionTag> &element_grid,
       const TeamMemberType &kokkos_index)
-      : indices(indices), ngllz(element_grid.ngllz), ngllx(element_grid.ngllx),
+      : indices(indices), element_grid(element_grid),
         kokkos_index(kokkos_index),
         iterator(kokkos_index, indices, element_grid) {}
 
@@ -316,9 +316,9 @@ public:
   }
 
 private:
-  ViewType indices;            ///< View of indices
-  int ngllz;                   ///< Number of GLL points in the z-direction
-  int ngllx;                   ///< Number of GLL points in the x-direction
+  ViewType indices;                                         ///< View of indices
+  specfem::mesh_entity::element<DimensionTag> element_grid; ///< Element grid
+                                                            ///< information
   TeamMemberType kokkos_index; ///< Kokkos index type
   iterator_type iterator;      ///< Iterator for iterating over the elements
                                ///< in the chunk.
