@@ -34,7 +34,7 @@ TEST(Source, AcousticIsotropic2D) {
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) =
-      point_source.stf(0) * point_source.lagrange_interpolant(0) / kappa;
+      -point_source.stf(0) * point_source.lagrange_interpolant(0) / kappa;
 
   std::ostringstream message;
   message << "Source acceleration is not equal to expected value: \n"
