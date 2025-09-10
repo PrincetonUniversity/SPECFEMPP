@@ -203,6 +203,87 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
   return test_view_host;
 }
 
+template <typename ParallelConfig>
+typename Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                      Kokkos::DefaultExecutionSpace>::HostMirror
+execute_chunk_element_policy_3d(const int nspec, const int ngllz,
+                                const int nglly, const int ngllx) {
+
+  constexpr bool using_simd = ParallelConfig::simd::using_simd;
+
+  constexpr auto dimension = specfem::dimension::type::dim3;
+
+  const specfem::mesh_entity::element<dimension> element_grid(ngllx, ngllz,
+                                                              nglly, ngllx);
+
+  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> elements("elements",
+                                                              nspec);
+
+  // Initialize elements
+  Kokkos::parallel_for(
+      "initialize_elements",
+      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, nspec),
+      KOKKOS_LAMBDA(const int ispec) { elements(ispec) = ispec; });
+
+  Kokkos::fence();
+
+  specfem::execution::ChunkedDomainIterator policy(ParallelConfig(), elements,
+                                                   element_grid);
+
+  using TestViewType = Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                                    Kokkos::DefaultExecutionSpace>;
+
+  TestViewType test_view("test_view", nspec, ngllz, nglly, ngllx);
+  TestViewType::HostMirror test_view_host =
+      Kokkos::create_mirror_view(test_view);
+
+  // initialize test_view
+  Kokkos::parallel_for(
+      "initialize_test_view",
+      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
+                                              { nspec, ngllz, nglly, ngllx }),
+      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix) {
+        test_view(ispec, iz, iy, ix) = 0;
+      });
+
+  Kokkos::fence();
+
+  using PointIndex = specfem::point::index<dimension, using_simd>;
+
+  specfem::execution::for_all(
+      "specfem::tests::execution::chunked_domain_3d", policy,
+      KOKKOS_LAMBDA(const PointIndex &point_index) {
+        const int ispec = point_index.ispec;
+        const int iz = point_index.iz;
+        const int iy = point_index.iy;
+        const int ix = point_index.ix;
+        constexpr bool is_simd = using_simd;
+        const auto l_test_view = test_view;
+
+        if constexpr (is_simd) {
+          using mask_type = typename ParallelConfig::simd::mask_type;
+          mask_type mask(
+              [&](std::size_t lane) { return point_index.mask(lane); });
+          using tag_type = typename ParallelConfig::simd::tag_type;
+          using datatype = typename ParallelConfig::simd::datatype;
+          datatype data(0);
+          Kokkos::Experimental::where(mask, data)
+              .copy_from(&l_test_view(ispec, iz, iy, ix), tag_type());
+
+          data = data + datatype(1);
+          Kokkos::Experimental::where(mask, data)
+              .copy_to(&l_test_view(ispec, iz, iy, ix), tag_type());
+        } else {
+          l_test_view(ispec, iz, iy, ix) += 1;
+        }
+      });
+
+  Kokkos::fence();
+
+  Kokkos::deep_copy(test_view_host, test_view);
+  return test_view_host;
+}
+
 class POLICIES : public ::testing::Test {
 protected:
   class Iterator {
@@ -361,6 +442,72 @@ TEST_F(POLICIES, ChunkElementPolicy) {
 
     std::cout << "--------------------------------------------------\n"
               << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"
+              << "--------------------------------------------------\n\n"
+              << std::endl;
+  }
+}
+
+TEST_F(POLICIES, ChunkElementPolicy3D) {
+  for (auto parameters : *this) {
+    const auto Test = std::get<0>(parameters);
+    const auto nglob = std::get<1>(parameters);
+    const auto nspec = std::get<2>(parameters);
+
+    const int ngllz = 5;
+    const int nglly = 5;
+    const int ngllx = 5;
+
+    using ParallelConfig = specfem::parallel_config::default_chunk_config<
+        specfem::dimension::type::dim3,
+        specfem::datatype::simd<type_real, false>,
+        Kokkos::DefaultExecutionSpace>;
+
+    using SimdParallelConfig = specfem::parallel_config::default_chunk_config<
+        specfem::dimension::type::dim3,
+        specfem::datatype::simd<type_real, true>,
+        Kokkos::DefaultExecutionSpace>;
+
+    const auto check_test_view = [&](const auto &test_view, std::string error) {
+      for (int ispec = 0; ispec < nspec; ispec++) {
+        for (int iz = 0; iz < ngllz; iz++) {
+          for (int iy = 0; iy < nglly; iy++) {
+            for (int ix = 0; ix < ngllx; ix++) {
+              if (test_view(ispec, iz, iy, ix) != 1) {
+                ADD_FAILURE();
+
+                std::cout
+                    << "--------------------------------------------------\n"
+                    << "\033[0;31m[FAILED]\033[0m Test name: " << Test.name
+                    << "\n"
+                    << "- Error: " << error << "\n"
+                    << "  Index: \n "
+                    << "    ispec = " << ispec << "\n"
+                    << "    iz = " << iz << "\n"
+                    << "    iy = " << iy << "\n"
+                    << "    ix = " << ix << "\n"
+                    << "--------------------------------------------------\n\n"
+                    << std::endl;
+                return;
+              }
+            }
+          }
+        }
+      }
+
+      return;
+    };
+
+    auto test_view = execute_chunk_element_policy_3d<ParallelConfig>(
+        nspec, ngllz, nglly, ngllx);
+    auto simd_test_view = execute_chunk_element_policy_3d<SimdParallelConfig>(
+        nspec, ngllz, nglly, ngllx);
+
+    check_test_view(test_view, "Error in 3D ChunkElementPolicy with SIMD OFF");
+    check_test_view(simd_test_view,
+                    "Error in 3D ChunkElementPolicy with SIMD ON");
+
+    std::cout << "--------------------------------------------------\n"
+              << "\033[0;32m[PASSED]\033[0m " << Test.name << " (3D)\n"
               << "--------------------------------------------------\n\n"
               << std::endl;
   }

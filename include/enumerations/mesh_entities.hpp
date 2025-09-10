@@ -140,6 +140,17 @@ template <> struct element<specfem::dimension::type::dim2> {
    *
    * @param ngll The number of Gauss-Lobatto-Legendre points
    */
+  element(const int ngll)
+      : ngll(ngll), ngllz(ngll), ngllx(ngll), order(ngll - 1) {};
+
+  /**
+   * @brief Constructs an element entity given the number of
+   * Gauss-Lobatto-Legendre points
+   *
+   * @param ngll The number of Gauss-Lobatto-Legendre points
+   * @param ngllz The number of Gauss-Lobatto-Legendre points in the z-direction
+   * @param ngllx The number of Gauss-Lobatto-Legendre points in the x-direction
+   */
   element(const int ngll, const int ngllz, const int ngllx)
       : ngll(ngll), ngllz(ngllz), ngllx(ngllx), order(ngll - 1) {};
 
@@ -189,6 +200,19 @@ template <> struct element<specfem::dimension::type::dim3> {
    */
   element(const int ngll)
       : ngll(ngll), ngllx(ngll), nglly(ngll), ngllz(ngll), order(ngll - 1) {};
+
+  /**
+   * @brief Constructs an element entity given individual GLL points for each
+   * dimension
+   *
+   * @param ngll The base number of Gauss-Lobatto-Legendre points
+   * @param ngllz The number of Gauss-Lobatto-Legendre points in the z-direction
+   * @param nglly The number of Gauss-Lobatto-Legendre points in the y-direction
+   * @param ngllx The number of Gauss-Lobatto-Legendre points in the x-direction
+   */
+  element(const int ngll, const int ngllz, const int nglly, const int ngllx)
+      : ngll(ngll), ngllx(ngllx), nglly(nglly), ngllz(ngllz),
+        order(ngll - 1) {};
 
 public:
   int order; ///< Polynomial order of the element
