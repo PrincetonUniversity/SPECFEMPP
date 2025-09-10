@@ -10,29 +10,31 @@
 #include "specfem/assembly/properties.hpp"
 #include "specfem/point.hpp"
 
+// This file will get deprecated in coming PRs
+
 namespace {
 
 std::vector<std::tuple<int, int> >
-get_points_on_edge(const specfem::enums::edge::type &edge, const int &ngll) {
+get_points_on_edge(const specfem::mesh_entity::type &edge, const int &ngll) {
   std::vector<std::tuple<int, int> > points(ngll);
 
   switch (edge) {
-  case specfem::enums::edge::type::BOTTOM:
+  case specfem::mesh_entity::type::bottom:
     for (int i = 0; i < ngll; i++) {
       points[i] = std::make_tuple(i, 0);
     }
     break;
-  case specfem::enums::edge::type::TOP:
+  case specfem::mesh_entity::type::top:
     for (int i = 0; i < ngll; i++) {
       points[i] = std::make_tuple(i, ngll - 1);
     }
     break;
-  case specfem::enums::edge::type::LEFT:
+  case specfem::mesh_entity::type::left:
     for (int i = 0; i < ngll; i++) {
       points[i] = std::make_tuple(0, i);
     }
     break;
-  case specfem::enums::edge::type::RIGHT:
+  case specfem::mesh_entity::type::right:
     for (int i = 0; i < ngll; i++) {
       points[i] = std::make_tuple(ngll - 1, i);
     }
@@ -46,8 +48,8 @@ get_points_on_edge(const specfem::enums::edge::type &edge, const int &ngll) {
 
 bool check_if_edges_are_connected(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::enums::edge::type edge1,
-    const specfem::enums::edge::type edge2, const int ispec1,
+    const specfem::mesh_entity::type edge1,
+    const specfem::mesh_entity::type edge2, const int ispec1,
     const int ispec2) {
 
   if (edge1 == edge2) {
@@ -69,13 +71,13 @@ bool check_if_edges_are_connected(
   // size of one edge of the element
   type_real edge_size = [&]() {
     switch (edge1) {
-    case specfem::enums::edge::type::BOTTOM:
-    case specfem::enums::edge::type::TOP:
+    case specfem::mesh_entity::type::bottom:
+    case specfem::mesh_entity::type::top:
       return h_coord(0, ispec1, 0, 1) - h_coord(0, ispec1, 0, 0);
       break;
 
-    case specfem::enums::edge::type::LEFT:
-    case specfem::enums::edge::type::RIGHT:
+    case specfem::mesh_entity::type::left:
+    case specfem::mesh_entity::type::right:
       return h_coord(1, ispec1, 1, 0) - h_coord(1, ispec1, 0, 0);
       break;
     default:
@@ -112,8 +114,8 @@ compute_edge_factors_and_normals(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
-    const int ispec1, const int ispec2, const specfem::enums::edge::type edge1,
-    const specfem::enums::edge::type edge2) {
+    const int ispec1, const int ispec2, const specfem::mesh_entity::type edge1,
+    const specfem::mesh_entity::type edge2) {
 
   const int ngll = mesh.ngllx;
 
@@ -167,13 +169,13 @@ compute_edge_factors_and_normals(
 
     edge_factor[ipoint] = [&]() {
       switch (edge1) {
-      case specfem::enums::edge::type::BOTTOM:
-      case specfem::enums::edge::type::TOP:
+      case specfem::mesh_entity::type::bottom:
+      case specfem::mesh_entity::type::top:
         return weights[0];
         break;
 
-      case specfem::enums::edge::type::LEFT:
-      case specfem::enums::edge::type::RIGHT:
+      case specfem::mesh_entity::type::left:
+      case specfem::mesh_entity::type::right:
         return weights[1];
         break;
       default:
@@ -190,7 +192,7 @@ compute_edge_factors_and_normals(
   return { edge_factor, edge_normal };
 }
 
-std::tuple<specfem::enums::edge::type, specfem::enums::edge::type,
+std::tuple<specfem::mesh_entity::type, specfem::mesh_entity::type,
            std::vector<type_real>, std::vector<std::array<type_real, 2> > >
 compute_edge_factors_and_normals(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
@@ -198,12 +200,12 @@ compute_edge_factors_and_normals(
         &jacobian_matrix,
     const int ispec1, const int ispec2) {
 
-  const std::array<specfem::enums::edge::type, 4> edges{
-    specfem::enums::edge::type::BOTTOM, specfem::enums::edge::type::TOP,
-    specfem::enums::edge::type::LEFT, specfem::enums::edge::type::RIGHT
+  const std::array<specfem::mesh_entity::type, 4> edges{
+    specfem::mesh_entity::type::bottom, specfem::mesh_entity::type::top,
+    specfem::mesh_entity::type::left, specfem::mesh_entity::type::right
   };
 
-  std::array<specfem::enums::edge::type, 2> connected_edges;
+  std::array<specfem::mesh_entity::type, 2> connected_edges;
   int number_of_edges = 0;
   for (const auto edge1 : edges) {
     for (const auto edge2 : edges) {

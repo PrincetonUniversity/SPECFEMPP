@@ -137,11 +137,10 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   InterfacePointIndex(
-      const specfem::point::index<DimensionTag, false> &self_index,
-      const specfem::point::index<DimensionTag, false> &coupled_index,
-      const int &ipoint, const KokkosIndexType &kokkos_index)
-      : index{ self_index, coupled_index, ipoint }, kokkos_index(kokkos_index) {
-  }
+      const specfem::point::edge_index<DimensionTag> &self_index,
+      const specfem::point::edge_index<DimensionTag> &coupled_index,
+      const KokkosIndexType &kokkos_index)
+      : index(self_index, coupled_index), kokkos_index(kokkos_index) {}
 
   /**
    * @brief Get iterator for this single interface point
@@ -217,12 +216,8 @@ public:
     const auto self_index = self_iterator(i);
     const auto coupled_index = coupled_iterator(i);
 
-    return index_type{ specfem::point::index<DimensionTag, false>{
-                           self_index.ispec, self_index.iz, self_index.ix },
-                       specfem::point::index<DimensionTag, false>{
-                           coupled_index.ispec, coupled_index.iz,
-                           coupled_index.ix },
-                       self_index.ipoint, self_index.get_policy_index() };
+    return index_type{ self_index.get_index(), coupled_index.get_index(),
+                       self_index.get_policy_index() };
   }
 
   /**

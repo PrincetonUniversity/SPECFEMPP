@@ -28,7 +28,7 @@ std::tuple<std::array<type_real, 2>, type_real> get_boundary_edge_and_weight(
       type == specfem::mesh_entity::type::top_left ||
       type == specfem::mesh_entity::type::left) {
     const auto normal =
-        point_jacobian_matrix.compute_normal(specfem::enums::edge::type::LEFT);
+        point_jacobian_matrix.compute_normal(specfem::mesh_entity::type::left);
     const std::array<type_real, 2> edge_normal = { normal(0), normal(1) };
     return std::make_tuple(edge_normal, weights[1]);
   }
@@ -37,21 +37,21 @@ std::tuple<std::array<type_real, 2>, type_real> get_boundary_edge_and_weight(
       type == specfem::mesh_entity::type::top_right ||
       type == specfem::mesh_entity::type::right) {
     const auto normal =
-        point_jacobian_matrix.compute_normal(specfem::enums::edge::type::RIGHT);
+        point_jacobian_matrix.compute_normal(specfem::mesh_entity::type::right);
     const std::array<type_real, 2> edge_normal = { normal(0), normal(1) };
     return std::make_tuple(edge_normal, weights[1]);
   }
 
   if (type == specfem::mesh_entity::type::top) {
     const auto normal =
-        point_jacobian_matrix.compute_normal(specfem::enums::edge::type::TOP);
+        point_jacobian_matrix.compute_normal(specfem::mesh_entity::type::top);
     const std::array<type_real, 2> edge_normal = { normal(0), normal(1) };
     return std::make_tuple(edge_normal, weights[0]);
   }
 
   if (type == specfem::mesh_entity::type::bottom) {
     const auto normal = point_jacobian_matrix.compute_normal(
-        specfem::enums::edge::type::BOTTOM);
+        specfem::mesh_entity::type::bottom);
     const std::array<type_real, 2> edge_normal = { normal(0), normal(1) };
     return std::make_tuple(edge_normal, weights[0]);
   }

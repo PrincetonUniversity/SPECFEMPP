@@ -1,18 +1,17 @@
+#include "specfem/assembly/edge_types.hpp"
 #include "enumerations/interface.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem/assembly/element_types.hpp"
-#include "specfem/assembly/interface_types.hpp"
 #include <Kokkos_Core.hpp>
 
 using EdgeViewType =
     Kokkos::View<specfem::mesh_entity::edge *, Kokkos::DefaultExecutionSpace>;
 
-specfem::assembly::interface_types<specfem::dimension::type::dim2>::
-    interface_types(
-        const int ngllx, const int ngllz,
-        specfem::assembly::element_types<dimension> element_types,
-        specfem::mesh::coupled_interfaces<dimension> coupled_interfaces) {
+specfem::assembly::edge_types<specfem::dimension::type::dim2>::edge_types(
+    const int ngllx, const int ngllz,
+    specfem::assembly::element_types<dimension> element_types,
+    specfem::mesh::coupled_interfaces<dimension> coupled_interfaces) {
 
   // Count the number of interfaces for each combination of connection
   FOR_EACH_IN_PRODUCT(
@@ -97,7 +96,7 @@ specfem::assembly::interface_types<specfem::dimension::type::dim2>::
 }
 
 std::tuple<EdgeViewType::HostMirror, EdgeViewType::HostMirror>
-specfem::assembly::interface_types<specfem::dimension::type::dim2>::
+specfem::assembly::edge_types<specfem::dimension::type::dim2>::
     get_edges_on_host(const specfem::connections::type connection,
                       const specfem::interface::interface_tag edge,
                       const specfem::element::boundary_tag boundary) const {
@@ -119,7 +118,7 @@ specfem::assembly::interface_types<specfem::dimension::type::dim2>::
 }
 
 std::tuple<EdgeViewType, EdgeViewType>
-specfem::assembly::interface_types<specfem::dimension::type::dim2>::
+specfem::assembly::edge_types<specfem::dimension::type::dim2>::
     get_edges_on_device(const specfem::connections::type connection,
                         const specfem::interface::interface_tag edge,
                         const specfem::element::boundary_tag boundary) const {
