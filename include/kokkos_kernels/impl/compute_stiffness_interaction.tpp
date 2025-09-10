@@ -44,7 +44,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   const int nelements = elements.extent(0);
 
   // Get the element grid information (ngll, ngllx, ngllz, order)
-  const auto element_grid = assembly.mesh.get_element_grid();
+  const auto &element_grid = assembly.mesh.element_grid;
 
   // Return if there are no elements matching the tag combination
   if (nelements == 0)
