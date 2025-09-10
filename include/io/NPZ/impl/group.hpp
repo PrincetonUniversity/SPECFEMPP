@@ -10,6 +10,36 @@ namespace specfem::io::impl::NPZ {
 template <typename ViewType, typename OpType> class Dataset;
 template <typename OpType> class File;
 
+#ifdef NO_NPZ
+template <typename OpType> class Group {
+public:
+  template <typename... Args> Group(Args &&...args) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  template <typename ViewType>
+  specfem::io::impl::NPZ::Dataset<ViewType, OpType>
+  createDataset(const std::string &name, const ViewType data) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  specfem::io::impl::NPZ::Group<OpType> createGroup(const std::string &name) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  template <typename ViewType>
+  specfem::io::impl::NPZ::Dataset<ViewType, OpType>
+  openDataset(const std::string &name, const ViewType data) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  specfem::io::impl::NPZ::Group<OpType> openGroup(const std::string &name) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+};
+
+#else
+
 /**
  * @brief Group class for npy IO
  *
@@ -146,5 +176,7 @@ private:
   File<OpType> &file;
   std::string group_name; ///< Path to the folder
 };
+
+#endif
 
 } // namespace specfem::io::impl::NPZ

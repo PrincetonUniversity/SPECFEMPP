@@ -6,6 +6,7 @@
 #include <Kokkos_Core.hpp>
 #include "kokkos_abstractions.h"
 
+#ifndef NO_NPZ
 template <typename ViewType, typename OpType>
 specfem::io::impl::NPZ::Dataset<ViewType, OpType>::Dataset(
     specfem::io::impl::NPZ::File<OpType> &file, const std::string &path,
@@ -45,3 +46,4 @@ void specfem::io::impl::NPZ::Dataset<ViewType, OpType>::read() {
     throw std::runtime_error("Unknown memory space");
   }
 }
+#endif

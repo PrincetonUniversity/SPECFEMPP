@@ -35,7 +35,7 @@ rule forward_simulation:
             network_name=["AA"],
             component=["BXX", "BXZ"],
         ),
-        forward_wavefield="OUTPUT_FILES/ForwardWavefield.npz",
+        forward_wavefield=directory("OUTPUT_FILES/ForwardWavefield"),
     resources:
         nodes=1,
         tasks=1,
@@ -87,7 +87,7 @@ rule adjoint_simulation:
             component=["BXX", "BXZ"],
         ),
     output:
-        kernels="OUTPUT_FILES/Kernels.npz",
+        kernels=directory("OUTPUT_FILES/Kernels"),
     resources:
         nodes=1,
         tasks=1,
@@ -105,7 +105,7 @@ rule adjoint_simulation:
 
 rule plot_kernels:
     input:
-        kernels="OUTPUT_FILES/Kernels.npz",
+        kernels="OUTPUT_FILES/Kernels",
         plot_script="plot.py",
     output:
         plot="OUTPUT_FILES/Kernels.png",

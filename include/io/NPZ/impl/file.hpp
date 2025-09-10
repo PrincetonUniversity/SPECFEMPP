@@ -1,19 +1,59 @@
 #pragma once
 
+#ifndef NO_NPZ
+#include <zlib.h>
+#endif
+
 #include "enumerations/interface.hpp"
 #include "group.hpp"
 #include "io/NPY/impl/npy_header.hpp"
 #include <fstream>
 #include <stdexcept>
 #include <string>
-#include <zlib.h>
 
 namespace specfem::io::impl::NPZ {
-using NPYString = specfem::io::impl::NPY::NPYString;
 
 // Forward declaration
 template <typename OpType> class Group;
 template <typename ViewType, typename OpType> class Dataset;
+
+#ifdef NO_NPZ
+template <typename OpType> class File {
+public:
+  File(const std::string &name) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+  File(const char *name) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  template <typename ViewType>
+  specfem::io::impl::NPZ::Dataset<ViewType, OpType>
+  createDataset(const std::string &name, const ViewType data) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  specfem::io::impl::NPZ::Group<OpType> createGroup(const std::string &name) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  template <typename ViewType>
+  specfem::io::impl::NPZ::Dataset<ViewType, OpType>
+  openDataset(const std::string &name, const ViewType data) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  specfem::io::impl::NPZ::Group<OpType> openGroup(const std::string &name) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  void flush() {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+};
+
+#else
+using NPYString = specfem::io::impl::NPY::NPYString;
 
 /**
  * @brief Numpy File implementation
@@ -178,4 +218,6 @@ private:
   std::string file_path; ///< Path to the file
   std::ifstream stream;  ///< File stream
 };
+
+#endif
 } // namespace specfem::io::impl::NPZ

@@ -5,6 +5,27 @@
 
 namespace specfem::io::impl::NPZ {
 
+#ifdef NO_NPZ
+// Error message if NPZ is not available
+template <typename ViewType, typename OpType> class Dataset {
+public:
+  using value_type = typename ViewType::non_const_value_type;
+  using MemSpace = typename ViewType::memory_space;
+  using native_type = void;
+
+  template <typename... Args> Dataset(Args &&...args) {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  void write() {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+
+  void read() {
+    throw std::runtime_error("SPECFEM++ was not compiled with NPZ support");
+  }
+};
+#else
 /**
  * @brief Dataset class for NPZ IO
  *
@@ -60,5 +81,5 @@ private:
   const std::string path;
   const std::vector<size_t> dims;
 };
-
+#endif
 } // namespace specfem::io::impl::NPZ
