@@ -103,8 +103,8 @@ public:
                                              PointType &point) const {
     if constexpr (on_device) {
       point.edge_factor = edge_factor(index.iedge, index.ipoint);
-      point.edge_normal(0) = edge_normal(index.iedge, index.ipoint);
-      point.edge_normal(1) = edge_normal(index.iedge, index.ipoint);
+      point.edge_normal(0) = edge_normal(index.iedge, index.ipoint, 0);
+      point.edge_normal(1) = edge_normal(index.iedge, index.ipoint, 1);
     } else {
       point.edge_factor = h_edge_factor(index.iedge, index.ipoint);
       point.edge_normal(0) = h_edge_normal(index.iedge, index.ipoint, 0);

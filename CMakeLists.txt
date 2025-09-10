@@ -512,6 +512,7 @@ add_library(
         src/kokkos_kernels/impl/compute_source_interaction.cpp
         src/kokkos_kernels/impl/compute_stiffness_interaction.cpp
         src/kokkos_kernels/impl/compute_material_derivatives.cpp
+        src/kokkos_kernels/impl/compute_coupling.cpp
         src/kokkos_kernels/frechet_kernels.cpp
 )
 set_target_properties(kokkos_kernels PROPERTIES UNITY_BUILD_BATCH_SIZE 4)
