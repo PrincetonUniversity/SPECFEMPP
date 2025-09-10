@@ -3,6 +3,7 @@
 #include "dimension.hpp"
 #include <algorithm>
 #include <list>
+#include <stdexcept>
 
 /**
  * @namespace specfem::mesh_entity
