@@ -175,14 +175,13 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
                 const auto F = point_stress * point_jacobian_matrix;
 
-                // for (int icomponent = 0; icomponent < components;
-                //      ++icomponent) {
-                //   for (int idim = 0; idim < num_dimensions; ++idim) {
-                //     stress_integrand.F(ielement, index.iz, index.ix, icomponent,
-                //                        idim) = F(icomponent, idim);
-                //   }
-                // }
-                stress_integrand(index) = F;
+                for (int icomponent = 0; icomponent < components;
+                     ++icomponent) {
+                  for (int idim = 0; idim < num_dimensions; ++idim) {
+                    stress_integrand.F(ielement, index.iz, index.ix, icomponent,
+                                       idim) = F(icomponent, idim);
+                  }
+                }
               });
 
           team.team_barrier();
