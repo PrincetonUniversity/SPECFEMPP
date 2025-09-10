@@ -149,13 +149,22 @@ template <> struct element<specfem::dimension::type::dim2> {
    *
    * @param ngll_in The number of Gauss-Lobatto-Legendre points
    * @return true If all dimensions match the specified number of GLL points
-   * @return false If the element is not valid
+   * @return false If any dimension does not match
    */
   bool operator==(const int ngll_in) const {
     return ngll_in == this->ngll && ngll_in == this->ngllz &&
            ngll_in == this->ngllx;
   }
 
+  /**
+   * @brief Checks if the element is consistent across dimensions against a
+   *        specific number of GLL points.
+   *
+   * @param ngll_in The number of Gauss-Lobatto-Legendre points
+   * @return false If all dimensions match the specified number of GLL points
+   * @return true If any dimension does not match
+   *
+   */
   bool operator!=(const int ngll_in) const { return !(*this == ngll_in); }
 
 public:
