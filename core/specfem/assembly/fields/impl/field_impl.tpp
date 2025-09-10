@@ -72,9 +72,9 @@ void assign_assembly_index_mapping<specfem::dimension::type::dim3>(
 
   const auto index_mapping = mesh.h_index_mapping;
   const int nspec = mesh.nspec;
-  const int ngllz = mesh.ngllz;
-  const int nglly = mesh.nglly;
-  const int ngllx = mesh.ngllx;
+  const int ngllz = mesh.element_grid.ngllz;
+  const int nglly = mesh.element_grid.nglly;
+  const int ngllx = mesh.element_grid.ngllx;
 
   int count = 0;
 

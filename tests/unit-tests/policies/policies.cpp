@@ -212,8 +212,8 @@ execute_chunk_element_policy_3d(const int nspec, const int ngllz,
 
   constexpr auto dimension = specfem::dimension::type::dim3;
 
-  const specfem::mesh_entity::element<dimension> element_grid(ngllx, ngllz,
-                                                              nglly, ngllx);
+  const specfem::mesh_entity::element<dimension> element_grid(ngllz, nglly,
+                                                              ngllx);
 
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace> elements("elements",
                                                               nspec);
