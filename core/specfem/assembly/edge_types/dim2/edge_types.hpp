@@ -31,6 +31,8 @@ public:
              specfem::assembly::element_types<dimension> element_types,
              specfem::mesh::coupled_interfaces<dimension> coupled_interfaces);
 
+  edge_types() = default;
+
 private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING),
                        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),

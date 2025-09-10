@@ -7,6 +7,8 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include <Kokkos_Core.hpp>
+#include <type_traits>
 
 namespace specfem::assembly {
 
@@ -95,38 +97,56 @@ public:
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 
-  /**
-   * @brief Friend function for loading interface data on host
-   *
-   * Provides access to the private interface containers for the host-side
-   * data loading operations. This friend declaration allows the external
-   * load_on_host function to access the internal container members.
-   *
-   * @tparam IndexType Type of the index used to specify the interface location
-   * @tparam ContainerType Type of the container holding the interface data
-   * @tparam PointType Type representing the interface point data structure
-   */
-  template <typename IndexType, typename ContainerType, typename PointType>
-  friend void load_on_host(const IndexType &index, ContainerType &container,
-                           const PointType &point);
+  coupled_interfaces2() = default;
 
   /**
-   * @brief Friend function for loading interface data on device
+   * @brief Get interface container for specific coupling and boundary types
    *
-   * Provides access to the private interface containers for the device-side
-   * data loading operations. This friend declaration allows the external
-   * load_on_device function to access the internal container members.
-   * The function is marked with KOKKOS_FORCEINLINE_FUNCTION for optimal
-   * performance on GPU devices.
+   * Uses compile-time dispatch to return the appropriate interface container
+   * without runtime overhead. Supports elastic_acoustic/acoustic_elastic
+   * interfaces with
+   * none/acoustic_free_surface/stacey/composite_stacey_dirichlet boundary
+   * conditions.
    *
-   * @tparam IndexType Type of the index used to specify the interface location
-   * @tparam ContainerType Type of the container holding the interface data
-   * @tparam PointType Type representing the interface point data structure
+   * @tparam InterfaceTag Interface coupling type
+   * @tparam BoundaryTag Boundary condition type
+   * @return const reference to the requested interface container
+   *
+   * @example
+   * ```cpp
+   * const auto& container = interfaces.get_interface_container<
+   *     specfem::interface::interface_tag::elastic_acoustic,
+   *     specfem::element::boundary_tag::stacey>();
+   * ```
    */
-  template <typename IndexType, typename ContainerType, typename PointType>
-  friend KOKKOS_FORCEINLINE_FUNCTION void
-  load_on_device(const IndexType &index, ContainerType &container,
-                 const PointType &point);
+  template <specfem::interface::interface_tag InterfaceTag,
+            specfem::element::boundary_tag BoundaryTag>
+  const InterfaceContainerType<InterfaceTag, BoundaryTag> &
+  get_interface_container() const {
+    // Compile-time dispatch using FOR_EACH_IN_PRODUCT macro
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING),
+                         INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
+                         BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                                      COMPOSITE_STACEY_DIRICHLET)),
+                        CAPTURE((interface_container, interface_container)) {
+                          if constexpr (InterfaceTag == _interface_tag_ &&
+                                        BoundaryTag == _boundary_tag_) {
+                            return _interface_container_;
+                          }
+                        })
+
+#ifndef NDEBUG
+    // Debug check: abort if no matching specialization found
+    KOKKOS_ABORT_WITH_LOCATION(
+        "specfem::assembly::coupled_interfaces2::get_interface_container(): No "
+        "matching specialization found.");
+#endif
+
+    // Unreachable code - satisfy compiler return requirements
+    [[maybe_unused]] static InterfaceContainerType<InterfaceTag, BoundaryTag>
+        dummy{};
+    return dummy;
+  }
 };
 
 /**
@@ -163,27 +183,18 @@ template <
         ((specfem::data_access::is_edge_index<IndexType>::value) &&
          (specfem::data_access::is_coupled_interface<ContainerType>::value)),
         int> = 0>
-inline void load_on_host(const IndexType &index, ContainerType &container,
-                         const PointType &point) {
+inline void load_on_host(const IndexType &index, const ContainerType &container,
+                         PointType &point) {
 
   static_assert(
       specfem::data_access::CheckCompatibility<IndexType, ContainerType,
                                                PointType>::value,
       "Incompatible types in load_on_host");
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING),
-       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
-      CAPTURE((interface_container, container.interface_container)) {
-        if constexpr (PointType::connection_tag == _connection_tag_ &&
-                      PointType::interface_tag == _interface_tag_ &&
-                      PointType::boundary_tag == _boundary_tag_) {
-          _interface_container_.impl_load<false>(index, point);
-          return;
-        }
-      })
+  container
+      .template get_interface_container<PointType::interface_tag,
+                                        PointType::boundary_tag>()
+      .template impl_load<false>(index, point);
 
 #ifndef NDEBUG
   KOKKOS_ABORT_WITH_LOCATION(
@@ -220,27 +231,18 @@ template <
          (specfem::data_access::is_coupled_interface<ContainerType>::value)),
         int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
-                                                ContainerType &container,
-                                                const PointType &point) {
+                                                const ContainerType &container,
+                                                PointType &point) {
 
   static_assert(
       specfem::data_access::CheckCompatibility<IndexType, ContainerType,
                                                PointType>::value,
       "Incompatible types in load_on_host");
 
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING),
-       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
-      CAPTURE((interface_container, container.interface_container)) {
-        if constexpr (PointType::connection_tag == _connection_tag_ &&
-                      PointType::interface_tag == _interface_tag_ &&
-                      PointType::boundary_tag == _boundary_tag_) {
-          _interface_container_.impl_load<true>(index, point);
-          return;
-        }
-      })
+  container
+      .template get_interface_container<PointType::interface_tag,
+                                        PointType::boundary_tag>()
+      .template impl_load<true>(index, point);
 
 #ifndef NDEBUG
   KOKKOS_ABORT_WITH_LOCATION("specfem::assembly::load_on_device(): No "

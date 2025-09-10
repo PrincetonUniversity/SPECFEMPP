@@ -548,6 +548,19 @@ target_link_libraries(
 )
 
 add_executable(
+  compute_coupling_tests
+  compute_coupling/acoustic_elastic.cpp
+  compute_coupling/elastic_acoustic.cpp
+)
+
+target_link_libraries(
+  compute_coupling_tests
+  point
+  gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
   source_class_tests
   source/source.cpp
   source/base_source_tests.cpp
@@ -705,6 +718,7 @@ if(NOT MPI_PARALLEL)
     locate_point_fixture_2d
     locate_point_fixture_3d
     mass_matrix_tests
+    compute_coupling_tests
     mesh_tests
     point_tests
     policies_tests
