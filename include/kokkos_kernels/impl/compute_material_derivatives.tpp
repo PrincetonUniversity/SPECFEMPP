@@ -30,7 +30,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
   const int nelements = elements.extent(0);
 
   // Get the element grid (ngllx, ngllz)
-  const auto element_grid = mesh.get_element();
+  const auto element_grid = mesh.get_element_grid();
 
   if (element_grid != NGLL) {
     throw std::runtime_error(

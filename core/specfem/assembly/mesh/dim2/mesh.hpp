@@ -60,7 +60,7 @@ public:
   void assemble();
 
   specfem::mesh_entity::element<specfem::dimension::type::dim2>
-  get_element() const;
+  get_element_grid() const;
 
   bool adjacency_graph_empty() const {
     return static_cast<const specfem::assembly::mesh_impl::adjacency_graph<

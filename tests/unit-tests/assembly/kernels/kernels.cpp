@@ -32,7 +32,7 @@ set_kernel_value(
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
-      assembly.mesh.get_element());
+      assembly.mesh.get_element_grid());
 
   specfem::execution::for_all(
       "set_to_value", policy,
@@ -63,7 +63,7 @@ check_kernel_value(
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
-      assembly.mesh.get_element());
+      assembly.mesh.get_element_grid());
 
   // Iterate over the elements
   specfem::execution::for_all(
@@ -120,7 +120,7 @@ add_value(const ViewType elements,
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
-      assembly.mesh.get_element());
+      assembly.mesh.get_element_grid());
 
   // Iterate over the elements
   specfem::execution::for_all(
@@ -154,7 +154,7 @@ set_kernel_value(
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultExecutionSpace>(), elements,
-      assembly.mesh.get_element());
+      assembly.mesh.get_element_grid());
 
   // Iterate over the elements
   specfem::execution::for_all(
@@ -192,7 +192,7 @@ check_kernel_value(
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultExecutionSpace>(), elements,
-      assembly.mesh.get_element());
+      assembly.mesh.get_element_grid());
   // Iterate over the elements
   specfem::execution::for_all(
       "check_to_value", policy,
@@ -217,7 +217,7 @@ check_kernel_value(
 
   specfem::execution::ChunkedDomainIterator host_policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(),
-      host_elements, assembly.mesh.get_element());
+      host_elements, assembly.mesh.get_element_grid());
 
   // Iterate over the elements
   specfem::execution::for_all(
@@ -273,7 +273,7 @@ add_value(const ViewType elements,
                                             MediumTag, PropertyTag, using_simd>;
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultExecutionSpace>(), elements,
-      assembly.mesh.get_element());
+      assembly.mesh.get_element_grid());
 
   // Iterate over the elements
   specfem::execution::for_all(

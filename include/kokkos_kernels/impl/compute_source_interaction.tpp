@@ -33,7 +33,7 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
                                              BoundaryTag, WavefieldType);
 
   // Get the element grid (ngllx, ngllz)
-  const auto element_grid = assembly.mesh.get_element();
+  const auto element_grid = assembly.mesh.get_element_grid();
 
   // Check if the number of GLL points in the mesh elements matches the template
   // parameter NGLL
