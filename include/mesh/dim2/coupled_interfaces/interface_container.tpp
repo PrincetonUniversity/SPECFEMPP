@@ -11,8 +11,10 @@ template <specfem::element::medium_tag medium1,
 specfem::mesh::interface_container<
     specfem::dimension::type::dim2, medium1, medium2>::interface_container(const int num_interfaces)
     : num_interfaces(num_interfaces),
-      medium1_index_mapping("medium1_index_mapping", num_interfaces),
-      medium2_index_mapping("medium2_index_mapping", num_interfaces) {
+      medium1_index_mapping("specfem::mesh::interface_container::medium1_index_mapping", num_interfaces),
+      medium2_index_mapping("specfem::mesh::interface_container::medium2_index_mapping", num_interfaces),
+      medium1_edge_type("specfem::mesh::interface_container::medium1_edge_type", num_interfaces),
+      medium2_edge_type("specfem::mesh::interface_container::medium2_edge_type", num_interfaces) {
   return;
 }
 

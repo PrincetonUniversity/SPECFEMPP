@@ -140,9 +140,10 @@ public:
             const typename decltype(iterator)::base_index_type &index) {
           const auto self_index = index.self_index;
           const auto coupled_index = index.coupled_index;
-          Kokkos::atomic_add(&self_view(self_index.ispec, index.ipoint), 1);
-          Kokkos::atomic_add(&coupled_view(coupled_index.ispec, index.ipoint),
+          Kokkos::atomic_add(&self_view(self_index.ispec, self_index.ipoint),
                              1);
+          Kokkos::atomic_add(
+              &coupled_view(coupled_index.ispec, coupled_index.ipoint), 1);
         });
     Kokkos::fence();
   }
