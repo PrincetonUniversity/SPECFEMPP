@@ -1,11 +1,13 @@
 #include "Kokkos_Environment.hpp"
 #include "MPI_environment.hpp"
+#include <boost/graph/filtered_graph.hpp>
 #include <gtest/gtest.h>
 
 #include "algorithms/locate_point.hpp"
 #include "specfem/assembly/nonconforming_interfaces/dim2/compute_intersection.hpp"
 
 #include "nonconforming/interfacial_assembly/interfacial_assembly.hpp"
+#include "specfem/point/coordinates.hpp"
 
 struct interval_unions {
   std::vector<std::pair<type_real, type_real> > intervals;
@@ -96,7 +98,6 @@ void test_intersection_completeness(
   const auto &mesh = assembly.mesh;
 
   const auto &graph = mesh.graph();
-  const auto edge_iter_pair = boost::edges(graph);
 
   auto mortar_quadrature =
       specfem::quadrature::gll::gll(0, 0, interface_config.ngll);
@@ -106,16 +107,15 @@ void test_intersection_completeness(
   std::vector<interval_unions> side1_intervals_top_to_bottom(nelem_side1);
   std::vector<interval_unions> side2_intervals_top_to_bottom(nelem_side2);
 
-  for (auto edge_iter = edge_iter_pair.first;
-       edge_iter != edge_iter_pair.second; ++edge_iter) {
-    const int ispec = mesh.compute_to_mesh(boost::source(*edge_iter, graph));
-    const int jspec = mesh.compute_to_mesh(boost::target(*edge_iter, graph));
+  for (auto edge : boost::make_iterator_range(boost::edges(graph))) {
+    const int ispec = mesh.compute_to_mesh(boost::source(edge, graph));
+    const int jspec = mesh.compute_to_mesh(boost::target(edge, graph));
 
     if (ispec < nelem_side1 && jspec >= nelem_side1) {
       // bottom to top
       auto intersections =
           specfem::assembly::nonconforming_interfaces::compute_intersection(
-              mesh, *edge_iter, mortar_quadrature);
+              mesh, edge, mortar_quadrature);
       // compute min and max of local coord on each side
       type_real lo_side1 = 1.0;
       type_real hi_side1 = -1.0;
@@ -141,7 +141,7 @@ void test_intersection_completeness(
       // top to bottom
       auto intersections =
           specfem::assembly::nonconforming_interfaces::compute_intersection(
-              mesh, *edge_iter, mortar_quadrature);
+              mesh, edge, mortar_quadrature);
       // compute min and max of local coord on each side
       type_real lo_side1 = 1.0;
       type_real hi_side1 = -1.0;
@@ -204,6 +204,84 @@ void test_intersection_completeness(
   }
 }
 
+/**
+ * @brief Test that the intersections computed have pointwise agreement
+ *
+ * This function computes the intersections for all edges between two sides of
+ * a nonconforming interface, and checks if the local coordinates
+ * recovered from compute_intersection on both sides have the same global
+ * coordinate.
+ *
+ * @param interface_config Configuration of the nonconforming interface
+ * @param assembly Assembly object containing the mesh
+ */
+void test_intersection_pointwise_agreement(
+    const specfem::testing::interfacial_assembly_config &interface_config,
+    const specfem::assembly::assembly<specfem::dimension::type::dim2>
+        &assembly) {
+  const type_real eps = 1e-5 * interface_config.interface_length;
+  const int &nelem_side1 = interface_config.nelem_side1;
+  const int &nelem_side2 = interface_config.nelem_side2;
+  const auto &mesh = assembly.mesh;
+  const auto &graph = mesh.graph();
+
+  // Filter out strongly conforming connections
+  auto filter = [&graph](const auto &edge) {
+    return graph[edge].connection == specfem::connections::type::nonconforming;
+  };
+
+  // Create a filtered graph view
+  const auto fg = boost::make_filtered_graph(graph, filter);
+
+  auto mortar_quadrature =
+      specfem::quadrature::gll::gll(0, 0, interface_config.ngll);
+
+  for (auto edge : boost::make_iterator_range(boost::edges(fg))) {
+    const int ispec_assem = boost::source(edge, fg);
+    const int jspec_assem = boost::target(edge, fg);
+    const int ispec = mesh.compute_to_mesh(ispec_assem);
+    const int jspec = mesh.compute_to_mesh(jspec_assem);
+
+    const specfem::mesh_entity::type iorientation = fg[edge].orientation;
+    const auto [edge_inv, exists] = boost::edge(jspec_assem, ispec_assem, fg);
+    if (!exists) {
+      std::ostringstream oss;
+      oss << "Non-symmetric adjacency graph! Edge " << ispec << " -> " << jspec
+          << " exists, but not the other way around.";
+      throw std::runtime_error(oss.str());
+    }
+    const specfem::mesh_entity::type jorientation = fg[edge_inv].orientation;
+
+    auto intersections =
+        specfem::assembly::nonconforming_interfaces::compute_intersection(
+            mesh, edge, mortar_quadrature);
+    // check pointwise agreement
+    for (int i = 0; i < mortar_quadrature.get_N(); ++i) {
+      const auto [a, b] = intersections[i];
+
+      // map to global coordinates and check agreement
+      auto p1 = specfem::algorithms::locate_point_on_edge(a, mesh, ispec,
+                                                          iorientation);
+      auto p2 = specfem::algorithms::locate_point_on_edge(b, mesh, jspec,
+                                                          jorientation);
+      if (specfem::point::distance(p1, p2) > eps) {
+        std::ostringstream oss;
+        oss << "Pointwise agreement failed for edge " << ispec << " ("
+            << specfem::mesh_entity::to_string(iorientation) << ") <-> "
+            << jspec << " (" << specfem::mesh_entity::to_string(jorientation)
+            << ") for quadrature point " << i << ":\n"
+            << " - Point on " << ispec << " @ local coord " << a << ": ("
+            << p1.x << ", " << p1.z << ")\n"
+            << " - Point on " << jspec << " @ local coord " << b << ": ("
+            << p2.x << ", " << p2.z << ")\n"
+            << " - Distance: " << std::scientific
+            << specfem::point::distance(p1, p2) << "\n";
+        throw std::runtime_error(oss.str());
+      }
+    }
+  }
+}
+
 using INTERFACIAL_ASSEMBLY_FIXTURE =
     specfem::testing::INTERFACIAL_ASSEMBLY_FIXTURE;
 
@@ -214,6 +292,26 @@ TEST_F(INTERFACIAL_ASSEMBLY_FIXTURE, IntersectionCompleteness) {
     } catch (const std::exception &e) {
       FAIL() << "--------------------------------------------------\n"
              << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " Test: IntersectionCompleteness\n"
+             << " - Interface: length = " << interface_config.interface_length
+             << ", ngll = " << interface_config.ngll << "\n"
+             << "     side 1: nelem = " << interface_config.nelem_side1 << "\n"
+             << "     side 1: nelem = " << interface_config.nelem_side2 << "\n"
+             << " - Exception thrown: " << e.what() << "\n"
+             << "--------------------------------------------------\n\n"
+             << std::endl;
+    }
+  }
+}
+
+TEST_F(INTERFACIAL_ASSEMBLY_FIXTURE, IntersectionPointwiseAgreement) {
+  for (const auto &[interface_config, assembly] : *this) {
+    try {
+      test_intersection_pointwise_agreement(interface_config, assembly);
+    } catch (const std::exception &e) {
+      FAIL() << "--------------------------------------------------\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " Test: IntersectionPointwiseAgreement\n"
              << " - Interface: length = " << interface_config.interface_length
              << ", ngll = " << interface_config.ngll << "\n"
              << "     side 1: nelem = " << interface_config.nelem_side1 << "\n"
