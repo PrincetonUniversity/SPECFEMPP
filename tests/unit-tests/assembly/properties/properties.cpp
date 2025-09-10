@@ -37,7 +37,7 @@ set_property_value(
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
-      assembly.mesh.get_element_grid());
+      assembly.mesh.element_grid);
 
   specfem::execution::for_all(
       "set_to_value", policy,
@@ -68,7 +68,7 @@ check_property_value(
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
-      assembly.mesh.get_element_grid());
+      assembly.mesh.element_grid);
 
   specfem::execution::for_all(
       "set_to_value", policy,
@@ -124,7 +124,7 @@ check_property_value(
   constexpr auto dimension = specfem::dimension::type::dim2;
 
   const int nspec = assembly.mesh.nspec;
-  const int ngll = assembly.mesh.ngllx;
+  const int ngll = assembly.mesh.element_grid.ngllx;
   const auto &properties = assembly.properties;
 
   using PointType =
@@ -136,7 +136,7 @@ check_property_value(
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultExecutionSpace>(), elements,
-      assembly.mesh.get_element_grid());
+      assembly.mesh.element_grid);
 
   specfem::execution::for_all(
       "set_to_value", policy,
@@ -159,7 +159,7 @@ check_property_value(
       Kokkos::DefaultHostExecutionSpace(), elements);
   specfem::execution::ChunkedDomainIterator host_policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(),
-      host_elements, assembly.mesh.get_element_grid());
+      host_elements, assembly.mesh.element_grid);
 
   specfem::execution::for_all(
       "set_to_value", host_policy,
@@ -208,7 +208,7 @@ void check_compute_to_mesh(
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<false, Kokkos::DefaultHostExecutionSpace>(), elements,
-      assembly.mesh.get_element_grid());
+      assembly.mesh.element_grid);
 
   specfem::execution::for_all(
       "set_to_value", policy,

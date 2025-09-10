@@ -19,23 +19,27 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
     const std::shared_ptr<specfem::io::reader> &property_reader) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures,
                  mesh.adjacency_graph };
-  this->element_types = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
-                          this->mesh, mesh.tags };
+
+  this->element_types = { this->mesh.nspec, this->mesh.element_grid.ngllz,
+                          this->mesh.element_grid.ngllx, this->mesh,
+                          mesh.tags };
   this->jacobian_matrix = { this->mesh };
-  this->properties = {
-    this->mesh.nspec,          this->mesh.ngllz, this->mesh.ngllx,
-    this->element_types,       this->mesh,       mesh.materials,
-    property_reader != nullptr
-  };
-  this->kernels = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
-                    this->element_types };
+  this->properties = { this->mesh.nspec,
+                       this->mesh.element_grid.ngllz,
+                       this->mesh.element_grid.ngllx,
+                       this->element_types,
+                       this->mesh,
+                       mesh.materials,
+                       property_reader != nullptr };
+  this->kernels = { this->mesh.nspec, this->mesh.element_grid.ngllz,
+                    this->mesh.element_grid.ngllx, this->element_types };
   this->sources = {
     sources, this->mesh, this->jacobian_matrix, this->element_types,
     t0,      dt,         max_timesteps
   };
   this->receivers = { this->mesh.nspec,
-                      this->mesh.ngllz,
-                      this->mesh.ngllz,
+                      this->mesh.element_grid.ngllz,
+                      this->mesh.element_grid.ngllz,
                       max_sig_step,
                       dt,
                       t0,
@@ -45,9 +49,12 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
                       this->mesh,
                       mesh.tags,
                       this->element_types };
-  this->boundaries = { this->mesh.nspec, this->mesh.ngllz,
-                       this->mesh.ngllx, mesh,
-                       this->mesh,       this->jacobian_matrix };
+  this->boundaries = { this->mesh.nspec,
+                       this->mesh.element_grid.ngllz,
+                       this->mesh.element_grid.ngllx,
+                       mesh,
+                       this->mesh,
+                       this->jacobian_matrix };
   this->coupled_interfaces = { mesh, this->mesh, this->jacobian_matrix,
                                this->element_types };
   this->fields = { this->mesh, this->element_types, simulation };
@@ -84,7 +91,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
   message << "Assembly information:\n"
           << "------------------------------\n"
           << "Total number of spectral elements : " << this->mesh.nspec << "\n"
-          << "Total number of geometric points : " << this->mesh.ngllz << "\n"
+          << "Total number of geometric points : "
+          << this->mesh.element_grid.ngllz << "\n"
           << "Total number of distinct quadrature points : " << this->mesh.nglob
           << "\n";
 

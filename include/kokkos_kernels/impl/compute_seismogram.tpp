@@ -33,7 +33,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
       assembly.receivers.get_indices_on_device(medium_tag, property_tag);
 
   // Get the element grid (ngllx, ngllz)
-  const auto element_grid = assembly.mesh.get_element_grid();
+  const auto &element_grid = assembly.mesh.element_grid;
 
   // Check if the number of GLL points in the mesh elements matches the template
   // parameter NGLL
