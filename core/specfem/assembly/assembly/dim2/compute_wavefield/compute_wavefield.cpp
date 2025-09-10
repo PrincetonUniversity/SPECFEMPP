@@ -17,7 +17,7 @@ void get_wavefield_on_entire_grid(
                  Kokkos::DefaultExecutionSpace>
         wavefield_on_entire_grid) {
 
-  const auto element_grid = assembly.mesh.get_element();
+  const auto element_grid = assembly.mesh.get_element_grid();
 
   if (element_grid.ngllx == 5 && element_grid.ngllz == 5) {
     impl::helper<MediumTag, PropertyTag, 5> helper(assembly,

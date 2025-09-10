@@ -214,6 +214,6 @@ void specfem::assembly::mesh<
 }
 
 
-specfem::mesh_entity::element<specfem::dimension::type::dim2> specfem::assembly::mesh<specfem::dimension::type::dim2>::get_element() const {
+specfem::mesh_entity::element<specfem::dimension::type::dim2> specfem::assembly::mesh<specfem::dimension::type::dim2>::get_element_grid() const {
   return specfem::mesh_entity::element<specfem::dimension::type::dim2>(this->ngll, this->ngllz, this->ngllx);
 }
