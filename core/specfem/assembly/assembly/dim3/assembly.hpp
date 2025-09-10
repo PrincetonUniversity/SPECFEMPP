@@ -18,16 +18,18 @@
 #include "specfem/source.hpp"
 
 namespace specfem::assembly {
+
 /**
- * @brief Specialization of the assembly class for 2D finite element problems
+ * @brief 3D specialization of the assembly class for finite element problems
  *
  */
-template <> struct assembly<specfem::dimension::type::dim2> {
+template <> struct assembly<specfem::dimension::type::dim3> {
 
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
 
   specfem::assembly::mesh<dimension_tag> mesh; ///< Properties of the assembled
                                                ///< mesh
+
   specfem::assembly::element_types<dimension_tag> element_types; ///< Element
                                                                  ///< tags for
                                                                  ///< every
