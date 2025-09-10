@@ -35,8 +35,17 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   // Get the element grid (ngllx, ngllz)
   const auto element_grid = assembly.mesh.get_element();
 
+  // Check if the number of GLL points in the mesh elements matches the template
+  // parameter NGLL
+  if (element_grid != ngll) {
+    throw std::runtime_error("The number of GLL points in z and x must match "
+                             "the template parameter NGLL.");
+  }
+
+  // Get the number of elements and receivers that match the specified tags
   const int nreceivers = receiver_indices.extent(0);
 
+  // return if there are no receivers with this tag combination
   if (nreceivers == 0)
     return;
 
@@ -49,11 +58,6 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   const auto field =
       assembly.fields
           .template get_simulation_field<wavefield_simulation_field>();
-
-  if (element_grid.ngllz != ngll || element_grid.ngllx != ngll) {
-    throw std::runtime_error("The number of GLL points in z and x must match "
-                             "the template parameter NGLL.");
-  }
 
   constexpr bool using_simd = false;
 

@@ -50,7 +50,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   if (nelements == 0)
     return 0;
 
-  if (element_grid.ngll != NGLL) {
+  // Check if the number of GLL points in the mesh elements matches the template
+  if (element_grid != NGLL) {
     throw std::runtime_error("The number of GLL points in the mesh elements must match "
                              "the template parameter NGLL.");
   }

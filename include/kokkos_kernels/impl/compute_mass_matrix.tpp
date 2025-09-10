@@ -47,6 +47,13 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
   // Get the element grid (ngllx, ngllz)
   const auto element_grid = assembly.mesh.get_element();
 
+  // Check if the number of GLL points in the mesh elements matches the template
+  // parameter NGLL
+  if (element_grid != NGLL) {
+    throw std::runtime_error("The number of GLL points in the mesh elements must match "
+                             "the template parameter NGLL.");
+  }
+
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
 #else
