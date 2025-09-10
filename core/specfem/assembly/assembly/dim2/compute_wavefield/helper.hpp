@@ -28,7 +28,7 @@ public:
              wavefield_on_entire_grid)
       : assembly(assembly), wavefield_on_entire_grid(wavefield_on_entire_grid) {
     const auto element_grid = assembly.mesh.get_element_grid();
-    if (element_grid.ngllz != ngll || element_grid.ngllx != ngll) {
+    if (element_grid != ngll) {
       throw std::runtime_error("Number of quadrature points not supported");
     }
   }
