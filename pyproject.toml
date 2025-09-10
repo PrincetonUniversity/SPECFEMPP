@@ -20,7 +20,8 @@ package = false
 [dependency-groups]
 all = [
   {include-group = "dev"},
-  {include-group = "examples"}
+  {include-group = "examples"},
+  {include-group = "scripts"}
 ]
 
 dev = [
@@ -59,6 +60,12 @@ examples = [
   "numpy==2.2.4",
   "scipy==1.15.2",
   "h5py==3.13.0",
+]
+
+scripts = [
+  "gmsh==4.14.0",
+  "matplotlib==3.10.3",
+  "rtree==1.4.1",
 ]
 
 [tool.scikit-build]
