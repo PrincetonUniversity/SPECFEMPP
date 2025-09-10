@@ -138,7 +138,6 @@ template <specfem::dimension::type Dimension> struct element;
 template <> struct element<specfem::dimension::type::dim2> {
 
 public:
-  int ngll;   ///< Number of Gauss-Lobatto-Legendre points in the element
   int ngllz;  ///< Number of Gauss-Lobatto-Legendre points in the z-direction
   int ngllx;  ///< Number of Gauss-Lobatto-Legendre points in the x-direction
   int orderz; ///< Polynomial order of the element
