@@ -1,5 +1,9 @@
 #pragma once
 
+#include "enumerations/interface.hpp"
+#include "specfem/data_access.hpp"
+#include <Kokkos_Core.hpp>
+#include <type_traits>
 namespace specfem::medium::impl {
 
 template <typename CoupledInterfaceType, typename CoupledFieldType,
