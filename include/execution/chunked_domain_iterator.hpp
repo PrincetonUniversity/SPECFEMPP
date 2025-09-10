@@ -124,7 +124,14 @@ private:
  */
 template <specfem::dimension::type DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
-class ChunkElementIterator
+class ChunkElementIterator;
+
+/**
+ * @brief 2D specialization of ChunkElementIterator
+ */
+template <typename SIMD, typename ViewType, typename TeamMemberType>
+class ChunkElementIterator<specfem::dimension::type::dim2, SIMD, ViewType,
+                           TeamMemberType>
     : public TeamThreadRangePolicy<TeamMemberType,
                                    typename ViewType::value_type> {
 private:
@@ -132,6 +139,7 @@ private:
       TeamThreadRangePolicy<TeamMemberType, typename ViewType::value_type>;
   constexpr static auto simd_size = SIMD::size();
   constexpr static auto using_simd = SIMD::using_simd;
+  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
 
 public:
   using base_policy_type =
@@ -141,7 +149,7 @@ public:
       typename base_type::policy_index_type; /// Policy index type. Must be
                                              ///< convertible to integral type.
   using index_type =
-      PointIndex<DimensionTag, policy_index_type, using_simd,
+      PointIndex<dimension_tag, policy_index_type, using_simd,
                  typename base_type::
                      execution_space>; ///< Underlying index type. This index
                                        ///< will be passed to the closure when
@@ -167,12 +175,12 @@ public:
                             : simd_size;
     int ispec = indices(ielement);
     int xz = i / num_elements;
-    const int iz = xz / ngllz;
-    const int ix = xz % ngllz;
+    const int iz = xz / element_grid.ngllz;
+    const int ix = xz % element_grid.ngllz;
 #else
-    const int ngll_total = ngllz * ngllx;
-    const int ix = i % ngllx;
-    const int iz = (i / ngllx) % ngllz;
+    const int ngll_total = element_grid.ngllz * element_grid.ngllx;
+    const int ix = i % element_grid.ngllx;
+    const int iz = (i / element_grid.ngllx) % element_grid.ngllz;
     const int ielement = i / ngll_total;
     int simd_elements = (simd_size + ielement > indices.extent(0))
                             ? indices.extent(0) - ielement
@@ -189,12 +197,12 @@ public:
     int ielement = i % num_elements;
     int ispec = indices(ielement);
     int xz = i / num_elements;
-    const int iz = xz / ngllz;
-    const int ix = xz % ngllz;
+    const int iz = xz / element_grid.ngllz;
+    const int ix = xz % element_grid.ngllz;
 #else
-    const int ix = i % ngllx;
-    const int iz = (i / ngllx) % ngllz;
-    const int ielement = i / (ngllz * ngllx);
+    const int ix = i % element_grid.ngllx;
+    const int iz = (i / element_grid.ngllx) % element_grid.ngllz;
+    const int ielement = i / (element_grid.ngllz * element_grid.ngllx);
     int ispec = indices(ielement);
 #endif
     return index_type(ispec, iz, ix, ielement);
@@ -210,8 +218,8 @@ public:
    */
   KOKKOS_INLINE_FUNCTION ChunkElementIterator(
       const TeamMemberType &team, const ViewType indices,
-      const specfem::mesh_entity::element<DimensionTag> &element_grid)
-      : indices(indices), ngllz(element_grid.ngllz), ngllx(element_grid.ngllx),
+      const specfem::mesh_entity::element<dimension_tag> &element_grid)
+      : indices(indices), element_grid(element_grid),
         num_elements((indices.extent(0) / simd_size) +
                      ((indices.extent(0) % simd_size) != 0)),
         base_type(team, (((indices.extent(0) / simd_size) +
@@ -221,8 +229,8 @@ public:
 private:
   ViewType indices; ///< View of indices of elements within this chunk
   int num_elements; ///< Number of elements in the chunk, adjusted for SIMD
-  int ngllz;        ///< Number of GLL points in the z-direction
-  int ngllx;        ///< Number of GLL points in the x-direction
+  specfem::mesh_entity::element<dimension_tag> element_grid; ///< Element grid
+                                                             ///< information
 };
 
 /**
