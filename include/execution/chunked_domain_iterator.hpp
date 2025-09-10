@@ -33,7 +33,17 @@ namespace execution {
  */
 template <specfem::dimension::type DimensionTag, typename KokkosIndexType,
           bool UseSIMD, typename ExecutionSpace>
-class PointIndex {
+class PointIndex;
+
+/**
+ * @brief 2D specialization of PointIndex
+ */
+template <typename KokkosIndexType, bool UseSIMD, typename ExecutionSpace>
+class PointIndex<specfem::dimension::type::dim2, KokkosIndexType, UseSIMD,
+                 ExecutionSpace> {
+private:
+  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+
 public:
   using iterator_type =
       VoidIterator<ExecutionSpace>; ///< Iterator type used to iterate over
@@ -59,7 +69,7 @@ public:
    * that defines the GLL point.
    */
   KOKKOS_INLINE_FUNCTION
-  constexpr const specfem::point::index<DimensionTag, UseSIMD>
+  constexpr const specfem::point::index<dimension_tag, UseSIMD>
   get_index() const {
     return this->index; ///< Returns the point index
   }
@@ -107,9 +117,9 @@ public:
   }
 
 private:
-  specfem::point::index<DimensionTag, UseSIMD> index; ///< Index of the GLL
-                                                      ///< point
-  KokkosIndexType kokkos_index;                       ///< Kokkos index type
+  specfem::point::index<dimension_tag, UseSIMD> index; ///< Index of the GLL
+                                                       ///< point
+  KokkosIndexType kokkos_index;                        ///< Kokkos index type
 };
 
 /**
