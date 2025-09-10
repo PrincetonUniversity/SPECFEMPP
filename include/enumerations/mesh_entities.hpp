@@ -125,9 +125,23 @@ std::list<type> edges_of_corner(const type &corner);
  */
 std::list<type> corners_of_edge(const type &edge);
 
+/**
+ * @brief Mesh element structure for a specific dimension
+ *
+ * @tparam Dimension The dimension type (e.g., dim2, dim3)
+ */
 template <specfem::dimension::type Dimension> struct element;
 
+/**
+ * @brief Mesh element structure for 2D elements (Specialization)
+ */
 template <> struct element<specfem::dimension::type::dim2> {
+
+public:
+  int ngllz;  ///< Number of Gauss-Lobatto-Legendre points in the z-direction
+  int ngllx;  ///< Number of Gauss-Lobatto-Legendre points in the x-direction
+  int orderz; ///< Polynomial order of the element
+  int orderx; ///< Polynomial order of the element
 
   /**
    * @brief Default constructor for the element struct
@@ -141,18 +155,21 @@ template <> struct element<specfem::dimension::type::dim2> {
    * @param ngll The number of Gauss-Lobatto-Legendre points
    */
   element(const int ngll)
-      : ngll(ngll), ngllz(ngll), ngllx(ngll), order(ngll - 1) {};
+      : ngllz(ngll), ngllx(ngll), orderz(ngll - 1), orderx(ngll - 1) {};
 
   /**
    * @brief Constructs an element entity given the number of
-   * Gauss-Lobatto-Legendre points
+   * Gauss-Lobatto-Legendre points in each dimension
    *
    * @param ngll The number of Gauss-Lobatto-Legendre points
-   * @param ngllz The number of Gauss-Lobatto-Legendre points in the z-direction
-   * @param ngllx The number of Gauss-Lobatto-Legendre points in the x-direction
    */
-  element(const int ngll, const int ngllz, const int ngllx)
-      : ngll(ngll), ngllz(ngllz), ngllx(ngllx), order(ngll - 1) {};
+  element(const int ngllz, const int ngllx)
+      : ngllz(ngllz), ngllx(ngllx), orderz(ngllz - 1), orderx(ngllx - 1) {
+    if (ngllz != ngllx) {
+      throw std::invalid_argument(
+          "Different number of GLL points for Z and X are not supported.");
+    }
+  };
 
   /**
    * @brief Checks if the element is consistent across dimensions against a
@@ -163,8 +180,7 @@ template <> struct element<specfem::dimension::type::dim2> {
    * @return false If any dimension does not match
    */
   bool operator==(const int ngll_in) const {
-    return ngll_in == this->ngll && ngll_in == this->ngllz &&
-           ngll_in == this->ngllx;
+    return ngll_in == this->ngllz && ngll_in == this->ngllx;
   }
 
   /**
@@ -177,12 +193,6 @@ template <> struct element<specfem::dimension::type::dim2> {
    *
    */
   bool operator!=(const int ngll_in) const { return !(*this == ngll_in); }
-
-public:
-  int order; ///< Polynomial order of the element
-  int ngll;  ///< Number of Gauss-Lobatto-Legendre points in the element
-  int ngllz; ///< Number of Gauss-Lobatto-Legendre points in the z-direction
-  int ngllx; ///< Number of Gauss-Lobatto-Legendre points in the x-direction
 };
 
 template <> struct element<specfem::dimension::type::dim3> {

@@ -27,7 +27,7 @@ public:
                       Kokkos::DefaultExecutionSpace>
              wavefield_on_entire_grid)
       : assembly(assembly), wavefield_on_entire_grid(wavefield_on_entire_grid) {
-    const auto element_grid = assembly.mesh.get_element_grid();
+    const auto &element_grid = assembly.mesh.element_grid;
     if (element_grid != ngll) {
       throw std::runtime_error("Number of quadrature points not supported");
     }
@@ -37,7 +37,7 @@ public:
     const auto buffer = assembly.fields.buffer;
 
     // Get the element grid (ngllx, ngllz)
-    const auto element_grid = assembly.mesh.get_element_grid();
+    const auto &element_grid = assembly.mesh.element_grid;
 
     const auto elements =
         assembly.element_types.get_elements_on_device(medium_tag, property_tag);

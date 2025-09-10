@@ -19,8 +19,8 @@ specfem::assembly::boundary_values_impl::boundary_medium_container<
 
   int nelements = 0;
   const int nspec = mesh.nspec;
-  const int nz = mesh.ngllz;
-  const int nx = mesh.ngllx;
+  const int nz = mesh.element_grid.ngllz;
+  const int nx = mesh.element_grid.ngllx;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     if (element_types.get_medium_tag(ispec) == MediumTag &&
