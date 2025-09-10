@@ -143,6 +143,21 @@ template <> struct element<specfem::dimension::type::dim2> {
   element(const int ngll, const int ngllz, const int ngllx)
       : ngll(ngll), ngllz(ngllz), ngllx(ngllx), order(ngll - 1) {};
 
+  /**
+   * @brief Checks if the element is consistent across dimensions against a
+   *        specific number of GLL points.
+   *
+   * @param ngll_in The number of Gauss-Lobatto-Legendre points
+   * @return true If all dimensions match the specified number of GLL points
+   * @return false If the element is not valid
+   */
+  bool operator==(const int ngll_in) const {
+    return ngll_in == this->ngll && ngll_in == this->ngllz &&
+           ngll_in == this->ngllx;
+  }
+
+  bool operator!=(const int ngll_in) const { return !(*this == ngll_in); }
+
 public:
   int order; ///< Polynomial order of the element
   int ngll;  ///< Number of Gauss-Lobatto-Legendre points in the element

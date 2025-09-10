@@ -32,6 +32,12 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
   // Get the element grid (ngllx, ngllz)
   const auto element_grid = mesh.get_element();
 
+  if (element_grid != NGLL) {
+    throw std::runtime_error(
+        "The number of GLL points in z and x must match the template parameter "
+        "NGLL.");
+  }
+
   if (nelements == 0) {
     return;
   }
@@ -42,11 +48,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
   constexpr bool using_simd = true;
 #endif
 
-  if (element_grid.ngllz != NGLL || element_grid.ngllx != NGLL) {
-    throw std::runtime_error(
-        "The number of GLL points in z and x must match the template parameter "
-        "NGLL.");
-  }
+
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using ParallelConfig = specfem::parallel_config::default_chunk_config<

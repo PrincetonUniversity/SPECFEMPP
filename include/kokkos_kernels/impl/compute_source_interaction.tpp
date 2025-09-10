@@ -35,6 +35,13 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
   // Get the element grid (ngllx, ngllz)
   const auto element_grid = assembly.mesh.get_element();
 
+  // Check if the number of GLL points in the mesh elements matches the template
+  // parameter NGLL
+  if (element_grid != NGLL) {
+    throw std::runtime_error("The number of GLL points in the mesh elements must match "
+                             "the template parameter NGLL.");
+  }
+
   auto &sources = assembly.sources;
 
   const int nsources = source_indices.extent(0);
