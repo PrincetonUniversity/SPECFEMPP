@@ -19,11 +19,11 @@ void get_wavefield_on_entire_grid(
 
   const auto element_grid = assembly.mesh.get_element_grid();
 
-  if (element_grid.ngllx == 5 && element_grid.ngllz == 5) {
+  if (element_grid == 5) {
     impl::helper<MediumTag, PropertyTag, 5> helper(assembly,
                                                    wavefield_on_entire_grid);
     helper(component);
-  } else if (element_grid.ngllx == 8 && element_grid.ngllz == 8) {
+  } else if (element_grid == 8) {
     impl::helper<MediumTag, PropertyTag, 8> helper(assembly,
                                                    wavefield_on_entire_grid);
     helper(component);
