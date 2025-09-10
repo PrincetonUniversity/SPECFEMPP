@@ -173,8 +173,11 @@ private:
 using IOTypes = ::testing::Types<
     specfem::io::ASCII<specfem::io::write>,
     specfem::io::ASCII<specfem::io::read>, specfem::io::NPY<specfem::io::write>,
-    specfem::io::NPY<specfem::io::read>, specfem::io::NPZ<specfem::io::write>,
-    specfem::io::NPZ<specfem::io::read>
+    specfem::io::NPY<specfem::io::read>
+#ifndef NO_NPZ
+    ,
+    specfem::io::NPZ<specfem::io::write>, specfem::io::NPZ<specfem::io::read>
+#endif
 #ifndef NO_HDF5
     ,
     specfem::io::HDF5<specfem::io::write>, specfem::io::HDF5<specfem::io::read>

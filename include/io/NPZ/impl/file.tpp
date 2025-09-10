@@ -2,6 +2,7 @@
 
 #include "file.hpp"
 
+#ifndef NO_NPZ
 template <typename value_type>
 void specfem::io::impl::NPZ::File<specfem::io::write>::write(
     const value_type *data, const std::vector<size_t> &dims,
@@ -172,3 +173,4 @@ void specfem::io::impl::NPZ::File<specfem::io::read>::read(
     }
   }
 }
+#endif
