@@ -4,16 +4,16 @@ from scipy.interpolate import griddata
 
 
 # Load the kernels
-def load_data(directory):
-    X = np.load(directory + "/elastic_psv_isotropic/X.npy")
-    Z = np.load(directory + "/elastic_psv_isotropic/Z.npy")
+def load_data(kernel_file):
+    X = np.load(kernel_file + "/elastic_psv_isotropic/X.npy")
+    Z = np.load(kernel_file + "/elastic_psv_isotropic/Z.npy")
 
-    rho = np.load(directory + "/elastic_psv_isotropic/rho.npy")
-    mu = np.load(directory + "/elastic_psv_isotropic/mu.npy")
-    kappa = np.load(directory + "/elastic_psv_isotropic/kappa.npy")
-    rhop = np.load(directory + "/elastic_psv_isotropic/rhop.npy")
-    alpha = np.load(directory + "/elastic_psv_isotropic/alpha.npy")
-    beta = np.load(directory + "/elastic_psv_isotropic/beta.npy")
+    rho = np.load(kernel_file + "/elastic_psv_isotropic/rho.npy")
+    mu = np.load(kernel_file + "/elastic_psv_isotropic/mu.npy")
+    kappa = np.load(kernel_file + "/elastic_psv_isotropic/kappa.npy")
+    rhop = np.load(kernel_file + "/elastic_psv_isotropic/rhop.npy")
+    alpha = np.load(kernel_file + "/elastic_psv_isotropic/alpha.npy")
+    beta = np.load(kernel_file + "/elastic_psv_isotropic/beta.npy")
 
     return X, Z, rho, kappa, mu, rhop, alpha, beta
 
