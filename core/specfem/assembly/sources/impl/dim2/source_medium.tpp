@@ -21,7 +21,7 @@ void print_view_info(const ViewType& view, const std::string& name) {
 
 // 2D Constructor
 /*
-// CPP20_CHANGE
+// TODO(Lucas : CPP20 update)
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename... Args>
 requires (DimensionTag == specfem::dimension::type::dim2)
@@ -73,7 +73,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
 
 // 2D load_on_device
 /*
-// CPP20_CHANGE
+// TODO(Lucas : CPP20 update)
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
 requires (DimensionTag == specfem::dimension::type::dim2)
@@ -97,7 +97,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::load_on
 
 // 2D store_on_device
 /*
-// CPP20_CHANGE
+// TODO(Lucas : CPP20 update)
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
 requires (DimensionTag == specfem::dimension::type::dim2)
@@ -121,7 +121,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::store_o
 
 // 2D load_on_host
 /*
-// CPP20_CHANGE
+// TODO(Lucas : CPP20 update)
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
 requires (DimensionTag == specfem::dimension::type::dim2)
@@ -145,7 +145,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::load_on
 
 // 2D store_on_host
 /*
-// CPP20_CHANGE
+// TODO(Lucas : CPP20 update)
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
 requires (DimensionTag == specfem::dimension::type::dim2)

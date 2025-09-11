@@ -77,28 +77,9 @@ def _concat_intersections(intersectlo, intersecthi, delta):
     return intersectlo + intersecthi
 
 
-def find_bbox(edge, t0, t1, compute_extrema: bool = True):
-    # quadratics have 1 possible interior extreme value. should we ignore it?
-    if compute_extrema:
-        bd_params = np.clip(
-            np.einsum("k,kd->d", maxfind_coefs_b, edge)
-            / np.einsum("k,kd->d", maxfind_coefs_a, edge),
-            t0,
-            t1,
-        )
-        candidates = np.array([[t0, t1, bd_params[0]], [t0, t1, bd_params[1]]])
-    else:
-        candidates = np.array([[t0, t1], [t0, t1]])
-    extrema = np.einsum("ji,dki,jd->dk", L, candidates[..., None] ** np.arange(3), edge)
-    xmin, ymin = np.min(extrema, axis=1)
-    xmax, ymax = np.max(extrema, axis=1)
-
-    return xmin, ymin, xmax, ymax
-
-
 def _find_intersection(
-    edge1: np.ndarray,
-    edge2: np.ndarray,
+    edgepoly1: np.ndarray,
+    edgepoly2: np.ndarray,
     param1lo: float,
     param1hi: float,
     param2lo: float,
@@ -131,37 +112,26 @@ def _find_intersection(
     The argument delta specifies a parameter-space distance for which an interval
     is ignored. If sk - sk-1 < delta, then both points
     are removed.
-
-
-    Args:
-        edge1 (np.ndarray): _description_
-        edge2 (np.ndarray): _description_
-        param1lo (float): _description_
-        param1hi (float): _description_
-        param2lo (float): _description_
-        param2hi (float): _description_
-        eps1 (float): _description_
-        eps2 (float): _description_
-        delta (float): _description_
     """
     if param1hi - param1lo < delta:
         # if we can find a point on edge1 close enough to a point on edge2,
         # we can mark the entire segment
-        midpoint1 = np.einsum(
-            "ji,i,jd->d", L, ((param1lo + param1hi) / 2) ** np.arange(3), edge1
-        )
-        midpoint2 = np.einsum(
-            "ji,i,jd->d", L, ((param2lo + param2hi) / 2) ** np.arange(3), edge2
-        )
+        midpoint1 = (((param1lo + param1hi) / 2) ** np.arange(3)) @ edgepoly1
+        midpoint2 = (((param2lo + param2hi) / 2) ** np.arange(3)) @ edgepoly2
         if np.sum((midpoint1 - midpoint2) ** 2) < eps2:
             return [param1lo, param1hi]
 
-    xmin1, ymin1, xmax1, ymax1 = find_bbox(
-        edge1, param1lo, param1hi, compute_extrema=False
-    )
-    xmin2, ymin2, xmax2, ymax2 = find_bbox(
-        edge2, param2lo, param2hi, compute_extrema=False
-    )
+    # compute edge 1
+    pt1lo = (param1lo ** np.arange(3)) @ edgepoly1
+    pt1hi = (param1hi ** np.arange(3)) @ edgepoly1
+    xmin1, ymin1 = np.minimum(pt1lo, pt1hi)
+    xmax1, ymax1 = np.maximum(pt1lo, pt1hi)
+
+    # compute edge 2
+    pt2lo = (param2lo ** np.arange(3)) @ edgepoly2
+    pt2hi = (param2hi ** np.arange(3)) @ edgepoly2
+    xmin2, ymin2 = np.minimum(pt2lo, pt2hi)
+    xmax2, ymax2 = np.maximum(pt2lo, pt2hi)
 
     # min separations
     xsep12 = xmin1 - xmax2
@@ -196,8 +166,8 @@ def _find_intersection(
         # element 1 is larger
         param1mid = (param1hi + param1lo) / 2
         intersectlo = _find_intersection(
-            edge1,
-            edge2,
+            edgepoly1,
+            edgepoly2,
             param1lo,
             param1mid,
             param2lo,
@@ -210,8 +180,8 @@ def _find_intersection(
         if isinstance(intersectlo, bool):
             return intersectlo
         intersecthi = _find_intersection(
-            edge1,
-            edge2,
+            edgepoly1,
+            edgepoly2,
             param1mid,
             param1hi,
             param2lo,
@@ -232,8 +202,8 @@ def _find_intersection(
     # element 2 is larger
     param2mid = (param2hi + param2lo) / 2
     intersectlo = _find_intersection(
-        edge1,
-        edge2,
+        edgepoly1,
+        edgepoly2,
         param1lo,
         param1hi,
         param2lo,
@@ -246,8 +216,8 @@ def _find_intersection(
     if isinstance(intersectlo, bool):
         return intersectlo
     intersecthi = _find_intersection(
-        edge1,
-        edge2,
+        edgepoly1,
+        edgepoly2,
         param1lo,
         param1hi,
         param2mid,
@@ -346,6 +316,8 @@ def quadratic_beziers_intersect(
                 nan=-1,
             ),
         ]
+    edgepoly1 = np.einsum("ji,jd->id", L, edge1)
+    edgepoly2 = np.einsum("ji,jd->id", L, edge2)
 
     extrema_points_1.sort()
     extrema_points_2.sort()
@@ -357,8 +329,8 @@ def quadratic_beziers_intersect(
         tmp_intersects = []
         for isubdiv2 in range(3):
             segment_intersects = _find_intersection(
-                edge1,
-                edge2,
+                edgepoly1,
+                edgepoly2,
                 param1lo,
                 param1hi,
                 extrema_points_2[isubdiv2],
