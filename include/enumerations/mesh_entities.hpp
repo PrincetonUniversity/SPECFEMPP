@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <list>
+#include <string>
 
 /**
  * @namespace specfem::mesh_entity
@@ -42,6 +43,12 @@ enum class type : int {
   top_right = 7,    ///< Top-right corner of the element
   top_left = 8      ///< Top-left corner of the element
 };
+
+/**
+ * @brief Recovers a human-readable string for a given mesh entity.
+ *
+ */
+const std::string to_string(const specfem::mesh_entity::type &entity);
 
 /**
  * @brief List of all edge types in a quadrilateral element

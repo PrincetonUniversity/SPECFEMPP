@@ -145,6 +145,7 @@ subroutine read_parameter_file(imesher,BROADCAST_AFTER_READ)
          call bcast_all_string(acoustic_forcing_surface_file)
          call bcast_all_string(absorbing_cpml_file)
          call bcast_all_string(tangential_detection_curve_file)
+         call bcast_all_string(nonconforming_adjacencies_file)
       else
          call bcast_all_string(interfaces_filename)
          call bcast_all_singledp(xmin_param)
@@ -194,6 +195,8 @@ subroutine read_parameter_file_init()
    acoustic_forcing_surface_file = ''
    absorbing_cpml_file = ''
    tangential_detection_curve_file = ''
+   nonconforming_adjacencies_file = ''
+   should_read_nonconforming_adjacencies_file = .false.
 
    ! internal meshing
    interfaces_filename = ''
@@ -458,6 +461,13 @@ subroutine read_parameter_file_only()
          some_parameters_missing_from_Par_file = .true.
          write(*,'(a)') 'tangential_detection_curve_file = ./DATA/courbe_eros_nodes'
          write(*,*)
+      endif
+
+      call read_value_string_p(nonconforming_adjacencies_file, 'nonconforming_adjacencies_file')
+      if (err_occurred() /= 0) then
+         should_read_nonconforming_adjacencies_file = .false.
+      else
+         should_read_nonconforming_adjacencies_file = .true.
       endif
 
    else

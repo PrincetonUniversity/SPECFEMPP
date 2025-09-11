@@ -742,7 +742,6 @@ if(NOT MPI_PARALLEL)
     io
     mesh
     policies
-    mortar
   )
 
   foreach(dir_name IN LISTS LINK_DIRS)
