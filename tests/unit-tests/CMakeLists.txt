@@ -518,14 +518,14 @@ target_link_libraries(
 
 add_executable(
   mass_matrix_tests
-  mass_matrix/main.cpp
+  medium/mass_matrix/main.cpp
   # 2D mass matrix tests
-  mass_matrix/dim2/elastic_isotropic.cpp
-  mass_matrix/dim2/elastic_anisotropic.cpp
-  mass_matrix/dim2/acoustic.cpp
-  mass_matrix/dim2/poroelastic.cpp
+  medium/mass_matrix/dim2/elastic_isotropic.cpp
+  medium/mass_matrix/dim2/elastic_anisotropic.cpp
+  medium/mass_matrix/dim2/acoustic.cpp
+  medium/mass_matrix/dim2/poroelastic.cpp
   # 3D mass matrix tests
-  mass_matrix/dim3/elastic_isotropic.cpp
+  medium/mass_matrix/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
@@ -536,19 +536,38 @@ target_link_libraries(
 
 add_executable(
   stress_tests
-  stress/main.cpp
+  medium/stress/main.cpp
   # 2D stress tests
-  stress/dim2/acoustic.cpp
-  stress/dim2/elastic_isotropic.cpp
-  stress/dim2/elastic_anisotropic.cpp
-  stress/dim2/elastic_isotropic_cosserat.cpp
-  stress/dim2/poroelastic_isotropic.cpp
+  medium/stress/dim2/acoustic.cpp
+  medium/stress/dim2/elastic_isotropic.cpp
+  medium/stress/dim2/elastic_anisotropic.cpp
+  medium/stress/dim2/elastic_isotropic_cosserat.cpp
+  medium/stress/dim2/poroelastic_isotropic.cpp
   # 3D stress tests
-  stress/dim3/elastic_isotropic.cpp
+  medium/stress/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
   stress_tests
+  point
+  gtest_main
+)
+
+add_executable(
+  source_tests
+  medium/source/main.cpp
+  # 2D source tests
+  medium/source/dim2/acoustic.cpp
+  medium/source/dim2/elastic_isotropic.cpp
+  medium/source/dim2/elastic_anisotropic.cpp
+  medium/source/dim2/elastic_isotropic_cosserat.cpp
+  medium/source/dim2/poroelastic.cpp
+  # 3D source tests
+  medium/source/dim3/elastic_isotropic.cpp
+)
+
+target_link_libraries(
+  source_tests
   point
   gtest_main
 )
@@ -718,6 +737,7 @@ if(NOT MPI_PARALLEL)
     receivers_tests
     simd_tests
     source_class_tests
+    source_tests
     stress_tests
     test_mesh_utilities_mapping_2d
     test_mesh_utilities_mapping_3d

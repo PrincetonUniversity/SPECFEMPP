@@ -46,22 +46,23 @@ specfem::sources::force<specfem::dimension::type::dim2>::get_force_vector()
   // Elastic P-SV
   else if (medium_tag == specfem::element::medium_tag::elastic_psv) {
     force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 2);
+    // angle measured clockwise vertical direction
     force_vector(0) = std::sin(angle_in_rad);
-    force_vector(1) = static_cast<type_real>(-1.0) * std::cos(angle_in_rad);
+    force_vector(1) = std::cos(angle_in_rad);
   }
   // Poroelastic
   else if (medium_tag == specfem::element::medium_tag::poroelastic) {
     force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 4);
     force_vector(0) = std::sin(angle_in_rad);
-    force_vector(1) = static_cast<type_real>(-1.0) * std::cos(angle_in_rad);
+    force_vector(1) = std::cos(angle_in_rad);
     force_vector(2) = std::sin(angle_in_rad);
-    force_vector(3) = static_cast<type_real>(-1.0) * std::cos(angle_in_rad);
+    force_vector(3) = std::cos(angle_in_rad);
   }
   // Elastic P-SV-T
   else if (medium_tag == specfem::element::medium_tag::elastic_psv_t) {
     force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 3);
     force_vector(0) = std::sin(angle_in_rad);
-    force_vector(1) = static_cast<type_real>(-1.0) * std::cos(angle_in_rad);
+    force_vector(1) = std::cos(angle_in_rad);
     force_vector(2) = static_cast<type_real>(0.0);
   } else {
     KOKKOS_ABORT_WITH_LOCATION("Force source array computation not "

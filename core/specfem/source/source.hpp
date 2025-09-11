@@ -14,6 +14,56 @@
 
 namespace specfem::sources {
 
+/**
+ * @brief Base class for all source types
+ *
+ * It is a container for source time functions, coordinates, and the medium
+ * that the source is located in. This class provides the fundamental interface
+ * common to all sources in SPECFEM++ simulations.
+ *
+ * @tparam DimensionTag The dimension specification (dim2 or dim3)
+ *
+ * @par Sources that inherit from this class:
+ * - @ref specfem::sources::vector_source
+ * - @ref specfem::sources::tensor_source
+ *
+ * @par Common Usage Pattern
+ * @code
+ * // All sources require a source time function
+ * auto stf = std::make_unique<specfem::forcing_function::Ricker>(
+ *     10.0,  // dominant frequency (Hz)
+ *     0.01,  // time factor
+ *     1.0,   // amplitude
+ *     0.0,   // time shift
+ *     1.0,   // normalization factor
+ *     false  // do not reverse
+ * );
+ *
+ * // Create any source (example with 2D force source)
+ * auto source = specfem::sources::force<specfem::dimension::type::dim2>(
+ *     5.0, 10.0,  // coordinates (x, z)
+ *     0.0,        // angle
+ *     std::move(stf),
+ *     specfem::wavefield::simulation_field::forward
+ * );
+ *
+ * // Common operations available for all sources:
+ * source.set_medium_tag(specfem::element::medium_tag::elastic_psv);
+ *
+ * // Access coordinates
+ * auto coords = source.get_global_coordinates();
+ *
+ * // Access timing information
+ * type_real t0 = source.get_t0();
+ * type_real tshift = source.get_tshift();
+ *
+ * // Update timing
+ * source.update_tshift(1.5);
+ *
+ * // Check medium compatibility
+ * auto supported_media = source.get_supported_media();
+ * @endcode
+ */
 template <specfem::dimension::type DimensionTag> class source {
 
 public:
@@ -24,13 +74,16 @@ public:
    */
   source() {};
 
+  /** @name 2D Constructors
+   * @{
+   */
+
   /**
-   * @brief Construct a new source object using the forcing function
+   * @brief Construct a new 2D source object using the forcing function
    *
    * @param x x-coordinate of source
    * @param z z-coordinate of source
    * @param forcing_function pointer to source time function
-   * @param wavefield_type type of wavefield
    */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim2>::type
@@ -41,30 +94,42 @@ public:
         forcing_function(std::move(forcing_function)){};
 
   /**
-   * @brief Construct a new source object from a YAML node and time steps
+   * @brief Construct a new 2D source object from a YAML node and time steps
    *
-   * @param Node
-   * @param nsteps
-   * @param dt
+   * @param Node YAML node containing source configuration
+   * @param nsteps number of time steps
+   * @param dt time step size
    */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim2>::type
                 * = nullptr>
   source(YAML::Node &Node, const int nsteps, const type_real dt);
 
+  /** @} */
+
+  /** @name 3D Constructors
+   * @{
+   */
+
+  /**
+   * @brief Construct a new 3D source object from a YAML node and time steps
+   *
+   * @param Node YAML node containing source configuration
+   * @param nsteps number of time steps
+   * @param dt time step size
+   */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim3>::type
                 * = nullptr>
   source(YAML::Node &Node, const int nsteps, const type_real dt);
 
   /**
-   * @brief Construct a new source object using the forcing function
+   * @brief Construct a new 3D source object using the forcing function
    *
    * @param x x-coordinate of source
    * @param y y-coordinate of source
    * @param z z-coordinate of source
    * @param forcing_function pointer to source time function
-   * @param wavefield_type type of wavefield
    */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim3>::type
@@ -73,6 +138,8 @@ public:
          std::unique_ptr<specfem::forcing_function::stf> forcing_function)
       : global_coordinates(x, y, z),
         forcing_function(std::move(forcing_function)){};
+
+  /** @} */
 
   /**
    * @brief Get the value of t0 from the specfem::stf::stf object

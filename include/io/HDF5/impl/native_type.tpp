@@ -1,5 +1,4 @@
-#ifndef SPECFEM_IO_HDF5_IMPL_NATIVE_TYPE_TPP
-#define SPECFEM_IO_HDF5_IMPL_NATIVE_TYPE_TPP
+#pragma once
 
 #ifndef NO_HDF5
 #include "H5Cpp.h"
@@ -112,6 +111,13 @@ template <> struct specfem::io::impl::HDF5::native_type<bool> {
     return type;
   }
 };
-#endif
+
+template <> struct specfem::io::impl::HDF5::native_type<std::string> {
+  static H5::StrType& type() {
+    static H5::StrType type(H5::PredType::C_S1, H5T_VARIABLE);
+    type.setOrder(H5T_ORDER_LE);
+    return type;
+  }
+};
 
 #endif
