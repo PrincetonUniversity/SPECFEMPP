@@ -28,13 +28,6 @@ protected:
       boost::filesystem::remove(data_path);
     }
 
-    int total_elements = 1;
-    for (int i = 0; i < dims.size(); ++i) {
-      total_elements *= dims[i];
-    }
-
-    std::string header = create_npy_header<value_type>(dims);
-
     std::ofstream file(data_path.string(), std::ios::out | std::ios::binary);
     if (!file.is_open()) {
       std::ostringstream oss;
@@ -42,7 +35,13 @@ protected:
       throw std::runtime_error(oss.str());
     }
 
-    file.write(reinterpret_cast<const char *>(&header[0]), header.size());
+    int total_elements = 1;
+    for (int i = 0; i < dims.size(); ++i) {
+      total_elements *= dims[i];
+    }
+
+    NPYString header = create_npy_header<value_type>(dims);
+    file.write(&header[0], header.size());
     file.write(reinterpret_cast<const char *>(data),
                total_elements * sizeof(value_type));
 

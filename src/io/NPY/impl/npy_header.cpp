@@ -8,6 +8,22 @@
 #include "io/NPY/impl/npy_header.hpp"
 
 namespace specfem::io::impl::NPY {
+
+template <> NPYString &NPYString::operator+=(const std::string rhs) {
+  this->insert(this->end(), rhs.begin(), rhs.end());
+  return *this;
+}
+
+template <> NPYString &NPYString::operator+=(const char *rhs) {
+  // write in little endian
+  size_t len = strlen(rhs);
+  this->reserve(len);
+  for (size_t byte = 0; byte < len; byte++) {
+    this->push_back(rhs[byte]);
+  }
+  return *this;
+}
+
 /**
  * @brief Create a NumPy .npy file header
  *
@@ -30,10 +46,10 @@ namespace specfem::io::impl::NPY {
  * the header dictionary might look like:
  * {'descr': '<f4', 'fortran_order': True, 'shape': (3, 4), }
  */
-std::string impl_create_npy_header(const std::vector<size_t> &shape,
-                                   const char type_char, const size_t type_size,
-                                   bool fortran_order) {
-  std::string dict;
+NPYString create_npy_header(const std::vector<size_t> &shape,
+                            const char type_char, const size_t type_size,
+                            bool fortran_order) {
+  NPYString dict;
   dict += "{'descr': '";
   dict += []() {
     int x = 1;
@@ -58,21 +74,12 @@ std::string impl_create_npy_header(const std::vector<size_t> &shape,
   dict.insert(dict.end(), remainder, ' ');
   dict.back() = '\n';
 
-  std::string header;
-  header.push_back((char)0x93);
-
-  // Add "NUMPY" string
-  const char *numpy_str = "NUMPY";
-  header.insert(header.end(), numpy_str, numpy_str + 5);
-
-  header.push_back((char)0x01); // major version of numpy format
-  header.push_back((char)0x00); // minor version of numpy format
-
-  // Add dict size as uint16_t (2 bytes)
-  uint16_t dict_size = dict.size();
-  header.push_back(dict_size & 0xFF);
-  header.push_back((dict_size >> 8) & 0xFF);
-
+  NPYString header;
+  header += (char)0x93;
+  header += "NUMPY";
+  header += (char)0x01; // major version of numpy format
+  header += (char)0x00; // minor version of numpy format
+  header += (uint16_t)dict.size();
   header.insert(header.end(), dict.begin(), dict.end());
 
   return header;
@@ -96,10 +103,8 @@ std::string impl_create_npy_header(const std::vector<size_t> &shape,
  * @note Modified from cnpy library (MIT License)
  * https://github.com/rogersce/cnpy
  */
-std::vector<size_t> impl_parse_npy_header(std::ifstream &file,
-                                          const char type_char,
-                                          const size_t type_size,
-                                          bool fortran_order) {
+std::vector<size_t> parse_npy_header(std::ifstream &file, const char type_char,
+                                     const size_t type_size) {
   char buffer[11];
   file.read(buffer, 11 * sizeof(char));
   // Read the header into a string
@@ -114,7 +119,12 @@ std::vector<size_t> impl_parse_npy_header(std::ifstream &file,
     throw std::runtime_error(
         "parse_npy_header: failed to find header keyword: 'fortran_order'");
   loc1 += 16;
-  fortran_order = (header.substr(loc1, 4) == "True" ? true : false);
+  bool fortran_order = (header.substr(loc1, 4) == "True" ? true : false);
+
+  if (!fortran_order) {
+    throw std::runtime_error(
+        "parse_npy_header: only fortran_order=True is supported");
+  }
 
   // shape
   loc1 = header.find("(");
