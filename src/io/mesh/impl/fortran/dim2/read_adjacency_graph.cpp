@@ -45,14 +45,12 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
     const auto connection_type =
         static_cast<specfem::connections::type>(connection_int);
 
-    if (connection_type == specfem::connections::type::strongly_conforming) {
+    if (connection_type == specfem::connections::type::strongly_conforming ||
+        connection_type == specfem::connections::type::nonconforming) {
       const auto edge_orientation =
           static_cast<specfem::mesh_entity::type>(orientation_int);
-      boost::add_edge(
-          current_element - 1, neighbor_element - 1,
-          EdgeProperties{ specfem::connections::type::strongly_conforming,
-                          edge_orientation },
-          g);
+      boost::add_edge(current_element - 1, neighbor_element - 1,
+                      EdgeProperties{ connection_type, edge_orientation }, g);
     } else {
       throw std::runtime_error("Unknown connection type in adjacency graph.");
     }

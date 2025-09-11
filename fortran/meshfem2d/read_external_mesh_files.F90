@@ -756,3 +756,59 @@
   endif
 
   end subroutine read_external_tangential_curve_file
+
+!
+!---------------------------------------------------------------------------------------
+!
+
+  subroutine read_external_nonconforming_adjacencies_file(filename)
+
+! reads in nonconforming adjacencies from file
+  use constants, only: MAX_STRING_LEN, IIN, IMAIN, myrank
+  ! assume these are already initialized
+  use part_unstruct_par, only: num_adjacent, adjacency_type, adjacency_id, adjacent_elements
+
+  implicit none
+
+  character(len=MAX_STRING_LEN),intent(in) :: filename
+  integer :: ier, num_adjacencies_in_file, iadj, ispec1, ispec2, adjtype_read, adjid_read, cur_adj;
+
+  ! ----- start: user out
+
+  if (myrank == 0) then
+    write(IMAIN,*) '  Reading additional nonconforming adjacency information from external mesh file: ',trim(filename)
+    call flush_IMAIN()
+  endif
+
+  ! reads in specified external file
+  open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    print *,'Error opening file: ',trim(filename)
+    call stop_the_code('Error read nonconforming adjacencies file')
+  endif
+
+  read(IIN,*) num_adjacencies_in_file
+  do iadj = 1, num_adjacencies_in_file
+    read(IIN, *) ispec1, ispec2, adjtype_read, adjid_read
+
+    ! from_ispec to_ispec, adjacency type, adjacency id
+
+    ispec1 = ispec1 - 1
+    ispec2 = ispec2 - 1
+    cur_adj = num_adjacent(ispec1)
+
+    ! append adjacency to list
+    adjacent_elements(ispec1, cur_adj) = ispec2;
+    adjacency_type(ispec1, cur_adj) = adjtype_read;
+    adjacency_id(ispec1, cur_adj) = adjid_read;
+    num_adjacent(ispec1) = cur_adj + 1
+  end do
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '    Total number of appended adjacent elements: ', num_adjacencies_in_file
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  end subroutine read_external_nonconforming_adjacencies_file
