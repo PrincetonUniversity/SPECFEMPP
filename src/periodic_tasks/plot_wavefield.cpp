@@ -53,7 +53,8 @@ specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     : assembly(assembly), wavefield(wavefield), wavefield_type(wavefield_type),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec),
-      ngllx(assembly.mesh.ngllx), ngllz(assembly.mesh.ngllz), mpi(mpi) {
+      ngllx(assembly.mesh.element_grid.ngllx),
+      ngllz(assembly.mesh.element_grid.ngllz), mpi(mpi) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -106,7 +107,8 @@ specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     : assembly(assembly), wavefield(wavefield), wavefield_type(wavefield_type),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec),
-      ngllx(assembly.mesh.ngllx), ngllz(assembly.mesh.ngllz), mpi(mpi) {};
+      ngllx(assembly.mesh.element_grid.ngllx),
+      ngllz(assembly.mesh.element_grid.ngllz), mpi(mpi) {};
 
 // Sigmoid function centered at 0.0
 double specfem::periodic_tasks::plot_wavefield::sigmoid(double x) {
@@ -163,8 +165,8 @@ specfem::periodic_tasks::plot_wavefield::map_materials_with_color() {
 
   const auto &coordinates = assembly.mesh.h_coord;
   const int nspec = assembly.mesh.nspec;
-  const int ngllx = assembly.mesh.ngllx;
-  const int ngllz = assembly.mesh.ngllz;
+  const int ngllx = assembly.mesh.element_grid.ngllx;
+  const int ngllz = assembly.mesh.element_grid.ngllz;
 
   const int cell_points = 4;
 

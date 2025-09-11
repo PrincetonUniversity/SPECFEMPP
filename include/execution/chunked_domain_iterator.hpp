@@ -33,16 +33,9 @@ namespace execution {
  */
 template <specfem::dimension::type DimensionTag, typename KokkosIndexType,
           bool UseSIMD, typename ExecutionSpace>
-class PointIndex;
-
-/**
- * @brief 2D specialization of PointIndex
- */
-template <typename KokkosIndexType, bool UseSIMD, typename ExecutionSpace>
-class PointIndex<specfem::dimension::type::dim2, KokkosIndexType, UseSIMD,
-                 ExecutionSpace> {
+class PointIndex {
 private:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = DimensionTag;
 
 public:
   using iterator_type =
@@ -83,7 +76,7 @@ public:
   constexpr const iterator_type get_iterator() const { return iterator_type{}; }
 
   /**
-   * @brief Constructor for PointIndex when SIMD is used.
+   * @brief Constructor for 2D PointIndex when SIMD is used.
    *
    * @param ispec The index of the spectral element.
    * @param number_elements The number of elements in the chunk.
@@ -91,86 +84,32 @@ public:
    * @param ix The x-coordinate of the GLL point.
    * @param kokkos_index The Kokkos index type.
    */
-  template <bool U = UseSIMD, typename std::enable_if<U, int>::type = 0>
+  template <bool U = UseSIMD, specfem::dimension::type D = DimensionTag,
+            typename std::enable_if<U && D == specfem::dimension::type::dim2,
+                                    int>::type = 0>
   KOKKOS_INLINE_FUNCTION
   PointIndex(const int &ispec, const int &number_elements, const int &iz,
              const int &ix, const KokkosIndexType &kokkos_index)
       : index(ispec, number_elements, iz, ix), kokkos_index(kokkos_index) {}
 
   /**
-   * @brief Constructor for PointIndex when SIMD is not used.
+   * @brief Constructor for 2D PointIndex when SIMD is not used.
    *
    * @param ispec The index of the spectral element.
    * @param iz The z-coordinate of the GLL point.
    * @param ix The x-coordinate of the GLL point.
    * @param kokkos_index The Kokkos index type.
    */
-  template <bool U = UseSIMD, typename std::enable_if<!U, int>::type = 0>
+  template <bool U = UseSIMD, specfem::dimension::type D = DimensionTag,
+            typename std::enable_if<!U && D == specfem::dimension::type::dim2,
+                                    int>::type = 0>
   KOKKOS_INLINE_FUNCTION PointIndex(const int &ispec, const int &iz,
                                     const int &ix,
                                     const KokkosIndexType &kokkos_index)
       : index(ispec, iz, ix), kokkos_index(kokkos_index) {}
 
-  KOKKOS_INLINE_FUNCTION
-  constexpr bool is_end() const {
-    return false; ///< Returns false as this is not an end iterator
-  }
-
-private:
-  specfem::point::index<dimension_tag, UseSIMD> index; ///< Index of the GLL
-                                                       ///< point
-  KokkosIndexType kokkos_index;                        ///< Kokkos index type
-};
-
-/**
- * @brief 3D specialization of PointIndex
- */
-template <typename KokkosIndexType, bool UseSIMD, typename ExecutionSpace>
-class PointIndex<specfem::dimension::type::dim3, KokkosIndexType, UseSIMD,
-                 ExecutionSpace> {
-private:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
-
-public:
-  using iterator_type =
-      VoidIterator<ExecutionSpace>; ///< Iterator type used to iterate over
-                                    ///< GLL points within this index.
-                                    ///< @c VoidIterator is used when the
-                                    ///< index refers to a single GLL point.
-
   /**
-   * @brief Get the policy index that defined this point index.
-   *
-   * @return const KokkosIndexType The policy index that defined this point
-   * index.
-   */
-  KOKKOS_INLINE_FUNCTION
-  constexpr const KokkosIndexType get_policy_index() const {
-    return this->kokkos_index;
-  }
-
-  /**
-   * @brief Get the underlying index used to define the GLL point.
-   *
-   * @return const specfem::point::index<dimension_tag, UseSIMD> The point index
-   * that defines the GLL point.
-   */
-  KOKKOS_INLINE_FUNCTION
-  constexpr const specfem::point::index<dimension_tag, UseSIMD>
-  get_index() const {
-    return this->index; ///< Returns the point index
-  }
-
-  /**
-   * @brief Get the iterator for this index.
-   *
-   * @return const iterator_type The iterator for this index.
-   */
-  KOKKOS_INLINE_FUNCTION
-  constexpr const iterator_type get_iterator() const { return iterator_type{}; }
-
-  /**
-   * @brief Constructor for PointIndex when SIMD is used.
+   * @brief Constructor for 3D PointIndex when SIMD is used.
    *
    * @param ispec The index of the spectral element.
    * @param number_elements The number of elements in the chunk.
@@ -179,14 +118,16 @@ public:
    * @param ix The x-coordinate of the GLL point.
    * @param kokkos_index The Kokkos index type.
    */
-  template <bool U = UseSIMD, typename std::enable_if<U, int>::type = 0>
+  template <bool U = UseSIMD, specfem::dimension::type D = DimensionTag,
+            typename std::enable_if<U && D == specfem::dimension::type::dim3,
+                                    int>::type = 0>
   KOKKOS_INLINE_FUNCTION
   PointIndex(const int &ispec, const int &number_elements, const int &iz,
              const int &iy, const int &ix, const KokkosIndexType &kokkos_index)
       : index(ispec, number_elements, iz, iy, ix), kokkos_index(kokkos_index) {}
 
   /**
-   * @brief Constructor for PointIndex when SIMD is not used.
+   * @brief Constructor for 3D PointIndex when SIMD is not used.
    *
    * @param ispec The index of the spectral element.
    * @param iz The z-coordinate of the GLL point.
@@ -194,7 +135,9 @@ public:
    * @param ix The x-coordinate of the GLL point.
    * @param kokkos_index The Kokkos index type.
    */
-  template <bool U = UseSIMD, typename std::enable_if<!U, int>::type = 0>
+  template <bool U = UseSIMD, specfem::dimension::type D = DimensionTag,
+            typename std::enable_if<!U && D == specfem::dimension::type::dim3,
+                                    int>::type = 0>
   KOKKOS_INLINE_FUNCTION PointIndex(const int &ispec, const int &iz,
                                     const int &iy, const int &ix,
                                     const KokkosIndexType &kokkos_index)
@@ -223,14 +166,7 @@ private:
  */
 template <specfem::dimension::type DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
-class ChunkElementIterator;
-
-/**
- * @brief 2D specialization of ChunkElementIterator
- */
-template <typename SIMD, typename ViewType, typename TeamMemberType>
-class ChunkElementIterator<specfem::dimension::type::dim2, SIMD, ViewType,
-                           TeamMemberType>
+class ChunkElementIterator
     : public TeamThreadRangePolicy<TeamMemberType,
                                    typename ViewType::value_type> {
 private:
@@ -238,7 +174,7 @@ private:
       TeamThreadRangePolicy<TeamMemberType, typename ViewType::value_type>;
   constexpr static auto simd_size = SIMD::size();
   constexpr static auto using_simd = SIMD::using_simd;
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = DimensionTag;
 
 public:
   using base_policy_type =
@@ -264,9 +200,11 @@ public:
    * @param i The policy index to convert to an index.
    * @return const index_type The index corresponding to the policy index.
    */
-  template <bool U = using_simd>
-  KOKKOS_INLINE_FUNCTION std::enable_if_t<U, const index_type>
-  operator()(const policy_index_type &i) const {
+  template <bool U = using_simd, specfem::dimension::type D = dimension_tag>
+  KOKKOS_INLINE_FUNCTION
+      typename std::enable_if<U && D == specfem::dimension::type::dim2,
+                              const index_type>::type
+      operator()(const policy_index_type &i) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     int ielement = i % num_elements;
     int simd_elements = (simd_size + ielement > indices.extent(0))
@@ -289,9 +227,11 @@ public:
     return index_type(ispec, simd_elements, iz, ix, ielement);
   }
 
-  template <bool U = using_simd>
-  KOKKOS_INLINE_FUNCTION std::enable_if_t<!U, const index_type>
-  operator()(const policy_index_type &i) const {
+  template <bool U = using_simd, specfem::dimension::type D = dimension_tag>
+  KOKKOS_INLINE_FUNCTION
+      typename std::enable_if<!U && D == specfem::dimension::type::dim2,
+                              const index_type>::type
+      operator()(const policy_index_type &i) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     int ielement = i % num_elements;
     int ispec = indices(ielement);
@@ -308,72 +248,16 @@ public:
   }
 
   /**
-   * @brief Constructor for ChunkElementIterator.
-   *
-   * @param team The Kokkos team member type.
-   * @param indices View of indices of elements within this chunk.
-   * @param element_grid Element grid information containing ngll, ngllx, ngllz,
-   * etc.
-   */
-  KOKKOS_INLINE_FUNCTION ChunkElementIterator(
-      const TeamMemberType &team, const ViewType indices,
-      const specfem::mesh_entity::element<dimension_tag> &element_grid)
-      : indices(indices), element_grid(element_grid),
-        num_elements((indices.extent(0) / simd_size) +
-                     ((indices.extent(0) % simd_size) != 0)),
-        base_type(team, (((indices.extent(0) / simd_size) +
-                          (indices.extent(0) % simd_size != 0)) *
-                         element_grid.ngllz * element_grid.ngllx)) {}
-
-private:
-  ViewType indices; ///< View of indices of elements within this chunk
-  int num_elements; ///< Number of elements in the chunk, adjusted for SIMD
-  specfem::mesh_entity::element<dimension_tag> element_grid; ///< Element grid
-                                                             ///< information
-};
-
-/**
- * @brief 3D specialization of ChunkElementIterator
- */
-template <typename SIMD, typename ViewType, typename TeamMemberType>
-class ChunkElementIterator<specfem::dimension::type::dim3, SIMD, ViewType,
-                           TeamMemberType>
-    : public TeamThreadRangePolicy<TeamMemberType,
-                                   typename ViewType::value_type> {
-private:
-  using base_type =
-      TeamThreadRangePolicy<TeamMemberType, typename ViewType::value_type>;
-  constexpr static auto simd_size = SIMD::size();
-  constexpr static auto using_simd = SIMD::using_simd;
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
-
-public:
-  using base_policy_type =
-      typename base_type::base_policy_type; ///< Base policy type. Evaluates to
-                                            ///< @c Kokkos::TeamThreadRange
-  using policy_index_type =
-      typename base_type::policy_index_type; /// Policy index type. Must be
-                                             ///< convertible to integral type.
-  using index_type =
-      PointIndex<dimension_tag, policy_index_type, using_simd,
-                 typename base_type::
-                     execution_space>; ///< Underlying index type. This index
-                                       ///< will be passed to the closure when
-                                       ///< calling @ref
-                                       ///< specfem::execution::for_each_level
-
-  using execution_space =
-      typename base_type::execution_space; ///< Execution space type.
-
-  /**
    * @brief Operator to get the index for a given policy index.
    *
    * @param i The policy index to convert to an index.
    * @return const index_type The index corresponding to the policy index.
    */
-  template <bool U = using_simd>
-  KOKKOS_INLINE_FUNCTION std::enable_if_t<U, const index_type>
-  operator()(const policy_index_type &i) const {
+  template <bool U = using_simd, specfem::dimension::type D = dimension_tag>
+  KOKKOS_INLINE_FUNCTION
+      typename std::enable_if<U && D == specfem::dimension::type::dim3,
+                              const index_type>::type
+      operator()(const policy_index_type &i) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     int ielement = i % num_elements;
     int simd_elements = (simd_size + ielement > indices.extent(0))
@@ -400,9 +284,11 @@ public:
     return index_type(ispec, simd_elements, iz, iy, ix, ielement);
   }
 
-  template <bool U = using_simd>
-  KOKKOS_INLINE_FUNCTION std::enable_if_t<!U, const index_type>
-  operator()(const policy_index_type &i) const {
+  template <bool U = using_simd, specfem::dimension::type D = dimension_tag>
+  KOKKOS_INLINE_FUNCTION
+      typename std::enable_if<!U && D == specfem::dimension::type::dim3,
+                              const index_type>::type
+      operator()(const policy_index_type &i) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     int ielement = i % num_elements;
     int ispec = indices(ielement);
@@ -427,8 +313,8 @@ public:
    *
    * @param team The Kokkos team member type.
    * @param indices View of indices of elements within this chunk.
-   * @param element_grid Element grid information containing ngll, ngllx, nglly,
-   * ngllz, etc.
+   * @param element_grid Element grid information containing ngll, ngllx, ngllz,
+   * etc.
    */
   KOKKOS_INLINE_FUNCTION ChunkElementIterator(
       const TeamMemberType &team, const ViewType indices,
@@ -438,8 +324,7 @@ public:
                      ((indices.extent(0) % simd_size) != 0)),
         base_type(team, (((indices.extent(0) / simd_size) +
                           (indices.extent(0) % simd_size != 0)) *
-                         element_grid.ngllz * element_grid.nglly *
-                         element_grid.ngllx)) {}
+                         element_grid.size)) {}
 
 private:
   ViewType indices; ///< View of indices of elements within this chunk

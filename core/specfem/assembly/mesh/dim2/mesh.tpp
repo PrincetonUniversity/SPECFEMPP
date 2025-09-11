@@ -116,13 +116,21 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
     const specfem::quadrature::quadratures &quadratures,
     const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
         &mesh_adjacency_graph) {
+
+  // Get the number of GLL points
+  int ngllz = quadratures.gll.get_N();
+  int ngllx = quadratures.gll.get_N();
+
+  // Get the number of spectral element from the tags
   nspec = tags.nspec;
-  ngllz = quadratures.gll.get_N();
-  ngllx = quadratures.gll.get_N();
+
+  // Get the number of control nodes in each element from the control nodes
+  // struct
   ngnod = control_nodes_in.ngnod;
 
-  auto &element = static_cast<specfem::mesh_entity::element<
-      specfem::dimension::type::dim2> &>(*this);
+  this->element_grid = specfem::mesh_entity::element<
+      specfem::dimension::type::dim2>(ngllz, ngllx);
+
   auto &mapping =
       static_cast<specfem::assembly::mesh_impl::mesh_to_compute_mapping<
           specfem::dimension::type::dim2> &>(*this);
@@ -139,8 +147,6 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       static_cast<specfem::assembly::mesh_impl::control_nodes<
           specfem::dimension::type::dim2> &>(*this);
 
-  element = specfem::mesh_entity::element<
-      specfem::dimension::type::dim2>(ngllx, ngllz, ngllx);
   mapping = specfem::assembly::mesh_impl::mesh_to_compute_mapping<
       specfem::dimension::type::dim2>(tags);
   control_nodes = specfem::assembly::mesh_impl::control_nodes<
@@ -176,6 +182,9 @@ void specfem::assembly::mesh<
   const auto xi = this->h_xi;
   const auto gamma = this->h_xi;
 
+  const auto ngllz = this->element_grid.ngllz;
+  const auto ngllx = this->element_grid.ngllx;
+
   const auto shape2D = this->h_shape2D;
   const auto coord = this->h_control_node_coord;
 
@@ -183,12 +192,12 @@ void specfem::assembly::mesh<
       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
   specfem::kokkos::HostView4d<double> global_coordinates(
-      "specfem::assembly::mesh::assemble::global_coordinates", nspec, ngll,
-      ngll, 2);
+      "specfem::assembly::mesh::assemble::global_coordinates", nspec, ngllz,
+      ngllx, 2);
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    for (int iz = 0; iz < ngll; iz++) {
-      for (int ix = 0; ix < ngll; ix++) {
+    for (int iz = 0; iz < ngllz; iz++) {
+      for (int ix = 0; ix < ngllx; ix++) {
         auto shape_functions =
             specfem::shape_function::shape_function(xi(ix), gamma(iz), ngnod);
 
@@ -211,9 +220,4 @@ void specfem::assembly::mesh<
       *this);
 
   points = assign_numbering(global_coordinates);
-}
-
-
-specfem::mesh_entity::element<specfem::dimension::type::dim2> specfem::assembly::mesh<specfem::dimension::type::dim2>::get_element_grid() const {
-  return specfem::mesh_entity::element<specfem::dimension::type::dim2>(this->ngll, this->ngllz, this->ngllx);
 }

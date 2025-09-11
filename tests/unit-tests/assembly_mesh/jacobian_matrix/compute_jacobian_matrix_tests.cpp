@@ -83,8 +83,8 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
       jacobian_matrix(compute_mesh);
 
   const int nspec = compute_mesh.nspec;
-  const int ngllz = compute_mesh.ngllz;
-  const int ngllx = compute_mesh.ngllx;
+  const int ngllz = compute_mesh.element_grid.ngllz;
+  const int ngllx = compute_mesh.element_grid.ngllx;
 
   specfem::testing::array3d<double, Kokkos::LayoutRight> xix_ref(
       test_config.xix_file, nspec, ngllz, ngllx);

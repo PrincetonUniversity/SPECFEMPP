@@ -13,7 +13,7 @@ specfem::algorithms::locate_point(
   // Extract mesh data and delegate to core implementation
   return locate_point_impl::locate_point_core(
       coordinates, mesh.h_coord, mesh.h_index_mapping,
-      mesh.h_control_node_coordinates, mesh.ngnod, mesh.ngllx);
+      mesh.h_control_node_coordinates, mesh.ngnod, mesh.element_grid.ngllx);
 }
 
 specfem::point::global_coordinates<specfem::dimension::type::dim3>
