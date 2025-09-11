@@ -1,6 +1,7 @@
 #pragma once
 
 #include <complex>
+#include <cstring>
 #include <fstream>
 #include <regex>
 #include <stdexcept>
@@ -16,31 +17,21 @@ namespace specfem::io::impl::NPY {
 class NPYString : public std::vector<char> {
 public:
   using std::vector<char>::vector;
-
-  template <typename T> NPYString &operator+=(const T rhs) {
-    // write in little endian
-    for (size_t byte = 0; byte < sizeof(T); byte++) {
-      char val = *((char *)&rhs + byte);
-      this->push_back(val);
-    }
-    return *this;
-  }
-
-  template <> NPYString &operator+=(const std::string rhs) {
-    this->insert(this->end(), rhs.begin(), rhs.end());
-    return *this;
-  }
-
-  template <> NPYString &operator+=(const char *rhs) {
-    // write in little endian
-    size_t len = strlen(rhs);
-    this->reserve(len);
-    for (size_t byte = 0; byte < len; byte++) {
-      this->push_back(rhs[byte]);
-    }
-    return *this;
-  }
+  template <typename T> NPYString &operator+=(const T rhs);
 };
+
+template <> NPYString &NPYString::operator+=(const std::string rhs);
+
+template <> NPYString &NPYString::operator+=(const char *rhs);
+
+template <typename T> NPYString &NPYString::operator+=(const T rhs) {
+  // write in little endian
+  for (size_t byte = 0; byte < sizeof(T); byte++) {
+    char val = *((char *)&rhs + byte);
+    this->push_back(val);
+  }
+  return *this;
+}
 
 /**
  * @brief Create a NumPy .npy file header

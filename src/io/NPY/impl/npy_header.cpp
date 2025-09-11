@@ -8,6 +8,22 @@
 #include "io/NPY/impl/npy_header.hpp"
 
 namespace specfem::io::impl::NPY {
+
+template <> NPYString &NPYString::operator+=(const std::string rhs) {
+  this->insert(this->end(), rhs.begin(), rhs.end());
+  return *this;
+}
+
+template <> NPYString &NPYString::operator+=(const char *rhs) {
+  // write in little endian
+  size_t len = strlen(rhs);
+  this->reserve(len);
+  for (size_t byte = 0; byte < len; byte++) {
+    this->push_back(rhs[byte]);
+  }
+  return *this;
+}
+
 /**
  * @brief Create a NumPy .npy file header
  *
