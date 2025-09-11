@@ -13,7 +13,7 @@ is yaml.
 
 In addition to these basic read functions, there are also the two
 reader and writer classes, :cpp:class:`specfem::io::wavefield_reader` and
-:cpp:class:`specfem::io::wavefield_writer`, which support both HDF5 and ASCII I/O.
+:cpp:class:`specfem::io::wavefield_writer`, which support Numpy, HDF5, ADIOS and ASCII I/O.
 And, to write seismograms, we can use :cpp:class:`specfem::io::seismogram_writer`.
 Seismogram I/O is only supported in ASCII format thus far.
 

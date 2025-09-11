@@ -28,7 +28,7 @@ parameters:
             combined:
                 reader:
                     wavefield:
-                        format: HDF5
+                        format: NPY
                         directory: OUTPUT_FILES
 
                 writer:

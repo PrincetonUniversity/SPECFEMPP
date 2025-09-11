@@ -102,6 +102,14 @@ Optional
 
       export LD_LIBRARY_PATH=/path/to/hdf5/lib[64]:$LD_LIBRARY_PATH
 
+* **ZLIB** can be used for reading and writing data in npz (zipped numpy arrays )format. Specify custom
+  ``zlib`` builds using ``-D ZLIB_ROOT=/path/to/zlib`` and add the libary path to
+  the ``LD_LIBRARY_PATH`` environment variable:
+
+  .. code-block:: bash
+
+      export LD_LIBRARY_PATH=/path/to/zlib/lib[64]:$LD_LIBRARY_PATH
+
 * **VTK** can be used visualization of the wavefield in 2D. Specify a custom
   ``vtk`` build using ``-D VTK_DIR=/path/to/vtk`` and add the libary path to
   the ``LD_LIBRARY_PATH`` environment variable:

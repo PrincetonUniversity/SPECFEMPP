@@ -31,8 +31,8 @@ The snippet below shows how to use these modules to write and read a Kokkos::Vie
 
     int main() {
         Kokkos::View<type_real> data("data", 10);
-        write<specfem::io::HDF5<specfem::io::write>>(data);
-        const auto data_read = read<specfem::io::HDF5<specfem::io::read>>();
+        write<specfem::io::NPY<specfem::io::write>>(data);
+        const auto data_read = read<specfem::io::NPY<specfem::io::read>>();
         return 0;
     }
 
@@ -42,3 +42,5 @@ The snippet below shows how to use these modules to write and read a Kokkos::Vie
     mesh/index
     ASCII/index
     HDF5/index
+    NPY/index
+    NPZ/index
