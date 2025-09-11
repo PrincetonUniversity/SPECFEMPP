@@ -22,8 +22,7 @@ namespace specfem::assembly {
  */
 template <>
 struct mesh<specfem::dimension::type::dim2>
-    : public specfem::mesh_entity::element<specfem::dimension::type::dim2>,
-      public specfem::assembly::mesh_impl::points<
+    : public specfem::assembly::mesh_impl::points<
           specfem::dimension::type::dim2>,
       public specfem::assembly::mesh_impl::quadrature<
           specfem::dimension::type::dim2>,
@@ -41,12 +40,10 @@ public:
       specfem::dimension::type::dim2; ///< Dimension
   int nspec;                          ///< Number of spectral
                                       ///< elements
-  int ngllz;                          ///< Number of quadrature
-                                      ///< points in z dimension
-  int ngllx;                          ///< Number of quadrature
-                                      ///< points in x dimension
   int ngnod;                          ///< Number of control
                                       ///< nodes
+  specfem::mesh_entity::element<dimension_tag> element_grid; ///< Element number
+                                                             ///< of GLL points
 
   mesh() = default;
 
@@ -58,9 +55,6 @@ public:
   void assemble_legacy();
 
   void assemble();
-
-  specfem::mesh_entity::element<specfem::dimension::type::dim2>
-  get_element_grid() const;
 
   bool adjacency_graph_empty() const {
     return static_cast<const specfem::assembly::mesh_impl::adjacency_graph<
