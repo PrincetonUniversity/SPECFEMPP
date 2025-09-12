@@ -38,17 +38,16 @@ Read the 2D Mesh
 .. doxygenfunction:: specfem::io::read_2d_mesh
 
 
-Read Sources
-------------
+Read 2D Sources
+---------------
 
-.. doxygenfunction:: specfem::io::read_sources(const std::string sources_file, const int nsteps, const type_real user_t0, const type_real dt, const specfem::simulation::type simulation_type)
+.. doxygenfunction:: specfem::io::read_2d_sources(const std::string &sources_file, const int nsteps, const type_real user_t0, const type_real dt, const specfem::simulation::type simulation_type)
 
 
-Read Receivers
---------------
+Read 2D Receivers
+-----------------
 
-.. doxygenfunction:: specfem::io::read_receivers(const std::string stations_file, const type_real angle)
-
+.. doxygenfunction:: specfem::io::read_receivers(const std::string &stations_file, const type_real angle)
 
 
 
@@ -60,6 +59,21 @@ Read the 3D Mesh
 ----------------
 
 .. doxygenfunction:: specfem::io::read_3d_mesh
+
+
+Read 3D Sources
+---------------
+
+.. doxygenfunction:: specfem::io::read_3d_sources(const std::string &sources_file, const int nsteps, const type_real user_t0, const type_real dt, const specfem::simulation::type simulation_type)
+
+
+Read 3D Receivers
+-----------------
+
+.. note::
+
+    3D Receiver I/O is not yet implemented.
+
 
 
 Helper functions

@@ -1,5 +1,4 @@
-#ifndef SPECFEM_IO_HDF5_IMPL_DATASET_TPP
-#define SPECFEM_IO_HDF5_IMPL_DATASET_TPP
+#pragma once
 
 #ifndef NO_HDF5
 #include "H5Cpp.h"
@@ -72,6 +71,4 @@ void specfem::io::impl::HDF5::Dataset<ViewType, OpType>::read() {
     throw std::runtime_error("Unknown memory space");
   }
 }
-#endif
-
 #endif

@@ -9,5 +9,5 @@ sources:
       vz : 0.0
       Ricker:
         f0: 10.0
-        factor: 1e10
+        factor: -1e10
         tshift: 0.0

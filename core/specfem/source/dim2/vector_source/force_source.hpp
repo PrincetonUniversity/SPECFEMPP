@@ -16,6 +16,37 @@ namespace sources {
 /**
  * @brief Collocated force source
  *
+ * This class implements a collocated force source in 2D that applies a
+ * directional force at a specific location in the simulation domain.
+ *
+ * @par Usage Example
+ * @code
+ * // Create a Ricker wavelet source time function
+ * auto stf = std::make_unique<specfem::forcing_function::Ricker>(
+ *     10,    // dominant frequency (Hz)
+ *     0.01,  // time factor
+ *     1.0,   // amplitude
+ *     0.0,   // time shift
+ *     1.0,   // normalization factor
+ *     false  // do not reverse
+ * );
+ *
+ * // Create a 2D force source at (2.5, 3.0) with 45-degree angle
+ * auto force_source = specfem::sources::force<specfem::dimension::type::dim2>(
+ *     2.5,  // x-coordinate
+ *     3.0,  // z-coordinate
+ *     45.0, // angle in degrees
+ *     std::move(stf),
+ *     specfem::wavefield::simulation_field::forward
+ * );
+ *
+ * // Set the medium type
+ * force_source.set_medium_tag(specfem::element::medium_tag::elastic_psv);
+ *
+ * // Get the force vector (depends on medium type)
+ * auto force_vector = force_source.get_force_vector();
+ * @endcode
+ *
  */
 template <>
 class force<specfem::dimension::type::dim2>
@@ -89,8 +120,26 @@ public:
   /**
    * @brief Get the force vector
    *
+   * Returns the 2D force vector for this directional force source:
+   *
+   * \f[
+   * \mathbf{f}_{2D} = \begin{cases}
+   * [\sin(\theta), -\cos(\theta)] & \text{elastic PSV: x,z components} \\
+   * [1.0] & \text{elastic SH: out-of-plane component} \\
+   * [1.0] & \text{acoustic: pressure amplitude} \\
+   * [\sin(\theta), -\cos(\theta), \sin(\theta), -\cos(\theta)] &
+   * \text{poroelastic} \\
+   * [\sin(\theta), -\cos(\theta), 0.0] & \text{elastic PSV-T}
+   * \end{cases}
+   * \f]
+   *
+   * Where:
+   * - \f$f\f$ is the force magnitude (normalized to 1.0)
+   * - \f$\theta\f$ is the force angle in degrees from horizontal
+   * - Components depend on the medium and wave field type
+   *
    * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Force vector
+   * Force vector with size depending on medium type
    */
   specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
 
