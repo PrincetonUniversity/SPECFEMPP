@@ -53,3 +53,50 @@ void specfem::assembly::jacobian_matrix<
   Kokkos::deep_copy(gammaz, h_gammaz);
   Kokkos::deep_copy(jacobian, h_jacobian);
 }
+
+std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
+specfem::assembly::jacobian_matrix<
+    specfem::dimension::type::dim3>::check_small_jacobian() const {
+  Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
+      "specfem::assembly::jacobian_matrix::negative", nspec);
+
+  Kokkos::deep_copy(small_jacobian, false);
+
+  const type_real threshold = 1e-10;
+
+  using PointJacobianMatrixType =
+      specfem::point::jacobian_matrix<dimension_tag, true, false>;
+
+  bool found = false;
+  Kokkos::parallel_reduce(
+      "specfem::assembly::jacobian_matrix::check_small_jacobian",
+      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nspec),
+      [=, *this](const int &ispec, bool &l_found) {
+        for (int iz = 0; iz < ngllz; ++iz) {
+          for (int iy = 0; iy < nglly; ++iy) {
+            for (int ix = 0; ix < ngllx; ++ix) {
+              // Define the local_index
+              const specfem::point::index<dimension_tag, false> index(ispec, iz,
+                                                                      iy, ix);
+
+              // Get the Jacobian determinant
+              const auto jacobian = [&]() {
+                PointJacobianMatrixType jacobian_matrix;
+                specfem::assembly::load_on_host(index, *this, jacobian_matrix);
+                return jacobian_matrix.jacobian;
+              }();
+
+              // Check if below threshold
+              if (jacobian < threshold) {
+                small_jacobian(ispec) = true;
+                l_found = true;
+                break;
+              }
+            }
+          }
+        }
+      },
+      found);
+
+  return std::make_tuple(found, small_jacobian);
+}
