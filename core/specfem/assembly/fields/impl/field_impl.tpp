@@ -25,8 +25,8 @@ void assign_assembly_index_mapping<specfem::dimension::type::dim2>(
     int &nglob, const specfem::element::medium_tag MediumTag) {
   const auto index_mapping = mesh.h_index_mapping;
   const int nspec = mesh.nspec;
-  const int ngllz = mesh.ngllz;
-  const int ngllx = mesh.ngllx;
+  const int ngllz = mesh.element_grid.ngllz;
+  const int ngllx = mesh.element_grid.ngllx;
 
   int count = 0;
 

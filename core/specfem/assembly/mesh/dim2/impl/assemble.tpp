@@ -9,8 +9,8 @@
 void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
 
   const int nspec = this->nspec;
-  const int ngllx = this->ngllx;
-  const int ngllz = this->ngllz;
+  const int ngllx = this->element_grid.ngllx;
+  const int ngllz = this->element_grid.ngllz;
 
   const int ngnod = this->ngnod;
 
