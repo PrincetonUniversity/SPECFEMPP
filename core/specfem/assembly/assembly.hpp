@@ -21,3 +21,4 @@ template <specfem::dimension::type DimensionTag> struct assembly;
 } // namespace specfem::assembly
 
 #include "assembly/dim2/assembly.hpp"
+#include "assembly/dim3/assembly.hpp"

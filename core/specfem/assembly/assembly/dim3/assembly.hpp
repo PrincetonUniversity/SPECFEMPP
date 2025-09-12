@@ -46,22 +46,24 @@ template <> struct assembly<specfem::dimension::type::dim3> {
   specfem::assembly::kernels<dimension_tag> kernels; ///< Frechet derivatives
                                                      ///< (Misfit kernels)
   specfem::assembly::sources<dimension_tag> sources; ///< Source information
-  specfem::assembly::receivers<dimension_tag> receivers;   ///< Receiver
-                                                           ///< information
-  specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
-                                                           ///< conditions
-  specfem::assembly::coupled_interfaces<dimension_tag>
-      coupled_interfaces;                          ///< Coupled
-                                                   ///< interfaces
-                                                   ///< between 2
-                                                   ///< mediums
+  specfem::assembly::receivers<dimension_tag> receivers; ///< Receiver
+                                                         ///< information
   specfem::assembly::fields<dimension_tag> fields; ///< Displacement, velocity,
                                                    ///< and acceleration fields
-  specfem::assembly::boundary_values<dimension_tag>
-      boundary_values; ///< Field
-                       ///< values at
-                       ///< the
-                       ///< boundaries
+
+  // specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
+  //                                                 ///< conditions
+  // specfem::assembly::coupled_interfaces<dimension_tag>
+  // coupled_interfaces;                          ///< Coupled
+  //                                         ///< interfaces
+  //                                         ///< between 2
+  //                                         ///< media
+
+  // specfem::assembly::boundary_values<dimension_tag>
+  // boundary_values; ///< Field
+  //             ///< values at
+  //             ///< the
+  //             ///< boundaries
 
   /**
    * @brief Generate a finite element assembly
@@ -103,11 +105,11 @@ template <> struct assembly<specfem::dimension::type::dim3> {
    * This field can be used to generate a plot of the wavefield
    *
    * @param component Component of the wavefield to map
-   * @return Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Wavefield mapped on the entire grid. Dimensions of the view are nspec,
-   * ngllz, ngllx
+   * @return Kokkos::View<type_real *****, Kokkos::LayoutLeft,
+   * Kokkos::HostSpace> Wavefield mapped on the entire grid. Dimensions of the
+   * view are nspec, ngllz, nglly, ngllx, ncomponents
    */
-  Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
+  Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   generate_wavefield_on_entire_grid(
       const specfem::wavefield::simulation_field wavefield,
       const specfem::wavefield::type component);
