@@ -73,6 +73,9 @@ public:
   coupled_interface(const scalar_type<type_real> &edge_factor,
                     const vector_type<type_real, 2> &edge_normal_)
       : edge_factor(edge_factor), edge_normal(edge_normal_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  coupled_interface() = default;
 };
 
 } // namespace specfem::point

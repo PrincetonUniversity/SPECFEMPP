@@ -62,36 +62,6 @@
 
 namespace specfem::interface {
 
-template <specfem::dimension::type DimensionTag,
-          specfem::interface::interface_tag InterfaceTag>
-class attributes;
-
-template <>
-class attributes<specfem::dimension::type::dim2,
-                 specfem::interface::interface_tag::elastic_acoustic> {
-public:
-  static constexpr specfem::element::medium_tag self_medium() {
-    return specfem::element::medium_tag::elastic_psv;
-  }
-
-  static constexpr specfem::element::medium_tag coupled_medium() {
-    return specfem::element::medium_tag::acoustic;
-  }
-};
-
-template <>
-class attributes<specfem::dimension::type::dim2,
-                 specfem::interface::interface_tag::acoustic_elastic> {
-public:
-  static constexpr specfem::element::medium_tag self_medium() {
-    return specfem::element::medium_tag::acoustic;
-  }
-
-  static constexpr specfem::element::medium_tag coupled_medium() {
-    return specfem::element::medium_tag::elastic_psv;
-  }
-};
-
 template <specfem::dimension::type DimensionTag> constexpr auto edges();
 
 template <> constexpr auto edges<specfem::dimension::type::dim2>() {
