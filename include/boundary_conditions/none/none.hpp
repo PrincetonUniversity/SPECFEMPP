@@ -38,5 +38,18 @@ KOKKOS_INLINE_FUNCTION void impl_compute_mass_matrix_terms(
   return;
 }
 
+template <typename PointBoundaryType, typename PointAccelerationType>
+KOKKOS_INLINE_FUNCTION void
+impl_apply_boundary_conditions(const none_type &, const PointBoundaryType &,
+                               PointAccelerationType &) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::none,
+                "Boundary tag must be none");
+
+  // Do nothing
+  return;
+}
+
 } // namespace boundary_conditions
 } // namespace specfem
