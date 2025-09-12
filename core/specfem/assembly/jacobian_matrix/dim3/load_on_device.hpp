@@ -5,10 +5,12 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
+namespace specfem::assembly {
+
 template <typename PointIndexType, typename ContainerType, typename PointType,
           typename std::enable_if_t<
               PointIndexType::dimension_tag == specfem::dimension::type::dim3 &&
-                  !(PointIndexType::using_simd == PointType::simd::using_simd),
+                  (PointIndexType::using_simd == PointType::simd::using_simd),
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const PointIndexType &index,
                                                 const ContainerType &container,
@@ -34,3 +36,5 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const PointIndexType &index,
         container.jacobian(index.ispec, index.iz, index.iy, index.ix);
   }
 }
+
+} // namespace specfem::assembly

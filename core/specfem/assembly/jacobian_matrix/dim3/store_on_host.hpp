@@ -5,6 +5,8 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
+namespace specfem::assembly {
+
 template <typename PointIndexType, typename PointType, typename ContainerType,
           typename std::enable_if_t<
               PointIndexType::dimension_tag == specfem::dimension::type::dim3 &&
@@ -33,3 +35,5 @@ void store_on_host(const PointIndexType &index, const PointType &point,
         point.jacobian;
   }
 }
+
+} // namespace specfem::assembly
