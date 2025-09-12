@@ -195,11 +195,6 @@ inline void load_on_host(const IndexType &index, const ContainerType &container,
       .template get_interface_container<PointType::interface_tag,
                                         PointType::boundary_tag>()
       .template impl_load<false>(index, point);
-
-#ifndef NDEBUG
-  KOKKOS_ABORT_WITH_LOCATION(
-      "specfem::assembly::load_on_host(): No matching specialization found.");
-#endif
 }
 
 /**
@@ -243,11 +238,6 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
       .template get_interface_container<PointType::interface_tag,
                                         PointType::boundary_tag>()
       .template impl_load<true>(index, point);
-
-#ifndef NDEBUG
-  KOKKOS_ABORT_WITH_LOCATION("specfem::assembly::load_on_device(): No "
-                             "matching specialization found.");
-#endif
 }
 
 } // namespace specfem::assembly

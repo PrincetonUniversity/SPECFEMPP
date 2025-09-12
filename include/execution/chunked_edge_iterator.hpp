@@ -250,13 +250,13 @@ private:
       return { ispec, 0, ipoint };
       break;
     case specfem::mesh_entity::type::top:
-      return { ispec, num_points - 1, num_points - 1 - ipoint };
+      return { ispec, num_points - 1, ipoint };
       break;
     case specfem::mesh_entity::type::left:
       return { ispec, ipoint, 0 };
       break;
     case specfem::mesh_entity::type::right:
-      return { ispec, num_points - 1 - ipoint, num_points - 1 };
+      return { ispec, ipoint, num_points - 1 };
       break;
     default:
       DEVICE_ASSERT(false, "Invalid edge type");

@@ -143,38 +143,10 @@ public:
   template <specfem::connections::type ConnectionTag> struct self_field;
 
   /**
-   * @brief Self field specialization for weakly conforming connections
-   *
-   * For elastic-acoustic coupling with weakly conforming interfaces,
-   * the self field is an elastic acceleration field without SIMD optimization.
-   */
-  template <> struct self_field<specfem::connections::type::weakly_conforming> {
-    using type =
-        specfem::point::acceleration<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic_psv,
-                                     false>;
-  };
-
-  /**
    * @brief Coupled field type templates for different connection types
    * @tparam ConnectionTag Type of mesh connectivity (weakly_conforming, etc.)
    */
   template <specfem::connections::type ConnectionTag> struct coupled_field;
-
-  /**
-   * @brief Coupled field specialization for weakly conforming connections
-   *
-   * For elastic-acoustic coupling with weakly conforming interfaces,
-   * the coupled field is an acoustic acceleration field without SIMD
-   * optimization.
-   */
-  template <>
-  struct coupled_field<specfem::connections::type::weakly_conforming> {
-    using type =
-        specfem::point::acceleration<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::acoustic,
-                                     false>;
-  };
 
   /**
    * @brief Type alias for self field based on connection type
@@ -189,6 +161,26 @@ public:
    */
   template <specfem::connections::type ConnectionTag>
   using coupled_field_t = typename coupled_field<ConnectionTag>::type;
+};
+
+template <>
+struct attributes<specfem::dimension::type::dim2,
+                  specfem::interface::interface_tag::elastic_acoustic>::
+    self_field<specfem::connections::type::weakly_conforming> {
+  using type =
+      specfem::point::acceleration<specfem::dimension::type::dim2,
+                                   specfem::element::medium_tag::elastic_psv,
+                                   false>;
+};
+
+template <>
+struct attributes<specfem::dimension::type::dim2,
+                  specfem::interface::interface_tag::elastic_acoustic>::
+    coupled_field<specfem::connections::type::weakly_conforming> {
+  using type =
+      specfem::point::acceleration<specfem::dimension::type::dim2,
+                                   specfem::element::medium_tag::acoustic,
+                                   false>;
 };
 
 /**
@@ -232,39 +224,10 @@ public:
   template <specfem::connections::type ConnectionTag> struct self_field;
 
   /**
-   * @brief Self field specialization for weakly conforming connections
-   *
-   * For acoustic-elastic coupling with weakly conforming interfaces,
-   * the self field is an acoustic acceleration field without SIMD optimization.
-   */
-  template <> struct self_field<specfem::connections::type::weakly_conforming> {
-    using type =
-        specfem::point::acceleration<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::acoustic,
-                                     false>;
-  };
-
-  /**
    * @brief Coupled field type templates for different connection types
    * @tparam ConnectionTag Type of mesh connectivity (weakly_conforming, etc.)
    */
   template <specfem::connections::type ConnectionTag> struct coupled_field;
-
-  /**
-   * @brief Coupled field specialization for weakly conforming connections
-   *
-   * For acoustic-elastic coupling with weakly conforming interfaces,
-   * the coupled field is an elastic displacement field without SIMD
-   * optimization. The displacement field is used to compute the coupling
-   * contribution to the acoustic pressure field.
-   */
-  template <>
-  struct coupled_field<specfem::connections::type::weakly_conforming> {
-    using type =
-        specfem::point::displacement<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic_psv,
-                                     false>;
-  };
 
   /**
    * @brief Type alias for self field based on connection type
@@ -279,6 +242,26 @@ public:
    */
   template <specfem::connections::type ConnectionTag>
   using coupled_field_t = typename coupled_field<ConnectionTag>::type;
+};
+
+template <>
+struct attributes<specfem::dimension::type::dim2,
+                  specfem::interface::interface_tag::acoustic_elastic>::
+    self_field<specfem::connections::type::weakly_conforming> {
+  using type =
+      specfem::point::acceleration<specfem::dimension::type::dim2,
+                                   specfem::element::medium_tag::acoustic,
+                                   false>;
+};
+
+template <>
+struct attributes<specfem::dimension::type::dim2,
+                  specfem::interface::interface_tag::acoustic_elastic>::
+    coupled_field<specfem::connections::type::weakly_conforming> {
+  using type =
+      specfem::point::displacement<specfem::dimension::type::dim2,
+                                   specfem::element::medium_tag::elastic_psv,
+                                   false>;
 };
 
 } // namespace specfem::interface

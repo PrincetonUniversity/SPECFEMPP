@@ -21,8 +21,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
                  mesh.adjacency_graph };
   this->element_types = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
                           this->mesh, mesh.tags };
-  this->edge_types = { this->mesh.ngllx, this->mesh.ngllz, this->element_types,
-                       mesh.coupled_interfaces };
+  this->edge_types = { this->mesh.ngllx, this->mesh.ngllz, this->mesh,
+                       this->element_types, mesh.coupled_interfaces };
   this->jacobian_matrix = { this->mesh };
   this->properties = {
     this->mesh.nspec,          this->mesh.ngllz, this->mesh.ngllx,
