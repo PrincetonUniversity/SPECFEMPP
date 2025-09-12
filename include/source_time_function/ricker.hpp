@@ -8,6 +8,12 @@
 
 namespace specfem {
 namespace forcing_function {
+
+/**
+ * @brief Ricker source time function. The Ricker wavelet is a commonly used
+ *        source time function in seismic modeling. We define it here as the
+ * first derivative of a Ga
+ */
 class Ricker : public stf {
 
 public:
