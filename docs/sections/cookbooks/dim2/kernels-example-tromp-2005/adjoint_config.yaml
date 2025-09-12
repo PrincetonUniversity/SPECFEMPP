@@ -33,7 +33,7 @@ parameters:
 
                 writer:
                     kernels:
-                        format: ASCII
+                        format: NPY
                         directory: OUTPUT_FILES/kernels
 
     receivers:
