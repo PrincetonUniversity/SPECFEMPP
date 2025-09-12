@@ -6,7 +6,6 @@
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
 #include "specfem/assembly/compute_source_array.hpp"
-#include "specfem/assembly/coupled_interfaces.hpp"
 #include "specfem/assembly/coupled_interfaces2.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/element_types.hpp"
@@ -61,11 +60,6 @@ template <> struct assembly<specfem::dimension::type::dim2> {
                                                            ///< information
   specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
                                                            ///< conditions
-  specfem::assembly::coupled_interfaces<dimension_tag>
-      coupled_interfaces; ///< Coupled
-                          ///< interfaces
-                          ///< between 2
-                          ///< mediums
   specfem::assembly::coupled_interfaces2<dimension_tag>
       coupled_interfaces2; ///< Coupled interfaces between 2 mediums (new
                            ///< implementation)
