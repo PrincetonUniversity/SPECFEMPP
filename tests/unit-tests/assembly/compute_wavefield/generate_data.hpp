@@ -16,8 +16,8 @@ void generate_data(
 
   auto field = assembly.fields.template get_simulation_field<type>();
 
-  const int ngllx = assembly.mesh.ngllx;
-  const int ngllz = assembly.mesh.ngllz;
+  const int ngllx = assembly.mesh.element_grid.ngllx;
+  const int ngllz = assembly.mesh.element_grid.ngllz;
 
   const auto elements =
       assembly.element_types.get_elements_on_host(medium, property);

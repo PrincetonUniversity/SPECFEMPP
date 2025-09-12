@@ -93,8 +93,8 @@ TEST(ASSEMBLY_MESH, compute_ibool) {
   const auto h_coord = compute_mesh.h_coord;
 
   const int nspec = compute_mesh.nspec;
-  const int ngllz = compute_mesh.ngllz;
-  const int ngllx = compute_mesh.ngllx;
+  const int ngllz = compute_mesh.element_grid.ngllz;
+  const int ngllx = compute_mesh.element_grid.ngllx;
 
   type_real nglob;
   Kokkos::parallel_reduce(
