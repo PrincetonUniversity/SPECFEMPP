@@ -50,9 +50,9 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
   this->boundaries = { this->mesh.nspec, this->mesh.ngllz,
                        this->mesh.ngllx, mesh,
                        this->mesh,       this->jacobian_matrix };
-  this->coupled_interfaces2 = { this->mesh.ngllz, this->mesh.ngllx,
-                                this->edge_types, this->jacobian_matrix,
-                                this->mesh };
+  this->coupled_interfaces = { this->mesh.ngllz, this->mesh.ngllx,
+                               this->edge_types, this->jacobian_matrix,
+                               this->mesh };
   this->fields = { this->mesh, this->element_types, simulation };
 
   if (allocate_boundary_values)

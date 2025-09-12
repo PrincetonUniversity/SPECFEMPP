@@ -33,7 +33,7 @@ void specfem::kokkos_kernels::impl::compute_coupling(
       specfem::interface::attributes<dimension_tag,
                                      interface_tag>::self_medium();
 
-  const auto &coupled_interfaces = assembly.coupled_interfaces2;
+  const auto &coupled_interfaces = assembly.coupled_interfaces;
   const auto [self_edges, coupled_edges] =
       assembly.edge_types.get_edges_on_device(connection_tag, interface_tag,
                                               boundary_tag);
