@@ -7,7 +7,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
 
-namespace specfem::assembly::coupled_interfaces2_impl {
+namespace specfem::assembly::coupled_interfaces_impl {
 
 /**
  * @brief Container for 2D coupled interface data storage and access
@@ -113,4 +113,4 @@ public:
     return;
   }
 };
-} // namespace specfem::assembly::coupled_interfaces2_impl
+} // namespace specfem::assembly::coupled_interfaces_impl

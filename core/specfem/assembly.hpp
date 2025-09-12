@@ -3,7 +3,7 @@
 #include "assembly/assembly.hpp"
 #include "assembly/boundaries.hpp"
 #include "assembly/boundary_values.hpp"
-#include "assembly/coupled_interfaces2.hpp"
+#include "assembly/coupled_interfaces.hpp"
 #include "assembly/element_types.hpp"
 #include "assembly/fields.hpp"
 #include "assembly/jacobian_matrix.hpp"

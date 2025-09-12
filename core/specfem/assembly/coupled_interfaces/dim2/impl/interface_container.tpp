@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "specfem/assembly/coupled_interfaces2.hpp"
+#include "specfem/assembly/coupled_interfaces.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
@@ -10,7 +10,7 @@
 
 template <specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
-specfem::assembly::coupled_interfaces2_impl::interface_container<
+specfem::assembly::coupled_interfaces_impl::interface_container<
     specfem::dimension::type::dim2, InterfaceTag, BoundaryTag>::
     interface_container(
         const int ngllz, const int ngllx,
@@ -38,9 +38,9 @@ specfem::assembly::coupled_interfaces2_impl::interface_container<
   const auto nedges = self_edges.size();
 
   this->edge_factor = EdgeFactorView(
-      "specfem::assembly::coupled_interfaces2::edge_factor", nedges, ngllx);
+      "specfem::assembly::coupled_interfaces::edge_factor", nedges, ngllx);
   this->edge_normal = EdgeNormalView(
-      "specfem::assembly::coupled_interfaces2::edge_normal", nedges, ngllx, 2);
+      "specfem::assembly::coupled_interfaces::edge_normal", nedges, ngllx, 2);
 
   this->h_edge_factor = Kokkos::create_mirror_view(edge_factor);
   this->h_edge_normal = Kokkos::create_mirror_view(edge_normal);
