@@ -22,11 +22,12 @@ template <specfem::dimension::type DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           typename... AdditionalArgs>
-void compute_coupling(const AdditionalArgs &...args) {
+void compute_coupling(
+    const specfem::assembly::assembly<DimensionTag> &assembly) {
   using connection_dispatch =
       std::integral_constant<specfem::connections::type, ConnectionTag>;
 
-  compute_coupling(connection_dispatch(),
-                   std::forward<AdditionalArgs>(args)...);
+  compute_coupling<DimensionTag, WavefieldType, InterfaceTag, BoundaryTag>(
+      connection_dispatch(), assembly);
 }
 } // namespace specfem::kokkos_kernels::impl
