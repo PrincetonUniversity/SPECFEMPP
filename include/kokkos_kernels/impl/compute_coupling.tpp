@@ -1,13 +1,14 @@
 #pragma once
 
+#include "boundary_conditions/boundary_conditions.hpp"
 #include "compute_coupling.hpp"
 #include "enumerations/interface.hpp"
 #include "execution/chunked_intersection_iterator.hpp"
 #include "execution/for_all.hpp"
+#include "medium/compute_coupling.hpp"
 #include "parallel_configuration/chunk_edge_config.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
-#include "medium/compute_coupling.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -27,6 +28,11 @@ void specfem::kokkos_kernels::impl::compute_coupling(
   constexpr static auto interface_tag = InterfaceTag;
   constexpr static auto boundary_tag = BoundaryTag;
   constexpr static auto wavefield = WavefieldType;
+
+  constexpr static auto self_medium =
+      specfem::interface::attributes<dimension_tag,
+                                     interface_tag>::self_medium();
+
   const auto &coupled_interfaces = assembly.coupled_interfaces2;
   const auto [self_edges, coupled_edges] =
       assembly.edge_types.get_edges_on_device(connection_tag, interface_tag,
@@ -46,6 +52,9 @@ void specfem::kokkos_kernels::impl::compute_coupling(
       dimension_tag, interface_tag>::template coupled_field_t<connection_tag>;
   using SelfFieldType = typename specfem::interface::attributes<
       dimension_tag, interface_tag>::template self_field_t<connection_tag>;
+
+  using PointBoundaryType =
+      specfem::point::boundary<boundary_tag, dimension_tag, false>;
 
   specfem::execution::ChunkedIntersectionIterator chunk(
       parallel_config(), self_edges, coupled_edges, num_points);
@@ -69,6 +78,16 @@ void specfem::kokkos_kernels::impl::compute_coupling(
 
         specfem::medium::compute_coupling(point_interface_data, coupled_field,
                                           self_field);
+
+        if constexpr (BoundaryTag ==
+                      specfem::element::boundary_tag::acoustic_free_surface)
+                      {
+          PointBoundaryType point_boundary;
+          specfem::assembly::load_on_device(self_index, assembly.boundaries,
+                                            point_boundary);
+          specfem::boundary_conditions::apply_boundary_conditions(
+              point_boundary, self_field);
+        }
 
         specfem::assembly::atomic_add_on_device(self_index, field, self_field);
       });

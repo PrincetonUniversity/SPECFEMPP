@@ -12,6 +12,39 @@
 namespace specfem {
 
 namespace boundary_conditions {
+
+template <typename PointBoundaryType, typename PointAccelerationType,
+          typename std::enable_if_t<
+              ((PointBoundaryType::boundary_tag ==
+                specfem::element::boundary_tag::none) ||
+               (PointBoundaryType::boundary_tag ==
+                specfem::element::boundary_tag::acoustic_free_surface)),
+              int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+apply_boundary_conditions(const PointBoundaryType &boundary,
+                          PointAccelerationType &acceleration) {
+
+  static_assert(specfem::data_access::is_point<PointBoundaryType>::value &&
+                    specfem::data_access::is_boundary<PointBoundaryType>::value,
+                "PointBoundaryType must be a PointBoundaryType");
+
+  static_assert(
+      specfem::data_access::is_point<PointAccelerationType>::value &&
+          specfem::data_access::is_acceleration<PointAccelerationType>::value,
+      "PointAccelerationType must be a PointAccelerationType");
+
+  using boundary_tag_type =
+      std::integral_constant<specfem::element::boundary_tag,
+                             PointBoundaryType::boundary_tag>;
+
+  impl_apply_boundary_conditions(
+      std::integral_constant<specfem::element::boundary_tag,
+                             PointBoundaryType::boundary_tag>(),
+      boundary, acceleration);
+
+  return;
+}
+
 template <typename PointBoundaryType, typename PointPropertyType,
           typename PointVelocityType, typename PointAccelerationType>
 KOKKOS_FORCEINLINE_FUNCTION void apply_boundary_conditions(

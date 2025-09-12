@@ -9,6 +9,7 @@
 #include "mesh/mesh.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem/point.hpp"
 
 namespace specfem::assembly::boundaries_impl {
@@ -44,8 +45,14 @@ public:
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
       std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
+  template <typename IndexType,
+            typename std::enable_if_t<
+                specfem::data_access::is_index_type<IndexType>::value &&
+                    specfem::data_access::is_point<IndexType>::value &&
+                    IndexType::using_simd == false,
+                int> = 0>
   KOKKOS_FORCEINLINE_FUNCTION void
-  load_on_device(const specfem::point::index<dimension_tag> &index,
+  load_on_device(const IndexType &index,
                  specfem::point::boundary<boundary_tag, dimension_tag, false>
                      &boundary) const {
 
@@ -54,8 +61,14 @@ public:
     return;
   }
 
+  template <typename IndexType,
+            typename std::enable_if_t<
+                specfem::data_access::is_index_type<IndexType>::value &&
+                    specfem::data_access::is_point<IndexType>::value &&
+                    IndexType::using_simd == false,
+                int> = 0>
   KOKKOS_FORCEINLINE_FUNCTION void
-  load_on_device(const specfem::point::index<dimension_tag> &index,
+  load_on_device(const IndexType &index,
                  specfem::point::boundary<
                      specfem::element::boundary_tag::composite_stacey_dirichlet,
                      dimension_tag, false> &boundary) const {
@@ -65,8 +78,14 @@ public:
     return;
   }
 
+  template <typename IndexType,
+            typename std::enable_if_t<
+                specfem::data_access::is_index_type<IndexType>::value &&
+                    specfem::data_access::is_point<IndexType>::value &&
+                    IndexType::using_simd == true,
+                int> = 0>
   KOKKOS_FORCEINLINE_FUNCTION void
-  load_on_device(const specfem::point::simd_index<dimension_tag> &index,
+  load_on_device(const IndexType &index,
                  specfem::point::boundary<boundary_tag, dimension_tag, true>
                      &boundary) const {
 
@@ -87,8 +106,14 @@ public:
     return;
   }
 
+  template <typename IndexType,
+            typename std::enable_if_t<
+                specfem::data_access::is_index_type<IndexType>::value &&
+                    specfem::data_access::is_point<IndexType>::value &&
+                    IndexType::using_simd == true,
+                int> = 0>
   KOKKOS_FORCEINLINE_FUNCTION void
-  load_on_device(const specfem::point::simd_index<dimension_tag> &index,
+  load_on_device(const IndexType &index,
                  specfem::point::boundary<
                      specfem::element::boundary_tag::composite_stacey_dirichlet,
                      dimension_tag, true> &boundary) const {
@@ -110,17 +135,28 @@ public:
     return;
   }
 
-  inline void
-  load_on_host(const specfem::point::index<dimension_tag> &index,
-               specfem::point ::boundary<boundary_tag, dimension_tag, false>
-                   &boundary) const {
+  template <typename IndexType,
+            typename std::enable_if_t<
+                specfem::data_access::is_index_type<IndexType>::value &&
+                    specfem::data_access::is_point<IndexType>::value &&
+                    IndexType::using_simd == false,
+                int> = 0>
+  inline void load_on_host(const IndexType &index,
+                           specfem::point::boundary<boundary_tag, dimension_tag,
+                                                    false> &boundary) const {
     boundary.tag +=
         h_quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
     return;
   }
 
+  template <typename IndexType,
+            typename std::enable_if_t<
+                specfem::data_access::is_index_type<IndexType>::value &&
+                    specfem::data_access::is_point<IndexType>::value &&
+                    IndexType::using_simd == false,
+                int> = 0>
   inline void
-  load_on_host(const specfem::point::index<dimension_tag> &index,
+  load_on_host(const IndexType &index,
                specfem::point::boundary<
                    specfem::element::boundary_tag::composite_stacey_dirichlet,
                    dimension_tag, false> &boundary) const {
@@ -130,10 +166,15 @@ public:
     return;
   }
 
-  inline void
-  load_on_host(const specfem::point::simd_index<dimension_tag> &index,
-               specfem::point::boundary<boundary_tag, dimension_tag, true>
-                   &boundary) const {
+  template <typename IndexType,
+            typename std::enable_if_t<
+                specfem::data_access::is_index_type<IndexType>::value &&
+                    specfem::data_access::is_point<IndexType>::value &&
+                    IndexType::using_simd == true,
+                int> = 0>
+  inline void load_on_host(const IndexType &index,
+                           specfem::point::boundary<boundary_tag, dimension_tag,
+                                                    true> &boundary) const {
 
     using simd = typename specfem::datatype::simd<type_real, true>;
 
@@ -149,8 +190,14 @@ public:
     return;
   }
 
+  template <typename IndexType,
+            typename std::enable_if_t<
+                specfem::data_access::is_index_type<IndexType>::value &&
+                    specfem::data_access::is_point<IndexType>::value &&
+                    IndexType::using_simd == true,
+                int> = 0>
   inline void
-  load_on_host(const specfem::point::simd_index<dimension_tag> &index,
+  load_on_host(const IndexType &index,
                specfem::point::boundary<
                    specfem::element::boundary_tag::composite_stacey_dirichlet,
                    dimension_tag, true> &boundary) const {
