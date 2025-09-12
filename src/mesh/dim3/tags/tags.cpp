@@ -30,13 +30,16 @@ specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
   const auto &acoustic_free_surface = boundaries.acoustic_free_surface;
   for (int i = 0; i < acoustic_free_surface.nelements; ++i) {
     const int ispec = acoustic_free_surface.ispec(i);
-    if (element_types.ispec_type(ispec) !=
+
+    // The acoustic elements at the free surface require special treatment in
+    // terms of boundary conditions.
+    if (element_types.ispec_type(ispec) ==
         specfem::element::medium_tag::acoustic) {
-      throw std::invalid_argument(
-          "Error: Acoustic free surface boundary is not an acoustic element");
+      boundary_tag[ispec] +=
+          specfem::element::boundary_tag::acoustic_free_surface;
+    } else {
+      continue;
     }
-    boundary_tag[ispec] +=
-        specfem::element::boundary_tag::acoustic_free_surface;
   }
 
   for (int ispec = 0; ispec < nspec; ispec++) {
