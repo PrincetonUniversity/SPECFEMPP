@@ -4,7 +4,7 @@
 Chapter 4: Instantiating the writer and reader
 ==============================================
 
-Now that we have implemented the writer and reader classes, let's instantiate them in the main function with the HDF5 library.
+Now that we have implemented the writer and reader classes, let's instantiate them in the main function with the Numpy library.
 
 .. code:: cpp
 
@@ -14,10 +14,10 @@ Now that we have implemented the writer and reader classes, let's instantiate th
         const auto& forward = fields.forward;
         const auto& buffer = fields.buffer;
 
-        writer<specfem::io::HDF5<specfem::io::write>> writer("output", forward);
+        writer<specfem::io::NPY<specfem::io::write>> writer("output", forward);
         writer.write();
 
-        reader<specfem::io::HDF5<specfem::io::read>> reader("output", buffer);
+        reader<specfem::io::NPY<specfem::io::read>> reader("output", buffer);
         reader.read();
 
         // Deep copy the buffer into the backward field
