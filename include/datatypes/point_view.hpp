@@ -49,9 +49,7 @@ struct VectorPointViewType
   ///@{
   constexpr static int components = Components; ///< Number of scalar values at
                                                 ///< the GLL point
-  constexpr static bool isElementViewType = false;
   constexpr static bool isChunkViewType = false;
-  constexpr static bool isDomainViewType = false;
   constexpr static bool isScalarViewType = true;
   constexpr static bool isVectorViewType = false;
   ///@}
@@ -125,9 +123,7 @@ struct TensorPointViewType
                                                 ///< vector
   constexpr static int dimensions = Dimensions; ///< Number of dimensions
                                                 ///< of the vector
-  constexpr static bool isElementViewType = false;
   constexpr static bool isChunkViewType = false;
-  constexpr static bool isDomainViewType = false;
   constexpr static bool isScalarViewType = false;
   constexpr static bool isVectorViewType = true;
   ///@}
