@@ -22,6 +22,7 @@ struct Accessor<specfem::data_access::AccessorType::chunk_element, DataClass,
 
   template <typename T, int nelements, int ngll>
   using scalar_type =
+
       Kokkos::View<typename simd<T>::datatype[nelements][ngll][ngll],
                    Kokkos::DefaultExecutionSpace::scratch_memory_space,
                    Kokkos::MemoryTraits<Kokkos::Unmanaged> >;

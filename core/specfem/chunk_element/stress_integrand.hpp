@@ -64,7 +64,7 @@ public:
   ///@{
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type.
 
-  using ViewType = specfem::datatype::VectorChunkViewType<
+  using ViewType = specfem::datatype::TensorChunkViewType<
       type_real, NumberElements, NGLL, components, num_dimensions, MemorySpace,
       MemoryTraits, UseSIMD>; ///< Underlying view used to store data.
   ///@}
