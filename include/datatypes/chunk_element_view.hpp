@@ -20,11 +20,11 @@ namespace datatype {
  * @tparam UseSIMD Use SIMD datatypes for the array. If true, value_type is a
  * SIMD type
  */
-template <
-    typename T, int NumberOfElements, int NumberOfGLLPoints, int Components,
-    typename MemorySpace = Kokkos::DefaultExecutionSpace::scratch_memory_space,
-    typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-    bool UseSIMD = false>
+template <typename T, int NumberOfElements, int NumberOfGLLPoints,
+          int Components, bool UseSIMD = false,
+          typename MemorySpace =
+              Kokkos::DefaultExecutionSpace::scratch_memory_space,
+          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
 struct VectorChunkViewType
     : public Kokkos::View<typename specfem::datatype::simd<T, UseSIMD>::datatype
                               [NumberOfElements][NumberOfGLLPoints]
@@ -114,11 +114,10 @@ struct VectorChunkViewType
  * SIMD type
  */
 template <typename T, int NumberOfElements, int NumberOfGLLPoints,
-          int Components, int NumberOfDimensions,
+          int Components, int NumberOfDimensions, bool UseSIMD = false,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
-          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-          bool UseSIMD = false>
+          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
 struct TensorChunkViewType
     : public Kokkos::View<
           typename specfem::datatype::simd<T, UseSIMD>::datatype

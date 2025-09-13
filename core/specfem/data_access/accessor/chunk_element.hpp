@@ -28,16 +28,14 @@ struct Accessor<specfem::data_access::AccessorType::chunk_element, DataClass,
                    Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
   template <typename T, int nelements, int ngll, int components>
-  using vector_type = specfem::datatype::VectorChunkViewType<
-      T, nelements, ngll, components,
-      Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, UseSIMD>;
+  using vector_type =
+      specfem::datatype::VectorChunkViewType<T, nelements, ngll, components,
+                                             UseSIMD>;
 
   template <typename T, int nelements, int ngll, int components, int dimension>
-  using tensor_type = specfem::datatype::TensorChunkViewType<
-      T, nelements, ngll, components, dimension,
-      Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, UseSIMD>;
+  using tensor_type =
+      specfem::datatype::TensorChunkViewType<T, nelements, ngll, components,
+                                             dimension, UseSIMD>;
 };
 
 template <typename T, typename = void>
