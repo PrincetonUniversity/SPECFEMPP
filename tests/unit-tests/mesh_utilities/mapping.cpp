@@ -168,7 +168,14 @@ create_coordinate_arrays(const std::vector<point_2d> &reordered_points,
   }
 
   int ngllxz = ngll * ngll;
-  assert(nglob != (nspec * ngllxz));
+
+  // assembly should reduce number of unique global nodes if there are shared
+  // nodes. nspec = 1 means no sharing, so nglob should equal nspec*ngllxz
+  if (nspec > 1) {
+    assert(nglob < (nspec * ngllxz));
+  } else {
+    assert(nglob == (nspec * ngllxz));
+  }
   assert(inum == nglob);
 
   return std::make_tuple(index_mapping, coord, inum);
