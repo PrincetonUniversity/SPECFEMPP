@@ -61,7 +61,6 @@ struct VectorChunkViewType
                                                  ///< each element
   constexpr static int components = Components;  ///< Number of scalar values at
                                                  ///< each GLL point
-  constexpr static bool isPointViewType = false;
   constexpr static bool isElementViewType = false;
   constexpr static bool isChunkViewType = true;
   constexpr static bool isDomainViewType = false;
@@ -158,7 +157,6 @@ struct TensorChunkViewType
   constexpr static int dimensions =
       NumberOfDimensions; ///< Number of dimensions
                           ///< of the vector values
-  constexpr static bool isPointViewType = false;
   constexpr static bool isElementViewType = false;
   constexpr static bool isChunkViewType = true;
   constexpr static bool isDomainViewType = false;
