@@ -54,9 +54,6 @@ KOKKOS_FUNCTION void divergence(
   using VectorPointViewType =
       specfem::datatype::VectorPointViewType<type_real, components, using_simd>;
 
-  static_assert(VectorFieldType::isVectorViewType,
-                "ViewType must be a vector field view type");
-
   static_assert(
       std::is_invocable_v<CallableType,
                           typename ChunkIndexType::iterator_type::index_type,

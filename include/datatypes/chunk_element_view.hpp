@@ -63,7 +63,6 @@ struct VectorChunkViewType
                                                  ///< each GLL point
   constexpr static bool isChunkViewType = true;
   constexpr static bool isScalarViewType = true;
-  constexpr static bool isVectorViewType = false;
   ///@}
 
   /**
@@ -157,7 +156,6 @@ struct TensorChunkViewType
                           ///< of the vector values
   constexpr static bool isChunkViewType = true;
   constexpr static bool isScalarViewType = false;
-  constexpr static bool isVectorViewType = true;
   ///@}
 
   /**
