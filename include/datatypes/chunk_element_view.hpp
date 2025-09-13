@@ -5,32 +5,6 @@
 
 namespace specfem {
 namespace datatype {
-
-namespace impl {
-/**
- * @brief Helper struct to select the correct chunk view type based on the
- * dimension tag.
- */
-template <specfem::dimension::type DimensionTag> struct BaseDimension;
-
-template <> struct BaseDimension<specfem::dimension::type::dim2> {
-  template <typename T, int NumberOfElements, int NumberOfGLLPoints,
-            bool UseSIMD>
-  using datatype =
-      typename specfem::datatype::simd<T, UseSIMD>::datatype[NumberOfElements]
-                                                            [NumberOfGLLPoints];
-};
-
-template <> struct BaseDimension<specfem::dimension::type::dim3> {
-  template <typename T, int NumberOfElements, int NumberOfGLLPoints,
-            bool UseSIMD>
-  using datatype =
-      typename specfem::datatype::simd<T, UseSIMD>::datatype[NumberOfElements]
-                                                            [NumberOfGLLPoints]
-                                                            [NumberOfGLLPoints];
-};
-} // namespace impl
-
 /**
  * @brief Datatype used to scalar values within chunk of elements. Data is
  * stored within a Kokkos view located in the memory space specified by
@@ -49,10 +23,16 @@ template <typename T, specfem::dimension::type DimensionTag,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
           typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
-struct ScalarChunkViewType
+struct ScalarChunkViewType;
+
+template <typename T, int NumberOfElements, int NumberOfGLLPoints, bool UseSIMD,
+          typename MemorySpace, typename MemoryTraits>
+struct ScalarChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
+                           NumberOfGLLPoints, UseSIMD, MemorySpace,
+                           MemoryTraits>
     : public Kokkos::View<
-          typename impl::BaseDimension<DimensionTag>::template datatype<
-              T, UseSIMD, NumberOfElements, NumberOfGLLPoints>,
+          typename specfem::datatype::simd<T, UseSIMD>::datatype
+              [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints],
           MemorySpace, MemoryTraits> {
   /**
    * @name Typedefs
@@ -60,11 +40,11 @@ struct ScalarChunkViewType
    */
   ///@{
   using simd = specfem::datatype::simd<T, UseSIMD>; ///< SIMD data type
-  using type = Kokkos::View<
-      typename impl::BaseDimension<DimensionTag>::template datatype<
-          T, UseSIMD, NumberOfElements, NumberOfGLLPoints>,
-      MemorySpace, MemoryTraits>; ///< Underlying data type used to
-                                  ///< store values
+  using type =
+      Kokkos::View<typename specfem::datatype::simd<T, UseSIMD>::datatype
+                       [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints],
+                   MemorySpace, MemoryTraits>; ///< Underlying data type used to
+                                               ///< store values
   using value_type = typename type::value_type; ///< Value type used to store
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
@@ -110,8 +90,8 @@ struct ScalarChunkViewType
   KOKKOS_FUNCTION
   ScalarChunkViewType(const ScratchMemorySpace &scratch_memory_space)
       : Kokkos::View<
-            typename impl::BaseDimension<DimensionTag>::template datatype<
-                T, UseSIMD, NumberOfElements, NumberOfGLLPoints>,
+            typename specfem::datatype::simd<T, UseSIMD>::datatype
+                [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints],
             MemorySpace, MemoryTraits>(scratch_memory_space) {}
   ///@}
 };
@@ -135,7 +115,14 @@ template <
     int NumberOfGLLPoints, int Components, bool UseSIMD = false,
     typename MemorySpace = Kokkos::DefaultExecutionSpace::scratch_memory_space,
     typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
-struct VectorChunkViewType
+struct VectorChunkViewType;
+
+template <typename T, int NumberOfElements, int NumberOfGLLPoints,
+          int Components, bool UseSIMD, typename MemorySpace,
+          typename MemoryTraits>
+struct VectorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
+                           NumberOfGLLPoints, Components, UseSIMD, MemorySpace,
+                           MemoryTraits>
     : public Kokkos::View<typename specfem::datatype::simd<T, UseSIMD>::datatype
                               [NumberOfElements][NumberOfGLLPoints]
                               [NumberOfGLLPoints][Components],
@@ -225,7 +212,14 @@ template <typename T, specfem::dimension::type DimensionTag,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
           typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
-struct TensorChunkViewType
+struct TensorChunkViewType;
+
+template <typename T, int NumberOfElements, int NumberOfGLLPoints,
+          int Components, int NumberOfDimensions, bool UseSIMD,
+          typename MemorySpace, typename MemoryTraits>
+struct TensorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
+                           NumberOfGLLPoints, Components, NumberOfDimensions,
+                           UseSIMD, MemorySpace, MemoryTraits>
     : public Kokkos::View<
           typename specfem::datatype::simd<T, UseSIMD>::datatype
               [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
