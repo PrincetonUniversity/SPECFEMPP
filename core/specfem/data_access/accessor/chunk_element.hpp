@@ -1,6 +1,6 @@
 #pragma once
 
-#include "datatypes/simd.hpp"
+#include "datatypes/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/data_access/accessor.hpp"
 #include <Kokkos_Core.hpp>
@@ -28,16 +28,16 @@ struct Accessor<specfem::data_access::AccessorType::chunk_element, DataClass,
                    Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
   template <typename T, int nelements, int ngll, int components>
-  using vector_type = typename Kokkos::View<
-      typename simd<T>::datatype[nelements][ngll][ngll][components],
+  using vector_type = specfem::datatype::VectorChunkViewType<
+      T, nelements, ngll, components,
       Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, UseSIMD>;
 
   template <typename T, int nelements, int ngll, int components, int dimension>
-  using tensor_type = Kokkos::View<
-      typename simd<T>::datatype[nelements][ngll][ngll][components][dimension],
+  using tensor_type = specfem::datatype::TensorChunkViewType<
+      T, nelements, ngll, components, dimension,
       Kokkos::DefaultExecutionSpace::scratch_memory_space,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, UseSIMD>;
 };
 
 template <typename T, typename = void>
