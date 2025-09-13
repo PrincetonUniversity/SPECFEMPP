@@ -6,6 +6,31 @@
 namespace specfem {
 namespace datatype {
 
+namespace impl {
+/**
+ * @brief Helper struct to select the correct chunk view type based on the
+ * dimension tag.
+ */
+template <specfem::dimension::type DimensionTag> struct BaseDimension;
+
+template <> struct BaseDimension<specfem::dimension::type::dim2> {
+  template <typename T, int NumberOfElements, int NumberOfGLLPoints,
+            bool UseSIMD>
+  using datatype =
+      typename specfem::datatype::simd<T, UseSIMD>::datatype[NumberOfElements]
+                                                            [NumberOfGLLPoints];
+};
+
+template <> struct BaseDimension<specfem::dimension::type::dim3> {
+  template <typename T, int NumberOfElements, int NumberOfGLLPoints,
+            bool UseSIMD>
+  using datatype =
+      typename specfem::datatype::simd<T, UseSIMD>::datatype[NumberOfElements]
+                                                            [NumberOfGLLPoints]
+                                                            [NumberOfGLLPoints];
+};
+} // namespace impl
+
 /**
  * @brief Datatype used to scalar values within chunk of elements. Data is
  * stored within a Kokkos view located in the memory space specified by
@@ -14,17 +39,102 @@ namespace datatype {
  * @tparam T Data type of the scalar values
  * @tparam NumberOfElements Number of elements in the chunk
  * @tparam NumberOfGLLPoints Number of GLL points in each element
- * @tparam Components Number of scalar values (components) at each GLL point
  * @tparam MemorySpace Memory space of the view
  * @tparam MemoryTraits Memory traits of the view
  * @tparam UseSIMD Use SIMD datatypes for the array. If true, value_type is a
  * SIMD type
  */
-template <typename T, int NumberOfElements, int NumberOfGLLPoints,
-          int Components, bool UseSIMD = false,
+template <typename T, specfem::dimension::type DimensionTag,
+          int NumberOfElements, int NumberOfGLLPoints, bool UseSIMD = false,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
           typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+struct ScalarChunkViewType
+    : public Kokkos::View<
+          typename impl::BaseDimension<DimensionTag>::template datatype<
+              T, UseSIMD, NumberOfElements, NumberOfGLLPoints>,
+          MemorySpace, MemoryTraits> {
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using simd = specfem::datatype::simd<T, UseSIMD>; ///< SIMD data type
+  using type = Kokkos::View<
+      typename impl::BaseDimension<DimensionTag>::template datatype<
+          T, UseSIMD, NumberOfElements, NumberOfGLLPoints>,
+      MemorySpace, MemoryTraits>; ///< Underlying data type used to
+                                  ///< store values
+  using value_type = typename type::value_type; ///< Value type used to store
+                                                ///< the elements of the array
+  using base_type = T;                          ///< Base type of the array
+  constexpr static bool using_simd = UseSIMD;   ///< Use SIMD datatypes for the
+                                                ///< array. If false,
+                                                ///< std::is_same<value_type,
+                                                ///< base_type>::value is true
+  ///@}
+
+  /**
+   * @name Compile time constants
+   *
+   */
+  ///@{
+  constexpr static int nelements = NumberOfElements; ///< Number of elements in
+                                                     ///< the chunk
+  constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
+                                                 ///< each element
+  constexpr static bool isChunkViewType = true;
+  ///@}
+
+  /**
+   * @name Constructors and assignment operators
+   *
+   */
+  ///@{
+  /**
+   * @brief Default constructor
+   */
+  KOKKOS_FUNCTION
+  ScalarChunkViewType() = default;
+
+  /**
+   * @brief Construct a new ScalarChunkViewType object within
+   * ScratchMemorySpace.
+   * Allocates an unmanaged view within ScratchMemorySpace. Useful for
+   * generating scratch views.
+   *
+   * @tparam ScratchMemorySpace Memory space of the view
+   * @param scratch_memory_space Memory space of the view
+   */
+  template <typename ScratchMemorySpace>
+  KOKKOS_FUNCTION
+  ScalarChunkViewType(const ScratchMemorySpace &scratch_memory_space)
+      : Kokkos::View<
+            typename impl::BaseDimension<DimensionTag>::template datatype<
+                T, UseSIMD, NumberOfElements, NumberOfGLLPoints>,
+            MemorySpace, MemoryTraits>(scratch_memory_space) {}
+  ///@}
+};
+
+/**
+ * @brief Datatype used to vector values within chunk of elements. Data is
+ * stored within a Kokkos view located in the memory space specified by
+ * MemorySpace.
+ *
+ * @tparam T Data type of the vector values
+ * @tparam NumberOfElements Number of elements in the chunk
+ * @tparam NumberOfGLLPoints Number of GLL points in each element
+ * @tparam Components Number of vector values (components) at each GLL point
+ * @tparam MemorySpace Memory space of the view
+ * @tparam MemoryTraits Memory traits of the view
+ * @tparam UseSIMD Use SIMD datatypes for the array. If true, value_type is a
+ * SIMD type
+ */
+template <
+    typename T, specfem::dimension::type DimensionTag, int NumberOfElements,
+    int NumberOfGLLPoints, int Components, bool UseSIMD = false,
+    typename MemorySpace = Kokkos::DefaultExecutionSpace::scratch_memory_space,
+    typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
 struct VectorChunkViewType
     : public Kokkos::View<typename specfem::datatype::simd<T, UseSIMD>::datatype
                               [NumberOfElements][NumberOfGLLPoints]
@@ -59,7 +169,7 @@ struct VectorChunkViewType
                                                      ///< the chunk
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
                                                  ///< each element
-  constexpr static int components = Components;  ///< Number of scalar values at
+  constexpr static int components = Components;  ///< Number of vector values at
                                                  ///< each GLL point
   constexpr static bool isChunkViewType = true;
   constexpr static bool isScalarViewType = true;
@@ -95,22 +205,23 @@ struct VectorChunkViewType
 };
 
 /**
- * @brief Datatype used to vector values within chunk of elements. Data is
+ * @brief Datatype used to tensor values within chunk of elements. Data is
  * stored within a Kokkos view located in the memory space specified by
  * MemorySpace.
  *
- * @tparam T Data type of the vector values
+ * @tparam T Data type of the tensor values
  * @tparam NumberOfElements Number of elements in the chunk
  * @tparam NumberOfGLLPoints Number of GLL points in each element
- * @tparam Components Number of scalar values (components) at each GLL point
- * @tparam NumberOfDimensions Number of dimensions of the vector
+ * @tparam Components Number of vector values (components) at each GLL point
+ * @tparam NumberOfDimensions Number of dimensions of the tensor
  * @tparam MemorySpace Memory space of the view
  * @tparam MemoryTraits Memory traits of the view
  * @tparam UseSIMD Use SIMD datatypes for the array. If true, value_type is a
  * SIMD type
  */
-template <typename T, int NumberOfElements, int NumberOfGLLPoints,
-          int Components, int NumberOfDimensions, bool UseSIMD = false,
+template <typename T, specfem::dimension::type DimensionTag,
+          int NumberOfElements, int NumberOfGLLPoints, int Components,
+          int NumberOfDimensions, bool UseSIMD = false,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
           typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
@@ -149,11 +260,11 @@ struct TensorChunkViewType
                                                      ///< the chunk
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
                                                  ///< each element
-  constexpr static int components = Components;  ///< Number of scalar values at
+  constexpr static int components = Components;  ///< Number of tensor values at
                                                  ///< each GLL point
   constexpr static int dimensions =
       NumberOfDimensions; ///< Number of dimensions
-                          ///< of the vector values
+                          ///< of the tensor values
   constexpr static bool isChunkViewType = true;
   constexpr static bool isScalarViewType = false;
   ///@}
