@@ -75,9 +75,9 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::print() const {
   std::ostringstream message;
   message << "Assembly information:\n"
           << "------------------------------\n"
-          << "Total number of spectral elements             : "
+          << "  Total number of spectral elements             : "
           << this->mesh.nspec << "\n"
-          << "Total number of quadrature points per element : "
+          << "  Total number of quadrature points per element : "
           << this->mesh.element_grid.ngllz << "\n";
   // << "Total number of distinct quadrature points    : "
   // << this->mesh.nglob << "\n";
@@ -101,5 +101,15 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::print() const {
         };
       })
 
+  if (total_elements == mesh.nspec) {
+    message << "  All elements accounted for.\n";
+  } else {
+    message << " NOT ALL ELEMENTS ACCOUNTED FOR\n";
+    message << "  Mesh elements:              " << mesh.nspec << "\n";
+    message << "  Assembly elements counted:  " << total_elements << "\n";
+    message << "  Total unaccounted elements: " << (mesh.nspec - total_elements)
+            << "\n";
+    throw std::runtime_error(message.str());
+  }
   return message.str();
 }
