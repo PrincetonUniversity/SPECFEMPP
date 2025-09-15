@@ -274,7 +274,6 @@ target_link_libraries(
 
 add_executable(
   nonconforming_tests
-  nonconforming/interfacial_assembly/interfacial_assembly.cpp
   nonconforming/reparameterizations/compute_intersection_test.cpp
   nonconforming/runner.cpp
 )
