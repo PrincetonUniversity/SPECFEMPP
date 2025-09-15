@@ -104,8 +104,6 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   check_values("nspec_irregular", nspec_irregular,
                mesh.parameters.nspec_irregular);
 
-  std::cout << "NSPEC IRREGULAR" << mesh.parameters.nspec_irregular << "\n";
-
   // Create the mapping object
   mesh.mapping = specfem::mesh::mapping<specfem::dimension::type::dim3>(
       mesh.parameters.nspec, mesh.parameters.nglob,
@@ -359,10 +357,6 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   // and read the absorbing boundaries
   if (num_abs_boundary_faces > 0) {
 
-    std::cout << "Reading absorbing boundary conditions..." << std::endl;
-    std::cout << "Number of absorbing boundary faces: "
-              << num_abs_boundary_faces << std::endl;
-
     mesh.boundaries.absorbing_boundary =
         specfem::mesh::absorbing_boundary<specfem::dimension::type::dim3>(
             mesh.parameters.nglob, mesh.parameters.num_abs_boundary_faces,
@@ -382,9 +376,6 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
     try_read_array("abs_boundary_normal", stream,
                    mesh.boundaries.absorbing_boundary.normal);
 
-    std::cout << "x extent: "
-              << mesh.boundaries.absorbing_boundary.mass_elastic.x.size()
-              << std::endl;
     // Read the absorbing mass matrix elastic
 
     if ((mesh.parameters.stacey_abc) & !(mesh.parameters.pml_abc)) {
