@@ -17,14 +17,13 @@ void get_wavefield_on_entire_grid(
                  Kokkos::DefaultExecutionSpace>
         wavefield_on_entire_grid) {
 
-  const int ngllx = assembly.mesh.ngllx;
-  const int ngllz = assembly.mesh.ngllz;
+  const auto &element_grid = assembly.mesh.element_grid;
 
-  if (ngllx == 5 && ngllz == 5) {
+  if (element_grid == 5) {
     impl::helper<MediumTag, PropertyTag, 5> helper(assembly,
                                                    wavefield_on_entire_grid);
     helper(component);
-  } else if (ngllx == 8 && ngllz == 8) {
+  } else if (element_grid == 8) {
     impl::helper<MediumTag, PropertyTag, 8> helper(assembly,
                                                    wavefield_on_entire_grid);
     helper(component);
@@ -79,7 +78,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::
   Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                Kokkos::DefaultExecutionSpace>
       wavefield_on_entire_grid("wavefield_on_entire_grid", this->mesh.nspec,
-                               this->mesh.ngllz, this->mesh.ngllx, ncomponents);
+                               this->mesh.element_grid.ngllz,
+                               this->mesh.element_grid.ngllx, ncomponents);
 
   // Create host mirror for the wavefield on the entire grid
   const auto h_wavefield_on_entire_grid =
