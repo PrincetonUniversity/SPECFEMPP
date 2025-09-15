@@ -10,7 +10,7 @@ namespace specfem::assembly {
 template <typename PointIndexType, typename ContainerType, typename PointType,
           typename std::enable_if_t<
               PointIndexType::dimension_tag == specfem::dimension::type::dim3 &&
-                  (PointIndexType::using_simd == PointType::simd::using_simd),
+                  specfem::data_access::is_index_type<PointIndexType>::value,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const PointIndexType &index,
                                                 const ContainerType &container,

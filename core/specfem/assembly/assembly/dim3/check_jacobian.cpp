@@ -1,3 +1,4 @@
+#include "specfem/assembly/assembly.hpp"
 
 void specfem::assembly::assembly<
     specfem::dimension::type::dim3>::check_jacobian_matrix() const {
