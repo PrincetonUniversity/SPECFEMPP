@@ -214,3 +214,8 @@ template <> struct global_coordinates<specfem::dimension::type::dim3> {
 
 } // namespace point
 } // namespace specfem
+
+template <specfem::dimension::type Dimension>
+std::ostream &
+operator<<(std::ostream &s,
+           const specfem::point::global_coordinates<Dimension> &point);
