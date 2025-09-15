@@ -3,8 +3,14 @@
 #include "simd.hpp"
 #include <Kokkos_Core.hpp>
 
+// Forward declarations
+namespace specfem::point {
+template <specfem::dimension::type DimensionTag, bool UseSIMD> struct index;
+} // namespace specfem::point
+
 namespace specfem {
 namespace datatype {
+
 /**
  * @brief Datatype used to scalar values within chunk of elements. Data is
  * stored within a Kokkos view located in the memory space specified by
@@ -41,8 +47,8 @@ struct ScalarChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
   ///@{
   using simd = specfem::datatype::simd<T, UseSIMD>; ///< SIMD data type
   using type =
-      Kokkos::View<typename specfem::datatype::simd<T, UseSIMD>::datatype
-                       [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints],
+      Kokkos::View<typename simd::datatype[NumberOfElements][NumberOfGLLPoints]
+                                          [NumberOfGLLPoints],
                    MemorySpace, MemoryTraits>; ///< Underlying data type used to
                                                ///< store values
   using value_type = typename type::value_type; ///< Value type used to store
@@ -90,10 +96,21 @@ struct ScalarChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
   KOKKOS_FUNCTION
   ScalarChunkViewType(const ScratchMemorySpace &scratch_memory_space)
       : Kokkos::View<
-            typename specfem::datatype::simd<T, UseSIMD>::datatype
-                [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints],
+            value_type[NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints],
             MemorySpace, MemoryTraits>(scratch_memory_space) {}
   ///@}
+
+  using type::operator();
+
+  /**
+   * @brief Get scalar value by a point index.
+   *
+   * @param index Point index
+   */
+  KOKKOS_INLINE_FUNCTION value_type &operator()(
+      specfem::point::index<specfem::dimension::type::dim2, UseSIMD> index) {
+    return (*this)(index.ispec, index.iz, index.ix);
+  }
 };
 
 /**
@@ -189,6 +206,19 @@ struct VectorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
                                [NumberOfGLLPoints][Components],
                      MemorySpace, MemoryTraits>(scratch_memory_space) {}
   ///@}
+
+  using type::operator();
+
+  /**
+   * @brief Get vector subview by a point index.
+   *
+   * @param index Point index
+   */
+  KOKKOS_INLINE_FUNCTION
+  auto operator()(
+      specfem::point::index<specfem::dimension::type::dim2, UseSIMD> index) {
+    return Kokkos::subview(*this, index.ispec, index.iz, index.ix, Kokkos::ALL);
+  }
 };
 
 /**
@@ -295,6 +325,20 @@ struct TensorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
             value_type[NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
                       [Components][NumberOfDimensions],
             MemorySpace, MemoryTraits>(scratch_memory_space) {}
+  ///@}
+
+  using type::operator();
+
+  /**
+   * @brief Get vector subview by a point index.
+   *
+   * @param index Point index
+   */
+  KOKKOS_INLINE_FUNCTION auto operator()(
+      specfem::point::index<specfem::dimension::type::dim2, UseSIMD> index) {
+    return Kokkos::subview(*this, index.ispec, index.iz, index.ix, Kokkos::ALL,
+                           Kokkos::ALL);
+  }
 };
 
 } // namespace datatype
