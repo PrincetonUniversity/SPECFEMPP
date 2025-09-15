@@ -1,6 +1,7 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "datatypes/simd.hpp"
+#include "enumerations/interface.hpp"
 #include "execution/chunked_domain_iterator.hpp"
 #include "execution/for_all.hpp"
 #include "execution/range_iterator.hpp"
@@ -132,6 +133,8 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
 
   constexpr auto dimension = specfem::dimension::type::dim2;
 
+  const specfem::mesh_entity::element<dimension> element_grid(ngllz, ngllx);
+
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace> elements("elements",
                                                               nspec);
 
@@ -144,7 +147,7 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
   Kokkos::fence();
 
   specfem::execution::ChunkedDomainIterator policy(ParallelConfig(), elements,
-                                                   ngllz, ngllx);
+                                                   element_grid);
 
   using TestViewType = Kokkos::View<type_real ***, Kokkos::LayoutLeft,
                                     Kokkos::DefaultExecutionSpace>;

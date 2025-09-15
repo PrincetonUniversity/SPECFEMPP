@@ -29,7 +29,8 @@ specfem::assembly::jacobian_matrix<
 specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
     jacobian_matrix(
         const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh)
-    : nspec(mesh.nspec), ngllz(mesh.ngllz), ngllx(mesh.ngllx),
+    : nspec(mesh.nspec), ngllz(mesh.element_grid.ngllz),
+      ngllx(mesh.element_grid.ngllx),
       xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, ngllx),
       xiz("specfem::assembly::jacobian_matrix::xiz", nspec, ngllz, ngllx),
       gammax("specfem::assembly::jacobian_matrix::gammax", nspec, ngllz, ngllx),

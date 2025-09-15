@@ -52,8 +52,8 @@ map_small_jacobian(
                                                      // large jacobian grey
 
   const int nspec = mesh.nspec;
-  const int ngllx = mesh.ngllx;
-  const int ngllz = mesh.ngllz;
+  const int ngllx = mesh.element_grid.ngllx;
+  const int ngllz = mesh.element_grid.ngllz;
 
   const auto &coordinates = mesh.h_coord;
 
