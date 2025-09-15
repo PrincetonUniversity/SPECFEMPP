@@ -104,6 +104,8 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   check_values("nspec_irregular", nspec_irregular,
                mesh.parameters.nspec_irregular);
 
+  std::cout << "NSPEC IRREGULAR" << mesh.parameters.nspec_irregular << "\n";
+
   // Create the mapping object
   mesh.mapping = specfem::mesh::mapping<specfem::dimension::type::dim3>(
       mesh.parameters.nspec, mesh.parameters.nglob,
@@ -145,7 +147,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
   // Initialize the Jacobian matrix object
   mesh.irregular_element_number = decltype(mesh.irregular_element_number)(
-      "irregular_element_number", mesh.parameters.nspec_irregular);
+      "irregular_element_number", mesh.parameters.nspec);
 
   // Read Irregular elements
   try_read_index_array("read_irregular_element_number", stream,
@@ -170,11 +172,27 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   mpi->cout(message.str());
 #endif
 
+  // Fix for reading a regular mesh with 0 irregular elements
+  int nspec_irregular_in, ngllx_in, nglly_in, ngllz_in;
+  if (mesh.parameters.nspec_irregular == 0) {
+    nspec_irregular_in = 1;
+    ngllx_in = 1;
+    nglly_in = 1;
+    ngllz_in = 1;
+  } else {
+    nspec_irregular_in = mesh.parameters.nspec_irregular;
+    ngllx_in = mesh.parameters.ngllx;
+    nglly_in = mesh.parameters.nglly;
+    ngllz_in = mesh.parameters.ngllz;
+  }
   // Create the Jacobian matrix object
   mesh.jacobian_matrix =
       specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>(
-          mesh.parameters.nspec, mesh.parameters.ngllx, mesh.parameters.nglly,
-          mesh.parameters.ngllz);
+          nspec_irregular_in, ngllx_in, nglly_in, ngllz_in);
+
+  // Adding already read parameters for the jacobian_matrix
+  mesh.jacobian_matrix.nspec_irregular = nspec_irregular;
+  mesh.jacobian_matrix.irregular_element_number = mesh.irregular_element_number;
 
   // Reading the Jacobian matrix from the database file.
   try_read_array("read_xi_x", stream, mesh.jacobian_matrix.xix);
@@ -340,6 +358,11 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   // if there are absorbing boundaries create the absorbing boundary object
   // and read the absorbing boundaries
   if (num_abs_boundary_faces > 0) {
+
+    std::cout << "Reading absorbing boundary conditions..." << std::endl;
+    std::cout << "Number of absorbing boundary faces: "
+              << num_abs_boundary_faces << std::endl;
+
     mesh.boundaries.absorbing_boundary =
         specfem::mesh::absorbing_boundary<specfem::dimension::type::dim3>(
             mesh.parameters.nglob, mesh.parameters.num_abs_boundary_faces,
@@ -359,20 +382,26 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
     try_read_array("abs_boundary_normal", stream,
                    mesh.boundaries.absorbing_boundary.normal);
 
+    std::cout << "x extent: "
+              << mesh.boundaries.absorbing_boundary.mass_elastic.x.size()
+              << std::endl;
     // Read the absorbing mass matrix elastic
-    if (mesh.parameters.elastic_simulation) {
-      try_read_array("abs_boundary_mass_elastic.mass", stream,
-                     mesh.boundaries.absorbing_boundary.mass_elastic.x);
-      try_read_array("abs_boundary_mass_elastic.mass", stream,
-                     mesh.boundaries.absorbing_boundary.mass_elastic.y);
-      try_read_array("abs_boundary_mass_elastic.mass", stream,
-                     mesh.boundaries.absorbing_boundary.mass_elastic.z);
-    }
 
-    // Read the absorbing mass matrix acoustic
-    if (mesh.parameters.acoustic_simulation) {
-      try_read_array("abs_boundary_mass_acoustic.mass", stream,
-                     mesh.boundaries.absorbing_boundary.mass_acoustic.mass);
+    if ((mesh.parameters.stacey_abc) & !(mesh.parameters.pml_abc)) {
+      if (mesh.parameters.elastic_simulation) {
+        try_read_array("abs_boundary_mass_elastic.mass", stream,
+                       mesh.boundaries.absorbing_boundary.mass_elastic.x);
+        try_read_array("abs_boundary_mass_elastic.mass", stream,
+                       mesh.boundaries.absorbing_boundary.mass_elastic.y);
+        try_read_array("abs_boundary_mass_elastic.mass", stream,
+                       mesh.boundaries.absorbing_boundary.mass_elastic.z);
+      }
+
+      // Read the absorbing mass matrix acoustic
+      if (mesh.parameters.acoustic_simulation) {
+        try_read_array("abs_boundary_mass_acoustic.mass", stream,
+                       mesh.boundaries.absorbing_boundary.mass_acoustic.mass);
+      }
     }
 #ifndef NDEBUG
     // Print the absorbing boundaries
