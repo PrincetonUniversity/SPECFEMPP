@@ -76,6 +76,22 @@ void execute(
       std::chrono::system_clock::now() - start_time;
   mpi->cout("Time to read mesh: " + std::to_string(elapsed_seconds.count()) +
             " seconds");
+
+  // Create single source and receiver
+  const int nsteps = setup.get_nsteps();
+  const specfem::simulation::type simulation_type = setup.get_simulation_type();
+  auto [sources, t0] =
+      specfem::io::read_3d_sources(setup.get_sources(), nsteps, setup.get_t0(),
+                                   setup.get_dt(), simulation_type);
+  setup.update_t0(0.0); // Update t0 in case it was changed
+
+  // Receivers
+  const auto stations_node = setup.get_stations();
+  const auto angle = setup.get_receiver_angle();
+  auto receivers = specfem::io::read_receivers(stations_node, angle);
+
+  //
+
   return;
 }
 

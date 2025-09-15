@@ -35,10 +35,19 @@ specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
     // terms of boundary conditions.
     if (element_types.ispec_type(ispec) ==
         specfem::element::medium_tag::acoustic) {
+      // Acoustic free surface requires special treatment
       boundary_tag[ispec] +=
           specfem::element::boundary_tag::acoustic_free_surface;
+    } else if (element_types.ispec_type(ispec) ==
+               specfem::element::medium_tag::elastic) {
+      // No special treatment for elastic free surface
+      boundary_tag[ispec] += specfem::element::boundary_tag::none;
     } else {
-      continue;
+      std::stringstream message;
+      message << "Undefined boundary tagging procedure for ispec " << ispec;
+      message << "\n             with medium tag: ";
+      message << specfem::element::to_string(element_types.ispec_type(ispec));
+      throw std::runtime_error(message.str());
     }
   }
 
