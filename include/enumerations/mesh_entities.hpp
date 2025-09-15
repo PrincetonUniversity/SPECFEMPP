@@ -150,6 +150,7 @@ public:
   int ngllx;  ///< Number of Gauss-Lobatto-Legendre points in the x-direction
   int orderz; ///< Polynomial order of the element
   int orderx; ///< Polynomial order of the element
+  int size;   ///< Total number of GLL points in the element
 
   /**
    * @brief Default constructor for the element struct
@@ -162,8 +163,19 @@ public:
    *
    * @param ngll The number of Gauss-Lobatto-Legendre points
    */
+  element(const int ngll)
+      : ngllz(ngll), ngllx(ngll), orderz(ngll - 1), orderx(ngll - 1),
+        size(ngll * ngll) {}
+
+  /**
+   * @brief Constructs an element entity given the number of
+   * Gauss-Lobatto-Legendre points in each dimension
+   *
+   * @param ngll The number of Gauss-Lobatto-Legendre points
+   */
   element(const int ngllz, const int ngllx)
-      : ngllz(ngllz), ngllx(ngllx), orderz(ngllz - 1), orderx(ngllx - 1) {
+      : ngllz(ngllz), ngllx(ngllx), orderz(ngllz - 1), orderx(ngllx - 1),
+        size(ngllz * ngllx) {
     if (ngllz != ngllx) {
       throw std::invalid_argument(
           "Different number of GLL points for Z and X are not supported.");
@@ -196,6 +208,15 @@ public:
 
 template <> struct element<specfem::dimension::type::dim3> {
 
+public:
+  int ngllz;  ///< Number of Gauss-Lobatto-Legendre points in the z-direction
+  int nglly;  ///< Number of Gauss-Lobatto-Legendre points in the y-direction
+  int ngllx;  ///< Number of Gauss-Lobatto-Legendre points in the x-direction
+  int orderz; ///< Polynomial order of the element
+  int ordery; ///< Polynomial order of the element
+  int orderx; ///< Polynomial order of the element
+  int size;   ///< Total number of GLL points in the element
+
   /**
    * @brief Default constructor for the element struct
    */
@@ -208,14 +229,46 @@ template <> struct element<specfem::dimension::type::dim3> {
    * @param ngll The number of Gauss-Lobatto-Legendre points
    */
   element(const int ngll)
-      : ngll(ngll), ngllx(ngll), nglly(ngll), ngllz(ngll), order(ngll - 1) {};
+      : ngllx(ngll), nglly(ngll), ngllz(ngll), orderz(ngll - 1),
+        ordery(nglly - 1), orderx(ngllx - 1), size(ngll * ngll * ngll) {};
 
-public:
-  int order; ///< Polynomial order of the element
-  int ngll;  ///< Number of Gauss-Lobatto-Legendre points in the element
-  int ngllz; ///< Number of Gauss-Lobatto-Legendre points in the z-direction
-  int nglly; ///< Number of Gauss-Lobatto-Legendre points in the y-direction
-  int ngllx; ///< Number of Gauss-Lobatto-Legendre points in the x-direction
+  /**
+   * @brief Constructs an element entity given individual GLL points for each
+   * dimension
+   *
+   * @param ngll The base number of Gauss-Lobatto-Legendre points
+   * @param ngllz The number of Gauss-Lobatto-Legendre points in the z-direction
+   * @param nglly The number of Gauss-Lobatto-Legendre points in the y-direction
+   * @param ngllx The number of Gauss-Lobatto-Legendre points in the x-direction
+   */
+  element(const int ngllz, const int nglly, const int ngllx)
+      : ngllz(ngllz), nglly(nglly), ngllx(ngllx), orderz(ngllz - 1),
+        ordery(nglly - 1), orderx(ngllx - 1), size(ngllz * nglly * ngllx) {
+    if (ngllz != nglly || ngllz != ngllx) {
+      throw std::invalid_argument("Inconsistent number of GLL points");
+    }
+  };
+
+  /**
+   * @brief Check if the GLL number of point is consistent against input ngll
+   *
+   * @param ngll The number of Gauss-Lobatto-Legendre points
+   * @return true If all dimensions match the specified number of GLL points
+   * @return false If any dimension does not match
+   */
+  bool operator==(const int ngll) const {
+    return ngll == ngllz && ngll == nglly && ngll == ngllx;
+  }
+
+  /**
+   * @brief Check if the GLL number of points is _not_ consistent against input
+   *        number of GLL points
+   *
+   * @param ngll The number of Gauss-Lobatto-Legendre points
+   * @return false If all dimensions match the specified number of GLL points
+   * @return true If any dimension does not match
+   */
+  bool operator!=(const int ngll) const { return !(*this == ngll); }
 };
 
 } // namespace specfem::mesh_entity
