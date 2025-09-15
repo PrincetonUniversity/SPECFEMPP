@@ -7,70 +7,70 @@
 #include "execution/range_iterator.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "parallel_configuration/range_config.hpp"
-#include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
-#include <fstream>
+#include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <memory>
 #include <string>
 #include <vector>
 
 // ------------------------------------------------------------------------
-// Test configuration
-namespace test_configuration {
-struct configuration {
+// Base fixture for common functionality
+class ChunkedDomainIteratorTestBase {
 public:
-  int processors;
+  static constexpr int default_ngll = 5;
 };
 
-void operator>>(YAML::Node &Node, configuration &configuration) {
-  configuration.processors = Node["nproc"].as<int>();
-  return;
-}
-
-struct parameters {
+// Test parameter structs
+struct RangePolicyTestParams {
   int nglob;
-  int nspec;
+  std::string name;
+
+  RangePolicyTestParams(int n, const char *test_name)
+      : nglob(n), name(test_name) {}
 };
 
-void operator>>(YAML::Node &Node, parameters &parameters) {
-  parameters.nglob = Node["nglob"].as<int>();
-  parameters.nspec = Node["nspec"].as<int>();
-  return;
+struct ChunkElementPolicyTestParams {
+  int nspec;
+  int ngllz;
+  int ngllx;
+  std::string name;
+
+  ChunkElementPolicyTestParams(int nspec, int ngllz, int ngllx,
+                               const char *test_name)
+      : nspec(nspec), ngllz(ngllz), ngllx(ngllx), name(test_name) {}
+};
+
+struct ChunkElementPolicy3DTestParams {
+  int nspec;
+  int ngllz;
+  int nglly;
+  int ngllx;
+  std::string name;
+
+  ChunkElementPolicy3DTestParams(int nspec, int ngllz, int nglly, int ngllx,
+                                 const char *test_name)
+      : nspec(nspec), ngllz(ngllz), nglly(nglly), ngllx(ngllx),
+        name(test_name) {}
+};
+
+// Operators for test naming
+std::ostream &operator<<(std::ostream &os,
+                         const RangePolicyTestParams &params) {
+  os << params.name;
+  return os;
 }
 
-struct Test {
-public:
-  Test(const YAML::Node &Node) {
-    name = Node["name"].as<std::string>();
-    description = Node["description"].as<std::string>();
-    YAML::Node config = Node["config"];
-    config >> configuration;
-    YAML::Node parameters = Node["parameters"];
-    parameters >> this->parameters;
-    return;
-  }
+std::ostream &operator<<(std::ostream &os,
+                         const ChunkElementPolicyTestParams &params) {
+  os << params.name;
+  return os;
+}
 
-  std::string name;
-  std::string description;
-  test_configuration::parameters parameters;
-  test_configuration::configuration configuration;
-};
-} // namespace test_configuration
-
-// ------------------------------------------------------------------------
-// Reading test config
-
-void parse_test_config(const YAML::Node &yaml,
-                       std::vector<test_configuration::Test> &tests) {
-  YAML::Node all_tests = yaml["Tests"];
-  assert(all_tests.IsSequence());
-
-  for (auto N : all_tests)
-    tests.push_back(test_configuration::Test(N));
-
-  return;
+std::ostream &operator<<(std::ostream &os,
+                         const ChunkElementPolicy3DTestParams &params) {
+  os << params.name;
+  return os;
 }
 
 // ------------------------------------------------------------------------
@@ -202,252 +202,257 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
   return test_view_host;
 }
 
-class POLICIES : public ::testing::Test {
-protected:
-  class Iterator {
-  public:
-    Iterator(test_configuration::Test *p_Test, int *p_nglob, int *p_nspec)
-        : p_Test(p_Test), p_nglob(p_nglob), p_nspec(p_nspec) {}
+template <typename ParallelConfig>
+typename Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                      Kokkos::DefaultExecutionSpace>::HostMirror
+execute_chunk_element_policy_3d(const int nspec, const int ngllz,
+                                const int nglly, const int ngllx) {
 
-    std::tuple<test_configuration::Test, int, int> operator*() {
-      std::cout << "-------------------------------------------------------\n"
-                << "\033[0;32m[RUNNING]\033[0m " << p_Test->name << "\n"
-                << "-------------------------------------------------------\n\n"
-                << std::endl;
-      return std::make_tuple(*p_Test, *p_nglob, *p_nspec);
-    }
+  constexpr bool using_simd = ParallelConfig::simd::using_simd;
 
-    Iterator &operator++() {
-      ++p_Test;
-      ++p_nglob;
-      ++p_nspec;
-      return *this;
-    }
+  constexpr auto dimension = specfem::dimension::type::dim3;
 
-    bool operator!=(const Iterator &other) const {
-      return p_Test != other.p_Test;
-    }
+  const specfem::mesh_entity::element<dimension> element_grid(ngllz, nglly,
+                                                              ngllx);
 
-  private:
-    test_configuration::Test *p_Test;
-    int *p_nglob;
-    int *p_nspec;
-  };
+  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> elements("elements",
+                                                              nspec);
 
-  POLICIES() {
+  // Initialize elements
+  Kokkos::parallel_for(
+      "initialize_elements",
+      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, nspec),
+      KOKKOS_LAMBDA(const int ispec) { elements(ispec) = ispec; });
 
-    std::string config_filename = "policies/test_config.yaml";
-    parse_test_config(YAML::LoadFile(config_filename), Tests);
+  Kokkos::fence();
 
-    for (auto &Test : Tests) {
-      nglobs.push_back(Test.parameters.nglob);
-      nspecs.push_back(Test.parameters.nspec);
-    }
+  specfem::execution::ChunkedDomainIterator policy(ParallelConfig(), elements,
+                                                   element_grid);
 
-    return;
-  }
+  using TestViewType = Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+                                    Kokkos::DefaultExecutionSpace>;
 
-  Iterator begin() { return Iterator(&Tests[0], &nglobs[0], &nspecs[0]); }
-  Iterator end() {
-    return Iterator(&Tests[Tests.size()], &nglobs[nglobs.size()],
-                    &nspecs[nspecs.size()]);
-  }
+  TestViewType test_view("test_view", nspec, ngllz, nglly, ngllx);
+  TestViewType::HostMirror test_view_host =
+      Kokkos::create_mirror_view(test_view);
 
-  std::vector<test_configuration::Test> Tests;
-  std::vector<int> nglobs;
-  std::vector<int> nspecs;
-};
+  // initialize test_view
+  Kokkos::parallel_for(
+      "initialize_test_view",
+      Kokkos::MDRangePolicy<Kokkos::Rank<4> >({ 0, 0, 0, 0 },
+                                              { nspec, ngllz, nglly, ngllx }),
+      KOKKOS_LAMBDA(const int ispec, const int iz, const int iy, const int ix) {
+        test_view(ispec, iz, iy, ix) = 0;
+      });
 
-TEST_F(POLICIES, RangePolicy) {
-  for (auto parameters : *this) {
-    const auto Test = std::get<0>(parameters);
-    const auto nglob = std::get<1>(parameters);
-    const auto nspec = std::get<2>(parameters);
+  Kokkos::fence();
 
-    using ParallelConfig = specfem::parallel_config::default_range_config<
-        specfem::datatype::simd<type_real, false>,
-        Kokkos::DefaultExecutionSpace>;
-    using SimdParallelConfig = specfem::parallel_config::default_range_config<
-        specfem::datatype::simd<type_real, true>,
-        Kokkos::DefaultExecutionSpace>;
+  using PointIndex = specfem::point::index<dimension, using_simd>;
 
-    const auto check_test_view = [&](const auto &test_view, std::string error) {
-      for (int iglob = 0; iglob < nglob; iglob++) {
-        if (test_view(iglob) != 1) {
-          ADD_FAILURE();
+  specfem::execution::for_all(
+      "specfem::tests::execution::chunked_domain_3d", policy,
+      KOKKOS_LAMBDA(const PointIndex &point_index) {
+        const int ispec = point_index.ispec;
+        const int iz = point_index.iz;
+        const int iy = point_index.iy;
+        const int ix = point_index.ix;
+        constexpr bool is_simd = using_simd;
+        const auto l_test_view = test_view;
 
-          std::cout << "--------------------------------------------------\n"
-                    << "\033[0;31m[FAILED]\033[0m Test name: " << Test.name
-                    << "\n"
-                    << "- Error: " << error << "\n"
-                    << "  Index: \n "
-                    << "    iglob = " << iglob << "\n"
-                    << "--------------------------------------------------\n\n"
-                    << std::endl;
-          return;
+        if constexpr (is_simd) {
+          using mask_type = typename ParallelConfig::simd::mask_type;
+          mask_type mask(
+              [&](std::size_t lane) { return point_index.mask(lane); });
+          using tag_type = typename ParallelConfig::simd::tag_type;
+          using datatype = typename ParallelConfig::simd::datatype;
+          datatype data(0);
+          Kokkos::Experimental::where(mask, data)
+              .copy_from(&l_test_view(ispec, iz, iy, ix), tag_type());
+
+          data = data + datatype(1);
+          Kokkos::Experimental::where(mask, data)
+              .copy_to(&l_test_view(ispec, iz, iy, ix), tag_type());
+        } else {
+          l_test_view(ispec, iz, iy, ix) += 1;
         }
-      }
+      });
 
-      return;
-    };
+  Kokkos::fence();
 
-    auto test_view = execute_range_policy<ParallelConfig>(nglob);
-    auto simd_test_view = execute_range_policy<SimdParallelConfig>(nglob);
-
-    check_test_view(test_view, "Error in RangePolicy with SIMD OFF");
-    check_test_view(simd_test_view, "Error in RangePolicy with SIMD ON");
-
-    std::cout << "--------------------------------------------------\n"
-              << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"
-              << "--------------------------------------------------\n\n"
-              << std::endl;
-  }
+  Kokkos::deep_copy(test_view_host, test_view);
+  return test_view_host;
 }
 
-TEST_F(POLICIES, ChunkElementPolicy) {
-  for (auto parameters : *this) {
-    const auto Test = std::get<0>(parameters);
-    const auto nglob = std::get<1>(parameters);
-    const auto nspec = std::get<2>(parameters);
+// Parameterized test classes
+class RangePolicyTest : public ChunkedDomainIteratorTestBase,
+                        public ::testing::TestWithParam<RangePolicyTestParams> {
+protected:
+  void SetUp() override {
+    // Common setup if needed
+  }
 
-    const int ngllz = 5;
-    const int ngllx = 5;
+  void TearDown() override {
+    // Common cleanup if needed
+  }
+};
 
-    using ParallelConfig = specfem::parallel_config::default_chunk_config<
-        specfem::dimension::type::dim2,
-        specfem::datatype::simd<type_real, false>,
-        Kokkos::DefaultExecutionSpace>;
+class ChunkElementPolicyTest
+    : public ChunkedDomainIteratorTestBase,
+      public ::testing::TestWithParam<ChunkElementPolicyTestParams> {
+protected:
+  void SetUp() override {
+    // Common setup if needed
+  }
 
-    using SimdParallelConfig = specfem::parallel_config::default_chunk_config<
-        specfem::dimension::type::dim2,
-        specfem::datatype::simd<type_real, true>,
-        Kokkos::DefaultExecutionSpace>;
+  void TearDown() override {
+    // Common cleanup if needed
+  }
+};
 
-    const auto check_test_view = [&](const auto &test_view, std::string error) {
-      for (int ispec = 0; ispec < nspec; ispec++) {
-        for (int iz = 0; iz < ngllz; iz++) {
+class ChunkElementPolicy3DTest
+    : public ChunkedDomainIteratorTestBase,
+      public ::testing::TestWithParam<ChunkElementPolicy3DTestParams> {
+protected:
+  void SetUp() override {
+    // Common setup if needed
+  }
+
+  void TearDown() override {
+    // Common cleanup if needed
+  }
+};
+
+TEST_P(RangePolicyTest, VisitAllPoints) {
+  const auto params = GetParam();
+  const int nglob = params.nglob;
+
+  using ParallelConfig = specfem::parallel_config::default_range_config<
+      specfem::datatype::simd<type_real, false>, Kokkos::DefaultExecutionSpace>;
+  using SimdParallelConfig = specfem::parallel_config::default_range_config<
+      specfem::datatype::simd<type_real, true>, Kokkos::DefaultExecutionSpace>;
+
+  const auto check_test_view = [&](const auto &test_view,
+                                   const std::string &error) {
+    for (int iglob = 0; iglob < nglob; iglob++) {
+      EXPECT_EQ(test_view(iglob), 1)
+          << "Range policy failed at iglob=" << iglob
+          << " for test: " << params.name << " - " << error;
+    }
+  };
+
+  auto test_view = execute_range_policy<ParallelConfig>(nglob);
+  auto simd_test_view = execute_range_policy<SimdParallelConfig>(nglob);
+
+  check_test_view(test_view, "Error in RangePolicy with SIMD OFF");
+  check_test_view(simd_test_view, "Error in RangePolicy with SIMD ON");
+}
+
+TEST_P(ChunkElementPolicyTest, VisitAllPoints) {
+  const auto params = GetParam();
+  const int nspec = params.nspec;
+  const int ngllz = params.ngllz;
+  const int ngllx = params.ngllx;
+
+  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+      specfem::dimension::type::dim2, specfem::datatype::simd<type_real, false>,
+      Kokkos::DefaultExecutionSpace>;
+
+  using SimdParallelConfig = specfem::parallel_config::default_chunk_config<
+      specfem::dimension::type::dim2, specfem::datatype::simd<type_real, true>,
+      Kokkos::DefaultExecutionSpace>;
+
+  const auto check_test_view = [&](const auto &test_view,
+                                   const std::string &error) {
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      for (int iz = 0; iz < ngllz; iz++) {
+        for (int ix = 0; ix < ngllx; ix++) {
+          EXPECT_EQ(test_view(ispec, iz, ix), 1)
+              << "2D ChunkElement policy failed at (" << ispec << "," << iz
+              << "," << ix << ")"
+              << " for test: " << params.name << " - " << error;
+        }
+      }
+    }
+  };
+
+  auto test_view =
+      execute_chunk_element_policy<ParallelConfig>(nspec, ngllz, ngllx);
+  auto simd_test_view =
+      execute_chunk_element_policy<SimdParallelConfig>(nspec, ngllz, ngllx);
+
+  check_test_view(test_view, "Error in ChunkElementPolicy with SIMD OFF");
+  check_test_view(simd_test_view, "Error in ChunkElementPolicy with SIMD ON");
+}
+
+TEST_P(ChunkElementPolicy3DTest, VisitAllPoints) {
+  const auto params = GetParam();
+  const int nspec = params.nspec;
+  const int ngllz = params.ngllz;
+  const int nglly = params.nglly;
+  const int ngllx = params.ngllx;
+
+  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+      specfem::dimension::type::dim3, specfem::datatype::simd<type_real, false>,
+      Kokkos::DefaultExecutionSpace>;
+
+  using SimdParallelConfig = specfem::parallel_config::default_chunk_config<
+      specfem::dimension::type::dim3, specfem::datatype::simd<type_real, true>,
+      Kokkos::DefaultExecutionSpace>;
+
+  const auto check_test_view = [&](const auto &test_view,
+                                   const std::string &error) {
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      for (int iz = 0; iz < ngllz; iz++) {
+        for (int iy = 0; iy < nglly; iy++) {
           for (int ix = 0; ix < ngllx; ix++) {
-            if (test_view(ispec, iz, ix) != 1) {
-              ADD_FAILURE();
-
-              std::cout
-                  << "--------------------------------------------------\n"
-                  << "\033[0;31m[FAILED]\033[0m Test name: " << Test.name
-                  << "\n"
-                  << "- Error: " << error << "\n"
-                  << "  Index: \n "
-                  << "    ispec = " << ispec << "\n"
-                  << "    iz = " << iz << "\n"
-                  << "    ix = " << ix << "\n"
-                  << "--------------------------------------------------\n\n"
-                  << std::endl;
-              return;
-            }
+            EXPECT_EQ(test_view(ispec, iz, iy, ix), 1)
+                << "3D ChunkElement policy failed at (" << ispec << "," << iz
+                << "," << iy << "," << ix << ")"
+                << " for test: " << params.name << " - " << error;
           }
         }
       }
+    }
+  };
 
-      return;
-    };
+  auto test_view = execute_chunk_element_policy_3d<ParallelConfig>(
+      nspec, ngllz, nglly, ngllx);
+  auto simd_test_view = execute_chunk_element_policy_3d<SimdParallelConfig>(
+      nspec, ngllz, nglly, ngllx);
 
-    auto test_view =
-        execute_chunk_element_policy<ParallelConfig>(nspec, ngllz, ngllx);
-    auto simd_test_view =
-        execute_chunk_element_policy<SimdParallelConfig>(nspec, ngllz, ngllx);
-
-    check_test_view(test_view, "Error in ChunkElementPolicy with SIMD OFF");
-    check_test_view(simd_test_view, "Error in ChunkElementPolicy with SIMD ON");
-
-    std::cout << "--------------------------------------------------\n"
-              << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"
-              << "--------------------------------------------------\n\n"
-              << std::endl;
-  }
+  check_test_view(test_view, "Error in 3D ChunkElementPolicy with SIMD OFF");
+  check_test_view(simd_test_view,
+                  "Error in 3D ChunkElementPolicy with SIMD ON");
 }
 
-// TEST(POLICIES, RangePolicy) {
-//   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
-//   std::string config_filename =
-//       "policies/test_config.yaml";
-//   std::vector<test_configuration::Test> Tests;
-//   parse_test_config(YAML::LoadFile(config_filename), Tests);
+// Test instantiations with comprehensive parameter sets
+INSTANTIATE_TEST_SUITE_P(
+    Policies, RangePolicyTest,
+    ::testing::Values(RangePolicyTestParams{ 100, "SmallRangeTest" },
+                      RangePolicyTestParams{ 1000, "MediumRangeTest" },
+                      RangePolicyTestParams{ 10000, "LargeRangeTest" },
+                      RangePolicyTestParams{ 25000, "VeryLargeRangeTest" }));
 
-//   specfem_data specfem_test(Tests);
+INSTANTIATE_TEST_SUITE_P(
+    Policies, ChunkElementPolicyTest,
+    ::testing::Values(
+        ChunkElementPolicyTestParams{ 10, 5, 5, "Small2DTest" },
+        ChunkElementPolicyTestParams{ 100, 5, 5, "Medium2DTest" },
+        ChunkElementPolicyTestParams{ 1000, 5, 5, "Large2DTest" },
+        ChunkElementPolicyTestParams{ 10000, 5, 5, "VeryLarge2DTest" },
+        ChunkElementPolicyTestParams{ 1024, 5, 5, "ExactChunkSize2DTest" },
+        ChunkElementPolicyTestParams{ 50, 3, 3, "Small2DTest3x3" },
+        ChunkElementPolicyTestParams{ 50, 7, 7, "Small2DTest7x7" }));
 
-//   for (auto [Test, assembly] : specfem_test) {
-
-//     const int nglob = compute_nglob(assembly.mesh.points.h_index_mapping);
-//     const int nspec = assembly.mesh.points.nspec;
-//     const int ngllz = assembly.mesh.points.ngllz;
-//     const int ngllx = assembly.mesh.points.ngllx;
-//     const auto index_mapping = assembly.mesh.points.h_index_mapping;
-
-//     using ParallelConfig = specfem::parallel_config::default_range_config<
-//         specfem::datatype::simd<type_real, false>,
-//         Kokkos::DefaultExecutionSpace>;
-//     using SimdParallelConfig =
-//     specfem::parallel_config::default_range_config<
-//         specfem::datatype::simd<type_real, true>,
-//         Kokkos::DefaultExecutionSpace>;
-
-//     const auto check_test_view = [&](const auto &test_view, std::string
-//     error) {
-//       for (int iglob = 0; iglob < nglob; iglob++) {
-//         if (test_view(iglob) != 1) {
-//           ADD_FAILURE();
-
-//           std::cout << "--------------------------------------------------\n"
-//                     << "\033[0;31m[FAILED]\033[0m Test name: " << Test.name
-//                     << "\n"
-//                     << "- Error: " << error << "\n"
-//                     << "  Index: \n "
-//                     << "    iglob = " << iglob << "\n"
-//                     <<
-//                     "--------------------------------------------------\n\n"
-//                     << std::endl;
-//           return;
-//         }
-//       }
-
-//       for (int ispec = 0; ispec < nspec; ispec++) {
-//         for (int iz = 0; iz < ngllz; iz++) {
-//           for (int ix = 0; ix < ngllx; ix++) {
-//             const int iglob = index_mapping(ispec, iz, ix);
-//             if (test_view(iglob) != 1) {
-//               ADD_FAILURE();
-
-//               std::cout
-//                   << "--------------------------------------------------\n"
-//                   << "\033[0;31m[FAILED]\033[0m Test name: " << Test.name
-//                   << "\n"
-//                   << "- Error: " << error << "\n"
-//                   << "  Index: \n "
-//                   << "    ispec = " << ispec << "\n"
-//                   << "    iz = " << iz << "\n"
-//                   << "    ix = " << ix << "\n"
-//                   << "--------------------------------------------------\n\n"
-//                   << std::endl;
-//               return;
-//             }
-//           }
-//         }
-//       }
-//     };
-
-//     auto test_view = execute_range_policy<ParallelConfig>(nglob);
-//     auto simd_test_view = execute_range_policy<SimdParallelConfig>(nglob);
-
-//     check_test_view(test_view, "Error in RangePolicy with SIMD OFF");
-//     check_test_view(simd_test_view, "Error in RangePolicy with SIMD ON");
-
-//     std::cout << "--------------------------------------------------\n"
-//               << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"
-//               << "--------------------------------------------------\n\n"
-//               << std::endl;
-//   }
-
-//   return;
-// }
+INSTANTIATE_TEST_SUITE_P(
+    Policies, ChunkElementPolicy3DTest,
+    ::testing::Values(
+        ChunkElementPolicy3DTestParams{ 10, 5, 5, 5, "Small3DTest" },
+        ChunkElementPolicy3DTestParams{ 100, 5, 5, 5, "Medium3DTest" },
+        ChunkElementPolicy3DTestParams{ 1000, 5, 5, 5, "Large3DTest" },
+        ChunkElementPolicy3DTestParams{ 1024, 5, 5, 5, "ExactChunkSize3DTest" },
+        ChunkElementPolicy3DTestParams{ 50, 3, 3, 3, "Small3DTest3x3x3" },
+        ChunkElementPolicy3DTestParams{ 50, 4, 4, 4, "Small3DTest4x4x4" }));
 
 // ------------------------------------------------------------------------
 

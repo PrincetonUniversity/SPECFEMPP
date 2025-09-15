@@ -59,10 +59,6 @@ public:
   /**
    * @brief Construct a new receivers object
    *
-   * @param nspec Total Number of spectral elements in the domain
-   * @param nglly Total Number of GLL points in the y-direction
-   * @param ngllz Total Number of GLL points in the z-direction
-   * @param ngllx Total Number of GLL points in the x-direction
    * @param max_sig_step Maximum number seismogram sample points
    * @param dt Time increament
    * @param t0 Initial time
@@ -75,7 +71,6 @@ public:
    * @param properties Properties object
    */
   receivers(
-      const int nspec, const int nglly, const int ngllz, const int ngllx,
       const int max_sig_step, const type_real dt, const type_real t0,
       const int nsteps_between_samples,
       const std::vector<

@@ -26,7 +26,10 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
       h_source_index_mapping(Kokkos::create_mirror_view(source_index_mapping)),
       source_time_function("specfem::sources::source_time_function", nsteps, sources.size(), components),
       h_source_time_function(Kokkos::create_mirror_view(source_time_function)),
-      source_array("specfem::sources::source_array", sources.size(), components, mesh.ngllz, mesh.nglly, mesh.ngllx),
+      source_array("specfem::sources::source_array", sources.size(), components,
+                   mesh.element_grid.ngllz,
+                   mesh.element_grid.nglly,
+                   mesh.element_grid.ngllx),
       h_source_array(Kokkos::create_mirror_view(source_array)) {
 
   for (int isource = 0; isource < sources.size(); isource++) {
