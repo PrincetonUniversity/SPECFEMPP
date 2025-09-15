@@ -24,8 +24,8 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
   using MappingView =
       Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
 
-  const int ngllz = mesh.ngllz;
-  const int ngllx = mesh.ngllx;
+  const int ngllz = mesh.element_grid.ngllz;
+  const int ngllx = mesh.element_grid.ngllx;
   // const int nspec = mesh.points.nspec;
 
   int ngroups = 0;
