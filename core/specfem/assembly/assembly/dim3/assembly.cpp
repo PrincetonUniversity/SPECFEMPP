@@ -65,7 +65,7 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::assembly(
   //                             this->boundaries };
 
   // Currently done in the mesher!
-  // this->check_jacobian_matrix();
+  this->check_jacobian_matrix();
 
   return;
 }

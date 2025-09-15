@@ -191,6 +191,8 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   // Adding already read parameters for the jacobian_matrix
   mesh.jacobian_matrix.nspec_irregular = nspec_irregular;
   mesh.jacobian_matrix.irregular_element_number = mesh.irregular_element_number;
+  mesh.jacobian_matrix.xix_regular = mesh.xix_regular;
+  mesh.jacobian_matrix.jacobian_regular = mesh.jacobian_regular;
 
   // Reading the Jacobian matrix from the database file.
   try_read_array("read_xi_x", stream, mesh.jacobian_matrix.xix);

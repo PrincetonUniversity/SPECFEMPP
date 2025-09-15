@@ -26,6 +26,10 @@ template <> struct jacobian_matrix<specfem::dimension::type::dim3> {
   int ngllz;           ///< Number of GLL points in z
   int nspec_irregular; ///< Number of irregular spectral elements
 
+  // Values
+  type_real xix_regular;
+  type_real jacobian_regular;
+
   View1DInt irregular_element_number; ///< 1D Kokkos::view of type int for
                                       ///< irregular_element_number
 
