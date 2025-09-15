@@ -28,10 +28,9 @@ namespace nonconforming_interfaces {
  *      (element1_local_coord, element2_local_coord) corresponding to the mortar
  *      knot mortar_quadrature(i).
  */
+template <typename EdgeType>
 std::vector<std::pair<type_real, type_real> > compute_intersection(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const boost::graph_traits<specfem::mesh::adjacency_graph<
-        specfem::dimension::type::dim2>::GraphType>::edge_descriptor &edge,
-    const Kokkos::View<type_real *> &mortar_quadrature);
+    const EdgeType &edge, const Kokkos::View<type_real *> &mortar_quadrature);
 } // namespace nonconforming_interfaces
 } // namespace specfem::assembly
