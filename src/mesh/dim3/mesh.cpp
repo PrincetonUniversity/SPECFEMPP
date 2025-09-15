@@ -47,7 +47,9 @@ std::string specfem::mesh::mesh<specfem::dimension::type::dim3>::print() const {
           << "Bounding box: xmin/xmax: " << bbox[0] << " / " << bbox[1] << "\n"
           << "Bounding box: ymin/ymax: " << bbox[2] << " / " << bbox[3] << "\n"
           << "Bounding box: zmin/zmax: " << bbox[4] << " / " << bbox[5] << "\n"
-          << "------------------------------\n";
+          << "------------------------------\n"
+          << "Parameters:\n"
+          << this->parameters.print() << "------------------------------\n";
 
   return message.str();
 }

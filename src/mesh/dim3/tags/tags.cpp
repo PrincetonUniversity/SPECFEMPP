@@ -21,10 +21,12 @@ specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
   std::vector<specfem::element::boundary_tag_container> boundary_tag(
       this->nspec);
 
-  const auto &absorbing_boundary = boundaries.absorbing_boundary;
-  for (int i = 0; i < absorbing_boundary.num_abs_boundary_faces; ++i) {
-    const int ispec = absorbing_boundary.ispec(i);
-    boundary_tag[ispec] += specfem::element::boundary_tag::stacey;
+  if (parameters.stacey_abc) {
+    const auto &absorbing_boundary = boundaries.absorbing_boundary;
+    for (int i = 0; i < absorbing_boundary.num_abs_boundary_faces; ++i) {
+      const int ispec = absorbing_boundary.ispec(i);
+      boundary_tag[ispec] += specfem::element::boundary_tag::stacey;
+    }
   }
 
   const auto &acoustic_free_surface = boundaries.acoustic_free_surface;

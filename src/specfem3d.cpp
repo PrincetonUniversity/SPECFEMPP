@@ -62,6 +62,7 @@ void execute(
 
   // Get simulation parameters
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
+  const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 
   // --------------------------------------------------------------
@@ -111,7 +112,7 @@ void execute(
   receivers.emplace_back(
       std::make_shared<
           specfem::receivers::receiver<specfem::dimension::type::dim3> >(
-          "NET", "STA", 50.0, 40.0, 30.0));
+          "NET", "STA", 50000.0, 40000.0, 0.0));
 
   mpi->cout("Receiver Information:");
   mpi->cout("-------------------------------");
@@ -126,19 +127,24 @@ void execute(
   }
 
   // --------------------------------------------------------------
+  //                   Instantiate Timescheme
+  // --------------------------------------------------------------
+  const auto time_scheme = setup.instantiate_timescheme();
+  if (mpi->main_proc())
+    std::cout << *time_scheme << std::endl;
+  const int max_seismogram_time_step = time_scheme->get_max_seismogram_step();
+  const int nstep_between_samples = time_scheme->get_nstep_between_samples();
+
+  // --------------------------------------------------------------
   //                   Generate Assembly
   // --------------------------------------------------------------
-  const type_real dt = setup.get_dt();
-  const int max_seismogram_time_step =
-      nsteps; // TODO(Lucas: should come from timescheme)
-  const int nstep_between_samples =
-      1; // TODO(Lucas: should come from timescheme)
-
   specfem::assembly::assembly<specfem::dimension::type::dim3> assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader());
+  if (mpi->main_proc())
+    mpi->cout(assembly.print());
 
   return;
 }
