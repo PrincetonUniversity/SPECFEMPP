@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stdexcept>
 
+template <>
 std::vector<std::pair<type_real, type_real> >
 specfem::assembly::nonconforming_interfaces::compute_intersection(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,

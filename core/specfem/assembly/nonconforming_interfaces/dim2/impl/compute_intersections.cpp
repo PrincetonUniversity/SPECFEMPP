@@ -32,7 +32,8 @@ edge_extents(const Kokkos::View<specfem::point::global_coordinates<
     return { element_coordinates(0), element_coordinates(3) };
   default:
     throw std::runtime_error(
-        "compute_intersection was given a corner, not an edge.");
+        "compute_intersection must be given edges. Found " +
+        specfem::mesh_entity::to_string(side) + ", instead.");
   }
 }
 
@@ -47,6 +48,7 @@ specfem::assembly::nonconforming_interfaces::impl::compute_intersection(
     const specfem::mesh_entity::type &edge1,
     const specfem::mesh_entity::type &edge2,
     const Kokkos::View<type_real *> &mortar_quadrature) {
+  constexpr type_real eps = 1e-5;
   const int nquad = mortar_quadrature.extent(0);
 
   std::vector<std::pair<type_real, type_real> > intersections(nquad);
@@ -82,7 +84,8 @@ specfem::assembly::nonconforming_interfaces::impl::compute_intersection(
   type_real inter_min_on_2 = std::min(p1lo_on_2, p1hi_on_2);
   type_real inter_max_on_2 = std::max(p1lo_on_2, p1hi_on_2);
 
-  if (inter_min_on_1 >= inter_max_on_1 || inter_min_on_2 >= inter_max_on_2) {
+  if (inter_min_on_1 > inter_max_on_1 - eps ||
+      inter_min_on_2 > inter_max_on_2 - eps) {
     // no intersection
     std::ostringstream oss;
 
