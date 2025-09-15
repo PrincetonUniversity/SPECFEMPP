@@ -30,11 +30,11 @@ specfem::assembly::nonconforming_interfaces::compute_intersection(
   const int ngnod = mesh.ngnod;
 
   const Kokkos::View<
-      point::global_coordinates<specfem::dimension::type::dim2> *,
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
       Kokkos::HostSpace>
       coorg1("coorg1", ngnod);
   const Kokkos::View<
-      point::global_coordinates<specfem::dimension::type::dim2> *,
+      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
       Kokkos::HostSpace>
       coorg2("coorg2", ngnod);
 
