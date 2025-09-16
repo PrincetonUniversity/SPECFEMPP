@@ -147,9 +147,9 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   mesh.irregular_element_number = decltype(mesh.irregular_element_number)(
       "irregular_element_number", mesh.parameters.nspec);
 
-  // Read Irregular elements
-  try_read_index_array("read_irregular_element_number", stream,
-                       mesh.irregular_element_number);
+  // Read Irregular elements boolean array
+  try_read_array("read_irregular_element_number", stream,
+                 mesh.irregular_element_number);
 
   // Read the Jacobian matrix (only two CUSTOM_REALs)
   try_read_line("read_xix_regular", stream, &mesh.xix_regular);
