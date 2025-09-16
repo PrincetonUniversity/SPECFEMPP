@@ -5,21 +5,16 @@
 #include "source_time_function/interface.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
+#include "test_source_solutions.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <yaml-cpp/yaml.h>
 
 // Local constants since these would be set by the simulation.
-int nsteps = 100;
-type_real dt = 0.01;
-int tshift = 0;            // for the single sources we are reading!
-type_real user_t0 = -10.0; // user defined t0
-
-// Internal t0 is being fixed using the halfduration of the source
-
-specfem::wavefield::simulation_field wavefield_type =
-    specfem::wavefield::simulation_field::forward;
+extern int nsteps;
+extern type_real dt;
+extern int tshift;
+extern type_real user_t0;
 
 /**
  * @brief Parameters for testing source reading.
@@ -47,48 +42,6 @@ std::ostream &operator<<(std::ostream &os,
   os << params.testname;
   return os;
 }
-
-using SourceVector2DType = std::vector<std::shared_ptr<
-    specfem::sources::source<specfem::dimension::type::dim2> > >;
-using SourceVector3DType = std::vector<std::shared_ptr<
-    specfem::sources::source<specfem::dimension::type::dim3> > >;
-
-const static SourceVector2DType single_moment_tensor_2d = { std::make_shared<
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> >(
-    2000.0, 3000.0, 1.0, 1.0, 0.0,
-    std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 1.0, 30.0,
-                                                        1.0e10, false),
-    wavefield_type) };
-
-const static SourceVector2DType single_force_2d = {
-  std::make_shared<specfem::sources::force<specfem::dimension::type::dim2> >(
-      2500.0, 2500.0, 0.0,
-      std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0, 5.0,
-                                                          1.0e10, false),
-      wavefield_type)
-};
-
-const static SourceVector2DType single_cosserat_force_2d = { std::make_shared<
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2> >(
-    2500.0, 2500.0, 0.0, 1.0, 0.0,
-    std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0, 0.0,
-                                                        1e10, false),
-    wavefield_type) };
-
-const static SourceVector3DType single_force_3d = {
-  std::make_shared<specfem::sources::force<specfem::dimension::type::dim3> >(
-      2500.0, 2500.0, 2500.0, 0.0, 0.0, 0.0,
-      std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0, 5.0,
-                                                          1.0e10, false),
-      wavefield_type)
-};
-
-const static SourceVector3DType single_moment_tensor_3d = { std::make_shared<
-    specfem::sources::moment_tensor<specfem::dimension::type::dim3> >(
-    2000.0, 3000.0, 2000.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-    std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 1.0, 30.0,
-                                                        1.0e10, false),
-    wavefield_type) };
 
 using SourceTestParam2D = SourceTestParam<specfem::dimension::type::dim2>;
 
@@ -132,7 +85,10 @@ INSTANTIATE_TEST_SUITE_P(
                            single_force_2d },
         SourceTestParam2D{ "2D Single Cosserat Force",
                            "io/sources/data/dim2/single_cosserat_force.yaml",
-                           single_cosserat_force_2d }));
+                           single_cosserat_force_2d },
+        SourceTestParam2D{ "2D Multiple Sources",
+                           "io/sources/data/dim2/multiple_sources.yaml",
+                           multiple_sources_2d }));
 
 using SourceTestParam3D = SourceTestParam<specfem::dimension::type::dim3>;
 
@@ -174,4 +130,7 @@ INSTANTIATE_TEST_SUITE_P(
                            single_force_3d },
         SourceTestParam3D{ "3D Single Moment Tensor",
                            "io/sources/data/dim3/single_moment_tensor.yaml",
-                           single_moment_tensor_3d }));
+                           single_moment_tensor_3d },
+        SourceTestParam3D{ "3D Multiple Sources",
+                           "io/sources/data/dim3/multiple_sources.yaml",
+                           multiple_sources_3d }));
