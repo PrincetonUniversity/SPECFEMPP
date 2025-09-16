@@ -10,8 +10,9 @@ using EdgeViewType =
 
 specfem::assembly::edge_types<specfem::dimension::type::dim2>::edge_types(
     const int ngllx, const int ngllz,
-    specfem::assembly::element_types<dimension> element_types,
-    specfem::mesh::coupled_interfaces<dimension> coupled_interfaces) {
+    const specfem::assembly::mesh<dimension> &mesh,
+    const specfem::assembly::element_types<dimension> &element_types,
+    const specfem::mesh::coupled_interfaces<dimension> &coupled_interfaces) {
 
   // Count the number of interfaces for each combination of connection
   FOR_EACH_IN_PRODUCT(
@@ -33,8 +34,11 @@ specfem::assembly::edge_types<specfem::dimension::type::dim2>::edge_types(
           const int nedges =
               interface_container.num_interfaces; // number of edges
           for (int iedge = 0; iedge < nedges; ++iedge) {
-            const int ispec1 = interface_container.medium1_index_mapping(iedge);
-            const int ispec2 = interface_container.medium2_index_mapping(iedge);
+            const int ispec1_mesh =
+                interface_container.medium1_index_mapping(iedge);
+            const int ispec2_mesh =
+                interface_container.medium2_index_mapping(iedge);
+            const int ispec1 = mesh.mesh_to_compute(ispec1_mesh);
             const auto boundary_tag = element_types.get_boundary_tag(ispec1);
             if (boundary_tag == _boundary_tag_) {
               count++;
@@ -72,8 +76,12 @@ specfem::assembly::edge_types<specfem::dimension::type::dim2>::edge_types(
           const int nedges =
               interface_container.num_interfaces; // number of edges
           for (int iedge = 0; iedge < nedges; ++iedge) {
-            const int ispec1 = interface_container.medium1_index_mapping(iedge);
-            const int ispec2 = interface_container.medium2_index_mapping(iedge);
+            const int ispec1_mesh =
+                interface_container.medium1_index_mapping(iedge);
+            const int ispec2_mesh =
+                interface_container.medium2_index_mapping(iedge);
+            const int ispec1 = mesh.mesh_to_compute(ispec1_mesh);
+            const int ispec2 = mesh.mesh_to_compute(ispec2_mesh);
             const auto boundary_tag = element_types.get_boundary_tag(ispec1);
             if (boundary_tag == _boundary_tag_) {
               const auto edge1 = interface_container.medium1_edge_type(iedge);

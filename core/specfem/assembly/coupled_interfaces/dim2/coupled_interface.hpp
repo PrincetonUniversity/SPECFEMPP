@@ -28,13 +28,13 @@ namespace specfem::assembly {
  *       is declared elsewhere and specialized here for dimension-specific
  *       optimizations.
  *
- * @see specfem::assembly::coupled_interfaces2_impl::interface_container
+ * @see specfem::assembly::coupled_interfaces_impl::interface_container
  * @see specfem::assembly::edge_types
  * @see specfem::assembly::jacobian_matrix
  * @see specfem::assembly::mesh
  */
 template <>
-class coupled_interfaces2<specfem::dimension::type::dim2>
+class coupled_interfaces<specfem::dimension::type::dim2>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::edge,
           specfem::data_access::DataClassType::coupled_interface,
@@ -52,7 +52,7 @@ private:
   template <specfem::interface::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag>
   using InterfaceContainerType =
-      specfem::assembly::coupled_interfaces2_impl::interface_container<
+      specfem::assembly::coupled_interfaces_impl::interface_container<
           dimension_tag, InterfaceTag, BoundaryTag>;
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING),
@@ -91,13 +91,13 @@ public:
    * @see specfem::assembly::jacobian_matrix
    * @see specfem::assembly::mesh
    */
-  coupled_interfaces2(
+  coupled_interfaces(
       const int ngllz, const int ngllx,
       const specfem::assembly::edge_types<dimension_tag> &edge_types,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 
-  coupled_interfaces2() = default;
+  coupled_interfaces() = default;
 
   /**
    * @brief Get interface container for specific coupling and boundary types
@@ -138,7 +138,7 @@ public:
 #ifndef NDEBUG
     // Debug check: abort if no matching specialization found
     KOKKOS_ABORT_WITH_LOCATION(
-        "specfem::assembly::coupled_interfaces2::get_interface_container(): No "
+        "specfem::assembly::coupled_interfaces::get_interface_container(): No "
         "matching specialization found.");
 #endif
 
@@ -195,11 +195,6 @@ inline void load_on_host(const IndexType &index, const ContainerType &container,
       .template get_interface_container<PointType::interface_tag,
                                         PointType::boundary_tag>()
       .template impl_load<false>(index, point);
-
-#ifndef NDEBUG
-  KOKKOS_ABORT_WITH_LOCATION(
-      "specfem::assembly::load_on_host(): No matching specialization found.");
-#endif
 }
 
 /**
@@ -243,11 +238,6 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
       .template get_interface_container<PointType::interface_tag,
                                         PointType::boundary_tag>()
       .template impl_load<true>(index, point);
-
-#ifndef NDEBUG
-  KOKKOS_ABORT_WITH_LOCATION("specfem::assembly::load_on_device(): No "
-                             "matching specialization found.");
-#endif
 }
 
 } // namespace specfem::assembly
