@@ -53,7 +53,7 @@ read_3d_mesh(const std::string &mesh_parameters_file,
  */
 std::vector<std::shared_ptr<
     specfem::receivers::receiver<specfem::dimension::type::dim2> > >
-read_receivers(const std::string &stations_file, const type_real angle);
+read_2d_receivers(const std::string &stations_file, const type_real angle);
 
 /**
  * @overload
@@ -80,7 +80,7 @@ read_receivers(const std::string &stations_file, const type_real angle);
  */
 std::vector<std::shared_ptr<
     specfem::receivers::receiver<specfem::dimension::type::dim2> > >
-read_receivers(const YAML::Node &stations, const type_real angle);
+read_2d_receivers(const YAML::Node &stations, const type_real angle);
 
 /**
  * @brief Read sources file written in .yml format
