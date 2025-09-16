@@ -27,7 +27,6 @@ struct VectorPointViewType
    *
    */
   ///@{
-  using self_type = VectorPointViewType<T, Components, UseSIMD>;
   using base_type = impl::RegisterArray<
       typename specfem::datatype::simd<T, UseSIMD>::datatype,
       Kokkos::extents<std::size_t, Components>,
@@ -59,8 +58,9 @@ struct VectorPointViewType
 
   using base_type::base_type;
 
-  KOKKOS_INLINE_FUNCTION value_type operator*(const self_type &other) const {
-    constexpr int N = self_type::components;
+  KOKKOS_INLINE_FUNCTION value_type
+  operator*(const VectorPointViewType &other) const {
+    constexpr int N = VectorPointViewType::components;
     value_type result{ 0.0 };
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
