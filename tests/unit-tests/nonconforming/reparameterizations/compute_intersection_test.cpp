@@ -1,16 +1,13 @@
 #include "Kokkos_Environment.hpp"
 #include "MPI_environment.hpp"
-#include <boost/graph/filtered_graph.hpp>
-#include <gtest/gtest.h>
-#include <sstream>
-#include <vector>
+
+#include <stdexcept>
 
 #include "algorithms/locate_point.hpp"
 #include "specfem/assembly/nonconforming_interfaces/dim2/impl/compute_intersection.hpp"
-#include "specfem/point/coordinates.hpp"
+#include <gtest/gtest.h>
 
-TEST(Intersection, impl) {
-
+TEST(impl__compute_intersection, KnotCorrectness) {
   const int ngnod = 4;
   const Kokkos::View<
       specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
@@ -20,6 +17,7 @@ TEST(Intersection, impl) {
       specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
       Kokkos::HostSpace>
       coorg2("coorg2", ngnod);
+  // element 1 lies on [0,1] x [0,1]
   coorg1(0) = { 0, 0 };
   coorg1(1) = { 1, 0 };
   coorg1(2) = { 1, 1 };
@@ -40,11 +38,25 @@ TEST(Intersection, impl) {
   // different vertical offsets for element 2
   for (const auto [coord_lo, coord_hi] :
        std::vector<std::pair<type_real, type_real> >{
-           { 0, 1 }, { -1, 0.5 }, { 0.5, 1 } }) {
+           { 0, 1 }, { -1, 0.5 }, { 0.5, 1 }, { 1.5, 2.5 }, { -100, -0.1 } }) {
     coorg2(0).z = coord_lo;
     coorg2(1).z = coord_lo;
     coorg2(2).z = coord_hi;
     coorg2(3).z = coord_hi;
+
+    if (coord_lo > 1 || coord_hi < 0) {
+      EXPECT_THROW(specfem::assembly::nonconforming_interfaces::impl::
+                       compute_intersection(
+                           coorg1, coorg2, specfem::mesh_entity::type::right,
+                           specfem::mesh_entity::type::left, mortar_quad),
+                   std::runtime_error)
+          << "Global coordinate intervals:\n"
+          << "   side 1: [0, 1]\n"
+          << "   side 2: [" << coord_lo << ", " << coord_hi << "]\n"
+          << "There should be no intersection, causing `compute_intersection` "
+             "to throw an error, but none was thrown.";
+      continue;
+    }
 
     type_real eps = 1e-3;
 

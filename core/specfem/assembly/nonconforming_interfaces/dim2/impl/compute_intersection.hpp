@@ -1,9 +1,10 @@
 #pragma once
 
+#include "enumerations/dimension.hpp"
 #include "enumerations/mesh_entities.hpp"
 #include "quadrature/interface.hpp"
 #include "quadrature/quadrature.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/point.hpp"
 
 #include <vector>
 
