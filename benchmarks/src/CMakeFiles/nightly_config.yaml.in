@@ -1,0 +1,7 @@
+benchmarks:
+  - name: homogeneous_medium_flat_topography
+    description: "Benchmark for homogeneous medium with flat topography"
+    snakefile: "@SPECFEM_BENCHMARKS_BUILD_DIR@/dim2/homogeneous-medium-flat-topography/Snakefile"
+  - name: fluid_solid_interface
+    description: "Benchmark for fluid-solid interface"
+    snakefile: "@SPECFEM_BENCHMARKS_BUILD_DIR@/dim2/fluid-solid-interface/Snakefile"

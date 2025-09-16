@@ -39,6 +39,8 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
 
   specfem::execution::RangeIterator range(parallel_config(), nglob);
 
+  Kokkos::Profiling::pushRegion("Divide Mass Matrix");
+
   specfem::execution::for_all(
       "specfem::kokkos_kernels::divide_mass_matrix", range,
       KOKKOS_LAMBDA(const IndexType &index) {
@@ -52,6 +54,8 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
         }
         specfem::assembly::store_on_device(index, field, acceleration);
       });
+
+  Kokkos::Profiling::popRegion();
 
   // Kokkos::fence();
 

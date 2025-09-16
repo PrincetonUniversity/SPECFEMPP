@@ -20,5 +20,15 @@ add_subdirectory(dim2/Tromp_2005)
 add_subdirectory(dim2/poroelastic-semi-infinite)
 add_subdirectory(dim2/homogeneous-cosserat)
 
+configure_file(CMakeFiles/nightly_benchmarks.smk.in ${SPECFEM_BENCHMARKS_BUILD_DIR}/nightly_benchmarks.smk @ONLY)
+configure_file(CMakeFiles/nightly_config.yaml.in ${SPECFEM_BENCHMARKS_BUILD_DIR}/nightly_config.yaml @ONLY)
+
+## Copy entire nightly_benchmarks directory
+file(COPY
+    ${CMAKE_CURRENT_SOURCE_DIR}/nightly_benchmarks
+    ${CMAKE_CURRENT_SOURCE_DIR}/run_parser.py
+    DESTINATION ${SPECFEM_BENCHMARKS_BUILD_DIR}
+)
+
 # 3D
 add_subdirectory(dim3/homogeneous_halfspace)
