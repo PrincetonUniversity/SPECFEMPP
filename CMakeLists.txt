@@ -492,17 +492,6 @@ target_link_libraries(
 # Disable unity build for source_time_function due to KOKKOS_INLINE_FUNCTION issues
 set_target_properties(source_time_function PROPERTIES UNITY_BUILD OFF)
 
-
-add_library(coupled_interface
-        src/coupled_interface/coupled_interface.cpp
-)
-
-target_link_libraries(
-        coupled_interface
-        Kokkos::kokkos
-        assembly
-)
-
 add_library(
         kokkos_kernels
         src/kokkos_kernels/impl/compute_mass_matrix.cpp
@@ -642,7 +631,6 @@ target_link_libraries(
         writer
         periodic_tasks
         reader
-        coupled_interface
         kokkos_kernels
         solver
         ${BOOST_LIBS}
@@ -677,7 +665,6 @@ target_link_libraries(
         writer
         periodic_tasks
         reader
-        coupled_interface
         kokkos_kernels
         solver
         ${BOOST_LIBS}

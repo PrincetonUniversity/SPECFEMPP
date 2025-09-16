@@ -2,13 +2,13 @@
 #include "enumerations/interface.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "impl/interface_container.tpp"
-#include "specfem/assembly/coupled_interfaces2.hpp"
+#include "specfem/assembly/coupled_interfaces.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 
-specfem::assembly::coupled_interfaces2<specfem::dimension::type::dim2>::
-    coupled_interfaces2(
+specfem::assembly::coupled_interfaces<specfem::dimension::type::dim2>::
+    coupled_interfaces(
         const int ngllz, const int ngllx,
         const specfem::assembly::edge_types<specfem::dimension::type::dim2>
             &edge_types,

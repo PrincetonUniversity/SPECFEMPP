@@ -69,26 +69,41 @@ compute_connected_edges(Kokkos::View<int **, Kokkos::HostSpace> knods,
   // 2, 3 -> top
   // 3, 0 -> left
 
-  if (edge1_node_indices == std::vector<int>{ 0, 1 })
+  if ((edge1_node_indices == std::vector<int>{ 0, 1 } ||
+       edge1_node_indices == std::vector<int>{ 1, 0 })) {
     edge1 = specfem::mesh_entity::type::bottom;
-  if (edge1_node_indices == std::vector<int>{ 1, 2 })
+  } else if ((edge1_node_indices == std::vector<int>{ 1, 2 } ||
+              edge1_node_indices == std::vector<int>{ 2, 1 })) {
     edge1 = specfem::mesh_entity::type::right;
-  if (edge1_node_indices == std::vector<int>{ 2, 3 })
+  } else if ((edge1_node_indices == std::vector<int>{ 2, 3 } ||
+              edge1_node_indices == std::vector<int>{ 3, 2 })) {
     edge1 = specfem::mesh_entity::type::top;
-  if (edge1_node_indices == std::vector<int>{ 3, 0 })
+  } else if ((edge1_node_indices == std::vector<int>{ 3, 0 } ||
+              edge1_node_indices == std::vector<int>{ 0, 3 })) {
     edge1 = specfem::mesh_entity::type::left;
+  } else {
+    throw std::runtime_error("Error: Could not determine edge1 type.");
+  }
 
-  if (edge2_node_indices == std::vector<int>{ 0, 1 })
+  if ((edge2_node_indices == std::vector<int>{ 0, 1 } ||
+       edge2_node_indices == std::vector<int>{ 1, 0 })) {
     edge2 = specfem::mesh_entity::type::bottom;
-  if (edge2_node_indices == std::vector<int>{ 1, 2 })
+  } else if ((edge2_node_indices == std::vector<int>{ 1, 2 } ||
+              edge2_node_indices == std::vector<int>{ 2, 1 })) {
     edge2 = specfem::mesh_entity::type::right;
-  if (edge2_node_indices == std::vector<int>{ 2, 3 })
+  } else if ((edge2_node_indices == std::vector<int>{ 2, 3 } ||
+              edge2_node_indices == std::vector<int>{ 3, 2 })) {
     edge2 = specfem::mesh_entity::type::top;
-  if (edge2_node_indices == std::vector<int>{ 3, 0 })
+  } else if ((edge2_node_indices == std::vector<int>{ 3, 0 } ||
+              edge2_node_indices == std::vector<int>{ 0, 3 })) {
     edge2 = specfem::mesh_entity::type::left;
+  } else {
+    throw std::runtime_error("Error: Could not determine edge2 type.");
+  }
 
   return { edge1, edge2 };
 }
+
 } // namespace
 
 template <specfem::dimension::type DimensionTag,

@@ -27,9 +27,11 @@ public:
                       const specfem::interface::interface_tag edge,
                       const specfem::element::boundary_tag boundary) const;
 
-  edge_types(const int ngllx, const int ngllz,
-             specfem::assembly::element_types<dimension> element_types,
-             specfem::mesh::coupled_interfaces<dimension> coupled_interfaces);
+  edge_types(
+      const int ngllx, const int ngllz,
+      const specfem::assembly::mesh<dimension> &mesh,
+      const specfem::assembly::element_types<dimension> &element_types,
+      const specfem::mesh::coupled_interfaces<dimension> &coupled_interfaces);
 
   edge_types() = default;
 
