@@ -20,7 +20,7 @@ void specfem::assembly::compute_source_array(
     SourceArrayViewType &source_array) {
 
   // Ensure source_array is a 3D view
-  static_assert(SourceArrayViewType::rank == 3, "Source array must be in rank 3.");
+  static_assert(SourceArrayViewType::rank() == 3, "Source array must be in rank 3.");
 
   switch (source->get_source_type()) {
   case specfem::sources::source_type::vector_source: {

@@ -79,8 +79,6 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
   constexpr int components =
       specfem::element::attributes<dimension, medium_tag>::components;
-  constexpr int num_dimensions =
-      specfem::element::attributes<dimension, medium_tag>::dimension;
 
   using ChunkElementFieldType = specfem::chunk_element::displacement<
         parallel_config::chunk_size, ngll, dimension, medium_tag, using_simd>;
@@ -184,7 +182,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
               [&](const auto &iterator_index,
                   const typename PointAccelerationType::value_type &result) {
                 const auto &index = iterator_index.get_index();
-                const auto &ielement = iterator_index.get_policy_index();
+                const auto &local_index = iterator_index.get_local_index();
                 PointAccelerationType acceleration(result);
 
                 for (int icomponent = 0; icomponent < components;
@@ -220,8 +218,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 // Compute the couple stress from the stress integrand
                 specfem::medium::compute_couple_stress(
                     point_jacobian_matrix, point_property, factor,
-                    Kokkos::subview(stress_integrand.F, ielement, index.iz,
-                                    index.ix, Kokkos::ALL, Kokkos::ALL),
+                    stress_integrand.F(local_index),
                     acceleration);
 
                 // Apply boundary conditions
