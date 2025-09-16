@@ -112,9 +112,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
         PointMassType mass_matrix =
             specfem::medium::mass_matrix_component(point_property);
 
-        for (int icomp = 0; icomp < components; icomp++) {
-          mass_matrix(icomp) *= wgll(ix) * wgll(iz) * jacobian;
-        }
+        mass_matrix *= wgll(ix) * wgll(iz) * jacobian;
 
         PointBoundaryType point_boundary;
         specfem::assembly::load_on_device(index, boundaries, point_boundary);

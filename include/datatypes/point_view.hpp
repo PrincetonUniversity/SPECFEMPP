@@ -55,8 +55,8 @@ struct VectorPointViewType
    *
    */
   ///@{
-
   using base_type::base_type;
+  ///@}
 
   KOKKOS_INLINE_FUNCTION value_type
   operator*(const VectorPointViewType &other) const {
@@ -71,7 +71,19 @@ struct VectorPointViewType
     }
     return result;
   }
-  ///@}
+
+  KOKKOS_FORCEINLINE_FUNCTION constexpr auto &
+  operator*=(const value_type &other) {
+    constexpr int N = VectorPointViewType::components;
+
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#pragma unroll
+#endif
+    for (int i = 0; i < N; ++i) {
+      (*this)(i) *= other;
+    }
+    return *this;
+  }
 };
 
 /**

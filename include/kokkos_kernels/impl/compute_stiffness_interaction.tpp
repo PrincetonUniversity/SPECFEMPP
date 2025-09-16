@@ -77,9 +77,6 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   using parallel_config = specfem::parallel_config::default_chunk_config<
       dimension, simd, Kokkos::DefaultExecutionSpace>;
 
-  constexpr int components =
-      specfem::element::attributes<dimension, medium_tag>::components;
-
   using ChunkElementFieldType = specfem::chunk_element::displacement<
         parallel_config::chunk_size, ngll, dimension, medium_tag, using_simd>;
   using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
@@ -185,11 +182,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 const auto &local_index = iterator_index.get_local_index();
                 PointAccelerationType acceleration(result);
 
-                for (int icomponent = 0; icomponent < components;
-                     ++icomponent) {
-                  acceleration(icomponent) *=
-                      static_cast<type_real>(-1.0);
-                }
+                acceleration *= static_cast<type_real>(-1.0);
 
                 PointPropertyType point_property;
                 specfem::assembly::load_on_device(index, properties,
