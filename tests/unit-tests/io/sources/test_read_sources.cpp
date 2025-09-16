@@ -6,6 +6,7 @@
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <yaml-cpp/yaml.h>
 
@@ -19,160 +20,158 @@ type_real user_t0 = -10.0; // user defined t0
 
 specfem::wavefield::simulation_field wavefield_type =
     specfem::wavefield::simulation_field::forward;
+
+/**
+ * @brief Parameters for testing source reading.
+ *
+ * @tparam DimensionTag
+ */
+template <specfem::dimension::type DimensionTag> struct SourceTestParam {
+  std::string testname;
+  std::string sourcefilename;
+  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
+      expected_sources;
+};
+
+/**
+ * @brief Stream insertion operator for SourceTestParam.
+ *
+ * @tparam DimensionTag
+ * @param os
+ * @param params
+ * @return std::ostream&
+ */
+template <specfem::dimension::type DimensionTag>
+std::ostream &operator<<(std::ostream &os,
+                         const SourceTestParam<DimensionTag> &params) {
+  os << params.testname;
+  return os;
+}
+
 using SourceVector2DType = std::vector<std::shared_ptr<
     specfem::sources::source<specfem::dimension::type::dim2> > >;
 using SourceVector3DType = std::vector<std::shared_ptr<
     specfem::sources::source<specfem::dimension::type::dim3> > >;
 
-const static std::unordered_map<std::string, SourceVector2DType> expected_2d = {
-  { "2D Single Moment Tensor",
-    { std::make_shared<
-        specfem::sources::moment_tensor<specfem::dimension::type::dim2> >(
-        2000.0, 3000.0, 1.0, 1.0, 0.0,
-        std::make_unique<specfem::forcing_function::Ricker>(
-            nsteps, dt, 1.0, 30.0, 1.0e10, false),
-        wavefield_type) } },
-  { "2D Single Force",
-    { std::make_shared<
-        specfem::sources::force<specfem::dimension::type::dim2> >(
-        2500.0, 2500.0, 0.0,
-        std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0,
-                                                            5.0, 1.0e10, false),
-        wavefield_type) } },
-  { "2D Single Cosserat Force",
-    { std::make_shared<
-        specfem::sources::cosserat_force<specfem::dimension::type::dim2> >(
-        2500.0, 2500.0, 0.0, 1.0, 0.0,
-        std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0,
-                                                            0.0, 1e10, false),
-        wavefield_type) } }
+const static SourceVector2DType single_moment_tensor_2d = { std::make_shared<
+    specfem::sources::moment_tensor<specfem::dimension::type::dim2> >(
+    2000.0, 3000.0, 1.0, 1.0, 0.0,
+    std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 1.0, 30.0,
+                                                        1.0e10, false),
+    wavefield_type) };
+
+const static SourceVector2DType single_force_2d = {
+  std::make_shared<specfem::sources::force<specfem::dimension::type::dim2> >(
+      2500.0, 2500.0, 0.0,
+      std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0, 5.0,
+                                                          1.0e10, false),
+      wavefield_type)
 };
 
-const static std::unordered_map<std::string, SourceVector3DType> expected_3d = {
-  { "3D Single Force",
-    { std::make_shared<
-        specfem::sources::force<specfem::dimension::type::dim3> >(
-        2500.0, 2500.0, 2500.0, 0.0, 0.0, 0.0,
-        std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0,
-                                                            5.0, 1.0e10, false),
-        wavefield_type) } },
-  { "3D Single Moment Tensor",
-    { std::make_shared<
-        specfem::sources::moment_tensor<specfem::dimension::type::dim3> >(
-        2000.0, 3000.0, 2000.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-        std::make_unique<specfem::forcing_function::Ricker>(
-            nsteps, dt, 1.0, 30.0, 1.0e10, false),
-        wavefield_type) } }
+const static SourceVector2DType single_cosserat_force_2d = { std::make_shared<
+    specfem::sources::cosserat_force<specfem::dimension::type::dim2> >(
+    2500.0, 2500.0, 0.0, 1.0, 0.0,
+    std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0, 0.0,
+                                                        1e10, false),
+    wavefield_type) };
+
+const static SourceVector3DType single_force_3d = {
+  std::make_shared<specfem::sources::force<specfem::dimension::type::dim3> >(
+      2500.0, 2500.0, 2500.0, 0.0, 0.0, 0.0,
+      std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 10.0, 5.0,
+                                                          1.0e10, false),
+      wavefield_type)
 };
 
-TEST(IO_TESTS, read_2d_sources) {
-  /**
-   *  This test checks whether 2D sources are read correctly
-   */
+const static SourceVector3DType single_moment_tensor_3d = { std::make_shared<
+    specfem::sources::moment_tensor<specfem::dimension::type::dim3> >(
+    2000.0, 3000.0, 2000.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+    std::make_unique<specfem::forcing_function::Ricker>(nsteps, dt, 1.0, 30.0,
+                                                        1.0e10, false),
+    wavefield_type) };
 
-  std::string test_data_file = "io/sources/test_config.yaml";
+using SourceTestParam2D = SourceTestParam<specfem::dimension::type::dim2>;
 
-  YAML::Node test_config = YAML::LoadFile(test_data_file);
-  YAML::Node sources_configs = test_config["2D Tests"];
+class Read2DSourcesTest : public ::testing::TestWithParam<SourceTestParam2D> {};
 
-  for (const auto &source_config : sources_configs) {
+TEST_P(Read2DSourcesTest, ReadSources) {
+  const auto &param = GetParam();
 
-    std::string source_file = source_config["sources"].as<std::string>();
-    std::string key = source_config["name"].as<std::string>();
+  auto [sources, _t0] =
+      specfem::io::read_2d_sources(param.sourcefilename, nsteps, user_t0, dt,
+                                   specfem::simulation::type::forward);
 
-    std::cout << "-------------------------------------------------------\n"
-              << "\033[0;32m[RUNNING]\033[0m Test read " << key << ":\n"
-              << "-------------------------------------------------------\n\n"
-              << std::endl;
+  ASSERT_EQ(sources.size(), param.expected_sources.size());
 
-    auto [sources, _t0] = specfem::io::read_2d_sources(
-        source_file, nsteps, user_t0, dt, specfem::simulation::type::forward);
+  for (size_t i = 0; i < sources.size(); ++i) {
+    auto source = sources[i];
+    auto expected_source = param.expected_sources[i];
 
-    if (expected_2d.find(key) != expected_2d.end()) {
+    std::cout << "Act. Source type: " << typeid(source).name() << "\n";
+    std::cout << "Exp. Source type: " << typeid(expected_source).name() << "\n";
 
-      auto expected_sources = expected_2d.at(key);
-
-      ASSERT_EQ(sources.size(), expected_sources.size());
-
-      for (size_t i = 0; i < sources.size(); ++i) {
-
-        auto source = sources[i];
-        auto expected_source = expected_sources[i];
-
-        // Print source id
-        std::cout << "Act. Source type: " << typeid(source).name() << "\n";
-        std::cout << "Exp. Source type: " << typeid(expected_source).name()
-                  << "\n";
-
-        // Since we have comparison operators defined, we can use them
-        EXPECT_EQ(*source, *expected_source)
-            << "Source mismatch at index " << i << ":\n"
-            << "Expected:\n"
-            << expected_source->print()
-            << "\n"
-               "!=\n"
-            << "Actual:\n"
-            << source->print() << "\n";
-      }
-    } else {
-      FAIL() << "Source not in expected list: " << key;
-    }
-
-    std::cout << "-------------------------------------------------------\n"
-              << "\033[0;32m[FINISHED]\033[0m Test read" << key << ".\n"
-              << "-------------------------------------------------------\n\n"
-              << std::endl;
+    EXPECT_EQ(*source, *expected_source)
+        << "Source mismatch at index " << i << ":\n"
+        << "Expected:\n"
+        << expected_source->print()
+        << "\n"
+           "!=\n"
+        << "Actual:\n"
+        << source->print() << "\n";
   }
 }
 
-TEST(IO_TESTS, read_3d_sources) {
-  /**
-   *  This test checks whether 3D sources are read correctly
-   */
+INSTANTIATE_TEST_SUITE_P(
+    IO_TESTS, Read2DSourcesTest,
+    ::testing::Values(
+        SourceTestParam2D{ "2D Single Moment Tensor",
+                           "io/sources/data/dim2/single_moment_tensor.yaml",
+                           single_moment_tensor_2d },
+        SourceTestParam2D{ "2D Single Force",
+                           "io/sources/data/dim2/single_force.yaml",
+                           single_force_2d },
+        SourceTestParam2D{ "2D Single Cosserat Force",
+                           "io/sources/data/dim2/single_cosserat_force.yaml",
+                           single_cosserat_force_2d }));
 
-  std::string test_data_file = "io/sources/test_config.yaml";
+using SourceTestParam3D = SourceTestParam<specfem::dimension::type::dim3>;
 
-  YAML::Node test_config = YAML::LoadFile(test_data_file);
-  YAML::Node sources_configs = test_config["3D Tests"];
+class Read3DSourcesTest : public ::testing::TestWithParam<SourceTestParam3D> {};
 
-  for (const auto &source_config : sources_configs) {
+TEST_P(Read3DSourcesTest, ReadSources) {
+  const auto &param = GetParam();
 
-    std::string source_file = source_config["sources"].as<std::string>();
-    std::string key = source_config["name"].as<std::string>();
+  auto [sources, _t0] =
+      specfem::io::read_3d_sources(param.sourcefilename, nsteps, user_t0, dt,
+                                   specfem::simulation::type::forward);
 
-    auto [sources, _t0] = specfem::io::read_3d_sources(
-        source_file, nsteps, user_t0, dt, specfem::simulation::type::forward);
+  ASSERT_EQ(sources.size(), param.expected_sources.size());
 
-    if (expected_3d.find(key) != expected_3d.end()) {
+  for (size_t i = 0; i < sources.size(); ++i) {
 
-      auto expected_sources = expected_3d.at(key);
+    auto source = sources[i];
+    auto expected_source = param.expected_sources[i];
 
-      ASSERT_EQ(sources.size(), expected_sources.size());
+    std::cout << "Act. Source type: " << typeid(source).name() << "\n";
+    std::cout << "Exp. Source type: " << typeid(expected_source).name() << "\n";
 
-      for (size_t i = 0; i < sources.size(); ++i) {
-
-        SCOPED_TRACE("Testing source: " + key);
-
-        auto source = sources[i];
-        auto expected_source = expected_sources[i];
-
-        // Print source id
-        std::cout << "Act. Source type: " << typeid(source).name() << "\n";
-        std::cout << "Exp. Source type: " << typeid(expected_source).name()
-                  << "\n";
-
-        // Since we have comparison operators defined, we can use them
-        EXPECT_EQ(*source, *expected_source)
-            << "Source mismatch at index " << i << ":\n"
-            << "Expected:\n"
-            << expected_source->print()
-            << "\n"
-               "!=\n"
-            << "Actual:\n"
-            << source->print() << "\n";
-      }
-    } else {
-      FAIL() << "Source not in expected list: " << key;
-    }
+    EXPECT_EQ(*source, *expected_source)
+        << "Source mismatch at index " << i << ":\n"
+        << "Expected:\n"
+        << expected_source->print()
+        << "\n"
+           "!=\n"
+        << "Actual:\n"
+        << source->print() << "\n";
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    IO_TESTS, Read3DSourcesTest,
+    ::testing::Values(
+        SourceTestParam3D{ "3D Single Force",
+                           "io/sources/data/dim3/single_force.yaml",
+                           single_force_3d },
+        SourceTestParam3D{ "3D Single Moment Tensor",
+                           "io/sources/data/dim3/single_moment_tensor.yaml",
+                           single_moment_tensor_3d }));
