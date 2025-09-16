@@ -1,3 +1,5 @@
+.. _git-workflow:
+
 Git development workflow
 ========================
 
