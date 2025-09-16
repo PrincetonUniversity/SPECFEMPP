@@ -47,7 +47,7 @@ ASSEMBLY::ASSEMBLY() {
 
     this->Sources.push_back(sources);
 
-    const auto receivers = specfem::io::read_receivers(stations_file, 0);
+    const auto receivers = specfem::io::read_2d_receivers(stations_file, 0);
 
     this->Stations.push_back(receivers);
 
