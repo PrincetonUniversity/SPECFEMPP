@@ -69,7 +69,9 @@ module save_arrays_module
     allocate(array_real(3))
     ! Check if the size of the array is correct
     if (size(array, 1) /= 3 .or. size(array, 2) /= nnodes) then
-      write(*,*) 'Error (control nodes): size of the array is not correct. Expected size: (3, ', nnodes, ') Actual size: (', size(array, 1), ', ', size(array, 2), ')'
+      write(*,*) 'Error (control nodes): size of the array is not correct. ', &
+                 'Expected size: (3, ', nnodes, ') Actual size: (', &
+                 size(array, 1), ', ', size(array, 2), ')'
       stop
     endif
 
@@ -94,7 +96,8 @@ module save_arrays_module
 
     ! Check if the size of the array is correct
     if (size(array, 4) /= nspec) then
-      write(*,*) 'Error (', name, '): size of the array is not correct. Expected size: ', nspec, ' Actual size: ', size(array, 4)
+      write(*,*) 'Error (', name, '): size of the array is not correct. ', &
+                 'Expected size: ', nspec, ' Actual size: ', size(array, 4)
       stop
     endif
 
@@ -117,7 +120,9 @@ module save_arrays_module
 
     ! Check if the size of the array is correct
     if (size(array, 1) /= num_inner) then
-      write(*,*) 'Error (inner/outer): size of the array is not correct. Expected size: (', num_inner, ', 3) Actual size: (', size(array, 1), ', ', size(array, 2), ')'
+      write(*,*) 'Error (inner/outer): size of the array is not correct. ', &
+                 'Expected size: (', num_inner, ', 3) Actual size: (', &
+                 size(array, 1), ', ', size(array, 2), ')'
       stop
     endif
 
@@ -140,7 +145,8 @@ module save_arrays_module
 
       ! Check if the size of the array is correct
       if (size(array, 5) /= nspec) then
-        write(*,*) 'Error (with components): size of the array is not correct. Expected size: ', nspec, ' Actual size: ', size(array, 5)
+        write(*,*) 'Error (with components): size of the array is not correct. ', &
+                   'Expected size: ', nspec, ' Actual size: ', size(array, 5)
         stop
       endif
 
@@ -505,11 +511,9 @@ end module save_arrays_module
   ! call print_unique_at_ispec(1, 'y', ystore_unique)
   ! call print_unique_at_ispec(1, 'z', zstore_unique)
 
-  write (*,*) "Irregular element number (size/shape) ", size(irregular_element_number), ' / ', shape(irregular_element_number)
   write(IOUT) irregular_element_number
   write(IOUT) xix_regular
   write(IOUT) jacobian_regular
-
 
   ! write (*,*) "Number of irregular elements: ", nspec_irregular
   ! write (*,*) "Size of xixstore: ", shape(xixstore)
