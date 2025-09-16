@@ -28,12 +28,12 @@ parameters:
             combined:
                 reader:
                     wavefield:
-                        format: HDF5
+                        format: NPY
                         directory: OUTPUT_FILES
 
                 writer:
                     kernels:
-                        format: ASCII
+                        format: NPY
                         directory: OUTPUT_FILES/kernels
 
     receivers:

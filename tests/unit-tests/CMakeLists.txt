@@ -98,6 +98,7 @@ target_link_libraries(io_framework_tests PRIVATE
   gtest_main
   Kokkos::kokkos
   kokkos_environment
+  $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
   $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
   $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
@@ -105,6 +106,7 @@ target_link_libraries(io_framework_tests PRIVATE
 target_compile_definitions(
     io_framework_tests
     PUBLIC
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:-DNO_NPZ>
     $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
     $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
 )
