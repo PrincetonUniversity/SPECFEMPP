@@ -415,6 +415,7 @@ target_link_libraries(
 add_executable(
   io_tests
   io/sources/test_read_sources.cpp
+  io/receivers/test_read_receivers.cpp
 )
 
 target_link_libraries(

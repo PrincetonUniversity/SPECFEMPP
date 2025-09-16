@@ -59,6 +59,14 @@ public:
   type_real get_x() const { return this->x; }
   type_real get_z() const { return this->z; }
 
+  /**
+   * @brief Equality operator
+   *
+   * @param other Other receiver to compare with
+   * @return true if receivers are equal, false otherwise
+   */
+  bool operator==(const receiver &other) const;
+
 private:
   type_real x;              ///< x coordinate of source
   type_real z;              ///< z coordinate of source

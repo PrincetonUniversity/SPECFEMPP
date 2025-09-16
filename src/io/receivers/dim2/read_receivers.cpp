@@ -1,6 +1,6 @@
 // Internal Includes
-#include "specfem/receivers.hpp"
 #include "io/interface.hpp"
+#include "specfem/receivers.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
@@ -52,6 +52,13 @@ specfem::io::read_2d_receivers(const std::string &stations_file,
     }
 
     stations.close();
+  }
+
+  // Warn if no receivers were found
+  if (receivers.empty()) {
+    std::cout << "\033[1mWARNING: No receiver stations found in the STATIONS "
+                 "file\033[0m"
+              << std::endl;
   }
 
   return receivers;
