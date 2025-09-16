@@ -252,7 +252,7 @@ public:
   }
 
   /**
-   * @brief Multiplication assignment operator.
+   * @brief Multiplication assignment operator with constant value.
    *
    * Multiply by a constant value and assign the result to this field.
    *
