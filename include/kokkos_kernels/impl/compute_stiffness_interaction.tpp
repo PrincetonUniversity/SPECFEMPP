@@ -152,7 +152,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
               [&](const auto &iterator_index,
                   const typename PointFieldDerivativesType::value_type &du) {
                 const auto &index = iterator_index.get_index();
-                const int &ielement = iterator_index.get_policy_index();
+                const auto &local_index = iterator_index.get_local_index();
                 PointJacobianMatrixType point_jacobian_matrix;
                 specfem::assembly::load_on_device(index, jacobian_matrix,
                                                   point_jacobian_matrix);
@@ -173,15 +173,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 specfem::medium::compute_cosserat_stress(
                     point_property, point_displacement, point_stress);
 
-                const auto F = point_stress * point_jacobian_matrix;
-
-                for (int icomponent = 0; icomponent < components;
-                     ++icomponent) {
-                  for (int idim = 0; idim < num_dimensions; ++idim) {
-                    stress_integrand.F(ielement, index.iz, index.ix, icomponent,
-                                       idim) = F(icomponent, idim);
-                  }
-                }
+                stress_integrand.F(local_index) = point_stress * point_jacobian_matrix;
               });
 
           team.team_barrier();
