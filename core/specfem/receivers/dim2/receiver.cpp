@@ -17,3 +17,12 @@ specfem::receivers::receiver<specfem::dimension::type::dim2>::print() const {
 
   return message.str();
 }
+
+bool specfem::receivers::receiver<specfem::dimension::type::dim2>::operator==(
+    const receiver &other) const {
+  return (this->network_name == other.network_name) &&
+         (this->station_name == other.station_name) &&
+         specfem::utilities::is_close(this->x, other.x) &&
+         specfem::utilities::is_close(this->z, other.z) &&
+         specfem::utilities::is_close(this->angle, other.angle);
+}

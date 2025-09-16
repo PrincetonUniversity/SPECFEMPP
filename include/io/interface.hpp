@@ -83,6 +83,46 @@ std::vector<std::shared_ptr<
 read_2d_receivers(const YAML::Node &stations, const type_real angle);
 
 /**
+ * @brief Read receivers file for 3D simulations
+ *
+ * Parse receiver stations file and create a vector of
+ * specfem::receiver::receiver * object
+ *
+ * @param stations_file Stations file describing receiver locations
+ * @return vector of instantiated receiver objects
+ */
+std::vector<std::shared_ptr<
+    specfem::receivers::receiver<specfem::dimension::type::dim3> > >
+read_3d_receivers(const std::string &stations_file);
+
+/**
+ * @overload
+ * @brief Read 3D receivers from YAML Node
+ *
+ * Parse receiver stations file and create a vector of
+ * specfem::receiver::receiver * object
+ *
+ * The receivers are defined in the YAML file as
+ *
+ * @code
+ * receivers:
+ *     stations-dict:
+ *         - network: "network_name"
+ *           station: "station_name"
+ *           x: x_coordinate
+ *           y: y_coordinate
+ *           z: z_coordinate
+ *         - <next station>
+ * @endcode
+ *
+ * @param stations YAML node containing receiver locations
+ * @return vector of instantiated receiver objects
+ */
+std::vector<std::shared_ptr<
+    specfem::receivers::receiver<specfem::dimension::type::dim3> > >
+read_3d_receivers(const YAML::Node &stations);
+
+/**
  * @brief Read sources file written in .yml format
  *
  * Parse source specification file written in yaml format and create a vector of
