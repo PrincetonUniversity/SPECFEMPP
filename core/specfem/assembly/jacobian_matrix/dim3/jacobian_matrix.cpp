@@ -62,9 +62,6 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>::
   h_gammaz = Kokkos::create_mirror_view(gammaz);
   h_jacobian = Kokkos::create_mirror_view(jacobian);
 
-  std::cout << "number of irregular elements: " << mesh_jacobian.nspec_irregular
-            << std::endl;
-
   if (mesh_jacobian.nspec_irregular > 0) {
 
     for (int ispec = 0; ispec < nspec; ispec++) {
@@ -125,15 +122,6 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>::
     Kokkos::deep_copy(h_jacobian, mesh_jacobian.jacobian_regular);
   }
 
-  // Print min/max value of h_xix
-  auto h_xix_host = Kokkos::create_mirror_view(h_xix);
-  Kokkos::deep_copy(h_xix_host, h_xix);
-  auto min_max_xix = std::minmax_element(h_xix_host.data(),
-                                         h_xix_host.data() + h_xix_host.size());
-
-  std::cout << "h_xix min: " << *min_max_xix.first
-            << ", max: " << *min_max_xix.second << std::endl;
-
   this->sync_views();
   return;
 }
@@ -157,9 +145,6 @@ specfem::assembly::jacobian_matrix<
     specfem::dimension::type::dim3>::check_small_jacobian() const {
   Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
       "specfem::assembly::jacobian_matrix::negative", nspec);
-
-  Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace>
-      jacobian_elements("specfem::assembly::jacobian_matrix::value", nspec);
 
   Kokkos::deep_copy(small_jacobian, false);
 
@@ -190,7 +175,6 @@ specfem::assembly::jacobian_matrix<
               // Check if below threshold
               if (jacobian < threshold) {
                 small_jacobian(ispec) = true;
-                jacobian_elements(ispec) = jacobian;
                 l_found = true;
                 break;
               }
@@ -200,12 +184,5 @@ specfem::assembly::jacobian_matrix<
       },
       found);
 
-  for (int ispec = 0; ispec < nspec; ++ispec) {
-    if (small_jacobian(ispec)) {
-      std::cout << "Spec " << ispec
-                << " has small jacobian: " << jacobian_elements(ispec)
-                << std::endl;
-    }
-  }
   return std::make_tuple(found, small_jacobian);
 }
