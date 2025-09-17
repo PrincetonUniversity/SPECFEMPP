@@ -1,6 +1,6 @@
 #pragma once
+#include "../impl/dim2/source_medium.tpp"
 #include "../impl/source_medium.hpp"
-#include "../impl/source_medium.tpp"
 #include "enumerations/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
@@ -11,6 +11,21 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
+/**
+ * @brief 2D template specialization for assembly-level source management
+ *
+ * This class manages sources within 2D assembled finite element meshes,
+ * providing efficient data access patterns for spectral element simulations.
+ * Sources are organized by medium type (elastic_psv, elastic_sh, acoustic,
+ * poroelastic) and support time-dependent computations through source time
+ * functions.
+ *
+ * Key features:
+ * - Device/host memory management with Kokkos
+ * - Medium-specific source organization
+ * - Time-dependent source function evaluation
+ * - Lagrange interpolant computation for spectral elements
+ */
 template <> struct sources<specfem::dimension::type::dim2> {
 
 public:
@@ -211,7 +226,13 @@ private:
 };
 
 /**
+ * @defgroup SourceDataAccess2D Source Data Access Functions
+ * @brief Data access functions for source operations
+ */
+
+/**
  * @brief Load source information on device at the given index
+ * @ingroup SourceDataAccess2D
  *
  * Loads source information on device at the given index. Make sure you set
  the
@@ -279,6 +300,7 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
 
 /**
  * @brief Load source information on host at the given index
+ * @ingroup SourceDataAccess2D
  *
  * Loads source information on device at the given index. Make sure you set
  the
@@ -347,6 +369,7 @@ void load_on_host(
 
 /**
  * @brief Store source information on device at the given index
+ * @ingroup SourceDataAccess2D
  *
  * Loads source information on device at the given index. Make sure you set
  the
@@ -411,6 +434,7 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
 
 /**
  * @brief Store source information on host at the given index
+ * @ingroup SourceDataAccess2D
  *
  * Loads source information on device at the given index. Make sure you set
  the

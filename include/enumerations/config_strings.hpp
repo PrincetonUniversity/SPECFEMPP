@@ -5,6 +5,8 @@
  ((hdf5, h5)) \
  ((adios2, bp)) \
  ((ascii, txt)) \
+ ((npy, numpy)) \
+ ((npz, numpy_zip)) \
  ((psv, p_sv, p-sv)) \
  ((sh)) \
  ((te)) \

@@ -6,10 +6,30 @@
 
 namespace specfem::assembly {
 
+/**
+ * @brief 2D assembly receiver specialization for seismic simulations
+ *
+ * Specialized implementation of receivers for 2D spectral element simulations.
+ * This class manages seismic receivers located within 2D finite element meshes,
+ * handling Lagrange interpolation for accurate field sampling and coordinate
+ * transformations using receiver angles for proper seismogram orientation.
+ *
+ * Key features for 2D:
+ * - Supports multiple medium types: elastic_psv, elastic_sh, acoustic,
+ * poroelastic
+ * - Uses angle-based coordinate rotation (sine/cosine) for 2D transformations
+ * - Records 2-component seismograms (typically horizontal and vertical)
+ * - Efficient Kokkos-based data structures for GPU computations
+ *
+ * The class inherits from both StationIterator (for station metadata) and
+ * SeismogramIterator (for time-series data access), providing a unified
+ * interface for receiver management and seismogram recording.
+ */
 template <>
 struct receivers<specfem::dimension::type::dim2>
     : public receivers_impl::StationIterator,
-      public receivers_impl::SeismogramIterator {
+      public receivers_impl::SeismogramIterator<
+          specfem::dimension::type::dim2> {
 
 public:
   constexpr static specfem::dimension::type dimension_tag =
@@ -150,21 +170,26 @@ private:
 };
 
 /**
- * @defgroup ComputeReceiversDataAccess
+ * @defgroup ComputeReceiversDataAccess2D
+ * @brief 2D receiver data access functions for device computations
+ *
+ * These functions provide efficient access to receiver data during GPU kernel
+ * execution for 2D spectral element simulations. They handle loading of
+ * Lagrange interpolants and storing of seismogram components with proper
+ * indexing.
  */
 
 /**
  * @brief Load the Lagrange interpolant for receivers associated with the
  * iterator on the device
  *
- * @ingroup ComputeReceiversDataAccess
+ * @ingroup ComputeReceiversDataAccess2D
  *
  * @tparam ChunkIndexType Chunk index type @ref
  * specfem::execution::ChunkElementIndex
  * @tparam ViewType Lagrange interpolant associated with the receivers in the
  * iterator
  *
- * @param team_member Kokkos team member
  * @param chunk_index Chunk index
  * @param receivers Receivers object containing the receiver information
  * @param lagrange_interpolant Lagrange interpolant associated with the
@@ -213,7 +238,7 @@ load_on_device(const ChunkIndexType &chunk_index,
  * @c receivers.set_seismogram_step(isig_step);
  * @c receivers.set_seismogram_type(iseis);
  *
- * @ingroup ComputeReceiversDataAccess
+ * @ingroup ComputeReceiversDataAccess2D
  * @tparam ChunkIndexType Chunk index type
  * @tparam SeismogramViewType View of the seismogram components
  * @param receivers Receivers object containing the receiver information

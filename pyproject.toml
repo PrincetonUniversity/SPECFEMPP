@@ -22,6 +22,7 @@ all = [
   {include-group = "dev"},
   {include-group = "examples"},
   {include-group = "nightly-benchmarks"},
+  {include-group = "scripts"}
 ]
 
 dev = [
@@ -65,6 +66,12 @@ examples = [
 nightly-benchmarks = [
   {include-group = "examples"},
   "pandas==2.3.2",
+]
+
+scripts = [
+  "gmsh==4.14.0",
+  "matplotlib==3.10.3",
+  "rtree==1.4.1",
 ]
 
 [tool.scikit-build]

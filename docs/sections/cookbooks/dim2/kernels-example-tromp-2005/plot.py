@@ -4,15 +4,16 @@ from scipy.interpolate import griddata
 
 
 # Load the kernels
-def load_data(directory):
-    X = np.loadtxt(directory + "/ElasticIsotropic/X.txt")
-    Z = np.loadtxt(directory + "/ElasticIsotropic/Z.txt")
-    rho = np.loadtxt(directory + "/ElasticIsotropic/rho.txt")
-    kappa = np.loadtxt(directory + "/ElasticIsotropic/kappa.txt")
-    mu = np.loadtxt(directory + "/ElasticIsotropic/mu.txt")
-    rhop = np.loadtxt(directory + "/ElasticIsotropic/rhop.txt")
-    alpha = np.loadtxt(directory + "/ElasticIsotropic/alpha.txt")
-    beta = np.loadtxt(directory + "/ElasticIsotropic/beta.txt")
+def load_data(kernel_file):
+    X = np.load(kernel_file + "/elastic_psv_isotropic/X.npy")
+    Z = np.load(kernel_file + "/elastic_psv_isotropic/Z.npy")
+
+    rho = np.load(kernel_file + "/elastic_psv_isotropic/rho.npy")
+    mu = np.load(kernel_file + "/elastic_psv_isotropic/mu.npy")
+    kappa = np.load(kernel_file + "/elastic_psv_isotropic/kappa.npy")
+    rhop = np.load(kernel_file + "/elastic_psv_isotropic/rhop.npy")
+    alpha = np.load(kernel_file + "/elastic_psv_isotropic/alpha.npy")
+    beta = np.load(kernel_file + "/elastic_psv_isotropic/beta.npy")
 
     return X, Z, rho, kappa, mu, rhop, alpha, beta
 
@@ -99,4 +100,5 @@ def plot_kernels(input_directory, output):
     return
 
 
-plot_kernels("OUTPUT_FILES/kernels/Kernels/", "kernels.png")
+if __name__ == "__main__":
+    plot_kernels("OUTPUT_FILES/Kernels", "Kernels_out.png")

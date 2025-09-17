@@ -97,6 +97,9 @@ subroutine save_databases()
       ! axial elements
       call save_databases_axial_elements()
 
+      ! adjacency graph
+      call save_databases_adjacency_graph()
+
       ! closes Database file
       close(IOUT)
 
@@ -848,3 +851,42 @@ subroutine save_databases_VTK_files()
    endif
 
 end subroutine save_databases_VTK_files
+
+subroutine save_databases_adjacency_graph()
+
+   use constants, only: IOUT
+   use shared_parameters, only: nelmnts, write_adjacency_map
+   use part_unstruct_par, only: num_adjacent, adjacency_type, adjacency_id, adjacent_elements
+
+   implicit none
+
+   integer :: i,j, total_adjacencies
+
+   write(IOUT) write_adjacency_map
+
+   if (.not. write_adjacency_map) return
+
+   ! Find total number of adjacent elements
+
+   total_adjacencies = 0
+   do i = 0, nelmnts-1
+      total_adjacencies = total_adjacencies + num_adjacent(i)
+   enddo
+
+   write(IOUT) total_adjacencies
+
+   ! local parameters
+   do i = 0, nelmnts-1
+      if (num_adjacent(i) > 0) then
+         do j = 0, num_adjacent(i)-1
+            !! Write out adjacency graph
+            ! i = current element
+            ! adjacent_elements(i,j) = adjacent element number
+            ! adjacency_type(i,j) = type of adjacency (1 = STRONGLY_CONFORMING)
+            ! adjacency_id(i,j) = defines which edge/vertex is connected from i to adjacent_elements(i,j)
+            write(IOUT) i + 1, adjacent_elements(i,j) + 1, adjacency_type(i,j), adjacency_id(i,j)
+         enddo
+      endif
+   enddo
+
+end subroutine save_databases_adjacency_graph

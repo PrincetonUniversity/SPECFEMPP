@@ -359,6 +359,7 @@ program meshfem2D
    use part_unstruct_par
 !  use source_file_par
    use compute_elements_load_par
+   use adjacency_graph
 
    implicit none
 
@@ -637,6 +638,9 @@ program meshfem2D
       ! create a Gnuplot file that displays the grid
       if (output_grid_Gnuplot .and. .not. read_external_mesh) &
          call save_gnuplot_file(NGNOD,nx_elem_internal,nz_elem_internal,grid_point_x,grid_point_z)
+
+      call compute_adjacency_graph()
+      call read_mesh_nonconforming_adjacencies_file()
 
       ! partitioning
       ! user output

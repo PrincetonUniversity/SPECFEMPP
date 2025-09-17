@@ -338,3 +338,49 @@ subroutine read_mesh_nodes_coords_from_interfaces()
    endif
 
 end subroutine read_mesh_nodes_coords_from_interfaces
+
+!
+!---------------------------------------------------------------------------------------
+!
+
+subroutine read_mesh_nonconforming_adjacencies_file()
+
+! reads in adjacency graph
+
+   use constants, only: IMAIN,myrank
+   ! assume these are already initialized
+   use part_unstruct_par, only: elmnts, num_adjacent, adjacency_type, adjacency_id, adjacent_elements
+   use shared_parameters, only: nonconforming_adjacencies_file, read_external_mesh, should_read_nonconforming_adjacencies_file
+
+
+   implicit none
+
+   integer :: ielem
+
+   ! ----- start:
+   if (.not. should_read_nonconforming_adjacencies_file) then
+      write(IMAIN,*) 'No "nonconforming_adjacencies_file" set. Skipping...'
+      call flush_IMAIN()
+      return
+   endif
+
+   if (myrank == 0) then
+      write(IMAIN,*) 'Appending adjacent elements:'
+      call flush_IMAIN()
+   endif
+
+   ! reads in file
+   if (read_external_mesh) then
+      ! reads in specified external file
+      call read_external_nonconforming_adjacencies_file(nonconforming_adjacencies_file)
+   else
+      ! safety stop
+      call stop_the_code('Error read_external_mesh must be set to .true. to use external nonconforming_adjacencies_file')
+   endif
+
+end subroutine read_mesh_nonconforming_adjacencies_file
+
+!
+!---------------------------------------------------------------------------------------
+!
+   ! initializes

@@ -2,6 +2,8 @@
 #include "io/ADIOS2/ADIOS2.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
+#include "io/NPY/NPY.hpp"
+#include "io/NPZ/NPZ.hpp"
 #include "io/reader.hpp"
 #include "periodic_tasks/wavefield_reader.hpp"
 #include "periodic_tasks/wavefield_writer.hpp"
@@ -108,6 +110,16 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
             specfem::periodic_tasks::wavefield_writer<specfem::io::ASCII> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
+      } else if (specfem::utilities::is_npy_string(this->output_format)) {
+        return std::make_shared<
+            specfem::periodic_tasks::wavefield_writer<specfem::io::NPY> >(
+            this->output_folder, this->time_interval, this->include_last_step,
+            this->for_adjoint_simulations);
+      } else if (specfem::utilities::is_npz_string(this->output_format)) {
+        return std::make_shared<
+            specfem::periodic_tasks::wavefield_writer<specfem::io::NPZ> >(
+            this->output_folder, this->time_interval, this->include_last_step,
+            this->for_adjoint_simulations);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }
@@ -137,6 +149,14 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
         return std::make_shared<
             specfem::periodic_tasks::wavefield_reader<specfem::io::ASCII> >(
+            this->output_folder, this->time_interval, this->include_last_step);
+      } else if (specfem::utilities::is_npy_string(this->output_format)) {
+        return std::make_shared<
+            specfem::periodic_tasks::wavefield_reader<specfem::io::NPY> >(
+            this->output_folder, this->time_interval, this->include_last_step);
+      } else if (specfem::utilities::is_npz_string(this->output_format)) {
+        return std::make_shared<
+            specfem::periodic_tasks::wavefield_reader<specfem::io::NPZ> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else {
         throw std::runtime_error("Unknown wavefield format");

@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" OFF)
 option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" OFF)
 option(SPECFEM_ENABLE_HDF5_FORCE_INSTALL "Force install HDF5 dependency if SPECFEM_ENABLE_HDF5 is ON even if system HDF5 is found" OFF)
+option(SPECFEM_ENABLE_NPZ "Enable NPZ I/O in SPECFEM++" OFF)
+option(SPECFEM_ENABLE_ZLIB_FORCE_INSTALL "Force install ZLIB dependency even if system ZLIB is found" OFF)
 option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
 option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
 option(SPECFEM_BUILD_TESTS "Tests included" OFF)
@@ -103,6 +105,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 # Find HDF5
 include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
 
+# Find or install NPZ library function
+include("${CMAKE_SOURCE_DIR}/cmake/npz.cmake")
+
 # Find or install ADIOS2 library function
 include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 
@@ -110,15 +115,14 @@ include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 # the pugixml dependency than ADIOS2)
 include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 
-
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
-    add_definitions(-DSPECFEM_ENABLE_SIMD)
+    add_compile_definitions(SPECFEM_ENABLE_SIMD)
 endif()
 
 if (SPECFEM_ENABLE_PROFILING)
     message(STATUS "Enabling profiling")
-    add_definitions(-DSPECFEM_ENABLE_PROFILING)
+    add_compile_definitions(SPECFEM_ENABLE_PROFILING)
 endif()
 
 if (SPECFEM_ENABLE_DOUBLE_PRECISION)
@@ -151,7 +155,6 @@ message(STATUS "INCLUDE DIRECTORIES:")
 message(STATUS "    core: ${CMAKE_CURRENT_SOURCE_DIR}/core")
 message(STATUS "    include: ${CMAKE_SOURCE_DIR}/include")
 message(STATUS "    binary: ${CMAKE_BINARY_DIR}/include")
-
 
 
 # Set loglevel to STATUS if build type is debug
@@ -197,6 +200,9 @@ target_link_libraries(
 
 add_library(
         io
+        # IO libraries
+        src/io/NPY/impl/npy_header.cpp
+        # SPECFEM IO
         src/io/fortranio/fortran_io.cpp
         src/io/sources/dim2/read_sources.cpp
         src/io/sources/dim3/read_sources.cpp
@@ -209,6 +215,7 @@ add_library(
         src/io/mesh/impl/fortran/dim2/read_mesh_database.cpp
         src/io/mesh/impl/fortran/dim2/read_interfaces.cpp
         src/io/mesh/impl/fortran/dim2/read_parameters.cpp
+        src/io/mesh/impl/fortran/dim2/read_adjacency_graph.cpp
         # Fortran 3D part
         src/io/mesh/impl/fortran/dim3/mesh.cpp
         src/io/mesh/impl/fortran/dim3/read_parameters.cpp
@@ -223,37 +230,26 @@ target_link_libraries(
         source_class
         specfem::receivers
         yaml-cpp
-        ${BOOST_LIBS}
+        boost
+        $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
+        $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
+        $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
 
-if (NOT SPECFEM_ENABLE_HDF5)
-    target_compile_definitions(
+target_compile_definitions(
         io
-        PUBLIC -DNO_HDF5
-    )
-else()
-    target_link_libraries(
-        io
-        ${HDF5_LIBRARIES}
-    )
-endif()
-
-if (NOT SPECFEM_ENABLE_ADIOS2)
-    target_compile_definitions(
-        io
-        PUBLIC -DNO_ADIOS2
-    )
-else()
-    target_link_libraries(
-        io
-        adios2
-    )
-endif()
+        PUBLIC
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:-DNO_NPZ>
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
+)
 
 add_library(
         enumerations
         src/enumerations/medium.cpp
         src/enumerations/wavefield.cpp
+        src/enumerations/connections.cpp
+        src/enumerations/mesh_entities.cpp
 )
 
 target_link_libraries(
@@ -277,15 +273,17 @@ add_library(
         src/specfem_mpi/specfem_mpi.cpp
 )
 
+target_compile_definitions(
+        specfem_mpi
+        PUBLIC
+        $<$<BOOL:${SPECFEM_ENABLE_MPI}>:-DMPI_PARALLEL>
+)
+
 if (SPECFEM_ENABLE_MPI)
-        target_compile_definitions(
-                specfem_mpi
-                PUBLIC -DMPI_PARALLEL
-        )
-        message(STATUS "Compiling SPECFEM with MPI")
+    message(STATUS "Compiling SPECFEM with MPI")
 else()
-        message(STATUS "Compiling SPECFEM without MPI")
-endif(SPECFEM_ENABLE_MPI)
+    message(STATUS "Compiling SPECFEM without MPI")
+endif()
 
 # add_library(
 #         material_class
@@ -312,6 +310,7 @@ add_library(
         src/mesh/dim2/coupled_interfaces/interface_container.cpp
         src/mesh/dim2/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/dim2/tags/tags.cpp
+        src/mesh/dim2/adjacency_graph/assert_symmetry.cpp
         # 3-D
         src/mesh/dim3/mesh.cpp
         src/mesh/dim3/boundaries/absorbing_boundary.cpp
@@ -490,30 +489,21 @@ target_link_libraries(
         periodic_tasks
         reader
         writer
+        io
 )
 
-if (NOT SPECFEM_ENABLE_VTK)
-        target_compile_definitions(
-                periodic_tasks
-                PUBLIC -DNO_VTK
-        )
+target_compile_definitions(
+        periodic_tasks
+        PUBLIC
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_VTK}>>:-DNO_VTK>
+        $<$<BOOL:${__APPLE__}>:__APPLE__>
+)
 
-        target_link_libraries(
-                periodic_tasks
-                assembly
-        )
-else ()
-        target_link_libraries(
-                periodic_tasks
-                assembly
-                ${VTK_LIBRARIES}
-                )
-
-        # Only define the __APPLE__ compile definition if it is defined
-        if (__APPLE__)
-        target_compile_definitions(periodic_tasks PRIVATE __APPLE__)
-        endif(__APPLE__)
-endif()
+target_link_libraries(
+        periodic_tasks
+        assembly
+        $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
+)
 
 add_library(
         parameter_reader

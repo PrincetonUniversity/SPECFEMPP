@@ -1,6 +1,7 @@
 #pragma once
 
 #include "element/quadrature.hpp"
+#include "impl/adjacency_graph.hpp"
 #include "impl/control_nodes.hpp"
 #include "impl/mesh_to_compute_mapping.hpp"
 #include "impl/points.hpp"
@@ -30,6 +31,8 @@ struct mesh<specfem::dimension::type::dim2>
       public specfem::assembly::mesh_impl::mesh_to_compute_mapping<
           specfem::dimension::type::dim2>,
       public specfem::assembly::mesh_impl::shape_functions<
+          specfem::dimension::type::dim2>,
+      public specfem::assembly::mesh_impl::adjacency_graph<
           specfem::dimension::type::dim2> {
 
 public:
@@ -37,20 +40,29 @@ public:
       specfem::dimension::type::dim2; ///< Dimension
   int nspec;                          ///< Number of spectral
                                       ///< elements
-  int ngllz;                          ///< Number of quadrature
-                                      ///< points in z dimension
-  int ngllx;                          ///< Number of quadrature
-                                      ///< points in x dimension
   int ngnod;                          ///< Number of control
                                       ///< nodes
+  specfem::mesh_entity::element<dimension_tag> element_grid; ///< Element number
+                                                             ///< of GLL points
 
   mesh() = default;
 
   mesh(const specfem::mesh::tags<dimension_tag> &tags,
        const specfem::mesh::control_nodes<dimension_tag> &control_nodes,
-       const specfem::quadrature::quadratures &quadratures);
+       const specfem::quadrature::quadratures &quadratures,
+       const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph);
+
+  void assemble_legacy();
 
   void assemble();
+
+  bool adjacency_graph_empty() const {
+    return static_cast<const specfem::assembly::mesh_impl::adjacency_graph<
+        dimension_tag> &>(*this)
+        .empty();
+  }
+
+  bool empty() = delete;
 };
 
 /**
@@ -66,13 +78,14 @@ public:
  * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
  * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
  * @param team Team member
- * @param quadrature Quadrature data
+ * @param mesh Mesh data
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <bool on_device, typename MemberType, typename ViewType>
 KOKKOS_INLINE_FUNCTION void
 impl_load(const MemberType &team,
-          const specfem::assembly::mesh<specfem::dimension::type::dim2> mesh,
+          const specfem::assembly::mesh_impl::quadrature<
+              specfem::dimension::type::dim2> &quadrature,
           ViewType &element_quadrature) {
 
   constexpr bool store_hprime_gll = ViewType::store_hprime_gll;
@@ -80,10 +93,6 @@ impl_load(const MemberType &team,
   constexpr bool store_weight_times_hprime_gll =
       ViewType::store_weight_times_hprime_gll;
   constexpr int NGLL = ViewType::ngll;
-
-  const auto &quadrature =
-      static_cast<const specfem::assembly::mesh_impl::quadrature<
-          specfem::dimension::type::dim2> &>(mesh);
 
   static_assert(std::is_same_v<typename MemberType::execution_space,
                                Kokkos::DefaultExecutionSpace>,
@@ -125,16 +134,17 @@ impl_load(const MemberType &team,
  * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
  * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
  * @param team Team member
- * @param quadrature Quadrature data
+ * @param mesh Mesh data
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <typename MemberType, typename ViewType>
-KOKKOS_FUNCTION void load_on_device(
-    const MemberType &team,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    ViewType &element_quadrature) {
+KOKKOS_FUNCTION void
+load_on_device(const MemberType &team,
+               const specfem::assembly::mesh_impl::quadrature<
+                   specfem::dimension::type::dim2> &quadrature,
+               ViewType &element_quadrature) {
 
-  impl_load<true>(team, mesh, element_quadrature);
+  impl_load<true>(team, quadrature, element_quadrature);
 }
 
 /**
@@ -145,15 +155,15 @@ KOKKOS_FUNCTION void load_on_device(
  * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
  * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
  * @param team Team member
- * @param quadrature Quadrature data
+ * @param mesh Mesh data
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <typename MemberType, typename ViewType>
-void load_on_host(
-    const MemberType &team,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    ViewType &element_quadrature) {
-  impl_load<false>(team, mesh, element_quadrature);
+void load_on_host(const MemberType &team,
+                  const specfem::assembly::mesh_impl::quadrature<
+                      specfem::dimension::type::dim2> &quadrature,
+                  ViewType &element_quadrature) {
+  impl_load<false>(team, quadrature, element_quadrature);
 }
 
 } // namespace specfem::assembly
