@@ -134,7 +134,7 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
   specfem::execution::for_each_level(
       index.get_iterator(),
       [&](const typename IndexType::iterator_type::index_type &iterator_index) {
-        const auto ielement = iterator_index.get_policy_index();
+        const auto local_index = iterator_index.get_local_index();
         const auto point_index = iterator_index.get_index();
 
         const int iglob =
@@ -143,8 +143,7 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
         for (int icomp = 0; icomp < ncomponents; ++icomp) {
           (specfem::assembly::fields_impl::base_load_accessor<
                on_device, AccessorTypes::data_class>(
-               iglob, icomp, current_field,
-               accessors(ielement, point_index.iz, point_index.ix, icomp)),
+               iglob, icomp, current_field, accessors(local_index, icomp)),
            ...);
         }
       });
@@ -190,15 +189,14 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
   specfem::execution::for_each_level(
       index.get_iterator(),
       [&](const typename IndexType::iterator_type::index_type &iterator_index) {
-        const auto ielement = iterator_index.get_policy_index();
+        const auto local_index = iterator_index.get_local_index();
         const auto point_index = iterator_index.get_index();
 
         int iglob[simd_size];
         for (int lane = 0; lane < simd_size; ++lane) {
           iglob[lane] = point_index.mask(lane)
                             ? field.template get_iglob<on_device>(
-                                  point_index.ispec + lane, point_index.iz,
-                                  point_index.ix, MediumTag)
+                                  point_index, lane, MediumTag)
                             : field.nglob + 1;
         }
 
@@ -207,8 +205,7 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
                on_device, AccessorTypes::data_class>(
                iglob, icomp,
                [&](std::size_t lane) { return point_index.mask(lane); },
-               current_field,
-               accessors(ielement, point_index.iz, point_index.ix, icomp)),
+               current_field, accessors(local_index, icomp)),
            ...);
         }
       });

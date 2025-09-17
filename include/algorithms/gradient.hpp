@@ -70,7 +70,7 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
       chunk_index.get_iterator(),
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
-        const auto ielement = iterator_index.get_policy_index();
+        const auto ielement = iterator_index.get_local_index().ispec;
         const auto point_index = iterator_index.get_index();
         const int ispec = point_index.ispec;
         const int iz = point_index.iz;
@@ -171,7 +171,7 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
       chunk_index.get_iterator(),
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
-        const auto ielement = iterator_index.get_policy_index();
+        const auto ielement = iterator_index.get_local_index().ispec;
         const auto point_index = iterator_index.get_index();
         const int ispec = point_index.ispec;
         const int iz = point_index.iz;
