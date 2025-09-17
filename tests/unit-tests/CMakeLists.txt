@@ -98,6 +98,7 @@ target_link_libraries(io_framework_tests PRIVATE
   gtest_main
   Kokkos::kokkos
   kokkos_environment
+  $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
   $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
   $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
@@ -105,6 +106,7 @@ target_link_libraries(io_framework_tests PRIVATE
 target_compile_definitions(
     io_framework_tests
     PUBLIC
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:-DNO_NPZ>
     $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
     $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
 )
@@ -358,6 +360,7 @@ add_executable(
   assembly/sources/sources.cpp
   assembly/check_jacobian/check_jacobian.cpp
   assembly/locate/locate_point.cpp
+  assembly/locate/locate_point_on_edge.cpp
   assembly/mesh/utilities.cpp
   assembly/sources/locate_sources.cpp
   assembly/compute_source_array/dim2/compute_source_array_from_vector.cpp
@@ -445,6 +448,8 @@ target_link_libraries(
 add_executable(
   locate_point_fixture_2d
   algorithms/dim2/locate_point_fixture.cpp
+  algorithms/dim2/locate_point_test.cpp
+  algorithms/dim2/locate_point_on_edge_test.cpp
 )
 
 target_link_libraries(
@@ -512,14 +517,14 @@ target_link_libraries(
 
 add_executable(
   mass_matrix_tests
-  mass_matrix/main.cpp
+  medium/mass_matrix/main.cpp
   # 2D mass matrix tests
-  mass_matrix/dim2/elastic_isotropic.cpp
-  mass_matrix/dim2/elastic_anisotropic.cpp
-  mass_matrix/dim2/acoustic.cpp
-  mass_matrix/dim2/poroelastic.cpp
+  medium/mass_matrix/dim2/elastic_isotropic.cpp
+  medium/mass_matrix/dim2/elastic_anisotropic.cpp
+  medium/mass_matrix/dim2/acoustic.cpp
+  medium/mass_matrix/dim2/poroelastic.cpp
   # 3D mass matrix tests
-  mass_matrix/dim3/elastic_isotropic.cpp
+  medium/mass_matrix/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
@@ -530,15 +535,15 @@ target_link_libraries(
 
 add_executable(
   stress_tests
-  stress/main.cpp
+  medium/stress/main.cpp
   # 2D stress tests
-  stress/dim2/acoustic.cpp
-  stress/dim2/elastic_isotropic.cpp
-  stress/dim2/elastic_anisotropic.cpp
-  stress/dim2/elastic_isotropic_cosserat.cpp
-  stress/dim2/poroelastic_isotropic.cpp
+  medium/stress/dim2/acoustic.cpp
+  medium/stress/dim2/elastic_isotropic.cpp
+  medium/stress/dim2/elastic_anisotropic.cpp
+  medium/stress/dim2/elastic_isotropic_cosserat.cpp
+  medium/stress/dim2/poroelastic_isotropic.cpp
   # 3D stress tests
-  stress/dim3/elastic_isotropic.cpp
+  medium/stress/dim3/elastic_isotropic.cpp
 )
 
 target_link_libraries(
@@ -558,6 +563,25 @@ target_link_libraries(
   point
   gtest_main
   Kokkos::kokkos
+)
+
+add_executable(
+  source_tests
+  medium/source/main.cpp
+  # 2D source tests
+  medium/source/dim2/acoustic.cpp
+  medium/source/dim2/elastic_isotropic.cpp
+  medium/source/dim2/elastic_anisotropic.cpp
+  medium/source/dim2/elastic_isotropic_cosserat.cpp
+  medium/source/dim2/poroelastic.cpp
+  # 3D source tests
+  medium/source/dim3/elastic_isotropic.cpp
+)
+
+target_link_libraries(
+  source_tests
+  point
+  gtest_main
 )
 
 add_executable(
@@ -725,6 +749,7 @@ if(NOT MPI_PARALLEL)
     receivers_tests
     simd_tests
     source_class_tests
+    source_tests
     stress_tests
     test_mesh_utilities_mapping_2d
     test_mesh_utilities_mapping_3d
@@ -751,7 +776,6 @@ if(NOT MPI_PARALLEL)
     io
     mesh
     policies
-    mortar
   )
 
   foreach(dir_name IN LISTS LINK_DIRS)

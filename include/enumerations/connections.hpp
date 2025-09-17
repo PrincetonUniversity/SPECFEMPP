@@ -17,9 +17,20 @@ namespace specfem::connections {
 enum class type : int {
   /// @brief Strongly conforming connection where nodes match exactly
   strongly_conforming = 1,
-  weakly_conforming =
-      2, ///< @brief Weakly conforming connection with non-matching nodes
+  /// @brief Weakly conforming connection where nodes match, but the shape
+  /// function can be discontinuous. (example: coupling across different media,
+  /// kinematic faults).
+  weakly_conforming = 2,
+  /// @brief Nonconforming connections have no matching nodes, but are
+  /// geometrically (spatially) adjacent
+  nonconforming = 3
 };
+
+/**
+ * @brief Recovers a human-readable string for a given connection
+ *
+ */
+const std::string to_string(const specfem::connections::type &conn);
 
 /**
  * @class connection_mapping

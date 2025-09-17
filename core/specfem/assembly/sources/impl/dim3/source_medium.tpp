@@ -8,7 +8,7 @@
 
 // 3D Constructor
 /*
-// CPP20_CHANGE
+// TODO(Lucas : CPP20 update)
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename... Args>
 requires (DimensionTag == specfem::dimension::type::dim3)
@@ -26,7 +26,10 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
       h_source_index_mapping(Kokkos::create_mirror_view(source_index_mapping)),
       source_time_function("specfem::sources::source_time_function", nsteps, sources.size(), components),
       h_source_time_function(Kokkos::create_mirror_view(source_time_function)),
-      source_array("specfem::sources::source_array", sources.size(), components, mesh.ngllz, mesh.nglly, mesh.ngllx),
+      source_array("specfem::sources::source_array", sources.size(), components,
+                   mesh.element_grid.ngllz,
+                   mesh.element_grid.nglly,
+                   mesh.element_grid.ngllx),
       h_source_array(Kokkos::create_mirror_view(source_array)) {
 
   for (int isource = 0; isource < sources.size(); isource++) {
@@ -49,7 +52,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
 
 // 3D load_on_device
 /*
-// CPP20_CHANGE
+// TODO(Lucas : CPP20 update)
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
 requires (DimensionTag == specfem::dimension::type::dim3)
@@ -73,7 +76,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::load_on
 
 // 3D store_on_device
 /*
-// CPP20_CHANGE
+// TODO(Lucas : CPP20 update)
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
 requires (DimensionTag == specfem::dimension::type::dim3)
@@ -97,7 +100,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::store_o
 
 // 3D load_on_host
 /*
-// CPP20_CHANGE
+// TODO(Lucas : CPP20 update)
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
 requires (DimensionTag == specfem::dimension::type::dim3)
@@ -121,7 +124,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::load_on
 
 // 3D store_on_host
 /*
-// CPP20_CHANGE
+// TODO(Lucas : CPP20 update)
 template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
 requires (DimensionTag == specfem::dimension::type::dim3)

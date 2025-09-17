@@ -4,7 +4,7 @@ import numpy as np
 
 from _gmsh2meshfem.dim2.binary_detect_N3 import quadratic_beziers_intersect
 from .boundary import BoundarySpec
-from .edges import edges_of_all_elements
+from .edges import edges_of_all_elements, vectorized_bbox_calc
 
 
 @dataclass
@@ -89,23 +89,39 @@ def interfaces_from_boundaryspec_entities(
     if isinstance(entity2, int):
         entity2 = bdspec.boundary_entity_spec[entity2]
 
+    entity1_elem_bounds = vectorized_bbox_calc(
+        node_locs[
+            edges_to_nodes[
+                bdspec.element_inds[entity1.start_index : entity1.end_index],
+                bdspec.element_edges[entity1.start_index : entity1.end_index],
+                :,
+            ],
+            ::2,
+        ]
+    )
+
     for i_a in range(entity1.start_index, entity1.end_index):
         elem_a = bdspec.element_inds[i_a]
         edge_a = bdspec.element_edges[i_a]
 
         edgenodes_a = edges_to_nodes[elem_a, edge_a, :]
-        for i_b in range(entity2.start_index, entity2.end_index):
-            elem_b = bdspec.element_inds[i_b]
-            edge_b = bdspec.element_edges[i_b]
-            edgenodes_b = edges_to_nodes[elem_b, edge_b, :]
 
-            if quadratic_beziers_intersect(
-                node_locs[edgenodes_a, ::2], node_locs[edgenodes_b, ::2]
-            ):
-                nonconform_ispec.append(elem_a)
-                nonconform_jspec.append(elem_b)
-                nonconform_iedge.append(edge_a)
-                nonconform_jedge.append(edge_b)
+        # iterate over all elements that intersect. (should be small)
+        for i_b in bdspec.rtree.intersection(
+            entity1_elem_bounds[i_a - entity1.start_index, :], objects=False
+        ):
+            if entity2.start_index <= i_b and i_b < entity2.end_index:
+                elem_b = bdspec.element_inds[i_b]
+                edge_b = bdspec.element_edges[i_b]
+                edgenodes_b = edges_to_nodes[elem_b, edge_b, :]
+
+                if quadratic_beziers_intersect(
+                    node_locs[edgenodes_a, ::2], node_locs[edgenodes_b, ::2]
+                ):
+                    nonconform_ispec.append(elem_a)
+                    nonconform_jspec.append(elem_b)
+                    nonconform_iedge.append(edge_a)
+                    nonconform_jedge.append(edge_b)
 
     return NonconformingInterfaces(
         elements_a=np.array(nonconform_ispec, dtype=np.int32),

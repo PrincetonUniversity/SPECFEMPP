@@ -17,6 +17,43 @@ namespace sources {
 /**
  * @brief Moment-tensor source
  *
+ * This class implements a moment tensor source in 3D, which represents
+ * seismic sources like earthquakes through a symmetric 3x3 stress tensor.
+ * The six independent components (Mxx, Myy, Mzz, Mxy, Mxz, Myz) fully
+ * characterize the source mechanism.
+ *
+ * @par Usage Example
+ * @code
+ * // Create a Ricker wavelet source time function
+ * auto stf = std::make_unique<specfem::forcing_function::Ricker>(
+ *     12.0,  // dominant frequency (Hz)
+ *     0.01,  // time factor
+ *     1.0,   // amplitude
+ *     0.0,   // time shift
+ *     1.0,   // normalization factor
+ *     false  // do not reverse
+ * );
+ *
+ * // Create a 3D moment tensor source at (10.0, 15.0, 20.0)
+ * auto mt_source =
+ * specfem::sources::moment_tensor<specfem::dimension::type::dim3>( 10.0,  //
+ * x-coordinate 15.0,  // y-coordinate 20.0,  // z-coordinate 1.2,   // Mxx -
+ * normal stress in x direction 0.8,   // Myy - normal stress in y direction
+ *     1.5,   // Mzz - normal stress in z direction
+ *     0.3,   // Mxy - shear stress component
+ *     0.1,   // Mxz - shear stress component
+ *     0.2,   // Myz - shear stress component
+ *     std::move(stf),
+ *     specfem::wavefield::simulation_field::forward
+ * );
+ *
+ * // Set the medium type (moment tensors work with elastic media)
+ * mt_source.set_medium_tag(specfem::element::medium_tag::elastic);
+ *
+ * // Get the source tensor (3x3 symmetric matrix for 3D)
+ * auto source_tensor = mt_source.get_source_tensor();
+ * @endcode
+ *
  */
 template <>
 class moment_tensor<specfem::dimension::type::dim3>
@@ -126,8 +163,25 @@ public:
   /**
    * @brief Get the source tensor
    *
+   * Returns the full 3D seismic moment tensor for this source:
+   *
+   * \f[
+   * \mathbf{M}_{3D} = \begin{pmatrix}
+   * M_{xx} & M_{xy} & M_{xz} \\
+   * M_{xy} & M_{yy} & M_{yz} \\
+   * M_{xz} & M_{yz} & M_{zz}
+   * \end{pmatrix}
+   * \f]
+   *
+   * Where the six independent components represent:
+   * - \f$M_{xx}, M_{yy}, M_{zz}\f$: Normal stress components (diagonal)
+   * - \f$M_{xy}, M_{xz}, M_{yz}\f$: Shear stress components (off-diagonal)
+   *
+   * The tensor format is a 3×3 symmetric matrix for elastic media, representing
+   * the complete seismic moment tensor used in earthquake source modeling.
+   *
    * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
-   * Source tensor with dimensions [ncomponents][2] where each row contains
+   * Source tensor with dimensions [ncomponents][3] where each row contains
    * [Mxx, Mxy, Mxz], [Mxy, Myy, Myz], [Mxz, Myz, Mzz] etc, depending on the
    * medium type
    */

@@ -40,12 +40,10 @@ public:
       specfem::dimension::type::dim2; ///< Dimension
   int nspec;                          ///< Number of spectral
                                       ///< elements
-  int ngllz;                          ///< Number of quadrature
-                                      ///< points in z dimension
-  int ngllx;                          ///< Number of quadrature
-                                      ///< points in x dimension
   int ngnod;                          ///< Number of control
                                       ///< nodes
+  specfem::mesh_entity::element<dimension_tag> element_grid; ///< Element number
+                                                             ///< of GLL points
 
   mesh() = default;
 
@@ -85,7 +83,7 @@ public:
  * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
  * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
  * @param team Team member
- * @param quadrature Quadrature data
+ * @param mesh Mesh data
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <bool on_device, typename MemberType, typename ViewType>
@@ -141,7 +139,7 @@ impl_load(const MemberType &team,
  * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
  * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
  * @param team Team member
- * @param quadrature Quadrature data
+ * @param mesh Mesh data
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <typename MemberType, typename ViewType>
@@ -162,7 +160,7 @@ load_on_device(const MemberType &team,
  * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
  * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
  * @param team Team member
- * @param quadrature Quadrature data
+ * @param mesh Mesh data
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <typename MemberType, typename ViewType>

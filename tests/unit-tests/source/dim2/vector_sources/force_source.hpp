@@ -73,15 +73,15 @@ std::vector<ForceSource2DParametersAndSolution> get_parameters_and_solutions<
                                 specfem::wavefield::simulation_field::forward,
                                 specfem::element::medium_tag::elastic_psv),
         ForceSource2DSolution(0.0, 0.0, 0.0,
-                              std::vector<type_real>{ 0., -1.0 })),
-    // Test elastic_psv_t source at origin with 45 angle
+                              std::vector<type_real>{ 0., 1.0 })),
+    // Test elastic PSV source at origin with 45 angle
     std::make_tuple(
-        ForceSource2DParameters("elastic_psv_t and 45 angle", 4.0, 4.0, 45.0,
+        ForceSource2DParameters("elastic_psv and 45 degree angle", 0.0, 0.0,
+                                45.0,
                                 specfem::wavefield::simulation_field::forward,
-                                specfem::element::medium_tag::elastic_psv_t),
+                                specfem::element::medium_tag::elastic_psv),
         ForceSource2DSolution(
-            4.0, 4.0, 45.0,
-            std::vector<type_real>{ sqrt2over2, -sqrt2over2, 0.0 })),
+            0.0, 0.0, 45.0, std::vector<type_real>{ sqrt2over2, sqrt2over2 })),
     // Test elastic isotropic source at origin with 90 degree angle
     std::make_tuple(ForceSource2DParameters(
                         "elastic_isotropic and 90 angle", 3.0, 3.0, 90.0,
@@ -110,7 +110,7 @@ std::vector<ForceSource2DParametersAndSolution> get_parameters_and_solutions<
                                 specfem::element::medium_tag::elastic_psv_t),
         ForceSource2DSolution(
             4.0, 4.0, 45.0,
-            std::vector<type_real>{ sqrt2over2, -sqrt2over2, 0.0 }))
+            std::vector<type_real>{ sqrt2over2, sqrt2over2, 0.0 }))
   };
 }
 
