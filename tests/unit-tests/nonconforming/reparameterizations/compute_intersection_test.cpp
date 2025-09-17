@@ -45,7 +45,7 @@ TEST(impl__compute_intersection, KnotCorrectness) {
     coorg2(3).z = coord_hi;
 
     if (coord_lo > 1 || coord_hi < 0) {
-      EXPECT_THROW(specfem::assembly::nonconforming_interfaces::impl::
+      EXPECT_THROW(specfem::assembly::nonconforming_interfaces_impl::
                        compute_intersection(
                            coorg1, coorg2, specfem::mesh_entity::type::right,
                            specfem::mesh_entity::type::left, mortar_quad),
@@ -71,7 +71,7 @@ TEST(impl__compute_intersection, KnotCorrectness) {
     type_real side2_hi = 2 * (global_hi - coord_lo) / (coord_hi - coord_lo) - 1;
 
     auto out =
-        specfem::assembly::nonconforming_interfaces::impl::compute_intersection(
+        specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
             coorg1, coorg2, specfem::mesh_entity::type::right,
             specfem::mesh_entity::type::left, mortar_quad);
 
