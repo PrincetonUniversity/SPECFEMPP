@@ -1,0 +1,78 @@
+name: List Organization Project Fields
+
+on:
+  workflow_dispatch: # This allows you to run it manually
+
+jobs:
+  list-org-project-fields:
+    runs-on: ubuntu-latest
+    steps:
+      - name: List Organization Project Fields
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Replace with your organization name and project number
+            const ORG_NAME = 'your-org-name'; // Change this to your organization
+            const PROJECT_NUMBER = 1; // Change this to your project number
+            
+            const query = `
+              query($org: String!, $projectNumber: Int!) {
+                organization(login: $org) {
+                  projectV2(number: $projectNumber) {
+                    id
+                    title
+                    fields(first: 20) {
+                      nodes {
+                        ... on ProjectV2Field {
+                          id
+                          name
+                          dataType
+                        }
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                          dataType
+                          options {
+                            id
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            try {
+              const result = await github.graphql(query, {
+                org: ORG_NAME,
+                projectNumber: PROJECT_NUMBER
+              });
+              
+              const project = result.organization.projectV2;
+              console.log(`Project: ${project.title}`);
+              console.log(`Project ID: ${project.id}`);
+              console.log('\n=== PROJECT FIELDS ===');
+              
+              for (const field of project.fields.nodes) {
+                console.log(`\nField: "${field.name}"`);
+                console.log(`  ID: ${field.id}`);
+                console.log(`  Type: ${field.dataType}`);
+                
+                if (field.options) {
+                  console.log('  Options:');
+                  for (const option of field.options) {
+                    console.log(`    - "${option.name}" (ID: ${option.id})`);
+                  }
+                }
+              }
+              
+            } catch (error) {
+              console.error('Error fetching project data:', error);
+              console.log('\nTroubleshooting tips:');
+              console.log('1. Make sure ORG_NAME and PROJECT_NUMBER are correct');
+              console.log('2. Check that GITHUB_TOKEN has proper permissions');
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
