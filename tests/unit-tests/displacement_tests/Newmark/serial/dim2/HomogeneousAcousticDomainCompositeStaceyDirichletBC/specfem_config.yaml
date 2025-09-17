@@ -32,7 +32,7 @@ parameters:
             output-folder: "."
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/HomogeneousAcousticDomainCompositeStaceyDirichletBC/STATIONS"
+    stations: "displacement_tests/Newmark/serial/dim2/HomogeneousAcousticDomainCompositeStaceyDirichletBC/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -45,6 +45,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/HomogeneousAcousticDomainCompositeStaceyDirichletBC/database.bin"
+    mesh-database: "displacement_tests/Newmark/serial/dim2/HomogeneousAcousticDomainCompositeStaceyDirichletBC/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/HomogeneousAcousticDomainCompositeStaceyDirichletBC/source.yaml"
+  sources: "displacement_tests/Newmark/serial/dim2/HomogeneousAcousticDomainCompositeStaceyDirichletBC/source.yaml"
