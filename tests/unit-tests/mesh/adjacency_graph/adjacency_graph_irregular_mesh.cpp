@@ -12,7 +12,7 @@
 #include <vector>
 
 const static std::unordered_map<std::string, std::string> mesh_files = {
-  { "Circular mesh", "data/mesh/circular_mesh/database.bin" }
+  { "Circular mesh", "data/dim2/circular_mesh/database.bin" }
 };
 
 const static std::unordered_map<std::string, std::map<int, std::vector<int> > >

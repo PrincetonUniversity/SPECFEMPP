@@ -12,9 +12,9 @@
 #include <vector>
 
 constexpr static int nx =
-    80; // See Par_file in data/mesh/regular_mesh/provenance
+    80; // See Par_file in data/dim2/regular_mesh/provenance
 constexpr static int nz =
-    60; // See Par_file in data/mesh/regular_mesh/provenance
+    60; // See Par_file in data/dim2/regular_mesh/provenance
 
 const static std::unordered_map<int, std::vector<int> > expected_adjacency{
   // Interior node example
@@ -33,7 +33,7 @@ const static std::unordered_map<int, std::vector<int> > expected_adjacency{
 
 TEST(AdjacencyGraphRegularMesh, CheckConnections) {
 
-  const std::string mesh_file = "data/mesh/regular_mesh/database.bin";
+  const std::string mesh_file = "data/dim2/regular_mesh/database.bin";
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   auto mesh =

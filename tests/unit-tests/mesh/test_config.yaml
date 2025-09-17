@@ -7,9 +7,9 @@ Tests:
       nproc : 1
       elastic_wave: "P_SV"
     databases:
-      mesh : "data/mesh/simple_mesh_flat_topography/database.bin"
-      sources : "data/mesh/simple_mesh_flat_topography/sources.yaml"
-      stations : "data/mesh/simple_mesh_flat_topography/STATIONS"
+      mesh : "data/dim2/simple_mesh_flat_topography/database.bin"
+      sources : "data/dim2/simple_mesh_flat_topography/sources.yaml"
+      stations : "data/dim2/simple_mesh_flat_topography/STATIONS"
 
 # Simple mesh with flat topography SH wave
   - name : "Simple mesh with flat topography (SH wave)"
@@ -19,9 +19,9 @@ Tests:
       nproc : 1
       elastic_wave: "SH"
     databases:
-      mesh : "data/mesh/simple_mesh_flat_topography/database.bin"
-      sources : "data/mesh/simple_mesh_flat_topography/sources.yaml"
-      stations : "data/mesh/simple_mesh_flat_topography/STATIONS"
+      mesh : "data/dim2/simple_mesh_flat_topography/database.bin"
+      sources : "data/dim2/simple_mesh_flat_topography/sources.yaml"
+      stations : "data/dim2/simple_mesh_flat_topography/STATIONS"
 
 # Simple mesh with curved topography
   - name : "Simple mesh with curved topography"
@@ -31,9 +31,9 @@ Tests:
       nproc : 1
       elastic_wave: "P_SV"
     databases:
-      mesh : "data/mesh/simple_mesh_curved_topography/database.bin"
-      sources : "data/mesh/simple_mesh_curved_topography/sources.yaml"
-      stations : "data/mesh/simple_mesh_curved_topography/STATIONS"
+      mesh : "data/dim2/simple_mesh_curved_topography/database.bin"
+      sources : "data/dim2/simple_mesh_curved_topography/sources.yaml"
+      stations : "data/dim2/simple_mesh_curved_topography/STATIONS"
 
 # Simple mesh with flat ocean bottom
   - name : "Simple mesh with flat ocean bottom"
@@ -43,9 +43,9 @@ Tests:
       nproc : 1
       elastic_wave: "P_SV"
     databases:
-      mesh : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/database.bin"
-      sources : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
-      stations : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
+      mesh : "data/dim2/fluid_solid_mesh_flat_ocean_bottom/database.bin"
+      sources : "data/dim2/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
+      stations : "data/dim2/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
 
 # Curved ocean bottom
   - name : "Simple mesh with curved ocean bottom"
@@ -55,9 +55,9 @@ Tests:
       nproc : 1
       elastic_wave: "P_SV"
     databases:
-      mesh : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/database.bin"
-      sources : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
-      stations : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
+      mesh : "data/dim2/fluid_solid_mesh_curved_ocean_bottom/database.bin"
+      sources : "data/dim2/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
+      stations : "data/dim2/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
 
 # Gmesh example
   - name : "Gmesh Example"
@@ -67,9 +67,9 @@ Tests:
       nproc : 1
       elastic_wave: "P_SV"
     databases:
-      mesh : "data/mesh/Gmesh_Example_Stacey/database.bin"
-      sources : "data/mesh/Gmesh_Example_Stacey/sources.yaml"
-      stations : "data/mesh/Gmesh_Example_Stacey/STATIONS"
+      mesh : "data/dim2/Gmesh_Example_Stacey/database.bin"
+      sources : "data/dim2/Gmesh_Example_Stacey/sources.yaml"
+      stations : "data/dim2/Gmesh_Example_Stacey/STATIONS"
 
 # Homogeneous elastic isotropic material P_SV wave
   - name : "Homogeneous Elastic Anisotropic Material (P_SV wave)"
@@ -79,9 +79,9 @@ Tests:
       nproc : 1
       elastic_wave: "P_SV"
     databases:
-      mesh : "data/mesh/homogeneous_elastic_anisotropic/database.bin"
-      sources : "data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
-      stations : "data/mesh/homogeneous_elastic_anisotropic/STATIONS"
+      mesh : "data/dim2/homogeneous_elastic_anisotropic/database.bin"
+      sources : "data/dim2/homogeneous_elastic_anisotropic/sources.yaml"
+      stations : "data/dim2/homogeneous_elastic_anisotropic/STATIONS"
 
 # Homogeneous elastic anisotropic material SH wave
   - name : "Homogeneous Elastic Anisotropic Material (SH wave)"
@@ -91,9 +91,9 @@ Tests:
       nproc : 1
       elastic_wave: "SH"
     databases:
-      mesh : "data/mesh/homogeneous_elastic_anisotropic/database.bin"
-      sources : "data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
-      stations : "data/mesh/homogeneous_elastic_anisotropic/STATIONS"
+      mesh : "data/dim2/homogeneous_elastic_anisotropic/database.bin"
+      sources : "data/dim2/homogeneous_elastic_anisotropic/sources.yaml"
+      stations : "data/dim2/homogeneous_elastic_anisotropic/STATIONS"
 
   # Poroelastic mesh
   - name: "Poroelastic mesh - Homogeneous isotropic material"
@@ -103,9 +103,9 @@ Tests:
       nproc: 1
       elastic_wave: "P_SV"
     databases:
-      mesh: "data/mesh/homogeneous_poroelastic_isotropic/database.bin"
-      sources: "data/mesh/homogeneous_poroelastic_isotropic/sources.yaml"
-      stations: "data/mesh/homogeneous_poroelastic_isotropic/DATA/STATIONS"
+      mesh: "data/dim2/homogeneous_poroelastic_isotropic/database.bin"
+      sources: "data/dim2/homogeneous_poroelastic_isotropic/sources.yaml"
+      stations: "data/dim2/homogeneous_poroelastic_isotropic/DATA/STATIONS"
 
   # Elastic Spin mesh
   - name: "Elastic Isotropic Cosserat Medium - Homogeneous"
@@ -115,9 +115,9 @@ Tests:
       nproc: 1
       elastic_wave: "P_SV"
     databases:
-      mesh: "data/mesh/cosserat_isotropic_homogeneous/database.bin"
-      sources: "data/mesh/cosserat_isotropic_homogeneous/sources.yaml"
-      stations: "data/mesh/cosserat_isotropic_homogeneous/DATA/STATIONS"
+      mesh: "data/dim2/cosserat_isotropic_homogeneous/database.bin"
+      sources: "data/dim2/cosserat_isotropic_homogeneous/sources.yaml"
+      stations: "data/dim2/cosserat_isotropic_homogeneous/DATA/STATIONS"
 
 # # Electromagnetic mesh P_SV wave
 #   - name: "Electro-magnetic mesh example from Morency 2020"
@@ -127,6 +127,6 @@ Tests:
 #       nproc: 1
 #       elastic_wave: "P_SV"
 #     databases:
-#       mesh: "data/mesh/electromagnetic_mesh_morency2020/database.bin"
-#       sources: "data/mesh/electromagnetic_mesh_morency2020/sources.yaml"
-#       stations: "data/mesh/electromagnetic_mesh_morency2020/DATA/STATIONS"
+#       mesh: "data/dim2/electromagnetic_mesh_morency2020/database.bin"
+#       sources: "data/dim2/electromagnetic_mesh_morency2020/sources.yaml"
+#       stations: "data/dim2/electromagnetic_mesh_morency2020/DATA/STATIONS"
