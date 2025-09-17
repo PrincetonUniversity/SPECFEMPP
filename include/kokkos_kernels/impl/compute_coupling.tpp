@@ -41,8 +41,9 @@ void specfem::kokkos_kernels::impl::compute_coupling(
   if (self_edges.extent(0) == 0 && coupled_edges.extent(0) == 0)
     return;
 
-  const auto& field = assembly.fields.template get_simulation_field<wavefield>();
-  const auto& boundaries = assembly.boundaries;
+  const auto &field =
+      assembly.fields.template get_simulation_field<wavefield>();
+  const auto &boundaries = assembly.boundaries;
 
   const auto num_points = assembly.mesh.element_grid.ngllx;
 
@@ -80,11 +81,11 @@ void specfem::kokkos_kernels::impl::compute_coupling(
         specfem::medium::compute_coupling(point_interface_data, coupled_field,
                                           self_field);
 
-        if (BoundaryTag ==
-            specfem::element::boundary_tag::acoustic_free_surface) {
-          PointBoundaryType point_boundary;
-          specfem::assembly::load_on_device(self_index, boundaries,
-                                            point_boundary);
+        PointBoundaryType point_boundary;
+        specfem::assembly::load_on_device(self_index, boundaries,
+                                          point_boundary);
+        if constexpr (BoundaryTag ==
+                      specfem::element::boundary_tag::acoustic_free_surface) {
           specfem::boundary_conditions::apply_boundary_conditions(
               point_boundary, self_field);
         }
