@@ -29,13 +29,15 @@ namespace specfem::assembly::nonconforming_interfaces_impl {
  *      (element1_local_coord, element2_local_coord) corresponding to the mortar
  *      knot mortar_quadrature(i).
  */
-std::vector<std::pair<type_real, type_real> >
-compute_intersection(const Kokkos::View<specfem::point::global_coordinates<
-                         specfem::dimension::type::dim2> *> &element1,
-                     const Kokkos::View<specfem::point::global_coordinates<
-                         specfem::dimension::type::dim2> *> &element2,
-                     const specfem::mesh_entity::type &edge1,
-                     const specfem::mesh_entity::type &edge2,
-                     const Kokkos::View<type_real *> &mortar_quadrature);
+std::vector<std::pair<type_real, type_real> > compute_intersection(
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &element1,
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &element2,
+    const specfem::mesh_entity::type &edge1,
+    const specfem::mesh_entity::type &edge2,
+    const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature);
 
 } // namespace specfem::assembly::nonconforming_interfaces_impl

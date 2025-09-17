@@ -1,7 +1,7 @@
 
+#include "compute_intersection.hpp"
 #include "Kokkos_Core_fwd.hpp"
 #include "algorithms/locate_point_impl.hpp"
-#include "compute_intersection.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/mesh_entities.hpp"
 #include "specfem/jacobian/dim2/jacobian.hpp"
@@ -13,10 +13,11 @@
 inline std::pair<
     specfem::point::global_coordinates<specfem::dimension::type::dim2>,
     specfem::point::global_coordinates<specfem::dimension::type::dim2> >
-edge_extents(const Kokkos::View<specfem::point::global_coordinates<
-                 specfem::dimension::type::dim2> *> &element_coordinates,
-             const specfem::mesh_entity::type &side) {
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> p1, p2;
+edge_extents(
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &element_coordinates,
+    const specfem::mesh_entity::type &side) {
   switch (side) {
   case specfem::mesh_entity::type::bottom:
     // control nodes 0 and 1
@@ -40,14 +41,14 @@ edge_extents(const Kokkos::View<specfem::point::global_coordinates<
 std::vector<std::pair<type_real, type_real> >
 specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
     const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *>
-        &element1,
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &element1,
     const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *>
-        &element2,
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &element2,
     const specfem::mesh_entity::type &edge1,
     const specfem::mesh_entity::type &edge2,
-    const Kokkos::View<type_real *> &mortar_quadrature) {
+    const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature) {
   constexpr type_real eps = 1e-5;
   const int nquad = mortar_quadrature.extent(0);
 
