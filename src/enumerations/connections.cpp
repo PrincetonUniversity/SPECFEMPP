@@ -3,9 +3,39 @@
 #include "enumerations/mesh_entities.hpp"
 #include <functional>
 #include <stdexcept>
+#include <string>
 #include <tuple>
 #include <unordered_map>
 
+const std::string
+specfem::connections::to_string(const specfem::connections::type &conn) {
+  switch (conn) {
+  case specfem::connections::type::strongly_conforming:
+    return "strongly_conforming";
+  case specfem::connections::type::weakly_conforming:
+    return "weakly_conforming";
+  case specfem::connections::type::nonconforming:
+    return "nonconforming";
+  default:
+    throw std::runtime_error(
+        std::string("specfem::connections::to_string does not handle ") +
+        std::to_string(static_cast<int>(conn)));
+    return "!ERR";
+  }
+}
+
+/**
+ * @brief Helper function to determine if orientation mapping requires
+ * coordinate flipping
+ *
+ * @param from Source mesh entity orientation
+ * @param to Target mesh entity orientation
+ * @return bool True if coordinates should be flipped during mapping
+ *
+ * This function implements the logic for determining when coordinate
+ * mappings between edges require flipping to maintain proper orientation.
+ * The flipping rules ensure consistent connectivity across mesh elements.
+ */
 bool specfem::connections::connection_mapping::flip_orientation(
     const specfem::mesh_entity::type &from,
     const specfem::mesh_entity::type &to) const {

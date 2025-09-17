@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" OFF)
 option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" OFF)
 option(SPECFEM_ENABLE_HDF5_FORCE_INSTALL "Force install HDF5 dependency if SPECFEM_ENABLE_HDF5 is ON even if system HDF5 is found" OFF)
+option(SPECFEM_ENABLE_NPZ "Enable NPZ I/O in SPECFEM++" OFF)
+option(SPECFEM_ENABLE_ZLIB_FORCE_INSTALL "Force install ZLIB dependency even if system ZLIB is found" OFF)
 option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
 option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
 option(SPECFEM_BUILD_TESTS "Tests included" OFF)
@@ -103,106 +105,15 @@ include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 # Find HDF5
 include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
 
+# Find or install NPZ library function
+include("${CMAKE_SOURCE_DIR}/cmake/npz.cmake")
+
 # Find or install ADIOS2 library function
 include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 
 # Include VTK if available (MUST BE AFTER ADIOS2, VTK is smarter about finding
 # the pugixml dependency than ADIOS2)
 include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
-
-
-if (VTK_CXX_BUILD)
-
-    find_package(VTK COMPONENTS
-        CommonColor
-        CommonCore
-        FiltersSources
-        InteractionStyle
-        RenderingContextOpenGL2
-        RenderingCore
-        RenderingFreeType
-        RenderingGL2PSOpenGL2
-        RenderingOpenGL2
-    )
-
-    if (VTK_FOUND)
-        message(STATUS "VTK libs/ and incs/:")
-        message(STATUS "    LIB:   ${VTK_LIBRARY_DIRS}")
-        message(STATUS "    INC:   ${VTK_INCLUDE_DIRS}")
-        message(STATUS "    LIBSO: ${VTK_LIBRARIES}")
-    else(NOT VTK_FOUND)
-        message(STATUS "VTK not found. Building without VTK.")
-        set(VTK_CXX_BUILD OFF)
-    endif()
-else ()
-    set(VTK_FOUND OFF)
-    message(STATUS "Building without VTK.")
-endif()
-
-
-# Try finding boost and if not found install.
-find_package(Boost 1.85.0 COMPONENTS program_options filesystem system graph)
-
-if (NOT ${Boost_FOUND})
-    set(SPECFEMPP_SAVE_UNITY_BUILD ${CMAKE_UNITY_BUILD})
-    set(CMAKE_UNITY_BUILD OFF)
-    # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd graph)
-    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
-                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd Boost::graph)
-    set(BOOST_ENABLE_CMAKE ON)
-    set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
-    set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
-    set(BOOST_BUILD_TESTING OFF CACHE BOOL INTERNAL "Boost Test Switch") # Disable testing for boost
-    # The test flag is not really working... added it for completeness
-
-    # Download and extract the boost library from GitHub
-    set(BOOST_VERSION 1.87.0)
-    message(STATUS "Downloading and extracting boost (${BOOST_VERSION}) library sources. This will take <1 min.")
-    include(FetchContent)
-
-    # Fetch boost from the Github release zip file to reduce download time
-    FetchContent_Declare(
-        Boost
-        URL https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.gz # downloading a zip release speeds up the download
-        USES_TERMINAL_DOWNLOAD True
-        GIT_PROGRESS TRUE
-        DOWNLOAD_NO_EXTRACT FALSE
-        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-    )
-
-    # Disable Boost installation
-    set(BOOST_INSTALL OFF CACHE BOOL "Don't install Boost" FORCE)
-    set(BOOST_INSTALL_LIBRARIES OFF CACHE BOOL "Don't install Boost libraries" FORCE)
-    set(BOOST_SKIP_INSTALL_RULES ON CACHE BOOL "Skip Boost install rules" FORCE)
-
-    FetchContent_MakeAvailable(Boost)
-
-    set(CMAKE_UNITY_BUILD ${SPECFEMPP_SAVE_UNITY_BUILD})
-    unset(SPECFEMPP_SAVE_UNITY_BUILD)
-
-else()
-    # Check which boost LIBRARY_DIRS to use
-    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system Boost::graph)
-    message(STATUS "Boost libs/ and incs/:")
-    message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
-    message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
-    message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
-endif()
-
-# Install HDF5 as a dependency if not found
-find_package(HDF5 COMPONENTS CXX)
-
-if (NOT ${HDF5_FOUND})
-    message(STATUS "HDF5 not found. Building without HDF5.")
-    set(HDF5_CXX_BUILD OFF)
-else()
-    message(STATUS "HDF5 libs/ and incs/:.")
-    message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
-    message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
-    message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
-endif()
-
 
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
@@ -244,7 +155,6 @@ message(STATUS "INCLUDE DIRECTORIES:")
 message(STATUS "    core: ${CMAKE_CURRENT_SOURCE_DIR}/core")
 message(STATUS "    include: ${CMAKE_SOURCE_DIR}/include")
 message(STATUS "    binary: ${CMAKE_BINARY_DIR}/include")
-
 
 
 # Set loglevel to STATUS if build type is debug
@@ -290,6 +200,9 @@ target_link_libraries(
 
 add_library(
         io
+        # IO libraries
+        src/io/NPY/impl/npy_header.cpp
+        # SPECFEM IO
         src/io/fortranio/fortran_io.cpp
         src/io/sources/dim2/read_sources.cpp
         src/io/sources/dim3/read_sources.cpp
@@ -318,6 +231,7 @@ target_link_libraries(
         specfem::receivers
         yaml-cpp
         boost
+        $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
         $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
         $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
@@ -325,6 +239,7 @@ target_link_libraries(
 target_compile_definitions(
         io
         PUBLIC
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:-DNO_NPZ>
         $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
         $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
 )
@@ -504,7 +419,10 @@ add_library(
         src/kokkos_kernels/impl/compute_coupling.cpp
         src/kokkos_kernels/frechet_kernels.cpp
 )
-set_target_properties(kokkos_kernels PROPERTIES UNITY_BUILD_BATCH_SIZE 4)
+set_target_properties(kokkos_kernels PROPERTIES
+        UNITY_BUILD $<NOT:$<BOOL:${__APPLE__}>>
+        UNITY_BUILD_BATCH_SIZE $<IF:$<BOOL:${__APPLE__}>,0,4>
+)
 
 target_link_libraries(
         kokkos_kernels
@@ -565,6 +483,7 @@ target_link_libraries(
         periodic_tasks
         reader
         writer
+        io
 )
 
 target_compile_definitions(

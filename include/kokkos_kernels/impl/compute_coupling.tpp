@@ -41,9 +41,10 @@ void specfem::kokkos_kernels::impl::compute_coupling(
   if (self_edges.extent(0) == 0 && coupled_edges.extent(0) == 0)
     return;
 
-  const auto field = assembly.fields.template get_simulation_field<wavefield>();
+  const auto& field = assembly.fields.template get_simulation_field<wavefield>();
+  const auto& boundaries = assembly.boundaries();
 
-  const auto num_points = assembly.mesh.ngllx;
+  const auto num_points = assembly.mesh.element_grid.ngllx;
 
   using parallel_config = specfem::parallel_config::default_chunk_edge_config<
       DimensionTag, Kokkos::DefaultExecutionSpace>;
@@ -79,11 +80,10 @@ void specfem::kokkos_kernels::impl::compute_coupling(
         specfem::medium::compute_coupling(point_interface_data, coupled_field,
                                           self_field);
 
-        if constexpr (BoundaryTag ==
-                      specfem::element::boundary_tag::acoustic_free_surface)
-                      {
+        if (BoundaryTag ==
+            specfem::element::boundary_tag::acoustic_free_surface) {
           PointBoundaryType point_boundary;
-          specfem::assembly::load_on_device(self_index, assembly.boundaries,
+          specfem::assembly::load_on_device(self_index, boundaries,
                                             point_boundary);
           specfem::boundary_conditions::apply_boundary_conditions(
               point_boundary, self_field);

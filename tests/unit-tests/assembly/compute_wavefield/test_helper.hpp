@@ -36,8 +36,8 @@ public:
         specfem::wavefield::wavefield<specfem::dimension::type::dim2,
                                       component>::num_components();
 
-    const int ngllz = assembly.mesh.ngllz;
-    const int ngllx = assembly.mesh.ngllx;
+    const int ngllz = assembly.mesh.element_grid.ngllz;
+    const int ngllx = assembly.mesh.element_grid.ngllx;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
@@ -86,8 +86,8 @@ public:
         specfem::dimension::type::dim2,
         specfem::wavefield::type::pressure>::num_components();
 
-    const int ngllz = assembly.mesh.ngllz;
-    const int ngllx = assembly.mesh.ngllx;
+    const int ngllz = assembly.mesh.element_grid.ngllz;
+    const int ngllx = assembly.mesh.element_grid.ngllx;
 
     using PointProperties =
         specfem::point::properties<specfem::dimension::type::dim2,
@@ -153,8 +153,8 @@ public:
         specfem::wavefield::wavefield<specfem::dimension::type::dim2,
                                       component>::num_components();
 
-    const int ngllz = assembly.mesh.ngllz;
-    const int ngllx = assembly.mesh.ngllx;
+    const int ngllz = assembly.mesh.element_grid.ngllz;
+    const int ngllx = assembly.mesh.element_grid.ngllx;
 
     using PointProperties = specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
@@ -217,8 +217,8 @@ public:
         specfem::dimension::type::dim2,
         specfem::wavefield::type::pressure>::num_components();
 
-    const int ngllz = assembly.mesh.ngllz;
-    const int ngllx = assembly.mesh.ngllx;
+    const int ngllz = assembly.mesh.element_grid.ngllz;
+    const int ngllx = assembly.mesh.element_grid.ngllx;
 
     using PointProperties = specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,

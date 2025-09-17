@@ -28,11 +28,11 @@ parameters:
           forward:
               writer:
                   wavefield:
-                      format: HDF5
+                      format: NPY
                       directory: OUTPUT_FILES
 
                   seismogram:
-                      format: ascii # output seismograms in HDF5 format
+                      format: ascii # output seismograms in ASCII format
                       directory: OUTPUT_FILES/seismograms
 
   receivers:

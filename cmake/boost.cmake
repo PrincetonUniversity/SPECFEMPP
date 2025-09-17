@@ -12,13 +12,11 @@ set(SAVE_UNITY_BUILD ${CMAKE_UNITY_BUILD})
 set(CMAKE_UNITY_BUILD OFF)
 
 # Try finding boost and if not found install.
-find_package(Boost 1.85.0 COMPONENTS program_options filesystem system graph)
+find_package(Boost 1.85.0 QUIET COMPONENTS program_options filesystem system graph)
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
     set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor vmd graph)
-    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
-                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd Boost::graph)
     set(BOOST_ENABLE_CMAKE ON)
     set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch")
     set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch")
@@ -47,7 +45,18 @@ if (NOT ${Boost_FOUND})
 
     FetchContent_MakeAvailable(Boost)
 
+    # Set BOOST_LIBS after FetchContent_MakeAvailable to ensure targets exist
+    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor Boost::vmd Boost::graph)
+
 else()
+    # Create Boost::system target manually since it's header-only in newer versions
+    if(NOT TARGET Boost::system)
+        add_library(Boost::system INTERFACE IMPORTED)
+        set_target_properties(Boost::system PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${Boost_INCLUDE_DIRS}")
+    endif()
+
     # Check which boost LIBRARY_DIRS to use
     set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system Boost::graph)
     message(STATUS "Boost libs/ and incs/:")

@@ -11,7 +11,7 @@ namespace specfem::assembly::mesh_impl {
  */
 template <> struct shape_functions<specfem::dimension::type::dim3> {
 public:
-  constexpr static auto dimension =
+  constexpr static auto dimension_tag =
       specfem::dimension::type::dim3; ///< Dimension
   int ngllz; ///< Number of quadrature points in z dimension
   int nglly; ///< Number of quadrature points in y dimension

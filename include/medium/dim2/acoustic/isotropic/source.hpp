@@ -27,7 +27,12 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
 
   PointAccelerationType result;
 
-  result(0) = point_source.stf(0) * point_source.lagrange_interpolant(0) /
+  /* note: for acoustic medium, the source is a pressure source and gets divided
+   *       by Kappa of the fluid. The sign is negative because pressure p = -
+   *       Chi_dot_dot therefore we need to add minus the source to Chi_dot_dot
+   *       to get plus the source in pressure
+   */
+  result(0) = -point_source.stf(0) * point_source.lagrange_interpolant(0) /
               point_properties.kappa();
 
   return result;

@@ -10,7 +10,6 @@
 #include <vector>
 
 specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
-    const int nspec, const int nglly, const int ngllz, const int ngllx,
     const int max_sig_step, const type_real dt, const type_real t0,
     const int nsteps_between_samples,
     const std::vector<std::shared_ptr<
@@ -21,10 +20,9 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
     const specfem::mesh::tags<specfem::dimension::type::dim3> &tags,
     const specfem::assembly::element_types<specfem::dimension::type::dim3>
         &element_types)
-    : nspec(nspec),
-      lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
-                           receivers.size(), mesh.nglly, mesh.ngllz, mesh.ngllx,
-                           3),
+    : lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
+                           receivers.size(), mesh.element_grid.nglly,
+                           mesh.element_grid.ngllz, mesh.element_grid.ngllx, 3),
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
       elements("specfem::assembly::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
@@ -35,6 +33,10 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
           specfem::dimension::type::dim3>(receivers.size(), stypes.size(),
                                           max_sig_step, dt, t0,
                                           nsteps_between_samples) {
+
+  // Discretization from the mesh
+  const auto nspec = mesh.nspec;
+  const auto &element_grid = mesh.element_grid;
 
   // Validate and populate seismogram type mapping
   for (int isies = 0; isies < stypes.size(); ++isies) {
@@ -85,19 +87,19 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
 
     auto [hxi_receiver, hpxi_receiver] =
         specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-            lcoord.xi, mesh.ngllx, xi);
+            lcoord.xi, element_grid.ngllx, xi);
 
     auto [heta_receiver, hpeta_receiver] =
         specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-            lcoord.eta, mesh.nglly, eta);
+            lcoord.eta, element_grid.nglly, eta);
 
     auto [hgamma_receiver, hpgamma_receiver] =
         specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-            lcoord.gamma, mesh.ngllz, gamma);
+            lcoord.gamma, element_grid.ngllz, gamma);
 
-    for (int iz = 0; iz < mesh.ngllz; ++iz) {
-      for (int iy = 0; iy < mesh.nglly; ++iy) {
-        for (int ix = 0; ix < mesh.ngllx; ++ix) {
+    for (int iz = 0; iz < element_grid.ngllz; ++iz) {
+      for (int iy = 0; iy < element_grid.nglly; ++iy) {
+        for (int ix = 0; ix < element_grid.ngllx; ++ix) {
           type_real hlagrange =
               hxi_receiver(ix) * heta_receiver(iy) * hgamma_receiver(iz);
 

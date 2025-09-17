@@ -214,6 +214,8 @@ class Model:
                     gmsh,
                     [tag for dim, tag in boundary_entities if dim == 1],
                     node_indexing.invert(element_nodes),
+                    node_indexing,
+                    node_locs
                 ),
                 _node_gmshtag_to_index_mapping=node_indexing,
                 conforming_interfaces=ConformingInterfaces.from_element_node_matrix(

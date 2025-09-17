@@ -1,15 +1,19 @@
 from dataclasses import dataclass, field
 
 import numpy as np
+from rtree.index import Index as RTree
 from _gmsh2meshfem.gmsh_dep import GmshContext
 
-from .edges import EdgeType
+from .edges import EdgeType, vectorized_bbox_calc
+from .index_mapping import IndexMapping
 
 
 @dataclass
 class BoundarySpec:
-    """Keeps track of element indices and edges corresponding to the boundary of
-    a surface or collection of surfaces.
+    """Keeps track of element indices and edges corresponding to the boundary
+    of a surface or collection of surfaces.
+
+    One optimization would be to prune (or mark) edges that are part of interfaces.
     """
 
     @dataclass(frozen=True)
@@ -35,18 +39,22 @@ class BoundarySpec:
     element_inds: np.ndarray
     element_edges: np.ndarray
     boundary_entity_spec: dict[int, EntityKey]
+    rtree: RTree = field(default_factory=RTree)
     num_edges: int = field(init=False)
 
     def __post_init__(self):
         self.num_edges = self.edge_tags.size
         assert self.element_inds.size == self.num_edges
         assert self.element_edges.size == self.num_edges
+        assert len(self.rtree) == self.num_edges
 
     @staticmethod
     def from_model_entity(
         gmsh: GmshContext,
         edge_entity: list[int] | int,
         element_nodes: np.ndarray,
+        node_mapping: IndexMapping,
+        node_coords: np.ndarray,
     ) -> "BoundarySpec":
         """For a model edge (entity) or list of model edges,
         recovers the pairs `(ielem, edgetype)` for each mesh edge in the
@@ -60,19 +68,20 @@ class BoundarySpec:
             edge_entity (list[int] | int): model entity tag(s).
             element_mapping (IndexMapping): the index mapping used for the elements
             element_nodes (np.ndarray): the node tags (shape = (N,9)) of all elements.
+            node_mapping (IndexMapping): the index mapping of node tags.
+            node_coords (np.ndarray): the coordinate array, re-indexed by node_mapping.
         """
         if isinstance(edge_entity, int):
             edge_entity = [edge_entity]
 
-        # for each model (entity) edge tag, (mesh edge tags, elem_indices, elem_edgetypes)
+        # for each model (entity) edge tag:
+        #   (mesh edge tags, elem_indices, elem_edgetypes, edge bounding boxes)
         collected_values: dict[
-            int, list[tuple[np.ndarray, np.ndarray, np.ndarray]]
+            int, list[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]
         ] = {}
         num_collected_edges = 0
 
-        QUA_9_node_indices_on_type = np.array(
-            [EdgeType.QUA_9_node_indices_on_type(i) for i in range(4)]
-        )
+        QUA_9_node_indices_on_type = EdgeType.QUA_9_edge_to_inds_matrix()
 
         for model_edge_tag in edge_entity:
             if model_edge_tag not in collected_values:
@@ -96,6 +105,16 @@ class BoundarySpec:
                 elem_inds = np.empty(n_edges, np.int64)
                 elem_edges = np.empty(n_edges, np.uint8)
 
+                edge_bboxes = vectorized_bbox_calc(
+                    node_coords[node_mapping.apply(edge_nodes), ::2]
+                )
+
+                # We need to recover the element index and edge type for each edge tag,
+                # which cannot easily be done mesh-side. Model-side, it would just be an
+                # adjacencies() call.
+
+                # (see https://gmsh.info/doc/texinfo/gmsh.html#x7 for possible rework --
+                # converting mesh to a discrete model, then operating on that)
                 for istart in range(0, n_edges, max_vec_size):
                     iend = min(istart + max_vec_size, n_edges)
                     candidate_elem, edge_for_candidate = np.nonzero(
@@ -174,6 +193,7 @@ class BoundarySpec:
                         edge_elems[edges_of_one],
                         elem_inds[edges_of_one],
                         elem_edges[edges_of_one],
+                        edge_bboxes[edges_of_one],
                     )
                 )
                 num_collected_edges += edges_of_one.size
@@ -191,17 +211,21 @@ class BoundarySpec:
         edge_tags = np.empty(num_collected_edges, dtype=np.int64)
         element_inds = np.empty(num_collected_edges, dtype=np.int64)
         element_edges = np.empty(num_collected_edges, dtype=np.uint8)
+        rtree = RTree()
 
         # recollect into ^
         num_collected_edges = 0
         entity_spec = {}
         for model_edge_tag, val_list in collected_values.items():
             start = num_collected_edges
-            for tag, elem, edge in val_list:
+            for tag, elem, edge, bbox in val_list:
                 val_end = num_collected_edges + tag.size
                 edge_tags[num_collected_edges:val_end] = tag
                 element_inds[num_collected_edges:val_end] = elem
                 element_edges[num_collected_edges:val_end] = edge
+
+                for i in range(tag.size):
+                    rtree.insert(num_collected_edges + i, bbox[i, :])
 
                 num_collected_edges = val_end
 
@@ -216,6 +240,7 @@ class BoundarySpec:
             element_inds=element_inds,
             element_edges=element_edges,
             boundary_entity_spec=entity_spec,
+            rtree=rtree,
         )
 
     @staticmethod
@@ -226,12 +251,19 @@ class BoundarySpec:
         element_edges = np.empty(num_edges, dtype=np.uint8)
         edges_start = 0
         entity_spec = {}
+
+        # store remapped indices
+        edge1_to_combined = np.empty(bdspec1.num_edges, dtype=np.int64)
+        edge2_to_combined = np.empty(bdspec2.num_edges, dtype=np.int64)
+
         for entity_ind in set(bdspec1.boundary_entity_spec.keys()) | set(
             bdspec2.boundary_entity_spec.keys()
         ):
             if entity_ind in bdspec1.boundary_entity_spec:
                 spec1 = bdspec1.boundary_entity_spec[entity_ind]
                 if entity_ind in bdspec2.boundary_entity_spec:
+                    # entity in both -- concatenate either side
+
                     spec2 = bdspec2.boundary_entity_spec[entity_ind]
                     edges_mid = edges_start + spec1.num_edges_in_entity
                     edges_end = edges_mid + spec2.num_edges_in_entity
@@ -250,7 +282,14 @@ class BoundarySpec:
                         element_inds[edges_mid:edges_end],
                         element_edges[edges_mid:edges_end],
                     ) = spec2._edges_in_entity(bdspec2)
+                    edge1_to_combined[spec1.start_index : spec1.end_index] = np.arange(
+                        edges_start, edges_mid
+                    )
+                    edge2_to_combined[spec2.start_index : spec2.end_index] = np.arange(
+                        edges_mid, edges_end
+                    )
                 else:
+                    # entity just in bdspec1 -- append just from that one
                     edges_end = edges_start + spec1.num_edges_in_entity
                     entity_spec[entity_ind] = BoundarySpec.EntityKey(
                         entity_tag=entity_ind,
@@ -262,7 +301,11 @@ class BoundarySpec:
                         element_inds[edges_start:edges_end],
                         element_edges[edges_start:edges_end],
                     ) = spec1._edges_in_entity(bdspec1)
+                    edge1_to_combined[spec1.start_index : spec1.end_index] = np.arange(
+                        edges_start, edges_end
+                    )
             else:
+                # entity just in bdspec2 -- append just from that one
                 spec2 = bdspec2.boundary_entity_spec[entity_ind]
                 edges_end = edges_start + spec2.num_edges_in_entity
                 entity_spec[entity_ind] = BoundarySpec.EntityKey(
@@ -275,11 +318,21 @@ class BoundarySpec:
                     element_inds[edges_start:edges_end],
                     element_edges[edges_start:edges_end],
                 ) = spec2._edges_in_entity(bdspec2)
+                edge2_to_combined[spec2.start_index : spec2.end_index] = np.arange(
+                    edges_start, edges_end
+                )
             edges_start = edges_end
+
+        rtree = RTree()
+        for hit in bdspec1.rtree.intersection(bdspec1.rtree.bounds, objects=True):
+            rtree.insert(int(edge1_to_combined[hit.id]), hit.bbox)
+        for hit in bdspec2.rtree.intersection(bdspec2.rtree.bounds, objects=True):
+            rtree.insert(int(edge2_to_combined[hit.id]), hit.bbox)
 
         return BoundarySpec(
             edge_tags=edge_tags,
             element_inds=element_inds,
             element_edges=element_edges,
             boundary_entity_spec=entity_spec,
+            rtree=rtree,
         )

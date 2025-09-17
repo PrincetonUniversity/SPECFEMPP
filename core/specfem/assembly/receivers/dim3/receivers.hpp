@@ -6,6 +6,26 @@
 
 namespace specfem::assembly {
 
+/**
+ * @brief 3D assembly receiver specialization for seismic simulations
+ *
+ * Specialized implementation of receivers for 3D spectral element simulations.
+ * This class manages seismic receivers located within 3D finite element meshes,
+ * handling Lagrange interpolation for accurate field sampling and coordinate
+ * transformations using full 3x3 rotation matrices for proper seismogram
+ * orientation in three-dimensional space.
+ *
+ * Key features for 3D:
+ * - Currently supports elastic medium type only
+ * - Uses full 3x3 rotation matrices for coordinate transformations
+ * - Records 3-component seismograms (X, Y, Z or North, East, Up)
+ * - Advanced rotation capabilities for arbitrary receiver orientations
+ * - Efficient Kokkos-based data structures for GPU computations
+ *
+ * The class inherits from both StationIterator (for station metadata) and
+ * SeismogramIterator (for time-series data access), providing a unified
+ * interface for receiver management and seismogram recording.
+ */
 template <>
 struct receivers<specfem::dimension::type::dim3>
     : public receivers_impl::StationIterator,
@@ -39,10 +59,6 @@ public:
   /**
    * @brief Construct a new receivers object
    *
-   * @param nspec Total Number of spectral elements in the domain
-   * @param nglly Total Number of GLL points in the y-direction
-   * @param ngllz Total Number of GLL points in the z-direction
-   * @param ngllx Total Number of GLL points in the x-direction
    * @param max_sig_step Maximum number seismogram sample points
    * @param dt Time increament
    * @param t0 Initial time
@@ -55,7 +71,6 @@ public:
    * @param properties Properties object
    */
   receivers(
-      const int nspec, const int nglly, const int ngllz, const int ngllx,
       const int max_sig_step, const type_real dt, const type_real t0,
       const int nsteps_between_samples,
       const std::vector<
@@ -163,21 +178,26 @@ private:
 };
 
 /**
- * @defgroup ComputeReceiversDataAccess
+ * @defgroup ComputeReceiversDataAccess3D
+ * @brief 3D receiver data access functions for device computations
+ *
+ * These functions provide efficient access to receiver data during GPU kernel
+ * execution for 3D spectral element simulations. They handle loading of
+ * Lagrange interpolants and storing of seismogram components with proper
+ * indexing for three-dimensional computations.
  */
 
 /**
  * @brief Load the Lagrange interpolant for receivers associated with the
  * iterator on the device
  *
- * @ingroup ComputeReceiversDataAccess
+ * @ingroup ComputeReceiversDataAccess3D
  *
  * @tparam ChunkIndexType Chunk index type @ref
  * specfem::execution::ChunkElementIndex
  * @tparam ViewType Lagrange interpolant associated with the receivers in the
  * iterator
  *
- * @param team_member Kokkos team member
  * @param chunk_index Chunk index
  * @param receivers Receivers object containing the receiver information
  * @param lagrange_interpolant Lagrange interpolant associated with the
@@ -232,7 +252,7 @@ load_on_device(const ChunkIndexType &chunk_index,
  * @c receivers.set_seismogram_step(isig_step);
  * @c receivers.set_seismogram_type(iseis);
  *
- * @ingroup ComputeReceiversDataAccess
+ * @ingroup ComputeReceiversDataAccess3D
  * @tparam ChunkIndexType Chunk index type
  * @tparam SeismogramViewType View of the seismogram components
  * @param receivers Receivers object containing the receiver information

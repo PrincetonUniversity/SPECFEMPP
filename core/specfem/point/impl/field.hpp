@@ -1,5 +1,6 @@
 #pragma once
 
+#include "datatypes/simd.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -248,6 +249,27 @@ public:
    */
   KOKKOS_FORCEINLINE_FUNCTION bool operator!=(const field &other) const {
     return !(*this == other);
+  }
+
+  /**
+   * @brief Output a string representation of the field components.
+   *
+   * Outputs the values of all field components to the specified output stream.
+   * Each component is printed in order, enclosed in square brackets.
+   * If SIMD the SIMD values are printed in curly brackets.
+   *
+   */
+  std::string print() const {
+    std::ostringstream os;
+    os << "{";
+    for (std::size_t i = 0; i < components; ++i) {
+      os << this->m_data(i);
+      if (i < components - 1) {
+        os << ",\n";
+      }
+    }
+    os << "}";
+    return os.str();
   }
 };
 

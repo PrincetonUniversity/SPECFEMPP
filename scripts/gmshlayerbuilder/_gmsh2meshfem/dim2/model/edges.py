@@ -4,6 +4,8 @@ from enum import IntEnum
 
 import numpy as np
 
+from _gmsh2meshfem.dim2.binary_detect_N3 import maxfind_coefs_a, maxfind_coefs_b, L
+
 
 class EdgeType(IntEnum):
     BOTTOM = 0
@@ -60,9 +62,13 @@ class ConformingInterfaces:
             "`b_joined_elem_inds` must represent the elements in `b`. "
             "They do not represent the same number of elements."
         )
-        remapped_a_adj = np.where(a.elements_adj >= 0, a_joined_elem_inds[a.elements_adj], -1)
-        remapped_b_adj = np.where(b.elements_adj >= 0, b_joined_elem_inds[b.elements_adj], -1)
-        nelem = max(np.max(a_joined_elem_inds), np.max(b_joined_elem_inds))+1
+        remapped_a_adj = np.where(
+            a.elements_adj >= 0, a_joined_elem_inds[a.elements_adj], -1
+        )
+        remapped_b_adj = np.where(
+            b.elements_adj >= 0, b_joined_elem_inds[b.elements_adj], -1
+        )
+        nelem = max(np.max(a_joined_elem_inds), np.max(b_joined_elem_inds)) + 1
         elements_new_adj = np.full((nelem, 4), -1, dtype=np.int32)
         elements_new_adj[a_joined_elem_inds, :] = remapped_a_adj
 
@@ -95,12 +101,12 @@ class ConformingInterfaces:
         element_node_matrix: np.ndarray,
     ) -> "ConformingInterfaces":
         nelem = element_node_matrix.shape[0]
-        edges = edges_of_all_elements(element_node_matrix, True).reshape((-1,3))
+        edges = edges_of_all_elements(element_node_matrix, True).reshape((-1, 3))
         # edges[ielem*4 + edgetype, :] == edgenodes
 
-        #sort edges
-        edges_sortinds = np.lexsort(edges.T,axis=0)
-        edges_sorted = edges[edges_sortinds,:]
+        # sort edges
+        edges_sortinds = np.lexsort(edges.T, axis=0)
+        edges_sorted = edges[edges_sortinds, :]
 
         edge_unique, ind, counts = np.unique(
             edges_sorted,
@@ -121,10 +127,10 @@ class ConformingInterfaces:
         elements_adj = np.full((nelem, 4), -1, dtype=np.int32)
         paired = ind[counts == 2]
         # (paired, paired+1) are equal -- invert the sort
-        elem_a, edge_a = np.unravel_index(edges_sortinds[paired],(nelem,4))
-        elem_b, edge_b = np.unravel_index(edges_sortinds[paired+1],(nelem,4))
-        elements_adj[elem_a,edge_a] = elem_b
-        elements_adj[elem_b,edge_b] = elem_a
+        elem_a, edge_a = np.unravel_index(edges_sortinds[paired], (nelem, 4))
+        elem_b, edge_b = np.unravel_index(edges_sortinds[paired + 1], (nelem, 4))
+        elements_adj[elem_a, edge_a] = elem_b
+        elements_adj[elem_b, edge_b] = elem_a
 
         return ConformingInterfaces(elements_adj=elements_adj)
 
@@ -155,3 +161,43 @@ def edges_of_all_elements(
         )
     else:
         return edges
+
+
+def vectorized_bbox_calc(node_coord_matrix: np.ndarray) -> np.ndarray:
+    """Computes the bounding boxes for all of the given edges in a fast way.
+
+    Args:
+        node_coord_matrix(np.ndarray): ...x3x2 array of node coordinates.
+
+    Returns:
+        np.ndarray: (...x4) array, with bbox = (xmin, ymin, xmax, ymax)
+    """
+    ret = np.empty(node_coord_matrix.shape[:-2] + (4,), dtype=node_coord_matrix.dtype)
+
+    # compute critical point
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        crit = np.einsum(
+            "k,...kd->...d", maxfind_coefs_b, node_coord_matrix
+        ) / np.einsum("k,...kd->...d", maxfind_coefs_a, node_coord_matrix)
+    valid_search = (crit > -1) * (crit < 1)
+
+    extrema = np.einsum(
+        "ji,...i,...j->...",
+        L,
+        crit[valid_search, None] ** np.arange(3),
+        np.swapaxes(node_coord_matrix, -2, -1)[valid_search, :],
+    )
+
+    # initialize (extrema or some point on edge)
+    ret[..., :2] = node_coord_matrix[..., 0, :]
+    ret[..., :2][valid_search] = extrema
+
+    # maximum values (between extrema and endpoints)
+    np.maximum(node_coord_matrix[..., 0, :], node_coord_matrix[..., 2, :], ret[..., 2:])
+    np.maximum(ret[..., :2], ret[..., 2:], ret[..., 2:])
+
+    # minima
+    np.minimum(ret[..., :2], node_coord_matrix[..., 0, :], ret[..., :2])
+    np.minimum(ret[..., :2], node_coord_matrix[..., 2, :], ret[..., :2])
+    return ret
