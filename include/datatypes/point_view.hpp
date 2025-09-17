@@ -27,6 +27,7 @@ struct VectorPointViewType
    *
    */
   ///@{
+  using self_type = VectorPointViewType<T, Components, UseSIMD>;
   using base_type = impl::RegisterArray<
       typename specfem::datatype::simd<T, UseSIMD>::datatype,
       Kokkos::extents<std::size_t, Components>,
@@ -48,12 +49,6 @@ struct VectorPointViewType
   ///@{
   constexpr static int components = Components; ///< Number of scalar values at
                                                 ///< the GLL point
-  constexpr static bool isPointViewType = true;
-  constexpr static bool isElementViewType = false;
-  constexpr static bool isChunkViewType = false;
-  constexpr static bool isDomainViewType = false;
-  constexpr static bool isScalarViewType = true;
-  constexpr static bool isVectorViewType = false;
   ///@}
 
   /**
@@ -63,6 +58,19 @@ struct VectorPointViewType
   ///@{
 
   using base_type::base_type;
+
+  KOKKOS_INLINE_FUNCTION value_type operator*(const self_type &other) const {
+    constexpr int N = self_type::components;
+    value_type result{ 0.0 };
+
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#pragma unroll
+#endif
+    for (int i = 0; i < N; ++i) {
+      result += (*this)(i)*other(i);
+    }
+    return result;
+  }
   ///@}
 };
 
@@ -112,12 +120,6 @@ struct TensorPointViewType
                                                 ///< vector
   constexpr static int dimensions = Dimensions; ///< Number of dimensions
                                                 ///< of the vector
-  constexpr static bool isPointViewType = true;
-  constexpr static bool isElementViewType = false;
-  constexpr static bool isChunkViewType = false;
-  constexpr static bool isDomainViewType = false;
-  constexpr static bool isScalarViewType = false;
-  constexpr static bool isVectorViewType = true;
   ///@}
 
   using base_type::base_type; ///< Inherit constructors from base class

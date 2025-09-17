@@ -1,6 +1,5 @@
 #pragma once
 
-#include "algorithms/dot.hpp"
 #include "enumerations/medium.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -36,8 +35,7 @@ impl_compute_frechet_derivatives(
       properties.rho_inverse() * dt;
 
   const auto kappa_kl =
-      specfem::algorithms::dot(adjoint_acceleration.get_data(),
-                               backward_displacement.get_data()) *
+      (adjoint_acceleration.get_data() * backward_displacement.get_data()) *
       static_cast<type_real>(1.0) / properties.kappa() * dt;
 
   return { rho_kl, kappa_kl };

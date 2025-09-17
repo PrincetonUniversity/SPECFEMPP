@@ -1,6 +1,5 @@
 #pragma once
 
-#include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
 #include "globals.h"
@@ -62,8 +61,8 @@ impl_compute_frechet_derivatives(
 
   // inner part of rho kernel equation 14
   // rho_kl = s#''_i * s_j
-  auto rho_kl = specfem::algorithms::dot(adjoint_acceleration.get_data(),
-                                         backward_displacement.get_data());
+  auto rho_kl =
+      adjoint_acceleration.get_data() * backward_displacement.get_data();
 
   // Inner part of the 2-D version of Equation 15 in Tromp et al. 2005
   // That is \eps_{jk} \eps_{lm}

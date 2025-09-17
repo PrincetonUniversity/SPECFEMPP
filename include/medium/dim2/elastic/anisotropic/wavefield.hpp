@@ -1,6 +1,5 @@
 #pragma once
 
-#include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/compute_stress.hpp"

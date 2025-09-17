@@ -1,6 +1,5 @@
 #pragma once
 
-#include "algorithms/dot.hpp"
 #include "enumerations/medium.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>

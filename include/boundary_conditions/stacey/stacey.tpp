@@ -1,6 +1,5 @@
 #pragma once
 
-#include "algorithms/dot.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "enumerations/medium.hpp"
 #include "specfem/point.hpp"
@@ -54,7 +53,7 @@ KOKKOS_FUNCTION void impl_base_elastic_psv_traction(
   if (boundary.tag != tag)
     return;
 
-  const auto vn = specfem::algorithms::dot(velocity.get_data(), boundary.edge_normal);
+  const auto vn = velocity.get_data() * boundary.edge_normal;
   const auto &dn = boundary.edge_normal;
 
   const auto jacobian1d = dn.l2_norm();
@@ -95,8 +94,7 @@ KOKKOS_FUNCTION void impl_base_elastic_psv_traction(
   if (Kokkos::Experimental::none_of(mask))
     return;
 
-  const auto vn = specfem::algorithms::dot(velocity.get_data(),
-                                           boundary.edge_normal);
+  const auto vn = velocity.get_data() * boundary.edge_normal;
   const auto &dn = boundary.edge_normal;
 
   const auto jacobian1d = dn.l2_norm();

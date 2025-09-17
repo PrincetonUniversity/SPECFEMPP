@@ -1,6 +1,5 @@
 #pragma once
 
-#include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/macros.hpp"

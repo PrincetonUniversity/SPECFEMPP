@@ -1,6 +1,5 @@
 #pragma once
 
-#include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
 #include "globals.h"
@@ -88,8 +87,7 @@ impl_compute_frechet_derivatives(
   //                          2.0 * ad_dsxz * b_dsxz - 1.0 / 3.0 * kappa_kl);
   // const type_real rho_kl =
   //     -1.0 * properties.rho * dt *
-  //     (specfem::algorithms::dot(adjoint_field.acceleration,
-  //                               backward_field.displacement));
+  //     (adjoint_field.acceleration * backward_field.displacement);
   // --------------------------------------
 
   // In the papers we use dagger for the notation of the adjoint wavefield
@@ -113,8 +111,8 @@ impl_compute_frechet_derivatives(
   // This notation/naming is confusing with respect to the physics.
   // Should be forward.acceleration dotted with adjoint displacement
   // See Tromp et al. 2005, Equation 14.
-  auto rho_kl = specfem::algorithms::dot(adjoint_acceleration.get_data(),
-                                         backward_displacement.get_data());
+  auto rho_kl =
+      adjoint_acceleration.get_data() * backward_displacement.get_data();
 
   // Finishing the kernels
   kappa_kl = static_cast<type_real>(-1.0) * kappa * dt * kappa_kl;
@@ -191,8 +189,7 @@ impl_compute_frechet_derivatives(
        adjoint_derivatives.du(0, 1) * backward_derivatives.du(0, 1));
   const auto rho_kl =
       static_cast<type_real>(-1.0) * properties.rho() * dt *
-      specfem::algorithms::dot(adjoint_acceleration.get_data(),
-                               backward_displacement.get_data());
+      (adjoint_acceleration.get_data() * backward_displacement.get_data());
   const auto kappa_kl = decltype(mu_kl)(0.0);
 
   const auto rhop_kl = rho_kl + kappa_kl + mu_kl;

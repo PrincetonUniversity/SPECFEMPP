@@ -1,6 +1,5 @@
 #pragma once
 
-#include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
 #include "globals.h"
@@ -112,8 +111,7 @@ impl_compute_frechet_derivatives(
   //                          2.0 * ad_dsxz * b_dsxz - 1.0 / 3.0 * kappa_kl);
   // const type_real rho_kl =
   //     -1.0 * properties.rho * dt *
-  //     (specfem::algorithms::dot(adjoint_field.acceleration,
-  //                               backward_field.displacement));
+  //     (adjoint_field.acceleration * backward_field.displacement);
   // --------------------------------------
 
   // In the papers we use dagger for the notation of the adjoint wavefield
