@@ -31,7 +31,8 @@ struct TestConfig {
     TestConfig config;
 
     // Create the test path by concatenating the base path with the test name
-    std::string test_path = "displacement_tests/Newmark/serial/" + test_name;
+    std::string test_path =
+        "displacement_tests/Newmark/serial/dim2" + test_name;
 
     // Load config.yaml from the test directory
     std::string config_file = test_path + "/config.yaml";
