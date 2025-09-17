@@ -24,7 +24,7 @@ if (DOXYGEN_FOUND)
     #     COMMENT "Generating API documentation with Doxygen"
     #     VERBATIM )
 else (DOXYGEN_FOUND)
-  message(STATUS "Doxygen need to be installed to generate the doxygen documentation")
+  message(STATUS "Doxygen need to be installed to generate the doxygen documentation.")
 endif (DOXYGEN_FOUND)
 
 # Pop the indentation for Doxygen messages

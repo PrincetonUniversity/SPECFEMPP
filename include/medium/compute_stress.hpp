@@ -5,6 +5,7 @@
 #include "dim2/elastic/isotropic/stress.hpp"
 #include "dim2/elastic/isotropic_cosserat/stress.hpp"
 #include "dim2/poroelastic/isotropic/stress.hpp"
+#include "dim3/elastic/isotropic/stress.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 

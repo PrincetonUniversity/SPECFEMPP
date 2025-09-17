@@ -74,7 +74,7 @@ RUN echo "Installing SPECFEM++..." && \
     echo "" && \
     cd ${SOURCE} && \
     rm -rf ${BUILD} && \
-    cmake --preset release-nosimd && \
+    cmake --preset release-nosimd -DSPECFEM_ENABLE_HDF5=ON -DSPECFEM_ENABLE_VTK=OFF && \
     cmake --build --preset release-nosimd && \
     echo "Done."
 

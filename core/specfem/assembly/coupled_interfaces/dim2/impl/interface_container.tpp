@@ -114,7 +114,7 @@ compute_edge_factors_and_normals(
     const int ispec2, const specfem::enums::edge::type edge1,
     const specfem::enums::edge::type edge2) {
 
-  const int ngll = mesh.ngllx;
+  const int ngll = mesh.element_grid.ngllx;
 
   const auto edge1_points = get_points_on_edge(edge1, ngll);
   const auto edge2_points = get_points_on_edge(edge2, ngll);
@@ -285,7 +285,7 @@ specfem::assembly::interface_container<specfem::dimension::type::dim2, MediumTag
       mesh.coupled_interfaces.get<MediumTag1, MediumTag2>());
 
   int num_interfaces = interface_container.num_interfaces;
-  const int ngll = mesh_assembly.ngllx;
+  const int ngll = mesh_assembly.element_grid.ngllx;
 
   if (num_interfaces == 0) {
     this->num_interfaces = 0;

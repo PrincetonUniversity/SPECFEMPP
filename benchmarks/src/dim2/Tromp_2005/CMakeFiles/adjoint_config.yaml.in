@@ -40,12 +40,12 @@ parameters:
         reader:
           wavefield:
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
-            format: HDF5
+            format: npy
 
         writer:
           kernels:
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES"
-            format: ASCII
+            format: npy
 
     solver:
       time-marching:

@@ -22,16 +22,18 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
         &element_types)
     : nspec(nspec),
       lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
-                           receivers.size(), mesh.ngllz, mesh.ngllx),
+                           receivers.size(), mesh.element_grid.ngllz,
+                           mesh.element_grid.ngllx),
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
       elements("specfem::assembly::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
       element_types(element_types),
       specfem::assembly::receivers_impl::StationIterator(receivers.size(),
                                                          stypes),
-      specfem::assembly::receivers_impl::SeismogramIterator(
-          receivers.size(), stypes.size(), max_sig_step, dt, t0,
-          nsteps_between_samples) {
+      specfem::assembly::receivers_impl::SeismogramIterator<
+          specfem::dimension::type::dim2>(receivers.size(), stypes.size(),
+                                          max_sig_step, dt, t0,
+                                          nsteps_between_samples) {
 
   // Validate and populate seismogram type mapping
   for (int isies = 0; isies < stypes.size(); ++isies) {
@@ -80,14 +82,14 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
 
     auto [hxi_receiver, hpxi_receiver] =
         specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-            lcoord.xi, mesh.ngllx, xi);
+            lcoord.xi, mesh.element_grid.ngllx, xi);
 
     auto [hgamma_receiver, hpgamma_receiver] =
         specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-            lcoord.gamma, mesh.ngllx, gamma);
+            lcoord.gamma, mesh.element_grid.ngllx, gamma);
 
-    for (int iz = 0; iz < mesh.ngllz; ++iz) {
-      for (int ix = 0; ix < mesh.ngllx; ++ix) {
+    for (int iz = 0; iz < mesh.element_grid.ngllz; ++iz) {
+      for (int ix = 0; ix < mesh.element_grid.ngllx; ++ix) {
         type_real hlagrange = hxi_receiver(ix) * hgamma_receiver(iz);
 
         h_lagrange_interpolant(ireceiver, iz, ix, 0) = hlagrange;

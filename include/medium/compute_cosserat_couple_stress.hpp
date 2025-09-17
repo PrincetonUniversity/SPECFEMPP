@@ -138,9 +138,10 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
  * specfem::point::field
  * @tparam PointAccelerationType Acceleration at the quadrature point
  * specfem::point::field
- * @param factor Prefactor for the damping term ($wx * wz * jacobian)
+ * @param PointJacobianMatrixType Jacobian matrix at the quadrature point
  * @param point_properties Material properties at the quadrature point
- * @param velocity Velocity at the quadrature point
+ * @param factor Prefactor for the damping term ($wx * wz * jacobian)
+ * @param F Stress integrand at the quadrature point
  * @param acceleration Acceleration at the quadrature point
  */
 template <typename T, typename PointJacobianMatrixType,

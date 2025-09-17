@@ -9,6 +9,7 @@
 #include "specfem/point.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
+#include <Kokkos_Core.hpp>
 
 // Local namespace for implementation details
 namespace specfem::assembly::compute_source_array_impl {
@@ -19,7 +20,8 @@ void compute_source_array_from_tensor_and_element_jacobian(
     const JacobianViewType &element_jacobian_matrix,
     const specfem::assembly::mesh_impl::quadrature<
         specfem::dimension::type::dim2> &quadrature,
-    specfem::kokkos::HostView3d<type_real> source_array) {
+    Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_array) {
 
   const int ngllx = quadrature.N;
   const int ngllz = quadrature.N;
@@ -90,7 +92,8 @@ void specfem::assembly::compute_source_array_impl::from_tensor(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
         &jacobian_matrix,
-    specfem::kokkos::HostView3d<type_real> source_array) {
+    Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_array) {
 
   const int ngllx = source_array.extent(2);
   const int ngllz = source_array.extent(1);

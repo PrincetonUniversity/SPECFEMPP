@@ -24,6 +24,14 @@ std::tuple<type_real, type_real> get_local_coordinates(
         Kokkos::HostSpace> &coorg,
     type_real xi, type_real gamma);
 
+std::pair<type_real, bool> get_local_edge_coordinate(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &global,
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &coorg,
+    const specfem::mesh_entity::type &mesh_entity, type_real coord);
+
 // Core locate_point logic that can be tested with raw data arrays
 specfem::point::local_coordinates<specfem::dimension::type::dim2>
 locate_point_core(
@@ -35,6 +43,26 @@ locate_point_core(
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coord,
     const int ngnod, const int ngllx);
+
+template <typename GraphType>
+specfem::point::local_coordinates<specfem::dimension::type::dim2>
+locate_point_core(
+    const GraphType &graph,
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &coordinates,
+    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
+    const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &control_node_coord,
+    const int ngnod);
+
+specfem::point::local_coordinates<specfem::dimension::type::dim2>
+locate_point_from_best_candidates(
+    const std::vector<int> &best_candidates,
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &coordinates,
+    const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &control_node_coord,
+    const int ngnod);
 
 // 3D overloads - using different input types for overload resolution
 

@@ -1,7 +1,7 @@
 #include "specfem/assembly/sources.hpp"
+#include "../impl/dim2/source_medium.tpp"
 #include "../impl/locate_sources.hpp"
 #include "../impl/source_medium.hpp"
-#include "../impl/source_medium.tpp"
 #include "algorithms/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
@@ -13,52 +13,6 @@
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <vector>
-
-// Forward declarations
-namespace {
-
-/** @brief Sort sources per medium
- * @tparam DimensionTag Dimension tag (e.g., dim2)
- * @tparam MediumTag Medium tag (e.g., elastic_psv, acoustic, etc.)
- * @param sources Vector of sources to be sorted
- * @param element_types Element types for every spectral element
- * @param mesh Finite element mesh information
- * @return Tuple containing sorted sources and their indices
- */
-template <specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag>
-std::tuple<
-    std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >,
-    std::vector<int> >
-sort_sources_per_medium(
-    const std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
-        &sources,
-    const specfem::assembly::element_types<DimensionTag> &element_types,
-    const specfem::assembly::mesh<DimensionTag> &mesh) {
-
-  std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
-      sorted_sources;
-  std::vector<int> source_indices;
-
-  // Loop over all sources
-  for (int isource = 0; isource < sources.size(); isource++) {
-
-    // Get the source
-    const auto &source = sources[isource];
-
-    // Get the medium tag for the source
-    const specfem::element::medium_tag medium_tag = source->get_medium_tag();
-
-    // Check if the element is in currently checked medium and add to
-    // the list of sources and indices if it is.
-    if (medium_tag == MediumTag) {
-      sorted_sources.push_back(source);
-      source_indices.push_back(isource);
-    }
-  }
-  return std::make_tuple(sorted_sources, source_indices);
-}
-} // namespace
 
 template class specfem::assembly::sources_impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
@@ -113,8 +67,8 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
                                        POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE(source) {
         auto [sorted_sources, source_indices] =
-            sort_sources_per_medium<_dimension_tag_, _medium_tag_>(
-                sources, element_types, mesh);
+            specfem::assembly::sources_impl::sort_sources_per_medium<
+                _dimension_tag_, _medium_tag_>(sources, element_types, mesh);
 
         /** For a sanity check we count the number of sources and source indices
          * for each medium and dimension

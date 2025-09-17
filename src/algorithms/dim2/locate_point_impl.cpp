@@ -123,24 +123,172 @@ std::tuple<type_real, type_real> get_local_coordinates(
   return std::make_tuple(xi, gamma);
 }
 
-// Core locate_point logic extracted for testability
+std::pair<type_real, bool> get_local_edge_coordinate(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &global,
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &coorg,
+    const specfem::mesh_entity::type &mesh_entity, type_real coord) {
+  constexpr type_real local_deriv_eps = 1e-12;
+  constexpr type_real global_coord_eps = 1e-2;
+  const int ngnod = coorg.extent(0);
+
+  // full local coords
+  type_real xi, gamma;
+  specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true, false>
+      jacobian;
+
+  /* coordinate of edge, references either xi or gamma. Other coord is
+   * edge-constrained.
+   *
+   * Additionally, we can reference the coordinate of the jacobian matrix.
+   */
+  auto [edgecoord, jacobian_edgecoordx, jacobian_edgecoordz] =
+      [&xi, &gamma, &mesh_entity,
+       &jacobian]() -> std::tuple<type_real &, type_real &, type_real &> {
+    if (mesh_entity == specfem::mesh_entity::type::bottom) {
+      gamma = -1;
+      return { xi, jacobian.xix, jacobian.xiz };
+    } else if (mesh_entity == specfem::mesh_entity::type::right) {
+      xi = 1;
+      return { gamma, jacobian.gammax, jacobian.gammaz };
+    } else if (mesh_entity == specfem::mesh_entity::type::top) {
+      gamma = 1;
+      return { xi, jacobian.xix, jacobian.xiz };
+    } else {
+      xi = -1;
+      return { gamma, jacobian.gammax, jacobian.gammaz };
+    }
+  }();
+  edgecoord = coord;
+
+  for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
+    // we may want a dim1 type? for now, just constrain on dim2. update location
+    // and jacobian matrix
+    auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma);
+    jacobian = specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma);
+
+    type_real dx = -(loc.x - global.x);
+    type_real dz = -(loc.z - global.z);
+
+    // step direction:
+    type_real dedgecoord = jacobian_edgecoordx * dx + jacobian_edgecoordz * dz;
+
+    // are we on the corner and pointing outside?
+    if (edgecoord == -1 && dedgecoord < -local_deriv_eps) {
+      return { -1, false };
+    }
+    if (edgecoord == 1 && dedgecoord > local_deriv_eps) {
+      return { 1, false };
+    }
+
+    // no out-of-bounds. keep going
+    edgecoord += dedgecoord;
+
+    // clamp exactly to bounds
+    if (edgecoord > 1) {
+      edgecoord = 1;
+    } else if (edgecoord < -1) {
+      edgecoord = -1;
+    }
+    // Check for convergence
+    if (std::abs(dedgecoord) < local_deriv_eps)
+      break;
+  }
+
+  // verify point proximity: first get the distance
+  auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma);
+  const type_real distance = specfem::point::distance(global, loc);
+
+  // find some characteristic length. We can use the max diagonal.
+  // corner control nodes are always [0,4)
+  const type_real mesh_charlen =
+      std::max(specfem::point::distance(coorg(0), coorg(2)),
+               specfem::point::distance(coorg(1), coorg(3)));
+
+  if (distance > mesh_charlen * global_coord_eps) {
+    std::ostringstream oss;
+    oss << "\nFailed to locate point along edge:\n"
+        << "  (xi, gamma)   = (" << xi << ", " << gamma << ")\n"
+        << "  (target_x, target_z) = (" << global.x << ", " << global.z << ")\n"
+        << "   (found_x,  found_z) = (" << loc.x << ", " << loc.z << ")\n"
+        << "            final_dist = " << distance << "\n"
+        << "This may have been caused by improper meshing along a "
+           "nonconforming interface.\n";
+    throw std::runtime_error(oss.str());
+  }
+
+  return { edgecoord, true };
+}
+
+template <typename GraphType>
+std::vector<int> get_best_candidates_from_graph(const int ispec_guess,
+                                                const GraphType &graph) {
+
+  std::vector<int> ispec_candidates;
+  ispec_candidates.push_back(ispec_guess);
+
+  for (auto edge :
+       boost::make_iterator_range(boost::out_edges(ispec_guess, graph))) {
+    const int ispec = boost::target(edge, graph);
+    if (std::find(ispec_candidates.begin(), ispec_candidates.end(), ispec) ==
+        ispec_candidates.end()) {
+      ispec_candidates.push_back(ispec);
+    }
+  }
+  return ispec_candidates;
+}
+
+std::tuple<type_real, type_real> get_best_location(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &global,
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &coorg,
+    type_real xi, type_real gamma) {
+
+  const int ngnod = coorg.extent(0);
+
+  for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
+    auto loc = specfem::jacobian::compute_locations(coorg, ngnod, xi, gamma);
+    auto jacobian =
+        specfem::jacobian::compute_jacobian(coorg, ngnod, xi, gamma);
+
+    type_real dx = -(loc.x - global.x);
+    type_real dz = -(loc.z - global.z);
+
+    type_real dxi = jacobian.xix * dx + jacobian.xiz * dz;
+    type_real dgamma = jacobian.gammax * dx + jacobian.gammaz * dz;
+
+    xi += dxi;
+    gamma += dgamma;
+
+    if (xi > 1.01)
+      xi = 1.01;
+    if (xi < -1.01)
+      xi = -1.01;
+    if (gamma > 1.01)
+      gamma = 1.01;
+    if (gamma < -1.01)
+      gamma = -1.01;
+
+    // Check for convergence
+    if (std::abs(dxi) < 1e-12 && std::abs(dgamma) < 1e-12)
+      break;
+  }
+
+  return std::make_tuple(xi, gamma);
+}
+
 specfem::point::local_coordinates<specfem::dimension::type::dim2>
-locate_point_core(
+locate_point_from_best_candidates(
+    const std::vector<int> &best_candidates,
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
-    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
-    const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
-        &index_mapping,
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coord,
-    const int ngnod, const int ngllx) {
-
-  int ix_guess, iz_guess, ispec_guess;
-
-  std::tie(ix_guess, iz_guess, ispec_guess) =
-      rough_location(coordinates, global_coordinates);
-
-  const auto best_candidates = get_best_candidates(ispec_guess, index_mapping);
+    const int ngnod) {
 
   type_real final_dist = std::numeric_limits<type_real>::max();
 
@@ -206,6 +354,29 @@ locate_point_core(
   }
 
   return { ispec_selected, xi_selected, gamma_selected };
+}
+
+// Core locate_point logic extracted for testability
+specfem::point::local_coordinates<specfem::dimension::type::dim2>
+locate_point_core(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &coordinates,
+    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
+    const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &index_mapping,
+    const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        &control_node_coord,
+    const int ngnod, const int ngllx) {
+
+  int ix_guess, iz_guess, ispec_guess;
+
+  std::tie(ix_guess, iz_guess, ispec_guess) =
+      rough_location(coordinates, global_coordinates);
+
+  const auto best_candidates = get_best_candidates(ispec_guess, index_mapping);
+
+  return locate_point_from_best_candidates(best_candidates, coordinates,
+                                           control_node_coord, ngnod);
 }
 
 } // namespace locate_point_impl

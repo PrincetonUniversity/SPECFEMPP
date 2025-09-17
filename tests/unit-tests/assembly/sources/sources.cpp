@@ -17,8 +17,8 @@ void check_store(
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
   specfem::assembly::sources<DimensionTag> &sources = assembly.sources;
-  const int ngllz = assembly.mesh.ngllz;
-  const int ngllx = assembly.mesh.ngllx;
+  const int ngllz = assembly.mesh.element_grid.ngllz;
+  const int ngllx = assembly.mesh.element_grid.ngllx;
 
   // the structured binding ([element_indices, source_indices]) is not
   // supported by the intel compiler
@@ -91,8 +91,8 @@ void check_load(
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
   specfem::assembly::sources<DimensionTag> &sources = assembly.sources;
-  const int ngllz = assembly.mesh.ngllz;
-  const int ngllx = assembly.mesh.ngllx;
+  const int ngllz = assembly.mesh.element_grid.ngllz;
+  const int ngllx = assembly.mesh.element_grid.ngllx;
 
   const auto elements_and_sources = sources.get_sources_on_device(
       MediumTag, PropertyTag, BoundaryTag, WavefieldType);
@@ -198,8 +198,8 @@ void check_assembly_source_construction(
         specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
-  const int ngllz = assembly.mesh.ngllz;
-  const int ngllx = assembly.mesh.ngllx;
+  const int ngllz = assembly.mesh.element_grid.ngllz;
+  const int ngllx = assembly.mesh.element_grid.ngllx;
 
   constexpr auto components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
@@ -222,13 +222,17 @@ void check_assembly_source_construction(
       continue;
     }
 
-    Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace> source_array(
-        "source_array", components, assembly.mesh.ngllz, assembly.mesh.ngllx);
+    Kokkos::View<type_real ***, Kokkos::LayoutRight,
+                 Kokkos::DefaultHostExecutionSpace>
+        source_array("source_array", components,
+                     assembly.mesh.element_grid.ngllz,
+                     assembly.mesh.element_grid.ngllx);
 
     specfem::assembly::compute_source_array(
         source, assembly.mesh, assembly.jacobian_matrix, source_array);
-    Kokkos::View<type_real **, Kokkos::DefaultHostExecutionSpace> stf(
-        "stf", 1, components);
+    Kokkos::View<type_real **, Kokkos::LayoutRight,
+                 Kokkos::DefaultHostExecutionSpace>
+        stf("stf", 1, components);
 
     source->compute_source_time_function(1.0, 0.0, 1, stf);
     using mapped_chunk_index_type =
