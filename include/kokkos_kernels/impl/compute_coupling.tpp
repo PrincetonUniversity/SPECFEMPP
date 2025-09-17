@@ -42,7 +42,7 @@ void specfem::kokkos_kernels::impl::compute_coupling(
     return;
 
   const auto& field = assembly.fields.template get_simulation_field<wavefield>();
-  const auto& boundaries = assembly.boundaries();
+  const auto& boundaries = assembly.boundaries;
 
   const auto num_points = assembly.mesh.element_grid.ngllx;
 
