@@ -448,6 +448,8 @@ target_link_libraries(
 add_executable(
   locate_point_fixture_2d
   algorithms/dim2/locate_point_fixture.cpp
+  algorithms/dim2/locate_point_test.cpp
+  algorithms/dim2/locate_point_on_edge_test.cpp
 )
 
 target_link_libraries(
