@@ -37,7 +37,7 @@ parameters:
             output-folder: "."
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/AcousticElasticCoupledDomainVariant2/STATIONS"
+    stations: "displacement_tests/Newmark/serial/dim2/AcousticElasticCoupledDomainVariant2/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -50,8 +50,8 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/AcousticElasticCoupledDomainVariant2/database.bin"
-    sources: "displacement_tests/Newmark/serial/AcousticElasticCoupledDomainVariant2/sources.yaml"
+    mesh-database: "displacement_tests/Newmark/serial/dim2/AcousticElasticCoupledDomainVariant2/database.bin"
+    sources: "displacement_tests/Newmark/serial/dim2/AcousticElasticCoupledDomainVariant2/sources.yaml"
 
   seismogram:
     seismogram-format: ascii

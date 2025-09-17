@@ -34,7 +34,7 @@ parameters:
             directory: "."
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/PoroelasticCoupledDomainPSV/STATIONS"
+    stations: "displacement_tests/Newmark/serial/dim2/PoroelasticCoupledDomainPSV/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -49,6 +49,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/PoroelasticCoupledDomainPSV/database.bin"
+    mesh-database: "displacement_tests/Newmark/serial/dim2/PoroelasticCoupledDomainPSV/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/PoroelasticCoupledDomainPSV/sources.yaml"
+  sources: "displacement_tests/Newmark/serial/dim2/PoroelasticCoupledDomainPSV/sources.yaml"

@@ -34,7 +34,7 @@ parameters:
             directory: "."
 
   receivers:
-    stations: "displacement_tests/Newmark/serial/TwoLayerElectromagneticDomain/STATIONS"
+    stations: "displacement_tests/Newmark/serial/dim2/TwoLayerElectromagneticDomain/STATIONS"
     angle: 0.0
     seismogram-type:
       - electric-field
@@ -47,6 +47,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/TwoLayerElectromagneticDomain/database.bin"
+    mesh-database: "displacement_tests/Newmark/serial/dim2/TwoLayerElectromagneticDomain/database.bin"
 
-  sources: "displacement_tests/Newmark/serial/TwoLayerElectromagneticDomain/sources.yaml"
+  sources: "displacement_tests/Newmark/serial/dim2/TwoLayerElectromagneticDomain/sources.yaml"
