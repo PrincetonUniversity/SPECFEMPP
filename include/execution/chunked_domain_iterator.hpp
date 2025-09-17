@@ -60,7 +60,7 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   constexpr const KokkosIndexType get_policy_index() const {
-    return this->local_index.ispec;
+    return this->kokkos_index; ///< Returns the policy index
   }
 
   /**
@@ -104,11 +104,13 @@ public:
    * @param kokkos_index The Kokkos index type.
    */
   template <bool U = UseSIMD, typename std::enable_if<U, int>::type = 0>
-  KOKKOS_INLINE_FUNCTION
-  PointIndex(const int &ispec, const int &number_elements, const int &iz,
-             const int &ix, const KokkosIndexType &kokkos_index)
+  KOKKOS_INLINE_FUNCTION PointIndex(const int &ispec,
+                                    const int &number_elements, const int &iz,
+                                    const int &ix, const int &ielement,
+                                    const KokkosIndexType &kokkos_index)
       : index(ispec, number_elements, iz, ix),
-        local_index(kokkos_index, number_elements, iz, ix) {}
+        local_index(ielement, number_elements, iz, ix),
+        kokkos_index(kokkos_index) {}
 
   /**
    * @brief Constructor for PointIndex when SIMD is not used.
@@ -120,9 +122,10 @@ public:
    */
   template <bool U = UseSIMD, typename std::enable_if<!U, int>::type = 0>
   KOKKOS_INLINE_FUNCTION PointIndex(const int &ispec, const int &iz,
-                                    const int &ix,
+                                    const int &ix, const int &ielement,
                                     const KokkosIndexType &kokkos_index)
-      : index(ispec, iz, ix), local_index(kokkos_index, iz, ix) {}
+      : index(ispec, iz, ix), local_index(ielement, iz, ix),
+        kokkos_index(kokkos_index) {}
 
   KOKKOS_INLINE_FUNCTION
   constexpr bool is_end() const {
@@ -136,6 +139,7 @@ private:
                                 ///< GLL point
                                 ///< relative to
                                 ///< current chunk
+  KokkosIndexType kokkos_index; ///< The Kokkos index
 };
 
 /**
@@ -213,7 +217,7 @@ public:
                             : simd_size;
     int ispec = indices(ielement);
 #endif
-    return index_type(ispec, simd_elements, iz, ix, ielement);
+    return index_type(ispec, simd_elements, iz, ix, ielement, i);
   }
 
   template <bool U = using_simd>
@@ -231,7 +235,7 @@ public:
     const int ielement = i / (element_grid.ngllz * element_grid.ngllx);
     int ispec = indices(ielement);
 #endif
-    return index_type(ispec, iz, ix, ielement);
+    return index_type(ispec, iz, ix, ielement, i);
   }
 
   /**

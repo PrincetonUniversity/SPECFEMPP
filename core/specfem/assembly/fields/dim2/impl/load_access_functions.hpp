@@ -35,8 +35,7 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
 
   const auto current_field = field.template get_field<MediumTag>();
 
-  const int iglob = field.template get_iglob<on_device>(index.ispec, index.iz,
-                                                        index.ix, MediumTag);
+  const int iglob = field.template get_iglob<on_device>(index, MediumTag);
 
   constexpr static int ncomponents = specfem::element::attributes<
       std::tuple_element_t<0, std::tuple<AccessorTypes...> >::dimension_tag,
@@ -80,10 +79,10 @@ load_after_simd_dispatch(const std::true_type, const IndexType &index,
 
   int iglob[simd_size];
   for (int lane = 0; lane < simd_size; ++lane) {
-    iglob[lane] = index.mask(lane)
-                      ? field.template get_iglob<on_device>(
-                            index.ispec + lane, index.iz, index.ix, MediumTag)
-                      : field.nglob + 1;
+    iglob[lane] =
+        index.mask(lane)
+            ? field.template get_iglob<on_device>(index, lane, MediumTag)
+            : field.nglob + 1;
   }
 
   const auto &current_field = field.template get_field<MediumTag>();
@@ -138,8 +137,8 @@ load_after_simd_dispatch(const std::false_type, const IndexType &index,
         const auto ielement = iterator_index.get_policy_index();
         const auto point_index = iterator_index.get_index();
 
-        const int iglob = field.template get_iglob<on_device>(
-            point_index.ispec, point_index.iz, point_index.ix, MediumTag);
+        const int iglob =
+            field.template get_iglob<on_device>(point_index, MediumTag);
 
         for (int icomp = 0; icomp < ncomponents; ++icomp) {
           (specfem::assembly::fields_impl::base_load_accessor<

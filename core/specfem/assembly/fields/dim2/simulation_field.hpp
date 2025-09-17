@@ -175,6 +175,29 @@ public:
     return -1;
   }
 
+  /**
+   * @brief Returns the assembled index given element index.
+   *
+   */
+  template <bool on_device>
+  KOKKOS_INLINE_FUNCTION constexpr int get_iglob(
+      const specfem::point::index<specfem::dimension::type::dim2, false> &index,
+      const specfem::element::medium_tag MediumTag) const {
+    return get_iglob<on_device>(index.ispec, index.iz, index.ix, MediumTag);
+  }
+
+  /**
+   * @brief Returns the assembled index given element index.
+   *
+   */
+  template <bool on_device>
+  KOKKOS_INLINE_FUNCTION constexpr int get_iglob(
+      const specfem::point::index<specfem::dimension::type::dim2, true> &index,
+      const int &lane, const specfem::element::medium_tag MediumTag) const {
+    return get_iglob<on_device>(index.ispec + lane, index.iz, index.ix,
+                                MediumTag);
+  }
+
   int nglob = 0; ///< Number of global degrees of freedom
   int nspec;     ///< Number of spectral elements
   int ngllz;     ///< Number of quadrature points in z direction
