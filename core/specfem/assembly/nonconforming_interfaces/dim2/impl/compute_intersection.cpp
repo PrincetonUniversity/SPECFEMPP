@@ -38,7 +38,7 @@ edge_extents(const Kokkos::View<specfem::point::global_coordinates<
 }
 
 std::vector<std::pair<type_real, type_real> >
-specfem::assembly::nonconforming_interfaces::impl::compute_intersection(
+specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
     const Kokkos::View<
         specfem::point::global_coordinates<specfem::dimension::type::dim2> *>
         &element1,

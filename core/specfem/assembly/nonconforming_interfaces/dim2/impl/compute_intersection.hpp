@@ -8,7 +8,7 @@
 
 #include <vector>
 
-namespace specfem::assembly::nonconforming_interfaces::impl {
+namespace specfem::assembly::nonconforming_interfaces_impl {
 
 /**
  * @brief Computes the intersection between two elements, returning the knots of
@@ -38,4 +38,4 @@ compute_intersection(const Kokkos::View<specfem::point::global_coordinates<
                      const specfem::mesh_entity::type &edge2,
                      const Kokkos::View<type_real *> &mortar_quadrature);
 
-} // namespace specfem::assembly::nonconforming_interfaces::impl
+} // namespace specfem::assembly::nonconforming_interfaces_impl

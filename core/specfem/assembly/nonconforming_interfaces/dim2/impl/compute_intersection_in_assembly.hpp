@@ -6,8 +6,7 @@
 
 #include <vector>
 
-namespace specfem::assembly {
-namespace nonconforming_interfaces {
+namespace specfem::assembly::nonconforming_interfaces_impl {
 
 /**
  * @brief Computes the intersection between two elements, returning the knots of
@@ -32,5 +31,4 @@ template <typename EdgeType>
 std::vector<std::pair<type_real, type_real> > compute_intersection(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const EdgeType &edge, const Kokkos::View<type_real *> &mortar_quadrature);
-} // namespace nonconforming_interfaces
-} // namespace specfem::assembly
+} // namespace specfem::assembly::nonconforming_interfaces_impl

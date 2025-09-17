@@ -1,17 +1,16 @@
 
 #include "compute_intersection.hpp"
 #include "enumerations/mesh_entities.hpp"
-#include "impl/compute_intersection.hpp"
+#include "compute_intersection_in_assembly.hpp"
 #include "specfem_setup.hpp"
 #include <sstream>
 #include <stdexcept>
 
-template <>
+template <typename EdgeType>
 std::vector<std::pair<type_real, type_real> >
-specfem::assembly::nonconforming_interfaces::compute_intersection(
+specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const boost::graph_traits<specfem::mesh::adjacency_graph<
-        specfem::dimension::type::dim2>::GraphType>::edge_descriptor &edge,
+    const EdgeType &edge,
     const Kokkos::View<type_real *> &mortar_quadrature) {
 
   const auto &graph = mesh.graph();
@@ -44,7 +43,7 @@ specfem::assembly::nonconforming_interfaces::compute_intersection(
     coorg2(i).z = mesh.h_control_node_coord(1, jspec, i);
   }
 
-  return specfem::assembly::nonconforming_interfaces::impl::
+  return specfem::assembly::nonconforming_interfaces_impl::
       compute_intersection(coorg1, coorg2, iorientation, jorientation,
                            mortar_quadrature);
 }
