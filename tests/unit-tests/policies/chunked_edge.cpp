@@ -72,8 +72,8 @@ public:
   }
 
   void run() const {
-    specfem::execution::ChunkedEdgeIterator iterator(ParallelConfig(), edges,
-                                                     num_points);
+    specfem::execution::ChunkedEdgeIterator iterator(this->ParallelConfig(), this->edges,
+                                                     this->num_points);
     specfem::execution::for_all(
         "test_chunked_edge_iterator", iterator,
         KOKKOS_CLASS_LAMBDA(
