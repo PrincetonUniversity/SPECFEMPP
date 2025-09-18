@@ -121,8 +121,9 @@ public:
    */
   template <specfem::interface::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag>
-  const InterfaceContainerType<InterfaceTag, BoundaryTag> &
-  get_interface_container() const {
+  KOKKOS_INLINE_FUNCTION const
+      InterfaceContainerType<InterfaceTag, BoundaryTag> &
+      get_interface_container() const {
     // Compile-time dispatch using FOR_EACH_IN_PRODUCT macro
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING),
                          INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
@@ -143,9 +144,7 @@ public:
 #endif
 
     // Unreachable code - satisfy compiler return requirements
-    [[maybe_unused]] static InterfaceContainerType<InterfaceTag, BoundaryTag>
-        dummy{};
-    return dummy;
+    return {};
   }
 };
 
