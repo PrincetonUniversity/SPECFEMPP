@@ -89,7 +89,7 @@ public:
     Kokkos::deep_copy(host_view, view);
 
     for (std::size_t i = 0; i < host_view.extent(0); ++i) {
-      for (int j = 0; j < num_points; ++j) {
+      for (int j = 0; j < this->num_points; ++j) {
         EXPECT_EQ(host_view(i, j), 1)
             << "Edge iterator failed at (" << i << "," << j << ") "
             << "for test: " << name;
