@@ -20,6 +20,12 @@ KOKKOS_FUNCTION
     get_index(const int ielement, const int num_elements, const int iz,
               const int ix);
 
+template <bool using_simd>
+KOKKOS_FUNCTION
+    specfem::point::index<specfem::dimension::type::dim3, using_simd>
+    get_index(const int ielement, const int num_elements, const int iz,
+              const int iy, const int ix);
+
 // ------------------------------------------------------------------------
 // Test configuration
 namespace test_configuration {
@@ -173,34 +179,32 @@ public:
 
 // ------------------------------------------------------------------------
 
-class ASSEMBLY : public ::testing::Test {
+template <specfem::dimension::type DimensionType>
+class Assembly : public ::testing::Test {
 
 protected:
   class Iterator {
   public:
     Iterator(
         test_configuration::Test *p_Test,
-        specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh,
-        std::vector<std::shared_ptr<
-            specfem::sources::source<specfem::dimension::type::dim2> > >
+        specfem::mesh::mesh<DimensionType> *p_mesh,
+        std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >
             *p_sources,
-        std::vector<std::shared_ptr<
-            specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+        std::vector<
+            std::shared_ptr<specfem::receivers::receiver<DimensionType> > >
             *p_stations,
         std::string *p_suffixes,
-        specfem::assembly::assembly<specfem::dimension::type::dim2> *p_assembly)
+        specfem::assembly::assembly<DimensionType> *p_assembly)
         : p_Test(p_Test), p_mesh(p_mesh), p_sources(p_sources),
           p_stations(p_stations), p_suffixes(p_suffixes),
           p_assembly(p_assembly) {}
 
-    std::tuple<test_configuration::Test,
-               specfem::mesh::mesh<specfem::dimension::type::dim2>,
-               std::vector<std::shared_ptr<
-                   specfem::sources::source<specfem::dimension::type::dim2> > >,
-               std::vector<std::shared_ptr<specfem::receivers::receiver<
-                   specfem::dimension::type::dim2> > >,
-               std::string,
-               specfem::assembly::assembly<specfem::dimension::type::dim2> >
+    std::tuple<
+        test_configuration::Test, specfem::mesh::mesh<DimensionType>,
+        std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >,
+        std::vector<
+            std::shared_ptr<specfem::receivers::receiver<DimensionType> > >,
+        std::string, specfem::assembly::assembly<DimensionType> >
     operator*() {
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[RUNNING]\033[0m " << p_Test->name << "\n"
@@ -226,17 +230,16 @@ protected:
 
   private:
     test_configuration::Test *p_Test;
-    specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh;
-    std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > > *p_sources;
-    std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+    specfem::mesh::mesh<DimensionType> *p_mesh;
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >
+        *p_sources;
+    std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionType> > >
         *p_stations;
     std::string *p_suffixes;
-    specfem::assembly::assembly<specfem::dimension::type::dim2> *p_assembly;
+    specfem::assembly::assembly<DimensionType> *p_assembly;
   };
 
-  ASSEMBLY();
+  Assembly();
 
   Iterator begin() {
     return Iterator(&Tests[0], &Meshes[0], &Sources[0], &Stations[0],
@@ -250,14 +253,17 @@ protected:
   }
 
   std::vector<test_configuration::Test> Tests;
-  std::vector<specfem::mesh::mesh<specfem::dimension::type::dim2> > Meshes;
-  std::vector<std::vector<std::shared_ptr<
-      specfem::sources::source<specfem::dimension::type::dim2> > > >
+  std::vector<specfem::mesh::mesh<DimensionType> > Meshes;
+  std::vector<
+      std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > > >
       Sources;
-  std::vector<std::vector<std::shared_ptr<
-      specfem::receivers::receiver<specfem::dimension::type::dim2> > > >
+  std::vector<std::vector<
+      std::shared_ptr<specfem::receivers::receiver<DimensionType> > > >
       Stations;
   std::vector<std::string> suffixes;
-  std::vector<specfem::assembly::assembly<specfem::dimension::type::dim2> >
-      assemblies;
+  std::vector<specfem::assembly::assembly<DimensionType> > assemblies;
 };
+
+// Template specializations
+using Assembly2D = Assembly<specfem::dimension::type::dim2>;
+using Assembly3D = Assembly<specfem::dimension::type::dim3>;

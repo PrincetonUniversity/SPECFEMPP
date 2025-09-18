@@ -127,7 +127,7 @@ void test_compute_wavefield(
   }
 }
 
-TEST_F(ASSEMBLY, compute_wavefield) {
+TEST_F(Assembly2D, compute_wavefield) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =

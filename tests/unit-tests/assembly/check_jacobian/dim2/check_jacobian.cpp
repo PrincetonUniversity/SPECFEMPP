@@ -1,4 +1,4 @@
-#include "../test_fixture/test_fixture.hpp"
+#include "../../test_fixture/test_fixture.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
@@ -22,7 +22,7 @@ void test_check_jacobian(
   assembly.check_jacobian_matrix();
 }
 
-TEST_F(ASSEMBLY, CheckJacobian) {
+TEST_F(Assembly2D, CheckJacobian) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =

@@ -310,7 +310,7 @@ void test_sources(specfem::assembly::assembly<specfem::dimension::type::dim2>
                  specfem::wavefield::simulation_field::forward>(assembly);
     }) }
 
-TEST_F(ASSEMBLY, sources) {
+TEST_F(Assembly2D, sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     auto sources = std::get<2>(parameters);

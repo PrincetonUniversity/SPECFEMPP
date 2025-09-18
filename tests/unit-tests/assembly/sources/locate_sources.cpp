@@ -12,7 +12,7 @@
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 
-TEST_F(ASSEMBLY, locate_sources) {
+TEST_F(Assembly2D, locate_sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     const auto source_solution = Test.solutions.source;

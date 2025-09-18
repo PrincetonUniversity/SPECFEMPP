@@ -287,7 +287,7 @@ add_value(const ViewType elements,
 }
 #endif
 
-TEST_F(ASSEMBLY, kernels_access_functions) {
+TEST_F(Assembly2D, kernels_access_functions) {
   for (auto parameters : *this) {
     auto Test = std::get<0>(parameters);
     auto mesh = std::get<1>(parameters);
