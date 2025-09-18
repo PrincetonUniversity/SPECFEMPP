@@ -30,5 +30,5 @@ namespace specfem::assembly::nonconforming_interfaces_impl {
 template <typename EdgeType>
 std::vector<std::pair<type_real, type_real> > compute_intersection(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const EdgeType &edge, const Kokkos::View<type_real *> &mortar_quadrature);
+    const EdgeType &edge, const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature);
 } // namespace specfem::assembly::nonconforming_interfaces_impl
