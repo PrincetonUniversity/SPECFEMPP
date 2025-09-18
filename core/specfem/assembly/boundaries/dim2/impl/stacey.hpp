@@ -235,7 +235,8 @@ public:
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
-    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+    mask_type mask(
+        KOKKOS_LAMBDA(std::size_t lane) { return index.mask(lane); });
 
     for (int lane = 0; lane < mask_type::size(); ++lane) {
       if (index.mask(lane)) {
@@ -275,7 +276,8 @@ public:
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
-    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+    mask_type mask(
+        KOKKOS_LAMBDA(std::size_t lane) { return index.mask(lane); });
 
     for (int lane = 0; lane < mask_type::size(); ++lane) {
       if (index.mask(lane)) {
