@@ -7,147 +7,6 @@
 
 namespace specfem::chunk_element::impl {
 
-/**
- * @brief Accessor-agnostic field implementation for chunk-based element data.
- *
- * This class provides a accessor-agnostic implementation for chunk-based
- * element data, primarily used when making unified references to different
- * field types. See the code example below :
- *
- * @code{.cpp}
- * // Example usage of field_without_accessor
- * const specfem::wavefield::type wavefield_type = ...;
- * const auto field = [&]() {
- *   if (wavefield_type == specfem::wavefield::type::displacement) {
- *     return displacement_field.field_without_accessor();
- *   } else if (wavefield_type == specfem::wavefield::type::velocity) {
- *     return velocity_field.field_without_accessor();
- *   } else if (wavefield_type == specfem::wavefield::type::acceleration) {
- *     return acceleration_field.field_without_accessor();
- *   } else {
- *     throw std::runtime_error("Unsupported wavefield type");
- *   }
- * }();
- * @endcode
- *
- * @note Note that this class is used internally and external references to it
- *       should be made using @c auto keyword.
- *
- * @tparam ChunkSize Number of elements processed together in a chunk
- * @tparam NGLL Number of Gauss-Lobatto-Legendre points per spatial dimension
- * @tparam DimensionTag Spatial dimension (dim2 or dim3) of the field
- * @tparam MediumTag Medium type (acoustic, elastic, poroelastic, etc.)
- * @tparam UseSIMD Whether to enable SIMD vectorization for performance
- * @tparam ValueType The underlying data storage type for field values
- */
-template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag, bool UseSIMD,
-          typename ValueType>
-class field_without_accessor {
-public:
-  /// @brief Number of field components based on dimension and medium type
-  constexpr static int components =
-      specfem::element::attributes<DimensionTag, MediumTag>::components;
-
-  /// @brief Number of elements in the chunk
-  constexpr static int nelements = ChunkSize;
-
-  /// @brief Number of Gauss-Lobatto-Legendre points per spatial dimension
-  constexpr static int ngll = NGLL;
-
-  /// @brief Medium tag identifying the physical medium type
-  constexpr static auto medium_tag = MediumTag;
-
-  /// @brief Type alias for the underlying data storage
-  using value_type = ValueType;
-
-  /// @brief Flag indicating this is a chunk-based view type
-  constexpr static bool isChunkViewType = true;
-
-  /// @brief Flag indicating this supports scalar view operations
-  constexpr static bool isScalarViewType = true;
-
-  /// @brief SIMD type for vectorized operations
-  using simd = specfem::datatype::simd<type_real, UseSIMD>;
-
-private:
-  /// @brief Internal storage for chunk field data
-  value_type m_data;
-
-public:
-  /**
-   * @brief Default constructor - creates field with uninitialized data.
-   */
-  KOKKOS_FORCEINLINE_FUNCTION field_without_accessor() = default;
-
-  /**
-   * @brief Construct field from existing data storage.
-   *
-   * Initializes the chunk field accessor with pre-allocated data storage.
-   * This is typically used when wrapping existing Kokkos views or other
-   * data structures.
-   *
-   * @param data_in The data storage object to wrap
-   */
-  KOKKOS_FORCEINLINE_FUNCTION
-  field_without_accessor(const value_type &data_in) : m_data(data_in) {}
-
-  /**
-   * @brief Multi-dimensional index operator for accessing field components.
-   *
-   * Provides access to individual field values using multi-dimensional
-   * indexing. The exact indexing scheme depends on the ValueType
-   * implementation, but typically follows the pattern: (element_id,
-   * gll_indices..., component_id).
-   *
-   * @tparam Indices Parameter pack for multi-dimensional indices
-   * @param indices The indices specifying the location and component to access
-   * @return Reference to the field value at the specified location
-   *
-   * @code{.cpp}
-   * // For 2D fields: (element, i_gll, j_gll, component)
-   * auto value = field(ielem, i, j, icomp);
-   * field(ielem, i, j, icomp) = new_value;
-   *
-   * // For 3D fields: (element, i_gll, j_gll, k_gll, component)
-   * auto value = field(ielem, i, j, k, icomp);
-   * @endcode
-   */
-  template <typename... Indices>
-  KOKKOS_FORCEINLINE_FUNCTION typename value_type::value_type &
-  operator()(Indices... indices) const {
-    return m_data(indices...);
-  }
-};
-
-/**
- * @brief Type trait helper for removing accessor attributes from field types.
- *
- * This template metafunction provides a type alias that maps from the full
- * field type (with accessor interface) to the lightweight
- * field_without_accessor type. It is used for type transformations when the
- * accessor interface overhead is not needed.
- *
- * @tparam ChunkSize Number of elements processed together in a chunk
- * @tparam NGLL Number of Gauss-Lobatto-Legendre points per spatial dimension
- * @tparam DimensionTag Spatial dimension (dim2 or dim3) of the field
- * @tparam MediumTag Medium type (acoustic, elastic, poroelastic, etc.)
- * @tparam UseSIMD Whether to enable SIMD vectorization
- * @tparam ValueType The underlying data storage type
- *
- * @see field_without_accessor for the resulting type
- *
- */
-template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
-          specfem::element::medium_tag MediumTag, bool UseSIMD,
-          typename ValueType>
-class remove_accessor_attribute {
-public:
-  /// @brief Type alias for the field without accessor interface
-  using type = field_without_accessor<ChunkSize, NGLL, DimensionTag, MediumTag,
-                                      UseSIMD, ValueType>;
-};
-
 // clang-format off
 /**
  * @brief Chunk element field accessor for storing field values at all
@@ -182,7 +41,6 @@ public:
  * @tparam DataClass     Data class type for access control and memory traits.
  * @tparam UseSIMD       Whether to enable SIMD vectorization for performance.
  *
- * @see remove_accessor_attribute for type trait to strip accessor attributes.
  */
 // clang-format on
 template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
@@ -222,12 +80,6 @@ public:
 
   /// @brief Medium tag identifying the physical medium type
   constexpr static auto medium_tag = MediumTag;
-
-  /// @brief Flag indicating this is a chunk-based view type
-  constexpr static bool isChunkViewType = true;
-
-  /// @brief Flag indicating this supports scalar view operations
-  constexpr static bool isScalarViewType = true;
 
 private:
   /// @brief Internal storage for chunk field data
@@ -318,36 +170,11 @@ public:
   constexpr static std::size_t shmem_size() { return value_type::shmem_size(); }
 
   /**
-   * @brief Strip accessor attributes and return a @c field_without_accessor
-   * type.
+   * @brief Access internal field data storage.
    *
-   * This method provides a way to a unified field type that does not
-   * include the accessor interface. It is useful when you need to reference
-   * field of different types.
-   *
-   * @code{.cpp}
-   * // Example usage of field_without_accessor
-   * const specfem::wavefield::type wavefield_type = ...;
-   * const auto field = [&]() {
-   *   if (wavefield_type == specfem::wavefield::type::displacement) {
-   *     return displacement_field.field_without_accessor();
-   *   } else if (wavefield_type == specfem::wavefield::type::velocity) {
-   *     return velocity_field.field_without_accessor();
-   *   } else if (wavefield_type == specfem::wavefield::type::acceleration) {
-   *     return acceleration_field.field_without_accessor();
-   *   } else {
-   *     throw std::runtime_error("Unsupported wavefield type");
-   *   }
-   * }();
-   * @endcode
-   *
-   * @return A field_without_accessor type with the same data storage
+   * @return const reference to the internal value_type storing field components
    */
-  KOKKOS_INLINE_FUNCTION const typename remove_accessor_attribute<
-      ChunkSize, NGLL, DimensionTag, MediumTag, UseSIMD, value_type>::type
-  field_without_accessor() const {
-    return { m_data };
-  }
+  KOKKOS_INLINE_FUNCTION const value_type &get_data() const { return m_data; }
 };
 
 } // namespace specfem::chunk_element::impl

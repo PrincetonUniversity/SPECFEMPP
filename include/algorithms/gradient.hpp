@@ -33,9 +33,12 @@ namespace algorithms {
  * specfem::datatype::TensorPointViewType<type_real, 2, ViewType::components>)
  * @endcode
  */
-template <typename ChunkIndexType, typename ViewType, typename QuadratureType,
-          typename CallbackFunctor,
-          std::enable_if_t<ViewType::isChunkViewType, int> = 0>
+template <
+    typename ChunkIndexType, typename ViewType, typename QuadratureType,
+    typename CallbackFunctor,
+    std::enable_if_t<ViewType::accessor_type ==
+                         specfem::data_access::AccessorType::chunk_element,
+                     int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void gradient(
     const ChunkIndexType &chunk_index,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
@@ -53,9 +56,6 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
                                              using_simd>;
 
   using datatype = typename ViewType::simd::datatype;
-
-  static_assert(ViewType::isScalarViewType,
-                "ViewType must be a scalar field view type");
 
   static_assert(
       std::is_invocable_v<CallbackFunctor,
@@ -133,9 +133,12 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
  * ViewType::components>)
  * @endcode
  */
-template <typename ChunkIndexType, typename ViewType, typename QuadratureType,
-          typename CallbackFunctor,
-          std::enable_if_t<ViewType::isChunkViewType, int> = 0>
+template <
+    typename ChunkIndexType, typename ViewType, typename QuadratureType,
+    typename CallbackFunctor,
+    std::enable_if_t<ViewType::value_type::accessor_type ==
+                         specfem::data_access::AccessorType::chunk_element,
+                     int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void gradient(
     const ChunkIndexType &chunk_index,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
@@ -151,9 +154,6 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
   using TensorPointViewType =
       specfem::datatype::TensorPointViewType<type_real, components, dimension,
                                              using_simd>;
-
-  static_assert(ViewType::isScalarViewType,
-                "ViewType must be a scalar field view type");
 
   using datatype = typename ViewType::simd::datatype;
 

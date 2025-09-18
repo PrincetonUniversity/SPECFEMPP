@@ -42,19 +42,19 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
   const auto &active_field = [&]() {
     if (wavefield_type == specfem::wavefield::type::displacement) {
-      return displacement.field_without_accessor();
+      return displacement.get_data();
     } else if (wavefield_type == specfem::wavefield::type::velocity) {
-      return velocity.field_without_accessor();
+      return velocity.get_data();
     } else if (wavefield_type == specfem::wavefield::type::acceleration) {
-      return acceleration.field_without_accessor();
+      return acceleration.get_data();
     } else if (wavefield_type == specfem::wavefield::type::pressure) {
-      return displacement.field_without_accessor();
+      return displacement.get_data();
     } else if (wavefield_type == specfem::wavefield::type::rotation) {
-      return displacement.field_without_accessor();
+      return displacement.get_data();
     } else if (wavefield_type == specfem::wavefield::type::intrinsic_rotation) {
-      return displacement.field_without_accessor();
+      return displacement.get_data();
     } else if (wavefield_type == specfem::wavefield::type::curl) {
-      return displacement.field_without_accessor();
+      return displacement.get_data();
     } else {
       KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D "
                                  "elastic isotropic Cosserat P-SV-T media");
