@@ -1,5 +1,7 @@
 # Homogeneous halfspace with force source, small model, no ABC
 
+## Recreating the traces
+
 ```bash
 mkdir -p OUTPUT_FILES/DATABASES_MPI
 ```
@@ -28,3 +30,16 @@ mpirun -np 1 ./bin/xgenerate_databases
 ```bash
 mpirun -np 1 ./bin/xspecfem3D
 ```
+
+
+## Recreatign The SPECFEM++ databases.
+
+Since the database is written slightly different from the fortran version you
+will have to recreate the databases with the SPECFEM++ mesher.
+
+Then move the traces from `OUTPUT_FILES` to the `traces` directory.
+
+Finally, to
+`OUTPUT_FILES/DATABASES_MPI/mesh_parameters.bin`
+`OUTPUT_FILES/DATABASES_MPI/proc000000_external_mesh.bin` to the test directory
+under `HomogeneousHalfspaceSmallNoABCForceSource/DATABASES_MPI/`
