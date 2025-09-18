@@ -69,36 +69,13 @@ KOKKOS_FUNCTION void divergence(
 
   using simd = typename VectorFieldType::simd;
   using datatype = typename VectorFieldType::simd::datatype;
-  using PointJacobianMatrixType =
-      specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
-                                      using_simd>;
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
-        const auto ielement = iterator_index.get_local_index().ispec;
-        const auto index = iterator_index.get_index();
-        const int iz = index.iz;
-        const int ix = index.ix;
-
-        datatype temp1l[components] = { 0.0 };
-        datatype temp2l[components] = { 0.0 };
-
-        /// We omit the divergence here since we multiplied it when computing F.
-        for (int l = 0; l < NGLL; ++l) {
-          for (int icomp = 0; icomp < components; ++icomp) {
-            temp1l[icomp] += f(ielement, iz, l, icomp, 0) * hprimewgll(ix, l);
-          }
-          for (int icomp = 0; icomp < components; ++icomp) {
-            temp2l[icomp] += f(ielement, l, ix, icomp, 1) * hprimewgll(iz, l);
-          }
-        }
-        VectorPointViewType result;
-        for (int icomp = 0; icomp < components; ++icomp) {
-          result(icomp) =
-              weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
-        }
+        const auto local_index = iterator_index.get_local_index();
+        const auto result = f.divergence(local_index, weights, hprimewgll);
         callback(iterator_index, result);
       });
 

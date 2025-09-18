@@ -518,9 +518,10 @@ struct TensorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
       typename specfem::point::index<dimension_tag, UseSIMD>; ///< index type
                                                               ///< for accessing
                                                               ///< at GLL level
-  using point_view_type = TensorPointViewType<T, Components, NumberOfDimensions,
-                                              UseSIMD>; ///< Point view type for
-                                                        ///< component access
+  using point_view_type =
+      TensorPointViewType<T, Components, NumberOfDimensions,
+                          UseSIMD>;           ///< Tensor Point view type for
+                                              ///< component access
   constexpr static bool using_simd = UseSIMD; ///< Use SIMD datatypes for the
                                               ///< array. If false,
                                               ///< std::is_same<value_type,
@@ -606,6 +607,40 @@ struct TensorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
   impl::TensorChunkSubview<TensorChunkViewType>
   operator()(const index_type &index) {
     return { *this, index };
+  }
+
+  /**
+   * @brief Compute the divergence of a vector field f using the spectral
+   * element formulation (eqn: A7 in Komatitsch and Tromp, 1999)
+   */
+  template <typename WeightsType, typename QuadratureType>
+  KOKKOS_FORCEINLINE_FUNCTION auto
+  divergence(const index_type &index, const WeightsType &weights,
+             const QuadratureType &hprimewgll) const {
+    using datatype = typename simd::datatype;
+    const auto ielement = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    datatype temp1l[components] = { 0.0 };
+    datatype temp2l[components] = { 0.0 };
+
+    /// We omit the divergence here since we multiplied it when computing F.
+    for (int l = 0; l < ngll; ++l) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        temp1l[icomp] += (*this)(ielement, iz, l, icomp, 0) * hprimewgll(ix, l);
+      }
+      for (int icomp = 0; icomp < components; ++icomp) {
+        temp2l[icomp] += (*this)(ielement, l, ix, icomp, 1) * hprimewgll(iz, l);
+      }
+    }
+
+    VectorPointViewType<T, Components, UseSIMD> result;
+    for (int icomp = 0; icomp < components; ++icomp) {
+      result(icomp) = weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
+    }
+
+    return result;
   }
 };
 
