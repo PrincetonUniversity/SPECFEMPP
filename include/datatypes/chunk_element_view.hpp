@@ -2,7 +2,6 @@
 
 #include "enumerations/dimension.hpp"
 #include "impl/chunk_element_subview.hpp"
-#include "point_view.hpp"
 #include "simd.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -246,8 +245,7 @@ struct VectorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
    * @param index Point index
    */
   KOKKOS_INLINE_FUNCTION
-  impl::VectorChunkSubview2D<
-      type, VectorPointViewType<base_type, components, UseSIMD>, index_type>
+  impl::VectorChunkSubview<VectorChunkViewType>
   operator()(const index_type &index) {
     return { *this, index };
   }
@@ -389,9 +387,7 @@ struct TensorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
    * @param index Point index
    */
   KOKKOS_INLINE_FUNCTION
-  impl::TensorChunkSubview2D<
-      type, TensorPointViewType<base_type, components, dimensions, UseSIMD>,
-      index_type>
+  impl::TensorChunkSubview<TensorChunkViewType>
   operator()(const index_type &index) {
     return { *this, index };
   }
