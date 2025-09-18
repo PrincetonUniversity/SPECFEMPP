@@ -573,12 +573,41 @@ target_link_libraries(
 # # )
 
 add_executable(
-  displacement_newmark_tests
-  displacement_tests/Newmark/newmark_tests.cpp
+  displacement_newmark_2d_tests
+  displacement_tests/Newmark/dim2/newmark_tests.cpp
 )
 
 target_link_libraries(
-  displacement_newmark_tests
+  displacement_newmark_2d_tests
+  quadrature
+  mesh
+  # material_class
+  yaml-cpp
+  kokkos_environment
+  mpi_environment
+  assembly
+  parameter_reader
+  compare_arrays
+  timescheme
+  point
+  edge
+  algorithms
+  coupled_interface
+  kokkos_kernels
+  solver
+  periodic_tasks
+  boost
+  -lpthread -lm
+)
+
+
+add_executable(
+  displacement_newmark_3d_tests
+  displacement_tests/Newmark/dim3/newmark_tests.cpp
+)
+
+target_link_libraries(
+  displacement_newmark_3d_tests
   quadrature
   mesh
   # material_class
@@ -678,7 +707,8 @@ if(NOT MPI_PARALLEL)
     # compute_elastic_tests
     compute_jacobian_matrix_tests
     compute_tests
-    displacement_newmark_tests
+    displacement_newmark_2d_tests
+    displacement_newmark_3d_tests
     fortranio_test
     gll_tests
     interpolate_function

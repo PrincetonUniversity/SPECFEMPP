@@ -1,6 +1,6 @@
-#include "../../Kokkos_Environment.hpp"
-#include "../../MPI_environment.hpp"
-#include "../../utilities/include/interface.hpp"
+#include "../../../Kokkos_Environment.hpp"
+#include "../../../MPI_environment.hpp"
+#include "../../../utilities/include/interface.hpp"
 #include "constants.hpp"
 #include "io/interface.hpp"
 #include "io/seismogram/reader.hpp"
@@ -93,7 +93,7 @@ protected:
   }
 };
 
-TEST_P(Newmark, Test) {
+TEST_P(Newmark, 2D) {
   const std::string &test_path = GetParam();
 
   // Load the test configuration from the directory
@@ -387,7 +387,7 @@ TEST_P(Newmark, Test) {
 
 // Load test directories and create parameterized test instances
 std::vector<std::string> GetTestDirectories() {
-  std::string tests_filename = "displacement_tests/Newmark/tests.yaml";
+  std::string tests_filename = "displacement_tests/Newmark/dim2/tests.yaml";
   return parse_test_directories(tests_filename);
 }
 

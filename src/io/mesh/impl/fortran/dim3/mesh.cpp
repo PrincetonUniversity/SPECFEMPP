@@ -64,7 +64,9 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   stream.open(mesh_parameters_file);
 
   if (!stream.is_open()) {
-    throw std::runtime_error("Could not open mesh parameter file");
+    std::stringstream message;
+    message << "Could not open mesh parameter file: " << mesh_parameters_file;
+    throw std::runtime_error(message.str());
   }
 
   try {
