@@ -165,3 +165,22 @@ specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
 
   return intersections;
 }
+
+void specfem::assembly::nonconforming_interfaces_impl::set_transfer_functions(
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &element1,
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &element2,
+    const specfem::mesh_entity::type &edge1,
+    const specfem::mesh_entity::type &edge2,
+    const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature,
+    const Kokkos::View<type_real *, Kokkos::HostSpace> &element_quadrature,
+    Kokkos::View<type_real **, Kokkos::HostSpace> &transfer_function) {
+
+  const auto intersections =
+      specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
+          element1, element2, edge1, edge2, mortar_quadrature);
+  // TODO receive gll quadrature and compute interpolations
+}

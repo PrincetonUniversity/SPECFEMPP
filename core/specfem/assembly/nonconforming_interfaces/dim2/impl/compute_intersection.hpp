@@ -40,4 +40,30 @@ std::vector<std::pair<type_real, type_real> > compute_intersection(
     const specfem::mesh_entity::type &edge2,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature);
 
+/**
+ * @brief Populates the transfer function for a given intersection.
+ * The transfer function is a linear map from the element edge function basis to
+ * the mortar basis.
+ *
+ * @param element1 - global coordinate representation of the first element.
+ * @param element2 - global coordinate representation of the second element.
+ * @param edge1 - edge on the first element
+ * @param edge2 - edge on the second element
+ * @param mortar_quadrature - a list of local (mortar space) knots describing
+ *             　　　　　　　　　the quadrature rule on the interval [-1,1]
+ * @param transfer_function - the nquad_mortar x ngll view to populate.
+ */
+void set_transfer_functions(
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &element1,
+    const Kokkos::View<
+        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        Kokkos::HostSpace> &element2,
+    const specfem::mesh_entity::type &edge1,
+    const specfem::mesh_entity::type &edge2,
+    const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature,
+    const Kokkos::View<type_real *, Kokkos::HostSpace> &element_quadrature,
+    Kokkos::View<type_real **, Kokkos::HostSpace> &transfer_function);
+
 } // namespace specfem::assembly::nonconforming_interfaces_impl
