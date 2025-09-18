@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
+#include "enumerations/interface.hpp"
 #include "impl/chunk_element_subview.hpp"
 #include "simd.hpp"
 #include <Kokkos_Core.hpp>
@@ -80,7 +80,6 @@ struct ScalarChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
                                                      ///< the chunk
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
                                                  ///< each element
-  constexpr static bool isChunkViewType = true;
   ///@}
 
   /**
@@ -194,8 +193,6 @@ struct VectorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
                                                  ///< each element
   constexpr static int components = Components;  ///< Number of vector values at
                                                  ///< each GLL point
-  constexpr static bool isChunkViewType = true;
-  constexpr static bool isScalarViewType = true;
   ///@}
 
   /**
@@ -328,8 +325,6 @@ struct TensorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
   constexpr static int dimensions =
       NumberOfDimensions; ///< Number of dimensions
                           ///< of the tensor values
-  constexpr static bool isChunkViewType = true;
-  constexpr static bool isScalarViewType = false;
   ///@}
 
   /**

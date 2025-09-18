@@ -37,9 +37,12 @@ namespace algorithms {
  * specfem::datatype::VectorPointViewType<type_real, ViewType::components>)
  * @endcode
  */
-template <typename ChunkIndexType, typename VectorFieldType,
-          typename WeightsType, typename QuadratureType, typename CallableType,
-          std::enable_if_t<(VectorFieldType::isChunkViewType), int> = 0>
+template <
+    typename ChunkIndexType, typename VectorFieldType, typename WeightsType,
+    typename QuadratureType, typename CallableType,
+    std::enable_if_t<VectorFieldType::accessor_type ==
+                         specfem::data_access::AccessorType::chunk_element,
+                     int> = 0>
 KOKKOS_FUNCTION void divergence(
     const ChunkIndexType &chunk_index,
     const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>

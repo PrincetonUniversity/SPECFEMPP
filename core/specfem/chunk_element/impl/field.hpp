@@ -61,12 +61,6 @@ public:
   /// @brief Type alias for the underlying data storage
   using value_type = ValueType;
 
-  /// @brief Flag indicating this is a chunk-based view type
-  constexpr static bool isChunkViewType = true;
-
-  /// @brief Flag indicating this supports scalar view operations
-  constexpr static bool isScalarViewType = true;
-
   /// @brief SIMD type for vectorized operations
   using simd = specfem::datatype::simd<type_real, UseSIMD>;
 
@@ -223,12 +217,6 @@ public:
   /// @brief Medium tag identifying the physical medium type
   constexpr static auto medium_tag = MediumTag;
 
-  /// @brief Flag indicating this is a chunk-based view type
-  constexpr static bool isChunkViewType = true;
-
-  /// @brief Flag indicating this supports scalar view operations
-  constexpr static bool isScalarViewType = true;
-
 private:
   /// @brief Internal storage for chunk field data
   value_type m_data;
@@ -343,10 +331,8 @@ public:
    *
    * @return A field_without_accessor type with the same data storage
    */
-  KOKKOS_INLINE_FUNCTION const typename remove_accessor_attribute<
-      ChunkSize, NGLL, DimensionTag, MediumTag, UseSIMD, value_type>::type
-  field_without_accessor() const {
-    return { m_data };
+  KOKKOS_INLINE_FUNCTION const value_type &field_without_accessor() const {
+    return m_data;
   }
 };
 
