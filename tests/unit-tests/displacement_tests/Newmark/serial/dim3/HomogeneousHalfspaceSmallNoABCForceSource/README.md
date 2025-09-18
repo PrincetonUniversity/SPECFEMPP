@@ -2,6 +2,8 @@
 
 ## Recreating the traces
 
+Use `provenance/fortran`.
+
 ```bash
 mkdir -p OUTPUT_FILES/DATABASES_MPI
 ```
@@ -11,9 +13,10 @@ Here, you'll have to create the `bin` folder and link the executables from your 
 ```bash
 mkdir -p bin
 cd bin
-ln -s /path/to/your/compiled/specfem3d/bin/xmeshfem3D
-ln -s /path/to/your/compiled/specfem3d/bin/xgenerate_databases
-ln -s /path/to/your/compiled/specfem3d/bin/xspecfem3D
+SPECFEM3D="/path/to/your/compiled/specfem3d"
+ln -s ${SPECFEM3D}/bin/xmeshfem3D
+ln -s ${SPECFEM3D}/bin/xgenerate_databases
+ln -s ${SPECFEM3D}/bin/xspecfem3D
 cd -
 ```
 
@@ -31,13 +34,27 @@ mpirun -np 1 ./bin/xgenerate_databases
 mpirun -np 1 ./bin/xspecfem3D
 ```
 
+Then move the traces from `OUTPUT_FILES` to the `traces` directory.
 
 ## Recreatign The SPECFEM++ databases.
+
+Use `provenance/specfempp`
 
 Since the database is written slightly different from the fortran version you
 will have to recreate the databases with the SPECFEM++ mesher.
 
-Then move the traces from `OUTPUT_FILES` to the `traces` directory.
+Add specfemmpp to your path
+```bash
+export PATH=path/to/specfempp/bin/:${PATH}
+```
+```bash
+cd provenance/specfempp
+mkdir -p OUTPUT_FILES/DATABASES_MPI
+mpirun -np 1 ./bin/xmeshfem3D -p DATA/Mesh_Par_file
+mpirun -np 1 ./bin/xgenerate_databases -p DATA/Par_File
+```
+
+Which should populate `OUTPUT_FILES/DATABASES_MPI`
 
 Finally, to
 `OUTPUT_FILES/DATABASES_MPI/mesh_parameters.bin`
