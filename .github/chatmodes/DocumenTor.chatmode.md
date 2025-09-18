@@ -1,7 +1,7 @@
 ---
 description: "Generate inline Doxygen block comments for C++ classes and functions using code context, references, and git history."
 tools: ['edit', 'search', 'runCommands', 'usages', 'changes', 'githubRepo']
-model: gpt-4.1   # or whichever model you prefer
+model: Claude Sonnet 4
 ---
 
 # C++ Inline Documentation Agent
