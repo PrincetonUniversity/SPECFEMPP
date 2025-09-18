@@ -356,7 +356,8 @@ add_executable(
   assembly/properties/properties.cpp
   assembly/compute_wavefield/compute_wavefield.cpp
   assembly/sources/sources.cpp
-  assembly/check_jacobian/check_jacobian.cpp
+  assembly/check_jacobian/dim2/check_jacobian.cpp
+  assembly/check_jacobian/dim3/check_jacobian.cpp
   assembly/locate/locate_point.cpp
   assembly/locate/locate_point_on_edge.cpp
   assembly/mesh/utilities.cpp

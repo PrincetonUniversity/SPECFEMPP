@@ -10,7 +10,7 @@ namespace specfem::assembly {
 template <typename PointIndexType, typename PointType, typename ContainerType,
           typename std::enable_if_t<
               PointIndexType::dimension_tag == specfem::dimension::type::dim3 &&
-                  !(PointIndexType::using_simd == PointType::simd::using_simd),
+                  (PointIndexType::using_simd == PointType::simd::using_simd),
               int> = 0>
 void store_on_host(const PointIndexType &index, const PointType &point,
                    const ContainerType &container) {

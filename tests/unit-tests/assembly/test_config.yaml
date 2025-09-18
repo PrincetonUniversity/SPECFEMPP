@@ -181,3 +181,22 @@ Tests:
           gamma: -0.99767500162124634
           ispec: 0
           medium_tag: elastic_psv_t
+
+  3D:
+    - name : "Homogeneous Halfspace Elastic Isotropic Force No ABC"
+      description: >
+        Testing mesh reader on a simple mesh with flat topography.
+      config:
+        nproc : 1
+      databases:
+        mesh-database : "data/dim3/HomogeneousHalfspaceElasticIsotropricForceNoABC/DATABASES/proc000000_external_mesh.bin"
+        mesh-parameters: "data/dim3/HomogeneousHalfspaceElasticIsotropricForceNoABC/DATABASES/mesh_parameters.bin"
+        sources : "data/dim3/HomogeneousHalfspaceElasticIsotropricForceNoABC/force.yaml"
+        stations : "data/dim3/HomogeneousHalfspaceElasticIsotropricForceNoABC/STATIONS"
+      suffix: "homo_halfspace_elastic_is_force_no_abc"
+      solutions:
+        source:
+          xi: 1.0
+          gamma: 1.0
+          ispec: 27000
+          medium_tag: elastic

@@ -5,14 +5,16 @@
 // ------------------------------------------------------------------------
 // Reading test config
 
-void parse_test_config(const YAML::Node &yaml,
-                       std::vector<test_configuration::Test> &tests,
-                       const std::string &dimension = "2D") {
+template <specfem::dimension::type DimensionType>
+void parse_test_config(
+    const YAML::Node &yaml,
+    std::vector<test_configuration::Test<DimensionType> > &tests,
+    const std::string &dimension) {
   YAML::Node all_tests = yaml["Tests"][dimension];
   assert(all_tests.IsSequence());
 
   for (auto N : all_tests)
-    tests.push_back(test_configuration::Test(N));
+    tests.push_back(test_configuration::Test<DimensionType>(N));
 
   return;
 }
@@ -21,7 +23,8 @@ void parse_test_config(const YAML::Node &yaml,
 template <> Assembly<specfem::dimension::type::dim2>::Assembly() {
 
   std::string config_filename = "assembly/test_config.yaml";
-  parse_test_config(YAML::LoadFile(config_filename), Tests, "2D");
+  parse_test_config<specfem::dimension::type::dim2>(
+      YAML::LoadFile(config_filename), Tests, "2D");
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
@@ -68,7 +71,8 @@ template <> Assembly<specfem::dimension::type::dim2>::Assembly() {
 template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
 
   std::string config_filename = "assembly/test_config.yaml";
-  parse_test_config(YAML::LoadFile(config_filename), Tests, "3D");
+  parse_test_config<specfem::dimension::type::dim3>(
+      YAML::LoadFile(config_filename), Tests, "3D");
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
@@ -78,12 +82,12 @@ template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
   }();
 
   for (auto &Test : Tests) {
-    const auto [database_file, sources_file, stations_file] =
+    const auto [mesh_parameters_file, mesh_database_file, sources_file] =
         Test.get_databases();
 
     // For 3D, we need different mesh and source reading functions
-    const auto mesh =
-        specfem::io::read_3d_mesh(database_file, database_file, mpi);
+    const auto mesh = specfem::io::read_3d_mesh(mesh_parameters_file,
+                                                mesh_database_file, mpi);
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);
@@ -95,6 +99,8 @@ template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
 
     this->Sources.push_back(sources);
 
+    std::cout << "Number of sources: " << sources.size() << std::endl;
+
     // --------------------------------------------------------------
     //                   Get receivers
     // --------------------------------------------------------------
@@ -102,12 +108,15 @@ template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
     std::vector<std::shared_ptr<
         specfem::receivers::receiver<specfem::dimension::type::dim3> > >
         receivers;
+
     receivers.emplace_back(
         std::make_shared<
             specfem::receivers::receiver<specfem::dimension::type::dim3> >(
             "NET", "STA", 50000.0, 40000.0, 0.0));
 
     this->Stations.push_back(receivers);
+
+    std::cout << "Number of receivers: " << receivers.size() << std::endl;
 
     std::vector<specfem::wavefield::type> seismogram_types = {
       specfem::wavefield::type::displacement
@@ -117,5 +126,7 @@ template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
         specfem::assembly::assembly<specfem::dimension::type::dim3>(
             mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1,
             1, 1, specfem::simulation::type::forward, false, nullptr));
+
+    std::cout << "Created assembly for " << Test.name << std::endl;
   }
 }
