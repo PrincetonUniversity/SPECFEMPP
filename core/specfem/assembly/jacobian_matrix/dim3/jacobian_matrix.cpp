@@ -62,10 +62,21 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>::
   h_gammaz = Kokkos::create_mirror_view(gammaz);
   h_jacobian = Kokkos::create_mirror_view(jacobian);
 
+  // Initialize the Kokkos view with single values
+  Kokkos::deep_copy(h_xix, mesh_jacobian.xix_regular);
+  Kokkos::deep_copy(h_xiy, mesh_jacobian.xix_regular);
+  Kokkos::deep_copy(h_xiz, mesh_jacobian.xix_regular);
+  Kokkos::deep_copy(h_etax, mesh_jacobian.xix_regular);
+  Kokkos::deep_copy(h_etay, mesh_jacobian.xix_regular);
+  Kokkos::deep_copy(h_etaz, mesh_jacobian.xix_regular);
+  Kokkos::deep_copy(h_gammax, mesh_jacobian.xix_regular);
+  Kokkos::deep_copy(h_gammay, mesh_jacobian.xix_regular);
+  Kokkos::deep_copy(h_gammaz, mesh_jacobian.xix_regular);
+  Kokkos::deep_copy(h_jacobian, mesh_jacobian.jacobian_regular);
+
   if (mesh_jacobian.nspec_irregular > 0) {
 
     for (int ispec = 0; ispec < nspec; ispec++) {
-
       // if element number is irregular
       if (mesh_jacobian.irregular_element_number(ispec)) {
         for (int iz = 0; iz < mesh_jacobian.ngllz; iz++) {
@@ -88,38 +99,8 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>::
             }
           }
         }
-      } else {
-        for (int iz = 0; iz < mesh_jacobian.ngllz; iz++) {
-          for (int iy = 0; iy < mesh_jacobian.nglly; iy++) {
-            for (int ix = 0; ix < mesh_jacobian.ngllx; ix++) {
-              h_xix(ispec, iz, iy, ix) = mesh_jacobian.xix_regular;
-              h_xiy(ispec, iz, iy, ix) = mesh_jacobian.xix_regular;
-              h_xiz(ispec, iz, iy, ix) = mesh_jacobian.xix_regular;
-              h_etax(ispec, iz, iy, ix) = mesh_jacobian.xix_regular;
-              h_etay(ispec, iz, iy, ix) = mesh_jacobian.xix_regular;
-              h_etaz(ispec, iz, iy, ix) = mesh_jacobian.xix_regular;
-              h_gammax(ispec, iz, iy, ix) = mesh_jacobian.xix_regular;
-              h_gammay(ispec, iz, iy, ix) = mesh_jacobian.xix_regular;
-              h_gammaz(ispec, iz, iy, ix) = mesh_jacobian.xix_regular;
-              h_jacobian(ispec, iz, iy, ix) = mesh_jacobian.jacobian_regular;
-            }
-          }
-        }
       }
     }
-
-  } else {
-    // Initialize the Kokkos view with single values
-    Kokkos::deep_copy(h_xix, mesh_jacobian.xix_regular);
-    Kokkos::deep_copy(h_xiy, mesh_jacobian.xix_regular);
-    Kokkos::deep_copy(h_xiz, mesh_jacobian.xix_regular);
-    Kokkos::deep_copy(h_etax, mesh_jacobian.xix_regular);
-    Kokkos::deep_copy(h_etay, mesh_jacobian.xix_regular);
-    Kokkos::deep_copy(h_etaz, mesh_jacobian.xix_regular);
-    Kokkos::deep_copy(h_gammax, mesh_jacobian.xix_regular);
-    Kokkos::deep_copy(h_gammay, mesh_jacobian.xix_regular);
-    Kokkos::deep_copy(h_gammaz, mesh_jacobian.xix_regular);
-    Kokkos::deep_copy(h_jacobian, mesh_jacobian.jacobian_regular);
   }
 
   this->sync_views();
