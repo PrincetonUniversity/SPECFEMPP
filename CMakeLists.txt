@@ -206,7 +206,8 @@ add_library(
         src/io/fortranio/fortran_io.cpp
         src/io/sources/dim2/read_sources.cpp
         src/io/sources/dim3/read_sources.cpp
-        src/io/receivers.cpp
+        src/io/receivers/dim2/read_receivers.cpp
+        src/io/receivers/dim3/read_receivers.cpp
         # Fortran 2D part
         src/io/mesh/impl/fortran/dim2/mesh.cpp
         src/io/mesh/impl/fortran/dim2/read_boundaries.cpp

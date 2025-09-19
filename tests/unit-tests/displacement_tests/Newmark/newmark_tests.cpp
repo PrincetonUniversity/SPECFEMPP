@@ -141,7 +141,7 @@ TEST_P(Newmark, Test) {
 
   const auto stations_node = setup.get_stations();
   const auto angle = setup.get_receiver_angle();
-  auto receivers = specfem::io::read_receivers(stations_node, angle);
+  auto receivers = specfem::io::read_2d_receivers(stations_node, angle);
 
   std::cout << "  Receiver information\n";
   std::cout << "------------------------------" << std::endl;

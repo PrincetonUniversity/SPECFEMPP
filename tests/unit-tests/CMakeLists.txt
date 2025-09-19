@@ -434,7 +434,12 @@ target_link_libraries(
 
 add_executable(
   io_tests
-  io/sources/test_read_sources.cpp
+  io/sources/test_read_sources_file.cpp
+  io/sources/test_read_sources_yaml.cpp
+  io/sources/test_source_solutions.cpp
+  io/receivers/test_receiver_solutions.cpp
+  io/receivers/test_read_stations_file.cpp
+  io/receivers/test_read_yaml.cpp
 )
 
 target_link_libraries(
