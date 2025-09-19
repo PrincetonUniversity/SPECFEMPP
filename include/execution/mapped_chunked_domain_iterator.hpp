@@ -27,6 +27,8 @@ private:
   using index_type =
       specfem::point::mapped_index<DimensionTag,
                                    UseSIMD>; ///< Mapped index type
+  using point_index_type = specfem::point::index<DimensionTag, UseSIMD>;
+
 public:
   using iterator_type =
       VoidIterator<ExecutionSpace>; ///< Iterator type for this index
@@ -34,6 +36,11 @@ public:
   KOKKOS_INLINE_FUNCTION
   constexpr const index_type get_index() const {
     return this->index; ///< Returns the point index
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  constexpr const point_index_type get_local_index() const {
+    return this->local_index; ///< Returns the point index
   }
 
   KOKKOS_INLINE_FUNCTION
@@ -47,9 +54,11 @@ public:
   }
 
   KOKKOS_INLINE_FUNCTION
-  MappedPointIndex(const specfem::point::index<DimensionTag, UseSIMD> &index,
-                   const int &imap, const KokkosIndexType &kokkos_index)
-      : index(index, imap), kokkos_index(kokkos_index) {}
+  MappedPointIndex(const point_index_type &index, const int &imap,
+                   const point_index_type &local_index,
+                   const KokkosIndexType &kokkos_index)
+      : index(index, imap), local_index(local_index),
+        kokkos_index(kokkos_index) {}
 
   KOKKOS_INLINE_FUNCTION
   constexpr bool is_end() const {
@@ -58,6 +67,7 @@ public:
 
 private:
   index_type index;             ///< Point
+  point_index_type local_index; ///< Local point index
   KokkosIndexType kokkos_index; ///< Kokkos index type
 };
 
@@ -84,10 +94,9 @@ public:
   operator()(const policy_index_type &i) const {
     const auto base_index = base_type::operator()(i);
     // Calculate the mapped index
-    int ielement = base_index.get_policy_index();
     const auto index = base_index.get_index();
-    const int imap = mapping(ielement);
-    return index_type(index, imap, ielement);
+    const auto local_index = base_index.get_local_index();
+    return index_type(index, mapping(local_index.ispec), local_index, i);
   }
 
   KOKKOS_INLINE_FUNCTION

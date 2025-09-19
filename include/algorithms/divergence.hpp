@@ -72,7 +72,7 @@ KOKKOS_FUNCTION void divergence(
       chunk_index.get_iterator(),
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
-        const auto ielement = iterator_index.get_policy_index();
+        const auto ielement = iterator_index.get_local_index().ispec;
         const auto index = iterator_index.get_index();
         const int iz = index.iz;
         const int ix = index.ix;

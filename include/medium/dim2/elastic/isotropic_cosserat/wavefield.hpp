@@ -70,7 +70,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
                 &iterator_index,
             const FieldDerivativesType::value_type &du) {
           const auto index = iterator_index.get_index();
-          const int ielement = iterator_index.get_policy_index();
+          const int ielement = iterator_index.get_local_index().ispec;
           PointPropertyType point_property;
 
           specfem::assembly::load_on_device(index, properties, point_property);
@@ -135,7 +135,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         [&](const typename ChunkIndexType::iterator_type::index_type
                 &iterator_index) {
           const auto index = iterator_index.get_index();
-          const int ielement = iterator_index.get_policy_index();
+          const int ielement = iterator_index.get_local_index().ispec;
 
           // The rotational component of the
           wavefield(ielement, index.iz, index.ix, 0) =
@@ -151,7 +151,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
                 &iterator_index,
             const FieldDerivativesType::value_type &du) {
           const auto index = iterator_index.get_index();
-          const int ielement = iterator_index.get_policy_index();
+          const int ielement = iterator_index.get_local_index().ispec;
 
           // Here we compute the curl of the displacement field.
           wavefield(ielement, index.iz, index.ix, 0) = du(0, 1) - du(1, 0);
@@ -166,7 +166,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
                 &iterator_index,
             const FieldDerivativesType::value_type &du) {
           const auto index = iterator_index.get_index();
-          const int ielement = iterator_index.get_policy_index();
+          const int ielement = iterator_index.get_local_index().ispec;
 
           // Here we compute the intrinsic rotation wavefield from the
           // rotation field and the curl of the displacement field.
@@ -183,7 +183,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.get_index();
-        const int ielement = iterator_index.get_policy_index();
+        const int ielement = iterator_index.get_local_index().ispec;
         wavefield(ielement, index.iz, index.ix, 0) =
             active_field(ielement, index.iz, index.ix, 0);
         wavefield(ielement, index.iz, index.ix, 1) =

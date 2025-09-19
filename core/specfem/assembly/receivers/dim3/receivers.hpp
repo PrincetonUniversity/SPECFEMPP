@@ -219,7 +219,7 @@ load_on_device(const ChunkIndexType &chunk_index,
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.get_index();
-        const int ielement = iterator_index.get_policy_index();
+        const int ielement = iterator_index.get_local_index().ispec;
         const int irec = index.imap;
 
 #ifndef NDEBUG
@@ -276,7 +276,7 @@ store_on_device(const ChunkIndexType &chunk_index,
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.get_index();
-        const int ielement = iterator_index.get_policy_index();
+        const int ielement = iterator_index.get_local_index().ispec;
         const int irec = index.imap;
 
 #ifndef NDEBUG

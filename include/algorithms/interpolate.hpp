@@ -139,7 +139,7 @@ KOKKOS_FUNCTION void interpolate_function(const ChunkIndex &chunk_index,
       [&](const typename ChunkIndex::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.get_index();
-        const int ielement = iterator_index.get_policy_index();
+        const int ielement = iterator_index.get_local_index().ispec;
 
         for (int icomponent = 0; icomponent < ncomponents; ++icomponent) {
           type_real polynomial_value =
