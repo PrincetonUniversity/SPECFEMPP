@@ -1,0 +1,188 @@
+name: Automate Project Dates
+
+on:
+  issues:
+    types: [opened, edited, closed, reopened]
+  # Note: project_card is for legacy projects. For Projects V2, we need to use other triggers
+  # The workflow will run when issues/PRs change, then check if project status changed
+
+jobs:
+  update-project-dates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Project Item
+        id: get_item
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get the project item details
+            const query = `
+              query($owner: String!, $repo: String!, $issueNumber: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  issue(number: $issueNumber) {
+                    projectItems(first: 10) {
+                      nodes {
+                        id
+                        project {
+                          id
+                          number
+                        }
+                        fieldValues(first: 20) {
+                          nodes {
+                            ... on ProjectV2ItemFieldSingleSelectValue {
+                              name
+                              field {
+                                ... on ProjectV2SingleSelectField {
+                                  name
+                                }
+                              }
+                            }
+                            ... on ProjectV2ItemFieldDateValue {
+                              date
+                              field {
+                                ... on ProjectV2Field {
+                                  name
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            const variables = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issueNumber: context.issue?.number || context.payload.pull_request?.number
+            };
+            
+            if (!variables.issueNumber) {
+              console.log('No issue or PR number found');
+              return;
+            }
+            
+            const result = await github.graphql(query, variables);
+            const projectItems = result.repository.issue.projectItems.nodes;
+            
+            for (const item of projectItems) {
+              console.log(`Processing project item: ${item.id}`);
+              
+              // Find status field value
+              let currentStatus = null;
+              let startDate = null;
+              let endDate = null;
+              let statusFieldId = null;
+              let startDateFieldId = null;
+              let endDateFieldId = null;
+              
+              // First, get field IDs from the project
+              const projectQuery = `
+                query($projectId: ID!) {
+                  node(id: $projectId) {
+                    ... on ProjectV2 {
+                      fields(first: 20) {
+                        nodes {
+                          ... on ProjectV2Field {
+                            id
+                            name
+                          }
+                          ... on ProjectV2SingleSelectField {
+                            id
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              `;
+              
+              const projectResult = await github.graphql(projectQuery, {
+                projectId: item.project.id
+              });
+              
+              const fields = projectResult.node.fields.nodes;
+              
+              // Map field names to IDs (using exact field names)
+              for (const field of fields) {
+                if (field.name.toLowerCase() === 'status') {
+                  statusFieldId = field.id;
+                } else if (field.name === 'Start Date') {
+                  startDateFieldId = field.id;
+                } else if (field.name === 'End Date') {
+                  endDateFieldId = field.id;
+                }
+              }
+              
+              // Get current field values
+              for (const fieldValue of item.fieldValues.nodes) {
+                if (fieldValue.field?.name?.toLowerCase() === 'status') {
+                  currentStatus = fieldValue.name;
+                } else if (fieldValue.field?.name === 'Start Date') {
+                  startDate = fieldValue.date;
+                } else if (fieldValue.field?.name === 'End Date') {
+                  endDate = fieldValue.date;
+                }
+              }
+              
+              console.log(`Current status: ${currentStatus}`);
+              console.log(`Start date: ${startDate}`);
+              console.log(`End date: ${endDate}`);
+              
+              const today = new Date().toISOString().split('T')[0];
+              
+              // Only update dates if they don't already exist (this prevents overwriting existing dates)
+              // Update start date if status is "In progress 🧑‍💻" and no start date exists
+              if (currentStatus === 'In progress 🧑‍💻' && !startDate && startDateFieldId) {
+                console.log('Setting start date to today');
+                await github.graphql(`
+                  mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: Date!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: { date: $value }
+                    }) {
+                      projectV2Item {
+                        id
+                      }
+                    }
+                  }
+                `, {
+                  projectId: item.project.id,
+                  itemId: item.id,
+                  fieldId: startDateFieldId,
+                  value: today
+                });
+              }
+              
+              // Update end date if status is "Done ✅" and no end date exists
+              if (currentStatus === 'Done ✅' && !endDate && endDateFieldId) {
+                console.log('Setting end date to today');
+                await github.graphql(`
+                  mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: Date!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: { date: $value }
+                    }) {
+                      projectV2Item {
+                        id
+                      }
+                    }
+                  }
+                `, {
+                  projectId: item.project.id,
+                  itemId: item.id,
+                  fieldId: endDateFieldId,
+                  value: today
+                });
+              }
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

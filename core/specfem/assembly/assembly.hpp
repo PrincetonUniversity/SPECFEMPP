@@ -12,7 +12,7 @@
 namespace specfem::assembly {
 
 /**
- * @brief Specialization of the assembly class for 2D finite element problems
+ * @brief Assembly class for finite element problems in different dimensions.
  *
  * @tparam DimensionTag
  */

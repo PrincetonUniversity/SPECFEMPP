@@ -145,7 +145,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   // mpi->cout(mesh.coordinates.print(0, mesh.mapping, "z"));
 #endif
 
-  // Initialize the Jacobian matrix object
+  // Initialize irregular element number array
   mesh.irregular_element_number = decltype(mesh.irregular_element_number)(
       "irregular_element_number", mesh.parameters.nspec);
 

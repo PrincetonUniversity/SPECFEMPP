@@ -3,9 +3,12 @@
 #include <gtest/gtest.h>
 
 // Include all I/O framework headers
+#include "../Kokkos_Environment.hpp"
 #include "io/ADIOS2/ADIOS2.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
+#include "io/NPY/NPY.hpp"
+#include "io/NPZ/NPZ.hpp"
 #include "io/operators.hpp"
 
 // Test utilities
@@ -25,6 +28,12 @@ template <> struct GetWriteType<specfem::io::HDF5<specfem::io::read> > {
 };
 template <> struct GetWriteType<specfem::io::ADIOS2<specfem::io::read> > {
   using type = specfem::io::ADIOS2<specfem::io::write>;
+};
+template <> struct GetWriteType<specfem::io::NPY<specfem::io::read> > {
+  using type = specfem::io::NPY<specfem::io::write>;
+};
+template <> struct GetWriteType<specfem::io::NPZ<specfem::io::read> > {
+  using type = specfem::io::NPZ<specfem::io::write>;
 };
 
 // Base test class
@@ -53,6 +62,18 @@ protected:
     } else if constexpr (std::is_same_v<
                              IOType, specfem::io::ADIOS2<specfem::io::read> >) {
       base_name = "test_adios2_read";
+    } else if constexpr (std::is_same_v<
+                             IOType, specfem::io::NPY<specfem::io::write> >) {
+      base_name = "test_npy_write";
+    } else if constexpr (std::is_same_v<IOType,
+                                        specfem::io::NPY<specfem::io::read> >) {
+      base_name = "test_npy_read";
+    } else if constexpr (std::is_same_v<
+                             IOType, specfem::io::NPZ<specfem::io::write> >) {
+      base_name = "test_npz_write";
+    } else if constexpr (std::is_same_v<IOType,
+                                        specfem::io::NPZ<specfem::io::read> >) {
+      base_name = "test_npz_read";
     } else {
       base_name = "test_unknown";
     }
@@ -150,19 +171,24 @@ private:
 
 // Type list for all I/O frameworks - conditionally include based on available
 // packages
-using IOTypes = ::testing::Types<specfem::io::ASCII<specfem::io::write>,
-                                 specfem::io::ASCII<specfem::io::read>
+using IOTypes = ::testing::Types<
+    specfem::io::ASCII<specfem::io::write>,
+    specfem::io::ASCII<specfem::io::read>, specfem::io::NPY<specfem::io::write>,
+    specfem::io::NPY<specfem::io::read>
+#ifndef NO_NPZ
+    ,
+    specfem::io::NPZ<specfem::io::write>, specfem::io::NPZ<specfem::io::read>
+#endif
 #ifndef NO_HDF5
-                                 ,
-                                 specfem::io::HDF5<specfem::io::write>,
-                                 specfem::io::HDF5<specfem::io::read>
+    ,
+    specfem::io::HDF5<specfem::io::write>, specfem::io::HDF5<specfem::io::read>
 #endif
 #ifndef NO_ADIOS2
-                                 ,
-                                 specfem::io::ADIOS2<specfem::io::write>,
-                                 specfem::io::ADIOS2<specfem::io::read>
+    ,
+    specfem::io::ADIOS2<specfem::io::write>,
+    specfem::io::ADIOS2<specfem::io::read>
 #endif
-                                 >;
+    >;
 
 TYPED_TEST_SUITE(IOFrameworkTest, IOTypes);
 
@@ -184,6 +210,9 @@ TYPED_TEST(IOFrameworkTest, BasicFileOperations) {
     } else if constexpr (std::is_same_v<IOType, specfem::io::ADIOS2<
                                                     specfem::io::write> >) {
       expected_name += ".bp";
+    } else if constexpr (std::is_same_v<
+                             IOType, specfem::io::NPZ<specfem::io::write> >) {
+      expected_name += ".npz";
     }
 
     EXPECT_TRUE(fs::exists(expected_name));
@@ -597,9 +626,8 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 
 // Main test runner
 int main(int argc, char *argv[]) {
-  Kokkos::initialize(argc, argv);
   ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
   int result = RUN_ALL_TESTS();
-  Kokkos::finalize();
   return result;
 }

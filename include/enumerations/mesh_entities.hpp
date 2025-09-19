@@ -1,9 +1,11 @@
 #pragma once
 
 #include "dimension.hpp"
+#include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <list>
 #include <stdexcept>
+#include <string>
 
 /**
  * @namespace specfem::mesh_entity
@@ -44,6 +46,12 @@ enum class type : int {
   top_right = 7,    ///< Top-right corner of the element
   top_left = 8      ///< Top-left corner of the element
 };
+
+/**
+ * @brief Recovers a human-readable string for a given mesh entity.
+ *
+ */
+const std::string to_string(const specfem::mesh_entity::type &entity);
 
 /**
  * @brief List of all edge types in a quadrilateral element
@@ -126,6 +134,20 @@ std::list<type> edges_of_corner(const type &corner);
  */
 std::list<type> corners_of_edge(const type &edge);
 
+struct edge {
+  specfem::mesh_entity::type edge_type;
+  int ispec;
+  bool reverse_orientation;
+
+  KOKKOS_INLINE_FUNCTION
+  edge(const int ispec, const specfem::mesh_entity::type edge_type,
+       const bool reverse_orientation = false)
+      : edge_type(edge_type), ispec(ispec),
+        reverse_orientation(reverse_orientation) {}
+
+  KOKKOS_INLINE_FUNCTION
+  edge() = default;
+};
 /**
  * @brief Mesh element structure for a specific dimension
  *

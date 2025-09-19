@@ -108,6 +108,8 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   specfem::execution::MappedChunkedDomainIterator chunk(
       ParallelConfig(), elements, receiver_indices, element_grid);
 
+  Kokkos::Profiling::pushRegion("Compute Seismograms");
+
   for (int iseis = 0; iseis < nseismograms; ++iseis) {
 
     receivers.set_seismogram_type(iseis);
@@ -150,6 +152,8 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
                                              receivers);
         });
   }
+
+  Kokkos::Profiling::popRegion();
 
   return;
 }

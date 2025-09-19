@@ -12,10 +12,16 @@
 namespace specfem::assembly {
 
 /**
- * @brief Struct to store information related to the receivers
+ * @brief Assembly-level receiver management for spectral element simulations
  *
+ * This template class manages seismic receivers within assembled finite element
+ * meshes, providing efficient access to receiver data for both host and device
+ * computations. The receivers support seismogram recording with various output
+ * types (displacement, velocity, acceleration) and handle coordinate
+ * transformations for proper seismogram orientation based on receiver geometry.
+ *
+ * @tparam DimensionTag The spatial dimension (dim2 or dim3)
  */
-
 template <specfem::dimension::type DimensionTag> struct receivers;
 
 } // namespace specfem::assembly

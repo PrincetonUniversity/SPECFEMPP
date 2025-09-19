@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 option(SPECFEM_ENABLE_ADIOS2 "Enable ADIOS2 I/O in SPECFEM++" OFF)
 option(SPECFEM_ENABLE_HDF5 "Enable HDF5 I/O in SPECFEM++" OFF)
 option(SPECFEM_ENABLE_HDF5_FORCE_INSTALL "Force install HDF5 dependency if SPECFEM_ENABLE_HDF5 is ON even if system HDF5 is found" OFF)
+option(SPECFEM_ENABLE_NPZ "Enable NPZ I/O in SPECFEM++" OFF)
+option(SPECFEM_ENABLE_ZLIB_FORCE_INSTALL "Force install ZLIB dependency even if system ZLIB is found" OFF)
 option(SPECFEM_ENABLE_VTK "Enable VTK visualization in SPECFEM++" ON)
 option(SPECFEM_ENABLE_MPI "MPI enabled" OFF)
 option(SPECFEM_BUILD_TESTS "Tests included" OFF)
@@ -103,6 +105,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 # Find HDF5
 include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
 
+# Find or install NPZ library function
+include("${CMAKE_SOURCE_DIR}/cmake/npz.cmake")
+
 # Find or install ADIOS2 library function
 include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 
@@ -195,10 +200,14 @@ target_link_libraries(
 
 add_library(
         io
+        # IO libraries
+        src/io/NPY/impl/npy_header.cpp
+        # SPECFEM IO
         src/io/fortranio/fortran_io.cpp
         src/io/sources/dim2/read_sources.cpp
         src/io/sources/dim3/read_sources.cpp
-        src/io/receivers.cpp
+        src/io/receivers/dim2/read_receivers.cpp
+        src/io/receivers/dim3/read_receivers.cpp
         # Fortran 2D part
         src/io/mesh/impl/fortran/dim2/mesh.cpp
         src/io/mesh/impl/fortran/dim2/read_boundaries.cpp
@@ -223,6 +232,7 @@ target_link_libraries(
         specfem::receivers
         yaml-cpp
         boost
+        $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
         $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
         $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
@@ -230,6 +240,7 @@ target_link_libraries(
 target_compile_definitions(
         io
         PUBLIC
+        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:-DNO_NPZ>
         $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
         $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
 )
@@ -245,6 +256,7 @@ add_library(
 target_link_libraries(
         enumerations
         ${BOOST_LIBS}
+        Kokkos::kokkos
 )
 
 
@@ -396,17 +408,6 @@ target_link_libraries(
 # Disable unity build for source_time_function due to KOKKOS_INLINE_FUNCTION issues
 set_target_properties(source_time_function PROPERTIES UNITY_BUILD OFF)
 
-
-add_library(coupled_interface
-        src/coupled_interface/coupled_interface.cpp
-)
-
-target_link_libraries(
-        coupled_interface
-        Kokkos::kokkos
-        assembly
-)
-
 add_library(
         kokkos_kernels
         src/kokkos_kernels/impl/compute_mass_matrix.cpp
@@ -416,9 +417,13 @@ add_library(
         src/kokkos_kernels/impl/compute_source_interaction.cpp
         src/kokkos_kernels/impl/compute_stiffness_interaction.cpp
         src/kokkos_kernels/impl/compute_material_derivatives.cpp
+        src/kokkos_kernels/impl/compute_coupling.cpp
         src/kokkos_kernels/frechet_kernels.cpp
 )
-set_target_properties(kokkos_kernels PROPERTIES UNITY_BUILD_BATCH_SIZE 4)
+set_target_properties(kokkos_kernels PROPERTIES
+        UNITY_BUILD $<NOT:$<BOOL:${__APPLE__}>>
+        UNITY_BUILD_BATCH_SIZE $<IF:$<BOOL:${__APPLE__}>,0,4>
+)
 
 target_link_libraries(
         kokkos_kernels
@@ -479,6 +484,7 @@ target_link_libraries(
         periodic_tasks
         reader
         writer
+        io
 )
 
 target_compile_definitions(
@@ -545,7 +551,6 @@ target_link_libraries(
         writer
         periodic_tasks
         reader
-        coupled_interface
         kokkos_kernels
         solver
         ${BOOST_LIBS}
@@ -580,7 +585,6 @@ target_link_libraries(
         writer
         periodic_tasks
         reader
-        coupled_interface
         kokkos_kernels
         solver
         ${BOOST_LIBS}

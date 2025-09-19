@@ -12,7 +12,7 @@ namespace specfem::assembly::mesh_impl {
 template <> struct shape_functions<specfem::dimension::type::dim2> {
 
 public:
-  constexpr static auto dimension =
+  constexpr static auto dimension_tag =
       specfem::dimension::type::dim2; ///< Dimension
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension

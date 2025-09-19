@@ -1,0 +1,8 @@
+#pragma once
+
+#define _ENUM_ID_DIMENSION_TAG 0
+#define _ENUM_ID_MEDIUM_TAG 1
+#define _ENUM_ID_PROPERTY_TAG 2
+#define _ENUM_ID_BOUNDARY_TAG 3
+#define _ENUM_ID_CONNECTION_TAG 4
+#define _ENUM_ID_INTERFACE_TAG 5
