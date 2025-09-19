@@ -5,16 +5,49 @@
 #include "jacobian_matrix.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
+#include <sstream>
 
 namespace specfem {
 namespace point {
 
 /**
- * @brief Stress tensor at a quadrature point
+ * @brief Represents a stress tensor at a quadrature point in spectral element
+ * simulations.
  *
- * @tparam DimensionTag Dimension of the element (2D or 3D)
- * @tparam MediumTag Medium tag for the element
- * @tparam UseSIMD Use SIMD instructions
+ * The stress class encapsulates stress tensor data and provides operations for
+ * stress transformations in finite element computations. The tensor dimensions
+ * and components are determined by the medium type and spatial dimension:
+ * - Acoustic medium: 1 component in 2D/3D (scalar pressure)
+ * - Elastic medium: 2 components in 2D, 3 components in 3D (velocity
+ * components)
+ * - Poroelastic medium: 4 components in 2D (solid and fluid phases)
+ *
+ * The class inherits from the data access framework providing SIMD
+ * vectorization support and efficient memory access patterns for
+ * high-performance computing.
+ *
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+ * @tparam MediumTag Physical medium type (acoustic, elastic_psv, elastic,
+ * poroelastic)
+ * @tparam UseSIMD Enable SIMD vectorization for performance optimization
+ *
+ * @code
+ * // Example: Create stress tensor for 2D elastic medium
+ * using stress_type = specfem::point::stress<specfem::dimension::type::dim2,
+ *                                           specfem::element::medium_tag::elastic_psv,
+ *                                           false>;
+ *
+ * // Initialize stress components (2x2 tensor for 2D elastic)
+ * typename stress_type::value_type T(1.1, 2.1,  // first column  (component 0,
+ * 1) 1.2, 2.2); // second column (component 0, 1) stress_type stress_tensor(T);
+ *
+ * // Transform stress using jacobian matrix
+ * // auto jacobian = initialize_jacobian_matrix();
+ * auto transformed_stress = stress_tensor * jacobian;
+ * @endcode
+ *
+ * @see specfem::point::jacobian_matrix
+ * @see specfem::data_access::Accessor
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
@@ -23,96 +56,113 @@ struct stress
           specfem::data_access::AccessorType::point,
           specfem::data_access::DataClassType::stress, DimensionTag, UseSIMD> {
 private:
+  /** @brief Base accessor type for data access framework integration */
   using base_type = specfem::data_access::Accessor<
       specfem::data_access::AccessorType::point,
-      specfem::data_access::DataClassType::stress, DimensionTag,
-      UseSIMD>; ///< Base accessor type
+      specfem::data_access::DataClassType::stress, DimensionTag, UseSIMD>;
+
 public:
   /**
-   * @name Compile time constants
-   *
+   * @name Static Properties
+   * @brief Compile-time constants derived from template parameters
    */
   ///@{
+  /** @brief Spatial dimension (2 or 3) */
   constexpr static int dimension =
       specfem::element::attributes<DimensionTag, MediumTag>::dimension;
+
+  /** @brief Number of stress components based on medium type */
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
-  constexpr static specfem::dimension::type dimension_tag =
-      DimensionTag; ///< Dimension tag of the element
-  constexpr static specfem::element::medium_tag medium_tag =
-      MediumTag;                              ///< Medium tag of the element
-  constexpr static bool using_simd = UseSIMD; ///< Whether to use SIMD
+  /** @brief Template parameter for spatial dimension */
+  constexpr static specfem::dimension::type dimension_tag = DimensionTag;
+
+  /** @brief Template parameter for medium type */
+  constexpr static specfem::element::medium_tag medium_tag = MediumTag;
+
+  /** @brief Template parameter for SIMD usage */
+  constexpr static bool using_simd = UseSIMD;
   ///@}
 
   /**
-   * @name Typedefs
-   *
+   * @name Type Definitions
+   * @brief Type aliases for SIMD and tensor operations
    */
   ///@{
-  using simd = typename base_type::template simd<type_real>; ///< SIMD type
+  /** @brief SIMD type for vectorized operations */
+  using simd = typename base_type::template simd<type_real>;
+
+  /** @brief Tensor type for storing stress components (components × dimension)
+   */
   using value_type =
       typename base_type::template tensor_type<type_real, components,
-                                               dimension>; ///< Underlying view
-                                                           ///< type to store
-                                                           ///< the stress
-                                                           ///< tensor
+                                               dimension>;
   ///@}
 
-  value_type T; ///< View to store the stress tensor
+  /**
+   * @name Data Members
+   */
+  ///@{
+  /** @brief Stress tensor storage with shape (components × dimension) */
+  value_type T;
+  ///@}
 
   /**
    * @name Constructors
-   *
    */
   ///@{
-
   /**
-   * @brief Default constructor
+   * @brief Default constructor.
    *
+   * Initializes stress tensor with default values (typically zero).
    */
   KOKKOS_FUNCTION stress() = default;
 
   /**
-   * @brief Constructor
+   * @brief Constructor with stress tensor initialization.
    *
-   * @param T stress tensor
+   * @param T Stress tensor with components arranged as (components × dimension)
+   *
+   * @code
+   * // For 2D elastic medium (2 components × 2 dimensions)
+   * typename stress_type::value_type tensor(1.1, 2.1,  // component 0: (σxx,
+   * σxz) 1.2, 2.2); // component 1: (σzx, σzz) stress_type stress(tensor);
+   * @endcode
    */
   KOKKOS_FUNCTION stress(const value_type &T) : T(T) {}
   ///@}
 
   /**
-   * @brief Compute the product of the stress tensor with spatial derivatives
+   * @name Operators
+   */
+  ///@{
+  /**
+   * @brief Transform stress tensor using jacobian matrix.
    *
-   * Following Komatitsch and Tromp (1999), the product of the stress tensor
-   * with the spatial derivatives is computed as follows:
+   * Applies the coordinate transformation from reference element to physical
+   * element using the jacobian matrix. This operation transforms stress
+   * components from the reference (ξ, ζ) coordinate system to the physical (x,
+   * z) coordinate system.
    *
-   * /f{equation}{ F_{ik} = \sum_{k=1}^{N} T_{ij} \partial_j xi_k /f}
+   * The transformation formula for 2D is:
+   * \f$ F(i,0) = J \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial x} + T(i,1)
+   * \cdot \frac{\partial\zeta}{\partial x}) \f$
+   * \f$ F(i,1) = J \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial z} + T(i,1)
+   * \cdot \frac{\partial\zeta}{\partial z}) \f$
    *
-   * In detail, the stress integrand array is intuitively defined as
+   * where \f$ J \f$ is the jacobian determinant and the partial derivatives are
+   * the inverse jacobian matrix elements.
    *
-   * \f{equation}{ F_{ik} = F_{x_i, \xi_k} = F(i, k),/f}
+   * @param jacobian_matrix Jacobian matrix containing transformation
+   * derivatives
+   * @return Transformed stress tensor in physical coordinates
    *
-   * where \f$x_i = [x,z]\f$, and \f$ \xi_k = [\xi, \gamma] \f$.
-   *
-   * The stress integrand is the populated as follows:
-   *
-   * \f{equation}{ F(i, k) = T(i, j) \partial xi_k / \partial \x_j \f}
-   *
-   * Here in code the actual assignment is done as follows:
-   * @code {.cpp}
-   * // The stress integrand is defined as follows
-   * F(i, k) = T(i, 0) * dxi_k_dx + T(i, 1) * dxi_k_dz
-   * // So for ncomponent = 2, we have:
-   * F(0, 0) =  sigma_xx * xix + sigma_xz * xiz       // = F_{x,\xi}
-   * F(0, 1) =  sigma_xz * gammax + sigma_zz * gammaz // = F_{x,\gamma}
-   * F(1, 0) =  sigma_zx * xix + sigma_zz * xiz       // = F_{z,\xi}
-   * F(1, 1) =  sigma_xx * gammax + sigma_xz * gammaz // = F_{x,\gamma}
+   * @code
+   * stress_type stress(stress_tensor);
+   * auto jacobian = compute_jacobian_matrix(quadrature_point);
+   * auto transformed = stress * jacobian;
    * @endcode
-   *
-   *
-   * @param jacobian_matrix Spatial derivatives
-   * @return ViewType Result of the product
    */
   KOKKOS_INLINE_FUNCTION
   value_type operator*(
@@ -121,12 +171,6 @@ public:
       const {
     value_type F;
 
-    // The correct expression for F does not include Jacobian factor here.
-    // However, for non regular meshes, the expression A5 in (Komatitsch et. al.
-    // 2005) results in numerical instabilities. This is because spatial
-    // derivatives can be small leading to precision errors. Multiplying by the
-    // Jacobian factor helps normalize the result. We then avoid the jacobian
-    // factor when computing the divergence in equation (A6).
     for (int icomponent = 0; icomponent < components; ++icomponent) {
       F(icomponent, 0) =
           jacobian_matrix.jacobian * (T(icomponent, 0) * jacobian_matrix.xix +
@@ -139,9 +183,41 @@ public:
     return F;
   }
 
+  /**
+   * @brief Equality comparison operator.
+   *
+   * Compares two stress tensors for equality by comparing their underlying
+   * tensor data element-wise.
+   *
+   * @param other Another stress tensor to compare with
+   * @return true if tensors are equal, false otherwise
+   */
   KOKKOS_INLINE_FUNCTION
   bool operator==(const stress &other) const { return T == other.T; };
+  ///@}
 
+  /**
+   * @name Utility Functions
+   */
+  ///@{
+  /**
+   * @brief Generate string representation of the stress tensor.
+   *
+   * Creates a formatted string showing all components of the stress tensor
+   * for debugging and visualization purposes. The output format shows each
+   * component with its (component, dimension) indices.
+   *
+   * @return Formatted string representation of the stress tensor
+   *
+   * @code
+   * stress_type stress(tensor_data);
+   * std::cout << stress.print() << std::endl;
+   * // Output:
+   * // Stress Tensor:
+   * // T(0, 0) = 1.1, T(0, 1) = 1.2
+   * // T(1, 0) = 2.1, T(1, 1) = 2.2
+   * @endcode
+   */
   std::string print() const {
     std::ostringstream oss;
     oss << "Stress Tensor:\n";
@@ -151,6 +227,7 @@ public:
     }
     return oss.str();
   }
+  ///@}
 };
 } // namespace point
 } // namespace specfem
