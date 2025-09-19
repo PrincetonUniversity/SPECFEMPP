@@ -112,6 +112,8 @@ template <> struct coordinates<specfem::dimension::type::dim3> {
   /**
    * @brief Compute bounding box of the mesh`
    *
+   * @return std::array<type_real, 6> Array containing minima and maxima of
+   *         domain @code {xmin, xmax, ymin, ymax, zmin, zmax} @endcode
    */
   std::array<type_real, 6> bounding_box() const;
 };

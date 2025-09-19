@@ -7,19 +7,23 @@
 
 namespace specfem::assembly {
 
-template <typename PointIndexType, typename ContainerType, typename PointType,
-          typename std::enable_if_t<
-              PointIndexType::dimension_tag == specfem::dimension::type::dim3 &&
-                  (PointIndexType::using_simd == PointType::simd::using_simd),
-              int> = 0>
+template <
+    typename PointIndexType, typename ContainerType, typename PointType,
+    typename std::enable_if_t<
+        specfem::data_access::is_index_type<PointIndexType>::value &&
+            PointIndexType::dimension_tag == specfem::dimension::type::dim3 &&
+            !PointIndexType::using_simd && !PointType::simd::using_simd &&
+            specfem::data_access::is_jacobian_matrix<ContainerType>::value,
+        int> = 0>
 void load_on_host(const PointIndexType &index, const ContainerType &container,
                   PointType &point) {
+
+  constexpr static bool load_jacobian = PointType::store_jacobian;
+
   static_assert(
       specfem::data_access::CheckCompatibility<PointIndexType, ContainerType,
                                                PointType>::value,
-      "Incompatible types");
-
-  constexpr static bool load_jacobian = PointType::store_jacobian;
+      "Incompatible Index, Container, and Point Types.");
 
   point.xix = container.h_xix(index.ispec, index.iz, index.iy, index.ix);
   point.xiy = container.h_xiy(index.ispec, index.iz, index.iy, index.ix);
