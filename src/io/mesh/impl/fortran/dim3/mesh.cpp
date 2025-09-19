@@ -3,7 +3,7 @@
 #include "enumerations/interface.hpp"
 #include "io/fortranio/interface.hpp"
 #include "io/interface.hpp"
-#include "io/mesh/impl/fortran/dim3/interface.hpp"
+#include "io/mesh/impl/fortran/dim3/generate_database/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
 #include "specfem_mpi/interface.hpp"
