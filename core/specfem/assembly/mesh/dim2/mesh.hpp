@@ -52,10 +52,15 @@ public:
        const specfem::quadrature::quadratures &quadratures,
        const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph);
 
+  // TODO(Rohit: ADJ_GRAPH_DEFAULT)
+  // Remove assemble_legacy functionality when adjacency graph is the default
+  // feature for store mesh adjancencies
   void assemble_legacy();
 
   void assemble();
 
+  // TODO(Rohit: ADJ_GRAPH_DEFAULT)
+  // The graph should never be empty after it is made as default
   bool adjacency_graph_empty() const {
     return static_cast<const specfem::assembly::mesh_impl::adjacency_graph<
         dimension_tag> &>(*this)
@@ -78,7 +83,7 @@ public:
  * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
  * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
  * @param team Team member
- * @param quadrature Quadrature data
+ * @param mesh Mesh data
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <bool on_device, typename MemberType, typename ViewType>
@@ -134,7 +139,7 @@ impl_load(const MemberType &team,
  * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
  * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
  * @param team Team member
- * @param quadrature Quadrature data
+ * @param mesh Mesh data
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <typename MemberType, typename ViewType>
@@ -155,7 +160,7 @@ load_on_device(const MemberType &team,
  * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
  * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
  * @param team Team member
- * @param quadrature Quadrature data
+ * @param mesh Mesh data
  * @param element_quadrature Quadrature data for the element (output)
  */
 template <typename MemberType, typename ViewType>

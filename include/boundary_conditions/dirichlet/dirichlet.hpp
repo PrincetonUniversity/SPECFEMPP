@@ -84,5 +84,56 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_compute_mass_matrix_terms(
   return;
 };
 
+template <
+    typename PointBoundaryType, typename PointAccelerationType,
+    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_INLINE_FUNCTION void
+impl_apply_boundary_conditions(const acoustic_free_surface_type &,
+                               const PointBoundaryType &boundary,
+                               PointAccelerationType &acceleration) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::acoustic_free_surface,
+                "Boundary tag must be acoustic_free_surface");
+
+  constexpr int components = PointAccelerationType::components;
+  constexpr auto tag = PointBoundaryType::boundary_tag;
+
+  if (boundary.tag != tag)
+    return;
+
+  for (int icomp = 0; icomp < components; ++icomp)
+    acceleration(icomp) = 0.0;
+
+  return;
+}
+
+template <
+    typename PointBoundaryType, typename PointAccelerationType,
+    typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_INLINE_FUNCTION void
+impl_apply_boundary_conditions(const acoustic_free_surface_type &,
+                               const PointBoundaryType &boundary,
+                               PointAccelerationType &acceleration) {
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::acoustic_free_surface,
+                "Boundary tag must be acoustic_free_surface");
+
+  constexpr int components = PointAccelerationType::components;
+  constexpr auto tag = PointBoundaryType::boundary_tag;
+
+  using mask_type = typename PointAccelerationType::simd::mask_type;
+  using simd_type = typename PointAccelerationType::simd::datatype;
+  for (std::size_t icomp = 0; icomp < components; ++icomp) {
+    simd_type result([&](std::size_t lane) {
+      return (boundary.tag[lane] == tag) ? 0.0 : acceleration(icomp)[lane];
+    });
+
+    acceleration(icomp) = result;
+  }
+
+  return;
+}
+
 } // namespace boundary_conditions
 } // namespace specfem

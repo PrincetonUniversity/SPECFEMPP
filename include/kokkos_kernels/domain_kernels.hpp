@@ -6,12 +6,12 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "impl/compute_coupling.hpp"
 #include "impl/compute_mass_matrix.hpp"
 #include "impl/compute_seismogram.hpp"
 #include "impl/compute_source_interaction.hpp"
 #include "impl/compute_stiffness_interaction.hpp"
 #include "impl/divide_mass_matrix.hpp"
-#include "impl/interface_kernels.hpp"
 #include "impl/invert_mass_matrix.hpp"
 
 namespace specfem {
@@ -51,8 +51,7 @@ public:
    *
    */
   domain_kernels(const specfem::assembly::assembly<dimension_tag> &assembly)
-      : assembly(assembly), coupling_interfaces_dim2_elastic_psv(assembly),
-        coupling_interfaces_dim2_acoustic(assembly) {}
+      : assembly(assembly) {}
 
   /**
    * @brief Updates the wavefield for a given medium
@@ -71,11 +70,18 @@ public:
     int elements_updated = 0;
 
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ACOUSTIC)),
-        CAPTURE(coupling_interfaces) {
+        (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING),
+         INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
+         BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                      COMPOSITE_STACEY_DIRICHLET)),
+        {
+          constexpr auto self_medium =
+              specfem::interface::attributes<_dimension_tag_,
+                                             _interface_tag_>::self_medium();
           if constexpr (dimension_tag == _dimension_tag_ &&
-                        medium == _medium_tag_) {
-            _coupling_interfaces_.compute_coupling();
+                        self_medium == medium) {
+            impl::compute_coupling<_dimension_tag_, _connection_tag_, wavefield,
+                                   _interface_tag_, _boundary_tag_>(assembly);
           }
         })
 
@@ -188,11 +194,6 @@ public:
 
 private:
   specfem::assembly::assembly<dimension_tag> assembly;
-
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ACOUSTIC)),
-                      DECLARE(((impl::interface_kernels,
-                                (WavefieldType, _DIMENSION_TAG_, _MEDIUM_TAG_)),
-                               coupling_interfaces)))
 };
 
 } // namespace kokkos_kernels

@@ -11,6 +11,20 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
+/**
+ * @brief 3D template specialization for assembly-level source management
+ *
+ * This class manages sources within 3D assembled finite element meshes,
+ * providing efficient data access patterns for spectral element simulations.
+ * Sources are organized by medium type (currently supporting elastic medium)
+ * and support time-dependent computations through source time functions.
+ *
+ * Key features:
+ * - Device/host memory management with Kokkos
+ * - Medium-specific source organization
+ * - Time-dependent source function evaluation
+ * - Lagrange interpolant computation for 3D spectral elements
+ */
 template <> struct sources<specfem::dimension::type::dim3> {
 
 public:
@@ -205,7 +219,13 @@ private:
 };
 
 /**
+ * @defgroup SourceDataAccess3D Source Data Access Functions
+ * @brief Data access functions for source operations
+ */
+
+/**
  * @brief Load source information on device at the given index
+ * @ingroup SourceDataAccess3D
  *
  * Loads source information on device at the given index. Make sure you set
  the
@@ -234,10 +254,10 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
 
   static_assert(PointSourceType::dimension_tag ==
                     specfem::dimension::type::dim3,
-                "PointSourceType must be a 2D point source type");
+                "PointSourceType must be a 3D point source type");
 
   static_assert(IndexType::dimension_tag == specfem::dimension::type::dim3,
-                "IndexType must be a 2D index type");
+                "IndexType must be a 3D index type");
 
 #ifndef NDEBUG
 
@@ -272,6 +292,7 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
 
 /**
  * @brief Load source information on host at the given index
+ * @ingroup SourceDataAccess3D
  *
  * Loads source information on device at the given index. Make sure you set
  the
@@ -302,10 +323,10 @@ void load_on_host(
 
   static_assert(PointSourceType::dimension_tag ==
                     specfem::dimension::type::dim3,
-                "PointSourceType must be a 2D point source type");
+                "PointSourceType must be a 3D point source type");
 
   static_assert(IndexType::dimension_tag == specfem::dimension::type::dim3,
-                "IndexType must be a 2D index type");
+                "IndexType must be a 3D index type");
 
 #ifndef NDEBUG
   const int isource = index.imap;
@@ -339,6 +360,7 @@ void load_on_host(
 
 /**
  * @brief Store source information on device at the given index
+ * @ingroup SourceDataAccess3D
  *
  * Loads source information on device at the given index. Make sure you set
  the
@@ -366,10 +388,10 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
 
   static_assert(PointSourceType::dimension_tag ==
                     specfem::dimension::type::dim3,
-                "PointSourceType must be a 2D point source type");
+                "PointSourceType must be a 3D point source type");
 
   static_assert(IndexType::dimension_tag == specfem::dimension::type::dim3,
-                "IndexType must be a 2D index type");
+                "IndexType must be a 3D index type");
 
 #ifndef NDEBUG
   const int isource = index.imap;
@@ -402,6 +424,7 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
 
 /**
  * @brief Store source information on host at the given index
+ * @ingroup SourceDataAccess3D
  *
  * Loads source information on device at the given index. Make sure you set
  the
@@ -429,10 +452,10 @@ void store_on_host(
 
   static_assert(PointSourceType::dimension_tag ==
                     specfem::dimension::type::dim3,
-                "PointSourceType must be a 2D point source type");
+                "PointSourceType must be a 3D point source type");
 
   static_assert(IndexType::dimension_tag == specfem::dimension::type::dim3,
-                "IndexType must be a 2D index type");
+                "IndexType must be a 3D index type");
 
 #ifndef NDEBUG
   const int isource = index.imap;

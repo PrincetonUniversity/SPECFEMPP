@@ -13,7 +13,7 @@ is yaml.
 
 In addition to these basic read functions, there are also the two
 reader and writer classes, :cpp:class:`specfem::io::wavefield_reader` and
-:cpp:class:`specfem::io::wavefield_writer`, which support both HDF5 and ASCII I/O.
+:cpp:class:`specfem::io::wavefield_writer`, which support Numpy Binary and Zip (NPY and NPZ, respectively), HDF5, ADIOS and ASCII I/O.
 And, to write seismograms, we can use :cpp:class:`specfem::io::seismogram_writer`.
 Seismogram I/O is only supported in ASCII format thus far.
 
@@ -38,17 +38,16 @@ Read the 2D Mesh
 .. doxygenfunction:: specfem::io::read_2d_mesh
 
 
-Read Sources
-------------
+Read 2D Sources
+---------------
 
-.. doxygenfunction:: specfem::io::read_sources(const std::string sources_file, const int nsteps, const type_real user_t0, const type_real dt, const specfem::simulation::type simulation_type)
+.. doxygenfunction:: specfem::io::read_2d_sources(const std::string &sources_file, const int nsteps, const type_real user_t0, const type_real dt, const specfem::simulation::type simulation_type)
 
 
-Read Receivers
---------------
+Read 2D Receivers
+-----------------
 
-.. doxygenfunction:: specfem::io::read_receivers(const std::string stations_file, const type_real angle)
-
+.. doxygenfunction:: specfem::io::read_2d_receivers(const std::string &stations_file, const type_real angle)
 
 
 
@@ -60,6 +59,19 @@ Read the 3D Mesh
 ----------------
 
 .. doxygenfunction:: specfem::io::read_3d_mesh
+
+
+Read 3D Sources
+---------------
+
+.. doxygenfunction:: specfem::io::read_3d_sources(const std::string &sources_file, const int nsteps, const type_real user_t0, const type_real dt, const specfem::simulation::type simulation_type)
+
+
+Read 3D Receivers
+-----------------
+
+.. doxygenfunction:: specfem::io::read_3d_receivers(const std::string &stations_file)
+
 
 
 Helper functions

@@ -3,8 +3,26 @@
 #include "enumerations/mesh_entities.hpp"
 #include <functional>
 #include <stdexcept>
+#include <string>
 #include <tuple>
 #include <unordered_map>
+
+const std::string
+specfem::connections::to_string(const specfem::connections::type &conn) {
+  switch (conn) {
+  case specfem::connections::type::strongly_conforming:
+    return "strongly_conforming";
+  case specfem::connections::type::weakly_conforming:
+    return "weakly_conforming";
+  case specfem::connections::type::nonconforming:
+    return "nonconforming";
+  default:
+    throw std::runtime_error(
+        std::string("specfem::connections::to_string does not handle ") +
+        std::to_string(static_cast<int>(conn)));
+    return "!ERR";
+  }
+}
 
 /**
  * @brief Helper function to determine if orientation mapping requires
@@ -18,8 +36,9 @@
  * mappings between edges require flipping to maintain proper orientation.
  * The flipping rules ensure consistent connectivity across mesh elements.
  */
-static bool flip_orientations(const specfem::mesh_entity::type &from,
-                              const specfem::mesh_entity::type &to) {
+bool specfem::connections::connection_mapping::flip_orientation(
+    const specfem::mesh_entity::type &from,
+    const specfem::mesh_entity::type &to) const {
   if ((from == specfem::mesh_entity::type::top &&
        to == specfem::mesh_entity::type::bottom) ||
       (from == specfem::mesh_entity::type::bottom &&
@@ -105,7 +124,7 @@ specfem::connections::connection_mapping::map_coordinates(
 
   const auto coord_from = edge_coordinates.at(from)(point);
 
-  const auto flip = flip_orientations(from, to);
+  const auto flip = this->flip_orientation(from, to);
 
   const auto coord_to =
       flip ? edge_coordinates.at(to)(total_points_on_to - 1 - point)

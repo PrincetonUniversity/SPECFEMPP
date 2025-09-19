@@ -1,0 +1,50 @@
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem2d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
+
+configfile: "@SPECFEM_BENCHMARKS_BUILD_DIR@/nightly_config.yaml"
+
+rule all:
+    input:
+        expand(
+            "@SPECFEM_BENCHMARKS_BUILD_DIR@/dim2/{module}/benchmark/profiles.json",
+            module=[benchmark["name"] for benchmark in config["benchmarks"]]
+        ),
+
+rule profiles:
+    input:
+        "@SPECFEM_BENCHMARKS_BUILD_DIR@/dim2/{module}/benchmark/output.log"
+    output:
+        "@SPECFEM_BENCHMARKS_BUILD_DIR@/dim2/{module}/benchmark/profiles.json"
+    shell:
+        """
+            # get hardware information
+            echo -e "\n# Current Time" > {wildcards.module}_profiles.txt
+            date >> {wildcards.module}_profiles.txt
+            echo -e "# Benchmark: {wildcards.module}" >> {wildcards.module}_profiles.txt
+            echo -e "\n# Hardware Information" >> {wildcards.module}_profiles.txt
+            lscpu >> {wildcards.module}_profiles.txt
+            # Extract Kokkos profiling information
+            echo -e "\n# Kokkos Profiling Information" >> {wildcards.module}_profiles.txt
+            profile=$(grep 'KokkosP: Kernel timing written' {input} | awk '{{print $NF}}')
+            ~/kokkos-tools/profiling/simple-kernel-timer/kp_reader ${{profile}} >> {wildcards.module}_profiles.txt
+            # Parse the log file to extract relevant information
+            python3 @SPECFEM_BENCHMARKS_BUILD_DIR@/run_parser.py {wildcards.module}_profiles.txt -o {output}
+
+            rm {wildcards.module}_profiles.txt
+        """
+
+for benchmark in config["benchmarks"]:
+    module_name = benchmark["name"]
+    alias = f'{module_name}_'
+    run_solver_alias = f'{alias}run_solver'
+    module:
+        name: module_name
+        snakefile: benchmark["snakefile"]
+
+    use rule * from module_name as alias*
+
+    use rule run_solver from module_name as run_solver_alias with:
+        params:
+            KOKKOS_TOOLS_LIBS="~/kokkos-tools/profiling/simple-kernel-timer/kp_kernel_timer.so"
+        output:
+            log=f"@SPECFEM_BENCHMARKS_BUILD_DIR@/dim2/{module_name}/benchmark/output.log"

@@ -38,10 +38,11 @@ parameters:
 
           # Uncomment the following lines to enable display output if VTK is installed
           # display:
-          #   format: on_screen
+          #   format: PNG
+          #   directory: "OUTPUT_FILES/display"
           #   field: displacement
           #   simulation-field: forward
-          #   time-interval: 10
+          #   time-interval: 100
 
   receivers:
     stations: "OUTPUT_FILES/STATIONS"

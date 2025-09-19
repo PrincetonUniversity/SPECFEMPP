@@ -104,6 +104,8 @@
         "SPECFEM_ENABLE_MPI": "OFF",
         "SPECFEM_BUILD_BENCHMARKS": "ON",
         "SPECFEM_ENABLE_ADIOS2": "ON",
+        "SPECFEM_ENABLE_NPZ": "ON",
+        "SPECFEM_ENABLE_ZLIB_FORCE_INSTALL": "ON",
         "SPECFEM_ENABLE_HDF5": "ON",
         "SPECFEM_ENABLE_HDF5_FORCE_INSTALL": "ON",
         "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-io"

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "coupled_interface/coupled_interface.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/wavefield.hpp"
