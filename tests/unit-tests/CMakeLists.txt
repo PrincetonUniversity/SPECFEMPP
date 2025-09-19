@@ -525,6 +525,22 @@ target_link_libraries(
 )
 
 add_executable(
+  chunked_edge_tests
+  policies/chunked_edge.cpp
+)
+
+target_link_libraries(
+  chunked_edge_tests
+  kokkos_environment
+  gtest_main
+  Kokkos::kokkos
+  mpi_environment
+  kokkos_environment
+  ${BOOST_LIBS}
+  -lpthread -lm
+)
+
+add_executable(
   mass_matrix_tests
   medium/mass_matrix/main.cpp
   # 2D mass matrix tests
@@ -559,6 +575,19 @@ target_link_libraries(
   stress_tests
   point
   gtest_main
+)
+
+add_executable(
+  compute_coupling_tests
+  compute_coupling/acoustic_elastic.cpp
+  compute_coupling/elastic_acoustic.cpp
+)
+
+target_link_libraries(
+  compute_coupling_tests
+  point
+  gtest_main
+  Kokkos::kokkos
 )
 
 add_executable(
@@ -640,7 +669,6 @@ target_link_libraries(
   point
   edge
   algorithms
-  coupled_interface
   kokkos_kernels
   solver
   periodic_tasks
@@ -738,10 +766,12 @@ if(NOT MPI_PARALLEL)
     locate_point_fixture_2d
     locate_point_fixture_3d
     mass_matrix_tests
+    compute_coupling_tests
     mesh_tests
     nonconforming_tests
     point_tests
     policies_tests
+    chunked_edge_tests
     receivers_tests
     simd_tests
     source_class_tests

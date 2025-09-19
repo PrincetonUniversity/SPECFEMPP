@@ -18,7 +18,8 @@ enum class type : int {
   /// @brief Strongly conforming connection where nodes match exactly
   strongly_conforming = 1,
   /// @brief Weakly conforming connection where nodes match, but the shape
-  /// function can be discontinuous. (example: coupling across different media, kinematic faults).
+  /// function can be discontinuous. (example: coupling across different media,
+  /// kinematic faults).
   weakly_conforming = 2,
   /// @brief Nonconforming connections have no matching nodes, but are
   /// geometrically (spatially) adjacent
@@ -143,6 +144,21 @@ public:
    */
   std::tuple<int, int>
   coordinates_at_corner(const specfem::mesh_entity::type &corner) const;
+
+  /**
+   * @brief Helper function to determine if orientation mapping requires
+   * coordinate flipping
+   *
+   * @param from Source mesh entity orientation
+   * @param to Target mesh entity orientation
+   * @return bool True if coordinates should be flipped during mapping
+   *
+   * This function implements the logic for determining when coordinate
+   * mappings between edges require flipping to maintain proper orientation.
+   * The flipping rules ensure consistent connectivity across mesh elements.
+   */
+  bool flip_orientation(const specfem::mesh_entity::type &from,
+                        const specfem::mesh_entity::type &to) const;
 
 private:
   /// @brief Number of grid points in the x-direction
