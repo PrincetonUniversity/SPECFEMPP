@@ -121,7 +121,7 @@ TEST(impl__compute_intersection, TransferFunctionCorrectness) {
     // interpolate this function at knot<i>_mortar and see if we get
     // kronecker delta{i,j}
     {
-      bool failed_test;
+      bool failed_test = false;
       std::ostringstream failmsg;
 
       const type_real global_lo = std::max(coord_lo, type_real(0));
