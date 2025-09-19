@@ -79,7 +79,7 @@ template <> struct local_coordinates<specfem::dimension::type::dim2> {
   template <typename ViewType>
   KOKKOS_FUNCTION local_coordinates(const int &ispec, const ViewType &coords)
       : ispec(ispec), xi(coords[0]), gamma(coords[1]) {
-    static_assert(ViewType::rank == 1, "ViewType must be rank 1");
+    static_assert(ViewType::rank() == 1, "ViewType must be rank 1");
     static_assert(ViewType::static_extent(0) == 2,
                   "ViewType must have extent 2 for 2D coordinates");
   }
@@ -117,7 +117,7 @@ template <> struct global_coordinates<specfem::dimension::type::dim2> {
   template <typename ViewType>
   KOKKOS_FUNCTION global_coordinates(const ViewType &coords)
       : x(coords[0]), z(coords[1]) {
-    static_assert(ViewType::rank == 1, "ViewType must be rank 1");
+    static_assert(ViewType::rank() == 1, "ViewType must be rank 1");
     static_assert(ViewType::static_extent(0) == 2,
                   "ViewType must have extent 2 for 2D coordinates");
   }
@@ -165,7 +165,7 @@ template <> struct local_coordinates<specfem::dimension::type::dim3> {
   template <typename ViewType>
   KOKKOS_FUNCTION local_coordinates(const int &ispec, const ViewType &coords)
       : ispec(ispec), xi(coords[0]), eta(coords[1]), gamma(coords[2]) {
-    static_assert(ViewType::rank == 1, "ViewType must be rank 1");
+    static_assert(ViewType::rank() == 1, "ViewType must be rank 1");
     static_assert(ViewType::static_extent(0) == 3,
                   "ViewType must have extent 3 for 3D coordinates");
   }
@@ -206,7 +206,7 @@ template <> struct global_coordinates<specfem::dimension::type::dim3> {
   template <typename ViewType>
   KOKKOS_FUNCTION global_coordinates(const ViewType &coords)
       : x(coords[0]), y(coords[1]), z(coords[2]) {
-    static_assert(ViewType::rank == 1, "ViewType must be rank 1");
+    static_assert(ViewType::rank() == 1, "ViewType must be rank 1");
     static_assert(ViewType::static_extent(0) == 3,
                   "ViewType must have extent 3 for 3D coordinates");
   }

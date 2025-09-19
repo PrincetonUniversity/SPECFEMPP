@@ -20,7 +20,7 @@ void specfem::assembly::compute_source_array(
     SourceArrayViewType &source_array) {
 
   // Ensure source_array is a 4D view
-  static_assert(SourceArrayViewType::rank == 4, "Source array must be in rank 4.");
+  static_assert(SourceArrayViewType::rank() == 4, "Source array must be in rank 4.");
 
 
   switch (source->get_source_type()) {

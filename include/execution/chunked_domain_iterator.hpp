@@ -43,6 +43,7 @@ class PointIndex<specfem::dimension::type::dim2, KokkosIndexType, UseSIMD,
                  ExecutionSpace> {
 private:
   constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  using point_index_type = specfem::point::index<dimension_tag, UseSIMD>;
 
 public:
   using iterator_type =
@@ -59,7 +60,7 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   constexpr const KokkosIndexType get_policy_index() const {
-    return this->kokkos_index;
+    return this->local_index.ispec;
   }
 
   /**
@@ -69,9 +70,20 @@ public:
    * that defines the GLL point.
    */
   KOKKOS_INLINE_FUNCTION
-  constexpr const specfem::point::index<dimension_tag, UseSIMD>
-  get_index() const {
+  constexpr const point_index_type get_index() const {
     return this->index; ///< Returns the point index
+  }
+
+  /**
+   * @brief Get the underlying index used to define the GLL point relative to
+   * current chunk.
+   *
+   * @return const specfem::point::index<DimensionTag, UseSIMD> The point index
+   * that defines the GLL point relative to current chunk.
+   */
+  KOKKOS_INLINE_FUNCTION
+  constexpr const point_index_type get_local_index() const {
+    return this->local_index; ///< Returns the local point index
   }
 
   /**
@@ -95,7 +107,8 @@ public:
   KOKKOS_INLINE_FUNCTION
   PointIndex(const int &ispec, const int &number_elements, const int &iz,
              const int &ix, const KokkosIndexType &kokkos_index)
-      : index(ispec, number_elements, iz, ix), kokkos_index(kokkos_index) {}
+      : index(ispec, number_elements, iz, ix),
+        local_index(kokkos_index, number_elements, iz, ix) {}
 
   /**
    * @brief Constructor for PointIndex when SIMD is not used.
@@ -109,7 +122,7 @@ public:
   KOKKOS_INLINE_FUNCTION PointIndex(const int &ispec, const int &iz,
                                     const int &ix,
                                     const KokkosIndexType &kokkos_index)
-      : index(ispec, iz, ix), kokkos_index(kokkos_index) {}
+      : index(ispec, iz, ix), local_index(kokkos_index, iz, ix) {}
 
   KOKKOS_INLINE_FUNCTION
   constexpr bool is_end() const {
@@ -117,9 +130,12 @@ public:
   }
 
 private:
-  specfem::point::index<dimension_tag, UseSIMD> index; ///< Index of the GLL
-                                                       ///< point
-  KokkosIndexType kokkos_index;                        ///< Kokkos index type
+  point_index_type index;       ///< Index of the GLL
+                                ///< point
+  point_index_type local_index; ///< Index of the
+                                ///< GLL point
+                                ///< relative to
+                                ///< current chunk
 };
 
 /**

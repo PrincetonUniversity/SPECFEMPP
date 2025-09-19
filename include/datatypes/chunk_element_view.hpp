@@ -1,5 +1,7 @@
 #pragma once
 
+#include "enumerations/dimension.hpp"
+#include "impl/chunk_element_subview.hpp"
 #include "simd.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -54,10 +56,14 @@ struct ScalarChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
   using value_type = typename type::value_type; ///< Value type used to store
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
-  constexpr static bool using_simd = UseSIMD;   ///< Use SIMD datatypes for the
-                                                ///< array. If false,
-                                                ///< std::is_same<value_type,
-                                                ///< base_type>::value is true
+  using index_type =
+      typename specfem::point::index<specfem::dimension::type::dim2,
+                                     UseSIMD>; ///< index type for accessing at
+                                               ///< GLL level
+  constexpr static bool using_simd = UseSIMD;  ///< Use SIMD datatypes for the
+                                               ///< array. If false,
+                                               ///< std::is_same<value_type,
+                                               ///< base_type>::value is true
   ///@}
 
   /**
@@ -65,6 +71,11 @@ struct ScalarChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
    *
    */
   ///@{
+  constexpr static auto accessor_type =
+      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
+                                                         ///< identifying the
+                                                         ///< class
+
   constexpr static int nelements = NumberOfElements; ///< Number of elements in
                                                      ///< the chunk
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
@@ -107,8 +118,8 @@ struct ScalarChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
    *
    * @param index Point index
    */
-  KOKKOS_INLINE_FUNCTION value_type &operator()(
-      specfem::point::index<specfem::dimension::type::dim2, UseSIMD> index) {
+  KOKKOS_INLINE_FUNCTION
+  constexpr value_type &operator()(index_type index) {
     return (*this)(index.ispec, index.iz, index.ix);
   }
 };
@@ -158,10 +169,14 @@ struct VectorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
   using value_type = typename type::value_type; ///< Value type used to store
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
-  constexpr static bool using_simd = UseSIMD;   ///< Use SIMD datatypes for the
-                                                ///< array. If false,
-                                                ///< std::is_same<value_type,
-                                                ///< base_type>::value is true
+  using index_type =
+      typename specfem::point::index<specfem::dimension::type::dim2,
+                                     UseSIMD>; ///< index type for accessing at
+                                               ///< GLL level
+  constexpr static bool using_simd = UseSIMD;  ///< Use SIMD datatypes for the
+                                               ///< array. If false,
+                                               ///< std::is_same<value_type,
+                                               ///< base_type>::value is true
   ///@}
 
   /**
@@ -169,6 +184,10 @@ struct VectorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
    *
    */
   ///@{
+  constexpr static auto accessor_type =
+      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
+                                                         ///< identifying the
+                                                         ///< class
   constexpr static int nelements = NumberOfElements; ///< Number of elements in
                                                      ///< the chunk
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
@@ -210,14 +229,25 @@ struct VectorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
   using type::operator();
 
   /**
+   * @brief Get vector component by a point index and vector indices.
+   *
+   * @param index Point index
+   * @param icomp Component index
+   */
+  KOKKOS_INLINE_FUNCTION
+  constexpr value_type &operator()(const index_type &index, const int &icomp) {
+    return (*this)(index.ispec, index.iz, index.ix, icomp);
+  }
+
+  /**
    * @brief Get vector subview by a point index.
    *
    * @param index Point index
    */
   KOKKOS_INLINE_FUNCTION
-  auto operator()(
-      specfem::point::index<specfem::dimension::type::dim2, UseSIMD> index) {
-    return Kokkos::subview(*this, index.ispec, index.iz, index.ix, Kokkos::ALL);
+  impl::VectorChunkSubview<VectorChunkViewType>
+  operator()(const index_type &index) {
+    return { *this, index };
   }
 };
 
@@ -269,10 +299,14 @@ struct TensorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
   using value_type = typename type::value_type; ///< Value type used to store
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
-  constexpr static bool using_simd = UseSIMD;   ///< Use SIMD datatypes for the
-                                                ///< array. If false,
-                                                ///< std::is_same<value_type,
-                                                ///< base_type>::value is true
+  using index_type =
+      typename specfem::point::index<specfem::dimension::type::dim2,
+                                     UseSIMD>; ///< index type for accessing at
+                                               ///< GLL level
+  constexpr static bool using_simd = UseSIMD;  ///< Use SIMD datatypes for the
+                                               ///< array. If false,
+                                               ///< std::is_same<value_type,
+                                               ///< base_type>::value is true
   ///@}
 
   /**
@@ -280,6 +314,11 @@ struct TensorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
    *
    */
   ///@{
+  constexpr static auto accessor_type =
+      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
+                                                         ///< identifying the
+                                                         ///< class
+
   constexpr static int nelements = NumberOfElements; ///< Number of elements in
                                                      ///< the chunk
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
@@ -330,14 +369,27 @@ struct TensorChunkViewType<T, specfem::dimension::type::dim2, NumberOfElements,
   using type::operator();
 
   /**
-   * @brief Get vector subview by a point index.
+   * @brief Get tensor component by a point index and tensor indices.
+   *
+   * @param index Point index
+   * @param icomp Component index
+   * @param idim Dimension index
+   */
+  KOKKOS_INLINE_FUNCTION
+  constexpr value_type &operator()(const index_type &index, const int &icomp,
+                                   const int &idim) {
+    return (*this)(index.ispec, index.iz, index.ix, icomp, idim);
+  }
+
+  /**
+   * @brief Get tensor subview by a point index.
    *
    * @param index Point index
    */
-  KOKKOS_INLINE_FUNCTION auto operator()(
-      specfem::point::index<specfem::dimension::type::dim2, UseSIMD> index) {
-    return Kokkos::subview(*this, index.ispec, index.iz, index.ix, Kokkos::ALL,
-                           Kokkos::ALL);
+  KOKKOS_INLINE_FUNCTION
+  impl::TensorChunkSubview<TensorChunkViewType>
+  operator()(const index_type &index) {
+    return { *this, index };
   }
 };
 

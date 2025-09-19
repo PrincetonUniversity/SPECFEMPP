@@ -55,7 +55,7 @@ assert_types(const std::integral_constant<bool, true>) {
 
   // Check the PointStressIntegrandViewType, which is a kokkos view for its
   //  extent
-  static_assert(PointStressIntegrandViewType::rank == 2,
+  static_assert(PointStressIntegrandViewType::rank() == 2,
                 "PointStressIntegrandViewType must be a 2D view");
   static_assert(
       PointStressIntegrandViewType::static_extent(0) ==

@@ -252,6 +252,20 @@ public:
   }
 
   /**
+   * @brief Multiplication assignment operator with constant value.
+   *
+   * Multiply by a constant value and assign the result to this field.
+   *
+   * @param other The factor to be multiplied with
+   * @return reference to this field after multiplication
+   */
+  KOKKOS_FORCEINLINE_FUNCTION constexpr auto &
+  operator*=(const typename value_type::value_type &other) {
+    this->m_data *= other;
+    return *this;
+  }
+
+  /**
    * @brief Output a string representation of the field components.
    *
    * Outputs the values of all field components to the specified output stream.
