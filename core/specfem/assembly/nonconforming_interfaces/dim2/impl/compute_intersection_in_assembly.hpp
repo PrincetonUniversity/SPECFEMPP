@@ -37,7 +37,7 @@ std::tuple<
         specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
         Kokkos::HostSpace>,
     specfem::mesh_entity::type, specfem::mesh_entity::type>
-_expand_edge_index(
+expand_edge_index(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const EdgeType &edge);
 
