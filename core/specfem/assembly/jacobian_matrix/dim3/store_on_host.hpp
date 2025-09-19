@@ -5,17 +5,22 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
-template <typename PointIndexType, typename PointType, typename ContainerType,
-          typename std::enable_if_t<
-              PointIndexType::dimension_tag == specfem::dimension::type::dim3 &&
-                  !(PointIndexType::using_simd == PointType::simd::using_simd),
-              int> = 0>
+namespace specfem::assembly {
+
+template <
+    typename PointIndexType, typename PointType, typename ContainerType,
+    typename std::enable_if_t<
+        specfem::data_access::is_index_type<PointIndexType>::value &&
+            PointIndexType::dimension_tag == specfem::dimension::type::dim3 &&
+            !PointIndexType::using_simd && !PointType::simd::using_simd &&
+            specfem::data_access::is_jacobian_matrix<ContainerType>::value,
+        int> = 0>
 void store_on_host(const PointIndexType &index, const PointType &point,
                    const ContainerType &container) {
   static_assert(
       specfem::data_access::CheckCompatibility<PointIndexType, ContainerType,
                                                PointType>::value,
-      "Incompatible types");
+      "Incompatible Index, Container, and Point Types.");
 
   constexpr static bool store_jacobian = PointType::store_jacobian;
 
@@ -33,3 +38,5 @@ void store_on_host(const PointIndexType &index, const PointType &point,
         point.jacobian;
   }
 }
+
+} // namespace specfem::assembly

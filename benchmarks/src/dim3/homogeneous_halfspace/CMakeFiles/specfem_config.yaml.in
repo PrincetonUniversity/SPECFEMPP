@@ -34,7 +34,7 @@ parameters:
     stations: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS"
     angle: 0.0
     seismogram-type:
-      - velocity
+      - displacement
     nstep_between_samples: 1
 
   ## Runtime setup
@@ -48,4 +48,4 @@ parameters:
     mesh-parameters: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES_MPI/mesh_parameters.bin"
 
   ## sources
-  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml"
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/force.yaml"

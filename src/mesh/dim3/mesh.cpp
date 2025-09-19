@@ -25,6 +25,8 @@ std::string specfem::mesh::mesh<specfem::dimension::type::dim3>::print() const {
   int nelastic = this->element_types.nelastic;
   int nporoelastic = this->element_types.nporoelastic;
 
+  const auto bbox = this->coordinates.bounding_box();
+
   // Print Mapping parameters
   message << "3D Mesh information :\n"
           << "------------------------------\n"
@@ -42,7 +44,12 @@ std::string specfem::mesh::mesh<specfem::dimension::type::dim3>::print() const {
           << "Total number of elastic spectral elements: " << nelastic << "\n"
           << "Total number of poroelastic spectral elements: " << nporoelastic
           << "\n"
-          << "------------------------------\n";
+          << "Bounding box: xmin/xmax: " << bbox[0] << " / " << bbox[1] << "\n"
+          << "Bounding box: ymin/ymax: " << bbox[2] << " / " << bbox[3] << "\n"
+          << "Bounding box: zmin/zmax: " << bbox[4] << " / " << bbox[5] << "\n"
+          << "------------------------------\n"
+          << "Parameters:\n"
+          << this->parameters.print() << "------------------------------\n";
 
   return message.str();
 }
