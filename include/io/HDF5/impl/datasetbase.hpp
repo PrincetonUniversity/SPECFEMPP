@@ -1,12 +1,11 @@
-#ifndef SPECFEM_IO_HDF5_IMPL_DATASETBASE_HPP
-#define SPECFEM_IO_HDF5_IMPL_DATASETBASE_HPP
+#pragma once
 
 #ifndef NO_HDF5
 #include "H5Cpp.h"
 #endif
 
 #include "io/operators.hpp"
-#include "native_type.hpp"
+#include "native_type.tpp"
 #include <memory>
 #include <string>
 
@@ -39,6 +38,15 @@ protected:
   template <typename value_type> void write(const value_type *data) {
     dataset->write(data,
                    specfem::io::impl::HDF5::native_type<value_type>::type());
+  }
+
+  void write(const std::string *data) {
+    hsize_t num_elements = dataspace->getSimpleExtentNpoints();
+    std::vector<const char *> cstrs(num_elements);
+    for (size_t i = 0; i < cstrs.size(); ++i)
+      cstrs[i] = data[i].c_str();
+    dataset->write(cstrs.data(),
+                   specfem::io::impl::HDF5::native_type<std::string>::type());
   }
 
   void close() {
@@ -97,6 +105,17 @@ protected:
                   specfem::io::impl::HDF5::native_type<value_type>::type());
   }
 
+  void read(std::string *data) {
+    hsize_t num_elements = dataspace->getSimpleExtentNpoints();
+    char **buffer = new char *[num_elements];
+    dataset->read(buffer,
+                  specfem::io::impl::HDF5::native_type<std::string>::type());
+    for (int i = 0; i < num_elements; i++) {
+      data[i].assign(buffer[i]);
+    }
+    delete[] buffer;
+  }
+
   void close() {
     dataset->close();
     dataspace->close();
@@ -113,5 +132,3 @@ private:
 } // namespace impl
 } // namespace io
 } // namespace specfem
-
-#endif

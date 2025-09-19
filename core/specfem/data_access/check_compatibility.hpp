@@ -90,13 +90,49 @@ struct is_field<
     : std::true_type {};
 
 template <typename T, typename = void>
+struct is_displacement : std::false_type {};
+
+template <typename T>
+struct is_displacement<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::displacement> >
+    : std::true_type {};
+
+template <typename T, typename = void> struct is_velocity : std::false_type {};
+
+template <typename T>
+struct is_velocity<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::velocity> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_acceleration : std::false_type {};
+
+template <typename T>
+struct is_acceleration<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::acceleration> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_mass_matrix : std::false_type {};
+
+template <typename T>
+struct is_mass_matrix<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::mass_matrix> >
+    : std::true_type {};
+
+template <typename T, typename = void>
 struct is_index_type : std::false_type {};
 
 template <typename T>
 struct is_index_type<
     T, std::enable_if_t<
            T::data_class == specfem::data_access::DataClassType::index ||
-           T::data_class == specfem::data_access::DataClassType::mapped_index> >
+           T::data_class == specfem::data_access::DataClassType::mapped_index ||
+           T::data_class == specfem::data_access::DataClassType::edge_index> >
     : std::true_type {};
 
 template <typename T, typename = void>
@@ -106,6 +142,25 @@ template <typename T>
 struct is_assembly_index<
     T, std::enable_if_t<T::data_class ==
                         specfem::data_access::DataClassType::assembly_index> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_edge_index : std::false_type {};
+
+template <typename T>
+struct is_edge_index<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::edge_index> >
+    : std::true_type {};
+
+template <typename T, typename = void>
+struct is_coupled_interface : std::false_type {};
+
+template <typename T>
+struct is_coupled_interface<
+    T,
+    std::enable_if_t<T::data_class ==
+                     specfem::data_access::DataClassType::coupled_interface> >
     : std::true_type {};
 
 } // namespace specfem::data_access

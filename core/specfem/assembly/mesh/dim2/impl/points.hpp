@@ -8,10 +8,13 @@ namespace specfem::assembly::mesh_impl {
 /**
  * @brief Spectral element assembly information
  *
+ * This struct contains information about the coordinates and their local
+ * to global mapping.
+ *
  */
 template <> struct points<specfem::dimension::type::dim2> {
 public:
-  constexpr static auto dimension =
+  constexpr static auto dimension_tag =
       specfem::dimension::type::dim2; ///< Dimension
   constexpr static int ndim = 2;      ///< Number of dimensions
   int nspec;                          ///< Number of spectral elements

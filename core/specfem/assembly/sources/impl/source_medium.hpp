@@ -19,7 +19,7 @@ specfem::point::local_coordinates<DimensionTag> locate_point(
 
 // EXTENT_IMPL_CHANGE
 
-namespace {
+namespace specfem::assembly::sources_impl {
 template <typename T, int Rank> struct ExtentImpl {
   using type = typename ExtentImpl<T, Rank - 1>::type *;
 };
@@ -28,7 +28,7 @@ template <typename T> struct ExtentImpl<T, 0> {
   using type = T;
 };
 
-} // namespace
+} // namespace specfem::assembly::sources_impl
 
 namespace specfem::assembly::sources_impl {
 /**
@@ -67,7 +67,8 @@ private:
                                                    ///< functions
   // EXTENT_IMPL_CHANGE
   using SourceArrayView =
-      Kokkos::View<typename ExtentImpl<type_real, source_array_rank>::type,
+      Kokkos::View<typename specfem::assembly::sources_impl::ExtentImpl<
+                       type_real, source_array_rank>::type,
                    Kokkos::LayoutRight, Kokkos::DefaultExecutionSpace>;
 
   constexpr static int components =
@@ -92,6 +93,7 @@ public:
 
   /**
    * @brief Compute source information for 2D case
+   * @details Constructs source information for 2D spectral elements
    */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim2>::type
@@ -105,7 +107,9 @@ public:
       const type_real t0, const type_real dt, const int nsteps);
 
   /**
+   * @overload
    * @brief Compute source information for 3D case
+   * @details Constructs source information for 3D spectral elements
    */
   template <specfem::dimension::type U = DimensionTag,
             typename std::enable_if<U == specfem::dimension::type::dim3>::type
@@ -131,7 +135,7 @@ public:
                                                        ///< source_array
 
   /*
-  // CPP20_CHANGE
+  // TODO(Lucas : CPP20 update)
   template <typename IndexType, typename PointSourceType>
   requires (DimensionTag == specfem::dimension::type::dim2)
   KOKKOS_INLINE_FUNCTION void load_on_device(...) const;
@@ -157,7 +161,7 @@ public:
                  PointSourceType &point_source) const;
 
   /*
-  // CPP20_CHANGE
+  // TODO(Lucas : CPP20 update)
   template <typename IndexType, typename PointSourceType>
   requires (DimensionTag == specfem::dimension::type::dim2)
   KOKKOS_INLINE_FUNCTION void store_on_device(...) const;
@@ -183,7 +187,7 @@ public:
                   const PointSourceType &point_source) const;
 
   /*
-  // CPP20_CHANGE
+  // TODO(Lucas : CPP20 update)
   template <typename IndexType, typename PointSourceType>
   requires (DimensionTag == specfem::dimension::type::dim2)
   void load_on_host(...) const;
@@ -207,7 +211,7 @@ public:
                     PointSourceType &point_source) const;
 
   /*
-  // CPP20_CHANGE
+  // TODO(Lucas : CPP20 update)
   template <typename IndexType, typename PointSourceType>
   requires (DimensionTag == specfem::dimension::type::dim2)
   */
@@ -219,7 +223,7 @@ public:
                      const PointSourceType &point_source) const;
 
   /*
-  // CPP20_CHANGE
+  // TODO(Lucas : CPP20 update)
   template <typename IndexType, typename PointSourceType>
   requires (DimensionTag == specfem::dimension::type::dim3)
   */

@@ -640,6 +640,7 @@ program meshfem2D
          call save_gnuplot_file(NGNOD,nx_elem_internal,nz_elem_internal,grid_point_x,grid_point_z)
 
       call compute_adjacency_graph()
+      call read_mesh_nonconforming_adjacencies_file()
 
       ! partitioning
       ! user output

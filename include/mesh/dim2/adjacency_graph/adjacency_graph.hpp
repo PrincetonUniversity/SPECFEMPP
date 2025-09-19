@@ -106,6 +106,8 @@ public:
    */
   const Graph &graph() const { return graph_; }
 
+  // TODO(Rohit: ADJ_GRAPH_DEFAULT)
+  // Graph should never be empty after it is made as default
   /**
    * @brief Check if the adjacency graph is empty
    *
@@ -114,7 +116,7 @@ public:
    *
    * @return true if the graph has no vertices, false otherwise
    */
-  const bool empty() const { return boost::num_vertices(graph_) == 0; }
+  bool empty() const { return boost::num_vertices(graph_) == 0; }
 
   /**
    * @brief Assert that the adjacency graph is symmetric

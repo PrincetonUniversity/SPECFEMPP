@@ -81,6 +81,8 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
   specfem::execution::MappedChunkedDomainIterator mapped_policy(
       ParallelConfig(), element_indices, source_indices, element_grid);
 
+  Kokkos::Profiling::pushRegion("Compute Source Interaction");
+
   specfem::execution::for_all(
       "specfem::kokkos_kernels::compute_source_interaction", mapped_policy,
       KOKKOS_LAMBDA(const PointIndexType &mapped_index) {
@@ -96,4 +98,6 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
 
         specfem::assembly::atomic_add_on_device(mapped_index, field, acceleration);
       });
+
+  Kokkos::Profiling::popRegion();
 }
