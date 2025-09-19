@@ -218,11 +218,11 @@ add_library(
         src/io/mesh/impl/fortran/dim2/read_parameters.cpp
         src/io/mesh/impl/fortran/dim2/read_adjacency_graph.cpp
         # Fortran 3D part
-        src/io/mesh/impl/fortran/dim3/mesh.cpp
-        src/io/mesh/impl/fortran/dim3/read_parameters.cpp
-        src/io/mesh/impl/fortran/dim3/read_coordinates.cpp
-        src/io/mesh/impl/fortran/dim3/read_jacobian_matrix.cpp
-        src/io/mesh/impl/fortran/dim3/utilities.cpp
+        src/io/mesh/impl/fortran/dim3/generate_database/mesh.cpp
+        src/io/mesh/impl/fortran/dim3/generate_database/read_parameters.cpp
+        src/io/mesh/impl/fortran/dim3/generate_database/read_coordinates.cpp
+        src/io/mesh/impl/fortran/dim3/generate_database/read_jacobian_matrix.cpp
+        src/io/mesh/impl/fortran/dim3/generate_database/utilities.cpp
 )
 
 target_link_libraries(
@@ -314,19 +314,19 @@ add_library(
         src/mesh/dim2/tags/tags.cpp
         src/mesh/dim2/adjacency_graph/assert_symmetry.cpp
         # 3-D
-        src/mesh/dim3/mesh.cpp
-        src/mesh/dim3/boundaries/absorbing_boundary.cpp
-        src/mesh/dim3/boundaries/acoustic_free_surface.cpp
-        src/mesh/dim3/coupled_interfaces/coupled_interfaces.cpp
-        src/mesh/dim3/element_types/element_types.cpp
-        src/mesh/dim3/parameters/parameters.cpp
-        src/mesh/dim3/parameters/parameters.cpp
-        src/mesh/dim3/mapping/mapping.cpp
-        src/mesh/dim3/materials/materials.cpp
-        src/mesh/dim3/coordinates/coordinates.cpp
-        src/mesh/dim3/jacobian_matrix/jacobian_matrix.cpp
-        src/mesh/dim3/control_nodes/control_nodes.cpp
-        src/mesh/dim3/tags/tags.cpp
+        src/mesh/dim3/generate_database/mesh.cpp
+        src/mesh/dim3/generate_database/boundaries/absorbing_boundary.cpp
+        src/mesh/dim3/generate_database/boundaries/acoustic_free_surface.cpp
+        src/mesh/dim3/generate_database/coupled_interfaces/coupled_interfaces.cpp
+        src/mesh/dim3/generate_database/element_types/element_types.cpp
+        src/mesh/dim3/generate_database/parameters/parameters.cpp
+        src/mesh/dim3/generate_database/parameters/parameters.cpp
+        src/mesh/dim3/generate_database/mapping/mapping.cpp
+        src/mesh/dim3/generate_database/materials/materials.cpp
+        src/mesh/dim3/generate_database/coordinates/coordinates.cpp
+        src/mesh/dim3/generate_database/jacobian_matrix/jacobian_matrix.cpp
+        src/mesh/dim3/generate_database/control_nodes/control_nodes.cpp
+        src/mesh/dim3/generate_database/tags/tags.cpp
 )
 
 target_link_libraries(

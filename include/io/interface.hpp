@@ -41,6 +41,11 @@ read_3d_mesh(const std::string &mesh_parameters_file,
              const std::string &mesh_databases_file,
              const specfem::MPI::MPI *mpi);
 
+// namespace meshfem3d {
+// specfem::mesh::meshfem3d::mesh<specfem::dimension::type::dim3>
+// read_3d_mesh(const std::string &filename, const specfem::MPI::MPI *mpi);
+// } // namespace meshfem3d
+
 /**
  * @brief Read station file
  *

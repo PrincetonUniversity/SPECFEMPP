@@ -1,4 +1,4 @@
-#include "mesh/dim3/materials/materials.hpp"
+#include "mesh/dim3/generate_database/materials/materials.hpp"
 #include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_setup.hpp"

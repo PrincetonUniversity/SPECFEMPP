@@ -1,5 +1,5 @@
-#include "mesh/dim3/coordinates/coordinates.hpp"
-#include "mesh/dim3/mapping/mapping.hpp"
+#include "mesh/dim3/generate_database/coordinates/coordinates.hpp"
+#include "mesh/dim3/generate_database/mapping/mapping.hpp"
 #include <iostream>
 
 std::string

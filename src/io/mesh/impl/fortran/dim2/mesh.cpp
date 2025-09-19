@@ -10,7 +10,7 @@
 #include "io/mesh/impl/fortran/dim2/read_material_properties.hpp"
 #include "io/mesh/impl/fortran/dim2/read_mesh_database.hpp"
 #include "io/mesh/impl/fortran/dim2/read_parameters.hpp"
-#include "io/mesh/impl/fortran/dim3/interface.hpp"
+#include "io/mesh/impl/fortran/dim3/generate_database/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
 #include "specfem_mpi/interface.hpp"

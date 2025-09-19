@@ -1,4 +1,4 @@
-#include "mesh/dim3/control_nodes/control_nodes.hpp"
+#include "mesh/dim3/generate_database/control_nodes/control_nodes.hpp"
 #include <sstream>
 
 std::string

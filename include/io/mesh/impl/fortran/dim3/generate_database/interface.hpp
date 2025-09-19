@@ -167,5 +167,5 @@ void read_control_nodes_coordinates(std::ifstream &stream,
 } // namespace io
 } // namespace specfem
 
-#include "io/mesh/impl/fortran/dim3/interface.tpp"
-#include "io/mesh/impl/fortran/dim3/utilities.hpp"
+#include "io/mesh/impl/fortran/dim3/generate_database/interface.tpp"
+#include "io/mesh/impl/fortran/dim3/generate_database/utilities.hpp"

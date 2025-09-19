@@ -1,6 +1,6 @@
 #include "enumerations/dimension.hpp"
 #include "io/fortranio/interface.hpp"
-#include "io/mesh/impl/fortran/dim3/interface.hpp"
+#include "io/mesh/impl/fortran/dim3/generate_database/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 

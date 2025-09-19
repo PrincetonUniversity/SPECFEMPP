@@ -1,6 +1,6 @@
 #pragma once
 #include "enumerations/dimension.hpp"
-#include "mesh/dim3/mapping/mapping.hpp"
+#include "mesh/dim3/generate_database/mapping/mapping.hpp"
 #include "mesh/mesh_base.hpp"
 #include "specfem_setup.hpp"
 

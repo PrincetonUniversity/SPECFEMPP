@@ -1,8 +1,8 @@
-#include "mesh/dim3/tags/tags.hpp"
+#include "mesh/dim3/generate_database/tags/tags.hpp"
 #include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
-#include "mesh/dim3/element_types/element_types.hpp"
-#include "mesh/dim3/parameters/parameters.hpp"
+#include "mesh/dim3/generate_database/element_types/element_types.hpp"
+#include "mesh/dim3/generate_database/parameters/parameters.hpp"
 #include <Kokkos_Core.hpp>
 
 specfem::mesh::tags<specfem::dimension::type::dim3>::tags(

@@ -2,8 +2,8 @@
 
 #include "enumerations/boundary.hpp"
 #include "enumerations/medium.hpp"
-#include "mesh/dim3/boundaries/boundaries.hpp"
-#include "mesh/dim3/materials/materials.hpp"
+#include "mesh/dim3/generate_database/boundaries/boundaries.hpp"
+#include "mesh/dim3/generate_database/materials/materials.hpp"
 #include "mesh/impl/tags_container.hpp"
 #include "mesh/mesh_base.hpp"
 
