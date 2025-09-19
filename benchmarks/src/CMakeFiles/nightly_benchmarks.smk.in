@@ -5,10 +5,27 @@ configfile: "@SPECFEM_BENCHMARKS_BUILD_DIR@/nightly_config.yaml"
 
 rule all:
     input:
-        expand(
+        profiles = expand(
             "@SPECFEM_BENCHMARKS_BUILD_DIR@/dim2/{module}/benchmark/profiles.json",
             module=[benchmark["name"] for benchmark in config["benchmarks"]]
         ),
+    params:
+        remote = "/home/TROMP/SPECFEMPP-benchmarks/nightly_benchmarks/data/benchmarks",
+    shell:
+        """
+            echo "Copying benchmark results to remote server..."
+            ## copy results to remote server along with date and time stamp
+            ## Create a folder with current date and time
+            remote="{params.remote}/$(date +'%Y%m%d_%H%M%S')"
+            mkdir -p $remote
+            # copy each profile.json file into separate subdirectory
+            for profile in {input.profiles}; do
+                module=$(basename $(dirname $(dirname $profile)))
+                mkdir -p $remote/$module
+                cp $profile $remote/$module/
+            done
+            echo "Benchmark results copied to $remote"
+        """
 
 rule profiles:
     input:
