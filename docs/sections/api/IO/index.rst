@@ -47,7 +47,7 @@ Read 2D Sources
 Read 2D Receivers
 -----------------
 
-.. doxygenfunction:: specfem::io::read_receivers(const std::string &stations_file, const type_real angle)
+.. doxygenfunction:: specfem::io::read_2d_receivers(const std::string &stations_file, const type_real angle)
 
 
 
@@ -70,9 +70,7 @@ Read 3D Sources
 Read 3D Receivers
 -----------------
 
-.. note::
-
-    3D Receiver I/O is not yet implemented.
+.. doxygenfunction:: specfem::io::read_3d_receivers(const std::string &stations_file)
 
 
 

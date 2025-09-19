@@ -1,6 +1,6 @@
 // Internal Includes
-#include "specfem/receivers.hpp"
 #include "io/interface.hpp"
+#include "specfem/receivers.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
@@ -13,8 +13,8 @@
 
 std::vector<std::shared_ptr<
     specfem::receivers::receiver<specfem::dimension::type::dim2> > >
-specfem::io::read_receivers(const std::string &stations_file,
-                            const type_real angle) {
+specfem::io::read_2d_receivers(const std::string &stations_file,
+                               const type_real angle) {
 
   boost::char_separator<char> sep(" ");
   std::vector<std::shared_ptr<
@@ -54,17 +54,25 @@ specfem::io::read_receivers(const std::string &stations_file,
     stations.close();
   }
 
+  // Warn if no receivers were found
+  if (receivers.empty()) {
+    std::cout << "\033[1mWARNING: No receiver stations found in the STATIONS "
+                 "file\033[0m"
+              << std::endl;
+  }
+
   return receivers;
 }
 
 std::vector<std::shared_ptr<
     specfem::receivers::receiver<specfem::dimension::type::dim2> > >
-specfem::io::read_receivers(const YAML::Node &stations, const type_real angle) {
+specfem::io::read_2d_receivers(const YAML::Node &stations,
+                               const type_real angle) {
 
   // If stations file is a string then read the stations file from text format
   try {
     std::string stations_file = stations["stations"].as<std::string>();
-    return read_receivers(stations_file, angle);
+    return read_2d_receivers(stations_file, angle);
   } catch (const YAML::Exception &e) {
     // If stations file is not a string then read the stations from the YAML
     // node

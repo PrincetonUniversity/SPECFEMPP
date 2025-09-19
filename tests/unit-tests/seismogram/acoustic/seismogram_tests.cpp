@@ -95,7 +95,7 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
 
   const auto angle = setup.get_receiver_angle();
   const auto stations_node = setup.get_stations();
-  auto receivers = specfem::io::read_receivers(stations_node, angle);
+  auto receivers = specfem::io::read_2d_receivers(stations_node, angle);
   const auto stypes = setup.get_seismogram_types();
 
   specfem::assembly::assembly assembly(mesh, quadratures, sources, receivers,
