@@ -10,7 +10,7 @@ rule all:
             module=[benchmark["name"] for benchmark in config["benchmarks"]]
         ),
     params:
-        remote = "/scratch/gpfs/rk9481/specfempp_benchmarks/nightly_benchmarks/data/benchmarks",
+        remote = "/home/TROMP/SPECFEMPP-benchmarks/nightly_benchmarks/data/benchmarks",
     shell:
         """
             echo "Copying benchmark results to remote server..."
