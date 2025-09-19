@@ -21,6 +21,7 @@ package = false
 all = [
   {include-group = "dev"},
   {include-group = "examples"},
+  {include-group = "nightly-benchmarks"},
   {include-group = "scripts"}
 ]
 
@@ -51,7 +52,7 @@ doc = [
 ]
 
 examples = [
-  "snakemake==8.29.3",
+  "snakemake==9.11.2",
   "obspy==1.4.1",
   "snakemake-executor-plugin-slurm==0.10.2",
   "imageio==2.36.1",
@@ -60,6 +61,11 @@ examples = [
   "numpy==2.2.4",
   "scipy==1.15.2",
   "h5py==3.13.0",
+]
+
+nightly-benchmarks = [
+  {include-group = "examples"},
+  "pandas==2.3.2",
 ]
 
 scripts = [

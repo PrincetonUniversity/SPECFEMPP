@@ -4,34 +4,34 @@ MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem2D"
 
 rule all:
     input:
-        plotX="OUTPUT_FILES/results/traces_X.png",
-        plotZ="OUTPUT_FILES/results/traces_Z.png",
+        plotX="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_X.png",
+        plotZ="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_Z.png",
     localrule: True
 
 
 rule generate_mesh:
     input:
-        "Par_File",
+        "@CURRENT_BENCHMARK_BUILD_DIR@/Par_File",
     output:
-        database="OUTPUT_FILES/database.bin",
-        stations="OUTPUT_FILES/STATIONS",
+        database="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/database.bin",
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS",
     localrule: True
     shell:
         """
-            mkdir -p OUTPUT_FILES
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
             {MESHFEM_BIN} -p {input}
         """
 
 
 rule run_solver:
     input:
-        database="OUTPUT_FILES/database.bin",
-        stations="OUTPUT_FILES/STATIONS",
-        source="sources.yaml",
-        config="specfem_config.yaml",
+        database="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/database.bin",
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS",
+        source="@CURRENT_BENCHMARK_BUILD_DIR@/sources.yaml",
+        config="@CURRENT_BENCHMARK_BUILD_DIR@/specfem_config.yaml",
     output:
         seismograms=expand(
-            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
             station_name=[
                 "S0001",
                 "S0002",
@@ -48,6 +48,7 @@ rule run_solver:
             network_name=["AA"],
             component=["BXX", "BXZ"],
         ),
+        log="@CURRENT_BENCHMARK_BUILD_DIR@/output.log",
     resources:
         nodes=1,
         tasks=1,
@@ -57,16 +58,17 @@ rule run_solver:
         """
             # module purge
             # module load boost/1.73.0
-            mkdir -p OUTPUT_FILES/results
-            echo "Hostname: $(hostname)" > output.log
-            {SPECFEM_BIN} -p {input.config} >> output.log
+            export KOKKOS_TOOLS_LIBS={params.KOKKOS_TOOLS_LIBS}
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results
+            echo "Hostname: $(hostname)" > {output.log}
+            {SPECFEM_BIN} -p {input.config} >> {output.log}
         """
 
 
 rule plot_seismogram:
     input:
         trace_files=expand(
-            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
             station_name=[
                 "S0001",
                 "S0002",
@@ -84,8 +86,8 @@ rule plot_seismogram:
             component=["BXX", "BXZ"],
         ),
     output:
-        traces_X="OUTPUT_FILES/results/traces_X.png",
-        traces_Z="OUTPUT_FILES/results/traces_Z.png",
+        traces_X="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_X.png",
+        traces_Z="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/traces_Z.png",
     localrule: True
     run:
         import glob
@@ -124,7 +126,7 @@ rule plot_seismogram:
             return stream
 
 
-        stream = get_traces("OUTPUT_FILES/results")
+        stream = get_traces("@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results")
 
         stream.select(component='X').plot(size=(800, 1000)).savefig(output.traces_X)
         stream.select(component='Z').plot(size=(800, 1000)).savefig(output.traces_Z)
@@ -133,5 +135,5 @@ rule plot_seismogram:
 rule clean:
     shell:
         """
-            rm -rf OUTPUT_FILES
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
         """

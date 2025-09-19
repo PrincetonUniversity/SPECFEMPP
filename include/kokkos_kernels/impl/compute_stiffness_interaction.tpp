@@ -116,6 +116,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
   specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements, element_grid);
 
+  Kokkos::Profiling::pushRegion("Compute Stiffness Interaction");
+
   if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey &&
                 WavefieldType ==
                     specfem::wavefield::simulation_field::backward) {
@@ -250,6 +252,8 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
               });
         });
   }
+
+  Kokkos::Profiling::popRegion();
 
   return nelements;
 }
