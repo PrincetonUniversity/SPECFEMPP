@@ -52,10 +52,15 @@ public:
        const specfem::quadrature::quadratures &quadratures,
        const specfem::mesh::adjacency_graph<dimension_tag> &adjacency_graph);
 
+  // TODO(Rohit: ADJ_GRAPH_DEFAULT)
+  // Remove assemble_legacy functionality when adjacency graph is the default
+  // feature for store mesh adjancencies
   void assemble_legacy();
 
   void assemble();
 
+  // TODO(Rohit: ADJ_GRAPH_DEFAULT)
+  // The graph should never be empty after it is made as default
   bool adjacency_graph_empty() const {
     return static_cast<const specfem::assembly::mesh_impl::adjacency_graph<
         dimension_tag> &>(*this)

@@ -36,8 +36,9 @@ specfem::connections::to_string(const specfem::connections::type &conn) {
  * mappings between edges require flipping to maintain proper orientation.
  * The flipping rules ensure consistent connectivity across mesh elements.
  */
-static bool flip_orientations(const specfem::mesh_entity::type &from,
-                              const specfem::mesh_entity::type &to) {
+bool specfem::connections::connection_mapping::flip_orientation(
+    const specfem::mesh_entity::type &from,
+    const specfem::mesh_entity::type &to) const {
   if ((from == specfem::mesh_entity::type::top &&
        to == specfem::mesh_entity::type::bottom) ||
       (from == specfem::mesh_entity::type::bottom &&
@@ -123,7 +124,7 @@ specfem::connections::connection_mapping::map_coordinates(
 
   const auto coord_from = edge_coordinates.at(from)(point);
 
-  const auto flip = flip_orientations(from, to);
+  const auto flip = this->flip_orientation(from, to);
 
   const auto coord_to =
       flip ? edge_coordinates.at(to)(total_points_on_to - 1 - point)

@@ -19,10 +19,12 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
     const std::shared_ptr<specfem::io::reader> &property_reader) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures,
                  mesh.adjacency_graph };
-
   this->element_types = { this->mesh.nspec, this->mesh.element_grid.ngllz,
                           this->mesh.element_grid.ngllx, this->mesh,
                           mesh.tags };
+  this->edge_types = { this->mesh.element_grid.ngllx,
+                       this->mesh.element_grid.ngllz, this->mesh,
+                       this->element_types, mesh.coupled_interfaces };
   this->jacobian_matrix = { this->mesh };
   this->properties = { this->mesh.nspec,
                        this->mesh.element_grid.ngllz,
@@ -55,8 +57,9 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
                        mesh,
                        this->mesh,
                        this->jacobian_matrix };
-  this->coupled_interfaces = { mesh, this->mesh, this->jacobian_matrix,
-                               this->element_types };
+  this->coupled_interfaces = { this->mesh.element_grid.ngllz,
+                               this->mesh.element_grid.ngllx, this->edge_types,
+                               this->jacobian_matrix, this->mesh };
   this->fields = { this->mesh, this->element_types, simulation };
 
   if (allocate_boundary_values)
