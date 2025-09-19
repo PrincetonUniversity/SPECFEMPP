@@ -38,6 +38,8 @@ int corrector_phase_impl(
 
   using IndexType = specfem::point::assembly_index<using_simd>;
 
+  Kokkos::Profiling::pushRegion("Compute Corrector Phase");
+
   specfem::execution::for_all(
       "specfem::TimeScheme::Newmark::corrector_phase_impl", range,
       KOKKOS_LAMBDA(const IndexType &index) {
@@ -52,6 +54,8 @@ int corrector_phase_impl(
 
         specfem::assembly::store_on_device(index, field, velocity);
       });
+
+  Kokkos::Profiling::popRegion();
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
                                               MediumTag>::components;
@@ -93,6 +97,8 @@ int predictor_phase_impl(
 
   using IndexType = specfem::point::assembly_index<using_simd>;
 
+  Kokkos::Profiling::pushRegion("Compute Predictor Phase");
+
   specfem::execution::for_all(
       "specfem::TimeScheme::Newmark::corrector_phase_impl", range,
       KOKKOS_LAMBDA(const IndexType &index) {
@@ -114,6 +120,8 @@ int predictor_phase_impl(
         specfem::assembly::store_on_device(index, field, displacement, velocity,
                                            acceleration);
       });
+
+  Kokkos::Profiling::popRegion();
 
   return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
                                               MediumTag>::components;

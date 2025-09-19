@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.12"
 
 [[package]]
@@ -852,6 +853,40 @@ wheels = [
 ]
 
 [[package]]
+name = "pandas"
+version = "2.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "python-dateutil" },
+    { name = "pytz" },
+    { name = "tzdata" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/79/8e/0e90233ac205ad182bd6b422532695d2b9414944a280488105d598c70023/pandas-2.3.2.tar.gz", hash = "sha256:ab7b58f8f82706890924ccdfb5f48002b83d2b5a3845976a9fb705d36c34dcdb", size = 4488684 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ec/db/614c20fb7a85a14828edd23f1c02db58a30abf3ce76f38806155d160313c/pandas-2.3.2-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:3fbb977f802156e7a3f829e9d1d5398f6192375a3e2d1a9ee0803e35fe70a2b9", size = 11587652 },
+    { url = "https://files.pythonhosted.org/packages/99/b0/756e52f6582cade5e746f19bad0517ff27ba9c73404607c0306585c201b3/pandas-2.3.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:1b9b52693123dd234b7c985c68b709b0b009f4521000d0525f2b95c22f15944b", size = 10717686 },
+    { url = "https://files.pythonhosted.org/packages/37/4c/dd5ccc1e357abfeee8353123282de17997f90ff67855f86154e5a13b81e5/pandas-2.3.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0bd281310d4f412733f319a5bc552f86d62cddc5f51d2e392c8787335c994175", size = 11278722 },
+    { url = "https://files.pythonhosted.org/packages/d3/a4/f7edcfa47e0a88cda0be8b068a5bae710bf264f867edfdf7b71584ace362/pandas-2.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:96d31a6b4354e3b9b8a2c848af75d31da390657e3ac6f30c05c82068b9ed79b9", size = 11987803 },
+    { url = "https://files.pythonhosted.org/packages/f6/61/1bce4129f93ab66f1c68b7ed1c12bac6a70b1b56c5dab359c6bbcd480b52/pandas-2.3.2-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:df4df0b9d02bb873a106971bb85d448378ef14b86ba96f035f50bbd3688456b4", size = 12766345 },
+    { url = "https://files.pythonhosted.org/packages/8e/46/80d53de70fee835531da3a1dae827a1e76e77a43ad22a8cd0f8142b61587/pandas-2.3.2-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:213a5adf93d020b74327cb2c1b842884dbdd37f895f42dcc2f09d451d949f811", size = 13439314 },
+    { url = "https://files.pythonhosted.org/packages/28/30/8114832daff7489f179971dbc1d854109b7f4365a546e3ea75b6516cea95/pandas-2.3.2-cp312-cp312-win_amd64.whl", hash = "sha256:8c13b81a9347eb8c7548f53fd9a4f08d4dfe996836543f805c987bafa03317ae", size = 10983326 },
+    { url = "https://files.pythonhosted.org/packages/27/64/a2f7bf678af502e16b472527735d168b22b7824e45a4d7e96a4fbb634b59/pandas-2.3.2-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:0c6ecbac99a354a051ef21c5307601093cb9e0f4b1855984a084bfec9302699e", size = 11531061 },
+    { url = "https://files.pythonhosted.org/packages/54/4c/c3d21b2b7769ef2f4c2b9299fcadd601efa6729f1357a8dbce8dd949ed70/pandas-2.3.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:c6f048aa0fd080d6a06cc7e7537c09b53be6642d330ac6f54a600c3ace857ee9", size = 10668666 },
+    { url = "https://files.pythonhosted.org/packages/50/e2/f775ba76ecfb3424d7f5862620841cf0edb592e9abd2d2a5387d305fe7a8/pandas-2.3.2-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0064187b80a5be6f2f9c9d6bdde29372468751dfa89f4211a3c5871854cfbf7a", size = 11332835 },
+    { url = "https://files.pythonhosted.org/packages/8f/52/0634adaace9be2d8cac9ef78f05c47f3a675882e068438b9d7ec7ef0c13f/pandas-2.3.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4ac8c320bded4718b298281339c1a50fb00a6ba78cb2a63521c39bec95b0209b", size = 12057211 },
+    { url = "https://files.pythonhosted.org/packages/0b/9d/2df913f14b2deb9c748975fdb2491da1a78773debb25abbc7cbc67c6b549/pandas-2.3.2-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:114c2fe4f4328cf98ce5716d1532f3ab79c5919f95a9cfee81d9140064a2e4d6", size = 12749277 },
+    { url = "https://files.pythonhosted.org/packages/87/af/da1a2417026bd14d98c236dba88e39837182459d29dcfcea510b2ac9e8a1/pandas-2.3.2-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:48fa91c4dfb3b2b9bfdb5c24cd3567575f4e13f9636810462ffed8925352be5a", size = 13415256 },
+    { url = "https://files.pythonhosted.org/packages/22/3c/f2af1ce8840ef648584a6156489636b5692c162771918aa95707c165ad2b/pandas-2.3.2-cp313-cp313-win_amd64.whl", hash = "sha256:12d039facec710f7ba305786837d0225a3444af7bbd9c15c32ca2d40d157ed8b", size = 10982579 },
+    { url = "https://files.pythonhosted.org/packages/f3/98/8df69c4097a6719e357dc249bf437b8efbde808038268e584421696cbddf/pandas-2.3.2-cp313-cp313t-macosx_10_13_x86_64.whl", hash = "sha256:c624b615ce97864eb588779ed4046186f967374185c047070545253a52ab2d57", size = 12028163 },
+    { url = "https://files.pythonhosted.org/packages/0e/23/f95cbcbea319f349e10ff90db488b905c6883f03cbabd34f6b03cbc3c044/pandas-2.3.2-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:0cee69d583b9b128823d9514171cabb6861e09409af805b54459bd0c821a35c2", size = 11391860 },
+    { url = "https://files.pythonhosted.org/packages/ad/1b/6a984e98c4abee22058aa75bfb8eb90dce58cf8d7296f8bc56c14bc330b0/pandas-2.3.2-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2319656ed81124982900b4c37f0e0c58c015af9a7bbc62342ba5ad07ace82ba9", size = 11309830 },
+    { url = "https://files.pythonhosted.org/packages/15/d5/f0486090eb18dd8710bf60afeaf638ba6817047c0c8ae5c6a25598665609/pandas-2.3.2-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b37205ad6f00d52f16b6d09f406434ba928c1a1966e2771006a9033c736d30d2", size = 11883216 },
+    { url = "https://files.pythonhosted.org/packages/10/86/692050c119696da19e20245bbd650d8dfca6ceb577da027c3a73c62a047e/pandas-2.3.2-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:837248b4fc3a9b83b9c6214699a13f069dc13510a6a6d7f9ba33145d2841a012", size = 12699743 },
+    { url = "https://files.pythonhosted.org/packages/cd/d7/612123674d7b17cf345aad0a10289b2a384bff404e0463a83c4a3a59d205/pandas-2.3.2-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:d2c3554bd31b731cd6490d94a28f3abb8dd770634a9e06eb6d2911b9827db370", size = 13186141 },
+]
+
+[[package]]
 name = "pbr"
 version = "6.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1050,6 +1085,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892 },
+]
+
+[[package]]
+name = "pytz"
+version = "2025.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/bf/abbd3cdfb8fbc7fb3d4d38d320f2441b1e7cbe29be4f23797b4a2b5d8aac/pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3", size = 320884 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/81/c4/34e93fe5f5429d7570ec1fa436f1986fb1f00c3e0f43a589fe2bbcd22c3f/pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00", size = 509225 },
 ]
 
 [[package]]
@@ -1337,7 +1381,7 @@ wheels = [
 
 [[package]]
 name = "snakemake"
-version = "8.29.3"
+version = "9.11.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
@@ -1356,21 +1400,24 @@ dependencies = [
     { name = "psutil" },
     { name = "pulp" },
     { name = "pyyaml" },
+    { name = "referencing" },
     { name = "requests" },
     { name = "reretry" },
     { name = "smart-open" },
     { name = "snakemake-interface-common" },
     { name = "snakemake-interface-executor-plugins" },
+    { name = "snakemake-interface-logger-plugins" },
     { name = "snakemake-interface-report-plugins" },
+    { name = "snakemake-interface-scheduler-plugins" },
     { name = "snakemake-interface-storage-plugins" },
     { name = "tabulate" },
     { name = "throttler" },
     { name = "wrapt" },
     { name = "yte" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/80/1ce0232ef3249de78ff77219fd51a3dc75074cf3b27f02d15106b5a360bd/snakemake-8.29.3.tar.gz", hash = "sha256:a4d4ba959beec079c7430b0cbd47989cbcc2c8943ae74034b3db38a32329c1be", size = 4761054 }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/67/88cbc1c18f0c97f07b7e2a0d722f4297a2398f7e6c095a30ec80d75b2126/snakemake-9.11.2.tar.gz", hash = "sha256:d0905992f6db8f887bb40234336a7979d9088886a7cabfb4334557c400d66ec9", size = 6724674 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/62/d4/a921243d8ae68af333c79aeb8e69260bb3773eba72989b0e3316de79dc17/snakemake-8.29.3-py3-none-any.whl", hash = "sha256:c3e6d41f77f6e7d5c2bbb647ba682d610fa37e9dcd2497e0bfc476adcd55375b", size = 1028356 },
+    { url = "https://files.pythonhosted.org/packages/ba/12/4da80db9cc71d6b5c5514dc53c4cb51a147cd22065596020ec98aeb7ab33/snakemake-9.11.2-py3-none-any.whl", hash = "sha256:9e55db7a53deef728b4ee558a5bf8207e7ffcf604edce4f1271678dec9557171", size = 1124593 },
 ]
 
 [[package]]
@@ -1403,15 +1450,16 @@ wheels = [
 
 [[package]]
 name = "snakemake-interface-common"
-version = "1.17.4"
+version = "1.21.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argparse-dataclass" },
     { name = "configargparse" },
+    { name = "packaging" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/09/d4/dd2694226160c126e3ce2a27222088bde3ef07cd554d31d63398cc48f810/snakemake_interface_common-1.17.4.tar.gz", hash = "sha256:c2142e1b93cbc18c2cf41d15968ba8688f60b077c8284e5de057cccfc215d4d3", size = 9897 }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/d6/f28dab9c084d01ac8b916e835f35838ce801cdc7176c5ed59cf1b39b42c1/snakemake_interface_common-1.21.0.tar.gz", hash = "sha256:0b6f0ef2c1a19fa8c20d676f4e355b8ba7058e142640a1c3c36fd1b9e110ef53", size = 13760 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/fe/c318657e6a4b8ab5b3eafa07cd1c360a732c6b37ba6085f3c82339ebbbdc/snakemake_interface_common-1.17.4-py3-none-any.whl", hash = "sha256:1d757cce0300a73d48b906d1ade38706853169320a5d27b963869888d130c354", size = 14011 },
+    { url = "https://files.pythonhosted.org/packages/a0/24/de0615747b9eebd2b5abf9f629120224338bac0a09a46ab86ec72d401645/snakemake_interface_common-1.21.0-py3-none-any.whl", hash = "sha256:844a23831ceab1069b859732a8f6d8151b75b89ad8ad4c58ab0dcfdea234b40a", size = 16723 },
 ]
 
 [[package]]
@@ -1429,20 +1477,44 @@ wheels = [
 ]
 
 [[package]]
-name = "snakemake-interface-report-plugins"
-version = "1.1.0"
+name = "snakemake-interface-logger-plugins"
+version = "1.2.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "snakemake-interface-common" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5e/ae/ee9a6c9475e380bb55020dc161ab08698fe85da9e866477bfb333b15a0ed/snakemake_interface_report_plugins-1.1.0.tar.gz", hash = "sha256:b1ee444b2fca51225cf8a102f8e56633791d01433cd00cf07a1d9713a12313a5", size = 4383 }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/d4/3cb00ef9a65bdb7f533f42df04873f96e08b8ef39eaf33c69db2e6f87f8b/snakemake_interface_logger_plugins-1.2.4.tar.gz", hash = "sha256:09193b07c260b3efc88a75a0d33767820705f66e85c14d4f0d0e562b123c3c58", size = 11858 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/35/89/f5f4e48b72fca04458a2fe4f4b02e10f95fb47772b0d0ea889ac929c3b1e/snakemake_interface_report_plugins-1.1.0-py3-none-any.whl", hash = "sha256:00749eb3c5c7ce465757d0fc9f04e6c4d3f5af4f463809c34b92c8b5efea0fd5", size = 7076 },
+    { url = "https://files.pythonhosted.org/packages/40/c1/5af0e20e8284c890968af059868290e8c070f3676751abc524b3c4cd42a8/snakemake_interface_logger_plugins-1.2.4-py3-none-any.whl", hash = "sha256:659ddf3448024b90d2715ea82b9e4dd77ffae42615d2ba30479faaa2755a1b65", size = 10087 },
+]
+
+[[package]]
+name = "snakemake-interface-report-plugins"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "snakemake-interface-common" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f1/0f/b0986bacc1087d549e2ce5f5987de73980dc7041b7c518286f5035160d89/snakemake_interface_report_plugins-1.2.0.tar.gz", hash = "sha256:36cff4d50e7763ae0def0a7cf36d85e6c575d7bad1a3ade26b66c9b2b8831c02", size = 4251 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/02/e0/fad8a90958288c47a26bd0b055301de6915df4bbc19cc1fd5eb5a8e29d4d/snakemake_interface_report_plugins-1.2.0-py3-none-any.whl", hash = "sha256:3f2fa6f49029f50f00b380f9a688a6d61b267f971b81faedff33188c0bf661f8", size = 7191 },
+]
+
+[[package]]
+name = "snakemake-interface-scheduler-plugins"
+version = "2.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "snakemake-interface-common" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ae/bf/b431786d74071726c6aed5f3536a03a4834c4a0286f5381e7be44269671a/snakemake_interface_scheduler_plugins-2.0.1.tar.gz", hash = "sha256:c22deccc6df4c702e67d012650571fa858e8577b759d8cb4729d16b087852b43", size = 8540 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/8b/a4a499c33719d99b8962209cb63c5095c0d16bbe04ceeaa8ed66be759ea5/snakemake_interface_scheduler_plugins-2.0.1-py3-none-any.whl", hash = "sha256:3ec1a43d6a71fba62b09a3b631cc618a672ef4d86e587d05f9aa3b2409fb6770", size = 10738 },
 ]
 
 [[package]]
 name = "snakemake-interface-storage-plugins"
-version = "3.5.0"
+version = "4.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "reretry" },
@@ -1450,9 +1522,9 @@ dependencies = [
     { name = "throttler" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d8/33/e638c10fb307f2576b235f9ce4ac3d085954783be716d1a958292b392bde/snakemake_interface_storage_plugins-3.5.0.tar.gz", hash = "sha256:88ee1dde95f9d5abb03113c52fb8cfa78ee502cce9ec788c161b3c09076fc075", size = 12041 }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/b3/cd5256e56cfe6fc51319a7d9df1a3a2a7584499fadd3c3fc5619ff39f74f/snakemake_interface_storage_plugins-4.2.3.tar.gz", hash = "sha256:95be93d1aa1c56c189d9ff661930a6475e847a79a74013822c9570c0ef691755", size = 14280 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/6b/f968bc4c8d24b22b0552fcbdbe6005d6f8ced4383e9ce4ab96d2259cd3ef/snakemake_interface_storage_plugins-3.5.0-py3-none-any.whl", hash = "sha256:90841b6333c60e5859f81eec5f63d66e8bd29108f40fe922862d31c0f761b1ca", size = 15417 },
+    { url = "https://files.pythonhosted.org/packages/14/76/27e22dbcab8550bfc6477ed109408896a662dc4de9852eff16a01f394928/snakemake_interface_storage_plugins-4.2.3-py3-none-any.whl", hash = "sha256:6e5d1773e2f2e08d343e15ea4afc961a296e3d4cdb1352c81303c553f376671f", size = 17138 },
 ]
 
 [[package]]
@@ -1489,6 +1561,7 @@ all = [
     { name = "jinja2" },
     { name = "numpy" },
     { name = "obspy" },
+    { name = "pandas" },
     { name = "pre-commit" },
     { name = "pyyaml" },
     { name = "restructuredtext-lint" },
@@ -1541,6 +1614,18 @@ examples = [
     { name = "snakemake" },
     { name = "snakemake-executor-plugin-slurm" },
 ]
+nightly-benchmarks = [
+    { name = "h5py" },
+    { name = "imageio" },
+    { name = "jinja2" },
+    { name = "numpy" },
+    { name = "obspy" },
+    { name = "pandas" },
+    { name = "pyyaml" },
+    { name = "scipy" },
+    { name = "snakemake" },
+    { name = "snakemake-executor-plugin-slurm" },
+]
 style = [
     { name = "clang-format" },
     { name = "pre-commit" },
@@ -1560,13 +1645,14 @@ all = [
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "numpy", specifier = "==2.2.4" },
     { name = "obspy", specifier = "==1.4.1" },
+    { name = "pandas", specifier = "==2.3.2" },
     { name = "pre-commit", specifier = "==2.19.0" },
     { name = "pyyaml", specifier = "==6.0.2" },
     { name = "restructuredtext-lint", specifier = "==1.4.0" },
     { name = "rstcheck", specifier = "==6.2.4" },
     { name = "ruff", specifier = "==0.9.1" },
     { name = "scipy", specifier = "==1.15.2" },
-    { name = "snakemake", specifier = "==8.29.3" },
+    { name = "snakemake", specifier = "==9.11.2" },
     { name = "snakemake-executor-plugin-slurm", specifier = "==0.10.2" },
     { name = "sphinx-copybutton", specifier = "==0.4.0" },
     { name = "sphinx-design", specifier = "==0.6.1" },
@@ -1609,7 +1695,19 @@ examples = [
     { name = "obspy", specifier = "==1.4.1" },
     { name = "pyyaml", specifier = "==6.0.2" },
     { name = "scipy", specifier = "==1.15.2" },
-    { name = "snakemake", specifier = "==8.29.3" },
+    { name = "snakemake", specifier = "==9.11.2" },
+    { name = "snakemake-executor-plugin-slurm", specifier = "==0.10.2" },
+]
+nightly-benchmarks = [
+    { name = "h5py", specifier = "==3.13.0" },
+    { name = "imageio", specifier = "==2.36.1" },
+    { name = "jinja2", specifier = "==3.1.6" },
+    { name = "numpy", specifier = "==2.2.4" },
+    { name = "obspy", specifier = "==1.4.1" },
+    { name = "pandas", specifier = "==2.3.2" },
+    { name = "pyyaml", specifier = "==6.0.2" },
+    { name = "scipy", specifier = "==1.15.2" },
+    { name = "snakemake", specifier = "==9.11.2" },
     { name = "snakemake-executor-plugin-slurm", specifier = "==0.10.2" },
 ]
 style = [
@@ -1859,6 +1957,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/df/db/f35a00659bc03fec321ba8bce9420de607a1d37f8342eee1863174c69557/typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8", size = 85321 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d", size = 37438 },
+]
+
+[[package]]
+name = "tzdata"
+version = "2025.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/95/32/1a225d6164441be760d75c2c42e2780dc0873fe382da3e98a2e1e48361e5/tzdata-2025.2.tar.gz", hash = "sha256:b60a638fcc0daffadf82fe0f57e53d06bdec2f36c4df66280ae79bce6bd6f2b9", size = 196380 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5c/23/c7abc0ca0a1526a0774eca151daeb8de62ec457e77262b66b359c3c7679e/tzdata-2025.2-py2.py3-none-any.whl", hash = "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8", size = 347839 },
 ]
 
 [[package]]
