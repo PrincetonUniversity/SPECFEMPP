@@ -9,7 +9,7 @@
 
  Reading parameters from ./DATA/Par_file
 
- Reading mesh parameters from file ./data/dim2fem3D_files/Mesh_Par_file
+ Reading mesh parameters from file ./DATA/meshfem3D_files/Mesh_Par_file
    input parameters...
    doubling layers...
    visualization...
@@ -18,9 +18,9 @@
      material            1  elastic
    domain regions...
      region            1  with material            1
-       nex_xi  begin/end =            1          25
-       nex_eta begin/end =            1          20
-       nz      begin/end =            1          15
+       nex_xi  begin/end =            1          15
+       nex_eta begin/end =            1          12
+       nz      begin/end =            1           9
 
    reading Mesh_Par_file done successfully
 
@@ -28,13 +28,13 @@
    all okay
 
 
- Reading interface data from file ./data/dim2fem3D_files/interfaces.txt
+ Reading interface data from file ./DATA/meshfem3D_files/interfaces.txt
    maximum interface points x/y =            2           2
    interfaces done
 
  parameter setup:
-   total number of elements =         7500
-   total number of points   =        64821
+   total number of elements =         1620
+   total number of points   =        14725
 
 
  Creating global slice addressing
@@ -45,11 +45,11 @@
  There are            1  MPI processes
  Processes are numbered from 0 to            0
 
- There are           25  elements along xi
- There are           20  elements along eta
- There are           15  elements along Z
+ There are           15  elements along xi
+ There are           12  elements along eta
+ There are            9  elements along Z
 
- There are           15  spectral elements along Z in layer            1
+ There are            9  spectral elements along Z in layer            1
 
  There are            1  slices along xi
  There are            1  slices along eta
@@ -88,7 +88,7 @@
  Creating interfaces
  **************************
 
- Reading interface data from file ./data/dim2fem3D_files/interfaces.txt
+ Reading interface data from file ./DATA/meshfem3D_files/interfaces.txt
 
  number of interfaces:            1
 
@@ -123,8 +123,8 @@
  creating mesh:
    NGLLX_M/NGLLY_M/NGLLZ_M =            3           3           3
    NGNOD/NGNOD2D           =            8           4
-   NSPEC_AB                =         7500
-   NGLOB_AB                =        64821
+   NSPEC_AB                =         1620
+   NGLOB_AB                =        14725
 
  allocating mesh arrays
 
@@ -143,15 +143,15 @@
  exact area =    8.00000000E+09 (m^2)
             =    8000.00000     (km^2)
 
-   Max element size =    4000.00000     (m)
-   Min element size =    4000.00000     (m)
-   Max/min ratio =    1.00000000
+   Max element size =    6666.67188     (m)
+   Min element size =    6666.66406     (m)
+   Max/min ratio =    1.00000119
 
 
  creating indirect addressing for unstructured mesh
 
 
- File "./data/dim2fem3D_files/no_cavity.dat" not found: assume no cavity
+ File "./DATA/meshfem3D_files/no_cavity.dat" not found: assume no cavity
 
  no PML region
 
@@ -174,27 +174,27 @@
  diagonal aspect ratio: 1. perfect,  above 1. gives stretching factor
  ------------
 
- minimum length of an edge in the whole mesh (m) =    3999.9999999999927
+ minimum length of an edge in the whole mesh (m) =    6666.6666666666570
 
- maximum length of an edge in the whole mesh (m) =    4000.0000000000073
-
- ***
- *** max equiangle skewness =    2.2617277734851675E-015  in element          283  of slice            0
- ***
-
- max deviation angle from a right angle (90 degrees) is therefore =    2.0355549961366507E-013
-
- worst angle in the mesh is therefore    89.999999999999801
- or    90.000000000000199       degrees
-
- max edge aspect ratio =    1.0000000000000036
-
- max diagonal aspect ratio =    1.0000000000000036
+ maximum length of an edge in the whole mesh (m) =    6666.6666666666715
 
  ***
- *** Maximum suggested time step for simulation =    0.11603637
+ *** max equiangle skewness =    1.4135798584282298E-015  in element           61  of slice            0
  ***
- *** Max CFL stability condition of the time scheme (must be below about 0.55 or so) =   0.47039999999999998
+
+ max deviation angle from a right angle (90 degrees) is therefore =    1.2722218725854067E-013
+
+ worst angle in the mesh is therefore    89.999999999999872
+ or    90.000000000000128       degrees
+
+ max edge aspect ratio =    1.0000000000000022
+
+ max diagonal aspect ratio =    1.0000000000000022
+
+ ***
+ *** Maximum suggested time step for simulation =    0.19339394
+ ***
+ *** Max CFL stability condition of the time scheme (must be below about 0.55 or so) =   0.47039999999999993
  *** computed using the maximum P wave velocity =    2800.0000000000000
  ***
  that value is below the upper CFL limit of   0.55000000000000004
@@ -204,7 +204,7 @@
 
  histogram of skewness (0. good - 1. bad):
 
-   0.00000000      -    5.00000007E-02        7500     100.000000      %
+   0.00000000      -    5.00000007E-02        1620     100.000000      %
    5.00000007E-02  -   0.100000001               0     0.00000000      %
   0.100000001      -   0.150000006               0     0.00000000      %
   0.150000006      -   0.200000003               0     0.00000000      %
@@ -236,19 +236,19 @@
  Repartition of elements:
  -----------------------
 
- total number of elements in mesh slice 0:         7500
- total number of points in mesh slice 0:        64821
+ total number of elements in mesh slice 0:         1620
+ total number of points in mesh slice 0:        14725
 
- total number of elements in entire mesh:         7500
- approximate total number of points in entire mesh (with duplicates on MPI edges):                 64821
- approximate total number of DOFs in entire mesh (with duplicates on MPI edges):                194463
+ total number of elements in entire mesh:         1620
+ approximate total number of points in entire mesh (with duplicates on MPI edges):                 14725
+ approximate total number of DOFs in entire mesh (with duplicates on MPI edges):                 44175
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =   0.149352998
+ Elapsed time for mesh generation and buffer creation in seconds =    4.66569997E-02
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 00 s
 
  End of mesh generation
