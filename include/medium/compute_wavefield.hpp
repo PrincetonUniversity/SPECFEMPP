@@ -95,7 +95,7 @@ KOKKOS_INLINE_FUNCTION auto compute_wavefield(
                          displacement, velocity, acceleration,
                          wavefield_component, wavefield_on_entire_grid);
   return;
-} // git pull
+} // compute_wavefield
 
 } // namespace medium
 } // namespace specfem
