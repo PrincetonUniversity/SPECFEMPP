@@ -5,6 +5,7 @@
 #include "dim2/elastic/isotropic/wavefield.hpp"
 #include "dim2/elastic/isotropic_cosserat/wavefield.hpp"
 #include "dim2/poroelastic/isotropic/wavefield.hpp"
+#include "dim3/elastic/isotropic/wavefield.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
