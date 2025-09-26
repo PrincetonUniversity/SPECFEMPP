@@ -1,11 +1,6 @@
-#ifndef _SPECFEM_KERNELS_HPP
-#define _SPECFEM_KERNELS_HPP
+#pragma once
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/material_definitions.hpp"
-#include "enumerations/medium.hpp"
-#include "enumerations/simulation.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "impl/compute_coupling.hpp"
 #include "impl/compute_mass_matrix.hpp"
 #include "impl/compute_seismogram.hpp"
@@ -54,17 +49,17 @@ public:
       : assembly(assembly) {}
 
   /**
-   * @brief Updates the wavefield for a given medium
+   * @brief Updates the wavefield for a given MediumTag
    *
-   * This function updates the wavefield for a given medium type. It computes
+   * This function updates the wavefield for a given MediumTag type. It computes
    * the coupling, source interaction, stiffness interaction, and divides the
-   * mass matrix. The function is specialized for different medium types and
+   * mass matrix. The function is specialized for different MediumTag types and
    *
-   * @tparam medium Medium for which the wacefield is updated
+   * @tparam MediumTag Medium for which the wacefield is updated
    * @param istep Time step for which the wavefield is updated
    * @return int Number of elements updated
    */
-  template <specfem::element::medium_tag medium>
+  template <specfem::element::medium_tag MediumTag>
   inline int update_wavefields(const int istep) {
 
     int elements_updated = 0;
@@ -79,7 +74,7 @@ public:
               specfem::interface::attributes<_dimension_tag_,
                                              _interface_tag_>::self_medium();
           if constexpr (dimension_tag == _dimension_tag_ &&
-                        self_medium == medium) {
+                        self_medium == MediumTag) {
             impl::compute_coupling<_dimension_tag_, _connection_tag_, wavefield,
                                    _interface_tag_, _boundary_tag_>(assembly);
           }
@@ -94,7 +89,7 @@ public:
                       COMPOSITE_STACEY_DIRICHLET)),
         {
           if constexpr (dimension_tag == _dimension_tag_ &&
-                        medium == _medium_tag_) {
+                        MediumTag == _medium_tag_) {
             impl::compute_source_interaction<dimension_tag, wavefield, ngll,
                                              _medium_tag_, _property_tag_,
                                              _boundary_tag_>(assembly, istep);
@@ -110,7 +105,7 @@ public:
                       COMPOSITE_STACEY_DIRICHLET)),
         {
           if constexpr (dimension_tag == _dimension_tag_ &&
-                        medium == _medium_tag_) {
+                        MediumTag == _medium_tag_) {
             elements_updated += impl::compute_stiffness_interaction<
                 dimension_tag, wavefield, ngll, _medium_tag_, _property_tag_,
                 _boundary_tag_>(assembly, istep);
@@ -122,11 +117,59 @@ public:
                                          POROELASTIC, ELASTIC_PSV_T)),
         {
           if constexpr (dimension_tag == _dimension_tag_ &&
-                        medium == _medium_tag_) {
+                        MediumTag == _medium_tag_) {
             impl::divide_mass_matrix<dimension_tag, wavefield, _medium_tag_>(
                 assembly);
           }
         })
+
+    // FOR_EACH_IN_PRODUCT(
+    //     (DIMENSION_TAG(DIM3), CONNECTION_TAG(WEAKLY_CONFORMING),
+    //      INTERFACE_TAG(ELASTIC), BOUNDARY_TAG(NONE)),
+    //     {
+    //       constexpr auto self_medium =
+    //           specfem::interface::attributes<_dimension_tag_,
+    //                                          _interface_tag_>::self_medium();
+    //       if constexpr (dimension_tag == _dimension_tag_ &&
+    //                     self_medium == MediumTag) {
+    //         impl::compute_coupling<_dimension_tag_, _connection_tag_,
+    //         wavefield,
+    //                                _interface_tag_,
+    //                                _boundary_tag_>(assembly);
+    //       }
+    //     })
+
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
+         BOUNDARY_TAG(NONE)),
+        {
+          if constexpr (dimension_tag == _dimension_tag_ &&
+                        MediumTag == _medium_tag_) {
+            impl::compute_source_interaction<dimension_tag, wavefield, ngll,
+                                             _medium_tag_, _property_tag_,
+                                             _boundary_tag_>(assembly, istep);
+          }
+        })
+
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
+         BOUNDARY_TAG(NONE)),
+        {
+          if constexpr (dimension_tag == _dimension_tag_ &&
+                        MediumTag == _medium_tag_) {
+            elements_updated += impl::compute_stiffness_interaction<
+                dimension_tag, wavefield, ngll, _medium_tag_, _property_tag_,
+                _boundary_tag_>(assembly, istep);
+          }
+        })
+
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)), {
+      if constexpr (dimension_tag == _dimension_tag_ &&
+                    MediumTag == _medium_tag_) {
+        impl::divide_mass_matrix<dimension_tag, wavefield, _medium_tag_>(
+            assembly);
+      }
+    })
 
     return elements_updated;
   }
@@ -135,7 +178,7 @@ public:
    * @brief Initializes the mass matrix for the simulation
    *
    * This function initializes the mass matrix for the simulation. It computes
-   * the mass matrix and inverts it for different medium types.
+   * the mass matrix and inverts it for different MediumTag types.
    *
    * @param dt Time step for the simulation
    */
@@ -165,6 +208,24 @@ public:
           }
         })
 
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
+         BOUNDARY_TAG(NONE)),
+        {
+          if constexpr (dimension_tag == _dimension_tag_) {
+            impl::compute_mass_matrix<dimension_tag, wavefield, ngll,
+                                      _medium_tag_, _property_tag_,
+                                      _boundary_tag_>(dt, assembly);
+          }
+        })
+
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)), {
+      if constexpr (dimension_tag == _dimension_tag_) {
+        impl::invert_mass_matrix<dimension_tag, wavefield, _medium_tag_>(
+            assembly);
+      }
+    })
+
     return;
   }
 
@@ -172,7 +233,7 @@ public:
    * @brief Computes the seismograms for the simulation
    *
    * This function computes the seismograms for the simulation. It is
-   * specialized for different medium types and properties.
+   * specialized for different MediumTag types and properties.
    *
    * @param isig_step Time step for which the seismograms are computed
    */
@@ -190,6 +251,16 @@ public:
                                                                     isig_step);
           }
         })
+
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC)),
+        {
+          if constexpr (dimension_tag == _dimension_tag_) {
+            impl::compute_seismograms<dimension_tag, wavefield, ngll,
+                                      _medium_tag_, _property_tag_>(assembly,
+                                                                    isig_step);
+          }
+        })
   }
 
 private:
@@ -198,5 +269,3 @@ private:
 
 } // namespace kokkos_kernels
 } // namespace specfem
-
-#endif /* _SPECFEM_KERNELS_HPP */
