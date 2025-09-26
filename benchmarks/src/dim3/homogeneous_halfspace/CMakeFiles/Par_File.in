@@ -119,7 +119,7 @@ f0_FOR_PML                      = 0.05555
 # absorbing boundary conditions for a regional simulation
 # (if set to .false., and PML_CONDITIONS is also set to .false., you get a free surface instead
 # in the case of elastic or viscoelastic mesh elements, and a rigid surface in the case of acoustic (fluid) elements
-STACEY_ABSORBING_CONDITIONS     = .true.
+STACEY_ABSORBING_CONDITIONS     = .false.
 
 # absorbing top surface (defined in mesh as 'free_surface_file')
 STACEY_INSTEAD_OF_FREE_SURFACE  = .false.

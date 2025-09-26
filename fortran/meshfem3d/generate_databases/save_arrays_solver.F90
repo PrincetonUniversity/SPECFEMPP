@@ -69,7 +69,9 @@ module save_arrays_module
     allocate(array_real(3))
     ! Check if the size of the array is correct
     if (size(array, 1) /= 3 .or. size(array, 2) /= nnodes) then
-      write(*,*) 'Error: size of the array is not correct'
+      write(*,*) 'Error (control nodes): size of the array is not correct. ', &
+                 'Expected size: (3, ', nnodes, ') Actual size: (', &
+                 size(array, 1), ', ', size(array, 2), ')'
       stop
     endif
 
@@ -81,7 +83,7 @@ module save_arrays_module
 
   end subroutine save_control_nodes_array
 
-  subroutine save_global_arrays(nspec, array)
+  subroutine save_global_arrays(nspec, array, name)
 
     use constants, only: IOUT, CUSTOM_REAL
 
@@ -89,11 +91,13 @@ module save_arrays_module
 
     integer, intent(in) :: nspec
     integer :: ispec
+    character(len=*), intent(in) :: name
     real(kind=CUSTOM_REAL), dimension(:, :, :, :), intent(in) :: array
 
     ! Check if the size of the array is correct
     if (size(array, 4) /= nspec) then
-      write(*,*) 'Error: size of the array is not correct'
+      write(*,*) 'Error (', name, '): size of the array is not correct. ', &
+                 'Expected size: ', nspec, ' Actual size: ', size(array, 4)
       stop
     endif
 
@@ -116,7 +120,9 @@ module save_arrays_module
 
     ! Check if the size of the array is correct
     if (size(array, 1) /= num_inner) then
-      write(*,*) 'Error: size of the array is not correct'
+      write(*,*) 'Error (inner/outer): size of the array is not correct. ', &
+                 'Expected size: (', num_inner, ', 3) Actual size: (', &
+                 size(array, 1), ', ', size(array, 2), ')'
       stop
     endif
 
@@ -139,7 +145,8 @@ module save_arrays_module
 
       ! Check if the size of the array is correct
       if (size(array, 5) /= nspec) then
-        write(*,*) 'Error: size of the array is not correct'
+        write(*,*) 'Error (with components): size of the array is not correct. ', &
+                   'Expected size: ', nspec, ' Actual size: ', size(array, 5)
         stop
       endif
 
@@ -437,7 +444,7 @@ end module save_arrays_module
   ! local parameters
   integer, dimension(:,:), allocatable :: ibool_interfaces_ext_mesh_dummy
   integer :: max_nibool_interfaces_ext_mesh
-  integer :: nglob
+  integer :: nglob, nspec_irregular_out
   integer :: ier,i,itest
   character(len=MAX_STRING_LEN) :: filename
 
@@ -508,22 +515,35 @@ end module save_arrays_module
   write(IOUT) xix_regular
   write(IOUT) jacobian_regular
 
-  call save_global_arrays(nspec, xixstore)
+  ! write (*,*) "Number of irregular elements: ", nspec_irregular
+  ! write (*,*) "Size of xixstore: ", shape(xixstore)
+
+  ! This is a fix for when the number irregular elements is 0.
+  ! Because the mesh database reader still expects a single element
+  ! 4-dimensional array.
+  if (nspec_irregular > 0) then
+    nspec_irregular_out = nspec_irregular
+  else
+    nspec_irregular_out = 1
+  endif
+
   ! Debugging the array layout for a given element
   ! call print_global_array(1, xixstore(1,:,:,:), "xix")
-  call save_global_arrays(nspec, xiystore)
-  call save_global_arrays(nspec, xizstore)
-  call save_global_arrays(nspec, etaxstore)
-  call save_global_arrays(nspec, etaystore)
+  call save_global_arrays(nspec_irregular_out, xixstore, 'xix')
+  call save_global_arrays(nspec_irregular_out, xiystore, 'xi')
+  call save_global_arrays(nspec_irregular_out, xizstore, 'zi')
+  call save_global_arrays(nspec_irregular_out, etaxstore, 'etax')
+  call save_global_arrays(nspec_irregular_out, etaystore, 'etay')
   ! Debugging the array layout for a given element
   ! call print_global_array(1, etaystore(1,:,:,:), "etay")
-  call save_global_arrays(nspec, etazstore)
-  call save_global_arrays(nspec, gammaxstore)
-  call save_global_arrays(nspec, gammaystore)
-  call save_global_arrays(nspec, gammazstore)
+  call save_global_arrays(nspec_irregular_out, etazstore, 'etaz')
+  call save_global_arrays(nspec_irregular_out, gammaxstore, 'gammax')
+  call save_global_arrays(nspec_irregular_out, gammaystore, 'gammay')
+  call save_global_arrays(nspec_irregular_out, gammazstore, 'gammaz')
   ! Debugging the array layout for a given element
   ! call print_global_array(1, gammazstore(1,:,:,:), "gammaz")
-  call save_global_arrays(nspec, jacobianstore)
+  call save_global_arrays(nspec_irregular_out, jacobianstore, 'jacobian')
+
 
   ! write test value
   itest = 10000
@@ -533,8 +553,8 @@ end module save_arrays_module
   call save_control_nodes_indexing(nspec, elmnts_ext_mesh)
   call save_control_nodes_array(nnodes_ext_mesh, nodes_coords_ext_mesh)
 
-  call save_global_arrays(nspec, kappastore)
-  call save_global_arrays(nspec, mustore)
+  call save_global_arrays(nspec, kappastore, 'kappa')
+  call save_global_arrays(nspec, mustore, 'mu')
 
   ! save_ispec_is_arrays writes the following:
   ! the number of each type of element
@@ -561,7 +581,7 @@ end module save_arrays_module
 
   ! this array is needed for acoustic simulations but also for elastic simulations with CPML,
   ! thus we allocate it and read it in all cases (whether the simulation is acoustic, elastic, or acoustic/elastic)
-  call save_global_arrays(nspec, rhostore)
+  call save_global_arrays(nspec, rhostore, 'rho')
 
   ! write test value
   itest = 9998
@@ -574,8 +594,8 @@ end module save_arrays_module
       write(IOUT) rmass_ocean_load
     endif
     ! Stacey
-    call save_global_arrays(nspec, rho_vp)
-    call save_global_arrays(nspec, rho_vs)
+    call save_global_arrays(nspec, rho_vp, 'rho_vp')
+    call save_global_arrays(nspec, rho_vs, 'rho_vs')
   endif
 
   ! Write a test value
@@ -589,13 +609,13 @@ end module save_arrays_module
 
     call save_global_arrays_with_components(nspec, rhoarraystore)
     call save_global_arrays_with_components(nspec, kappaarraystore)
-    call save_global_arrays(nspec, etastore)
-    call save_global_arrays(nspec, tortstore)
+    call save_global_arrays(nspec, etastore, 'eta')
+    call save_global_arrays(nspec, tortstore, 'tort')
     call save_global_arrays_with_components(nspec, permstore)
-    call save_global_arrays(nspec, phistore)
-    call save_global_arrays(nspec, rho_vpI)
-    call save_global_arrays(nspec, rho_vpII)
-    call save_global_arrays(nspec, rho_vsI)
+    call save_global_arrays(nspec, phistore, 'phi')
+    call save_global_arrays(nspec, rho_vpI, 'rho_vpI')
+    call save_global_arrays(nspec, rho_vpII, 'rho_vpII')
+    call save_global_arrays(nspec, rho_vsI, 'rho_vsI')
 
   endif
 
@@ -782,27 +802,27 @@ end module save_arrays_module
   ! anisotropy
   if (ELASTIC_SIMULATION .and. ANISOTROPY) then
 
-    call save_global_arrays(nspec, c11store)
-    call save_global_arrays(nspec, c12store)
-    call save_global_arrays(nspec, c13store)
-    call save_global_arrays(nspec, c14store)
-    call save_global_arrays(nspec, c15store)
-    call save_global_arrays(nspec, c16store)
-    call save_global_arrays(nspec, c22store)
-    call save_global_arrays(nspec, c23store)
-    call save_global_arrays(nspec, c24store)
-    call save_global_arrays(nspec, c25store)
-    call save_global_arrays(nspec, c26store)
-    call save_global_arrays(nspec, c33store)
-    call save_global_arrays(nspec, c34store)
-    call save_global_arrays(nspec, c35store)
-    call save_global_arrays(nspec, c36store)
-    call save_global_arrays(nspec, c44store)
-    call save_global_arrays(nspec, c45store)
-    call save_global_arrays(nspec, c46store)
-    call save_global_arrays(nspec, c55store)
-    call save_global_arrays(nspec, c56store)
-    call save_global_arrays(nspec, c66store)
+    call save_global_arrays(nspec, c11store, 'c11')
+    call save_global_arrays(nspec, c12store, 'c12')
+    call save_global_arrays(nspec, c13store, 'c13')
+    call save_global_arrays(nspec, c14store, 'c14')
+    call save_global_arrays(nspec, c15store, 'c15')
+    call save_global_arrays(nspec, c16store, 'c16')
+    call save_global_arrays(nspec, c22store, 'c22')
+    call save_global_arrays(nspec, c23store, 'c23')
+    call save_global_arrays(nspec, c24store, 'c24')
+    call save_global_arrays(nspec, c25store, 'c25')
+    call save_global_arrays(nspec, c26store, 'c26')
+    call save_global_arrays(nspec, c33store, 'c33')
+    call save_global_arrays(nspec, c34store, 'c34')
+    call save_global_arrays(nspec, c35store, 'c35')
+    call save_global_arrays(nspec, c36store, 'c36')
+    call save_global_arrays(nspec, c44store, 'c44')
+    call save_global_arrays(nspec, c45store, 'c45')
+    call save_global_arrays(nspec, c46store, 'c46')
+    call save_global_arrays(nspec, c55store, 'c55')
+    call save_global_arrays(nspec, c56store, 'c56')
+    call save_global_arrays(nspec, c66store, 'c66')
 
     ! write(IOUT) c11store
     ! write(IOUT) c12store
@@ -1111,7 +1131,7 @@ end module save_arrays_module
                                   free_surface_ispec(i) )
         enddo
       enddo
-      filename = prname(1:len_trim(prname))//'acoustic_free_surface'
+      filename = prname(1:len_trim(prname))//'free_surface'
       call write_VTK_data_points(nglob_unique, &
                                  xstore_unique,ystore_unique,zstore_unique, &
                                  iglob_tmp,NGLLSQUARE*num_free_surface_faces, &
