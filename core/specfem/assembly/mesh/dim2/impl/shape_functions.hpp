@@ -10,6 +10,7 @@ namespace specfem::assembly::mesh_impl {
  *
  */
 template <> struct shape_functions<specfem::dimension::type::dim2> {
+
 public:
   constexpr static auto dimension_tag =
       specfem::dimension::type::dim2; ///< Dimension

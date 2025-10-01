@@ -1,6 +1,9 @@
 #include "mesh/dim3/coordinates/coordinates.hpp"
 #include "mesh/dim3/mapping/mapping.hpp"
+#include <Kokkos_Core.hpp>
+#include <array>
 #include <iostream>
+#include <sstream>
 
 std::string
 specfem::mesh::coordinates<specfem::dimension::type::dim3>::print() const {
@@ -95,10 +98,10 @@ specfem::mesh::coordinates<specfem::dimension::type::dim3>::bounding_box()
   type_real x_min, x_max, y_min, y_max, z_min, z_max;
 
   Kokkos::parallel_reduce(
-      "compute_bbox", n,
-      KOKKOS_LAMBDA(const int i, type_real &min_x, type_real &max_x,
-                    type_real &min_y, type_real &max_y, type_real &min_z,
-                    type_real &max_z) {
+      "specfem::mesh::coordinates::bounding_box",
+      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, n),
+      [=](const int i, type_real &min_x, type_real &max_x, type_real &min_y,
+          type_real &max_y, type_real &min_z, type_real &max_z) {
         if (x(i) < min_x)
           min_x = x(i);
         if (x(i) > max_x)

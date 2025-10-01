@@ -10,7 +10,7 @@ specfem::assembly::mesh_impl::shape_functions<specfem::dimension::type::dim3>::
         const Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace> eta,
         const Kokkos::View<type_real *, Kokkos::DefaultHostExecutionSpace> zeta,
         const int &ngll, const int &ngnod)
-    : ngllz(ngll), ngllx(ngll), ngnod(ngnod),
+    : ngllz(ngll), nglly(ngll), ngllx(ngll), ngnod(ngnod),
       shape3D("specfem::assembly::shape_functions::shape3D", ngll, ngll, ngll,
               ngnod),
       dshape3D("specfem::assembly::shape_functions::dshape3D", ngll, ngll, ngll,

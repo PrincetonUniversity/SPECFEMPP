@@ -62,17 +62,17 @@ specfem::medium::properties_container<specfem::dimension::type::dim3, MediumTag,
   for (int i = 0; i < nelement; ++i) {
     const int ispec = elements(i);
     property_index_mapping(ispec) = count;
-      if (medium_tag == specfem::element::medium_tag::elastic && property_tag == specfem::element::property_tag::isotropic) {
-        // Handle the specific case for 3D elastic isotropic materials
-        for (int iz = 0; iz < ngllz; ++iz) {
-         for (int iy = 0; iy < ngllx; ++iy) {
-           for (int ix = 0; ix < ngllx; ++ix) {
-             this->rho(count, iz, iy, ix) = materials.rho(ispec, iz, iy, ix);
-             this->kappa(count, iz, iy, ix) = materials.kappa(ispec, iz, iy, ix);
-             this->mu(count, iz, iy, ix) = materials.mu(ispec, iz, iy, ix);
-           }
-         }
-       }
+    if (medium_tag == specfem::element::medium_tag::elastic && property_tag == specfem::element::property_tag::isotropic) {
+      // Handle the specific case for 3D elastic isotropic materials
+      for (int iz = 0; iz < ngllz; ++iz) {
+        for (int iy = 0; iy < nglly; ++iy) {
+          for (int ix = 0; ix < ngllx; ++ix) {
+            this->h_rho(count, iz, iy, ix) = materials.rho(ispec, iz, iy, ix);
+            this->h_kappa(count, iz, iy, ix) = materials.kappa(ispec, iz, iy, ix);
+            this->h_mu(count, iz, iy, ix) = materials.mu(ispec, iz, iy, ix);
+          }
+        }
+      }
     }
     count++;
   }

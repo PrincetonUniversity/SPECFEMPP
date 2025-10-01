@@ -15,9 +15,9 @@
 #include "predicate.tpp"
 
 const static std::unordered_map<std::string, std::string> mesh_files = {
-  { "Circular mesh", "data/mesh/circular_mesh/database.bin" },
+  { "Circular mesh", "data/dim2/circular_mesh/database.bin" },
   { "3 Element Nonconforming",
-    "data/mesh/3_elem_nonconforming/database.bin" }
+    "data/dim2/3_elem_nonconforming/database.bin" }
 };
 
 const static std::unordered_map<

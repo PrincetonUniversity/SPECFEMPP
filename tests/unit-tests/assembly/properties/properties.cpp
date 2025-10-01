@@ -242,7 +242,7 @@ void check_compute_to_mesh(
       });
 }
 
-TEST_F(ASSEMBLY, properties_access_functions) {
+TEST_F(Assembly2D, properties_access_functions) {
   for (auto parameters : *this) {
     auto Test = std::get<0>(parameters);
     auto mesh = std::get<1>(parameters);
@@ -320,7 +320,7 @@ TEST_F(ASSEMBLY, properties_access_functions) {
   }
 }
 
-TEST_F(ASSEMBLY, properties_construction) {
+TEST_F(Assembly2D, properties_construction) {
   for (auto parameters : *this) {
     auto Test = std::get<0>(parameters);
     auto mesh = std::get<1>(parameters);
@@ -354,7 +354,7 @@ TEST_F(ASSEMBLY, properties_construction) {
   }
 }
 
-TEST_F(ASSEMBLY, properties_io_routines) {
+TEST_F(Assembly2D, properties_io_routines) {
   for (auto parameters : *this) {
     auto Test = std::get<0>(parameters);
     auto mesh = std::get<1>(parameters);

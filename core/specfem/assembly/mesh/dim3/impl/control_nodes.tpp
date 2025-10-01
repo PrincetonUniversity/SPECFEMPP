@@ -14,6 +14,8 @@ specfem::assembly::mesh_impl::control_nodes<specfem::dimension::type::dim3>::
       h_control_node_coordinates(
           Kokkos::create_mirror_view(control_node_coordinates)) {
 
+
+
   Kokkos::parallel_for(
       "specfem::assembly::mesh::control_nodes::copy_to_device",
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,

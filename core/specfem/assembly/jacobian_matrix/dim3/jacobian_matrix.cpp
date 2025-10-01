@@ -3,64 +3,43 @@
 
 specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>::
     jacobian_matrix(
-        const specfem::mesh::jacobian_matrix<dimension_tag> &mesh_jacobian) {
+        const specfem::mesh::jacobian_matrix<dimension_tag> &mesh_jacobian)
+    : xix("specfem::assembly::jacobian_matrix::xix", mesh_jacobian.nspec,
+          mesh_jacobian.ngllz, mesh_jacobian.nglly, mesh_jacobian.ngllx),
+      xiy("specfem::assembly::jacobian_matrix::xiy", mesh_jacobian.nspec,
+          mesh_jacobian.ngllz, mesh_jacobian.nglly, mesh_jacobian.ngllx),
+      xiz("specfem::assembly::jacobian_matrix::xiz", mesh_jacobian.nspec,
+          mesh_jacobian.ngllz, mesh_jacobian.nglly, mesh_jacobian.ngllx),
+      etax("specfem::assembly::jacobian_matrix::etax", mesh_jacobian.nspec,
+           mesh_jacobian.ngllz, mesh_jacobian.nglly, mesh_jacobian.ngllx),
+      etay("specfem::assembly::jacobian_matrix::etay", mesh_jacobian.nspec,
+           mesh_jacobian.ngllz, mesh_jacobian.nglly, mesh_jacobian.ngllx),
+      etaz("specfem::assembly::jacobian_matrix::etaz", mesh_jacobian.nspec,
+           mesh_jacobian.ngllz, mesh_jacobian.nglly, mesh_jacobian.ngllx),
+      gammax("specfem::assembly::jacobian_matrix::gammax", mesh_jacobian.nspec,
+             mesh_jacobian.ngllz, mesh_jacobian.nglly, mesh_jacobian.ngllx),
+      gammay("specfem::assembly::jacobian_matrix::gammay", mesh_jacobian.nspec,
+             mesh_jacobian.ngllz, mesh_jacobian.nglly, mesh_jacobian.ngllx),
+      gammaz("specfem::assembly::jacobian_matrix::gammaz", mesh_jacobian.nspec,
+             mesh_jacobian.ngllz, mesh_jacobian.nglly, mesh_jacobian.ngllx),
+      jacobian("specfem::assembly::jacobian_matrix::jacobian",
+               mesh_jacobian.nspec, mesh_jacobian.ngllz, mesh_jacobian.nglly,
+               mesh_jacobian.ngllx),
+      h_xix(Kokkos::create_mirror_view(xix)),
+      h_xiy(Kokkos::create_mirror_view(xiy)),
+      h_xiz(Kokkos::create_mirror_view(xiz)),
+      h_etax(Kokkos::create_mirror_view(etax)),
+      h_etay(Kokkos::create_mirror_view(etay)),
+      h_etaz(Kokkos::create_mirror_view(etaz)),
+      h_gammax(Kokkos::create_mirror_view(gammax)),
+      h_gammay(Kokkos::create_mirror_view(gammay)),
+      h_gammaz(Kokkos::create_mirror_view(gammaz)),
+      h_jacobian(Kokkos::create_mirror_view(jacobian)) {
 
   nspec = mesh_jacobian.nspec;
   ngllx = mesh_jacobian.ngllx;
   nglly = mesh_jacobian.nglly;
   ngllz = mesh_jacobian.ngllz;
-
-  xix = view_type(Kokkos::ViewAllocateWithoutInitializing("xix"),
-                  mesh_jacobian.nspec, mesh_jacobian.ngllz, mesh_jacobian.nglly,
-                  mesh_jacobian.ngllx);
-
-  xiy = view_type(Kokkos::ViewAllocateWithoutInitializing("xiy"),
-                  mesh_jacobian.nspec, mesh_jacobian.ngllz, mesh_jacobian.nglly,
-                  mesh_jacobian.ngllx);
-
-  xiz = view_type(Kokkos::ViewAllocateWithoutInitializing("xiz"),
-                  mesh_jacobian.nspec, mesh_jacobian.ngllz, mesh_jacobian.nglly,
-                  mesh_jacobian.ngllx);
-
-  etax = view_type(Kokkos::ViewAllocateWithoutInitializing("etax"),
-                   mesh_jacobian.nspec, mesh_jacobian.ngllz,
-                   mesh_jacobian.nglly, mesh_jacobian.ngllx);
-
-  etay = view_type(Kokkos::ViewAllocateWithoutInitializing("etay"),
-                   mesh_jacobian.nspec, mesh_jacobian.ngllz,
-                   mesh_jacobian.nglly, mesh_jacobian.ngllx);
-
-  etaz = view_type(Kokkos::ViewAllocateWithoutInitializing("etaz"),
-                   mesh_jacobian.nspec, mesh_jacobian.ngllz,
-                   mesh_jacobian.nglly, mesh_jacobian.ngllx);
-
-  gammax = view_type(Kokkos::ViewAllocateWithoutInitializing("gammax"),
-                     mesh_jacobian.nspec, mesh_jacobian.ngllz,
-                     mesh_jacobian.nglly, mesh_jacobian.ngllx);
-
-  gammay = view_type(Kokkos::ViewAllocateWithoutInitializing("gammay"),
-                     mesh_jacobian.nspec, mesh_jacobian.ngllz,
-                     mesh_jacobian.nglly, mesh_jacobian.ngllx);
-
-  gammaz = view_type(Kokkos::ViewAllocateWithoutInitializing("gammaz"),
-                     mesh_jacobian.nspec, mesh_jacobian.ngllz,
-                     mesh_jacobian.nglly, mesh_jacobian.ngllx);
-
-  jacobian = view_type(Kokkos::ViewAllocateWithoutInitializing("jacobian"),
-                       mesh_jacobian.nspec, mesh_jacobian.ngllz,
-                       mesh_jacobian.nglly, mesh_jacobian.ngllx);
-
-  // Create hostmirror
-  h_xix = Kokkos::create_mirror_view(xix);
-  h_xiy = Kokkos::create_mirror_view(xiy);
-  h_xiz = Kokkos::create_mirror_view(xiz);
-  h_etax = Kokkos::create_mirror_view(etax);
-  h_etay = Kokkos::create_mirror_view(etay);
-  h_etaz = Kokkos::create_mirror_view(etaz);
-  h_gammax = Kokkos::create_mirror_view(gammax);
-  h_gammay = Kokkos::create_mirror_view(gammay);
-  h_gammaz = Kokkos::create_mirror_view(gammaz);
-  h_jacobian = Kokkos::create_mirror_view(jacobian);
 
   // Initialize the Kokkos view with single values
   Kokkos::deep_copy(h_xix, mesh_jacobian.xix_regular);
@@ -133,6 +112,8 @@ specfem::assembly::jacobian_matrix<
 
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension_tag, true, false>;
+
+  std::cout << "Checking for small Jacobian values..." << std::endl;
 
   bool found = false;
   Kokkos::parallel_reduce(

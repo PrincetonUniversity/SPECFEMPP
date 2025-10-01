@@ -1,183 +1,202 @@
 Tests:
+  2D:
+    - name : "Test 1: Simple mesh with flat topography (P_SV wave)"
+      description: >
+        Testing mesh reader on a simple mesh with flat topography.
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+      databases:
+        mesh : "data/dim2/simple_mesh_flat_topography/database.bin"
+        sources : "data/dim2/simple_mesh_flat_topography/sources.yaml"
+        stations : "data/dim2/simple_mesh_flat_topography/STATIONS"
+      suffix: "simple_topo_P_SV"
+      solutions:
+        source:
+          xi: 1.0
+          gamma: 1.0
+          ispec: 3969
+          medium_tag: elastic_psv
 
-  - name : "Test 1: Simple mesh with flat topography (P_SV wave)"
-    description: >
-      Testing mesh reader on a simple mesh with flat topography.
-    config:
-      nproc : 1
-      elastic_wave: "P_SV"
-    databases:
-      mesh : "data/mesh/simple_mesh_flat_topography/database.bin"
-      sources : "data/mesh/simple_mesh_flat_topography/sources.yaml"
-      stations : "data/mesh/simple_mesh_flat_topography/STATIONS"
-    suffix: "simple_topo_P_SV"
-    solutions:
-      source:
-        xi: 1.0
-        gamma: 1.0
-        ispec: 3969
-        medium_tag: elastic_psv
 
+    - name : "Test 2: Simple mesh with flat topography (SH wave)"
+      description: >
+        Testing mesh reader on a simple mesh with flat topography.
+      config:
+        nproc : 1
+        elastic_wave: "SH"
+      databases:
+        mesh : "data/dim2/simple_mesh_flat_topography/database.bin"
+        sources : "data/dim2/simple_mesh_flat_topography/sources.yaml"
+        stations : "data/dim2/simple_mesh_flat_topography/STATIONS"
+      suffix: "simple_topo_SH"
+      solutions:
+        source:
+          xi: 1.0
+          gamma: 1.0
+          ispec: 3969
+          medium_tag: elastic_sh
 
-  - name : "Test 2: Simple mesh with flat topography (SH wave)"
-    description: >
-      Testing mesh reader on a simple mesh with flat topography.
-    config:
-      nproc : 1
-      elastic_wave: "SH"
-    databases:
-      mesh : "data/mesh/simple_mesh_flat_topography/database.bin"
-      sources : "data/mesh/simple_mesh_flat_topography/sources.yaml"
-      stations : "data/mesh/simple_mesh_flat_topography/STATIONS"
-    suffix: "simple_topo_SH"
-    solutions:
-      source:
-        xi: 1.0
-        gamma: 1.0
-        ispec: 3969
-        medium_tag: elastic_sh
+    - name : "Test 3: Simple mesh with curved topography"
+      description: >
+        Testing mesh reader on a simple mesh with curved topography.
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+      databases:
+        mesh : "data/dim2/simple_mesh_curved_topography/database.bin"
+        sources : "data/dim2/simple_mesh_curved_topography/sources.yaml"
+        stations : "data/dim2/simple_mesh_curved_topography/STATIONS"
+      suffix: "curved_topo_P_SV"
+      solutions:
+        source:
+          xi: 1.0
+          gamma: -0.050847456
+          ispec: 3889
+          medium_tag: elastic_psv
 
-  - name : "Test 3: Simple mesh with curved topography"
-    description: >
-      Testing mesh reader on a simple mesh with curved topography.
-    config:
-      nproc : 1
-      elastic_wave: "P_SV"
-    databases:
-      mesh : "data/mesh/simple_mesh_curved_topography/database.bin"
-      sources : "data/mesh/simple_mesh_curved_topography/sources.yaml"
-      stations : "data/mesh/simple_mesh_curved_topography/STATIONS"
-    suffix: "curved_topo_P_SV"
-    solutions:
-      source:
-        xi: 1.0
-        gamma: -0.050847456
-        ispec: 3889
-        medium_tag: elastic_psv
+    - name : "Test 4: Simple mesh with flat ocean bottom"
+      description: >
+        Testing mesh reader on a simple mesh with flat ocean bottom. Fluid-solid interface is at the ocean bottom.
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+      databases:
+        mesh : "data/dim2/fluid_solid_mesh_flat_ocean_bottom/database.bin"
+        sources : "data/dim2/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
+        stations : "data/dim2/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
+      suffix: "flat_ocean_bottom_P_SV"
+      solutions:
+        source:
+          xi: -0.12500772
+          gamma: -0.50000995
+          ispec: 9372
+          medium_tag: acoustic
 
-  - name : "Test 4: Simple mesh with flat ocean bottom"
-    description: >
-      Testing mesh reader on a simple mesh with flat ocean bottom. Fluid-solid interface is at the ocean bottom.
-    config:
-      nproc : 1
-      elastic_wave: "P_SV"
-    databases:
-      mesh : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/database.bin"
-      sources : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
-      stations : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
-    suffix: "flat_ocean_bottom_P_SV"
-    solutions:
-      source:
-        xi: -0.12500772
-        gamma: -0.50000995
-        ispec: 9372
-        medium_tag: acoustic
+    - name : "Test 5: Simple mesh with curved ocean bottom"
+      description: >
+        Testing mesh reader on a simple mesh with curved ocean bottom. Fluid-solid interface is at the ocean bottom.
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+      databases:
+        mesh : "data/dim2/fluid_solid_mesh_curved_ocean_bottom/database.bin"
+        sources : "data/dim2/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
+        stations : "data/dim2/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
+      suffix: "curved_ocean_bottom_P_SV"
+      solutions:
+        source:
+          xi: -0.12500234
+          gamma: 0.54891706
+          ispec: 9230
+          medium_tag: acoustic
 
-  - name : "Test 5: Simple mesh with curved ocean bottom"
-    description: >
-      Testing mesh reader on a simple mesh with curved ocean bottom. Fluid-solid interface is at the ocean bottom.
-    config:
-      nproc : 1
-      elastic_wave: "P_SV"
-    databases:
-      mesh : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/database.bin"
-      sources : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
-      stations : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
-    suffix: "curved_ocean_bottom_P_SV"
-    solutions:
-      source:
-        xi: -0.12500234
-        gamma: 0.54891706
-        ispec: 9230
-        medium_tag: acoustic
+    - name : "Test 6: Gmesh Example"
+      description: >
+        Testing mesh reader on a Gmesh example mesh.
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+      databases:
+        mesh : "data/dim2/Gmesh_Example_Stacey/database.bin"
+        sources : "data/dim2/Gmesh_Example_Stacey/sources.yaml"
+        stations : "data/dim2/Gmesh_Example_Stacey/STATIONS"
+      suffix: "Gmesh_Example_P_SV"
+      solutions:
+        source:
+          xi: -0.98861307
+          gamma: 0.80903608
+          ispec: 1363
+          medium_tag: acoustic
 
-  - name : "Test 6: Gmesh Example"
-    description: >
-      Testing mesh reader on a Gmesh example mesh.
-    config:
-      nproc : 1
-      elastic_wave: "P_SV"
-    databases:
-      mesh : "data/mesh/Gmesh_Example_Stacey/database.bin"
-      sources : "data/mesh/Gmesh_Example_Stacey/sources.yaml"
-      stations : "data/mesh/Gmesh_Example_Stacey/STATIONS"
-    suffix: "Gmesh_Example_P_SV"
-    solutions:
-      source:
-        xi: -0.98861307
-        gamma: 0.80903608
-        ispec: 1363
-        medium_tag: acoustic
+    - name : "Test 7: Homogeneous Elastic Anisotropic Material (P_SV wave)"
+      description: >
+        Testing the reading of a homogeneous elastic anisotropic material.
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+      databases:
+        mesh : "data/dim2/homogeneous_elastic_anisotropic/database.bin"
+        sources : "data/dim2/homogeneous_elastic_anisotropic/sources.yaml"
+        stations : "data/dim2/homogeneous_elastic_anisotropic/STATIONS"
+      suffix: "homogeneous_elastic_anisotropic_P_SV"
+      solutions:
+        source:
+          xi: 1.0
+          gamma: 1.0
+          ispec: 3969
+          medium_tag: elastic_psv
 
-  - name : "Test 7: Homogeneous Elastic Anisotropic Material (P_SV wave)"
-    description: >
-      Testing the reading of a homogeneous elastic anisotropic material.
-    config:
-      nproc : 1
-      elastic_wave: "P_SV"
-    databases:
-      mesh : "data/mesh/homogeneous_elastic_anisotropic/database.bin"
-      sources : "data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
-      stations : "data/mesh/homogeneous_elastic_anisotropic/STATIONS"
-    suffix: "homogeneous_elastic_anisotropic_P_SV"
-    solutions:
-      source:
-        xi: 1.0
-        gamma: 1.0
-        ispec: 3969
-        medium_tag: elastic_psv
+    - name : "Test 8: Homogeneous Elastic Anisotropic Material (SH wave)"
+      description: >
+        Testing the reading of a homogeneous elastic anisotropic material.
+      config:
+        nproc : 1
+        elastic_wave: "SH"
+      databases:
+        mesh : "data/dim2/homogeneous_elastic_anisotropic/database.bin"
+        sources : "data/dim2/homogeneous_elastic_anisotropic/sources.yaml"
+        stations : "data/dim2/homogeneous_elastic_anisotropic/STATIONS"
+      suffix: "homogeneous_elastic_anisotropic_SH"
+      solutions:
+        source:
+          xi: 1.0
+          gamma: 1.0
+          ispec: 3969
+          medium_tag: elastic_sh
 
-  - name : "Test 8: Homogeneous Elastic Anisotropic Material (SH wave)"
-    description: >
-      Testing the reading of a homogeneous elastic anisotropic material.
-    config:
-      nproc : 1
-      elastic_wave: "SH"
-    databases:
-      mesh : "data/mesh/homogeneous_elastic_anisotropic/database.bin"
-      sources : "data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
-      stations : "data/mesh/homogeneous_elastic_anisotropic/STATIONS"
-    suffix: "homogeneous_elastic_anisotropic_SH"
-    solutions:
-      source:
-        xi: 1.0
-        gamma: 1.0
-        ispec: 3969
-        medium_tag: elastic_sh
+    - name : "Test 9: Homogeneous Poroelastic Isotropic Material (P_SV wave)"
+      description: >
+        Testing the reading of a homogeneous poroelastic isotropic material.
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+      databases:
+        mesh : "data/dim2/homogeneous_poroelastic_isotropic/database.bin"
+        sources : "data/dim2/homogeneous_poroelastic_isotropic/sources.yaml"
+        stations : "data/dim2/homogeneous_poroelastic_isotropic/STATIONS"
+      suffix: "homogeneous_poroelastic_isotropic_P_SV"
+      solutions:
+        source:
+          xi: 1.0
+          gamma: 1.0
+          ispec: 724
+          medium_tag: poroelastic
 
-  - name : "Test 9: Homogeneous Poroelastic Isotropic Material (P_SV wave)"
-    description: >
-      Testing the reading of a homogeneous poroelastic isotropic material.
-    config:
-      nproc : 1
-      elastic_wave: "P_SV"
-    databases:
-      mesh : "data/mesh/homogeneous_poroelastic_isotropic/database.bin"
-      sources : "data/mesh/homogeneous_poroelastic_isotropic/sources.yaml"
-      stations : "data/mesh/homogeneous_poroelastic_isotropic/STATIONS"
-    suffix: "homogeneous_poroelastic_isotropic_P_SV"
-    solutions:
-      source:
-        xi: 1.0
-        gamma: 1.0
-        ispec: 724
-        medium_tag: poroelastic
+    # THE STATIONS FOR THIS HAVE NOT BEEN CHECKED/TESTED
+    - name : "Test 10: Cosserat Isotropic Homogeneous Material (P_SV wave)"
+      description: >
+        Testing the reading of a homogeneous elastic isotropic cosserat material.
+      config:
+        nproc : 1
+        elastic_wave: "P_SV"
+      databases:
+        mesh : "data/dim2/cosserat_isotropic_homogeneous/database.bin"
+        sources : "data/dim2/cosserat_isotropic_homogeneous/sources.yaml"
+        stations : "data/dim2/cosserat_isotropic_homogeneous/STATIONS"
+      suffix: "cosserat_isotropic_homogeneous"
+      solutions:
+        source:
+          xi: -0.99767500162124634
+          gamma: -0.99767500162124634
+          ispec: 0
+          medium_tag: elastic_psv_t
 
-  # THE STATIONS FOR THIS HAVE NOT BEEN CHECKED/TESTED
-  - name : "Test 10: Cosserat Isotropic Homogeneous Material (P_SV wave)"
-    description: >
-      Testing the reading of a homogeneous elastic isotropic cosserat material.
-    config:
-      nproc : 1
-      elastic_wave: "P_SV"
-    databases:
-      mesh : "data/mesh/cosserat_isotropic_homogeneous/database.bin"
-      sources : "data/mesh/cosserat_isotropic_homogeneous/sources.yaml"
-      stations : "data/mesh/cosserat_isotropic_homogeneous/STATIONS"
-    suffix: "cosserat_isotropic_homogeneous"
-    solutions:
-      source:
-        xi: -0.99767500162124634
-        gamma: -0.99767500162124634
-        ispec: 0
-        medium_tag: elastic_psv_t
+  3D:
+    - name : "Homogeneous Halfspace Elastic Isotropic Force No ABC"
+      description: >
+        Testing mesh reader on a simple mesh with flat topography.
+      config:
+        nproc : 1
+      databases:
+        mesh-database : "data/dim3/HomogeneousHalfspaceElasticIsotropricForceNoABC/DATABASES/proc000000_external_mesh.bin"
+        mesh-parameters: "data/dim3/HomogeneousHalfspaceElasticIsotropricForceNoABC/DATABASES/mesh_parameters.bin"
+        sources : "data/dim3/HomogeneousHalfspaceElasticIsotropricForceNoABC/force.yaml"
+        stations : "data/dim3/HomogeneousHalfspaceElasticIsotropricForceNoABC/STATIONS"
+      suffix: "homo_halfspace_elastic_is_force_no_abc"
+      solutions:
+        source:
+          xi: 1.0
+          gamma: 1.0
+          ispec: 27000
+          medium_tag: elastic

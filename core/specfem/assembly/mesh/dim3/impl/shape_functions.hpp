@@ -10,6 +10,8 @@ namespace specfem::assembly::mesh_impl {
  *
  */
 template <> struct shape_functions<specfem::dimension::type::dim3> {
+private:
+  constexpr static int ndim = 3; ///< Number of dimensions
 public:
   constexpr static auto dimension_tag =
       specfem::dimension::type::dim3; ///< Dimension

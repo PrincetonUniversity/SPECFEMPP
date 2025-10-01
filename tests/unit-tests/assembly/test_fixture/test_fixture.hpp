@@ -20,10 +20,28 @@ KOKKOS_FUNCTION
     get_index(const int ielement, const int num_elements, const int iz,
               const int ix);
 
+template <bool using_simd>
+KOKKOS_FUNCTION
+    specfem::point::index<specfem::dimension::type::dim3, using_simd>
+    get_index(const int ielement, const int num_elements, const int iz,
+              const int iy, const int ix);
+
 // ------------------------------------------------------------------------
 // Test configuration
 namespace test_configuration {
-struct database {
+
+// Base database struct
+template <specfem::dimension::type DimensionType> struct database {
+public:
+  database() : sources(""), stations("") {};
+  virtual ~database() = default;
+
+  std::string sources;
+  std::string stations;
+};
+
+// 2D database specialization
+template <> struct database<specfem::dimension::type::dim2> {
 public:
   database() : mesh(""), sources(""), stations("") {};
   database(const YAML::Node &Node) {
@@ -37,6 +55,28 @@ public:
   }
 
   std::string mesh;
+  std::string sources;
+  std::string stations;
+};
+
+// 3D database specialization
+template <> struct database<specfem::dimension::type::dim3> {
+public:
+  database()
+      : mesh_database(""), mesh_parameters(""), sources(""), stations("") {};
+  database(const YAML::Node &Node) {
+    mesh_database = Node["mesh-database"].as<std::string>();
+    mesh_parameters = Node["mesh-parameters"].as<std::string>();
+    sources = Node["sources"].as<std::string>();
+    stations = Node["stations"].as<std::string>();
+  }
+
+  std::tuple<std::string, std::string, std::string> get_databases() {
+    return std::make_tuple(mesh_parameters, mesh_database, sources);
+  }
+
+  std::string mesh_database;
+  std::string mesh_parameters;
   std::string sources;
   std::string stations;
 };
@@ -74,12 +114,29 @@ public:
   source_solution source;
 };
 
-struct config {
+// Base config struct
+template <specfem::dimension::type DimensionType> struct config {
+public:
+  config() : nproc(1) {};
+  virtual ~config() = default;
+
+  int get_nproc() { return nproc; }
+
+protected:
+  int nproc;
+};
+
+// 2D config specialization
+template <> struct config<specfem::dimension::type::dim2> {
 public:
   config() : nproc(1), elastic_wave("P_SV"), electromagnetic_wave("TE") {};
   config(const YAML::Node &Node) {
     nproc = Node["nproc"].as<int>();
-    elastic_wave = Node["elastic_wave"].as<std::string>();
+    if (Node["elastic_wave"].IsDefined())
+      elastic_wave = Node["elastic_wave"].as<std::string>();
+    else
+      // Default to P_SV if not defined
+      elastic_wave = "P_SV";
 
     if (Node["electromagnetic_wave"].IsDefined())
       electromagnetic_wave = Node["electromagnetic_wave"].as<std::string>();
@@ -114,7 +171,19 @@ private:
   std::string electromagnetic_wave;
 };
 
-struct Test {
+// 3D config specialization
+template <> struct config<specfem::dimension::type::dim3> {
+public:
+  config() : nproc(1) {};
+  config(const YAML::Node &Node) { nproc = Node["nproc"].as<int>(); }
+
+  int get_nproc() { return nproc; }
+
+private:
+  int nproc;
+};
+
+template <specfem::dimension::type DimensionType> struct Test {
 public:
   Test(const YAML::Node &Node) {
     name = Node["name"].as<std::string>();
@@ -125,13 +194,64 @@ public:
     YAML::Node solutions_node = Node["solutions"];
 
     try {
-      database = test_configuration::database(databases);
+      database = test_configuration::database<DimensionType>(databases);
     } catch (std::runtime_error &e) {
       throw std::runtime_error("Error in test configuration: " + name + "\n" +
                                e.what());
     }
     try {
-      config = test_configuration::config(configuration);
+      config = test_configuration::config<DimensionType>(configuration);
+    } catch (std::runtime_error &e) {
+      throw std::runtime_error("Error in test configuration: " + name + "\n" +
+                               e.what());
+    }
+
+    try {
+      solutions = test_configuration::solutions(solutions_node);
+    } catch (std::runtime_error &e) {
+      throw std::runtime_error("Error in test configuration: " + name + "\n" +
+                               e.what());
+    }
+    return;
+  }
+
+  std::tuple<std::string, std::string, std::string> get_databases() {
+    return database.get_databases();
+  }
+
+  int get_nproc() { return config.get_nproc(); }
+
+  std::string get_suffix() { return suffix; }
+
+  std::string name;
+  std::string description;
+  std::string suffix;
+  test_configuration::database<DimensionType> database;
+  test_configuration::config<DimensionType> config;
+  test_configuration::solutions solutions;
+};
+
+// 2D Test specialization with elastic wave methods
+template <> struct Test<specfem::dimension::type::dim2> {
+public:
+  Test(const YAML::Node &Node) {
+    name = Node["name"].as<std::string>();
+    description = Node["description"].as<std::string>();
+    suffix = Node["suffix"].as<std::string>();
+    YAML::Node databases = Node["databases"];
+    YAML::Node configuration = Node["config"];
+    YAML::Node solutions_node = Node["solutions"];
+
+    try {
+      database = test_configuration::database<specfem::dimension::type::dim2>(
+          databases);
+    } catch (std::runtime_error &e) {
+      throw std::runtime_error("Error in test configuration: " + name + "\n" +
+                               e.what());
+    }
+    try {
+      config = test_configuration::config<specfem::dimension::type::dim2>(
+          configuration);
     } catch (std::runtime_error &e) {
       throw std::runtime_error("Error in test configuration: " + name + "\n" +
                                e.what());
@@ -165,42 +285,41 @@ public:
   std::string name;
   std::string description;
   std::string suffix;
-  test_configuration::database database;
-  test_configuration::config config;
+  test_configuration::database<specfem::dimension::type::dim2> database;
+  test_configuration::config<specfem::dimension::type::dim2> config;
   test_configuration::solutions solutions;
 };
 } // namespace test_configuration
 
 // ------------------------------------------------------------------------
 
-class ASSEMBLY : public ::testing::Test {
+template <specfem::dimension::type DimensionType>
+class Assembly : public ::testing::Test {
 
 protected:
   class Iterator {
   public:
     Iterator(
-        test_configuration::Test *p_Test,
-        specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh,
-        std::vector<std::shared_ptr<
-            specfem::sources::source<specfem::dimension::type::dim2> > >
+        test_configuration::Test<DimensionType> *p_Test,
+        specfem::mesh::mesh<DimensionType> *p_mesh,
+        std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >
             *p_sources,
-        std::vector<std::shared_ptr<
-            specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+        std::vector<
+            std::shared_ptr<specfem::receivers::receiver<DimensionType> > >
             *p_stations,
         std::string *p_suffixes,
-        specfem::assembly::assembly<specfem::dimension::type::dim2> *p_assembly)
+        specfem::assembly::assembly<DimensionType> *p_assembly)
         : p_Test(p_Test), p_mesh(p_mesh), p_sources(p_sources),
           p_stations(p_stations), p_suffixes(p_suffixes),
           p_assembly(p_assembly) {}
 
-    std::tuple<test_configuration::Test,
-               specfem::mesh::mesh<specfem::dimension::type::dim2>,
-               std::vector<std::shared_ptr<
-                   specfem::sources::source<specfem::dimension::type::dim2> > >,
-               std::vector<std::shared_ptr<specfem::receivers::receiver<
-                   specfem::dimension::type::dim2> > >,
-               std::string,
-               specfem::assembly::assembly<specfem::dimension::type::dim2> >
+    std::tuple<
+        test_configuration::Test<DimensionType>,
+        specfem::mesh::mesh<DimensionType>,
+        std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >,
+        std::vector<
+            std::shared_ptr<specfem::receivers::receiver<DimensionType> > >,
+        std::string, specfem::assembly::assembly<DimensionType> >
     operator*() {
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[RUNNING]\033[0m " << p_Test->name << "\n"
@@ -225,18 +344,17 @@ protected:
     }
 
   private:
-    test_configuration::Test *p_Test;
-    specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh;
-    std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > > *p_sources;
-    std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+    test_configuration::Test<DimensionType> *p_Test;
+    specfem::mesh::mesh<DimensionType> *p_mesh;
+    std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > >
+        *p_sources;
+    std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionType> > >
         *p_stations;
     std::string *p_suffixes;
-    specfem::assembly::assembly<specfem::dimension::type::dim2> *p_assembly;
+    specfem::assembly::assembly<DimensionType> *p_assembly;
   };
 
-  ASSEMBLY();
+  Assembly();
 
   Iterator begin() {
     return Iterator(&Tests[0], &Meshes[0], &Sources[0], &Stations[0],
@@ -249,15 +367,18 @@ protected:
                     &suffixes[suffixes.size()], &assemblies[assemblies.size()]);
   }
 
-  std::vector<test_configuration::Test> Tests;
-  std::vector<specfem::mesh::mesh<specfem::dimension::type::dim2> > Meshes;
-  std::vector<std::vector<std::shared_ptr<
-      specfem::sources::source<specfem::dimension::type::dim2> > > >
+  std::vector<test_configuration::Test<DimensionType> > Tests;
+  std::vector<specfem::mesh::mesh<DimensionType> > Meshes;
+  std::vector<
+      std::vector<std::shared_ptr<specfem::sources::source<DimensionType> > > >
       Sources;
-  std::vector<std::vector<std::shared_ptr<
-      specfem::receivers::receiver<specfem::dimension::type::dim2> > > >
+  std::vector<std::vector<
+      std::shared_ptr<specfem::receivers::receiver<DimensionType> > > >
       Stations;
   std::vector<std::string> suffixes;
-  std::vector<specfem::assembly::assembly<specfem::dimension::type::dim2> >
-      assemblies;
+  std::vector<specfem::assembly::assembly<DimensionType> > assemblies;
 };
+
+// Template specializations
+using Assembly2D = Assembly<specfem::dimension::type::dim2>;
+using Assembly3D = Assembly<specfem::dimension::type::dim3>;

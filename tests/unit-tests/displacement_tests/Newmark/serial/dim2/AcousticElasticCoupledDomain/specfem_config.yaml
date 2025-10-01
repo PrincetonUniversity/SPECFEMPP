@@ -1,0 +1,55 @@
+## Coupling interfaces have code flow that is dependent on orientation of the interface.
+## This test is to check the code flow for horizontal acoustic-elastic interface with acoustic domain on top.
+
+parameters:
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Heterogeneous acoustic-elastic medium with 1 acoustic-elastic interface (orientation horizontal)  # name for your simulation
+    # A detailed description for your simulation
+    description: |
+      Material systems : Elastic domain (1), Acoustic domain (1)
+      Interfaces : Acoustic-elastic interface (1) (orientation horizontal with acoustic domain on top)
+      Sources : Force source (1)
+      Boundary conditions : Neumann BCs on all edges
+      Debugging comments: This tests checks coupling acoustic-elastic interface implementation.
+                          The orientation of the interface is horizontal with acoustic domain on top.
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      quadrature-type: GLL4
+
+    ## Solver setup
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 0.85e-3
+          nstep: 600
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "."
+
+  receivers:
+    stations: "displacement_tests/Newmark/serial/dim2/AcousticElasticCoupledDomain/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 1
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "displacement_tests/Newmark/serial/dim2/AcousticElasticCoupledDomain/database.bin"
+
+  sources: "displacement_tests/Newmark/serial/dim2/AcousticElasticCoupledDomain/sources.yaml"
