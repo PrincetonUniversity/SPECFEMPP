@@ -2,6 +2,7 @@
 #include "io/interface.hpp"
 #include "parameter_parser/interface.hpp"
 #include "periodic_tasks/periodic_task.hpp"
+#include "specfem/receivers.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <boost/program_options.hpp>
@@ -59,23 +60,92 @@ void execute(
   const auto database_filename = setup.get_databases();
   const auto mesh_parameters_filename = setup.get_mesh_parameters();
 
+  // Get simulation parameters
+  const specfem::simulation::type simulation_type = setup.get_simulation_type();
+  const type_real dt = setup.get_dt();
+  const int nsteps = setup.get_nsteps();
+
+  // --------------------------------------------------------------
+  //                   Read mesh and materials
+  // --------------------------------------------------------------
+
   // Read mesh from the mesh database file
   mpi->cout("Reading the mesh...");
   mpi->cout("===================");
-  try {
-    const auto mesh = specfem::io::read_3d_mesh(mesh_parameters_filename,
-                                                database_filename, mpi);
-    mpi->cout("Mesh read successfully.");
-  } catch (const std::runtime_error &e) {
-    mpi->cout("Error reading mesh: " + std::string(e.what()));
-    mpi->cout("Exiting...");
-    return;
-  }
-  mpi->cout("Done.");
+  const auto mesh = specfem::io::read_3d_mesh(mesh_parameters_filename,
+                                              database_filename, mpi);
   std::chrono::duration<double> elapsed_seconds =
       std::chrono::system_clock::now() - start_time;
   mpi->cout("Time to read mesh: " + std::to_string(elapsed_seconds.count()) +
             " seconds");
+
+  // --------------------------------------------------------------
+  //                   Get Quadrature
+  // --------------------------------------------------------------
+  const auto quadrature = setup.instantiate_quadrature();
+
+  // --------------------------------------------------------------
+  //                   Get Sources
+  // --------------------------------------------------------------
+  auto [sources, t0] =
+      specfem::io::read_3d_sources(setup.get_sources(), nsteps, setup.get_t0(),
+                                   setup.get_dt(), simulation_type);
+  setup.update_t0(0.0); // Update t0 in case it was changed
+
+  mpi->cout("Source Information:");
+  mpi->cout("-------------------------------");
+  if (mpi->main_proc()) {
+    std::cout << "Number of sources : " << sources.size() << "\n" << std::endl;
+  }
+
+  for (auto &source : sources) {
+    mpi->cout(source->print());
+  }
+
+  // --------------------------------------------------------------
+  //                   Get receivers
+  // --------------------------------------------------------------
+  // create single receiver receivers vector for now
+  std::vector<std::shared_ptr<
+      specfem::receivers::receiver<specfem::dimension::type::dim3> > >
+      receivers;
+  receivers.emplace_back(
+      std::make_shared<
+          specfem::receivers::receiver<specfem::dimension::type::dim3> >(
+          "NET", "STA", 50000.0, 40000.0, 0.0));
+
+  mpi->cout("Receiver Information:");
+  mpi->cout("-------------------------------");
+
+  if (mpi->main_proc()) {
+    std::cout << "Number of receivers : " << receivers.size() << "\n"
+              << std::endl;
+  }
+
+  for (auto &receiver : receivers) {
+    mpi->cout(receiver->print());
+  }
+
+  // --------------------------------------------------------------
+  //                   Instantiate Timescheme
+  // --------------------------------------------------------------
+  const auto time_scheme = setup.instantiate_timescheme();
+  if (mpi->main_proc())
+    std::cout << *time_scheme << std::endl;
+  const int max_seismogram_time_step = time_scheme->get_max_seismogram_step();
+  const int nstep_between_samples = time_scheme->get_nstep_between_samples();
+
+  // --------------------------------------------------------------
+  //                   Generate Assembly
+  // --------------------------------------------------------------
+  specfem::assembly::assembly<specfem::dimension::type::dim3> assembly(
+      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
+      setup.get_t0(), dt, nsteps, max_seismogram_time_step,
+      nstep_between_samples, setup.get_simulation_type(),
+      setup.allocate_boundary_values(), setup.instantiate_property_reader());
+  if (mpi->main_proc())
+    mpi->cout(assembly.print());
+
   return;
 }
 

@@ -80,3 +80,48 @@ std::string specfem::mesh::coordinates<specfem::dimension::type::dim3>::print(
 
   return message.str();
 }
+
+/**
+ * @brief Compute bounding box of the mesh`
+ *
+ */
+std::array<type_real, 6>
+specfem::mesh::coordinates<specfem::dimension::type::dim3>::bounding_box()
+    const {
+  std::array<type_real, 6> bbox;
+
+  const int n = x.extent(0);
+
+  type_real x_min, x_max, y_min, y_max, z_min, z_max;
+
+  Kokkos::parallel_reduce(
+      "compute_bbox", n,
+      KOKKOS_LAMBDA(const int i, type_real &min_x, type_real &max_x,
+                    type_real &min_y, type_real &max_y, type_real &min_z,
+                    type_real &max_z) {
+        if (x(i) < min_x)
+          min_x = x(i);
+        if (x(i) > max_x)
+          max_x = x(i);
+        if (y(i) < min_y)
+          min_y = y(i);
+        if (y(i) > max_y)
+          max_y = y(i);
+        if (z(i) < min_z)
+          min_z = z(i);
+        if (z(i) > max_z)
+          max_z = z(i);
+      },
+      Kokkos::Min<type_real>(x_min), Kokkos::Max<type_real>(x_max),
+      Kokkos::Min<type_real>(y_min), Kokkos::Max<type_real>(y_max),
+      Kokkos::Min<type_real>(z_min), Kokkos::Max<type_real>(z_max));
+
+  bbox[0] = x_min;
+  bbox[1] = x_max;
+  bbox[2] = y_min;
+  bbox[3] = y_max;
+  bbox[4] = z_min;
+  bbox[5] = z_max;
+
+  return bbox;
+}
