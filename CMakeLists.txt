@@ -251,7 +251,6 @@ add_library(
         src/enumerations/wavefield.cpp
         src/enumerations/connections.cpp
         src/enumerations/mesh_entities.cpp
-        src/enumerations/coupled_interface.cpp
 )
 
 target_link_libraries(

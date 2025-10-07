@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 
 /**
  * @brief Forward declarations for point field types
@@ -262,7 +263,5 @@ struct attributes<specfem::dimension::type::dim2,
                                    specfem::element::medium_tag::elastic_psv,
                                    false>;
 };
-
-std::string to_string(const interface_tag &interface_tag);
 
 } // namespace specfem::interface
