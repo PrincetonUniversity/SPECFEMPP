@@ -39,6 +39,16 @@ void assign_field(PointType &point, const int num_components, const int iz,
 
 const type_real jacobian_fac[] = { 1.0, 1.4 };
 
+template <specfem::wavefield::type component>
+type_real get_du(const int ic, const int idim, const int iz, const int ix) {
+  const auto df = 5.0 * field_factor<component>::f_iz[ic] * iz +
+                  5.0 * field_factor<component>::f_ix[ic] * ix +
+                  10.0 * (field_factor<component>::f_iz[ic] +
+                          field_factor<component>::f_ix[ic] +
+                          field_factor<component>::f_c[ic]);
+  return jacobian_fac[idim] * df;
+}
+
 template <specfem::wavefield::type component,
           specfem::wavefield::simulation_field type,
           specfem::element::medium_tag medium,
@@ -87,14 +97,12 @@ void generate_data(
       PointVelocityType velocity;
       PointAccelerationType acceleration;
 
-      for (int icomp = 0; icomp < num_components; icomp++) {
-        assign_field<specfem::wavefield::type::displacement>(
-            displacement, num_components, iz, ix);
-        assign_field<specfem::wavefield::type::velocity>(
-            velocity, num_components, iz, ix);
-        assign_field<specfem::wavefield::type::acceleration>(
-            acceleration, num_components, iz, ix);
-      }
+      assign_field<specfem::wavefield::type::displacement>(
+          displacement, num_components, iz, ix);
+      assign_field<specfem::wavefield::type::velocity>(velocity, num_components,
+                                                       iz, ix);
+      assign_field<specfem::wavefield::type::acceleration>(
+          acceleration, num_components, iz, ix);
 
       specfem::assembly::store_on_host(index, field, displacement, velocity,
                                        acceleration);
@@ -110,6 +118,9 @@ std::vector<int> generate_data(
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
   std::vector<int> ispecs;
+
+  generate_data<component, type, specfem::element::medium_tag::elastic_sh,
+                specfem::element::property_tag::isotropic>(assembly, ispecs);
 
   generate_data<component, type, specfem::element::medium_tag::elastic_psv,
                 specfem::element::property_tag::isotropic>(assembly, ispecs);

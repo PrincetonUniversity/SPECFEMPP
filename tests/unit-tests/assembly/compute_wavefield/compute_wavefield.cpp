@@ -116,15 +116,15 @@ void test_compute_wavefield(
     throw std::runtime_error(message.str());
   }
 
-  // try {
-  //   test_compute_wavefield<specfem::wavefield::type::pressure,
-  //                          specfem::wavefield::simulation_field::forward>(
-  //       assembly);
-  // } catch (std::exception &e) {
-  //   std::ostringstream message;
-  //   message << "Error in computing pressure wavefield: \n\t" << e.what();
-  //   throw std::runtime_error(message.str());
-  // }
+  try {
+    test_compute_wavefield<specfem::wavefield::type::pressure,
+                           specfem::wavefield::simulation_field::forward>(
+        assembly);
+  } catch (std::exception &e) {
+    std::ostringstream message;
+    message << "Error in computing pressure wavefield: \n\t" << e.what();
+    throw std::runtime_error(message.str());
+  }
 }
 
 TEST_F(Assembly2D, compute_wavefield) {
