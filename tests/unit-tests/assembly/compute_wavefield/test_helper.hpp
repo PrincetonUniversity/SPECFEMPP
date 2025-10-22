@@ -174,15 +174,23 @@ public:
           const auto computed =
               wavefield(ispec, iz, ix, ic) / point_properties.rho_inverse();
           const auto expected = [&]() {
+            double df;
             if constexpr (component == specfem::wavefield::type::displacement) {
-              auto df = 5.5 * iz + 13.0 * ix + 37.0;
-              if (ic == 0) {
-                return df;
-              } else {
-                return df * 1.4;
-              }
+              // displacement
+              df = 5.5 * iz + 13.0 * ix + 37.0;
+            } else if constexpr (component ==
+                                 specfem::wavefield::type::velocity) {
+              // velocity
+              df = 10.0;
+            } else {
+              // acceleration
+              df = 6.5 * iz + 13;
             }
-            return 0.0;
+            if (ic == 0) {
+              return df;
+            } else {
+              return df * 1.4;
+            }
           }();
 
           if (std::abs(computed - expected) > 1.0e-4) {
