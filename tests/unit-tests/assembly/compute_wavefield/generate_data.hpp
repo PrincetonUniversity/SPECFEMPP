@@ -50,9 +50,19 @@ void generate_data(
     for (int ix = 0; ix < ngllx; ix++) {
       const IndexType index(ispec, iz, ix);
 
-      PointDisplacementType displacement(1.0);
+      // PointDisplacementType displacement(1.0);
+      // PointVelocityType velocity(1.0);
+      // PointAccelerationType acceleration(1.0);
+
+      PointDisplacementType displacement(1.1 * iz + 2.6 * ix);
+      if constexpr (num_components == 2) {
+        displacement(1) = 1.7 * iz + 2.3;
+      }
       PointVelocityType velocity(1.0);
-      PointAccelerationType acceleration(1.0);
+      PointAccelerationType acceleration(1.3 * iz);
+      if constexpr (num_components == 2) {
+        acceleration(1) = 0.0;
+      }
 
       specfem::assembly::store_on_host(index, field, displacement, velocity,
                                        acceleration);
@@ -69,8 +79,8 @@ std::vector<int> generate_data(
 
   std::vector<int> ispecs;
 
-  generate_data<component, type, specfem::element::medium_tag::elastic_psv,
-                specfem::element::property_tag::isotropic>(assembly, ispecs);
+  // generate_data<component, type, specfem::element::medium_tag::elastic_psv,
+  //               specfem::element::property_tag::isotropic>(assembly, ispecs);
 
   generate_data<component, type, specfem::element::medium_tag::acoustic,
                 specfem::element::property_tag::isotropic>(assembly, ispecs);

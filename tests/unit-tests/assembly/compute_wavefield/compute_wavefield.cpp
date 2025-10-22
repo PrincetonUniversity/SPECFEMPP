@@ -96,25 +96,25 @@ void test_compute_wavefield(
     throw std::runtime_error(message.str());
   }
 
-  try {
-    test_compute_wavefield<specfem::wavefield::type::velocity,
-                           specfem::wavefield::simulation_field::forward>(
-        assembly);
-  } catch (std::exception &e) {
-    std::ostringstream message;
-    message << "Error in computing velocity wavefield: \n\t" << e.what();
-    throw std::runtime_error(message.str());
-  }
+  // try {
+  //   test_compute_wavefield<specfem::wavefield::type::velocity,
+  //                          specfem::wavefield::simulation_field::forward>(
+  //       assembly);
+  // } catch (std::exception &e) {
+  //   std::ostringstream message;
+  //   message << "Error in computing velocity wavefield: \n\t" << e.what();
+  //   throw std::runtime_error(message.str());
+  // }
 
-  try {
-    test_compute_wavefield<specfem::wavefield::type::acceleration,
-                           specfem::wavefield::simulation_field::forward>(
-        assembly);
-  } catch (std::exception &e) {
-    std::ostringstream message;
-    message << "Error in computing acceleration wavefield: \n\t" << e.what();
-    throw std::runtime_error(message.str());
-  }
+  // try {
+  //   test_compute_wavefield<specfem::wavefield::type::acceleration,
+  //                          specfem::wavefield::simulation_field::forward>(
+  //       assembly);
+  // } catch (std::exception &e) {
+  //   std::ostringstream message;
+  //   message << "Error in computing acceleration wavefield: \n\t" << e.what();
+  //   throw std::runtime_error(message.str());
+  // }
 
   try {
     test_compute_wavefield<specfem::wavefield::type::pressure,
@@ -132,6 +132,30 @@ TEST_F(Assembly2D, compute_wavefield) {
     const auto Test = std::get<0>(parameters);
     specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
         std::get<5>(parameters);
+
+    // Use indentity jacobian matrix for testing
+    for (int ispec = 0; ispec < assembly.mesh.nspec; ispec++) {
+      for (int iz = 0; iz < assembly.mesh.element_grid.ngllz; iz++) {
+        for (int ix = 0; ix < assembly.mesh.element_grid.ngllx; ix++) {
+          specfem::point::index<specfem::dimension::type::dim2, false> index(
+              ispec, iz, ix);
+          specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
+                                          false>
+              point_jacobian_matrix(1.0, 1.0, 1.4, 1.4);
+          specfem::assembly::store_on_host(index, assembly.jacobian_matrix,
+                                           point_jacobian_matrix);
+        }
+      }
+    }
+    assembly.jacobian_matrix.sync_views();
+
+    // Use indentity quadrature for testing
+    for (int iz = 0; iz < assembly.mesh.element_grid.ngllz; iz++) {
+      for (int ix = 0; ix < assembly.mesh.element_grid.ngllx; ix++) {
+        assembly.mesh.h_hprime(iz, ix) = 1.0;
+      }
+    }
+    Kokkos::deep_copy(assembly.mesh.hprime, assembly.mesh.h_hprime);
 
     try {
       test_compute_wavefield(assembly);

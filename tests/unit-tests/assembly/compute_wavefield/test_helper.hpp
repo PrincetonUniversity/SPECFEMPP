@@ -173,7 +173,17 @@ public:
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed =
               wavefield(ispec, iz, ix, ic) / point_properties.rho_inverse();
-          const auto expected = 0.0;
+          const auto expected = [&]() {
+            if constexpr (component == specfem::wavefield::type::displacement) {
+              auto df = 5.5 * iz + 13.0 * ix + 37.0;
+              if (ic == 0) {
+                return df;
+              } else {
+                return df * 1.4;
+              }
+            }
+            return 0.0;
+          }();
 
           if (std::abs(computed - expected) > 1.0e-4) {
             std::ostringstream message;
@@ -181,6 +191,7 @@ public:
                     << "  ispec = " << ispec << "\n"
                     << "  iz = " << iz << "\n"
                     << "  ix = " << ix << "\n"
+                    << "  ic = " << ic << "\n"
                     << "  component = " << ic << "\n"
                     << "  computed = " << computed << "\n"
                     << "  expected = " << expected;
@@ -236,7 +247,7 @@ public:
 
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed = wavefield(ispec, iz, ix, ic);
-          const auto expected = -1.0;
+          const auto expected = -1.3 * iz;
 
           if (std::abs(computed - expected) > 1.0e-4) {
             std::ostringstream message;
@@ -244,6 +255,7 @@ public:
                     << "  ispec = " << ispec << "\n"
                     << "  iz = " << iz << "\n"
                     << "  ix = " << ix << "\n"
+                    << "  ic = " << ic << "\n"
                     << "  component = " << ic << "\n"
                     << "  computed = " << computed << "\n"
                     << "  expected = " << expected;
