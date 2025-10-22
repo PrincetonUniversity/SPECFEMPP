@@ -111,8 +111,8 @@ std::vector<int> generate_data(
 
   std::vector<int> ispecs;
 
-  // generate_data<component, type, specfem::element::medium_tag::elastic_psv,
-  //               specfem::element::property_tag::isotropic>(assembly, ispecs);
+  generate_data<component, type, specfem::element::medium_tag::elastic_psv,
+                specfem::element::property_tag::isotropic>(assembly, ispecs);
 
   generate_data<component, type, specfem::element::medium_tag::acoustic,
                 specfem::element::property_tag::isotropic>(assembly, ispecs);

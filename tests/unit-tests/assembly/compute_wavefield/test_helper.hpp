@@ -44,7 +44,9 @@ public:
 
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed = wavefield(ispec, iz, ix, ic);
-          const auto expected = 1.0;
+          const auto expected = field_factor<component>::f_iz[ic] * iz +
+                                field_factor<component>::f_ix[ic] * ix +
+                                field_factor<component>::f_c[ic];
 
           if (std::abs(computed - expected) > 1.0e-4) {
             std::ostringstream message;
