@@ -141,7 +141,8 @@ TEST_F(Assembly2D, compute_wavefield) {
               ispec, iz, ix);
           specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
                                           false>
-              point_jacobian_matrix(1.0, 1.0, 1.4, 1.4);
+              point_jacobian_matrix(jacobian_fac[0], jacobian_fac[0],
+                                    jacobian_fac[1], jacobian_fac[1]);
           specfem::assembly::store_on_host(index, assembly.jacobian_matrix,
                                            point_jacobian_matrix);
         }
