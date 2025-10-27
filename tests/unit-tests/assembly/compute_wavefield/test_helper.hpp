@@ -173,7 +173,12 @@ public:
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed =
               wavefield(ispec, iz, ix, ic) / point_properties.rho_inverse();
-          const auto expected = 0.0;
+          const auto df = 5.0 * field_factor<component>::f_iz[0] * iz +
+                          5.0 * field_factor<component>::f_ix[0] * ix +
+                          10.0 * (field_factor<component>::f_iz[0] +
+                                  field_factor<component>::f_ix[0] +
+                                  field_factor<component>::f_c[0]);
+          const auto expected = jacobian_fac[ic] * df;
 
           if (std::abs(computed - expected) > 1.0e-4) {
             std::ostringstream message;
@@ -181,6 +186,7 @@ public:
                     << "  ispec = " << ispec << "\n"
                     << "  iz = " << iz << "\n"
                     << "  ix = " << ix << "\n"
+                    << "  ic = " << ic << "\n"
                     << "  component = " << ic << "\n"
                     << "  computed = " << computed << "\n"
                     << "  expected = " << expected;
@@ -236,7 +242,13 @@ public:
 
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed = wavefield(ispec, iz, ix, ic);
-          const auto expected = -1.0;
+          const auto expected =
+              -1.0 *
+              (field_factor<specfem::wavefield::type::acceleration>::f_iz[0] *
+                   iz +
+               field_factor<specfem::wavefield::type::acceleration>::f_ix[0] *
+                   ix +
+               field_factor<specfem::wavefield::type::acceleration>::f_c[0]);
 
           if (std::abs(computed - expected) > 1.0e-4) {
             std::ostringstream message;
@@ -244,6 +256,7 @@ public:
                     << "  ispec = " << ispec << "\n"
                     << "  iz = " << iz << "\n"
                     << "  ix = " << ix << "\n"
+                    << "  ic = " << ic << "\n"
                     << "  component = " << ic << "\n"
                     << "  computed = " << computed << "\n"
                     << "  expected = " << expected;

@@ -133,6 +133,31 @@ TEST_F(Assembly2D, compute_wavefield) {
     specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
         std::get<5>(parameters);
 
+    // Use indentity jacobian matrix for testing
+    for (int ispec = 0; ispec < assembly.mesh.nspec; ispec++) {
+      for (int iz = 0; iz < assembly.mesh.element_grid.ngllz; iz++) {
+        for (int ix = 0; ix < assembly.mesh.element_grid.ngllx; ix++) {
+          specfem::point::index<specfem::dimension::type::dim2, false> index(
+              ispec, iz, ix);
+          specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
+                                          false>
+              point_jacobian_matrix(jacobian_fac[0], jacobian_fac[0],
+                                    jacobian_fac[1], jacobian_fac[1]);
+          specfem::assembly::store_on_host(index, assembly.jacobian_matrix,
+                                           point_jacobian_matrix);
+        }
+      }
+    }
+    assembly.jacobian_matrix.sync_views();
+
+    // Use indentity quadrature for testing
+    for (int iz = 0; iz < assembly.mesh.element_grid.ngllz; iz++) {
+      for (int ix = 0; ix < assembly.mesh.element_grid.ngllx; ix++) {
+        assembly.mesh.h_hprime(iz, ix) = 1.0;
+      }
+    }
+    Kokkos::deep_copy(assembly.mesh.hprime, assembly.mesh.h_hprime);
+
     try {
       test_compute_wavefield(assembly);
 
