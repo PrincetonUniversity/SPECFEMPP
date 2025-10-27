@@ -32,9 +32,9 @@ public:
 
   void test() {
 
-    constexpr static int num_components =
-        specfem::wavefield::wavefield<specfem::dimension::type::dim2,
-                                      component>::num_components();
+    constexpr int num_components =
+        specfem::element::attributes<specfem::dimension::type::dim2,
+                                     medium>::components;
 
     const int ngllz = assembly.mesh.element_grid.ngllz;
     const int ngllx = assembly.mesh.element_grid.ngllx;
@@ -44,7 +44,9 @@ public:
 
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed = wavefield(ispec, iz, ix, ic);
-          const auto expected = 1.0;
+          const auto expected = field_factor<component>::f_iz[ic] * iz +
+                                field_factor<component>::f_ix[ic] * ix +
+                                field_factor<component>::f_c[ic];
 
           if (std::abs(computed - expected) > 1.0e-4) {
             std::ostringstream message;
@@ -108,9 +110,11 @@ public:
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed =
               wavefield(ispec, iz, ix, ic) /
-              ((point_properties.lambdaplus2mu() + point_properties.lambda()) /
-               2.0);
-          const auto expected = 0.0;
+              (point_properties.lambda() + (2.0 / 3.0) * point_properties.mu());
+          const auto expected =
+              -1.0 *
+              (get_du<specfem::wavefield::type::displacement>(0, 0, iz, ix) +
+               get_du<specfem::wavefield::type::displacement>(1, 1, iz, ix));
 
           if (std::abs(computed - expected) > 1.0e-4) {
             std::ostringstream message;
@@ -173,12 +177,7 @@ public:
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed =
               wavefield(ispec, iz, ix, ic) / point_properties.rho_inverse();
-          const auto df = 5.0 * field_factor<component>::f_iz[0] * iz +
-                          5.0 * field_factor<component>::f_ix[0] * ix +
-                          10.0 * (field_factor<component>::f_iz[0] +
-                                  field_factor<component>::f_ix[0] +
-                                  field_factor<component>::f_c[0]);
-          const auto expected = jacobian_fac[ic] * df;
+          const auto expected = get_du<component>(0, ic, iz, ix);
 
           if (std::abs(computed - expected) > 1.0e-4) {
             std::ostringstream message;
@@ -230,6 +229,11 @@ public:
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, false>;
 
+    using PointAccelerationType =
+        specfem::point::acceleration<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::acoustic,
+                                     false>;
+
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
 
@@ -240,15 +244,13 @@ public:
         specfem::assembly::load_on_host(index, assembly.properties,
                                         point_properties);
 
+        PointAccelerationType acceleration;
+        assign_field<specfem::wavefield::type::acceleration>(
+            acceleration, num_components, iz, ix);
+
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed = wavefield(ispec, iz, ix, ic);
-          const auto expected =
-              -1.0 *
-              (field_factor<specfem::wavefield::type::acceleration>::f_iz[0] *
-                   iz +
-               field_factor<specfem::wavefield::type::acceleration>::f_ix[0] *
-                   ix +
-               field_factor<specfem::wavefield::type::acceleration>::f_c[0]);
+          const auto expected = -1.0 * acceleration(ic);
 
           if (std::abs(computed - expected) > 1.0e-4) {
             std::ostringstream message;
