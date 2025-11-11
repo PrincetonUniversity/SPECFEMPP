@@ -40,18 +40,19 @@ public:
    * @param dt Time step
    * @param assembly Assembly object
    * @param time_scheme Time scheme object
-   * @param quadrature Quadrature points object
+   * @param tasks Periodic tasks
+   * @param mpi MPI communicator
    * @return std::shared_ptr<specfem::solver::solver> Solver object
    */
   template <int NGLL>
-  std::shared_ptr<specfem::solver::solver>
-  instantiate(const type_real dt,
-              const specfem::assembly::assembly<specfem::dimension::type::dim2>
-                  &assembly,
-              std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-              const std::vector<
-                  std::shared_ptr<specfem::periodic_tasks::periodic_task> >
-                  &tasks) const;
+  std::shared_ptr<specfem::solver::solver> instantiate(
+      const type_real dt,
+      const specfem::assembly::assembly<specfem::dimension::type::dim2>
+          &assembly,
+      std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
+      const std::vector<
+          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks,
+      specfem::MPI::MPI *mpi) const;
 
   /**
    * @brief Get the type of the simulation (forward or combined)

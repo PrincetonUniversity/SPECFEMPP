@@ -34,9 +34,6 @@ specfem::runtime_configuration::time_scheme::time_scheme::instantiate(
     throw std::runtime_error(message.str());
   }
 
-  // User output
-  std::cout << *it << "\n";
-
   return it;
 }
 

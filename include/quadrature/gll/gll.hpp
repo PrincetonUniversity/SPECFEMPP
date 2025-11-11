@@ -99,6 +99,13 @@ public:
    */
   void print(std::ostream &out) const override;
 
+  /**
+   * @brief Get a string representation of the quadrature details
+   *
+   * @return std::string String representation of the quadrature details
+   */
+  std::string to_string() const;
+
 private:
   type_real alpha; ///< alpha value of the quadrature
   type_real beta;  ///< beta value of the quadrature

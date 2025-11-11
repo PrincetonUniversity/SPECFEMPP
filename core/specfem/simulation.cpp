@@ -1,6 +1,6 @@
 #include "simulation.hpp"
 
-#include "enumerations/dimension.hpp"
+#include "enumerations/interface.hpp"
 #include "io/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
@@ -46,29 +46,33 @@ void specfem::simulation::simulation_2d(
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks,
     specfem::MPI::MPI *mpi) {
 
-  // --------------------------------------------------------------
-  //                    Read parameter file
-  // --------------------------------------------------------------
+  // --- Read parameter file --------------------------------------
   auto start_time = std::chrono::system_clock::now();
   specfem::runtime_configuration::setup setup(parameter_dict, default_dict);
+
+  // Set up logging (empty string means stdout)
+  mpi->set_logfile(setup.get_output_log());
+
+  // Print header
+  specfem::simulation::model simulation_model =
+      specfem::simulation::model::Cartesian2D;
+  std::string title =
+      "SPECFEM++ - " + specfem::simulation::to_string(simulation_model);
+  mpi->print_header(title);
+
   const auto database_filename = setup.get_databases();
-
-  mpi->cout(setup.print_header(start_time));
-
-  // --------------------------------------------------------------
-
-  // --------------------------------------------------------------
-  //                   Read mesh and materials
-  // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
+
+  mpi->print(setup.print_header(start_time));
+
+  // --- Read mesh and materials -----------------------------------
+  mpi->print_title("Reading the mesh");
   const auto mesh = specfem::io::read_2d_mesh(
       database_filename, setup.get_elastic_wave_type(),
       setup.get_electromagnetic_wave_type(), mpi);
-  // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                   Read Sources and Receivers
-  // --------------------------------------------------------------
+  // --- Read sources ----------------------------------------------
+  mpi->print_title("Reading Sources");
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
   auto [sources, t0] =
@@ -76,36 +80,27 @@ void specfem::simulation::simulation_2d(
                                    setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
+  mpi->print("Number of sources : " + std::to_string(sources.size()) + "\n");
+
+  for (auto &source : sources) {
+    mpi->print(source->print());
+  }
+
+  // --- Read receivers --------------------------------------------
+  mpi->print_title("Reading Receivers");
   const auto stations_node = setup.get_stations();
   const auto angle = setup.get_receiver_angle();
   auto receivers = specfem::io::read_2d_receivers(stations_node, angle);
 
-  mpi->cout("Source Information:");
-  mpi->cout("-------------------------------");
-  if (mpi->main_proc()) {
-    std::cout << "Number of sources : " << sources.size() << "\n" << std::endl;
-  }
-
-  for (auto &source : sources) {
-    mpi->cout(source->print());
-  }
-
-  mpi->cout("Receiver Information:");
-  mpi->cout("-------------------------------");
-
-  if (mpi->main_proc()) {
-    std::cout << "Number of receivers : " << receivers.size() << "\n"
-              << std::endl;
-  }
+  mpi->print("Number of receivers : " + std::to_string(receivers.size()) +
+             "\n");
 
   for (auto &receiver : receivers) {
-    mpi->cout(receiver->print());
+    mpi->print(receiver->print());
   }
-  // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                   Generate Assembly
-  // --------------------------------------------------------------
+  // --- Generate Assembly -----------------------------------------
+  mpi->print_title("Generating Assembly");
   const type_real dt = setup.get_dt();
   const int max_seismogram_time_step = setup.get_max_seismogram_step();
   const int nstep_between_samples = setup.get_nstep_between_samples();
@@ -115,34 +110,20 @@ void specfem::simulation::simulation_2d(
       nstep_between_samples, setup.get_simulation_type(),
       setup.allocate_boundary_values(), setup.instantiate_property_reader());
 
-  if (mpi->main_proc()) {
-    mpi->cout(assembly.print());
-  }
+  mpi->print(assembly.print());
 
-  // --------------------------------------------------------------
-
-  // --------------------------------------------------------------
-  //                   Instantiate Timescheme
-  // --------------------------------------------------------------
+  // --- Instantiate Timescheme -----------------------------------
+  mpi->print_title("Instantiating Timescheme");
   const auto time_scheme = setup.instantiate_timescheme(assembly.fields);
+  mpi->print(time_scheme->print());
 
-  if (mpi->main_proc())
-    std::cout << *time_scheme << std::endl;
-
-  // --------------------------------------------------------------
-
-  // --------------------------------------------------------------
-  //               Write properties
-  // --------------------------------------------------------------
+  // --- Instantiate Property writer -------------------------------
   const auto property_writer = setup.instantiate_property_writer();
   if (property_writer) {
-    mpi->cout("Writing model files:");
-    mpi->cout("-------------------------------");
-
+    mpi->print_title("Writing model files");
     property_writer->write(assembly);
     return;
   }
-  // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Read wavefields
@@ -184,32 +165,20 @@ void specfem::simulation::simulation_2d(
   //                   Instantiate Solver
   // --------------------------------------------------------------
   std::shared_ptr<specfem::solver::solver> solver =
-      setup.instantiate_solver<5>(dt, assembly, time_scheme, tasks);
+      setup.instantiate_solver<5>(dt, assembly, time_scheme, tasks, mpi);
   // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                   Execute Solver
-  // --------------------------------------------------------------
-  // Time the solver
-  mpi->cout("Executing time loop:");
-  mpi->cout("-------------------------------");
-
+  mpi->print_title("Executing time loop");
   const auto solver_start_time = std::chrono::system_clock::now();
   solver->run();
   const auto solver_end_time = std::chrono::system_clock::now();
 
   std::chrono::duration<double> solver_time =
       solver_end_time - solver_start_time;
-  // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                   Write Seismograms
-  // --------------------------------------------------------------
   const auto seismogram_writer = setup.instantiate_seismogram_writer();
   if (seismogram_writer) {
-    mpi->cout("Writing seismogram files:");
-    mpi->cout("-------------------------------");
-
+    mpi->print_title("Writing seismogram files");
     seismogram_writer->write(assembly);
   }
   // --------------------------------------------------------------

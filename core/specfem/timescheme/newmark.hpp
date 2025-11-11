@@ -58,6 +58,13 @@ public:
   void print(std::ostream &out) const override;
 
   /**
+   * @brief Get a string representation of the timescheme details
+   *
+   * @return std::string String representation of the timescheme details
+   */
+  std::string print() const override;
+
+  /**
    * @brief Apply the predictor phase for forward simulation on fields within
    * the elements within a medium.
    *
@@ -171,6 +178,13 @@ public:
    * @name Print timescheme details
    */
   void print(std::ostream &out) const override;
+
+  /**
+   * @brief Get a string representation of the timescheme details
+   *
+   * @return std::string String representation of the timescheme details
+   */
+  std::string print() const override;
 
   /**
    * @brief Apply the predictor phase for forward simulation on fields within

@@ -34,10 +34,9 @@ void specfem::assembly::compute_source_array(
           "Source is not of vector type. Cannot compute vector source "
           "array.");
     }
-    std::cout << "computing for vector" << std::endl;
+
     specfem::assembly::compute_source_array_impl::from_vector(*vector_source,
                                                               source_array);
-    std::cout << "computed for vector: " << std::endl;
     break;
   }
   case specfem::sources::source_type::tensor_source: {

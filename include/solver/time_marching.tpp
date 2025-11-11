@@ -89,8 +89,10 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     }
 
     if (istep % 10 == 0) {
-      std::cout << "Progress : executed " << istep << " steps of " << nstep
-                << " steps" << std::endl;
+      std::ostringstream progress_msg;
+      progress_msg << "Progress : executed " << istep << " steps of " << nstep
+                   << " steps";
+      mpi->print(progress_msg.str());
     }
     if (dofs_updated != total_dof_to_be_updated) {
       std::ostringstream message;
@@ -123,7 +125,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     task->finalize(assembly);
   }
 
-  std::cout << std::endl;
+  mpi->print("");
 
   return;
 }
@@ -225,8 +227,10 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     }
 
     if (istep % 10 == 0) {
-      std::cout << "Progress : executed " << istep << " steps of " << nstep
-                << " steps" << std::endl;
+      std::ostringstream progress_msg;
+      progress_msg << "Progress : executed " << istep << " steps of " << nstep
+                   << " steps";
+      mpi->print(progress_msg.str());
     }
 
     if (dofs_updated != total_dof_to_be_updated) {
@@ -254,7 +258,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     task->finalize(assembly);
   }
 
-  std::cout << std::endl;
+  mpi->print("");
 
   return;
 }

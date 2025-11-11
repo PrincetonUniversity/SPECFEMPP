@@ -155,14 +155,6 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
 
   stream.close();
 
-  // Print material properties
-
-  mpi->cout("Material systems:\n"
-            "------------------------------");
-
-  mpi->cout("Number of material systems = " +
-            std::to_string(mesh.materials.n_materials) + "\n\n");
-
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T,

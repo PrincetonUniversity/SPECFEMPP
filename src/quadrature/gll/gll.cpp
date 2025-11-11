@@ -64,6 +64,12 @@ void specfem::quadrature::gll::gll::set_derivation_matrices() {
   this->sync_views();
 }
 
+std::string specfem::quadrature::gll::gll::to_string() const {
+  std::ostringstream message;
+  this->print(message);
+  return message.str();
+}
+
 void specfem::quadrature::gll::gll::print(std::ostream &message) const {
   message << "------------------------------\n"
           << "- GLL\n"

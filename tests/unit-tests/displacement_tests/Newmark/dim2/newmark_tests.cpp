@@ -176,8 +176,8 @@ TEST_P(Newmark, 2D) {
   if (mpi->main_proc())
     std::cout << *time_scheme << std::endl;
 
-  std::shared_ptr<specfem::solver::solver> solver =
-      setup.instantiate_solver<5>(setup.get_dt(), assembly, time_scheme, {});
+  std::shared_ptr<specfem::solver::solver> solver = setup.instantiate_solver<5>(
+      setup.get_dt(), assembly, time_scheme, {}, mpi);
 
   solver->run();
 

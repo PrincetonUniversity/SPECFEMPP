@@ -1,6 +1,7 @@
 #ifndef _SPECFEM_MPI_HPP
 #define _SPECFEM_MPI_HPP
 
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -247,10 +248,26 @@ public:
    */
   void bcast(double &val, int root) const;
 
+  /**
+   * @brief Set a log file for output redirection
+   *
+   * @param filename Path to the log file
+   * @param per_rank If true, creates separate log files per rank (e.g.,
+   * filename.rank0)
+   * @param auto_flush_override If true, forces auto-flush in Release builds
+   * (Debug builds always auto-flush)
+   */
+  void set_logfile(const std::string &filename, bool per_rank = false,
+                   bool auto_flush_override = false);
+
 private:
   int world_size;  ///< total number of MPI processes
   int my_rank;     ///< rank of my process
   int extern_init; ///< flag to check if MPI was initialized outside SPECFEM
+  mutable std::ofstream log_file_; ///< File stream for logging
+  mutable bool logging_enabled_;   ///< Flag: is logging to file active?
+  bool per_rank_logging_;          ///< Flag: per-rank log files enabled?
+  bool auto_flush_;                ///< Flag: flush after each write?
 #ifdef MPI_PARALLEL
   MPI_Comm comm; ///< MPI communicator
 #endif

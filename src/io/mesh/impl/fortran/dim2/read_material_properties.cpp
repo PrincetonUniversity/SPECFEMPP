@@ -82,19 +82,11 @@ read_materials(
 
   input_holder read_values;
 
-  std::ostringstream message;
-
   std::vector<specfem::mesh::materials<
       specfem::dimension::type::dim2>::material_specification>
       index_mapping(numat);
 
-  message << "Material systems:\n"
-          << "------------------------------";
-
-  mpi->cout(message.str());
-
-  if (mpi->get_rank() == 0)
-    std::cout << "Number of material systems = " << numat << "\n\n";
+  mpi->print("Number of material systems to be read " + std::to_string(numat));
 
   // Section for acoustic isotropic
   std::vector<specfem::medium::material<acoustic, isotropic> >

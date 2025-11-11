@@ -44,6 +44,9 @@ public:
    *
    * @param kernels Computational kernels
    * @param time_scheme Time scheme
+   * @param tasks Periodic tasks
+   * @param assembly Spectral element assembly
+   * @param mpi MPI communicator
    */
   time_marching(
       const specfem::kokkos_kernels::domain_kernels<
@@ -52,9 +55,10 @@ public:
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<
           std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks,
-      specfem::assembly::assembly<dimension_tag> assembly)
+      specfem::assembly::assembly<dimension_tag> assembly,
+      const specfem::MPI::MPI *mpi)
       : kernels(kernels), time_scheme(time_scheme), tasks(tasks),
-        assembly(assembly) {}
+        assembly(assembly), mpi(mpi) {}
 
   ///@}
 
@@ -75,6 +79,7 @@ private:
   ///< objects
   specfem::assembly::assembly<dimension_tag> assembly; ///< Spectral element
                                                        ///< assembly object
+  const specfem::MPI::MPI *mpi;                        ///< MPI communicator
 };
 
 /**
@@ -99,6 +104,8 @@ public:
    * @param adjoint_kernels Adjoint computational kernels
    * @param backward_kernels Backward computational kernels
    * @param time_scheme Time scheme
+   * @param tasks Periodic tasks
+   * @param mpi MPI communicator
    */
   time_marching(
       const specfem::assembly::assembly<dimension_tag> &assembly,
@@ -110,10 +117,11 @@ public:
           &backward_kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<
-          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
+          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks,
+      const specfem::MPI::MPI *mpi)
       : assembly(assembly), adjoint_kernels(adjoint_kernels),
         frechet_kernels(assembly), backward_kernels(backward_kernels),
-        time_scheme(time_scheme), tasks(tasks) {}
+        time_scheme(time_scheme), tasks(tasks), mpi(mpi) {}
   ///@}
 
   /**
@@ -138,8 +146,9 @@ private:
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
   std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
-      tasks; ///< Periodic tasks
-             ///< objects
+      tasks;                    ///< Periodic tasks
+                                ///< objects
+  const specfem::MPI::MPI *mpi; ///< MPI communicator
 };
 } // namespace solver
 } // namespace specfem

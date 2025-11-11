@@ -265,9 +265,10 @@ public:
           &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<
-          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
-      const {
-    return this->solver->instantiate<NGLL>(dt, assembly, time_scheme, tasks);
+          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks,
+      specfem::MPI::MPI *mpi) const {
+    return this->solver->instantiate<NGLL>(dt, assembly, time_scheme, tasks,
+                                           mpi);
   }
 
   int get_nsteps() const { return this->time_scheme->get_nsteps(); }
@@ -278,6 +279,13 @@ public:
          (this->wavefield->is_for_adjoint_simulations())) ||
         (this->get_simulation_type() == specfem::simulation::type::combined));
   }
+
+  /**
+   * @brief Get the output log filename (if specified)
+   *
+   * @return std::string Path to output log file, empty string if not specified
+   */
+  std::string get_output_log() const { return this->output_log_; }
 
 private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
@@ -317,7 +325,8 @@ private:
   std::unique_ptr<specfem::runtime_configuration::database_configuration>
       databases; ///< Get database filenames
   std::unique_ptr<specfem::runtime_configuration::solver::solver>
-      solver; ///< Pointer to solver object
+      solver;              ///< Pointer to solver object
+  std::string output_log_; ///< Output log file path (optional)
 };
 } // namespace runtime_configuration
 } // namespace specfem

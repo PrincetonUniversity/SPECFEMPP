@@ -267,28 +267,40 @@ int specfem::time_scheme::newmark<AssemblyFields,
 }
 
 
+
 template <typename AssemblyFields>
 void specfem::time_scheme::newmark<AssemblyFields, specfem::simulation::type::forward>::print(
     std::ostream &message) const {
-  message << "  Time Scheme:\n"
-          << "------------------------------\n"
-          << "- Newmark\n"
-          << "    simulation type = forward\n"
-          << "    dt = " << this->deltat
-          << "\n"
-          // << "    number of time steps = " << this->nstep << "\n"
-          << "    Start time = " << this->t0 << "\n";
+  message << "Newmark\n"
+          << "  simulation type = forward\n"
+          << "  dt = " << this->deltat          << "\n"
+          << "  Start time = " << this->t0 << "\n";
+}
+
+template <typename AssemblyFields>
+std::string specfem::time_scheme::newmark<AssemblyFields,
+                                        specfem::simulation::type::forward>::
+    print() const {
+
+  std::ostringstream message;
+  print(message);
+  return message.str();
 }
 
 template <typename AssemblyFields>
 void specfem::time_scheme::newmark<AssemblyFields, specfem::simulation::type::combined>::print(
     std::ostream &message) const {
-  message << "  Time Scheme:\n"
-          << "------------------------------\n"
-          << "- Newmark\n"
-          << "    simulation type = adjoint\n"
-          << "    dt = " << this->deltat
-          << "\n"
-          // << "    number of time steps = " << this->nstep << "\n"
-          << "    Start time = " << this->t0 << "\n";
+  message
+          << "Newmark\n"
+          << "  simulation type = adjoint\n"
+          << "  dt = " << this->deltat << "\n"
+          << "  Start time = " << this->t0 << "\n";
+}
+
+template <typename AssemblyFields>
+std::string specfem::time_scheme::newmark<AssemblyFields,
+                                        specfem::simulation::type::combined>::print() const {
+  std::ostringstream message;
+  print(message);
+  return message.str();
 }

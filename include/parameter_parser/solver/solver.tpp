@@ -13,12 +13,11 @@ std::shared_ptr<specfem::solver::solver>
 specfem::runtime_configuration::solver::solver::instantiate(
     const type_real dt, const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
     std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-    const std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
+    const std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks,
+    specfem::MPI::MPI *mpi)
     const {
 
   if (specfem::utilities::is_forward_string(this->simulation_type)) {
-    std::cout << "Instantiating Kernels \n";
-    std::cout << "-------------------------------\n";
     const auto kernels =
         specfem::kokkos_kernels::domain_kernels<specfem::wavefield::simulation_field::forward,
                                   specfem::dimension::type::dim2, NGLL>(
@@ -26,10 +25,9 @@ specfem::runtime_configuration::solver::solver::instantiate(
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::forward,
                                        specfem::dimension::type::dim2, NGLL> >(
-        kernels, time_scheme, tasks, assembly);
+        kernels, time_scheme, tasks, assembly, mpi);
   } else if (specfem::utilities::is_combined_string(this->simulation_type)) {
-    std::cout << "Instantiating Kernels \n";
-    std::cout << "-------------------------------\n";
+
     const auto adjoint_kernels =
         specfem::kokkos_kernels::domain_kernels<specfem::wavefield::simulation_field::adjoint,
                                   specfem::dimension::type::dim2, NGLL>(
@@ -40,7 +38,7 @@ specfem::runtime_configuration::solver::solver::instantiate(
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::combined,
                                        specfem::dimension::type::dim2, NGLL> >(
-        assembly, adjoint_kernels, backward_kernels, time_scheme, tasks);
+        assembly, adjoint_kernels, backward_kernels, time_scheme, tasks, mpi);
   } else {
     throw std::runtime_error("Simulation type not recognized");
   }

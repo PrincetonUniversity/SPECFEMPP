@@ -1,11 +1,14 @@
 #include "specfem_mpi/interface.hpp"
 #include <cassert>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <stdlib.h>
 #include <vector>
 
-specfem::MPI::MPI::MPI(int *argc, char ***argv) {
+specfem::MPI::MPI::MPI(int *argc, char ***argv)
+    : logging_enabled_(false), per_rank_logging_(false), auto_flush_(false) {
 #ifdef MPI_PARALLEL
   MPI_Initialized(&this->extern_init);
   if (!this->extern_init) {
@@ -28,6 +31,11 @@ void specfem::MPI::MPI::sync_all() const {
 }
 
 specfem::MPI::MPI::~MPI() {
+  // Close log file if open
+  if (log_file_.is_open()) {
+    log_file_.close();
+  }
+
 #ifdef MPI_PARALLEL
   if (!this->extern_init) {
     MPI_Finalize();
@@ -274,7 +282,9 @@ void specfem::MPI::MPI::print_title(const std::string &s) const {
   title_line += s;
   title_line += std::string(total_width - padding - text_length, '-');
 
+  this->cout("");
   this->cout(title_line);
+  this->cout("");
 }
 
 /**
@@ -300,4 +310,51 @@ void specfem::MPI::MPI::print_header(const std::string &s) const {
   this->cout(deco_line);
   this->cout(title_line);
   this->cout(deco_line);
+  this->cout("");
+}
+
+void specfem::MPI::MPI::set_logfile(const std::string &filename, bool per_rank,
+                                    bool auto_flush_override) {
+  // If filename is empty, disable logging and return (output to stdout)
+  if (filename.empty()) {
+    if (log_file_.is_open()) {
+      log_file_.close();
+    }
+    logging_enabled_ = false;
+    return;
+  }
+
+  // Close existing log file if open
+  if (log_file_.is_open()) {
+    log_file_.close();
+  }
+
+  // Construct filename with rank suffix if per_rank is enabled
+  // Per-rank creates: filename.rank00000, filename.rank00001, etc.
+  // Otherwise just use the filename as-is
+  std::string actual_filename = filename;
+  if (per_rank) {
+    std::ostringstream rank_str;
+    rank_str << std::setfill('0') << std::setw(5) << my_rank;
+    actual_filename += ".rank" + rank_str.str();
+  }
+
+  // Open file in truncate mode
+  log_file_.open(actual_filename, std::ios::out | std::ios::trunc);
+
+  // Throw exception if opening failed
+  if (!log_file_.is_open()) {
+    throw std::runtime_error("Failed to open log file: " + actual_filename);
+  }
+
+  // Set flags
+  logging_enabled_ = true;
+  per_rank_logging_ = per_rank;
+
+  // Auto-flush: always true in Debug builds, user-controlled in Release
+#ifndef NDEBUG
+  auto_flush_ = true; // Always true in Debug mode
+#else
+  auto_flush_ = auto_flush_override; // User-controlled in Release
+#endif
 }

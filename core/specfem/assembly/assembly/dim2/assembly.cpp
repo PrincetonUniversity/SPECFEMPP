@@ -91,9 +91,7 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
 std::string
 specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
   std::ostringstream message;
-  message << "Assembly information:\n"
-          << "------------------------------\n"
-          << "Total number of spectral elements : " << this->mesh.nspec << "\n"
+  message << "Total number of spectral elements : " << this->mesh.nspec << "\n"
           << "Total number of geometric points : "
           << this->mesh.element_grid.ngllz << "\n"
           << "Total number of distinct quadrature points : " << this->mesh.nglob

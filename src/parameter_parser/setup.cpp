@@ -36,6 +36,13 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
 
   const YAML::Node &n_databases = runtime_config["databases"];
 
+  // Read optional log parameter
+  if (runtime_config["log"]) {
+    this->output_log_ = runtime_config["log"].as<std::string>();
+  } else {
+    this->output_log_ = "";
+  }
+
   try {
     this->header = std::make_unique<specfem::runtime_configuration::header>(
         runtime_config["header"]);
@@ -312,13 +319,9 @@ std::string specfem::runtime_configuration::setup::print_header(
   // convert now to string form
   const std::time_t c_now = std::chrono::system_clock::to_time_t(now);
 
-  message << "================================================\n"
-          << "              SPECFEM2D SIMULATION\n"
-          << "================================================\n\n"
-          << "Title : " << this->header->get_title() << "\n"
+  message << "Title : " << this->header->get_title() << "\n"
           << "Discription: " << this->header->get_description() << "\n"
-          << "Simulation start time: " << ctime(&c_now)
-          << "------------------------------------------------\n";
+          << "Simulation start time: " << ctime(&c_now);
 
   return message.str();
 }
