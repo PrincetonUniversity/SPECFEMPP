@@ -5,14 +5,11 @@ add_subdirectory(specfem)
 add_executable(specfem specfem.cpp)
 
 # Link the executable with our unified libraries
-target_include_directories(specfem PRIVATE ${CMAKE_SOURCE_DIR}/core)
 target_link_libraries(specfem
     PRIVATE
-        specfem_unified
+        specfem::core
         Boost::program_options
         yaml-cpp::yaml-cpp
-        # Add periodic tasks dependency when available
-        $<TARGET_NAME_IF_EXISTS:periodic_tasks>
 )
 
 # Set executable properties

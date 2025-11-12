@@ -4,6 +4,7 @@ add_library(
         source_class
         ${COMPUTE_SOURCE_FILES}
 )
+add_library(specfem::source ALIAS source_class)
 
 target_link_libraries(
         source_class

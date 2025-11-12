@@ -21,37 +21,20 @@
 
 namespace specfem::simulation {
 
-// Execute function for 2D simulations
-void simulation_2d(
+/**
+ * @brief Execute SPECFEM simulation with runtime dimension selection
+ *
+ * @param dimension Dimension string ("2d" or "3d")
+ * @param mpi MPI instance pointer
+ * @param parameter_dict YAML parameter configuration
+ * @param default_dict YAML default configuration
+ * @param tasks Vector of periodic tasks
+ * @return true if execution successful, false otherwise
+ */
+bool execute(
+    const std::string &dimension, specfem::MPI::MPI *mpi,
     const YAML::Node &parameter_dict, const YAML::Node &default_dict,
-    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks,
-    specfem::MPI::MPI *mpi);
-
-// Execute function for 3D simulations
-void simulation_3d(
-    const YAML::Node &parameter_dict, const YAML::Node &default_dict,
-    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks,
-    specfem::MPI::MPI *mpi);
-
-// Future templated execute functions (to be implemented)
-// These will replace the legacy function once dimension-specific logic is
-// refactored
-
-template <specfem::dimension::type DIM>
-void execute_templated(
-    const YAML::Node &parameter_dict, const YAML::Node &default_dict,
-    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks,
-    specfem::MPI::MPI *mpi);
-
-// Explicit declarations for template specializations
-extern template void execute_templated<specfem::dimension::type::dim2>(
-    const YAML::Node &, const YAML::Node &,
-    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >,
-    specfem::MPI::MPI *);
-
-extern template void execute_templated<specfem::dimension::type::dim3>(
-    const YAML::Node &, const YAML::Node &,
-    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >,
-    specfem::MPI::MPI *);
+    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
+        &tasks);
 
 } // namespace specfem::simulation

@@ -531,6 +531,25 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
+
+# specfem2d executable for backward compatibility
+add_executable(specfem2d src/specfem2d.cpp)
+target_link_libraries(specfem2d
+    PRIVATE
+        specfem::core
+        yaml-cpp::yaml-cpp
+        ${BOOST_LIBS}
+)
+
+# specfem3d executable for backward compatibility
+add_executable(specfem3d src/specfem3d.cpp)
+target_link_libraries(specfem3d
+    PRIVATE
+        specfem::core
+        yaml-cpp::yaml-cpp
+        ${BOOST_LIBS}
+)
+
 # Include tests
 if (SPECFEM_BUILD_TESTS)
         message(STATUS "Including tests.")
@@ -568,7 +587,7 @@ if (SPECFEM_BINDING_PYTHON)
     python_add_library(_core MODULE src/python/core.cpp WITH_SOABI)
     target_link_libraries(
         _core PRIVATE
-        specfem_unified
+        specfem::core
         periodic_tasks
         ${BOOST_LIBS}
         pybind11::headers

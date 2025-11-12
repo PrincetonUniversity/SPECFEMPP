@@ -1,6 +1,6 @@
-#include "simulation.hpp"
-
-#include "enumerations/interface.hpp"
+#include "specfem/simulation.hpp"
+#include "context.hpp"
+#include "enumerations/dimension.hpp"
 #include "io/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
@@ -18,6 +18,8 @@
 
 #include <sstream>
 
+namespace {
+
 std::string
 print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
                   std::chrono::duration<double> solver_time) {
@@ -29,19 +31,16 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
 
   std::chrono::duration<double> diff = now - start_time;
 
-  message << "\n================================================\n"
-          << "             Finished simulation\n"
-          << "================================================\n\n"
-          << "Total simulation time : " << diff.count() << " secs\n"
+  message << "Total simulation time : " << diff.count() << " secs\n"
           << "Total solver time (time loop) : " << solver_time.count()
           << " secs\n"
-          << "Simulation end time : " << ctime(&c_now)
-          << "------------------------------------------------\n";
+          << "Simulation end time : " << ctime(&c_now);
 
   return message.str();
 }
 
-void specfem::simulation::simulation_2d(
+// Internal function for 2D simulations
+void simulation_2d(
     const YAML::Node &parameter_dict, const YAML::Node &default_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks,
     specfem::MPI::MPI *mpi) {
@@ -125,49 +124,34 @@ void specfem::simulation::simulation_2d(
     return;
   }
 
-  // --------------------------------------------------------------
-  //                   Read wavefields
-  // --------------------------------------------------------------
+  // --- Read wavefields ------------------------------------------
   const auto wavefield_reader = setup.instantiate_wavefield_reader();
-  // if (wavefield_reader) {
-  //   mpi->cout("Reading wavefield files:");
-  //   mpi->cout("-------------------------------");
-
-  //   wavefield_reader->read(assembly);
-  //   // Transfer the buffer field to device
-  //   assembly.fields.buffer.copy_to_device();
-  // }
   if (wavefield_reader) {
+    mpi->print_title("Adding wavefield reader task");
     tasks.push_back(wavefield_reader);
   }
-  // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                  Write Forward Wavefields
-  // --------------------------------------------------------------
+  // --- Instantiate Wavefield writer -----------------------------
   const auto wavefield_writer = setup.instantiate_wavefield_writer();
   if (wavefield_writer) {
+    mpi->print_title("Adding wavefield writer task");
     tasks.push_back(wavefield_writer);
   }
-  // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                   Instantiate plotter
-  // --------------------------------------------------------------
+  // --- Instantiate Wavefield plotter ----------------------------
   const auto wavefield_plotter =
       setup.instantiate_wavefield_plotter(assembly, dt, mpi);
   if (wavefield_plotter) {
+    mpi->print_title("Adding wavefield plotter task");
     tasks.push_back(wavefield_plotter);
   }
-  // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                   Instantiate Solver
-  // --------------------------------------------------------------
+  // --- Instantiate Solver ---------------------------------------
+  mpi->print_title("Instantiating Solver");
   std::shared_ptr<specfem::solver::solver> solver =
       setup.instantiate_solver<5>(dt, assembly, time_scheme, tasks, mpi);
-  // --------------------------------------------------------------
 
+  // --- Execute Solver -------------------------------------------
   mpi->print_title("Executing time loop");
   const auto solver_start_time = std::chrono::system_clock::now();
   solver->run();
@@ -176,46 +160,32 @@ void specfem::simulation::simulation_2d(
   std::chrono::duration<double> solver_time =
       solver_end_time - solver_start_time;
 
+  // --- Write Seismograms ----------------------------------------
   const auto seismogram_writer = setup.instantiate_seismogram_writer();
   if (seismogram_writer) {
     mpi->print_title("Writing seismogram files");
     seismogram_writer->write(assembly);
   }
-  // --------------------------------------------------------------
 
-  // // --------------------------------------------------------------
-  // //                  Write Forward Wavefields
-  // // --------------------------------------------------------------
-  // if (wavefield_writer) {
-  //   mpi->cout("Writing wavefield files:");
-  //   mpi->cout("-------------------------------");
-
-  //   wavefield_writer->write(assembly);
-  // }
-  // // --------------------------------------------------------------
-
-  // --------------------------------------------------------------
-  //                Write Kernels
-  // --------------------------------------------------------------
+  // --- Write Kernels --------------------------------------------
   const auto kernel_writer = setup.instantiate_kernel_writer();
   if (kernel_writer) {
-    mpi->cout("Writing kernel files:");
-    mpi->cout("-------------------------------");
-
+    mpi->print_title("Writing kernel files");
     kernel_writer->write(assembly);
   }
-  // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                   Print End Message
-  // --------------------------------------------------------------
+  // --- Print end message ---------------------------------------
+  mpi->print_title("Timing Summary");
   mpi->cout(print_end_message(start_time, solver_time));
-  // --------------------------------------------------------------
+
+  // Final message
+  mpi->print_header("Finished simulation.");
 
   return;
 }
 
-void specfem::simulation::simulation_3d(
+// Internal function for 3D simulations
+void simulation_3d(
     const YAML::Node &parameter_dict, const YAML::Node &default_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks,
     specfem::MPI::MPI *mpi) {
@@ -329,4 +299,33 @@ void specfem::simulation::simulation_3d(
   // --------------------------------------------------------------
 
   return;
+}
+
+} // anonymous namespace
+
+bool specfem::simulation::execute(
+    const std::string &dimension, specfem::MPI::MPI *mpi,
+    const YAML::Node &parameter_dict, const YAML::Node &default_dict,
+    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
+        &tasks) {
+  try {
+    // Use simulation model enumeration for validation
+    specfem::simulation::model simulation_model =
+        specfem::simulation::from_string(dimension);
+
+    switch (simulation_model) {
+    case specfem::simulation::model::Cartesian2D:
+      simulation_2d(parameter_dict, default_dict, tasks, mpi);
+      return true;
+    case specfem::simulation::model::Cartesian3D:
+      simulation_3d(parameter_dict, default_dict, tasks, mpi);
+      return true;
+    default:
+      std::cerr << "Unsupported simulation model" << std::endl;
+      return false;
+    }
+  } catch (const std::exception &e) {
+    std::cerr << "Error during execution: " << e.what() << std::endl;
+    return false;
+  }
 }

@@ -7,49 +7,26 @@ add_subdirectory(source)
 add_subdirectory(jacobian)
 add_subdirectory(timescheme)
 add_subdirectory(periodic_tasks)
+add_subdirectory(simulation)
 
+# Create specfem::core interface library that ties everything together
+add_library(specfem_core_interface INTERFACE)
+add_library(specfem::core ALIAS specfem_core_interface)
 
-# Core library - context manager for initialization/finalization
-add_library(specfem_core STATIC context.cpp)
-target_include_directories(specfem_core PUBLIC ${CMAKE_SOURCE_DIR}/core)
-target_link_libraries(specfem_core
-    PUBLIC
-        specfem_execute
-        Kokkos::kokkos
-        yaml-cpp::yaml-cpp
-        ${BOOST_LIBS}
-        # Add MPI dependency when available
-        $<TARGET_NAME_IF_EXISTS:MPI::MPI_CXX>
-)
-
-# Simulation library - main simulation execution logic
-add_library(specfem_execute STATIC simulation.cpp)
-target_include_directories(specfem_execute PUBLIC ${CMAKE_SOURCE_DIR}/core)
-target_link_libraries(specfem_execute
-    PUBLIC
-        yaml-cpp::yaml-cpp
-        ${BOOST_LIBS}
-        # All the dependencies from the original execute library
-        specfem_mpi
-        Kokkos::kokkos
-        mesh
-        quadrature
-        assembly
-        source_class
-        parameter_reader
-        specfem::receivers
-        writer
-        periodic_tasks
-        reader
-        kokkos_kernels
-        solver
-        ${BOOST_LIBS}
-)
-
-# Create an interface library to group all specfem components
-add_library(specfem_unified INTERFACE)
-target_link_libraries(specfem_unified
+target_link_libraries(specfem_core_interface
     INTERFACE
-        specfem_core
-        specfem_execute
+        specfem::assembly
+        specfem::point
+        specfem::receivers
+        specfem::shape_functions
+        specfem::source
+        specfem::jacobian
+        specfem::timescheme
+        specfem::periodic_tasks
+        specfem::simulation
+)
+
+target_include_directories(specfem_core_interface
+    INTERFACE
+        ${CMAKE_SOURCE_DIR}/core
 )

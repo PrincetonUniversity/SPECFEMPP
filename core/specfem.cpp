@@ -1,6 +1,7 @@
 #include "constants.hpp"
-#include "specfem/context.hpp"
 #include "specfem/periodic_tasks.hpp"
+#include "specfem/simulation.hpp"
+#include "specfem/simulation/context.hpp"
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <string>
@@ -105,8 +106,11 @@ int main(int argc, char **argv) {
     tasks.push_back(signal_task);
 
     // Execute simulation with the specified dimension
-    if (!context.execute_with_dimension(dimension, parameter_dict, default_dict,
-                                        tasks)) {
+    const auto success = specfem::simulation::execute(
+        dimension, guard.get_mpi(), parameter_dict, default_dict, tasks);
+
+    // Check execution result
+    if (!success) {
       std::cerr << "Execution failed" << std::endl;
       result = 1;
     }

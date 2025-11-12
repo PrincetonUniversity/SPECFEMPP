@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "periodic_tasks/periodic_task.hpp"
+#include "specfem/periodic_tasks/periodic_task.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
@@ -12,11 +12,11 @@
 namespace specfem {
 
 /**
- * @brief Unified SPECFEM++ context class for managing initialization,
- * execution, and finalization
+ * @brief Unified SPECFEM++ context class for managing initialization
+ * and finalization
  *
- * This class provides RAII-based management of Kokkos and MPI initialization,
- * dimension-templated execution, and proper resource cleanup.
+ * This class provides RAII-based management of Kokkos and MPI initialization
+ * and proper resource cleanup.
  * Typically used through ContextGuard for scoped lifetime management.
  */
 class Context {
@@ -28,36 +28,6 @@ public:
    * @param argv Command line arguments
    */
   Context(int argc, char *argv[]);
-
-  /**
-   * @brief Execute simulation with dimension template
-   *
-   * @tparam DimensionTag Dimension type (dim2 or dim3)
-   * @param parameter_dict YAML parameter configuration
-   * @param default_dict YAML default configuration
-   * @param tasks Vector of periodic tasks
-   * @return true if execution successful
-   */
-  template <specfem::dimension::type DimensionTag>
-  bool
-  execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
-          std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
-              &tasks);
-
-  /**
-   * @brief Execute simulation with dimension specified as string
-   *
-   * @param dimension Dimension string ("2d" or "3d")
-   * @param parameter_dict YAML parameter configuration
-   * @param default_dict YAML default configuration
-   * @param tasks Vector of periodic tasks
-   * @return true if execution successful
-   */
-  bool execute_with_dimension(
-      const std::string &dimension, const YAML::Node &parameter_dict,
-      const YAML::Node &default_dict,
-      std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
-          &tasks);
 
   /**
    * @brief Get MPI instance

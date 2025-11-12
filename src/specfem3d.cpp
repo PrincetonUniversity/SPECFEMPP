@@ -1,5 +1,7 @@
-#include "specfem/context.hpp"
+#include "constants.hpp"
 #include "specfem/periodic_tasks.hpp"
+#include "specfem/simulation.hpp"
+#include "specfem/simulation/context.hpp"
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <yaml-cpp/yaml.h>
@@ -73,8 +75,11 @@ int main(int argc, char **argv) {
     tasks.push_back(signal_task);
 
     // Execute simulation for 3D
-    if (!context.execute<specfem::dimension::type::dim3>(parameter_dict,
-                                                         default_dict, tasks)) {
+    const auto success = specfem::simulation::execute(
+        "3d", guard.get_mpi(), parameter_dict, default_dict, tasks);
+
+    // Check execution result
+    if (!success) {
       std::cerr << "Execution failed" << std::endl;
       result = 1;
     }

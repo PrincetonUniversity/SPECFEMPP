@@ -1,5 +1,5 @@
-#include "specfem/context.hpp"
 #include "specfem/simulation.hpp"
+#include "specfem/simulation/context.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #define STRINGIFY(x) #x
@@ -49,13 +49,16 @@ bool _execute(const std::string &parameter_string,
   // Releasing the GIL in a scoped section
   // is needed for long running tasks, such as a
   // simulation.
+  bool success;
   {
     py::gil_scoped_release release;
     // For now, default to 2D execution for backward compatibility
     // Later we can add a dimension parameter to the Python interface
-    context.execute_with_dimension("2d", parameter_dict, default_dict, tasks);
+    success =
+        specfem::simulation::execute("2d", global_context_guard->get_mpi(),
+                                     parameter_dict, default_dict, tasks);
   }
-  return true;
+  return success;
 }
 
 bool _finalize() {

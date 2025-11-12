@@ -4,6 +4,7 @@ add_library(
         periodic_tasks
         ${POINT_SOURCE_FILES}
 )
+add_library(specfem::periodic_tasks ALIAS periodic_tasks)
 
 target_link_libraries(
         periodic_tasks
