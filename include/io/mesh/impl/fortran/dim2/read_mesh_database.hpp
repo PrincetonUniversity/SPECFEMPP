@@ -26,7 +26,7 @@ namespace dim2 {
  * database file
  */
 std::tuple<int, int, int>
-read_mesh_database_header(std::ifstream &stream, const specfem::MPI::MPI *mpi);
+read_mesh_database_header(std::ifstream &stream, const specfem::MPI::MPI &mpi);
 /**
  * @brief Read coorg elements from fortran binary database file
  *
@@ -38,7 +38,7 @@ read_mesh_database_header(std::ifstream &stream, const specfem::MPI::MPI *mpi);
  */
 specfem::kokkos::HostView2d<type_real>
 read_coorg_elements(std::ifstream &stream, const int npgeo,
-                    const specfem::MPI::MPI *mpi);
+                    const specfem::MPI::MPI &mpi);
 
 /**
  * @warning These two routines need to be implemented
@@ -46,7 +46,7 @@ read_coorg_elements(std::ifstream &stream, const int npgeo,
 
 std::tuple<int, type_real, bool>
 read_mesh_database_attenuation(std::ifstream &stream,
-                               const specfem::MPI::MPI *mpi);
+                               const specfem::MPI::MPI &mpi);
 
 } // namespace dim2
 } // namespace fortran

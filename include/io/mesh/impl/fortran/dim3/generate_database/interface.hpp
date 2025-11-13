@@ -20,30 +20,7 @@ namespace dim3 {
  * parameters
  */
 specfem::mesh::parameters<specfem::dimension::type::dim3>
-read_mesh_parameters(std::ifstream &stream, const specfem::MPI::MPI *mpi);
-
-/**
- * @brief Read mapping from 3D mesh database
- *
- * @param stream Input stream
- * @param mapping Mapping object
- * @param mpi MPI object
- */
-void read_ibool(std::ifstream &stream,
-                specfem::mesh::mapping<specfem::dimension::type::dim3> &mapping,
-                const specfem::MPI::MPI *mpi);
-
-/**
- * @brief Read element types from 3D mesh database
- *
- * @param stream Input stream
- * @param element_types Element types object
- * @param mpi MPI object
- */
-void read_element_types(
-    std::ifstream &stream,
-    specfem::mesh::element_types<specfem::dimension::type::dim3> &element_types,
-    const specfem::MPI::MPI *mpi);
+read_mesh_parameters(std::ifstream &stream, const specfem::MPI::MPI &mpi);
 
 /**
  * @brief Read coordinates from 3D mesh database
@@ -55,7 +32,7 @@ void read_element_types(
 void read_xyz(
     std::ifstream &stream,
     specfem::mesh::coordinates<specfem::dimension::type::dim3> &coordinates,
-    const specfem::MPI::MPI *mpi);
+    const specfem::MPI::MPI &mpi);
 
 /**
  * @brief Read Jacobian from 3D mesh database
@@ -68,7 +45,7 @@ void read_jacobian_matrix(
     std::ifstream &stream,
     specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>
         &jacobian_matrix,
-    const specfem::MPI::MPI *mpi);
+    const specfem::MPI::MPI &mpi);
 
 /**
  * @brief Read array from 3D mesh database

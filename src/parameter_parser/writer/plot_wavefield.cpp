@@ -68,7 +68,7 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
 std::shared_ptr<specfem::periodic_tasks::periodic_task>
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const type_real &dt, specfem::MPI::MPI *mpi) const {
+    const type_real &dt, std::weak_ptr<specfem::MPI::MPI> mpi) const {
 
   const auto output_format = [&]() {
     if (specfem::utilities::is_png_string(this->output_format)) {

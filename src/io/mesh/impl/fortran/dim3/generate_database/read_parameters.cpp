@@ -6,7 +6,7 @@
 
 specfem::mesh::parameters<specfem::dimension::type::dim3>
 specfem::io::mesh::impl::fortran::dim3::read_mesh_parameters(
-    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream, const specfem::MPI::MPI &mpi) {
 
   // Creating aliases for Array Reading functions
   using specfem::io::mesh::impl::fortran::dim3::check_read_test_value;
@@ -244,7 +244,7 @@ specfem::io::mesh::impl::fortran::dim3::read_mesh_parameters(
   /// Read test parameter
   check_read_test_value(stream, 9992);
 
-  mpi->sync_all();
+  mpi.sync_all();
 
   return parameters;
 }

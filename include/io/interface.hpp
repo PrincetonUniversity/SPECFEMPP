@@ -24,7 +24,7 @@ specfem::mesh::mesh<specfem::dimension::type::dim2>
 read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
              const specfem::enums::electromagnetic_wave electromagnetic_wave,
-             const specfem::MPI::MPI *mpi);
+             const specfem::MPI::MPI &mpi);
 
 /**
  * @brief Construct a 3D mesh object from a Fortran binary database file
@@ -39,7 +39,7 @@ read_2d_mesh(const std::string &filename,
 specfem::mesh::mesh<specfem::dimension::type::dim3>
 read_3d_mesh(const std::string &mesh_parameters_file,
              const std::string &mesh_databases_file,
-             const specfem::MPI::MPI *mpi);
+             const specfem::MPI::MPI &mpi);
 
 namespace meshfem3d {
 /**
@@ -56,7 +56,7 @@ namespace meshfem3d {
  * @endcode
  */
 specfem::mesh::meshfem3d::mesh<specfem::dimension::type::dim3>
-read_3d_mesh(const std::string &database_file, const specfem::MPI::MPI *mpi);
+read_3d_mesh(const std::string &database_file, const specfem::MPI::MPI &mpi);
 } // namespace meshfem3d
 
 // namespace meshfem3d {

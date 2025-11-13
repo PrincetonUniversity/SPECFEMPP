@@ -10,7 +10,7 @@
 
 std::tuple<int, int, int>
 specfem::io::mesh::impl::fortran::dim2::read_mesh_database_header(
-    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream, const specfem::MPI::MPI &mpi) {
   // This subroutine reads header values of the database which are skipped
   std::string dummy_s;
   int dummy_i, dummy_i1, dummy_i2;
@@ -153,14 +153,14 @@ specfem::io::mesh::impl::fortran::dim2::read_mesh_database_header(
       stream, &dummy_b1,
       &dummy_b2); // ADD_RANDOM_PERTURBATION_TO_THE_MESH,ADD_PERTURBATION_AROUND_SOURCE_ONLY
 
-  mpi->sync_all();
+  mpi.sync_all();
 
   return std::make_tuple(nspec, npgeo, nproc);
 }
 
 specfem::kokkos::HostView2d<type_real>
 specfem::io::mesh::impl::fortran::dim2::read_coorg_elements(
-    std::ifstream &stream, const int npgeo, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream, const int npgeo, const specfem::MPI::MPI &mpi) {
 
   int ipoin = 0;
 
@@ -184,7 +184,7 @@ specfem::io::mesh::impl::fortran::dim2::read_coorg_elements(
 
 std::tuple<int, type_real, bool>
 specfem::io::mesh::impl::fortran::dim2::read_mesh_database_attenuation(
-    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream, const specfem::MPI::MPI &mpi) {
 
   int n_sls;
   double attenuation_f0_reference;

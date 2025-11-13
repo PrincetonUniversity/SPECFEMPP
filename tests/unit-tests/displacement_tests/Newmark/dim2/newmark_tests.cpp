@@ -104,7 +104,8 @@ TEST_P(Newmark, 2D) {
             << "-------------------------------------------------------\n\n"
             << std::endl;
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  // Get MPI from test environment (returns shared_ptr)
+  auto mpi = MPIEnvironment::get_mpi();
 
   const auto parameter_file = Test.specfem_config;
 
@@ -120,7 +121,7 @@ TEST_P(Newmark, 2D) {
 
   // Read mesh generated MESHFEM
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-      database_file, elastic_wave, electromagnetic_wave, mpi);
+      database_file, elastic_wave, electromagnetic_wave, *mpi);
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 

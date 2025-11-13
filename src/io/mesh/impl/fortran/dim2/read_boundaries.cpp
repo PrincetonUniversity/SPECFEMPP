@@ -139,7 +139,7 @@ inline void calculate_ib(const specfem::kokkos::HostView2d<bool> code,
 
 specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
 read_absorbing_boundaries(std::ifstream &stream, int num_abs_boundary_faces,
-                          const int nspec, const specfem::MPI::MPI *mpi) {
+                          const int nspec, const specfem::MPI::MPI &mpi) {
 
   // Create base instance of the absorbing boundary
   specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
@@ -152,7 +152,7 @@ read_absorbing_boundaries(std::ifstream &stream, int num_abs_boundary_faces,
   std::vector<int> iedgeread(8, 0);
   int numabsread, typeabsread;
   if (num_abs_boundary_faces < 0) {
-    mpi->cout("Warning: read in negative nelemabs resetting to 0!");
+    mpi.cout("Warning: read in negative nelemabs resetting to 0!");
     num_abs_boundary_faces = 0;
   }
 
@@ -276,7 +276,7 @@ specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
 read_acoustic_free_surface(std::ifstream &stream,
                            const int &nelem_acoustic_surface,
                            const Kokkos::View<int **, Kokkos::HostSpace> knods,
-                           const specfem::MPI::MPI *mpi) {
+                           const specfem::MPI::MPI &mpi) {
 
   std::vector<int> acfree_edge(4, 0);
   specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
@@ -294,14 +294,14 @@ read_acoustic_free_surface(std::ifstream &stream,
     }
   }
 
-  mpi->sync_all();
+  mpi.sync_all();
 
   return acoustic_free_surface;
 }
 
 specfem::mesh::forcing_boundary<specfem::dimension::type::dim2>
 read_forcing_boundaries(std::ifstream &stream, const int nelement_acforcing,
-                        const int nspec, const specfem::MPI::MPI *mpi) {
+                        const int nspec, const specfem::MPI::MPI &mpi) {
 
   bool codeacread1 = true, codeacread2 = true, codeacread3 = true,
        codeacread4 = true;
@@ -358,7 +358,7 @@ specfem::io::mesh::impl::fortran::dim2::read_boundaries(
     std::ifstream &stream, const int nspec, const int n_absorbing,
     const int n_acoustic_surface, const int n_acforcing,
     const Kokkos::View<int **, Kokkos::HostSpace> knods,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::MPI::MPI &mpi) {
 
   // Read absorbing boundaries
   auto absorbing_boundary =

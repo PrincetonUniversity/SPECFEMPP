@@ -42,7 +42,7 @@ std::string try_print_medium_element(
 specfem::mesh::mesh<specfem::dimension::type::dim3>
 specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
                           const std::string &mesh_databases_file,
-                          const specfem::MPI::MPI *mpi) {
+                          const specfem::MPI::MPI &mpi) {
 
   // Creating aliases for Checking functions
   using specfem::io::mesh::impl::fortran::dim3::check_read_test_value;
@@ -82,7 +82,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the parameters
-  mpi->cout(mesh.parameters.print());
+  mpi.cout(mesh.parameters.print());
 #endif
 
   // Open the database file
@@ -117,9 +117,9 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print Mapping parameters and the first spectral element
-  mpi->cout(mesh.mapping.print());
-  mpi->cout(mesh.mapping.print(0));
-  mpi->cout(mesh.mapping.print(mesh.parameters.nspec - 1));
+  mpi.cout(mesh.mapping.print());
+  mpi.cout(mesh.mapping.print(0));
+  mpi.cout(mesh.mapping.print(mesh.parameters.nspec - 1));
 #endif
 
   // Create the coordinates object
@@ -134,15 +134,15 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print Coordinates parameters and the first global node
-  mpi->cout(mesh.coordinates.print());
-  mpi->cout(mesh.coordinates.print(0));
-  mpi->cout(mesh.coordinates.print(mesh.parameters.nglob - 1));
+  mpi.cout(mesh.coordinates.print());
+  mpi.cout(mesh.coordinates.print(0));
+  mpi.cout(mesh.coordinates.print(mesh.parameters.nglob - 1));
 
   // These print the coordinate array layout for the first spectral element
   // for debugging the array layout (Fortran v. C)
-  // mpi->cout(mesh.coordinates.print(0, mesh.mapping, "x"));
-  // mpi->cout(mesh.coordinates.print(0, mesh.mapping, "y"));
-  // mpi->cout(mesh.coordinates.print(0, mesh.mapping, "z"));
+  // mpi.cout(mesh.coordinates.print(0, mesh.mapping, "x"));
+  // mpi.cout(mesh.coordinates.print(0, mesh.mapping, "y"));
+  // mpi.cout(mesh.coordinates.print(0, mesh.mapping, "z"));
 #endif
 
   // Initialize irregular element number array
@@ -169,7 +169,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   // Print xix and jacobian
   message << "xix_regular: " << mesh.xix_regular << "\n";
   message << "jacobian_regular: " << mesh.jacobian_regular << "\n";
-  mpi->cout(message.str());
+  mpi.cout(message.str());
 #endif
 
   // Fix for reading a regular mesh with 0 irregular elements
@@ -210,14 +210,14 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print Jacobian matrix parameters and the first spectral element
-  mpi->cout(mesh.jacobian_matrix.print());
-  mpi->cout(mesh.jacobian_matrix.print(0, 0, 0, 0));
+  mpi.cout(mesh.jacobian_matrix.print());
+  mpi.cout(mesh.jacobian_matrix.print(0, 0, 0, 0));
 
   // These print the Jacobian matrix array layout for the first spectral
   // element for debugging the array layout (Fortran v. C)
-  // mpi->cout(mesh.jacobian_matrix.print(0, "xix"));
-  // mpi->cout(mesh.jacobian_matrix.print(0, "etay"));
-  // mpi->cout(mesh.jacobian_matrix.print(0, "gammaz"));
+  // mpi.cout(mesh.jacobian_matrix.print(0, "xix"));
+  // mpi.cout(mesh.jacobian_matrix.print(0, "etay"));
+  // mpi.cout(mesh.jacobian_matrix.print(0, "gammaz"));
 #endif
 
   // Marker that should be 10000
@@ -236,7 +236,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print control nodes parameters and the first spectral element
-  mpi->cout(mesh.control_nodes.print());
+  mpi.cout(mesh.control_nodes.print());
 #endif
 
   // Create material object
@@ -251,7 +251,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the materials
-  mpi->cout(mesh.materials.print());
+  mpi.cout(mesh.materials.print());
 #endif
 
   int nacoustic, nelastic, nporoelastic;
@@ -274,15 +274,15 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the element types
-  mpi->cout(mesh.element_types.print());
-  mpi->cout(mesh.element_types.print(0));
+  mpi.cout(mesh.element_types.print());
+  mpi.cout(mesh.element_types.print(0));
 
   // Print elements first element of each category
-  mpi->cout(try_print_medium_element<specfem::element::medium_tag::acoustic>(
+  mpi.cout(try_print_medium_element<specfem::element::medium_tag::acoustic>(
       mesh.element_types, 0));
-  mpi->cout(try_print_medium_element<specfem::element::medium_tag::elastic>(
+  mpi.cout(try_print_medium_element<specfem::element::medium_tag::elastic>(
       mesh.element_types, 0));
-  mpi->cout(try_print_medium_element<specfem::element::medium_tag::poroelastic>(
+  mpi.cout(try_print_medium_element<specfem::element::medium_tag::poroelastic>(
       mesh.element_types, 0));
 #endif
 
@@ -400,12 +400,12 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
     }
 #ifndef NDEBUG
     // Print the absorbing boundaries
-    mpi->cout(mesh.boundaries.absorbing_boundary.print());
+    mpi.cout(mesh.boundaries.absorbing_boundary.print());
 
     // Print the absorbing boundaries for the first face
     // for debugging the array layout (Fortran v. C)
-    // mpi->cout(mesh.boundaries.absorbing_boundary.print_ijk(0));
-    // mpi->cout(mesh.boundaries.absorbing_boundary.print_ijk(num_abs_boundary_faces
+    // mpi.cout(mesh.boundaries.absorbing_boundary.print_ijk(0));
+    // mpi.cout(mesh.boundaries.absorbing_boundary.print_ijk(num_abs_boundary_faces
     // - 1));
 #endif
   }
@@ -433,7 +433,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   message << "nspec2D_ymax: " << nspec2D_ymax << "\n";
   message << "nspec2D_bottom: " << nspec2D_bottom << "\n";
   message << "nspec2D_top: " << nspec2D_top << "\n";
-  mpi->cout(message.str());
+  mpi.cout(message.str());
 #endif
 
   // Check values
@@ -473,7 +473,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
     }
     // Print the absorbing boundaries
 #ifndef NDEBUG
-    mpi->cout(mesh.boundaries.absorbing_boundary.print());
+    mpi.cout(mesh.boundaries.absorbing_boundary.print());
 #endif
   }
 
@@ -500,12 +500,12 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the free surface
-  mpi->cout(mesh.boundaries.acoustic_free_surface.print());
+  mpi.cout(mesh.boundaries.acoustic_free_surface.print());
 
   // Print the free surface for the first face
   // for debugging the array layout (Fortran v. C)
-  // mpi->cout(mesh.acoustic_free_surface.print_ijk(0));
-  // mpi->cout(mesh.acoustic_free_surface.print_ijk(num_free_surface_faces -
+  // mpi.cout(mesh.acoustic_free_surface.print_ijk(0));
+  // mpi.cout(mesh.acoustic_free_surface.print_ijk(num_free_surface_faces -
   // 1));
 #endif
 
@@ -599,7 +599,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the interfaces
-  mpi->cout(mesh.coupled_interfaces.print());
+  mpi.cout(mesh.coupled_interfaces.print());
 #endif
 
   // Read test value 9997
@@ -632,7 +632,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   }
 #ifndef NDEBUG
   else {
-    mpi->cout("No MPI information stored in the binary file.\n");
+    mpi.cout("No MPI information stored in the binary file.\n");
   }
 #endif
 
@@ -839,7 +839,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
   check_read_test_value(stream, 9989);
 
   // Final print with basic information
-  mpi->cout(mesh.print());
+  mpi.cout(mesh.print());
 
   stream.close();
 

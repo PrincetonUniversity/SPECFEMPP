@@ -9,6 +9,7 @@ target_link_libraries(specfem_simulation
     PUBLIC
         yaml-cpp::yaml-cpp
         ${BOOST_LIBS}
+        Kokkos::kokkos
         specfem_mpi
         Kokkos::kokkos
         mesh

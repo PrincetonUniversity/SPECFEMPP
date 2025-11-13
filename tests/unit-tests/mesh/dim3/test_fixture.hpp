@@ -15,8 +15,9 @@ struct ActualMesh3D {
 
   ActualMesh3D() = default;
 
-  ActualMesh3D(const std::string &database_file, const specfem::MPI::MPI *mpi) {
-    mesh = specfem::io::meshfem3d::read_3d_mesh(database_file, mpi);
+  ActualMesh3D(const std::string &database_file,
+               std::shared_ptr<specfem::MPI::MPI> mpi) {
+    mesh = specfem::io::meshfem3d::read_3d_mesh(database_file, *mpi);
   }
 };
 } // namespace specfem::test_configuration
@@ -33,8 +34,8 @@ protected:
   void SetUp() override {
     const auto &folder = GetParam();
     const std::string database_file = "data/dim3/" + folder + "/database.bin";
-    // Initialize MPI (assuming MPIEnvironment is defined elsewhere)
-    specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+    // Get MPI from test environment (returns shared_ptr)
+    auto mpi = MPIEnvironment::get_mpi();
     mesh = specfem::test_configuration::ActualMesh3D(database_file, mpi);
   }
   void TearDown() override {

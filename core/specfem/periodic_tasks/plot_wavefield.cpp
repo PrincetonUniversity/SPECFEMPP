@@ -57,12 +57,12 @@ specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     const specfem::wavefield::type &wavefield_type,
     const specfem::wavefield::simulation_field &wavefield, const type_real &dt,
     const int &time_interval, const boost::filesystem::path &output_folder,
-    specfem::MPI::MPI *mpi)
+    std::weak_ptr<specfem::MPI::MPI> mpi)
     : assembly(assembly), wavefield(wavefield), wavefield_type(wavefield_type),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec), dt(dt),
       ngllx(assembly.mesh.element_grid.ngllx),
-      ngllz(assembly.mesh.element_grid.ngllz), mpi(mpi) {
+      ngllz(assembly.mesh.element_grid.ngllz), mpi_(mpi) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -111,12 +111,12 @@ specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     const specfem::wavefield::type &wavefield_type,
     const specfem::wavefield::simulation_field &wavefield, const type_real &dt,
     const int &time_interval, const boost::filesystem::path &output_folder,
-    specfem::MPI::MPI *mpi)
+    std::weak_ptr<specfem::MPI::MPI> mpi)
     : assembly(assembly), wavefield(wavefield), wavefield_type(wavefield_type),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec), dt(dt),
       ngllx(assembly.mesh.element_grid.ngllx),
-      ngllz(assembly.mesh.element_grid.ngllz), mpi(mpi) {};
+      ngllz(assembly.mesh.element_grid.ngllz), mpi_(mpi) {};
 
 // Sigmoid function centered at 0.0
 double specfem::periodic_tasks::plot_wavefield::sigmoid(double x) {
@@ -847,8 +847,12 @@ void specfem::periodic_tasks::plot_wavefield::initialize<
   H5Gclose(vtkhdf_group);
   H5Fclose(hdf5_file_id);
 
-  this->mpi->cout("Initialized VTK HDF5 file for wavefield output: " +
-                  this->hdf5_filename + " (extensible datasets)");
+  if (auto mpi = this->mpi_.lock()) {
+    mpi->cout("Initialized VTK HDF5 file for wavefield output: " +
+              this->hdf5_filename + " (extensible datasets)");
+  } else {
+    throw std::runtime_error("MPI pointer expired. Cannot plot wavefield.");
+  }
 
 #else
   throw std::runtime_error(
@@ -1053,7 +1057,11 @@ void specfem::periodic_tasks::plot_wavefield::run<
   writer->SetInputConnection(image_filter->GetOutputPort());
   writer->Write();
   std::string message = "Wrote wavefield image to " + filename.string();
-  this->mpi->cout(message);
+  if (auto mpi = this->mpi_.lock()) {
+    mpi->cout(message);
+  } else {
+    throw std::runtime_error("MPI pointer expired. Cannot export PNG.");
+  }
 }
 
 template <>
@@ -1073,7 +1081,11 @@ void specfem::periodic_tasks::plot_wavefield::run<
   writer->SetInputConnection(image_filter->GetOutputPort());
   writer->Write();
   std::string message = "Wrote wavefield image to " + filename.string();
-  this->mpi->cout(message);
+  if (auto mpi = this->mpi_.lock()) {
+    mpi->cout(message);
+  } else {
+    throw std::runtime_error("MPI pointer expired. Cannot export JPG.");
+  }
 }
 
 template <>
@@ -1290,9 +1302,14 @@ void specfem::periodic_tasks::plot_wavefield::run<
 
   this->current_timestep++;
 
-  this->mpi->cout("Wrote wavefield data for timestep " + std::to_string(istep) +
-                  " to HDF5 file (step " +
-                  std::to_string(this->current_timestep) + ")");
+  if (auto mpi = this->mpi_.lock()) {
+    mpi->cout("Wrote wavefield data for timestep " + std::to_string(istep) +
+              " to HDF5 file (step " + std::to_string(this->current_timestep) +
+              ")");
+  } else {
+    throw std::runtime_error(
+        "MPI pointer expired. Cannot write wavefield to HDF5.");
+  }
 
 #else
   throw std::runtime_error(

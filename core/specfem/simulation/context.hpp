@@ -32,9 +32,9 @@ public:
   /**
    * @brief Get MPI instance
    *
-   * @return Pointer to MPI instance
+   * @return Weak pointer to MPI instance for safe non-owning access
    */
-  specfem::MPI::MPI *get_mpi() const;
+  std::weak_ptr<specfem::MPI::MPI> get_mpi() const;
 
   /**
    * @brief Destructor - ensures proper cleanup via RAII
@@ -49,7 +49,7 @@ public:
 
 private:
   Kokkos::ScopeGuard kokkos_guard_;
-  std::unique_ptr<specfem::MPI::MPI> mpi_;
+  std::shared_ptr<specfem::MPI::MPI> mpi_;
 };
 
 /**
@@ -103,9 +103,9 @@ public:
   /**
    * @brief Get MPI instance for convenience
    *
-   * @return Pointer to MPI instance
+   * @return Weak pointer to MPI instance for safe non-owning access
    */
-  specfem::MPI::MPI *get_mpi() const;
+  std::weak_ptr<specfem::MPI::MPI> get_mpi() const;
 
   /**
    * @brief Delete copy constructor and assignment operator

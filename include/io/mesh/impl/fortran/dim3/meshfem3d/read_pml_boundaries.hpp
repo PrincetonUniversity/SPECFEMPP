@@ -51,6 +51,6 @@ namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d {
  * @todo Implement full PML boundary processing for 3D absorbing boundary
  * conditions
  */
-void read_pml_boundaries(std::ifstream &stream, const specfem::MPI::MPI *mpi);
+void read_pml_boundaries(std::ifstream &stream, const specfem::MPI::MPI &mpi);
 
 } // namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d

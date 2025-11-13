@@ -144,7 +144,7 @@ TEST(SOURCES, compute_source_locations) {
   std::string config_filename = "source/test_config.yml";
 
   //  alias the mpi environment pointer
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  auto mpi = MPIEnvironment::get_mpi();
 
   // parse solutions file for future use
   test_config test_config = parse_test_config(config_filename);

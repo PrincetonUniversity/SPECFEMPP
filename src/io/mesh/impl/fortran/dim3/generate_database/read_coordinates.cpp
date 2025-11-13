@@ -4,7 +4,7 @@
 void specfem::io::mesh::impl::fortran::dim3::read_xyz(
     std::ifstream &stream,
     specfem::mesh::coordinates<specfem::dimension::type::dim3> &coordinates,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::MPI::MPI &mpi) {
 
   std::vector<type_real> dummy_f(coordinates.nglob, -9999.0);
 

@@ -19,7 +19,7 @@ namespace dim2 {
  * parameters
  */
 specfem::mesh::parameters<specfem::dimension::type::dim2>
-read_mesh_parameters(std::ifstream &stream, const specfem::MPI::MPI *mpi);
+read_mesh_parameters(std::ifstream &stream, const specfem::MPI::MPI &mpi);
 
 } // namespace dim2
 } // namespace fortran

@@ -7,11 +7,11 @@ namespace specfem {
 
 Context::Context(int argc, char *argv[])
     : kokkos_guard_(argc, argv),
-      mpi_(std::make_unique<specfem::MPI::MPI>(&argc, &argv)) {}
+      mpi_(std::make_shared<specfem::MPI::MPI>(&argc, &argv)) {}
 
 Context::~Context() = default;
 
-specfem::MPI::MPI *Context::get_mpi() const { return mpi_.get(); }
+std::weak_ptr<specfem::MPI::MPI> Context::get_mpi() const { return mpi_; }
 
 // ============================================================================
 // ContextGuard Implementation
@@ -39,7 +39,9 @@ ContextGuard::~ContextGuard() = default;
 
 Context &ContextGuard::get_context() { return *context_; }
 
-specfem::MPI::MPI *ContextGuard::get_mpi() const { return context_->get_mpi(); }
+std::weak_ptr<specfem::MPI::MPI> ContextGuard::get_mpi() const {
+  return context_->get_mpi();
+}
 
 void ContextGuard::setup_argc_argv(const std::vector<std::string> &args,
                                    int &argc, char **&argv) {

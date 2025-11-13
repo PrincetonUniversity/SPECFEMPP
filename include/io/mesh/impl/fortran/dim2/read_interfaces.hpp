@@ -17,7 +17,7 @@ specfem::mesh::interface_container<DimensionTag, medium1, medium2>
 read_interfaces(
     const int num_interfaces,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    std::ifstream &stream, const specfem::MPI::MPI *mpi);
+    std::ifstream &stream, const specfem::MPI::MPI &mpi);
 
 /* @brief Read the coupled interfaces from the database file
  *
@@ -34,7 +34,7 @@ read_coupled_interfaces(
     const int num_interfaces_acoustic_poroelastic,
     const int num_interfaces_elastic_poroelastic,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    const specfem::MPI::MPI *mpi);
+    const specfem::MPI::MPI &mpi);
 
 } // namespace dim2
 } // namespace fortran

@@ -16,7 +16,7 @@ struct interface {
   specfem::kokkos::HostView3d<int> my_interfaces;
   interface() {};
   interface(const int ninterfaces, const int max_interface_size);
-  interface(std::ifstream &stream, const specfem::MPI::MPI *mpi);
+  interface(std::ifstream &stream, const specfem::MPI::MPI &mpi);
   ~interface() = default;
 };
 } // namespace interfaces

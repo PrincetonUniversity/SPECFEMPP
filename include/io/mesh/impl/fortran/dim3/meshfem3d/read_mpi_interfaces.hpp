@@ -48,6 +48,6 @@ namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d {
  * @see specfem::io::mesh::impl::fortran::dim3::mesh
  * @todo Implement full MPI interface processing for parallel 3D simulations
  */
-void read_mpi_interfaces(std::ifstream &stream, const specfem::MPI::MPI *mpi);
+void read_mpi_interfaces(std::ifstream &stream, const specfem::MPI::MPI &mpi);
 
 } // namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d

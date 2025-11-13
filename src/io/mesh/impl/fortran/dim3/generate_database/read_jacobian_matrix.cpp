@@ -14,7 +14,7 @@ void specfem::io::mesh::impl::fortran::dim3::read_jacobian_matrix(
     std::ifstream &stream,
     specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>
         &jacobian_matrix,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::MPI::MPI &mpi) {
 
   // Read Jacobian matrix
   const int nspec = jacobian_matrix.nspec;

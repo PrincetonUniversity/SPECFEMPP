@@ -16,8 +16,9 @@ struct Assembly3D {
 
   Assembly3D() = default;
 
-  Assembly3D(const std::string &database_file, const specfem::MPI::MPI *mpi) {
-    const auto mesh = specfem::io::meshfem3d::read_3d_mesh(database_file, mpi);
+  Assembly3D(const std::string &database_file,
+             const std::shared_ptr<specfem::MPI::MPI> mpi) {
+    const auto mesh = specfem::io::meshfem3d::read_3d_mesh(database_file, *mpi);
 
     const int nspec = mesh.nspec;
     const int ngnod = mesh.control_nodes.ngnod;
@@ -49,7 +50,7 @@ protected:
     const auto &folder = GetParam();
     const std::string database_file = "data/dim3/" + folder + "/database.bin";
     // Initialize MPI (assuming MPIEnvironment is defined elsewhere)
-    specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+    auto mpi = MPIEnvironment::get_mpi();
     assembly = specfem::test_configuration::Assembly3D(database_file, mpi);
   }
   void TearDown() override {

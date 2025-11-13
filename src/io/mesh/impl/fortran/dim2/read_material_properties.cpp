@@ -51,7 +51,7 @@ read_materials(
         electromagnetic_te, isotropic> &electromagnetic_te_isotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
         elastic_psv_t, isotropic_cosserat> &elastic_psv_t_isotropic_cosserat,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::MPI::MPI &mpi) {
 
   // Define the elastic medium tag based on input elastic wave type
   const specfem::element::medium_tag elastic = [elastic_wave]() {
@@ -91,9 +91,9 @@ read_materials(
   message << "Material systems:\n"
           << "------------------------------";
 
-  mpi->cout(message.str());
+  mpi.cout(message.str());
 
-  if (mpi->get_rank() == 0)
+  if (mpi.get_rank() == 0)
     std::cout << "Number of material systems = " << numat << "\n\n";
 
   // Section for acoustic isotropic
@@ -475,7 +475,7 @@ void read_material_indices(
         specfem::dimension::type::dim2>::material_specification>
         material_index_mapping,
     const specfem::kokkos::HostView2d<int> knods,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::MPI::MPI &mpi) {
 
   const int ngnod = knods.extent(0);
 
@@ -515,7 +515,7 @@ specfem::io::mesh::impl::fortran::dim2::read_material_properties(
     const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
     const specfem::kokkos::HostView2d<int> knods,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::MPI::MPI &mpi) {
 
   // Create materials instances
   specfem::mesh::materials<specfem::dimension::type::dim2> materials(nspec,

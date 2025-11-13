@@ -47,7 +47,7 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
 void simulation_2d(
     const YAML::Node &parameter_dict, const YAML::Node &default_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks,
-    specfem::MPI::MPI *mpi) {
+    const std::shared_ptr<specfem::MPI::MPI> &mpi) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
@@ -66,7 +66,7 @@ void simulation_2d(
   const auto quadrature = setup.instantiate_quadrature();
   const auto mesh = specfem::io::read_2d_mesh(
       database_filename, setup.get_elastic_wave_type(),
-      setup.get_electromagnetic_wave_type(), mpi);
+      setup.get_electromagnetic_wave_type(), *mpi);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -253,7 +253,7 @@ void simulation_2d(
 void simulation_3d(
     const YAML::Node &parameter_dict, const YAML::Node &default_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks,
-    specfem::MPI::MPI *mpi) {
+    const std::shared_ptr<specfem::MPI::MPI> &mpi) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
@@ -277,7 +277,7 @@ void simulation_3d(
   mpi->cout("===================");
   const auto quadrature = setup.instantiate_quadrature();
   const auto mesh = specfem::io::read_3d_mesh(mesh_parameters_filename,
-                                              database_filename, mpi);
+                                              database_filename, *mpi);
   std::chrono::duration<double> elapsed_seconds =
       std::chrono::system_clock::now() - start_time;
   mpi->cout("Time to read mesh: " + std::to_string(elapsed_seconds.count()) +
@@ -369,11 +369,18 @@ void simulation_3d(
 } // anonymous namespace
 
 bool specfem::simulation::execute(
-    const std::string &dimension, specfem::MPI::MPI *mpi,
+    const std::string &dimension, std::weak_ptr<specfem::MPI::MPI> mpi_weak,
     const YAML::Node &parameter_dict, const YAML::Node &default_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
         &tasks) {
   try {
+    // Lock the weak_ptr to get a shared_ptr
+    auto mpi = mpi_weak.lock();
+    if (!mpi) {
+      std::cerr << "Error: MPI object is no longer valid" << std::endl;
+      return false;
+    }
+
     // Use simulation model enumeration for validation
     specfem::simulation::model simulation_model =
         specfem::simulation::from_string(dimension);

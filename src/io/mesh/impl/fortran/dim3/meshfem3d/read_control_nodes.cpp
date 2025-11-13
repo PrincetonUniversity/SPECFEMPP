@@ -6,7 +6,7 @@
 
 specfem::mesh::meshfem3d::ControlNodes<specfem::dimension::type::dim3>
 specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_control_nodes(
-    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream, const specfem::MPI::MPI &mpi) {
 
   using ControlNodesType =
       specfem::mesh::meshfem3d::ControlNodes<specfem::dimension::type::dim3>;

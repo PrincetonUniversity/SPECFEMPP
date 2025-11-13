@@ -40,7 +40,7 @@ struct ExpectedMapping {
 
     // Get the mesh
     const auto expected_mesh = specfem::io::meshfem3d::read_3d_mesh(
-        database_file, MPIEnvironment::get_mpi());
+        database_file, *MPIEnvironment::get_mpi());
 
     ASSERT_EQ(points.nspec, total_quadrature_points.nelements)
         << "Number of spectral elements mismatch. "

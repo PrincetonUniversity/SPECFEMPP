@@ -4,7 +4,7 @@
 
 specfem::mesh::meshfem3d::adjacency_graph<specfem::dimension::type::dim3>
 specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_adjacency_graph(
-    std::ifstream &stream, const int nspec, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream, const int nspec, const specfem::MPI::MPI &mpi) {
 
   specfem::mesh::meshfem3d::adjacency_graph<specfem::dimension::type::dim3>
       graph(nspec);

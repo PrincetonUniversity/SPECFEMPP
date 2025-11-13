@@ -66,7 +66,7 @@ specfem::mesh::boundaries<specfem::dimension::type::dim2>
 read_boundaries(std::ifstream &stream, const int nspec, const int n_absorbing,
                 const int n_acoustic_surface, const int n_acforcing,
                 const Kokkos::View<int **, Kokkos::HostSpace> knods,
-                const specfem::MPI::MPI *mpi);
+                const specfem::MPI::MPI &mpi);
 
 } // namespace dim2
 } // namespace fortran

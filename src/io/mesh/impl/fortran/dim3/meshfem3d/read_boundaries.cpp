@@ -178,7 +178,7 @@ specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_boundaries(
     std::ifstream &stream, const int nspec,
     const specfem::mesh::meshfem3d::ControlNodes<specfem::dimension::type::dim3>
         &control_nodes,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::MPI::MPI &mpi) {
 
   int boundary_number;
   std::array<int, 6> nfaces_per_direction;

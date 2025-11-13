@@ -88,7 +88,6 @@ int main(int argc, char **argv) {
   try {
     // Initialize context with RAII guard
     specfem::ContextGuard guard(argc, argv);
-    auto &context = guard.get_context();
 
     // Extract parameters (dimension is already extracted as positional
     // argument)

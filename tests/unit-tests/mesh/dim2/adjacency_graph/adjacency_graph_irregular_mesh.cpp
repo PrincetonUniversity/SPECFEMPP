@@ -66,11 +66,11 @@ TEST_P(CheckConnections, Test) {
 
   const std::string mesh_file = mesh_files.at(mesh_name);
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  auto mpi = MPIEnvironment::get_mpi();
 
   auto mesh =
       specfem::io::read_2d_mesh(mesh_file, specfem::enums::elastic_wave::psv,
-                                specfem::enums::electromagnetic_wave::te, mpi);
+                                specfem::enums::electromagnetic_wave::te, *mpi);
 
   const auto &adjacency_graph = mesh.adjacency_graph;
 

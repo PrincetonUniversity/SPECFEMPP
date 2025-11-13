@@ -73,6 +73,7 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
         specfem::point::global_coordinates<specfem::dimension::type::dim2>{
           receiver->get_x(), receiver->get_z()
         };
+
     const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
 
     h_elements(ireceiver) = lcoord.ispec;

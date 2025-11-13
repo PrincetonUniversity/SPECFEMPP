@@ -106,7 +106,8 @@ TEST_P(Newmark, 3D) {
             << "-------------------------------------------------------\n\n"
             << std::endl;
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  // Get MPI from test environment (returns shared_ptr)
+  auto mpi = MPIEnvironment::get_mpi();
 
   const auto parameter_file = Test.specfem_config;
 
@@ -122,7 +123,7 @@ TEST_P(Newmark, 3D) {
 
   // Read mesh generated MESHFEM
   auto mesh = specfem::io::read_3d_mesh(mesh_parameters_filename,
-                                        database_filename, mpi);
+                                        database_filename, *mpi);
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 

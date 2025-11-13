@@ -20,7 +20,8 @@ MESH::MESH() {
   std::string config_filename = "mesh/dim2/test_config.yaml";
   parse_test_config(YAML::LoadFile(config_filename), this->Tests);
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  // Get MPI from test environment (returns shared_ptr)
+  auto mpi = MPIEnvironment::get_mpi();
 
   for (auto &Test : this->Tests) {
     const auto [database_file, sources_file, stations_file] =
@@ -29,7 +30,7 @@ MESH::MESH() {
     const auto elastic_wave = Test.get_elastic_wave();
     const auto electromagnetic_wave = Test.get_electromagnetic_wave();
     specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-        database_file, elastic_wave, electromagnetic_wave, mpi);
+        database_file, elastic_wave, electromagnetic_wave, *mpi);
 
     meshes.push_back(mesh);
   }

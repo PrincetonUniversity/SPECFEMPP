@@ -113,7 +113,7 @@ specfem::mesh::interface_container<DimensionTag, medium1, medium2>
 specfem::io::mesh::impl::fortran::dim2::read_interfaces(
     const int num_interfaces,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream, const specfem::MPI::MPI &mpi) {
 
   specfem::mesh::interface_container<DimensionTag, medium1, medium2> interface(
       num_interfaces);
@@ -148,7 +148,7 @@ specfem::io::mesh::impl::fortran::dim2::read_interfaces<
     specfem::element::medium_tag::acoustic>(
     const int num_interfaces,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    std::ifstream &stream, const specfem::MPI::MPI *mpi);
+    std::ifstream &stream, const specfem::MPI::MPI &mpi);
 
 // acoustic/poroelastic
 template specfem::mesh::interface_container<
@@ -159,7 +159,7 @@ specfem::io::mesh::impl::fortran::dim2::read_interfaces<
     specfem::element::medium_tag::poroelastic>(
     const int num_interfaces,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    std::ifstream &stream, const specfem::MPI::MPI *mpi);
+    std::ifstream &stream, const specfem::MPI::MPI &mpi);
 
 // elastic/poroelastic
 template specfem::mesh::interface_container<
@@ -170,7 +170,7 @@ specfem::io::mesh::impl::fortran::dim2::read_interfaces<
     specfem::element::medium_tag::poroelastic>(
     const int num_interfaces,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    std::ifstream &stream, const specfem::MPI::MPI *mpi);
+    std::ifstream &stream, const specfem::MPI::MPI &mpi);
 
 specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_coupled_interfaces(
@@ -178,7 +178,7 @@ specfem::io::mesh::impl::fortran::dim2::read_coupled_interfaces(
     const int num_interfaces_acoustic_poroelastic,
     const int num_interfaces_elastic_poroelastic,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::MPI::MPI &mpi) {
 
   auto elastic_acoustic =
       specfem::io::mesh::impl::fortran::dim2::read_interfaces<

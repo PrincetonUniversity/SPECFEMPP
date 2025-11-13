@@ -30,7 +30,7 @@ void operator>>(YAML::Node &Node, test_config &test_config) {
 }
 
 test_config get_test_config(std::string config_filename,
-                            specfem::MPI::MPI *mpi) {
+                            std::shared_ptr<specfem::MPI::MPI> mpi) {
   // read test config file
   YAML::Node yaml = YAML::LoadFile(config_filename);
   test_config test_config{};
@@ -64,7 +64,7 @@ test_config get_test_config(std::string config_filename,
  */
 TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  auto mpi = MPIEnvironment::get_mpi();
 
   std::string config_filename = "assembly_mesh/jacobian_matrix/test_config.yml";
   test_config test_config = get_test_config(config_filename, mpi);
@@ -75,7 +75,7 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
 
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
       test_config.database_filename, specfem::enums::elastic_wave::psv,
-      specfem::enums::electromagnetic_wave::te, mpi);
+      specfem::enums::electromagnetic_wave::te, *mpi);
 
   specfem::assembly::mesh<specfem::dimension::type::dim2> compute_mesh(
       mesh.tags, mesh.control_nodes, quadratures, mesh.adjacency_graph);

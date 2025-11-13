@@ -4,7 +4,7 @@
 #include <fstream>
 
 void specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_mpi_interfaces(
-    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream, const specfem::MPI::MPI &mpi) {
 
   int num_interfaces, max_elements_per_interface;
 

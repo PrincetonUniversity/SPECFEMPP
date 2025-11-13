@@ -55,7 +55,7 @@ public:
   instantiate_wavefield_plotter(
       const specfem::assembly::assembly<specfem::dimension::type::dim2>
           &assembly,
-      const type_real &dt, specfem::MPI::MPI *mpi) const;
+      const type_real &dt, std::weak_ptr<specfem::MPI::MPI> mpi) const;
 
 private:
   std::string output_format;  ///< format of output file

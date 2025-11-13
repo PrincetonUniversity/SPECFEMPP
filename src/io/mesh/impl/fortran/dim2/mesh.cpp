@@ -28,7 +28,7 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
     const std::string &filename,
     const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::MPI::MPI &mpi) {
 
   // Declaring empty mesh objects
   specfem::mesh::mesh<specfem::dimension::type::dim2> mesh;
@@ -75,11 +75,11 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
   mesh.control_nodes.knods = specfem::kokkos::HostView2d<int>(
       "specfem::mesh::knods", mesh.parameters.ngnod, mesh.nspec);
 
-  int nspec_all = mpi->reduce(mesh.parameters.nspec, specfem::MPI::sum);
+  int nspec_all = mpi.reduce(mesh.parameters.nspec, specfem::MPI::sum);
   int nelem_acforcing_all =
-      mpi->reduce(mesh.parameters.nelem_acforcing, specfem::MPI::sum);
+      mpi.reduce(mesh.parameters.nelem_acforcing, specfem::MPI::sum);
   int nelem_acoustic_surface_all =
-      mpi->reduce(mesh.parameters.nelem_acoustic_surface, specfem::MPI::sum);
+      mpi.reduce(mesh.parameters.nelem_acoustic_surface, specfem::MPI::sum);
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
@@ -157,11 +157,11 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
 
   // Print material properties
 
-  mpi->cout("Material systems:\n"
-            "------------------------------");
+  mpi.cout("Material systems:\n"
+           "------------------------------");
 
-  mpi->cout("Number of material systems = " +
-            std::to_string(mesh.materials.n_materials) + "\n\n");
+  mpi.cout("Number of material systems = " +
+           std::to_string(mesh.materials.n_materials) + "\n\n");
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
@@ -172,7 +172,7 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
         for (const auto material :
              mesh.materials.get_container<_medium_tag_, _property_tag_>()
                  .element_materials) {
-          mpi->cout(material.print());
+          mpi.cout(material.print());
         }
       })
 
