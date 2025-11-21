@@ -144,9 +144,6 @@ test_config parse_test_config(std::string config_filename) {
 TEST(SOURCES, compute_source_locations) {
   std::string config_filename = "source/test_config.yml";
 
-  //  alias the mpi environment pointer
-  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
-
   // parse solutions file for future use
   test_config test_config = parse_test_config(config_filename);
   std::vector<solution> solutions =
@@ -160,12 +157,10 @@ TEST(SOURCES, compute_source_locations) {
 
   // Read mesh for binary database for the test
   std::vector<std::shared_ptr<specfem::medium::material> > materials;
-  specfem::mesh::mesh mesh =
-      specfem::io::read_mesh(test_config.database_file, mpi);
+  specfem::mesh::mesh mesh = specfem::io::read_mesh(test_config.database_file);
 
   // read sources file
-  auto [sources, t0] =
-      specfem::io::read_sources(test_config.sources_file, 1.0, mpi);
+  auto [sources, t0] = specfem::io::read_sources(test_config.sources_file, 1.0);
 
   // setup compute struct for future use
   specfem::assembly::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
@@ -181,7 +176,7 @@ TEST(SOURCES, compute_source_locations) {
     source->locate(compute.coordinates.coord, compute.h_ibool, gllx->get_hxi(),
                    gllz->get_hxi(), mesh.nproc, mesh.coorg,
                    mesh.material_ind.knods, mesh.npgeo,
-                   material_properties.h_ispec_type, mpi);
+                   material_properties.h_ispec_type);
 
   // flag to check if a solution exists for current MPI configuration
   bool tested = false;

@@ -160,8 +160,6 @@ void test_edges(
 
 TEST(ASSEMBLY_MESH, coupled_interfaces_tests) {
 
-  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
-
   std::string config_filename =
       "assembly_mesh/coupled_interfaces/test_config.yaml";
 
@@ -177,7 +175,7 @@ TEST(ASSEMBLY_MESH, coupled_interfaces_tests) {
 
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh =
-        specfem::io::read_2d_mesh(Test.databases.mesh.database_filename, mpi);
+        specfem::io::read_2d_mesh(Test.databases.mesh.database_filename);
 
     // Generate compute structs to be used by the solver
     specfem::assembly::mesh assembly(mesh.control_nodes, quadratures);

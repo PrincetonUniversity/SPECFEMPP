@@ -4,7 +4,7 @@
 #include "enumerations/wavefield.hpp"
 #include "plotter.hpp"
 #include "specfem/assembly.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include <boost/filesystem.hpp>
 #ifdef NO_VTK
 #include <sstream>
@@ -55,7 +55,7 @@ public:
       const specfem::wavefield::type &wavefield_type,
       const specfem::wavefield::simulation_field &wavefield,
       const type_real &dt, const int &time_interval,
-      const boost::filesystem::path &output_folder, specfem::MPI::MPI *mpi);
+      const boost::filesystem::path &output_folder);
 
   /**
    * @brief Updates the wavefield within open window
@@ -97,9 +97,6 @@ public:
   int nspec; ///< Number of elements
   int ngllx; ///< Number of GLL points in x direction per element
   int ngllz; ///< Number of GLL points in z direction per element
-
-  // MPI object
-  specfem::MPI::MPI *mpi;
 
   type_real dt; ///< Time step
 

@@ -6,7 +6,7 @@
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
 #include "specfem/source.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"

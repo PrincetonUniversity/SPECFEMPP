@@ -2,7 +2,6 @@
 
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_mpi/interface.hpp"
 
 namespace specfem {
 namespace mesh {

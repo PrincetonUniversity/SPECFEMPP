@@ -41,7 +41,6 @@ template <specfem::dimension::type DimensionTag> struct mesh;
  * // Example: Reading a MESHFEM3D database
  * std::string param_file = "MESH/parameters.bin";
  * std::string database_file = "MESH/database.bin";
- * auto mpi = std::make_shared<specfem::MPI::MPI>();
  *
  * // Read mesh from MESHFEM3D binary files
  * auto mesh = specfem::io::meshfem3d::read_3d_mesh(param_file, database_file,
@@ -135,9 +134,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    * @code
    * // Internal usage in IO routines
    * specfem::mesh::meshfem3d::mesh<specfem::dimension::type::dim3> mesh;
-   * mesh.control_nodes = read_control_nodes(stream, mpi);
-   * mesh.materials = read_materials(stream, mpi);
-   * mesh.absorbing_boundaries = read_absorbing_boundaries(stream, mpi);
+   * mesh.control_nodes = read_control_nodes(stream);
+   * mesh.materials = read_materials(stream);
+   * mesh.absorbing_boundaries = read_absorbing_boundaries(stream);
    * @endcode
    */
   mesh() = default;

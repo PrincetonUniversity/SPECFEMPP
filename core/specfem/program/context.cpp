@@ -1,7 +1,7 @@
 #include "specfem/program/context.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mpi.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
@@ -9,8 +9,7 @@
 namespace specfem::program {
 
 Context::Context(int argc, char *argv[])
-    : kokkos_guard_(std::make_unique<Kokkos::ScopeGuard>(argc, argv)),
-      mpi_(std::make_unique<specfem::MPI::MPI>(&argc, &argv)) {
+    : kokkos_guard_(std::make_unique<Kokkos::ScopeGuard>(argc, argv)) {
   // Initialize static MPI wrapper
   specfem::MPI_new::initialize(&argc, &argv);
   // Initialize Logger
@@ -25,9 +24,6 @@ Context::Context(const std::vector<std::string> &args) {
   try {
     // Initialize Kokkos
     kokkos_guard_ = std::make_unique<Kokkos::ScopeGuard>(argc, argv);
-
-    // Initialize old MPI
-    mpi_ = std::make_unique<specfem::MPI::MPI>(&argc, &argv);
 
     // Initialize static MPI wrapper
     specfem::MPI_new::initialize(&argc, &argv);
@@ -48,8 +44,6 @@ Context::~Context() {
   // Finalize static MPI wrapper
   specfem::MPI_new::finalize();
 }
-
-specfem::MPI::MPI *Context::get_mpi() const { return mpi_.get(); }
 
 void Context::setup_argc_argv(const std::vector<std::string> &args, int &argc,
                               char **&argv) {

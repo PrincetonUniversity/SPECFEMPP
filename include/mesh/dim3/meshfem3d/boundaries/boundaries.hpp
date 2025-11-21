@@ -48,7 +48,7 @@ template <specfem::dimension::type DimensionTag> struct Boundaries;
  * // Read all domain boundaries from database
  * auto boundaries =
  *     specfem::io::mesh_impl::fortran::dim3::meshfem3d::read_boundaries(
- *         database_stream, control_nodes, mpi);
+ *         database_stream, control_nodes);
  *
  * // Process all boundary faces
  * for (int iface = 0; iface < boundaries.nfaces; ++iface) {

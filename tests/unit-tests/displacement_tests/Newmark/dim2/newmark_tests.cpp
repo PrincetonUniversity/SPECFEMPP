@@ -9,7 +9,6 @@
 #include "solver/solver.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/logger.hpp"
-#include "specfem/mpi.hpp"
 #include "specfem/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 #include <algorithm>
@@ -105,8 +104,6 @@ TEST_P(Newmark, 2D) {
             << "-------------------------------------------------------\n\n"
             << std::endl;
 
-  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
-
   const auto parameter_file = Test.specfem_config;
 
   specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
@@ -121,7 +118,7 @@ TEST_P(Newmark, 2D) {
 
   // Read mesh generated MESHFEM
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-      database_file, elastic_wave, electromagnetic_wave, mpi);
+      database_file, elastic_wave, electromagnetic_wave);
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 

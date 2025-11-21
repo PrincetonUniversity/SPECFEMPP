@@ -57,13 +57,12 @@ specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     const specfem::display::format &output_format,
     const specfem::wavefield::type &wavefield_type,
     const specfem::wavefield::simulation_field &wavefield, const type_real &dt,
-    const int &time_interval, const boost::filesystem::path &output_folder,
-    specfem::MPI::MPI *mpi)
+    const int &time_interval, const boost::filesystem::path &output_folder)
     : assembly(assembly), wavefield(wavefield), wavefield_type(wavefield_type),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec), dt(dt),
       ngllx(assembly.mesh.element_grid.ngllx),
-      ngllz(assembly.mesh.element_grid.ngllz), mpi(mpi) {
+      ngllz(assembly.mesh.element_grid.ngllz) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -111,13 +110,12 @@ specfem::periodic_tasks::plot_wavefield::plot_wavefield(
     const specfem::display::format &output_format,
     const specfem::wavefield::type &wavefield_type,
     const specfem::wavefield::simulation_field &wavefield, const type_real &dt,
-    const int &time_interval, const boost::filesystem::path &output_folder,
-    specfem::MPI::MPI *mpi)
+    const int &time_interval, const boost::filesystem::path &output_folder)
     : assembly(assembly), wavefield(wavefield), wavefield_type(wavefield_type),
       plotter(time_interval), output_format(output_format),
       output_folder(output_folder), nspec(assembly.mesh.nspec), dt(dt),
       ngllx(assembly.mesh.element_grid.ngllx),
-      ngllz(assembly.mesh.element_grid.ngllz), mpi(mpi) {};
+      ngllz(assembly.mesh.element_grid.ngllz) {};
 
 // Sigmoid function centered at 0.0
 double specfem::periodic_tasks::plot_wavefield::sigmoid(double x) {

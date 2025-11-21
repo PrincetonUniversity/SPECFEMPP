@@ -2,7 +2,6 @@
 
 #include "enumerations/interface.hpp"
 #include "mesh/mesh_base.hpp"
-#include "specfem_mpi/specfem_mpi.hpp"
 
 namespace specfem {
 namespace mesh {

@@ -2,7 +2,7 @@
 #include "io/fortranio/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem/logger.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
@@ -140,7 +140,7 @@ inline void calculate_ib(const specfem::kokkos::HostView2d<bool> code,
 
 specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
 read_absorbing_boundaries(std::ifstream &stream, int num_abs_boundary_faces,
-                          const int nspec, const specfem::MPI::MPI *mpi) {
+                          const int nspec) {
 
   // Create base instance of the absorbing boundary
   specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
@@ -274,10 +274,9 @@ get_boundary_type(const int type, const int e1, const int e2,
 }
 
 specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
-read_acoustic_free_surface(std::ifstream &stream,
-                           const int &nelem_acoustic_surface,
-                           const Kokkos::View<int **, Kokkos::HostSpace> knods,
-                           const specfem::MPI::MPI *mpi) {
+read_acoustic_free_surface(
+    std::ifstream &stream, const int &nelem_acoustic_surface,
+    const Kokkos::View<int **, Kokkos::HostSpace> knods) {
 
   std::vector<int> acfree_edge(4, 0);
   specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
@@ -302,7 +301,7 @@ read_acoustic_free_surface(std::ifstream &stream,
 
 specfem::mesh::forcing_boundary<specfem::dimension::type::dim2>
 read_forcing_boundaries(std::ifstream &stream, const int nelement_acforcing,
-                        const int nspec, const specfem::MPI::MPI *mpi) {
+                        const int nspec) {
 
   bool codeacread1 = true, codeacread2 = true, codeacread3 = true,
        codeacread4 = true;
@@ -358,20 +357,18 @@ specfem::mesh::boundaries<specfem::dimension::type::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_boundaries(
     std::ifstream &stream, const int nspec, const int n_absorbing,
     const int n_acoustic_surface, const int n_acforcing,
-    const Kokkos::View<int **, Kokkos::HostSpace> knods,
-    const specfem::MPI::MPI *mpi) {
+    const Kokkos::View<int **, Kokkos::HostSpace> knods) {
 
   // Read absorbing boundaries
   auto absorbing_boundary =
-      read_absorbing_boundaries(stream, n_absorbing, nspec, mpi);
+      read_absorbing_boundaries(stream, n_absorbing, nspec);
 
   // Read acoustic free surface
   auto acoustic_free_surface =
-      read_acoustic_free_surface(stream, n_acoustic_surface, knods, mpi);
+      read_acoustic_free_surface(stream, n_acoustic_surface, knods);
 
   // Read forcing boundaries
-  auto forcing_boundary =
-      read_forcing_boundaries(stream, n_acforcing, nspec, mpi);
+  auto forcing_boundary = read_forcing_boundaries(stream, n_acforcing, nspec);
 
   return { absorbing_boundary, acoustic_free_surface, forcing_boundary };
 }

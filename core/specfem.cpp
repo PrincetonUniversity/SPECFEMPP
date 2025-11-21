@@ -105,8 +105,8 @@ int main(int argc, char **argv) {
     tasks.push_back(signal_task);
 
     // Execute program with the specified dimension
-    const auto success = specfem::program::execute(
-        dimension, context.get_mpi(), parameter_dict, default_dict, tasks);
+    const auto success = specfem::program::execute(dimension, parameter_dict,
+                                                   default_dict, tasks);
 
     // Check execution result
     if (!success) {

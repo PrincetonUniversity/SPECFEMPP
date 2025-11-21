@@ -2,7 +2,6 @@
 
 #include "io/fortranio/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem_mpi/interface.hpp"
 
 namespace specfem {
 namespace io {
@@ -20,7 +19,7 @@ namespace dim3 {
  * parameters
  */
 specfem::mesh::parameters<specfem::dimension::type::dim3>
-read_mesh_parameters(std::ifstream &stream, const specfem::MPI::MPI *mpi);
+read_mesh_parameters(std::ifstream &stream);
 
 /**
  * @brief Read mapping from 3D mesh database
@@ -29,9 +28,9 @@ read_mesh_parameters(std::ifstream &stream, const specfem::MPI::MPI *mpi);
  * @param mapping Mapping object
  * @param mpi MPI object
  */
-void read_ibool(std::ifstream &stream,
-                specfem::mesh::mapping<specfem::dimension::type::dim3> &mapping,
-                const specfem::MPI::MPI *mpi);
+void read_ibool(
+    std::ifstream &stream,
+    specfem::mesh::mapping<specfem::dimension::type::dim3> &mapping);
 
 /**
  * @brief Read element types from 3D mesh database
@@ -42,8 +41,8 @@ void read_ibool(std::ifstream &stream,
  */
 void read_element_types(
     std::ifstream &stream,
-    specfem::mesh::element_types<specfem::dimension::type::dim3> &element_types,
-    const specfem::MPI::MPI *mpi);
+    specfem::mesh::element_types<specfem::dimension::type::dim3>
+        &element_types);
 
 /**
  * @brief Read coordinates from 3D mesh database
@@ -54,8 +53,7 @@ void read_element_types(
  */
 void read_xyz(
     std::ifstream &stream,
-    specfem::mesh::coordinates<specfem::dimension::type::dim3> &coordinates,
-    const specfem::MPI::MPI *mpi);
+    specfem::mesh::coordinates<specfem::dimension::type::dim3> &coordinates);
 
 /**
  * @brief Read Jacobian from 3D mesh database
@@ -67,8 +65,7 @@ void read_xyz(
 void read_jacobian_matrix(
     std::ifstream &stream,
     specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>
-        &jacobian_matrix,
-    const specfem::MPI::MPI *mpi);
+        &jacobian_matrix);
 
 /**
  * @brief Read array from 3D mesh database

@@ -1,6 +1,6 @@
 #include "mesh/dim2/boundaries/acoustic_free_surface.hpp"
 #include "io/fortranio/interface.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include <Kokkos_Core.hpp>
 
 specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>::

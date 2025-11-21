@@ -11,7 +11,7 @@
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
 #include "specfem/timescheme.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
@@ -47,8 +47,8 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
 // Internal function for 2D simulations
 void program_2d(
     const YAML::Node &parameter_dict, const YAML::Node &default_dict,
-    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks,
-    specfem::MPI::MPI *mpi) {
+    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
+        tasks) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
@@ -67,7 +67,7 @@ void program_2d(
   const auto quadrature = setup.instantiate_quadrature();
   const auto mesh = specfem::io::read_2d_mesh(
       database_filename, setup.get_elastic_wave_type(),
-      setup.get_electromagnetic_wave_type(), mpi);
+      setup.get_electromagnetic_wave_type());
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -164,7 +164,7 @@ void program_2d(
   //                   Instantiate plotter
   // --------------------------------------------------------------
   const auto wavefield_plotter =
-      setup.instantiate_wavefield_plotter(assembly, dt, mpi);
+      setup.instantiate_wavefield_plotter(assembly, dt);
   if (wavefield_plotter) {
     tasks.push_back(wavefield_plotter);
   }
@@ -228,8 +228,8 @@ void program_2d(
 // Internal function for 3D simulations
 void program_3d(
     const YAML::Node &parameter_dict, const YAML::Node &default_dict,
-    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks,
-    specfem::MPI::MPI *mpi) {
+    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
+        tasks) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
@@ -252,8 +252,8 @@ void program_3d(
   specfem::Logger::info("Reading the mesh...");
   specfem::Logger::info("===================");
   const auto quadrature = setup.instantiate_quadrature();
-  const auto mesh = specfem::io::read_3d_mesh(mesh_parameters_filename,
-                                              database_filename, mpi);
+  const auto mesh =
+      specfem::io::read_3d_mesh(mesh_parameters_filename, database_filename);
   std::chrono::duration<double> elapsed_seconds =
       std::chrono::system_clock::now() - start_time;
   specfem::Logger::info("Time to read mesh: " +
@@ -335,8 +335,8 @@ void program_3d(
 } // anonymous namespace
 
 bool specfem::program::execute(
-    const std::string &dimension, specfem::MPI::MPI *mpi,
-    const YAML::Node &parameter_dict, const YAML::Node &default_dict,
+    const std::string &dimension, const YAML::Node &parameter_dict,
+    const YAML::Node &default_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
         &tasks) {
   try {
@@ -346,10 +346,10 @@ bool specfem::program::execute(
 
     switch (simulation_model) {
     case specfem::simulation::model::Cartesian2D:
-      program_2d(parameter_dict, default_dict, tasks, mpi);
+      program_2d(parameter_dict, default_dict, tasks);
       return true;
     case specfem::simulation::model::Cartesian3D:
-      program_3d(parameter_dict, default_dict, tasks, mpi);
+      program_3d(parameter_dict, default_dict, tasks);
       return true;
     default:
       std::cerr << "Unsupported simulation model" << std::endl;

@@ -1,6 +1,6 @@
 #include "io/fortranio/interface.hpp"
 #include "mesh/dim2/boundaries/absorbing_boundary.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include <Kokkos_Core.hpp>
 #include <vector>
 

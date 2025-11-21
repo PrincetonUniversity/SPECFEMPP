@@ -1,5 +1,5 @@
 #include "parameter_parser/database_configuration.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include "yaml-cpp/yaml.h"
 #include <ostream>
 

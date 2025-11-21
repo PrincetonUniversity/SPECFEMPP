@@ -1,7 +1,7 @@
 
 #include "specfem/source.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_mpi/interface.hpp"
+
 #include "specfem_setup.hpp"
 #include <yaml-cpp/yaml.h>
 #include <cmath>

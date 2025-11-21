@@ -2,7 +2,7 @@
 
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include <fstream>
 
 namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d {
@@ -20,6 +20,6 @@ namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d {
  * @throws std::runtime_error if file reading fails
  */
 specfem::mesh::meshfem3d::ControlNodes<specfem::dimension::type::dim3>
-read_control_nodes(std::ifstream &stream, const specfem::MPI::MPI *mpi);
+read_control_nodes(std::ifstream &stream);
 
 } // namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d

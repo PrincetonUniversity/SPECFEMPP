@@ -39,8 +39,8 @@ struct ExpectedMapping {
   check(const specfem::assembly::mesh_impl::points<dimension> &points) const {
 
     // Get the mesh
-    const auto expected_mesh = specfem::io::meshfem3d::read_3d_mesh(
-        database_file, SPECFEMEnvironment::get_mpi());
+    const auto expected_mesh =
+        specfem::io::meshfem3d::read_3d_mesh(database_file);
 
     ASSERT_EQ(points.nspec, total_quadrature_points.nelements)
         << "Number of spectral elements mismatch. "

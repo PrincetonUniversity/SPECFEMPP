@@ -4,7 +4,7 @@
 #include "io/fortranio/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem/logger.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include "utilities/interface.hpp"
 #include <memory>
 #include <sstream>
@@ -51,8 +51,7 @@ read_materials(
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
         electromagnetic_te, isotropic> &electromagnetic_te_isotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-        elastic_psv_t, isotropic_cosserat> &elastic_psv_t_isotropic_cosserat,
-    const specfem::MPI::MPI *mpi) {
+        elastic_psv_t, isotropic_cosserat> &elastic_psv_t_isotropic_cosserat) {
 
   // Define the elastic medium tag based on input elastic wave type
   const specfem::element::medium_tag elastic = [elastic_wave]() {
@@ -474,8 +473,7 @@ void read_material_indices(
     const specfem::kokkos::HostView1d<specfem::mesh::materials<
         specfem::dimension::type::dim2>::material_specification>
         material_index_mapping,
-    const specfem::kokkos::HostView2d<int> knods,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::kokkos::HostView2d<int> knods) {
 
   const int ngnod = knods.extent(0);
 
@@ -514,8 +512,7 @@ specfem::io::mesh::impl::fortran::dim2::read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
     const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
-    const specfem::kokkos::HostView2d<int> knods,
-    const specfem::MPI::MPI *mpi) {
+    const specfem::kokkos::HostView2d<int> knods) {
 
   // Create materials instances
   specfem::mesh::materials<specfem::dimension::type::dim2> materials(nspec,
@@ -531,11 +528,11 @@ specfem::io::mesh::impl::fortran::dim2::read_material_properties(
       materials.get_container<elastic_sh, anisotropic>(),
       materials.get_container<poroelastic, isotropic>(),
       materials.get_container<electromagnetic_te, isotropic>(),
-      materials.get_container<elastic_psv_t, isotropic_cosserat>(), mpi);
+      materials.get_container<elastic_psv_t, isotropic_cosserat>());
 
   // Read material indices
   read_material_indices(stream, nspec, numat, index_mapping,
-                        materials.material_index_mapping, knods, mpi);
+                        materials.material_index_mapping, knods);
 
   return materials;
 }

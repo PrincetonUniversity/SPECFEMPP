@@ -9,7 +9,6 @@ target_link_libraries(specfem_program
     PUBLIC
         yaml-cpp::yaml-cpp
         ${BOOST_LIBS}
-        specfem_mpi
         specfem::logger
         specfem::mpi
         Kokkos::kokkos

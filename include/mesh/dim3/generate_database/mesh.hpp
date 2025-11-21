@@ -18,7 +18,7 @@
 #include "mesh/mesh_base.hpp"
 #include "mpi/mpi.hpp"
 #include "parameters/parameters.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include "specfem_setup.hpp"
 #include "surface/surface.hpp"
 #include "tags/tags.hpp"
@@ -156,7 +156,7 @@ template <> struct mesh<specfem::dimension::type::dim3> {
         irregular_element_number(irregular_element_number),
         jacobian_matrix(jacobian_matrix), element_types(element_types),
         mass_matrix(mass_matrix), materials(materials), boundaries(boundaries),
-        tags(tags), coupled_interfaces(coupled_interfaces), mpi(mpi),
+        tags(tags), coupled_interfaces(coupled_interfaces),
         inner_outer(inner_outer), coloring(coloring), surface(surface),
         adjacency(adjacency) {};
 

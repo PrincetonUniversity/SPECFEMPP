@@ -12,8 +12,8 @@
 #include <string>
 
 specfem::mesh::meshfem3d::mesh<specfem::dimension::type::dim3>
-specfem::io::meshfem3d::read_3d_mesh(const std::string &database_file,
-                                     const specfem::MPI::MPI *mpi) {
+specfem::io::meshfem3d::read_3d_mesh(const std::string &database_file) {
+
   // Read mesh parameters
   std::ifstream param_stream(database_file, std::ios::in | std::ios::binary);
   if (!param_stream.is_open()) {
@@ -34,32 +34,32 @@ specfem::io::meshfem3d::read_3d_mesh(const std::string &database_file,
 
   mesh.control_nodes =
       specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_control_nodes(
-          param_stream, mpi);
+          param_stream);
   const auto [nspec, control_node_index, materials] =
       specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_materials(
-          param_stream, mesh.control_nodes.ngnod, mpi);
+          param_stream, mesh.control_nodes.ngnod);
   mesh.nspec = nspec;
   mesh.control_nodes.nspec = nspec;
   mesh.control_nodes.control_node_index = control_node_index;
   mesh.materials = materials;
   mesh.boundaries =
       specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_boundaries(
-          param_stream, nspec, mesh.control_nodes, mpi);
+          param_stream, nspec, mesh.control_nodes);
 
   // CPML boundaries are not supported yet
   // TODO (Rohit: PML_BOUNDARIES): Add support for PML boundaries
   specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_pml_boundaries(
-      param_stream, mpi);
+      param_stream);
 
   // MPI interfaces are not supported yet
   // TODO (Rohit: MPI_INTERFACES): Add support for MPI interfaces
   specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_mpi_interfaces(
-      param_stream, mpi);
+      param_stream);
 
   // Read adjacency information
   mesh.adjacency_graph =
       specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_adjacency_graph(
-          param_stream, mesh.nspec, mpi);
+          param_stream, mesh.nspec);
 
   param_stream.close();
 

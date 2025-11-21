@@ -7,7 +7,7 @@
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
 #include "specfem/logger.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include "specfem_setup.hpp"
 
 // External/Standard Libraries
@@ -42,8 +42,7 @@ std::string try_print_medium_element(
 
 specfem::mesh::mesh<specfem::dimension::type::dim3>
 specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
-                          const std::string &mesh_databases_file,
-                          const specfem::MPI::MPI *mpi) {
+                          const std::string &mesh_databases_file) {
 
   // Creating aliases for Checking functions
   using specfem::io::mesh::impl::fortran::dim3::check_read_test_value;
@@ -72,8 +71,7 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
   try {
     mesh.parameters =
-        specfem::io::mesh::impl::fortran::dim3::read_mesh_parameters(stream,
-                                                                     mpi);
+        specfem::io::mesh::impl::fortran::dim3::read_mesh_parameters(stream);
   } catch (std::runtime_error &e) {
     throw;
   }
