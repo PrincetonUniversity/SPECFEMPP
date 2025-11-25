@@ -1,6 +1,7 @@
 #include "io/mesh/impl/fortran/dim2/read_mesh_database.hpp"
 #include "io/fortranio/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/mpi.hpp"
 
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

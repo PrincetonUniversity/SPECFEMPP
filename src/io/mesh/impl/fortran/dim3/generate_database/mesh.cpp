@@ -406,8 +406,8 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
     // Print the absorbing boundaries for the first face
     // for debugging the array layout (Fortran v. C)
-    specfem::Logger::trace(mesh.boundaries.absorbing_boundary.print_ijk(0));
-    specfem::Logger::trace(mesh.boundaries.absorbing_boundary.print_ijk(num_abs_boundary_faces
+    // specfem::Logger::trace(mesh.boundaries.absorbing_boundary.print_ijk(0));
+    // specfem::Logger::trace(mesh.boundaries.absorbing_boundary.print_ijk(num_abs_boundary_faces
     // - 1));
 #endif
   }
@@ -506,9 +506,9 @@ specfem::io::read_3d_mesh(const std::string &mesh_parameters_file,
 
   // Print the free surface for the first face
   // for debugging the array layout (Fortran v. C)
-  specfem::Logger::trace(mesh.acoustic_free_surface.print_ijk(0));
-  specfem::Logger::trace(mesh.acoustic_free_surface.print_ijk(num_free_surface_faces -
-  // 1));
+  // specfem::Logger::trace(mesh.acoustic_free_surface.print_ijk(0));
+  // specfem::Logger::trace(mesh.acoustic_free_surface.print_ijk(num_free_surface_faces
+  // - 1));
 #endif
 
   // Create the coupled interfaces object
