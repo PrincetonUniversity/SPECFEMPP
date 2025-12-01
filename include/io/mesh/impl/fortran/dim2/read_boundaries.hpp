@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mesh/mesh.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include <fstream>
 #include <vector>
 
@@ -23,7 +23,7 @@ namespace dim2 {
 //  */
 // specfem::mesh::absorbing_boundary read_absorbing_boundaries(
 //     std::ifstream &stream, const int n_absorbing, const int nspec,
-//     const specfem::MPI::MPI *mpi);
+//
 
 // /**
 //  * @brief Read acoustic free surface from mesh database
@@ -36,7 +36,7 @@ namespace dim2 {
 //  */
 // specfem::mesh::acoustic_free_surface read_acoustic_free_surface(
 //     std::ifstream &stream, const int nspec, const int n_acoustic_surface,
-//     const specfem::MPI::MPI *mpi);
+//
 
 // /**
 //  * @brief Read forcing boundaries from mesh database
@@ -49,7 +49,7 @@ namespace dim2 {
 //  */
 // specfem::mesh::forcing_boundary read_forcing_boundaries(
 //     std::ifstream &stream, const int nspec, const int n_acforcing,
-//     const specfem::MPI::MPI *mpi);
+//
 
 /**
  * @brief Read boundaries from mesh database
@@ -65,8 +65,7 @@ namespace dim2 {
 specfem::mesh::boundaries<specfem::dimension::type::dim2>
 read_boundaries(std::ifstream &stream, const int nspec, const int n_absorbing,
                 const int n_acoustic_surface, const int n_acforcing,
-                const Kokkos::View<int **, Kokkos::HostSpace> knods,
-                const specfem::MPI::MPI *mpi);
+                const Kokkos::View<int **, Kokkos::HostSpace> knods);
 
 } // namespace dim2
 } // namespace fortran

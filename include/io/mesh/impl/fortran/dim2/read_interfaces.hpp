@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mesh/mesh.hpp"
-#include "specfem_mpi/interface.hpp"
 
 namespace specfem {
 namespace io {
@@ -17,7 +16,7 @@ specfem::mesh::interface_container<DimensionTag, medium1, medium2>
 read_interfaces(
     const int num_interfaces,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    std::ifstream &stream, const specfem::MPI::MPI *mpi);
+    std::ifstream &stream);
 
 /* @brief Read the coupled interfaces from the database file
  *
@@ -33,8 +32,7 @@ read_coupled_interfaces(
     std::ifstream &stream, const int num_interfaces_elastic_acoustic,
     const int num_interfaces_acoustic_poroelastic,
     const int num_interfaces_elastic_poroelastic,
-    Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    const specfem::MPI::MPI *mpi);
+    Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods);
 
 } // namespace dim2
 } // namespace fortran

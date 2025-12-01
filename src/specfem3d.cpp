@@ -74,8 +74,8 @@ int main(int argc, char **argv) {
     tasks.push_back(signal_task);
 
     // Execute program for 3D
-    const auto success = specfem::program::execute(
-        "3d", context.get_mpi(), parameter_dict, default_dict, tasks);
+    const auto success =
+        specfem::program::execute("3d", parameter_dict, default_dict, tasks);
 
     // Check execution result
     if (!success) {

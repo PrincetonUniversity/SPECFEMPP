@@ -4,7 +4,7 @@
 #include "enumerations/medium.hpp"
 #include "interface_container.hpp"
 #include "mesh/mesh_base.hpp"
-#include "specfem_mpi/specfem_mpi.hpp"
+
 #include <fstream>
 #include <variant>
 

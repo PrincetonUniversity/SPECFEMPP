@@ -18,12 +18,12 @@ namespace utilities {
 //        const type_real x_source, const type_real z_source,
 //        const specfem::kokkos::HostView2d<type_real> coorg,
 //        const specfem::kokkos::HostView2d<int> knods, const int npgeo,
-//        const specfem::MPI::MPI *mpi);
+//
 
 // void check_locations(const type_real x, const type_real z, const type_real
 // xmin,
 //                      const type_real xmax, const type_real zmin,
-//                      const type_real zmax, const specfem::MPI::MPI *mpi);
+//                      const type_real zmax);
 
 // int compute_nglob(const specfem::kokkos::HostMirror3d<int> ibool);
 

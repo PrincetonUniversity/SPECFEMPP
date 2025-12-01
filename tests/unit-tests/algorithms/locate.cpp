@@ -11,10 +11,9 @@ TEST(ALGORITHMS, locate_point) {
   std::string database_file = "algorithms/serial/database.bin";
 
   // Read Mesh database
-  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
       database_file, specfem::enums::elastic_wave::psv,
-      specfem::enums::electromagnetic_wave::te, mpi);
+      specfem::enums::electromagnetic_wave::te);
 
   // Quadratures
   specfem::quadrature::gll::gll gll(0.0, 0.0, 5);

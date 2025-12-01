@@ -2,7 +2,7 @@
 
 #include "enumerations/interface.hpp"
 #include "specfem/periodic_tasks/periodic_task.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <string>
@@ -46,13 +46,6 @@ public:
   explicit Context(const std::vector<std::string> &args);
 
   /**
-   * @brief Get MPI instance
-   *
-   * @return Pointer to MPI instance
-   */
-  specfem::MPI::MPI *get_mpi() const;
-
-  /**
    * @brief Destructor - ensures proper cleanup via RAII
    */
   ~Context();
@@ -76,7 +69,6 @@ private:
   static void cleanup_argc_argv(int argc, char **argv);
 
   std::unique_ptr<Kokkos::ScopeGuard> kokkos_guard_;
-  std::unique_ptr<specfem::MPI::MPI> mpi_;
 };
 
 } // namespace specfem::program

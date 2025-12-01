@@ -30,7 +30,7 @@ void operator>>(const YAML::Node &Node, test_config &test_config) {
 }
 
 test_config parse_test_config(std::string test_configuration_file,
-                              specfem::MPI::MPI *mpi) {
+
 
   YAML::Node yaml = YAML::LoadFile(test_configuration_file);
   const YAML::Node &tests = yaml["Tests"];
@@ -38,7 +38,7 @@ test_config parse_test_config(std::string test_configuration_file,
 
   test_config test_config;
   if (specfem::MPI_new::get_size() == 1) {
-    serial >> test_config;
+  serial >> test_config;
   }
 
   return test_config;
@@ -74,9 +74,7 @@ void read_field(
 TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   std::string config_filename = "seismogram/acoustic/test_config.yaml";
 
-  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
-
-  test_config test_config = parse_test_config(config_filename, mpi);
+  test_config test_config = parse_test_config(config_filename);
 
   const std::string parameter_file = test_config.specfem_config;
 
@@ -89,7 +87,7 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(database_file, mpi);
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(database_file);
 
   std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
 

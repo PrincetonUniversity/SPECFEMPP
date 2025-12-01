@@ -3,7 +3,6 @@
 
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_mpi/interface.hpp"
 
 namespace specfem {
 namespace mesh {
@@ -25,7 +24,7 @@ template <> struct axial_elements<specfem::dimension::type::dim2> {
   axial_elements() {};
   axial_elements(const int nspec);
   axial_elements(std::ifstream &stream, const int nelem_on_the_axis,
-                 const int nspec, const specfem::MPI::MPI *mpi);
+                 const int nspec);
 };
 } // namespace elements
 } // namespace mesh

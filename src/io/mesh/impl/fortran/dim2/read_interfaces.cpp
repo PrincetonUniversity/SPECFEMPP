@@ -1,7 +1,6 @@
 #include "io/mesh/impl/fortran/dim2/read_interfaces.hpp"
 #include "io/fortranio/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem_mpi/interface.hpp"
 
 namespace {
 
@@ -113,7 +112,7 @@ specfem::mesh::interface_container<DimensionTag, medium1, medium2>
 specfem::io::mesh::impl::fortran::dim2::read_interfaces(
     const int num_interfaces,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream) {
 
   specfem::mesh::interface_container<DimensionTag, medium1, medium2> interface(
       num_interfaces);
@@ -148,7 +147,7 @@ specfem::io::mesh::impl::fortran::dim2::read_interfaces<
     specfem::element::medium_tag::acoustic>(
     const int num_interfaces,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    std::ifstream &stream, const specfem::MPI::MPI *mpi);
+    std::ifstream &stream);
 
 // acoustic/poroelastic
 template specfem::mesh::interface_container<
@@ -159,7 +158,7 @@ specfem::io::mesh::impl::fortran::dim2::read_interfaces<
     specfem::element::medium_tag::poroelastic>(
     const int num_interfaces,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    std::ifstream &stream, const specfem::MPI::MPI *mpi);
+    std::ifstream &stream);
 
 // elastic/poroelastic
 template specfem::mesh::interface_container<
@@ -170,36 +169,35 @@ specfem::io::mesh::impl::fortran::dim2::read_interfaces<
     specfem::element::medium_tag::poroelastic>(
     const int num_interfaces,
     Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    std::ifstream &stream, const specfem::MPI::MPI *mpi);
+    std::ifstream &stream);
 
 specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_coupled_interfaces(
     std::ifstream &stream, const int num_interfaces_elastic_acoustic,
     const int num_interfaces_acoustic_poroelastic,
     const int num_interfaces_elastic_poroelastic,
-    Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods,
-    const specfem::MPI::MPI *mpi) {
+    Kokkos::View<int **, Kokkos::LayoutRight, Kokkos::HostSpace> knods) {
 
   auto elastic_acoustic =
       specfem::io::mesh::impl::fortran::dim2::read_interfaces<
           specfem::dimension::type::dim2,
           specfem::element::medium_tag::elastic_psv,
           specfem::element::medium_tag::acoustic>(
-          num_interfaces_elastic_acoustic, knods, stream, mpi);
+          num_interfaces_elastic_acoustic, knods, stream);
 
   auto acoustic_poroelastic =
       specfem::io::mesh::impl::fortran::dim2::read_interfaces<
           specfem::dimension::type::dim2,
           specfem::element::medium_tag::acoustic,
           specfem::element::medium_tag::poroelastic>(
-          num_interfaces_acoustic_poroelastic, knods, stream, mpi);
+          num_interfaces_acoustic_poroelastic, knods, stream);
 
   auto elastic_poroelastic =
       specfem::io::mesh::impl::fortran::dim2::read_interfaces<
           specfem::dimension::type::dim2,
           specfem::element::medium_tag::elastic_psv,
           specfem::element::medium_tag::poroelastic>(
-          num_interfaces_elastic_poroelastic, knods, stream, mpi);
+          num_interfaces_elastic_poroelastic, knods, stream);
 
   return specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>(
       elastic_acoustic, acoustic_poroelastic, elastic_poroelastic);

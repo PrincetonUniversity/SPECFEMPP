@@ -302,17 +302,6 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
-add_library(
-        specfem_mpi
-        src/specfem_mpi/specfem_mpi.cpp
-)
-
-target_compile_definitions(
-        specfem_mpi
-        PUBLIC
-        $<$<BOOL:${SPECFEM_ENABLE_MPI}>:-DMPI_PARALLEL>
-)
-
 if (SPECFEM_ENABLE_MPI)
     message(STATUS "Compiling SPECFEM with MPI")
 else()
@@ -328,7 +317,6 @@ endif()
 # target_link_libraries(
 #         material_class
 #         Kokkos::kokkos
-#         specfem_mpi
 # )
 
 add_library(
@@ -368,7 +356,6 @@ target_link_libraries(
         mesh
         enumerations
         Kokkos::kokkos
-        specfem_mpi
         # material_class
         yaml-cpp
         ${BOOST_LIBS}

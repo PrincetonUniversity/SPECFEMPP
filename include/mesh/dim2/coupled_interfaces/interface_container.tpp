@@ -4,7 +4,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "io/fortranio/interface.hpp"
 #include "interface_container.hpp"
-#include "specfem_mpi/interface.hpp"
+
 
 template <specfem::element::medium_tag medium1,
           specfem::element::medium_tag medium2>

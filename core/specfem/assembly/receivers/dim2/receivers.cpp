@@ -4,7 +4,7 @@
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "specfem/assembly.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>

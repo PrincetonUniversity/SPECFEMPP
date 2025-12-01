@@ -2,7 +2,7 @@
 #include "io/fortranio/interface.hpp"
 #include "io/mesh/impl/fortran/dim3/generate_database/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include <Kokkos_Core.hpp>
 
 // temolate instationation
@@ -13,8 +13,7 @@
 void specfem::io::mesh::impl::fortran::dim3::read_jacobian_matrix(
     std::ifstream &stream,
     specfem::mesh::jacobian_matrix<specfem::dimension::type::dim3>
-        &jacobian_matrix,
-    const specfem::MPI::MPI *mpi) {
+        &jacobian_matrix) {
 
   // Read Jacobian matrix
   const int nspec = jacobian_matrix.nspec;

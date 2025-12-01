@@ -1,6 +1,5 @@
 #pragma once
 
-#include "specfem_mpi/interface.hpp"
 #include <fstream>
 
 namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d {
@@ -31,7 +30,6 @@ namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d {
  * @code
  * // Example usage in MESHFEM3D database reading
  * std::ifstream database_stream("proc000000_mesh.bin", std::ios::binary);
- * specfem::MPI::MPI mpi;
  *
  * // Read other mesh components first...
  *
@@ -44,13 +42,12 @@ namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d {
  * }
  * @endcode
  *
- * @see specfem::MPI::MPI
  * @see specfem::io::mesh::impl::fortran::dim3::mesh
  * @see Perfectly Matched Layer theory in computational electromagnetics and
  * seismology
  * @todo Implement full PML boundary processing for 3D absorbing boundary
  * conditions
  */
-void read_pml_boundaries(std::ifstream &stream, const specfem::MPI::MPI *mpi);
+void read_pml_boundaries(std::ifstream &stream);
 
 } // namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d

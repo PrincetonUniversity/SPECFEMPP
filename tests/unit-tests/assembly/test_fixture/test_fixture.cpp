@@ -26,8 +26,6 @@ template <> Assembly<specfem::dimension::type::dim2>::Assembly() {
   parse_test_config<specfem::dimension::type::dim2>(
       YAML::LoadFile(config_filename), Tests, "2D");
 
-  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
-
   const auto quadrature = []() {
     specfem::quadrature::gll::gll gll{};
     return specfem::quadrature::quadratures(gll);
@@ -40,7 +38,7 @@ template <> Assembly<specfem::dimension::type::dim2>::Assembly() {
     const auto elastic_wave = Test.get_elastic_wave();
     const auto electromagnetic_wave = Test.get_electromagnetic_wave();
     const auto mesh = specfem::io::read_2d_mesh(database_file, elastic_wave,
-                                                electromagnetic_wave, mpi);
+                                                electromagnetic_wave);
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);
@@ -74,8 +72,6 @@ template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
   parse_test_config<specfem::dimension::type::dim3>(
       YAML::LoadFile(config_filename), Tests, "3D");
 
-  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
-
   const auto quadrature = []() {
     specfem::quadrature::gll::gll gll{};
     return specfem::quadrature::quadratures(gll);
@@ -86,8 +82,8 @@ template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
         Test.get_databases();
 
     // For 3D, we need different mesh and source reading functions
-    const auto mesh = specfem::io::read_3d_mesh(mesh_parameters_file,
-                                                mesh_database_file, mpi);
+    const auto mesh =
+        specfem::io::read_3d_mesh(mesh_parameters_file, mesh_database_file);
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);

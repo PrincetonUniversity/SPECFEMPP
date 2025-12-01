@@ -2,11 +2,11 @@
 #include "io/fortranio/interface.hpp"
 #include "io/mesh/impl/fortran/dim3/generate_database/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem_mpi/interface.hpp"
+#include "specfem/mpi.hpp"
 
 specfem::mesh::parameters<specfem::dimension::type::dim3>
 specfem::io::mesh::impl::fortran::dim3::read_mesh_parameters(
-    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream) {
 
   // Creating aliases for Array Reading functions
   using specfem::io::mesh::impl::fortran::dim3::check_read_test_value;

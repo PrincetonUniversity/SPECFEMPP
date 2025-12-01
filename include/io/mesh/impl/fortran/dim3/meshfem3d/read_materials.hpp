@@ -2,7 +2,7 @@
 
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include <Kokkos_Core.hpp>
 #include <fstream>
 #include <tuple>
@@ -32,7 +32,6 @@ namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d {
  */
 std::tuple<int, Kokkos::View<int **, Kokkos::LayoutLeft, Kokkos::HostSpace>,
            specfem::mesh::meshfem3d::Materials<specfem::dimension::type::dim3> >
-read_materials(std::ifstream &stream, const int ngnod,
-               const specfem::MPI::MPI *mpi);
+read_materials(std::ifstream &stream, const int ngnod);
 
 } // namespace specfem::io::mesh::impl::fortran::dim3::meshfem3d

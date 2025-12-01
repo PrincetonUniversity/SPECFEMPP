@@ -106,8 +106,6 @@ TEST_P(Newmark, 3D) {
             << "-------------------------------------------------------\n\n"
             << std::endl;
 
-  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
-
   const auto parameter_file = Test.specfem_config;
 
   specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
@@ -121,8 +119,8 @@ TEST_P(Newmark, 3D) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  auto mesh = specfem::io::read_3d_mesh(mesh_parameters_filename,
-                                        database_filename, mpi);
+  auto mesh =
+      specfem::io::read_3d_mesh(mesh_parameters_filename, database_filename);
   const type_real dt = setup.get_dt();
   const int nsteps = setup.get_nsteps();
 

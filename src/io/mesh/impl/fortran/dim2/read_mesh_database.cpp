@@ -1,7 +1,8 @@
 #include "io/mesh/impl/fortran/dim2/read_mesh_database.hpp"
 #include "io/fortranio/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_mpi/interface.hpp"
+#include "specfem/mpi.hpp"
+
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <fstream>
@@ -10,7 +11,7 @@
 
 std::tuple<int, int, int>
 specfem::io::mesh::impl::fortran::dim2::read_mesh_database_header(
-    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream) {
   // This subroutine reads header values of the database which are skipped
   std::string dummy_s;
   int dummy_i, dummy_i1, dummy_i2;
@@ -160,7 +161,7 @@ specfem::io::mesh::impl::fortran::dim2::read_mesh_database_header(
 
 specfem::kokkos::HostView2d<type_real>
 specfem::io::mesh::impl::fortran::dim2::read_coorg_elements(
-    std::ifstream &stream, const int npgeo, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream, const int npgeo) {
 
   int ipoin = 0;
 
@@ -184,7 +185,7 @@ specfem::io::mesh::impl::fortran::dim2::read_coorg_elements(
 
 std::tuple<int, type_real, bool>
 specfem::io::mesh::impl::fortran::dim2::read_mesh_database_attenuation(
-    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
+    std::ifstream &stream) {
 
   int n_sls;
   double attenuation_f0_reference;

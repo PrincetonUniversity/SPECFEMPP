@@ -3,7 +3,7 @@
 #include "io/fortranio/interface.hpp"
 #include "io/mesh/impl/fortran/dim3/generate_database/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem_mpi/interface.hpp"
+
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
