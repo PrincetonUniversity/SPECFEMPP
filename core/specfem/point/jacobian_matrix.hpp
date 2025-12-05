@@ -10,21 +10,128 @@ namespace specfem {
 namespace point {
 
 /**
- * @brief Store spatial derivatives of the basis functions at a quadrature point
+ * @brief Jacobian matrix for coordinate transformations in spectral elements.
  *
- * @tparam DimensionTag Dimension of the spectral element
- * @tparam StoreJacobian Boolean indicating whether to store the Jacobian
- * @tparam UseSIMD Boolean indicating whether to use SIMD
+ * The jacobian_matrix class stores and manages the Jacobian transformation data
+ * necessary for converting between local reference coordinates (\f$\xi,
+ * \gamma\f$) and global physical coordinates (\f$x, z\f$) within spectral
+ * elements. This transformation is fundamental to spectral element methods,
+ * enabling the evaluation of integrals over arbitrarily-shaped elements using
+ * standardized quadrature rules.
+ *
+ * The Jacobian matrix \f$\mathbf{J}\f$ relates coordinate systems via:
+ * \f$
+ *   \mathbf{J} = \begin{pmatrix}
+ *     \frac{\partial x}{\partial \xi} & \frac{\partial x}{\partial \gamma} \\
+ *     \frac{\partial z}{\partial \xi} & \frac{\partial z}{\partial \gamma}
+ *   \end{pmatrix}
+ * \f$
+ *
+ * The inverse transformation derivatives (stored by this class) are:
+ * \f$
+ *   \mathbf{J}^{-1} = \frac{1}{|\mathbf{J}|} \begin{pmatrix}
+ *     \frac{\partial \gamma}{\partial z} & -\frac{\partial x}{\partial \gamma}
+ * \\
+ *     -\frac{\partial z}{\partial \xi} & \frac{\partial x}{\partial \xi}
+ *   \end{pmatrix} = \begin{pmatrix}
+ *     \xi_x & \gamma_x \\
+ *     \xi_z & \gamma_z
+ *   \end{pmatrix}
+ * \f$
+ *
+ * @tparam DimensionTag Spatial dimension of the spectral element (dim2 or
+ * dim3).
+ * @tparam StoreJacobian Boolean flag controlling whether to store the full
+ * Jacobian matrix data. When `false`, only transformation derivatives are
+ * stored for memory efficiency.
+ * @tparam UseSIMD Boolean enabling SIMD vectorization for performance
+ * optimization when processing multiple quadrature points simultaneously.
+ *
+ * @note The Jacobian determinant |J| represents the local scaling factor
+ * between reference and physical coordinate systems and is crucial for integral
+ *       transformations in finite element assembly.
+ *
+ * @see specfem::point::coordinates for coordinate system definitions
+ * @see specfem::quadrature for integration over reference elements
+ *
+ * @code
+ * // Example: Using Jacobian for gradient computation
+ * specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false, false>
+ * jac;
+ *
+ * // Load Jacobian data from element geometry
+ * specfem::assembly::load_on_device(index, geometry, jac);
+ *
+ * // Transform basis function derivatives to physical space
+ * // dφ/dx = dφ/dξ * ξ_x + dφ/dγ * γ_x
+ * type_real dphi_dx = dphi_dxi * jac.xix + dphi_dgamma * jac.gammax;
+ * type_real dphi_dz = dphi_dxi * jac.xiz + dphi_dgamma * jac.gammaz;
+ * @endcode
  */
 template <specfem::dimension::type DimensionTag, bool StoreJacobian,
           bool UseSIMD>
 struct jacobian_matrix;
 
 /**
- * @brief Template specialization for 2D spectral elements without storing the
- * Jacobian
+ * @brief 2D Jacobian matrix specialization without full matrix storage.
  *
- * @tparam UseSIMD Boolean indicating whether to use SIMD
+ * This specialization provides an optimized implementation for 2D spectral
+ * elements that stores only the essential transformation derivatives without
+ * the full Jacobian matrix data. This reduces memory usage while maintaining
+ * all necessary functionality for coordinate transformations and gradient
+ * computations.
+ *
+ * For 2D elements, the stored derivatives represent:
+ * - `xix` = ∂ξ/∂x: Sensitivity of reference coordinate ξ to physical
+ * x-coordinate
+ * - `gammax` = ∂γ/∂x: Sensitivity of reference coordinate γ to physical
+ * x-coordinate
+ * - `xiz` = ∂ξ/∂z: Sensitivity of reference coordinate ξ to physical
+ * z-coordinate
+ * - `gammaz` = ∂γ/∂z: Sensitivity of reference coordinate γ to physical
+ * z-coordinate
+ *
+ * These derivatives enable the transformation of derivatives from reference to
+ * physical space:
+ * \f$
+ *   \frac{\partial f}{\partial x} = \frac{\partial f}{\partial \xi} \xi_x +
+ * \frac{\partial f}{\partial \gamma} \gamma_x
+ * \f$
+ * \f$
+ *   \frac{\partial f}{\partial z} = \frac{\partial f}{\partial \xi} \xi_z +
+ * \frac{\partial f}{\partial \gamma} \gamma_z
+ * \f$
+ *
+ * This specialization is commonly used when:
+ * - Memory efficiency is prioritized over computational convenience
+ * - Only gradient transformations are needed (no full Jacobian operations)
+ * - Processing large numbers of quadrature points with limited memory
+ *
+ * @tparam UseSIMD Boolean enabling SIMD vectorization for processing multiple
+ *                 transformation derivatives simultaneously.
+ *
+ * @note The Jacobian determinant can be computed as: |J| = 1/(xix*gammaz -
+ * xiz*gammax) when needed for integral transformations.
+ *
+ * @see jacobian_matrix<DimensionTag, true, UseSIMD> for full matrix storage
+ * version
+ *
+ * @code
+ * // Example: Gradient transformation using compact storage
+ * using CompactJacobian = specfem::point::jacobian_matrix<
+ *     specfem::dimension::type::dim2, false, false>;
+ *
+ * CompactJacobian jac;
+ * // Load transformation derivatives
+ * jac.xix = xi_x_derivative;
+ * jac.gammax = gamma_x_derivative;
+ * jac.xiz = xi_z_derivative;
+ * jac.gammaz = gamma_z_derivative;
+ *
+ * // Transform gradient from reference to physical space
+ * auto grad_x = grad_xi * jac.xix + grad_gamma * jac.gammax;
+ * auto grad_z = grad_xi * jac.xiz + grad_gamma * jac.gammaz;
+ * @endcode
  */
 template <bool UseSIMD>
 struct jacobian_matrix<specfem::dimension::type::dim2, false, UseSIMD>

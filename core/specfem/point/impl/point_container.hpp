@@ -1,5 +1,44 @@
 #pragma once
 
+/**
+ * @file point_container.hpp
+ * @brief Macro-based code generation system for point data containers in
+ * spectral elements.
+ *
+ * This file provides a sophisticated macro-based framework for automatically
+ * generating data container classes that store multiple physical properties at
+ * spectral element quadrature points. The system uses Boost.Preprocessor
+ * metaprogramming to create type-safe, high-performance accessor functions and
+ * operators for point data.
+ *
+ * **Usage Pattern:**
+ * The macros are designed to work with sequences of property definitions, where
+ * each property is specified as a (name, index) pair. The generated container
+ * provides:
+ * 1. Named accessor functions for each property
+ * 2. Index-based access operators
+ * 3. Equality comparison operators
+ * 4. Variadic constructors for initialization
+ * 5. Stream output for debugging
+ *
+ * **Macro Expansion Example:**
+ * @code
+ * // Input sequence: ((density)(0))((mu)(1))((kappa)(2))
+ * // Generates:
+ * // - const value_type density() const { return _point_data_container[0]; }
+ * // - value_type& density() { return _point_data_container[1]; }
+ * // - Similar for mu() and kappa()
+ * // - operator[](int i) for index access
+ * // - operator==(const data_container& other) for comparison
+ * // - Constructor accepting (density_val, mu_val, kappa_val)
+ * @endcode
+ *
+ * @see POINT_VALUE_ACCESSOR
+ * @see POINT_CONTAINER
+ * @see specfem::point::properties
+ * @see specfem::point::kernels
+ */
+
 #include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem_setup.hpp"

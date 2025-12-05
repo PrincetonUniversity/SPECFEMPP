@@ -1,19 +1,3 @@
-/**
- * @file coupled_interface.hpp
- * @brief Defines interface types and attributes for coupling between different
- * physical media
- *
- * This file provides the fundamental infrastructure for multi-physics coupling
- * in SPECFEM++, enabling simulation of wave propagation across interfaces
- * between different medium types such as elastic-acoustic boundaries. The
- * coupling system supports weakly conforming interfaces where different
- * physical equations are solved on either side of the boundary.
- *
- * @author SPECFEM++ Development Team
- * @date 2025
- * @copyright Princeton University
- */
-
 #pragma once
 
 #include "enumerations/interface.hpp"

@@ -6,47 +6,88 @@
 namespace specfem::point {
 
 /**
- * @brief Point acceleration field accessor for spectral element computations.
+ * @brief Acceleration field accessor
  *
- * This class provides a specialized interface for accessing and manipulating
- * acceleration field data at individual points within spectral elements. It
- * inherits all functionality from the base field implementation while being
- * specifically typed for acceleration data.
+ * This class provides a specialized, type-safe interface for accessing and
+ * manipulating acceleration field data at individual quadrature points within
+ * spectral elements. Acceleration fields represent the second time derivative
+ * of displacement:
+ * \f$\mathbf{a} = \ddot{\mathbf{u}} = \frac{\partial^2 \mathbf{u}}{\partial
+ * t^2}\f$
  *
- * The acceleration class is commonly used in time-domain wave propagation
- * simulations where acceleration values need to be computed, stored, and
- * accessed at quadrature points during the assembly process.
+ * @tparam DimensionTag The spatial dimension defining acceleration vector size:
+ *                      - `specfem::dimension::type::dim2`: 2D problems (ax, az)
+ *                      - `specfem::dimension::type::dim3`: 3D problems (ax, ay,
+ * az)
  *
- * @tparam DimensionTag The spatial dimension (dim2 or dim3) of the acceleration
- * field
- * @tparam MediumTag The medium type (acoustic, elastic, poroelastic, etc.)
- * @tparam UseSIMD Whether to enable SIMD vectorization for performance
- * optimization
+ * @tparam MediumTag The physical medium type governing the acceleration
+ * computation:
+ *                   - `specfem::element::medium_tag::acoustic`: Scalar pressure
+ * acceleration
+ *                   - `specfem::element::medium_tag::elastic`: Vector
+ * displacement acceleration
+ *                   - `specfem::element::medium_tag::poroelastic`: Coupled
+ * solid-fluid acceleration
  *
+ * @tparam UseSIMD Boolean flag controlling SIMD vectorization for processing
+ * multiple quadrature points simultaneously. Critical for performance in
+ *                 element-wise operations during assembly.
  *
- * @code{.cpp}
- * // Example: Creating 2D elastic acceleration field accessor
+ * @note This class inherits all functionality from the base field
+ * implementation while providing specific typing for acceleration data and
+ * physics-aware operations.
+ *
+ * @see specfem::time_integration
+ * @see specfem::assembly
+ * @see specfem::point::velocity
+ * @see specfem::point::displacement
+ *
+ * @code
+ * // Example: Creating 2D elastic acceleration field for earthquake simulation
  * using AccelField = specfem::point::acceleration<
  *     specfem::dimension::type::dim2,
  *     specfem::element::medium_tag::elastic,
- *     false>;  // No SIMD
+ *     false>;  // Scalar operations for debugging
  *
- * // Initialize with zero acceleration
- * AccelField accel(0.0);
+ * AccelField accel(0.0);  // Initialize with zero acceleration
  *
- * // Set acceleration components
- * accel(0) = 9.81;  // x-component acceleration
- * accel(1) = 0.0;   // z-component acceleration
+ * // Set seismic acceleration components (e.g., from strong ground motion)
+ * accel(0) = 2.5;   // Horizontal acceleration (m/s²)
+ * accel(1) = -9.81; // Vertical acceleration including gravity (m/s²)
  *
- * // Use in assembly operations
- * specfem::assembly::load_on_device(point_index, field_container, accel);
+ * // Use in time integration (Newmark scheme example)
+ * velocity(0) += accel(0) * dt;              // Update horizontal velocity
+ * displacement(0) += velocity(0) * dt + 0.5 * accel(0) * dt * dt;
  * @endcode
  *
- * @code{.cpp}
- * // Example: Using acceleration in time integration scheme
- * AccelField acceleration;
- * VelocityField velocity;
- * DisplacementField displacement;
+ * @code
+ * // Example: SIMD-optimized acceleration for high-performance computing
+ * using AccelFieldSIMD = specfem::point::acceleration<
+ *     specfem::dimension::type::dim3,
+ *     specfem::element::medium_tag::elastic,
+ *     true>;   // Enable SIMD for multiple points
+ *
+ * AccelFieldSIMD accel_simd;
+ *
+ * // Process multiple quadrature points simultaneously
+ * auto simd_data = accel_simd.get_simd_data();
+ * // Vectorized operations across multiple points
+ * simd_data = mass_matrix_inverse * force_vector; // SIMD acceleration
+ * computation
+ * @endcode
+ *
+ * @code
+ * // Example: Acoustic acceleration for fluid domains
+ * using AcousticAccel = specfem::point::acceleration<
+ *     specfem::dimension::type::dim2,
+ *     specfem::element::medium_tag::acoustic,
+ *     false>;
+ *
+ * AcousticAccel pressure_accel;
+ * // In acoustic media, "acceleration" represents pressure rate of change
+ * pressure_accel(0) = bulk_modulus_inv * divergence_velocity;
+ * @endcode
+ *
  *
  * // Load current values
  * specfem::assembly::load_on_device(index, fields, acceleration, velocity,

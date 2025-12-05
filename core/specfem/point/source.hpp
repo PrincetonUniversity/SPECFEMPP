@@ -8,11 +8,61 @@ namespace specfem {
 namespace point {
 
 /**
- * @brief Store source information at a given quadrature point
+ * @brief Source term representation for external forcing in spectral element
+ * simulations.
  *
- * @tparam DimensionTag Dimension of the spectral element
- * @tparam MediumTag Medium tag of the spectral element
- * @tparam WavefieldType Wavefield type on which the source is applied
+ * The source class encapsulates external force terms applied at quadrature
+ * points within spectral elements, representing physical phenomena such as
+ * seismic sources, acoustic sources, or external loads. These source terms are
+ * essential components of the governing equations in wave propagation problems
+ * and contribute to the right-hand side of the semi-discrete system of
+ * equations.
+ *
+ * @tparam DimensionTag Spatial dimension of the source term:
+ *                      - `dim2`: 2D sources with x,z components
+ *                      - `dim3`: 3D sources with x,y,z components
+ * @tparam MediumTag Physical medium determining source interpretation:
+ *                  - `acoustic`: Scalar pressure or potential sources
+ *                  - `elastic`: Vector displacement or force sources
+ *                  - `poroelastic`: Coupled solid-fluid sources
+ * @tparam WavefieldType Target wavefield for source application:
+ *                       - `forward`: Forward wavefield simulation
+ *                       - `adjoint`: Adjoint/backward wavefield
+ *                       - `kernel`: Sensitivity kernel computation
+ *
+ * @note Source terms are typically time-dependent and require careful temporal
+ *       discretization to maintain accuracy and stability.
+ *
+ * @see specfem::sources for source initialization and management
+ * @see specfem::time_marching for temporal integration with sources
+ *
+ * @code
+ * // Example: Applying a 2D elastic point force source
+ * using ElasticSource = specfem::point::source<
+ *     specfem::dimension::type::dim2,
+ *     specfem::element::medium_tag::elastic,
+ *     specfem::wavefield::simulation_field::forward>;
+ *
+ * ElasticSource point_force;
+ *
+ * // Set force components (Newtons)
+ * point_force.force_vector(0) = 1000.0;  // x-direction force
+ * point_force.force_vector(1) = 0.0;     // z-direction force
+ *
+ * // Apply source term in assembly
+ * type_real source_contribution = point_force.force_vector(icomp) *
+ *                                 basis_function * time_function;
+ * rhs_vector(iglob) += source_contribution * quadrature_weight;
+ *
+ * // Example: Acoustic pressure source
+ * using AcousticSource = specfem::point::source<
+ *     specfem::dimension::type::dim2,
+ *     specfem::element::medium_tag::acoustic,
+ *     specfem::wavefield::simulation_field::forward>;
+ *
+ * AcousticSource pressure_source;
+ * pressure_source.pressure_amplitude = ricker_wavelet(time);
+ * @endcode
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,

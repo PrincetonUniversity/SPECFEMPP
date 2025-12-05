@@ -8,20 +8,68 @@ namespace specfem {
 namespace point {
 
 /**
- * @brief Struct to store the index associated with a quadrature point
+ * @brief Local element indexing system for quadrature points within spectral
+ * elements.
  *
- * @tparam DimensionTag Dimension of the element where the quadrature point is
- * located
- * @tparam using_simd Flag to indicate if this is a simd index
+ * The index struct provides a comprehensive indexing system for uniquely
+ * identifying quadrature points within individual spectral elements. This local
+ * indexing system is essential for accessing element-specific data, performing
+ * local operations, and mapping between different coordinate systems within the
+ * spectral element framework.
+ *
+ * @tparam DimensionTag Spatial dimension of the element (dim2 or dim3).
+ * @tparam using_simd Boolean flag enabling SIMD vectorization support.
+ *                   When `true`, enables vectorized operations on multiple
+ * indices. When `false`, uses scalar indexing for single points.
+ *
+ * @note The local indexing follows the spectral element convention where
+ * indices typically range from 0 to N-1, where N is the polynomial degree + 1.
+ *
+ * @see specfem::point::simd_index for SIMD-enabled vectorized indexing
+ * @see specfem::point::assembly_index for global DOF indexing
+ *
+ * @code
+ * // Example: 2D local indexing
+ * using LocalIndex = specfem::point::index<specfem::dimension::type::dim2,
+ * false>; LocalIndex local_idx; local_idx.ispec = element_id; local_idx.ix = 3;
+ * // 4th point in x-direction (0-indexed) local_idx.iz = 2;  // 3rd point in
+ * z-direction
+ *
+ * // Use for field access
+ * auto field_value = element_fields(local_idx.ispec, local_idx.iz,
+ * local_idx.ix);
+ * @endcode
  */
 template <specfem::dimension::type DimensionTag, bool using_simd = false>
 struct index;
 
 /**
- * @brief Alias for the simd index
+ * @brief Type alias for SIMD-vectorized local element indexing.
  *
- * @tparam DimensionTag Dimension of the element where the quadrature point is
- * located
+ * This alias provides convenient access to the SIMD-enabled specialization of
+ * the index template, which supports vectorized operations on multiple
+ * quadrature points simultaneously. SIMD indexing is crucial for achieving
+ * optimal performance on modern vector architectures by processing multiple
+ * points in parallel.
+ *
+ * @tparam DimensionTag Spatial dimension determining the indexing structure.
+ *
+ * @see specfem::point::index<DimensionTag, true> for the underlying SIMD
+ * implementation
+ * @see specfem::datatype::simd for SIMD type definitions
+ *
+ * @code
+ * // Example: SIMD vectorized indexing
+ * using SIMDIndex = specfem::point::simd_index<specfem::dimension::type::dim2>;
+ * SIMDIndex simd_idx(element_id, base_iz, base_ix, num_valid_points);
+ *
+ * // Process multiple points with vectorization
+ * for (int lane = 0; lane < num_valid_points; ++lane) {
+ *   if (simd_idx.mask(lane)) {
+ *     // Process valid lane
+ *   }
+ * }
+ * @endcode
  */
 template <specfem::dimension::type DimensionTag>
 using simd_index = index<DimensionTag, true>;
@@ -29,8 +77,49 @@ using simd_index = index<DimensionTag, true>;
 //--------------------------- 2D Specializations -----------------------------//
 
 /**
- * @brief 2D specialization of the index struct for the non-SIMD case
+ * @brief 2D scalar specialization for local element quadrature point indexing.
  *
+ * This specialization provides indexing for 2D spectral elements using a
+ * three-component system: element index (ispec) and two spatial indices (ix,
+ * iz). The indexing follows the tensor-product structure characteristic of
+ * spectral element methods, where each spatial direction is independently
+ * indexed.
+ *
+ * The 2D indexing convention typically follows:
+ * - ispec: Element identifier within the mesh [0, num_elements)
+ * - ix: Index along the x-direction within the element [0, NGLL_X)
+ * - iz: Index along the z-direction within the element [0, NGLL_Z)
+ *
+ * This indexing system enables efficient access to:
+ * - Element-local field arrays organized as [ispec][iz][ix]
+ * - Basis function coefficients and quadrature weights
+ * - Local mass and stiffness matrix entries
+ * - Geometric transformation data (Jacobians, coordinate mappings)
+ *
+ * @note NGLL_X and NGLL_Z are typically (polynomial_degree + 1) in each
+ * direction, commonly 5 for degree-4 polynomials in standard spectral element
+ * setups.
+ *
+ * @see specfem::quadrature for GLL point ordering conventions
+ * @see specfem::assembly for element assembly operations
+ *
+ * @code
+ * // Example: Traversing all quadrature points in a 2D element
+ * specfem::point::index<specfem::dimension::type::dim2, false> idx;
+ * idx.ispec = element_id;
+ *
+ * for (int iz = 0; iz < NGLL_Z; ++iz) {
+ *   for (int ix = 0; ix < NGLL_X; ++ix) {
+ *     idx.iz = iz; idx.ix = ix;
+ *
+ *     // Access field values at this quadrature point
+ *     auto field_val = element_fields(idx.ispec, idx.iz, idx.ix);
+ *
+ *     // Perform local operations
+ *     process_quadrature_point(idx, field_val);
+ *   }
+ * }
+ * @endcode
  */
 template <>
 struct index<specfem::dimension::type::dim2, false>

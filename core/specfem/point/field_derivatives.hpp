@@ -9,16 +9,67 @@ namespace specfem {
 namespace point {
 
 /**
- * @brief Store field derivatives for a quadrature point
+ * @brief Field gradient computation for spectral element variational
+ * formulations.
  *
- * The field derivatives are given by:
- * \f$ du_{i,k} = \partial_i u_k \f$
+ * The field_derivatives class computes and stores spatial derivatives of field
+ * variables at quadrature points within spectral elements. These derivatives
+ * are fundamental to implementing weak-form partial differential equations in
+ * spectral element methods, enabling the computation of strain tensors,
+ * divergence operators, and other differential quantities essential for wave
+ * propagation simulations.
  *
- * @tparam DimensionTag The dimension of the element where the quadrature point
- * is located
- * @tparam MediumTag The medium of the element where the quadrature point is
- * located
- * @tparam UseSIMD Use SIMD instructions
+ * **Mathematical Foundation:**
+ * The field derivatives represent the spatial gradient tensor:
+ * \f$
+ *   \nabla \mathbf{u} = \left[ \frac{\partial u_i}{\partial x_j} \right]_{i,j}
+ * \f$
+ * where \f$u_i\f$ are the field components and \f$x_j\f$ are spatial
+ * coordinates.
+ *
+ * For specific media, these derivatives enable computation of:
+ * - **Elastic media**: Strain tensor \f$\epsilon_{ij} = \frac{1}{2}(\partial_i
+ * u_j + \partial_j u_i)\f$
+ * - **Acoustic media**: Velocity divergence \f$\nabla \cdot \mathbf{v}\f$ for
+ * pressure computation
+ * - **Poroelastic media**: Solid and fluid phase strain components
+ *
+ * @tparam DimensionTag Spatial dimension determining gradient tensor size:
+ *                      - `dim2`: 2×2 gradient matrix for 2D problems
+ *                      - `dim3`: 3×3 gradient matrix for 3D problems
+ * @tparam MediumTag Physical medium type determining field interpretation:
+ *                  - `acoustic`: Velocity potential derivatives
+ *                  - `elastic`: Displacement gradient tensor
+ *                  - `poroelastic`: Solid and fluid displacement gradients
+ * @tparam UseSIMD Boolean flag enabling SIMD vectorization for processing
+ *                 multiple field derivatives simultaneously.
+ *
+ * @note Field derivatives are typically computed by transforming
+ * reference-space derivatives using the Jacobian matrix of coordinate
+ * transformation.
+ *
+ * @see specfem::point::stress for stress tensor computation
+ * @see specfem::point::jacobian_matrix for coordinate transformations
+ * @see specfem::assembly for weak-form integration procedures
+ *
+ * @code
+ * // Example: Computing strain tensor from displacement derivatives
+ * using FieldDerivatives = specfem::point::field_derivatives<
+ *     specfem::dimension::type::dim2,
+ *     specfem::element::medium_tag::elastic,
+ *     false>;
+ *
+ * FieldDerivatives grad_u;
+ * specfem::assembly::load_on_device(index, fields, grad_u);
+ *
+ * // Compute strain tensor: ε = (∇u + (∇u)^T) / 2
+ * auto epsilon_xx = grad_u(0, 0);  // ∂u_x/∂x
+ * auto epsilon_zz = grad_u(1, 1);  // ∂u_z/∂z
+ * auto epsilon_xz = 0.5 * (grad_u(0, 1) + grad_u(1, 0));  // Shear strain
+ *
+ * // Use in stress computation
+ * auto stress = constitutive_relation(epsilon_xx, epsilon_zz, epsilon_xz);
+ * @endcode
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
