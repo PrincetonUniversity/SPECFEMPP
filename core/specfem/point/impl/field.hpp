@@ -74,63 +74,62 @@ class field : public specfem::data_access::Accessor<
                   specfem::data_access::AccessorType::point, DataClass,
                   DimensionTag, UseSIMD> {
 private:
-  /// @brief Type alias for the base accessor class
+  /**
+   * @brief Base accessor type.
+   */
   using base_type =
       specfem::data_access::Accessor<specfem::data_access::AccessorType::point,
                                      DataClass, DimensionTag, UseSIMD>;
 
 public:
-  /// @brief Number of field components based on dimension and medium type
+  /**
+   * @brief Number of field components.
+   */
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
-  /// @brief SIMD type for vectorized operations
+  /**
+   * @brief SIMD type for vectorized operations.
+   */
   using simd = typename base_type::template simd<type_real>;
 
-  /// @brief Vector type for storing field component values
+  /**
+   * @brief Vector type for storing field component values.
+   */
   using value_type =
       typename base_type::template vector_type<type_real, components>;
 
-  /// @brief Medium tag identifying the physical medium type
+  /**
+   * @brief Medium tag identifying the physical medium type.
+   */
   constexpr static auto medium_tag = MediumTag;
 
 private:
-  /// @brief Internal storage for field component values
+  /**
+   * @brief Internal storage for field component values.
+   */
   value_type m_data;
 
 public:
   /**
-   * @brief Default constructor - creates field with uninitialized values.
+   * @brief Default constructor.
    */
   KOKKOS_FORCEINLINE_FUNCTION field() = default;
 
   /**
    * @brief Access internal field data storage.
    *
-   * @return const reference to the internal value_type storing field components
+   * @return Const reference to the internal data.
    */
   KOKKOS_FORCEINLINE_FUNCTION const value_type &get_data() const {
     return m_data;
   }
 
   /**
-   * @brief Construct field with uniform initialization across all components.
+   * @brief Construct field with uniform initialization.
    *
-   * Initializes all field components to the same scalar value. This is useful
-   * for creating zero-initialized fields or fields with uniform values.
-   *
-   * @tparam U Type convertible to the field's component type
-   * @param initializer The value to assign to all field components
-   *
-   * @pre U must be convertible to typename value_type::value_type
-   *
-   * @code{.cpp}
-   * // Create zero-initialized displacement field
-   * DisplacementField u_field(0.0);
-   *
-   * // Create field with uniform value
-   * VelocityField v_field(1.5);  // All components = 1.5
-   * @endcode
+   * @tparam U Type convertible to the component type.
+   * @param initializer The value to assign to all components.
    */
   template <
       typename U,
@@ -144,13 +143,8 @@ public:
   /**
    * @brief Construct field from value_type object.
    *
-   * Directly initializes the field from a compatible value_type object.
-   * This allows construction from pre-computed vector objects.
-   *
-   * @tparam U Type that must match value_type exactly
-   * @param initializer The value_type object to copy from
-   *
-   * @pre U must be exactly the same type as value_type
+   * @tparam U Type matching value_type.
+   * @param initializer The value object to copy from.
    */
   template <typename U, typename... Args,
             typename = std::enable_if_t<std::is_same_v<U, value_type>, int> >
@@ -160,22 +154,8 @@ public:
   /**
    * @brief Construct field with component-wise initialization.
    *
-   * Allows direct initialization of field components by providing individual
-   * values for each component. The number of arguments must exactly match
-   * the number of field components.
-   *
-   * @tparam Args Types of the component values (must match component count)
-   * @param args Individual values for each field component
-   *
-   * @pre sizeof...(Args) must equal the number of field components
-   *
-   * @code{.cpp}
-   * // 2D displacement field: ux, uz
-   * DisplacementField u_field(1.5, 2.3);
-   *
-   * // 3D velocity field: vx, vy, vz
-   * VelocityField v_field(0.1, 0.2, 0.3);
-   * @endcode
+   * @tparam Args Types of the component values.
+   * @param args Individual values for each component.
    */
   template <typename... Args,
             typename = std::enable_if_t<sizeof...(Args) == components> >
@@ -183,21 +163,10 @@ public:
       : m_data(std::forward<Args>(args)...) {}
 
   /**
-   * @brief Access field component by index (const version).
+   * @brief Access field component by index (read-only).
    *
-   * Provides read-only access to individual field components using zero-based
-   * indexing. For 2D problems: 0=x, 1=z. For 3D problems: 0=x, 1=y, 2=z.
-   *
-   * @param icomp Component index (0 to components-1)
-   * @return const reference to the component value
-   *
-   * @pre icomp must be less than the number of components
-   *
-   * @code{.cpp}
-   * DisplacementField u_field(1.5, 2.3);
-   * auto ux = u_field(0);  // x-component = 1.5
-   * auto uz = u_field(1);  // z-component = 2.3
-   * @endcode
+   * @param icomp Component index (0 to components-1).
+   * @return Const reference to the component value.
    */
   KOKKOS_FORCEINLINE_FUNCTION const typename value_type::value_type &
   operator()(const std::size_t icomp) const {
@@ -205,21 +174,10 @@ public:
   }
 
   /**
-   * @brief Access field component by index (mutable version).
+   * @brief Access field component by index (read-write).
    *
-   * Provides read-write access to individual field components using zero-based
-   * indexing. Allows modification of field component values.
-   *
-   * @param icomp Component index (0 to components-1)
-   * @return mutable reference to the component value
-   *
-   * @pre icomp must be less than the number of components
-   *
-   * @code{.cpp}
-   * DisplacementField u_field;
-   * u_field(0) = 1.5;  // Set x-component
-   * u_field(1) = 2.3;  // Set z-component
-   * @endcode
+   * @param icomp Component index (0 to components-1).
+   * @return Mutable reference to the component value.
    */
   KOKKOS_FORCEINLINE_FUNCTION typename value_type::value_type &
   operator()(const std::size_t icomp) {
@@ -229,11 +187,8 @@ public:
   /**
    * @brief Equality comparison operator.
    *
-   * Compares two field objects for exact equality by comparing their
-   * internal data storage.
-   *
-   * @param other The field object to compare against
-   * @return true if all components are exactly equal, false otherwise
+   * @param other The field object to compare against.
+   * @return True if all components are equal.
    */
   KOKKOS_FORCEINLINE_FUNCTION bool operator==(const field &other) const {
     return (this->m_data == other.m_data);
@@ -242,22 +197,18 @@ public:
   /**
    * @brief Inequality comparison operator.
    *
-   * Compares two field objects for inequality.
-   *
-   * @param other The field object to compare against
-   * @return true if any component differs, false if all components are equal
+   * @param other The field object to compare against.
+   * @return True if any component differs.
    */
   KOKKOS_FORCEINLINE_FUNCTION bool operator!=(const field &other) const {
     return !(*this == other);
   }
 
   /**
-   * @brief Multiplication assignment operator with constant value.
+   * @brief Multiplication assignment operator.
    *
-   * Multiply by a constant value and assign the result to this field.
-   *
-   * @param other The factor to be multiplied with
-   * @return reference to this field after multiplication
+   * @param other The scalar factor to multiply with.
+   * @return Reference to this field.
    */
   KOKKOS_FORCEINLINE_FUNCTION constexpr auto &
   operator*=(const typename value_type::value_type &other) {
@@ -266,12 +217,9 @@ public:
   }
 
   /**
-   * @brief Output a string representation of the field components.
+   * @brief Convert field to string representation.
    *
-   * Outputs the values of all field components to the specified output stream.
-   * Each component is printed in order, enclosed in square brackets.
-   * If SIMD the SIMD values are printed in curly brackets.
-   *
+   * @return String containing all component values.
    */
   std::string print() const {
     std::ostringstream os;

@@ -134,13 +134,24 @@ namespace impl {
 namespace properties {
 
 /**
- * @brief Compile time information associated with the properties of a
- * quadrature point in a 2D
+ * @brief Base accessor class for point properties.
  *
- * @tparam Dimension The dimension of the medium
- * @tparam MediumTag The type of the medium
- * @tparam PropertyTag The type of the properties
- * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
+ * This struct serves as a base class for accessing physical properties
+ * defined at quadrature points within a spectral element. It provides
+ * essential type definitions and static constants used by derived
+ * property containers.
+ *
+ * @tparam DimensionTag The dimension of the physical domain (e.g., 2D, 3D).
+ * @tparam MediumTag The type of the medium (e.g., acoustic, elastic).
+ * @tparam PropertyTag The specific property category.
+ * @tparam UseSIMD Flag indicating whether to use SIMD vectorization.
+ *
+ * @code
+ * template <typename T>
+ * struct MyProperties : public PropertyAccessor<dim2, acoustic, T, true> {
+ *     // ...
+ * };
+ * @endcode
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
@@ -151,33 +162,45 @@ struct PropertyAccessor : public specfem::data_access::Accessor<
                               DimensionTag, UseSIMD> {
 
 public:
+  /**
+   * @brief Base type alias for the point properties accessor.
+   */
   using base_accessor = specfem::data_access::Accessor<
       specfem::data_access::AccessorType::point,
-      specfem::data_access::DataClassType::properties, DimensionTag,
-      UseSIMD>; ///< Base type of
-                ///< the point
-                ///< properties
+      specfem::data_access::DataClassType::properties, DimensionTag, UseSIMD>;
 
-  using simd =
-      typename base_accessor::template simd<type_real>; ///< SIMD data type
+  /**
+   * @brief SIMD data type used for vectorized operations.
+   */
+  using simd = typename base_accessor::template simd<type_real>;
 
-  using value_type =
-      typename base_accessor::template scalar_type<type_real>; ///< Type of the
-                                                               ///< properties
+  /**
+   * @brief Scalar value type for property data.
+   */
+  using value_type = typename base_accessor::template scalar_type<type_real>;
 
-  constexpr static auto medium_tag = MediumTag;     ///< type of the medium
-  constexpr static auto property_tag = PropertyTag; ///< type of the properties
+  /**
+   * @brief Compile-time constant for the medium type.
+   */
+  constexpr static auto medium_tag = MediumTag;
+
+  /**
+   * @brief Compile-time constant for the property type.
+   */
+  constexpr static auto property_tag = PropertyTag;
 };
 
-/*
- * @brief Data container to hold properties of 2D acoustic media at a quadrature
- * point
+/**
+ * @brief Forward declaration of the data container for properties.
  *
- * @tparam Dimension The dimension of the medium
- * @tparam MediumTag The type of the medium
- * @tparam PropertyTag The type of the properties
- * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
+ * This struct is specialized to hold specific physical properties
+ * based on the medium and dimension.
  *
+ * @tparam DimensionTag The dimension of the medium.
+ * @tparam MediumTag The type of the medium.
+ * @tparam PropertyTag The type of the properties.
+ * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics.
+ * @tparam Enable SFINAE enabler.
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
@@ -188,6 +211,25 @@ struct data_container;
 
 namespace kernels {
 
+/**
+ * @brief Base accessor class for point kernels.
+ *
+ * This struct serves as a base class for accessing kernel data
+ * (precomputed integration weights, Jacobians, etc.) at quadrature points.
+ * It standardizes type definitions for SIMD and scalar operations.
+ *
+ * @tparam DimensionTag The dimension of the physical domain.
+ * @tparam MediumTag The type of the medium.
+ * @tparam PropertyTag The specific property category.
+ * @tparam UseSIMD Flag indicating whether to use SIMD vectorization.
+ *
+ * @code
+ * template <typename T>
+ * struct MyKernels : public KernelsAccessor<dim2, acoustic, T, true> {
+ *     // ...
+ * };
+ * @endcode
+ */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
@@ -195,21 +237,47 @@ struct KernelsAccessor
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::point,
           specfem::data_access::DataClassType::kernels, DimensionTag, UseSIMD> {
+
+  /**
+   * @brief Base type alias for the point kernels accessor.
+   */
   using base_type = specfem::data_access::Accessor<
       specfem::data_access::AccessorType::point,
-      specfem::data_access::DataClassType::kernels, DimensionTag,
-      UseSIMD>;                                              ///< Base type of
-                                                             ///< the point
-                                                             ///< kernels
-  using simd = typename base_type::template simd<type_real>; ///< SIMD data type
-  using value_type =
-      typename base_type::template scalar_type<type_real>; ///< Type of the
-                                                           ///< properties
+      specfem::data_access::DataClassType::kernels, DimensionTag, UseSIMD>;
 
-  constexpr static auto medium_tag = MediumTag;     ///< type of the medium
-  constexpr static auto property_tag = PropertyTag; ///< type of the properties
+  /**
+   * @brief SIMD data type used for vectorized operations.
+   */
+  using simd = typename base_type::template simd<type_real>;
+
+  /**
+   * @brief Scalar value type for kernel data.
+   */
+  using value_type = typename base_type::template scalar_type<type_real>;
+
+  /**
+   * @brief Compile-time constant for the medium type.
+   */
+  constexpr static auto medium_tag = MediumTag;
+
+  /**
+   * @brief Compile-time constant for the property type.
+   */
+  constexpr static auto property_tag = PropertyTag;
 };
 
+/**
+ * @brief Forward declaration of the data container for kernels.
+ *
+ * This struct is specialized to hold specific kernel data
+ * based on the medium and dimension.
+ *
+ * @tparam DimensionTag The dimension of the medium.
+ * @tparam MediumTag The type of the medium.
+ * @tparam PropertyTag The type of the properties.
+ * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics.
+ * @tparam Enable SFINAE enabler.
+ */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
