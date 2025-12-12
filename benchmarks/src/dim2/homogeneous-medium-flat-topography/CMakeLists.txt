@@ -12,9 +12,14 @@ endif()
 set(CURRENT_BENCHMARK_BUILD_DIR "${SPECFEM_BENCHMARKS_BUILD_DIR}/dim2/${CURRENT_DIR_NAME}")
 
 # Configure files directly into the cmake benchmarks_build!
-configure_file(CMakeFiles/Par_File.in ${CURRENT_BENCHMARK_BUILD_DIR}/Par_File)
-configure_file(CMakeFiles/specfem_config.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/specfem_config.yaml)
-configure_file(CMakeFiles/Snakefile.in ${CURRENT_BENCHMARK_BUILD_DIR}/Snakefile)
+configure_file(cpu/CMakeFiles/Par_File.in ${CURRENT_BENCHMARK_BUILD_DIR}/cpu/Par_File)
+configure_file(cpu/CMakeFiles/specfem_config.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/cpu/specfem_config.yaml)
+configure_file(cpu/CMakeFiles/Snakefile.in ${CURRENT_BENCHMARK_BUILD_DIR}/cpu/Snakefile)
+
+# Configure files directly into the cmake benchmarks_build!
+configure_file(gpu/CMakeFiles/Par_File.in ${CURRENT_BENCHMARK_BUILD_DIR}/gpu/Par_File)
+configure_file(gpu/CMakeFiles/specfem_config.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/gpu/specfem_config.yaml)
+configure_file(gpu/CMakeFiles/Snakefile.in ${CURRENT_BENCHMARK_BUILD_DIR}/gpu/Snakefile)
 
 # Copy static files into the benchmarks.
 file(
