@@ -39,3 +39,4 @@ bin
 
 
 **/__pycache__
+.github/prompts/ConciseDocument.prompt.md

@@ -128,7 +128,7 @@ interfacesfile                  = @CURRENT_BENCHMARK_BUILD_DIR@/gpu/topography.d
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 4000.d0        # abscissa of right side of the model
-nx                              = 80             # number of elements along X
+nx                              = 800             # number of elements along X
 
 STACEY_ABSORBING_CONDITIONS     = .false.
 

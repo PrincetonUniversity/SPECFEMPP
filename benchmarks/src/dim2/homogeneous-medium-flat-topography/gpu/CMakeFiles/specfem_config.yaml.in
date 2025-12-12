@@ -47,4 +47,4 @@ parameters:
     mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/gpu/OUTPUT_FILES/database.bin"
 
   ## sources
-  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/gpu/source.yaml"
+  sources: "@CURRENT_BENCHMARK_BUILD_DIR@/source.yaml"
