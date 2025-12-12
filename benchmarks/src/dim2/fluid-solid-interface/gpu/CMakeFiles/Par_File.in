@@ -11,7 +11,7 @@ title                           = Flat fluid/solid interface
 NPROC                           = 1              # number of processes
 
 # Output folder to store mesh related files
-OUTPUT_FILES                   = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
+OUTPUT_FILES                   = @CURRENT_BENCHMARK_BUILD_DIR@/gpu/OUTPUT_FILES
 
 #-----------------------------------------------------------
 #
@@ -26,7 +26,7 @@ PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (
 NGNOD                           = 9
 
 # location to store the mesh
-database_filename               = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/database.bin
+database_filename               = @CURRENT_BENCHMARK_BUILD_DIR@/gpu/OUTPUT_FILES/database.bin
 
 #-----------------------------------------------------------
 #
@@ -53,7 +53,7 @@ zfin                            = 3400   # last receiver z in meters (ignored if
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
 # filename to store stations file
-stations_filename              = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/STATIONS
+stations_filename              = @CURRENT_BENCHMARK_BUILD_DIR@/gpu/OUTPUT_FILES/STATIONS
 
 #-----------------------------------------------------------
 #
@@ -103,12 +103,12 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = @CURRENT_BENCHMARK_BUILD_DIR@/topography.dat
+interfacesfile                  = @CURRENT_BENCHMARK_BUILD_DIR@/gpu/topography.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 6400.d0        # abscissa of right side of the model
-nx                              = 144            # number of elements along X
+nx                              = 1440            # number of elements along X
 
 STACEY_ABSORBING_CONDITIONS    = .false.
 
@@ -120,8 +120,8 @@ absorbleft                      = .false.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 2              # then set below the different regions and model number for each region
-1 144 1   54 1
-1 144 55 108 2
+1 1440 1   540 1
+1 1440 55 1080 2
 
 #-----------------------------------------------------------
 #
