@@ -105,9 +105,14 @@ std::vector<
 init_transfer_function<TransferFunctionInitializer2D::Zero>() {
   return std::vector<
       std::array<std::array<type_real, n_quad_intersection>, n_quad_element> >(
-      1, std::array<std::array<type_real, n_quad_intersection>, n_quad_element>{
-             std::array<type_real, n_quad_intersection>{
-                 static_cast<type_real>(0.0) } });
+      1,
+      []{
+        std::array<std::array<type_real, n_quad_intersection>, n_quad_element> arr{};
+        for (auto& inner : arr) {
+          inner.fill(static_cast<type_real>(0.0));
+        }
+        return arr;
+      }());
 }
 
 /**
