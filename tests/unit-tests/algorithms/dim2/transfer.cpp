@@ -11,10 +11,10 @@
 #include "enumerations/interface.hpp"
 #include "specfem/chunk_edge.hpp"
 #include "specfem/data_access.hpp"
+#include "utilities/include/fixture/nonconforming_interface.hpp"
 #include "utilities/interface.hpp"
 
-#include "Kokkos_Environment.hpp"
-#include "MPI_environment.hpp"
+#include "SPECFEM_Environment.hpp"
 
 namespace specfem::algorithms_test {
 
@@ -63,200 +63,6 @@ constexpr static auto interface_tag =
     specfem::interface::interface_tag::acoustic_elastic;
 /** Boundary type (dummy for testing) */
 constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
-constexpr size_t n_quad_element = 5; /**< Quadrature points per element */
-constexpr size_t n_quad_intersection =
-    5;                             /**< Quadrature points per intersection */
-constexpr size_t n_components = 1; /**< Field components */
-using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
-
-/**
- * @brief Transfer function initializers for testing.
- */
-namespace TransferFunctionInitializer2D {
-/** Zero transfer function initializer */
-struct Zero {};
-} // namespace TransferFunctionInitializer2D
-
-/**
- * @brief Function initializers for testing.
- */
-namespace EdgeFunctionInitializer2D {
-/** Uniform field initializer */
-struct Uniform {};
-} // namespace EdgeFunctionInitializer2D
-
-/**
- * @brief Initialize transfer function data based on strategy.
- * @tparam Initializer Transfer function initialization strategy
- * @return Vector of transfer function arrays
- */
-template <typename Initializer>
-std::vector<
-    std::array<std::array<type_real, n_quad_intersection>, n_quad_element> >
-init_transfer_function();
-
-/**
- * @brief Initialize zero transfer function.
- * @return Vector containing zero-initialized transfer function
- */
-template <>
-std::vector<
-    std::array<std::array<type_real, n_quad_intersection>, n_quad_element> >
-init_transfer_function<TransferFunctionInitializer2D::Zero>() {
-  return std::vector<
-      std::array<std::array<type_real, n_quad_intersection>, n_quad_element> >(
-      1, [] {
-        std::array<std::array<type_real, n_quad_intersection>, n_quad_element>
-            arr{};
-        for (auto &inner : arr) {
-          inner.fill(static_cast<type_real>(0.0));
-        }
-        return arr;
-      }());
-}
-
-/**
- * @brief Test transfer function container.
- * @tparam Initializer Transfer function initialization strategy
- */
-template <typename Initializer> struct TransferFunction2D {
-  using TransferFunctionInitializer = Initializer;
-
-private:
-  std::vector<
-      std::array<std::array<type_real, n_quad_intersection>, n_quad_element> >
-      _transfer_function;
-  using TransferFunctionView =
-      Kokkos::View<type_real *[n_quad_element][n_quad_intersection],
-                   memory_space>;
-
-public:
-  /**
-   * @brief Construct transfer function with initializer.
-   * @param initializer Initialization strategy
-   */
-  TransferFunction2D(const Initializer &initializer)
-      : _transfer_function(init_transfer_function<Initializer>()) {}
-
-  /**
-   * @brief Get Kokkos view of transfer function data.
-   * @return Kokkos view for device access
-   */
-  TransferFunctionView get_view() const {
-    TransferFunctionView view("transfer_function_view",
-                              _transfer_function.size());
-    auto host_view = Kokkos::create_mirror_view(view);
-    for (size_t i = 0; i < _transfer_function.size(); ++i) {
-      for (size_t j = 0; j < n_quad_element; ++j) {
-        for (size_t k = 0; k < n_quad_intersection; ++k) {
-          host_view(i, j, k) = _transfer_function[i][j][k];
-        }
-      }
-    }
-    Kokkos::deep_copy(view, host_view);
-    return view;
-  }
-
-  /**
-   * @brief Get number of edges.
-   * @return Edge count
-   */
-  int get_edges() const { return _transfer_function.size(); }
-
-  /**
-   * @brief Access transfer function values.
-   * @param i Edge index
-   * @param j Element quadrature index
-   * @param k Intersection quadrature index
-   * @return Reference to transfer function value
-   */
-  type_real &operator()(const int i, const int j, const int k) {
-    return _transfer_function[i][j][k];
-  }
-};
-
-/**
- * @brief Initialize field data based on strategy.
- * @tparam Initializer Field initialization strategy
- * @return Vector of field arrays
- */
-template <typename Initializer>
-std::vector<std::array<std::array<type_real, n_components>, n_quad_element> >
-init_function();
-
-/**
- * @brief Initialize uniform field.
- * @return Vector containing uniform field values
- */
-template <>
-std::vector<std::array<std::array<type_real, n_components>, n_quad_element> >
-init_function<EdgeFunctionInitializer2D::Uniform>() {
-  return std::vector<
-      std::array<std::array<type_real, n_components>, n_quad_element> >(1, [] {
-    std::array<std::array<type_real, n_components>, n_quad_element> arr{};
-    for (auto &inner : arr) {
-      inner.fill(static_cast<type_real>(1.0));
-    }
-    return arr;
-  }());
-}
-
-/**
- * @brief Test field container.
- * @tparam Initializer Field initialization strategy
- */
-template <typename Initializer> struct EdgeFunction2D {
-  using FunctionInitializer = Initializer;
-
-private:
-  std::vector<std::array<std::array<type_real, n_components>, n_quad_element> >
-      _field;
-  using FieldView =
-      Kokkos::View<type_real *[n_quad_element][n_components], memory_space>;
-
-public:
-  /**
-   * @brief Construct field with initializer.
-   * @param initializer Initialization strategy
-   */
-  EdgeFunction2D(const FunctionInitializer &initializer)
-      : _field(init_function<FunctionInitializer>()) {}
-
-  /**
-   * @brief Get Kokkos view of field data.
-   * @return Kokkos view for device access
-   */
-  FieldView get_view() const {
-    FieldView view("field_view", _field.size());
-    auto host_view = Kokkos::create_mirror_view(view);
-    for (size_t i = 0; i < _field.size(); ++i) {
-      for (size_t j = 0; j < n_quad_element; ++j) {
-        for (size_t k = 0; k < n_components; ++k) {
-          host_view(i, j, k) = _field[i][j][k];
-        }
-      }
-    }
-    Kokkos::deep_copy(view, host_view);
-    return view;
-  }
-
-  /**
-   * @brief Get number of edges.
-   * @return Edge count
-   */
-  int get_edges() const { return _field.size(); }
-
-  /**
-   * @brief Access field values.
-   * @param i Edge index
-   * @param j Element quadrature index
-   * @param k Component index
-   * @return Reference to field value
-   */
-  type_real &operator()(const int i, const int j, const int k) {
-    return _field[i][j][k];
-  }
-};
 
 /**
  * @brief Compute expected result of transfer function operation.
@@ -267,23 +73,79 @@ public:
  * @return Expected transferred field values
  */
 template <typename TransferFunction2D, typename EdgeFunction2D>
-std::vector<std::array<type_real, n_components> >
-compute_transferred_function(const TransferFunction2D &transfer_function,
-                             const EdgeFunction2D &field) {
-  const int n_edges = transfer_function.get_edges();
-  std::vector<std::array<type_real, n_components> > result_field(
-      n_edges, std::array<type_real, n_components>{ 0.0 });
+std::vector<std::array<std::array<type_real, EdgeFunction2D::num_components>,
+                       TransferFunction2D::nquad_intersection> >
+expected_solution(const TransferFunction2D &transfer_function,
+                  const EdgeFunction2D &field) {
+  const int n_edges = TransferFunction2D::num_edges;
+  std::vector<std::array<std::array<type_real, EdgeFunction2D::num_components>,
+                         TransferFunction2D::nquad_intersection> >
+      result_field(
+          n_edges,
+          std::array<std::array<type_real, EdgeFunction2D::num_components>,
+                     TransferFunction2D::nquad_intersection>{ 0.0 });
   for (int i = 0; i < n_edges; ++i) {
-    for (int j = 0; j < n_quad_intersection; ++j) {
-      for (int k = 0; k < n_components; ++k) {
-        for (int l = 0; l < n_quad_element; ++l) {
-          result_field[i][k] += transfer_function(i, j, l) * field(l, j, k);
+    for (int j = 0; j < TransferFunction2D::nquad_intersection; ++j) {
+      for (int k = 0; k < EdgeFunction2D::num_components; ++k) {
+
+        for (int l = 0; l < TransferFunction2D::nquad_edge; ++l) {
+          result_field[i][j][k] += transfer_function(i, l, j) * field(i, l, k);
         }
       }
     }
   }
   return result_field;
 }
+
+/*
+ * Specialization: We are transfering a function f =
+ * AnalyticalFunction::evaluate using an actual quadrature rule.
+ */
+template <typename AnalyticalFunction, typename EdgeQuadraturePoints,
+          typename IntersectionQuadraturePoints>
+std::vector<
+    std::array<std::array<type_real, 1>, IntersectionQuadraturePoints::nquad> >
+expected_solution(
+    const specfem::test::fixture::TransferFunction2D<
+        specfem::test::fixture::TransferFunctionInitializer2D::
+            FromQuadratureRules<EdgeQuadraturePoints,
+                                IntersectionQuadraturePoints> >
+        &transfer_function,
+    const specfem::test::fixture::EdgeFunction2D<
+        specfem::test::fixture::EdgeFunctionInitializer2D::
+            FromAnalyticalFunction<AnalyticalFunction, EdgeQuadraturePoints> >
+        &field) {
+  using TransferFunction2D = specfem::test::fixture::TransferFunction2D<
+      specfem::test::fixture::TransferFunctionInitializer2D::
+          FromQuadratureRules<EdgeQuadraturePoints,
+                              IntersectionQuadraturePoints> >;
+  using EdgeFunction2D = specfem::test::fixture::EdgeFunction2D<
+      specfem::test::fixture::EdgeFunctionInitializer2D::FromAnalyticalFunction<
+          AnalyticalFunction, EdgeQuadraturePoints> >;
+
+  const int n_edges = TransferFunction2D::num_edges;
+  std::vector<std::array<std::array<type_real, EdgeFunction2D::num_components>,
+                         TransferFunction2D::nquad_intersection> >
+      result_field(
+          n_edges,
+          std::array<std::array<type_real, EdgeFunction2D::num_components>,
+                     TransferFunction2D::nquad_intersection>{ 0.0 });
+  for (int i = 0; i < n_edges; ++i) {
+    for (int j = 0; j < TransferFunction2D::nquad_intersection; ++j) {
+      for (int k = 0; k < EdgeFunction2D::num_components; ++k) {
+
+        result_field[i][j][k] = AnalyticalFunction::evaluate(
+            IntersectionQuadraturePoints::quadrature_points[j]);
+      }
+    }
+  }
+  return result_field;
+}
+
+using ZeroTransferFunction = specfem::test::fixture::TransferFunction2D<
+    specfem::test::fixture::TransferFunctionInitializer2D::Zero>;
+using UniformEdgeFunction = specfem::test::fixture::EdgeFunction2D<
+    specfem::test::fixture::EdgeFunctionInitializer2D::Uniform>;
 
 /**
  * @brief Compute transferred field for zero transfer function and uniform
@@ -292,16 +154,22 @@ compute_transferred_function(const TransferFunction2D &transfer_function,
  * @param field Uniform field
  * @return Zero field result
  */
-template <>
-std::vector<std::array<type_real, n_components> > compute_transferred_function(
-    const TransferFunction2D<TransferFunctionInitializer2D::Zero>
-        &transfer_function,
-    const EdgeFunction2D<EdgeFunctionInitializer2D::Uniform> &field) {
+
+std::vector<
+    std::array<std::array<type_real, UniformEdgeFunction::num_components>,
+               ZeroTransferFunction::nquad_intersection> >
+expected_solution(const ZeroTransferFunction &transfer_function,
+                  const UniformEdgeFunction &field) {
+  using TransferFunction2D = ZeroTransferFunction;
+  using EdgeFunction2D = UniformEdgeFunction;
   // Result field is a zero field
-  const int n_edges = field.get_edges();
-  return std::vector<std::array<type_real, n_components> >(n_edges, [] {
-    std::array<type_real, n_components> arr{};
-    arr.fill(static_cast<type_real>(0.0));
+  const int n_edges = EdgeFunction2D::num_edges;
+  return std::vector<
+      std::array<std::array<type_real, EdgeFunction2D::num_components>,
+                 TransferFunction2D::nquad_intersection> >(n_edges, [] {
+    std::array<std::array<type_real, EdgeFunction2D::num_components>,
+               TransferFunction2D::nquad_intersection>
+        arr{};
     return arr;
   }());
 }
@@ -316,22 +184,29 @@ std::vector<std::array<type_real, n_components> > compute_transferred_function(
 template <typename TransferFunction2D, typename EdgeFunction2D>
 void execute(const TransferFunction2D &transfer_function,
              const EdgeFunction2D &function) {
-  auto expected = compute_transferred_function(transfer_function, function);
+  auto expected = expected_solution(transfer_function, function);
 
-  const int n_edges = transfer_function.get_edges();
+  const int n_edges = TransferFunction2D::num_edges;
   using TransferFunctionType = specfem::chunk_edge::impl::transfer_function<
-      dimension_tag, 1, n_quad_intersection, n_quad_element,
+      dimension_tag, 1, TransferFunction2D::nquad_intersection,
+      TransferFunction2D::nquad_edge,
       specfem::data_access::DataClassType::transfer_function_self,
-      interface_tag, boundary_tag, memory_space, Kokkos::MemoryTraits<> >;
+      interface_tag, boundary_tag, typename TransferFunction2D::memory_space,
+      Kokkos::MemoryTraits<> >;
   using FunctionType = specfem::datatype::VectorChunkEdgeViewType<
-      type_real, dimension_tag, 1, n_quad_element, n_components, false,
-      memory_space, Kokkos::MemoryTraits<> >;
+      type_real, dimension_tag, 1, TransferFunction2D::nquad_edge,
+      EdgeFunction2D::num_components, false,
+      typename TransferFunction2D::memory_space, Kokkos::MemoryTraits<> >;
 
   const auto transfer_function_view = transfer_function.get_view();
   const auto function_view = function.get_view();
 
-  Kokkos::View<type_real *[n_components], memory_space> result_view(
-      "result_view", n_edges);
+  const auto results_view_name = "result_view";
+
+  Kokkos::View<type_real * [TransferFunction2D::nquad_intersection]
+                               [EdgeFunction2D::num_components],
+               typename TransferFunction2D::memory_space>
+      result_view(results_view_name, n_edges);
 
   Kokkos::parallel_for(
       "transfer_function_test", Kokkos::TeamPolicy<>(n_edges, 1, 1),
@@ -346,9 +221,10 @@ void execute(const TransferFunction2D &transfer_function,
         specfem::algorithms::transfer(
             ChunkEdgeIndex(1, team_member), TF, F,
             [&](const auto &index, const auto &point) {
-              for (int icomp = 0; icomp < n_components; ++icomp) {
+              for (int icomp = 0; icomp < EdgeFunction2D::num_components;
+                   ++icomp) {
                 Kokkos::single(Kokkos::PerTeam(team_member), [&]() {
-                  result_view(index(0), icomp) = point(icomp);
+                  result_view(index(0), index(1), icomp) = point(icomp);
                 });
               }
             });
@@ -360,10 +236,21 @@ void execute(const TransferFunction2D &transfer_function,
       Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), result_view);
 
   for (int i = 0; i < n_edges; ++i) {
-    if (!specfem::utilities::is_close(result_host(i, 0), expected[i][0])) {
-      ADD_FAILURE() << "Transfer function test failed at edge " << i
-                    << ": expected " << expected[i][0] << "\n got "
-                    << result_host(i, 0);
+    for (int j = 0; j < TransferFunction2D::nquad_intersection; ++j) {
+      if (!specfem::utilities::is_close(result_host(i, j, 0),
+                                        expected[i][j][0])) {
+        std::ostringstream oss;
+        oss << "-- Transfer function --\n"
+            << TransferFunction2D::description() << std::endl
+            << "-- Edge Function --\n"
+            << EdgeFunction2D::description() << std::endl
+            << "\n-- Failure --\n"
+            << "Transfer function test failed at edge " << i << ": expected "
+            << expected[i][j][0] << "\n got " << result_host(i, j, 0)
+            << std::endl;
+
+        ADD_FAILURE() << oss.str();
+      }
     }
   }
 }
@@ -389,17 +276,42 @@ struct TransferFunctionTest2D : public ::testing::Test {
       : transfer_function(TransferFunctionInitializer()),
         function(FunctionInitializer()) {}
 
-  TransferFunction2D<TransferFunctionInitializer> transfer_function; /**< Test
-                                                                        transfer
-                                                                        function
-                                                                      */
-  EdgeFunction2D<FunctionInitializer> function; /**< Test field */
+  specfem::test::fixture::TransferFunction2D<TransferFunctionInitializer>
+      transfer_function; /**< Test
+    transfer
+    function
+  */
+  specfem::test::fixture::EdgeFunction2D<FunctionInitializer> function; /**<
+                                                                           Test
+                                                                           field
+                                                                         */
 };
 
+using specfem::test::fixture::AnalyticalFunctionType1D::Power;
+using specfem::test::fixture::EdgeFunctionInitializer2D::FromAnalyticalFunction;
+using specfem::test::fixture::QuadraturePoints::Asymm4Point;
+using specfem::test::fixture::QuadraturePoints::Asymm5Point;
+using specfem::test::fixture::QuadraturePoints::GLL1;
+using specfem::test::fixture::QuadraturePoints::GLL2;
+using specfem::test::fixture::TransferFunctionInitializer2D::
+    FromQuadratureRules;
+
 /** Test type combinations for parameterized testing */
-using TransferFunctionTestTypes2D =
-    ::testing::Types<std::tuple<TransferFunctionInitializer2D::Zero,
-                                EdgeFunctionInitializer2D::Uniform> >;
+using TransferFunctionTestTypes2D = ::testing::Types<
+    std::tuple<specfem::test::fixture::TransferFunctionInitializer2D::Zero,
+               specfem::test::fixture::EdgeFunctionInitializer2D::Uniform>,
+    std::tuple<FromQuadratureRules<GLL1, GLL2>,
+               FromAnalyticalFunction<Power<0>, GLL1> >,
+    std::tuple<FromQuadratureRules<GLL2, GLL1>,
+               FromAnalyticalFunction<Power<1>, GLL2> >,
+    std::tuple<FromQuadratureRules<GLL2, GLL2>,
+               FromAnalyticalFunction<Power<2>, GLL2> >,
+    std::tuple<FromQuadratureRules<Asymm4Point, Asymm5Point>,
+               FromAnalyticalFunction<Power<3>, Asymm4Point> >,
+    std::tuple<FromQuadratureRules<Asymm5Point, Asymm4Point>,
+               FromAnalyticalFunction<Power<4>, Asymm5Point> >,
+    std::tuple<FromQuadratureRules<Asymm5Point, Asymm5Point>,
+               FromAnalyticalFunction<Power<5>, Asymm5Point> > >;
 
 TYPED_TEST_SUITE(TransferFunctionTest2D, TransferFunctionTestTypes2D);
 
@@ -409,7 +321,6 @@ TYPED_TEST(TransferFunctionTest2D, ExecuteTransferFunction) {
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }
