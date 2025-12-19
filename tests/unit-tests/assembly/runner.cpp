@@ -1,5 +1,4 @@
-#include "../Kokkos_Environment.hpp"
-#include "../MPI_environment.hpp"
+#include "../SPECFEM_Environment.hpp"
 #include "dim3/test_fixture.hpp"
 #include "gtest/gtest.h"
 
@@ -8,7 +7,6 @@ INSTANTIATE_TEST_SUITE_P(Assembly3DTests, Assembly3DTest,
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

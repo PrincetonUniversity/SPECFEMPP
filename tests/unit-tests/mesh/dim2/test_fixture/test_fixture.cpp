@@ -20,7 +20,7 @@ MESH::MESH() {
   std::string config_filename = "mesh/dim2/test_config.yaml";
   parse_test_config(YAML::LoadFile(config_filename), this->Tests);
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
 
   for (auto &Test : this->Tests) {
     const auto [database_file, sources_file, stations_file] =

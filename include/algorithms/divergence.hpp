@@ -58,16 +58,17 @@ template <typename TensorFieldType, typename WeightsType,
                                     int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION auto
 element_divergence(const TensorFieldType &f,
-                   const typename TensorFieldType::index_type &index,
-                   const int &ielement, const WeightsType &weights,
+                   const typename TensorFieldType::index_type &local_index,
+                   const WeightsType &weights,
                    const QuadratureType &lagrange_derivative) {
   using datatype = typename TensorFieldType::simd::datatype;
 
   using VectorPointViewType = specfem::datatype::VectorPointViewType<
       type_real, TensorFieldType::components, TensorFieldType::using_simd>;
-  const int iz = index.iz;
-  const int iy = index.iy;
-  const int ix = index.ix;
+  const int iz = local_index.iz;
+  const int iy = local_index.iy;
+  const int ix = local_index.ix;
+  const int ielement = local_index.ispec;
   constexpr int components = TensorFieldType::components;
   constexpr int ngll = TensorFieldType::ngll;
 
@@ -133,12 +134,10 @@ template <typename ChunkIndexType, typename TensorFieldType,
           std::enable_if_t<
               specfem::data_access::is_chunk_element<TensorFieldType>::value,
               int> = 0>
-KOKKOS_FUNCTION void divergence(
-    const ChunkIndexType &chunk_index,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
-        &jacobian_matrix,
-    const WeightsType &weights, const QuadratureType &hprime,
-    const TensorFieldType &f, const CallableType &callback) {
+KOKKOS_FUNCTION void
+divergence(const ChunkIndexType &chunk_index, const WeightsType &weights,
+           const QuadratureType &hprime, const TensorFieldType &f,
+           const CallableType &callback) {
 
   using VectorPointViewType = specfem::datatype::VectorPointViewType<
       type_real, TensorFieldType::components, TensorFieldType::using_simd>;

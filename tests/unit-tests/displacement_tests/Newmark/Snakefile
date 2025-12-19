@@ -1,14 +1,20 @@
 configfile: "dim2/tests.yaml"
+configfile: "dim3/tests.yaml"
 
-tests = config["tests2d"]
+tests2d = config["tests2d"]
+tests3d = config["tests3d"]
+
 
 rule all:
     input:
-        traces=expand("serial/dim2/{test_name}/traces/trace_list.txt", test_name=tests),
-        database=expand("serial/dim2/{test_name}/database.bin", test_name=tests),
+        traces2d=expand("serial/dim2/{test_name}/traces/trace_list.txt", test_name=tests2d),
+        database2d=expand("serial/dim2/{test_name}/database.bin", test_name=tests2d),
+        traces3d=expand("serial/dim3/{test_name}/traces/trace_list.txt", test_name=tests3d),
+        database3d=expand("serial/dim3/{test_name}/database.bin", test_name=tests3d),
+    localrule: True
 
 # for test_name in config["tests"]:
-for test_name in tests:
+for test_name in tests2d:
     alias = f'{test_name}_'
 
     module:
@@ -19,10 +25,24 @@ for test_name in tests:
 
     use rule * from test_name as alias*
 
+for test_name in tests3d:
+    alias = f'{test_name}_'
+
+    module:
+        name: test_name
+        snakefile: f"serial/dim3/{test_name}/Snakefile"
+        pathvars:
+            cwd=f"serial/dim3/{test_name}"
+
+    use rule * from test_name as alias*
+
 rule clean:
     shell:
         """
         rm -rf serial/dim2/*/specfem2d_workdir
         rm -rf serial/dim2/*/database.bin
         rm -rf serial/dim2/*/traces
+        rm -rf serial/dim3/*/specfem3d_workdir
+        rm -rf serial/dim3/*/database.bin
+        rm -rf serial/dim3/*/traces
         """

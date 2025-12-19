@@ -3,13 +3,23 @@
 #include <cstddef>
 
 namespace specfem {
-namespace parallel_config {
+namespace parallel_configuration {
 
 /**
- * @brief Parallel configuration for range policy
+ * @brief Configuration for parallel range-based operations.
  *
- * @tparam SIMD SIMD type @ref specfem::datatype::simd
- * @tparam ExecutionSpace Execution space
+ * @tparam SIMD SIMD vectorization type
+ * @tparam ExecutionSpace Kokkos execution space
+ * @tparam ChunkSize Elements per processing chunk
+ * @tparam TileSize Memory tiling size
+ *
+ * @code
+ * using config = range_config<simd_type, Kokkos::Cuda, 1024, 32>;
+ * specfem::execution::RangeIterator<config> iterator;
+ * @endcode
+ *
+ * @see specfem::execution::RangeIterator
+ * @see specfem::parallel_configuration::default_range_config
  */
 template <typename SIMD, typename ExecutionSpace, std::size_t ChunkSize,
           std::size_t TileSize>
@@ -22,13 +32,20 @@ struct range_config {
 };
 
 /**
- * @brief Type alias for default range configuration
+ * @brief Default range configuration with minimal chunking.
  *
- * @tparam SIMD SIMD type @ref specfem::datatype::simd
- * @tparam ExecutionSpace Execution space
+ * Uses chunk_size=1 and tile_size=1 for simple point-wise operations.
+ *
+ * @tparam SIMD SIMD vectorization type
+ * @tparam ExecutionSpace Kokkos execution space
+ *
+ * @code
+ * using config = default_range_config<simd_type, Kokkos::OpenMP>;
+ * // Automatically uses: chunk_size=1, tile_size=1
+ * @endcode
  */
 template <typename SIMD, typename ExecutionSpace>
 using default_range_config = range_config<SIMD, ExecutionSpace, 1, 1>;
 
-} // namespace parallel_config
+} // namespace parallel_configuration
 } // namespace specfem

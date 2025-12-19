@@ -1,4 +1,4 @@
-#include "../../Kokkos_Environment.hpp"
+#include "../../SPECFEM_Environment.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
 #include "io/interface.hpp"

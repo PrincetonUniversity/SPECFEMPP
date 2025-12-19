@@ -12,7 +12,8 @@
  * #include "execution/chunked_intersection_iterator.hpp"
  * #include "execution/for_all.hpp"
  *
- * using ParallelConfig = specfem::parallel_config::default_chunk_edge_config<
+ * using ParallelConfig =
+ * specfem::parallel_configuration::default_chunk_edge_config<
  *     specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
  *
  * // Create views for edge intersections
@@ -468,7 +469,8 @@ private:
  * #include "execution/for_all.hpp"
  *
  * // Define parallel configuration
- * using ParallelConfig = specfem::parallel_config::default_chunk_edge_config<
+ * using ParallelConfig =
+ * specfem::parallel_configuration::default_chunk_edge_config<
  *     specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
  *
  * // Create edge views for intersection

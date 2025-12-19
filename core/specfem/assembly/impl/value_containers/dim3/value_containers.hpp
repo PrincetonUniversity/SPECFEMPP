@@ -89,14 +89,14 @@ struct value_containers<specfem::dimension::type::dim3, containers_type> {
   void copy_to_host() {
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC)),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)),
         CAPTURE(value) { _value_.copy_to_host(); })
   }
 
   void copy_to_device() {
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC)),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)),
         CAPTURE(value) { _value_.copy_to_device(); })
   }
 };

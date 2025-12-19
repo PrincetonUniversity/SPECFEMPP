@@ -1,9 +1,9 @@
+#include "../SPECFEM_Environment.hpp"
 #include <Kokkos_Core.hpp>
 #include <boost/filesystem.hpp>
 #include <gtest/gtest.h>
 
 // Include all I/O framework headers
-#include "../Kokkos_Environment.hpp"
 #include "io/ADIOS2/ADIOS2.hpp"
 #include "io/ASCII/ASCII.hpp"
 #include "io/HDF5/HDF5.hpp"
@@ -627,7 +627,7 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 // Main test runner
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   int result = RUN_ALL_TESTS();
   return result;
 }

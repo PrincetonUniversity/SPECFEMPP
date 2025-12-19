@@ -183,6 +183,63 @@ public:
   }
 
   /**
+   * @brief Transform stress tensor using 3D jacobian matrix.
+   *
+   * Applies the coordinate transformation from reference element to physical
+   * element using the jacobian matrix. This operation transforms stress
+   * components from the reference (ξ, η, ζ) coordinate system to the physical
+   * (x, y, z) coordinate system.
+   *
+   * The transformation formula for 3D is:
+   * \f$ F(i,0) = J \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial x} +
+   *                       T(i,1) \cdot \frac{\partial\eta}{\partial x} +
+   *                       T(i,2) \cdot \frac{\partial\zeta}{\partial x}) \f$
+   * \f$ F(i,1) = J \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial y} +
+   *                       T(i,1) \cdot \frac{\partial\eta}{\partial y} +
+   *                       T(i,2) \cdot \frac{\partial\zeta}{\partial y}) \f$
+   * \f$ F(i,2) = J \cdot (T(i,0) \cdot \frac{\partial\xi}{\partial z} +
+   *                       T(i,1) \cdot \frac{\partial\eta}{\partial z} +
+   *                       T(i,2) \cdot \frac{\partial\zeta}{\partial z}) \f$
+   *
+   * where \f$ J \f$ is the jacobian determinant and the partial derivatives are
+   * the inverse jacobian matrix elements.
+   *
+   * @param jacobian_matrix 3D Jacobian matrix containing transformation
+   * derivatives
+   * @return Transformed stress tensor in physical coordinates
+   *
+   * @code
+   * stress_type stress(stress_tensor);
+   * auto jacobian = compute_jacobian_matrix_3d(quadrature_point);
+   * auto transformed = stress * jacobian;
+   * @endcode
+   */
+  KOKKOS_INLINE_FUNCTION
+  value_type operator*(
+      const specfem::point::jacobian_matrix<specfem::dimension::type::dim3,
+                                            true, UseSIMD> &jacobian_matrix)
+      const {
+    value_type F;
+
+    for (int icomponent = 0; icomponent < components; ++icomponent) {
+      F(icomponent, 0) =
+          jacobian_matrix.jacobian * (T(icomponent, 0) * jacobian_matrix.xix +
+                                      T(icomponent, 1) * jacobian_matrix.xiy +
+                                      T(icomponent, 2) * jacobian_matrix.xiz);
+      F(icomponent, 1) =
+          jacobian_matrix.jacobian * (T(icomponent, 0) * jacobian_matrix.etax +
+                                      T(icomponent, 1) * jacobian_matrix.etay +
+                                      T(icomponent, 2) * jacobian_matrix.etaz);
+      F(icomponent, 2) = jacobian_matrix.jacobian *
+                         (T(icomponent, 0) * jacobian_matrix.gammax +
+                          T(icomponent, 1) * jacobian_matrix.gammay +
+                          T(icomponent, 2) * jacobian_matrix.gammaz);
+    }
+
+    return F;
+  }
+
+  /**
    * @brief Equality comparison operator.
    *
    * Compares two stress tensors for equality by comparing their underlying

@@ -169,6 +169,24 @@
         "SPECFEM_BUILD_BENCHMARKS": "ON",
         "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/debug-nosimd"
       }
+    },
+    {
+      "name": "release-mpi",
+      "displayName": "MPI Release -- EXPERIMENTAL",
+      "binaryDir": "build/release-mpi",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-mpi",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "SPECFEM_ENABLE_MPI": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_ENABLE_SIMD": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-mpi"
+      }
     }
   ],
   "buildPresets": [
@@ -231,6 +249,13 @@
     {
       "name": "debug-nosimd",
       "configurePreset": "debug-nosimd",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-mpi",
+      "configurePreset": "release-mpi",
       "targets": [
         "all"
       ]

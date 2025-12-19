@@ -3,25 +3,23 @@
 ``specfem::assembly::receivers``
 ================================
 
-The assembly receivers module manages seismic receiver information within assembled
-finite element meshes for spectral element simulations. Receivers handle seismogram
-recording with various output types and coordinate transformations for proper
-seismogram orientation based on receiver geometry.
+.. doxygenstruct:: specfem::assembly::receivers
+   :members:
 
-Common Templates
-----------------
+Dimension-specific Specializations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. toctree::
-   :maxdepth: 1
+.. doxygenstruct:: specfem::assembly::receivers< specfem::dimension::type::dim2 >
+   :members:
 
-   common/receivers
-   common/receiver_iterator
+.. doxygenstruct:: specfem::assembly::receivers< specfem::dimension::type::dim3 >
+   :members:
 
-Dimension-Specific Implementations
-----------------------------------
+Data Access Functions
+^^^^^^^^^^^^^^^^^^^^^
 
-.. toctree::
-   :maxdepth: 1
+.. doxygengroup:: ComputeReceiversDataAccess2D
+   :content-only:
 
-   dim2/index
-   dim3/index
+.. doxygengroup:: ComputeReceiversDataAccess3D
+   :content-only:

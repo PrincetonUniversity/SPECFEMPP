@@ -14,7 +14,8 @@
  * #include "execution/chunked_edge_iterator.hpp"
  * #include "execution/for_all.hpp"
  *
- * using ParallelConfig = specfem::parallel_config::default_chunk_edge_config<
+ * using ParallelConfig =
+ * specfem::parallel_configuration::default_chunk_edge_config<
  *     specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
  *
  * // Create views for storage and edges
@@ -370,7 +371,8 @@ private:
  * #include "execution/for_all.hpp"
  *
  * // Define parallel configuration
- * using ParallelConfig = specfem::parallel_config::default_chunk_edge_config<
+ * using ParallelConfig =
+ * specfem::parallel_configuration::default_chunk_edge_config<
  *     specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
  *
  * // Create edge view and initialize

@@ -43,14 +43,13 @@ public:
    * @param quadrature Quadrature points object
    * @return std::shared_ptr<specfem::solver::solver> Solver object
    */
-  template <int NGLL>
+  template <int NGLL, specfem::dimension::type DimensionTag>
   std::shared_ptr<specfem::solver::solver>
   instantiate(const type_real dt,
-              const specfem::assembly::assembly<specfem::dimension::type::dim2>
-                  &assembly,
+              const specfem::assembly::assembly<DimensionTag> &assembly,
               std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-              const std::vector<
-                  std::shared_ptr<specfem::periodic_tasks::periodic_task> >
+              const std::vector<std::shared_ptr<
+                  specfem::periodic_tasks::periodic_task<DimensionTag> > >
                   &tasks) const;
 
   /**

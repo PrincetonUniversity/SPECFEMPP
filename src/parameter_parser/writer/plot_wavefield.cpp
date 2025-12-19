@@ -65,9 +65,10 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
   return;
 }
 
-std::shared_ptr<specfem::periodic_tasks::periodic_task>
+template <specfem::dimension::type DimensionTag>
+std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const specfem::assembly::assembly<DimensionTag> &assembly,
     const type_real &dt, specfem::MPI::MPI *mpi) const {
 
   const auto output_format = [&]() {
@@ -118,7 +119,23 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     }
   }();
 
-  return std::make_shared<specfem::periodic_tasks::plot_wavefield>(
+  return std::make_shared<
+      specfem::periodic_tasks::plot_wavefield<DimensionTag> >(
       assembly, output_format, component, wavefield, dt, time_interval,
       this->output_folder, mpi);
 }
+
+// Explicit template instantiations
+template std::shared_ptr<
+    specfem::periodic_tasks::periodic_task<specfem::dimension::type::dim2> >
+specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter<
+    specfem::dimension::type::dim2>(
+    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const type_real &dt, specfem::MPI::MPI *mpi) const;
+
+template std::shared_ptr<
+    specfem::periodic_tasks::periodic_task<specfem::dimension::type::dim3> >
+specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter<
+    specfem::dimension::type::dim3>(
+    const specfem::assembly::assembly<specfem::dimension::type::dim3> &assembly,
+    const type_real &dt, specfem::MPI::MPI *mpi) const;

@@ -5,29 +5,49 @@
 
 namespace specfem::assembly::mesh_impl {
 /**
- * @brief Shape function and their derivatives for every control node within the
- * mesh
+ * @brief 3D shape functions and derivatives for spectral elements.
  *
+ * Computes and stores shape function values and derivatives at all
+ * GLL quadrature points for 3D hexahedral elements.
+ *
+ * @see specfem::shape_function::shape_function
  */
 template <> struct shape_functions<specfem::dimension::type::dim3> {
 private:
-  constexpr static int ndim = 3; ///< Number of dimensions
+  constexpr static int ndim = 3;
+
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension
-  int ngllz; ///< Number of quadrature points in z dimension
-  int nglly; ///< Number of quadrature points in y dimension
-  int ngllx; ///< Number of quadrature points in x dimension
-  int ngnod; ///< Number of control nodes
+      specfem::dimension::type::dim3; ///< Dimension tag
 
+  int ngllz; ///< Number of GLL points in z direction
+  int nglly; ///< Number of GLL points in y direction
+  int ngllx; ///< Number of GLL points in x direction
+  int ngnod; ///< Number of control nodes per element
+
+  /**
+   * @brief Shape function view type.
+   *
+   * Dimensions: [ngllz, nglly, ngllx, ngnod].
+   */
   using ShapeFunctionViewType =
       Kokkos::View<type_real ****, Kokkos::LayoutRight,
                    Kokkos::DefaultExecutionSpace>;
 
+  /**
+   * @brief Shape function derivative view type.
+   *
+   * Dimensions: [ngllz, nglly, ngllx, ndim, ngnod].
+   */
   using DShapeFunctionViewType =
       Kokkos::View<type_real *****, Kokkos::LayoutRight,
                    Kokkos::DefaultExecutionSpace>;
 
+  /**
+   * @brief Constructor with pre-allocated storage.
+   *
+   * Allocates views but does not compute values.
+   */
   shape_functions(const int &ngllz, const int &nglly, const int &ngllx,
                   const int &ngnod)
       : ngllz(ngllz), nglly(nglly), ngllx(ngllx), ngnod(ngnod),
@@ -38,8 +58,16 @@ public:
         h_shape3D(Kokkos::create_mirror_view(shape3D)),
         h_dshape3D(Kokkos::create_mirror_view(dshape3D)) {}
 
+  /**
+   * @brief Default constructor.
+   */
   shape_functions() = default;
 
+  /**
+   * @brief Constructor with immediate computation.
+   *
+   * Computes shape functions and derivatives from quadrature points.
+   */
   shape_functions(const int ngllz, const int nglly, const int ngllx,
                   const int ngnod,
                   const specfem::assembly::mesh_impl::quadrature<
@@ -48,11 +76,9 @@ public:
                       specfem::dimension::type::dim3>
                       control_nodes);
 
-  ShapeFunctionViewType shape3D;                 ///< Shape functions
-  DShapeFunctionViewType dshape3D;               ///< Shape function
-                                                 ///< derivatives
-  ShapeFunctionViewType::HostMirror h_shape3D;   ///< Shape functions
-  DShapeFunctionViewType::HostMirror h_dshape3D; ///< Shape function
-                                                 ///< derivatives
+  ShapeFunctionViewType shape3D;                 ///< Device shape functions
+  DShapeFunctionViewType dshape3D;               ///< Device derivatives
+  ShapeFunctionViewType::HostMirror h_shape3D;   ///< Host shape functions
+  DShapeFunctionViewType::HostMirror h_dshape3D; ///< Host derivatives
 };
 } // namespace specfem::assembly::mesh_impl

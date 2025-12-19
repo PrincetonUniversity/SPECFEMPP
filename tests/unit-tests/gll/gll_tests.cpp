@@ -1,4 +1,4 @@
-#include "../Kokkos_Environment.hpp"
+#include "../SPECFEM_Environment.hpp"
 #include "quadrature/gll/gll_library.hpp"
 #include "quadrature/gll/gll_utils.hpp"
 #include <Kokkos_Core.hpp>
@@ -218,6 +218,6 @@ TEST(GLL_tests, ZWGLJD) {
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

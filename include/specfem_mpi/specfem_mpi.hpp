@@ -87,7 +87,28 @@ public:
    * @brief Print string s from the head node
    *
    */
-  template <typename T> void cout(T s) const;
+  template <typename T> void cout(T s, bool root_only = true) const;
+
+  /**
+   * @brief Print a formatted header with SPECFEM++ branding
+   *
+   * @param s Header string to print (default: "SPECFEM++")
+   */
+  void print_header(const std::string &s = "SPECFEM++") const;
+
+  /**
+   * @brief Print a title string with surrounding decoration
+   *
+   * @param s Title string to print
+   */
+  void print_title(const std::string &s) const;
+
+  /**
+   * @brief Print a string (wrapper for cout with root_only=true)
+   *
+   * @param s String to print
+   */
+  template <typename T> void print(T s) const;
 
   /**
    * @brief Destroy the MPI object

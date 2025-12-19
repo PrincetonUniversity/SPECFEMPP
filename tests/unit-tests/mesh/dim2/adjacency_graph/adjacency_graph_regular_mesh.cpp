@@ -1,5 +1,5 @@
 
-#include "MPI_environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include <algorithm>
@@ -34,7 +34,7 @@ const static std::unordered_map<int, std::vector<int> > expected_adjacency{
 TEST(AdjacencyGraphRegularMesh, CheckConnections) {
 
   const std::string mesh_file = "data/dim2/regular_mesh/database.bin";
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
 
   auto mesh =
       specfem::io::read_2d_mesh(mesh_file, specfem::enums::elastic_wave::psv,

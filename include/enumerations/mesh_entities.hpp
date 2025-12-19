@@ -4,18 +4,20 @@
 namespace specfem::mesh_entity {
 
 /**
- * @brief Template structure for edge mesh entities in various dimensions
- *
- * @tparam DimensionTag The dimension type (e.g., dim2, dim3)
+ * @brief Edge entities for spectral element connectivity.
+ * @tparam DimensionTag Spatial dimension (2D or 3D)
  */
 template <specfem::dimension::type DimensionTag> struct edge;
 
+/**
+ * @brief Element grid structure with GLL point configuration.
+ * @tparam DimensionTag Spatial dimension (2D or 3D)
+ */
 template <specfem::dimension::type DimensionTag> struct element_grid;
 
 /**
- * @brief Mesh element structure for a specific dimension
- *
- * @tparam Dimension The dimension type (e.g., dim2, dim3)
+ * @brief Element structure with coordinate mapping capabilities.
+ * @tparam DimensionTag Spatial dimension (2D or 3D)
  */
 template <specfem::dimension::type DimensionTag> struct element;
 
@@ -24,9 +26,12 @@ template <specfem::dimension::type DimensionTag> struct element;
 #include "dim2/mesh_entities.hpp"
 #include "dim3/mesh_entities.hpp"
 
-// CTAD guides
 namespace specfem::mesh_entity {
 
+/**
+ * @brief Template argument deduction guides for automatic dimension detection.
+ */
+///@{
 element_grid(const int, const int)
     -> element_grid<specfem::dimension::type::dim2>;
 
@@ -37,4 +42,5 @@ element(const int, const int) -> element<specfem::dimension::type::dim2>;
 
 element(const int, const int, const int)
     -> element<specfem::dimension::type::dim3>;
+///@}
 } // namespace specfem::mesh_entity

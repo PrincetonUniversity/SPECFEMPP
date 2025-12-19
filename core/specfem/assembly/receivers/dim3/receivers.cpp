@@ -21,8 +21,8 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
     const specfem::assembly::element_types<specfem::dimension::type::dim3>
         &element_types)
     : lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
-                           receivers.size(), mesh.element_grid.nglly,
-                           mesh.element_grid.ngllz, mesh.element_grid.ngllx, 3),
+                           receivers.size(), mesh.element_grid.ngllz,
+                           mesh.element_grid.nglly, mesh.element_grid.ngllx, 3),
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
       elements("specfem::assembly::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
@@ -35,7 +35,7 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
                                           nsteps_between_samples) {
 
   // Discretization from the mesh
-  const auto nspec = mesh.nspec;
+  this->nspec = mesh.nspec;
   const auto &element_grid = mesh.element_grid;
 
   // Validate and populate seismogram type mapping

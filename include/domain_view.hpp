@@ -237,7 +237,7 @@ template <typename T, std::size_t Rank, typename MemorySpace>
 using DomainView2d =
     View<T, chunked_tiled_layout2d<Rank>,
          DomainViewMapping<specfem::dimension::type::dim2,
-                           specfem::parallel_config::storage_chunk_size>,
+                           specfem::parallel_configuration::storage_chunk_size>,
          MemorySpace>;
 
 template <specfem::dimension::type DimensionTag, typename T, std::size_t Rank,
@@ -245,7 +245,7 @@ template <specfem::dimension::type DimensionTag, typename T, std::size_t Rank,
 using DomainView =
     View<T, Kokkos::dextents<std::size_t, Rank>,
          DomainViewMapping<DimensionTag,
-                           specfem::parallel_config::storage_chunk_size>,
+                           specfem::parallel_configuration::storage_chunk_size>,
          MemorySpace>;
 
 template <typename ViewType>

@@ -90,16 +90,16 @@ interpolate_function(const PolynomialViewType &polynomial,
   return result;
 }
 
+// 2D version - 4D views
 template <typename ChunkIndex, typename PolynomialViewType,
-          typename FunctionViewType, typename ResultType>
+          typename FunctionViewType, typename ResultType,
+          std::enable_if_t<PolynomialViewType::rank() == 4 &&
+                               FunctionViewType::rank() == 4,
+                           int> = 0>
 KOKKOS_FUNCTION void interpolate_function(const ChunkIndex &chunk_index,
                                           const PolynomialViewType &polynomial,
                                           const FunctionViewType &function,
                                           ResultType &result) {
-
-  static_assert(PolynomialViewType::rank() == 4,
-                "Polynomial must be a 4D view");
-  static_assert(FunctionViewType::rank() == 4, "Function must be a 4D view");
 
   static_assert(ResultType::rank() == 2, "Result must be 2D views");
 
@@ -146,6 +146,70 @@ KOKKOS_FUNCTION void interpolate_function(const ChunkIndex &chunk_index,
               polynomial(ielement, index.iz, index.ix, icomponent);
           type_real function_value =
               function(ielement, index.iz, index.ix, icomponent);
+          Kokkos::atomic_add(&result(ielement, icomponent),
+                             polynomial_value * function_value);
+        }
+      });
+
+  return;
+}
+
+// 3D version - 5D views
+template <typename ChunkIndex, typename PolynomialViewType,
+          typename FunctionViewType, typename ResultType,
+          std::enable_if_t<PolynomialViewType::rank() == 5 &&
+                               FunctionViewType::rank() == 5,
+                           int> = 0>
+KOKKOS_FUNCTION void interpolate_function(const ChunkIndex &chunk_index,
+                                          const PolynomialViewType &polynomial,
+                                          const FunctionViewType &function,
+                                          ResultType &result) {
+
+  static_assert(ResultType::rank() == 2, "Result must be 2D views");
+
+#ifndef NDEBUG
+
+  if (polynomial.extent(0) != function.extent(0) ||
+      polynomial.extent(1) != function.extent(1)) {
+    Kokkos::abort("Polynomial and function must have the same size");
+  }
+
+  if (polynomial.extent(0) != result.extent(0)) {
+    Kokkos::abort("Polynomial and result must have the same size");
+  }
+
+  if (function.extent(4) != result.extent(1)) {
+    Kokkos::abort(
+        "Function and result must have the same number of components");
+  }
+#endif
+
+  const auto &team = chunk_index.get_policy_index();
+  const int number_of_elements = result.extent(0);
+
+  // // Initialize result
+  const int ncomponents = function.extent(4);
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team, number_of_elements),
+                       [&](const int &ielement) {
+                         for (int icomp = 0; icomp < ncomponents; ++icomp) {
+                           result(ielement, icomp) = 0.0;
+                         }
+                       });
+
+  team.team_barrier();
+
+  specfem::execution::for_each_level(
+      chunk_index.get_iterator(),
+      [&](const typename ChunkIndex::iterator_type::index_type
+              &iterator_index) {
+        const auto index = iterator_index.get_index();
+        const int ielement = iterator_index.get_local_index().ispec;
+
+        for (int icomponent = 0; icomponent < ncomponents; ++icomponent) {
+          type_real polynomial_value =
+              polynomial(ielement, index.iz, index.iy, index.ix, icomponent);
+          type_real function_value =
+              function(ielement, index.iz, index.iy, index.ix, icomponent);
           Kokkos::atomic_add(&result(ielement, icomponent),
                              polynomial_value * function_value);
         }

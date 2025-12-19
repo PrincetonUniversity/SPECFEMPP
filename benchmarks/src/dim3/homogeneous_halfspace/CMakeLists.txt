@@ -1,10 +1,6 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.17.5)
 
-
-
-CMAKE_MINIMUM_REQUIRED(VERSION 3.17.5)
-
 # This basically jsut gets the example name
 get_filename_component(CURRENT_DIR_NAME "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
 
@@ -21,7 +17,15 @@ file(
     ${CMAKE_CURRENT_SOURCE_DIR}/README.md
     ${CMAKE_CURRENT_SOURCE_DIR}/DATA
     ${CMAKE_CURRENT_SOURCE_DIR}/force.yaml
+    ${CMAKE_CURRENT_SOURCE_DIR}/plot_seismograms.py
   DESTINATION ${CURRENT_BENCHMARK_BUILD_DIR}
+)
+
+file(
+  CREATE_LINK
+    ${CMAKE_CURRENT_SOURCE_DIR}/reference_seismograms
+    ${CURRENT_BENCHMARK_BUILD_DIR}/reference_seismograms
+    SYMBOLIC
 )
 
 # Configure files directly into the cmake benchmarks_build!
@@ -29,7 +33,9 @@ configure_file(CMakeFiles/Mesh_Par_file.in ${CURRENT_BENCHMARK_BUILD_DIR}/DATA/m
 configure_file(CMakeFiles/interfaces.txt.in ${CURRENT_BENCHMARK_BUILD_DIR}/DATA/meshfem3D_files/interfaces.txt)
 configure_file(CMakeFiles/Par_File.in ${CURRENT_BENCHMARK_BUILD_DIR}/DATA/Par_File)
 configure_file(CMakeFiles/specfem_config.yaml.in ${CURRENT_BENCHMARK_BUILD_DIR}/specfem_config.yaml)
+configure_file(CMakeFiles/Snakefile.in ${CURRENT_BENCHMARK_BUILD_DIR}/Snakefile)
 
 # Mkdir CAN BE REMOVED ONCE WE HAVE A SNAKEFILE WITH FULL EXAMPLE
-file(MAKE_DIRECTORY ${CURRENT_BENCHMARK_BUILD_DIR}/OUTPUT_FILES/DATABASES_MPI)
+file(MAKE_DIRECTORY ${CURRENT_BENCHMARK_BUILD_DIR}/OUTPUT_FILES/DATABASES)
 file(MAKE_DIRECTORY ${CURRENT_BENCHMARK_BUILD_DIR}/OUTPUT_FILES/results)
+file(MAKE_DIRECTORY ${CURRENT_BENCHMARK_BUILD_DIR}/OUTPUT_FILES/vtk)

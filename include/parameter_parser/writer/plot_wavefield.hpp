@@ -51,10 +51,10 @@ public:
    * @return std::shared_ptr<specfem::io::writer> Pointer to an instantiated
    * plotter object
    */
-  std::shared_ptr<specfem::periodic_tasks::periodic_task>
+  template <specfem::dimension::type DimensionTag>
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
   instantiate_wavefield_plotter(
-      const specfem::assembly::assembly<specfem::dimension::type::dim2>
-          &assembly,
+      const specfem::assembly::assembly<DimensionTag> &assembly,
       const type_real &dt, specfem::MPI::MPI *mpi) const;
 
 private:

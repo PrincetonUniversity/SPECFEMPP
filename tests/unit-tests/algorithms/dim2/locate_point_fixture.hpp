@@ -1,8 +1,7 @@
 #pragma once
 #include "../../mesh_utilities/mapping.hpp"
 #include "../../test_macros.hpp"
-#include "Kokkos_Environment.hpp"
-#include "MPI_environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "algorithms/locate_point.hpp"
 #include "algorithms/locate_point_impl.hpp"
 #include "kokkos_abstractions.h"

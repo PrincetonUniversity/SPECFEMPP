@@ -1,4 +1,4 @@
-#include "../Kokkos_Environment.hpp"
+#include "../SPECFEM_Environment.hpp"
 #include "quadrature/gll/gll_library.hpp"
 #include "quadrature/interface.hpp"
 #include <Kokkos_Core.hpp>
@@ -51,6 +51,6 @@ TEST(lagrange_tests, LAGRANGE_TESTS) {
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

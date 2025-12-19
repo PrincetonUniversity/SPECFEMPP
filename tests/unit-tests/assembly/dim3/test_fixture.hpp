@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MPI_environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "enumerations/interface.hpp"
 #include "io/interface.hpp"
 #include "mesh/mesh.hpp"
@@ -52,8 +52,8 @@ protected:
   void SetUp() override {
     const auto &folder = GetParam();
     const std::string database_file = "data/dim3/" + folder + "/database.bin";
-    // Initialize MPI (assuming MPIEnvironment is defined elsewhere)
-    specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+    // Initialize MPI (assuming SPECFEMEnvironment is defined elsewhere)
+    specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
     assembly = specfem::test_configuration::Assembly3D(database_file, mpi);
   }
   void TearDown() override {

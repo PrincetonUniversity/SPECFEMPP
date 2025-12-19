@@ -49,3 +49,15 @@ FOR_EACH_IN_PRODUCT(
           _MEDIUM_TAG_, _PROPERTY_TAG_, _BOUNDARY_TAG_),
          (const specfem::assembly::assembly<specfem::dimension::type::dim2> &,
           const int &);)))
+
+FOR_EACH_IN_PRODUCT(
+    (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
+     BOUNDARY_TAG(NONE)),
+    INSTANTIATE(
+        /** instantiation for NGLL = 5     */
+        (template int
+             specfem::kokkos_kernels::impl::compute_stiffness_interaction,
+         (_DIMENSION_TAG_, specfem::wavefield::simulation_field::forward, 5,
+          _MEDIUM_TAG_, _PROPERTY_TAG_, _BOUNDARY_TAG_),
+         (const specfem::assembly::assembly<specfem::dimension::type::dim3> &,
+          const int &);)))

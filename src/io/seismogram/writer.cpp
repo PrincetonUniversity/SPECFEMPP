@@ -2,6 +2,7 @@
 #include "enumerations/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "specfem/assembly.hpp"
+#include "utilities/utilities.hpp"
 #include <fstream>
 
 void specfem::io::seismogram_writer::write(
@@ -117,6 +118,52 @@ void specfem::io::seismogram_writer::write(
         message << "Please check your configuration file.\n";
         throw std::runtime_error(message.str());
       }
+
+      const int ncomponents = filenames.size();
+      std::vector<std::ofstream> seismo_file(ncomponents);
+      for (int icomp = 0; icomp < ncomponents; icomp++) {
+        seismo_file[icomp].open(filenames[icomp]);
+      }
+
+      for (auto [time, value] : receivers.get_seismogram(
+               station_name, network_name, seismogram_type)) {
+        for (int icomp = 0; icomp < ncomponents; icomp++) {
+          seismo_file[icomp] << std::scientific << time << " "
+                             << std::scientific << value[icomp] << "\n";
+        }
+      }
+
+      for (int icomp = 0; icomp < ncomponents; icomp++) {
+        seismo_file[icomp].close();
+      }
+    }
+  }
+}
+
+void specfem::io::seismogram_writer::write(
+    specfem::assembly::assembly<specfem::dimension::type::dim3> &assembly) {
+
+  // Get reference to receivers and timestep
+  auto &receivers = assembly.receivers;
+  auto dt = receivers.get_timestep();
+
+  // Get channel code depending on the time range
+  receivers.sync_seismograms();
+
+  // Initialize filename generator
+
+  // Loop over all stations
+  for (auto station_info : receivers.stations()) {
+
+    std::string network_name = station_info.network_name;
+    std::string station_name = station_info.station_name;
+
+    // Loop over all seismogram types for this station
+    for (auto seismogram_type : station_info.get_seismogram_types()) {
+
+      // Depending on station name and wavefield type, get the correct filenames
+      std::vector<std::string> filenames = this->get_station_filenames(
+          network_name, station_name, "S3", seismogram_type);
 
       const int ncomponents = filenames.size();
       std::vector<std::ofstream> seismo_file(ncomponents);

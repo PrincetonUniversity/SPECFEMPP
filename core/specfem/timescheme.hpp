@@ -186,6 +186,8 @@ public:
 
   virtual ~time_scheme() = default;
 
+  virtual std::string to_string() const = 0;
+
   virtual void print(std::ostream &out) const = 0;
 
   virtual type_real get_timestep() const = 0;

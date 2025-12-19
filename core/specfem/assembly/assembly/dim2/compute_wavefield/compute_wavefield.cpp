@@ -1,6 +1,6 @@
 #include "enumerations/interface.hpp"
-#include "helper.hpp"
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/assembly/assembly/impl/helper.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
@@ -20,12 +20,14 @@ void get_wavefield_on_entire_grid(
   const auto &element_grid = assembly.mesh.element_grid;
 
   if (element_grid == 5) {
-    impl::helper<MediumTag, PropertyTag, 5> helper(assembly,
-                                                   wavefield_on_entire_grid);
+    specfem::assembly::assembly_impl::helper<specfem::dimension::type::dim2,
+                                             MediumTag, PropertyTag, 5>
+        helper(assembly, wavefield_on_entire_grid);
     helper(component);
   } else if (element_grid == 8) {
-    impl::helper<MediumTag, PropertyTag, 8> helper(assembly,
-                                                   wavefield_on_entire_grid);
+    specfem::assembly::assembly_impl::helper<specfem::dimension::type::dim2,
+                                             MediumTag, PropertyTag, 8>
+        helper(assembly, wavefield_on_entire_grid);
     helper(component);
   } else {
     throw std::runtime_error("Number of quadrature points not supported");

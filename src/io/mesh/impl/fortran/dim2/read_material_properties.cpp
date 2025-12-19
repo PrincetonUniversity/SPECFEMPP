@@ -3,6 +3,7 @@
 #include "enumerations/interface.hpp"
 #include "io/fortranio/interface.hpp"
 #include "mesh/mesh.hpp"
+#include "specfem/logger.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/interface.hpp"
 #include <memory>
@@ -91,10 +92,9 @@ read_materials(
   message << "Material systems:\n"
           << "------------------------------";
 
-  mpi->cout(message.str());
-
-  if (mpi->get_rank() == 0)
-    std::cout << "Number of material systems = " << numat << "\n\n";
+  specfem::Logger::debug(message.str());
+  specfem::Logger::debug(
+      "Number of material systems = " + std::to_string(numat) + "\n\n");
 
   // Section for acoustic isotropic
   std::vector<specfem::medium::material<specfem::dimension::type::dim2,

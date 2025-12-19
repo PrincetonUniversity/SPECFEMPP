@@ -6,70 +6,100 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
+
 /**
- * @brief Store fields for a given simulation type
+ * @brief 2D simulation field container for spectral element wave computations
  *
- * @tparam WavefieldType Wavefield type.
+ * This template specialization provides storage and management for simulation
+ * fields in 2D spectral element meshes. It handles different wavefield types
+ * (forward, adjoint, backward, buffer) and supports multiple physical media
+ * (elastic P-SV, elastic SH, acoustic, poroelastic).
+ *
+ * The class manages field components appropriate for each medium:
+ * - Elastic P-SV: displacement (ux, uz), velocity, acceleration
+ * - Elastic SH: displacement (uy), velocity, acceleration
+ * - Acoustic: potential, velocity potential, acceleration potential
+ * - Poroelastic: solid and fluid phase displacements and pressures
+ *
+ * @tparam SimulationWavefieldType Type of simulation field (forward, adjoint,
+ * backward, buffer)
  */
 template <specfem::wavefield::simulation_field SimulationWavefieldType>
 struct simulation_field<specfem::dimension::type::dim2,
                         SimulationWavefieldType> {
 
 private:
+  /**
+   * @brief 3D index mapping view type for element-to-global indexing.
+   *
+   * Maps (element, z-quad, x-quad) triplets to linear indices for 2D field
+   * access.
+   */
   using IndexViewType =
-      Kokkos::View<int ***, Kokkos::LayoutLeft,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store field values
+      Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
 
+  /**
+   * @brief Assembly index mapping view type for global degree of freedom
+   * indexing.
+   *
+   * Maps local field indices to global assembled system indices.
+   */
   using AssemblyIndexViewType =
-      Kokkos::View<int *, Kokkos::DefaultExecutionSpace>; ///< Underlying view
-                                                          ///< type to store
-                                                          ///< assembled indices
+      Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
 public:
   constexpr static auto dimension_tag =
       specfem::dimension::type::dim2; ///< Dimension tag
   constexpr static auto simulation_wavefield =
       SimulationWavefieldType; ///< Simulation wavefield type
+
   /**
-   * @name Constructors
+   * @brief Default constructor.
    *
-   */
-  ///@{
-  /**
-   * @brief Default constructor
-   *
+   * Initializes an empty 2D simulation field with no allocated storage.
    */
   simulation_field() = default;
 
   /**
-   * @brief Construct a new simulation field object from assebled mesh
+   * @brief Construct 2D simulation field from mesh and element information.
    *
-   * @param mesh Assembled mesh
-   * @param properties Material properties
+   * Initializes the simulation field by allocating storage for all medium
+   * types present in the mesh. Creates global indexing mappings and allocates
+   * appropriate field components based on the 2D mesh structure and element
+   * classifications.
+   *
+   * @param mesh 2D assembly mesh containing global numbering and connectivity
+   * @param element_types Element classification determining field allocation
    */
   simulation_field(
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::element_types<dimension_tag> &element_types);
-  ///@}
 
   /**
-   * @brief Copy fields to the device
+   * @brief Copy 2D simulation field data from device to host memory.
    *
+   * Synchronizes all field components and index mappings from device-accessible
+   * memory to host memory for post-processing, I/O, or debugging operations.
    */
   void copy_to_host() { sync_fields<specfem::sync::kind::DeviceToHost>(); }
 
   /**
-   * @brief Copy fields to the host
+   * @brief Copy 2D simulation field data from host to device memory.
    *
+   * Synchronizes all field components and index mappings from host memory
+   * to device-accessible memory for GPU-accelerated computations.
    */
   void copy_to_device() { sync_fields<specfem::sync::kind::HostToDevice>(); }
 
   /**
-   * @brief Copy fields from another simulation field
+   * @brief Assignment operator for copying from different wavefield types.
    *
-   * @tparam DestinationWavefieldType Destination wavefield type
-   * @param rhs Simulation field to copy from
+   * Enables copying field data between different simulation field types
+   * (e.g., from forward to buffer, adjoint to backward) while preserving
+   * the field structure and indexing information.
+   *
+   * @tparam DestinationWavefieldType Source wavefield type to copy from
+   * @param rhs Source simulation field to copy data from
    */
   template <specfem::wavefield::simulation_field DestinationWavefieldType>
   void operator=(
@@ -92,10 +122,15 @@ public:
   }
 
   /**
-   * @brief Get the number of global degrees of freedom within a medium
+   * @brief Get number of global points for a specific medium type.
    *
-   * @tparam MediumTag Medium type
-   * @return int Number of global degrees of freedom
+   * Returns the total number of global degrees of freedom for the specified
+   * medium type in the 2D simulation field.
+   *
+   * @tparam MediumTag Medium type to query (elastic_psv, elastic_sh, acoustic,
+   * etc.)
+   * @return Number of global points for the specified medium
+   *
    */
   template <specfem::element::medium_tag MediumTag>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
@@ -113,8 +148,22 @@ public:
   }
 
   /**
-   * @brief Returns the field for a given medium
+   * @brief Get field implementation for a specific medium type.
    *
+   * Provides access to the underlying field storage for the specified medium
+   * type, containing the appropriate field components (displacement, velocity,
+   * acceleration for elastic; potential derivatives for acoustic, etc.).
+   *
+   * @tparam MediumTag Medium type to access (elastic_psv, elastic_sh, acoustic,
+   * etc.)
+   * @return Const reference to the field implementation for the specified
+   * medium
+   *
+   * @code
+   * auto elastic_field = field.get_field<specfem::element::medium_tag::elastic_psv>();
+   * auto displacement = elastic_field.displacement;
+   * // Now you can use displacement for further computations
+   * @endcode
    */
   template <specfem::element::medium_tag MediumTag>
   KOKKOS_INLINE_FUNCTION
@@ -140,10 +189,6 @@ public:
     return *return_value;
   }
 
-  /**
-   * @brief Returns the assembled index given element index.
-   *
-   */
   template <bool on_device>
   KOKKOS_INLINE_FUNCTION constexpr int
   get_iglob(const int &ispec, const int &iz, const int &ix,
@@ -175,10 +220,6 @@ public:
     return -1;
   }
 
-  /**
-   * @brief Returns the assembled index given element index.
-   *
-   */
   template <bool on_device, typename IndexType,
             typename std::enable_if_t<
                 specfem::data_access::is_index_type<IndexType>::value &&
@@ -191,10 +232,6 @@ public:
     return get_iglob<on_device>(index.ispec, index.iz, index.ix, MediumTag);
   }
 
-  /**
-   * @brief Returns the assembled index given element index.
-   *
-   */
   template <bool on_device, typename IndexType,
             typename std::enable_if_t<
                 specfem::data_access::is_index_type<IndexType>::value &&
@@ -208,12 +245,14 @@ public:
                                 MediumTag);
   }
 
-  int nglob = 0; ///< Number of global degrees of freedom
-  int nspec;     ///< Number of spectral elements
-  int ngllz;     ///< Number of quadrature points in z direction
-  int ngllx;     ///< Number of quadrature points in x direction
-  IndexViewType index_mapping;
-  IndexViewType::HostMirror h_index_mapping;
+  int nglob = 0; ///< Total number of global points across all media
+  int nspec;     ///< Number of spectral elements in the 2D mesh
+  int ngllz;     ///< Number of quadrature points in z-direction
+  int ngllx;     ///< Number of quadrature points in x-direction
+  IndexViewType index_mapping; ///< Device index mapping from (ispec,iz,ix) to
+                               ///< linear index
+  IndexViewType::HostMirror h_index_mapping; ///< Host mirror of index mapping
+                                             ///< for CPU operations
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -224,13 +263,45 @@ public:
               (AssemblyIndexViewType, assembly_index_mapping),
               (AssemblyIndexViewType::HostMirror, h_assembly_index_mapping)))
 
+  /**
+   * @brief Get total degrees of freedom across all medium types.
+   *
+   * Computes the total number of degrees of freedom in the 2D simulation field,
+   * summing over all active medium types and their respective field components.
+   *
+   * @return Total number of degrees of freedom in the assembled system
+   */
   int get_total_degrees_of_freedom();
 
 private:
+  /**
+   * @brief Synchronize field data between host and device memory.
+   *
+   * @tparam sync Synchronization direction (HostToDevice or DeviceToHost)
+   */
   template <specfem::sync::kind sync> void sync_fields();
-  int total_degrees_of_freedom = 0; ///< Total number of degrees of freedom
+
+  int total_degrees_of_freedom = 0; ///< Cached total degrees of freedom count
 };
 
+/**
+ * @brief Deep copy between 2D simulation fields of different types.
+ *
+ * Performs a complete deep copy of field data, index mappings, and metadata
+ * between two 2D simulation fields. This enables copying between different
+ * wavefield types (e.g., forward to buffer, adjoint to backward) while
+ * preserving all field structure and indexing information.
+ *
+ * @tparam SimulationWavefieldType1 Destination field type
+ * @tparam SimulationWavefieldType2 Source field type
+ * @param dst Destination simulation field
+ * @param src Source simulation field to copy from
+ *
+ * @code
+ * // Copy forward field to buffer for checkpointing
+ * deep_copy(buffer_field, forward_field);
+ * @endcode
+ */
 template <typename SimulationWavefieldType1, typename SimulationWavefieldType2,
           typename std::enable_if_t<((SimulationWavefieldType1::dimension_tag ==
                                       specfem::dimension::type::dim2) &&

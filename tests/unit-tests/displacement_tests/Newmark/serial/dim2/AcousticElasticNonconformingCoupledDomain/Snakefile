@@ -1,6 +1,8 @@
 # nonconformimg piggy-backs off of the conforming traces, so we skip specfem2d.smk
 # this is a modified verson of meshfem2d.smk
 
+include: "../../../specfem2d.smk"
+
 envvars:
     "SPECFEMPP_BINDIR",
     "SPECFEMPP_SCRIPTS_DIR",
@@ -8,50 +10,83 @@ envvars:
 pathvars:
     cwd=os.getcwd()
 
-rule specfempp_external_mesher:
-    input:
-        topography="<cwd>/provenance/topography.dat",
-    output:
-        external_mesh=directory("<cwd>/specfem2d_workdir/MESH"),
-    shell:
-        """
-            python $SPECFEMPP_SCRIPTS_DIR/gmshlayerbuilder provenance/topography.dat specfem2d_workdir/MESH
-        """
 
-rule specfempp_mesher:
-    input:
-        par_file="<cwd>/provenance/Par_file",
-        external_mesh=rules.specfempp_external_mesher.output,
-        cwd="<cwd>/specfem2d_workdir",
-    output:
-        database="<cwd>/specfem2d_workdir/OUTPUT_FILES/database.bin",
-    shell:
-        """
-            cd {input.cwd}/MESH
-            $SPECFEMPP_BINDIR/xmeshfem2D -p {input.par_file}
-        """
+# Should be the same traces as in the conforming case AcousticElasticCoupledDomain
+stations = [f"S{i:04d}" for i in range(1, 11)]
+components = ["BXX", "BXZ"]
 
-rule specfempp_move_database:
-    input:
-        database=rules.specfempp_mesher.output.database,
-    output:
-        database="<cwd>/database.bin",
-    shell:
-        """
-            mv {input.database} {output.database}
-        """
+traces = [
+    f"traces/AA.{station}.S2.{component}.semd"
+    for station in stations
+    for component in components
+]
 
 rule all:
     input:
+        traces=traces,
+        trace_list="<cwd>/traces/trace_list.txt",
         database="<cwd>/database.bin",
     localrule: True
 
 
-# from specfem2d.smk
-rule clean:
-    localrule: True
+rule specfempp_mesher_setup:
+    input:
+        Par_file="<cwd>/provenance/Par_file_specfempp",
+        topography="<cwd>/provenance/topography_specfempp.dat",
+    output:
+        Par_file="<cwd>/specfem2d_workdir/specfempp/DATA/Par_file",
+        topography="<cwd>/specfem2d_workdir/specfempp/DATA/topography.dat",
+        cwd=directory("<cwd>/specfem2d_workdir/specfempp"),
+    localrule: True,
     shell:
         """
-            rm -rf specfem2d_workdir
-            rm -f database.bin
+            mkdir -p {output.cwd}
+            cp {input.Par_file} {output.Par_file}
+            cp {input.topography} {output.topography}
         """
+
+rule specfempp_external_mesher:
+    input:
+        topography=rules.specfempp_mesher_setup.output.topography,
+    output:
+        external_mesh=directory("<cwd>/specfem2d_workdir/specfempp/MESH"),
+    shell:
+        """
+            python $SPECFEMPP_SCRIPTS_DIR/gmshlayerbuilder {input.topography} {output.external_mesh}
+        """
+
+rule specfempp_mesher_using_external_mesh:
+    input:
+        Par_file=rules.specfempp_mesher_setup.output.Par_file,
+        external_mesh_dir=directory(rules.specfempp_external_mesher.output.external_mesh),
+        external_mesh=rules.specfempp_external_mesher.output.external_mesh,
+        cwd="<cwd>/specfem2d_workdir/specfempp",
+    output:
+        database="<cwd>/specfem2d_workdir/specfempp/OUTPUT_FILES/database.bin",
+    shell:
+        """
+            cd {input.cwd}
+            pwd
+            $SPECFEMPP_BINDIR/xmeshfem2D -p DATA/Par_file
+        """
+
+ruleorder: specfempp_mesher_using_external_mesh > specfempp_mesher
+
+rule specfempp_move_database_external_mesh:
+    input:
+        database=rules.specfempp_mesher_using_external_mesh.output.database,
+    output:
+        database="<cwd>/database.bin",
+    shell:
+        """
+            cp {input.database} {output.database}
+        """
+
+ruleorder: specfempp_move_database_external_mesh > specfempp_move_database
+
+rule check_traces:
+    input:
+        trace_list="<cwd>/traces/trace_list.txt",
+    output:
+        traces=traces,
+    localrule: True

@@ -67,7 +67,7 @@ CREATE_VTK_FILES                = .true.
 SAVE_MESH_AS_CUBIT              = .false.
 
 # path to store the databases files
-LOCAL_PATH                      = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES_MPI
+LOCAL_PATH                      = @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES
 
 #-----------------------------------------------------------
 #

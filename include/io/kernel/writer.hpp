@@ -30,9 +30,20 @@ public:
   /**
    * @brief write the kernel data to disk
    *
+   * @param assembly 2D Assembly object
    */
   void write(specfem::assembly::assembly<specfem::dimension::type::dim2>
                  &assembly) override;
+
+  /**
+   * @brief write the kernel data to disk
+   *
+   * @param assembly 3D Assembly object
+   */
+  void write(specfem::assembly::assembly<specfem::dimension::type::dim3>
+                 &assembly) override {
+    throw std::runtime_error("3D kernel output not implemented yet");
+  }
 
 private:
   std::string output_folder; ///< Path to output folder

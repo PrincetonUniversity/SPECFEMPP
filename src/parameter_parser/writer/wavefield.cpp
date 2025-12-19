@@ -87,36 +87,39 @@ specfem::runtime_configuration::wavefield::wavefield(
   return;
 }
 
-std::shared_ptr<specfem::periodic_tasks::periodic_task>
+template <specfem::dimension::type DimensionTag>
+std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
 specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
     const {
 
-  const std::shared_ptr<specfem::periodic_tasks::periodic_task> writer =
-      [&]() -> std::shared_ptr<specfem::periodic_tasks::periodic_task> {
+  const std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
+      writer =
+          [&]() -> std::shared_ptr<
+                    specfem::periodic_tasks::periodic_task<DimensionTag> > {
     if (this->simulation_type == specfem::simulation::type::forward) {
       if (specfem::utilities::is_hdf5_string(this->output_format)) {
-        return std::make_shared<
-            specfem::periodic_tasks::wavefield_writer<specfem::io::HDF5> >(
+        return std::make_shared<specfem::periodic_tasks::wavefield_writer<
+            DimensionTag, specfem::io::HDF5> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
       } else if (specfem::utilities::is_adios2_string(this->output_format)) {
-        return std::make_shared<
-            specfem::periodic_tasks::wavefield_writer<specfem::io::ADIOS2> >(
+        return std::make_shared<specfem::periodic_tasks::wavefield_writer<
+            DimensionTag, specfem::io::ADIOS2> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
-        return std::make_shared<
-            specfem::periodic_tasks::wavefield_writer<specfem::io::ASCII> >(
+        return std::make_shared<specfem::periodic_tasks::wavefield_writer<
+            DimensionTag, specfem::io::ASCII> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
       } else if (specfem::utilities::is_npy_string(this->output_format)) {
-        return std::make_shared<
-            specfem::periodic_tasks::wavefield_writer<specfem::io::NPY> >(
+        return std::make_shared<specfem::periodic_tasks::wavefield_writer<
+            DimensionTag, specfem::io::NPY> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
       } else if (specfem::utilities::is_npz_string(this->output_format)) {
-        return std::make_shared<
-            specfem::periodic_tasks::wavefield_writer<specfem::io::NPZ> >(
+        return std::make_shared<specfem::periodic_tasks::wavefield_writer<
+            DimensionTag, specfem::io::NPZ> >(
             this->output_folder, this->time_interval, this->include_last_step,
             this->for_adjoint_simulations);
       } else {
@@ -130,32 +133,35 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
   return writer;
 }
 
-std::shared_ptr<specfem::periodic_tasks::periodic_task>
+template <specfem::dimension::type DimensionTag>
+std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
 specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
     const {
 
-  const std::shared_ptr<specfem::periodic_tasks::periodic_task> reader =
-      [&]() -> std::shared_ptr<specfem::periodic_tasks::periodic_task> {
+  const std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
+      reader =
+          [&]() -> std::shared_ptr<
+                    specfem::periodic_tasks::periodic_task<DimensionTag> > {
     if (this->simulation_type == specfem::simulation::type::combined) {
       if (specfem::utilities::is_hdf5_string(this->output_format)) {
-        return std::make_shared<
-            specfem::periodic_tasks::wavefield_reader<specfem::io::HDF5> >(
+        return std::make_shared<specfem::periodic_tasks::wavefield_reader<
+            DimensionTag, specfem::io::HDF5> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_adios2_string(this->output_format)) {
-        return std::make_shared<
-            specfem::periodic_tasks::wavefield_reader<specfem::io::ADIOS2> >(
+        return std::make_shared<specfem::periodic_tasks::wavefield_reader<
+            DimensionTag, specfem::io::ADIOS2> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_ascii_string(this->output_format)) {
-        return std::make_shared<
-            specfem::periodic_tasks::wavefield_reader<specfem::io::ASCII> >(
+        return std::make_shared<specfem::periodic_tasks::wavefield_reader<
+            DimensionTag, specfem::io::ASCII> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_npy_string(this->output_format)) {
-        return std::make_shared<
-            specfem::periodic_tasks::wavefield_reader<specfem::io::NPY> >(
+        return std::make_shared<specfem::periodic_tasks::wavefield_reader<
+            DimensionTag, specfem::io::NPY> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else if (specfem::utilities::is_npz_string(this->output_format)) {
-        return std::make_shared<
-            specfem::periodic_tasks::wavefield_reader<specfem::io::NPZ> >(
+        return std::make_shared<specfem::periodic_tasks::wavefield_reader<
+            DimensionTag, specfem::io::NPZ> >(
             this->output_folder, this->time_interval, this->include_last_step);
       } else {
         throw std::runtime_error("Unknown wavefield format");
@@ -167,3 +173,16 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
 
   return reader;
 }
+
+// Explicit template instantiations
+template std::shared_ptr<
+    specfem::periodic_tasks::periodic_task<specfem::dimension::type::dim2> >
+specfem::runtime_configuration::wavefield::instantiate_wavefield_writer<
+    specfem::dimension::type::dim2>() const;
+
+
+
+template std::shared_ptr<
+    specfem::periodic_tasks::periodic_task<specfem::dimension::type::dim2> >
+specfem::runtime_configuration::wavefield::instantiate_wavefield_reader<
+    specfem::dimension::type::dim2>() const;

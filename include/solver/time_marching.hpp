@@ -50,8 +50,8 @@ public:
           specfem::wavefield::simulation_field::forward, DimensionTag, NGLL>
           &kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const std::vector<
-          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks,
+      const std::vector<std::shared_ptr<
+          specfem::periodic_tasks::periodic_task<DimensionTag> > > &tasks,
       specfem::assembly::assembly<dimension_tag> assembly)
       : kernels(kernels), time_scheme(time_scheme), tasks(tasks),
         assembly(assembly) {}
@@ -70,7 +70,8 @@ private:
       kernels; ///< Computational kernels
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
-  std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
+  std::vector<
+      std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> > >
       tasks; ///< Periodic tasks
   ///< objects
   specfem::assembly::assembly<dimension_tag> assembly; ///< Spectral element
@@ -109,8 +110,8 @@ public:
           specfem::wavefield::simulation_field::backward, DimensionTag, NGLL>
           &backward_kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const std::vector<
-          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
+      const std::vector<std::shared_ptr<
+          specfem::periodic_tasks::periodic_task<dimension_tag> > > &tasks)
       : assembly(assembly), adjoint_kernels(adjoint_kernels),
         frechet_kernels(assembly), backward_kernels(backward_kernels),
         time_scheme(time_scheme), tasks(tasks) {}
@@ -137,7 +138,8 @@ private:
                                                        ///< assembly object
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
-  std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
+  std::vector<
+      std::shared_ptr<specfem::periodic_tasks::periodic_task<dimension_tag> > >
       tasks; ///< Periodic tasks
              ///< objects
 };

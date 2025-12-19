@@ -1,80 +1,80 @@
-#include "execute.hpp"
+#include "specfem/program.hpp"
+#include "specfem/program/context.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 #include "specfem/periodic_tasks.hpp"
+#include <memory>
 
 namespace py = pybind11;
 
-// global MPI variable for Python
-specfem::MPI::MPI *_py_mpi = NULL;
+// Global Context to manage Context lifetime in Python
+static std::unique_ptr<specfem::program::Context> global_context = nullptr;
 
 bool _initialize(py::list py_argv) {
-  if (_py_mpi != NULL) {
+  if (global_context) {
+    return false; // Already initialized
+  }
+
+  // Convert Python list to C++ string vector
+  std::vector<std::string> args;
+  for (const auto &item : py_argv) {
+    args.push_back(item.cast<std::string>());
+  }
+
+  try {
+    global_context = std::make_unique<specfem::program::Context>(args);
+    return true;
+  } catch (const std::exception &) {
     return false;
   }
-  // parse argc and argv from Python
-  int argc = py_argv.size();
-  char **argv = new char *[argc + 1];
-
-  for (size_t i = 0; i < argc; i++) {
-    std::string str =
-        py_argv[i].cast<std::string>(); // Convert Python string to std::string
-    argv[i] =
-        new char[str.length() + 1]; // Allocate memory for each C-style string
-    std::strcpy(argv[i], str.c_str()); // Copy the string content
-  }
-
-  // Null-terminate argv following the specification
-  argv[argc] = nullptr;
-  // Initialize MPI
-  _py_mpi = new specfem::MPI::MPI(&argc, &argv);
-  // Initialize Kokkos
-  Kokkos::initialize(argc, argv);
-
-  // free argv
-  for (int i = 0; i < argc; i++) {
-    delete[] argv[i]; // Free each individual string
-  }
-
-  delete[] argv;
-
-  return true;
 }
 
 bool _execute(const std::string &parameter_string,
               const std::string &default_string) {
-  if (_py_mpi == NULL) {
+  if (global_context == nullptr) {
     return false;
   }
 
   const YAML::Node parameter_dict = YAML::Load(parameter_string);
   const YAML::Node default_dict = YAML::Load(default_string);
-  std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks;
+
+  // Setup periodic tasks (signal checking)
+  const auto dimension_tag = specfem::dimension::type::dim2;
+  std::vector<
+      std::shared_ptr<specfem::periodic_tasks::periodic_task<dimension_tag> > >
+      tasks;
   const auto signal_task =
-      std::make_shared<specfem::periodic_tasks::check_signal>(10);
+      std::make_shared<specfem::periodic_tasks::check_signal<dimension_tag> >(
+          10);
   tasks.push_back(signal_task);
+
   // Releasing the GIL in a scoped section
   // is needed for long running tasks, such as a
   // simulation.
+  bool success;
   {
     py::gil_scoped_release release;
-    execute(parameter_dict, default_dict, tasks, _py_mpi);
+
+    // For now, default to 2D execution for backward compatibility
+    // Later we can add a dimension parameter to the Python interface
+    // Run 2D Cartesian program
+    program_2d(parameter_dict, default_dict, tasks, mpi);
+
+    success = true;
   }
-  return true;
+  return success;
 }
 
 bool _finalize() {
-  if (_py_mpi != NULL) {
-    // Finalize Kokkos
-    Kokkos::finalize();
-    // Finalize MPI
-    delete _py_mpi;
-    _py_mpi = NULL;
-    return true;
+  if (global_context == nullptr) {
+    return false;
   }
-  return false;
+
+  // Explicitly destroy the Context, which triggers proper cleanup
+  global_context.reset();
+  return true;
 }
 
 PYBIND11_MODULE(_core, m) {

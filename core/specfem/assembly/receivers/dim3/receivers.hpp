@@ -47,7 +47,7 @@ private:
                    Kokkos::DefaultExecutionSpace>; ///< View to store the
                                                    ///< Lagrange interpolant for
                                                    ///< every receiver (nrec,
-                                                   ///< nglly, ngllz, ngllx, 3)
+                                                   ///< ngllz, nglly, ngllx, 3)
 
 public:
   /**
@@ -205,7 +205,7 @@ load_on_device(const ChunkIndexType &chunk_index,
 
 #ifndef NDEBUG
 
-        if (index.ispec >= receivers.nspec) {
+        if (ielement >= receivers.nspec) {
           std::string message = "Invalid element detected in kernel at " +
                                 std::string(__FILE__) + ":" +
                                 std::to_string(__LINE__);
@@ -215,14 +215,14 @@ load_on_device(const ChunkIndexType &chunk_index,
 #endif
 
         // Load all three components for 3D
-        lagrange_interpolant(ielement, index.iy, index.iz, index.ix, 0) =
-            receivers.lagrange_interpolant(irec, index.iy, index.iz, index.ix,
+        lagrange_interpolant(ielement, index.iz, index.iy, index.ix, 0) =
+            receivers.lagrange_interpolant(irec, index.iz, index.iy, index.ix,
                                            0);
-        lagrange_interpolant(ielement, index.iy, index.iz, index.ix, 1) =
-            receivers.lagrange_interpolant(irec, index.iy, index.iz, index.ix,
+        lagrange_interpolant(ielement, index.iz, index.iy, index.ix, 1) =
+            receivers.lagrange_interpolant(irec, index.iz, index.iy, index.ix,
                                            1);
-        lagrange_interpolant(ielement, index.iy, index.iz, index.ix, 2) =
-            receivers.lagrange_interpolant(irec, index.iy, index.iz, index.ix,
+        lagrange_interpolant(ielement, index.iz, index.iy, index.ix, 2) =
+            receivers.lagrange_interpolant(irec, index.iz, index.iy, index.ix,
                                            2);
       });
 

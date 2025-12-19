@@ -20,8 +20,8 @@ parameters:
       time-marching:
         time-scheme:
           type: Newmark
-          dt: 4e-2
-          nstep: 1000
+          dt: 0.16
+          nstep: 250
 
     simulation-mode:
       forward:
@@ -29,6 +29,13 @@ parameters:
           seismogram:
             format: "ascii"
             directory: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results"
+
+          // display:
+          //   format: VTKHDF
+          //   directory: @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/vtk/
+          //   field: displacement
+          //   simulation-field: forward
+          //   time-interval: 5
 
   receivers:
     stations: "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS"
@@ -44,8 +51,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES_MPI/proc000000_external_mesh.bin"
-    mesh-parameters: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES_MPI/mesh_parameters.bin"
+    mesh-database: "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/proc000000_Database.bin"
 
   ## sources
   sources: "@CURRENT_BENCHMARK_BUILD_DIR@/force.yaml"

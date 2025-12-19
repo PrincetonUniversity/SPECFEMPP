@@ -221,6 +221,88 @@ public:
 };
 
 /**
+ * @brief Template specialization for Stacey boundary condition in 3D
+ *
+ * @tparam UseSIMD Boolean indicating whether to use SIMD instructions
+ */
+template <bool UseSIMD>
+struct boundary<specfem::element::boundary_tag::stacey,
+                specfem::dimension::type::dim3, UseSIMD>
+    : public boundary<specfem::element::boundary_tag::acoustic_free_surface,
+                      specfem::dimension::type::dim3, UseSIMD> {
+private:
+  constexpr static int num_dimensions = 3;
+  /**
+   * @name Private Typedefs
+   *
+   */
+  ///@{
+  using NormalViewType =
+      specfem::datatype::VectorPointViewType<type_real, num_dimensions,
+                                             UseSIMD>; ///< View type to store
+                                                       ///< the normal vector to
+                                                       ///< the face at the
+                                                       ///< quadrature point
+
+  using datatype =
+      typename specfem::datatype::simd<type_real, UseSIMD>::datatype; ///< SIMD
+                                                                      ///< data
+                                                                      ///< type
+  ///@}
+
+public:
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+  ///@}
+
+  /**
+   * @name Compile-time constants
+   *
+   */
+  ///@{
+  constexpr static auto boundary_tag = specfem::element::boundary_tag::stacey;
+  ///@}
+
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+
+  /**
+   * @brief Default constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  boundary() = default;
+
+  /**
+   * @brief Implicit conversion constructor from composite Stacey Dirichlet
+   * boundary
+   *
+   * @param boundary Composite Stacey Dirichlet boundary
+   */
+  KOKKOS_FUNCTION
+  boundary(const specfem::point::boundary<
+           specfem::element::boundary_tag::composite_stacey_dirichlet,
+           specfem::dimension::type::dim3, UseSIMD> &boundary);
+  ///@}
+
+  datatype face_weight =
+      static_cast<type_real>(0.0); ///< Integration weight associated with the
+                                   ///< face at the quadrature point
+  NormalViewType face_normal = {
+    static_cast<type_real>(0.0), static_cast<type_real>(0.0),
+    static_cast<type_real>(0.0)
+  }; ///< Normal vector to the face at
+     ///< the quadrature point
+};
+
+/**
  * @brief Template specialization for composite Stacey Dirichlet boundary
  * condition
  *
@@ -284,6 +366,18 @@ KOKKOS_FUNCTION specfem::point::boundary<specfem::element::boundary_tag::stacey,
   this->tag = boundary.tag;
   this->edge_weight = boundary.edge_weight;
   this->edge_normal = boundary.edge_normal;
+}
+
+template <bool UseSIMD>
+KOKKOS_FUNCTION
+specfem::point::boundary<specfem::element::boundary_tag::stacey,
+                         specfem::dimension::type::dim3, UseSIMD>::
+    boundary(const specfem::point::boundary<
+             specfem::element::boundary_tag::composite_stacey_dirichlet,
+             specfem::dimension::type::dim3, UseSIMD> &boundary) {
+  this->tag = boundary.tag;
+  this->face_weight = boundary.face_weight;
+  this->face_normal = boundary.face_normal;
 }
 
 } // namespace point

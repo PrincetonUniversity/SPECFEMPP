@@ -26,28 +26,23 @@ namespace specfem::algorithms {
  into
  */
 template <
-    typename IndexType, typename TransferFunctionType, typename EdgeFieldType,
-    typename IntersectionReturnCallback,
+    typename IndexType, typename TransferFunctionType,
+    typename EdgeFunctionType, typename IntersectionReturnCallback,
     typename std::enable_if_t<TransferFunctionType::connection_tag ==
                                   specfem::connections::type::nonconforming,
                               int> = 0>
 KOKKOS_INLINE_FUNCTION void
 transfer(const IndexType &chunk_edge_index,
          const TransferFunctionType &transfer_function,
-         const EdgeFieldType &coupled_field,
+         const EdgeFunctionType &edge_function,
          const IntersectionReturnCallback &callback) {
-
-  constexpr auto dimension_tag = EdgeFieldType::dimension_tag;
-  constexpr auto edge_medium_tag = EdgeFieldType::medium_tag;
-  constexpr auto interface_tag = TransferFunctionType::interface_tag;
 
   static_assert(
       specfem::data_access::is_chunk_edge<IndexType>::value,
       "The index for a nonconforming compute_coupling must be a chunk_edge.");
 
-  static_assert(specfem::data_access::is_chunk_edge<EdgeFieldType>::value &&
-                    specfem::data_access::is_field<EdgeFieldType>::value,
-                "coupled_field is not a point field type");
+  static_assert(specfem::data_access::is_chunk_edge<EdgeFunctionType>::value,
+                "EdgeFunctionType must be a chunk_edge data type.");
 
   // TODO future consideration: use load_on_device for coupled field here.
   // We would want it to be a specialization, since we want to transfer more
@@ -56,10 +51,9 @@ transfer(const IndexType &chunk_edge_index,
   const int &num_edges = chunk_edge_index.nedges();
 
   using VectorPointViewType = specfem::datatype::VectorPointViewType<
-      type_real, EdgeFieldType::components, EdgeFieldType::using_simd>;
+      type_real, EdgeFunctionType::components, EdgeFunctionType::using_simd>;
 
-  constexpr int ncomp =
-      specfem::element::attributes<dimension_tag, edge_medium_tag>::components;
+  constexpr int ncomp = EdgeFunctionType::components;
 
   specfem::execution::for_each_level(
       specfem::execution::TeamThreadMDRangeIterator(
@@ -76,7 +70,7 @@ transfer(const IndexType &chunk_edge_index,
                ipoint_edge < TransferFunctionType::n_quad_element;
                ipoint_edge++) {
             intersection_point_view(icomp) +=
-                coupled_field(iedge, ipoint_edge, icomp) *
+                edge_function(iedge, ipoint_edge, icomp) *
                 transfer_function(iedge, ipoint_edge, iquad);
           }
         }

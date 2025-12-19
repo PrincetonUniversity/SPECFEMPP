@@ -1,6 +1,7 @@
 #include "io/mesh/impl/fortran/dim2/read_boundaries.hpp"
 #include "io/fortranio/interface.hpp"
 #include "mesh/mesh.hpp"
+#include "specfem/logger.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
@@ -152,7 +153,7 @@ read_absorbing_boundaries(std::ifstream &stream, int num_abs_boundary_faces,
   std::vector<int> iedgeread(8, 0);
   int numabsread, typeabsread;
   if (num_abs_boundary_faces < 0) {
-    mpi->cout("Warning: read in negative nelemabs resetting to 0!");
+    specfem::Logger::warning("Read in negative nelemabs resetting to 0!");
     num_abs_boundary_faces = 0;
   }
 
@@ -294,7 +295,7 @@ read_acoustic_free_surface(std::ifstream &stream,
     }
   }
 
-  mpi->sync_all();
+  specfem::MPI_new::sync_all();
 
   return acoustic_free_surface;
 }

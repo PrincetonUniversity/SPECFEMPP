@@ -45,13 +45,18 @@ private:
   TransferViewType data_;
 
 public:
-  KOKKOS_INLINE_FUNCTION
-  transfer_function(const TransferViewType &transfer_function)
+  template <typename U = TransferViewType,
+            typename std::enable_if_t<
+                std::is_convertible<TransferViewType, U>::value, int> = 0>
+  KOKKOS_INLINE_FUNCTION transfer_function(const U &transfer_function)
       : data_(transfer_function) {}
+
   KOKKOS_INLINE_FUNCTION
   transfer_function() = default;
 
-  template <typename MemberType>
+  template <typename MemberType, typename U = TransferViewType,
+            typename std::enable_if_t<U::memory_traits::is_unmanaged == true,
+                                      int> = 0>
   KOKKOS_INLINE_FUNCTION transfer_function(const MemberType &team)
       : data_(team.team_scratch(0)) {}
 
@@ -119,14 +124,19 @@ private:
   IntersectionFactorViewType data_;
 
 public:
-  KOKKOS_INLINE_FUNCTION
-  intersection_factor(const IntersectionFactorViewType &intersection_factor)
+  template <
+      typename U = IntersectionFactorViewType,
+      typename std::enable_if_t<
+          std::is_convertible<IntersectionFactorViewType, U>::value, int> = 0>
+  KOKKOS_INLINE_FUNCTION intersection_factor(const U &intersection_factor)
       : data_(intersection_factor) {}
 
   KOKKOS_INLINE_FUNCTION
   intersection_factor() = default;
 
-  template <typename MemberType>
+  template <typename MemberType, typename U = IntersectionFactorViewType,
+            typename std::enable_if_t<U::memory_traits::is_unmanaged == true,
+                                      int> = 0>
   KOKKOS_INLINE_FUNCTION intersection_factor(const MemberType &team)
       : data_(team.team_scratch(0)) {}
 
@@ -178,14 +188,19 @@ private:
   IntersectionNormalViewType data_;
 
 public:
-  KOKKOS_INLINE_FUNCTION
-  intersection_normal(const IntersectionNormalViewType &intersection_normal)
+  template <
+      typename U = IntersectionNormalViewType,
+      typename std::enable_if_t<
+          std::is_convertible<IntersectionNormalViewType, U>::value, int> = 0>
+  KOKKOS_INLINE_FUNCTION intersection_normal(const U &intersection_normal)
       : data_(intersection_normal) {}
 
   KOKKOS_INLINE_FUNCTION
   intersection_normal() = default;
 
-  template <typename MemberType>
+  template <typename MemberType, typename U = IntersectionNormalViewType,
+            typename std::enable_if_t<U::memory_traits::is_unmanaged == true,
+                                      int> = 0>
   KOKKOS_INLINE_FUNCTION intersection_normal(const MemberType &team)
       : data_(team.team_scratch(0)) {}
 
@@ -250,7 +265,8 @@ struct NonconformingAccessorPack
 
   KOKKOS_INLINE_FUNCTION NonconformingAccessorPack() = default;
 
-  KOKKOS_INLINE_FUNCTION NonconformingAccessorPack(const Accessors &...accessors)
+  KOKKOS_INLINE_FUNCTION
+  NonconformingAccessorPack(const Accessors &...accessors)
       : Accessors(accessors)... {};
 
   template <typename... Indices>

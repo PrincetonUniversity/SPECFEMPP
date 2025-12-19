@@ -5,6 +5,7 @@
 
 // Explcit template instantiation
 
+// 2D instantiations
 template class specfem::solver::time_marching<
     specfem::simulation::type::forward, specfem::dimension::type::dim2, 5>;
 
@@ -16,3 +17,10 @@ template class specfem::solver::time_marching<
 
 template class specfem::solver::time_marching<
     specfem::simulation::type::combined, specfem::dimension::type::dim2, 8>;
+
+// 3D instantiations
+template class specfem::solver::time_marching<
+    specfem::simulation::type::forward, specfem::dimension::type::dim3, 5>;
+
+// template class specfem::solver::time_marching<
+//     specfem::simulation::type::forward, specfem::dimension::type::dim3, 8>;

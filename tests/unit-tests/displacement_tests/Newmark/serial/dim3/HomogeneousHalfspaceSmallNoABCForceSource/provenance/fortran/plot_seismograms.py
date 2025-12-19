@@ -68,6 +68,24 @@ def main():
             station["x"], station["y"], source["x"], source["y"]
         )
 
+    # Get stations and source extent
+    x_coords = [station["x"] for station in stations]
+    y_coords = [station["y"] for station in stations]
+    x_coords.append(source["x"])
+    y_coords.append(source["y"])
+
+    # Compute map extent with some padding
+    x_min, x_max = min(x_coords), max(x_coords)
+    y_min, y_max = min(y_coords), max(y_coords)
+    padding_factor = 0.1  # 10% padding
+    x_range_pad = (x_max - x_min) * padding_factor
+    y_range_pad = (y_max - y_min) * padding_factor
+
+    x_min -= x_range_pad
+    x_max += x_range_pad
+    y_min -= y_range_pad
+    y_max += y_range_pad
+
     stations_sorted = sorted(stations, key=lambda x: x["distance"])
 
     # Create figure with gridspec for 1 row x 4 columns
@@ -76,6 +94,9 @@ def main():
 
     # Subplot 1: Source-Station geometry with circular grid (larger)
     ax1 = fig.add_subplot(gs[0, 0])
+
+    # Plot source
+    ax1.plot(source["x"], source["y"], "k*", markersize=20, label="Source")
 
     # Plot stations
     for station in stations:
@@ -86,21 +107,26 @@ def main():
             markersize=8,
             label="Stations" if station == stations[0] else "",
         )
+        if station["station"][2] == "B":
+            offset = -y_range_pad * 0.5
+        elif station["station"][2] == "C":
+            offset = 0
+        else:
+            offset = y_range_pad * 0.5
+
+        print(offset)
         ax1.text(
-            station["x"],
-            station["y"] + 1000,
+            station["x"] + x_range_pad * 0.5,  # slight offset for visibility
+            station["y"] + offset,  # slight offset for visibility
             station["station"],
             ha="center",
-            va="bottom",
+            va="center",
             fontsize=8,
         )
 
-    # Plot source
-    ax1.plot(source["x"], source["y"], "r*", markersize=15, label="Source")
-
     # Add circular distance grid
     max_dist = max([s["distance"] for s in stations])
-    circles = [5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000]
+    circles = [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
     for radius in circles:
         if radius <= max_dist * 1.2:
             circle = Circle(
@@ -116,7 +142,7 @@ def main():
             ax1.text(
                 source["x"] + radius * 0.7,
                 source["y"] + radius * 0.7,
-                f"{radius / 1000:.0f}km",
+                f"{radius / 1000:.1f}km",
                 fontsize=8,
                 alpha=0.7,
             )
@@ -124,9 +150,13 @@ def main():
     ax1.set_xlabel("X (UTM)")
     ax1.set_ylabel("Y (UTM)")
     ax1.set_title("Source-Station Geometry")
-    ax1.legend()
+    ax1.legend(
+        ncol=1, bbox_to_anchor=(1.0, 1), loc="lower right", fontsize=8, frameon=False
+    )
     ax1.grid(True, alpha=0.3)
-    ax1.set_aspect("equal")
+    # ax1.set_aspect("equal")
+    ax1.set_xlim(x_min, x_max)
+    ax1.set_ylim(y_min, y_max)
 
     # Find seismogram files
     seismogram_files = {

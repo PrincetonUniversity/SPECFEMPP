@@ -1,0 +1,79 @@
+SPECFEM_BIN = "@CMAKE_BINARY_DIR@/bin/specfem3d"
+MESHFEM_BIN = "@CMAKE_BINARY_DIR@/bin/xmeshfem3D"
+
+rule all:
+    input:
+        summary_plot="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/seismogram_plot.png",
+        traces=expand(
+            "@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results/{network_name}.{station_name}.S3.{component}.semd",
+            station_name=["X55", "X60", "X65", "X70", "X75", "X80", "X85", "X90", "X95"],
+            network_name=["DB"],
+            component=["MXX", "MXY", "MXZ"],
+        ),
+        # vtk_file="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/vtk/wavefield.vtkhdf",
+    localrule: True
+
+
+rule generate_mesh:
+    input:
+        "@CURRENT_BENCHMARK_BUILD_DIR@/DATA/meshfem3D_files/Mesh_Par_file",
+    output:
+        database="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/proc000000_Database.bin",
+        mesh_vtk="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/proc000000_mesh.vtk",
+        skewness_vtk="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES/proc000000_skewness.vtk",
+        output_meshfem3D="@CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/output_meshfem3D.txt",
+    localrule: True
+    shell:
+        """
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/DATABASES
+            {MESHFEM_BIN} -p {input}
+        """
+
+rule run_solver:
+    input:
+        database=rules.generate_mesh.output.database,
+        stations="@CURRENT_BENCHMARK_BUILD_DIR@/DATA/STATIONS",
+        source="@CURRENT_BENCHMARK_BUILD_DIR@/force.yaml",
+        config="@CURRENT_BENCHMARK_BUILD_DIR@/specfem_config.yaml",
+    output:
+        traces=rules.all.input.traces,
+        # vtk_file=rules.all.input.vtk_file,
+        log="@CURRENT_BENCHMARK_BUILD_DIR@/output.log",
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=10,
+    params:
+        KOKKOS_TOOLS_LIBS="",
+    shell:
+        """
+            # module purge
+            # module load boost/1.73.0
+            export KOKKOS_TOOLS_LIBS={params.KOKKOS_TOOLS_LIBS}
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/results
+            mkdir -p @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES/vtk
+            echo "Hostname: $(hostname)" > {output.log}
+            {SPECFEM_BIN} -p {input.config} >> {output.log}
+        """
+
+
+rule plot_seismogram:
+    input:
+        rules.run_solver.output.traces,
+    output:
+        summary_plot=rules.all.input.summary_plot,
+    localrule: True
+    shell:
+        """
+            python plot_seismograms.py
+        """
+
+
+rule clean:
+    localrule: True
+    shell:
+        """
+            rm -rf @CURRENT_BENCHMARK_BUILD_DIR@/OUTPUT_FILES
+            rm -f @CURRENT_BENCHMARK_BUILD_DIR@/output.log
+        """

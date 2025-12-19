@@ -61,21 +61,55 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_host(const IndexType &index,
 } // namespace fields_impl
 
 /**
- * @brief Loads field data on the host at the specified index into the given
- * accessors.
+ * @brief Host-side field data loading for spectral elements and debugging
  *
- * @ingroup FieldDataAccess
+ * Public interface for loading field data from simulation fields into accessors
+ * on the host (CPU). This function provides a unified interface for retrieving
+ * values from multiple field components simultaneously for host-based
+ * computations and debugging.
  *
- * @tparam IndexType The type of the index (assembly index, point, or chunk
- * element).
- * @tparam ContainerType The type of the container holding the field data.
- * @tparam AccessorTypes The types of the accessors used to access the field
- * data.
+ * @ingroup FieldsDataAccess
  *
- * @param index The index specifying the location or entity for field access.
- * @param field The container holding the field data.
- * @param accessors One or more accessor objects specifying how to access the
- * field data.
+ * @tparam IndexType Index type (specfem::point::index,
+ * specfem::chunk::element_index, specfem::chunk::edge_index with SIMD support)
+ * @tparam ContainerType Simulation field container (2D/3D specializations)
+ * @tparam AccessorTypes Variadic field accessor types
+ *
+ * @param index Spatial index (element + quadrature point information with
+ * optional SIMD support)
+ * @param field Simulation field container holding medium-specific field data
+ * @param accessors Variable number of field accessors to populate with loaded
+ * data
+ *
+ * @pre All accessors must have the same medium tag (e.g., all elastic or all
+ * acoustic)
+ * @pre All accessors must be field accessor types
+ *
+ * @note All accessors must target the same medium type (enforced at
+ * compile-time)
+ * @note This function is host-only and should be called from host code
+ * @note For device operations, use load_on_device instead
+ * @note Supports both SIMD and non-SIMD index types
+ *
+ * Usage Examples:
+ *
+ * @code
+ * // Host-side debugging: Load displacement field values
+ * auto disp = specfem::point::displacement<...>(...);
+ *
+ * // Load field data on host for analysis
+ * load_on_host(assembly_index, elastic_field, disp);
+ *
+ * // Access loaded values for debugging
+ * std::cout << "Displacement X: " << disp(0) << std::endl;
+ * std::cout << "Displacement Z: " << disp(1) << std::endl;
+ *
+ * // Host-based field processing
+ * for (int i = 0; i < num_points; ++i) {
+ *   load_on_host(host_index[i], field, accessor);
+ *   // Process field data on host
+ * }
+ * @endcode
  */
 template <
     typename IndexType, typename ContainerType, typename... AccessorTypes,

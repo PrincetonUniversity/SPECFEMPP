@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dim2/impl/boundary_value_container.hpp"
+#include "dim3/impl/boundary_value_container.hpp"
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem/assembly/boundaries.hpp"

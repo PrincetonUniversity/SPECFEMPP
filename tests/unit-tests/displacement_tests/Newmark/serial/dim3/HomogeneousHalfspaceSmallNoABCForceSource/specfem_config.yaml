@@ -22,21 +22,23 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 4e-2
-          nstep: 1000
+          dt: 0.035
+          nstep: 75
 
     simulation-mode:
       forward:
         writer:
           seismogram:
             format: ascii
-            directory: "."
+            directory: "./"
 
   receivers:
     stations: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSource/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
+      - velocity
+      - acceleration
     nstep_between_samples: 1
 
   ## Runtime setup
@@ -46,6 +48,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSource/DATABASES/database.bin"
+    mesh-database: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSource/database.bin"
 
   sources: "displacement_tests/Newmark/serial/dim3/HomogeneousHalfspaceSmallNoABCForceSource/force.yaml"

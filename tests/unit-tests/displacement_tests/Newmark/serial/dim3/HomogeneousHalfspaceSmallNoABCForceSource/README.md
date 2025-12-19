@@ -36,7 +36,11 @@ mpirun -np 1 ./bin/xspecfem3D
 
 Then move the traces from `OUTPUT_FILES` to the `traces` directory.
 
-## Recreatign The SPECFEM++ databases.
+```bash
+mv -f OUTPUT_FILES/*.sem* ../../traces/
+```
+
+## Recreating The SPECFEM++ databases.
 
 Use `provenance/specfempp`
 
@@ -50,13 +54,13 @@ export PATH=path/to/specfempp/bin/:${PATH}
 ```bash
 cd provenance/specfempp
 mkdir -p OUTPUT_FILES/DATABASES_MPI
-mpirun -np 1 ./bin/xmeshfem3D -p DATA/Mesh_Par_file
-mpirun -np 1 ./bin/xgenerate_databases -p DATA/Par_File
+xmeshfem3D -p DATA/meshfem3D_files/Mesh_Par_file
 ```
 
-Which should populate `OUTPUT_FILES/DATABASES_MPI`
+Which should create `OUTPUT_FILES/DATABASES_MPI/proc000000_Database`.
 
-Finally, to
-`OUTPUT_FILES/DATABASES_MPI/mesh_parameters.bin`
-`OUTPUT_FILES/DATABASES_MPI/proc000000_external_mesh.bin` to the test directory
-under `HomogeneousHalfspaceSmallNoABCForceSource/DATABASES_MPI/`
+Finally, move `proc000000_Database` to the test directory.
+
+```bash
+cp OUTPUT_FILES/DATABASES_MPI/proc000000_Database ../../mesh_database.bin
+```

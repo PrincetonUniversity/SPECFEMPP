@@ -1,16 +1,23 @@
 #pragma once
 
 namespace specfem {
-namespace parallel_config {
+namespace parallel_configuration {
 
 /**
- * @brief Parallel configuration for edge policy.
+ * @brief Parallel execution configuration for edge operations.
  *
- * @tparam DimensionTag Dimension type of the elements where the edge is
- * defined.
- * @tparam NumThreads Number of threads to use.
- * @tparam VectorLanes Number of vector lanes to use.
- * @tparam ExecutionSpace Execution space to use.
+ * @tparam DimensionTag Spatial dimension (dim2/dim3)
+ * @tparam NumThreads Thread count per team
+ * @tparam VectorLanes Vector lane width
+ * @tparam ExecutionSpace Kokkos execution space
+ *
+ * @code
+ * using config = edge_config<dim2, 32, 1, Kokkos::Cuda>;
+ * // Use config in specfem::execution::EdgeIterator<config>
+ * @endcode
+ *
+ * @see specfem::execution
+ * @see specfem::parallel_configuration::default_edge_config
  */
 template <specfem::dimension::type DimensionTag, int NumThreads,
           int VectorLanes, typename ExecutionSpace>
@@ -22,14 +29,19 @@ struct edge_config {
 };
 
 /**
- * @brief Default edge configuration.
+ * @brief Platform-optimized edge configuration defaults.
  *
- * Sets the number of threads and vector lanes to use for the edge policy based
- * on DimensionTag and ExecutionSpace.
+ * Automatically selects optimal thread and vector lane counts:
+ * - CUDA/HIP: 32 threads, 1 vector lane
+ * - OpenMP/Serial: 1 thread, 1 vector lane
  *
- * @tparam DimensionTag Dimension type of the elements where the edge is
- * defined.
- * @tparam ExecutionSpace Execution space to use.
+ * @tparam DimensionTag Spatial dimension
+ * @tparam ExecutionSpace Kokkos execution space
+ *
+ * @code
+ * using config = default_edge_config<dim2, Kokkos::Cuda>;
+ * // Automatically uses: num_threads=32, vector_lanes=1 for CUDA
+ * @endcode
  */
 template <specfem::dimension::type DimensionTag, typename ExecutionSpace>
 struct default_edge_config;
@@ -58,5 +70,5 @@ struct default_edge_config<specfem::dimension::type::dim2, Kokkos::Serial>
     : edge_config<specfem::dimension::type::dim2, 1, 1, Kokkos::Serial> {};
 #endif
 
-} // namespace parallel_config
+} // namespace parallel_configuration
 } // namespace specfem

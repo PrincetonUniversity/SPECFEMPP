@@ -42,7 +42,8 @@ std::vector<point> flatten_coordinates(
 
   std::vector<point> points(nspec * ngllxz);
 
-  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
+  constexpr int chunk_size =
+      specfem::parallel_configuration::storage_chunk_size;
 
   int iloc = 0;
   for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
@@ -132,7 +133,8 @@ create_coordinate_arrays(const std::vector<point> &reordered_points, int nspec,
           "coord", 2, nspec, ngll, ngll);
 
   std::vector<int> iglob_counted(nglob, -1);
-  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
+  constexpr int chunk_size =
+      specfem::parallel_configuration::storage_chunk_size;
   int iloc = 0;
   int inum = 0;
 

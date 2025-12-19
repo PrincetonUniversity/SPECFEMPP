@@ -52,12 +52,13 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::assembly(
     max_sig_step, dt,         t0,        nsteps_between_samples, receivers,
     stypes,       this->mesh, mesh.tags, this->element_types
   };
-  // this->boundaries = { this->mesh.nspec,
-  //                      this->mesh.element_grid.ngllz,
-  //                      this->mesh.element_grid.ngllx,
-  //                      mesh,
-  //                      this->mesh,
-  //                      this->jacobian_matrix };
+  this->boundaries = { this->mesh.nspec,
+                       this->mesh.element_grid.ngllz,
+                       this->mesh.element_grid.nglly,
+                       this->mesh.element_grid.ngllx,
+                       mesh,
+                       this->mesh,
+                       this->jacobian_matrix };
   // this->coupled_interfaces = { mesh, this->mesh, this->jacobian_matrix,
   //                              this->element_types };
   this->fields = { this->mesh, this->element_types, simulation };

@@ -57,7 +57,8 @@ public:
    * @return std::shared_ptr<specfem::io::writer> Pointer to an instantiated
    * writer object
    */
-  std::shared_ptr<specfem::periodic_tasks::periodic_task>
+  template <specfem::dimension::type DimensionTag>
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
   instantiate_wavefield_writer() const;
 
   /**
@@ -66,7 +67,8 @@ public:
    * @return std::shared_ptr<specfem::io::reader> Pointer to an instantiated
    * reader object
    */
-  std::shared_ptr<specfem::periodic_tasks::periodic_task>
+  template <specfem::dimension::type DimensionTag>
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
   instantiate_wavefield_reader() const;
 
   inline specfem::simulation::type get_simulation_type() const {

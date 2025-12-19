@@ -1,6 +1,7 @@
 #include "io/mesh/impl/fortran/dim2/read_mesh_database.hpp"
 #include "io/fortranio/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/mpi.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -153,7 +154,7 @@ specfem::io::mesh::impl::fortran::dim2::read_mesh_database_header(
       stream, &dummy_b1,
       &dummy_b2); // ADD_RANDOM_PERTURBATION_TO_THE_MESH,ADD_PERTURBATION_AROUND_SOURCE_ONLY
 
-  mpi->sync_all();
+  specfem::MPI_new::sync_all();
 
   return std::make_tuple(nspec, npgeo, nproc);
 }

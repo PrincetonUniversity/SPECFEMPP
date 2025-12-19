@@ -256,3 +256,48 @@ void specfem::MPI::MPI::bcast(double &val, int root) const {
   MPI_Bcast(&val, 1, MPI_DOUBLE, root, this->comm);
 #endif
 }
+
+/**
+ * @brief Print a title string with surrounding decoration
+ *
+ * @param s Title string to print
+ */
+void specfem::MPI::MPI::print_title(const std::string &s) const {
+  const int total_width = 60; // Fixed width for the separator lines
+
+  // Calculate padding for centering
+  int text_length = s.length();
+  int padding = (total_width - text_length) / 2;
+
+  // Build the centered title line
+  std::string title_line(padding, '-');
+  title_line += s;
+  title_line += std::string(total_width - padding - text_length, '-');
+
+  this->cout(title_line);
+}
+
+/**
+ * @brief Print a formatted header with SPECFEM++ branding
+ *
+ * @param s Header string to print (default: "SPECFEM++")
+ */
+void specfem::MPI::MPI::print_header(const std::string &s) const {
+  const int total_width = 60;
+  const std::string deco_line(total_width, '=');
+  // Add spaces around the string
+  const std::string title = " " + s + " ";
+
+  // Calculate padding for centering
+  int text_length = title.length();
+  int padding = (total_width - text_length) / 2;
+
+  // Build the centered title line
+  std::string title_line(padding, '-');
+  title_line += title;
+  title_line += std::string(total_width - padding - text_length, '-');
+
+  this->cout(deco_line);
+  this->cout(title_line);
+  this->cout(deco_line);
+}

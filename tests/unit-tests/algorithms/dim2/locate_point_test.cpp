@@ -386,7 +386,6 @@ TEST_F(LocatePoint2D, LocatePoint2DCoreTwoAdjacent5x5Elements) {
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

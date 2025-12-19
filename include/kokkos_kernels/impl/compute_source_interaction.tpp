@@ -63,7 +63,7 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
       specfem::point::boundary<boundary_tag, dimension, false>;
   using PointIndexType = specfem::point::mapped_index<dimension, false>;
 
-      using simd = specfem::datatype::simd<type_real, false>;
+  using simd = specfem::datatype::simd<type_real, false>;
 
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr int nthreads = 32;
@@ -74,7 +74,7 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
 #endif
 
   using ParallelConfig =
-      specfem::parallel_config::chunk_config<dimension, 1, 1, nthreads,
+      specfem::parallel_configuration::chunk_config<dimension, 1, 1, nthreads,
                                              lane_size, simd,
                                              Kokkos::DefaultExecutionSpace>;
 

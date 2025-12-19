@@ -212,19 +212,6 @@ The output image should look like this:
    :width: 100%
    :alt: Seismograms from the simulation
 
-If you compare these traces with that found in the
-``fluid-solid-interface`` example, you will notice a relative error
-reaching up to 3% in the ``S0001`` trace and 4% in the ``S0002`` trace.
-Since the elastic side is at a much lower resolution, errors due to
-bathymetric resolution are expected (note that due to ``ngnod==9``, the
-exponent on grid size for numerical truncation error is lower than the
-solver). So, be sure to continue respecting domain geometry when
-choosing mesh sizes.
-
-.. image:: conforming_nonconforming_compare.svg
-   :width: 100%
-   :alt: Seismograms from the simulation
-
 ********************************************
  [Optional] Creating animated visualization
 ********************************************
@@ -245,3 +232,51 @@ refracting at the seafloor interface.
 .. image:: fluid-solid-nonconforming.gif
    :width: 100%
    :alt: Animated wavefield evolution
+
+***********************************************
+ Appendix: Comparison to conforming simulation
+***********************************************
+
+We can return to a conforming scheme by disabling the external mesher
+
+.. code:: fortran
+
+   read_external_mesh              = .false.
+
+and setting the topography file to the original.
+
+.. code:: bash
+
+   ...
+   # layer number 1 (bottom layer)
+   #
+   ## The original 2000 Geophysics paper used nz = 90 but NGLLZ = 6
+   ## here I rescale it to nz = 108 and NGLLZ = 5 because nowadays we almost always use NGLLZ = 5
+   26
+   #
+   # layer number 2 (top layer)
+   #
+   58
+
+We can run this simulation and plot it against the nonconforming run.
+
+.. image:: conforming_nonconforming_compare.svg
+   :width: 100%
+   :alt: Seismograms from the simulation
+
+We can notice a relative error reaching up to 3% in the ``S0001`` trace
+and 4% in the ``S0002`` trace. Since the elastic side is at a much lower
+resolution, errors due to bathymetric resolution are expected (note that
+due to ``ngnod==9``, the exponent on grid size for numerical truncation
+error is lower than the solver). So, be sure to continue respecting
+domain geometry when choosing mesh sizes.
+
+A smoother bathymetry will provide simulations that agree closer:
+
+.. image:: fluid-solid-nonconforming-different-bathy.gif
+   :width: 100%
+   :alt: Animated wavefield evolution of a different bathymetric profile
+
+.. image:: conforming_nonconforming_compare-different-bathy.svg
+   :width: 100%
+   :alt: Seismograms from the simulation

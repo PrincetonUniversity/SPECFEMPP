@@ -23,7 +23,8 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
 #else
-  constexpr bool using_simd = true;
+  // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
+  constexpr bool using_simd = (DimensionTag == specfem::dimension::type::dim2) ? true : false;
 #endif
 
   using PointAccelerationType =
@@ -31,7 +32,7 @@ void specfem::kokkos_kernels::impl::divide_mass_matrix(
   using PointMassInverseType =
       specfem::point::mass_inverse<dimension, medium_tag, using_simd>;
 
-  using parallel_config = specfem::parallel_config::default_range_config<
+  using parallel_config = specfem::parallel_configuration::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,
       Kokkos::DefaultExecutionSpace>;
 

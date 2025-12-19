@@ -124,6 +124,13 @@ public:
   void set_seismogram_step(const int isig_step) { this->seis_step = isig_step; }
   void set_seismogram_type(const int iseis) { this->iseis = iseis; }
 
+  /**
+   * @brief Get the time step between the samples
+   *
+   * @return type_real Time step between samples
+   */
+  type_real get_timestep() const { return dt; }
+
   KOKKOS_FUNCTION int get_seismogram_step() const { return seis_step; }
   KOKKOS_FUNCTION int get_seis_type() const { return iseis; }
 

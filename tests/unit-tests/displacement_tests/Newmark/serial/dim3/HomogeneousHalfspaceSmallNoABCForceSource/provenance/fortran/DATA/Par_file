@@ -26,8 +26,8 @@ SUPPRESS_UTM_PROJECTION         = .true.
 NPROC                           = 1
 
 # time step parameters
-NSTEP                           = 250
-DT                              = 0.16
+NSTEP                           = 75
+DT                              = 0.035
 
 # set to true to use local-time stepping (LTS)
 LTS_MODE                        = .false.
@@ -163,7 +163,7 @@ HDUR_MOVIE                      = 0.0
 SAVE_MESH_FILES                 = .true.
 
 # path to store the local database file on each node
-LOCAL_PATH                      = OUTPUT_FILES/DATABASES_MPI
+LOCAL_PATH                      = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
 NTSTEP_BETWEEN_OUTPUT_INFO      = 500
@@ -228,8 +228,8 @@ NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 1
 # decide if we save displacement, velocity, acceleration and/or pressure in forward runs (they can be set to true simultaneously)
 # currently pressure seismograms are implemented in acoustic (i.e. fluid) elements only
 SAVE_SEISMOGRAMS_DISPLACEMENT   = .true.
-SAVE_SEISMOGRAMS_VELOCITY       = .false.
-SAVE_SEISMOGRAMS_ACCELERATION   = .false.
+SAVE_SEISMOGRAMS_VELOCITY       = .true.
+SAVE_SEISMOGRAMS_ACCELERATION   = .true.
 SAVE_SEISMOGRAMS_PRESSURE       = .false.   # currently implemented in acoustic (i.e. fluid) elements only
 
 # option to save strain seismograms

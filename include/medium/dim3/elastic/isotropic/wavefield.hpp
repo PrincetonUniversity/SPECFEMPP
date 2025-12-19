@@ -101,7 +101,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
       [&](const typename ChunkIndexType::iterator_type::index_type
               &iterator_index) {
         const auto index = iterator_index.get_index();
-        const int ielement = iterator_index.get_policy_index();
+        const int ielement = iterator_index.get_local_index().ispec;
         wavefield(ielement, index.iz, index.iy, index.ix, 0) =
             active_field(ielement, index.iz, index.iy, index.ix, 0);
         wavefield(ielement, index.iz, index.iy, index.ix, 1) =

@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 
 template <bool using_simd, typename ExecutionSpace>
-using ParallelConfig = specfem::parallel_config::default_chunk_config<
+using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
     specfem::dimension::type::dim2,
     specfem::datatype::simd<type_real, using_simd>, ExecutionSpace>;
 

@@ -7,35 +7,32 @@
 namespace specfem::assembly::mesh_impl {
 
 /**
- * @brief Gauss-Lobatto-Legendre quadrature points and weights
+ * @brief GLL quadrature points and weights for spectral elements.
  *
- * @tparam DimensionTag Dimension tag (2D or 3D)
+ * Stores Gauss-Lobatto-Legendre quadrature data using Kokkos views
+ * for device/host access.
  */
 template <specfem::dimension::type DimensionTag> struct GLLQuadrature {
-  constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
+  constexpr static auto dimension_tag = DimensionTag;
 
   using ViewType = Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>;
   using DViewType = Kokkos::View<type_real **, Kokkos::LayoutRight,
                                  Kokkos::DefaultExecutionSpace>;
 
-  int N;                          ///< Number of quadrature points
-  ViewType xi;                    ///< Quadrature points
-  ViewType weights;               ///< Quadrature weights
-  DViewType hprime;               ///< Derivative of lagrange interpolants
-  DViewType::HostMirror h_hprime; ///< Derivative of lagrange interpolants
-  ViewType::HostMirror h_xi;      ///< Quadrature points
-  ViewType::HostMirror h_weights; ///< Quadrature weights
+  int N;                          ///< Number of GLL points
+  ViewType xi;                    ///< Device GLL points on [-1,1]
+  ViewType weights;               ///< Device integration weights
+  DViewType hprime;               ///< Device Lagrange derivative matrix
+  DViewType::HostMirror h_hprime; ///< Host Lagrange derivative matrix
+  ViewType::HostMirror h_xi;      ///< Host GLL points
+  ViewType::HostMirror h_weights; ///< Host weights
 
-  /**
-   * @brief Construct a new GLLQuadrature object
-   *
-   */
   GLLQuadrature() = default;
 
   /**
-   * @brief Construct a new GLLQuadrature object
+   * @brief Constructor from quadrature object.
    *
-   * @param quadratures quadratures object
+   * Copies GLL data from source quadrature to device/host views.
    */
   GLLQuadrature(const specfem::quadrature::quadratures &quadratures)
       : N(quadratures.gll.get_N()), xi(quadratures.gll.get_xi()),
@@ -46,23 +43,20 @@ template <specfem::dimension::type DimensionTag> struct GLLQuadrature {
 };
 
 /**
- * @brief Information about the integration quadratures
+ * @brief Assembly quadrature wrapper for mesh integration.
  *
- * This struct provides access to the quadrature points and weights for a given
- * dimension.
+ * Inherits GLL quadrature functionality for use in assembly operations.
  */
 template <specfem::dimension::type DimensionTag>
 struct quadrature
     : public specfem::assembly::mesh_impl::GLLQuadrature<DimensionTag> {
 public:
-  constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
+  constexpr static auto dimension_tag = DimensionTag;
 
   quadrature() = default;
 
   /**
-   * @brief Construct a new quadrature object
-   *
-   * @param quadratures quadratures object
+   * @brief Constructor from quadrature object.
    */
   quadrature(const specfem::quadrature::quadratures &quadratures)
       : specfem::assembly::mesh_impl::GLLQuadrature<DimensionTag>(quadratures) {

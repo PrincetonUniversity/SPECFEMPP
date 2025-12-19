@@ -153,7 +153,7 @@
   endif
 
   ! opens database file
-  open(unit=IIN_database,file=prname(1:len_trim(prname))//'Database', &
+  open(unit=IIN_database,file=prname(1:len_trim(prname))//'Database.bin', &
        status='unknown',action='write',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print *,'Error opening Database file: ',prname(1:len_trim(prname))//'Database'

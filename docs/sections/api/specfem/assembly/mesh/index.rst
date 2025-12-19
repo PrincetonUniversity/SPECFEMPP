@@ -3,27 +3,20 @@
 ``specfem::assembly::mesh``
 ===========================
 
-The assembly mesh provides a high-level interface for spectral element mesh operations,
-combining coordinate information, quadrature data, control nodes, shape functions, and
-computational mappings into cohesive structures optimized for finite element assembly.
+.. doxygenstruct:: specfem::assembly::mesh
+   :members:
 
-Common Templates
-----------------
+Dimension-Specific Implementation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. toctree::
-   :maxdepth: 1
+.. doxygenstruct:: specfem::assembly::mesh< specfem::dimension::type::dim2 >
+   :members:
 
-   common/mesh
-   common/points
-   common/control_nodes
-   common/quadrature
-   common/shape_functions
+.. doxygenstruct:: specfem::assembly::mesh< specfem::dimension::type::dim3 >
+   :members:
 
-Dimension-Specific Implementations
-----------------------------------
+Data Access Functions
+^^^^^^^^^^^^^^^^^^^^^
 
-.. toctree::
-   :maxdepth: 1
-
-   dim2/index
-   dim3/index
+.. doxygengroup:: MeshDataAccess
+   :content-only:

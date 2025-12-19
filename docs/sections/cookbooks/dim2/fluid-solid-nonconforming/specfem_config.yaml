@@ -34,7 +34,7 @@ parameters:
           display:
             format: PNG
             directory: OUTPUT_FILES/display
-            field: displacement
+            field: pressure
             simulation-field: forward
             time-interval: 250
 

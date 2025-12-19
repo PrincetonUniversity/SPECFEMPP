@@ -68,7 +68,7 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
 
   // ----
 
-  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
+  constexpr int chunk_size = specfem::parallel_configuration::storage_chunk_size;
 
   this->h_index_mapping = Kokkos::View<int ***, Kokkos::LayoutLeft,
                                        Kokkos::DefaultHostExecutionSpace>(

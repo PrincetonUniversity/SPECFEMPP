@@ -10,23 +10,14 @@
 namespace specfem::mesh_entity {
 
 /**
- * @namespace specfem::mesh_entity::dim2
- * @brief Defines mesh entity types and utilities for spectral element method
- *
- * This namespace provides enumerations and utility functions for working with
- * mesh entities in 2D spectral element grids, including edges and corners
- * of quadrilateral elements.
+ * @brief 2D quadrilateral mesh entity types and utilities.
  */
-
 namespace dim2 {
 
 /**
- * @brief Enumeration of mesh entity types for 2D quadrilateral elements
+ * @brief Mesh entity types for 2D quadrilateral elements.
  *
- * Defines the different types of mesh entities that can exist on the boundary
- * of a quadrilateral element in a 2D spectral element mesh. The numbering
- * follows the convention:
- *
+ * Numbering: edges (1-4), corners (5-8)
  * @code
  * 8 --- 3 --- 7
  * |           |
@@ -34,105 +25,56 @@ namespace dim2 {
  * |           |
  * 5 --- 1 --- 6
  * @endcode
- *
- * Where:
- * - 1 = bottom edge, 2 = top edge, 3 = left edge, 4 = right edge
- * - 5 = bottom_left, 6 = bottom_right, 7 = top_right, 8 = top_left corners
  */
 enum class type : int {
-  bottom = 1,       ///< Bottom edge of the element
-  right = 2,        ///< Top edge of the element
-  top = 3,          ///< Left edge of the element
-  left = 4,         ///< Right edge of the element
-  bottom_left = 5,  ///< Bottom-left corner of the element
-  bottom_right = 6, ///< Bottom-right corner of the element
-  top_right = 7,    ///< Top-right corner of the element
-  top_left = 8      ///< Top-left corner of the element
+  bottom = 1,       ///< Bottom edge
+  right = 2,        ///< Right edge
+  top = 3,          ///< Top edge
+  left = 4,         ///< Left edge
+  bottom_left = 5,  ///< Bottom-left corner
+  bottom_right = 6, ///< Bottom-right corner
+  top_right = 7,    ///< Top-right corner
+  top_left = 8      ///< Top-left corner
 };
 
 /**
- * @brief Recovers a human-readable string for a given mesh entity.
- *
+ * @brief Convert entity type to string.
+ * @param entity Mesh entity type
+ * @return String representation
  */
 const std::string to_string(const specfem::mesh_entity::dim2::type &entity);
 
-/**
- * @brief List of all edge types in a quadrilateral element
- *
- * Contains all edge mesh entities in counter-clockwise order starting from the
- * top edge. This list is useful for iterating over all edges of an element.
- */
+/// All edge types in counter-clockwise order
 const std::list<type> edges = { type::top, type::right, type::bottom,
                                 type::left };
 
-/**
- * @brief List of all corner types in a quadrilateral element
- *
- * Contains all corner mesh entities in counter-clockwise order starting from
- * the top-left corner. This list is useful for iterating over all corners of an
- * element.
- */
+/// All corner types in counter-clockwise order
 const std::list<type> corners = { type::top_left, type::top_right,
                                   type::bottom_right, type::bottom_left };
 
 } // namespace dim2
 /**
- * @brief Returns the edges that form a given corner
- *
- * @param corner The corner mesh entity type
- * @return std::list<type> List of edge types that meet at the specified corner
- *
- * For each corner of a quadrilateral element, this function returns the two
- * edges that meet at that corner. The edges are returned in a consistent order.
- *
- * Corner-to-edge mappings:
- * - top_left: [top, left]
- * - top_right: [top, right]
- * - bottom_right: [bottom, right]
- * - bottom_left: [bottom, left]
- *
- * @throws std::runtime_error if the input is not a valid corner type
+ * @brief Get edges that meet at a corner.
+ * @param corner Corner entity type
+ * @return List of two edges meeting at the corner
+ * @throws std::runtime_error if invalid corner type
  */
 std::list<dim2::type> edges_of_corner(const dim2::type &corner);
 
 /**
- * @brief Returns the corners that are adjacent to a given edge.
- *
- * For a specified edge of a quadrilateral element, this function returns the
- * two corners that are connected to that edge. The corners are returned in a
- * consistent order.
- *
- * Edge-to-corner mappings:
- * - top: [top_left, top_right]
- * - right: [top_right, bottom_right]
- * - bottom: [bottom_right, bottom_left]
- * - left: [bottom_left, top_left]
- *
- * @param edge The edge mesh entity type.
- * @return std::list<type> List of corner types adjacent to the specified edge.
- *
- * @throws std::runtime_error if the input is not a valid edge type.
+ * @brief Get corners connected to an edge.
+ * @param edge Edge entity type
+ * @return List of two corners connected to the edge
+ * @throws std::runtime_error if invalid edge type
  */
 std::list<dim2::type> corners_of_edge(const dim2::type &edge);
 
 /**
- * @brief Generic utility function to check if a container contains a specific
- * mesh entity type
- *
- * @tparam T Container type that supports begin() and end() iterators
- * @param list The container to search in
- * @param value The mesh entity type to search for
- * @return bool True if the value is found in the container, false otherwise
- *
- * This template function provides a generic way to check membership in any
- * container of mesh entity types. It's commonly used with the predefined
- * edges and corners lists.
- *
- * @code
- * if (contains(edges, type::top)) {
- *     // Handle edge case
- * }
- * @endcode
+ * @brief Check if container contains a mesh entity type.
+ * @tparam T Container type with iterators
+ * @param list Container to search
+ * @param value Entity type to find
+ * @return True if found, false otherwise
  */
 template <typename T> bool contains(const T &list, const dim2::type &value) {
   return std::find(list.begin(), list.end(), value) != list.end();
@@ -141,11 +83,14 @@ template <typename T> bool contains(const T &list, const dim2::type &value) {
 std::vector<int>
 nodes_on_orientation(const specfem::mesh_entity::dim2::type &entity);
 
+/**
+ * @brief 2D edge entity for quadrilateral elements.
+ */
 template <> struct edge<specfem::dimension::type::dim2> {
-  specfem::mesh_entity::dim2::type edge_type;
-  int ispec;
-  int iedge;
-  bool reverse_orientation;
+  specfem::mesh_entity::dim2::type edge_type; ///< Edge type
+  int ispec;                                  ///< Element index
+  int iedge;                                  ///< Local edge index
+  bool reverse_orientation;                   ///< Orientation flag
 
   KOKKOS_INLINE_FUNCTION
   edge(const int ispec, const int iedge,
@@ -154,42 +99,43 @@ template <> struct edge<specfem::dimension::type::dim2> {
       : edge_type(edge_type), ispec(ispec), iedge(iedge),
         reverse_orientation(reverse_orientation) {}
 
+  /**
+   * @brief Default constructor.
+   */
   KOKKOS_INLINE_FUNCTION
   edge() = default;
 };
 
 /**
- * @brief Mesh element structure for 2D elements (Specialization)
+ * @brief 2D element grid with GLL point configuration.
  */
 template <> struct element_grid<specfem::dimension::type::dim2> {
 
 public:
-  int ngllz;  ///< Number of Gauss-Lobatto-Legendre points in the z-direction
-  int ngllx;  ///< Number of Gauss-Lobatto-Legendre points in the x-direction
-  int orderz; ///< Polynomial order of the element
-  int orderx; ///< Polynomial order of the element
-  int size;   ///< Total number of GLL points in the element
+  int ngllz;  ///< Number of GLL points in z-direction
+  int ngllx;  ///< Number of GLL points in x-direction
+  int orderz; ///< Polynomial order in z
+  int orderx; ///< Polynomial order in x
+  int size;   ///< Total number of GLL points
 
   /**
-   * @brief Default constructor for the element struct
+   * @brief Default constructor.
    */
   element_grid() = default;
 
   /**
-   * @brief Constructs an element entity given the number of
-   * Gauss-Lobatto-Legendre points
-   *
-   * @param ngll The number of Gauss-Lobatto-Legendre points
+   * @brief Construct with uniform GLL points.
+   * @param ngll Number of GLL points in both directions
    */
   element_grid(const int ngll)
       : ngllz(ngll), ngllx(ngll), orderz(ngll - 1), orderx(ngll - 1),
         size(ngll * ngll) {}
 
   /**
-   * @brief Constructs an element entity given the number of
-   * Gauss-Lobatto-Legendre points in each dimension
-   *
-   * @param ngll The number of Gauss-Lobatto-Legendre points
+   * @brief Construct with different GLL points per direction.
+   * @param ngllz Number of GLL points in z-direction
+   * @param ngllx Number of GLL points in x-direction
+   * @throws std::invalid_argument if ngllz != ngllx
    */
   element_grid(const int ngllz, const int ngllx)
       : ngllz(ngllz), ngllx(ngllx), orderz(ngllz - 1), orderx(ngllx - 1),
@@ -201,29 +147,25 @@ public:
   };
 
   /**
-   * @brief Checks if the element is consistent across dimensions against a
-   *        specific number of GLL points.
-   *
-   * @param ngll_in The number of Gauss-Lobatto-Legendre points
-   * @return true If all dimensions match the specified number of GLL points
-   * @return false If any dimension does not match
+   * @brief Check if element matches specified GLL point count.
+   * @param ngll_in Number of GLL points to compare against
+   * @return True if all dimensions match the specified count
    */
   bool operator==(const int ngll_in) const {
     return ngll_in == this->ngllz && ngll_in == this->ngllx;
   }
 
   /**
-   * @brief Checks if the element is consistent across dimensions against a
-   *        specific number of GLL points.
-   *
-   * @param ngll_in The number of Gauss-Lobatto-Legendre points
-   * @return false If all dimensions match the specified number of GLL points
-   * @return true If any dimension does not match
-   *
+   * @brief Check if element does not match specified GLL point count.
+   * @param ngll_in Number of GLL points to compare against
+   * @return True if any dimension does not match the specified count
    */
   bool operator!=(const int ngll_in) const { return !(*this == ngll_in); }
 };
 
+/**
+ * @brief 2D element with coordinate mapping capabilities.
+ */
 template <>
 struct element<specfem::dimension::type::dim2>
     : public element_grid<specfem::dimension::type::dim2> {
@@ -231,19 +173,46 @@ private:
   using base = element_grid<specfem::dimension::type::dim2>;
 
 public:
+  /**
+   * @brief Default constructor.
+   */
   element() = default;
-
+  /**
+   * @brief Construct with uniform GLL points.
+   * @param ngll Number of GLL points in both directions
+   */
   element(const int ngll);
-
+  /**
+   * @brief Construct with different GLL points per direction.
+   * @param ngllz Number of GLL points in z-direction
+   * @param ngllx Number of GLL points in x-direction
+   * @throws std::invalid_argument if ngllz != ngllx
+   */
   element(const int ngllz, const int ngllx);
 
+  /**
+   * @brief Get number of GLL points on a mesh entity.
+   * @param entity Mesh entity type (edge or corner)
+   * @return Number of GLL points on the specified entity
+   */
   int number_of_points_on_orientation(
       const specfem::mesh_entity::dim2::type &entity) const;
 
+  /**
+   * @brief Map point index to element coordinates.
+   * @param entity Mesh entity type
+   * @param point Point index on the entity
+   * @return Tuple of (iz, ix) coordinates
+   */
   std::tuple<int, int>
   map_coordinates(const specfem::mesh_entity::dim2::type &entity,
                   const int point) const;
 
+  /**
+   * @brief Get corner coordinates.
+   * @param corner Corner entity type
+   * @return Tuple of (iz, ix) coordinates for the corner
+   */
   std::tuple<int, int>
   map_coordinates(const specfem::mesh_entity::dim2::type &corner) const;
 

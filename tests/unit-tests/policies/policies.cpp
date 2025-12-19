@@ -1,5 +1,4 @@
-#include "../Kokkos_Environment.hpp"
-#include "../MPI_environment.hpp"
+#include "../SPECFEM_Environment.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
 #include "execution/chunked_domain_iterator.hpp"
@@ -333,10 +332,12 @@ TEST_P(RangePolicyTest, VisitAllPoints) {
   const auto params = GetParam();
   const int nglob = params.nglob;
 
-  using ParallelConfig = specfem::parallel_config::default_range_config<
+  using ParallelConfig = specfem::parallel_configuration::default_range_config<
       specfem::datatype::simd<type_real, false>, Kokkos::DefaultExecutionSpace>;
-  using SimdParallelConfig = specfem::parallel_config::default_range_config<
-      specfem::datatype::simd<type_real, true>, Kokkos::DefaultExecutionSpace>;
+  using SimdParallelConfig =
+      specfem::parallel_configuration::default_range_config<
+          specfem::datatype::simd<type_real, true>,
+          Kokkos::DefaultExecutionSpace>;
 
   const auto check_test_view = [&](const auto &test_view,
                                    const std::string &error) {
@@ -360,13 +361,15 @@ TEST_P(ChunkElementPolicyTest, VisitAllPoints) {
   const int ngllz = params.ngllz;
   const int ngllx = params.ngllx;
 
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+  using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
       specfem::dimension::type::dim2, specfem::datatype::simd<type_real, false>,
       Kokkos::DefaultExecutionSpace>;
 
-  using SimdParallelConfig = specfem::parallel_config::default_chunk_config<
-      specfem::dimension::type::dim2, specfem::datatype::simd<type_real, true>,
-      Kokkos::DefaultExecutionSpace>;
+  using SimdParallelConfig =
+      specfem::parallel_configuration::default_chunk_config<
+          specfem::dimension::type::dim2,
+          specfem::datatype::simd<type_real, true>,
+          Kokkos::DefaultExecutionSpace>;
 
   const auto check_test_view = [&](const auto &test_view,
                                    const std::string &error) {
@@ -398,13 +401,15 @@ TEST_P(ChunkElementPolicy3DTest, VisitAllPoints) {
   const int nglly = params.nglly;
   const int ngllx = params.ngllx;
 
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+  using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
       specfem::dimension::type::dim3, specfem::datatype::simd<type_real, false>,
       Kokkos::DefaultExecutionSpace>;
 
-  using SimdParallelConfig = specfem::parallel_config::default_chunk_config<
-      specfem::dimension::type::dim3, specfem::datatype::simd<type_real, true>,
-      Kokkos::DefaultExecutionSpace>;
+  using SimdParallelConfig =
+      specfem::parallel_configuration::default_chunk_config<
+          specfem::dimension::type::dim3,
+          specfem::datatype::simd<type_real, true>,
+          Kokkos::DefaultExecutionSpace>;
 
   const auto check_test_view = [&](const auto &test_view,
                                    const std::string &error) {
@@ -465,7 +470,6 @@ INSTANTIATE_TEST_SUITE_P(
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

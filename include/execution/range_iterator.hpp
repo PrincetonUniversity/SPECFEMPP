@@ -104,7 +104,7 @@ private:
  * This iterator iterates over a range of GLL points between [0, RangeSize).
  *
  * @tparam ParallelConfig Configuration for parallel execution. @ref
- * specfem::parallel_configuration::range_config
+ * specfem::parallel_configurationuration::range_config
  *
  */
 template <typename ParallelConfig>

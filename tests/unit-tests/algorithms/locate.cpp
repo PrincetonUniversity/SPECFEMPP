@@ -1,5 +1,4 @@
-#include "Kokkos_Environment.hpp"
-#include "MPI_environment.hpp"
+#include "../SPECFEM_Environment.hpp"
 #include "algorithms/locate_point.hpp"
 #include "io/interface.hpp"
 #include "kokkos_abstractions.h"
@@ -12,7 +11,7 @@ TEST(ALGORITHMS, locate_point) {
   std::string database_file = "algorithms/serial/database.bin";
 
   // Read Mesh database
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
       database_file, specfem::enums::elastic_wave::psv,
       specfem::enums::electromagnetic_wave::te, mpi);
@@ -99,7 +98,6 @@ TEST(ALGORITHMS, locate_point) {
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

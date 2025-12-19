@@ -128,20 +128,31 @@ def main():
     ax1.grid(True, alpha=0.3)
     ax1.set_aspect("equal")
 
-    # Find seismogram files
+    # Find seismogram files (current output)
     seismogram_files = {
-        "BXX": sorted(glob.glob("OUTPUT_FILES/*.BXX.semd")),
-        "BXY": sorted(glob.glob("OUTPUT_FILES/*.BXY.semd")),
-        "BXZ": sorted(glob.glob("OUTPUT_FILES/*.BXZ.semd")),
+        "MXX": sorted(glob.glob("OUTPUT_FILES/results/*.S3.MXX.semd")),
+        "MXY": sorted(glob.glob("OUTPUT_FILES/results/*.S3.MXY.semd")),
+        "MXZ": sorted(glob.glob("OUTPUT_FILES/results/*.S3.MXZ.semd")),
+    }
+
+    # Find reference seismogram files
+    reference_seismogram_files = {
+        "MXX": sorted(glob.glob("reference_seismograms/*.S3.MXX.semd")),
+        "MXY": sorted(glob.glob("reference_seismograms/*.S3.MXY.semd")),
+        "MXZ": sorted(glob.glob("reference_seismograms/*.S3.MXZ.semd")),
     }
 
     # Read all seismograms and find common time range
     all_seismograms = {}
+    reference_seismograms = {}
     time_range = None
     max_displacement = 0
 
-    for component in ["BXX", "BXY", "BXZ"]:
+    for component in ["MXX", "MXY", "MXZ"]:
         all_seismograms[component] = {}
+        reference_seismograms[component] = {}
+
+        # Read current output seismograms
         for filename in seismogram_files[component]:
             # Extract station name from filename
             station_name = filename.split("/")[-1].split(".")[1]
@@ -158,8 +169,25 @@ def main():
                 )
             max_displacement = max(max_displacement, np.abs(displacement).max())
 
+        # Read reference seismograms
+        for filename in reference_seismogram_files[component]:
+            # Extract station name from filename
+            station_name = filename.split("/")[-1].split(".")[1]
+            time, displacement = read_seismogram(filename)
+            reference_seismograms[component][station_name] = (time, displacement)
+
+            # Update global ranges
+            if time_range is None:
+                time_range = (time.min(), time.max())
+            else:
+                time_range = (
+                    min(time_range[0], time.min()),
+                    max(time_range[1], time.max()),
+                )
+            max_displacement = max(max_displacement, np.abs(displacement).max())
+
     # Plot seismograms for each component
-    components = ["BXX", "BXY", "BXZ"]
+    components = ["MXX", "MXY", "MXZ"]
 
     for i, component in enumerate(components):
         ax = fig.add_subplot(gs[0, i + 1])
@@ -169,6 +197,8 @@ def main():
 
         for j, station in enumerate(stations_sorted):
             station_name = station["station"]
+
+            # Plot current output seismogram
             if station_name in all_seismograms[component]:
                 time, displacement = all_seismograms[component][station_name]
 
@@ -176,9 +206,40 @@ def main():
                 normalized_disp = displacement / max_displacement * y_spacing * 0.8
                 y_pos = j * y_spacing
 
-                ax.plot(time, normalized_disp + y_pos, "k-", linewidth=0.8)
+                ax.plot(
+                    time,
+                    normalized_disp + y_pos,
+                    "k-",
+                    linewidth=0.8,
+                    label="specfem++" if j == 0 else "",
+                )
 
-                # Add station label and distance
+            # Plot reference seismogram
+            if station_name in reference_seismograms[component]:
+                time_ref, displacement_ref = reference_seismograms[component][
+                    station_name
+                ]
+
+                # Normalize and offset displacement
+                normalized_disp_ref = (
+                    displacement_ref / max_displacement * y_spacing * 0.8
+                )
+                y_pos = j * y_spacing
+
+                ax.plot(
+                    time_ref,
+                    normalized_disp_ref + y_pos,
+                    "r--",
+                    linewidth=0.8,
+                    alpha=0.7,
+                    label="xspecfem3D" if j == 0 else "",
+                )
+
+            # Add station label and distance
+            if (
+                station_name in all_seismograms[component]
+                or station_name in reference_seismograms[component]
+            ):
                 ax.text(
                     time_range[0] - (time_range[1] - time_range[0]) * 0.05,
                     y_pos,
@@ -192,6 +253,10 @@ def main():
         ax.set_title(f"Component {component}")
         ax.set_xlim(time_range)
         ax.grid(True, alpha=0.3)
+
+        # Add legend for the first component only
+        if i == 0:
+            ax.legend(loc="upper left", fontsize=8, fancybox=False)
 
         # Set y-axis limits to show all traces properly
         if len(stations_sorted) > 0:
@@ -207,8 +272,8 @@ def main():
         ax.set_aspect("auto")
 
     plt.tight_layout()
-    plt.savefig("seismogram_plot.png", dpi=150, bbox_inches="tight")
-    plt.show()
+    plt.savefig("OUTPUT_FILES/seismogram_plot.png", dpi=300, bbox_inches="tight")
+    plt.show(block=False)
 
 
 if __name__ == "__main__":

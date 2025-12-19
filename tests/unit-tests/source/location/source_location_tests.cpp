@@ -1,3 +1,4 @@
+#include "../../SPECFEM_Environment.hpp"
 #include "io/interface.hpp"
 #include "medium/material.hpp"
 #include "mesh/mesh.hpp"
@@ -57,8 +58,8 @@ struct solution {
   //   // communicate correct size from main proc
   //   mpi->bcast(count);
   //   // resize sources for rest of processors
-  //   if (!mpi->main_proc())
-  //     sources.resize(count);
+  //   specfem::Logger::info("Sources size: " +
+  //   std::to_string(sources.resize(count)));
 
   //   specfem::MPI::datatype mpi_source_type = source.get_mpi_type();
 
@@ -144,7 +145,7 @@ TEST(SOURCES, compute_source_locations) {
   std::string config_filename = "source/test_config.yml";
 
   //  alias the mpi environment pointer
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
 
   // parse solutions file for future use
   test_config test_config = parse_test_config(config_filename);
@@ -186,7 +187,7 @@ TEST(SOURCES, compute_source_locations) {
   bool tested = false;
 
   for (solution &solution : solutions) {
-    if (mpi->get_size() == solution.nnodes) {
+    if (specfem::MPI_new::get_size() == solution.nnodes) {
       tested = true;
       ASSERT_EQ(sources.size(), solution.sources.size());
 
@@ -209,12 +210,12 @@ TEST(SOURCES, compute_source_locations) {
   }
 
   if (!tested)
-    FAIL() << "Solution doesn't exist for current nnodes = " << mpi->get_size();
+    FAIL() << "Solution doesn't exist for current nnodes = "
+           << specfem::MPI_new::get_size();
 }
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

@@ -96,19 +96,19 @@ template <> struct assembly<specfem::dimension::type::dim3> {
    */
   specfem::assembly::fields<dimension_tag> fields;
 
-  // specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
-  //                                                 ///< conditions
+  specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
+                                                           ///< conditions
   // specfem::assembly::coupled_interfaces<dimension_tag>
   // coupled_interfaces;                          ///< Coupled
   //                                         ///< interfaces
   //                                         ///< between 2
   //                                         ///< media
 
-  // specfem::assembly::boundary_values<dimension_tag>
-  // boundary_values; ///< Field
-  //             ///< values at
-  //             ///< the
-  //             ///< boundaries
+  specfem::assembly::boundary_values<dimension_tag>
+      boundary_values; ///< Field
+                       ///< values at
+                       ///< the
+                       ///< boundaries
 
   ///@}
 

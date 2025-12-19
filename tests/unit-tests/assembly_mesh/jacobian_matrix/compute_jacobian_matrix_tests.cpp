@@ -1,9 +1,9 @@
-#include "../../Kokkos_Environment.hpp"
-#include "../../MPI_environment.hpp"
+#include "../../SPECFEM_Environment.hpp"
 #include "../../utilities/include/interface.hpp"
 #include "io/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/mpi.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>
@@ -34,7 +34,7 @@ test_config get_test_config(std::string config_filename,
   // read test config file
   YAML::Node yaml = YAML::LoadFile(config_filename);
   test_config test_config{};
-  if (mpi->get_size() == 1) {
+  if (specfem::MPI_new::get_size() == 1) {
     YAML::Node Node = yaml["SerialTest"];
     YAML::Node database = Node["database"];
     assert(database.IsSequence());
@@ -46,9 +46,9 @@ test_config get_test_config(std::string config_filename,
     YAML::Node database = Node["database"];
     assert(database.IsSequence());
     assert(database.size() == Node["config"]["nproc"].as<int>());
-    assert(mpi->get_size() == Node["config"]["nproc"].as<int>());
+    assert(specfem::MPI_new::get_size() == Node["config"]["nproc"].as<int>());
     for (auto N : database) {
-      if (N["processor"].as<int>() == mpi->get_rank())
+      if (N["processor"].as<int>() == specfem::MPI_new::get_rank())
         N >> test_config;
     }
   }
@@ -64,7 +64,7 @@ test_config get_test_config(std::string config_filename,
  */
 TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
 
   std::string config_filename = "assembly_mesh/jacobian_matrix/test_config.yml";
   test_config test_config = get_test_config(config_filename, mpi);
@@ -161,7 +161,6 @@ TEST(ASSEMBLY_MESH, compute_jacobian_matrix) {
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

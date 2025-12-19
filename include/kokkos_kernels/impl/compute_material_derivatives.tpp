@@ -45,17 +45,18 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr bool using_simd = false;
 #else
-  constexpr bool using_simd = true;
+  // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
+  constexpr bool using_simd = (DimensionTag == specfem::dimension::type::dim2) ? true : false;
 #endif
 
 
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+  using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
       DimensionTag, simd, Kokkos::DefaultExecutionSpace>;
 
   using ChunkElementFieldType =
-      specfem::chunk_element::displacement<specfem::parallel_config::chunk_size,
+      specfem::chunk_element::displacement<specfem::parallel_configuration::chunk_size,
                                            NGLL, DimensionTag, MediumTag,
                                            using_simd>;
 

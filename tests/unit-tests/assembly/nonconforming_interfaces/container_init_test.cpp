@@ -1,4 +1,4 @@
-#include "../../MPI_environment.hpp"
+#include "../../SPECFEM_Environment.hpp"
 #include "algorithms/locate_point.hpp"
 #include "io/interface.hpp"
 #include "specfem/assembly.hpp"
@@ -342,7 +342,7 @@ void test_nonconforming_container_transfers(
 
 TEST(NonconformingInterfaces, ContainerInitialization) {
   std::string database_file("data/dim2/3_elem_nonconforming/database.bin");
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
 
   const auto mesh = specfem::io::read_2d_mesh(
       database_file, specfem::enums::elastic_wave::psv,

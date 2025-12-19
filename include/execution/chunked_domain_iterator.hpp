@@ -471,7 +471,7 @@ private:
  * `ParallelConfig::chunk_size` and iterates over them in parallel.
  * @tparam DimensionTag The dimension tag for the elements.
  * @tparam ParallelConfig Configuration for parallel execution. @ref
- * specfem::parallel_configuration::chunk_config
+ * specfem::parallel_configurationuration::chunk_config
  * @tparam ViewType Type of the view containing indices of elements.
  */
 template <specfem::dimension::type DimensionTag, typename ParallelConfig,

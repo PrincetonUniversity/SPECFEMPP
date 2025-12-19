@@ -58,7 +58,7 @@ void specfem::kokkos_kernels::impl::compute_coupling(
 
   const auto num_points = assembly.mesh.element_grid.ngllx;
 
-  using parallel_config = specfem::parallel_config::default_chunk_edge_config<
+  using parallel_config = specfem::parallel_configuration::default_chunk_edge_config<
       DimensionTag, Kokkos::DefaultExecutionSpace>;
 
   using CoupledFieldType = typename specfem::interface::attributes<
@@ -139,7 +139,7 @@ void specfem::kokkos_kernels::impl::compute_coupling(
 
   const auto num_points = assembly.mesh.element_grid.ngllx;
 
-  using parallel_config = specfem::parallel_config::default_chunk_edge_config<
+  using parallel_config = specfem::parallel_configuration::default_chunk_edge_config<
       DimensionTag, Kokkos::DefaultExecutionSpace>;
 
   // As written, field types cannot readily be defined in attributes. Define

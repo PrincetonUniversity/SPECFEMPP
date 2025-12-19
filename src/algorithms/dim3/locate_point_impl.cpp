@@ -117,7 +117,10 @@ std::tuple<type_real, type_real, type_real> get_local_coordinates(
 
   const int ngnod = coorg.extent(0);
 
-  for (int iter_loop = 0; iter_loop < 100; iter_loop++) {
+  // Initialize minimum distance squared
+  type_real d_min_sq = std::numeric_limits<type_real>::max();
+
+  for (int iter_loop = 0; iter_loop < 4; iter_loop++) {
     auto loc =
         specfem::jacobian::compute_locations(coorg, ngnod, xi, eta, gamma);
     auto jacobian =
@@ -128,12 +131,36 @@ std::tuple<type_real, type_real, type_real> get_local_coordinates(
     type_real dy = -(loc.y - global.y);
     type_real dz = -(loc.z - global.z);
 
+    // distance squared
+    type_real d_sq = dx * dx + dy * dy + dz * dz;
+
+    // compute increments
+    if (d_sq < d_min_sq) {
+      d_min_sq = d_sq;
+    } else {
+      // new position is worse than old one, no change necessary
+      // stop, no further improvements
+      // dxi = 0.d0
+      // deta = 0.d0
+      // dgamma = 0.d0
+      break;
+    }
+
     // Compute the change in local coordinates using the Jacobian
     type_real dxi = jacobian.xix * dx + jacobian.xiy * dy + jacobian.xiz * dz;
     type_real deta =
         jacobian.etax * dx + jacobian.etay * dy + jacobian.etaz * dz;
     type_real dgamma =
         jacobian.gammax * dx + jacobian.gammay * dy + jacobian.gammaz * dz;
+
+    // decreases step length if step is large
+    if ((dxi * dxi + deta * deta + dgamma * dgamma) >
+        static_cast<type_real>(1.0)) {
+      type_real scale = 0.33333333333;
+      dxi *= scale;
+      deta *= scale;
+      dgamma *= scale;
+    }
 
     // Update the local coordinates
     xi += dxi;
@@ -153,11 +180,75 @@ std::tuple<type_real, type_real, type_real> get_local_coordinates(
       gamma = 1.01;
     if (gamma < -1.01)
       gamma = -1.01;
+  }
 
-    // Check convergence
-    if (std::abs(dxi) < 1e-12 && std::abs(deta) < 1e-12 &&
-        std::abs(dgamma) < 1e-12)
-      break;
+  // Position refinement
+  if (d_min_sq > static_cast<type_real>(1.0)) {
+
+    if (std::abs(xi) < static_cast<type_real>(1.0) &&
+        std::abs(eta) < static_cast<type_real>(1.0) &&
+        std::abs(gamma) < static_cast<type_real>(1.0)) {
+
+      for (int iter_loop = 0; iter_loop < 4; iter_loop++) {
+        auto loc =
+            specfem::jacobian::compute_locations(coorg, ngnod, xi, eta, gamma);
+        auto jacobian =
+            specfem::jacobian::compute_jacobian(coorg, ngnod, xi, eta, gamma);
+
+        // Compute the correction to the local coordinates
+        type_real dx = -(loc.x - global.x);
+        type_real dy = -(loc.y - global.y);
+        type_real dz = -(loc.z - global.z);
+
+        // distance squared
+        type_real d_sq = dx * dx + dy * dy + dz * dz;
+
+        // compute increments
+        if (d_sq < d_min_sq) {
+          d_min_sq = d_sq;
+        } else {
+          // new position is worse than old one, no change necessary
+          // stop, no further improvements
+          // dxi = 0.d0
+          // deta = 0.d0
+          // dgamma = 0.d0
+          break;
+        }
+
+        // Compute the change in local coordinates using the Jacobian
+        type_real dxi =
+            jacobian.xix * dx + jacobian.xiy * dy + jacobian.xiz * dz;
+        type_real deta =
+            jacobian.etax * dx + jacobian.etay * dy + jacobian.etaz * dz;
+        type_real dgamma =
+            jacobian.gammax * dx + jacobian.gammay * dy + jacobian.gammaz * dz;
+
+        // decreases step length if step is large
+        if ((dxi * dxi + deta * deta + dgamma * dgamma) >
+            static_cast<type_real>(1.0)) {
+          type_real scale = 0.33333333333;
+          dxi *= scale;
+          deta *= scale;
+          dgamma *= scale;
+        }
+
+        // Update the local coordinates
+        xi += dxi;
+        eta += deta;
+        gamma += dgamma;
+
+        // Clip the local coordinates to the (somewhat) valid range
+        if (std::abs(xi) >= static_cast<type_real>(1.01))
+          break;
+        if (std::abs(eta) >= static_cast<type_real>(1.01))
+          break;
+        if (std::abs(gamma) >= static_cast<type_real>(1.01))
+          break;
+
+        if (d_min_sq < static_cast<type_real>(1e-10))
+          break;
+      }
+    }
   }
 
   return std::make_tuple(xi, eta, gamma);

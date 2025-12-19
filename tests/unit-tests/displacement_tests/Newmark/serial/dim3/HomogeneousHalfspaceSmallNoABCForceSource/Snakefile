@@ -1,0 +1,32 @@
+include: "../../../specfem3d.smk"
+
+networks = ["TEST"]
+stations = ["CBB","CBC","CBT","CCB","CCT","CFB","CFC","CFT","LBB","LBC","LBT","LCB","LCC","LCT","LFB","LFC","LFT","RBB","RBC","RBT","RCB","RCC","RCT","RFB","RFC","RFT"]
+locations = ["S3"]
+channels = ["BXX","BXY","BXZ"]
+extensions = ["semd", "semv", "sema"]
+
+traces = [
+    f"traces/{network}.{station}.{location}.{channel}.{extension}"
+    for network in networks
+    for station in stations
+    for location in locations
+    for channel in channels
+    for extension in extensions
+]
+
+
+rule all:
+    input:
+        traces=traces,
+        trace_list="<cwd>/traces/trace_list.txt",
+        database="<cwd>/database.bin",
+    localrule: True
+
+
+rule check_traces:
+    input:
+        trace_list="<cwd>/traces/trace_list.txt",
+    output:
+        traces=traces,
+    localrule: True

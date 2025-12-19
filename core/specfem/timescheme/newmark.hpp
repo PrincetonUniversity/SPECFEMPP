@@ -53,6 +53,11 @@ public:
   ///@}
 
   /**
+   * @name Convert timescheme to string
+   */
+  std::string to_string() const override;
+
+  /**
    * @name Print timescheme details
    */
   void print(std::ostream &out) const override;
@@ -166,6 +171,11 @@ public:
         fields(fields) {}
 
   ///@}
+
+  /**
+   * @name Convert timescheme to string
+   */
+  std::string to_string() const override;
 
   /**
    * @name Print timescheme details

@@ -41,3 +41,14 @@ FOR_EACH_IN_PRODUCT(
           _MEDIUM_TAG_, _PROPERTY_TAG_),
          (specfem::assembly::assembly<specfem::dimension::type::dim2> &,
           const int &);)))
+
+FOR_EACH_IN_PRODUCT(
+    (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+     PROPERTY_TAG(ISOTROPIC)),
+    INSTANTIATE(
+        /** instantiation for NGLL = 5     */
+        (template void specfem::kokkos_kernels::impl::compute_seismograms,
+         (_DIMENSION_TAG_, specfem::wavefield::simulation_field::forward, 5,
+          _MEDIUM_TAG_, _PROPERTY_TAG_),
+         (specfem::assembly::assembly<specfem::dimension::type::dim3> &,
+          const int &);), ))

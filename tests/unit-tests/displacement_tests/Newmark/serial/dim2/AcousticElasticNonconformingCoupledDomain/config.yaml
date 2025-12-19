@@ -10,4 +10,4 @@ config:
   tolerance: 1e-2
 databases:
   specfem_config: "specfem_config.yaml"
-  traces: "../AcousticElasticCoupledDomain/traces"
+  traces: "traces"

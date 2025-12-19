@@ -1,5 +1,4 @@
-#include "Kokkos_Environment.hpp"
-#include "MPI_environment.hpp"
+#include "../SPECFEM_Environment.hpp"
 #include "enumerations/interface.hpp"
 #include "execution/chunked_edge_iterator.hpp"
 #include "execution/chunked_intersection_iterator.hpp"
@@ -15,8 +14,9 @@
 // Base fixture for common functionality
 class ChunkedIteratorTestBase {
 public:
-  using ParallelConfig = specfem::parallel_config::default_chunk_edge_config<
-      specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
+  using ParallelConfig =
+      specfem::parallel_configuration::default_chunk_edge_config<
+          specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
 
   constexpr static int num_points = 5;
   using StorageViewType =
@@ -253,7 +253,6 @@ INSTANTIATE_TEST_SUITE_P(
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

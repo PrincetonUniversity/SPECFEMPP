@@ -37,33 +37,56 @@ KOKKOS_FORCEINLINE_FUNCTION void store_on_device(const IndexType &index,
 } // namespace fields_impl
 
 /**
- * @brief Stores field data on the device at the specified index from the given
- * accessors.
+ * @brief High-performance device-side field data storage for spectral elements
  *
- * @ingroup FieldDataAccess
+ * Public interface for storing field data from accessors into simulation fields
+ * on GPU devices. This function provides a unified interface for writing values
+ * from multiple field components simultaneously with optimized device memory
+ * access patterns.
  *
- * This function stores field data from accessors into the field container at
- * the specified index location. The operation is performed on the device (GPU)
- * and is optimized for parallel execution within Kokkos kernels.
+ * @ingroup FieldsDataAccess
  *
- * @tparam IndexType The type of the index (assembly index, point, or chunk
- * element).
- * @tparam ContainerType The type of the container holding the field data.
- * @tparam AccessorTypes The types of the accessors used to access the field
- * data.
+ * @tparam IndexType Index type (specfem::point::assembly_index)
+ * @tparam ContainerType Simulation field container (2D/3D specializations)
+ * @tparam AccessorTypes Variadic field accessor types
  *
- * @param index The index specifying the location or entity for field storage.
- * @param field The container holding the field data to be modified.
- * @param accessors One or more accessor objects containing data to store in the
- * field.
+ * @param index Spatial index (element + quadrature point information)
+ * @param field Simulation field container holding medium-specific field data to
+ * be modified
+ * @param accessors Variable number of field accessors containing data to store
  *
  * @pre All accessors must have the same medium tag (e.g., all elastic or all
- * acoustic).
- * @pre All accessors must be field accessor types.
+ * acoustic)
+ * @pre All accessors must be field accessor types
  *
+ * @note All accessors must target the same medium type (enforced at
+ * compile-time)
  * @note This function is device-only (KOKKOS_FORCEINLINE_FUNCTION) and should
- * be called from device kernels.
+ * be called from device kernels
+ * @note For thread-safe operations where race conditions may occur, use
+ * atomic_add_on_device instead
  *
+ * Usage Examples:
+ *
+ * @code
+ * // Elastic medium: Store computed displacement and velocity
+ * auto disp = specfem::point::displacement<...>(...);
+ * auto vel = specfem::point::velocity<...>(...);
+ *
+ * // Update accessor values
+ * disp(0) = computed_disp_x;
+ * disp(1) = computed_disp_z;
+ * vel(0) = computed_vel_x;
+ *
+ * // Single kernel call stores multiple components to field
+ * store_on_device(assembly_index, elastic_field, disp, vel);
+ *
+ * // Use in device kernels for field updates
+ * Kokkos::parallel_for("store_kernel", range, KOKKOS_LAMBDA(int i) {
+ *   // Compute new field values
+ *   store_on_device(index[i], field, accessor1, accessor2);
+ * });
+ * @endcode
  */
 template <
     typename IndexType, typename ContainerType, typename... AccessorTypes,

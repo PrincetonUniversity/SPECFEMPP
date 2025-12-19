@@ -1,5 +1,4 @@
-#include "Kokkos_Environment.hpp"
-#include "MPI_environment.hpp"
+#include "SPECFEM_Environment.hpp"
 
 #include <stdexcept>
 

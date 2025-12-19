@@ -1,4 +1,9 @@
-#include "execute.hpp"
+#include "constants.hpp"
+#include "specfem/periodic_tasks.hpp"
+#include "specfem/program.hpp"
+#include <boost/program_options.hpp>
+#include <iostream>
+#include <yaml-cpp/yaml.h>
 
 boost::program_options::options_description define_args() {
   namespace po = boost::program_options;
@@ -38,26 +43,45 @@ int parse_args(int argc, char **argv,
 }
 
 int main(int argc, char **argv) {
-  // Initialize MPI
-  specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
-  // Initialize Kokkos
-  Kokkos::initialize(argc, argv);
-  {
-    boost::program_options::variables_map vm;
-    if (parse_args(argc, argv, vm)) {
-      const std::string parameters_file =
-          vm["parameters_file"].as<std::string>();
-      const std::string default_file = vm["default_file"].as<std::string>();
-      const YAML::Node parameter_dict = YAML::LoadFile(parameters_file);
-      const YAML::Node default_dict = YAML::LoadFile(default_file);
-      std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
-          tasks;
-      execute(parameter_dict, default_dict, tasks, mpi);
-    }
+  // Parse command line arguments
+  boost::program_options::variables_map vm;
+  int parse_result = parse_args(argc, argv, vm);
+
+  if (parse_result <= 0) {
+    return (parse_result == 0) ? 0 : 1; // 0 for help, 1 for error
   }
-  // Finalize Kokkos
-  Kokkos::finalize();
-  // Finalize MPI
-  delete mpi;
-  return 0;
+
+  // Use Context for automatic RAII-based initialization and cleanup
+  int result = 0;
+
+  try {
+    // Initialize context with RAII
+    specfem::program::Context context(argc, argv);
+
+    // Extract parameters
+    const std::string parameters_file = vm["parameters_file"].as<std::string>();
+    const std::string default_file = vm["default_file"].as<std::string>();
+
+    // Load configuration files
+    const YAML::Node parameter_dict = YAML::LoadFile(parameters_file);
+    const YAML::Node default_dict = YAML::LoadFile(default_file);
+
+    // Execute program for 2D
+    const auto success = specfem::program::execute(
+        "2d", context.get_mpi(), parameter_dict, default_dict);
+
+    // Check execution result
+    if (!success) {
+      std::cerr << "Execution failed" << std::endl;
+      result = 1;
+    }
+
+    // Context automatically finalized when guard goes out of scope
+
+  } catch (const std::exception &e) {
+    std::cerr << "Error during execution: " << e.what() << std::endl;
+    result = 1;
+  }
+
+  return result;
 }

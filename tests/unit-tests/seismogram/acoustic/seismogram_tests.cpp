@@ -1,5 +1,4 @@
-#include "../../Kokkos_Environment.hpp"
-#include "../../MPI_environment.hpp"
+#include "../../SPECFEM_Environment.hpp"
 // #include "../../utilities/include/compare_array.h"
 #include "constants.hpp"
 #include "domain/domain.hpp"
@@ -10,6 +9,7 @@
 #include "quadrature/interface.hpp"
 #include "solver/solver.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -37,7 +37,7 @@ test_config parse_test_config(std::string test_configuration_file,
   const YAML::Node &serial = tests["serial"];
 
   test_config test_config;
-  if (mpi->get_size() == 1) {
+  if (specfem::MPI_new::get_size() == 1) {
     serial >> test_config;
   }
 
@@ -74,7 +74,7 @@ void read_field(
 TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   std::string config_filename = "seismogram/acoustic/test_config.yaml";
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  specfem::MPI::MPI *mpi = SPECFEMEnvironment::get_mpi();
 
   test_config test_config = parse_test_config(config_filename, mpi);
 
@@ -83,7 +83,7 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
 
   const auto database_file = setup.get_databases();
-  // mpi->cout(setup.print_header());
+  // std::cout << setup.print_header();
 
   // Set up GLL quadrature points
   const auto quadratures = setup.instantiate_quadrature();
@@ -163,7 +163,6 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new MPIEnvironment);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
   return RUN_ALL_TESTS();
 }

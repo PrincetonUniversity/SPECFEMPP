@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MPI_environment.hpp"
+#include "SPECFEM_Environment.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "io/interface.hpp"
 #include "mesh/mesh.hpp"

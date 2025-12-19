@@ -8,12 +8,12 @@
 #include <iostream>
 #include <memory>
 
-template <int NGLL>
+template <int NGLL, specfem::dimension::type DimensionTag>
 std::shared_ptr<specfem::solver::solver>
 specfem::runtime_configuration::solver::solver::instantiate(
-    const type_real dt, const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const type_real dt, const specfem::assembly::assembly<DimensionTag> &assembly,
     std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-    const std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
+    const std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag>>> &tasks)
     const {
 
   if (specfem::utilities::is_forward_string(this->simulation_type)) {
@@ -21,25 +21,31 @@ specfem::runtime_configuration::solver::solver::instantiate(
     std::cout << "-------------------------------\n";
     const auto kernels =
         specfem::kokkos_kernels::domain_kernels<specfem::wavefield::simulation_field::forward,
-                                  specfem::dimension::type::dim2, NGLL>(
+                                  DimensionTag, NGLL>(
             assembly);
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::forward,
-                                       specfem::dimension::type::dim2, NGLL> >(
+                                       DimensionTag, NGLL> >(
         kernels, time_scheme, tasks, assembly);
   } else if (specfem::utilities::is_combined_string(this->simulation_type)) {
+
+    if (DimensionTag == specfem::dimension::type::dim3) {
+      throw std::runtime_error(
+          "Combined simulation not implemented for 3D problems");
+    }
+
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
     const auto adjoint_kernels =
         specfem::kokkos_kernels::domain_kernels<specfem::wavefield::simulation_field::adjoint,
-                                  specfem::dimension::type::dim2, NGLL>(
+                                                DimensionTag, NGLL>(
             assembly);
     const auto backward_kernels = specfem::kokkos_kernels::domain_kernels<
         specfem::wavefield::simulation_field::backward,
-        specfem::dimension::type::dim2, NGLL>(assembly);
+        DimensionTag, NGLL>(assembly);
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::combined,
-                                       specfem::dimension::type::dim2, NGLL> >(
+                                       DimensionTag, NGLL> >(
         assembly, adjoint_kernels, backward_kernels, time_scheme, tasks);
   } else {
     throw std::runtime_error("Simulation type not recognized");

@@ -58,32 +58,57 @@ void store_on_host(const IndexType &index, const ContainerType &field,
 } // namespace fields_impl
 
 /**
- * @brief Stores field data on the host at the specified index from the given
- * accessors.
+ * @brief Host-side field data storage for spectral elements and debugging
  *
- * @ingroup FieldDataAccess
+ * Public interface for storing field data from accessors into simulation fields
+ * on the host (CPU). This function provides a unified interface for writing
+ * values from multiple field components simultaneously for host-based
+ * computations and debugging.
  *
- * This function stores field data from accessors into the field container at
- * the specified index location. The operation is performed on the host (CPU)
- * and is suitable for host-based computations and debugging.
+ * @ingroup FieldsDataAccess
  *
- * @tparam IndexType The type of the index (assembly index, point, or chunk
- * element).
- * @tparam ContainerType The type of the container holding the field data.
- * @tparam AccessorTypes The types of the accessors used to access the field
- * data.
+ * @tparam IndexType Index type (specfem::point::assembly_index,
+ * specfem::point::index)
+ * @tparam ContainerType Simulation field container (2D/3D specializations)
+ * @tparam AccessorTypes Variadic field accessor types
  *
- * @param index The index specifying the location or entity for field storage.
- * @param field The container holding the field data to be modified.
- * @param accessors One or more accessor objects containing data to store in the
- * field.
+ * @param index Spatial index (element + quadrature point information)
+ * @param field Simulation field container holding medium-specific field data to
+ * be modified
+ * @param accessors Variable number of field accessors containing data to store
  *
  * @pre All accessors must have the same medium tag (e.g., all elastic or all
- * acoustic).
- * @pre All accessors must be field accessor types.
+ * acoustic)
+ * @pre All accessors must be field accessor types
  *
- * @note This function is host-only and should be called from host code.
- *       For device operations, use store_on_device instead.
+ * @note All accessors must target the same medium type (enforced at
+ * compile-time)
+ * @note This function is host-only and should be called from host code
+ * @note For device operations, use store_on_device instead
+ * @note No atomic operations needed on host as there's typically no thread
+ * contention
+ *
+ * Usage Examples:
+ *
+ * @code
+ * // Host-side field initialization or debugging
+ * auto disp = specfem::point::displacement<...>(...);
+ * auto vel = specfem::point::velocity<...>(...);
+ *
+ * // Set initial or computed values
+ * disp(0) = initial_disp_x;
+ * disp(1) = initial_disp_z;
+ * velocity(0) = initial_vel_x;
+ *
+ * // Store values to field on host
+ * store_on_host(assembly_index, elastic_field, disp, vel);
+ *
+ * // Host-based field processing and storage
+ * for (int i = 0; i < num_points; ++i) {
+ *   // Compute field values on host
+ *   store_on_host(host_index[i], field, accessor1, accessor2);
+ * }
+ * @endcode
  */
 template <
     typename IndexType, typename ContainerType, typename... AccessorTypes,
