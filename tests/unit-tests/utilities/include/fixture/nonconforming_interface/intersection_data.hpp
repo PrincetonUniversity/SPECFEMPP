@@ -22,7 +22,7 @@ struct IntersectionDataPack
       specfem::connections::type::nonconforming;
   static constexpr specfem::interface::interface_tag interface_tag =
       InterfaceTag;
-  static constexpr specfem::dimension::type dimension_tag = dimension_tag;
+  static constexpr specfem::dimension::type dimension_tag = dimension_tag_;
 
   constexpr static size_t n_accessors = sizeof...(Accessors);
   using packed_accessors = std::tuple<Accessors...>;
