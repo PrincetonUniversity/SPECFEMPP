@@ -150,6 +150,13 @@ public:
   const type_real &operator()(const int i, const int j, const int k) const {
     return _transfer_function[i][j][k];
   }
+
+public:
+  // used for kernels
+  static constexpr specfem::connections::type connection_tag =
+      specfem::connections::type::nonconforming;
+  static constexpr int n_quad_intersection = nquad_intersection;
+  static constexpr int n_quad_element = nquad_edge;
 };
 
 } // namespace specfem::test::fixture

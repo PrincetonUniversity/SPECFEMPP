@@ -1,238 +1,171 @@
 #pragma once
 
-#include "analytical_fixtures/coupled_interfaces/interface_shape.hpp"
-#include "analytical_fixtures/coupled_interfaces/interface_transfer.hpp"
-#include "analytical_fixtures/field.hpp"
 #include "datatypes/point_view.hpp"
+#include "enumerations/coupled_interface.hpp"
+#include "enumerations/medium.hpp"
+#include "medium/compute_coupling.hpp"
 #include "specfem/point/field_derivatives.hpp"
 
-#include "analytical_fixtures/coupled_interfaces/interface_configuration.hpp"
-#include "kernel.hpp"
+#include "utilities/include/fixture/nonconforming_interface.hpp"
+#include "utilities/interface.hpp"
 
-#include "test_macros.hpp" // for expected_got()
 #include <gtest/gtest.h>
-
-template <specfem::dimension::type DimensionTag,
-          specfem::interface::interface_tag InterfaceTag>
-struct PointData {
-  static constexpr specfem::element::medium_tag self_medium =
-      specfem::interface::attributes<DimensionTag, InterfaceTag>::self_medium();
-  static constexpr specfem::element::medium_tag coupled_medium =
-      specfem::interface::attributes<DimensionTag,
-                                     InterfaceTag>::coupled_medium();
-  static constexpr int ncomp_self =
-      specfem::element::attributes<DimensionTag, self_medium>::components;
-  static constexpr int ncomp_coupled =
-      specfem::element::attributes<DimensionTag, coupled_medium>::components;
-  static constexpr int ndim = specfem::dimension::dimension<DimensionTag>::dim;
-  static constexpr bool use_simd = false;
-
-  specfem::datatype::VectorPointViewType<type_real, ncomp_self, use_simd>
-      field_self;
-  specfem::datatype::VectorPointViewType<type_real, ncomp_coupled, use_simd>
-      field_coupled;
-  specfem::point::field_derivatives<DimensionTag, self_medium, use_simd>
-      field_gradient_self;
-  specfem::point::field_derivatives<DimensionTag, coupled_medium, use_simd>
-      field_gradient_coupled;
-  specfem::datatype::VectorPointViewType<type_real, ndim, use_simd> normal;
-};
-
-template <specfem::dimension::type DimensionTag,
-          specfem::interface::interface_tag InterfaceTag>
-std::array<type_real, PointData<DimensionTag, InterfaceTag>::ncomp_self>
-compute_coupling_expected(
-    const PointData<DimensionTag, InterfaceTag> &point_data);
+#include <tuple>
+#include <type_traits>
 
 /**
- * @brief Verifies the nonconforming compute_coupling call against a pointwise
- * compute_coupling algorithm given by compute_coupling_expected.
- *
- * @tparam InterfaceTag Interface being tested
- * @tparam DimensionTag dimension of the kernel
- * @tparam nquad_edge number of quadrature points on the edge (NGLL)
- * @tparam nquad_intersection number of quadrature points on the intersection
- * @param interface_shape_generator generator for interface shapes
- * @param field_generator generator for fields
- * @param interface_transfer_generator generator for transfer functions
- * @param num_chunks league size of the test kernel
-    compute_kernel<DimensionTag, InterfaceTag, parallel_config::chunk_size, */
-template <specfem::interface::interface_tag InterfaceTag,
-          specfem::dimension::type DimensionTag, int nquad_edge,
-          int nquad_intersection>
-void test_interface(
-    const specfem::test::analytical::interface_shape::Generator<DimensionTag>
-        &interface_shape_generator,
-    const specfem::test::analytical::field::Generator<DimensionTag>
-        &field_generator,
-    const specfem::test::analytical::interface_transfer::Generator<
-        DimensionTag, nquad_edge, nquad_intersection>
-        &interface_transfer_generator,
-    const int &num_edges) {
-  using parallel_config = specfem::parallel_config::default_chunk_edge_config<
-      DimensionTag, Kokkos::DefaultExecutionSpace>;
-  static constexpr int chunk_size = parallel_config::chunk_size;
+ * @brief Test index type for chunk edge operations.
+ */
+class ChunkEdgeIndex {
+public:
+  static constexpr auto accessor_type =
+      specfem::data_access::AccessorType::chunk_edge;
+  using KokkosIndexType = Kokkos::TeamPolicy<>::member_type;
 
-  // smallest number of chunks that has at least this many edges
-  const int num_chunks = ((num_edges - 1) / chunk_size) + 1;
-
-  // ====================================================================
-  // views for inputs / outputs
-  // ====================================================================
-  ComputeCouplingKernelStorage<DimensionTag, InterfaceTag, chunk_size,
-                               nquad_edge, nquad_intersection>
-      kernel_data(num_chunks);
-  specfem::test::analytical::interface_configuration::InterfaceConfiguration<
-      false, InterfaceTag, DimensionTag, nquad_edge, nquad_intersection>
-      interface_config(field_generator, interface_shape_generator,
-                       interface_transfer_generator, num_chunks * chunk_size);
-
-  // ====================================================================
-  // initialize views
-  // ====================================================================
-
-  auto field_iter = field_generator.iterator();
-  auto interface_transfer_iter = interface_transfer_generator.iterator();
-  auto interface_shape_iter = interface_shape_generator.iterator();
-
-  // consider putting this into some kind of function with a generalized (or
-  // further templated) ComputeCouplingKernelStorage
-
-  // we will need to load more things for different schemes. Handle that
-  // later.
-  for (auto intersection : interface_config.edges) {
-    const int ichunk = intersection.iedge / chunk_size;
-    const int iedge = intersection.iedge % chunk_size;
-
-    intersection.interface_transfer.template set_transfer_function<true>(
-        Kokkos::subview(kernel_data.h_transfer_self, ichunk, iedge, Kokkos::ALL,
-                        Kokkos::ALL));
-    intersection.interface_transfer.template set_transfer_function<false>(
-        Kokkos::subview(kernel_data.h_transfer_coupled, ichunk, iedge,
-                        Kokkos::ALL, Kokkos::ALL));
-    intersection.interface_shape.set_intersection_normal(
-        Kokkos::subview(kernel_data.h_normals, ichunk, iedge, Kokkos::ALL,
-                        Kokkos::ALL),
-        intersection.interface_transfer);
-    for (int icomp = 0; icomp < interface_config.ncomp_self; icomp++) {
-      intersection.interface_shape.template set_edge_field<true>(
-          Kokkos::subview(kernel_data.h_field_self, ichunk, iedge, Kokkos::ALL,
-                          icomp),
-          intersection.field_self(icomp), intersection.interface_transfer);
-    }
-    for (int icomp = 0; icomp < interface_config.ncomp_coupled; icomp++) {
-      intersection.interface_shape.template set_edge_field<false>(
-          Kokkos::subview(kernel_data.h_field_coupled, ichunk, iedge,
-                          Kokkos::ALL, icomp),
-          intersection.field_coupled(icomp), intersection.interface_transfer);
-    }
+  /**
+   * @brief Get Kokkos team member index.
+   * @return Reference to Kokkos team member
+   */
+  KOKKOS_INLINE_FUNCTION
+  constexpr const KokkosIndexType &get_policy_index() const {
+    return this->kokkos_index;
   }
 
-  kernel_data.sync_to_device();
+  /**
+   * @brief Construct chunk edge index.
+   * @param nedges Number of edges in chunk
+   * @param kokkos_index Kokkos team member
+   */
+  KOKKOS_INLINE_FUNCTION
+  ChunkEdgeIndex(const int nedges, const KokkosIndexType &kokkos_index)
+      : kokkos_index(kokkos_index), _nedges(nedges) {}
 
-  // ====================================================================
-  // run kernel
-  // ===================================================================='
-  compute_kernel<DimensionTag, InterfaceTag, chunk_size, nquad_edge,
-                 nquad_intersection>(kernel_data);
+  /**
+   * @brief Get number of edges.
+   * @return Edge count
+   */
+  KOKKOS_INLINE_FUNCTION int nedges() const { return _nedges; }
 
-  kernel_data.sync_to_host();
+private:
+  int _nedges;                  ///< Number of edges in the chunk
+  KokkosIndexType kokkos_index; /**< Kokkos team member for this chunk */
+};
 
-  int num_comparisons = 0;
-  for (auto intersection : interface_config.edges) {
-    const int ichunk = intersection.iedge / chunk_size;
-    const int iedge = intersection.iedge % chunk_size;
+constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
 
-    // verify self transfers
-    for (int ipoint = 0; ipoint < nquad_intersection; ipoint++) {
-      PointData<DimensionTag, InterfaceTag> point_data;
+template <specfem::interface::interface_tag interface_tag,
+          typename IntersectionData2D, typename EdgeFunction2D>
+std::array<
+    std::array<
+        std::array<type_real,
+                   specfem::element::attributes<
+                       dimension_tag, specfem::interface::attributes<
+                                          dimension_tag, interface_tag>::
+                                          self_medium()>::components>,
+        std::tuple_element_t<0, typename IntersectionData2D::packed_accessors>::
+            nquad_intersection>,
+    1 /*num_edges*/>
+expected_solution(
+    std::integral_constant<specfem::interface::interface_tag, interface_tag>,
+    const IntersectionData2D &intersection_data,
+    const EdgeFunction2D &coupled_field);
 
-      // -------------------------------
-      // start point_data initialization
+/**
+ * @brief Execute transfer function test with validation.
+ * @tparam TransferFunction2D Transfer function type
+ * @tparam EdgeFunction2D Field type
+ * @param transfer_function Transfer function data
+ * @param function Input function data
+ */
+template <specfem::interface::interface_tag interface_tag,
+          typename IntersectionData2D, typename EdgeFunction2D>
+void execute(std::integral_constant<decltype(interface_tag), interface_tag>,
+             const IntersectionData2D &intersection_data,
+             const EdgeFunction2D &coupled_field) {
 
-      // Consider moving point_data initialization into analytical_fixutres.
-      const type_real edge_coord = intersection.interface_transfer
-                                       .intersection_quadrature_points[ipoint];
+  static constexpr auto self_medium =
+      specfem::interface::attributes<dimension_tag,
+                                     interface_tag>::self_medium();
+  static constexpr auto coupled_medium =
+      specfem::interface::attributes<dimension_tag,
+                                     interface_tag>::coupled_medium();
+  static constexpr int ndim = specfem::dimension::dimension<dimension_tag>::dim;
+  static constexpr int ncomp_self =
+      specfem::element::attributes<dimension_tag, self_medium>::components;
+  static constexpr int ncomp_coupled =
+      specfem::element::attributes<dimension_tag, coupled_medium>::components;
+  static constexpr int num_edges = 1;
+  static constexpr int chunk_size = 1;
 
-      const auto point_loc =
-          intersection.interface_shape.coordinate(edge_coord);
-      const auto point_normal = intersection.interface_shape.normal(edge_coord);
+  using TransferFunction2D =
+      std::tuple_element_t<0, typename IntersectionData2D::packed_accessors>;
 
-      for (int idim = 0; idim < point_data.ndim; idim++) {
-        point_data.normal(idim) = point_normal(idim);
-      }
-      for (int icomp = 0; icomp < interface_config.ncomp_self; icomp++) {
-        point_data.field_self(icomp) =
-            intersection.field_self(icomp).eval(point_loc);
-        const auto grad = intersection.field_self(icomp).gradient(point_loc);
-        for (int idim = 0; idim < point_data.ndim; idim++) {
-          point_data.field_gradient_self.du(icomp, idim) = grad(idim);
-        }
-      }
-      for (int icomp = 0; icomp < interface_config.ncomp_coupled; icomp++) {
-        point_data.field_coupled(icomp) =
-            intersection.field_coupled(icomp).eval(point_loc);
-        const auto grad = intersection.field_coupled(icomp).gradient(point_loc);
-        for (int idim = 0; idim < point_data.ndim; idim++) {
-          point_data.field_gradient_coupled.du(icomp, idim) = grad(idim);
-        }
-      }
-      // -----------------------------
-      // end point_data initialization
+  static constexpr int nquad_edge = TransferFunction2D::nquad_edge;
+  static constexpr int nquad_intersection =
+      TransferFunction2D::nquad_intersection;
+  using memory_space = typename TransferFunction2D::memory_space;
+  using SelfFieldType = specfem::datatype::VectorChunkEdgeViewType<
+      type_real, dimension_tag, num_edges, nquad_edge, ncomp_self, false,
+      memory_space, Kokkos::MemoryTraits<> >;
+  using CoupledFieldType = specfem::datatype::VectorChunkEdgeViewType<
+      type_real, dimension_tag, num_edges, nquad_edge, ncomp_coupled, false,
+      memory_space, Kokkos::MemoryTraits<> >;
 
-      const auto expected = compute_coupling_expected(point_data);
+  auto expected = expected_solution(
+      std::integral_constant<specfem::interface::interface_tag,
+                             interface_tag>(),
+      intersection_data, coupled_field);
 
-      for (int icomp = 0; icomp < interface_config.ncomp_self; icomp++) {
-        // TODO replace with more verbose test
+  const auto coupled_function_view = coupled_field.get_view();
 
-        type_real got =
-            kernel_data.h_computed_coupling(ichunk, iedge, ipoint, icomp);
+  const auto results_view_name = "result_view";
 
-        // TODO get a more programatical way of specifying rel_tol
-        if (!specfem::utilities::is_close(got, expected[icomp],
-                                          (type_real)1e-3)) {
+  Kokkos::View<type_real *[nquad_intersection][ncomp_self], memory_space>
+      result_view(results_view_name, num_edges);
 
-          ADD_FAILURE() << "iedge (global) = " << intersection.iedge
-                        << " quadrature point = " << ipoint
-                        << ", component = " << icomp << "\n"
-                        << expected_got(expected[icomp], got)
-                        << intersection.verbose_intersection_data()
-                        << std::endl;
-        }
+  Kokkos::parallel_for(
+      "transfer_function_test", Kokkos::TeamPolicy<>(num_edges, 1, 1),
+      KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type &team_member) {
+        const int iedge = team_member.league_rank();
+        // const TransferFunctionType TF(Kokkos::subview(
+        //     transfer_function_view, Kokkos::make_pair(iedge, iedge + 1),
+        //     Kokkos::ALL(), Kokkos::ALL()));
+        // const CoupledFieldType F(Kokkos::subview(
+        //     coupled_function_view, Kokkos::make_pair(iedge, iedge + 1),
+        //     Kokkos::ALL(), Kokkos::ALL()));
 
-        num_comparisons++;
+        specfem::medium::compute_coupling(
+            ChunkEdgeIndex(chunk_size, team_member), intersection_data,
+            coupled_field, result_view);
+      });
+
+  Kokkos::fence();
+
+  auto result_host =
+      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), result_view);
+
+  for (int i = 0; i < num_edges; ++i) {
+    for (int j = 0; j < nquad_intersection; ++j) {
+      if (!specfem::utilities::is_close(result_host(i, j, 0),
+                                        expected[i][j][0])) {
+        std::ostringstream oss;
+        oss << "-- Intersection Data --\n"
+            << IntersectionData2D::description() << std::endl
+            << "-- Edge Function --\n"
+            << EdgeFunction2D::description() << std::endl
+            << "\n-- Failure --\n"
+            << "compute_coupling<"
+            << specfem::interface::to_string(interface_tag)
+            << "> test failed at edge " << i << ", intersection point " << j
+            << " ("
+            << TransferFunction2D::TransferFunctionInitializer::
+                   intersection_quadrature_points[j]
+            << "):\n expected " << expected[i][j][0] << "\n got "
+            << result_host(i, j, 0) << std::endl;
+
+        ADD_FAILURE() << oss.str();
       }
     }
-
-    // skip coupled side, since we don't have a way to get the conjugate
-    // interface tag.
-
-    // // verify coupled transfers
-    // for (int ipoint = 0; ipoint < nquad_intersection; ipoint++) {
-    //   PointData<DimensionTag, CONJUGATE_INTERFACE<InterfaceTag>> point_data;
-    //   const auto expected = compute_coupling_expected(point_data);
-
-    //   for (int icomp = 0; icomp < interface_config.ncomp_self; icomp++) {
-    //     // TODO replace with more verbose test
-
-    //     type_real got =
-    //         kernel_data.h_computed_coupling(ichunk, iedge, ipoint, icomp);
-
-    //     EXPECT_TRUE(specfem::utilities::is_close(got, expected[icomp]))
-    //         << expected_got(expected[icomp], got);
-    //   }
-    // }
   }
-
-  EXPECT_EQ(num_comparisons, num_chunks * chunk_size * nquad_intersection *
-                                 interface_config.ncomp_self)
-      << "Test failed to perform the correct number of comparisons!\n"
-      << "  - " << num_chunks << " chunks of " << chunk_size
-      << " edges for a total of " << num_chunks * chunk_size << " edges\n"
-      << "  - each edge has " << nquad_intersection
-      << " points on the intersection quadrature ("
-      << num_chunks * chunk_size * nquad_intersection << " quadrature points)\n"
-      << "  - " << interface_config.ncomp_self
-      << " components in self_field and " << interface_config.ncomp_coupled
-      << " components in coupled_field";
 }

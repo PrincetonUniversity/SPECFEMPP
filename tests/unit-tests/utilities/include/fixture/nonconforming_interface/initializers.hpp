@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enumerations/connections.hpp"
 // all non-specific declarations for NCIs
 namespace specfem::test::fixture {
 
@@ -9,7 +10,7 @@ namespace specfem::test::fixture {
  * @tparam Initializer initializer type: must inherit
  * EdgeFunctionInitializer2D::Base
  */
-template <typename Initializer> struct EdgeFunction2D;
+template <typename Initializer, typename... BaseTypes> struct EdgeFunction2D;
 /**
  * @brief Initializes views of field values along an edge.
  *
@@ -34,6 +35,22 @@ template <typename EdgeQuadratureInitializer,
           typename IntersectionQuadratureInitializer>
 struct FromQuadratureRules;
 } // namespace TransferFunctionInitializer2D
+
+/**
+ * @brief Manages views of field values along an intersection. (TODO: we may
+ * wish to merge this with EdgeFunction2D)
+ *
+ * @tparam Initializer initializer type: must inherit
+ * IntersectionFunction2D::IntersectionFunction2D
+ */
+template <typename Initializer> struct IntersectionFunction2D;
+/**
+ * @brief Initializes views of field values along an edge.
+ *
+ */
+namespace IntersectionFunctionInitializer2D {
+struct IntersectionFunctionInitializer2D {};
+} // namespace IntersectionFunctionInitializer2D
 
 // =================================================================================================
 // We may wish to move these to somewhere else in the future: these are not

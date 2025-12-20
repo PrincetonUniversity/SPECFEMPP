@@ -609,22 +609,6 @@ target_link_libraries(
   -lpthread -lm
 )
 
-add_executable(
-  transfer_tests
-  algorithms/dim2/transfer_test.cpp
-)
-
-target_link_libraries(
-  transfer_tests
-  algorithms
-  kokkos_environment
-  gtest_main
-  Kokkos::kokkos
-  mpi_environment
-  utilities
-  -lpthread -lm
-)
-
 # Turn unity build off for gradient_tests
 set_target_properties(gradient_tests PROPERTIES UNITY_BUILD OFF)
 
