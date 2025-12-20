@@ -54,6 +54,13 @@ private:
 constexpr static auto dimension_tag = specfem::dimension::type::dim2;
 constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
 
+template <specfem::interface::interface_tag interface_tag>
+struct CoupledMediumTagInheritor {
+  static constexpr auto medium_tag =
+      specfem::interface::attributes<dimension_tag,
+                                     interface_tag>::coupled_medium();
+};
+
 template <specfem::interface::interface_tag interface_tag,
           typename IntersectionData2D, typename EdgeFunction2D>
 std::array<

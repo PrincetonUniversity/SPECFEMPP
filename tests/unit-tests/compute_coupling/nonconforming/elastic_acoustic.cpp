@@ -4,24 +4,26 @@
 #include <gtest/gtest.h>
 #include <type_traits>
 
-static constexpr specfem::interface::interface_tag interface_tag =
-    specfem::interface::interface_tag::elastic_acoustic;
-
 template <typename IntersectionData2D, typename EdgeFunction2D>
 std::array<
     std::array<
         std::array<type_real,
                    specfem::element::attributes<
-                       dimension_tag, specfem::interface::attributes<
-                                          dimension_tag, interface_tag>::
-                                          self_medium()>::components>,
+                       dimension_tag,
+                       specfem::interface::attributes<
+                           dimension_tag,
+                           specfem::interface::interface_tag::
+                               elastic_acoustic>::self_medium()>::components>,
         std::tuple_element_t<0, typename IntersectionData2D::packed_accessors>::
             nquad_intersection>,
     1 /*num_edges*/>
 expected_solution(
-    std::integral_constant<specfem::interface::interface_tag, interface_tag>,
+    std::integral_constant<specfem::interface::interface_tag,
+                           specfem::interface::interface_tag::elastic_acoustic>,
     const IntersectionData2D &intersection_data,
     const EdgeFunction2D &coupled_field) {
+  static constexpr specfem::interface::interface_tag interface_tag =
+      specfem::interface::interface_tag::elastic_acoustic;
   static constexpr int num_edges = 1;
   static constexpr int nquad_intersection = std::tuple_element_t<
       0, typename IntersectionData2D::packed_accessors>::nquad_intersection;
@@ -80,11 +82,9 @@ expected_solution(
   return expected;
 }
 
-struct CoupledMediumTagInheritor {
-  static constexpr auto medium_tag = specfem::element::medium_tag::acoustic;
-};
-
 TEST(NonconformingComputeCoupling, ElasticAcoustic) {
+  static constexpr specfem::interface::interface_tag interface_tag =
+      specfem::interface::interface_tag::elastic_acoustic;
 
   using EdgeQuadrature = specfem::test::fixture::QuadraturePoints::Asymm5Point;
   using IntersectionQuadrature =
@@ -118,5 +118,5 @@ TEST(NonconformingComputeCoupling, ElasticAcoustic) {
               specfem::data_access::AccessorType::chunk_edge,
               specfem::data_access::DataClassType::acceleration,
               specfem::dimension::type::dim2, false>,
-          CoupledMediumTagInheritor>({}));
+          CoupledMediumTagInheritor<interface_tag> >({}));
 }
