@@ -21,15 +21,19 @@ template <typename Initializer> struct Mesh2D {
   static constexpr int ndim = specfem::dimension::dimension<DimensionTag>::dim;
 
 private:
-  static std::unique_ptr<specfem::mesh::mesh<DimensionTag> > _mesh_instance;
+  inline static std::unique_ptr<specfem::mesh::mesh<DimensionTag> >
+      _mesh_instance = nullptr;
+  inline static int refcount = 0;
 
-  template <typename = void> struct is_from_file_t : std::false_type {};
-  template <>
-  struct is_from_file_t<std::enable_if_t<Initializer::is_from_file, void> >
+  template <typename dummy, typename = void>
+  struct is_from_file_t : std::false_type {};
+  template <typename dummy>
+  struct is_from_file_t<dummy,
+                        std::enable_if_t<Initializer::is_from_file, void> >
       : std::true_type {};
 
 public:
-  static constexpr bool is_from_file = is_from_file_t<>::type;
+  static constexpr bool is_from_file = is_from_file_t<int>::value;
 
   Mesh2D() {
     if (_mesh_instance == nullptr) {
@@ -46,6 +50,13 @@ public:
                                  "database file) not yet implemented.");
       }
     }
+    ++refcount;
+  }
+  ~Mesh2D() {
+    --refcount;
+    if (refcount == 0) {
+      _mesh_instance = nullptr;
+    }
   }
 
   const specfem::mesh::mesh<DimensionTag> &mesh_instance() const {
@@ -54,7 +65,7 @@ public:
 };
 
 namespace MeshInitializer2D {
-struct ThreeElementNonconforming {
+struct ThreeElementNonconforming : MeshInitializer2D {
   static std::string description() { return "3 element nonconforming grid"; }
   static constexpr specfem::enums::elastic_wave elastic_wave_type =
       specfem::enums::elastic_wave::psv;

@@ -16,8 +16,9 @@ template <typename Initializer> struct Assembly2D {
   static constexpr int ndim = specfem::dimension::dimension<DimensionTag>::dim;
 
 private:
-  static std::unique_ptr<specfem::assembly::assembly<DimensionTag> >
-      _assembly_instance;
+  inline static std::unique_ptr<specfem::assembly::assembly<DimensionTag> >
+      _assembly_instance = nullptr;
+  inline static int refcount = 0;
 
 public:
   Assembly2D() {
@@ -25,6 +26,13 @@ public:
       _assembly_instance =
           std::make_unique<specfem::assembly::assembly<DimensionTag> >(
               Initializer::generate_assembly());
+    }
+    ++refcount;
+  }
+  ~Assembly2D() {
+    --refcount;
+    if (refcount == 0) {
+      _assembly_instance = nullptr;
     }
   }
 
@@ -38,7 +46,7 @@ static constexpr specfem::dimension::type DimensionTag =
     specfem::dimension::type::dim2;
 static constexpr int ndim = specfem::dimension::dimension<DimensionTag>::dim;
 
-template <typename MeshInitializer> struct FromMesh {
+template <typename MeshInitializer> struct FromMesh : AssemblyInitializer2D {
   static_assert(
       std::is_base_of_v<MeshInitializer2D::MeshInitializer2D, MeshInitializer>,
       "FromMesh template parameter expects MeshInitializer2D!");
