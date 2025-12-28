@@ -407,6 +407,18 @@ void execute(const specfem::assembly::assembly<specfem::dimension::type::dim2>
 }
 
 /**
+ * @brief struct for naming the typed test suite.
+ * http://google.github.io/googletest/reference/testing.html#TYPED_TEST_SUITE
+ *
+ */
+struct MeshedCouplingIntegralTest2DNames {
+  template <typename TestingTypes> static std::string GetName(int) {
+    return specfem::test_fixture::impl::name<
+        std::tuple_element_t<0, TestingTypes> >::get();
+  }
+};
+
+/**
  * @brief Test fixture for 2D transfer function algorithms.
  * @tparam TestingTypes Tuple of (TransferFunctionInitializer,
  * FunctionInitializer)
@@ -421,7 +433,21 @@ struct MeshedCouplingIntegralTest2D : public ::testing::Test {
   MeshedCouplingIntegralTest2D() {}
 
   specfem::test_fixture::Assembly2D<AssemblyInitializer> assembly_fixture;
+
+  static void print_description() {
+    std::ostringstream oss;
+    oss << "====================================================\n";
+    oss << "-=-=- Test: "
+        << MeshedCouplingIntegralTest2DNames::GetName<TestingTypes>(0)
+        << " -=-=-\n";
+    oss << "  Assembly:\n";
+    oss << specfem::test_fixture::impl::description<AssemblyInitializer>::get(
+        4);
+    oss << "\n====================================================\n";
+    SPECFEMEnvironment::get_mpi()->cout(oss.str());
+  }
 };
+
 using namespace specfem::test_fixture;
 
 /** Test type combinations for parameterized testing */
@@ -430,10 +456,13 @@ using MeshedCouplingIntegralTestTypes2D =
         MeshInitializer2D::ThreeElementNonconforming> > >;
 
 TYPED_TEST_SUITE(MeshedCouplingIntegralTest2D,
-                 MeshedCouplingIntegralTestTypes2D);
+                 MeshedCouplingIntegralTestTypes2D,
+                 MeshedCouplingIntegralTest2DNames);
 
 TYPED_TEST(MeshedCouplingIntegralTest2D, FullMeshOnKroneckeredFields) {
-  execute(this->assembly_fixture.assembly_instance());
+  this->print_description();
+  const auto assembly = this->assembly_fixture.assembly_instance();
+  execute(*assembly);
 }
 
 int main(int argc, char *argv[]) {
