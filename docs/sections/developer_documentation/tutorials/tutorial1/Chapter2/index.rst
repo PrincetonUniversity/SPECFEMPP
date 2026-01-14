@@ -17,7 +17,7 @@ The mesh generated in :ref:`Chapter1 <Chapter1>` is stored in the ``OUTPUT_FILES
 
 .. code:: cpp
 
-    #include "mesh/mesh.hpp"
+    #include "specfem/mesh.hpp"
     #include "specfem_mpi/specfem_mpi.hpp"
 
     int main(int argc, char **argv) {

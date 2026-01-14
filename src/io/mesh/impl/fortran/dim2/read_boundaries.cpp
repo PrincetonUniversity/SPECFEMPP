@@ -1,7 +1,7 @@
 #include "io/mesh/impl/fortran/dim2/read_boundaries.hpp"
 #include "io/fortranio/interface.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/mesh.hpp"
 
 #include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>

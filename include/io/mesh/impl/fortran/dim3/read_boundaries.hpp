@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 
 #include <fstream>
 

@@ -1,9 +1,9 @@
 #include "../SPECFEM_Environment.hpp"
 #include "io/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "mesh/mesh.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 TEST(ALGORITHMS, locate_point) {

@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
 #include "test_fixture.hpp"

@@ -1,6 +1,6 @@
 
 #include "../test_fixture/test_fixture.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include <cmath>
 #include <unordered_map>
 #include <variant>

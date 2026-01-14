@@ -1,5 +1,5 @@
 // Internal Includes
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "enumerations/interface.hpp"
 #include "io/fortranio/interface.hpp"
 #include "io/interface.hpp"

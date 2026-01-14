@@ -18,6 +18,7 @@
     jacobian/index
     kokkos_kernels/index
     macros/index
+    mesh/index
     mpi/index
     parallel_configuration/index
     periodic_tasks/index

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {

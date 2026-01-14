@@ -12,7 +12,7 @@ target_link_libraries(
         specfem::algorithms
         enumerations
         specfem::quadrature
-        mesh
+        specfem::mesh
         source_class
         jacobian
         point

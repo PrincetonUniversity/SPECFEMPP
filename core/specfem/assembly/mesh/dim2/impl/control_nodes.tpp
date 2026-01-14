@@ -2,7 +2,7 @@
 
 #include "control_nodes.hpp"
 #include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "mesh_to_compute_mapping.hpp"
 #include <Kokkos_Core.hpp>
 
