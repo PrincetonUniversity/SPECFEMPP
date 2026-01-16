@@ -140,8 +140,8 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
   constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
   constexpr auto poroelastic = specfem::element::medium_tag::poroelastic;
 
-  adjoint_kernels.initialize(time_scheme->get_timestep());
-  backward_kernels.initialize(time_scheme->get_timestep());
+  adjoint_.initialize(time_scheme->get_timestep());
+  backward_.initialize(time_scheme->get_timestep());
 
   const int nstep = time_scheme->get_max_timestep();
 
@@ -176,17 +176,17 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     dofs_updated += time_scheme->apply_predictor_phase_forward(elastic_sh);
     dofs_updated += time_scheme->apply_predictor_phase_forward(poroelastic);
 
-    elements_updated += adjoint_kernels.template update_wavefields<acoustic>(istep);
+    elements_updated += adjoint_.template update_wavefields<acoustic>(istep);
     dofs_updated += time_scheme->apply_corrector_phase_forward(acoustic);
 
-    elements_updated += adjoint_kernels.template update_wavefields<elastic>(istep);
-    elements_updated += adjoint_kernels.template update_wavefields<elastic_psv>(istep);
-    elements_updated += adjoint_kernels.template update_wavefields<elastic_sh>(istep);
+    elements_updated += adjoint_.template update_wavefields<elastic>(istep);
+    elements_updated += adjoint_.template update_wavefields<elastic_psv>(istep);
+    elements_updated += adjoint_.template update_wavefields<elastic_sh>(istep);
     dofs_updated += time_scheme->apply_corrector_phase_forward(elastic);
     dofs_updated += time_scheme->apply_corrector_phase_forward(elastic_psv);
     dofs_updated += time_scheme->apply_corrector_phase_forward(elastic_sh);
 
-    elements_updated += adjoint_kernels.template update_wavefields<poroelastic>(istep);
+    elements_updated += adjoint_.template update_wavefields<poroelastic>(istep);
     dofs_updated += time_scheme->apply_corrector_phase_forward(poroelastic);
 
     // Backward time step
@@ -196,17 +196,17 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     dofs_updated += time_scheme->apply_predictor_phase_backward(acoustic);
     dofs_updated += time_scheme->apply_predictor_phase_backward(poroelastic);
 
-    elements_updated += backward_kernels.template update_wavefields<elastic>(istep);
-    elements_updated += backward_kernels.template update_wavefields<elastic_psv>(istep);
-    elements_updated += backward_kernels.template update_wavefields<elastic_sh>(istep);
+    elements_updated += backward_.template update_wavefields<elastic>(istep);
+    elements_updated += backward_.template update_wavefields<elastic_psv>(istep);
+    elements_updated += backward_.template update_wavefields<elastic_sh>(istep);
     dofs_updated += time_scheme->apply_corrector_phase_backward(elastic);
     dofs_updated += time_scheme->apply_corrector_phase_backward(elastic_psv);
     dofs_updated += time_scheme->apply_corrector_phase_backward(elastic_sh);
 
-    elements_updated += backward_kernels.template update_wavefields<acoustic>(istep);
+    elements_updated += backward_.template update_wavefields<acoustic>(istep);
     dofs_updated += time_scheme->apply_corrector_phase_backward(acoustic);
 
-    elements_updated += backward_kernels.template update_wavefields<poroelastic>(istep);
+    elements_updated += backward_.template update_wavefields<poroelastic>(istep);
     dofs_updated += time_scheme->apply_corrector_phase_backward(poroelastic);
 
     // Copy read wavefield buffer to the backward wavefield
@@ -218,11 +218,11 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
                                   assembly.fields.buffer);
     }
 
-    frechet_kernels.compute_derivatives(dt);
+    frechet_.compute_derivatives(dt);
 
     if (time_scheme->compute_seismogram(istep)) {
       // compute seismogram for backward time step
-      backward_kernels.compute_seismograms(time_scheme->get_seismogram_step());
+      backward_.compute_seismograms(time_scheme->get_seismogram_step());
       time_scheme->increment_seismogram_step();
     }
 

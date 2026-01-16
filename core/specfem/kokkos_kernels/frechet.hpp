@@ -15,8 +15,7 @@ namespace kokkos_kernels {
  * @tparam DimensionTag Dimension of the problem.
  * @tparam NGLL Number of GLL points.
  */
-template <specfem::dimension::type DimensionTag, int NGLL>
-class frechet_kernels {
+template <specfem::dimension::type DimensionTag, int NGLL> class Frechet {
 public:
   constexpr static auto dimension_tag =
       DimensionTag; ///< Dimension of the problem.
@@ -26,7 +25,7 @@ public:
    *
    * @param assembly Assembly object.
    */
-  frechet_kernels(const specfem::assembly::assembly<dimension_tag> &assembly)
+  Frechet(const specfem::assembly::assembly<dimension_tag> &assembly)
       : assembly(assembly) {}
 
   /**

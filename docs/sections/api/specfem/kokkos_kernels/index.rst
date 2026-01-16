@@ -7,16 +7,16 @@
 .. doxygennamespace:: specfem::kokkos_kernels
     :desc-only:
 
-``specfem::kokkos_kernels::domain_kernels``
--------------------------------------------
+``specfem::kokkos_kernels::Domain``
+-----------------------------------
 
-.. doxygenclass:: specfem::kokkos_kernels::domain_kernels
+.. doxygenclass:: specfem::kokkos_kernels::Domain
     :members:
 
-``specfem::kokkos_kernels::frechet_kernels``
---------------------------------------------
+``specfem::kokkos_kernels::Frechet``
+------------------------------------
 
-.. doxygenclass:: specfem::kokkos_kernels::frechet_kernels
+.. doxygenclass:: specfem::kokkos_kernels::Frechet
     :members:
 
 Implementation Details

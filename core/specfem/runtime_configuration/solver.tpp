@@ -16,7 +16,7 @@ specfem::runtime_configuration::solver::solver::instantiate(
 
   if (specfem::utilities::is_forward_string(this->simulation_type)) {
     const auto kernels =
-        specfem::kokkos_kernels::domain_kernels<specfem::wavefield::simulation_field::forward,
+        specfem::kokkos_kernels::Domain<specfem::wavefield::simulation_field::forward,
                                   DimensionTag, NGLL>(
             assembly);
     return std::make_shared<
@@ -30,17 +30,17 @@ specfem::runtime_configuration::solver::solver::instantiate(
           "Combined simulation not implemented for 3D problems");
     }
 
-    const auto adjoint_kernels =
-        specfem::kokkos_kernels::domain_kernels<specfem::wavefield::simulation_field::adjoint,
+    const auto adjoint =
+        specfem::kokkos_kernels::Domain<specfem::wavefield::simulation_field::adjoint,
                                                 DimensionTag, NGLL>(
             assembly);
-    const auto backward_kernels = specfem::kokkos_kernels::domain_kernels<
+    const auto backward = specfem::kokkos_kernels::Domain<
         specfem::wavefield::simulation_field::backward,
         DimensionTag, NGLL>(assembly);
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::combined,
                                        DimensionTag, NGLL> >(
-        assembly, adjoint_kernels, backward_kernels, time_scheme, tasks);
+        assembly, adjoint, backward, time_scheme, tasks);
   } else {
     throw std::runtime_error("Simulation type not recognized");
   }

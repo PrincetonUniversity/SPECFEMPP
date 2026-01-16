@@ -36,16 +36,16 @@ namespace kokkos_kernels {
  */
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionTag, int NGLL>
-class domain_kernels {
+class Domain {
 public:
   constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto wavefield = WavefieldType;
   constexpr static auto ngll = NGLL;
 
   /**
-   * @brief Constructor for the domain_kernels class
+   * @brief Constructor for the Domain class
    *
-   * This constructor initializes the domain_kernels class with the given
+   * This constructor initializes the Domain class with the given
    * assembly object.
    *
    * @param assembly The assembly object containing the mesh and other
@@ -55,7 +55,7 @@ public:
    * and acoustic media.
    *
    */
-  domain_kernels(const specfem::assembly::assembly<dimension_tag> &assembly)
+  Domain(const specfem::assembly::assembly<dimension_tag> &assembly)
       : assembly(assembly) {}
 
   /**
