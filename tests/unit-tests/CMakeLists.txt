@@ -627,6 +627,27 @@ target_link_libraries(
 )
 
 add_executable(
+  coupling_integral_tests
+  algorithms/dim2/coupling_integral/dshape.cpp
+)
+
+target_link_libraries(
+  coupling_integral_tests
+  algorithms
+  enumerations
+  mesh
+  assembly
+  gtest_main
+  Kokkos::kokkos
+  specfem_environment
+  utilities
+
+  quadrature
+  yaml-cpp
+  -lpthread -lm
+)
+
+add_executable(
   policies_tests
   policies/policies.cpp
 )
