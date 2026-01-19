@@ -109,9 +109,11 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
           // sample derivative of interior_index shape function, in normal
           // (covector) direction, at edge coordinate.
           const type_real dlagrange_dn =
-              ipoint_n_is_ix
-                  ? lagrange_derivative.xi(ipoint_n, self_index.ix)
-                  : lagrange_derivative.gamma(ipoint_n, self_index.iz);
+              -(ipoint_n_is_ix ? lagrange_derivative.xi(0, ipoint_n)
+                               : lagrange_derivative.gamma(0, ipoint_n));
+          // if the edge is at igll = 0, then the outward normal is the negative
+          // direction. Instead of using self_index.iz and ngll_n - ipoint_n, we
+          // can use symmetry to assume the edge is at igll == 0
 
           // we may want to refactor this at some point. For now, this should be
           // fine to update the index point.
@@ -145,27 +147,30 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
 #pragma unroll
 #endif
+            // dshape_dn, local-normal derivative (derivative of
+            // normal-direction L, which is normally kronecker delta
+            // indicating on edge)
+
+            // first, in the local-normal component
+            type_real dshape_dn =
+                intersection_normal_contravariant_edgelocal(iedge, iquad, 0) *
+                (dlagrange_dn * transfer_function_self(iquad));
+            // dshape_dn, local-tangential derivative (differentiate
+            // transfer_function_self instead of normal-direction L)
+            if (ipoint_n == 0) {
+              // the local-tangential is constant zero if we are not on the
+              // edge.
+              dshape_dn +=
+                  intersection_normal_contravariant_edgelocal(iedge, iquad, 1) *
+                  transfer_function_self_derivative(iedge, ipoint_s, iquad);
+            }
             for (int icomp = 0; icomp < ncomp; icomp++) {
-              // dshape_dn, local-normal derivative (derivative of
-              // normal-direction L, which is normally kronecker delta
-              // indicating on edge)
-              type_real dshape_dn =
-                  intersection_normal_contravariant_edgelocal(iedge, iquad, 0) *
-                  (dlagrange_dn * transfer_function_self(iquad));
-              // dshape_dn, local-tangential derivative (differentiate
-              // transfer_function_self instead of normal-direction L)
-              if (ipoint_n == 0) {
-                dshape_dn +=
-                    intersection_normal_contravariant_edgelocal(iedge, iquad,
-                                                                1) *
-                    transfer_function_self_derivative(iedge, ipoint_s, iquad);
-              }
               result(icomp) += intersection_field(iedge, iquad, icomp) *
                                intersection_factor(iedge, iquad) * dshape_dn;
             }
           }
 
-          callback(self_index, result);
+          callback(interior_index, result);
         }
       });
 }

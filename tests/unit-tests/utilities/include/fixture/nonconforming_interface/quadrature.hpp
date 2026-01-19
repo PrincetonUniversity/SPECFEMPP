@@ -173,6 +173,26 @@ struct Asymm4Point : QuadraturePoints {
            "testing)";
   }
 };
+struct GL6 : QuadraturePoints {
+  static constexpr int nquad = 7;
+
+  // computed from scipy.special.roots_legendre(7)
+  // (https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.roots_legendre.html)
+  // print(*(f"{x:.40}" for x in scipy.special.roots_legendre(7)[0]), sep=", ")
+  static constexpr std::array<double, nquad> quadrature_points = {
+    -0.9491079123427583752459213428664952516556,
+    -0.7415311855993944600839995473506860435009,
+    -0.4058451513773971841558818596240598708391,
+    0.0,
+    0.4058451513773971841558818596240598708391,
+    0.7415311855993944600839995473506860435009,
+    0.9491079123427583752459213428664952516556
+  };
+  static std::string name() { return "GL6"; }
+  static std::string description() {
+    return "Degree-6 Gauss-Legendre (11 degrees of exactness)";
+  }
+};
 
 } // namespace QuadraturePoints
 

@@ -1,14 +1,14 @@
+#include "Kokkos_Core.hpp"
+#include "Kokkos_Core_fwd.hpp"
 #include "algorithms/integrate/coupling_integral1d_dnshape.hpp"
+#include "enumerations/dim2/mesh_entities.hpp"
 #include "specfem/chunk_edge.hpp"
 
 #include "utilities/include/fixture/impl/accessors.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 
 #include "SPECFEM_Environment.hpp"
-#include "utilities/include/fixture/nonconforming_interface/analytical_function.hpp"
-#include "utilities/include/fixture/nonconforming_interface/intersection_function.hpp"
 #include "utilities/include/fixture/nonconforming_interface/quadrature.hpp"
-#include "utilities/include/fixture/nonconforming_interface/transfer_function.hpp"
 #include <gtest/gtest.h>
 
 template <typename EdgeTypesView>
@@ -57,8 +57,8 @@ public:
 
     return index_type(
         specfem::point::edge_index<specfem::dimension::type::dim2>(
-            0 /*ispec*/, global_offset + iedge /*iedge*/, ipoint, iz, ix,
-            edge_type),
+            global_offset + iedge /*ispec*/, global_offset + iedge /*iedge*/,
+            ipoint, iz, ix, edge_type),
         iedge, i);
   }
 
@@ -173,19 +173,22 @@ TEST(CouplingIntegral, SimpleDShapeTest) {
 
   using QuadX = specfem::test_fixture::QuadraturePoints::GLL2;
   using QuadZ = specfem::test_fixture::QuadraturePoints::GLL2;
-  using QuadIntersection = specfem::test_fixture::QuadraturePoints::Asymm5Point;
+  using QuadIntersection = specfem::test_fixture::QuadraturePoints::GL6;
   constexpr int num_edges = 1;
 
   const type_real intersection_min = -1;
   const type_real intersection_max = 1;
   const auto side = specfem::mesh_entity::dim2::type::top;
-  // we are integrating d(shape-function)/dn * F, where
-  // :: F(x) = x^2
-  // :: n = [1, x] in the contravariant local coordinate basis (see
-  //      coupling_integral1d_dnshape.hpp)
-  // :: shape functions on GLL2 x GLL1 elements
+  // we are integrating d(shape_function)/dn * F, where
+  // :: F(x) = x
+  // :: n = [1, x] in the contravariant local edge basis (see
+  //      coupling_integral1d_dnshape.hpp), or [x, 1] in typical local
+  //      coordinates
+  // :: shape functions on GLL2 x GLL1 elements (shape_function = L_xi(x) *
+  // L_gamma(z))
   // :: integral on [-1,1] (intersection_<min/max>)
   // :: edge has same coordinates, and goes between [-1,1] in xi
+  // :: solution: int(x * (x * L_xi'(x) * L_gamma(z) + L_xi(x) * L_gamma'(z)))
 
   // structs to use
 
@@ -195,7 +198,7 @@ TEST(CouplingIntegral, SimpleDShapeTest) {
 
   using IntersectionFunctionInitializer = specfem::test_fixture::
       IntersectionFunctionInitializer2D::FromAnalyticalFunction<
-          specfem::test_fixture::AnalyticalFunctionType::Power<2>,
+          specfem::test_fixture::AnalyticalFunctionType::Power<1>,
           QuadIntersection>;
   const auto function_view = specfem::test_fixture::IntersectionFunction2D(
                                  IntersectionFunctionInitializer())
@@ -213,9 +216,9 @@ TEST(CouplingIntegral, SimpleDShapeTest) {
     for (int iedge = 0; iedge < num_edges; iedge++) {
       for (int iquad = 0; iquad < QuadIntersection::nquad; iquad++) {
         h_intersection_factor(iedge, iquad) =
-            specfem::test_fixture::QuadratureRule<
-                QuadIntersection>::compute_lagrange_quadrature_weight(iquad, -1,
-                                                                      1);
+            specfem::test_fixture::QuadratureRule<QuadIntersection>::
+                compute_lagrange_quadrature_weight(iquad, intersection_min,
+                                                   intersection_max);
       }
     }
     intersection_factor.sync_to_device(h_intersection_factor);
@@ -236,11 +239,12 @@ TEST(CouplingIntegral, SimpleDShapeTest) {
           .get_view();
 
   // no data access help for transfer_function_self derivative, but the type
-  // only needs to support deriv(iedge, iquad, icomp).
+  // only needs to support deriv(iedge, iedge, iquad).
   using TransferFunctionDerivativeType =
       specfem::datatype::VectorChunkEdgeViewType<
-          type_real, dimension_tag, num_edges, QuadIntersection::nquad, 2,
-          false, memory_space, Kokkos::MemoryTraits<> >;
+          type_real, dimension_tag, num_edges, QuadX::nquad,
+          QuadIntersection::nquad, false, memory_space,
+          Kokkos::MemoryTraits<> >;
 
   TransferFunctionDerivativeType transfer_function_self_derivative(
       "dshape::transfer_function_self_derivative"); // init later with
@@ -320,32 +324,129 @@ TEST(CouplingIntegral, SimpleDShapeTest) {
   const int num_chunks =
       num_edges / chunk_size + ((num_edges % chunk_size != 0) ? 1 : 0);
 
+  Kokkos::View<type_real *[ngllz][ngllx], memory_space, Kokkos::MemoryTraits<> >
+      computed_integrals("dshape::computed_integrals", num_edges);
+
+  // Kokkos::View<type_real *[ngllz][ngllx], memory_space,
+  // Kokkos::MemoryTraits<> >
+  //     expected_solutions("dshape::expected_solutions", num_edges);
+  // const auto h_expected_solutions =
+  //     Kokkos::create_mirror_view(expected_solutions);
+  Kokkos::View<type_real *[ngllz][ngllx], Kokkos::HostSpace>
+      h_expected_solutions("dshape::h_expected_solutions", num_edges);
+
+  // =================================================================
+  // compute expected solutions
+
+  using IntersectionQuadrature =
+      specfem::test_fixture::QuadratureRule<QuadIntersection>;
+  std::array<double, nquad_intersection> quadrature_weights;
+  for (int iquad = 0; iquad < nquad_intersection; iquad++) {
+    quadrature_weights[iquad] =
+        IntersectionQuadrature::compute_lagrange_quadrature_weight(
+            iquad, intersection_min, intersection_max);
+  }
+
+  // [!] modify for when num_edges > 1 in later test
+  for (int iz = 0; iz < ngllz; iz++) {
+    for (int ix = 0; ix < ngllx; ix++) {
+      // use the intersection quadrature rule
+      // solution: int(x * (x * L_xi'(x) * L_gamma(z) + L_xi(x) * L_gamma'(z)))
+      double integral = 0;
+      for (int iquad = 0; iquad < nquad_intersection; iquad++) {
+        const double x = QuadIntersection::quadrature_points[iquad];
+        const double z = 1; // since we are at the top
+        const double dshapedxi =
+            specfem::test_fixture::QuadratureRule<
+                QuadX>::evaluate_lagrange_derivative(ix, x) *
+            specfem::test_fixture::QuadratureRule<
+                QuadZ>::evaluate_lagrange_polynomial(iz, z);
+        const double dshapedga =
+            specfem::test_fixture::QuadratureRule<
+                QuadX>::evaluate_lagrange_polynomial(ix, x) *
+            specfem::test_fixture::QuadratureRule<
+                QuadZ>::evaluate_lagrange_derivative(iz, z);
+        const double intersection_function =
+            IntersectionFunctionInitializer::AnalyticalFunctionType::evaluate(
+                x)[0];
+        const auto n_contraedge = IntersectionContraNormalFunction::evaluate(x);
+        double nxi;
+        double nga;
+        switch (side) {
+        case specfem::mesh_entity::dim2::type::bottom:
+          nga = -n_contraedge[0];
+          nxi = n_contraedge[1];
+          break;
+        case specfem::mesh_entity::dim2::type::top:
+          nga = n_contraedge[0];
+          nxi = n_contraedge[1];
+          break;
+        case specfem::mesh_entity::dim2::type::left:
+          nxi = -n_contraedge[0];
+          nga = n_contraedge[1];
+          break;
+        case specfem::mesh_entity::dim2::type::right:
+          nxi = n_contraedge[0];
+          nga = n_contraedge[1];
+          break;
+        default:
+          FAIL() << "Poorly posed test. \"side\" is not an edge!.";
+        }
+        integral +=
+            quadrature_weights[iquad] *
+            (intersection_function * (nxi * dshapedxi + nga * dshapedga));
+      }
+      h_expected_solutions(0, iz, ix) = (type_real)integral;
+    }
+  }
+
+  // Kokkos::deep_copy(expected_solutions, h_expected_solutions);
+  // =================================================================
+
   Kokkos::parallel_for(
       "SimpleDShapeTest", Kokkos::TeamPolicy<>(num_edges, 1, 1),
       KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type &team_member) {
-        const int iedge = team_member.league_rank();
-        const FunctionType F(Kokkos::subview(
-            function_view,
-            Kokkos::make_pair(iedge * chunk_size, (iedge + 1) * chunk_size),
-            Kokkos::ALL(), Kokkos::ALL()));
+        const int chunk_index = team_member.league_rank();
+        const FunctionType F(
+            Kokkos::subview(function_view,
+                            Kokkos::make_pair(chunk_index * chunk_size,
+                                              (chunk_index + 1) * chunk_size),
+                            Kokkos::ALL(), Kokkos::ALL()));
         specfem::algorithms::coupling_integral_dnshape(
             nonconforming_interfaces, ngllz, ngllx, lagrange_derivative,
-            ChunkEdgeIndex(
-                Kokkos::subview(edge_types,
-                                Kokkos::make_pair(iedge * chunk_size,
-                                                  (iedge + 1) * chunk_size)),
-                num_edges, ngllz, ngllx, team_member),
+            ChunkEdgeIndex(Kokkos::subview(edge_types,
+                                           Kokkos::make_pair(
+                                               chunk_index * chunk_size,
+                                               (chunk_index + 1) * chunk_size)),
+                           num_edges, ngllz, ngllx, team_member),
             F, intersection_factor, intersection_contra_normal,
             transfer_function_self_derivative,
             [&](const auto &index, const auto &point) {
-              // TODO START HERE
-              // for (int icomp = 0; icomp < ncomp_self; ++icomp) {
-              //   Kokkos::single(Kokkos::PerTeam(team_member), [&]() {
-              //     result_view(index(0), index(1), icomp) = point(icomp);
-              //   });
-              // }
+              computed_integrals(index.ispec, index.iz, index.ix) = point(0);
             });
       });
+
+  const auto h_computed_integrals = Kokkos::create_mirror_view_and_copy(
+      Kokkos::HostSpace(), computed_integrals);
+
+  for (int iedge = 0; iedge < num_edges; iedge++) {
+    for (int iz = 0; iz < ngllz; iz++) {
+      for (int ix = 0; ix < ngllx; ix++) {
+
+        if (!specfem::utilities::is_close(
+                h_computed_integrals(iedge, iz, ix),
+                h_expected_solutions(iedge, iz, ix))) {
+          ADD_FAILURE() << "Integral mismatch for edge " << iedge << "\n"
+                        << "    at GLL point (iz = " << iz << ", ix = " << ix
+                        << ")\n"
+                        << "    expected: "
+                        << h_expected_solutions(iedge, iz, ix) << "\n"
+                        << "    computed: "
+                        << h_computed_integrals(iedge, iz, ix);
+        }
+      }
+    }
+  }
 }
 
 int main(int argc, char *argv[]) {
