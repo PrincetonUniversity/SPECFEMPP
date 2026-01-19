@@ -6,8 +6,8 @@
 
 #include "enumerations/interface.hpp"
 #include "medium/material.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem_setup.hpp"
 #include "test_fixture.hpp"
 

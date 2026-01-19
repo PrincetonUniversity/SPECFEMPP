@@ -29,10 +29,10 @@
 
 #include "../test_fixture.hpp"
 #include "enumerations/interface.hpp"
-#include "quadrature/interface.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
+#include "specfem/quadrature.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 #include <array>

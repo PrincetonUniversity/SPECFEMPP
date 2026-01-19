@@ -1,6 +1,6 @@
 #pragma once
 #include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "enumerations/medium_tags.hpp"
 #include "mesh_to_compute_mapping.hpp"
 #include <vector>

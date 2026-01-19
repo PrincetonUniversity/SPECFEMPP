@@ -3,12 +3,12 @@
 #include "constants.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
 #include "specfem/point.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
+#include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 

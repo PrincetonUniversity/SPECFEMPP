@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "utilities/errors.hpp"
+#include "specfem/utilities/errors.hpp"
 #include <array>
 #include <tuple>
 

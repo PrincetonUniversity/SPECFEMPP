@@ -1,11 +1,11 @@
 #pragma once
 
-#include "execution/for_each_level.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/fields/impl/check_accessor_compatibility.hpp"
 #include "specfem/assembly/fields/impl/field_impl.hpp"
 #include "specfem/assembly/fields/impl/load_access_functions.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/execution.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 

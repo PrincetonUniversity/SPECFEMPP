@@ -1,9 +1,9 @@
 #pragma once
 
-#include "datatypes/point_view.hpp"
 #include "enumerations/interface.hpp"
 #include "jacobian_matrix.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/datatype.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "execution/mapped_chunked_domain_iterator.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/execution.hpp"
 
 namespace specfem {
 namespace chunk_element {

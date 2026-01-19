@@ -1,8 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "execution/for_all.hpp"
-#include "execution/team_thread_md_range_iterator.hpp"
+#include "specfem/execution.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {

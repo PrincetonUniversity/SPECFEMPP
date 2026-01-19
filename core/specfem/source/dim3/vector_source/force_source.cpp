@@ -3,8 +3,8 @@
 #include "specfem/macros.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
+#include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 

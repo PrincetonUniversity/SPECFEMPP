@@ -1,6 +1,6 @@
 #include "../SPECFEM_Environment.hpp"
-#include "quadrature/gll/gll_library.hpp"
-#include "quadrature/gll/gll_utils.hpp"
+#include "specfem/quadrature/gll/gll_library.hpp"
+#include "specfem/quadrature/gll/gll_utils.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <iostream>

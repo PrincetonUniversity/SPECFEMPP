@@ -3,9 +3,8 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/wavefield.hpp"
-#include "kokkos_kernels/domain_kernels.hpp"
-#include "kokkos_kernels/frechet_kernels.hpp"
 #include "solver.hpp"
+#include "specfem/kokkos_kernels.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/timescheme.hpp"
 

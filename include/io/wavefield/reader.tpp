@@ -1,7 +1,7 @@
 #pragma once
 
 #include "io/wavefield/reader.hpp"
-#include "utilities/strings.hpp"
+#include "specfem/utilities.hpp"
 
 template <typename IOLibrary>
 specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(

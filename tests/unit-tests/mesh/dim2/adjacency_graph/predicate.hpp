@@ -1,8 +1,8 @@
 #pragma once
 #include "enumerations/connections.hpp"
 #include "enumerations/mesh_entities.hpp"
-#include "mesh/dim2/adjacency_graph/adjacency_graph.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/mesh/dim2/adjacency_graph/adjacency_graph.hpp"
 #include <string>
 #include <type_traits>
 

@@ -12,16 +12,16 @@ target_link_libraries(specfem_program
         specfem::logger
         specfem::mpi
         Kokkos::kokkos
-        mesh
-        quadrature
+        specfem::mesh
+        specfem::quadrature
         assembly
         source_class
-        parameter_reader
+        specfem::runtime_configuration
         specfem::receivers
         writer
         periodic_tasks
         reader
-        kokkos_kernels
+        specfem::kokkos_kernels
         specfem::solver
         # Add MPI dependency when available
         $<TARGET_NAME_IF_EXISTS:MPI::MPI_CXX>

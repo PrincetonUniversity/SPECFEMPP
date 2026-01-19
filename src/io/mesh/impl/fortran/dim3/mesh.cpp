@@ -1,4 +1,4 @@
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "io/fortranio/interface.hpp"
 #include "io/interface.hpp"
 #include "io/mesh/impl/fortran/dim3/read_adjacency_graph.hpp"

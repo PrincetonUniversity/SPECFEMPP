@@ -5,8 +5,8 @@
 #include <stdexcept>
 #include <vector>
 
-#include "algorithms/interpolate.hpp"
-#include "quadrature/interface.hpp"
+#include "specfem/algorithms/interpolate.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
 #include <Kokkos_Core.hpp>
 

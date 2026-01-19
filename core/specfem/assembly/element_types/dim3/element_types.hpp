@@ -1,9 +1,9 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 

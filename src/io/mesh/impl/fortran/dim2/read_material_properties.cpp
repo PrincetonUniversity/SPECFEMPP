@@ -2,10 +2,10 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/interface.hpp"
 #include "io/fortranio/interface.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/mesh.hpp"
 
-#include "utilities/interface.hpp"
+#include "specfem/utilities.hpp"
 #include <memory>
 #include <sstream>
 #include <vector>

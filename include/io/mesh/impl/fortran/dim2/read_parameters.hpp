@@ -1,7 +1,7 @@
 #pragma once
 
 #include "io/fortranio/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 
 namespace specfem {
 namespace io {

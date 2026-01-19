@@ -19,9 +19,9 @@
 
 #include "enumerations/dimension.hpp"
 #include "enumerations/mesh_entities.hpp"
-#include "quadrature/interface.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
-#include "utilities/interface.hpp"
+#include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <array>
 #include <functional>

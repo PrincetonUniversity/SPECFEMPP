@@ -4,7 +4,7 @@
 #include "enumerations/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem_setup.hpp"
 #include <cmath>
 

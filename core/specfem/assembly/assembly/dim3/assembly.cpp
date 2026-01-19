@@ -1,7 +1,7 @@
 #include "assembly.hpp"
 #include "enumerations/interface.hpp"
 #include "io/reader.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 
 specfem::assembly::assembly<specfem::dimension::type::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,

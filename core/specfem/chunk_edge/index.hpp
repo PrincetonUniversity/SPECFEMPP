@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "execution/chunked_edge_iterator.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/execution.hpp"
 
 namespace specfem::chunk_edge {
 

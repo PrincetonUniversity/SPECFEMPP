@@ -1,9 +1,7 @@
 #include "../SPECFEM_Environment.hpp"
 #include "enumerations/interface.hpp"
-#include "execution/chunked_edge_iterator.hpp"
-#include "execution/chunked_intersection_iterator.hpp"
-#include "execution/for_all.hpp"
-#include "parallel_configuration/chunk_edge_config.hpp"
+#include "specfem/execution.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <gtest/gtest-param-test.h>

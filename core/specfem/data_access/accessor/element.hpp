@@ -1,8 +1,8 @@
 #pragma once
 
-#include "datatypes/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/data_access/accessor.hpp"
+#include "specfem/datatype.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::data_access {

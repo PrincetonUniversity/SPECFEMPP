@@ -3,7 +3,7 @@
 #include "enumerations/interface.hpp"
 #include "io/wavefield/writer.hpp"
 #include "specfem/assembly.hpp"
-#include "utilities/strings.hpp"
+#include "specfem/utilities.hpp"
 #include "specfem/logger.hpp"
 
 template <typename OutputLibrary>

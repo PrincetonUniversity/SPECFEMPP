@@ -5,7 +5,7 @@
 #include "specfem/logger.hpp"
 #include "specfem/periodic_tasks/plotter.hpp"
 #include "specfem/program.hpp"
-#include "utilities/strings.hpp"
+#include "specfem/utilities.hpp"
 
 #ifdef NO_VTK
 

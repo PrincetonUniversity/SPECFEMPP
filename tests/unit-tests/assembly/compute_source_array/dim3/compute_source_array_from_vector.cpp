@@ -1,7 +1,7 @@
 #include "specfem/assembly/compute_source_array/dim3/impl/compute_source_array_from_vector.hpp"
 #include "../../test_fixture/test_fixture.hpp"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "test_macros.hpp"

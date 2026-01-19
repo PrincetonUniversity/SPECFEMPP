@@ -1,7 +1,7 @@
 #include "../test_fixture.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/assembly.hpp"
-#include "utilities/utilities.hpp"
+#include "specfem/utilities.hpp"
 #include <gtest/gtest.h>
 #include <vector>
 

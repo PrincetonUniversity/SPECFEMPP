@@ -1,4 +1,4 @@
-#include "algorithms/locate_point.hpp"
+#include "specfem/algorithms/locate_point.hpp"
 #include "../test_fixture/test_fixture.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>

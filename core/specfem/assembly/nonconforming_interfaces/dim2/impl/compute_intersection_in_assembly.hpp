@@ -1,8 +1,7 @@
 #pragma once
 
-#include "quadrature/interface.hpp"
-#include "quadrature/quadrature.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/quadrature.hpp"
 
 #include <vector>
 

@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-#include "algorithms/locate_point.hpp"
+#include "specfem/algorithms.hpp"
 #include "specfem/assembly/nonconforming_interfaces/dim2/impl/compute_intersection.hpp"
 #include <gtest/gtest.h>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 
 namespace specfem::assembly::mesh_impl {
 

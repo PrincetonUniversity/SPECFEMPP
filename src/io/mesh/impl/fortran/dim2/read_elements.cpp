@@ -1,7 +1,7 @@
 #include "io/mesh/impl/fortran/dim2/read_elements.hpp"
 #include "enumerations/interface.hpp"
 #include "io/fortranio/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 
 specfem::mesh::elements::axial_elements<specfem::dimension::type::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_axial_elements(

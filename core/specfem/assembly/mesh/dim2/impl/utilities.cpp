@@ -1,5 +1,5 @@
 #include "utilities.hpp"
-#include "parallel_configuration/chunk_config.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include <algorithm>
 #include <cmath>
 

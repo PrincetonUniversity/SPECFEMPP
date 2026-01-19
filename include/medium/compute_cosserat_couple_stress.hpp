@@ -5,7 +5,7 @@
 #include "medium/dim2/elastic/isotropic_cosserat/cosserat_couple_stress.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/point.hpp"
-#include "utilities/errors.hpp"
+#include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 
 template <typename T, typename PointJacobianMatrixType,

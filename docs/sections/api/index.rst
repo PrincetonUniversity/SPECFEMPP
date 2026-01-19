@@ -26,16 +26,7 @@ Old structure
 .. toctree::
     :maxdepth: 2
 
-    algorithms/index
-    boundary_conditions/index
     enumerations/index
-    quadrature/index
-    mesh/index
-    datatypes/index
-    execution/index
     medium/index
-    kokkos_kernels/index
     coupling_physics/coupled_interface
-    setup_parameters/index
     macros/index
-    parallel_configuration/index

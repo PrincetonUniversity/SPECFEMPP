@@ -1,6 +1,6 @@
 #pragma once
 
-#include "datatypes/simd.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem_setup.hpp"
 #include "test_helper.hpp"
 #include <Kokkos_Core.hpp>

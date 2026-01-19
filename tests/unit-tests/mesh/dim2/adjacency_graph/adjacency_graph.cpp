@@ -1,4 +1,4 @@
-#include "mesh/dim2/adjacency_graph/adjacency_graph.hpp"
+#include "specfem/mesh/dim2/adjacency_graph/adjacency_graph.hpp"
 #include "enumerations/interface.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <gtest/gtest.h>

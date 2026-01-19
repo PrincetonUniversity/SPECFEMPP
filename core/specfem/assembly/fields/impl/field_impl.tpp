@@ -2,7 +2,7 @@
 
 #include "field_impl.hpp"
 #include "kokkos_abstractions.h"
-#include "parallel_configuration/chunk_config.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include <Kokkos_Core.hpp>
 

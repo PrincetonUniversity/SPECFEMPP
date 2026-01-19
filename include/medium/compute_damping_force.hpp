@@ -3,7 +3,7 @@
 #include "enumerations/medium.hpp"
 #include "medium/dim2/poroelastic/isotropic/damping.hpp"
 #include "specfem/data_access.hpp"
-#include "utilities/errors.hpp"
+#include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 
 // Function that is called when the implementation is available

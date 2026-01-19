@@ -1,8 +1,8 @@
 #pragma once
 
-#include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
 #include "globals.h"
+#include "specfem/algorithms.hpp"
 #include "specfem/point.hpp"
 
 #include <Kokkos_Core.hpp>

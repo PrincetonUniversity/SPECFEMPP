@@ -1,8 +1,8 @@
 #include "../properties_tests.hpp"
 #include "specfem/point/properties.hpp"
+#include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
-#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 

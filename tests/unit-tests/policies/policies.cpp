@@ -1,11 +1,8 @@
 #include "../SPECFEM_Environment.hpp"
-#include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
-#include "execution/chunked_domain_iterator.hpp"
-#include "execution/for_all.hpp"
-#include "execution/range_iterator.hpp"
-#include "parallel_configuration/chunk_config.hpp"
-#include "parallel_configuration/range_config.hpp"
+#include "specfem/datatype.hpp"
+#include "specfem/execution.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>

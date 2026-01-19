@@ -1,7 +1,7 @@
 
 #include "io/mesh/impl/fortran/dim3/read_control_nodes.hpp"
 #include "io/fortranio/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include <fstream>
 
 specfem::mesh::control_nodes<specfem::dimension::type::dim3>

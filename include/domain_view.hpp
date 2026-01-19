@@ -1,6 +1,6 @@
 #pragma once
 
-#include "parallel_configuration/chunk_config.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
 #include <mdspan/mdspan.hpp>

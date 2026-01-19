@@ -1,11 +1,11 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "../../mesh_utilities/mapping.hpp"
 #include "../../test_macros.hpp"
-#include "algorithms/locate_point.hpp"
-#include "algorithms/locate_point_impl.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/algorithms.hpp"
+#include "specfem/algorithms/locate_point/locate_point_impl.hpp"
 #include "specfem/point.hpp"
-#include "utilities/utilities.hpp"
+#include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 #include <gtest/gtest.h>

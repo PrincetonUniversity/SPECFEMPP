@@ -1,10 +1,10 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>

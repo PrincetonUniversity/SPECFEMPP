@@ -1,6 +1,6 @@
 #include "../test_macros.hpp"
 #include "mapping.hpp"
-#include "utilities/utilities.hpp"
+#include "specfem/utilities.hpp"
 #include <gtest/gtest.h>
 #include <set>
 #include <vector>

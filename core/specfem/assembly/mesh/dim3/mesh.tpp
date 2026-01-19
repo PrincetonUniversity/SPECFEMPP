@@ -3,7 +3,7 @@
 #include "impl/control_nodes.hpp"
 #include "impl/points.hpp"
 #include "mesh.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/assembly/mesh/impl/quadrature.hpp"
 
 specfem::assembly::mesh<specfem::dimension::type::dim3>::mesh(

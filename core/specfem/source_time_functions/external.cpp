@@ -2,7 +2,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "io/seismogram/reader.hpp"
 #include "kokkos_abstractions.h"
-#include "utilities/strings.hpp"
+#include "specfem/utilities.hpp"
 #include <fstream>
 #include <tuple>
 #include <vector>

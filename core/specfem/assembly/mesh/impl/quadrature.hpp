@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "quadrature/interface.hpp"
+#include "specfem/quadrature.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::mesh_impl {

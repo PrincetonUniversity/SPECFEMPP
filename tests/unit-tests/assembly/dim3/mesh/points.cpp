@@ -4,8 +4,8 @@
 #include "enumerations/interface.hpp"
 #include "enumerations/mesh_entities.hpp"
 #include "io/interface.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/mesh.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <gtest/gtest.h>
