@@ -111,4 +111,14 @@ namespace AnalyticalFunctionType {
 struct AnalyticalFunctionType {};
 } // namespace AnalyticalFunctionType
 
+/**
+ * @brief Provides a struct that can be passed as a LagrangeDerivative argument
+ * to kernels.
+ *
+ * @tparam QuadraturePointsX quadrature on the xi coordinates
+ * @tparam QuadraturePointsZ quadrature on the gamma coordinates
+ */
+template <typename QuadraturePointsX, typename QuadraturePointsZ>
+struct LagrangeDerivative2D;
+
 } // namespace specfem::test_fixture

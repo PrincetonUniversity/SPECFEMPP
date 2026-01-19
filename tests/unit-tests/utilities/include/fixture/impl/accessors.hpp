@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Kokkos_Core.hpp"
 #include "enumerations/coupled_interface.hpp"
 #include "enumerations/medium.hpp"
 #include "specfem/data_access/accessor.hpp"
 #include "specfem/data_access/data_class.hpp"
+#include <type_traits>
 namespace specfem::test_fixture::impl {
 
 /**
@@ -29,8 +31,22 @@ public:
   static constexpr auto connection_tag =
       specfem::connections::type::nonconforming;
   /// View type for storing intersection scaling factors
+private:
+  template <typename LeftType, int... RemainingAxes> struct ViewInternalType;
+
+  template <typename LeftType, int Axis, int... RemainingAxes>
+  struct ViewInternalType<LeftType, Axis, RemainingAxes...> {
+    using type =
+        typename ViewInternalType<LeftType[Axis], RemainingAxes...>::type;
+  };
+
+  template <typename LeftType> struct ViewInternalType<LeftType> {
+    using type = LeftType;
+  };
+
+public:
   using DataViewType =
-      Kokkos::View<type_real[Axes]...,
+      Kokkos::View<typename ViewInternalType<type_real, Axes...>::type,
                    Kokkos::DefaultExecutionSpace::memory_space>;
 
 private:
@@ -53,6 +69,14 @@ public:
   KOKKOS_INLINE_FUNCTION auto &operator()(Indices... indices) const {
     return data_(indices...);
   }
+
+  typename DataViewType::HostMirror create_host_mirror() {
+    return Kokkos::create_mirror_view(data_);
+  }
+
+  void sync_to_device(const typename DataViewType::HostMirror &host_data) {
+    Kokkos::deep_copy(data_, host_data);
+  }
 };
 
 template <specfem::interface::interface_tag InterfaceTag,
@@ -63,6 +87,11 @@ struct NonconformingTransferFunctionSelfPatch
           InterfaceTag, BoundaryTag,
           specfem::data_access::DataClassType::transfer_function_self,
           NumberElements, NQuadElement, NQuadIntersection> {
+  using NonconformingAccessorPatch2D<
+      InterfaceTag, BoundaryTag,
+      specfem::data_access::DataClassType::transfer_function_self,
+      NumberElements, NQuadElement,
+      NQuadIntersection>::NonconformingAccessorPatch2D;
   static constexpr int chunk_size = NumberElements;
   static constexpr int n_quad_element = NQuadElement;
   static constexpr int n_quad_intersection = NQuadIntersection;
@@ -75,6 +104,11 @@ struct NonconformingTransferFunctionCoupledPatch
           InterfaceTag, BoundaryTag,
           specfem::data_access::DataClassType::transfer_function_coupled,
           NumberElements, NQuadElement, NQuadIntersection> {
+  using NonconformingAccessorPatch2D<
+      InterfaceTag, BoundaryTag,
+      specfem::data_access::DataClassType::transfer_function_coupled,
+      NumberElements, NQuadElement,
+      NQuadIntersection>::NonconformingAccessorPatch2D;
   static constexpr int chunk_size = NumberElements;
   static constexpr int n_quad_element = NQuadElement;
   static constexpr int n_quad_intersection = NQuadIntersection;
@@ -87,6 +121,10 @@ struct NonconformingIntersectionNormalPatch
           InterfaceTag, BoundaryTag,
           specfem::data_access::DataClassType::intersection_normal,
           NumberElements, NQuadIntersection, 2> {
+  using NonconformingAccessorPatch2D<
+      InterfaceTag, BoundaryTag,
+      specfem::data_access::DataClassType::intersection_normal, NumberElements,
+      NQuadIntersection, 2>::NonconformingAccessorPatch2D;
   static constexpr int chunk_size = NumberElements;
   static constexpr int n_quad_intersection = NQuadIntersection;
 };
@@ -98,6 +136,10 @@ struct NonconformingIntersectionFactorPatch
           InterfaceTag, BoundaryTag,
           specfem::data_access::DataClassType::intersection_factor,
           NumberElements, NQuadIntersection> {
+  using NonconformingAccessorPatch2D<
+      InterfaceTag, BoundaryTag,
+      specfem::data_access::DataClassType::intersection_factor, NumberElements,
+      NQuadIntersection>::NonconformingAccessorPatch2D;
   static constexpr int chunk_size = NumberElements;
   static constexpr int n_quad_intersection = NQuadIntersection;
 };

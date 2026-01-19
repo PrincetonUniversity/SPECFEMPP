@@ -42,9 +42,14 @@ namespace specfem::algorithms {
  * @param intersection_field - the field to integrate
  * @param weight_jacobian - nonconforming chunk_edge accessor holding
  * `intersection_factor`
- * @param intersection_normal_covariant_edgelocal - the normal vector at each
- * intersection point in contravariant local coordinate basis, with the first
- * component in the normal direction.
+ * @param intersection_normal_contravariant_edgelocal - the normal vector at
+ * each intersection point in contravariant local coordinate basis, with the
+ * first component in the outward normal direction (-/+xi for left/right,
+ * +/-gamma for top/bottom), and second component in the tangential axis (+gamma
+ * for left/right, +xi for top/bottom).
+ * @param transfer_function_self_derivative - (TEMPORARY, TO BE LOADED LATER BY
+ * THIS FUNCTION) derivative (in edge coordinates, not intersection coordinates
+ * ) of transfer_function_self, evaluated at intersection quadrature points.
  * @param callback - callback function to capture integral values
  * @ingroup AlgorithmsIntegration
  */
@@ -55,10 +60,11 @@ template <specfem::dimension::type dimension_tag, typename QuadratureType,
 KOKKOS_FUNCTION void coupling_integral_dnshape(
     const specfem::assembly::nonconforming_interfaces<dimension_tag>
         &nonconforming_interfaces,
+    const int &ngllz, const int &ngllx,
     const QuadratureType &lagrange_derivative, const IndexType &chunk_index,
     const IntersectionFieldViewType &intersection_field,
     const IntersectionFactor &intersection_factor,
-    const IntersectionJacobianType &intersection_normal_covariant_edgelocal,
+    const IntersectionJacobianType &intersection_normal_contravariant_edgelocal,
     const TransferFunctionDerivativeType
         &transfer_function_self_derivative /* This could be loaded just like
                                          transfer_function_self */
@@ -79,7 +85,6 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
 
   constexpr int ncomp = PointFieldType::components;
   constexpr int nquad_intersection = IntersectionFactor::n_quad_intersection;
-  constexpr int nquad_element = IntersectionFactor::n_quad_element;
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
@@ -95,7 +100,8 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
                                           transfer_function_self);
 
         const int &ipoint_s = self_index.ipoint;
-        for (int ipoint_n = 0; ipoint_n < nquad_element; ++ipoint_n) {
+        const int ngll_n = ipoint_n_is_ix ? ngllx : ngllz;
+        for (int ipoint_n = 0; ipoint_n < ngll_n; ++ipoint_n) {
           // iterate backwards from the edge (this gets called for each gllxz)
           specfem::point::index<specfem::dimension::type::dim2> interior_index(
               self_index.ispec, self_index.iz, self_index.ix);
@@ -111,10 +117,10 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
           // fine to update the index point.
           switch (self_index.edge_type) {
           case specfem::mesh_entity::dim2::type::right:
-            interior_index.ix = (nquad_element - 1) - ipoint_n;
+            interior_index.ix = (ngllx - 1) - ipoint_n;
             break;
           case specfem::mesh_entity::dim2::type::top:
-            interior_index.iz = (nquad_element - 1) - ipoint_n;
+            interior_index.iz = (ngllz - 1) - ipoint_n;
             break;
           case specfem::mesh_entity::dim2::type::left:
             interior_index.ix = ipoint_n;
@@ -144,13 +150,14 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
               // normal-direction L, which is normally kronecker delta
               // indicating on edge)
               type_real dshape_dn =
-                  intersection_normal_covariant_edgelocal(iedge, iquad, 0) *
+                  intersection_normal_contravariant_edgelocal(iedge, iquad, 0) *
                   (dlagrange_dn * transfer_function_self(iquad));
               // dshape_dn, local-tangential derivative (differentiate
               // transfer_function_self instead of normal-direction L)
               if (ipoint_n == 0) {
                 dshape_dn +=
-                    intersection_normal_covariant_edgelocal(iedge, iquad, 1) *
+                    intersection_normal_contravariant_edgelocal(iedge, iquad,
+                                                                1) *
                     transfer_function_self_derivative(iedge, ipoint_s, iquad);
               }
               result(icomp) += intersection_field(iedge, iquad, icomp) *

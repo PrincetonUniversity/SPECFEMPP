@@ -20,7 +20,7 @@ class nonconforming_interfaces<specfem::dimension::type::dim2>
 public:
   static constexpr auto dimension_tag = specfem::dimension::type::dim2;
 
-private:
+protected:
   template <specfem::interface::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
             specfem::connections::type ConnectionTag>
@@ -51,37 +51,6 @@ public:
   KOKKOS_INLINE_FUNCTION const
       InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag> &
       get_interface_container() const {
-    // Compile-time dispatch using FOR_EACH_IN_PRODUCT macro
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(NONCONFORMING),
-                         INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-                         BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                      COMPOSITE_STACEY_DIRICHLET)),
-                        CAPTURE((interface_container, interface_container)) {
-                          if constexpr (InterfaceTag == _interface_tag_ &&
-                                        BoundaryTag == _boundary_tag_ &&
-                                        ConnectionTag == _connection_tag_) {
-                            return _interface_container_;
-                          }
-                        })
-
-#ifndef NDEBUG
-    // Debug check: abort if no matching specialization found
-    KOKKOS_ABORT_WITH_LOCATION("specfem::assembly::nonconforming_interfaces::"
-                               "get_interface_container(): No "
-                               "matching specialization found.");
-#endif
-
-    // Unreachable code - satisfy compiler return requirements
-
-    SUPPRESS_TEMPORARY_REF(return {};)
-  }
-
-  template <specfem::interface::interface_tag InterfaceTag,
-            specfem::element::boundary_tag BoundaryTag,
-            specfem::connections::type ConnectionTag>
-  KOKKOS_INLINE_FUNCTION
-      InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag> &
-      get_interface_container() {
     // Compile-time dispatch using FOR_EACH_IN_PRODUCT macro
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(NONCONFORMING),
                          INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
