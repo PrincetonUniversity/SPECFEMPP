@@ -160,7 +160,7 @@ public:
 };
 
 // temporary test for purposes of uncombined coupling_integral
-TEST(CouplingIntegral, SimpleDShapeTest) {
+void execute_simple_dshape_test() {
   constexpr auto dimension_tag = specfem::dimension::type::dim2;
   constexpr auto interface_tag =
       specfem::interface::interface_tag::acoustic_elastic;
@@ -447,6 +447,8 @@ TEST(CouplingIntegral, SimpleDShapeTest) {
     }
   }
 }
+
+TEST(CouplingIntegral, SimpleDShapeTest) { execute_simple_dshape_test(); }
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

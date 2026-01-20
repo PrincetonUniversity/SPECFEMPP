@@ -86,7 +86,7 @@ template <typename QuadraturePointsType> struct QuadratureRule {
   compute_lagrange_quadrature_weight(const int &iquad,
                                      const double &integral_start = -1,
                                      const double &integral_end = 1) {
-    std::array<double, nquad> L = polynomial_coefficients[iquad];
+    const std::array<double, nquad> &L = polynomial_coefficients[iquad];
 
     // evaluate integral at integral_end and integral_start
     double result = 0;

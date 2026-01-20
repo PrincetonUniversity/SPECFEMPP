@@ -32,17 +32,30 @@ public:
       specfem::connections::type::nonconforming;
   /// View type for storing intersection scaling factors
 private:
+  // ======================================================================================
+  /**
+   * @brief helper to unpack [Axes][...]
+   *
+   * ViewInternalType<T,Axis1, ..., Axisk>::type = T[Axis1]...[Axisk]
+   */
   template <typename LeftType, int... RemainingAxes> struct ViewInternalType;
 
+  // stitch in axis recursively.
   template <typename LeftType, int Axis, int... RemainingAxes>
   struct ViewInternalType<LeftType, Axis, RemainingAxes...> {
+
+    // I would have thought it would be
+    // ViewInternalType<LeftType[Axis], RemainingAxes...>::type
+    // but this one gave me the correct type:
     using type =
-        typename ViewInternalType<LeftType[Axis], RemainingAxes...>::type;
+        typename ViewInternalType<LeftType, RemainingAxes...>::type[Axis];
   };
 
+  // base case (recursive termination)
   template <typename LeftType> struct ViewInternalType<LeftType> {
     using type = LeftType;
   };
+  // ======================================================================================
 
 public:
   using DataViewType =

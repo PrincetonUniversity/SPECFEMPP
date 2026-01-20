@@ -22,7 +22,7 @@ public:
 
 public:
   KOKKOS_FUNCTION LagrangeDerivative2D() = default;
-  KOKKOS_FUNCTION LagrangeDerivative2D(const std::string &name)
+  LagrangeDerivative2D(const std::string &name)
       : xi(name + "(xi)"), gamma(name + "(gamma)") {
 
     auto h_xi = Kokkos::create_mirror_view(xi);
