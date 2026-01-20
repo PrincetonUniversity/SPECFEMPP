@@ -143,9 +143,6 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
 #endif
           for (int iquad = 0; iquad < nquad_intersection; iquad++) {
 
-#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
-#pragma unroll
-#endif
             // dshape_dn, local-normal derivative (derivative of
             // normal-direction L, which is normally kronecker delta
             // indicating on edge)
@@ -163,6 +160,9 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
                   intersection_normal_contravariant_edgelocal(iedge, iquad, 1) *
                   transfer_function_self_derivative(iedge, ipoint_s, iquad);
             }
+#if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+#pragma unroll
+#endif
             for (int icomp = 0; icomp < ncomp; icomp++) {
               result(icomp) += intersection_field(iedge, iquad, icomp) *
                                intersection_factor(iedge, iquad) * dshape_dn;
