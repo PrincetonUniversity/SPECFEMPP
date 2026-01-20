@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../impl/descriptions.hpp"
-#include "Serial/Kokkos_Serial_Parallel_Range.hpp"
 #include "initializers.hpp"
 #include "specfem_setup.hpp"
 
