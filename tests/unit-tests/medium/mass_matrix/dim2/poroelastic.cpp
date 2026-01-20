@@ -1,4 +1,4 @@
-#include "medium/compute_mass_matrix.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <cmath>
 #include <gtest/gtest.h>

@@ -1,4 +1,4 @@
-#include "medium/compute_coupling.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>

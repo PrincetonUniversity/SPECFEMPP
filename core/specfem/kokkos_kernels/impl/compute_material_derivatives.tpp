@@ -3,7 +3,7 @@
 #include "specfem/algorithms.hpp"
 #include "compute_material_derivatives.hpp"
 #include "specfem/execution.hpp"
-#include "medium/compute_frechet_derivatives.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/chunk_element.hpp"

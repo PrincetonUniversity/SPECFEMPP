@@ -6,7 +6,7 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "medium/compute_source.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"

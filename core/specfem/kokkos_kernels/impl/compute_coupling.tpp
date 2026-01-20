@@ -5,7 +5,7 @@
 #include "enumerations/connections.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/execution.hpp"
-#include "medium/compute_coupling.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"

@@ -1,6 +1,6 @@
 #include "enumerations/interface.hpp"
 #include "enumerations/wavefield.hpp"
-#include "medium/compute_source.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>

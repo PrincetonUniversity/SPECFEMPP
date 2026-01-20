@@ -6,7 +6,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/execution.hpp"
-#include "medium/compute_mass_matrix.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/assembly.hpp"
