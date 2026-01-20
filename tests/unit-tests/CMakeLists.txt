@@ -632,16 +632,16 @@ add_executable(
 
 target_link_libraries(
   coupling_integral_tests
-  algorithms
+  specfem::algorithms
   enumerations
-  mesh
+  specfem::mesh
   assembly
   gtest_main
   Kokkos::kokkos
   specfem_environment
-  utilities
+  specfem::utilities
 
-  quadrature
+  specfem::quadrature
   yaml-cpp
   -lpthread -lm
 )

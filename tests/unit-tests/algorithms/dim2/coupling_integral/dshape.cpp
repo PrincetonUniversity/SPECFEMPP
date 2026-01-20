@@ -1,7 +1,7 @@
 #include "Kokkos_Core.hpp"
 #include "Kokkos_Core_fwd.hpp"
-#include "algorithms/integrate/coupling_integral1d_dnshape.hpp"
 #include "enumerations/dim2/mesh_entities.hpp"
+#include "specfem/algorithms/coupling_integral1d_dnshape.hpp"
 #include "specfem/chunk_edge.hpp"
 
 #include "utilities/include/fixture/impl/accessors.hpp"
