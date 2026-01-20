@@ -1,11 +1,9 @@
 #pragma once
 
-#include "Kokkos_Core.hpp"
 #include "enumerations/coupled_interface.hpp"
 #include "enumerations/medium.hpp"
 #include "specfem/data_access/accessor.hpp"
 #include "specfem/data_access/data_class.hpp"
-#include <type_traits>
 namespace specfem::test_fixture::impl {
 
 /**

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Kokkos_Core.hpp"
+#include "../impl/descriptions.hpp"
 #include "initializers.hpp"
 #include "specfem_setup.hpp"
 
@@ -14,7 +14,7 @@ template <typename QuadraturePointsType> struct QuadratureRule {
   static_assert(std::is_base_of_v<QuadraturePoints::QuadraturePoints,
                                   QuadraturePointsType>,
                 "QuadratureRule template parameter expects QuadraturePoints!");
-
+  using QuadraturePoints = QuadraturePointsType;
   static constexpr int nquad = QuadraturePointsType::nquad;
   static constexpr std::array<double, nquad> quadrature_points =
       QuadraturePointsType::quadrature_points;
@@ -130,7 +130,7 @@ template <typename QuadraturePointsType> struct QuadratureRule {
    * @return double the value L'[iquad] (x).
    */
   static constexpr double evaluate_lagrange_derivative(const int &iquad,
-                                                       const type_real &x) {
+                                                       const double &x) {
     double result = 0;
     double xpow = 1;
     for (int ideg = 0; ideg < nquad - 1; ++ideg) {
@@ -139,19 +139,34 @@ template <typename QuadraturePointsType> struct QuadratureRule {
     }
     return result;
   }
+
+  static std::string description(const int &indent = 0) {
+    return specfem::test_fixture::impl::description<QuadraturePoints>::get(
+        indent);
+  }
+  static std::string quadrature_name() {
+    return specfem::test_fixture::impl::name<QuadraturePoints>::get();
+  }
 };
 namespace QuadraturePoints {
 
 struct GLL1 : QuadraturePoints {
   static constexpr int nquad = 2;
   static constexpr std::array<double, nquad> quadrature_points = { -1, 1 };
-
-  static std::string description() { return "GLL1 (-1, 1)"; }
+  static std::string name() { return "GLL1"; }
+  static std::string description() {
+    return ("2-point GLL quadrature (exactness to x^1)\n"
+            "  points = [-1, 1]");
+  }
 };
 struct GLL2 : QuadraturePoints {
   static constexpr int nquad = 3;
   static constexpr std::array<double, nquad> quadrature_points = { -1, 0, 1 };
-  static std::string description() { return "GLL2 (-1, 0, 1)"; }
+  static std::string name() { return "GLL2"; }
+  static std::string description() {
+    return ("3-point GLL quadrature (exactness to x^3)\n"
+            "  points = [-1, 0, 1]");
+  }
 };
 
 struct Asymm5Point : QuadraturePoints {
@@ -159,18 +174,22 @@ struct Asymm5Point : QuadraturePoints {
   static constexpr std::array<double, nquad> quadrature_points = { -1, -0.8,
                                                                    -0.5, 0.2,
                                                                    0.7 };
+  static std::string name() { return "Asymm5"; }
   static std::string description() {
-    return "5 point asymmetric (low exactness interpolating quadrature for "
-           "testing)";
+    return ("5 point asymmetric quadrature rule (low exactness interpolating "
+            "quadrature for testing)\n"
+            "  points = [-1, -0.8, -0.5, 0.2, 0.7]");
   }
 };
 struct Asymm4Point : QuadraturePoints {
   static constexpr int nquad = 4;
   static constexpr std::array<double, nquad> quadrature_points = { -0.3, 0, 0.4,
                                                                    0.6 };
+  static std::string name() { return "Asymm4"; }
   static std::string description() {
-    return "4 point asymmetric (low exactness interpolating quadrature for "
-           "testing)";
+    return ("4 point asymmetric quadrature rule (low exactness interpolating "
+            "quadrature for testing)\n"
+            "  points = [-0.3, 0, 0.4, -0.6]");
   }
 };
 struct GL6 : QuadraturePoints {
@@ -190,7 +209,7 @@ struct GL6 : QuadraturePoints {
   };
   static std::string name() { return "GL6"; }
   static std::string description() {
-    return "Degree-6 Gauss-Legendre (11 degrees of exactness)";
+    return "7 Point (degree-6) Gauss-Legendre (11 degrees of exactness)";
   }
 };
 
