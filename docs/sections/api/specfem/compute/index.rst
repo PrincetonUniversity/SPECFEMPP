@@ -7,11 +7,20 @@
 .. doxygennamespace:: specfem::compute
     :desc-only:
 
-``specfem::compute::Domain``
-----------------------------
+``specfem::compute::initialize_mass_matrix``
+--------------------------------------------
 
-.. doxygenclass:: specfem::compute::Domain
-    :members:
+.. doxygenfunction:: specfem::compute::initialize_mass_matrix
+
+``specfem::compute::update_wavefields``
+---------------------------------------
+
+.. doxygenfunction:: specfem::compute::update_wavefields
+
+``specfem::compute::compute_seismograms``
+-----------------------------------------
+
+.. doxygenfunction:: specfem::compute::compute_seismograms
 
 ``specfem::compute::compute_derivatives``
 -----------------------------------------
