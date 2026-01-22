@@ -13,11 +13,10 @@
 .. doxygenclass:: specfem::compute::Domain
     :members:
 
-``specfem::compute::Frechet``
------------------------------
+``specfem::compute::compute_derivatives``
+-----------------------------------------
 
-.. doxygenclass:: specfem::compute::Frechet
-    :members:
+.. doxygenfunction:: specfem::compute::compute_derivatives
 
 Implementation Details
 ^^^^^^^^^^^^^^^^^^^^^^

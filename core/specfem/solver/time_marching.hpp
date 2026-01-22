@@ -137,8 +137,8 @@ public:
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<std::shared_ptr<
           specfem::periodic_tasks::periodic_task<dimension_tag> > > &tasks)
-      : assembly(assembly), adjoint_(adjoint), frechet_(assembly),
-        backward_(backward), time_scheme(time_scheme), tasks(tasks) {}
+      : assembly(assembly), adjoint_(adjoint), backward_(backward),
+        time_scheme(time_scheme), tasks(tasks) {}
   ///@}
 
   /**
@@ -176,10 +176,8 @@ private:
                            DimensionTag,
                            NGLL>
       backward_; ///< Backward computational kernels
-  specfem::compute::Frechet<DimensionTag, NGLL> frechet_; ///< Misfit
-                                                          ///< kernels
-  specfem::assembly::assembly<dimension_tag> assembly;    ///< Spectral element
-                                                          ///< assembly object
+  specfem::assembly::assembly<dimension_tag> assembly; ///< Spectral element
+                                                       ///< assembly object
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
   std::vector<

@@ -2,6 +2,7 @@
 
 #include "specfem/solver/time_marching.hpp"
 #include "specfem/timescheme/newmark.hpp"
+#include "specfem/compute.hpp"
 #include "specfem/logger.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -218,7 +219,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
                                   assembly.fields.buffer);
     }
 
-    frechet_.compute_derivatives(dt);
+    specfem::compute::compute_derivatives<DimensionTag, NGLL>(assembly, dt);
 
     if (time_scheme->compute_seismogram(istep)) {
       // compute seismogram for backward time step
