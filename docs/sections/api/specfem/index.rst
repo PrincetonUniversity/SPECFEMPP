@@ -17,7 +17,7 @@
     execution/index
     io/index
     jacobian/index
-    kokkos_kernels/index
+    compute/index
     macros/index
     mesh/index
     mpi/index

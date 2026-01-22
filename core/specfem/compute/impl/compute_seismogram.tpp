@@ -19,7 +19,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field SimulationFieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-void specfem::kokkos_kernels::impl::compute_seismograms(
+void specfem::compute::impl::compute_seismograms(
     specfem::assembly::assembly<DimensionTag> &assembly, const int &isig_step) {
 
   constexpr auto dimension_tag = DimensionTag;
@@ -127,7 +127,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
     const auto wavefield_type = seismogram_types[iseis];
 
     specfem::execution::for_each_level(
-        "specfem::kokkos_kernels::compute_seismograms",
+        "specfem::compute::compute_seismograms",
         chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
         KOKKOS_LAMBDA(const typename decltype(chunk)::index_type &chunk_iterator_index) {
           const auto &chunk_index = chunk_iterator_index.get_index();

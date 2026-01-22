@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/kokkos_kernels.hpp"
+#include "specfem/compute.hpp"
 #include "specfem/solver.hpp"
 #include "specfem/timescheme/newmark.hpp"
 #include <iostream>
@@ -16,7 +16,7 @@ specfem::runtime_configuration::solver::solver::instantiate(
 
   if (specfem::utilities::is_forward_string(this->simulation_type)) {
     const auto kernels =
-        specfem::kokkos_kernels::Domain<specfem::wavefield::simulation_field::forward,
+        specfem::compute::Domain<specfem::wavefield::simulation_field::forward,
                                   DimensionTag, NGLL>(
             assembly);
     return std::make_shared<
@@ -31,10 +31,10 @@ specfem::runtime_configuration::solver::solver::instantiate(
     }
 
     const auto adjoint =
-        specfem::kokkos_kernels::Domain<specfem::wavefield::simulation_field::adjoint,
+        specfem::compute::Domain<specfem::wavefield::simulation_field::adjoint,
                                                 DimensionTag, NGLL>(
             assembly);
-    const auto backward = specfem::kokkos_kernels::Domain<
+    const auto backward = specfem::compute::Domain<
         specfem::wavefield::simulation_field::backward,
         DimensionTag, NGLL>(assembly);
     return std::make_shared<

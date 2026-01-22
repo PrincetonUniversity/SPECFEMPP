@@ -1,22 +1,22 @@
 
 .. _kokkos_kernels:
 
-``specfem::kokkos_kernels``
+``specfem::compute``
 ===========================
 
-.. doxygennamespace:: specfem::kokkos_kernels
+.. doxygennamespace:: specfem::compute
     :desc-only:
 
-``specfem::kokkos_kernels::Domain``
+``specfem::compute::Domain``
 -----------------------------------
 
-.. doxygenclass:: specfem::kokkos_kernels::Domain
+.. doxygenclass:: specfem::compute::Domain
     :members:
 
-``specfem::kokkos_kernels::Frechet``
+``specfem::compute::Frechet``
 ------------------------------------
 
-.. doxygenclass:: specfem::kokkos_kernels::Frechet
+.. doxygenclass:: specfem::compute::Frechet
     :members:
 
 Implementation Details

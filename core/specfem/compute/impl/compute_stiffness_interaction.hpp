@@ -6,7 +6,7 @@
 #include "specfem/assembly.hpp"
 
 namespace specfem {
-namespace kokkos_kernels {
+namespace compute {
 namespace impl {
 
 /**
@@ -40,5 +40,5 @@ int compute_stiffness_interaction(
     const specfem::assembly::assembly<DimensionTag> &assembly,
     const int &istep);
 } // namespace impl
-} // namespace kokkos_kernels
+} // namespace compute
 } // namespace specfem

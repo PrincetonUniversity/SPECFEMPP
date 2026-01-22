@@ -7,7 +7,7 @@
 #include "specfem/macros.hpp"
 
 namespace specfem {
-namespace kokkos_kernels {
+namespace compute {
 
 /**
  * @brief Compute kernels used to compute Frechet derivatives.
@@ -56,5 +56,5 @@ private:
    */
   specfem::assembly::assembly<dimension_tag> assembly;
 };
-} // namespace kokkos_kernels
+} // namespace compute
 } // namespace specfem

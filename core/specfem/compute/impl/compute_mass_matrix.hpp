@@ -6,7 +6,7 @@
 #include "specfem/assembly.hpp"
 
 namespace specfem {
-namespace kokkos_kernels {
+namespace compute {
 namespace impl {
 
 /**
@@ -36,5 +36,5 @@ void compute_mass_matrix(
     const type_real &dt,
     const specfem::assembly::assembly<DimensionTag> &assembly);
 } // namespace impl
-} // namespace kokkos_kernels
+} // namespace compute
 } // namespace specfem

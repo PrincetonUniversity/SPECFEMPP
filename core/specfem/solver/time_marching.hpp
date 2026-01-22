@@ -4,7 +4,7 @@
 #include "enumerations/simulation.hpp"
 #include "enumerations/wavefield.hpp"
 #include "solver.hpp"
-#include "specfem/kokkos_kernels.hpp"
+#include "specfem/compute.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/timescheme.hpp"
 
@@ -50,7 +50,7 @@ public:
    * @param assembly Spectral element assembly containing mesh and field data
    */
   time_marching(
-      const specfem::kokkos_kernels::Domain<
+      const specfem::compute::Domain<
           specfem::wavefield::simulation_field::forward, DimensionTag, NGLL>
           &kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
@@ -85,9 +85,9 @@ public:
   void run() override;
 
 private:
-  specfem::kokkos_kernels::Domain<specfem::wavefield::simulation_field::forward,
-                                  DimensionTag,
-                                  NGLL>
+  specfem::compute::Domain<specfem::wavefield::simulation_field::forward,
+                           DimensionTag,
+                           NGLL>
       kernels; ///< Computational kernels
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
@@ -128,10 +128,10 @@ public:
    */
   time_marching(
       const specfem::assembly::assembly<dimension_tag> &assembly,
-      const specfem::kokkos_kernels::Domain<
+      const specfem::compute::Domain<
           specfem::wavefield::simulation_field::adjoint, DimensionTag, NGLL>
           &adjoint,
-      const specfem::kokkos_kernels::Domain<
+      const specfem::compute::Domain<
           specfem::wavefield::simulation_field::backward, DimensionTag, NGLL>
           &backward,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
@@ -168,18 +168,18 @@ public:
   void run() override;
 
 private:
-  specfem::kokkos_kernels::Domain<specfem::wavefield::simulation_field::adjoint,
-                                  DimensionTag,
-                                  NGLL>
+  specfem::compute::Domain<specfem::wavefield::simulation_field::adjoint,
+                           DimensionTag,
+                           NGLL>
       adjoint_; ///< Adjoint computational kernels
-  specfem::kokkos_kernels::Domain<
-      specfem::wavefield::simulation_field::backward, DimensionTag,
-      NGLL>
+  specfem::compute::Domain<specfem::wavefield::simulation_field::backward,
+                           DimensionTag,
+                           NGLL>
       backward_; ///< Backward computational kernels
-  specfem::kokkos_kernels::Frechet<DimensionTag, NGLL> frechet_; ///< Misfit
-                                                                 ///< kernels
-  specfem::assembly::assembly<dimension_tag> assembly; ///< Spectral element
-                                                       ///< assembly object
+  specfem::compute::Frechet<DimensionTag, NGLL> frechet_; ///< Misfit
+                                                          ///< kernels
+  specfem::assembly::assembly<dimension_tag> assembly;    ///< Spectral element
+                                                          ///< assembly object
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
   std::vector<

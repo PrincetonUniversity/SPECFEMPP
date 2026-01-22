@@ -24,7 +24,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
-int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
+int specfem::compute::impl::compute_stiffness_interaction(
     const specfem::assembly::assembly<DimensionTag> &assembly,
     const int &istep) {
 
@@ -121,7 +121,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                     specfem::wavefield::simulation_field::backward) {
 
     specfem::execution::for_all(
-        "specfem::kokkos_kernels::compute_stiffness_interaction", chunk,
+        "specfem::compute::compute_stiffness_interaction", chunk,
         KOKKOS_LAMBDA(
             const typename decltype(chunk)::base_index_type &iterator_index) {
             const auto index = iterator_index.get_index();
@@ -134,7 +134,7 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   } else {
 
     specfem::execution::for_each_level(
-        "specfem::kokkos_kernels::compute_stiffness_interaction",
+        "specfem::compute::compute_stiffness_interaction",
         chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
         KOKKOS_LAMBDA(
             const typename decltype(chunk)::index_type &chunk_iterator_index) {

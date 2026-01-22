@@ -6,7 +6,7 @@
 #include "specfem/assembly.hpp"
 
 namespace specfem {
-namespace kokkos_kernels {
+namespace compute {
 namespace impl {
 /**
  * @brief Compute the inverse of the mass matrix for a given medium type.
@@ -27,5 +27,5 @@ void invert_mass_matrix(
     const specfem::assembly::assembly<DimensionTag> &assembly);
 } // namespace impl
 
-} // namespace kokkos_kernels
+} // namespace compute
 } // namespace specfem

@@ -798,7 +798,7 @@ target_link_libraries(
   timescheme
   point
   specfem::algorithms
-  specfem::kokkos_kernels
+  specfem::compute
   specfem::solver
   specfem::periodic_tasks
   boost
@@ -824,7 +824,7 @@ target_link_libraries(
   timescheme
   point
   specfem::algorithms
-  specfem::kokkos_kernels
+  specfem::compute
   specfem::solver
   specfem::periodic_tasks
   boost

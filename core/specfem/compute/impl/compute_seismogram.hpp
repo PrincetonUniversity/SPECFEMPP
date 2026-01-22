@@ -6,7 +6,7 @@
 #include "specfem/assembly.hpp"
 
 namespace specfem {
-namespace kokkos_kernels {
+namespace compute {
 namespace impl {
 /**
  * @brief Compute the seismograms for the given medium.
@@ -33,5 +33,5 @@ void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
                          const int &isig_step);
 
 } // namespace impl
-} // namespace kokkos_kernels
+} // namespace compute
 } // namespace specfem

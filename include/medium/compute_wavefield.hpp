@@ -18,7 +18,7 @@ namespace medium {
  * pressure, stress, etc.) from intrinsic field values at GLL nodes for
  * different medium types using medium-specific implementations.
  *
- * @see specfem::kokkos_kernels::impl::compute_seismograms for usage example.
+ * @see specfem::compute::impl::compute_seismograms for usage example.
  *
  * @tparam DimensionTag Spatial dimension (dim2/dim3)
  * @tparam MediumTag Medium type (acoustic, elastic, poroelastic)

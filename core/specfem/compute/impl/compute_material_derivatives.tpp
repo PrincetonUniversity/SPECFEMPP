@@ -13,7 +13,7 @@
 template <specfem::dimension::type DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-void specfem::kokkos_kernels::impl::compute_material_derivatives(
+void specfem::compute::impl::compute_material_derivatives(
     const specfem::assembly::assembly<DimensionTag> &assembly,
     const type_real &dt) {
   auto &properties = assembly.properties;
@@ -84,7 +84,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
                                                   element_grid);
 
   specfem::execution::for_each_level(
-      "specfem::kokkos_kernels::compute_material_derivatives",
+      "specfem::compute::compute_material_derivatives",
       chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_LAMBDA(
           const typename decltype(chunk)::index_type &chunk_iterator_index) {

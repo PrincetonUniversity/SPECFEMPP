@@ -18,7 +18,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
-void specfem::kokkos_kernels::impl::compute_mass_matrix(
+void specfem::compute::impl::compute_mass_matrix(
     const type_real &dt,
     const specfem::assembly::assembly<DimensionTag> &assembly) {
 
@@ -91,7 +91,7 @@ void specfem::kokkos_kernels::impl::compute_mass_matrix(
                                                   element_grid);
 
   specfem::execution::for_all(
-      "specfem::kokkos_kernels::compute_mass_matrix", chunk,
+      "specfem::compute::compute_mass_matrix", chunk,
       KOKKOS_LAMBDA(const typename decltype(chunk)::base_index_type &iterator_index) {
         const auto index = iterator_index.get_index();
         PointPropertyType point_property;

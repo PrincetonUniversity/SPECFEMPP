@@ -21,7 +21,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>
-void specfem::kokkos_kernels::impl::compute_coupling(
+void specfem::compute::impl::compute_coupling(
     std::integral_constant<
         specfem::connections::type,
         specfem::connections::type::weakly_conforming> /*unused*/,
@@ -77,7 +77,7 @@ void specfem::kokkos_kernels::impl::compute_coupling(
       parallel_config(), self_edges, coupled_edges);
 
   specfem::execution::for_all(
-      "specfem::kokkos_kernels::impl::compute_coupling", chunk,
+      "specfem::compute::impl::compute_coupling", chunk,
       KOKKOS_LAMBDA(
           const typename decltype(chunk)::base_index_type &iterator_index) {
         const auto index = iterator_index.get_index();
@@ -118,7 +118,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>
-void specfem::kokkos_kernels::impl::compute_coupling(
+void specfem::compute::impl::compute_coupling(
     std::integral_constant<
         specfem::connections::type,
         specfem::connections::type::nonconforming> /*unused*/,
@@ -191,7 +191,7 @@ void specfem::kokkos_kernels::impl::compute_coupling(
       InterfaceFieldViewType::shmem_size() + IntegrationFactor::shmem_size();
 
   specfem::execution::for_each_level(
-      "specfem::kokkos_kernels::impl::compute_coupling",
+      "specfem::compute::impl::compute_coupling",
       chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_LAMBDA(
           const typename decltype(chunk)::index_type &chunk_iterator_index) {
@@ -253,7 +253,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>
-void specfem::kokkos_kernels::impl::compute_coupling(
+void specfem::compute::impl::compute_coupling(
     const specfem::assembly::assembly<DimensionTag> &assembly) {
   // Create dispatch tag for connection type
   using connection_dispatch =

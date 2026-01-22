@@ -17,7 +17,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
-void specfem::kokkos_kernels::impl::compute_source_interaction(
+void specfem::compute::impl::compute_source_interaction(
     specfem::assembly::assembly<DimensionTag> &assembly, const int &timestep) {
 
   constexpr auto medium_tag = MediumTag;
@@ -82,7 +82,7 @@ void specfem::kokkos_kernels::impl::compute_source_interaction(
   Kokkos::Profiling::pushRegion("Compute Source Interaction");
 
   specfem::execution::for_all(
-      "specfem::kokkos_kernels::compute_source_interaction", mapped_policy,
+      "specfem::compute::compute_source_interaction", mapped_policy,
       KOKKOS_LAMBDA(const typename decltype(mapped_policy)::base_index_type &iterator_index) {
         const auto mapped_index = iterator_index.get_index();
         PointSourceType point_source;

@@ -6,7 +6,7 @@
 #include "specfem/assembly.hpp"
 
 namespace specfem {
-namespace kokkos_kernels {
+namespace compute {
 namespace impl {
 /**
  * @brief Compute the source interaction for the given medium.
@@ -34,5 +34,5 @@ template <specfem::dimension::type DimensionTag,
 void compute_source_interaction(
     specfem::assembly::assembly<DimensionTag> &assembly, const int &timestep);
 } // namespace impl
-} // namespace kokkos_kernels
+} // namespace compute
 } // namespace specfem

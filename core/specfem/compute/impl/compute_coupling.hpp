@@ -4,7 +4,7 @@
 #include "specfem/assembly.hpp"
 #include <type_traits>
 
-namespace specfem::kokkos_kernels::impl {
+namespace specfem::compute::impl {
 
 template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType,
@@ -53,4 +53,4 @@ template <specfem::dimension::type DimensionTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>
 void compute_coupling(
     const specfem::assembly::assembly<DimensionTag> &assembly);
-} // namespace specfem::kokkos_kernels::impl
+} // namespace specfem::compute::impl

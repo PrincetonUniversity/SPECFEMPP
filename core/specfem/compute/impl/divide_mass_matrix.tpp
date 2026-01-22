@@ -1,15 +1,15 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
-#include "specfem/parallel_configuration.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/parallel_configuration.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionTag,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
-void specfem::kokkos_kernels::impl::invert_mass_matrix(
+void specfem::compute::impl::divide_mass_matrix(
     const specfem::assembly::assembly<DimensionTag> &assembly) {
 
   constexpr auto medium_tag = MediumTag;
@@ -26,7 +26,9 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
   constexpr bool using_simd = (DimensionTag == specfem::dimension::type::dim2) ? true : false;
 #endif
 
-  using PointMassType =
+  using PointAccelerationType =
+      specfem::point::acceleration<dimension, medium_tag, using_simd>;
+  using PointMassInverseType =
       specfem::point::mass_inverse<dimension, medium_tag, using_simd>;
 
   using parallel_config = specfem::parallel_configuration::default_range_config<
@@ -37,18 +39,26 @@ void specfem::kokkos_kernels::impl::invert_mass_matrix(
 
   specfem::execution::RangeIterator range(parallel_config(), nglob);
 
+  Kokkos::Profiling::pushRegion("Divide Mass Matrix");
+
   specfem::execution::for_all(
-      "specfem::kokkos_kernels::divide_mass_matrix", range,
+      "specfem::compute::divide_mass_matrix", range,
       KOKKOS_LAMBDA(const typename decltype(range)::base_index_type &iterator_index) {
         const auto index = iterator_index.get_index();
-        PointMassType mass;
-        specfem::assembly::load_on_device(index, field, mass);
-        for (int icomp = 0; icomp < PointMassType::components;
+        PointAccelerationType acceleration;
+        PointMassInverseType mass_inverse;
+        specfem::assembly::load_on_device(index, field, acceleration,
+                                          mass_inverse);
+        for (int icomp = 0; icomp < PointAccelerationType::components;
              ++icomp) {
-          mass(icomp) = static_cast<type_real>(1.0) / mass(icomp);
+          acceleration(icomp) *= mass_inverse(icomp);
         }
-        specfem::assembly::store_on_device(index, field, mass);
+        specfem::assembly::store_on_device(index, field, acceleration);
       });
 
+  Kokkos::Profiling::popRegion();
+
   // Kokkos::fence();
+
+  return;
 }

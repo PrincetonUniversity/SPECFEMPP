@@ -20,7 +20,7 @@ namespace specfem {
  * various computing architectures including CPUs, GPUs, and other accelerators.
  *
  */
-namespace kokkos_kernels {
+namespace compute {
 
 /**
  * @brief Class to compute the domain kernels for the simulation
@@ -212,5 +212,5 @@ private:
   specfem::assembly::assembly<dimension_tag> assembly;
 };
 
-} // namespace kokkos_kernels
+} // namespace compute
 } // namespace specfem
