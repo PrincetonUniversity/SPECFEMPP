@@ -29,7 +29,7 @@ void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       {
         if constexpr (DimensionTag == _dimension_tag_) {
-          impl::compute_seismograms<DimensionTag, WavefieldType, NGLL,
+          impl::compute_seismograms<WavefieldType, DimensionTag, NGLL,
                                     _medium_tag_, _property_tag_>(assembly,
                                                                   isig_step);
         }

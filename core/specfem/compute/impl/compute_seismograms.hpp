@@ -15,8 +15,8 @@ namespace impl {
  * properties. It is specialized for different dimension tags, wavefield types,
  * medium tags, and property tags.
  *
- * @tparam DimensionTag Spatial dimension (2D/3D)
  * @tparam WavefieldType Simulation wavefield type (e.g., forward, adjoint,
+ * @tparam DimensionTag Spatial dimension (2D/3D)
  * backward)
  * @tparam NGLL Number of GLL points
  * @tparam MediumTag Medium type (e.g., elastic, acoustic)
@@ -25,8 +25,8 @@ namespace impl {
  * @param assembly SPECFEM++ assembly object.
  * @param isig_step Time step for which the seismograms are computed
  */
-template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field WavefieldType, int NGLL,
+template <specfem::wavefield::simulation_field WavefieldType,
+          specfem::dimension::type DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,

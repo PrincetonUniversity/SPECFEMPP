@@ -15,8 +15,9 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field SimulationFieldType, int NGLL,
+template <specfem::wavefield::simulation_field WavefieldType,
+            specfem::dimension::type DimensionTag,
+          int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void specfem::compute::impl::compute_seismograms(
@@ -25,7 +26,7 @@ void specfem::compute::impl::compute_seismograms(
   constexpr auto dimension_tag = DimensionTag;
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
-  constexpr auto wavefield_simulation_field = SimulationFieldType;
+  constexpr auto wavefield_simulation_field = WavefieldType;
   constexpr int ngll = NGLL;
 
   const auto [elements, receiver_indices] =
