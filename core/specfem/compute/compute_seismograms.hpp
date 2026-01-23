@@ -19,9 +19,8 @@ namespace specfem::compute {
  */
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionTag, int NGLL>
-inline void
-compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
-                    const int &isig_step) {
+void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
+                         const int &isig_step) {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3),

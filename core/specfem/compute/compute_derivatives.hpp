@@ -18,9 +18,9 @@ namespace compute {
  * @param dt Time interval.
  */
 template <specfem::dimension::type DimensionTag, int NGLL>
-inline void
-compute_derivatives(const specfem::assembly::assembly<DimensionTag> &assembly,
-                    const type_real &dt) {
+void compute_derivatives(
+    const specfem::assembly::assembly<DimensionTag> &assembly,
+    const type_real &dt) {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),

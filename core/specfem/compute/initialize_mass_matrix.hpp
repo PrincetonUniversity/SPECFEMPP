@@ -20,9 +20,8 @@ namespace specfem::compute {
  */
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionTag, int NGLL>
-inline void
-initialize_mass_matrix(specfem::assembly::assembly<DimensionTag> &assembly,
-                       const type_real &dt) {
+void initialize_mass_matrix(specfem::assembly::assembly<DimensionTag> &assembly,
+                            const type_real &dt) {
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2, DIM3),
                        MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T),

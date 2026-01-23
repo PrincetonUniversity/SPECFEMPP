@@ -27,9 +27,8 @@ namespace specfem::compute {
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag>
-inline int
-update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
-                  const int istep) {
+int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
+                      const int istep) {
 
   int elements_updated = 0;
 
