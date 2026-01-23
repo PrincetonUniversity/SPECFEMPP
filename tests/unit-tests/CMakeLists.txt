@@ -125,6 +125,17 @@ target_link_libraries(
 )
 
 add_executable(
+  compute_tau_sigma_tests
+  attenuation/compute_tau_sigma_tests.cpp
+)
+
+target_link_libraries(
+  compute_tau_sigma_tests
+  gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
   gll_tests
   gll/gll_tests.cpp
 )
@@ -901,6 +912,7 @@ if(NOT MPI_PARALLEL)
   set(TEST_TARGETS
     abort_tests
     assembly_receivers_tests
+    compute_tau_sigma_tests
     assembly_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests
