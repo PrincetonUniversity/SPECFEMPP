@@ -15,7 +15,8 @@
 #include <tuple>
 #include <vector>
 
-namespace {
+namespace specfem::assembly::mesh_impl {
+
 using point = specfem::assembly::mesh_impl::dim2::point;
 using bounding_box = specfem::assembly::mesh_impl::dim2::bounding_box;
 
@@ -101,7 +102,7 @@ build_assembly_adjacency_graph(
 
   return adjacency_graph;
 }
-} // namespace
+} // namespace specfem::assembly::mesh_impl
 
 specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
@@ -154,7 +155,7 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       quadratures.gll.get_N(), control_nodes_in.ngnod);
 
   adjacency_graph =
-      build_assembly_adjacency_graph(nspec, mapping, mesh_adjacency_graph);
+      specfem::assembly::mesh_impl::build_assembly_adjacency_graph(nspec, mapping, mesh_adjacency_graph);
 
   this->assemble();
 }
