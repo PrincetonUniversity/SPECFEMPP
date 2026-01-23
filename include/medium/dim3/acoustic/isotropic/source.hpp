@@ -1,0 +1,35 @@
+#pragma once
+
+#include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
+#include "specfem/point.hpp"
+#include <Kokkos_Core.hpp>
+
+namespace specfem::medium {
+
+template <typename PointSourceType, typename PointPropertiesType>
+KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
+    const std::integral_constant<specfem::dimension::type,
+                                 specfem::dimension::type::dim3> /*unused*/,
+    const std::integral_constant<
+        specfem::element::medium_tag,
+        specfem::element::medium_tag::acoustic> /*unused*/,
+    const std::integral_constant<
+        specfem::element::property_tag,
+        specfem::element::property_tag::isotropic> /*unused*/,
+    const PointSourceType &point_source,
+    const PointPropertiesType &point_properties) {
+  constexpr bool using_simd = PointPropertiesType::simd::using_simd;
+
+  using PointAccelerationType =
+      specfem::point::acceleration<specfem::dimension::type::dim3,
+                                   specfem::element::medium_tag::acoustic,
+                                   using_simd>;
+
+  PointAccelerationType result;
+  result(0) = point_source.stf(0) * point_source.lagrange_interpolant(0) /
+              point_properties.kappa();
+  return result;
+}
+
+} // namespace specfem::medium
