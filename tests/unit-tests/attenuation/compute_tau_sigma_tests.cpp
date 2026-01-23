@@ -1,4 +1,4 @@
-#include "specfem/attenuation/impl/compute_tau_sigma.hpp"
+#include "specfem/attenuation.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
 

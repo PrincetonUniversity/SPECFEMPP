@@ -1,6 +1,7 @@
 # Add existing subdirectories
 add_subdirectory(algorithms)
 add_subdirectory(assembly)
+add_subdirectory(attenuation)
 add_subdirectory(jacobian)
 add_subdirectory(kokkos_kernels)
 add_subdirectory(logger)

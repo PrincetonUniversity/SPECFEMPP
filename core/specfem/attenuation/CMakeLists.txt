@@ -1,15 +1,15 @@
-file(GLOB_RECURSE SPECFEM_ATTENUATION_SOURCE_FILES "./*.cpp")
+# Create header-only interface library for specfem::attenuation
+add_library(specfem_attenuation INTERFACE)
 
-add_library(specfem_attenuation ${SPECFEM_ATTENUATION_SOURCE_FILES})
+# Create alias for consistent naming
 add_library(specfem::attenuation ALIAS specfem_attenuation)
 
-set_target_properties(specfem_attenuation PROPERTIES
-        UNITY_BUILD $<NOT:$<BOOL:${__APPLE__}>>
-        UNITY_BUILD_BATCH_SIZE $<IF:$<BOOL:${__APPLE__}>,0,4>
+# Add include directories so the library can find its headers
+target_include_directories(specfem_attenuation
+    INTERFACE
+        ${CMAKE_SOURCE_DIR}/core
 )
 
-target_link_libraries(
-        specfem_attenuation
-        PRIVATE
+target_link_libraries(specfem_attenuation INTERFACE
         Kokkos::kokkos
 )

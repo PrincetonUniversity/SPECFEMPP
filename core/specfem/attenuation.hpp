@@ -1,2 +1,3 @@
 #pragma once
-#include "impl/compute_tau_sigma.hpp"
+#include "attenuation/compute_tau_sigma.hpp"
+#include "attenuation/compute_tau_sigma.tpp"

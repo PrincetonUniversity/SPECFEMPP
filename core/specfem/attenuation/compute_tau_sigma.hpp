@@ -21,7 +21,7 @@ namespace attenuation {
  */
 template <int N_SLS>
 Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-compute_tau_sigma(const type_real min_period, const type_real max_period)
+compute_tau_sigma(const type_real min_period, const type_real max_period);
 
 } // namespace attenuation
 } // namespace specfem

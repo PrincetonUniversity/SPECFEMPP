@@ -1,5 +1,5 @@
 #pragma once
-
+#include "compute_tau_sigma.hpp"
 #include "constants.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -10,7 +10,7 @@ namespace attenuation {
 
 template <int N_SLS>
 Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-specfem::attenuation::compute_tau_sigma(const type_real min_period, const type_real max_period) {
+compute_tau_sigma(const type_real min_period, const type_real max_period) {
 
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace> tau_s(
       "tau_sigma");

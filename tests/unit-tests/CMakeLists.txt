@@ -133,6 +133,7 @@ add_executable(
 target_link_libraries(
   attenuation_tests
   gtest_main
+  specfem::attenuation
   Kokkos::kokkos
 )
 
