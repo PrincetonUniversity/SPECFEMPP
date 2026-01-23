@@ -125,12 +125,13 @@ target_link_libraries(
 )
 
 add_executable(
-  compute_tau_sigma_tests
+  attenuation_tests
+  attenuation/runner.cpp
   attenuation/compute_tau_sigma_tests.cpp
 )
 
 target_link_libraries(
-  compute_tau_sigma_tests
+  attenuation_tests
   gtest_main
   Kokkos::kokkos
 )
@@ -904,16 +905,14 @@ target_link_libraries(
 # )
 
 
-
-
 # Link to gtest only if MPI is disabled
 if(NOT MPI_PARALLEL)
   include(GoogleTest)
   set(TEST_TARGETS
     abort_tests
     assembly_receivers_tests
-    compute_tau_sigma_tests
     assembly_tests
+    attenuation_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests
     # compute_elastic_tests
