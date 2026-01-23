@@ -23,3 +23,9 @@
 
 .. doxygengroup:: specfem_medium_dim3_compute_mass_matrix_elastic
     :content-only:
+
+3D Acoustic Mass Matrix Computation
+===================================
+
+.. doxygengroup:: specfem_medium_dim3_compute_mass_matrix_acoustic
+    :content-only:
