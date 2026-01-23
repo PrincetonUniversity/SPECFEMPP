@@ -8,7 +8,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace {
+namespace specfem::assembly::simulation_fields_impl {
 template <typename ViewType> int compute_nglob3D(const ViewType index_mapping) {
   const int nspec = index_mapping.extent(0);
   const int ngllz = index_mapping.extent(1);
@@ -29,7 +29,7 @@ template <typename ViewType> int compute_nglob3D(const ViewType index_mapping) {
 
   return nglob + 1;
 }
-} // namespace
+} // namespace specfem::assembly::simulation_fields_impl
 
 template <specfem::wavefield::simulation_field WavefieldType>
 specfem::assembly::simulation_field<specfem::dimension::type::dim3,
@@ -38,7 +38,7 @@ specfem::assembly::simulation_field<specfem::dimension::type::dim3,
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::assembly::element_types<dimension_tag> &element_types) {
 
-  nglob = compute_nglob3D(mesh.h_index_mapping);
+  nglob = specfem::assembly::simulation_fields_impl::compute_nglob3D(mesh.h_index_mapping);
   this->index_mapping = mesh.index_mapping;
   this->h_index_mapping = mesh.h_index_mapping;
 

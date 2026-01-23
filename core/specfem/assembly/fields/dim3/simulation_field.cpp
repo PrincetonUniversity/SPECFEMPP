@@ -1,7 +1,6 @@
 #include "simulation_field.tpp"
 #include "enumerations/interface.hpp"
 #include "specfem/assembly/fields.hpp"
-#include "specfem/assembly/fields/impl/field_impl.tpp"
 
 // Explicitly instantiate the template class
 template class specfem::assembly::simulation_field<
