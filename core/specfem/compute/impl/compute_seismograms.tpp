@@ -2,7 +2,7 @@
 
 #include "specfem/algorithms.hpp"
 #include "specfem/chunk_element.hpp"
-#include "compute_seismogram.hpp"
+#include "compute_seismograms.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/quadrature.hpp"
 #include "enumerations/dimension.hpp"
