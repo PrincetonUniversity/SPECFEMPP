@@ -5,7 +5,6 @@
 
 namespace specfem::point::impl::properties {
 
-
 /**
  * @defgroup specfem_point_properties_dim2_acoustic_isotropic 2D Acoustic
  * Properties
@@ -39,22 +38,21 @@ namespace specfem::point::impl::properties {
  *   @endcode
  *
  */
-template <bool UseSIMD>
-struct data_container<specfem::dimension::type::dim2,
-                      specfem::element::medium_tag::acoustic,
+template <specfem::dimension::type DimensionTag, bool UseSIMD>
+struct data_container<DimensionTag, specfem::element::medium_tag::acoustic,
                       specfem::element::property_tag::isotropic, UseSIMD>
-/// @cond
-    : PropertyAccessor<specfem::dimension::type::dim2,
-                       specfem::element::medium_tag::acoustic,
+    /// @cond
+    : PropertyAccessor<DimensionTag, specfem::element::medium_tag::acoustic,
                        specfem::element::property_tag::isotropic, UseSIMD>
 /// @endcond
 {
 
 private:
-  using base_type = PropertyAccessor<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
-                                                           ///< point properties
+  using base_type =
+      PropertyAccessor<DimensionTag, specfem::element::medium_tag::acoustic,
+                       specfem::element::property_tag::isotropic,
+                       UseSIMD>; ///< Base type of the
+                                 ///< point properties
 public:
   using value_type = typename base_type::value_type; ///< Type of the properties
   using simd = typename base_type::simd;

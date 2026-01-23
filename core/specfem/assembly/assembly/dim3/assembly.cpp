@@ -88,7 +88,9 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::print() const {
   int total_elements = 0;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)), {
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+       PROPERTY_TAG(ISOTROPIC)),
+      {
         // Getting the number of elements per medium
         int n_elements = this->element_types.get_number_of_elements(
             _medium_tag_, _property_tag_);
