@@ -17,7 +17,7 @@ namespace specfem::compute {
  * @param assembly The assembly object containing the mesh and other
  * @param isig_step Time step for which the seismograms are computed
  */
-template <specfem::wavefield::simulation_field WavefieldType,
+template <specfem::simulation::field_type WavefieldType,
           specfem::dimension::type DimensionTag, int NGLL>
 void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
                          const int &isig_step) {

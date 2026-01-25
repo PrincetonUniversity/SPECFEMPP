@@ -18,7 +18,7 @@ namespace specfem::compute {
  * @param assembly The assembly object containing the mesh
  * @param dt Time step for the simulation
  */
-template <specfem::wavefield::simulation_field WavefieldType,
+template <specfem::simulation::field_type WavefieldType,
           specfem::dimension::type DimensionTag, int NGLL>
 void initialize_mass_matrix(specfem::assembly::assembly<DimensionTag> &assembly,
                             const type_real &dt) {

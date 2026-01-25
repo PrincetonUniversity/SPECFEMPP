@@ -28,7 +28,7 @@ namespace impl {
  * @param assembly SPECFEM++ assembly object.
  */
 template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field WavefieldType, int NGLL,
+          specfem::simulation::field_type WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>

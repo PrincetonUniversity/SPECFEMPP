@@ -12,7 +12,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 void check_store(
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
@@ -86,7 +86,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 void check_load(
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
@@ -206,7 +206,7 @@ void check_assembly_source_construction(
 
   using PointSourceType =
       specfem::point::source<DimensionTag, MediumTag,
-                             specfem::wavefield::simulation_field::forward>;
+                             specfem::simulation::field_type::forward>;
 
   const int nsources = sources.size();
   for (int isource = 0; isource < nsources; isource++) {
@@ -305,9 +305,9 @@ void test_sources(specfem::assembly::assembly<specfem::dimension::type::dim2>
                   COMPOSITE_STACEY_DIRICHLET)),
     {
       check_store<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
-                  specfem::wavefield::simulation_field::forward>(assembly);
+                  specfem::simulation::field_type::forward>(assembly);
       check_load<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
-                 specfem::wavefield::simulation_field::forward>(assembly);
+                 specfem::simulation::field_type::forward>(assembly);
     }) }
 
 TEST_F(Assembly2D, sources) {

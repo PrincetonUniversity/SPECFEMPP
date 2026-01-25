@@ -24,7 +24,7 @@ namespace impl {
  *
  */
 template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field WavefieldType,
+          specfem::simulation::field_type WavefieldType,
           specfem::element::medium_tag MediumTag>
 void divide_mass_matrix(
     const specfem::assembly::assembly<DimensionTag> &assembly);

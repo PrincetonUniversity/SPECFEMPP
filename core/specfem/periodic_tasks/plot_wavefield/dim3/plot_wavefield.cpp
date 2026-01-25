@@ -39,7 +39,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
         const specfem::assembly::assembly<dimension_tag> &assembly,
         const specfem::display::format &output_format,
         const specfem::wavefield::type &wavefield_type,
-        const specfem::wavefield::simulation_field &simulation_wavefield_type,
+        const specfem::simulation::field_type &simulation_wavefield_type,
         const specfem::display::component &component, const type_real &dt,
         const int &time_interval, const boost::filesystem::path &output_folder)
     : assembly(assembly), simulation_wavefield_type(simulation_wavefield_type),
@@ -95,7 +95,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim3>::
         const specfem::assembly::assembly<dimension_tag> &assembly,
         const specfem::display::format &output_format,
         const specfem::wavefield::type &wavefield_type,
-        const specfem::wavefield::simulation_field &simulation_wavefield_type,
+        const specfem::simulation::field_type &simulation_wavefield_type,
         const specfem::display::component &component, const type_real &dt,
         const int &time_interval, const boost::filesystem::path &output_folder)
     : assembly(assembly), simulation_wavefield_type(simulation_wavefield_type),

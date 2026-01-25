@@ -158,13 +158,13 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
   const auto simulation_wavefield_type = [&]() {
     if (specfem::utilities::is_forward_string(
             this->simulation_wavefield_type)) {
-      return specfem::wavefield::simulation_field::forward;
+      return specfem::simulation::field_type::forward;
     } else if (specfem::utilities::is_adjoint_string(
                    this->simulation_wavefield_type)) {
-      return specfem::wavefield::simulation_field::adjoint;
+      return specfem::simulation::field_type::adjoint;
     } else if (specfem::utilities::is_backward_string(
                    this->simulation_wavefield_type)) {
-      return specfem::wavefield::simulation_field::backward;
+      return specfem::simulation::field_type::backward;
     } else {
       throw std::runtime_error("Unknown wavefield type in the display section");
     }

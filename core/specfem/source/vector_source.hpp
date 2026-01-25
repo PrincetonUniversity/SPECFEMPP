@@ -37,7 +37,7 @@ namespace sources {
  *     3.5, 7.2,   // coordinates (x, z)
  *     30.0,       // angle in degrees
  *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium where the source is located

@@ -16,7 +16,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
   constexpr auto poroelastic = specfem::element::medium_tag::poroelastic;
   constexpr auto elastic_psv_t = specfem::element::medium_tag::elastic_psv_t;
-  constexpr auto forward = specfem::wavefield::simulation_field::forward;
+  constexpr auto forward = specfem::simulation::field_type::forward;
 
   // Calls to compute mass matrix and invert mass matrix
   specfem::compute::initialize_mass_matrix<forward, DimensionTag, NGLL>(assembly, time_scheme->get_timestep());
@@ -49,7 +49,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
         this->time_scheme->apply_predictor_phase_forward(elastic_psv_t);
     // Update acoustic wavefield:
     // coupling, source interaction, stiffness, divide by mass matrix
-    elements_updated += specfem::compute::update_wavefields<specfem::wavefield::simulation_field::forward, DimensionTag, NGLL, acoustic>(assembly, istep);
+    elements_updated += specfem::compute::update_wavefields<specfem::simulation::field_type::forward, DimensionTag, NGLL, acoustic>(assembly, istep);
 
     // Corrector phase forward for acoustic
     dofs_updated += this->time_scheme->apply_corrector_phase_forward(acoustic);
@@ -140,8 +140,8 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
   constexpr auto elastic_psv = specfem::element::medium_tag::elastic_psv;
   constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
   constexpr auto poroelastic = specfem::element::medium_tag::poroelastic;
-  constexpr auto adjoint = specfem::wavefield::simulation_field::adjoint;
-  constexpr auto backward = specfem::wavefield::simulation_field::backward;
+  constexpr auto adjoint = specfem::simulation::field_type::adjoint;
+  constexpr auto backward = specfem::simulation::field_type::backward;
 
   specfem::compute::initialize_mass_matrix<adjoint, DimensionTag, NGLL>(assembly, time_scheme->get_timestep());
   specfem::compute::initialize_mass_matrix<backward, DimensionTag, NGLL>(assembly, time_scheme->get_timestep());

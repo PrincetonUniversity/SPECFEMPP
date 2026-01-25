@@ -43,7 +43,7 @@ namespace sources {
  *
  * // Adjoint sources always return adjoint wavefield type
  * assert(adj_source.get_wavefield_type() ==
- *        specfem::wavefield::simulation_field::adjoint);
+ *        specfem::simulation::field_type::adjoint);
  * @endcode
  *
  */
@@ -66,8 +66,8 @@ public:
         network_name(Node["network_name"].as<std::string>()),
         vector_source(Node, nsteps, dt) {};
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
-    return specfem::wavefield::simulation_field::adjoint;
+  specfem::simulation::field_type get_wavefield_type() const override {
+    return specfem::simulation::field_type::adjoint;
   }
 
   std::string print() const override;

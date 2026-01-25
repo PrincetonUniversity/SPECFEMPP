@@ -15,7 +15,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::wavefield::simulation_field WavefieldType,
+template <specfem::simulation::field_type WavefieldType,
             specfem::dimension::type DimensionTag,
           int NGLL,
           specfem::element::medium_tag MediumTag,

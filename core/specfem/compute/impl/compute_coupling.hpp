@@ -7,7 +7,7 @@
 namespace specfem::compute::impl {
 
 template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field WavefieldType,
+          specfem::simulation::field_type WavefieldType,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>
@@ -18,7 +18,7 @@ void compute_coupling(
     const specfem::assembly::assembly<DimensionTag> &assembly);
 
 template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field WavefieldType, int NGLL,
+          specfem::simulation::field_type WavefieldType, int NGLL,
           int NQuad_interface, specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>
@@ -47,7 +47,7 @@ void compute_coupling(
  */
 template <specfem::dimension::type DimensionTag,
           specfem::connections::type ConnectionTag,
-          specfem::wavefield::simulation_field WavefieldType, int NGLL,
+          specfem::simulation::field_type WavefieldType, int NGLL,
           int NQuad_interface, specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>

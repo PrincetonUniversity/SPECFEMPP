@@ -51,7 +51,7 @@ Used to explicitly instantiate templates for all combinations of the specified t
         BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY, COMPOSITE_STACEY_DIRICHLET)),
         INSTANTIATE(
             (template void specfem::compute::impl::compute_mass_matrix,
-            (_DIMENSION_TAG_, specfem::wavefield::simulation_field::forward, 5,
+            (_DIMENSION_TAG_, specfem::simulation::field_type::forward, 5,
             _MEDIUM_TAG_, _PROPERTY_TAG_, _BOUNDARY_TAG_),
             (const type_real &, const specfem::assembly::assembly &);)))
 

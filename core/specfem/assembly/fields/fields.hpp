@@ -37,7 +37,7 @@ namespace specfem::assembly {
  *
  * // Access forward wavefield
  * auto forward_field = sim_fields.get_simulation_field<
- *     specfem::wavefield::simulation_field::forward>();
+ *     specfem::simulation::field_type::forward>();
  *
  * // Copy fields to device for computation
  * sim_fields.copy_to_device();
@@ -87,28 +87,27 @@ template <specfem::dimension::type DimensionTag> struct fields {
    * @code
    * // Get forward field for wave propagation
    * auto forward = fields.get_simulation_field<
-   *     specfem::wavefield::simulation_field::forward>();
+   *     specfem::simulation::field_type::forward>();
    *
    * // Get adjoint field for reverse propagation
    * auto adjoint = fields.get_simulation_field<
-   *     specfem::wavefield::simulation_field::adjoint>();
+   *     specfem::simulation::field_type::adjoint>();
    * @endcode
    */
-  template <specfem::wavefield::simulation_field ReturnFieldType>
+  template <specfem::simulation::field_type ReturnFieldType>
   KOKKOS_INLINE_FUNCTION
       specfem::assembly::simulation_field<dimension_tag, ReturnFieldType>
       get_simulation_field() const {
-    if constexpr (ReturnFieldType ==
-                  specfem::wavefield::simulation_field::forward) {
+    if constexpr (ReturnFieldType == specfem::simulation::field_type::forward) {
       return forward;
     } else if constexpr (ReturnFieldType ==
-                         specfem::wavefield::simulation_field::adjoint) {
+                         specfem::simulation::field_type::adjoint) {
       return adjoint;
     } else if constexpr (ReturnFieldType ==
-                         specfem::wavefield::simulation_field::backward) {
+                         specfem::simulation::field_type::backward) {
       return backward;
     } else if constexpr (ReturnFieldType ==
-                         specfem::wavefield::simulation_field::buffer) {
+                         specfem::simulation::field_type::buffer) {
       return buffer;
     } else {
       static_assert("field type not supported");
@@ -141,8 +140,8 @@ template <specfem::dimension::type DimensionTag> struct fields {
    * Used for intermediate storage during time stepping, I/O operations,
    * and checkpointing in long simulations.
    */
-  specfem::assembly::simulation_field<
-      dimension_tag, specfem::wavefield::simulation_field::buffer>
+  specfem::assembly::simulation_field<dimension_tag,
+                                      specfem::simulation::field_type::buffer>
       buffer;
 
   /**
@@ -151,8 +150,8 @@ template <specfem::dimension::type DimensionTag> struct fields {
    * Contains displacement (elastic), potential (acoustic), or appropriate
    * field variables for forward-time wave propagation simulations.
    */
-  specfem::assembly::simulation_field<
-      dimension_tag, specfem::wavefield::simulation_field::forward>
+  specfem::assembly::simulation_field<dimension_tag,
+                                      specfem::simulation::field_type::forward>
       forward;
 
   /**
@@ -161,8 +160,8 @@ template <specfem::dimension::type DimensionTag> struct fields {
    * Used in adjoint methods for seismic imaging, full waveform inversion,
    * and gradient computation. Propagates backward in time from receivers.
    */
-  specfem::assembly::simulation_field<
-      dimension_tag, specfem::wavefield::simulation_field::adjoint>
+  specfem::assembly::simulation_field<dimension_tag,
+                                      specfem::simulation::field_type::adjoint>
       adjoint;
 
   /**
@@ -171,8 +170,8 @@ template <specfem::dimension::type DimensionTag> struct fields {
    * Used in conjunction with adjoint fields for computing gradients in
    * full waveform inversion and optimization algorithms.
    */
-  specfem::assembly::simulation_field<
-      dimension_tag, specfem::wavefield::simulation_field::backward>
+  specfem::assembly::simulation_field<dimension_tag,
+                                      specfem::simulation::field_type::backward>
       backward;
 };
 

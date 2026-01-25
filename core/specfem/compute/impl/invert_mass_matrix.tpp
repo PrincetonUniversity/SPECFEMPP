@@ -7,7 +7,7 @@
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field WavefieldType,
+          specfem::simulation::field_type WavefieldType,
           specfem::element::medium_tag MediumTag>
 void specfem::compute::impl::invert_mass_matrix(
     const specfem::assembly::assembly<DimensionTag> &assembly) {

@@ -15,6 +15,18 @@ enum class type {
 };
 
 /**
+ * @brief Simulation field types for wave propagation algorithms.
+ *
+ * Used in time-stepping schemes and inversion methods.
+ */
+enum class field_type {
+  forward,  ///< Forward time propagation
+  adjoint,  ///< Adjoint field (backward from receivers)
+  backward, ///< Backward field (for gradient computation)
+  buffer    ///< Temporary buffer field
+};
+
+/**
  * @brief Simulation model enumeration
  *
  * Defines the different simulation models supported by SPECFEM++.

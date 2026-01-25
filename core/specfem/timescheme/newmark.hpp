@@ -33,7 +33,7 @@ namespace newmark_impl {
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 int corrector_phase_impl(
     const specfem::assembly::simulation_field<DimensionTag, WavefieldType>
         &field,
@@ -65,7 +65,7 @@ int corrector_phase_impl(
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 int predictor_phase_impl(
     const specfem::assembly::simulation_field<DimensionTag, WavefieldType>
         &field,

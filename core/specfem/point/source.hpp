@@ -16,7 +16,7 @@ namespace point {
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 struct source
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::point,

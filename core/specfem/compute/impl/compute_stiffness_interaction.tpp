@@ -20,7 +20,7 @@
 #include <type_traits>
 
 template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field WavefieldType, int NGLL,
+          specfem::simulation::field_type WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
@@ -118,7 +118,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
 
   if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey &&
                 WavefieldType ==
-                    specfem::wavefield::simulation_field::backward) {
+                    specfem::simulation::field_type::backward) {
 
     specfem::execution::for_all(
         "specfem::compute::compute_stiffness_interaction", chunk,
@@ -232,7 +232,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 // adjoint simulations. The function does nothing if the
                 // boundary tag is not stacey
                 if (wavefield ==
-                    specfem::wavefield::simulation_field::forward) {
+                    specfem::simulation::field_type::forward) {
                   specfem::assembly::store_on_device(istep, index, acceleration,
                                                      boundary_values);
                 }

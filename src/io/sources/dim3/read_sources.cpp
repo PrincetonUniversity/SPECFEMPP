@@ -55,13 +55,13 @@ specfem::io::read_3d_sources(const YAML::Node source_node, const int nsteps,
   // Now we can directly access the source_dict
   int nsources = source_dict["number-of-sources"].as<int>();
 
-  const specfem::wavefield::simulation_field source_wavefield_type =
-      [&simulation_type]() -> specfem::wavefield::simulation_field {
+  const specfem::simulation::field_type source_wavefield_type =
+      [&simulation_type]() -> specfem::simulation::field_type {
     switch (simulation_type) {
     case specfem::simulation::type::forward:
-      return specfem::wavefield::simulation_field::forward;
+      return specfem::simulation::field_type::forward;
     case specfem::simulation::type::combined:
-      return specfem::wavefield::simulation_field::backward;
+      return specfem::simulation::field_type::backward;
     default:
       throw std::runtime_error("Unknown simulation type");
     }

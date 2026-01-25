@@ -18,7 +18,7 @@ struct source_parameters<
   source_parameters(std::string name, type_real x, type_real y, type_real z,
                     type_real Mxx, type_real Myy, type_real Mzz, type_real Mxy,
                     type_real Mxz, type_real Myz,
-                    specfem::wavefield::simulation_field wavefield_type,
+                    specfem::simulation::field_type wavefield_type,
                     specfem::element::medium_tag medium_tag)
       : name(name), x(x), y(y), z(z), Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy),
         Mxz(Mxz), Myz(Myz), wavefield_type(wavefield_type),
@@ -34,8 +34,8 @@ struct source_parameters<
   type_real Mxy;    ///< Mxy component of moment tensor
   type_real Mxz;    ///< Mxz component of moment tensor
   type_real Myz;    ///< Myz component of moment tensor
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield
-  specfem::element::medium_tag medium_tag; ///< Medium tag of the source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield
+  specfem::element::medium_tag medium_tag;        ///< Medium tag of the source
 };
 
 template <>
@@ -93,20 +93,20 @@ get_parameters_and_solutions<
   return std::vector<MomentTensorSource3DParametersAndSolution>{
     // Test 3D elastic moment tensor source (simple diagonal)
     std::make_tuple(
-        MomentTensorSource3DParameters(
-            "3D elastic diagonal", 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 0.0, 0.0, 0.0,
-            specfem::wavefield::simulation_field::forward,
-            specfem::element::medium_tag::elastic),
+        MomentTensorSource3DParameters("3D elastic diagonal", 0.0, 0.0, 0.0,
+                                       1.0, 2.0, 3.0, 0.0, 0.0, 0.0,
+                                       specfem::simulation::field_type::forward,
+                                       specfem::element::medium_tag::elastic),
         MomentTensorSource3DSolution(
             0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 0.0, 0.0, 0.0,
             std::vector<std::vector<type_real> >{
                 { 1.0, 0.0, 0.0 }, { 0.0, 2.0, 0.0 }, { 0.0, 0.0, 3.0 } })),
     // Test 3D elastic moment tensor source (full tensor)
     std::make_tuple(
-        MomentTensorSource3DParameters(
-            "3D elastic full", 1.0, 1.0, 1.0, 1.0, 2.0, 3.0, 0.5, 0.6, 0.7,
-            specfem::wavefield::simulation_field::forward,
-            specfem::element::medium_tag::elastic),
+        MomentTensorSource3DParameters("3D elastic full", 1.0, 1.0, 1.0, 1.0,
+                                       2.0, 3.0, 0.5, 0.6, 0.7,
+                                       specfem::simulation::field_type::forward,
+                                       specfem::element::medium_tag::elastic),
         MomentTensorSource3DSolution(
             1.0, 1.0, 1.0, 1.0, 2.0, 3.0, 0.5, 0.6, 0.7,
             std::vector<std::vector<type_real> >{
