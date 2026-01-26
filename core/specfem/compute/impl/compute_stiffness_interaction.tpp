@@ -217,7 +217,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
                                                        velocity, acceleration);
 
                 // Compute the couple stress from the stress integrand
-                specfem::medium::compute_couple_stress(
+                specfem::medium::compute_cosserat_couple_stress(
                     point_jacobian_matrix, point_property, factor,
                     stress_integrand.F(local_index), acceleration);
 

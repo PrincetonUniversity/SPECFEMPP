@@ -148,11 +148,11 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
 template <typename T, typename PointJacobianMatrixType,
           typename PointPropertiesType, typename PointStressIntegrandViewType,
           typename PointAccelerationType>
-KOKKOS_INLINE_FUNCTION void
-compute_couple_stress(const PointJacobianMatrixType &point_jacobian_matrix,
-                      const PointPropertiesType &point_properties,
-                      const T factor, const PointStressIntegrandViewType &F,
-                      PointAccelerationType &acceleration) {
+KOKKOS_INLINE_FUNCTION void compute_cosserat_couple_stress(
+    const PointJacobianMatrixType &point_jacobian_matrix,
+    const PointPropertiesType &point_properties, const T factor,
+    const PointStressIntegrandViewType &F,
+    PointAccelerationType &acceleration) {
 
   constexpr auto DimensionTag = PointPropertiesType::dimension_tag;
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
