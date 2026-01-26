@@ -1,7 +1,7 @@
 .. _api_medium_domain_kernels_data_container:
 
 ``specfem::medium::kernels::data_container``
-===============================================
+============================================
 
 .. doxygenstruct:: specfem::medium::kernels::data_container
     :members:

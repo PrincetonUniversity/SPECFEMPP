@@ -1,7 +1,7 @@
 .. _api_medium_domain_kernels:
 
 ``specfem::medium::domain_kernels``
-=========================================
+===================================
 
 .. doxygenstruct:: specfem::medium::domain_kernels
     :members:

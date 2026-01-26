@@ -1,7 +1,7 @@
 .. _api_medium_domain_properties:
 
 ``specfem::medium::domain_properties``
-=========================================
+======================================
 
 .. doxygenstruct:: specfem::medium::domain_properties
     :members:
