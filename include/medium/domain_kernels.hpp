@@ -1,10 +1,10 @@
 #pragma once
 
-#include "dim2/acoustic/isotropic/kernels_container.hpp"
-#include "dim2/elastic/anisotropic/kernels_container.hpp"
-#include "dim2/elastic/isotropic/kernels_container.hpp"
-#include "dim2/elastic/isotropic_cosserat/kernels_container.hpp"
-#include "dim2/poroelastic/isotropic/kernels_container.hpp"
+#include "dim2/acoustic/isotropic/domain_kernels.hpp"
+#include "dim2/elastic/anisotropic/domain_kernels.hpp"
+#include "dim2/elastic/isotropic/domain_kernels.hpp"
+#include "dim2/elastic/isotropic_cosserat/domain_kernels.hpp"
+#include "dim2/poroelastic/isotropic/domain_kernels.hpp"
 #include "impl/accessor.hpp"
 #include "impl/data_container.hpp"
 
@@ -32,7 +32,7 @@ namespace medium {
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct kernels_container;
+struct domain_kernels;
 
 /**
  * @brief 2D misfit kernels container specialization.
@@ -51,12 +51,12 @@ struct kernels_container;
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct kernels_container<specfem::dimension::type::dim2, MediumTag, PropertyTag>
+struct domain_kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag>
     : public kernels::data_container<specfem::dimension::type::dim2, MediumTag,
                                      PropertyTag>,
       public impl::Accessor<specfem::dimension::type::dim2,
-                            kernels_container<specfem::dimension::type::dim2,
-                                              MediumTag, PropertyTag> > {
+                            domain_kernels<specfem::dimension::type::dim2,
+                                           MediumTag, PropertyTag> > {
 
   /// Base kernels data container type
   using base_type = kernels::data_container<specfem::dimension::type::dim2,
@@ -71,7 +71,7 @@ struct kernels_container<specfem::dimension::type::dim2, MediumTag, PropertyTag>
       base_type::property_tag; ///< Material property type
 
   /// Default constructor for empty kernels container
-  kernels_container() = default;
+  domain_kernels() = default;
 
   /**
    * @brief Construct 2D kernels container for specified elements.
@@ -86,7 +86,7 @@ struct kernels_container<specfem::dimension::type::dim2, MediumTag, PropertyTag>
    * @param property_index_mapping Output mapping from element index to kernel
    * storage index
    */
-  kernels_container(
+  domain_kernels(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const int ngllz, const int ngllx,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
@@ -117,12 +117,12 @@ struct kernels_container<specfem::dimension::type::dim2, MediumTag, PropertyTag>
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct kernels_container<specfem::dimension::type::dim3, MediumTag, PropertyTag>
+struct domain_kernels<specfem::dimension::type::dim3, MediumTag, PropertyTag>
     : public kernels::data_container<specfem::dimension::type::dim3, MediumTag,
                                      PropertyTag>,
       public impl::Accessor<specfem::dimension::type::dim3,
-                            kernels_container<specfem::dimension::type::dim3,
-                                              MediumTag, PropertyTag> > {
+                            domain_kernels<specfem::dimension::type::dim3,
+                                           MediumTag, PropertyTag> > {
 
   /// Base kernels data container type
   using base_type = kernels::data_container<specfem::dimension::type::dim3,
@@ -137,7 +137,7 @@ struct kernels_container<specfem::dimension::type::dim3, MediumTag, PropertyTag>
       base_type::property_tag; ///< Material property type
 
   /// Default constructor for empty kernels container
-  kernels_container() = default;
+  domain_kernels() = default;
 
   /**
    * @brief Construct 3D kernels container for specified elements.
@@ -153,7 +153,7 @@ struct kernels_container<specfem::dimension::type::dim3, MediumTag, PropertyTag>
    * @param property_index_mapping Output mapping from element index to kernel
    * storage index
    */
-  kernels_container(
+  domain_kernels(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const int ngllz, const int nglly, const int ngllx,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
@@ -170,5 +170,5 @@ struct kernels_container<specfem::dimension::type::dim3, MediumTag, PropertyTag>
 } // namespace medium
 } // namespace specfem
 
-// Including the template specializations here so that kernels_container is
+// Including the template specializations here so that domain_kernels is
 // an interface to the compute/kernels module

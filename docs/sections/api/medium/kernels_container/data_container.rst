@@ -1,4 +1,4 @@
-.. _api_medium_kernels_container_data_container:
+.. _api_medium_domain_kernels_data_container:
 
 ``specfem::medium::kernels::data_container``
 ===============================================

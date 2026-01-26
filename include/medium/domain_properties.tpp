@@ -1,12 +1,12 @@
 #pragma once
 
-#include "properties_container.hpp"
+#include "domain_properties.hpp"
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-specfem::medium::properties_container<specfem::dimension::type::dim2, MediumTag,
+specfem::medium::domain_properties<specfem::dimension::type::dim2, MediumTag,
                                       PropertyTag>::
-    properties_container(
+    domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,
         const int ngllx,
@@ -49,9 +49,9 @@ specfem::medium::properties_container<specfem::dimension::type::dim2, MediumTag,
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-specfem::medium::properties_container<specfem::dimension::type::dim3, MediumTag,
+specfem::medium::domain_properties<specfem::dimension::type::dim3, MediumTag,
                                       PropertyTag>::
-    properties_container(
+    domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
         const int nspec, const int ngllz, const int nglly, const int ngllx,
         const specfem::mesh::materials<dimension_tag> &materials,
@@ -61,7 +61,7 @@ specfem::medium::properties_container<specfem::dimension::type::dim3, MediumTag,
   const int nelement = elements.extent(0);
   int count = 0;
   Kokkos::parallel_for(
-      "specfem::medium::properties_container::dim3::init_host_values",
+      "specfem::medium::domain_properties::dim3::init_host_values",
       Kokkos::MDRangePolicy<Kokkos::DefaultHostExecutionSpace,
                             Kokkos::Rank<4> >(
           { 0, 0, 0, 0 }, { nelement, ngllz, nglly, ngllx }),

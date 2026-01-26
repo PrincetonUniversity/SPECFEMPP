@@ -1,7 +1,7 @@
 #include "specfem/assembly/properties.hpp"
 #include "enumerations/interface.hpp"
-#include "medium/properties_container.hpp"
-#include "medium/properties_container.tpp"
+#include "medium/domain_properties.hpp"
+#include "medium/domain_properties.tpp"
 #include "specfem/assembly/mesh.hpp"
 
 specfem::assembly::properties<specfem::dimension::type::dim3>::properties(
@@ -26,7 +26,7 @@ specfem::assembly::properties<specfem::dimension::type::dim3>::properties(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)),
       CAPTURE(value) {
-        _value_ = specfem::medium::properties_container<
+        _value_ = specfem::medium::domain_properties<
             _dimension_tag_, _medium_tag_, _property_tag_>(
             element_types.get_elements_on_host(_medium_tag_, _property_tag_),
             nspec, ngllz, nglly, ngllx, materials, h_property_index_mapping);

@@ -1,20 +1,20 @@
-.. _api_medium_properties_container:
+.. _api_medium_domain_properties:
 
-``specfem::medium::properties_container``
+``specfem::medium::domain_properties``
 =========================================
 
-.. doxygenstruct:: specfem::medium::properties_container
+.. doxygenstruct:: specfem::medium::domain_properties
     :members:
     :private-members:
 
 Dimension-specific Specializations
 ----------------------------------
 
-.. doxygenstruct:: specfem::medium::properties_container< specfem::dimension::type::dim2, MediumTag, PropertyTag >
+.. doxygenstruct:: specfem::medium::domain_properties< specfem::dimension::type::dim2, MediumTag, PropertyTag >
     :members:
     :private-members:
 
-.. doxygenstruct:: specfem::medium::properties_container< specfem::dimension::type::dim3, MediumTag, PropertyTag >
+.. doxygenstruct:: specfem::medium::domain_properties< specfem::dimension::type::dim3, MediumTag, PropertyTag >
     :members:
     :private-members:
 

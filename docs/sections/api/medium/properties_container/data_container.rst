@@ -1,4 +1,4 @@
-.. _api_medium_properties_container_data_container:
+.. _api_medium_domain_properties_data_container:
 
 ``specfem::medium::properties::data_container``
 ===============================================

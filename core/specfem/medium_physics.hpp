@@ -12,7 +12,7 @@
  * - `compute_wavefield()`: Wavefield from intrinsic fields
  * - `compute_source_contribution()`: Source terms
  * - `compute_frechet_derivatives()`: Sensitivity kernels
- * - `material<>`, `properties_container<>`: Material property management
+ * - `material<>`, `domain_properties<>`: Material property management
  */
 namespace specfem::medium {}
 
