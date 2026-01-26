@@ -245,27 +245,3 @@ void specfem::compute::impl::compute_coupling(
 
   return;
 }
-
-template <specfem::dimension::type DimensionTag,
-          specfem::connections::type ConnectionTag,
-          specfem::simulation::field_type WavefieldType, int NGLL,
-          int NQuad_intersection,
-          specfem::interface::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag,
-          specfem::interface::flux_scheme_tag FluxSchemeTag>
-void specfem::compute::impl::compute_coupling(
-    const specfem::assembly::assembly<DimensionTag> &assembly) {
-  // Create dispatch tag for connection type
-  using connection_dispatch =
-      std::integral_constant<specfem::connections::type, ConnectionTag>;
-
-  // Forward to implementation with dispatch tag
-  if constexpr (ConnectionTag == specfem::connections::type::nonconforming) {
-    compute_coupling<DimensionTag, WavefieldType, NGLL, NQuad_intersection,
-                     InterfaceTag, BoundaryTag, FluxSchemeTag>(
-        connection_dispatch(), assembly);
-  } else {
-    compute_coupling<DimensionTag, WavefieldType, InterfaceTag, BoundaryTag,
-                     FluxSchemeTag>(connection_dispatch(), assembly);
-  }
-}

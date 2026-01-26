@@ -11,6 +11,6 @@ set_target_properties(specfem_compute PROPERTIES
 target_link_libraries(
         specfem_compute
         PRIVATE
-        assembly
+        specfem::assembly
         Kokkos::kokkos
 )
