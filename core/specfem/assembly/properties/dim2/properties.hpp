@@ -2,11 +2,10 @@
 
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "medium/domain_properties.hpp"
-#include "medium/material.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/impl/value_containers.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/medium_container.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

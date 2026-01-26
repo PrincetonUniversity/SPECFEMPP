@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
-#include "medium/material.hpp"
+#include "specfem/medium_container.hpp"
 #include "materials.hpp"
 #include <variant>
 #include <vector>

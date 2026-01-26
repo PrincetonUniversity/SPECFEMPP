@@ -1,19 +1,22 @@
 #pragma once
 
-#include "dim2/acoustic/isotropic/domain_properties.hpp"
-#include "dim2/elastic/anisotropic/domain_properties.hpp"
-#include "dim2/elastic/isotropic/domain_properties.hpp"
-#include "dim2/elastic/isotropic_cosserat/domain_properties.hpp"
-#include "dim2/poroelastic/isotropic/domain_properties.hpp"
 #include "enumerations/medium.hpp"
-#include "impl/accessor.hpp"
-#include "specfem/mesh.hpp"
+#include "medium/dim2/acoustic/isotropic/domain_properties.hpp"
+#include "medium/dim2/elastic/anisotropic/domain_properties.hpp"
+#include "medium/dim2/elastic/isotropic/domain_properties.hpp"
+#include "medium/dim2/elastic/isotropic_cosserat/domain_properties.hpp"
+#include "medium/dim2/poroelastic/isotropic/domain_properties.hpp"
+#include "medium/impl/accessor.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
 class mesh_to_compute_mapping;
 template <specfem::dimension::type Dimension> struct mesh;
 } // namespace specfem::assembly
+
+namespace specfem::mesh {
+template <specfem::dimension::type Dimension> struct materials;
+}
 
 namespace specfem::medium {
 
