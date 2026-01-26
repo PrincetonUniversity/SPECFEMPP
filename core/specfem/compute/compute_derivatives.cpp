@@ -1,4 +1,6 @@
 #include "compute_derivatives.hpp"
+#include "impl/compute_material_derivatives.hpp"
+#include "impl/compute_material_derivatives.tpp"
 
 // Explicit template instantiation
 template void
