@@ -20,7 +20,8 @@ template <> struct tangential_elements<specfem::dimension::type::dim2> {
   constexpr static auto dimension = specfem::dimension::type::dim2;
 
   bool force_normal_to_surface, rec_normal_to_surface;
-  specfem::kokkos::HostView1d<type_real> x, y;
+  Kokkos::View<type_real *, Kokkos::HostSpace> x;
+  Kokkos::View<type_real *, Kokkos::HostSpace> y;
   tangential_elements() {};
   tangential_elements(const int nnodes_tangential_curve);
 };

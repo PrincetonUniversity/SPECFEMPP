@@ -40,7 +40,7 @@ namespace sources {
  * specfem::sources::moment_tensor<specfem::dimension::type::dim2>( 12.5, 8.0,
  * // coordinates (x, z) 1.5,        // Mxx - normal stress in x direction 2.1,
  * // Mzz - normal stress in z direction 0.7,        // Mxz - shear stress
- * component std::move(stf), specfem::wavefield::simulation_field::forward
+ * component std::move(stf), specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium (tensor sources work with elastic media)
@@ -161,7 +161,8 @@ public:
    * Source tensor matrix with dimensions [ncomponents][ndim] where ncomponents
    * depends on medium type and ndim is spatial dimension
    */
-  virtual specfem::kokkos::HostView2d<type_real> get_source_tensor() const = 0;
+  virtual Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_source_tensor() const = 0;
 
   /**
    * @brief Get the source type

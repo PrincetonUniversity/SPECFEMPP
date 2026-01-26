@@ -73,7 +73,8 @@ type_real specfem::source_time_functions::Heaviside::compute(type_real t) {
 
 void specfem::source_time_functions::Heaviside::compute_source_time_function(
     const type_real t0, const type_real dt, const int nsteps,
-    specfem::kokkos::HostView2d<type_real> source_time_function) {
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_time_function) {
 
   const int ncomponents = source_time_function.extent(1);
 

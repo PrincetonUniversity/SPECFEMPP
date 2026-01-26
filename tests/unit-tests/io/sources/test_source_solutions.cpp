@@ -9,8 +9,8 @@ int tshift = 0;            // for the single sources we are reading!
 type_real user_t0 = -10.0; // user defined t0
 
 // Internal t0 is being fixed using the halfduration of the source
-specfem::wavefield::simulation_field wavefield_type =
-    specfem::wavefield::simulation_field::forward;
+specfem::simulation::field_type wavefield_type =
+    specfem::simulation::field_type::forward;
 
 // 2D source test solutions
 const SourceVector2DType single_moment_tensor_2d = { std::make_shared<

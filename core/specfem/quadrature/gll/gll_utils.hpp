@@ -39,8 +39,9 @@ std::tuple<type_real, type_real, type_real> jacobf(const int n,
  * @param xjac HostMirror1d where Gauss points (GLL points) will be stored
  * xjac.extent(0) == np, xjac.rank == 1
  */
-void jacg(specfem::kokkos::HostMirror1d<type_real> xjac, const int np,
-          const type_real alpha, const type_real beta);
+void jacg(
+    Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> xjac,
+    const int np, const type_real alpha, const type_real beta);
 
 type_real calc_gammaf(const type_real x);
 type_real calc_pnormj(const int n, const type_real alpha, const type_real beta);
@@ -55,9 +56,9 @@ type_real calc_pnormj(const int n, const type_real alpha, const type_real beta);
  * @param alpha alpha value of Jacobi polynomial
  * @param beta beta value of Jacobi polynomial
  */
-void jacw(specfem::kokkos::HostMirror1d<type_real> z,
-          specfem::kokkos::HostMirror1d<type_real> w, const int np,
-          const int alpha, const int beta);
+void jacw(Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
+          Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
+          const int np, const int alpha, const int beta);
 
 /**
  * @brief Compute the GLL points and weights of jacobi polynomials inside the
@@ -72,9 +73,9 @@ void jacw(specfem::kokkos::HostMirror1d<type_real> z,
  * @param alpha Alpha value of the Jacobi polynomial
  * @param beta Beta value of the Jacobi polynomial
  */
-void zwgjd(specfem::kokkos::HostMirror1d<type_real> z,
-           specfem::kokkos::HostMirror1d<type_real> w, const int np,
-           const int alpha, const int beta);
+void zwgjd(Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
+           Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
+           const int np, const int alpha, const int beta);
 
 /**
  * @brief Calculate the weight contribution at xi == -1.0

@@ -31,7 +31,7 @@ template <typename ViewType> int compute_nglob3D(const ViewType index_mapping) {
 }
 } // namespace
 
-template <specfem::wavefield::simulation_field WavefieldType>
+template <specfem::simulation::field_type WavefieldType>
 specfem::assembly::simulation_field<specfem::dimension::type::dim3,
                                     WavefieldType>::
     simulation_field(
@@ -46,7 +46,7 @@ specfem::assembly::simulation_field<specfem::dimension::type::dim3,
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
       CAPTURE(assembly_index_mapping, h_assembly_index_mapping, field) {
         _assembly_index_mapping_ = Kokkos::View<int *, Kokkos::LayoutLeft,
-                                                specfem::kokkos::DevMemSpace>(
+                                                Kokkos::DefaultExecutionSpace::memory_space>(
             "specfem::assembly::simulation_field::index_mapping", nglob);
         _h_assembly_index_mapping_ =
             Kokkos::create_mirror_view(_assembly_index_mapping_);
@@ -65,7 +65,7 @@ specfem::assembly::simulation_field<specfem::dimension::type::dim3,
   return;
 }
 
-template <specfem::wavefield::simulation_field WavefieldType>
+template <specfem::simulation::field_type WavefieldType>
 int specfem::assembly::simulation_field<
     specfem::dimension::type::dim3,
     WavefieldType>::get_total_degrees_of_freedom() {
@@ -83,7 +83,7 @@ int specfem::assembly::simulation_field<
   return total_degrees_of_freedom;
 }
 
-template <specfem::wavefield::simulation_field WavefieldType>
+template <specfem::simulation::field_type WavefieldType>
 template <specfem::sync::kind sync>
 void specfem::assembly::simulation_field<specfem::dimension::type::dim3,
                                          WavefieldType>::sync_fields() {

@@ -200,7 +200,7 @@ template <> struct assembly<specfem::dimension::type::dim2> {
    */
   Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   generate_wavefield_on_entire_grid(
-      const specfem::wavefield::simulation_field wavefield,
+      const specfem::simulation::field_type wavefield,
       const specfem::wavefield::type component);
 
   /**

@@ -12,7 +12,7 @@ namespace specfem::assembly {
  * computations.
  */
 template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field SimulationWavefieldType>
+          specfem::simulation::field_type SimulationWavefieldType>
 struct simulation_field;
 
 } // namespace specfem::assembly

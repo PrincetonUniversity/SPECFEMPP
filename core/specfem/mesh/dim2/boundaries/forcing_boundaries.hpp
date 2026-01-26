@@ -23,13 +23,16 @@ template <> struct forcing_boundary<specfem::dimension::type::dim2> {
       specfem::dimension::type::dim2; ///< Dimension
                                       ///< type
 
-  specfem::kokkos::HostView1d<int> numacforcing;  ///< ispec value for the the
-                                                  ///< element on the boundary
-  specfem::kokkos::HostView1d<int> typeacforcing; ///< Defines if the acoustic
-                                                  ///< forcing boundary type is
-                                                  ///< top, left, right or
-                                                  ///< bottom. This is only used
-                                                  ///< during plotting
+  Kokkos::View<int *, Kokkos::HostSpace> numacforcing;  ///< ispec value for the
+                                                        ///< the element on the
+                                                        ///< boundary
+  Kokkos::View<int *, Kokkos::HostSpace> typeacforcing; ///< Defines if the
+                                                        ///< acoustic forcing
+                                                        ///< boundary type is
+                                                        ///< top, left, right or
+                                                        ///< bottom. This is
+                                                        ///< only used during
+                                                        ///< plotting
   /**
    * @name Edge definitions
    *
@@ -42,32 +45,32 @@ template <> struct forcing_boundary<specfem::dimension::type::dim2> {
    * @name Bottom boundary
    */
   /// @{
-  specfem::kokkos::HostView1d<int> ibegin_edge1;
-  specfem::kokkos::HostView1d<int> iend_edge1;
+  Kokkos::View<int *, Kokkos::HostSpace> ibegin_edge1;
+  Kokkos::View<int *, Kokkos::HostSpace> iend_edge1;
   /// @}
 
   /**
    * @name Right boundary
    */
   /// @{
-  specfem::kokkos::HostView1d<int> ibegin_edge2;
-  specfem::kokkos::HostView1d<int> iend_edge2;
+  Kokkos::View<int *, Kokkos::HostSpace> ibegin_edge2;
+  Kokkos::View<int *, Kokkos::HostSpace> iend_edge2;
   /// @}
 
   /**
    * @name Top boundary
    */
   /// @{
-  specfem::kokkos::HostView1d<int> ibegin_edge3;
-  specfem::kokkos::HostView1d<int> iend_edge3;
+  Kokkos::View<int *, Kokkos::HostSpace> ibegin_edge3;
+  Kokkos::View<int *, Kokkos::HostSpace> iend_edge3;
   /// @}
 
   /**
    * @name Left boundary
    */
   /// @{
-  specfem::kokkos::HostView1d<int> ibegin_edge4;
-  specfem::kokkos::HostView1d<int> iend_edge4;
+  Kokkos::View<int *, Kokkos::HostSpace> ibegin_edge4;
+  Kokkos::View<int *, Kokkos::HostSpace> iend_edge4;
   /// @}
 
   /// @}
@@ -78,15 +81,19 @@ template <> struct forcing_boundary<specfem::dimension::type::dim2> {
    *
    */
   ///@{
-  specfem::kokkos::HostView1d<int> ib_bottom; ///< Number of bottom elements on
-                                              ///< ith acoustic forcing boundary
-  specfem::kokkos::HostView1d<int> ib_top;    ///< Number of top elemetns on the
-                                              ///< ith acoustic forcing boundary
-  specfem::kokkos::HostView1d<int> ib_right;  ///< Number of right elemetns on
-                                              ///< the ith acoustic forcing
-                                              ///< boundary
-  specfem::kokkos::HostView1d<int> ib_left; ///< Number of left elemetns on the
-                                            ///< ith acoustic forcing boundary
+  Kokkos::View<int *, Kokkos::HostSpace> ib_bottom; ///< Number of bottom
+                                                    ///< elements on ith
+                                                    ///< acoustic forcing
+                                                    ///< boundary
+  Kokkos::View<int *, Kokkos::HostSpace> ib_top; ///< Number of top elemetns on
+                                                 ///< the ith acoustic forcing
+                                                 ///< boundary
+  Kokkos::View<int *, Kokkos::HostSpace> ib_right; ///< Number of right elemetns
+                                                   ///< on the ith acoustic
+                                                   ///< forcing boundary
+  Kokkos::View<int *, Kokkos::HostSpace> ib_left;  ///< Number of left elemetns
+                                                   ///< on the ith acoustic
+                                                   ///< forcing boundary
   ///@}
   /**
    * Specifies if an element is bottom, right, top or left absorbing boundary
@@ -103,7 +110,7 @@ template <> struct forcing_boundary<specfem::dimension::type::dim2> {
    *@endcode
    *
    */
-  specfem::kokkos::HostView2d<bool> codeacforcing;
+  Kokkos::View<bool **, Kokkos::LayoutRight, Kokkos::HostSpace> codeacforcing;
 
   /**
    * @brief Default constructor

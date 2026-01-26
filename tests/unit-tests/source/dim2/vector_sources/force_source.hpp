@@ -14,7 +14,7 @@ struct source_parameters<
     specfem::sources::force<specfem::dimension::type::dim2> > {
   source_parameters() : x(0.0), z(0.0), angle(0.0) {};
   source_parameters(std::string name, type_real x, type_real z, type_real angle,
-                    specfem::wavefield::simulation_field wavefield_type,
+                    specfem::simulation::field_type wavefield_type,
                     specfem::element::medium_tag medium_tag)
       : name(name), x(x), z(z), angle(angle), wavefield_type(wavefield_type),
         medium_tag(medium_tag) {};
@@ -23,8 +23,8 @@ struct source_parameters<
   type_real x;      ///< x-coordinate of the source
   type_real z;      ///< z-coordinate of the source
   type_real angle;  ///< angle of the force source in degrees
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield
-  specfem::element::medium_tag medium_tag; ///< Medium tag of the source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield
+  specfem::element::medium_tag medium_tag;        ///< Medium tag of the source
 };
 
 template <>
@@ -70,43 +70,42 @@ std::vector<ForceSource2DParametersAndSolution> get_parameters_and_solutions<
     // Test elastic PSV source at origin with zero angle
     std::make_tuple(
         ForceSource2DParameters("elastic_psv and zero angle", 0.0, 0.0, 0.0,
-                                specfem::wavefield::simulation_field::forward,
+                                specfem::simulation::field_type::forward,
                                 specfem::element::medium_tag::elastic_psv),
         ForceSource2DSolution(0.0, 0.0, 0.0,
                               std::vector<type_real>{ 0., 1.0 })),
     // Test elastic PSV source at origin with 45 angle
     std::make_tuple(
         ForceSource2DParameters("elastic_psv and 45 degree angle", 0.0, 0.0,
-                                45.0,
-                                specfem::wavefield::simulation_field::forward,
+                                45.0, specfem::simulation::field_type::forward,
                                 specfem::element::medium_tag::elastic_psv),
         ForceSource2DSolution(
             0.0, 0.0, 45.0, std::vector<type_real>{ sqrt2over2, sqrt2over2 })),
     // Test elastic isotropic source at origin with 90 degree angle
-    std::make_tuple(ForceSource2DParameters(
-                        "elastic_isotropic and 90 angle", 3.0, 3.0, 90.0,
-                        specfem::wavefield::simulation_field::forward,
-                        specfem::element::medium_tag::elastic_psv),
-                    ForceSource2DSolution(3.0, 3.0, 90.0,
-                                          std::vector<type_real>{ 1.0, 0.0 })),
+    std::make_tuple(
+        ForceSource2DParameters("elastic_isotropic and 90 angle", 3.0, 3.0,
+                                90.0, specfem::simulation::field_type::forward,
+                                specfem::element::medium_tag::elastic_psv),
+        ForceSource2DSolution(3.0, 3.0, 90.0,
+                              std::vector<type_real>{ 1.0, 0.0 })),
     // Test elastic SH source at origin with angle angle should not affect the
     // force vector
     std::make_tuple(
         ForceSource2DParameters("elastic_sh and zero angle", 1.0, 1.0, 45.0,
-                                specfem::wavefield::simulation_field::forward,
+                                specfem::simulation::field_type::forward,
                                 specfem::element::medium_tag::elastic_sh),
         ForceSource2DSolution(1.0, 1.0, 45.0, std::vector<type_real>{ 1.0 })),
     // Test acoustic source at origin with 45 degree angle, which should not
     // affect the force vector
     std::make_tuple(
         ForceSource2DParameters("acoustic and 45 angle", 2.0, 2.0, 45.0,
-                                specfem::wavefield::simulation_field::forward,
+                                specfem::simulation::field_type::forward,
                                 specfem::element::medium_tag::acoustic),
         ForceSource2DSolution(2.0, 2.0, 45.0, std::vector<type_real>{ 1.0 })),
     // Test elastic_psv_t source at origin with 45 angle
     std::make_tuple(
         ForceSource2DParameters("elastic_psv_t and 45 angle", 4.0, 4.0, 45.0,
-                                specfem::wavefield::simulation_field::forward,
+                                specfem::simulation::field_type::forward,
                                 specfem::element::medium_tag::elastic_psv_t),
         ForceSource2DSolution(
             4.0, 4.0, 45.0,

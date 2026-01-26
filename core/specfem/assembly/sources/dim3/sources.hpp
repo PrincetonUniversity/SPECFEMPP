@@ -37,7 +37,7 @@ namespace specfem::assembly {
  *     specfem::element::medium_tag::elastic,
  *     specfem::element::property_tag::isotropic,
  *     specfem::element::boundary_tag::none,
- *     specfem::wavefield::simulation_field::forward);
+ *     specfem::simulation::field_type::forward);
  *
  * // 3. Time integration with source updates
  * for (int step = 0; step < nsteps; ++step) {
@@ -104,9 +104,8 @@ private:
    * wavefields, crucial for proper handling of different simulation types in
    * 3D.
    */
-  using WavefieldTagViewType =
-      Kokkos::View<specfem::wavefield::simulation_field *,
-                   Kokkos::DefaultExecutionSpace>;
+  using WavefieldTagViewType = Kokkos::View<specfem::simulation::field_type *,
+                                            Kokkos::DefaultExecutionSpace>;
 
   /**
    * @brief Kokkos view type for storing boundary condition tags on device
@@ -221,16 +220,15 @@ public:
    *     specfem::element::medium_tag::elastic,
    *     specfem::element::property_tag::isotropic,
    *     specfem::element::boundary_tag::none,
-   *     specfem::wavefield::simulation_field::forward);
+   *     specfem::simulation::field_type::forward);
    * @endcode
    */
   std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
              Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-  get_sources_on_host(
-      const specfem::element::medium_tag medium,
-      const specfem::element::property_tag property,
-      const specfem::element::boundary_tag boundary,
-      const specfem::wavefield::simulation_field wavefield) const;
+  get_sources_on_host(const specfem::element::medium_tag medium,
+                      const specfem::element::property_tag property,
+                      const specfem::element::boundary_tag boundary,
+                      const specfem::simulation::field_type wavefield) const;
 
   /**
    * @brief Retrieve 3D source indices for specified criteria on device memory
@@ -256,16 +254,15 @@ public:
    *     specfem::element::medium_tag::elastic,
    *     specfem::element::property_tag::isotropic,
    *     specfem::element::boundary_tag::none,
-   *     specfem::wavefield::simulation_field::adjoint);
+   *     specfem::simulation::field_type::adjoint);
    * @endcode
    */
   std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
              Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-  get_sources_on_device(
-      const specfem::element::medium_tag medium,
-      const specfem::element::property_tag property,
-      const specfem::element::boundary_tag boundary,
-      const specfem::wavefield::simulation_field wavefield) const;
+  get_sources_on_device(const specfem::element::medium_tag medium,
+                        const specfem::element::property_tag property,
+                        const specfem::element::boundary_tag boundary,
+                        const specfem::simulation::field_type wavefield) const;
   ///@}
 
   /**

@@ -5,14 +5,14 @@
 specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>::
     tangential_elements(const int nnodes_tangential_curve) {
   if (nnodes_tangential_curve > 0) {
-    this->x = specfem::kokkos::HostView1d<type_real>(
+    this->x = Kokkos::View<type_real *, Kokkos::HostSpace>(
         "specfem::mesh::tangential_nodes::x", nnodes_tangential_curve);
-    this->y = specfem::kokkos::HostView1d<type_real>(
+    this->y = Kokkos::View<type_real *, Kokkos::HostSpace>(
         "specfem::mesh::tangential_nodes::y", nnodes_tangential_curve);
   } else {
-    this->x = specfem::kokkos::HostView1d<type_real>(
+    this->x = Kokkos::View<type_real *, Kokkos::HostSpace>(
         "specfem::mesh::tangential_nodes::x", 1);
-    this->y = specfem::kokkos::HostView1d<type_real>(
+    this->y = Kokkos::View<type_real *, Kokkos::HostSpace>(
         "specfem::mesh::tangential_nodes::y", 1);
   }
 

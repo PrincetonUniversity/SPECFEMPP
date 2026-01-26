@@ -8,66 +8,69 @@ specfem::mesh::forcing_boundary<specfem::dimension::type::dim2>::
     forcing_boundary(const int nelement_acforcing) {
 
   if (nelement_acforcing > 0) {
-    this->numacforcing = specfem::kokkos::HostView1d<int>(
+    this->numacforcing = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing);
-    this->codeacforcing = specfem::kokkos::HostView2d<bool>(
-        "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing, 4);
-    this->typeacforcing = specfem::kokkos::HostView1d<int>(
+    this->codeacforcing =
+        Kokkos::View<bool **, Kokkos::LayoutRight, Kokkos::HostSpace>(
+            "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing,
+            4);
+    this->typeacforcing = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing);
-    this->ibegin_edge1 = specfem::kokkos::HostView1d<int>(
+    this->ibegin_edge1 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ibegin_edge1", nelement_acforcing);
-    this->ibegin_edge2 = specfem::kokkos::HostView1d<int>(
+    this->ibegin_edge2 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ibegin_edge2", nelement_acforcing);
-    this->ibegin_edge3 = specfem::kokkos::HostView1d<int>(
+    this->ibegin_edge3 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ibegin_edge3", nelement_acforcing);
-    this->ibegin_edge4 = specfem::kokkos::HostView1d<int>(
+    this->ibegin_edge4 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ibegin_edge4", nelement_acforcing);
-    this->iend_edge1 = specfem::kokkos::HostView1d<int>(
+    this->iend_edge1 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::iend_edge1", nelement_acforcing);
-    this->iend_edge2 = specfem::kokkos::HostView1d<int>(
+    this->iend_edge2 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::iend_edge2", nelement_acforcing);
-    this->iend_edge3 = specfem::kokkos::HostView1d<int>(
+    this->iend_edge3 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::iend_edge3", nelement_acforcing);
-    this->iend_edge4 = specfem::kokkos::HostView1d<int>(
+    this->iend_edge4 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::iend_edge4", nelement_acforcing);
-    this->ib_bottom = specfem::kokkos::HostView1d<int>(
+    this->ib_bottom = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ib_bottom", nelement_acforcing);
-    this->ib_top = specfem::kokkos::HostView1d<int>(
+    this->ib_top = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ib_top", nelement_acforcing);
-    this->ib_right = specfem::kokkos::HostView1d<int>(
+    this->ib_right = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ib_right", nelement_acforcing);
-    this->ib_left = specfem::kokkos::HostView1d<int>(
+    this->ib_left = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ib_left", nelement_acforcing);
   } else {
-    this->numacforcing = specfem::kokkos::HostView1d<int>(
+    this->numacforcing = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::numacforcing", 1);
-    this->codeacforcing = specfem::kokkos::HostView2d<bool>(
-        "specfem::mesh::forcing_boundary::numacforcing", 1, 1);
-    this->typeacforcing = specfem::kokkos::HostView1d<int>(
+    this->codeacforcing =
+        Kokkos::View<bool **, Kokkos::LayoutRight, Kokkos::HostSpace>(
+            "specfem::mesh::forcing_boundary::numacforcing", 1, 1);
+    this->typeacforcing = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::numacforcing", 1);
-    this->ibegin_edge1 = specfem::kokkos::HostView1d<int>(
+    this->ibegin_edge1 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ibegin_edge1", 1);
-    this->ibegin_edge2 = specfem::kokkos::HostView1d<int>(
+    this->ibegin_edge2 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ibegin_edge2", 1);
-    this->ibegin_edge3 = specfem::kokkos::HostView1d<int>(
+    this->ibegin_edge3 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ibegin_edge3", 1);
-    this->ibegin_edge4 = specfem::kokkos::HostView1d<int>(
+    this->ibegin_edge4 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ibegin_edge4", 1);
-    this->iend_edge1 = specfem::kokkos::HostView1d<int>(
+    this->iend_edge1 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::iend_edge1", 1);
-    this->iend_edge2 = specfem::kokkos::HostView1d<int>(
+    this->iend_edge2 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::iend_edge2", 1);
-    this->iend_edge3 = specfem::kokkos::HostView1d<int>(
+    this->iend_edge3 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::iend_edge3", 1);
-    this->iend_edge4 = specfem::kokkos::HostView1d<int>(
+    this->iend_edge4 = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::iend_edge4", 1);
-    this->ib_bottom = specfem::kokkos::HostView1d<int>(
+    this->ib_bottom = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ib_bottom", 1);
-    this->ib_top = specfem::kokkos::HostView1d<int>(
+    this->ib_top = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ib_top", 1);
-    this->ib_right = specfem::kokkos::HostView1d<int>(
+    this->ib_right = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ib_right", 1);
-    this->ib_left = specfem::kokkos::HostView1d<int>(
+    this->ib_left = Kokkos::View<int *, Kokkos::HostSpace>(
         "specfem::mesh::forcing_boundary::ib_left", 1);
   }
 

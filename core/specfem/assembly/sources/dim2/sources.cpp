@@ -133,13 +133,13 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
               (h_boundary_types(isource) == _boundary_tag_)) {
             /* Count the number of sources for each wavefield type */
             if (h_wavefield_types(isource) ==
-                specfem::wavefield::simulation_field::forward) {
+                specfem::simulation::field_type::forward) {
               count_forward++;
             } else if (h_wavefield_types(isource) ==
-                       specfem::wavefield::simulation_field::backward) {
+                       specfem::simulation::field_type::backward) {
               count_backward++;
             } else if (h_wavefield_types(isource) ==
-                       specfem::wavefield::simulation_field::adjoint) {
+                       specfem::simulation::field_type::adjoint) {
               count_adjoint++;
             }
           }
@@ -196,7 +196,7 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
               (h_property_types(isource) == _property_tag_) &&
               (h_boundary_types(isource) == _boundary_tag_)) {
             if (h_wavefield_types(isource) ==
-                specfem::wavefield::simulation_field::forward) {
+                specfem::simulation::field_type::forward) {
               /* Assign global ispec to local forward element index array */
               /* h_element_indices_forward_<dim>_<medium>_<property> = ispec*/
               _h_element_indices_forward_(index_forward) = ispec;
@@ -206,7 +206,7 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
               /* Increase forward counter index*/
               index_forward++;
             } else if (h_wavefield_types(isource) ==
-                       specfem::wavefield::simulation_field::backward) {
+                       specfem::simulation::field_type::backward) {
               /* Assign global ispec to local backward element index array */
               /* h_element_indices_backward_<dim>_<medium>_<property> = ispec */
               _h_element_indices_backward_(index_backward) = ispec;
@@ -216,7 +216,7 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
               _h_source_indices_backward_(index_backward) = isource;
               index_backward++;
             } else if (h_wavefield_types(isource) ==
-                       specfem::wavefield::simulation_field::adjoint) {
+                       specfem::simulation::field_type::adjoint) {
               /* Assign global ispec to local adjoint element index array */
               /* h_element_indices_adjoint_<dim>_<medium>_<property> = ispec */
               _h_element_indices_adjoint_(index_adjoint) = ispec;
@@ -250,7 +250,7 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::get_sources_on_host(
     const specfem::element::medium_tag medium,
     const specfem::element::property_tag property,
     const specfem::element::boundary_tag boundary,
-    const specfem::wavefield::simulation_field wavefield) const {
+    const specfem::simulation::field_type wavefield) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
@@ -261,19 +261,17 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::get_sources_on_host(
       CAPTURE(h_element_indices_forward, h_element_indices_backward,
               h_element_indices_adjoint, h_source_indices_forward,
               h_source_indices_backward, h_source_indices_adjoint) {
-        if ((wavefield == specfem::wavefield::simulation_field::forward) &&
+        if ((wavefield == specfem::simulation::field_type::forward) &&
             (medium == _medium_tag_) && (property == _property_tag_) &&
             (boundary == _boundary_tag_)) {
           return std::make_tuple(_h_element_indices_forward_,
                                  _h_source_indices_forward_);
-        } else if ((wavefield ==
-                    specfem::wavefield::simulation_field::backward) &&
+        } else if ((wavefield == specfem::simulation::field_type::backward) &&
                    (medium == _medium_tag_) && (property == _property_tag_) &&
                    (boundary == _boundary_tag_)) {
           return std::make_tuple(_h_element_indices_backward_,
                                  _h_source_indices_backward_);
-        } else if ((wavefield ==
-                    specfem::wavefield::simulation_field::adjoint) &&
+        } else if ((wavefield == specfem::simulation::field_type::adjoint) &&
                    (medium == _medium_tag_) && (property == _property_tag_) &&
                    (boundary == _boundary_tag_)) {
           return std::make_tuple(_h_element_indices_adjoint_,
@@ -298,7 +296,7 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::
         const specfem::element::medium_tag medium,
         const specfem::element::property_tag property,
         const specfem::element::boundary_tag boundary,
-        const specfem::wavefield::simulation_field wavefield) const {
+        const specfem::simulation::field_type wavefield) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
@@ -309,19 +307,17 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::
       CAPTURE(element_indices_forward, element_indices_backward,
               element_indices_adjoint, source_indices_forward,
               source_indices_backward, source_indices_adjoint) {
-        if ((wavefield == specfem::wavefield::simulation_field::forward) &&
+        if ((wavefield == specfem::simulation::field_type::forward) &&
             (medium == _medium_tag_) && (property == _property_tag_) &&
             (boundary == _boundary_tag_)) {
           return std::make_tuple(_element_indices_forward_,
                                  _source_indices_forward_);
-        } else if ((wavefield ==
-                    specfem::wavefield::simulation_field::backward) &&
+        } else if ((wavefield == specfem::simulation::field_type::backward) &&
                    (medium == _medium_tag_) && (property == _property_tag_) &&
                    (boundary == _boundary_tag_)) {
           return std::make_tuple(_element_indices_backward_,
                                  _source_indices_backward_);
-        } else if ((wavefield ==
-                    specfem::wavefield::simulation_field::adjoint) &&
+        } else if ((wavefield == specfem::simulation::field_type::adjoint) &&
                    (medium == _medium_tag_) && (property == _property_tag_) &&
                    (boundary == _boundary_tag_)) {
           return std::make_tuple(_element_indices_adjoint_,

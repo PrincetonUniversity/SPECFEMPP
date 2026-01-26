@@ -186,7 +186,8 @@ public:
   constexpr static int components =
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
-  // Bring get_value methods from base classes into scope for unified field access
+  // Bring get_value methods from base classes into scope for unified field
+  // access
   using acceleration_base_type::get_value; ///< Access acceleration field values
   using displacement_base_type::get_value; ///< Access displacement field values
   using mass_inverse_base_type::get_value; ///< Access mass matrix field values
@@ -218,7 +219,7 @@ public:
   field_impl(
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::element_types<dimension_tag> &element_type,
-      Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+      Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
           assembly_index_mapping);
 
   /**
@@ -320,7 +321,7 @@ public:
    * @return Host view of displacement field data
    */
   KOKKOS_FORCEINLINE_FUNCTION
-  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
   get_host_field() const {
     return displacement_base_type::template get_base_field_view<false>();
   }
@@ -334,7 +335,7 @@ public:
    * @return Host view of velocity field data
    */
   KOKKOS_FORCEINLINE_FUNCTION
-  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
   get_host_field_dot() const {
     return velocity_base_type::template get_base_field_view<false>();
   }
@@ -348,7 +349,7 @@ public:
    * @return Host view of acceleration field data
    */
   KOKKOS_FORCEINLINE_FUNCTION
-  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
   get_host_field_dot_dot() const {
     return acceleration_base_type::template get_base_field_view<false>();
   }
@@ -362,7 +363,7 @@ public:
    * @return Host view of inverse mass matrix data
    */
   KOKKOS_FORCEINLINE_FUNCTION
-  Kokkos::View<type_real **, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+  Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
   get_host_mass_inverse() const {
     return mass_inverse_base_type::template get_base_field_view<false>();
   }

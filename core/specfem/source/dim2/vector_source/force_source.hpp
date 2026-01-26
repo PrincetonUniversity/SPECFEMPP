@@ -37,7 +37,7 @@ namespace sources {
  *     3.0,  // z-coordinate
  *     45.0, // angle in degrees
  *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium type
@@ -66,7 +66,7 @@ public:
    * frequecy of Dirac source.
    */
   force(YAML::Node &Node, const int nsteps, const type_real dt,
-        const specfem::wavefield::simulation_field wavefield_type)
+        const specfem::simulation::field_type wavefield_type)
       : angle([](YAML::Node &Node) -> type_real {
           if (Node["angle"]) {
             return Node["angle"].as<type_real>();
@@ -88,7 +88,7 @@ public:
   force(
       type_real x, type_real z, type_real angle,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
-      const specfem::wavefield::simulation_field wavefield_type)
+      const specfem::simulation::field_type wavefield_type)
       : angle(angle), wavefield_type(wavefield_type),
         vector_source(x, z, std::move(source_time_function)) {};
 
@@ -105,7 +105,7 @@ public:
    */
   type_real get_angle() const { return angle; }
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
+  specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
 
@@ -139,10 +139,11 @@ public:
    * - \f$\theta\f$ is the force angle in degrees from horizontal
    * - Components depend on the medium and wave field type
    *
-   * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * @return Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
    * Force vector with size depending on medium type
    */
-  specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_force_vector() const override;
 
   /**
    * @brief Get the list of supported media for this source type
@@ -156,10 +157,10 @@ public:
   static constexpr const char *name = "2-D force";
 
 private:
-  type_real angle; ///< Angle of force source
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
-                                                       ///< which the source
-                                                       ///< acts
+  type_real angle;                                ///< Angle of force source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
+                                                  ///< which the source
+                                                  ///< acts
   const static std::vector<specfem::element::medium_tag> supported_media;
 };
 } // namespace sources

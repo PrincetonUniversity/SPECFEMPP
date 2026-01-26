@@ -127,7 +127,8 @@ public:
                                              using_simd>;
 
     using QuadratureType = specfem::quadrature::lagrange_derivative<
-        ngll, dimension_tag, specfem::kokkos::DevScratchSpace,
+        ngll, dimension_tag,
+        Kokkos::DefaultExecutionSpace::scratch_memory_space,
         Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
     using PointPropertyType =

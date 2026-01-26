@@ -15,7 +15,7 @@ specfem::sources::force<specfem::dimension::type::dim3>::get_supported_media()
            specfem::element::medium_tag::elastic };
 }
 
-specfem::kokkos::HostView1d<type_real>
+Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
 specfem::sources::force<specfem::dimension::type::dim3>::get_force_vector()
     const {
 
@@ -23,16 +23,18 @@ specfem::sources::force<specfem::dimension::type::dim3>::get_force_vector()
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
 
   // Declare the force vector
-  specfem::kokkos::HostView1d<type_real> force_vector;
+  using ViewType =
+      Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>;
+  ViewType force_vector;
 
   // Acoustic
   if (medium_tag == specfem::element::medium_tag::acoustic) {
-    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 1);
+    force_vector = ViewType("force_vector", 1);
     force_vector(0) = fx;
   }
   // Elastic P-SV
   else if (medium_tag == specfem::element::medium_tag::elastic) {
-    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 3);
+    force_vector = ViewType("force_vector", 3);
     force_vector(0) = fx;
     force_vector(1) = fy;
     force_vector(2) = fz;

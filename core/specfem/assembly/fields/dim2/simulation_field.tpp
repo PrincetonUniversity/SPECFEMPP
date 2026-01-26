@@ -8,7 +8,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::wavefield::simulation_field WavefieldType>
+template <specfem::simulation::field_type WavefieldType>
 specfem::assembly::simulation_field<specfem::dimension::type::dim2,
                                     WavefieldType>::
     simulation_field(const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -23,7 +23,7 @@ specfem::assembly::simulation_field<specfem::dimension::type::dim2,
                                        POROELASTIC, ELASTIC_PSV_T)),
       CAPTURE(assembly_index_mapping, h_assembly_index_mapping, field) {
         _assembly_index_mapping_ =
-            Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::DevMemSpace>(
+            Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::memory_space>(
                 "specfem::assembly::simulation_field::index_mapping", nglob);
         _h_assembly_index_mapping_ = Kokkos::create_mirror_view(
             _assembly_index_mapping_);
@@ -42,7 +42,7 @@ specfem::assembly::simulation_field<specfem::dimension::type::dim2,
   return;
 }
 
-template <specfem::wavefield::simulation_field WavefieldType>
+template <specfem::simulation::field_type WavefieldType>
 int specfem::assembly::simulation_field<
     specfem::dimension::type::dim2,
     WavefieldType>::get_total_degrees_of_freedom() {
@@ -63,7 +63,7 @@ int specfem::assembly::simulation_field<
   return total_degrees_of_freedom;
 }
 
-template <specfem::wavefield::simulation_field WavefieldType>
+template <specfem::simulation::field_type WavefieldType>
 template <specfem::sync::kind sync>
 void specfem::assembly::simulation_field<specfem::dimension::type::dim2,
                                          WavefieldType>::sync_fields() {
