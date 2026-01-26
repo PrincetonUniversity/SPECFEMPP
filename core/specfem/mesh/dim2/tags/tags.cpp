@@ -10,7 +10,7 @@ specfem::mesh::tags<specfem::dimension::type::dim2>::tags(
   this->nspec = materials.material_index_mapping.extent(0);
 
   this->tags_container =
-      specfem::kokkos::HostView1d<specfem::mesh::impl::tags_container>(
+      Kokkos::View<specfem::mesh::impl::tags_container *, Kokkos::HostSpace>(
           "specfem::mesh::tags::tags", this->nspec);
 
   std::vector<specfem::element::boundary_tag_container> boundary_tag(

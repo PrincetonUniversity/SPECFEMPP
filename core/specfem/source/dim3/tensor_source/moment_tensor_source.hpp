@@ -180,12 +180,13 @@ public:
    * The tensor format is a 3×3 symmetric matrix for elastic media, representing
    * the complete seismic moment tensor used in earthquake source modeling.
    *
-   * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * @return Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
    * Source tensor with dimensions [ncomponents][3] where each row contains
    * [Mxx, Mxy, Mxz], [Mxy, Myy, Myz], [Mxz, Myz, Mzz] etc, depending on the
    * medium type
    */
-  specfem::kokkos::HostView2d<type_real> get_source_tensor() const override;
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_source_tensor() const override;
 
   /**
    * @brief Get the list of supported media for this source type

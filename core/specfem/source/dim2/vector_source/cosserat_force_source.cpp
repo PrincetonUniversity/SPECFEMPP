@@ -11,14 +11,17 @@ std::vector<specfem::element::medium_tag> specfem::sources::cosserat_force<
   return { specfem::element::medium_tag::elastic_psv_t };
 }
 
-specfem::kokkos::HostView1d<type_real> specfem::sources::cosserat_force<
+Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+specfem::sources::cosserat_force<
     specfem::dimension::type::dim2>::get_force_vector() const {
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
 
   // Declare the force vector
-  specfem::kokkos::HostView1d<type_real> force_vector;
+  using ViewType =
+      Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>;
+  ViewType force_vector;
 
   // Convert angle to radians
   type_real angle_in_rad = this->angle * Kokkos::numbers::pi_v<type_real> /
@@ -26,7 +29,7 @@ specfem::kokkos::HostView1d<type_real> specfem::sources::cosserat_force<
 
   // Only supporting elastic_psv_t medium for Cosserat force sources
   if (medium_tag == specfem::element::medium_tag::elastic_psv_t) {
-    force_vector = specfem::kokkos::HostView1d<type_real>("force_vector", 3);
+    force_vector = ViewType("force_vector", 3);
     force_vector(0) = this->f * std::sin(angle_in_rad);
     force_vector(1) =
         static_cast<type_real>(-1.0) * this->f * std::cos(angle_in_rad);

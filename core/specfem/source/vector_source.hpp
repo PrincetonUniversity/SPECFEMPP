@@ -152,7 +152,8 @@ public:
    * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
    * Force vector with size depending on medium type
    */
-  virtual specfem::kokkos::HostView1d<type_real> get_force_vector() const = 0;
+  virtual Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_force_vector() const = 0;
 };
 
 } // namespace sources

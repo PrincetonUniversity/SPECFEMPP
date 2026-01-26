@@ -184,11 +184,12 @@ public:
    * \end{pmatrix}
    * \f]
    *
-   * @return Kokkos::View<type_real **, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * @return Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
    * Source tensor with dimensions [ncomponents][2] where each row contains
    * [Mxx, Mxz], [Mxz, Mzz] etc, depending on the medium type
    */
-  specfem::kokkos::HostView2d<type_real> get_source_tensor() const override;
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_source_tensor() const override;
 
   /**
    * @brief Get the list of supported media for this source type

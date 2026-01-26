@@ -19,7 +19,7 @@ template <> struct axial_elements<specfem::dimension::type::dim2> {
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
 
-  specfem::kokkos::HostView1d<bool> is_on_the_axis;
+  Kokkos::View<bool *, Kokkos::HostSpace> is_on_the_axis;
 
   axial_elements() {};
   axial_elements(const int nspec);

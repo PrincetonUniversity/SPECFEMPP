@@ -62,7 +62,7 @@ template <> struct materials<specfem::dimension::type::dim2> {
   };
 
   int n_materials; ///< Total number of different materials
-  specfem::kokkos::HostView1d<material_specification>
+  Kokkos::View<material_specification *, Kokkos::HostSpace>
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties
 

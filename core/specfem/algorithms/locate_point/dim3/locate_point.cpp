@@ -46,7 +46,8 @@ specfem::algorithms::locate_point(
 // Except for the tests this function is not used in the codebase.
 specfem::point::global_coordinates<specfem::dimension::type::dim3>
 specfem::algorithms::locate_point(
-    const specfem::kokkos::HostTeam::member_type &team_member,
+    const Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type
+        &team_member,
     const specfem::point::local_coordinates<specfem::dimension::type::dim3>
         &coordinate,
     const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh) {

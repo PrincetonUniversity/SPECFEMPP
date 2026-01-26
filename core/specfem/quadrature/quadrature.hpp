@@ -24,42 +24,51 @@ public:
    * @param alpha alpha value of the quadrature
    * @param beta beta value of the quadrature
    */
-  virtual specfem::kokkos::DeviceView1d<type_real> get_xi() const {
+  virtual Kokkos::View<type_real *, Kokkos::LayoutRight,
+                       Kokkos::DefaultExecutionSpace>
+  get_xi() const {
     return this->xi;
   };
   /**
    * Get quadrature weights on device
    *
    */
-  virtual specfem::kokkos::DeviceView1d<type_real> get_w() const {
+  virtual Kokkos::View<type_real *, Kokkos::LayoutRight,
+                       Kokkos::DefaultExecutionSpace>
+  get_w() const {
     return this->w;
   };
   /**
    * Get derivatives of quadrature polynomials at quadrature points on device
    *
    */
-  virtual specfem::kokkos::DeviceView2d<type_real> get_hprime() const {
+  virtual Kokkos::View<type_real **, Kokkos::LayoutRight,
+                       Kokkos::DefaultExecutionSpace>
+  get_hprime() const {
     return this->hprime;
   };
   /**
    * Get quadrature points on host
    *
    */
-  virtual specfem::kokkos::HostMirror1d<type_real> get_hxi() const {
+  virtual Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_hxi() const {
     return this->h_xi;
   };
   /**
    * Get quadrature weights on host
    *
    */
-  virtual specfem::kokkos::HostMirror1d<type_real> get_hw() const {
+  virtual Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_hw() const {
     return this->h_w;
   };
   /**
    * Get derivatives of quadrature polynomials at quadrature points on host
    *
    */
-  virtual specfem::kokkos::HostMirror2d<type_real> get_hhprime() const {
+  virtual Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_hhprime() const {
     return this->h_hprime;
   };
   /**
@@ -85,20 +94,26 @@ private:
   type_real beta;  ///< beta value of the quadrature
   int N;           ///< Number of qudrature points
 
-  specfem::kokkos::DeviceView1d<type_real> xi;   ///< qudrature points stored on
-                                                 ///< device
-  specfem::kokkos::HostMirror1d<type_real> h_xi; ///< quadrature points stored
-                                                 ///< on host
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::DefaultExecutionSpace>
+      xi; ///< qudrature points stored on
+          ///< device
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+      h_xi; ///< quadrature points stored
+            ///< on host
 
-  specfem::kokkos::DeviceView1d<type_real> w; ///< qudrature weights stored on
-                                              ///< device
-  specfem::kokkos::HostView1d<type_real> h_w; ///< quadrature weights stored on
-                                              ///< host
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::DefaultExecutionSpace>
+      w; ///< qudrature weights stored on
+         ///< device
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+      h_w; ///< quadrature weights stored on
+           ///< host
 
-  specfem::kokkos::DeviceView2d<type_real> hprime; ///< Polynomial derivatives
-                                                   ///< stored on device
-  specfem::kokkos::HostView2d<type_real> h_hprime; ///< Polynomial derivatives
-                                                   ///< store on host
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::DefaultExecutionSpace>
+      hprime; ///< Polynomial derivatives
+              ///< stored on device
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      h_hprime; ///< Polynomial derivatives
+                ///< store on host
 };
 
 std::ostream &operator<<(std::ostream &out,

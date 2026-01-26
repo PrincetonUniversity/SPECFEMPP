@@ -21,6 +21,9 @@ void compute_source_array_from_tensor_and_element_jacobian(
     Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
         source_array) {
 
+  using ViewType =
+      Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>;
+
   const int ngllx = quadrature.N;
   const int nglly = quadrature.N;
   const int ngllz = quadrature.N;
@@ -41,8 +44,7 @@ void compute_source_array_from_tensor_and_element_jacobian(
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
           tensor_source.get_local_coordinates().gamma, ngllz, gamma);
 
-  specfem::kokkos::HostView3d<type_real> source_polynomial("source_polynomial",
-                                                           ngllz, nglly, ngllx);
+  ViewType source_polynomial("source_polynomial", ngllz, nglly, ngllx);
 
   // Use pre-computed jacobian data instead of loading from jacobian_matrix
   for (int iz = 0; iz < ngllz; ++iz) {
