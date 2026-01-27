@@ -1,7 +1,8 @@
 #include "specfem/assembly/properties.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/assembly/impl/domain_properties.hpp"
+#include "specfem/assembly/impl/domain_properties.tpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/medium_container.hpp"
 
 specfem::assembly::properties<specfem::dimension::type::dim2>::properties(
     const int nspec, const int ngllz, const int ngllx,
