@@ -1,12 +1,8 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "medium/dim2/acoustic/isotropic/domain_properties.hpp"
-#include "medium/dim2/elastic/anisotropic/domain_properties.hpp"
-#include "medium/dim2/elastic/isotropic/domain_properties.hpp"
-#include "medium/dim2/elastic/isotropic_cosserat/domain_properties.hpp"
-#include "medium/dim2/poroelastic/isotropic/domain_properties.hpp"
 #include "medium/impl/accessor.hpp"
+#include "specfem/medium_container.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {

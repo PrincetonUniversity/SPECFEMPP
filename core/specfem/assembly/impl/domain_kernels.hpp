@@ -1,12 +1,7 @@
 #pragma once
 
-#include "medium/dim2/acoustic/isotropic/domain_kernels.hpp"
-#include "medium/dim2/elastic/anisotropic/domain_kernels.hpp"
-#include "medium/dim2/elastic/isotropic/domain_kernels.hpp"
-#include "medium/dim2/elastic/isotropic_cosserat/domain_kernels.hpp"
-#include "medium/dim2/poroelastic/isotropic/domain_kernels.hpp"
 #include "medium/impl/accessor.hpp"
-#include "medium/impl/data_container.hpp"
+#include "specfem/medium_container.hpp"
 
 namespace specfem {
 namespace medium {
