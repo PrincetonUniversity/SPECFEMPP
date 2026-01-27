@@ -1,23 +1,18 @@
 #pragma once
 
-#include "../impl/accessors.hpp"
-#include "accessor_patch.hpp"
 #include "enumerations/coupled_interface.hpp"
 #include "enumerations/dimension.hpp"
 #include "initializers.hpp"
 #include "specfem/data_access/accessor.hpp"
 #include "specfem_setup.hpp"
-#include "transfer_function.hpp"
 
 #include <type_traits>
 static constexpr specfem::dimension::type dimension_tag_ =
     specfem::dimension::type::dim2;
 namespace specfem::test_fixture {
 
-// legacy: TODO remove if IntersectionDataPack2D is sufficient
-
 template <specfem::interface::interface_tag InterfaceTag, typename... Accessors>
-struct IntersectionAccessorPack
+struct IntersectionDataPack
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::nonconforming_interface,
@@ -33,7 +28,7 @@ struct IntersectionAccessorPack
   using packed_accessors = std::tuple<Accessors...>;
 
   KOKKOS_INLINE_FUNCTION
-  IntersectionAccessorPack(const Accessors &...accessors)
+  IntersectionDataPack(const Accessors &...accessors)
       : Accessors(accessors)... {};
 
   template <typename... Indices>

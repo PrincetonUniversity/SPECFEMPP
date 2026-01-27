@@ -11,10 +11,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>
-void compute_coupling(
-    std::integral_constant<
-        specfem::connections::type,
-        specfem::connections::type::weakly_conforming> /*unused*/,
+void compute_coupling_weakly_conforming(
     const specfem::assembly::assembly<DimensionTag> &assembly);
 
 template <specfem::dimension::type DimensionTag,
@@ -22,10 +19,7 @@ template <specfem::dimension::type DimensionTag,
           int NQuad_interface, specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>
-void compute_coupling(
-    std::integral_constant<
-        specfem::connections::type,
-        specfem::connections::type::nonconforming> /*unused*/,
+void compute_coupling_nonconforming(
     const specfem::assembly::assembly<DimensionTag> &assembly);
 
 /**
@@ -60,12 +54,13 @@ void compute_coupling(
 
   // Forward to implementation with dispatch tag
   if constexpr (ConnectionTag == specfem::connections::type::nonconforming) {
-    compute_coupling<DimensionTag, WavefieldType, NGLL, NQuad_intersection,
-                     InterfaceTag, BoundaryTag, FluxSchemeTag>(
-        connection_dispatch(), assembly);
+    compute_coupling_nonconforming<DimensionTag, WavefieldType, NGLL,
+                                   NQuad_intersection, InterfaceTag,
+                                   BoundaryTag, FluxSchemeTag>(assembly);
   } else {
-    compute_coupling<DimensionTag, WavefieldType, InterfaceTag, BoundaryTag,
-                     FluxSchemeTag>(connection_dispatch(), assembly);
+    compute_coupling_weakly_conforming<
+        DimensionTag, WavefieldType, InterfaceTag, BoundaryTag, FluxSchemeTag>(
+        assembly);
   }
 }
 } // namespace specfem::compute::impl
