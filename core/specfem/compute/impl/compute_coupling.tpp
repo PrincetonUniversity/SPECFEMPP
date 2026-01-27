@@ -1,16 +1,16 @@
 #pragma once
 
-#include "specfem/boundary_conditions.hpp"
 #include "compute_coupling.hpp"
 #include "enumerations/connections.hpp"
 #include "enumerations/interface.hpp"
-#include "specfem/execution.hpp"
 #include "medium/compute_coupling.hpp"
-#include "specfem/parallel_configuration.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/boundary_conditions.hpp"
 #include "specfem/chunk_edge.hpp"
+#include "specfem/execution.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include "specfem/point/interface_index.hpp"
 #include <Kokkos_Core.hpp>
@@ -21,10 +21,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>
-void specfem::compute::impl::compute_coupling(
-    std::integral_constant<
-        specfem::connections::type,
-        specfem::connections::type::weakly_conforming> /*unused*/,
+void specfem::compute::impl::compute_coupling_weakly_conforming(
     const specfem::assembly::assembly<DimensionTag> &assembly) {
 
   constexpr static auto dimension_tag = DimensionTag;
@@ -118,10 +115,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::interface::flux_scheme_tag FluxSchemeTag>
-void specfem::compute::impl::compute_coupling(
-    std::integral_constant<
-        specfem::connections::type,
-        specfem::connections::type::nonconforming> /*unused*/,
+void specfem::compute::impl::compute_coupling_nonconforming(
     const specfem::assembly::assembly<DimensionTag> &assembly) {
 
   constexpr bool using_simd = false;
