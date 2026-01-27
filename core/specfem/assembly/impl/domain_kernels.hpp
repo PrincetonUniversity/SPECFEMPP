@@ -3,8 +3,7 @@
 #include "domain_accessor.hpp"
 #include "specfem/medium_container.hpp"
 
-namespace specfem {
-namespace medium {
+namespace specfem::assembly::impl {
 
 /**
  * @brief Misfit kernel storage container for seismic inversion.
@@ -17,7 +16,7 @@ namespace medium {
  * Specializes for different dimension/medium/property combinations and provides
  * efficient accumulation operations for kernel computation during adjoint
  * simulations. Inherits from `kernels::data_container` for storage and
- * `impl::Accessor` for device/host data access.
+ * `specfem::assembly::impl::DomainAccessor` for device/host data access.
  *
  * @tparam DimensionTag Spatial dimension (dim2/dim3)
  * @tparam MediumTag Physical medium type
@@ -47,15 +46,16 @@ struct domain_kernels;
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 struct domain_kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag>
-    : public kernels::data_container<specfem::dimension::type::dim2, MediumTag,
-                                     PropertyTag>,
-      public impl::DomainAccessor<specfem::dimension::type::dim2,
-                                  domain_kernels<specfem::dimension::type::dim2,
-                                                 MediumTag, PropertyTag> > {
+    : public specfem::medium::kernels::data_container<
+          specfem::dimension::type::dim2, MediumTag, PropertyTag>,
+      public DomainAccessor<specfem::dimension::type::dim2,
+                            domain_kernels<specfem::dimension::type::dim2,
+                                           MediumTag, PropertyTag> > {
 
   /// Base kernels data container type
-  using base_type = kernels::data_container<specfem::dimension::type::dim2,
-                                            MediumTag, PropertyTag>;
+  using base_type =
+      specfem::medium::kernels::data_container<specfem::dimension::type::dim2,
+                                               MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =
@@ -113,15 +113,16 @@ struct domain_kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag>
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 struct domain_kernels<specfem::dimension::type::dim3, MediumTag, PropertyTag>
-    : public kernels::data_container<specfem::dimension::type::dim3, MediumTag,
-                                     PropertyTag>,
-      public impl::DomainAccessor<specfem::dimension::type::dim3,
-                                  domain_kernels<specfem::dimension::type::dim3,
-                                                 MediumTag, PropertyTag> > {
+    : public specfem::medium::kernels::data_container<
+          specfem::dimension::type::dim3, MediumTag, PropertyTag>,
+      public DomainAccessor<specfem::dimension::type::dim3,
+                            domain_kernels<specfem::dimension::type::dim3,
+                                           MediumTag, PropertyTag> > {
 
   /// Base kernels data container type
-  using base_type = kernels::data_container<specfem::dimension::type::dim3,
-                                            MediumTag, PropertyTag>;
+  using base_type =
+      specfem::medium::kernels::data_container<specfem::dimension::type::dim3,
+                                               MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =
@@ -162,8 +163,4 @@ struct domain_kernels<specfem::dimension::type::dim3, MediumTag, PropertyTag>
     }
   }
 };
-} // namespace medium
-} // namespace specfem
-
-// Including the template specializations here so that domain_kernels is
-// an interface to the compute/kernels module
+} // namespace specfem::assembly::impl

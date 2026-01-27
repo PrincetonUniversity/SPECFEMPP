@@ -3,9 +3,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace medium {
-namespace impl {
+namespace specfem::assembly::impl {
 
 /**
  * @brief CRTP base for accessing data containers in device/host memory.
@@ -288,6 +286,4 @@ public:
   }
 };
 
-} // namespace impl
-} // namespace medium
-} // namespace specfem
+} // namespace specfem::assembly::impl

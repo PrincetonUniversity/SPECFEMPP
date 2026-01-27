@@ -1,20 +1,20 @@
 .. _api_medium_domain_kernels:
 
-``specfem::medium::domain_kernels``
+``specfem::assembly::impl::domain_kernels``
 ===================================
 
-.. doxygenstruct:: specfem::medium::domain_kernels
+.. doxygenstruct:: specfem::assembly::impl::domain_kernels
     :members:
     :private-members:
 
 Dimension-specific Specializations
 ----------------------------------
 
-.. doxygenstruct:: specfem::medium::domain_kernels< specfem::dimension::type::dim2, MediumTag, PropertyTag >
+.. doxygenstruct:: specfem::assembly::impl::domain_kernels< specfem::dimension::type::dim2, MediumTag, PropertyTag >
     :members:
     :private-members:
 
-.. doxygenstruct:: specfem::medium::domain_kernels< specfem::dimension::type::dim3, MediumTag, PropertyTag >
+.. doxygenstruct:: specfem::assembly::impl::domain_kernels< specfem::dimension::type::dim3, MediumTag, PropertyTag >
     :members:
     :private-members:
 

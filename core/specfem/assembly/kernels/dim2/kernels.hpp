@@ -39,13 +39,14 @@ namespace specfem::assembly {
  * @endcode
  *
  * @see specfem::assembly::kernels Base template class
- * @see specfem::medium::domain_kernels Individual medium kernel containers
+ * @see specfem::assembly::impl::domain_kernels Individual medium kernel
+ * containers
  * @see specfem::point::kernels Point-wise kernel accessors
  */
 template <>
 struct kernels<specfem::dimension::type::dim2>
     : public impl::value_containers<specfem::dimension::type::dim2,
-                                    specfem::medium::domain_kernels> {
+                                    impl::domain_kernels> {
 public:
   /**
    * @brief Default constructor
@@ -78,8 +79,8 @@ public:
    *
    */
   void copy_to_host() {
-    impl::value_containers<dimension_tag,
-                           specfem::medium::domain_kernels>::copy_to_host();
+    impl::value_containers<
+        dimension_tag, specfem::assembly::impl::domain_kernels>::copy_to_host();
   }
 
   /**
@@ -87,8 +88,9 @@ public:
    *
    */
   void copy_to_device() {
-    impl::value_containers<dimension_tag,
-                           specfem::medium::domain_kernels>::copy_to_device();
+    impl::value_containers<
+        dimension_tag,
+        specfem::assembly::impl::domain_kernels>::copy_to_device();
   }
 };
 

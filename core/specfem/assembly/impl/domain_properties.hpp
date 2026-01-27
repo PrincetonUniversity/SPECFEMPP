@@ -14,7 +14,7 @@ namespace specfem::mesh {
 template <specfem::dimension::type Dimension> struct materials;
 }
 
-namespace specfem::medium {
+namespace specfem::assembly::impl {
 
 /**
  * @brief Material properties storage for spectral elements at quadrature
@@ -57,16 +57,15 @@ struct domain_properties;
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 struct domain_properties<specfem::dimension::type::dim2, MediumTag, PropertyTag>
-    : public properties::data_container<specfem::dimension::type::dim2,
-                                        MediumTag, PropertyTag>,
-      public impl::DomainAccessor<
-          specfem::dimension::type::dim2,
-          domain_properties<specfem::dimension::type::dim2, MediumTag,
-                            PropertyTag> > {
+    : public specfem::medium::properties::data_container<
+          specfem::dimension::type::dim2, MediumTag, PropertyTag>,
+      public DomainAccessor<specfem::dimension::type::dim2,
+                            domain_properties<specfem::dimension::type::dim2,
+                                              MediumTag, PropertyTag> > {
 
   /// Base data container type for property storage
-  using base_type = properties::data_container<specfem::dimension::type::dim2,
-                                               MediumTag, PropertyTag>;
+  using base_type = specfem::medium::properties::data_container<
+      specfem::dimension::type::dim2, MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =
@@ -124,16 +123,15 @@ struct domain_properties<specfem::dimension::type::dim2, MediumTag, PropertyTag>
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 struct domain_properties<specfem::dimension::type::dim3, MediumTag, PropertyTag>
-    : public properties::data_container<specfem::dimension::type::dim3,
-                                        MediumTag, PropertyTag>,
-      public impl::DomainAccessor<
-          specfem::dimension::type::dim3,
-          domain_properties<specfem::dimension::type::dim3, MediumTag,
-                            PropertyTag> > {
+    : public specfem::medium::properties::data_container<
+          specfem::dimension::type::dim3, MediumTag, PropertyTag>,
+      public DomainAccessor<specfem::dimension::type::dim3,
+                            domain_properties<specfem::dimension::type::dim3,
+                                              MediumTag, PropertyTag> > {
 
   /// Base data container type for property storage
-  using base_type = properties::data_container<specfem::dimension::type::dim3,
-                                               MediumTag, PropertyTag>;
+  using base_type = specfem::medium::properties::data_container<
+      specfem::dimension::type::dim3, MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =
@@ -177,4 +175,4 @@ struct domain_properties<specfem::dimension::type::dim3, MediumTag, PropertyTag>
   add_host_values(const IndexType &index, PointValues &values) const = delete;
 };
 
-} // namespace specfem::medium
+} // namespace specfem::assembly::impl
