@@ -64,6 +64,26 @@
    _ENUM_ID_INTERFACE_TAG)
 /** @} */
 
+/**
+ * @defgroup flux_scheme_tag_macros Flux Scheme Tag Macros
+ * @brief Macros for flux schemes.
+ * @{
+ */
+/**
+ * @brief Strongly conforming connection tag
+ */
+#define FLUX_SCHEME_TAG_NATURAL                                                \
+  (0, specfem::interface::flux_scheme_tag::natural, natural,                   \
+   _ENUM_ID_FLUX_SCHEME_TAG)
+
+/**
+ * @brief Weakly conforming connection tag
+ */
+#define FLUX_SCHEME_TAG_SYMMETRIC_INTERIOR_PENALTY                             \
+  (1, specfem::interface::flux_scheme_tag::symmetric_interior_penalty,         \
+   symmetric_interior_penalty, _ENUM_ID_FLUX_SCHEME_TAG)
+/** @} */
+
 /// \cond
 #define _MAKE_INTERFACE_TUPLE(r, product) BOOST_PP_SEQ_TO_TUPLE(product)
 
@@ -85,11 +105,19 @@
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 /**
+ * @brief Converts flux scheme tag arguments to a sequence of tag tuples
+ */
+#define FLUX_SCHEME_TAG(...)                                                   \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAGS, FLUX_SCHEME_TAG_,                    \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+/**
  * @brief Tag getters. The macros are intended to be used only in @ref DECLARE
  * and @ref INSTANTIATE.
  */
 #define _CONNECTION_TAG_ BOOST_PP_SEQ_TO_LIST((1))
 #define _INTERFACE_TAG_ BOOST_PP_SEQ_TO_LIST((2))
+#define _FLUX_SCHEME_TAG_ BOOST_PP_SEQ_TO_LIST((4))
 
 /**
  * @brief List of interface systems
@@ -130,6 +158,47 @@
       (DIMENSION_TAG_DIM2, CONNECTION_TAG_NONCONFORMING,                       \
        INTERFACE_TAG_ACOUSTIC_ELASTIC,                                         \
        BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+
+/**
+ * @brief List of edges with interfaces and flux scheme tag
+ */
+#define EDGES_AND_FLUX_SCHEME                                                  \
+  ((DIMENSION_TAG_DIM2, CONNECTION_TAG_WEAKLY_CONFORMING,                      \
+    INTERFACE_TAG_ELASTIC_ACOUSTIC, BOUNDARY_TAG_NONE,                         \
+    FLUX_SCHEME_TAG_NATURAL))((DIMENSION_TAG_DIM2,                             \
+                               CONNECTION_TAG_WEAKLY_CONFORMING,               \
+                               INTERFACE_TAG_ELASTIC_ACOUSTIC,                 \
+                               BOUNDARY_TAG_STACEY, FLUX_SCHEME_TAG_NATURAL))( \
+      (DIMENSION_TAG_DIM2, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
+       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_NONE,                      \
+       FLUX_SCHEME_TAG_NATURAL))(                                              \
+      (DIMENSION_TAG_DIM2, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
+       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_STACEY,                    \
+       FLUX_SCHEME_TAG_NATURAL))(                                              \
+      (DIMENSION_TAG_DIM2, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
+       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,     \
+       FLUX_SCHEME_TAG_NATURAL))(                                              \
+      (DIMENSION_TAG_DIM2, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
+       INTERFACE_TAG_ACOUSTIC_ELASTIC,                                         \
+       BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET, FLUX_SCHEME_TAG_NATURAL))(     \
+      (DIMENSION_TAG_DIM2, CONNECTION_TAG_NONCONFORMING,                       \
+       INTERFACE_TAG_ELASTIC_ACOUSTIC, BOUNDARY_TAG_NONE,                      \
+       FLUX_SCHEME_TAG_NATURAL))(                                              \
+      (DIMENSION_TAG_DIM2, CONNECTION_TAG_NONCONFORMING,                       \
+       INTERFACE_TAG_ELASTIC_ACOUSTIC, BOUNDARY_TAG_STACEY,                    \
+       FLUX_SCHEME_TAG_NATURAL))(                                              \
+      (DIMENSION_TAG_DIM2, CONNECTION_TAG_NONCONFORMING,                       \
+       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_NONE,                      \
+       FLUX_SCHEME_TAG_NATURAL))(                                              \
+      (DIMENSION_TAG_DIM2, CONNECTION_TAG_NONCONFORMING,                       \
+       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_STACEY,                    \
+       FLUX_SCHEME_TAG_NATURAL))(                                              \
+      (DIMENSION_TAG_DIM2, CONNECTION_TAG_NONCONFORMING,                       \
+       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,     \
+       FLUX_SCHEME_TAG_NATURAL))(                                              \
+      (DIMENSION_TAG_DIM2, CONNECTION_TAG_NONCONFORMING,                       \
+       INTERFACE_TAG_ACOUSTIC_ELASTIC,                                         \
+       BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET, FLUX_SCHEME_TAG_NATURAL))
 
 /// \endcond
 /** @} */
