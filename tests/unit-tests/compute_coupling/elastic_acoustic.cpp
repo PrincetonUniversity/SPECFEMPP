@@ -3,6 +3,8 @@
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
+#include <string>
+
 struct ElasticAcousticTestParams {
   type_real edge_factor;
   std::array<type_real, 2> normal;
@@ -11,6 +13,8 @@ struct ElasticAcousticTestParams {
   type_real tolerance;
   std::string name;
 };
+
+void PrintTo(const ElasticAcousticTestParams &, std::ostream *os) { *os << ""; }
 
 class ElasticAcousticCouplingTest
     : public ::testing::TestWithParam<ElasticAcousticTestParams> {};
@@ -102,4 +106,6 @@ INSTANTIATE_TEST_SUITE_P(
             { 1.414213562, 1.414213562 }, // expected_result (1.0 * 0.707106781
                                           // * 2.0 ≈ 1.414)
             1e-6, // tolerance (relaxed for floating point precision)
-            "DiagonalNormalTest" }));
+            "DiagonalNormalTest" }),
+    [](const ::testing::TestParamInfo<ElasticAcousticTestParams> &info)
+        -> std::string { return info.param.name; });
