@@ -82,7 +82,8 @@ specfem::source_time_functions::external::external(const YAML::Node &external,
 
 void specfem::source_time_functions::external::compute_source_time_function(
     const type_real t0, const type_real dt, const int nsteps,
-    specfem::kokkos::HostView2d<type_real> source_time_function) {
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_time_function) {
 
   const int ncomponents = source_time_function.extent(1);
 
@@ -132,7 +133,8 @@ void specfem::source_time_functions::external::compute_source_time_function(
     if (filename[icomp].empty())
       continue;
 
-    specfem::kokkos::HostView2d<type_real> data("external", nsteps, 2);
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> data(
+        "external", nsteps, 2);
     specfem::io::seismogram_reader reader(
         filename[icomp], specfem::enums::seismogram::format::ascii, data);
     reader.read();

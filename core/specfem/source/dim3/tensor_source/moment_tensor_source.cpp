@@ -14,20 +14,22 @@ std::vector<specfem::element::medium_tag> specfem::sources::moment_tensor<
   return { specfem::element::medium_tag::elastic };
 }
 
-specfem::kokkos::HostView2d<type_real> specfem::sources::moment_tensor<
+Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+specfem::sources::moment_tensor<
     specfem::dimension::type::dim3>::get_source_tensor() const {
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
 
   // Declare the source tensor
-  specfem::kokkos::HostView2d<type_real> source_tensor;
+  using ViewType =
+      Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>;
+  ViewType source_tensor;
 
   // For elastic: 3x3 tensor [[Mxx, Mxz], [Mxz, Mzz]]
 
   if (medium_tag == specfem::element::medium_tag::elastic) {
-    source_tensor =
-        specfem::kokkos::HostView2d<type_real>("source_tensor", 3, 3);
+    source_tensor = ViewType("source_tensor", 3, 3);
     source_tensor(0, 0) = this->Mxx;
     source_tensor(0, 1) = this->Mxy;
     source_tensor(0, 2) = this->Mxz;

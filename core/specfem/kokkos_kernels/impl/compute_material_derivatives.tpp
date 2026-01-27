@@ -60,7 +60,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
                                            using_simd>;
 
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
-      NGLL, DimensionTag, specfem::kokkos::DevScratchSpace,
+      NGLL, DimensionTag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   using PointDisplacementType =

@@ -5,9 +5,6 @@
 #include <iostream>
 #include <stdexcept>
 
-using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
-using HostView1d = specfem::kokkos::HostView1d<type_real>;
-
 type_real specfem::quadrature::gll::gll_library::pnleg(const type_real z,
                                                        const int n) {
   // Generate Lagendre polynomials using recurrance relation
@@ -99,10 +96,10 @@ type_real specfem::quadrature::gll::gll_library::pndglj(const type_real z,
   return glj_deriv;
 }
 
-void specfem::quadrature::gll::gll_library::zwgljd(HostMirror1d z,
-                                                   HostMirror1d w, const int np,
-                                                   const type_real alpha,
-                                                   const type_real beta) {
+void specfem::quadrature::gll::gll_library::zwgljd(
+    Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
+    Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
+    const int np, const type_real alpha, const type_real beta) {
 
   type_real p, pd;
 
@@ -146,7 +143,8 @@ void specfem::quadrature::gll::gll_library::zwgljd(HostMirror1d z,
   return;
 }
 
-std::tuple<HostView1d, HostView1d>
+std::tuple<Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>,
+           Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> >
 specfem::quadrature::gll::gll_library::zwgljd(const int np,
                                               const type_real alpha,
                                               const type_real beta) {
@@ -156,8 +154,10 @@ specfem::quadrature::gll::gll_library::zwgljd(const int np,
   assert(np > 2);
   assert(alpha > -1.0 && beta > -1.0);
 
-  HostView1d z("specfem::gll_library::z", np);
-  HostView1d w("specfem::gll_library::z", np);
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> z(
+      "specfem::gll_library::z", np);
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> w(
+      "specfem::gll_library::z", np);
 
   if (np > 2) {
     auto z_view = Kokkos::subview(z, Kokkos::pair(1, np - 1));

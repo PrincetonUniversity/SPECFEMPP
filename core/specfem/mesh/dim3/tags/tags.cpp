@@ -25,7 +25,7 @@ specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
   this->nspec = nspec;
 
   this->tags_container =
-      specfem::kokkos::HostView1d<specfem::mesh::impl::tags_container>(
+      Kokkos::View<specfem::mesh::impl::tags_container *, Kokkos::HostSpace>(
           "specfem::mesh::tags::tags", this->nspec);
 
   Kokkos::parallel_for(

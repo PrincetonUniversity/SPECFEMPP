@@ -9,7 +9,8 @@ namespace specfem::algorithms::locate_point_impl {
 std::tuple<int, int, int> rough_location(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,
-    const specfem::kokkos::HostView4d<type_real> coord);
+    const Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        coord);
 
 std::vector<int> get_best_candidates(
     const int ispec_guess,
@@ -37,7 +38,8 @@ specfem::point::local_coordinates<specfem::dimension::type::dim2>
 locate_point_core(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
-    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
+    const Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        &global_coordinates,
     const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &index_mapping,
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
@@ -50,7 +52,8 @@ locate_point_core(
     const GraphType &graph,
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
-    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
+    const Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        &global_coordinates,
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coord,
     const int ngnod);

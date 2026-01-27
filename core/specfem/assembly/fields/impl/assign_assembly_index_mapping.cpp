@@ -8,7 +8,7 @@ void assign_assembly_index_mapping<specfem::dimension::type::dim2>(
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::assembly::element_types<specfem::dimension::type::dim2>
         &element_types,
-    Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+    Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
         assembly_index_mapping,
     int &nglob, const specfem::element::medium_tag MediumTag) {
   const auto index_mapping = mesh.h_index_mapping;
@@ -54,7 +54,7 @@ void assign_assembly_index_mapping<specfem::dimension::type::dim3>(
     const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
     const specfem::assembly::element_types<specfem::dimension::type::dim3>
         &element_types,
-    Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+    Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
         assembly_index_mapping,
     int &nglob, const specfem::element::medium_tag MediumTag) {
 

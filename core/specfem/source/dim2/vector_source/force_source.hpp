@@ -139,10 +139,11 @@ public:
    * - \f$\theta\f$ is the force angle in degrees from horizontal
    * - Components depend on the medium and wave field type
    *
-   * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * @return Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
    * Force vector with size depending on medium type
    */
-  specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_force_vector() const override;
 
   /**
    * @brief Get the list of supported media for this source type
