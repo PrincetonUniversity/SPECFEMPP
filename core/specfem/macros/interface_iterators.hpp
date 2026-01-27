@@ -70,14 +70,14 @@
  * @{
  */
 /**
- * @brief Strongly conforming connection tag
+ * @brief Natural flux scheme tag
  */
 #define FLUX_SCHEME_TAG_NATURAL                                                \
   (0, specfem::interface::flux_scheme_tag::natural, natural,                   \
    _ENUM_ID_FLUX_SCHEME_TAG)
 
 /**
- * @brief Weakly conforming connection tag
+ * @brief Symmetric interior penalty flux scheme tag
  */
 #define FLUX_SCHEME_TAG_SYMMETRIC_INTERIOR_PENALTY                             \
   (1, specfem::interface::flux_scheme_tag::symmetric_interior_penalty,         \
