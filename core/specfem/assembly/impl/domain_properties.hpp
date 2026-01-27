@@ -1,7 +1,7 @@
 #pragma once
 
+#include "domain_accessor.hpp"
 #include "enumerations/medium.hpp"
-#include "medium/impl/accessor.hpp"
 #include "specfem/medium_container.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -59,9 +59,10 @@ template <specfem::element::medium_tag MediumTag,
 struct domain_properties<specfem::dimension::type::dim2, MediumTag, PropertyTag>
     : public properties::data_container<specfem::dimension::type::dim2,
                                         MediumTag, PropertyTag>,
-      public impl::Accessor<specfem::dimension::type::dim2,
-                            domain_properties<specfem::dimension::type::dim2,
-                                              MediumTag, PropertyTag> > {
+      public impl::DomainAccessor<
+          specfem::dimension::type::dim2,
+          domain_properties<specfem::dimension::type::dim2, MediumTag,
+                            PropertyTag> > {
 
   /// Base data container type for property storage
   using base_type = properties::data_container<specfem::dimension::type::dim2,
@@ -125,9 +126,10 @@ template <specfem::element::medium_tag MediumTag,
 struct domain_properties<specfem::dimension::type::dim3, MediumTag, PropertyTag>
     : public properties::data_container<specfem::dimension::type::dim3,
                                         MediumTag, PropertyTag>,
-      public impl::Accessor<specfem::dimension::type::dim3,
-                            domain_properties<specfem::dimension::type::dim3,
-                                              MediumTag, PropertyTag> > {
+      public impl::DomainAccessor<
+          specfem::dimension::type::dim3,
+          domain_properties<specfem::dimension::type::dim3, MediumTag,
+                            PropertyTag> > {
 
   /// Base data container type for property storage
   using base_type = properties::data_container<specfem::dimension::type::dim3,

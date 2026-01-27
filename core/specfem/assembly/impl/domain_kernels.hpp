@@ -1,6 +1,6 @@
 #pragma once
 
-#include "medium/impl/accessor.hpp"
+#include "domain_accessor.hpp"
 #include "specfem/medium_container.hpp"
 
 namespace specfem {
@@ -49,9 +49,9 @@ template <specfem::element::medium_tag MediumTag,
 struct domain_kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag>
     : public kernels::data_container<specfem::dimension::type::dim2, MediumTag,
                                      PropertyTag>,
-      public impl::Accessor<specfem::dimension::type::dim2,
-                            domain_kernels<specfem::dimension::type::dim2,
-                                           MediumTag, PropertyTag> > {
+      public impl::DomainAccessor<specfem::dimension::type::dim2,
+                                  domain_kernels<specfem::dimension::type::dim2,
+                                                 MediumTag, PropertyTag> > {
 
   /// Base kernels data container type
   using base_type = kernels::data_container<specfem::dimension::type::dim2,
@@ -115,9 +115,9 @@ template <specfem::element::medium_tag MediumTag,
 struct domain_kernels<specfem::dimension::type::dim3, MediumTag, PropertyTag>
     : public kernels::data_container<specfem::dimension::type::dim3, MediumTag,
                                      PropertyTag>,
-      public impl::Accessor<specfem::dimension::type::dim3,
-                            domain_kernels<specfem::dimension::type::dim3,
-                                           MediumTag, PropertyTag> > {
+      public impl::DomainAccessor<specfem::dimension::type::dim3,
+                                  domain_kernels<specfem::dimension::type::dim3,
+                                                 MediumTag, PropertyTag> > {
 
   /// Base kernels data container type
   using base_type = kernels::data_container<specfem::dimension::type::dim3,

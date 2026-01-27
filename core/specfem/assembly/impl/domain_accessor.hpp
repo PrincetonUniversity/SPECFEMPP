@@ -23,7 +23,7 @@ namespace impl {
  *
  */
 template <specfem::dimension::type DimensionTag, typename DataContainer>
-class Accessor {
+class DomainAccessor {
 
 private:
   constexpr static auto dimension = DimensionTag;
