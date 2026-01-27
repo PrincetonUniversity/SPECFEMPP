@@ -1,6 +1,6 @@
 #pragma once
 
-#include "medium/impl/data_container.hpp"
+#include "specfem/medium_container/impl/domain_container.hpp"
 #include <Kokkos_SIMD.hpp>
 
 namespace specfem {
