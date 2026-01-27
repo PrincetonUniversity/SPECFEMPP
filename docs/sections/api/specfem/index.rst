@@ -9,6 +9,7 @@
 
     algorithms/index
     assembly/index
+    attenuation/index
     boundary_conditions/index
     chunk_edge/index
     chunk_element/index
