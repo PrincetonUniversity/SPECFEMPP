@@ -3,9 +3,6 @@
 #include "field_impl.hpp"
 #include "assign_assembly_index_mapping.hpp"
 
-namespace specfem::assembly::fields_impl {
-
-} // namespace specfem::assembly::fields_impl
 
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
