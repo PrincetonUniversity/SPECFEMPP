@@ -132,6 +132,37 @@ template <typename T> bool contains(const T &list, const dim3::type &value) {
 std::vector<int>
 nodes_on_orientation(const specfem::mesh_entity::dim3::type &entity);
 
+template <specfem::dimension::type Dimension> struct face;
+
+/**
+ * @brief 3D face entity for hexahedral elements.
+ */
+template <> struct face<specfem::dimension::type::dim3> {
+  specfem::mesh_entity::dim3::type face_type; ///< Face type
+  int ispec;                                  ///< Element index
+  int face_index;                             ///< Global face index
+  bool reverse_orientation;                   ///< Orientation flag
+
+  /**
+   * @brief Construct face with parameters.
+   * @param ispec Element index
+   * @param face_type Face type
+   * @param face_index Global face index (default: -1)
+   * @param reverse_orientation Orientation flag (default: false)
+   */
+  KOKKOS_INLINE_FUNCTION
+  face(const int ispec, const specfem::mesh_entity::dim3::type face_type,
+       const int face_index = -1, const bool reverse_orientation = false)
+      : face_type(face_type), ispec(ispec), face_index(face_index),
+        reverse_orientation(reverse_orientation) {}
+
+  /**
+   * @brief Default constructor.
+   */
+  KOKKOS_INLINE_FUNCTION
+  face() = default;
+};
+
 template <specfem::dimension::type Dimension> struct edge;
 
 /**
