@@ -82,10 +82,10 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
       ParallelConfig::chunk_size, ngll, dimension_tag, medium_tag, using_simd>;
   using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
       ParallelConfig::chunk_size, ngll, dimension_tag, medium_tag,
-      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+      Kokkos::DefaultExecutionSpace::scratch_memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
       using_simd>;
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
-      ngll, dimension_tag, specfem::kokkos::DevScratchSpace,
+      ngll, dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
   using PointBoundaryType =

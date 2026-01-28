@@ -34,7 +34,9 @@ locate_point_core(
     const GraphType &graph,
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
-    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
+    const Kokkos::View<
+        type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        &global_coordinates,
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coord,
     const int ngnod) {

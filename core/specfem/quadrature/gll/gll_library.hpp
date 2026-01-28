@@ -55,9 +55,9 @@ type_real pndglj(const type_real z, const int n);
  * @param alpha Alpha value of the Jacobi polynomial
  * @param beta Beta value of the Jacobi polynomial
  */
-void zwgljd(specfem::kokkos::HostMirror1d<type_real> z,
-            specfem::kokkos::HostMirror1d<type_real> w, const int np,
-            const type_real alpha, const type_real beta);
+void zwgljd(Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
+            Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
+            const int np, const type_real alpha, const type_real beta);
 /**
  * Generate np Gauss-Lobatto-Jacobi points and the weights associated
  * with Jacobi polynomials of degree n = np-1.
@@ -71,8 +71,8 @@ void zwgljd(specfem::kokkos::HostMirror1d<type_real> z,
  * @return std::tuple<specfem::HostView<type_real>,
  * specfem::HostView<type_real>> GLL points and weights
  */
-std::tuple<specfem::kokkos::HostView1d<type_real>,
-           specfem::kokkos::HostView1d<type_real> >
+std::tuple<Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>,
+           Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> >
 zwgljd(const int np, const type_real alpha, const type_real beta);
 } // namespace gll_library
 } // namespace gll

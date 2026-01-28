@@ -87,25 +87,25 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
       specfem::chunk_element::acceleration<ParallelConfig::chunk_size, ngll,
                                            dimension_tag, medium_tag, using_simd>;
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
-      ngll, dimension_tag, specfem::kokkos::DevScratchSpace,
+      ngll, dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   using ViewType = std::conditional_t<
       dimension_tag == specfem::dimension::type::dim2,
       Kokkos::View<type_real[ParallelConfig::chunk_size][ngll][ngll][2],
-                   Kokkos::LayoutLeft, specfem::kokkos::DevScratchSpace,
+                   Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::scratch_memory_space,
                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>,
       Kokkos::View<type_real[ParallelConfig::chunk_size][ngll][ngll][ngll][3],
-                   Kokkos::LayoutLeft, specfem::kokkos::DevScratchSpace,
+                   Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::scratch_memory_space,
                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>>;
 
   using ResultsViewType = std::conditional_t<
       dimension_tag == specfem::dimension::type::dim2,
       Kokkos::View<type_real[ParallelConfig::chunk_size][2], Kokkos::LayoutLeft,
-                   specfem::kokkos::DevScratchSpace,
+                   Kokkos::DefaultExecutionSpace::scratch_memory_space,
                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>,
       Kokkos::View<type_real[ParallelConfig::chunk_size][3], Kokkos::LayoutLeft,
-                   specfem::kokkos::DevScratchSpace,
+                   Kokkos::DefaultExecutionSpace::scratch_memory_space,
                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>>;
 
   int scratch_size = ChunkDisplacementType::shmem_size() +

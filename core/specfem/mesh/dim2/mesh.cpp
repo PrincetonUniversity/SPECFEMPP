@@ -177,7 +177,8 @@ std::string specfem::mesh::mesh<specfem::dimension::type::dim2>::print() const {
   int n_acoustic;
 
   Kokkos::parallel_reduce(
-      "specfem::mesh::mesh::print", specfem::kokkos::HostRange(0, this->nspec),
+      "specfem::mesh::mesh::print",
+      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nspec),
       KOKKOS_CLASS_LAMBDA(const int ispec, int &n_elastic, int &n_acoustic) {
         if (this->materials.material_index_mapping(ispec).type ==
             specfem::element::medium_tag::elastic_psv) {

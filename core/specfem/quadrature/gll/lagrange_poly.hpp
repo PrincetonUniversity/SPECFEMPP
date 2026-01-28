@@ -15,15 +15,17 @@ namespace Lagrange {
  * @param xi Value to calculate lagrange interpolants and its derivatives
  * @param ngll Order used to approximate functions
  * @param xigll GLL points
- * @return std::tuple<specfem::kokkos::HostView1d<type_real>,
- * specfem::kokkos::HostView1d<type_real> > values of lagrange interpolants and
- * derivates calculated at xi
+ * @return std::tuple<Kokkos::View<type_real *, Kokkos::LayoutRight,
+ * Kokkos::HostSpace>, Kokkos::View<type_real *, Kokkos::LayoutRight,
+ * Kokkos::HostSpace> > values of lagrange interpolants and its derivates
+ * calculated at xi
  */
-std::tuple<specfem::kokkos::HostView1d<type_real>,
-           specfem::kokkos::HostView1d<type_real> >
+std::tuple<Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>,
+           Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> >
 compute_lagrange_interpolants(
     const type_real xi, const int ngll,
-    const specfem::kokkos::HostView1d<type_real> xigll);
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xigll);
 
 /**
  * @brief Compute the derivatives of Lagrange functions at GLL points
@@ -31,11 +33,14 @@ compute_lagrange_interpolants(
  *
  * @param xigll GLL points
  * @param ngll Order used to approximate functions
- * @return specfem::kokkos::HostView2d<type_real> Derivates of lagrange
- * polynomials at GLL points
+ * @return Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+ * Derivates of lagrange polynomials at GLL points
  */
-specfem::kokkos::HostView2d<type_real> compute_lagrange_derivatives_GLL(
-    const specfem::kokkos::HostView1d<type_real> xigll, const int ngll);
+Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+compute_lagrange_derivatives_GLL(
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xigll,
+    const int ngll);
 
 /**
  * @brief Compute the derivatives of Jacobi functions at GLJ points
@@ -46,11 +51,14 @@ specfem::kokkos::HostView2d<type_real> compute_lagrange_derivatives_GLL(
  *
  * @param xiglj GLJ points
  * @param nglj Order used to approximate functions
- * @return specfem::kokkos::HostView2d<type_real> Derivates of Jacobi
- * polynomials at GLJ points
+ * @return Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+ * Derivates of Jacobi polynomials at GLJ points
  */
-specfem::kokkos::HostView2d<type_real> compute_jacobi_derivatives_GLJ(
-    const specfem::kokkos::HostView1d<type_real> xiglj, const int nglj);
+Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+compute_jacobi_derivatives_GLJ(
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xiglj,
+    const int nglj);
 /**
  * @brief Compute lagrange interpolants and its derivatives at xi
  *
@@ -61,9 +69,11 @@ specfem::kokkos::HostView2d<type_real> compute_jacobi_derivatives_GLJ(
  * @param xigll GLL points
  */
 void compute_lagrange_interpolants(
-    specfem::kokkos::HostMirror1d<type_real> h,
-    specfem::kokkos::HostMirror1d<type_real> hprime, const type_real xi,
-    const int ngll, const specfem::kokkos::HostMirror1d<type_real> xigll);
+    Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> h,
+    Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> hprime,
+    const type_real xi, const int ngll,
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xigll);
 
 /**
  * @brief Compute the derivatives of Lagrange functions at GLL points
@@ -74,8 +84,11 @@ void compute_lagrange_interpolants(
  * @param ngll Order used to approximate functions
  */
 void compute_lagrange_derivatives_GLL(
-    specfem::kokkos::HostMirror2d<type_real> hprime_ii,
-    const specfem::kokkos::HostMirror1d<type_real> xigll, const int ngll);
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+        hprime_ii,
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xigll,
+    const int ngll);
 
 /**
  * @brief Compute the derivatives of Jacobi functions at GLJ points
@@ -89,8 +102,11 @@ void compute_lagrange_derivatives_GLL(
  * @param nglj Order used to approximate functions
  */
 void compute_jacobi_derivatives_GLJ(
-    specfem::kokkos::HostMirror2d<type_real> hprimeBar_ii,
-    const specfem::kokkos::HostMirror1d<type_real> xiglj, const int nglj);
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+        hprimeBar_ii,
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xiglj,
+    const int nglj);
 
 } // namespace Lagrange
 } // namespace gll

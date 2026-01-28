@@ -3,19 +3,19 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-using HostView1d = specfem::kokkos::HostView1d<type_real>;
-using HostView2d = specfem::kokkos::HostView2d<type_real>;
-using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
-using HostMirror2d = specfem::kokkos::HostMirror2d<type_real>;
-
-std::tuple<HostView1d, HostView1d>
+std::tuple<Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>,
+           Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> >
 specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-    const type_real xi, const int ngll, const HostView1d xigll) {
+    const type_real xi, const int ngll,
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xigll) {
 
   assert(xigll.extent(0) == ngll);
 
-  HostView1d h("Lagrange::compute_lagrange_interpolants::h", ngll);
-  HostView1d hprime("Lagrange::compute_lagrange_interpolants::hprime", ngll);
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> h(
+      "Lagrange::compute_lagrange_interpolants::h", ngll);
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> hprime(
+      "Lagrange::compute_lagrange_interpolants::hprime", ngll);
   type_real prod1, prod2, prod3, prod2_inv, sum, x0, x;
 
   for (int dgr = 0; dgr < ngll; dgr++) {
@@ -42,13 +42,16 @@ specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
   return std::make_tuple(h, hprime);
 }
 
-HostView2d specfem::quadrature::gll::Lagrange::compute_lagrange_derivatives_GLL(
-    const HostView1d xigll, const int ngll) {
+Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+specfem::quadrature::gll::Lagrange::compute_lagrange_derivatives_GLL(
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xigll,
+    const int ngll) {
 
   assert(xigll.extent(0) == ngll);
 
-  HostView2d hprime_ii("Lagrange::compute_lagrange_derivates_GLL::hprime_ii",
-                       ngll, ngll);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> hprime_ii(
+      "Lagrange::compute_lagrange_derivates_GLL::hprime_ii", ngll, ngll);
   int degpoly = ngll - 1;
   for (int i = 0; i < ngll; i++) {
     for (int j = 0; j < ngll; j++) {
@@ -70,13 +73,17 @@ HostView2d specfem::quadrature::gll::Lagrange::compute_lagrange_derivatives_GLL(
   return hprime_ii;
 }
 
-HostView2d specfem::quadrature::gll::Lagrange::compute_jacobi_derivatives_GLJ(
-    const HostView1d xiglj, const int nglj) {
+Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+specfem::quadrature::gll::Lagrange::compute_jacobi_derivatives_GLJ(
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xiglj,
+    const int nglj) {
 
   assert(xiglj.extent(0) == nglj);
 
-  HostView2d hprimeBar_ii(
-      "Lagrange::compute_lagrange_derivates_GLJ::hprimeBar_ii", nglj, nglj);
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      hprimeBar_ii("Lagrange::compute_lagrange_derivates_GLJ::hprimeBar_ii",
+                   nglj, nglj);
   int degpoly = nglj - 1;
   for (int i = 0; i < nglj; i++) {
     for (int j = 0; j < nglj; j++) {
@@ -126,8 +133,11 @@ HostView2d specfem::quadrature::gll::Lagrange::compute_jacobi_derivatives_GLJ(
 }
 
 void specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
-    HostMirror1d h, HostMirror1d hprime, const type_real xi, const int ngll,
-    const HostMirror1d xigll) {
+    Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> h,
+    Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace> hprime,
+    const type_real xi, const int ngll,
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xigll) {
 
   assert(xigll.extent(0) == ngll);
   assert(h.extent(0) == ngll);
@@ -159,7 +169,11 @@ void specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
 }
 
 void specfem::quadrature::gll::Lagrange::compute_lagrange_derivatives_GLL(
-    HostMirror2d hprime_ii, const HostMirror1d xigll, const int ngll) {
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+        hprime_ii,
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xigll,
+    const int ngll) {
 
   assert(xigll.extent(0) == ngll);
   assert(hprime_ii.extent(0) == ngll && hprime_ii.extent(1) == ngll);
@@ -191,7 +205,11 @@ void specfem::quadrature::gll::Lagrange::compute_lagrange_derivatives_GLL(
 }
 
 void specfem::quadrature::gll::Lagrange::compute_jacobi_derivatives_GLJ(
-    HostMirror2d hprimeBar_ii, const HostMirror1d xiglj, const int nglj) {
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+        hprimeBar_ii,
+    const Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+        xiglj,
+    const int nglj) {
 
   assert(xiglj.extent(0) == nglj);
   assert(hprimeBar_ii.extent(0) == nglj && hprimeBar_ii.extent(1) == nglj);

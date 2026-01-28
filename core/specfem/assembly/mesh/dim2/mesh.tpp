@@ -20,7 +20,8 @@ using point = specfem::assembly::mesh_impl::dim2::point;
 using bounding_box = specfem::assembly::mesh_impl::dim2::bounding_box;
 
 specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
-assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
+assign_numbering(Kokkos::View<double ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+                      global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);

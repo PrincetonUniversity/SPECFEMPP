@@ -14,7 +14,8 @@ namespace locate_point_impl {
 std::tuple<int, int, int> rough_location(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,
-    const specfem::kokkos::HostView4d<type_real> coord) {
+    const Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        coord) {
 
   const int nspec = coord.extent(1);
   const int ngllz = coord.extent(2);
@@ -363,7 +364,8 @@ specfem::point::local_coordinates<specfem::dimension::type::dim2>
 locate_point_core(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &coordinates,
-    const specfem::kokkos::HostView4d<type_real> &global_coordinates,
+    const Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        &global_coordinates,
     const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &index_mapping,
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>

@@ -6,20 +6,22 @@
 #include <iostream>
 #include <stdexcept>
 
-using DeviceView1d = specfem::kokkos::DeviceView1d<type_real>;
-using DeviceView2d = specfem::kokkos::DeviceView2d<type_real>;
-using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
-using HostMirror2d = specfem::kokkos::HostMirror2d<type_real>;
+using DeviceView1d = Kokkos::View<type_real *, Kokkos::LayoutRight,
+                                  Kokkos::DefaultExecutionSpace>;
+using DeviceView2d = Kokkos::View<type_real **, Kokkos::LayoutRight,
+                                  Kokkos::DefaultExecutionSpace>;
+using HostMirror1d =
+    Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>;
+using HostMirror2d =
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>;
 
 void specfem::quadrature::gll::gll::set_allocations() {
-  xi = specfem::kokkos::DeviceView1d<type_real>(
-      "specfem::quadrature::quadrature::DeviceView1d::xi", N);
+  xi = DeviceView1d("specfem::quadrature::quadrature::DeviceView1d::xi", N);
   h_xi = Kokkos::create_mirror_view(xi);
-  w = specfem::kokkos::DeviceView1d<type_real>(
-      "specfem::quadrature::quadrature::DeviceView1d::w", N);
+  w = DeviceView1d("specfem::quadrature::quadrature::DeviceView1d::w", N);
   h_w = Kokkos::create_mirror_view(w);
-  hprime = specfem::kokkos::DeviceView2d<type_real>(
-      "specfem::quadrature::quadrature::DeviceView1d::hprime", N, N);
+  hprime = DeviceView2d("specfem::quadrature::quadrature::DeviceView1d::hprime",
+                        N, N);
   h_hprime = Kokkos::create_mirror_view(hprime);
 }
 

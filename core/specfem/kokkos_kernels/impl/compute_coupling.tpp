@@ -180,7 +180,7 @@ void specfem::kokkos_kernels::impl::compute_coupling(
   using InterfaceFieldViewType = specfem::datatype::VectorChunkEdgeViewType<
       type_real, dimension_tag, parallel_config::chunk_size, NQuad_intersection,
       specfem::element::attributes<DimensionTag, self_medium>::components,
-      using_simd, specfem::kokkos::DevScratchSpace,
+      using_simd, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
   specfem::execution::ChunkedIntersectionIterator chunk(

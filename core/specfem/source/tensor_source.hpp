@@ -161,7 +161,8 @@ public:
    * Source tensor matrix with dimensions [ncomponents][ndim] where ncomponents
    * depends on medium type and ndim is spatial dimension
    */
-  virtual specfem::kokkos::HostView2d<type_real> get_source_tensor() const = 0;
+  virtual Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_source_tensor() const = 0;
 
   /**
    * @brief Get the source type

@@ -46,7 +46,7 @@ specfem::assembly::simulation_field<specfem::dimension::type::dim3,
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
       CAPTURE(assembly_index_mapping, h_assembly_index_mapping, field) {
         _assembly_index_mapping_ = Kokkos::View<int *, Kokkos::LayoutLeft,
-                                                specfem::kokkos::DevMemSpace>(
+                                                Kokkos::DefaultExecutionSpace::memory_space>(
             "specfem::assembly::simulation_field::index_mapping", nglob);
         _h_assembly_index_mapping_ =
             Kokkos::create_mirror_view(_assembly_index_mapping_);
