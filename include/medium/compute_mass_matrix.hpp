@@ -1,10 +1,17 @@
 #pragma once
 
+#include "dim2/acoustic/isotropic/mass_matrix.hpp"
 #include "dim2/acoustic/isotropic/mass_matrix.tpp"
+#include "dim2/elastic/anisotropic/mass_matrix.hpp"
 #include "dim2/elastic/anisotropic/mass_matrix.tpp"
+#include "dim2/elastic/isotropic/mass_matrix.hpp"
 #include "dim2/elastic/isotropic/mass_matrix.tpp"
+#include "dim2/elastic/isotropic_cosserat/mass_matrix.hpp"
 #include "dim2/elastic/isotropic_cosserat/mass_matrix.tpp"
+#include "dim2/poroelastic/isotropic/mass_matrix.hpp"
 #include "dim2/poroelastic/isotropic/mass_matrix.tpp"
+#include "dim3/elastic/isotropic/mass_matrix.hpp"
+#include "dim3/elastic/isotropic/mass_matrix.tpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "specfem/macros.hpp"
