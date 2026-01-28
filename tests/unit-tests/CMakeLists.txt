@@ -326,7 +326,7 @@ add_executable(
 target_link_libraries(
   nonconforming_tests
   specfem::mesh
-  assembly
+  specfem::assembly
   specfem::quadrature
   specfem_environment
   yaml-cpp
@@ -428,7 +428,7 @@ target_link_libraries(
   reader
   writer
   specfem::mesh
-  assembly
+  specfem::assembly
   specfem::quadrature
   specfem_environment
   io
@@ -462,6 +462,9 @@ add_executable(
   # Edge types tests
   assembly/edge_types/edge_types_tests.cpp
 
+  # Face types tests
+  assembly/face_types/face_types_tests.cpp
+
   # New dim3 tests
   assembly/dim3/mesh/shape_functions.cpp
   assembly/dim3/mesh/points.cpp
@@ -479,7 +482,7 @@ target_link_libraries(
   reader
   writer
   specfem::mesh
-  assembly
+  specfem::assembly
   specfem::quadrature
   specfem_environment
   io
@@ -507,7 +510,7 @@ add_executable(
 target_link_libraries(
   assembly_receivers_tests
   specfem::mesh
-  assembly
+  specfem::assembly
   specfem::quadrature
   specfem_environment
   yaml-cpp
@@ -604,7 +607,7 @@ target_link_libraries(
   gtest_main
   Kokkos::kokkos
   specfem_environment
-  assembly
+  specfem::assembly
   specfem::utilities
   -lpthread -lm
 )
@@ -810,7 +813,7 @@ target_link_libraries(
   # material_class
   yaml-cpp
   specfem_environment
-  assembly
+  specfem::assembly
   specfem::runtime_configuration
   compare_arrays
   timescheme
@@ -836,7 +839,7 @@ target_link_libraries(
   # material_class
   yaml-cpp
   specfem_environment
-  assembly
+  specfem::assembly
   specfem::runtime_configuration
   compare_arrays
   timescheme
