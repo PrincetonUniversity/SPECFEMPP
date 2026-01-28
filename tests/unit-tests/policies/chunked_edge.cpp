@@ -1,6 +1,7 @@
 #include "../SPECFEM_Environment.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -48,122 +49,6 @@ void get_edge_coordinates(const specfem::mesh_entity::dim2::type edge_type,
 
 } // namespace
 
-/**
- * @brief Individual 2D edge representation with quadrature point access
- *
- * This structure represents a single edge in a 2D spectral element mesh,
- * providing access to quadrature points on the edge for coupling
- * computations and boundary condition enforcement.
- *
- * @tparam ExecutionSpace Kokkos execution space (host or device)
- */
-template <typename ExecutionSpace> struct Edge {
-  int n_points;      ///< Number of quadrature points per edge
-  int element_index; ///< Index of the spectral element containing this edge
-  int edge_index;    ///< Global edge index
-  specfem::mesh_entity::dim2::type edge_type; ///< Edge type
-  using IndexView = Kokkos::View<int *, Kokkos::LayoutStride,
-                                 ExecutionSpace>; ///< View for quadrature
-                                                  ///< indices
-  IndexView iz;                                   ///< Z-coordinate indices
-  IndexView ix;                                   ///< X-coordinate indices
-
-  KOKKOS_INLINE_FUNCTION
-  Edge(const int n_points_, const int element_index_, const int edge_index_,
-       const specfem::mesh_entity::dim2::type edge_type_, const IndexView &iz_,
-       const IndexView &ix_)
-      : n_points(n_points_), element_index(element_index_),
-        edge_index(edge_index_), edge_type(edge_type_), iz(iz_), ix(ix_) {}
-
-  /**
-   * @brief Access quadrature point on the edge
-   *
-   * @param ipoint Point index along the edge (0 to n_points-1)
-   * @return edge_index for the specified quadrature point
-   */
-  KOKKOS_INLINE_FUNCTION
-  specfem::point::edge_index<specfem::dimension::type::dim2>
-  operator()(const int ipoint) const {
-    return { element_index, edge_index, ipoint, iz(ipoint), ix(ipoint),
-             edge_type };
-  }
-};
-
-/**
- * @brief Collection of 2D edges with parallel access capabilities
- *
- * This structure manages collections of edges for efficient parallel
- * processing of edge-based operations.
- *
- * @tparam ExecutionSpace Kokkos execution space (host or device)
- * @tparam Layout Memory layout for Kokkos views
- */
-template <typename ExecutionSpace,
-          typename Layout = typename ExecutionSpace::array_layout>
-struct EdgeView {
-  int n_edges;  ///< Number of edges in this view
-  int n_points; ///< Number of quadrature points per edge
-  using IndexView = Kokkos::View<int *, Layout, ExecutionSpace>;
-  using QPView = Kokkos::View<int **, Layout, ExecutionSpace>;
-  using EdgeTypeView =
-      Kokkos::View<specfem::mesh_entity::dim2::type *, ExecutionSpace>;
-
-  using HostMirror = std::conditional_t<
-      std::is_same<typename ExecutionSpace::memory_space,
-                   Kokkos::HostSpace>::value,
-      EdgeView, EdgeView<Kokkos::DefaultHostExecutionSpace, Layout>>;
-
-  EdgeView() : n_edges(0), n_points(0) {}
-
-  EdgeView(const std::string &label, const int n_edges_, const int n_points_)
-      : n_edges(n_edges_), n_points(n_points_),
-        element_index(label + "_element_index", n_edges_),
-        edge_index(label + "_edge_index", n_edges_),
-        edge_types(label + "_edge_types", n_edges_),
-        iz(label + "_iz", n_edges_, n_points_),
-        ix(label + "_ix", n_edges_, n_points_) {}
-
-  IndexView element_index;
-  IndexView edge_index;
-  EdgeTypeView edge_types;
-  QPView iz;
-  QPView ix;
-
-  KOKKOS_INLINE_FUNCTION
-  EdgeView(const int n_edges_, const int n_points_,
-           const IndexView &element_index_, const IndexView &edge_index_,
-           const EdgeTypeView &edge_types_, const QPView &iz_, const QPView &ix_)
-      : n_edges(n_edges_), n_points(n_points_), element_index(element_index_),
-        edge_index(edge_index_), edge_types(edge_types_), iz(iz_), ix(ix_) {}
-
-  /**
-   * @brief Access individual edge by index
-   */
-  KOKKOS_INLINE_FUNCTION
-  Edge<ExecutionSpace> operator()(const int edge_id) const {
-    return { n_points,
-             element_index(edge_id),
-             edge_index(edge_id),
-             edge_types(edge_id),
-             Kokkos::subview(iz, edge_id, Kokkos::ALL()),
-             Kokkos::subview(ix, edge_id, Kokkos::ALL()) };
-  }
-
-  /**
-   * @brief Access subrange of edges
-   */
-  KOKKOS_INLINE_FUNCTION
-  EdgeView<ExecutionSpace>
-  operator()(const Kokkos::pair<int, int> &edge_range) const {
-    return { edge_range.second - edge_range.first,
-             n_points,
-             Kokkos::subview(element_index, edge_range),
-             Kokkos::subview(edge_index, edge_range),
-             Kokkos::subview(edge_types, edge_range),
-             Kokkos::subview(iz, edge_range, Kokkos::ALL()),
-             Kokkos::subview(ix, edge_range, Kokkos::ALL()) };
-  }
-};
 
 // Base fixture for common functionality
 class ChunkedIteratorTestBase {
@@ -176,7 +61,7 @@ public:
   // Storage view indexed by [edge][ipoint]
   using StorageViewType =
       Kokkos::View<int **, Kokkos::DefaultExecutionSpace>;
-  using EdgesViewType = EdgeView<Kokkos::DefaultExecutionSpace>;
+  using EdgesViewType = specfem::assembly::EdgeView<Kokkos::DefaultExecutionSpace>;
 };
 
 // Test parameter structs (no Kokkos views here)

@@ -459,6 +459,9 @@ add_executable(
   assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
   assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
 
+  # Edge types tests
+  assembly/edge_types/edge_types_tests.cpp
+
   # New dim3 tests
   assembly/dim3/mesh/shape_functions.cpp
   assembly/dim3/mesh/points.cpp
@@ -651,6 +654,7 @@ target_link_libraries(
   gtest_main
   Kokkos::kokkos
   specfem_environment
+  specfem::assembly
   enumerations
   ${BOOST_LIBS}
   -lpthread -lm
