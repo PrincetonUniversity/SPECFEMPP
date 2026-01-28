@@ -1,5 +1,6 @@
 #include "../SPECFEM_Environment.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/assembly/face_types.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
@@ -64,133 +65,6 @@ void get_face_coordinates(const specfem::mesh_entity::dim3::type face_type,
 
 } // namespace
 
-/**
- * @brief Individual 3D face representation with quadrature point access
- *
- * This structure represents a single face in a 3D spectral element mesh,
- * providing access to quadrature points on the face for coupling
- * computations and boundary condition enforcement.
- *
- * @tparam ExecutionSpace Kokkos execution space (host or device)
- */
-template <typename ExecutionSpace> struct Face {
-  int n_points;      ///< Number of quadrature points per face dimension
-  int element_index; ///< Index of the spectral element containing this face
-  int face_index;    ///< Global face index
-  specfem::mesh_entity::dim3::type face_type; ///< Face type
-  using IndexView = Kokkos::View<int **, Kokkos::LayoutStride,
-                                 ExecutionSpace>; ///< View for quadrature
-                                                  ///< indices
-  IndexView iz;                                   ///< Z-coordinate indices
-  IndexView iy;                                   ///< Y-coordinate indices
-  IndexView ix;                                   ///< X-coordinate indices
-
-  KOKKOS_INLINE_FUNCTION
-  Face(const int n_points_, const int element_index_, const int face_index_,
-       const specfem::mesh_entity::dim3::type face_type_, const IndexView &iz_,
-       const IndexView &iy_, const IndexView &ix_)
-      : n_points(n_points_), element_index(element_index_),
-        face_index(face_index_), face_type(face_type_), iz(iz_), iy(iy_),
-        ix(ix_) {}
-
-  /**
-   * @brief Access quadrature point on the face
-   *
-   * @param ipoint_i First face coordinate index (0 to n_points-1)
-   * @param ipoint_j Second face coordinate index (0 to n_points-1)
-   * @return face_index for the specified quadrature point
-   */
-  KOKKOS_INLINE_FUNCTION
-  specfem::point::face_index<specfem::dimension::type::dim3>
-  operator()(const int ipoint_i, const int ipoint_j) const {
-    return { element_index, face_index, ipoint_i, ipoint_j,
-             iz(ipoint_i, ipoint_j), iy(ipoint_i, ipoint_j),
-             ix(ipoint_i, ipoint_j), face_type };
-  }
-};
-
-/**
- * @brief Collection of 3D faces with parallel access capabilities
- *
- * This structure manages collections of faces for efficient parallel
- * processing of face-based operations.
- *
- * @tparam ExecutionSpace Kokkos execution space (host or device)
- * @tparam Layout Memory layout for Kokkos views
- */
-template <typename ExecutionSpace,
-          typename Layout = typename ExecutionSpace::array_layout>
-struct FaceView {
-  int n_faces;  ///< Number of faces in this view
-  int n_points; ///< Number of quadrature points per face dimension
-  using IndexView = Kokkos::View<int *, Layout, ExecutionSpace>;
-  using QPView = Kokkos::View<int ***, Layout, ExecutionSpace>;
-  using FaceTypeView =
-      Kokkos::View<specfem::mesh_entity::dim3::type *, ExecutionSpace>;
-
-  using HostMirror = std::conditional_t<
-      std::is_same<typename ExecutionSpace::memory_space,
-                   Kokkos::HostSpace>::value,
-      FaceView, FaceView<Kokkos::DefaultHostExecutionSpace, Layout>>;
-
-  FaceView() : n_faces(0), n_points(0) {}
-
-  FaceView(const std::string &label, const int n_faces_, const int n_points_)
-      : n_faces(n_faces_), n_points(n_points_),
-        element_index(label + "_element_index", n_faces_),
-        face_index(label + "_face_index", n_faces_),
-        face_types(label + "_face_types", n_faces_),
-        iz(label + "_iz", n_faces_, n_points_, n_points_),
-        iy(label + "_iy", n_faces_, n_points_, n_points_),
-        ix(label + "_ix", n_faces_, n_points_, n_points_) {}
-
-  IndexView element_index;
-  IndexView face_index;
-  FaceTypeView face_types;
-  QPView iz;
-  QPView iy;
-  QPView ix;
-
-  KOKKOS_INLINE_FUNCTION
-  FaceView(const int n_faces_, const int n_points_,
-           const IndexView &element_index_, const IndexView &face_index_,
-           const FaceTypeView &face_types_, const QPView &iz_, const QPView &iy_,
-           const QPView &ix_)
-      : n_faces(n_faces_), n_points(n_points_), element_index(element_index_),
-        face_index(face_index_), face_types(face_types_), iz(iz_), iy(iy_),
-        ix(ix_) {}
-
-  /**
-   * @brief Access individual face by index
-   */
-  KOKKOS_INLINE_FUNCTION
-  Face<ExecutionSpace> operator()(const int face_id) const {
-    return { n_points,
-             element_index(face_id),
-             face_index(face_id),
-             face_types(face_id),
-             Kokkos::subview(iz, face_id, Kokkos::ALL(), Kokkos::ALL()),
-             Kokkos::subview(iy, face_id, Kokkos::ALL(), Kokkos::ALL()),
-             Kokkos::subview(ix, face_id, Kokkos::ALL(), Kokkos::ALL()) };
-  }
-
-  /**
-   * @brief Access subrange of faces
-   */
-  KOKKOS_INLINE_FUNCTION
-  FaceView<ExecutionSpace>
-  operator()(const Kokkos::pair<int, int> &face_range) const {
-    return { face_range.second - face_range.first,
-             n_points,
-             Kokkos::subview(element_index, face_range),
-             Kokkos::subview(face_index, face_range),
-             Kokkos::subview(face_types, face_range),
-             Kokkos::subview(iz, face_range, Kokkos::ALL(), Kokkos::ALL()),
-             Kokkos::subview(iy, face_range, Kokkos::ALL(), Kokkos::ALL()),
-             Kokkos::subview(ix, face_range, Kokkos::ALL(), Kokkos::ALL()) };
-  }
-};
-
 // Base fixture for common functionality
 class ChunkedFaceIteratorTestBase {
 public:
@@ -202,7 +76,7 @@ public:
   // Storage view indexed by [face][ipoint_i][ipoint_j]
   using StorageViewType =
       Kokkos::View<int ***, Kokkos::DefaultExecutionSpace>;
-  using FacesViewType = FaceView<Kokkos::DefaultExecutionSpace>;
+  using FacesViewType = specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
 };
 
 // Test parameter structs
@@ -479,14 +353,14 @@ protected:
 };
 
 TEST_F(FaceViewTest, Construction) {
-  FaceView<Kokkos::DefaultExecutionSpace> faces("test_faces", n_faces,
+  specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace> faces("test_faces", n_faces,
                                                  n_points);
   EXPECT_EQ(faces.n_faces, n_faces);
   EXPECT_EQ(faces.n_points, n_points);
 }
 
 TEST_F(FaceViewTest, SubviewExtraction) {
-  FaceView<Kokkos::DefaultExecutionSpace> faces("test_faces", n_faces,
+  specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace> faces("test_faces", n_faces,
                                                  n_points);
 
   // Initialize some data
@@ -513,7 +387,7 @@ TEST_F(FaceViewTest, SubviewExtraction) {
 }
 
 TEST_F(FaceViewTest, FaceAccess) {
-  FaceView<Kokkos::DefaultExecutionSpace> faces("test_faces", n_faces,
+  specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace> faces("test_faces", n_faces,
                                                  n_points);
 
   // Initialize
