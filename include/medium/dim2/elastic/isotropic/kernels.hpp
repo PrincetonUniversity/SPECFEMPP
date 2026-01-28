@@ -1,6 +1,6 @@
 #pragma once
 
-#include "medium/impl/point_container.hpp"
+#include "specfem/medium_container/impl/point_container.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::point::impl::kernels {
@@ -39,10 +39,9 @@ template <specfem::dimension::type DimensionTag,
 struct data_container<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-/// @cond
+    /// @cond
     : public KernelsAccessor<DimensionTag, MediumTag,
-                             specfem::element::property_tag::isotropic,
-                             UseSIMD>
+                             specfem::element::property_tag::isotropic, UseSIMD>
 /// @endcond
 {
 

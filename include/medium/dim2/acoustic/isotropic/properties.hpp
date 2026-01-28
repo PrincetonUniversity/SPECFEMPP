@@ -1,10 +1,9 @@
 #pragma once
 
-#include "medium/impl/point_container.hpp"
+#include "specfem/medium_container/impl/point_container.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::point::impl::properties {
-
 
 /**
  * @defgroup specfem_point_properties_dim2_acoustic_isotropic 2D Acoustic
@@ -43,7 +42,7 @@ template <bool UseSIMD>
 struct data_container<specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic,
                       specfem::element::property_tag::isotropic, UseSIMD>
-/// @cond
+    /// @cond
     : PropertyAccessor<specfem::dimension::type::dim2,
                        specfem::element::medium_tag::acoustic,
                        specfem::element::property_tag::isotropic, UseSIMD>

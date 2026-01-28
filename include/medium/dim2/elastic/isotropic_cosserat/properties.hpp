@@ -1,6 +1,6 @@
 #pragma once
 
-#include "medium/impl/point_container.hpp"
+#include "specfem/medium_container/impl/point_container.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::point::impl::properties {
@@ -32,7 +32,7 @@ struct data_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic_cosserat, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-/// @cond
+    /// @cond
     : public PropertyAccessor<
           specfem::dimension::type::dim2, MediumTag,
           specfem::element::property_tag::isotropic_cosserat, UseSIMD>
