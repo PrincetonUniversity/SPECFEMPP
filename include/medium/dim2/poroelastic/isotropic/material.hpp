@@ -12,52 +12,90 @@
 namespace specfem {
 namespace medium {
 
+namespace impl {
+
+template <specfem::dimension::type DimensionTag>
+struct AttenuationValues<
+    DimensionTag, specfem::element::medium_tag::poroelastic,
+    specfem::element::attenuation_tag::constant_isotropic> {
+public:
+  type_real Qmu; ///< Attenuation factor for shear modulus
+  AttenuationValues(const type_real &Qmu) : Qmu(Qmu) {
+    if (this->Qmu <= 0.0) {
+      std::runtime_error(
+          "negative or null values of Q attenuation factor not allowed; set "
+          "them equal to 9999 to indicate no attenuation");
+    }
+  };
+
+  bool operator==(const AttenuationValues &other) const {
+    return (std::abs(this->Qmu - other.Qmu) < 1e-6);
+  }
+
+  std::string print() const {
+    std::ostringstream message;
+
+    message << "      Qmu : " << this->Qmu << "\n";
+
+    return message.str();
+  }
+};
+
+} // namespace impl
+
 /**
  * @brief Template specialization for poroelastic isotropic material
  * properties
  *
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::dimension::type DimensionTag,
+          specfem::element::attenuation_tag AttenuationTag>
 class material<DimensionTag, specfem::element::medium_tag::poroelastic,
-               specfem::element::property_tag::isotropic> {
+               specfem::element::property_tag::isotropic, AttenuationTag>
+    : impl::AttenuationValues<DimensionTag,
+                              specfem::element::medium_tag::poroelastic,
+                              AttenuationTag> {
 public:
   constexpr static auto dimension_tag =
       DimensionTag; ///< Dimension of the material
   constexpr static auto medium_tag =
       specfem::element::medium_tag::poroelastic; ///< Medium tag
   constexpr static auto property_tag =
-      specfem::element::property_tag::isotropic; ///< Property tag
+      specfem::element::property_tag::isotropic;          ///< Property tag
+  constexpr static auto attenuation_tag = AttenuationTag; ///< Attenuation tag
+
+  using attenuation = impl::AttenuationValues<
+      DimensionTag, specfem::element::medium_tag::poroelastic, AttenuationTag>;
 
   /**
    * @name Constructors
    */
   ///@{
+
+  template <
+      specfem::element::attenuation_tag T = AttenuationTag,
+      std::enable_if_t<T == specfem::element::attenuation_tag::none, int> = 0>
+  material(type_real rhos, type_real rhof, type_real phi, type_real tortuosity,
+           type_real kxx, type_real kxz, type_real kzz, type_real Ks,
+           type_real Kf, type_real Kfr, type_real etaf, type_real mufr)
+      : material(std::integral_constant<specfem::element::attenuation_tag,
+                                        attenuation_tag>{},
+                 rhos, rhof, phi, tortuosity, kxx, kxz, kzz, Ks, Kf, Kfr, etaf,
+                 mufr) {}
+
+  template <
+      specfem::element::attenuation_tag T = AttenuationTag,
+      std::enable_if_t<
+          T == specfem::element::attenuation_tag::constant_isotropic, int> = 0>
   material(type_real rhos, type_real rhof, type_real phi, type_real tortuosity,
            type_real kxx, type_real kxz, type_real kzz, type_real Ks,
            type_real Kf, type_real Kfr, type_real etaf, type_real mufr,
            type_real Qmu)
-      : rhos(rhos), rhof(rhof), phi(phi), tortuosity(tortuosity), kxx(kxx),
-        kxz(kxz), kzz(kzz), Ks(Ks), Kf(Kf), Kfr(Kfr), etaf(etaf), mufr(mufr),
-        Qmu(Qmu) {
-    if (this->Qmu <= 0.0) {
-      std::runtime_error(
-          "negative or null values of Q attenuation factor not allowed; "
-          "set them equal to 9999 to indicate no attenuation");
-    }
-
-    if (std::abs(this->Qmu - 9999.0) > 1e-6) {
-      std::ostringstream message;
-
-      message << "Error : Attenuation is not implementated thrown at "
-              << __FILE__ << ":" << __LINE__ << "\n"
-              << "Attenuation factor is set to a finite value. Indicating "
-                 "attenuation "
-              << "needs to be applied. \n"
-              << "Qmu = " << this->Qmu << "\n";
-
-      throw std::runtime_error(message.str());
-    }
-  };
+      : material(std::integral_constant<specfem::element::attenuation_tag,
+                                        attenuation_tag>{},
+                 rhos, rhof, phi, tortuosity, kxx, kxz, kzz, Ks, Kf, Kfr, etaf,
+                 mufr),
+        attenuation(Qmu){};
   /**
    * @brief Default constructor
    *
@@ -74,7 +112,8 @@ public:
    */
   bool operator==(
       const material<dimension_tag, specfem::element::medium_tag::poroelastic,
-                     specfem::element::property_tag::isotropic> &other) const {
+                     specfem::element::property_tag::isotropic, attenuation_tag>
+          &other) const {
     return (std::abs(this->rhos - other.rhos) < 1e-6 &&
             std::abs(this->rhof - other.rhof) < 1e-6 &&
             std::abs(this->phi - other.phi) < 1e-6 &&
@@ -87,7 +126,7 @@ public:
             std::abs(this->Kfr - other.Kfr) < 1e-6 &&
             std::abs(this->etaf - other.etaf) < 1e-6 &&
             std::abs(this->mufr - other.mufr) < 1e-6 &&
-            std::abs(this->Qmu - other.Qmu) < 1e-6);
+            attenuation::operator==(other));
   }
 
   /**
@@ -98,7 +137,8 @@ public:
    */
   bool operator!=(
       const material<dimension_tag, specfem::element::medium_tag::poroelastic,
-                     specfem::element::property_tag::isotropic> &other) const {
+                     specfem::element::property_tag::isotropic, attenuation_tag>
+          &other) const {
     return !(*this == other);
   }
 
@@ -147,7 +187,7 @@ public:
             << "      Kfr : " << this->Kfr << "\n"
             << "      etaf : " << this->etaf << "\n"
             << "      mufr : " << this->mufr << "\n"
-            << "      Qmu : " << this->Qmu << "\n";
+            << attenuation::print();
 
     return message.str();
   }
@@ -165,7 +205,6 @@ private:
   type_real Kfr;        ///< Bulk modulus of the frame
   type_real etaf;       ///< Viscosity of the fluid phase
   type_real mufr;       ///< Shear modulus of the frame
-  type_real Qmu;        ///< Attenuation factor
 
   std::tuple<type_real, type_real, type_real>
   compute_biot_coefficients() const {
@@ -190,6 +229,14 @@ private:
 
     return std::make_tuple(H_Biot, C_biot, M_biot);
   }
+
+  material(const std::integral_constant<specfem::element::attenuation_tag,
+                                        AttenuationTag> /*unused*/,
+           type_real rhos, type_real rhof, type_real phi, type_real tortuosity,
+           type_real kxx, type_real kxz, type_real kzz, type_real Ks,
+           type_real Kf, type_real Kfr, type_real etaf, type_real mufr)
+      : rhos(rhos), rhof(rhof), phi(phi), tortuosity(tortuosity), kxx(kxx),
+        kxz(kxz), kzz(kzz), Ks(Ks), Kf(Kf), Kfr(Kfr), etaf(etaf), mufr(mufr) {}
 };
 
 } // namespace medium

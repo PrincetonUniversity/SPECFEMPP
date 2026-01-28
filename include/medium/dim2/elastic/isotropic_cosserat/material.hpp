@@ -36,6 +36,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 class material<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic_cosserat,
+    specfem::element::attenuation_tag::none,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
 public:
   constexpr static auto dimension_tag =
@@ -43,6 +44,8 @@ public:
   constexpr static auto medium_tag = MediumTag; ///< Medium tag
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic_cosserat; ///< Property tag
+  constexpr static auto attenuation_tag =
+      specfem::element::attenuation_tag::none; ///< Attenuation tag
 
   /**
    * @name Constructors
@@ -85,8 +88,8 @@ public:
    */
   bool operator==(
       const material<dimension_tag, medium_tag,
-                     specfem::element::property_tag::isotropic_cosserat> &other)
-      const {
+                     specfem::element::property_tag::isotropic_cosserat,
+                     specfem::element::attenuation_tag::none> &other) const {
 
     return (std::abs(this->rho - other.rho) < 1e-6 &&
             std::abs(this->kappa - other.kappa) < 1e-6 &&
@@ -106,8 +109,8 @@ public:
    */
   bool operator!=(
       const material<dimension_tag, specfem::element::medium_tag::elastic_psv_t,
-                     specfem::element::property_tag::isotropic_cosserat> &other)
-      const {
+                     specfem::element::property_tag::isotropic_cosserat,
+                     specfem::element::attenuation_tag::none> &other) const {
     return !(*this == other);
   }
 

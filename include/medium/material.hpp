@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
+#include "impl/attenuation_values.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <ostream>
@@ -37,6 +38,7 @@ namespace medium {
  * @tparam dimension_tag Spatial dimension (dim2 or dim3)
  * @tparam MediumTag Medium type (acoustic, elastic, etc.)
  * @tparam PropertyTag Property type (isotropic, anisotropic, etc.)
+ * @tparam AttenuationTag Attenuation model (no_attenuation, constant_q, etc.)
  * @tparam Enable SFINAE parameter for template specialization
  *
  * @note This stores properties for a domain section. For GLL-level properties,
@@ -44,7 +46,9 @@ namespace medium {
  */
 template <specfem::dimension::type dimension_tag,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, typename Enable = void>
+          specfem::element::property_tag PropertyTag,
+          specfem::element::attenuation_tag AttenuationTag,
+          typename Enable = void>
 class material;
 
 } // namespace medium

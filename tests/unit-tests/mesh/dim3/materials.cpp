@@ -104,7 +104,8 @@ struct ExpectedMaterials3D {
                       expected.element_id);
               const auto expected_material =
                   std::any_cast<specfem::medium::material<
-                      _dimension_tag_, _medium_tag_, _property_tag_> >(
+                      _dimension_tag_, _medium_tag_, _property_tag_,
+                      specfem::element::attenuation_tag::none> >(
                       expected.material);
               if (computed_material != expected_material) {
                 FAIL() << "Material mismatch for element "
@@ -138,17 +139,18 @@ static const std::unordered_map<std::string, ExpectedMaterials3D>
                               specfem::medium::material<
                                   specfem::dimension::type::dim3,
                                   specfem::element::medium_tag::elastic,
-                                  specfem::element::property_tag::isotropic>(
-                                  2300.0, 1500.0, 2800.0, 2444.4, 300.0, 0.0)),
+                                  specfem::element::property_tag::isotropic,
+                                  specfem::element::attenuation_tag::none>(
+                                  2300.0, 1500.0, 2800.0, 0.0)),
               // Element 5
-              ElementMaterial(
-                  specfem::element::medium_tag::elastic,
-                  specfem::element::property_tag::isotropic, 5,
-                  specfem::medium::material<
-                      specfem::dimension::type::dim3,
-                      specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::isotropic>(
-                      2300.0, 1500.0, 2800.0, 2444.4, 300.0, 0.0)) }),
+              ElementMaterial(specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::isotropic, 5,
+                              specfem::medium::material<
+                                  specfem::dimension::type::dim3,
+                                  specfem::element::medium_tag::elastic,
+                                  specfem::element::property_tag::isotropic,
+                                  specfem::element::attenuation_tag::none>(
+                                  2300.0, 1500.0, 2800.0, 0.0)) }),
         // Add more test cases as needed
     } };
 
