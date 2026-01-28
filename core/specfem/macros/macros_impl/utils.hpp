@@ -42,6 +42,8 @@
 
 #define _SEQ_FOR_TAGS_4 ELEMENT_TYPES EDGES
 
+#define _SEQ_FOR_TAGS_5 EDGES_AND_FLUX_SCHEME
+
 /**
  * @brief Declare a variable or instantiante a template based on the type
  * declaration tuple.
@@ -165,6 +167,7 @@
 #define _WRITE_TAGS_2(data) _WRITE_TAGS_1(data) _WRITE_TAG(_medium_tag_, data, 1) _WRITE_TAG(_connection_tag_, data, 1)
 #define _WRITE_TAGS_3(data) _WRITE_TAGS_2(data) _WRITE_TAG(_property_tag_, data, 2) _WRITE_TAG(_interface_tag_, data, 2)
 #define _WRITE_TAGS_4(data) _WRITE_TAGS_3(data) _WRITE_TAG(_boundary_tag_, data, 3)
+#define _WRITE_TAGS_5(data) _WRITE_TAGS_4(data) _WRITE_TAG(_flux_scheme_tag_, data, 4)
 // clang-format on
 
 /**
@@ -256,6 +259,29 @@
           0),                                                                  \
       0)
 
+#define _TYPE_MATCH_5(elem, seq)                                               \
+  BOOST_PP_IF(                                                                 \
+      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(seq), 5),                             \
+      BOOST_PP_IF(                                                             \
+          _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(0, elem),                            \
+                      BOOST_PP_TUPLE_ELEM(0, seq)),                            \
+          BOOST_PP_IF(                                                         \
+              _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(1, elem),                        \
+                          BOOST_PP_TUPLE_ELEM(1, seq)),                        \
+              BOOST_PP_IF(                                                     \
+                  _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(2, elem),                    \
+                              BOOST_PP_TUPLE_ELEM(2, seq)),                    \
+                  BOOST_PP_IF(                                                 \
+                      _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(3, elem),                \
+                                  BOOST_PP_TUPLE_ELEM(3, seq)),                \
+                      BOOST_PP_IF(_TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(4, elem),    \
+                                              BOOST_PP_TUPLE_ELEM(4, seq)),    \
+                                  1, 0),                                       \
+                      0),                                                      \
+                  0),                                                          \
+              0),                                                              \
+          0),                                                                  \
+      0)
 /**
  * @brief Check if a given tag sequence is in the list of available tag
  * sequences.
