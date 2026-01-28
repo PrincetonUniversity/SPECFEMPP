@@ -128,6 +128,9 @@ add_executable(
   attenuation_tests
   attenuation/runner.cpp
   attenuation/compute_tau_sigma_tests.cpp
+  attenuation/optimization_tests.cpp
+  attenuation/maxwell_tests.cpp
+  attenuation/compute_tau_eps_tests.cpp
 )
 
 target_link_libraries(
