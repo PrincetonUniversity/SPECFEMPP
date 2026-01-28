@@ -8,8 +8,6 @@
 namespace specfem {
 namespace attenuation {
 
-// TODO (Lucas : CPP20): and requires N_SLS>1
-
 /**
  * @brief Compute stress relaxation times \f$\tau_{\sigma}\f$ equally spaced in
  * log10 frequency.

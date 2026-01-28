@@ -11,6 +11,7 @@ namespace attenuation {
 template <int N_SLS>
 Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
 compute_tau_sigma(const type_real min_period, const type_real max_period) {
+  static_assert(N_SLS > 1, "N_SLS must be greater than 1 to avoid division by zero");
 
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace> tau_s(
       "tau_sigma");
