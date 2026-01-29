@@ -37,6 +37,159 @@ void get_edge_coordinates(const specfem::mesh_entity::dim2::type edge_type,
   }
 }
 
+// Functors to replace lambdas for CUDA compatibility
+// (CUDA does not allow extended __host__ __device__ lambdas inside
+// functions with private/protected access, such as TEST_F's TestBody)
+
+template <typename EdgeViewType>
+struct InitializeEdgesFunctor {
+  EdgeViewType view;
+  specfem::mesh_entity::dim2::type edge_type;
+  int num_points;
+  int element_multiplier;
+
+  InitializeEdgesFunctor(EdgeViewType view_,
+                         specfem::mesh_entity::dim2::type edge_type_,
+                         int num_points_, int element_multiplier_)
+      : view(view_), edge_type(edge_type_), num_points(num_points_),
+        element_multiplier(element_multiplier_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int i) const {
+    view.element_index(i) = i * element_multiplier;
+    view.edge_index(i) = i;
+    view.edge_types(i) = edge_type;
+    for (int j = 0; j < num_points; ++j) {
+      int iz_val, ix_val;
+      get_edge_coordinates(edge_type, j, num_points, iz_val, ix_val);
+      view.iz(i, j) = iz_val;
+      view.ix(i, j) = ix_val;
+    }
+  }
+};
+
+template <typename EdgeViewType, typename ResultsType>
+struct TestSingleEdgeFunctor {
+  EdgeViewType view;
+  ResultsType results;
+
+  TestSingleEdgeFunctor(EdgeViewType view_, ResultsType results_)
+      : view(view_), results(results_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int) const {
+    auto edge = view(1);
+    results(0) = edge.n_points;
+    results(1) = edge.element_index;
+    results(2) = edge.edge_index;
+  }
+};
+
+template <typename EdgeViewType, typename ResultsType>
+struct TestRangeAccessFunctor {
+  EdgeViewType view;
+  ResultsType results;
+
+  TestRangeAccessFunctor(EdgeViewType view_, ResultsType results_)
+      : view(view_), results(results_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int) const {
+    EdgeViewType subview = view(Kokkos::make_pair(1, 3));
+    results(0) = subview.n_edges;
+    results(1) = subview.n_points;
+    results(2) = subview.element_index(0);
+    results(3) = subview.element_index(1);
+  }
+};
+
+template <typename StorageType>
+struct InitCoordsFunctor {
+  StorageType iz_storage;
+  StorageType ix_storage;
+  specfem::mesh_entity::dim2::type edge_type;
+  int num_points;
+
+  InitCoordsFunctor(StorageType iz_, StorageType ix_,
+                    specfem::mesh_entity::dim2::type edge_type_, int num_points_)
+      : iz_storage(iz_), ix_storage(ix_), edge_type(edge_type_),
+        num_points(num_points_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int j) const {
+    int iz_val, ix_val;
+    get_edge_coordinates(edge_type, j, num_points, iz_val, ix_val);
+    iz_storage(j) = iz_val;
+    ix_storage(j) = ix_val;
+  }
+};
+
+template <typename StorageType, typename ResultsType>
+struct TestEdgeOperatorFunctor {
+  StorageType iz_storage;
+  StorageType ix_storage;
+  ResultsType results;
+  specfem::mesh_entity::dim2::type edge_type;
+  int num_points;
+
+  TestEdgeOperatorFunctor(StorageType iz_, StorageType ix_, ResultsType results_,
+                          specfem::mesh_entity::dim2::type edge_type_,
+                          int num_points_)
+      : iz_storage(iz_), ix_storage(ix_), results(results_),
+        edge_type(edge_type_), num_points(num_points_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int) const {
+    using Edge = specfem::assembly::Edge<Kokkos::DefaultExecutionSpace>;
+    using EdgeIndex =
+        specfem::point::edge_index<specfem::dimension::type::dim2>;
+
+    auto iz_strided = Kokkos::subview(iz_storage, Kokkos::ALL());
+    auto ix_strided = Kokkos::subview(ix_storage, Kokkos::ALL());
+
+    Edge edge(num_points, 42, 3, edge_type, iz_strided, ix_strided);
+    EdgeIndex idx = edge(2);
+
+    results(0) = idx.ispec;
+    results(1) = idx.iedge;
+    results(2) = idx.ipoint;
+    results(3) = idx.iz;
+    results(4) = idx.ix;
+    results(5) = static_cast<int>(idx.edge_type);
+  }
+};
+
+template <typename StorageType, typename ResultsType>
+struct TestEdgeTypeFunctor {
+  StorageType iz_storage;
+  StorageType ix_storage;
+  ResultsType results;
+  specfem::mesh_entity::dim2::type edge_type;
+  int num_points;
+
+  TestEdgeTypeFunctor(StorageType iz_, StorageType ix_, ResultsType results_,
+                      specfem::mesh_entity::dim2::type edge_type_,
+                      int num_points_)
+      : iz_storage(iz_), ix_storage(ix_), results(results_),
+        edge_type(edge_type_), num_points(num_points_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int) const {
+    using Edge = specfem::assembly::Edge<Kokkos::DefaultExecutionSpace>;
+    using EdgeIndex =
+        specfem::point::edge_index<specfem::dimension::type::dim2>;
+
+    auto iz_strided = Kokkos::subview(iz_storage, Kokkos::ALL());
+    auto ix_strided = Kokkos::subview(ix_storage, Kokkos::ALL());
+
+    Edge edge(num_points, 0, 0, edge_type, iz_strided, ix_strided);
+    EdgeIndex idx = edge(3);
+
+    results(0) = idx.iz;
+    results(1) = idx.ix;
+  }
+};
+
 } // namespace
 
 class AssemblyEdgeViewTest : public ::testing::Test {
@@ -79,29 +232,15 @@ TEST_F(AssemblyEdgeViewTest, SingleEdgeAccess) {
   Kokkos::parallel_for(
       "initialize_edges",
       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, num_edges),
-      KOKKOS_LAMBDA(const int i) {
-        view.element_index(i) = i * 10;
-        view.edge_index(i) = i;
-        view.edge_types(i) = bottom;
-        for (int j = 0; j < num_points; ++j) {
-          int iz_val, ix_val;
-          get_edge_coordinates(bottom, j, num_points, iz_val, ix_val);
-          view.iz(i, j) = iz_val;
-          view.ix(i, j) = ix_val;
-        }
-      });
+      InitializeEdgesFunctor<EdgeView>(view, bottom, num_points, 10));
   Kokkos::fence();
 
   // Test single edge access
   Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
 
   Kokkos::parallel_for(
-      "test_single_edge", 1, KOKKOS_LAMBDA(const int) {
-        Edge edge = view(1);
-        results(0) = edge.n_points;
-        results(1) = edge.element_index;
-        results(2) = edge.edge_index;
-      });
+      "test_single_edge", 1,
+      TestSingleEdgeFunctor<EdgeView, decltype(results)>(view, results));
   Kokkos::fence();
 
   auto host_results = Kokkos::create_mirror_view(results);
@@ -121,30 +260,15 @@ TEST_F(AssemblyEdgeViewTest, RangeAccess) {
   Kokkos::parallel_for(
       "initialize_edges",
       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, num_edges),
-      KOKKOS_LAMBDA(const int i) {
-        view.element_index(i) = i * 100;
-        view.edge_index(i) = i;
-        view.edge_types(i) = top;
-        for (int j = 0; j < num_points; ++j) {
-          int iz_val, ix_val;
-          get_edge_coordinates(top, j, num_points, iz_val, ix_val);
-          view.iz(i, j) = iz_val;
-          view.ix(i, j) = ix_val;
-        }
-      });
+      InitializeEdgesFunctor<EdgeView>(view, top, num_points, 100));
   Kokkos::fence();
 
   // Test range access [1, 3) should give 2 edges
   Kokkos::View<int[4], Kokkos::DefaultExecutionSpace> results("results");
 
   Kokkos::parallel_for(
-      "test_range_access", 1, KOKKOS_LAMBDA(const int) {
-        EdgeView subview = view(Kokkos::make_pair(1, 3));
-        results(0) = subview.n_edges;
-        results(1) = subview.n_points;
-        results(2) = subview.element_index(0); // First edge in subview
-        results(3) = subview.element_index(1); // Second edge in subview
-      });
+      "test_range_access", 1,
+      TestRangeAccessFunctor<EdgeView, decltype(results)>(view, results));
   Kokkos::fence();
 
   auto host_results = Kokkos::create_mirror_view(results);
@@ -176,12 +300,9 @@ TEST_F(AssemblyEdgeTest, OperatorPointAccess) {
 
   // Initialize quadrature point coordinates
   Kokkos::parallel_for(
-      "init_coords", num_points, KOKKOS_LAMBDA(const int j) {
-        int iz_val, ix_val;
-        get_edge_coordinates(left, j, num_points, iz_val, ix_val);
-        iz_storage(j) = iz_val;
-        ix_storage(j) = ix_val;
-      });
+      "init_coords", num_points,
+      InitCoordsFunctor<decltype(iz_storage)>(iz_storage, ix_storage, left,
+                                              num_points));
   Kokkos::fence();
 
   // Test Edge operator()
@@ -189,22 +310,9 @@ TEST_F(AssemblyEdgeTest, OperatorPointAccess) {
   Kokkos::View<int[6], Kokkos::DefaultExecutionSpace> results("results");
 
   Kokkos::parallel_for(
-      "test_edge_operator", 1, KOKKOS_LAMBDA(const int) {
-        // Create strided subviews matching Edge::IndexView type
-        auto iz_strided = Kokkos::subview(iz_storage, Kokkos::ALL());
-        auto ix_strided = Kokkos::subview(ix_storage, Kokkos::ALL());
-
-        Edge edge(num_points, 42, 3, left, iz_strided, ix_strided);
-
-        EdgeIndex idx = edge(2); // Access point 2
-
-        results(0) = idx.ispec;
-        results(1) = idx.iedge;
-        results(2) = idx.ipoint;
-        results(3) = idx.iz;
-        results(4) = idx.ix;
-        results(5) = static_cast<int>(idx.edge_type);
-      });
+      "test_edge_operator", 1,
+      TestEdgeOperatorFunctor<decltype(iz_storage), decltype(results)>(
+          iz_storage, ix_storage, results, left, num_points));
   Kokkos::fence();
 
   auto host_results = Kokkos::create_mirror_view(results);
@@ -226,29 +334,22 @@ TEST_F(AssemblyEdgeTest, AllEdgeTypes) {
                                                                  num_points);
 
   using EdgeIndex = specfem::point::edge_index<specfem::dimension::type::dim2>;
+  using StorageType = decltype(iz_storage);
 
   // Test bottom edge
   {
     constexpr auto edge_type = specfem::mesh_entity::dim2::type::bottom;
     Kokkos::parallel_for(
-        "init_bottom", num_points, KOKKOS_LAMBDA(const int j) {
-          int iz_val, ix_val;
-          get_edge_coordinates(edge_type, j, num_points, iz_val, ix_val);
-          iz_storage(j) = iz_val;
-          ix_storage(j) = ix_val;
-        });
+        "init_bottom", num_points,
+        InitCoordsFunctor<StorageType>(iz_storage, ix_storage, edge_type,
+                                       num_points));
     Kokkos::fence();
 
     Kokkos::View<int[2], Kokkos::DefaultExecutionSpace> results("results");
     Kokkos::parallel_for(
-        "test_bottom", 1, KOKKOS_LAMBDA(const int) {
-          auto iz_strided = Kokkos::subview(iz_storage, Kokkos::ALL());
-          auto ix_strided = Kokkos::subview(ix_storage, Kokkos::ALL());
-          Edge edge(num_points, 0, 0, edge_type, iz_strided, ix_strided);
-          EdgeIndex idx = edge(3);
-          results(0) = idx.iz;
-          results(1) = idx.ix;
-        });
+        "test_bottom", 1,
+        TestEdgeTypeFunctor<StorageType, decltype(results)>(
+            iz_storage, ix_storage, results, edge_type, num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -261,24 +362,16 @@ TEST_F(AssemblyEdgeTest, AllEdgeTypes) {
   {
     constexpr auto edge_type = specfem::mesh_entity::dim2::type::top;
     Kokkos::parallel_for(
-        "init_top", num_points, KOKKOS_LAMBDA(const int j) {
-          int iz_val, ix_val;
-          get_edge_coordinates(edge_type, j, num_points, iz_val, ix_val);
-          iz_storage(j) = iz_val;
-          ix_storage(j) = ix_val;
-        });
+        "init_top", num_points,
+        InitCoordsFunctor<StorageType>(iz_storage, ix_storage, edge_type,
+                                       num_points));
     Kokkos::fence();
 
     Kokkos::View<int[2], Kokkos::DefaultExecutionSpace> results("results");
     Kokkos::parallel_for(
-        "test_top", 1, KOKKOS_LAMBDA(const int) {
-          auto iz_strided = Kokkos::subview(iz_storage, Kokkos::ALL());
-          auto ix_strided = Kokkos::subview(ix_storage, Kokkos::ALL());
-          Edge edge(num_points, 0, 0, edge_type, iz_strided, ix_strided);
-          EdgeIndex idx = edge(3);
-          results(0) = idx.iz;
-          results(1) = idx.ix;
-        });
+        "test_top", 1,
+        TestEdgeTypeFunctor<StorageType, decltype(results)>(
+            iz_storage, ix_storage, results, edge_type, num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -291,24 +384,16 @@ TEST_F(AssemblyEdgeTest, AllEdgeTypes) {
   {
     constexpr auto edge_type = specfem::mesh_entity::dim2::type::right;
     Kokkos::parallel_for(
-        "init_right", num_points, KOKKOS_LAMBDA(const int j) {
-          int iz_val, ix_val;
-          get_edge_coordinates(edge_type, j, num_points, iz_val, ix_val);
-          iz_storage(j) = iz_val;
-          ix_storage(j) = ix_val;
-        });
+        "init_right", num_points,
+        InitCoordsFunctor<StorageType>(iz_storage, ix_storage, edge_type,
+                                       num_points));
     Kokkos::fence();
 
     Kokkos::View<int[2], Kokkos::DefaultExecutionSpace> results("results");
     Kokkos::parallel_for(
-        "test_right", 1, KOKKOS_LAMBDA(const int) {
-          auto iz_strided = Kokkos::subview(iz_storage, Kokkos::ALL());
-          auto ix_strided = Kokkos::subview(ix_storage, Kokkos::ALL());
-          Edge edge(num_points, 0, 0, edge_type, iz_strided, ix_strided);
-          EdgeIndex idx = edge(3);
-          results(0) = idx.iz;
-          results(1) = idx.ix;
-        });
+        "test_right", 1,
+        TestEdgeTypeFunctor<StorageType, decltype(results)>(
+            iz_storage, ix_storage, results, edge_type, num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);

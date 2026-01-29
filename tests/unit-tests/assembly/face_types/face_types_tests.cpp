@@ -59,6 +59,181 @@ void get_face_coordinates(const specfem::mesh_entity::dim3::type face_type,
   }
 }
 
+// Functors to replace lambdas for CUDA compatibility
+// (CUDA does not allow extended __host__ __device__ lambdas inside
+// functions with private/protected access, such as TEST_F's TestBody)
+
+template <typename FaceViewType>
+struct InitializeFacesFunctor {
+  FaceViewType view;
+  specfem::mesh_entity::dim3::type face_type;
+  int num_points;
+  int element_multiplier;
+
+  InitializeFacesFunctor(FaceViewType view_,
+                         specfem::mesh_entity::dim3::type face_type_,
+                         int num_points_, int element_multiplier_)
+      : view(view_), face_type(face_type_), num_points(num_points_),
+        element_multiplier(element_multiplier_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int i) const {
+    view.element_index(i) = i * element_multiplier;
+    view.face_index(i) = i;
+    view.face_types(i) = face_type;
+    for (int j = 0; j < num_points; ++j) {
+      for (int k = 0; k < num_points; ++k) {
+        int iz_val, iy_val, ix_val;
+        get_face_coordinates(face_type, j, k, num_points, iz_val, iy_val,
+                             ix_val);
+        view.iz(i, j, k) = iz_val;
+        view.iy(i, j, k) = iy_val;
+        view.ix(i, j, k) = ix_val;
+      }
+    }
+  }
+};
+
+template <typename FaceViewType, typename ResultsType>
+struct TestSingleFaceFunctor {
+  FaceViewType view;
+  ResultsType results;
+
+  TestSingleFaceFunctor(FaceViewType view_, ResultsType results_)
+      : view(view_), results(results_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int) const {
+    auto face = view(1);
+    results(0) = face.n_points;
+    results(1) = face.element_index;
+    results(2) = face.face_index;
+  }
+};
+
+template <typename FaceViewType, typename ResultsType>
+struct TestRangeAccessFaceFunctor {
+  FaceViewType view;
+  ResultsType results;
+
+  TestRangeAccessFaceFunctor(FaceViewType view_, ResultsType results_)
+      : view(view_), results(results_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int) const {
+    FaceViewType subview = view(Kokkos::make_pair(1, 3));
+    results(0) = subview.n_faces;
+    results(1) = subview.n_points;
+    results(2) = subview.element_index(0);
+    results(3) = subview.element_index(1);
+  }
+};
+
+template <typename StorageType>
+struct InitCoords2DFunctor {
+  StorageType iz_storage;
+  StorageType iy_storage;
+  StorageType ix_storage;
+  specfem::mesh_entity::dim3::type face_type;
+  int num_points;
+
+  InitCoords2DFunctor(StorageType iz_, StorageType iy_, StorageType ix_,
+                      specfem::mesh_entity::dim3::type face_type_,
+                      int num_points_)
+      : iz_storage(iz_), iy_storage(iy_), ix_storage(ix_), face_type(face_type_),
+        num_points(num_points_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int i, const int j) const {
+    int iz_val, iy_val, ix_val;
+    get_face_coordinates(face_type, i, j, num_points, iz_val, iy_val, ix_val);
+    iz_storage(i, j) = iz_val;
+    iy_storage(i, j) = iy_val;
+    ix_storage(i, j) = ix_val;
+  }
+};
+
+template <typename StorageType, typename ResultsType>
+struct TestFaceOperatorFunctor {
+  StorageType iz_storage;
+  StorageType iy_storage;
+  StorageType ix_storage;
+  ResultsType results;
+  specfem::mesh_entity::dim3::type face_type;
+  int num_points;
+
+  TestFaceOperatorFunctor(StorageType iz_, StorageType iy_, StorageType ix_,
+                          ResultsType results_,
+                          specfem::mesh_entity::dim3::type face_type_,
+                          int num_points_)
+      : iz_storage(iz_), iy_storage(iy_), ix_storage(ix_), results(results_),
+        face_type(face_type_), num_points(num_points_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int) const {
+    using Face = specfem::assembly::Face<Kokkos::DefaultExecutionSpace>;
+    using FaceIndex =
+        specfem::point::face_index<specfem::dimension::type::dim3>;
+
+    auto iz_strided =
+        Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
+    auto iy_strided =
+        Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
+    auto ix_strided =
+        Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
+
+    Face face(num_points, 42, 3, face_type, iz_strided, iy_strided, ix_strided);
+    FaceIndex idx = face(2, 3);
+
+    results(0) = idx.ispec;
+    results(1) = idx.iface;
+    results(2) = idx.ipoint_i;
+    results(3) = idx.ipoint_j;
+    results(4) = idx.iz;
+    results(5) = idx.iy;
+    results(6) = idx.ix;
+    results(7) = static_cast<int>(idx.face_type);
+  }
+};
+
+template <typename StorageType, typename ResultsType>
+struct TestFaceTypeFunctor {
+  StorageType iz_storage;
+  StorageType iy_storage;
+  StorageType ix_storage;
+  ResultsType results;
+  specfem::mesh_entity::dim3::type face_type;
+  int num_points;
+
+  TestFaceTypeFunctor(StorageType iz_, StorageType iy_, StorageType ix_,
+                      ResultsType results_,
+                      specfem::mesh_entity::dim3::type face_type_,
+                      int num_points_)
+      : iz_storage(iz_), iy_storage(iy_), ix_storage(ix_), results(results_),
+        face_type(face_type_), num_points(num_points_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int) const {
+    using Face = specfem::assembly::Face<Kokkos::DefaultExecutionSpace>;
+    using FaceIndex =
+        specfem::point::face_index<specfem::dimension::type::dim3>;
+
+    auto iz_strided =
+        Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
+    auto iy_strided =
+        Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
+    auto ix_strided =
+        Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
+
+    Face face(num_points, 0, 0, face_type, iz_strided, iy_strided, ix_strided);
+    FaceIndex idx = face(2, 3);
+
+    results(0) = idx.iz;
+    results(1) = idx.iy;
+    results(2) = idx.ix;
+  }
+};
+
 } // namespace
 
 class AssemblyFaceViewTest : public ::testing::Test {
@@ -106,33 +281,15 @@ TEST_F(AssemblyFaceViewTest, SingleFaceAccess) {
   Kokkos::parallel_for(
       "initialize_faces",
       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, num_faces),
-      KOKKOS_LAMBDA(const int i) {
-        view.element_index(i) = i * 10;
-        view.face_index(i) = i;
-        view.face_types(i) = bottom;
-        for (int j = 0; j < num_points; ++j) {
-          for (int k = 0; k < num_points; ++k) {
-            int iz_val, iy_val, ix_val;
-            get_face_coordinates(bottom, j, k, num_points, iz_val, iy_val,
-                                 ix_val);
-            view.iz(i, j, k) = iz_val;
-            view.iy(i, j, k) = iy_val;
-            view.ix(i, j, k) = ix_val;
-          }
-        }
-      });
+      InitializeFacesFunctor<FaceView>(view, bottom, num_points, 10));
   Kokkos::fence();
 
   // Test single face access
   Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
 
   Kokkos::parallel_for(
-      "test_single_face", 1, KOKKOS_LAMBDA(const int) {
-        Face face = view(1);
-        results(0) = face.n_points;
-        results(1) = face.element_index;
-        results(2) = face.face_index;
-      });
+      "test_single_face", 1,
+      TestSingleFaceFunctor<FaceView, decltype(results)>(view, results));
   Kokkos::fence();
 
   auto host_results = Kokkos::create_mirror_view(results);
@@ -152,33 +309,15 @@ TEST_F(AssemblyFaceViewTest, RangeAccess) {
   Kokkos::parallel_for(
       "initialize_faces",
       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, num_faces),
-      KOKKOS_LAMBDA(const int i) {
-        view.element_index(i) = i * 100;
-        view.face_index(i) = i;
-        view.face_types(i) = top;
-        for (int j = 0; j < num_points; ++j) {
-          for (int k = 0; k < num_points; ++k) {
-            int iz_val, iy_val, ix_val;
-            get_face_coordinates(top, j, k, num_points, iz_val, iy_val, ix_val);
-            view.iz(i, j, k) = iz_val;
-            view.iy(i, j, k) = iy_val;
-            view.ix(i, j, k) = ix_val;
-          }
-        }
-      });
+      InitializeFacesFunctor<FaceView>(view, top, num_points, 100));
   Kokkos::fence();
 
   // Test range access [1, 3) should give 2 faces
   Kokkos::View<int[4], Kokkos::DefaultExecutionSpace> results("results");
 
   Kokkos::parallel_for(
-      "test_range_access", 1, KOKKOS_LAMBDA(const int) {
-        FaceView subview = view(Kokkos::make_pair(1, 3));
-        results(0) = subview.n_faces;
-        results(1) = subview.n_points;
-        results(2) = subview.element_index(0); // First face in subview
-        results(3) = subview.element_index(1); // Second face in subview
-      });
+      "test_range_access", 1,
+      TestRangeAccessFaceFunctor<FaceView, decltype(results)>(view, results));
   Kokkos::fence();
 
   auto host_results = Kokkos::create_mirror_view(results);
@@ -212,19 +351,15 @@ TEST_F(AssemblyFaceTest, OperatorPointAccess) {
                                                                   num_points);
 
   constexpr auto left = specfem::mesh_entity::dim3::type::left;
+  using StorageType = decltype(iz_storage);
 
   // Initialize quadrature point coordinates
   Kokkos::parallel_for(
       "init_coords",
       Kokkos::MDRangePolicy<Kokkos::Rank<2>, Kokkos::DefaultExecutionSpace>(
           { 0, 0 }, { num_points, num_points }),
-      KOKKOS_LAMBDA(const int i, const int j) {
-        int iz_val, iy_val, ix_val;
-        get_face_coordinates(left, i, j, num_points, iz_val, iy_val, ix_val);
-        iz_storage(i, j) = iz_val;
-        iy_storage(i, j) = iy_val;
-        ix_storage(i, j) = ix_val;
-      });
+      InitCoords2DFunctor<StorageType>(iz_storage, iy_storage, ix_storage, left,
+                                       num_points));
   Kokkos::fence();
 
   // Test Face operator()
@@ -232,28 +367,9 @@ TEST_F(AssemblyFaceTest, OperatorPointAccess) {
   Kokkos::View<int[8], Kokkos::DefaultExecutionSpace> results("results");
 
   Kokkos::parallel_for(
-      "test_face_operator", 1, KOKKOS_LAMBDA(const int) {
-        // Create strided subviews matching Face::IndexView type
-        auto iz_strided =
-            Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
-        auto iy_strided =
-            Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
-        auto ix_strided =
-            Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
-
-        Face face(num_points, 42, 3, left, iz_strided, iy_strided, ix_strided);
-
-        FaceIndex idx = face(2, 3); // Access point (2, 3)
-
-        results(0) = idx.ispec;
-        results(1) = idx.iface;
-        results(2) = idx.ipoint_i;
-        results(3) = idx.ipoint_j;
-        results(4) = idx.iz;
-        results(5) = idx.iy;
-        results(6) = idx.ix;
-        results(7) = static_cast<int>(idx.face_type);
-      });
+      "test_face_operator", 1,
+      TestFaceOperatorFunctor<StorageType, decltype(results)>(
+          iz_storage, iy_storage, ix_storage, results, left, num_points));
   Kokkos::fence();
 
   auto host_results = Kokkos::create_mirror_view(results);
@@ -282,6 +398,7 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
                                                                   num_points);
 
   using FaceIndex = specfem::point::face_index<specfem::dimension::type::dim3>;
+  using StorageType = decltype(iz_storage);
 
   // Test bottom face (z = 0)
   {
@@ -290,32 +407,16 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
         "init_bottom",
         Kokkos::MDRangePolicy<Kokkos::Rank<2>, Kokkos::DefaultExecutionSpace>(
             { 0, 0 }, { num_points, num_points }),
-        KOKKOS_LAMBDA(const int i, const int j) {
-          int iz_val, iy_val, ix_val;
-          get_face_coordinates(face_type, i, j, num_points, iz_val, iy_val,
-                               ix_val);
-          iz_storage(i, j) = iz_val;
-          iy_storage(i, j) = iy_val;
-          ix_storage(i, j) = ix_val;
-        });
+        InitCoords2DFunctor<StorageType>(iz_storage, iy_storage, ix_storage,
+                                         face_type, num_points));
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
     Kokkos::parallel_for(
-        "test_bottom", 1, KOKKOS_LAMBDA(const int) {
-          auto iz_strided =
-              Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto iy_strided =
-              Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto ix_strided =
-              Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
-          Face face(num_points, 0, 0, face_type, iz_strided, iy_strided,
-                    ix_strided);
-          FaceIndex idx = face(2, 3);
-          results(0) = idx.iz;
-          results(1) = idx.iy;
-          results(2) = idx.ix;
-        });
+        "test_bottom", 1,
+        TestFaceTypeFunctor<StorageType, decltype(results)>(
+            iz_storage, iy_storage, ix_storage, results, face_type,
+            num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -332,32 +433,16 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
         "init_top",
         Kokkos::MDRangePolicy<Kokkos::Rank<2>, Kokkos::DefaultExecutionSpace>(
             { 0, 0 }, { num_points, num_points }),
-        KOKKOS_LAMBDA(const int i, const int j) {
-          int iz_val, iy_val, ix_val;
-          get_face_coordinates(face_type, i, j, num_points, iz_val, iy_val,
-                               ix_val);
-          iz_storage(i, j) = iz_val;
-          iy_storage(i, j) = iy_val;
-          ix_storage(i, j) = ix_val;
-        });
+        InitCoords2DFunctor<StorageType>(iz_storage, iy_storage, ix_storage,
+                                         face_type, num_points));
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
     Kokkos::parallel_for(
-        "test_top", 1, KOKKOS_LAMBDA(const int) {
-          auto iz_strided =
-              Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto iy_strided =
-              Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto ix_strided =
-              Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
-          Face face(num_points, 0, 0, face_type, iz_strided, iy_strided,
-                    ix_strided);
-          FaceIndex idx = face(2, 3);
-          results(0) = idx.iz;
-          results(1) = idx.iy;
-          results(2) = idx.ix;
-        });
+        "test_top", 1,
+        TestFaceTypeFunctor<StorageType, decltype(results)>(
+            iz_storage, iy_storage, ix_storage, results, face_type,
+            num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -374,32 +459,16 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
         "init_left",
         Kokkos::MDRangePolicy<Kokkos::Rank<2>, Kokkos::DefaultExecutionSpace>(
             { 0, 0 }, { num_points, num_points }),
-        KOKKOS_LAMBDA(const int i, const int j) {
-          int iz_val, iy_val, ix_val;
-          get_face_coordinates(face_type, i, j, num_points, iz_val, iy_val,
-                               ix_val);
-          iz_storage(i, j) = iz_val;
-          iy_storage(i, j) = iy_val;
-          ix_storage(i, j) = ix_val;
-        });
+        InitCoords2DFunctor<StorageType>(iz_storage, iy_storage, ix_storage,
+                                         face_type, num_points));
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
     Kokkos::parallel_for(
-        "test_left", 1, KOKKOS_LAMBDA(const int) {
-          auto iz_strided =
-              Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto iy_strided =
-              Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto ix_strided =
-              Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
-          Face face(num_points, 0, 0, face_type, iz_strided, iy_strided,
-                    ix_strided);
-          FaceIndex idx = face(2, 3);
-          results(0) = idx.iz;
-          results(1) = idx.iy;
-          results(2) = idx.ix;
-        });
+        "test_left", 1,
+        TestFaceTypeFunctor<StorageType, decltype(results)>(
+            iz_storage, iy_storage, ix_storage, results, face_type,
+            num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -416,32 +485,16 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
         "init_right",
         Kokkos::MDRangePolicy<Kokkos::Rank<2>, Kokkos::DefaultExecutionSpace>(
             { 0, 0 }, { num_points, num_points }),
-        KOKKOS_LAMBDA(const int i, const int j) {
-          int iz_val, iy_val, ix_val;
-          get_face_coordinates(face_type, i, j, num_points, iz_val, iy_val,
-                               ix_val);
-          iz_storage(i, j) = iz_val;
-          iy_storage(i, j) = iy_val;
-          ix_storage(i, j) = ix_val;
-        });
+        InitCoords2DFunctor<StorageType>(iz_storage, iy_storage, ix_storage,
+                                         face_type, num_points));
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
     Kokkos::parallel_for(
-        "test_right", 1, KOKKOS_LAMBDA(const int) {
-          auto iz_strided =
-              Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto iy_strided =
-              Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto ix_strided =
-              Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
-          Face face(num_points, 0, 0, face_type, iz_strided, iy_strided,
-                    ix_strided);
-          FaceIndex idx = face(2, 3);
-          results(0) = idx.iz;
-          results(1) = idx.iy;
-          results(2) = idx.ix;
-        });
+        "test_right", 1,
+        TestFaceTypeFunctor<StorageType, decltype(results)>(
+            iz_storage, iy_storage, ix_storage, results, face_type,
+            num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -458,32 +511,16 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
         "init_front",
         Kokkos::MDRangePolicy<Kokkos::Rank<2>, Kokkos::DefaultExecutionSpace>(
             { 0, 0 }, { num_points, num_points }),
-        KOKKOS_LAMBDA(const int i, const int j) {
-          int iz_val, iy_val, ix_val;
-          get_face_coordinates(face_type, i, j, num_points, iz_val, iy_val,
-                               ix_val);
-          iz_storage(i, j) = iz_val;
-          iy_storage(i, j) = iy_val;
-          ix_storage(i, j) = ix_val;
-        });
+        InitCoords2DFunctor<StorageType>(iz_storage, iy_storage, ix_storage,
+                                         face_type, num_points));
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
     Kokkos::parallel_for(
-        "test_front", 1, KOKKOS_LAMBDA(const int) {
-          auto iz_strided =
-              Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto iy_strided =
-              Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto ix_strided =
-              Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
-          Face face(num_points, 0, 0, face_type, iz_strided, iy_strided,
-                    ix_strided);
-          FaceIndex idx = face(2, 3);
-          results(0) = idx.iz;
-          results(1) = idx.iy;
-          results(2) = idx.ix;
-        });
+        "test_front", 1,
+        TestFaceTypeFunctor<StorageType, decltype(results)>(
+            iz_storage, iy_storage, ix_storage, results, face_type,
+            num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -500,32 +537,16 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
         "init_back",
         Kokkos::MDRangePolicy<Kokkos::Rank<2>, Kokkos::DefaultExecutionSpace>(
             { 0, 0 }, { num_points, num_points }),
-        KOKKOS_LAMBDA(const int i, const int j) {
-          int iz_val, iy_val, ix_val;
-          get_face_coordinates(face_type, i, j, num_points, iz_val, iy_val,
-                               ix_val);
-          iz_storage(i, j) = iz_val;
-          iy_storage(i, j) = iy_val;
-          ix_storage(i, j) = ix_val;
-        });
+        InitCoords2DFunctor<StorageType>(iz_storage, iy_storage, ix_storage,
+                                         face_type, num_points));
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
     Kokkos::parallel_for(
-        "test_back", 1, KOKKOS_LAMBDA(const int) {
-          auto iz_strided =
-              Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto iy_strided =
-              Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
-          auto ix_strided =
-              Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
-          Face face(num_points, 0, 0, face_type, iz_strided, iy_strided,
-                    ix_strided);
-          FaceIndex idx = face(2, 3);
-          results(0) = idx.iz;
-          results(1) = idx.iy;
-          results(2) = idx.ix;
-        });
+        "test_back", 1,
+        TestFaceTypeFunctor<StorageType, decltype(results)>(
+            iz_storage, iy_storage, ix_storage, results, face_type,
+            num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
