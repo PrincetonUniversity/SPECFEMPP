@@ -8,7 +8,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace {
+namespace specfem::assembly::simulation_fields_impl {
 template <typename ViewType> int compute_nglob3D(const ViewType index_mapping) {
   const int nspec = index_mapping.extent(0);
   const int ngllz = index_mapping.extent(1);
@@ -29,7 +29,7 @@ template <typename ViewType> int compute_nglob3D(const ViewType index_mapping) {
 
   return nglob + 1;
 }
-} // namespace
+} // namespace specfem::assembly::simulation_fields_impl
 
 template <specfem::simulation::field_type WavefieldType>
 specfem::assembly::simulation_field<specfem::dimension::type::dim3,
@@ -38,12 +38,12 @@ specfem::assembly::simulation_field<specfem::dimension::type::dim3,
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::assembly::element_types<dimension_tag> &element_types) {
 
-  nglob = compute_nglob3D(mesh.h_index_mapping);
+  nglob = specfem::assembly::simulation_fields_impl::compute_nglob3D(mesh.h_index_mapping);
   this->index_mapping = mesh.index_mapping;
   this->h_index_mapping = mesh.h_index_mapping;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE(assembly_index_mapping, h_assembly_index_mapping, field) {
         _assembly_index_mapping_ = Kokkos::View<int *, Kokkos::LayoutLeft,
                                                 Kokkos::DefaultExecutionSpace::memory_space>(
@@ -73,7 +73,7 @@ int specfem::assembly::simulation_field<
     return total_degrees_of_freedom;
   }
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)), CAPTURE(
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)), CAPTURE(
                                                                       field) {
     total_degrees_of_freedom +=
         this->get_nglob<_medium_tag_>() *
@@ -87,6 +87,6 @@ template <specfem::simulation::field_type WavefieldType>
 template <specfem::sync::kind sync>
 void specfem::assembly::simulation_field<specfem::dimension::type::dim3,
                                          WavefieldType>::sync_fields() {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       CAPTURE(field) { _field_.template sync_fields<sync>(); })
 }

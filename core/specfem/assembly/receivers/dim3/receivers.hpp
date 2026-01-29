@@ -144,7 +144,7 @@ private:
   specfem::assembly::element_types<dimension_tag> element_types; ///< Element
                                                                  ///< types
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
                        PROPERTY_TAG(ISOTROPIC)),
                       DECLARE((IndexViewType, receiver_indices),
                               (IndexViewType::HostMirror, h_receiver_indices),

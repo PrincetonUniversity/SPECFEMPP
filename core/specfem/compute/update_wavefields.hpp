@@ -36,7 +36,8 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
       (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                    COMPOSITE_STACEY_DIRICHLET)),
+                    COMPOSITE_STACEY_DIRICHLET),
+       FLUX_SCHEME_TAG(NATURAL)),
       {
         constexpr auto self_medium =
             specfem::interface::attributes<_dimension_tag_,
@@ -45,9 +46,7 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
                       self_medium == MediumTag) {
           impl::compute_coupling<_dimension_tag_, _connection_tag_,
                                  WavefieldType, NGLL, NGLL, _interface_tag_,
-                                 _boundary_tag_,
-                                 specfem::interface::flux_scheme_tag::natural>(
-              assembly);
+                                 _boundary_tag_, _flux_scheme_tag_>(assembly);
           // second ngll is the number of quadrature points on the mortar.
         }
       })

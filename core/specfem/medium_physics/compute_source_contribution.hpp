@@ -5,6 +5,7 @@
 #include "medium/dim2/elastic/isotropic/source.hpp"
 #include "medium/dim2/elastic/isotropic_cosserat/source.hpp"
 #include "medium/dim2/poroelastic/isotropic/source.hpp"
+#include "medium/dim3/acoustic/isotropic/source.hpp"
 #include "medium/dim3/elastic/isotropic/source.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>

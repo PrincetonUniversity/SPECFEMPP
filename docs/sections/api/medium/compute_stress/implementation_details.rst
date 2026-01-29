@@ -35,3 +35,9 @@
 
 .. doxygengroup:: specfem_stress_computation_dim3_elastic_isotropic
     :content-only:
+
+3D Acoustic Stress Computation
+==============================
+
+.. doxygengroup:: specfem_stress_computation_dim3_acoustic
+    :content-only:
