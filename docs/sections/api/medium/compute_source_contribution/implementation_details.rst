@@ -35,3 +35,9 @@
 
 .. doxygengroup:: specfem_medium_dim3_compute_source_contribution_elastic_isotropic
     :content-only:
+
+3D Acoustic Source Contribution
+===============================
+
+.. doxygengroup:: specfem_medium_dim3_compute_source_contribution_acoustic
+    :content-only:
