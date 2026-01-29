@@ -7,10 +7,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/execution.hpp"
-#include "medium/compute_cosserat_couple_stress.hpp"
-#include "medium/compute_cosserat_stress.hpp"
-#include "medium/compute_damping_force.hpp"
-#include "medium/compute_stress.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/assembly.hpp"
@@ -220,7 +217,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
                                                        velocity, acceleration);
 
                 // Compute the couple stress from the stress integrand
-                specfem::medium::compute_couple_stress(
+                specfem::medium::compute_cosserat_couple_stress(
                     point_jacobian_matrix, point_property, factor,
                     stress_integrand.F(local_index), acceleration);
 

@@ -5,10 +5,9 @@
 #include "enumerations/coupled_interface.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "medium/compute_coupling.hpp"
-#include "medium/dim2/coupling_terms/acoustic_elastic.hpp"
 #include "specfem/chunk_edge.hpp"
 #include "specfem/data_access/accessor.hpp"
+#include "specfem/medium_physics.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 
 #include <Kokkos_Core.hpp>

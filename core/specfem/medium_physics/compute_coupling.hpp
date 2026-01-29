@@ -1,9 +1,9 @@
 #pragma once
 
-#include "dim2/coupling_terms/acoustic_elastic.hpp"
-#include "dim2/coupling_terms/elastic_acoustic.hpp"
 #include "enumerations/connections.hpp"
 #include "enumerations/interface.hpp"
+#include "medium/dim2/coupling_terms/acoustic_elastic.hpp"
+#include "medium/dim2/coupling_terms/elastic_acoustic.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/data_access/accessor/chunk_edge.hpp"
 #include "specfem/data_access/check_compatibility.hpp"

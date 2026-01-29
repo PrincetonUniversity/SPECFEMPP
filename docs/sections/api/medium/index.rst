@@ -10,8 +10,8 @@
     :maxdepth: 1
 
     material/index
-    properties_container/index
-    kernels_container/index
+    domain_properties/index
+    domain_kernels/index
     compute_stress/index
     compute_mass_matrix/index
     compute_wavefield

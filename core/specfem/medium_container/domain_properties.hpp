@@ -1,19 +1,22 @@
 #pragma once
 
-#include "dim2/acoustic/isotropic/properties_container.hpp"
-#include "dim2/elastic/anisotropic/properties_container.hpp"
-#include "dim2/elastic/isotropic/properties_container.hpp"
-#include "dim2/elastic/isotropic_cosserat/properties_container.hpp"
-#include "dim2/poroelastic/isotropic/properties_container.hpp"
 #include "enumerations/medium.hpp"
-#include "impl/accessor.hpp"
-#include "specfem/mesh.hpp"
+#include "medium/dim2/acoustic/isotropic/domain_properties.hpp"
+#include "medium/dim2/elastic/anisotropic/domain_properties.hpp"
+#include "medium/dim2/elastic/isotropic/domain_properties.hpp"
+#include "medium/dim2/elastic/isotropic_cosserat/domain_properties.hpp"
+#include "medium/dim2/poroelastic/isotropic/domain_properties.hpp"
+#include "medium/impl/accessor.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
 class mesh_to_compute_mapping;
 template <specfem::dimension::type Dimension> struct mesh;
 } // namespace specfem::assembly
+
+namespace specfem::mesh {
+template <specfem::dimension::type Dimension> struct materials;
+}
 
 namespace specfem::medium {
 
@@ -43,7 +46,7 @@ namespace specfem::medium {
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct properties_container;
+struct domain_properties;
 
 /**
  * @brief 2D material properties container specialization.
@@ -57,13 +60,12 @@ struct properties_container;
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct properties_container<specfem::dimension::type::dim2, MediumTag,
-                            PropertyTag>
+struct domain_properties<specfem::dimension::type::dim2, MediumTag, PropertyTag>
     : public properties::data_container<specfem::dimension::type::dim2,
                                         MediumTag, PropertyTag>,
       public impl::Accessor<specfem::dimension::type::dim2,
-                            properties_container<specfem::dimension::type::dim2,
-                                                 MediumTag, PropertyTag> > {
+                            domain_properties<specfem::dimension::type::dim2,
+                                              MediumTag, PropertyTag> > {
 
   /// Base data container type for property storage
   using base_type = properties::data_container<specfem::dimension::type::dim2,
@@ -78,7 +80,7 @@ struct properties_container<specfem::dimension::type::dim2, MediumTag,
       base_type::property_tag; ///< Material property type
 
   /// Default constructor for empty container
-  properties_container() = default;
+  domain_properties() = default;
 
   /**
    * @brief Construct 2D properties from mesh and material data.
@@ -94,7 +96,7 @@ struct properties_container<specfem::dimension::type::dim2, MediumTag,
    * @param has_gll_model Skip material assignment for GLL models
    * @param property_index_mapping Element to property mapping
    */
-  properties_container(
+  domain_properties(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,
       const int ngllx, const specfem::mesh::materials<dimension_tag> &materials,
@@ -124,13 +126,12 @@ struct properties_container<specfem::dimension::type::dim2, MediumTag,
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct properties_container<specfem::dimension::type::dim3, MediumTag,
-                            PropertyTag>
+struct domain_properties<specfem::dimension::type::dim3, MediumTag, PropertyTag>
     : public properties::data_container<specfem::dimension::type::dim3,
                                         MediumTag, PropertyTag>,
       public impl::Accessor<specfem::dimension::type::dim3,
-                            properties_container<specfem::dimension::type::dim3,
-                                                 MediumTag, PropertyTag> > {
+                            domain_properties<specfem::dimension::type::dim3,
+                                              MediumTag, PropertyTag> > {
 
   /// Base data container type for property storage
   using base_type = properties::data_container<specfem::dimension::type::dim3,
@@ -145,7 +146,7 @@ struct properties_container<specfem::dimension::type::dim3, MediumTag,
       base_type::property_tag; ///< Material property type
 
   /// Default constructor for empty container
-  properties_container() = default;
+  domain_properties() = default;
 
   /**
    * @brief Construct 3D properties from mesh and material data.
@@ -161,7 +162,7 @@ struct properties_container<specfem::dimension::type::dim3, MediumTag,
    * @param materials Material database indexed by element
    * @param property_index_mapping Element to property mapping
    */
-  properties_container(
+  domain_properties(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const int nspec, const int ngllz, const int nglly, const int ngllx,
       const specfem::mesh::materials<dimension_tag> &materials,

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "dim2/acoustic/isotropic/frechet_derivative.hpp"
-#include "dim2/elastic/anisotropic/frechet_derivative.hpp"
-#include "dim2/elastic/isotropic/frechet_derivative.hpp"
-#include "dim2/poroelastic/isotropic/frechet_derivative.hpp"
+#include "medium/dim2/acoustic/isotropic/frechet_derivative.hpp"
+#include "medium/dim2/elastic/anisotropic/frechet_derivative.hpp"
+#include "medium/dim2/elastic/isotropic/frechet_derivative.hpp"
+#include "medium/dim2/poroelastic/isotropic/frechet_derivative.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 

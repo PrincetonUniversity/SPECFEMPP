@@ -12,10 +12,17 @@
  * - `compute_wavefield()`: Wavefield from intrinsic fields
  * - `compute_source_contribution()`: Source terms
  * - `compute_frechet_derivatives()`: Sensitivity kernels
- * - `material<>`, `properties_container<>`: Material property management
+ * - `material<>`, `domain_properties<>`, `domain_kernels<>`: Material property
+ * management
  */
 namespace specfem::medium {}
 
-#include "compute_frechet_derivatives.hpp"
-#include "compute_stress.hpp"
-#include "compute_wavefield.hpp"
+#include "medium_physics/compute_cosserat_couple_stress.hpp"
+#include "medium_physics/compute_cosserat_stress.hpp"
+#include "medium_physics/compute_coupling.hpp"
+#include "medium_physics/compute_damping_force.hpp"
+#include "medium_physics/compute_frechet_derivatives.hpp"
+#include "medium_physics/compute_source_contribution.hpp"
+#include "medium_physics/compute_stress.hpp"
+#include "medium_physics/compute_wavefield.hpp"
+#include "medium_physics/mass_matrix_component.hpp"

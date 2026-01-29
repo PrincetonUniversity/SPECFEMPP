@@ -3,7 +3,7 @@
 #include "compute_coupling.hpp"
 #include "enumerations/connections.hpp"
 #include "enumerations/interface.hpp"
-#include "medium/compute_coupling.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
