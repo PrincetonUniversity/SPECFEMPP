@@ -63,6 +63,60 @@ void get_face_coordinates(const specfem::mesh_entity::dim3::type face_type,
   }
 }
 
+// Functors to replace lambdas for CUDA compatibility
+// (CUDA does not allow extended __host__ __device__ lambdas inside
+// functions with private/protected access, such as TEST_F's TestBody)
+
+template <typename FaceViewType>
+struct InitFaceViewIndicesFunctor {
+  FaceViewType faces;
+
+  InitFaceViewIndicesFunctor(FaceViewType faces_) : faces(faces_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int i) const {
+    faces.element_index(i) = i;
+    faces.face_index(i) = i * 10;
+  }
+};
+
+template <typename FaceViewType>
+struct InitFaceViewFullFunctor {
+  FaceViewType faces;
+  int n_points;
+
+  InitFaceViewFullFunctor(FaceViewType faces_, int n_points_)
+      : faces(faces_), n_points(n_points_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int i) const {
+    faces.element_index(i) = i;
+    faces.face_index(i) = i;
+    faces.face_types(i) = specfem::mesh_entity::dim3::type::bottom;
+    for (int j = 0; j < n_points; ++j) {
+      for (int k = 0; k < n_points; ++k) {
+        faces.iz(i, j, k) = 0;
+        faces.iy(i, j, k) = j;
+        faces.ix(i, j, k) = k;
+      }
+    }
+  }
+};
+
+template <typename FaceViewType>
+struct TestFaceAccessFunctor {
+  FaceViewType faces;
+
+  TestFaceAccessFunctor(FaceViewType faces_) : faces(faces_) {}
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(const int, int &local_result) const {
+    auto face = faces(0);
+    auto point = face(2, 3);
+    local_result = point.ix + point.iy * 10 + point.iz * 100;
+  }
+};
+
 } // namespace
 
 // Base fixture for common functionality
@@ -360,16 +414,13 @@ TEST_F(FaceViewTest, Construction) {
 }
 
 TEST_F(FaceViewTest, SubviewExtraction) {
-  specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace> faces("test_faces", n_faces,
-                                                 n_points);
+  using FaceViewType = specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
+  FaceViewType faces("test_faces", n_faces, n_points);
 
   // Initialize some data
   Kokkos::parallel_for(
       "init", Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, n_faces),
-      KOKKOS_LAMBDA(const int i) {
-        faces.element_index(i) = i;
-        faces.face_index(i) = i * 10;
-      });
+      InitFaceViewIndicesFunctor<FaceViewType>(faces));
   Kokkos::fence();
 
   // Get a subview
@@ -387,24 +438,13 @@ TEST_F(FaceViewTest, SubviewExtraction) {
 }
 
 TEST_F(FaceViewTest, FaceAccess) {
-  specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace> faces("test_faces", n_faces,
-                                                 n_points);
+  using FaceViewType = specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
+  FaceViewType faces("test_faces", n_faces, n_points);
 
   // Initialize
   Kokkos::parallel_for(
       "init", Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, n_faces),
-      KOKKOS_LAMBDA(const int i) {
-        faces.element_index(i) = i;
-        faces.face_index(i) = i;
-        faces.face_types(i) = specfem::mesh_entity::dim3::type::bottom;
-        for (int j = 0; j < n_points; ++j) {
-          for (int k = 0; k < n_points; ++k) {
-            faces.iz(i, j, k) = 0;
-            faces.iy(i, j, k) = j;
-            faces.ix(i, j, k) = k;
-          }
-        }
-      });
+      InitFaceViewFullFunctor<FaceViewType>(faces, n_points));
   Kokkos::fence();
 
   // Test accessing a face and its points on device
@@ -412,12 +452,7 @@ TEST_F(FaceViewTest, FaceAccess) {
   Kokkos::parallel_reduce(
       "test_face_access",
       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, 1),
-      KOKKOS_LAMBDA(const int, int &local_result) {
-        auto face = faces(0);
-        auto point = face(2, 3);
-        local_result = point.ix + point.iy * 10 + point.iz * 100;
-      },
-      result);
+      TestFaceAccessFunctor<FaceViewType>(faces), result);
   Kokkos::fence();
 
   // point should be (iz=0, iy=2, ix=3) for bottom face at (2,3)
