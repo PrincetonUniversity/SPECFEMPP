@@ -30,13 +30,12 @@ namespace medium {
  * @param properties Acoustic material properties (\f$ \rho^{-1}, \kappa \f$)
  * @return Mass inverse component [\f$ \kappa^{-1} \f$] for pressure wavefield
  */
-template <bool UseSIMD>
+template <specfem::dimension::type DimensionTag, bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-    UseSIMD>
+    DimensionTag, specfem::element::medium_tag::acoustic, UseSIMD>
 impl_mass_matrix_component(
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+        DimensionTag, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, UseSIMD> &properties);
 
 } // namespace medium

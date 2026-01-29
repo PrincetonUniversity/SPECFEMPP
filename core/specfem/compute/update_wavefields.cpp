@@ -49,8 +49,8 @@ FOR_EACH_IN_PRODUCT(
           const int);)))
 
 FOR_EACH_IN_PRODUCT(
-    (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
-     BOUNDARY_TAG(NONE)),
+    (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+     PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
     INSTANTIATE(
         /** instantiation for NGLL = 5     */
         (template int specfem::compute::update_wavefields,

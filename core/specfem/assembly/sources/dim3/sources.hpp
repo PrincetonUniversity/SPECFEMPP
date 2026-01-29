@@ -415,7 +415,7 @@ private:
    */
   PropertyTagViewType::HostMirror h_property_types;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       DECLARE(((specfem::assembly::sources_impl::source_medium,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                source)))
@@ -429,8 +429,8 @@ private:
   int timestep;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
-       BOUNDARY_TAG(NONE)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
       DECLARE((IndexViewType, element_indices_forward),
               (IndexViewType::HostMirror, h_element_indices_forward),
               (IndexViewType, element_indices_backward),
@@ -540,7 +540,7 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -619,7 +619,7 @@ void load_on_host(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -694,7 +694,7 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -769,7 +769,7 @@ void store_on_host(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {

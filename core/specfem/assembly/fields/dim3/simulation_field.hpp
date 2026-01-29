@@ -114,7 +114,7 @@ public:
     this->nglly = rhs.nglly;
     this->ngllx = rhs.ngllx;
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
         CAPTURE(field, (rhs_field, rhs.field), assembly_index_mapping,
                 (rhs_assembly_index_mapping, rhs.assembly_index_mapping),
                 h_assembly_index_mapping,
@@ -141,7 +141,7 @@ public:
    */
   template <specfem::element::medium_tag MediumTag>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                         CAPTURE(field) {
                           if constexpr (MediumTag == _medium_tag_) {
                             return _field_.nglob;
@@ -173,7 +173,7 @@ public:
       constexpr specfem::assembly::fields_impl::field_impl<dimension_tag,
                                                            MediumTag> const &
       get_field() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                         CAPTURE(field) {
                           if constexpr (MediumTag == _medium_tag_) {
                             return _field_;
@@ -195,7 +195,7 @@ public:
   get_iglob(const int &ispec, const int &iz, const int &iy, const int &ix,
             const specfem::element::medium_tag MediumTag) const {
     if constexpr (on_device) {
-      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                           CAPTURE(assembly_index_mapping) {
                             if (MediumTag == _medium_tag_) {
                               return _assembly_index_mapping_(
@@ -204,7 +204,7 @@ public:
                           })
 
     } else {
-      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                           CAPTURE(h_assembly_index_mapping) {
                             if (MediumTag == _medium_tag_) {
                               return _h_assembly_index_mapping_(
@@ -255,7 +255,7 @@ public:
   IndexViewType::HostMirror h_index_mapping; ///< Host mirror of 3D index
                                              ///< mapping for CPU operations
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       DECLARE(((specfem::assembly::fields_impl::field_impl,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                field),
@@ -313,7 +313,7 @@ inline void deep_copy(SimulationWavefieldType1 &dst,
   dst.nglob = src.nglob;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((src_assembly_index_mapping, src.assembly_index_mapping),
               (dst_assembly_index_mapping, dst.assembly_index_mapping),
               (src_h_assembly_index_mapping, src.h_assembly_index_mapping),
