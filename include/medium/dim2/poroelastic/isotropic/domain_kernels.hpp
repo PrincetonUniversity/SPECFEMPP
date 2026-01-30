@@ -3,10 +3,7 @@
 #include "specfem/medium_container/impl/domain_container.hpp"
 #include <Kokkos_SIMD.hpp>
 
-namespace specfem {
-namespace medium {
-
-namespace kernels {
+namespace specfem::medium_container::kernels {
 
 /**
  * @brief Poroelastic isotropic misfit kernels container.
@@ -40,7 +37,4 @@ struct data_container<DimensionTag, specfem::element::medium_tag::poroelastic,
   DATA_CONTAINER(rhot, rhof, eta, sm, mu_fr, B, C, M, mu_frb, rhob, rhofb, phi,
                  cpI, cpII, cs, rhobb, rhofbb, ratio, phib);
 };
-} // namespace kernels
-
-} // namespace medium
-} // namespace specfem
+} // namespace specfem::medium_container::kernels

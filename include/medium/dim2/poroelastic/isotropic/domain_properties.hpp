@@ -3,10 +3,7 @@
 #include "specfem/medium_container/impl/domain_container.hpp"
 #include <Kokkos_SIMD.hpp>
 
-namespace specfem {
-namespace medium {
-
-namespace properties {
+namespace specfem::medium_container::properties {
 
 /**
  * @brief Poroelastic isotropic material properties container.
@@ -43,6 +40,4 @@ struct data_container<DimensionTag, specfem::element::medium_tag::poroelastic,
                  permxx, permxz, permzz, eta_f)
 };
 
-} // namespace properties
-} // namespace medium
-} // namespace specfem
+} // namespace specfem::medium_container::properties

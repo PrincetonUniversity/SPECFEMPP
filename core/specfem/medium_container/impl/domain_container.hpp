@@ -5,7 +5,7 @@
 #include "specfem/macros.hpp"
 #include <boost/preprocessor.hpp>
 
-namespace specfem::medium::impl {
+namespace specfem::medium_container::impl {
 
 // Helper function to get flat index from mapping for dim2
 template <typename MappingType, typename IndexType>
@@ -25,11 +25,9 @@ KOKKOS_FORCEINLINE_FUNCTION
   return mapping(index.ispec, index.iz, index.iy, index.ix);
 }
 
-} // namespace specfem::medium::impl
+} // namespace specfem::medium_container::impl
 
-namespace specfem {
-namespace medium {
-namespace properties {
+namespace specfem::medium_container::properties {
 
 /**
  * @brief Material properties storage container template.
@@ -44,9 +42,9 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::property_tag PropertyTag, typename Enable = void>
 struct data_container;
 
-} // namespace properties
+} // namespace specfem::medium_container::properties
 
-namespace kernels {
+namespace specfem::medium_container::kernels {
 
 /**
  * @brief Sensitivity kernel storage container template.
@@ -60,6 +58,4 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename Enable = void>
 struct data_container;
-} // namespace kernels
-} // namespace medium
-} // namespace specfem
+} // namespace specfem::medium_container::kernels

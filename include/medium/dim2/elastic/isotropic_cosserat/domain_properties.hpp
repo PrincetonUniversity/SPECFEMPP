@@ -4,7 +4,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_SIMD.hpp>
 
-namespace specfem::medium::properties {
+namespace specfem::medium_container::properties {
 
 /**
  * @defgroup specfem_medium_properties_dim2_elastic_isotropic_cosserat 2D
@@ -51,4 +51,4 @@ struct data_container<
   DATA_CONTAINER(rho, kappa, mu, nu, j, lambda_c, mu_c, nu_c)
 };
 
-} // namespace specfem::medium::properties
+} // namespace specfem::medium_container::properties

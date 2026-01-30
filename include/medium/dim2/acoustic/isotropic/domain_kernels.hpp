@@ -3,10 +3,7 @@
 #include "specfem/medium_container/impl/domain_container.hpp"
 #include <Kokkos_SIMD.hpp>
 
-namespace specfem {
-namespace medium {
-
-namespace kernels {
+namespace specfem::medium_container::kernels {
 
 /**
  * @brief Acoustic isotropic misfit kernels container.
@@ -37,7 +34,4 @@ struct data_container<DimensionTag, specfem::element::medium_tag::acoustic,
   DATA_CONTAINER(rho, kappa, rhop, alpha)
 };
 
-} // namespace kernels
-
-} // namespace medium
-} // namespace specfem
+} // namespace specfem::medium_container::kernels

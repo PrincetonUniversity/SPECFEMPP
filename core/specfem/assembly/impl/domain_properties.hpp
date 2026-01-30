@@ -57,14 +57,14 @@ struct domain_properties;
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 struct domain_properties<specfem::dimension::type::dim2, MediumTag, PropertyTag>
-    : public specfem::medium::properties::data_container<
+    : public specfem::medium_container::properties::data_container<
           specfem::dimension::type::dim2, MediumTag, PropertyTag>,
       public DomainAccessor<specfem::dimension::type::dim2,
                             domain_properties<specfem::dimension::type::dim2,
                                               MediumTag, PropertyTag> > {
 
   /// Base data container type for property storage
-  using base_type = specfem::medium::properties::data_container<
+  using base_type = specfem::medium_container::properties::data_container<
       specfem::dimension::type::dim2, MediumTag, PropertyTag>;
   using base_type::base_type;
 
@@ -123,14 +123,14 @@ struct domain_properties<specfem::dimension::type::dim2, MediumTag, PropertyTag>
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 struct domain_properties<specfem::dimension::type::dim3, MediumTag, PropertyTag>
-    : public specfem::medium::properties::data_container<
+    : public specfem::medium_container::properties::data_container<
           specfem::dimension::type::dim3, MediumTag, PropertyTag>,
       public DomainAccessor<specfem::dimension::type::dim3,
                             domain_properties<specfem::dimension::type::dim3,
                                               MediumTag, PropertyTag> > {
 
   /// Base data container type for property storage
-  using base_type = specfem::medium::properties::data_container<
+  using base_type = specfem::medium_container::properties::data_container<
       specfem::dimension::type::dim3, MediumTag, PropertyTag>;
   using base_type::base_type;
 

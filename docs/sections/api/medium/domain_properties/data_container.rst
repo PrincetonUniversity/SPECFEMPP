@@ -1,9 +1,9 @@
 .. _api_medium_domain_properties_data_container:
 
-``specfem::medium::properties::data_container``
+``specfem::medium_container::properties::data_container``
 ===============================================
 
-.. doxygenstruct:: specfem::medium::properties::data_container
+.. doxygenstruct:: specfem::medium_container::properties::data_container
     :members:
     :private-members:
 

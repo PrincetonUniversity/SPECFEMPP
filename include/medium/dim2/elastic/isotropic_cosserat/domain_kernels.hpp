@@ -2,7 +2,7 @@
 
 #include "specfem/medium_container/impl/domain_container.hpp"
 
-namespace specfem::medium::kernels {
+namespace specfem::medium_container::kernels {
 
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
@@ -17,4 +17,4 @@ struct data_container<
   DATA_CONTAINER(rho) ///< density @f$ \rho @f$
 };
 
-} // namespace specfem::medium::kernels
+} // namespace specfem::medium_container::kernels

@@ -3,9 +3,7 @@
 #include "specfem/medium_container/impl/domain_container.hpp"
 #include <Kokkos_SIMD.hpp>
 
-namespace specfem {
-namespace medium {
-namespace properties {
+namespace specfem::medium_container::properties {
 
 /**
  * @brief Acoustic isotropic material properties container.
@@ -33,7 +31,4 @@ struct data_container<DimensionTag, specfem::element::medium_tag::acoustic,
 
   DATA_CONTAINER(rho_inverse, kappa)
 };
-} // namespace properties
-
-} // namespace medium
-} // namespace specfem
+} // namespace specfem::medium_container::properties

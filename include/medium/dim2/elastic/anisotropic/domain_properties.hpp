@@ -3,10 +3,7 @@
 #include "specfem/medium_container/impl/domain_container.hpp"
 #include <Kokkos_SIMD.hpp>
 
-namespace specfem {
-namespace medium {
-
-namespace properties {
+namespace specfem::medium_container::properties {
 
 /**
  * @defgroup specfem_medium_properties_dim2_elastic_anisotropic 2D Elastic
@@ -45,7 +42,4 @@ struct data_container<
   DATA_CONTAINER(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho)
 };
 
-} // namespace properties
-
-} // namespace medium
-} // namespace specfem
+} // namespace specfem::medium_container::properties

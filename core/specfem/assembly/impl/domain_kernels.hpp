@@ -46,16 +46,15 @@ struct domain_kernels;
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 struct domain_kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag>
-    : public specfem::medium::kernels::data_container<
+    : public specfem::medium_container::kernels::data_container<
           specfem::dimension::type::dim2, MediumTag, PropertyTag>,
       public DomainAccessor<specfem::dimension::type::dim2,
                             domain_kernels<specfem::dimension::type::dim2,
                                            MediumTag, PropertyTag> > {
 
   /// Base kernels data container type
-  using base_type =
-      specfem::medium::kernels::data_container<specfem::dimension::type::dim2,
-                                               MediumTag, PropertyTag>;
+  using base_type = specfem::medium_container::kernels::data_container<
+      specfem::dimension::type::dim2, MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =
@@ -113,16 +112,15 @@ struct domain_kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag>
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 struct domain_kernels<specfem::dimension::type::dim3, MediumTag, PropertyTag>
-    : public specfem::medium::kernels::data_container<
+    : public specfem::medium_container::kernels::data_container<
           specfem::dimension::type::dim3, MediumTag, PropertyTag>,
       public DomainAccessor<specfem::dimension::type::dim3,
                             domain_kernels<specfem::dimension::type::dim3,
                                            MediumTag, PropertyTag> > {
 
   /// Base kernels data container type
-  using base_type =
-      specfem::medium::kernels::data_container<specfem::dimension::type::dim3,
-                                               MediumTag, PropertyTag>;
+  using base_type = specfem::medium_container::kernels::data_container<
+      specfem::dimension::type::dim3, MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =
