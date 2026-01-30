@@ -76,32 +76,50 @@ TEST(impl__compute_intersection, TransferFunctionCorrectness) {
     coorg2(3).z = coord_hi;
 
     if (coord_lo > 1 || coord_hi < 0) {
-      EXPECT_THROW(specfem::assembly::nonconforming_interfaces_impl::
-                       set_transfer_functions(
-                           coorg1, coorg2,
-                           specfem::mesh_entity::dim2::type::right,
-                           specfem::mesh_entity::dim2::type::left, mortar_quad,
-                           edge_quad, mortar_trans1_singlecall,
-                           mortar_trans2_singlecall),
-                   std::runtime_error)
-          << "Global coordinate intervals:\n"
-          << "   side 1: [0, 1]\n"
-          << "   side 2: [" << coord_lo << ", " << coord_hi << "]\n"
-          << "There should be no intersection, causing `compute_intersection` "
-             "to throw an error, but none was thrown.";
-      EXPECT_THROW(specfem::assembly::nonconforming_interfaces_impl::
-                       set_transfer_functions(
-                           coorg1, coorg2,
-                           specfem::mesh_entity::dim2::type::right,
-                           specfem::mesh_entity::dim2::type::left, mortar_quad,
-                           edge_quad, mortar_trans1_bothcall, mortar_trans1p,
-                           mortar_trans2_bothcall, mortar_trans2p),
-                   std::runtime_error)
-          << "Global coordinate intervals:\n"
-          << "   side 1: [0, 1]\n"
-          << "   side 2: [" << coord_lo << ", " << coord_hi << "]\n"
-          << "There should be no intersection, causing `compute_intersection` "
-             "to throw an error, but none was thrown.";
+      {
+        bool captured = false;
+        try {
+          specfem::assembly::nonconforming_interfaces_impl::
+              set_transfer_functions(
+                  coorg1, coorg2, specfem::mesh_entity::dim2::type::right,
+                  specfem::mesh_entity::dim2::type::left, mortar_quad,
+                  edge_quad, mortar_trans1_singlecall,
+                  mortar_trans2_singlecall);
+        } catch (const std::runtime_error &) {
+          captured = true;
+        }
+        if (!captured) {
+          ADD_FAILURE() << "Global coordinate intervals:\n"
+                        << "   side 1: [0, 1]\n"
+                        << "   side 2: [" << coord_lo << ", " << coord_hi
+                        << "]\n"
+                        << "There should be no intersection, causing "
+                           "`compute_intersection` "
+                           "to throw an error, but none was thrown.";
+        }
+      }
+      {
+        bool captured = false;
+        try {
+          specfem::assembly::nonconforming_interfaces_impl::
+              set_transfer_functions(
+                  coorg1, coorg2, specfem::mesh_entity::dim2::type::right,
+                  specfem::mesh_entity::dim2::type::left, mortar_quad,
+                  edge_quad, mortar_trans1_bothcall, mortar_trans1p,
+                  mortar_trans2_bothcall, mortar_trans2p);
+        } catch (const std::runtime_error &) {
+          captured = true;
+        }
+        if (!captured) {
+          ADD_FAILURE() << "Global coordinate intervals:\n"
+                        << "   side 1: [0, 1]\n"
+                        << "   side 2: [" << coord_lo << ", " << coord_hi
+                        << "]\n"
+                        << "There should be no intersection, causing "
+                           "`compute_intersection` "
+                           "to throw an error, but none was thrown.";
+        }
+      }
       continue;
     }
 
