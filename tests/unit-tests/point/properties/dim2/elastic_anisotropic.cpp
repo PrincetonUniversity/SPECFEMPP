@@ -33,6 +33,9 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
   simd_type rho;
   simd_type rho_vp_val;
   simd_type rho_vs_val;
+  simd_type vp_val;
+  simd_type vs_val;
+  simd_type vmax_val;
 
   if constexpr (using_simd) {
     T rho_arr[simd_size];
@@ -47,6 +50,9 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
     T c25_arr[simd_size];
     T rho_vp_val_arr[simd_size];
     T rho_vs_val_arr[simd_size];
+    T vp_val_arr[simd_size];
+    T vs_val_arr[simd_size];
+    T vmax_val_arr[simd_size];
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
       rho_arr[i] = 2500.0 + i * 50.0;  // kg/m³
@@ -65,6 +71,11 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
                                     static_cast<type_real>(c33_arr[i]));
       rho_vs_val_arr[i] = std::sqrt(static_cast<type_real>(rho_arr[i]) *
                                     static_cast<type_real>(c55_arr[i]));
+      vp_val_arr[i] = std::sqrt(static_cast<type_real>(c33_arr[i]) /
+                                static_cast<type_real>(rho_arr[i]));
+      vs_val_arr[i] = std::sqrt(static_cast<type_real>(c55_arr[i]) /
+                                static_cast<type_real>(rho_arr[i]));
+      vmax_val_arr[i] = std::max(vp_val_arr[i], vs_val_arr[i]);
     }
     // Copy to SIMD types
     rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
@@ -81,6 +92,9 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
                          Kokkos::Experimental::simd_flag_default);
     rho_vs_val.copy_from(rho_vs_val_arr,
                          Kokkos::Experimental::simd_flag_default);
+    vp_val.copy_from(vp_val_arr, Kokkos::Experimental::simd_flag_default);
+    vs_val.copy_from(vs_val_arr, Kokkos::Experimental::simd_flag_default);
+    vmax_val.copy_from(vmax_val_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Anisotropic material values (e.g., shale-like)
     constexpr type_real rho_val = 2500.0; // kg/m³
@@ -109,6 +123,9 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
     // Computed values for verification
     rho_vp_val = std::sqrt(rho_val * c33_val);
     rho_vs_val = std::sqrt(rho_val * c55_val);
+    vp_val = std::sqrt(c33_val / rho_val);
+    vs_val = std::sqrt(c55_val / rho_val);
+    vmax_val = std::max(vp_val, vs_val);
   }
 
   // Create the properties object
@@ -193,4 +210,12 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
       << ExpectedGot(rho_vp_val, props.rho_vp());
   EXPECT_TRUE(specfem::utilities::is_close(props.rho_vs(), rho_vs_val))
       << ExpectedGot(rho_vs_val, props.rho_vs());
+
+  // New property checks
+  EXPECT_TRUE(specfem::utilities::is_close(props.vp(), vp_val))
+      << ExpectedGot(vp_val, props.vp());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vs(), vs_val))
+      << ExpectedGot(vs_val, props.vs());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmax(), vmax_val))
+      << ExpectedGot(vmax_val, props.vmax());
 }

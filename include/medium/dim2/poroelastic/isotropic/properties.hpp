@@ -190,6 +190,19 @@ public:
     const auto afactor = rho_bar() - phi_over_tort * rho_f();
     return Kokkos::sqrt(mu_G() / afactor);
   }
+
+  KOKKOS_INLINE_FUNCTION const value_type vp() const {
+    return vpI(); ///< @f$ v_P = v_{pI} @f$ (fast P-wave) for poroelastic media
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type rho() const {
+    return rho_bar(); ///< @f$ \rho = \rho_{bar} @f$ (average density) for
+                      ///< poroelastic media
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vmax() const {
+    return Kokkos::max(vpI(), vs()); ///< @f$ v_{max} = \max(v_{pI}, v_S) @f$
+  }
 };
 /**@} end of group specfem_point_properties_dim2_poroelastic_isotropic */
 

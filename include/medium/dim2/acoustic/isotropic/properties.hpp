@@ -69,6 +69,22 @@ public:
     return Kokkos::sqrt(rho_inverse() * kappa_inverse()); ///< @f$ \frac{1}{\rho
                                                           ///< v_p} @f$
   }
+
+  KOKKOS_INLINE_FUNCTION const value_type vp() const {
+    return Kokkos::sqrt(kappa() * rho_inverse()); ///< @f$ v_P @f$
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vs() const {
+    return static_cast<type_real>(0.0); ///< @f$ v_S = 0 @f$ for acoustic media
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vmax() const {
+    return vp(); ///< @f$ v_{max} = v_P @f$ for acoustic media
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type rho() const {
+    return (static_cast<type_real>(1.0)) / rho_inverse(); ///< @f$ \rho @f$
+  }
 };
 
 ///@} end of group specfem_point_properties_dim2_acoustic_isotropic

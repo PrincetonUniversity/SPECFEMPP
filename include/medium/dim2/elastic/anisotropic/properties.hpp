@@ -92,6 +92,18 @@ public:
   KOKKOS_INLINE_FUNCTION const value_type rho_vs() const {
     return Kokkos::sqrt(rho() * c55()); ///< S-wave velocity @f$ \rho v_s @f$
   }
+
+  KOKKOS_INLINE_FUNCTION const value_type vp() const {
+    return Kokkos::sqrt(c33() / rho()); ///< @f$ v_P @f$ (vertical P-wave)
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vs() const {
+    return Kokkos::sqrt(c55() / rho()); ///< @f$ v_S @f$ (vertical S-wave)
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vmax() const {
+    return Kokkos::max(vp(), vs()); ///< @f$ v_{max} = \max(v_P, v_S) @f$
+  }
 };
 ///@} end of group specfem_point_properties_dim2_elastic_anisotropic
 
