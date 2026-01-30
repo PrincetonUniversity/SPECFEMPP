@@ -107,10 +107,17 @@ TEST_F(LocatePoint2D, LocateEdgeOnCoreOutsideMesh) {
            specfem::mesh_entity::dim2::type::left }) {
     // target is center of element. Distance minimized on each edge at center,
     // so exception should be thrown
-    EXPECT_THROW(
+    {
+      bool captured = false;
+      try {
         specfem::algorithms::locate_point_impl::get_local_edge_coordinate(
-            target, coorg, side, 0),
-        std::runtime_error);
+            target, coorg, side, 0);
+      } catch (const std::runtime_error &) {
+        captured = true;
+      }
+      if (!captured)
+        ADD_FAILURE() << "Expected std::runtime_error";
+    }
   }
 
   // Test corner point (1.5, -0.5) should map to (2, -2), out-of-bounds

@@ -51,12 +51,12 @@ struct EdgeFunctionWithEmbeddedAccessor
   static constexpr bool using_simd = false;
 
   template <typename Init>
-  EdgeFunctionWithEmbeddedAccessor(const Init &init)
+  KOKKOS_INLINE_FUNCTION EdgeFunctionWithEmbeddedAccessor(const Init &init)
       : specfem::datatype::VectorChunkEdgeViewType<
             type_real, dimension_tag, 1, EdgeFunction2D::nquad_edge,
             EdgeFunction2D::num_components, false,
             typename EdgeFunction2D::memory_space, Kokkos::MemoryTraits<> >(
-            init){};
+            init) {};
 };
 
 template <specfem::interface::interface_tag interface_tag>
