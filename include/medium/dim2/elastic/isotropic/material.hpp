@@ -99,10 +99,15 @@ public:
       std::enable_if_t<T == specfem::element::attenuation_tag::none, int> = 0>
   material(const type_real &density, const type_real &cs, const type_real &cp,
            const type_real &compaction_grad)
-      : material(std::integral_constant<specfem::element::attenuation_tag,
-                                        attenuation_tag>{},
-                 density, cs, cp, compaction_grad) {}
-
+      : density(density), cs(cs), cp(cp), compaction_grad(compaction_grad),
+        lambdaplus2mu(density * cp * cp), mu(density * cs * cs),
+        lambda(lambdaplus2mu - 2.0 * mu),
+        kappa(density * (cp * cp - (4.0 / 3.0) * cs * cs)),
+        young(9.0 * kappa * mu / (3.0 * kappa + mu)),
+        poisson(0.5 * (cp * cp - 2.0 * cs * cs) / (cp * cp - cs * cs)) {
+    if (this->poisson < -1.0 || this->poisson > 0.5)
+      std::runtime_error("Poisson's ratio out of range");
+  };
   /**
    * @brief Construct a new elastic isotropic material
    *
@@ -120,11 +125,15 @@ public:
   material(const type_real &density, const type_real &cs, const type_real &cp,
            const type_real &Qkappa, const type_real &Qmu,
            const type_real &compaction_grad)
-      : material(std::integral_constant<specfem::element::attenuation_tag,
-                                        attenuation_tag>{},
-                 density, cs, cp, compaction_grad),
-        attenuation(Qkappa, Qmu){};
-
+      : attenuation(Qkappa, Qmu), density(density), cs(cs), cp(cp),
+        compaction_grad(compaction_grad), lambdaplus2mu(density * cp * cp),
+        mu(density * cs * cs), lambda(lambdaplus2mu - 2.0 * mu),
+        kappa(density * (cp * cp - (4.0 / 3.0) * cs * cs)),
+        young(9.0 * kappa * mu / (3.0 * kappa + mu)),
+        poisson(0.5 * (cp * cp - 2.0 * cs * cs) / (cp * cp - cs * cs)) {
+    if (this->poisson < -1.0 || this->poisson > 0.5)
+      std::runtime_error("Poisson's ratio out of range");
+  };
   /**
    * @brief Default constructor
    *
@@ -188,7 +197,8 @@ public:
             << "      cp : " << this->cp << "\n"
             << "      kappa : " << this->kappa << "\n"
             << "      mu : " << this->mu << "\n"
-            << attenuation::print() << "      lambda : " << this->lambda << "\n"
+            << static_cast<const attenuation &>(*this).print()
+            << "      lambda : " << this->lambda << "\n"
             << "      mu : " << this->mu << "\n"
             << "      youngs modulus : " << this->young << "\n"
             << "      poisson ratio : " << this->poisson << "\n";
@@ -207,20 +217,6 @@ protected:
   type_real kappa;           ///< Bulk modulus
   type_real young;           ///< Young's modulus
   type_real poisson;         ///< Poisson's ratio
-
-  material(const std::integral_constant<specfem::element::attenuation_tag,
-                                        AttenuationTag> /*unused*/,
-           const type_real &density, const type_real &cs, const type_real &cp,
-           const type_real &compaction_grad)
-      : density(density), cs(cs), cp(cp), compaction_grad(compaction_grad),
-        lambdaplus2mu(density * cp * cp), mu(density * cs * cs),
-        lambda(lambdaplus2mu - 2.0 * mu),
-        kappa(density * (cp * cp - (4.0 / 3.0) * cs * cs)),
-        young(9.0 * kappa * mu / (3.0 * kappa + mu)),
-        poisson(0.5 * (cp * cp - 2.0 * cs * cs) / (cp * cp - cs * cs)) {
-    if (this->poisson < -1.0 || this->poisson > 0.5)
-      std::runtime_error("Poisson's ratio out of range");
-  };
 };
 
 } // namespace medium

@@ -78,10 +78,8 @@ public:
   material(type_real rhos, type_real rhof, type_real phi, type_real tortuosity,
            type_real kxx, type_real kxz, type_real kzz, type_real Ks,
            type_real Kf, type_real Kfr, type_real etaf, type_real mufr)
-      : material(std::integral_constant<specfem::element::attenuation_tag,
-                                        attenuation_tag>{},
-                 rhos, rhof, phi, tortuosity, kxx, kxz, kzz, Ks, Kf, Kfr, etaf,
-                 mufr) {}
+      : rhos(rhos), rhof(rhof), phi(phi), tortuosity(tortuosity), kxx(kxx),
+        kxz(kxz), kzz(kzz), Ks(Ks), Kf(Kf), Kfr(Kfr), etaf(etaf), mufr(mufr) {}
 
   template <
       specfem::element::attenuation_tag T = AttenuationTag,
@@ -91,11 +89,9 @@ public:
            type_real kxx, type_real kxz, type_real kzz, type_real Ks,
            type_real Kf, type_real Kfr, type_real etaf, type_real mufr,
            type_real Qmu)
-      : material(std::integral_constant<specfem::element::attenuation_tag,
-                                        attenuation_tag>{},
-                 rhos, rhof, phi, tortuosity, kxx, kxz, kzz, Ks, Kf, Kfr, etaf,
-                 mufr),
-        attenuation(Qmu){};
+      : attenuation(Qmu), rhos(rhos), rhof(rhof), phi(phi),
+        tortuosity(tortuosity), kxx(kxx), kxz(kxz), kzz(kzz), Ks(Ks), Kf(Kf),
+        Kfr(Kfr), etaf(etaf), mufr(mufr) {}
   /**
    * @brief Default constructor
    *
@@ -187,7 +183,7 @@ public:
             << "      Kfr : " << this->Kfr << "\n"
             << "      etaf : " << this->etaf << "\n"
             << "      mufr : " << this->mufr << "\n"
-            << attenuation::print();
+            << static_cast<const attenuation &>(*this).print();
 
     return message.str();
   }
@@ -229,14 +225,6 @@ private:
 
     return std::make_tuple(H_Biot, C_biot, M_biot);
   }
-
-  material(const std::integral_constant<specfem::element::attenuation_tag,
-                                        AttenuationTag> /*unused*/,
-           type_real rhos, type_real rhof, type_real phi, type_real tortuosity,
-           type_real kxx, type_real kxz, type_real kzz, type_real Ks,
-           type_real Kf, type_real Kfr, type_real etaf, type_real mufr)
-      : rhos(rhos), rhof(rhof), phi(phi), tortuosity(tortuosity), kxx(kxx),
-        kxz(kxz), kzz(kzz), Ks(Ks), Kf(Kf), Kfr(Kfr), etaf(etaf), mufr(mufr) {}
 };
 
 } // namespace medium

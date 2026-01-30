@@ -22,8 +22,8 @@ rule check_executible:
 rule generate_database:
     input:
         executable_checked = "executable_checked.txt",
-        par_file = "provenance/Mesh_Par_file",
-        artifacts = expand("provenance/{file}", file=["interfaces.txt", "interface1.txt"]),
+        par_file = "provenance/DATA/meshfem3D_files/Mesh_Par_file",
+        artifacts = expand("provenance/DATA/meshfem3D_files/{file}", file=["interfaces.txt", "interface1.txt"]),
     output:
         database = "database.bin",
     shell:

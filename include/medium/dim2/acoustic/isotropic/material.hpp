@@ -85,9 +85,9 @@ public:
       std::enable_if_t<T == specfem::element::attenuation_tag::none, int> = 0>
   material(const type_real &density, const type_real &cp,
            const type_real &compaction_grad)
-      : material(std::integral_constant<specfem::element::attenuation_tag,
-                                        attenuation_tag>{},
-                 density, cp, compaction_grad) {}
+      : density(density), cp(cp), compaction_grad(compaction_grad) {
+    this->kappa = density * cp * cp;
+  }
 
   template <
       specfem::element::attenuation_tag T = AttenuationTag,
@@ -95,10 +95,10 @@ public:
           T == specfem::element::attenuation_tag::constant_isotropic, int> = 0>
   material(const type_real &density, const type_real &cp,
            const type_real &Qkappa, const type_real &compaction_grad)
-      : material(std::integral_constant<specfem::element::attenuation_tag,
-                                        attenuation_tag>{},
-                 density, cp, compaction_grad),
-        attenuation(Qkappa){};
+      : density(density), cp(cp), compaction_grad(compaction_grad),
+        attenuation(Qkappa) {
+    this->kappa = density * cp * cp;
+  }
 
   /**
    * @brief Check if 2 materials have the same properties
@@ -167,7 +167,8 @@ public:
             << "      density : " << this->density << "\n"
             << "      cp : " << this->cp << "\n"
             << "      kappa : " << this->kappa << "\n"
-            << attenuation::print() << "      youngs modulus : 0.0 \n"
+            << static_cast<const attenuation &>(*this).print()
+            << "      youngs modulus : 0.0 \n"
             << "      poisson ratio :  0.5 \n";
 
     return message.str();
@@ -178,14 +179,6 @@ private:
   type_real cp;              ///< Compressional wave speed
   type_real compaction_grad; ///< Compaction gradient
   type_real kappa;           ///< Bulk modulus
-
-  material(std::integral_constant<specfem::element::attenuation_tag,
-                                  AttenuationTag> /*unused*/,
-           const type_real &density, const type_real &cp,
-           const type_real &compaction_grad)
-      : density(density), cp(cp), compaction_grad(compaction_grad) {
-    this->kappa = density * cp * cp;
-  }
 };
 
 } // namespace medium

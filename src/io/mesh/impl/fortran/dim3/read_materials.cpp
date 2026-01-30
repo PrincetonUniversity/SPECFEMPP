@@ -52,7 +52,7 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                 "materials.");
           }
 
-          if (std::abs(Qmu - 9999.0) < 1e-6) {
+          if ((std::abs(Qmu - 9999.0) < 1e-6) || (std::abs(Qmu) < 1e-6)) {
 
             specfem::medium::material<specfem::dimension::type::dim3,
                                       specfem::element::medium_tag::acoustic,
@@ -75,8 +75,9 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                 "materials.");
           }
 
-          if (std::abs(Qmu - 9999.0) < 1e-6 &&
-              std::abs(Qkappa - 9999.0) < 1e-6) {
+          if ((std::abs(Qmu - 9999.0) < 1e-6 &&
+               std::abs(Qkappa - 9999.0) < 1e-6) ||
+              (std::abs(Qmu) < 1e-6 && std::abs(Qkappa) < 1e-6)) {
             specfem::medium::material<specfem::dimension::type::dim3,
                                       specfem::element::medium_tag::elastic,
                                       specfem::element::property_tag::isotropic,

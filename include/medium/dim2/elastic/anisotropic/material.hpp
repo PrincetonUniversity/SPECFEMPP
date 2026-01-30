@@ -65,9 +65,8 @@ public:
            const type_real &c15, const type_real &c33, const type_real &c35,
            const type_real &c55, const type_real &c12, const type_real &c23,
            const type_real &c25)
-      : material(std::integral_constant<specfem::element::attenuation_tag,
-                                        attenuation_tag>{},
-                 density, c11, c13, c15, c33, c35, c55, c12, c23, c25) {}
+      : density(density), c11(c11), c13(c13), c15(c15), c33(c33), c35(c35),
+        c55(c55), c12(c12), c23(c23), c25(c25) {}
   /**
    * @brief Construct a new elastic anisotropic material
    * @param density Density of the material
@@ -91,13 +90,8 @@ public:
            const type_real &c15, const type_real &c33, const type_real &c35,
            const type_real &c55, const type_real &c12, const type_real &c23,
            const type_real &c25, const type_real &Qkappa, const type_real &Qmu)
-      : material(std::integral_constant<specfem::element::attenuation_tag,
-                                        attenuation_tag>{},
-                 density, c11, c13, c15, c33, c35, c55, c12, c23, c25),
-        attenuation(Qkappa, Qmu){
-
-          /// @todo Add checks for the elastic constants
-        };
+      : attenuation(Qkappa, Qmu), density(density), c11(c11), c13(c13),
+        c15(c15), c33(c33), c35(c35), c55(c55), c12(c12), c23(c23), c25(c25) {}
 
   /**
    * @brief Default constructor
@@ -172,7 +166,7 @@ public:
             << "      c12 : " << this->c12 << "\n"
             << "      c23 : " << this->c23 << "\n"
             << "      c25 : " << this->c25 << "\n"
-            << attenuation::print();
+            << static_cast<const attenuation &>(*this).print();
     return message.str();
   }
 
@@ -187,15 +181,6 @@ protected:
   type_real c12;     ///< Elastic constant
   type_real c23;     ///< Elastic constant
   type_real c25;     ///< Elastic constant
-
-  material(std::integral_constant<specfem::element::attenuation_tag,
-                                  attenuation_tag> /*unused*/,
-           const type_real &density, const type_real &c11, const type_real &c13,
-           const type_real &c15, const type_real &c33, const type_real &c35,
-           const type_real &c55, const type_real &c12, const type_real &c23,
-           const type_real &c25)
-      : density(density), c11(c11), c13(c13), c15(c15), c33(c33), c35(c35),
-        c55(c55), c12(c12), c23(c23), c25(c25) {}
 };
 
 } // namespace medium
