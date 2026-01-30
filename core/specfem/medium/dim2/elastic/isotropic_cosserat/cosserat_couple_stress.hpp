@@ -6,7 +6,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 // clang-format off
 /**
@@ -93,5 +93,5 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   acceleration(2) -= (sigma_xz - sigma_zx) * factor / jacobian;
 };
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

@@ -1,9 +1,9 @@
 .. _api_medium_material:
 
-``specfem::medium::material``
+``specfem::medium_container::material``
 =============================
 
-.. doxygenclass:: specfem::medium::material
+.. doxygenclass:: specfem::medium_container::material
     :members:
     :private-members:
 

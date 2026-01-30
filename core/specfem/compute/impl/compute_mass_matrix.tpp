@@ -105,7 +105,7 @@ void specfem::compute::impl::compute_mass_matrix(
         specfem::assembly::load_on_device(index, mesh.weights, point_weights);
 
         PointMassType mass_matrix =
-            specfem::medium::mass_matrix_component(point_property);
+            specfem::medium_physics::mass_matrix_component(point_property);
 
         mass_matrix *= point_weights.product() * point_jacobian_matrix.jacobian;
 

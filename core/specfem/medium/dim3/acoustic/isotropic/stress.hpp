@@ -6,7 +6,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::medium {
+namespace specfem::medium_physics {
 
 /**
  * @defgroup specfem_stress_computation_dim3_acoustic
@@ -53,4 +53,4 @@ impl_compute_stress(
   return { T };
 }
 
-} // namespace specfem::medium
+} // namespace specfem::medium_physics

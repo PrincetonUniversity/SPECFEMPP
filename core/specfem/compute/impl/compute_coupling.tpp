@@ -90,7 +90,7 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
                                           coupled_field);
         SelfFieldType self_field;
 
-        specfem::medium::compute_coupling(point_interface_data, coupled_field,
+        specfem::medium_physics::compute_coupling(point_interface_data, coupled_field,
                                           self_field);
 
         PointBoundaryType point_boundary;
@@ -209,7 +209,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
         InterfaceFieldViewType interface_field(team.team_scratch(0));
 
         team.team_barrier();
-        specfem::medium::compute_coupling(self_chunk_index, interface_data,
+        specfem::medium_physics::compute_coupling(self_chunk_index, interface_data,
                                           coupled_field, interface_field);
 
         IntegrationFactor integration_factor(team);

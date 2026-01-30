@@ -5,7 +5,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @defgroup specfem_medium_frechet_derivative_dim2_acoustic
@@ -92,5 +92,5 @@ impl_compute_frechet_derivatives(
   return { rho_kl, kappa_kl };
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

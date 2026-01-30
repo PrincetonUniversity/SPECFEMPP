@@ -15,7 +15,7 @@
  * - `material<>`, `domain_properties<>`, `domain_kernels<>`: Material property
  * management
  */
-namespace specfem::medium {}
+namespace specfem::medium_physics {}
 
 #include "medium_physics/compute_cosserat_couple_stress.hpp"
 #include "medium_physics/compute_cosserat_stress.hpp"

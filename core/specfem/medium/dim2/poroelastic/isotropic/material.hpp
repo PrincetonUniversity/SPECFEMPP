@@ -10,7 +10,7 @@
 #include <sstream>
 
 namespace specfem {
-namespace medium {
+namespace medium_container {
 
 /**
  * @brief Template specialization for poroelastic isotropic material
@@ -192,5 +192,5 @@ private:
   }
 };
 
-} // namespace medium
+} // namespace medium_container
 } // namespace specfem

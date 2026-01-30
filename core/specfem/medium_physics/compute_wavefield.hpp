@@ -10,7 +10,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @brief Convert intrinsic fields values to wavefield of interest on GLL grid.
@@ -96,5 +96,5 @@ compute_wavefield(const ChunkIndexType &chunk_index,
   return;
 } // compute_wavefield
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

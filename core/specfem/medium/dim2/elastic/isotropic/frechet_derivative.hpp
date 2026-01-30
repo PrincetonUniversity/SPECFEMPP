@@ -8,7 +8,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @defgroup specfem_medium_frechet_derivative_dim2_elastic_isotropic
@@ -276,5 +276,5 @@ impl_compute_frechet_derivatives(
 
   return { rho_kl, mu_kl, kappa_kl, rhop_kl, alpha_kl, beta_kl };
 }
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

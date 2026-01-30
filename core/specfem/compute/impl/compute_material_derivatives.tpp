@@ -140,7 +140,7 @@ void specfem::compute::impl::compute_material_derivatives(
 
               // Compute the kernel for the point
               const auto point_kernel =
-                  specfem::medium::compute_frechet_derivatives(
+                  specfem::medium_physics::compute_frechet_derivatives(
                       point_properties, adjoint_velocity, adjoint_acceleration,
                       backward_displacement, adjoint_point_derivatives,
                       backward_point_derivatives, dt);

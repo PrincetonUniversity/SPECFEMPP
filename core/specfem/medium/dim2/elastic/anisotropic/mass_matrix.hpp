@@ -7,7 +7,7 @@
 #include "specfem_setup.hpp"
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 // Using template specializations from isotropic case
 
@@ -22,5 +22,5 @@ namespace medium {
 //     const specfem::point::jacobian_matrix<
 //         specfem::dimension::type::dim2, true, UseSIMD> &jacobian_matrix);
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

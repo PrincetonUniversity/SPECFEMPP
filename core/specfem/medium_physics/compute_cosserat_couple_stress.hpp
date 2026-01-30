@@ -81,7 +81,7 @@ assert_types(const std::integral_constant<bool, false>) {
 }
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 template <typename T, typename PointJacobianMatrixType,
           typename PointPropertiesType, typename PointStressIntegrandViewType,
@@ -182,5 +182,5 @@ KOKKOS_INLINE_FUNCTION void compute_cosserat_couple_stress(
       point_properties, factor, F, acceleration);
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

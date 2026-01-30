@@ -1,9 +1,9 @@
 .. _api_medium_compute_stress:
 
-``specfem::medium::compute_stress``
+``specfem::medium_physics::compute_stress``
 ===================================
 
-.. doxygenfunction:: specfem::medium::compute_stress
+.. doxygenfunction:: specfem::medium_physics::compute_stress
 
 Implementation Details
 ----------------------

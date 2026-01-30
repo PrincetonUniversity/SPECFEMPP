@@ -12,7 +12,7 @@
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 
-namespace specfem::medium {
+namespace specfem::medium_physics {
 
 template <typename ChunkIndexType, typename DisplacementFieldType,
           typename VelocityFieldType, typename AccelerationFieldType,
@@ -98,4 +98,4 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   return;
 }
 
-} // namespace specfem::medium
+} // namespace specfem::medium_physics

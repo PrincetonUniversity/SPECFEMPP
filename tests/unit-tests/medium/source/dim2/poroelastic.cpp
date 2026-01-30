@@ -49,7 +49,8 @@ TEST(Source, PoroelasticIsotropic2D) {
   point_source.lagrange_interpolant(3) = 4.5;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   // Values from actual implementation - calculated using the property methods
@@ -108,7 +109,8 @@ TEST(Source, PoroelasticIsotropic2D_ZeroSource) {
   point_source.lagrange_interpolant(3) = 4.5;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) = 0.0;

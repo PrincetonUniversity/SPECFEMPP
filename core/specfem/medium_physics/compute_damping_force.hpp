@@ -68,7 +68,7 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::false_type) {
 }
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 template <typename T, typename PointPropertiesType, typename PointVelocityType,
           typename PointAccelerationType, typename DimensionTagType,
@@ -162,10 +162,10 @@ KOKKOS_INLINE_FUNCTION void compute_damping_force(
   // If damping force is not available call empty function, else call the
   // implementation
   // Compute the damping force
-  specfem::medium::impl_compute_damping_force(
+  specfem::medium_physics::impl_compute_damping_force(
       damping_force_dispatch(), dimension_dispatch(), medium_dispatch(),
       property_dispatch(), factor, point_properties, velocity, acceleration);
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

@@ -7,7 +7,7 @@
 #include <tuple>
 
 namespace specfem {
-namespace medium {
+namespace medium_container {
 
 /**
  * @brief Template for material properties in seismic simulations.
@@ -25,7 +25,7 @@ namespace medium {
  * Example usage:
  * @code
  * // Create 2D elastic isotropic material
- * using Mat = specfem::medium::material<
+ * using Mat = specfem::medium_container::material<
  *     specfem::dimension::type::dim2,
  *     specfem::element::medium_tag::elastic,
  *     specfem::element::property_tag::isotropic>;
@@ -47,7 +47,7 @@ template <specfem::dimension::type dimension_tag,
           specfem::element::property_tag PropertyTag, typename Enable = void>
 class material;
 
-} // namespace medium
+} // namespace medium_container
 } // namespace specfem
 
 #include "specfem/medium/dim2/acoustic/isotropic/material.hpp"

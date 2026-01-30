@@ -14,7 +14,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 // clang-format off
 /**
  * @brief Compute mass matrix from material properties.
@@ -33,7 +33,7 @@ namespace medium {
  * // Example usage for 2D elastic isotropic medium
  * using Properties = specfem::point::properties<dim2, elastic, isotropic, false>;
  * Properties props = ...; // Initialize material properties
- * auto mass_inv = specfem::medium::mass_matrix_component(props);
+ * auto mass_inv = specfem::medium_physics::mass_matrix_component(props);
  * @endcode
  */
 // clang-format on
@@ -48,5 +48,5 @@ KOKKOS_INLINE_FUNCTION
   return impl_mass_matrix_component(properties);
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

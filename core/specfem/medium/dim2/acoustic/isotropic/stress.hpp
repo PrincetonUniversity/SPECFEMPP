@@ -5,7 +5,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @defgroup specfem_stress_computation_dim2_acoustic
@@ -52,5 +52,5 @@ impl_compute_stress(
   return { T };
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

@@ -7,7 +7,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 template <typename ChunkIndexType, typename DisplacementFieldType,
           typename VelocityFieldType, typename AccelerationFieldType,
@@ -170,5 +170,5 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   return;
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

@@ -6,7 +6,7 @@
 #include "specfem/point.hpp"
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @defgroup specfem_medium_frechet_derivative_dim2_elastic_anisotropic
@@ -238,5 +238,5 @@ impl_compute_frechet_derivatives(
   return { 0, 0, 0, 0, 0, 0, 0 };
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

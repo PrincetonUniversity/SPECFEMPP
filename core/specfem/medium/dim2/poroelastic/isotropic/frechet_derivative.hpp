@@ -8,7 +8,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @defgroup specfem_medium_frechet_derivative_dim2_poroelastic
@@ -536,5 +536,5 @@ impl_compute_frechet_derivatives(
            cs_kl,   rhobb_kl, rhofbb_kl, ratio_kl, phib_kl };
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

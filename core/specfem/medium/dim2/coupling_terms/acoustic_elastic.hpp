@@ -6,7 +6,7 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
-namespace specfem::medium::impl {
+namespace specfem::medium_physics::impl {
 
 template <typename CoupledInterfaceType, typename CoupledFieldType,
           typename SelfFieldType>
@@ -70,4 +70,4 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
       });
 }
 
-} // namespace specfem::medium::impl
+} // namespace specfem::medium_physics::impl

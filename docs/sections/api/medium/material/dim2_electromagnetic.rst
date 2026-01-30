@@ -1,6 +1,6 @@
 .. _api_medium_dim2_electromagnetic:
 
-``specfem::medium::material< dim2, electromagnetic, isotropic >``
+``specfem::medium_container::material< dim2, electromagnetic, isotropic >``
 =================================================================
 
 .. doxygengroup:: specfem_medium_material_dim2_electromagnetic_isotropic

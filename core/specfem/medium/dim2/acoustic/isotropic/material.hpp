@@ -9,7 +9,7 @@
 #include <sstream>
 
 namespace specfem {
-namespace medium {
+namespace medium_container {
 
 /**
  * @brief Template specialization for acoustic isotropic material properties
@@ -131,5 +131,5 @@ private:
   type_real kappa;           ///< Bulk modulus
 };
 
-} // namespace medium
+} // namespace medium_container
 } // namespace specfem

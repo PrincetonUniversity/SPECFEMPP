@@ -10,7 +10,7 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
-namespace specfem::medium {
+namespace specfem::medium_physics {
 
 /**
  * @brief Computes coupling terms between different physical media
@@ -28,7 +28,8 @@ namespace specfem::medium {
  * @param self_field Field data from self medium (output)
  *
  * @code{.cpp}
- * specfem::medium::compute_coupling(interface, coupled_field, self_field);
+ * specfem::medium_physics::compute_coupling(interface, coupled_field,
+ * self_field);
  * @endcode
  */
 template <typename CoupledInterfaceType, typename CoupledFieldType,
@@ -120,7 +121,8 @@ KOKKOS_INLINE_FUNCTION void compute_coupling_expand(
  * @param self_field Field data from self medium (output)
  *
  * @code{.cpp}
- * specfem::medium::compute_coupling(interface, coupled_field, self_field);
+ * specfem::medium_physics::compute_coupling(interface, coupled_field,
+ * self_field);
  * @endcode
  */
 template <typename IndexType, typename InterfaceDataType,
@@ -167,4 +169,4 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
       index, interface_data, coupled_field, self_field);
 }
 
-} // namespace specfem::medium
+} // namespace specfem::medium_physics

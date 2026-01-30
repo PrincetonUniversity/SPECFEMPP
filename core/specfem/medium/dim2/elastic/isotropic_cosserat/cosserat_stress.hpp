@@ -5,7 +5,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @defgroup specfem_cosserat_stress_computation_dim2_elastic_isotropic_cosserat
@@ -71,5 +71,5 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_stress(
   return;
 };
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

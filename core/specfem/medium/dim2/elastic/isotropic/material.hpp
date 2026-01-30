@@ -9,7 +9,7 @@
 #include <sstream>
 
 namespace specfem {
-namespace medium {
+namespace medium_container {
 
 /**
  * @defgroup specfem_medium_material_dim2_elastic_isotropic 2D Elastic Isotropic
@@ -30,7 +30,7 @@ namespace medium {
  *
  * @see specfem::element::is_elastic
  * @see specfem::dimension::type::dim2
- * @see specfem::medium::material
+ * @see specfem::medium_container::material
  *
  */
 template <specfem::dimension::type DimensionTag,
@@ -168,5 +168,5 @@ protected:
   type_real poisson;         ///< Poisson's ratio
 };
 
-} // namespace medium
+} // namespace medium_container
 } // namespace specfem

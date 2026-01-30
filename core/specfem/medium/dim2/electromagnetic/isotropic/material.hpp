@@ -10,7 +10,7 @@
 #include <sstream>
 
 namespace specfem {
-namespace medium {
+namespace medium_container {
 
 /**
  * @defgroup specfem_medium_material_dim2_electromagnetic_isotropic 2D
@@ -164,5 +164,5 @@ private:
   type_real Qs33;  ///< Quality factor of @f$ \sigma_{33} @f$ for attenuation
 };
 
-} // namespace medium
+} // namespace medium_container
 } // namespace specfem

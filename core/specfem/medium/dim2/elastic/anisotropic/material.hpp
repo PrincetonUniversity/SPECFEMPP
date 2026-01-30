@@ -9,7 +9,7 @@
 #include <sstream>
 
 namespace specfem {
-namespace medium {
+namespace medium_container {
 
 /**
  * @defgroup specfem_medium_material_dim2_elastic_anisotropic 2D Elastic
@@ -31,7 +31,7 @@ namespace medium {
  *
  * @see specfem::element::is_elastic
  * @see specfem::dimension::type::dim2
- * @see specfem::medium::material
+ * @see specfem::medium_container::material
  */
 template <specfem::element::medium_tag MediumTag>
 struct material<specfem::dimension::type::dim2, MediumTag,
@@ -173,5 +173,5 @@ protected:
   type_real Qmu;     ///< Attenuation factor for shear modulus
 };
 
-} // namespace medium
+} // namespace medium_container
 } // namespace specfem

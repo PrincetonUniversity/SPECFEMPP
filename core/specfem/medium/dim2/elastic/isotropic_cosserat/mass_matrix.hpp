@@ -6,7 +6,7 @@
 #include "specfem_setup.hpp"
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @defgroup specfem_medium_dim2_compute_mass_matrix_elastic_cosserat
@@ -47,5 +47,5 @@ impl_mass_matrix_component(const specfem::point::properties<
                            specfem::element::property_tag::isotropic_cosserat,
                            UseSIMD> &properties);
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

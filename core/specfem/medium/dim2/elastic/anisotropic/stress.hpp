@@ -4,7 +4,7 @@
 #include "specfem/point.hpp"
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @defgroup specfem_stress_computation_dim2_elastic_anisotropic
@@ -136,5 +136,5 @@ KOKKOS_INLINE_FUNCTION
   return { T };
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

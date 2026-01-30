@@ -18,7 +18,7 @@ TEST(MassMatrix, ElasticPSVIsotropicTrivialSolution2D) {
   const PointPSVPropertiesType properties(0.0, 0.0, 0.0);
 
   const PointPSVMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component(properties);
 
   const PointPSVMassMatrixType expected_mass_matrix(0.0, 0.0);
 
@@ -38,7 +38,7 @@ TEST(MassMatrix, ElasticSHIsotropicTrivialSolution2D) {
   const PointSHPropertiesType properties(0.0, 0.0, 0.0);
 
   const PointSHMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component(properties);
 
   const PointSHMassMatrixType expected_mass_matrix(0.0);
 
@@ -62,7 +62,7 @@ TEST(MassMatrix, ElasticPSVIsotropic2D) {
   const PointPSVPropertiesType properties(0.0, 0.0, rho);
 
   const PointPSVMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component(properties);
 
   const PointPSVMassMatrixType expected_mass_matrix(rho, rho);
 
@@ -84,7 +84,7 @@ TEST(MassMatrix, ElasticSHIsotropic2D) {
   const PointSHPropertiesType properties(0.0, 0.0, rho);
 
   const PointSHMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component(properties);
 
   const PointSHMassMatrixType expected_mass_matrix(rho);
 

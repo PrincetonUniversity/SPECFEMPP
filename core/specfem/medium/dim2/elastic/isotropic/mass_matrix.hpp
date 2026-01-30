@@ -7,7 +7,7 @@
 #include "specfem_setup.hpp"
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @defgroup specfem_medium_dim2_compute_mass_matrix_elastic
@@ -64,5 +64,5 @@ impl_mass_matrix_component(
                                      specfem::element::medium_tag::elastic_sh,
                                      PropertyTag, UseSIMD> &properties);
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

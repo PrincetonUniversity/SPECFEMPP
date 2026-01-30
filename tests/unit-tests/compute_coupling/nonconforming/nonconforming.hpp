@@ -132,7 +132,7 @@ execute_impl_compute_coupling(const TransferFunction2D &transfer_function,
         ComputedCouplingFunction CCF(Kokkos::subview(computed_coupling_function,
                                                      view_slice, Kokkos::ALL(),
                                                      Kokkos::ALL()));
-        specfem::medium::impl::compute_coupling(
+        specfem::medium_physics::impl::compute_coupling(
             std::integral_constant<specfem::dimension::type, dimension_tag>(),
             std::integral_constant<specfem::connections::type,
                                    specfem::connections::type::nonconforming>(),

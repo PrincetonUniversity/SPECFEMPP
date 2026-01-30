@@ -10,7 +10,7 @@
 #include <sstream>
 
 namespace specfem {
-namespace medium {
+namespace medium_container {
 /**
  * @defgroup specfem_medium_material_dim2_elastic_isotropic_cosserat 2D Elastic
  * Isotropic Material
@@ -30,7 +30,7 @@ namespace medium {
  *
  * @see specfem::element::is_elastic
  * @see specfem::dimension::type::dim2
- * @see specfem::medium::material
+ * @see specfem::medium_container::material
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
@@ -155,5 +155,5 @@ private:
   type_real nu_c;     ///< Coupling symmetry breaking modulus @f$ \nu_c @f$
 };
 
-} // namespace medium
+} // namespace medium_container
 } // namespace specfem

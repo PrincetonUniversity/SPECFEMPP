@@ -92,7 +92,7 @@ void specfem::compute::impl::compute_source_interaction(
         specfem::assembly::load_on_device(mapped_index, properties,
                                          point_property);
 
-        auto acceleration = specfem::medium::compute_source_contribution(
+        auto acceleration = specfem::medium_physics::compute_source_contribution(
             point_source, point_property);
 
         specfem::assembly::atomic_add_on_device(mapped_index, field, acceleration);

@@ -5,7 +5,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @defgroup specfem_medium_dim3_compute_source_contribution_elastic_isotropic
@@ -55,5 +55,5 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
   return result;
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

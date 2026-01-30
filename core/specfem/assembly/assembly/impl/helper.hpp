@@ -178,8 +178,8 @@ public:
           }();
 
           // Call the compute_wavefield function
-          specfem::medium::compute_wavefield<dimension_tag, MediumTag,
-                                             PropertyTag>(
+          specfem::medium_physics::compute_wavefield<dimension_tag, MediumTag,
+                                                     PropertyTag>(
               chunk_index, assembly, lagrange_derivative, displacement,
               velocity, acceleration, wavefield_type, wavefield);
         });

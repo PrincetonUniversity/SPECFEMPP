@@ -1,9 +1,9 @@
 .. _api_medium_cosserat_stress:
 
-``specfem::medium::compute_cosserat_stress``
+``specfem::medium_physics::compute_cosserat_stress``
 ============================================
 
-.. doxygenfunction:: specfem::medium::compute_cosserat_stress
+.. doxygenfunction:: specfem::medium_physics::compute_cosserat_stress
 
 Implementation Details
 ----------------------

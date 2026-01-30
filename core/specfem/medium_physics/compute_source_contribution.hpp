@@ -11,7 +11,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 // clang-format off
 /**
  * @brief Compute source contribution for seismic wave simulation.
@@ -37,7 +37,7 @@ namespace medium {
  * Properties props = ...;  // Initialize material properties
  *
  * auto source_contribution =
- *     specfem::medium::compute_source_contribution(src, props);
+ *     specfem::medium_physics::compute_source_contribution(src, props);
  * @endcode
  */
 // clang-format on
@@ -76,10 +76,10 @@ compute_source_contribution(const PointSourceType &point_source,
       std::integral_constant<specfem::element::property_tag,
                              PointPropertiesType::property_tag>;
 
-  return specfem::medium::impl_compute_source_contribution(
+  return specfem::medium_physics::impl_compute_source_contribution(
       dimension_dispatch(), medium_dispatch(), property_dispatch(),
       point_source, point_properties);
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

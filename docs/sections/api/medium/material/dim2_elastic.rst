@@ -1,6 +1,6 @@
 .. _api_medium_dim2_elastic:
 
-``specfem::medium::material< dim2, elastic, isotropic >``
+``specfem::medium_container::material< dim2, elastic, isotropic >``
 =========================================================
 
 .. doxygengroup:: specfem_medium_material_dim2_elastic_isotropic
@@ -8,7 +8,7 @@
     :members:
     :private-members:
 
-``specfem::medium::material< dim2, elastic, anisotropic >``
+``specfem::medium_container::material< dim2, elastic, anisotropic >``
 ===========================================================
 
 .. doxygengroup:: specfem_medium_material_dim2_elastic_anisotropic
@@ -16,7 +16,7 @@
     :members:
     :private-members:
 
-``specfem::medium::material< dim2, elastic, isotropic_cosserat >``
+``specfem::medium_container::material< dim2, elastic, isotropic_cosserat >``
 ==================================================================
 
 .. doxygengroup:: specfem_medium_material_dim2_elastic_isotropic_cosserat

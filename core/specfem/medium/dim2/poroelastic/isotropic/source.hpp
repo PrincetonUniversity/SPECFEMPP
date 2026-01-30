@@ -4,7 +4,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::medium {
+namespace specfem::medium_physics {
 
 /**
  * @defgroup specfem_medium_dim2_compute_source_contribution_poroelastic
@@ -74,4 +74,4 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
   return result;
 }
 
-} // namespace specfem::medium
+} // namespace specfem::medium_physics
