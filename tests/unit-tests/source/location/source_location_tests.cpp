@@ -1,6 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
-#include "io/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/source.hpp"

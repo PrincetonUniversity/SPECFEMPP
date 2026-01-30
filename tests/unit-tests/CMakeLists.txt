@@ -39,7 +39,7 @@ add_library(
 target_link_libraries(
   compare_arrays
   Kokkos::kokkos
-  io
+  specfem::io
 )
 
 add_library(
@@ -82,8 +82,8 @@ add_executable(
 )
 
 target_link_libraries(io_framework_tests PRIVATE
-  io
-  boost
+  specfem::io
+  ${BOOST_LIBS}
   gtest_main
   Kokkos::kokkos
   specfem_environment
@@ -226,7 +226,7 @@ target_link_libraries(
   fortranio_test
   gtest_main
   gmock_main
-  io
+  specfem::io
   -lpthread -lm
 )
 
@@ -279,7 +279,7 @@ target_link_libraries(
   specfem::receivers
   specfem_environment
   yaml-cpp
-  boost
+  ${BOOST_LIBS}
   -lpthread -lm
 )
 
@@ -300,7 +300,7 @@ target_link_libraries(
   specfem::mesh
   specfem_environment
   yaml-cpp
-  io
+  specfem::io
   specfem::utilities
 
   # material_class
@@ -323,7 +323,7 @@ target_link_libraries(
   gtest_main
   specfem::mesh
   specfem_environment
-  io
+  specfem::io
   specfem::utilities
 
   -lpthread -lm
@@ -344,7 +344,7 @@ target_link_libraries(
   specfem_environment
   yaml-cpp
   specfem::utilities
-  boost
+  ${BOOST_LIBS}
   -lpthread -lm
   gtest_main
 )
@@ -438,16 +438,16 @@ add_executable(
 )
 target_link_libraries(
   nonconforming_assembly_tests
-  reader
-  writer
+  specfem::io
+  specfem::io
   specfem::mesh
   assembly
   specfem::quadrature
   specfem_environment
-  io
+  specfem::io
   yaml-cpp
   specfem::utilities
-  boost
+  ${BOOST_LIBS}
 
   -lpthread -lm
   gtest_main
@@ -486,20 +486,20 @@ set_target_properties(assembly_tests PROPERTIES UNITY_BUILD OFF)
 
 target_link_libraries(
   assembly_tests
-  reader
-  writer
+  specfem::io
+  specfem::io
   specfem::mesh
   assembly
   specfem::quadrature
   specfem_environment
-  io
+  specfem::io
 
   yaml-cpp
   specfem::utilities
   enumerations
   shape_functions
   specfem::quadrature
-  boost
+  ${BOOST_LIBS}
 
   -lpthread -lm
   gtest_main
@@ -521,8 +521,8 @@ target_link_libraries(
   specfem::quadrature
   specfem_environment
   yaml-cpp
-  io
-  boost
+  specfem::io
+  ${BOOST_LIBS}
 
   gtest
   gtest_main
@@ -541,12 +541,12 @@ add_executable(
 
 target_link_libraries(
   io_tests
-  io
+  specfem::io
   gtest_main
 
   yaml-cpp
   enumerations
-  boost
+  ${BOOST_LIBS}
 )
 
 add_executable(
@@ -561,8 +561,8 @@ target_link_libraries(
   specfem::quadrature
   specfem_environment
   specfem::algorithms
-  io
-  boost
+  specfem::io
+  ${BOOST_LIBS}
   point
 )
 
@@ -650,7 +650,7 @@ target_link_libraries(
   specfem::receivers
   specfem_environment
   yaml-cpp
-  boost
+  ${BOOST_LIBS}
   -lpthread -lm
 )
 
@@ -816,7 +816,7 @@ target_link_libraries(
   specfem::compute
   specfem::solver
   specfem::periodic_tasks
-  boost
+  ${BOOST_LIBS}
   -lpthread -lm
 )
 
@@ -842,7 +842,7 @@ target_link_libraries(
   specfem::compute
   specfem::solver
   specfem::periodic_tasks
-  boost
+  ${BOOST_LIBS}
   -lpthread -lm
 )
 
@@ -972,7 +972,7 @@ if(NOT MPI_PARALLEL)
     displacement_tests
     domain
     fortran_io
-    io
+  specfem::io
     mesh
     policies
   )

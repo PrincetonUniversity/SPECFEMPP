@@ -1,8 +1,8 @@
 #include "../../SPECFEM_Environment.hpp"
-#include "io/interface.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/assembly/nonconforming_interfaces/dim2/impl/compute_intersection.tpp"
+#include "specfem/io.hpp"
 #include "specfem/point.hpp"
 #include "specfem/point/global_coordinates.hpp"
 #include <gtest/gtest.h>

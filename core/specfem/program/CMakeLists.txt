@@ -18,9 +18,8 @@ target_link_libraries(specfem_program
         source_class
         specfem::runtime_configuration
         specfem::receivers
-        writer
+        specfem::io
         periodic_tasks
-        reader
         specfem::compute
         specfem::solver
         # Add MPI dependency when available

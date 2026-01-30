@@ -1,5 +1,5 @@
 #include "seismogram.hpp"
-#include "io/seismogram/writer.hpp"
+#include "specfem/io.hpp"
 #include "specfem/utilities.hpp"
 #include "yaml-cpp/yaml.h"
 #include <boost/filesystem.hpp>

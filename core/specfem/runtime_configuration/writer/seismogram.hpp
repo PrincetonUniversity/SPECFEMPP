@@ -1,6 +1,6 @@
 #pragma once
 
-#include "io/seismogram/writer.hpp"
+#include "specfem/io.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>

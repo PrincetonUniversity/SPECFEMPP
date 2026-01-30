@@ -4,12 +4,7 @@
 #include <gtest/gtest.h>
 
 // Include all I/O framework headers
-#include "io/ADIOS2/ADIOS2.hpp"
-#include "io/ASCII/ASCII.hpp"
-#include "io/HDF5/HDF5.hpp"
-#include "io/NPY/NPY.hpp"
-#include "io/NPZ/NPZ.hpp"
-#include "io/operators.hpp"
+#include "specfem/io.hpp"
 
 // Test utilities
 #include <type_traits>

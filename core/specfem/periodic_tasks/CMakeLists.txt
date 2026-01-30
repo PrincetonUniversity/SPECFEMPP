@@ -12,9 +12,7 @@ target_link_libraries(
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
         enumerations
         PRIVATE
-        reader
-        writer
-        io
+        specfem::io
         assembly
         specfem::program
 )

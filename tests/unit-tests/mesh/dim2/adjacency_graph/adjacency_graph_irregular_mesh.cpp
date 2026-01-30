@@ -1,7 +1,7 @@
 
 #include "SPECFEM_Environment.hpp"
 #include "enumerations/mesh_entities.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>

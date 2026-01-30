@@ -1,6 +1,6 @@
 #include "assembly.hpp"
 #include "enumerations/interface.hpp"
-#include "io/reader.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 
 specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
