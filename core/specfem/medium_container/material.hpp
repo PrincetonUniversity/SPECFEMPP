@@ -50,12 +50,12 @@ class material;
 } // namespace medium
 } // namespace specfem
 
-#include "medium/dim2/acoustic/isotropic/material.hpp"
-#include "medium/dim2/elastic/anisotropic/material.hpp"
-#include "medium/dim2/elastic/isotropic/material.hpp"
-#include "medium/dim2/elastic/isotropic_cosserat/material.hpp"
-#include "medium/dim2/electromagnetic/isotropic/material.hpp"
-#include "medium/dim2/poroelastic/isotropic/material.hpp"
+#include "specfem/medium/dim2/acoustic/isotropic/material.hpp"
+#include "specfem/medium/dim2/elastic/anisotropic/material.hpp"
+#include "specfem/medium/dim2/elastic/isotropic/material.hpp"
+#include "specfem/medium/dim2/elastic/isotropic_cosserat/material.hpp"
+#include "specfem/medium/dim2/electromagnetic/isotropic/material.hpp"
+#include "specfem/medium/dim2/poroelastic/isotropic/material.hpp"
 
-#include "medium/dim3/acoustic/isotropic/material.hpp"
-#include "medium/dim3/elastic/isotropic/material.hpp"
+#include "specfem/medium/dim3/acoustic/isotropic/material.hpp"
+#include "specfem/medium/dim3/elastic/isotropic/material.hpp"

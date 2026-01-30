@@ -2,25 +2,26 @@
 
 #include "enumerations/interface.hpp"
 
-#include "medium/dim2/acoustic/isotropic/kernels.hpp"
-#include "medium/dim2/elastic/anisotropic/kernels.hpp"
-#include "medium/dim2/elastic/isotropic/kernels.hpp"
-#include "medium/dim2/elastic/isotropic_cosserat/kernels.hpp"
-#include "medium/dim2/electromagnetic/isotropic/kernels.hpp"
-#include "medium/dim2/poroelastic/isotropic/kernels.hpp"
+#include "specfem/medium/dim2/acoustic/isotropic/kernels.hpp"
+#include "specfem/medium/dim2/elastic/anisotropic/kernels.hpp"
+#include "specfem/medium/dim2/elastic/isotropic/kernels.hpp"
+#include "specfem/medium/dim2/elastic/isotropic_cosserat/kernels.hpp"
+#include "specfem/medium/dim2/electromagnetic/isotropic/kernels.hpp"
+#include "specfem/medium/dim2/poroelastic/isotropic/kernels.hpp"
 
 namespace specfem::point {
 
 /**
  * @brief Kernels of a quadrature point.
  *
- * This class serves as a container for sensitivity (misfit) kernels at a specific quadrature point
- * within an element. These kernels represent the gradient of the misfit function with respect
- * to physical parameters (e.g., density, velocity, moduli) and are essential for adjoint
- * tomography and inversion workflows.
+ * This class serves as a container for sensitivity (misfit) kernels at a
+ * specific quadrature point within an element. These kernels represent the
+ * gradient of the misfit function with respect to physical parameters (e.g.,
+ * density, velocity, moduli) and are essential for adjoint tomography and
+ * inversion workflows.
  *
- * It is templated on dimension, medium type, and property type to provide specialized
- * storage and accessors for different physical models.
+ * It is templated on dimension, medium type, and property type to provide
+ * specialized storage and accessors for different physical models.
  *
  * @tparam DimensionTag The dimension of the medium (e.g., dim2, dim3)
  * @tparam MediumTag The type of the medium (e.g., acoustic, elastic)
@@ -32,9 +33,9 @@ namespace specfem::point {
  *
  * @section usage Usage Example
  *
- * The following example demonstrates how to instantiate and use the kernels class
- * for a 2D elastic isotropic medium. In this context, the stored values represent
- * the sensitivity densities (e.g., K_rho, K_mu, K_kappa).
+ * The following example demonstrates how to instantiate and use the kernels
+ * class for a 2D elastic isotropic medium. In this context, the stored values
+ * represent the sensitivity densities (e.g., K_rho, K_mu, K_kappa).
  *
  * @code
  * #include "specfem/point/kernels.hpp"
@@ -55,8 +56,8 @@ namespace specfem::point {
  * double K_alpha = 0.5;
  * double K_beta = 0.4;
  *
- * specfem::point::kernels<dim, medium_tag::elastic, property_tag::isotropic, use_simd>
- *     kernels(K_rho, K_mu, K_kappa, K_rhop, K_alpha, K_beta);
+ * specfem::point::kernels<dim, medium_tag::elastic, property_tag::isotropic,
+ * use_simd> kernels(K_rho, K_mu, K_kappa, K_rhop, K_alpha, K_beta);
  *
  * // Access kernel values
  * double k_mu = kernels.mu();

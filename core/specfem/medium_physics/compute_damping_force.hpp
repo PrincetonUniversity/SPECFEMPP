@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "medium/dim2/poroelastic/isotropic/damping.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/medium/dim2/poroelastic/isotropic/damping.hpp"
 #include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
 

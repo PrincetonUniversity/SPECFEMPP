@@ -1,12 +1,12 @@
 #pragma once
 
-#include "medium/dim2/acoustic/isotropic/wavefield.hpp"
-#include "medium/dim2/elastic/anisotropic/wavefield.hpp"
-#include "medium/dim2/elastic/isotropic/wavefield.hpp"
-#include "medium/dim2/elastic/isotropic_cosserat/wavefield.hpp"
-#include "medium/dim2/poroelastic/isotropic/wavefield.hpp"
-#include "medium/dim3/acoustic/isotropic/wavefield.hpp"
-#include "medium/dim3/elastic/isotropic/wavefield.hpp"
+#include "specfem/medium/dim2/acoustic/isotropic/wavefield.hpp"
+#include "specfem/medium/dim2/elastic/anisotropic/wavefield.hpp"
+#include "specfem/medium/dim2/elastic/isotropic/wavefield.hpp"
+#include "specfem/medium/dim2/elastic/isotropic_cosserat/wavefield.hpp"
+#include "specfem/medium/dim2/poroelastic/isotropic/wavefield.hpp"
+#include "specfem/medium/dim3/acoustic/isotropic/wavefield.hpp"
+#include "specfem/medium/dim3/elastic/isotropic/wavefield.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
