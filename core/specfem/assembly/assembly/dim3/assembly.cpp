@@ -1,4 +1,4 @@
-#include "assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
