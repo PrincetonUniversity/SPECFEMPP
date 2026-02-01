@@ -12,4 +12,6 @@
     material/index
     domain_properties/index
     domain_kernels/index
+    point_kernels/index
+    point_properties/index
     impl/accessor

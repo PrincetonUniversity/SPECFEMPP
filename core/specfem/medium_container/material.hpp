@@ -1,13 +1,18 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
-#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <ostream>
 #include <tuple>
 
-namespace specfem {
-namespace medium_container {
+namespace specfem::point {
+template <specfem::dimension::type Dimension,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, bool UseSIMD>
+struct properties;
+} // namespace specfem::point
+
+namespace specfem::medium_container {
 
 /**
  * @brief Template for material properties in seismic simulations.
@@ -47,8 +52,7 @@ template <specfem::dimension::type dimension_tag,
           specfem::element::property_tag PropertyTag, typename Enable = void>
 class material;
 
-} // namespace medium_container
-} // namespace specfem
+} // namespace specfem::medium_container
 
 #include "specfem/medium/dim2/acoustic/isotropic/material.hpp"
 #include "specfem/medium/dim2/elastic/anisotropic/material.hpp"

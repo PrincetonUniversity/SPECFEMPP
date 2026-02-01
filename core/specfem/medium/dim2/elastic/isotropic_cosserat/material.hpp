@@ -2,7 +2,6 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <exception>
 #include <iostream>

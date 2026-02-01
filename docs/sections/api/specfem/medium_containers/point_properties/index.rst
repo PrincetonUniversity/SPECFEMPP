@@ -1,10 +1,10 @@
-.. _specfem_point_impl_properties_data_container:
+.. _specfem_medium_container_properties_point_container:
 
 
-``specfem::point::impl::properties::data_container``
-====================================================
+``specfem::medium_container::properties::point_container``
+==========================================================
 
-.. doxygenstruct:: specfem::point::impl::properties::data_container
+.. doxygenstruct:: specfem::medium_container::properties::point_container
     :members:
     :private-members:
 

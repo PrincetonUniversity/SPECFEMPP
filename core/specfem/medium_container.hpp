@@ -18,3 +18,5 @@ namespace specfem::medium_container {}
 #include "specfem/medium_container/domain_kernels.hpp"
 #include "specfem/medium_container/domain_properties.hpp"
 #include "specfem/medium_container/material.hpp"
+#include "specfem/medium_container/point_kernels.hpp"
+#include "specfem/medium_container/point_properties.hpp"
