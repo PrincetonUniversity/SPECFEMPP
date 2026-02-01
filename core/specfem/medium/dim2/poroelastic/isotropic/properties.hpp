@@ -3,7 +3,7 @@
 #include "specfem/medium_container/impl/point_container.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::point::impl::properties {
+namespace specfem::medium_container::properties {
 
 /**
  * @defgroup specfem_point_properties_dim2_poroelastic_isotropic 2D Poroelastic
@@ -90,9 +90,9 @@ namespace specfem::point::impl::properties {
  *   @code KOKKOS_INLINE_FUNCTION const value_type vs() const @endcode
  */
 template <bool UseSIMD>
-struct data_container<specfem::dimension::type::dim2,
-                      specfem::element::medium_tag::poroelastic,
-                      specfem::element::property_tag::isotropic, UseSIMD>
+struct point_container<specfem::dimension::type::dim2,
+                       specfem::element::medium_tag::poroelastic,
+                       specfem::element::property_tag::isotropic, UseSIMD>
     /// @cond
     : public PropertyAccessor<specfem::dimension::type::dim2,
                               specfem::element::medium_tag::poroelastic,
@@ -193,4 +193,4 @@ public:
 };
 /**@} end of group specfem_point_properties_dim2_poroelastic_isotropic */
 
-} // namespace specfem::point::impl::properties
+} // namespace specfem::medium_container::properties

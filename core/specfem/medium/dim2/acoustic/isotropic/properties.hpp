@@ -3,7 +3,7 @@
 #include "specfem/medium_container/impl/point_container.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::point::impl::properties {
+namespace specfem::medium_container::properties {
 
 /**
  * @defgroup specfem_point_properties_dim2_acoustic_isotropic 2D Acoustic
@@ -40,8 +40,8 @@ namespace specfem::point::impl::properties {
  *
  */
 template <specfem::dimension::type DimensionTag, bool UseSIMD>
-struct data_container<DimensionTag, specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic, UseSIMD>
+struct point_container<DimensionTag, specfem::element::medium_tag::acoustic,
+                       specfem::element::property_tag::isotropic, UseSIMD>
     /// @cond
     : PropertyAccessor<DimensionTag, specfem::element::medium_tag::acoustic,
                        specfem::element::property_tag::isotropic, UseSIMD>
@@ -73,4 +73,4 @@ public:
 
 ///@} end of group specfem_point_properties_dim2_acoustic_isotropic
 
-} // namespace specfem::point::impl::properties
+} // namespace specfem::medium_container::properties

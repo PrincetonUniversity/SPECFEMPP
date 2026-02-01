@@ -3,7 +3,7 @@
 #include "specfem/medium_container/impl/point_container.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::point::impl::properties {
+namespace specfem::medium_container::properties {
 
 /**
  * @defgroup specfem_point_properties_elastic_isotropic Elastic
@@ -49,7 +49,7 @@ namespace specfem::point::impl::properties {
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct data_container<
+struct point_container<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
     /// @cond
@@ -92,4 +92,4 @@ public:
 };
 ///@} end of group specfem_point_properties_elastic_isotropic
 
-} // namespace specfem::point::impl::properties
+} // namespace specfem::medium_container::properties

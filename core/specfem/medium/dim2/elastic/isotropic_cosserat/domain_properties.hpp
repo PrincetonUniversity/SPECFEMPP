@@ -1,7 +1,6 @@
 #pragma once
 
 #include "specfem/medium_container/impl/domain_container.hpp"
-#include "specfem/point.hpp"
 #include <Kokkos_SIMD.hpp>
 
 namespace specfem::medium_container::properties {

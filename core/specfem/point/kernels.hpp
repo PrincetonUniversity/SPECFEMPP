@@ -1,13 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-
-#include "specfem/medium/dim2/acoustic/isotropic/kernels.hpp"
-#include "specfem/medium/dim2/elastic/anisotropic/kernels.hpp"
-#include "specfem/medium/dim2/elastic/isotropic/kernels.hpp"
-#include "specfem/medium/dim2/elastic/isotropic_cosserat/kernels.hpp"
-#include "specfem/medium/dim2/electromagnetic/isotropic/kernels.hpp"
-#include "specfem/medium/dim2/poroelastic/isotropic/kernels.hpp"
+#include "specfem/medium_container.hpp"
 
 namespace specfem::point {
 
@@ -29,7 +23,7 @@ namespace specfem::point {
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  *
  * @note Medium-specific specializations are available in the implementation
- * details. See @ref specfem::point::impl::kernels::data_container.
+ * details. See @ref specfem::medium_container::kernels::point_container.
  *
  * @section usage Usage Example
  *
@@ -65,17 +59,17 @@ namespace specfem::point {
  * @endcode
  *
  * @section see_also See Also
- * - specfem::point::impl::kernels::data_container
+ * - specfem::medium_container::kernels::point_container
  * - specfem::compute::frechet_derivative
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>
-struct kernels : public impl::kernels::data_container<DimensionTag, MediumTag,
-                                                      PropertyTag, UseSIMD> {
-  using base_type = impl::kernels::data_container<DimensionTag, MediumTag,
-                                                  PropertyTag, UseSIMD>;
+struct kernels : public specfem::medium_container::kernels::point_container<
+                     DimensionTag, MediumTag, PropertyTag, UseSIMD> {
+  using base_type = specfem::medium_container::kernels::point_container<
+      DimensionTag, MediumTag, PropertyTag, UseSIMD>;
 
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
