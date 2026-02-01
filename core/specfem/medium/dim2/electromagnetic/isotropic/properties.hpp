@@ -35,7 +35,7 @@ namespace specfem::point::impl::properties {
  *   @code KOKKOS_INLINE_FUNCTION const value_type sig33() const @endcode
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct data_container<
+struct point_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> >

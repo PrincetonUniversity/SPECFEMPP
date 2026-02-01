@@ -90,9 +90,9 @@ namespace specfem::point::impl::properties {
  *   @code KOKKOS_INLINE_FUNCTION const value_type vs() const @endcode
  */
 template <bool UseSIMD>
-struct data_container<specfem::dimension::type::dim2,
-                      specfem::element::medium_tag::poroelastic,
-                      specfem::element::property_tag::isotropic, UseSIMD>
+struct point_container<specfem::dimension::type::dim2,
+                       specfem::element::medium_tag::poroelastic,
+                       specfem::element::property_tag::isotropic, UseSIMD>
     /// @cond
     : public PropertyAccessor<specfem::dimension::type::dim2,
                               specfem::element::medium_tag::poroelastic,

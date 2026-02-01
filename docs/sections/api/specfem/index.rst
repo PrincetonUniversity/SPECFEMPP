@@ -20,6 +20,8 @@
     io/index
     jacobian/index
     macros/index
+    medium_containers/index
+    medium_physics/index
     mesh/index
     mpi/index
     parallel_configuration/index

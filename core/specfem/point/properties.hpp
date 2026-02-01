@@ -28,7 +28,7 @@ namespace point {
  * and operations
  *
  * @note Medium-specific specializations are available in the implementation
- * details. See @ref specfem::point::impl::properties::data_container.
+ * details. See @ref specfem::point::impl::properties::point_container.
  *
  * @section usage Usage Example
  *
@@ -62,17 +62,17 @@ namespace point {
  * @endcode
  *
  * @section see_also See Also
- * - specfem::point::impl::properties::data_container
+ * - specfem::point::impl::properties::point_container
  * - specfem::compute::mass_matrix
  */
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
-struct properties : impl::properties::data_container<Dimension, MediumTag,
-                                                     PropertyTag, UseSIMD> {
+struct properties : impl::properties::point_container<Dimension, MediumTag,
+                                                      PropertyTag, UseSIMD> {
 
-  using base_type = impl::properties::data_container<Dimension, MediumTag,
-                                                     PropertyTag, UseSIMD>;
+  using base_type = impl::properties::point_container<Dimension, MediumTag,
+                                                      PropertyTag, UseSIMD>;
 
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;

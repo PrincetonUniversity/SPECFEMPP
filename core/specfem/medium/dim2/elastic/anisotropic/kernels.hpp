@@ -36,7 +36,7 @@ namespace specfem::point::impl::kernels {
  *   @code KOKKOS_INLINE_FUNCTION const value_type c55() const @endcode
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct data_container<
+struct point_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::anisotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >

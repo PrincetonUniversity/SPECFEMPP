@@ -17,7 +17,7 @@ namespace specfem::point::impl::kernels {
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct data_container<
+struct point_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic_cosserat, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
@@ -37,7 +37,7 @@ struct data_container<
   using simd = typename base_type::simd;
 
   KOKKOS_INLINE_FUNCTION
-  data_container() {
+  point_container() {
     Kokkos::abort(
         "Kernels container for elastic isotropic cosserat media is not "
         "implemented for this dimension");

@@ -29,9 +29,9 @@ namespace specfem::point::impl::kernels {
  *   @code KOKKOS_INLINE_FUNCTION const value_type alpha() const @endcode
  */
 template <bool UseSIMD>
-struct data_container<specfem::dimension::type::dim2,
-                      specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic, UseSIMD>
+struct point_container<specfem::dimension::type::dim2,
+                       specfem::element::medium_tag::acoustic,
+                       specfem::element::property_tag::isotropic, UseSIMD>
     /// @cond
     : public KernelsAccessor<specfem::dimension::type::dim2,
                              specfem::element::medium_tag::acoustic,
@@ -50,9 +50,9 @@ struct data_container<specfem::dimension::type::dim2,
   POINT_CONTAINER(rho, kappa, rhop, alpha)
 
   KOKKOS_FUNCTION
-  data_container(const value_type rho, const value_type kappa)
-      : data_container(rho, kappa, rho * kappa,
-                       static_cast<type_real>(2.0) * kappa) {}
+  point_container(const value_type rho, const value_type kappa)
+      : point_container(rho, kappa, rho * kappa,
+                        static_cast<type_real>(2.0) * kappa) {}
 };
 
 /** @} */ // end of group

@@ -28,7 +28,7 @@ namespace specfem::point::impl::properties {
  * - nu_c: Cosserat Coupling parameter @f$ \nu_c @f$
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct data_container<
+struct point_container<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic_cosserat, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >

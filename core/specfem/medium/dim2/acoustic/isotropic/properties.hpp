@@ -40,8 +40,8 @@ namespace specfem::point::impl::properties {
  *
  */
 template <specfem::dimension::type DimensionTag, bool UseSIMD>
-struct data_container<DimensionTag, specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic, UseSIMD>
+struct point_container<DimensionTag, specfem::element::medium_tag::acoustic,
+                       specfem::element::property_tag::isotropic, UseSIMD>
     /// @cond
     : PropertyAccessor<DimensionTag, specfem::element::medium_tag::acoustic,
                        specfem::element::property_tag::isotropic, UseSIMD>

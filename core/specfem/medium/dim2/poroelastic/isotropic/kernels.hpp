@@ -59,9 +59,9 @@ namespace specfem::point::impl::kernels {
  *   @code KOKKOS_INLINE_FUNCTION const value_type phib() const @endcode
  */
 template <bool UseSIMD>
-struct data_container<specfem::dimension::type::dim2,
-                      specfem::element::medium_tag::poroelastic,
-                      specfem::element::property_tag::isotropic, UseSIMD>
+struct point_container<specfem::dimension::type::dim2,
+                       specfem::element::medium_tag::poroelastic,
+                       specfem::element::property_tag::isotropic, UseSIMD>
     /// @cond
     : public KernelsAccessor<specfem::dimension::type::dim2,
                              specfem::element::medium_tag::poroelastic,
@@ -80,17 +80,17 @@ struct data_container<specfem::dimension::type::dim2,
                   cpI, cpII, cs, rhobb, rhofbb, ratio, phib)
 
   KOKKOS_FUNCTION
-  data_container(const value_type rhot, const value_type rhof,
-                 const value_type eta, const value_type sm,
-                 const value_type mu_fr, const value_type B, const value_type C,
-                 const value_type M, const value_type cpI,
-                 const value_type cpII, const value_type cs,
-                 const value_type rhobb, const value_type rhofbb,
-                 const value_type ratio, const value_type phib)
-      : data_container(rhot, rhof, eta, sm, mu_fr, B, C, M, mu_fr,
-                       (rhot + B + mu_fr), (rhof + C + M + sm),
-                       (static_cast<value_type>(-1.0) * (sm + M)), cpI, cpII,
-                       cs, rhobb, rhofbb, ratio, phib) {}
+  point_container(const value_type rhot, const value_type rhof,
+                  const value_type eta, const value_type sm,
+                  const value_type mu_fr, const value_type B,
+                  const value_type C, const value_type M, const value_type cpI,
+                  const value_type cpII, const value_type cs,
+                  const value_type rhobb, const value_type rhofbb,
+                  const value_type ratio, const value_type phib)
+      : point_container(rhot, rhof, eta, sm, mu_fr, B, C, M, mu_fr,
+                        (rhot + B + mu_fr), (rhof + C + M + sm),
+                        (static_cast<value_type>(-1.0) * (sm + M)), cpI, cpII,
+                        cs, rhobb, rhofbb, ratio, phib) {}
 };
 
 /** @} */ // end of group

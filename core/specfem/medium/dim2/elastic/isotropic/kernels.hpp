@@ -36,7 +36,7 @@ namespace specfem::point::impl::kernels {
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct data_container<
+struct point_container<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
     /// @cond
