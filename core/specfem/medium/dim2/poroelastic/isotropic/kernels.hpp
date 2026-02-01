@@ -3,7 +3,7 @@
 #include "specfem/medium_container/impl/point_container.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::point::impl::kernels {
+namespace specfem::medium_container::kernels {
 
 /**
  * @defgroup specfem_point_kernels_dim2_poroelastic_isotropic 2D Poroelastic
@@ -95,4 +95,4 @@ struct point_container<specfem::dimension::type::dim2,
 
 /** @} */ // end of group
 
-} // namespace specfem::point::impl::kernels
+} // namespace specfem::medium_container::kernels

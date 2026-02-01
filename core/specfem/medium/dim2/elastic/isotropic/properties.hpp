@@ -3,7 +3,7 @@
 #include "specfem/medium_container/impl/point_container.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::point::impl::properties {
+namespace specfem::medium_container::properties {
 
 /**
  * @defgroup specfem_point_properties_elastic_isotropic Elastic
@@ -92,4 +92,4 @@ public:
 };
 ///@} end of group specfem_point_properties_elastic_isotropic
 
-} // namespace specfem::point::impl::properties
+} // namespace specfem::medium_container::properties
