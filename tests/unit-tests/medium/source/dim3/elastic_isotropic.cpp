@@ -1,6 +1,6 @@
 #include "enumerations/interface.hpp"
 #include "enumerations/wavefield.hpp"
-#include "medium/compute_source.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -17,7 +17,7 @@ TEST(Source, ElasticIsotropic3D) {
       specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
-                             specfem::wavefield::simulation_field::forward>;
+                             specfem::simulation::field_type::forward>;
   using PointAccelerationType =
       specfem::point::acceleration<dimension, medium_tag, false>;
 
@@ -63,7 +63,7 @@ TEST(Source, ElasticIsotropic3D_ZeroSource) {
       specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
-                             specfem::wavefield::simulation_field::forward>;
+                             specfem::simulation::field_type::forward>;
   using PointAccelerationType =
       specfem::point::acceleration<dimension, medium_tag, false>;
 

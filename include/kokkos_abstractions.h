@@ -1,5 +1,4 @@
-#ifndef KOKKOS_ABSTRACTION_H
-#define KOKKOS_ABSTRACTION_H
+#pragma once
 
 #include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -650,5 +649,3 @@ private:
 
 } // namespace kokkos
 } // namespace specfem
-
-#endif

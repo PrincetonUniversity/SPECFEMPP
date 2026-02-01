@@ -20,7 +20,7 @@ namespace specfem::assembly {
  * @tparam SimulationWavefieldType Type of simulation field (forward, adjoint,
  * backward, buffer)
  */
-template <specfem::wavefield::simulation_field SimulationWavefieldType>
+template <specfem::simulation::field_type SimulationWavefieldType>
 struct simulation_field<specfem::dimension::type::dim3,
                         SimulationWavefieldType> {
 
@@ -70,7 +70,7 @@ public:
    *
    * @code
    * specfem::assembly::simulation_field<specfem::dimension::type::dim3,
-   *     specfem::wavefield::simulation_field::forward> field(mesh,
+   *     specfem::simulation::field_type::forward> field(mesh,
    * element_types);
    * @endcode
    */
@@ -105,7 +105,7 @@ public:
    * @tparam DestinationWavefieldType Source wavefield type to copy from
    * @param rhs Source 3D simulation field to copy data from
    */
-  template <specfem::wavefield::simulation_field DestinationWavefieldType>
+  template <specfem::simulation::field_type DestinationWavefieldType>
   void operator=(
       const simulation_field<dimension_tag, DestinationWavefieldType> &rhs) {
     this->nglob = rhs.nglob;

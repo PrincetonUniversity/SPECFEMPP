@@ -1,8 +1,7 @@
 #include "specfem/assembly/properties.hpp"
 #include "enumerations/interface.hpp"
-#include "medium/properties_container.hpp"
-#include "medium/properties_container.tpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/medium_container.hpp"
 
 specfem::assembly::properties<specfem::dimension::type::dim2>::properties(
     const int nspec, const int ngllz, const int ngllx,
@@ -32,7 +31,7 @@ specfem::assembly::properties<specfem::dimension::type::dim2>::properties(
                   ELASTIC_PSV_T),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
       CAPTURE(value) {
-        _value_ = specfem::medium::properties_container<
+        _value_ = specfem::medium::domain_properties<
             _dimension_tag_, _medium_tag_, _property_tag_>(
             element_types.get_elements_on_host(_medium_tag_, _property_tag_),
             mesh, ngllz, ngllx, materials, has_gll_model,

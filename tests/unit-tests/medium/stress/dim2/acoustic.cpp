@@ -1,5 +1,5 @@
 #include "enumerations/interface.hpp"
-#include "medium/compute_stress.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>

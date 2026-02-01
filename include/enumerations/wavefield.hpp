@@ -5,17 +5,6 @@
 
 namespace specfem {
 namespace wavefield {
-/**
- * @brief Simulation field types for wave propagation algorithms.
- *
- * Used in time-stepping schemes and inversion methods.
- */
-enum class simulation_field {
-  forward,  ///< Forward time propagation
-  adjoint,  ///< Adjoint field (backward from receivers)
-  backward, ///< Backward field (for gradient computation)
-  buffer    ///< Temporary buffer field
-};
 
 /**
  * @brief Wavefield component types for different physical quantities.

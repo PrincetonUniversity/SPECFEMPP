@@ -15,7 +15,7 @@ struct source_parameters<
   source_parameters() : x(0.0), y(0.0), z(0.0), fx(0.0), fy(0.0), fz(0.0) {};
   source_parameters(std::string name, type_real x, type_real y, type_real z,
                     type_real fx, type_real fy, type_real fz,
-                    specfem::wavefield::simulation_field wavefield_type,
+                    specfem::simulation::field_type wavefield_type,
                     specfem::element::medium_tag medium_tag)
       : name(name), x(x), y(y), z(z), fx(fx), fy(fy), fz(fz),
         wavefield_type(wavefield_type), medium_tag(medium_tag) {};
@@ -27,8 +27,8 @@ struct source_parameters<
   type_real fx;     ///< x-component of force
   type_real fy;     ///< y-component of force
   type_real fz;     ///< z-component of force
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield
-  specfem::element::medium_tag medium_tag; ///< Medium tag of the source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield
+  specfem::element::medium_tag medium_tag;        ///< Medium tag of the source
 };
 
 template <>
@@ -73,24 +73,21 @@ std::vector<ForceSource3DParametersAndSolution> get_parameters_and_solutions<
     // Test 3D elastic source with force in x-direction
     std::make_tuple(
         ForceSource3DParameters("3D elastic x-force", 0.0, 0.0, 0.0, 1.0, 0.0,
-                                0.0,
-                                specfem::wavefield::simulation_field::forward,
+                                0.0, specfem::simulation::field_type::forward,
                                 specfem::element::medium_tag::elastic),
         ForceSource3DSolution(0.0, 0.0, 0.0,
                               std::vector<type_real>{ 1.0, 0.0, 0.0 })),
     // Test 3D elastic source with force in y-direction
     std::make_tuple(
         ForceSource3DParameters("3D elastic y-force", 1.0, 1.0, 1.0, 0.0, 1.0,
-                                0.0,
-                                specfem::wavefield::simulation_field::forward,
+                                0.0, specfem::simulation::field_type::forward,
                                 specfem::element::medium_tag::elastic),
         ForceSource3DSolution(1.0, 1.0, 1.0,
                               std::vector<type_real>{ 0.0, 1.0, 0.0 })),
     // Test 3D elastic source with force in z-direction
     std::make_tuple(
         ForceSource3DParameters("3D elastic z-force", 2.0, 2.0, 2.0, 0.0, 0.0,
-                                1.0,
-                                specfem::wavefield::simulation_field::forward,
+                                1.0, specfem::simulation::field_type::forward,
                                 specfem::element::medium_tag::elastic),
         ForceSource3DSolution(2.0, 2.0, 2.0,
                               std::vector<type_real>{ 0.0, 0.0, 1.0 })),
@@ -98,14 +95,14 @@ std::vector<ForceSource3DParametersAndSolution> get_parameters_and_solutions<
     std::make_tuple(
         ForceSource3DParameters("3D elastic combined force", 3.0, 3.0, 3.0, 0.5,
                                 0.5, 0.5,
-                                specfem::wavefield::simulation_field::forward,
+                                specfem::simulation::field_type::forward,
                                 specfem::element::medium_tag::elastic),
         ForceSource3DSolution(3.0, 3.0, 3.0,
                               std::vector<type_real>{ 0.5, 0.5, 0.5 })),
     // Test 3D acoustic source (single component)
     std::make_tuple(
         ForceSource3DParameters("3D acoustic", 4.0, 4.0, 4.0, 1.0, 0.0, 0.0,
-                                specfem::wavefield::simulation_field::forward,
+                                specfem::simulation::field_type::forward,
                                 specfem::element::medium_tag::acoustic),
         ForceSource3DSolution(4.0, 4.0, 4.0, std::vector<type_real>{ 1.0 }))
   };

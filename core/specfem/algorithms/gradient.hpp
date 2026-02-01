@@ -1,7 +1,7 @@
 #pragma once
 
 #include "kokkos_abstractions.h"
-#include "specfem/assembly/jacobian_matrix.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"

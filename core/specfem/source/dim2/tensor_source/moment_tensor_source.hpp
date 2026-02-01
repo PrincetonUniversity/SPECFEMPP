@@ -39,7 +39,7 @@ namespace sources {
  * x-coordinate 8.0,  // z-coordinate 1.0,  // Mxx - normal double couple in x
  * direction 2.0,  // Mzz - normal double couple in z direction 0.5,  // Mxz -
  * shear double couple in x-z plane std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium type (moment tensors work with elastic media)
@@ -89,7 +89,7 @@ public:
    * written in .yml format
    */
   moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
-                const specfem::wavefield::simulation_field wavefield_type)
+                const specfem::simulation::field_type wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
         Mxz(Node["Mxz"].as<type_real>()), wavefield_type(wavefield_type),
         tensor_source<specfem::dimension::type::dim2>(Node, nsteps, dt) {};
@@ -110,7 +110,7 @@ public:
       type_real x, type_real z, const type_real Mxx, const type_real Mzz,
       const type_real Mxz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
-      const specfem::wavefield::simulation_field wavefield_type)
+      const specfem::simulation::field_type wavefield_type)
       : Mxx(Mxx), Mzz(Mzz), Mxz(Mxz), wavefield_type(wavefield_type),
         tensor_source<specfem::dimension::type::dim2>(
             x, z, std::move(source_time_function)) {};
@@ -121,7 +121,7 @@ public:
    */
   std::string print() const override;
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
+  specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
 
@@ -200,12 +200,12 @@ public:
   get_supported_media() const override;
 
 private:
-  type_real Mxx;                                       ///< Mxx for the source
-  type_real Mxz;                                       ///< Mxz for the source
-  type_real Mzz;                                       ///< Mzz for the source
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
-                                                       ///< which the source
-                                                       ///< acts
+  type_real Mxx;                                  ///< Mxx for the source
+  type_real Mxz;                                  ///< Mxz for the source
+  type_real Mzz;                                  ///< Mzz for the source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
+                                                  ///< which the source
+                                                  ///< acts
 
 public:
   static constexpr const char *name = "2-D moment tensor";

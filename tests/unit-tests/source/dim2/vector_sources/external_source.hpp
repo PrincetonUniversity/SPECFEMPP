@@ -14,7 +14,7 @@ struct source_parameters<
     specfem::sources::external<specfem::dimension::type::dim2> > {
   source_parameters() : x(0.0), z(0.0) {};
   source_parameters(std::string name, type_real x, type_real z,
-                    specfem::wavefield::simulation_field wavefield_type,
+                    specfem::simulation::field_type wavefield_type,
                     specfem::element::medium_tag medium_tag)
       : name(name), x(x), z(z), wavefield_type(wavefield_type),
         medium_tag(medium_tag) {};
@@ -22,8 +22,8 @@ struct source_parameters<
   std::string name; ///< Name of the source
   type_real x;      ///< x-coordinate of the source
   type_real z;      ///< z-coordinate of the source
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield
-  specfem::element::medium_tag medium_tag; ///< Medium tag of the source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield
+  specfem::element::medium_tag medium_tag;        ///< Medium tag of the source
 };
 
 template <>
@@ -65,47 +65,44 @@ std::vector<ExternalSource2DParametersAndSolution> get_parameters_and_solutions<
   return std::vector<ExternalSource2DParametersAndSolution>{
     // Test acoustic external source
     std::make_tuple(
-        ExternalSource2DParameters(
-            "acoustic", 0.0, 0.0, specfem::wavefield::simulation_field::forward,
-            specfem::element::medium_tag::acoustic),
+        ExternalSource2DParameters("acoustic", 0.0, 0.0,
+                                   specfem::simulation::field_type::forward,
+                                   specfem::element::medium_tag::acoustic),
         ExternalSource2DSolution(0.0, 0.0, std::vector<type_real>{ 1.0 })),
     // Test elastic SH external source
     std::make_tuple(
-        ExternalSource2DParameters(
-            "elastic_sh", 1.0, 1.0,
-            specfem::wavefield::simulation_field::forward,
-            specfem::element::medium_tag::elastic_sh),
+        ExternalSource2DParameters("elastic_sh", 1.0, 1.0,
+                                   specfem::simulation::field_type::forward,
+                                   specfem::element::medium_tag::elastic_sh),
         ExternalSource2DSolution(1.0, 1.0, std::vector<type_real>{ 1.0 })),
     // Test elastic P-SV external source
     std::make_tuple(
-        ExternalSource2DParameters(
-            "elastic_psv", 2.0, 2.0,
-            specfem::wavefield::simulation_field::forward,
-            specfem::element::medium_tag::elastic_psv),
+        ExternalSource2DParameters("elastic_psv", 2.0, 2.0,
+                                   specfem::simulation::field_type::forward,
+                                   specfem::element::medium_tag::elastic_psv),
         ExternalSource2DSolution(2.0, 2.0, std::vector<type_real>{ 1.0, 1.0 })),
     // Test poroelastic external source
     std::make_tuple(
-        ExternalSource2DParameters(
-            "poroelastic", 3.0, 3.0,
-            specfem::wavefield::simulation_field::forward,
-            specfem::element::medium_tag::poroelastic),
+        ExternalSource2DParameters("poroelastic", 3.0, 3.0,
+                                   specfem::simulation::field_type::forward,
+                                   specfem::element::medium_tag::poroelastic),
         ExternalSource2DSolution(3.0, 3.0,
                                  std::vector<type_real>{ 1.0, 1.0, 1.0, 1.0 })),
     // Test electromagnetic TE external source
     std::make_tuple(
         ExternalSource2DParameters(
             "electromagnetic_te", 4.0, 4.0,
-            specfem::wavefield::simulation_field::forward,
+            specfem::simulation::field_type::forward,
             specfem::element::medium_tag::electromagnetic_te),
         ExternalSource2DSolution(4.0, 4.0, std::vector<type_real>{ 1.0, 1.0 })),
     // Test elastic P-SV-T external source (note: external uses 1.0 for all
     // components)
-    std::make_tuple(ExternalSource2DParameters(
-                        "elastic_psv_t", 5.0, 5.0,
-                        specfem::wavefield::simulation_field::forward,
-                        specfem::element::medium_tag::elastic_psv_t),
-                    ExternalSource2DSolution(
-                        5.0, 5.0, std::vector<type_real>{ 1.0, 1.0, 1.0 }))
+    std::make_tuple(
+        ExternalSource2DParameters("elastic_psv_t", 5.0, 5.0,
+                                   specfem::simulation::field_type::forward,
+                                   specfem::element::medium_tag::elastic_psv_t),
+        ExternalSource2DSolution(5.0, 5.0,
+                                 std::vector<type_real>{ 1.0, 1.0, 1.0 }))
   };
 }
 

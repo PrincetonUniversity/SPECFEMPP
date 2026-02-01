@@ -3,7 +3,7 @@ add_subdirectory(algorithms)
 add_subdirectory(assembly)
 add_subdirectory(attenuation)
 add_subdirectory(jacobian)
-add_subdirectory(kokkos_kernels)
+add_subdirectory(compute)
 add_subdirectory(logger)
 add_subdirectory(macros)
 add_subdirectory(mesh)
@@ -32,7 +32,7 @@ target_link_libraries(specfem_core_interface
         specfem::algorithms
         specfem::assembly
         specfem::jacobian
-        specfem::kokkos_kernels
+        specfem::compute
         specfem::logger
         specfem::macros
         specfem::mesh

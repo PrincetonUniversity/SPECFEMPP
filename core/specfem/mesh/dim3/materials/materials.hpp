@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "medium/material.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/medium_container.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 

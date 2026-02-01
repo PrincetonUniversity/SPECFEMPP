@@ -1,6 +1,6 @@
 #include "io/mesh/impl/fortran/dim3/read_materials.hpp"
 #include "io/fortranio/interface.hpp"
-#include "medium/material.hpp"
+#include "specfem/medium_container.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 #include <fstream>
