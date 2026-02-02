@@ -22,7 +22,7 @@ public:
 
   AttenuationValues(const type_real &Qkappa) : Qkappa(Qkappa) {
     if (this->Qkappa <= 0.0) {
-      std::runtime_error(
+      throw std::runtime_error(
           "negative or null values of Q attenuation factor not allowed; set "
           "them equal to 9999 to indicate no attenuation");
     }
