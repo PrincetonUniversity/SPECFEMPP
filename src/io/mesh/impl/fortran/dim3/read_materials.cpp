@@ -63,7 +63,8 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
             const int index = materials.add_material(material);
             mapping.push_back({ specfem::element::medium_tag::acoustic,
                                 specfem::element::property_tag::isotropic,
-                                index, imat });
+                                specfem::element::attenuation_tag::none, index,
+                                imat });
           } else {
             throw std::runtime_error(
                 "Attenuation not yet supported for acoustic materials in 3D");
@@ -88,7 +89,8 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
             const int index = materials.add_material(material);
             mapping.push_back({ specfem::element::medium_tag::elastic,
                                 specfem::element::property_tag::isotropic,
-                                index, imat });
+                                specfem::element::attenuation_tag::none, index,
+                                imat });
           } else {
             throw std::runtime_error(
                 "Attenuation not yet supported for elastic materials in 3D");

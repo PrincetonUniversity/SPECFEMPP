@@ -91,7 +91,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
           get_wavefield_on_entire_grid<_medium_tag_, _property_tag_>(

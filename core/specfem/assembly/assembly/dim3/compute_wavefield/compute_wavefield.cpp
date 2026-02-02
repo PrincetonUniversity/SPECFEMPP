@@ -90,7 +90,7 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC)),
+       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
       {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
           get_wavefield_on_entire_grid<_medium_tag_, _property_tag_>(

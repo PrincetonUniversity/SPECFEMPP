@@ -19,8 +19,8 @@ void generate_data(
   const int ngllx = assembly.mesh.element_grid.ngllx;
   const int ngllz = assembly.mesh.element_grid.ngllz;
 
-  const auto elements =
-      assembly.element_types.get_elements_on_host(medium, property);
+  const auto elements = assembly.element_types.get_elements_on_host(
+      medium, property, specfem::element::attenuation_tag::none);
 
   constexpr int num_components =
       specfem::element::attributes<specfem::dimension::type::dim2,

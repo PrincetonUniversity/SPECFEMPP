@@ -71,6 +71,9 @@ template <> struct materials<specfem::dimension::type::dim3> {
     /** @brief Material property type (isotropic, anisotropic) */
     specfem::element::property_tag property;
 
+    /** @brief Attenuation type (none, constant_isotropic, etc.) */
+    specfem::element::attenuation_tag attenuation;
+
     /** @brief Local index within the type-specific material container */
     int index;
 
@@ -89,10 +92,11 @@ template <> struct materials<specfem::dimension::type::dim3> {
      * @param database_index Original MESHFEM3D database index
      */
     material_specification(specfem::element::medium_tag type,
-                           specfem::element::property_tag property, int index,
-                           int database_index)
-        : type(type), property(property), index(index),
-          database_index(database_index) {};
+                           specfem::element::property_tag property,
+                           specfem::element::attenuation_tag attenuation,
+                           int index, int database_index)
+        : type(type), property(property), attenuation(attenuation),
+          index(index), database_index(database_index) {};
   };
 
   /**
@@ -112,7 +116,8 @@ template <> struct materials<specfem::dimension::type::dim3> {
    * @tparam property Property type (isotropic, anisotropic)
    */
   template <specfem::element::medium_tag type,
-            specfem::element::property_tag property>
+            specfem::element::property_tag property,
+            specfem::element::attenuation_tag attenuation>
   struct material {
     /** @brief Number of materials stored in this container */
     int n_materials;
@@ -120,9 +125,8 @@ template <> struct materials<specfem::dimension::type::dim3> {
     /** @brief Storage for material objects of this type/property combination */
     std::vector<
 
-        specfem::medium_container::material<
-            dimension_tag, type, property,
-            specfem::element::attenuation_tag::none> >
+        specfem::medium_container::material<dimension_tag, type, property,
+                                            attenuation> >
         element_materials;
 
     /** @brief Default constructor creating empty container */
@@ -136,8 +140,7 @@ template <> struct materials<specfem::dimension::type::dim3> {
      */
     material(const int n_materials,
              const std::vector<specfem::medium_container::material<
-                 dimension_tag, type, property,
-                 specfem::element::attenuation_tag::none> > &l_material);
+                 dimension_tag, type, property, attenuation> > &l_material);
   };
 
   /** @name Core Data Members */
@@ -186,11 +189,12 @@ private:
    * - Efficient storage organization by material type
    * - Integration with SPECFEM++ template metaprogramming patterns
    */
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
-                      DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_),
-                                ::material, (_MEDIUM_TAG_, _PROPERTY_TAG_)),
-                               material)))
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC), ATTENUATION_TAG(NONE)),
+      DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
+                (_MEDIUM_TAG_, _PROPERTY_TAG_, _ATTENUATION_TAG_)),
+               material)))
 
   /** @} */
 public:
@@ -239,9 +243,10 @@ public:
    * @endcode
    */
   template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
+            specfem::element::property_tag PropertyTag,
+            specfem::element::attenuation_tag AttenuationTag>
   specfem::medium_container::material<dimension_tag, MediumTag, PropertyTag,
-                                      specfem::element::attenuation_tag::none>
+                                      AttenuationTag>
   get_material(const int index) const {
 #ifndef NDEBUG
     if (index < 0 || index >= this->nspec) {
@@ -252,17 +257,19 @@ public:
 
 #ifndef NDEBUG
     if (material_specification.type != MediumTag ||
-        material_specification.property != PropertyTag) {
+        material_specification.property != PropertyTag ||
+        material_specification.attenuation != AttenuationTag) {
       KOKKOS_ABORT_WITH_LOCATION("Material type mismatch in get_material");
     }
 #endif
 
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC), ATTENUATION_TAG(NONE)),
         CAPTURE(material) {
           if constexpr (MediumTag == _medium_tag_ &&
-                        PropertyTag == _property_tag_) {
+                        PropertyTag == _property_tag_ &&
+                        AttenuationTag == _attenuation_tag_) {
             return _material_.element_materials[material_specification.index];
           }
         })
@@ -273,10 +280,12 @@ public:
   }
 
   template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
+            specfem::element::property_tag PropertyTag,
+            specfem::element::attenuation_tag AttenuationTag>
   const specfem::point::properties<dimension_tag, MediumTag, PropertyTag, false>
   get_properties(const int index) const {
-    const auto material = this->get_material<MediumTag, PropertyTag>(index);
+    const auto material =
+        this->get_material<MediumTag, PropertyTag, AttenuationTag>(index);
     return material.get_properties();
   }
 
@@ -307,15 +316,19 @@ public:
    * @endcode
    */
   template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
-  specfem::mesh::materials<dimension_tag>::material<MediumTag, PropertyTag> &
+            specfem::element::property_tag PropertyTag,
+            specfem::element::attenuation_tag AttenuationTag>
+  specfem::mesh::materials<dimension_tag>::material<MediumTag, PropertyTag,
+                                                    AttenuationTag> &
   get_container() {
 
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+                         ATTENUATION_TAG(NONE)),
                         CAPTURE(material) {
                           if constexpr (_medium_tag_ == MediumTag &&
-                                        _property_tag_ == PropertyTag) {
+                                        _property_tag_ == PropertyTag &&
+                                        _attenuation_tag_ == AttenuationTag) {
                             return _material_;
                           }
                         })
@@ -343,12 +356,14 @@ public:
    * @endcode
    */
   template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
+            specfem::element::property_tag PropertyTag,
+            specfem::element::attenuation_tag AttenuationTag>
   int add_material(const specfem::medium_container::material<
-                   dimension_tag, MediumTag, PropertyTag,
-                   specfem::element::attenuation_tag::none> &new_material) {
+                   dimension_tag, MediumTag, PropertyTag, AttenuationTag>
+                       &new_material) {
     this->n_materials += 1;
-    auto &material_container = this->get_container<MediumTag, PropertyTag>();
+    auto &material_container =
+        this->get_container<MediumTag, PropertyTag, AttenuationTag>();
     material_container.element_materials.push_back(new_material);
     material_container.n_materials += 1;
 
@@ -375,7 +390,8 @@ public:
    * }
    * @endcode
    */
-  std::tuple<specfem::element::medium_tag, specfem::element::property_tag>
+  std::tuple<specfem::element::medium_tag, specfem::element::property_tag,
+             specfem::element::attenuation_tag>
   get_material_type(const int index) const {
 #ifndef NDEBUG
     if (index < 0 || index >= this->nspec) {
@@ -385,7 +401,8 @@ public:
 #endif
     const auto &material_specification = this->material_index_mapping[index];
     return std::make_tuple(material_specification.type,
-                           material_specification.property);
+                           material_specification.property,
+                           material_specification.attenuation);
   }
 
   /** @} */ // End Material Access Interface

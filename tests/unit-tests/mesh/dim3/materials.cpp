@@ -80,7 +80,7 @@ struct ExpectedMaterials3D {
       }
 
       // Get the material type for the element and verify it matches expected
-      const auto [medium_tag, property_tag] =
+      const auto [medium_tag, property_tag, attenuation_tag] =
           materials.get_material_type(expected.element_id);
 
       if (medium_tag != expected.medium_tag ||

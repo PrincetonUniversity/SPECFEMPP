@@ -40,9 +40,11 @@ specfem::mesh::tags<specfem::dimension::type::dim2>::tags(
         materials.material_index_mapping(ispec);
     const auto medium_tag = material_specification.type;
     const auto property_tag = material_specification.property;
+    const auto attenuation_tag = material_specification.attenuation;
 
     this->tags_container(ispec).medium_tag = medium_tag;
     this->tags_container(ispec).property_tag = property_tag;
+    this->tags_container(ispec).attenuation_tag = attenuation_tag;
     this->tags_container(ispec).boundary_tag = boundary_tag[ispec].get_tag();
   }
 }

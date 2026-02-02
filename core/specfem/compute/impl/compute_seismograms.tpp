@@ -30,7 +30,7 @@ void specfem::compute::impl::compute_seismograms(
   constexpr int ngll = NGLL;
 
   const auto [elements, receiver_indices] =
-      assembly.receivers.get_indices_on_device(medium_tag, property_tag);
+      assembly.receivers.get_indices_on_device(medium_tag, property_tag, specfem::element::attenuation_tag::none);
 
   // Get the element grid (ngllx, ngllz)
   const auto &element_grid = assembly.mesh.element_grid;
