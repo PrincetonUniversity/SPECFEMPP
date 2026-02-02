@@ -1,5 +1,5 @@
 #include "enumerations/interface.hpp"
-#include "medium/compute_stress.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -36,7 +36,7 @@ TEST(Stress, ElasticIsotropic3D_Basic) {
   field_derivatives.du(2, 1) = 9.0; // du_z/dy
 
   const StressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   StressType expected_stress;
   expected_stress.T(0, 0) =
@@ -90,7 +90,7 @@ TEST(Stress, ElasticIsotropic3D_ZeroDerivatives) {
   field_derivatives.du(2, 1) = 0.0;
 
   const StressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   StressType expected_stress;
   expected_stress.T(0, 0) = 0.0;

@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "enumerations/interface.hpp"
-#include "medium/material.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/medium_container.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem_setup.hpp"
 #include "test_fixture.hpp"
@@ -103,7 +103,7 @@ struct ExpectedMaterials3D {
                   materials.get_material<_medium_tag_, _property_tag_>(
                       expected.element_id);
               const auto expected_material =
-                  std::any_cast<specfem::medium::material<
+                  std::any_cast<specfem::medium_container::material<
                       _dimension_tag_, _medium_tag_, _property_tag_,
                       specfem::element::attenuation_tag::none> >(
                       expected.material);
@@ -136,7 +136,7 @@ static const std::unordered_map<std::string, ExpectedMaterials3D>
             { // Element 0
               ElementMaterial(specfem::element::medium_tag::elastic,
                               specfem::element::property_tag::isotropic, 0,
-                              specfem::medium::material<
+                              specfem::medium_container::material<
                                   specfem::dimension::type::dim3,
                                   specfem::element::medium_tag::elastic,
                                   specfem::element::property_tag::isotropic,
@@ -145,7 +145,7 @@ static const std::unordered_map<std::string, ExpectedMaterials3D>
               // Element 5
               ElementMaterial(specfem::element::medium_tag::elastic,
                               specfem::element::property_tag::isotropic, 5,
-                              specfem::medium::material<
+                              specfem::medium_container::material<
                                   specfem::dimension::type::dim3,
                                   specfem::element::medium_tag::elastic,
                                   specfem::element::property_tag::isotropic,

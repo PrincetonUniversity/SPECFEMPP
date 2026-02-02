@@ -44,7 +44,7 @@ namespace specfem::sources {
  *     5.0, 10.0,  // coordinates (x, z)
  *     0.0,        // angle
  *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Common operations available for all sources:
@@ -177,7 +177,7 @@ public:
         t0, dt, nsteps, source_time_function);
   }
 
-  virtual specfem::wavefield::simulation_field get_wavefield_type() const = 0;
+  virtual specfem::simulation::field_type get_wavefield_type() const = 0;
 
   virtual bool operator==(const source &other) const {
     // Base implementation might just check type identity

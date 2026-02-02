@@ -7,7 +7,7 @@
 #include "specfem/point.hpp"
 
 template <specfem::wavefield::type component,
-          specfem::wavefield::simulation_field type,
+          specfem::simulation::field_type type,
           specfem::element::medium_tag medium,
           specfem::element::property_tag property>
 void generate_data(
@@ -63,7 +63,7 @@ void generate_data(
 }
 
 template <specfem::wavefield::type component,
-          specfem::wavefield::simulation_field type>
+          specfem::simulation::field_type type>
 std::vector<int> generate_data(
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 

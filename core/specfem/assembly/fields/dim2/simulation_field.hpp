@@ -24,7 +24,7 @@ namespace specfem::assembly {
  * @tparam SimulationWavefieldType Type of simulation field (forward, adjoint,
  * backward, buffer)
  */
-template <specfem::wavefield::simulation_field SimulationWavefieldType>
+template <specfem::simulation::field_type SimulationWavefieldType>
 struct simulation_field<specfem::dimension::type::dim2,
                         SimulationWavefieldType> {
 
@@ -101,7 +101,7 @@ public:
    * @tparam DestinationWavefieldType Source wavefield type to copy from
    * @param rhs Source simulation field to copy data from
    */
-  template <specfem::wavefield::simulation_field DestinationWavefieldType>
+  template <specfem::simulation::field_type DestinationWavefieldType>
   void operator=(
       const simulation_field<dimension_tag, DestinationWavefieldType> &rhs) {
     this->nglob = rhs.nglob;
@@ -160,8 +160,9 @@ public:
    * medium
    *
    * @code
-   * auto elastic_field = field.get_field<specfem::element::medium_tag::elastic_psv>();
-   * auto displacement = elastic_field.displacement;
+   * auto elastic_field =
+   * field.get_field<specfem::element::medium_tag::elastic_psv>(); auto
+   * displacement = elastic_field.displacement;
    * // Now you can use displacement for further computations
    * @endcode
    */

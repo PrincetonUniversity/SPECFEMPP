@@ -125,6 +125,19 @@ target_link_libraries(
 )
 
 add_executable(
+  attenuation_tests
+  attenuation/runner.cpp
+  attenuation/compute_tau_sigma_tests.cpp
+)
+
+target_link_libraries(
+  attenuation_tests
+  gtest_main
+  specfem::attenuation
+  Kokkos::kokkos
+)
+
+add_executable(
   gll_tests
   gll/gll_tests.cpp
 )
@@ -800,7 +813,7 @@ target_link_libraries(
   timescheme
   point
   specfem::algorithms
-  specfem::kokkos_kernels
+  specfem::compute
   specfem::solver
   specfem::periodic_tasks
   boost
@@ -826,7 +839,7 @@ target_link_libraries(
   timescheme
   point
   specfem::algorithms
-  specfem::kokkos_kernels
+  specfem::compute
   specfem::solver
   specfem::periodic_tasks
   boost
@@ -895,8 +908,6 @@ target_link_libraries(
 # )
 
 
-
-
 # Link to gtest only if MPI is disabled
 if(NOT MPI_PARALLEL)
   include(GoogleTest)
@@ -904,6 +915,7 @@ if(NOT MPI_PARALLEL)
     abort_tests
     assembly_receivers_tests
     assembly_tests
+    attenuation_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests
     # compute_elastic_tests

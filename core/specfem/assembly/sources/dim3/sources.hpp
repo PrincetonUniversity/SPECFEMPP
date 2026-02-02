@@ -37,7 +37,7 @@ namespace specfem::assembly {
  *     specfem::element::medium_tag::elastic,
  *     specfem::element::property_tag::isotropic,
  *     specfem::element::boundary_tag::none,
- *     specfem::wavefield::simulation_field::forward);
+ *     specfem::simulation::field_type::forward);
  *
  * // 3. Time integration with source updates
  * for (int step = 0; step < nsteps; ++step) {
@@ -104,9 +104,8 @@ private:
    * wavefields, crucial for proper handling of different simulation types in
    * 3D.
    */
-  using WavefieldTagViewType =
-      Kokkos::View<specfem::wavefield::simulation_field *,
-                   Kokkos::DefaultExecutionSpace>;
+  using WavefieldTagViewType = Kokkos::View<specfem::simulation::field_type *,
+                                            Kokkos::DefaultExecutionSpace>;
 
   /**
    * @brief Kokkos view type for storing boundary condition tags on device
@@ -221,16 +220,15 @@ public:
    *     specfem::element::medium_tag::elastic,
    *     specfem::element::property_tag::isotropic,
    *     specfem::element::boundary_tag::none,
-   *     specfem::wavefield::simulation_field::forward);
+   *     specfem::simulation::field_type::forward);
    * @endcode
    */
   std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
              Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-  get_sources_on_host(
-      const specfem::element::medium_tag medium,
-      const specfem::element::property_tag property,
-      const specfem::element::boundary_tag boundary,
-      const specfem::wavefield::simulation_field wavefield) const;
+  get_sources_on_host(const specfem::element::medium_tag medium,
+                      const specfem::element::property_tag property,
+                      const specfem::element::boundary_tag boundary,
+                      const specfem::simulation::field_type wavefield) const;
 
   /**
    * @brief Retrieve 3D source indices for specified criteria on device memory
@@ -256,16 +254,15 @@ public:
    *     specfem::element::medium_tag::elastic,
    *     specfem::element::property_tag::isotropic,
    *     specfem::element::boundary_tag::none,
-   *     specfem::wavefield::simulation_field::adjoint);
+   *     specfem::simulation::field_type::adjoint);
    * @endcode
    */
   std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
              Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-  get_sources_on_device(
-      const specfem::element::medium_tag medium,
-      const specfem::element::property_tag property,
-      const specfem::element::boundary_tag boundary,
-      const specfem::wavefield::simulation_field wavefield) const;
+  get_sources_on_device(const specfem::element::medium_tag medium,
+                        const specfem::element::property_tag property,
+                        const specfem::element::boundary_tag boundary,
+                        const specfem::simulation::field_type wavefield) const;
   ///@}
 
   /**
@@ -418,7 +415,7 @@ private:
    */
   PropertyTagViewType::HostMirror h_property_types;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       DECLARE(((specfem::assembly::sources_impl::source_medium,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                source)))
@@ -432,8 +429,8 @@ private:
   int timestep;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC),
-       BOUNDARY_TAG(NONE)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
       DECLARE((IndexViewType, element_indices_forward),
               (IndexViewType::HostMirror, h_element_indices_forward),
               (IndexViewType, element_indices_backward),
@@ -543,7 +540,7 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -622,7 +619,7 @@ void load_on_host(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -697,7 +694,7 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
@@ -772,7 +769,7 @@ void store_on_host(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC_PSV)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {

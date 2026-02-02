@@ -38,7 +38,7 @@ namespace sources {
  * specfem::sources::cosserat_force<specfem::dimension::type::dim2>( 3.2,   //
  * x-coordinate 4.8,   // z-coordinate 1.5,   // f - elastic force scaling
  * factor 0.8,   // fc - rotational force scaling factor 30.0,  // angle in
- * degrees std::move(stf), specfem::wavefield::simulation_field::forward
+ * degrees std::move(stf), specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium type (only works with Cosserat elastic media)
@@ -67,7 +67,7 @@ public:
    * frequecy of Dirac source.
    */
   cosserat_force(YAML::Node &Node, const int nsteps, const type_real dt,
-                 const specfem::wavefield::simulation_field wavefield_type)
+                 const specfem::simulation::field_type wavefield_type)
       : angle([](YAML::Node &Node) -> type_real {
           if (Node["angle"]) {
             return Node["angle"].as<type_real>();
@@ -95,7 +95,7 @@ public:
   cosserat_force(
       type_real x, type_real z, type_real f, type_real fc, type_real angle,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
-      const specfem::wavefield::simulation_field wavefield_type)
+      const specfem::simulation::field_type wavefield_type)
       : f(f), fc(fc), angle(angle), wavefield_type(wavefield_type),
         vector_source(x, z, std::move(source_time_function)) {};
   /**
@@ -104,7 +104,7 @@ public:
    */
   std::string print() const override;
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
+  specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
 
@@ -157,9 +157,9 @@ private:
   type_real angle; ///< Angle of the elastic force source
   type_real f;     ///< Factor to scale the elastic force
   type_real fc;    ///< Factor to scale the rotational force
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
-                                                       ///< which the source
-                                                       ///< acts
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
+                                                  ///< which the source
+                                                  ///< acts
   const static std::vector<specfem::element::medium_tag> supported_media;
 };
 

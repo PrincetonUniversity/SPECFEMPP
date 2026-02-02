@@ -225,24 +225,6 @@ std::pair<type_real, bool> get_local_edge_coordinate(
   return { edgecoord, true };
 }
 
-template <typename GraphType>
-std::vector<int> get_best_candidates_from_graph(const int ispec_guess,
-                                                const GraphType &graph) {
-
-  std::vector<int> ispec_candidates;
-  ispec_candidates.push_back(ispec_guess);
-
-  for (auto edge :
-       boost::make_iterator_range(boost::out_edges(ispec_guess, graph))) {
-    const int ispec = boost::target(edge, graph);
-    if (std::find(ispec_candidates.begin(), ispec_candidates.end(), ispec) ==
-        ispec_candidates.end()) {
-      ispec_candidates.push_back(ispec);
-    }
-  }
-  return ispec_candidates;
-}
-
 std::tuple<type_real, type_real> get_best_location(
     const specfem::point::global_coordinates<specfem::dimension::type::dim2>
         &global,

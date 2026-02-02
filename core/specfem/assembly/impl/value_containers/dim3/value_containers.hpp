@@ -36,7 +36,7 @@ struct value_containers<specfem::dimension::type::dim3, containers_type> {
     }
   }
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
                        PROPERTY_TAG(ISOTROPIC)),
                       DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_,
                                                   _PROPERTY_TAG_)),
@@ -63,14 +63,14 @@ struct value_containers<specfem::dimension::type::dim3, containers_type> {
       constexpr containers_type<dimension_tag, MediumTag, PropertyTag> const &
       get_container() const {
 
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)),
-        CAPTURE(value) {
-          if constexpr (_medium_tag_ == MediumTag &&
-                        _property_tag_ == PropertyTag) {
-            return _value_;
-          }
-        })
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+                         PROPERTY_TAG(ISOTROPIC)),
+                        CAPTURE(value) {
+                          if constexpr (_medium_tag_ == MediumTag &&
+                                        _property_tag_ == PropertyTag) {
+                            return _value_;
+                          }
+                        })
 
     Kokkos::abort("Invalid material type detected in value containers");
 
@@ -88,16 +88,16 @@ struct value_containers<specfem::dimension::type::dim3, containers_type> {
    */
   void copy_to_host() {
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)),
-        CAPTURE(value) { _value_.copy_to_host(); })
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+                         PROPERTY_TAG(ISOTROPIC)),
+                        CAPTURE(value) { _value_.copy_to_host(); })
   }
 
   void copy_to_device() {
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)),
-        CAPTURE(value) { _value_.copy_to_device(); })
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+                         PROPERTY_TAG(ISOTROPIC)),
+                        CAPTURE(value) { _value_.copy_to_device(); })
   }
 };
 

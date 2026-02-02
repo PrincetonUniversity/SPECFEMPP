@@ -58,7 +58,7 @@ void test_element_wavefield(
 }
 
 template <specfem::wavefield::type component,
-          specfem::wavefield::simulation_field type>
+          specfem::simulation::field_type type>
 void test_compute_wavefield(
     specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
 
@@ -88,8 +88,7 @@ void test_compute_wavefield(
 
   try {
     test_compute_wavefield<specfem::wavefield::type::displacement,
-                           specfem::wavefield::simulation_field::forward>(
-        assembly);
+                           specfem::simulation::field_type::forward>(assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
     message << "Error in computing displacement wavefield: \n\t" << e.what();
@@ -98,8 +97,7 @@ void test_compute_wavefield(
 
   try {
     test_compute_wavefield<specfem::wavefield::type::velocity,
-                           specfem::wavefield::simulation_field::forward>(
-        assembly);
+                           specfem::simulation::field_type::forward>(assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
     message << "Error in computing velocity wavefield: \n\t" << e.what();
@@ -108,8 +106,7 @@ void test_compute_wavefield(
 
   try {
     test_compute_wavefield<specfem::wavefield::type::acceleration,
-                           specfem::wavefield::simulation_field::forward>(
-        assembly);
+                           specfem::simulation::field_type::forward>(assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
     message << "Error in computing acceleration wavefield: \n\t" << e.what();
@@ -118,8 +115,7 @@ void test_compute_wavefield(
 
   try {
     test_compute_wavefield<specfem::wavefield::type::pressure,
-                           specfem::wavefield::simulation_field::forward>(
-        assembly);
+                           specfem::simulation::field_type::forward>(assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
     message << "Error in computing pressure wavefield: \n\t" << e.what();

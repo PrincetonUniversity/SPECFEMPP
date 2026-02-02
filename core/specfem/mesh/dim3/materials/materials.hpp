@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "medium/material.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/medium_container.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 
@@ -24,7 +24,7 @@ template <specfem::dimension::type Dimension> struct materials;
  * This ensures comprehensive material support while maintaining type safety
  * and enabling compile-time optimizations in the spectral element framework.
  *
- * @see specfem::medium::material
+ * @see specfem::medium_container::material
  * @see FOR_EACH_IN_PRODUCT
  *
  * @code
@@ -33,7 +33,7 @@ template <specfem::dimension::type Dimension> struct materials;
  *     materials(1000, 5);
  *
  * // Add an isotropic elastic material from MESHFEM3D database
- * specfem::medium::material<specfem::element::medium_tag::elastic,
+ * specfem::medium_container::material<specfem::element::medium_tag::elastic,
  *                          specfem::element::property_tag::isotropic>
  * elastic_mat; materials.add_material(elastic_mat, database_index);
  *
@@ -119,8 +119,10 @@ template <> struct materials<specfem::dimension::type::dim3> {
 
     /** @brief Storage for material objects of this type/property combination */
     std::vector<
-        specfem::medium::material<dimension_tag, type, property,
-                                  specfem::element::attenuation_tag::none> >
+
+        specfem::medium_container::material<
+            dimension_tag, type, property,
+            specfem::element::attenuation_tag::none> >
         element_materials;
 
     /** @brief Default constructor creating empty container */
@@ -133,7 +135,7 @@ template <> struct materials<specfem::dimension::type::dim3> {
      * @param l_material Vector of materials to initialize container with
      */
     material(const int n_materials,
-             const std::vector<specfem::medium::material<
+             const std::vector<specfem::medium_container::material<
                  dimension_tag, type, property,
                  specfem::element::attenuation_tag::none> > &l_material);
   };
@@ -238,8 +240,8 @@ public:
    */
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
-  specfem::medium::material<dimension_tag, MediumTag, PropertyTag,
-                            specfem::element::attenuation_tag::none>
+  specfem::medium_container::material<dimension_tag, MediumTag, PropertyTag,
+                                      specfem::element::attenuation_tag::none>
   get_material(const int index) const {
 #ifndef NDEBUG
     if (index < 0 || index >= this->nspec) {
@@ -335,17 +337,16 @@ public:
    *
    * @code
    * // Add elastic isotropic material from MESHFEM3D database
-   * specfem::medium::material<specfem::element::medium_tag::elastic,
+   * specfem::medium_container::material<specfem::element::medium_tag::elastic,
    *                          specfem::element::property_tag::isotropic> mat;
    * const auto index = materials.add_material(mat);
    * @endcode
    */
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
-  int add_material(
-      const specfem::medium::material<dimension_tag, MediumTag, PropertyTag,
-                                      specfem::element::attenuation_tag::none>
-          &new_material) {
+  int add_material(const specfem::medium_container::material<
+                   dimension_tag, MediumTag, PropertyTag,
+                   specfem::element::attenuation_tag::none> &new_material) {
     this->n_materials += 1;
     auto &material_container = this->get_container<MediumTag, PropertyTag>();
     material_container.element_materials.push_back(new_material);

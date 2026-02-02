@@ -22,7 +22,7 @@
   }
 
 #define POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                 \
-  KOKKOS_INLINE_FUNCTION bool operator==(const data_container &other) const {  \
+  KOKKOS_INLINE_FUNCTION bool operator==(const point_container &other) const { \
     if (nprops != other.nprops) {                                              \
       return false;                                                            \
     }                                                                          \
@@ -36,18 +36,18 @@
   }
 
 #define POINT_CONSTRUCTOR(seq)                                                 \
-  KOKKOS_INLINE_FUNCTION data_container() = default;                           \
+  KOKKOS_INLINE_FUNCTION point_container() = default;                          \
   template <typename... Args,                                                  \
             typename std::enable_if_t<sizeof...(Args) == nprops, int> = 0>     \
-  KOKKOS_INLINE_FUNCTION data_container(Args... args)                          \
+  KOKKOS_INLINE_FUNCTION point_container(Args... args)                         \
       : _point_data_container{ static_cast<value_type>(args)... } {}           \
   KOKKOS_INLINE_FUNCTION                                                       \
-  data_container(const value_type *value) {                                    \
+  point_container(const value_type *value) {                                   \
     for (int i = 0; i < nprops; ++i) {                                         \
       _point_data_container[i] = value[i];                                     \
     }                                                                          \
   }                                                                            \
-  KOKKOS_INLINE_FUNCTION data_container(const value_type &value) {             \
+  KOKKOS_INLINE_FUNCTION point_container(const value_type &value) {            \
     for (int i = 0; i < nprops; ++i) {                                         \
       _point_data_container[i] = value;                                        \
     }                                                                          \
@@ -96,7 +96,7 @@ public:                                                                        \
   POINT_BOOLEAN_OPERATOR_DEFINITION(seq)                                       \
   POINT_VALUE_ACCESSORS(seq)                                                   \
   POINT_OPERATOR_DEFINITION(seq)                                               \
-  KOKKOS_INLINE_FUNCTION bool operator!=(const data_container &other) const {  \
+  KOKKOS_INLINE_FUNCTION bool operator!=(const point_container &other) const { \
     return !(*this == other);                                                  \
   }                                                                            \
   std::string print() const {                                                  \

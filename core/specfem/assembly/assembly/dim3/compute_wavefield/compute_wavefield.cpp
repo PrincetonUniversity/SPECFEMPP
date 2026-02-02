@@ -41,7 +41,7 @@ void get_wavefield_on_entire_grid(
 Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>
 specfem::assembly::assembly<specfem::dimension::type::dim3>::
     generate_wavefield_on_entire_grid(
-        const specfem::wavefield::simulation_field wavefield,
+        const specfem::simulation::field_type wavefield,
         const specfem::wavefield::type component) {
 
   // Check which type of wavefield component is requested
@@ -66,11 +66,11 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::
   }();
 
   // Copy the required wavefield into the buffer
-  if (wavefield == specfem::wavefield::simulation_field::forward) {
+  if (wavefield == specfem::simulation::field_type::forward) {
     specfem::assembly::deep_copy(this->fields.buffer, this->fields.forward);
-  } else if (wavefield == specfem::wavefield::simulation_field::adjoint) {
+  } else if (wavefield == specfem::simulation::field_type::adjoint) {
     specfem::assembly::deep_copy(this->fields.buffer, this->fields.adjoint);
-  } else if (wavefield == specfem::wavefield::simulation_field::backward) {
+  } else if (wavefield == specfem::simulation::field_type::backward) {
     specfem::assembly::deep_copy(this->fields.buffer, this->fields.backward);
   } else {
     throw std::runtime_error("Wavefield type not supported");
@@ -89,7 +89,9 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::
       Kokkos::create_mirror_view(wavefield_on_entire_grid);
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)), {
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+       PROPERTY_TAG(ISOTROPIC)),
+      {
         if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
           get_wavefield_on_entire_grid<_medium_tag_, _property_tag_>(
               component, *this, wavefield_on_entire_grid);
