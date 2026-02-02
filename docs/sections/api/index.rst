@@ -27,6 +27,5 @@ Old structure
     :maxdepth: 2
 
     enumerations/index
-    medium/index
     coupling_physics/coupled_interface
     macros/index

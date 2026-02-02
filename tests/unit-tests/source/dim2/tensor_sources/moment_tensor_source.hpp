@@ -14,7 +14,7 @@ struct source_parameters<
   source_parameters() : x(0.0), z(0.0), Mxx(0.0), Mzz(0.0), Mxz(0.0) {};
   source_parameters(std::string name, type_real x, type_real z, type_real Mxx,
                     type_real Mzz, type_real Mxz,
-                    specfem::wavefield::simulation_field wavefield_type,
+                    specfem::simulation::field_type wavefield_type,
                     specfem::element::medium_tag medium_tag)
       : name(name), x(x), z(z), Mxx(Mxx), Mzz(Mzz), Mxz(Mxz),
         wavefield_type(wavefield_type), medium_tag(medium_tag) {};
@@ -25,8 +25,8 @@ struct source_parameters<
   type_real Mxx;    ///< Mxx component of moment tensor
   type_real Mzz;    ///< Mzz component of moment tensor
   type_real Mxz;    ///< Mxz component of moment tensor
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield
-  specfem::element::medium_tag medium_tag; ///< Medium tag of the source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield
+  specfem::element::medium_tag medium_tag;        ///< Medium tag of the source
 };
 
 template <>
@@ -79,7 +79,7 @@ get_parameters_and_solutions<
     std::make_tuple(
         MomentTensorSource2DParameters(
             "elastic_psv", 0.0, 0.0, 1.0, 2.0, 0.5,
-            specfem::wavefield::simulation_field::forward,
+            specfem::simulation::field_type::forward,
             specfem::element::medium_tag::elastic_psv),
         MomentTensorSource2DSolution(0.0, 0.0, 1.0, 2.0, 0.5,
                                      std::vector<std::vector<type_real> >{
@@ -88,7 +88,7 @@ get_parameters_and_solutions<
     std::make_tuple(
         MomentTensorSource2DParameters(
             "poroelastic", 1.0, 1.0, 2.0, 3.0, 1.5,
-            specfem::wavefield::simulation_field::forward,
+            specfem::simulation::field_type::forward,
             specfem::element::medium_tag::poroelastic),
         MomentTensorSource2DSolution(
             1.0, 1.0, 2.0, 3.0, 1.5,
@@ -97,7 +97,7 @@ get_parameters_and_solutions<
     // Test elastic P-SV-T moment tensor source (third component zero)
     std::make_tuple(MomentTensorSource2DParameters(
                         "elastic_psv_t", 2.0, 2.0, 0.8, 1.2, 0.3,
-                        specfem::wavefield::simulation_field::forward,
+                        specfem::simulation::field_type::forward,
                         specfem::element::medium_tag::elastic_psv_t),
                     MomentTensorSource2DSolution(
                         2.0, 2.0, 0.8, 1.2, 0.3,
@@ -107,7 +107,7 @@ get_parameters_and_solutions<
     std::make_tuple(
         MomentTensorSource2DParameters(
             "electromagnetic_te", 3.0, 3.0, 1.5, 2.5, 0.8,
-            specfem::wavefield::simulation_field::forward,
+            specfem::simulation::field_type::forward,
             specfem::element::medium_tag::electromagnetic_te),
         MomentTensorSource2DSolution(
             3.0, 3.0, 1.5, 2.5, 0.8,

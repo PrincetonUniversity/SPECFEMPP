@@ -1,6 +1,6 @@
 #include "io/mesh/impl/fortran/dim3/read_materials.hpp"
 #include "io/fortranio/interface.hpp"
-#include "medium/material.hpp"
+#include "specfem/medium_container.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 #include <fstream>
@@ -52,9 +52,10 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                 "materials.");
           }
 
-          specfem::medium::material<specfem::dimension::type::dim3,
-                                    specfem::element::medium_tag::acoustic,
-                                    specfem::element::property_tag::isotropic>
+          specfem::medium_container::material<
+              specfem::dimension::type::dim3,
+              specfem::element::medium_tag::acoustic,
+              specfem::element::property_tag::isotropic>
               material(rho, vp, Qkappa, Qmu, static_cast<type_real>(0.0));
           const int index = materials.add_material(material);
           mapping.push_back({ specfem::element::medium_tag::acoustic,
@@ -68,9 +69,10 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                 "materials.");
           }
 
-          specfem::medium::material<specfem::dimension::type::dim3,
-                                    specfem::element::medium_tag::elastic,
-                                    specfem::element::property_tag::isotropic>
+          specfem::medium_container::material<
+              specfem::dimension::type::dim3,
+              specfem::element::medium_tag::elastic,
+              specfem::element::property_tag::isotropic>
               material(rho, vs, vp, Qkappa, Qmu, static_cast<type_real>(0.0));
           const int index = materials.add_material(material);
           mapping.push_back({ specfem::element::medium_tag::elastic,

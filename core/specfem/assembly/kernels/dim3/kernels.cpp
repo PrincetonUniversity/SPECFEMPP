@@ -25,7 +25,7 @@ specfem::assembly::kernels<specfem::dimension::type::dim3>::kernels(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
        PROPERTY_TAG(ISOTROPIC)),
       CAPTURE(value) {
-        _value_ = specfem::medium::kernels_container<
+        _value_ = specfem::assembly::impl::domain_kernels<
             _dimension_tag_, _medium_tag_, _property_tag_>(
             element_types.get_elements_on_host(_medium_tag_, _property_tag_),
             nglly, ngllz, ngllx, h_property_index_mapping);

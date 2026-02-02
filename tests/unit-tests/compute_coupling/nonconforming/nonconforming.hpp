@@ -5,10 +5,9 @@
 #include "enumerations/coupled_interface.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "medium/compute_coupling.hpp"
-#include "medium/dim2/coupling_terms/acoustic_elastic.hpp"
 #include "specfem/chunk_edge.hpp"
 #include "specfem/data_access/accessor.hpp"
+#include "specfem/medium_physics.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 
 #include <Kokkos_Core.hpp>
@@ -52,12 +51,12 @@ struct EdgeFunctionWithEmbeddedAccessor
   static constexpr bool using_simd = false;
 
   template <typename Init>
-  EdgeFunctionWithEmbeddedAccessor(const Init &init)
+  KOKKOS_INLINE_FUNCTION EdgeFunctionWithEmbeddedAccessor(const Init &init)
       : specfem::datatype::VectorChunkEdgeViewType<
             type_real, dimension_tag, 1, EdgeFunction2D::nquad_edge,
             EdgeFunction2D::num_components, false,
             typename EdgeFunction2D::memory_space, Kokkos::MemoryTraits<> >(
-            init){};
+            init) {};
 };
 
 template <specfem::interface::interface_tag interface_tag>
@@ -133,7 +132,7 @@ execute_impl_compute_coupling(const TransferFunction2D &transfer_function,
         ComputedCouplingFunction CCF(Kokkos::subview(computed_coupling_function,
                                                      view_slice, Kokkos::ALL(),
                                                      Kokkos::ALL()));
-        specfem::medium::impl::compute_coupling(
+        specfem::medium_physics::impl::compute_coupling(
             std::integral_constant<specfem::dimension::type, dimension_tag>(),
             std::integral_constant<specfem::connections::type,
                                    specfem::connections::type::nonconforming>(),

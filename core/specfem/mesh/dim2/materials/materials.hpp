@@ -2,8 +2,8 @@
 
 #include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
-#include "medium/material.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/medium_container.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
 #include "specfem_setup.hpp"
@@ -50,15 +50,15 @@ template <> struct materials<specfem::dimension::type::dim2> {
             specfem::element::property_tag property>
   struct material {
     int n_materials; ///< Number of elements
-    std::vector<specfem::medium::material<dimension_tag, type, property> >
+    std::vector<
+        specfem::medium_container::material<dimension_tag, type, property> >
         element_materials; ///< Material properties
 
     material() = default;
 
     material(const int n_materials,
-             const std::vector<
-                 specfem::medium::material<dimension_tag, type, property> >
-                 &l_material);
+             const std::vector<specfem::medium_container::material<
+                 dimension_tag, type, property> > &l_material);
   };
 
   int n_materials; ///< Total number of different materials
@@ -111,7 +111,7 @@ public:
    * @param index Spectral element index
    * @return std::variant Material properties
    */
-  specfem::medium::material<dimension_tag, MediumTag, PropertyTag>
+  specfem::medium_container::material<dimension_tag, MediumTag, PropertyTag>
   get_material(const int index) const {
     const auto &material_specification = this->material_index_mapping(index);
 

@@ -50,7 +50,7 @@ public:
           &assembly,
       const specfem::display::format &output_format,
       const specfem::wavefield::type &wavefield_type,
-      const specfem::wavefield::simulation_field &simulation_wavefield_type,
+      const specfem::simulation::field_type &simulation_wavefield_type,
       const specfem::display::component &component, const type_real &dt,
       const int &time_interval, const boost::filesystem::path &output_folder);
 
@@ -82,7 +82,7 @@ public:
 
   const specfem::display::format output_format;  ///< Output format of the plot
   const specfem::wavefield::type wavefield_type; ///< Type of the wavefield
-  const specfem::wavefield::simulation_field
+  const specfem::simulation::field_type
       simulation_wavefield_type;               ///< Type of wavefield
                                                ///< to plot
   const specfem::display::component component; ///< Component of the wavefield
