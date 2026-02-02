@@ -1,9 +1,9 @@
 #include "info.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/point.hpp"
-#include "constants.hpp"
 #include "specfem_setup.hpp"
 #include "specfem/assembly/info/impl/bounds.hpp"
+#include "specfem/assembly/info/impl/compute.hpp"
 #include "impl/bounding_box.hpp"
 #include <limits>
 
@@ -15,7 +15,7 @@ Info(specfem::assembly::assembly<dimension_tag> &assembly) {
   const auto &mesh = assembly.mesh;
 
   // Domain bounds
-  domain_bounds = info_impl::BoundingBox<dimension_tag>(
+  domain_bounds = info::impl::BoundingBox<dimension_tag>(
       mesh.xmin, mesh.xmax, mesh.zmin, mesh.zmax);
   
 
@@ -100,10 +100,6 @@ Info(specfem::assembly::assembly<dimension_tag> &assembly) {
       
   auto scatter_dt_suggested = Kokkos::Experimental::create_scatter_view<
       Kokkos::Experimental::ScatterMin>(dt_suggested);
-
-  // Constants
-  type_real npts_per_wavelength = specfem::constants::empirical::NPTS_PER_WAVELENGTH;
-  type_real cfl_number = specfem::constants::empirical::COURANT_NUMBER_SUGGESTED;
 
   // Type alias
   using global_coord_type =
@@ -250,16 +246,16 @@ Info(specfem::assembly::assembly<dimension_tag> &assembly) {
         }
 
         // Compute average GLL distance from element size (using element-local max)
-        type_real avg_distance = element_max_distance / static_cast<type_real>(fgll);
+        type_real avg_distance = info::impl::compute_average_gll_spacing(element_max_distance, fgll);
 
         // Estimate largest minimum period resolved (using element-local min velocity)
-        type_real max_minimum_period = (npts_per_wavelength * avg_distance) / element_min_v;
+        type_real max_minimum_period = info::impl::compute_minimum_period(avg_distance, element_min_v);
 
         // Update maximum minimum period
         access_max_minimum_period(0).update(max_minimum_period);
 
         // Suggested time step based on CFL condition (using element-local values)
-        type_real element_dt_suggested = cfl_number * (element_min_gll_distance / element_max_v);
+        type_real element_dt_suggested = info::impl::compute_suggested_timestep(element_min_gll_distance, element_max_v);
         access_dt_suggested(0).update(element_dt_suggested);
       });
     };
@@ -285,25 +281,25 @@ Info(specfem::assembly::assembly<dimension_tag> &assembly) {
   // Copy back to member variables
   auto min_vp_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), min_vp);
   auto max_vp_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), max_vp);
-  this->vp = info_impl::Bounds(min_vp_h(0), max_vp_h(0));
+  this->vp = info::impl::Bounds(min_vp_h(0), max_vp_h(0));
 
   auto min_vs_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), min_vs);
   auto max_vs_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), max_vs);
-  this->vs = info_impl::Bounds(min_vs_h(0), max_vs_h(0));
+  this->vs = info::impl::Bounds(min_vs_h(0), max_vs_h(0));
 
   auto min_v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), min_v);
   auto max_v_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), max_v);
-  this->v = info_impl::Bounds(min_v_h(0), max_v_h(0)); 
+  this->v = info::impl::Bounds(min_v_h(0), max_v_h(0)); 
   auto min_rho_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), min_rho);
   auto max_rho_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), max_rho);
-  this->rho = info_impl::Bounds(min_rho_h(0), max_rho_h(0));  
+  this->rho = info::impl::Bounds(min_rho_h(0), max_rho_h(0));  
 
   auto min_distance_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), min_distance);
   auto max_distance_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), max_distance);
-  this->element_size = info_impl::Bounds(min_distance_h(0), max_distance_h(0)); 
+  this->element_size = info::impl::Bounds(min_distance_h(0), max_distance_h(0)); 
   auto min_gll_distance_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), min_gll_distance);
   auto max_gll_distance_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), max_gll_distance);
-  this->gll_distance = info_impl::Bounds(min_gll_distance_h(0), max_gll_distance_h(0));
+  this->gll_distance = info::impl::Bounds(min_gll_distance_h(0), max_gll_distance_h(0));
 
   auto max_minimum_period_h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), max_minimum_period);
   this->largest_minimum_period = max_minimum_period_h(0);

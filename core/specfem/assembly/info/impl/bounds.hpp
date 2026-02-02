@@ -2,7 +2,7 @@
 
 #include "specfem_setup.hpp"
 
-namespace specfem::assembly::info_impl {
+namespace specfem::assembly::info::impl {
 
 struct Bounds {
 public:
@@ -24,4 +24,4 @@ public:
   type_real center() const { return 0.5 * (this->max + this->min); }
 };
 
-} // namespace specfem::assembly::info_impl  
+} // namespace specfem::assembly::info::impl  

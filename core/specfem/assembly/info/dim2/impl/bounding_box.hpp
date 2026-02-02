@@ -2,7 +2,7 @@
 
 #include "specfem/assembly/info/impl/bounding_box.hpp"
 
-namespace specfem::assembly::info_impl {
+namespace specfem::assembly::info::impl {
   template <>
   struct BoundingBox<specfem::dimension::type::dim2> {
     Bounds x;
@@ -17,4 +17,4 @@ namespace specfem::assembly::info_impl {
         : x(x_min, x_max),
           z(z_min, z_max) {}
   };
-} // namespace specfem::assembly::info_impl  
+} // namespace specfem::assembly::info::impl  

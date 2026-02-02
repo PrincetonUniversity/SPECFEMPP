@@ -2,7 +2,7 @@
 #include "specfem/assembly/info/impl/bounds.hpp"
 #include "specfem/assembly/info/impl/bounding_box.hpp"
 
-namespace specfem::assembly::info_impl
+namespace specfem::assembly::info::impl
 {
   template <>
   struct BoundingBox<specfem::dimension::type::dim3> {
@@ -11,5 +11,5 @@ namespace specfem::assembly::info_impl
     Bounds z;
   };
 
-} // namespace specfem::assembly::info_impl
+} // namespace specfem::assembly::info::impl
 

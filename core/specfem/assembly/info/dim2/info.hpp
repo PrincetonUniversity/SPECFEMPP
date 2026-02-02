@@ -37,14 +37,14 @@ struct Info<specfem::dimension::type::dim2> {
   Info(specfem::assembly::assembly<dimension_tag> &assembly);
 
   // Computed mesh properties
-  info_impl::BoundingBox<dimension_tag> domain_bounds;
-  info_impl::Bounds element_size;
-  info_impl::Bounds gll_distance;
-  info_impl::Bounds vp;
-  info_impl::Bounds vs;
-  info_impl::Bounds v;
-  info_impl::Bounds rho;
-  info_impl::Bounds vp_vs_ratio;
+  info::impl::BoundingBox<dimension_tag> domain_bounds;
+  info::impl::Bounds element_size;
+  info::impl::Bounds gll_distance;
+  info::impl::Bounds vp;
+  info::impl::Bounds vs;
+  info::impl::Bounds v;
+  info::impl::Bounds rho;
+  info::impl::Bounds vp_vs_ratio;
 
   // Suggested time step based on CFL condition
   type_real suggested_time_step;
