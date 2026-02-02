@@ -16,23 +16,3 @@ target_link_libraries(
         $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
         $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
-
-target_compile_definitions(
-        specfem_io
-        PUBLIC
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:-DNO_NPZ>
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
-)
-
-if(SPECFEM_ENABLE_ADIOS2)
-    target_link_libraries(specfem_io PUBLIC adios2::adios2_cxx11_mpi)
-endif()
-
-if(SPECFEM_ENABLE_HDF5)
-    target_link_libraries(specfem_io PUBLIC hdf5::hdf5)
-endif()
-
-if(SPECFEM_ENABLE_MPI)
-    target_link_libraries(specfem_io PUBLIC MPI::MPI_CXX)
-endif()
