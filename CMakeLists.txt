@@ -153,19 +153,6 @@ include("${CMAKE_SOURCE_DIR}/cmake/npz.cmake")
 # Find or install ADIOS2 library function
 include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 
-# Make compile definitions based on enabled options
-if (NOT SPECFEM_ENABLE_ADIOS2)
-    add_compile_definitions(NO_ADIOS2)
-endif()
-
-if (NOT SPECFEM_ENABLE_HDF5)
-    add_compile_definitions(NO_HDF5)
-endif()
-
-if (NOT SPECFEM_ENABLE_NPZ)
-    add_compile_definitions(NO_NPZ)
-endif()
-
 # Include VTK if available (MUST BE AFTER ADIOS2, VTK is smarter about finding
 # the pugixml dependency than ADIOS2)
 include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")

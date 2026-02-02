@@ -92,6 +92,14 @@ target_link_libraries(io_framework_tests PRIVATE
   $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
 )
 
+target_compile_definitions(
+    io_framework_tests
+    PUBLIC
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:-DNO_NPZ>
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
+    $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
+)
+
 add_executable(
   abort_tests
   program/abort_tests.cpp
