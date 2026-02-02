@@ -12,6 +12,7 @@ std::string specfem::assembly::Info<specfem::dimension::type::dim2>::string() co
   oss << " Rho: .................... [" << rho.min << ", " << rho.max << "]\n";
   oss << " Element Size: ........... [" << element_size.min << ", " << element_size.max << "]\n";
   oss << " GLL Distance: ........... [" << gll_distance.min << ", " << gll_distance.max << "]\n";
+  oss << " Jacobian Determinant: ... [" << jacobian_determinant.min << ", " << jacobian_determinant.max << "]\n";
   oss << " Largest Minimum Period: . " << largest_minimum_period << "\n";
   oss << " Suggested Time Step: .... " << suggested_time_step << "\n";
   return oss.str();

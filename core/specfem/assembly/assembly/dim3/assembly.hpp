@@ -7,6 +7,7 @@
 #include "specfem/assembly/compute_source_array.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
 #include "specfem/assembly/fields.hpp"
+#include "specfem/assembly/info.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/kernels.hpp"
 #include "specfem/assembly/mesh.hpp"
@@ -109,6 +110,8 @@ template <> struct assembly<specfem::dimension::type::dim3> {
                        ///< values at
                        ///< the
                        ///< boundaries
+
+  specfem::assembly::Info<dimension_tag> info;
 
   ///@}
 

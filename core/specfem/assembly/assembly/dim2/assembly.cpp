@@ -67,8 +67,6 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
                                      this->edge_types, this->mesh };
   this->fields = { this->mesh, this->element_types, simulation };
 
-  this->info = Info<specfem::dimension::type::dim2>(*this);
-
   if (allocate_boundary_values)
     this->boundary_values = { max_timesteps, this->mesh, this->element_types,
                               this->boundaries };
@@ -91,6 +89,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
   }
 
   this->check_jacobian_matrix();
+
+  this->info = {*this};
 
   return;
 }

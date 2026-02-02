@@ -10,3 +10,4 @@ namespace specfem::assembly {
 } // namespace specfem::assembly
 
 #include "specfem/assembly/info/dim2/info.hpp"
+#include "specfem/assembly/info/dim3/info.hpp"

@@ -86,11 +86,13 @@ TEST_F(ScatterMinMaxTests, ScatterMinMaxBasic) {
 
   // Use ScatterMinMax
   ScatterMinMax<type_real> scatter("test");
-  auto accessor = scatter.access();
 
   Kokkos::parallel_for(
       "scatter_minmax", Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      KOKKOS_LAMBDA(const int i) { accessor.update(data(i)); });
+      KOKKOS_LAMBDA(const int i) { 
+        auto accessor = scatter.access();
+        accessor.update(data(i)); 
+      });
   Kokkos::fence();
 
   scatter.contribute();
@@ -122,12 +124,12 @@ TEST_F(ScatterMinMaxTests, ScatterMinMaxSeparateUpdates) {
   Kokkos::fence();
 
   ScatterMinMax<type_real> scatter("test_separate");
-  auto accessor = scatter.access();
 
   Kokkos::parallel_for(
       "scatter_separate",
       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
       KOKKOS_LAMBDA(const int i) {
+        auto accessor = scatter.access();
         accessor.update_min(min_data(i));
         accessor.update_max(max_data(i));
       });
@@ -156,12 +158,14 @@ TEST_F(ScatterMinMaxTests, ScatterMinMaxNegativeValues) {
   Kokkos::fence();
 
   ScatterMinMax<type_real> scatter("test_negative");
-  auto accessor = scatter.access();
 
   Kokkos::parallel_for(
       "scatter_negative",
       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      KOKKOS_LAMBDA(const int i) { accessor.update(data(i)); });
+      KOKKOS_LAMBDA(const int i) { 
+        auto accessor = scatter.access();
+        accessor.update(data(i)); 
+      });
   Kokkos::fence();
 
   scatter.contribute();
@@ -188,11 +192,13 @@ TEST_F(ScatterMinMaxTests, BoundsHelperMethods) {
   Kokkos::fence();
 
   ScatterMinMax<type_real> scatter("test_bounds");
-  auto accessor = scatter.access();
 
   Kokkos::parallel_for(
       "scatter_bounds", Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
-      KOKKOS_LAMBDA(const int i) { accessor.update(data(i)); });
+      KOKKOS_LAMBDA(const int i) { 
+        auto accessor = scatter.access();
+        accessor.update(data(i)); 
+      });
   Kokkos::fence();
 
   scatter.contribute();
@@ -236,12 +242,14 @@ TEST_F(ScatterMinMaxTests, ScatterMinMaxLargeDataset) {
   Kokkos::fence();
 
   ScatterMinMax<type_real> scatter("test_large");
-  auto accessor = scatter.access();
 
   Kokkos::parallel_for(
       "scatter_large",
       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, LARGE_N),
-      KOKKOS_LAMBDA(const int i) { accessor.update(data(i)); });
+      KOKKOS_LAMBDA(const int i) { 
+        auto accessor = scatter.access();
+        accessor.update(data(i)); 
+      });
   Kokkos::fence();
 
   scatter.contribute();

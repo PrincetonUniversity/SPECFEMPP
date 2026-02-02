@@ -40,6 +40,7 @@ struct Info<specfem::dimension::type::dim2> {
   info::impl::BoundingBox<dimension_tag> domain_bounds;
   info::impl::Bounds element_size;
   info::impl::Bounds gll_distance;
+  info::impl::Bounds jacobian_determinant;
   info::impl::Bounds vp;
   info::impl::Bounds vs;
   info::impl::Bounds v;

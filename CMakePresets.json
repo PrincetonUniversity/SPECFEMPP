@@ -113,6 +113,26 @@
       }
     },
     {
+      "name": "release-openmp",
+      "displayName": "Release OpenMP -- OpenMP enabled",
+      "binaryDir": "build/release-openmp",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/release-openmp",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_OPENMP": "ON",
+        "Kokkos_ENABLE_SIMD": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-openmp",
+        "OpenMP_CXX_FLAGS": "$env{OpenMP_CXX_FLAGS}",
+        "OpenMP_CXX_LIB_NAMES": "$env{OpenMP_CXX_LIB_NAMES}",
+        "OpenMP_omp_LIBRARY": "$env{OpenMP_omp_LIBRARY}"
+      }
+    },
+    {
       "name": "debug",
       "displayName": "Default Debug -- SIMD enabled",
       "binaryDir": "build/debug",
@@ -256,6 +276,13 @@
     {
       "name": "release-mpi",
       "configurePreset": "release-mpi",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "release-openmp",
+      "configurePreset": "release-openmp",
       "targets": [
         "all"
       ]
