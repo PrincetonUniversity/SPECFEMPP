@@ -106,7 +106,7 @@ TEST(SOURCES, compute_source_locations) {
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
 
   // Read mesh for binary database for the test
-  std::vector<std::shared_ptr<specfem::medium::material> > materials;
+  std::vector<std::shared_ptr<specfem::medium_container::material> > materials;
   specfem::mesh::mesh mesh =
       specfem::io::read_mesh(test_config.database_file, mpi);
 

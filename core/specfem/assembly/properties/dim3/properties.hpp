@@ -3,9 +3,9 @@
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/impl/domain_properties.hpp"
 #include "specfem/assembly/impl/value_containers.hpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/medium_container.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -29,7 +29,7 @@ namespace specfem::assembly {
  * y-dimension compared to the 2D case.
  *
  * Related classes:
- * - specfem::medium::domain_properties: Base storage container
+ * - specfem::assembly::impl::domain_properties: Base storage container
  * - specfem::assembly::mesh: 3D mesh geometry and connectivity
  * - specfem::mesh::materials: Material assignment per 3D element
  *
@@ -45,7 +45,7 @@ namespace specfem::assembly {
 template <>
 struct properties<specfem::dimension::type::dim3>
     : public impl::value_containers<specfem::dimension::type::dim3,
-                                    specfem::medium::domain_properties> {
+                                    impl::domain_properties> {
 
   /**
    * @brief Default constructor.
@@ -82,8 +82,9 @@ struct properties<specfem::dimension::type::dim3>
    * Handles the full 3D tensor storage efficiently.
    */
   void copy_to_host() {
-    impl::value_containers<dimension_tag,
-                           specfem::medium::domain_properties>::copy_to_host();
+    impl::value_containers<
+        dimension_tag,
+        specfem::assembly::impl::domain_properties>::copy_to_host();
   }
 
   /**
@@ -95,7 +96,8 @@ struct properties<specfem::dimension::type::dim3>
    */
   void copy_to_device() {
     impl::value_containers<
-        dimension_tag, specfem::medium::domain_properties>::copy_to_device();
+        dimension_tag,
+        specfem::assembly::impl::domain_properties>::copy_to_device();
   }
 };
 } // namespace specfem::assembly

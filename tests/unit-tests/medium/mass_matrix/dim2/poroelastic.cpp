@@ -26,7 +26,7 @@ TEST(MassMatrix, PoroelasticIsotropic2DZeroPorosity) {
   const PointPropertiesType properties(phi, rho_s, rho_f, tortuosity, 0.0, 0.0,
                                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   const PointMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component(properties);
 
   EXPECT_NEAR(mass_matrix(0), solid_component, 1e-6 * solid_component)
       << "Mass matrix is not equal to expected value: " << mass_matrix(0)
@@ -70,7 +70,7 @@ TEST(MassMatrix, PoroelasticIsotropic2D) {
                                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
   const PointMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component(properties);
 
   const PointMassMatrixType expected_mass_matrix(
       solid_component, solid_component, fluid_component, fluid_component);

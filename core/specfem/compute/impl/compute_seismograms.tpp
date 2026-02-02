@@ -147,7 +147,7 @@ void specfem::compute::impl::compute_seismograms(
                                             velocity, acceleration);
           team.team_barrier();
 
-          specfem::medium::compute_wavefield<dimension_tag, medium_tag, property_tag>(
+          specfem::medium_physics::compute_wavefield<dimension_tag, medium_tag, property_tag>(
               chunk_index, assembly, lagrange_derivative, displacement, velocity,
               acceleration, wavefield_type, wavefield);
 

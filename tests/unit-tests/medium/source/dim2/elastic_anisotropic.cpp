@@ -35,7 +35,8 @@ TEST(Source, ElasticAnisotropicPSV2D) {
   point_source.lagrange_interpolant(1) = 3.5;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) =
@@ -77,7 +78,8 @@ TEST(Source, ElasticAnisotropicSH2D) {
   point_source.lagrange_interpolant(0) = 1.2;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) =

@@ -1,17 +1,17 @@
 #pragma once
 
-#include "medium/dim2/acoustic/isotropic/stress.hpp"
-#include "medium/dim2/elastic/anisotropic/stress.hpp"
-#include "medium/dim2/elastic/isotropic/stress.hpp"
-#include "medium/dim2/elastic/isotropic_cosserat/stress.hpp"
-#include "medium/dim2/poroelastic/isotropic/stress.hpp"
-#include "medium/dim3/acoustic/isotropic/stress.hpp"
-#include "medium/dim3/elastic/isotropic/stress.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/medium/dim2/acoustic/isotropic/stress.hpp"
+#include "specfem/medium/dim2/elastic/anisotropic/stress.hpp"
+#include "specfem/medium/dim2/elastic/isotropic/stress.hpp"
+#include "specfem/medium/dim2/elastic/isotropic_cosserat/stress.hpp"
+#include "specfem/medium/dim2/poroelastic/isotropic/stress.hpp"
+#include "specfem/medium/dim3/acoustic/isotropic/stress.hpp"
+#include "specfem/medium/dim3/elastic/isotropic/stress.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 // clang-format off
 /**
@@ -33,7 +33,7 @@ namespace medium {
  * using FieldDerivatives = specfem::point::field_derivatives<dim2, elastic, false>;
  * Properties props = ...; // Initialize material properties
  * FieldDerivatives derivs = ...; // Initialize field derivatives
- * auto stress = specfem::medium::compute_stress(props, derivs);
+ * auto stress = specfem::medium_physics::compute_stress(props, derivs);
  * @endcode
  */
 // clang-format on
@@ -41,8 +41,8 @@ template <typename PointPropertiesType, typename PointFieldDerivativesType>
 KOKKOS_INLINE_FUNCTION auto
 compute_stress(const PointPropertiesType &properties,
                const PointFieldDerivativesType &field_derivatives)
-    -> decltype(specfem::medium::impl_compute_stress(properties,
-                                                     field_derivatives)) {
+    -> decltype(specfem::medium_physics::impl_compute_stress(
+        properties, field_derivatives)) {
 
   // Check whether the point is of properties type
   static_assert(
@@ -69,8 +69,9 @@ compute_stress(const PointPropertiesType &properties,
           PointFieldDerivativesType::simd::using_simd,
       "properties and field_derivatives have different SIMD settings");
 
-  return specfem::medium::impl_compute_stress(properties, field_derivatives);
+  return specfem::medium_physics::impl_compute_stress(properties,
+                                                      field_derivatives);
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

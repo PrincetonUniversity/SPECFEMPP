@@ -1,14 +1,14 @@
 #pragma once
 
-#include "medium/dim2/acoustic/isotropic/frechet_derivative.hpp"
-#include "medium/dim2/elastic/anisotropic/frechet_derivative.hpp"
-#include "medium/dim2/elastic/isotropic/frechet_derivative.hpp"
-#include "medium/dim2/poroelastic/isotropic/frechet_derivative.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/medium/dim2/acoustic/isotropic/frechet_derivative.hpp"
+#include "specfem/medium/dim2/elastic/anisotropic/frechet_derivative.hpp"
+#include "specfem/medium/dim2/elastic/isotropic/frechet_derivative.hpp"
+#include "specfem/medium/dim2/poroelastic/isotropic/frechet_derivative.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @brief Compute Fréchet derivatives for seismic inversion kernels.
@@ -113,11 +113,11 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
       std::integral_constant<specfem::element::property_tag,
                              PointPropertiesType::property_tag>;
 
-  return specfem::medium::impl_compute_frechet_derivatives(
+  return specfem::medium_physics::impl_compute_frechet_derivatives(
       dimension_dispatch(), medium_dispatch(), property_dispatch(), properties,
       adjoint_velocity, adjoint_acceleration, backward_displacement,
       adjoint_derivatives, backward_derivatives, dt);
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

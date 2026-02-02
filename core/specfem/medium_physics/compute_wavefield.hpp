@@ -1,16 +1,16 @@
 #pragma once
 
-#include "medium/dim2/acoustic/isotropic/wavefield.hpp"
-#include "medium/dim2/elastic/anisotropic/wavefield.hpp"
-#include "medium/dim2/elastic/isotropic/wavefield.hpp"
-#include "medium/dim2/elastic/isotropic_cosserat/wavefield.hpp"
-#include "medium/dim2/poroelastic/isotropic/wavefield.hpp"
-#include "medium/dim3/acoustic/isotropic/wavefield.hpp"
-#include "medium/dim3/elastic/isotropic/wavefield.hpp"
+#include "specfem/medium/dim2/acoustic/isotropic/wavefield.hpp"
+#include "specfem/medium/dim2/elastic/anisotropic/wavefield.hpp"
+#include "specfem/medium/dim2/elastic/isotropic/wavefield.hpp"
+#include "specfem/medium/dim2/elastic/isotropic_cosserat/wavefield.hpp"
+#include "specfem/medium/dim2/poroelastic/isotropic/wavefield.hpp"
+#include "specfem/medium/dim3/acoustic/isotropic/wavefield.hpp"
+#include "specfem/medium/dim3/elastic/isotropic/wavefield.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 /**
  * @brief Convert intrinsic fields values to wavefield of interest on GLL grid.
@@ -96,5 +96,5 @@ compute_wavefield(const ChunkIndexType &chunk_index,
   return;
 } // compute_wavefield
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

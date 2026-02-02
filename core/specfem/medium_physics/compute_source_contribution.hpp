@@ -1,17 +1,17 @@
 #pragma once
 
-#include "medium/dim2/acoustic/isotropic/source.hpp"
-#include "medium/dim2/elastic/anisotropic/source.hpp"
-#include "medium/dim2/elastic/isotropic/source.hpp"
-#include "medium/dim2/elastic/isotropic_cosserat/source.hpp"
-#include "medium/dim2/poroelastic/isotropic/source.hpp"
-#include "medium/dim3/acoustic/isotropic/source.hpp"
-#include "medium/dim3/elastic/isotropic/source.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/medium/dim2/acoustic/isotropic/source.hpp"
+#include "specfem/medium/dim2/elastic/anisotropic/source.hpp"
+#include "specfem/medium/dim2/elastic/isotropic/source.hpp"
+#include "specfem/medium/dim2/elastic/isotropic_cosserat/source.hpp"
+#include "specfem/medium/dim2/poroelastic/isotropic/source.hpp"
+#include "specfem/medium/dim3/acoustic/isotropic/source.hpp"
+#include "specfem/medium/dim3/elastic/isotropic/source.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 // clang-format off
 /**
  * @brief Compute source contribution for seismic wave simulation.
@@ -37,7 +37,7 @@ namespace medium {
  * Properties props = ...;  // Initialize material properties
  *
  * auto source_contribution =
- *     specfem::medium::compute_source_contribution(src, props);
+ *     specfem::medium_physics::compute_source_contribution(src, props);
  * @endcode
  */
 // clang-format on
@@ -76,10 +76,10 @@ compute_source_contribution(const PointSourceType &point_source,
       std::integral_constant<specfem::element::property_tag,
                              PointPropertiesType::property_tag>;
 
-  return specfem::medium::impl_compute_source_contribution(
+  return specfem::medium_physics::impl_compute_source_contribution(
       dimension_dispatch(), medium_dispatch(), property_dispatch(),
       point_source, point_properties);
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

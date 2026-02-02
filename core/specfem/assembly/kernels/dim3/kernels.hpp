@@ -2,8 +2,8 @@
 
 #include "enumerations/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/impl/domain_kernels.hpp"
 #include "specfem/assembly/impl/value_containers.hpp"
-#include "specfem/medium_container.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -39,13 +39,14 @@ namespace specfem::assembly {
  * @endcode
  *
  * @see specfem::assembly::kernels Base template class
- * @see specfem::medium::domain_kernels Individual medium kernel containers
+ * @see specfem::assembly::impl::domain_kernels Individual medium kernel
+ * containers
  * @see specfem::point::kernels Point-wise kernel accessors
  */
 template <>
 struct kernels<specfem::dimension::type::dim3>
     : public impl::value_containers<specfem::dimension::type::dim3,
-                                    specfem::medium::domain_kernels> {
+                                    impl::domain_kernels> {
 public:
   /**
    * @brief Construct 3D kernels container from mesh and element information.
@@ -80,8 +81,8 @@ public:
    *
    */
   void copy_to_host() {
-    impl::value_containers<dimension_tag,
-                           specfem::medium::domain_kernels>::copy_to_host();
+    impl::value_containers<
+        dimension_tag, specfem::assembly::impl::domain_kernels>::copy_to_host();
   }
 
   /**
@@ -89,8 +90,9 @@ public:
    *
    */
   void copy_to_device() {
-    impl::value_containers<dimension_tag,
-                           specfem::medium::domain_kernels>::copy_to_device();
+    impl::value_containers<
+        dimension_tag,
+        specfem::assembly::impl::domain_kernels>::copy_to_device();
   }
 };
 

@@ -49,7 +49,8 @@ TEST_P(AcousticElasticCouplingTest, CouplingCalculation) {
       self_field;
 
   // Perform coupling computation
-  specfem::medium::compute_coupling(interface_data, coupled_field, self_field);
+  specfem::medium_physics::compute_coupling(interface_data, coupled_field,
+                                            self_field);
 
   // Verify result
   EXPECT_NEAR(self_field(0), params.expected_result, params.tolerance);

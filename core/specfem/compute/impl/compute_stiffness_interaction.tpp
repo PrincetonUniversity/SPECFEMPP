@@ -165,10 +165,10 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 specfem::assembly::load_on_device(index, field,
                                                   point_displacement);
 
-                auto point_stress = specfem::medium::compute_stress(
+                auto point_stress = specfem::medium_physics::compute_stress(
                     point_property, field_derivatives);
 
-                specfem::medium::compute_cosserat_stress(
+                specfem::medium_physics::compute_cosserat_stress(
                     point_property, point_displacement, point_stress);
 
                 stress_integrand.F(local_index) =
@@ -213,11 +213,11 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 const auto factor =
                     point_weights.product() * point_jacobian_matrix.jacobian;
 
-                specfem::medium::compute_damping_force(factor, point_property,
+                specfem::medium_physics::compute_damping_force(factor, point_property,
                                                        velocity, acceleration);
 
                 // Compute the couple stress from the stress integrand
-                specfem::medium::compute_cosserat_couple_stress(
+                specfem::medium_physics::compute_cosserat_couple_stress(
                     point_jacobian_matrix, point_property, factor,
                     stress_integrand.F(local_index), acceleration);
 

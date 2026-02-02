@@ -71,7 +71,7 @@ In Context of SPECFEMPP
 
 .. code-block:: cpp
 
-   namespace specfem::medium::properties {
+   namespace specfem::medium_container::properties {
      template <>
      struct data_container<specfem::element::medium_tag::elastic,
                           specfem::element::property_tag::isotropic> {

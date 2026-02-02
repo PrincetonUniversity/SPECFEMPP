@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "medium/dim2/elastic/isotropic_cosserat/cosserat_stress.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/medium/dim2/elastic/isotropic_cosserat/cosserat_stress.hpp"
 #include "specfem/point.hpp"
 #include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
@@ -65,7 +65,7 @@ KOKKOS_INLINE_FUNCTION void assert_types(const std::false_type) {
 }
 
 namespace specfem {
-namespace medium {
+namespace medium_physics {
 
 template <typename PointPropertiesType, typename PointDisplacementType,
           typename PointStressType, typename DimensionTagType,
@@ -161,10 +161,10 @@ compute_cosserat_stress(const PointPropertiesType &point_properties,
   // If damping force is not available call empty function, else call the
   // implementation
   // Compute the damping force
-  specfem::medium::impl_compute_cosserat_stress(
+  specfem::medium_physics::impl_compute_cosserat_stress(
       cosserat_stress_dispatch(), dimension_dispatch(), medium_dispatch(),
       property_dispatch(), point_properties, point_displacement, point_stress);
 }
 
-} // namespace medium
+} // namespace medium_physics
 } // namespace specfem

@@ -1,7 +1,8 @@
 #include "specfem/assembly/properties.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/assembly/impl/domain_properties.hpp"
+#include "specfem/assembly/impl/domain_properties.tpp"
 #include "specfem/assembly/mesh.hpp"
-#include "specfem/medium_container.hpp"
 
 specfem::assembly::properties<specfem::dimension::type::dim3>::properties(
     const int nspec, const int ngllz, const int nglly, const int ngllx,
@@ -26,7 +27,7 @@ specfem::assembly::properties<specfem::dimension::type::dim3>::properties(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
        PROPERTY_TAG(ISOTROPIC)),
       CAPTURE(value) {
-        _value_ = specfem::medium::domain_properties<
+        _value_ = specfem::assembly::impl::domain_properties<
             _dimension_tag_, _medium_tag_, _property_tag_>(
             element_types.get_elements_on_host(_medium_tag_, _property_tag_),
             nspec, ngllz, nglly, ngllx, materials, h_property_index_mapping);

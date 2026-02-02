@@ -42,7 +42,8 @@ TEST(Source, ElasticIsotropicCosserat2D) {
   point_source.lagrange_interpolant(2) = 3.5;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) =
@@ -95,7 +96,8 @@ TEST(Source, ElasticIsotropicCosserat2D_ZeroSource) {
   point_source.lagrange_interpolant(2) = 3.5;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) = 0.0;
