@@ -158,10 +158,6 @@
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC))(                           \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE))
 
-#define MEDIUM_TAGS_DIM2                                                       \
-  ((DIMENSION_TAG_DIM2),                                                       \
-   (MEDIUM_TAG_ELASTIC_PSV)(MEDIUM_TAG_ELASTIC_SH)(MEDIUM_TAG_ELASTIC_PSV_T)(MEDIUM_TAG_ACOUSTIC)(MEDIUM_TAG_POROELASTIC)(MEDIUM_TAG_ELECTROMAGNETIC_TE))
-
 #define MEDIUM_TAGS_DIM3                                                       \
   ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC))(                                  \
       (DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC))
@@ -183,10 +179,6 @@
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC))(   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
        PROPERTY_TAG_ISOTROPIC))
-
-#define MATERIAL_SYSTEMS_DIM2                                                  \
-  ((DIMENSION_TAG_DIM2), (MEDIUM_TAG_ELASTIC_PSV)(MEDIUM_TAG_ELASTIC_SH),      \
-   (PROPERTY_TAG_ISOTROPIC)(PROPERTY_TAG_ANISOTROPIC))
 
 #define MATERIAL_SYSTEMS_DIM3                                                  \
   ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC))(          \
