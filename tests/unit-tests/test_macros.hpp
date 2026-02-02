@@ -2,6 +2,27 @@
 #include "specfem_setup.hpp"
 #include <string>
 
+// Workaround for GTest EXPECT_NO_THROW duplicate label error with GCC 14
+// This assumes gtest.h is included before this file or will be included.
+// If included AFTER, this might not work unless we ensure order.
+// Best to include this file in test files after gtest.
+#define LOCAL_EXPECT_NO_THROW(stmt)                                            \
+  try {                                                                        \
+    stmt;                                                                      \
+  } catch (...) {                                                              \
+    ADD_FAILURE() << "Expected: " #stmt                                        \
+                     " doesn't throw. Throws unknown exception.";              \
+  }
+
+#define LOCAL_EXPECT_THROW(stmt, etype)                                        \
+  try {                                                                        \
+    stmt;                                                                      \
+    ADD_FAILURE() << "Expected exception " #etype " not thrown";               \
+  } catch (const etype &) {                                                    \
+  } catch (...) {                                                              \
+    ADD_FAILURE() << "Expected exception " #etype " but threw something else"; \
+  }
+
 // Compile-time conditional for Google Test expectations
 #define EXPECT_REAL_EQ(expected, actual)                                       \
   if constexpr (sizeof(type_real) == sizeof(double)) {                         \
