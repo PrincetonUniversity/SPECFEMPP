@@ -431,12 +431,10 @@ add_executable(
 target_link_libraries(
   nonconforming_assembly_tests
   specfem::io
-  specfem::io
   specfem::mesh
   assembly
   specfem::quadrature
   specfem_environment
-  specfem::io
   yaml-cpp
   specfem::utilities
   ${BOOST_LIBS}
@@ -478,8 +476,6 @@ set_target_properties(assembly_tests PROPERTIES UNITY_BUILD OFF)
 
 target_link_libraries(
   assembly_tests
-  specfem::io
-  specfem::io
   specfem::mesh
   assembly
   specfem::quadrature
@@ -964,7 +960,7 @@ if(NOT MPI_PARALLEL)
     displacement_tests
     domain
     fortran_io
-  specfem::io
+    io
     mesh
     policies
   )
