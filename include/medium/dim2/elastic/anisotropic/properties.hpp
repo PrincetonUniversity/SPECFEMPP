@@ -104,6 +104,10 @@ public:
   KOKKOS_INLINE_FUNCTION const value_type vmax() const {
     return Kokkos::max(vp(), vs()); ///< @f$ v_{max} = \max(v_P, v_S) @f$
   }
+
+  KOKKOS_INLINE_FUNCTION const value_type vmin() const {
+    return Kokkos::min(vp(), vs()); ///< @f$ v_{min} = \min(v_P, v_S) @f$
+  }
 };
 ///@} end of group specfem_point_properties_dim2_elastic_anisotropic
 

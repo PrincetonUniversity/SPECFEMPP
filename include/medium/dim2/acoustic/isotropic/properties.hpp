@@ -82,6 +82,10 @@ public:
     return vp(); ///< @f$ v_{max} = v_P @f$ for acoustic media
   }
 
+  KOKKOS_INLINE_FUNCTION const value_type vmin() const {
+    return vp(); ///< @f$ v_{min} = v_P @f$ for acoustic media (no shear waves)
+  }
+
   KOKKOS_INLINE_FUNCTION const value_type rho() const {
     return (static_cast<type_real>(1.0)) / rho_inverse(); ///< @f$ \rho @f$
   }

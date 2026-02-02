@@ -36,6 +36,7 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
   simd_type vp_val;
   simd_type vs_val;
   simd_type vmax_val;
+  simd_type vmin_val;
 
   if constexpr (using_simd) {
     T rho_arr[simd_size];
@@ -53,6 +54,7 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
     T vp_val_arr[simd_size];
     T vs_val_arr[simd_size];
     T vmax_val_arr[simd_size];
+    T vmin_val_arr[simd_size];
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
       rho_arr[i] = 2500.0 + i * 50.0;  // kg/m³
@@ -76,6 +78,7 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
       vs_val_arr[i] = std::sqrt(static_cast<type_real>(c55_arr[i]) /
                                 static_cast<type_real>(rho_arr[i]));
       vmax_val_arr[i] = std::max(vp_val_arr[i], vs_val_arr[i]);
+      vmin_val_arr[i] = std::min(vp_val_arr[i], vs_val_arr[i]);
     }
     // Copy to SIMD types
     rho.copy_from(rho_arr, Kokkos::Experimental::simd_flag_default);
@@ -95,6 +98,7 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
     vp_val.copy_from(vp_val_arr, Kokkos::Experimental::simd_flag_default);
     vs_val.copy_from(vs_val_arr, Kokkos::Experimental::simd_flag_default);
     vmax_val.copy_from(vmax_val_arr, Kokkos::Experimental::simd_flag_default);
+    vmin_val.copy_from(vmin_val_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Anisotropic material values (e.g., shale-like)
     constexpr type_real rho_val = 2500.0; // kg/m³
@@ -126,6 +130,7 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
     vp_val = std::sqrt(c33_val / rho_val);
     vs_val = std::sqrt(c55_val / rho_val);
     vmax_val = std::max(vp_val, vs_val);
+    vmin_val = std::min(vp_val, vs_val);
   }
 
   // Create the properties object
@@ -218,4 +223,6 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
       << ExpectedGot(vs_val, props.vs());
   EXPECT_TRUE(specfem::utilities::is_close(props.vmax(), vmax_val))
       << ExpectedGot(vmax_val, props.vmax());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmin(), vmin_val))
+      << ExpectedGot(vmin_val, props.vmin());
 }

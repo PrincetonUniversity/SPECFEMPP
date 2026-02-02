@@ -31,6 +31,7 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
   simd_type vp_val;
   simd_type vs_val;
   simd_type vmax_val;
+  simd_type vmin_val;
 
   if constexpr (using_simd) {
     // Setup test data for SIMD
@@ -48,6 +49,7 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
       vp_val[i] = vp;
       vs_val[i] = vs;
       vmax_val[i] = std::max(vp, vs);
+      vmin_val[i] = std::min(vp, vs);
     }
   } else {
     // Granite-like material for scalar test
@@ -73,6 +75,7 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
     vp_val = vp;
     vs_val = vs;
     vmax_val = std::max(vp, vs);
+    vmin_val = std::min(vp, vs);
   }
 
   // Create the properties object
@@ -105,6 +108,8 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
       << ExpectedGot(vs_val, props.vs());
   EXPECT_TRUE(specfem::utilities::is_close(props.vmax(), vmax_val))
       << ExpectedGot(vmax_val, props.vmax());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmin(), vmin_val))
+      << ExpectedGot(vmin_val, props.vmin());
 
   // Additional constructors and assignment tests
   PointPropertiesType props2;

@@ -157,6 +157,7 @@ void program_2d(
       setup.allocate_boundary_values(), setup.instantiate_property_reader());
 
   specfem::Logger::info(assembly.print());
+  specfem::Logger::info(assembly.info.string());
 
   // --------------------------------------------------------------
 

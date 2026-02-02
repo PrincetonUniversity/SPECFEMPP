@@ -2,6 +2,7 @@
 #include "enumerations/interface.hpp"
 #include "io/reader.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/assembly/info.hpp"
 
 specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
@@ -66,6 +67,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
                                      this->edge_types, this->mesh };
   this->fields = { this->mesh, this->element_types, simulation };
 
+  this->info = Info<specfem::dimension::type::dim2>(*this);
+
   if (allocate_boundary_values)
     this->boundary_values = { max_timesteps, this->mesh, this->element_types,
                               this->boundaries };
@@ -101,6 +104,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
           << "Total number of geometric points : "
           << this->mesh.element_grid.ngllz << "\n"
           << "Total number of distinct quadrature points : " << this->mesh.nglob
+          << "\n"
+          << this->info.string()
           << "\n";
 
   int total_elements = 0;

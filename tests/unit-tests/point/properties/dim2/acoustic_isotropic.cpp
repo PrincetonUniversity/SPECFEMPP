@@ -92,6 +92,8 @@ TYPED_TEST(PointPropertiesTest, AcousticIsotropic2D) {
       << ExpectedGot(vs, props.vs());
   EXPECT_TRUE(specfem::utilities::is_close(props.vmax(), vp))
       << ExpectedGot(vp, props.vmax());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmin(), vp))
+      << ExpectedGot(vp, props.vmin());
   EXPECT_TRUE(specfem::utilities::is_close(props.rho(), rho))
       << ExpectedGot(rho, props.rho());
 

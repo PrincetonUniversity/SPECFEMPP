@@ -203,6 +203,11 @@ public:
   KOKKOS_INLINE_FUNCTION const value_type vmax() const {
     return Kokkos::max(vpI(), vs()); ///< @f$ v_{max} = \max(v_{pI}, v_S) @f$
   }
+
+  KOKKOS_INLINE_FUNCTION const value_type vmin() const {
+    return Kokkos::min(Kokkos::min(vpI(), vpII()),
+                       vs()); ///< @f$ v_{min} = \min(v_{pI}, v_{pII}, v_S) @f$
+  }
 };
 /**@} end of group specfem_point_properties_dim2_poroelastic_isotropic */
 
