@@ -25,7 +25,7 @@ public:
   AttenuationValues(const type_real &Qkappa, const type_real &Qmu)
       : Qkappa(Qkappa), Qmu(Qmu) {
     if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
-      std::runtime_error(
+      throw std::runtime_error(
           "negative or null values of Q attenuation factor not allowed; set "
           "them equal to 9999 to indicate no attenuation");
     }

@@ -21,7 +21,7 @@ public:
   type_real Qmu; ///< Attenuation factor for shear modulus
   AttenuationValues(const type_real &Qmu) : Qmu(Qmu) {
     if (this->Qmu <= 0.0) {
-      std::runtime_error(
+      throw std::runtime_error(
           "negative or null values of Q attenuation factor not allowed; set "
           "them equal to 9999 to indicate no attenuation");
     }
