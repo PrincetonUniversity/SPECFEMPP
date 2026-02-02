@@ -474,6 +474,7 @@ add_executable(
 
   # Info compute tests
   assembly/info/compute_tests.cpp
+  assembly/info/scatter_minmax_tests.cpp
 
   # New dim3 tests
   assembly/dim3/mesh/shape_functions.cpp
