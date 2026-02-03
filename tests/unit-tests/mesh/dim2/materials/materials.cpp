@@ -147,6 +147,7 @@ void check_material(
 
     const auto medium_tag = material_specification.type;
     const auto property_tag = material_specification.property;
+    const auto attenuation_tag = material_specification.attenuation;
     const int index = material_specification.index;
     const int imaterial = material_specification.database_index;
 
@@ -154,17 +155,19 @@ void check_material(
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE)),
         {
           if ((medium_tag == _medium_tag_) &&
-              (property_tag == _property_tag_)) {
+              (property_tag == _property_tag_) &&
+              (attenuation_tag == _attenuation_tag_)) {
             const auto icomputed =
-                computed.get_material<_medium_tag_, _property_tag_>(ispec);
+                computed.get_material<_medium_tag_, _property_tag_,
+                                      _attenuation_tag_>(ispec);
             const auto iexpected =
                 std::any_cast<specfem::medium_container::material<
                     _dimension_tag_, _medium_tag_, _property_tag_,
-                    specfem::element::attenuation_tag::none> >(
-                    expected[imaterial]);
+                    _attenuation_tag_> >(expected[imaterial]);
             if (icomputed != iexpected) {
               std::ostringstream error_message;
               error_message << "Material " << index << " is not the same ["

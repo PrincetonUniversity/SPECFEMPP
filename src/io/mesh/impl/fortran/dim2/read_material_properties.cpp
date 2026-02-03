@@ -40,21 +40,23 @@ read_materials(
     const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-        acoustic, isotropic> &acoustic_isotropic,
+        acoustic, isotropic, no_attenuation> &acoustic_isotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-        elastic_psv, isotropic> &elastic_psv_isotropic,
+        elastic_psv, isotropic, no_attenuation> &elastic_psv_isotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-        elastic_sh, isotropic> &elastic_sh_isotropic,
+        elastic_sh, isotropic, no_attenuation> &elastic_sh_isotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-        elastic_psv, anisotropic> &elastic_psv_anisotropic,
+        elastic_psv, anisotropic, no_attenuation> &elastic_psv_anisotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-        elastic_sh, anisotropic> &elastic_sh_anisotropic,
+        elastic_sh, anisotropic, no_attenuation> &elastic_sh_anisotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-        poroelastic, isotropic> &poroelastic_isotropic,
+        poroelastic, isotropic, no_attenuation> &poroelastic_isotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-        electromagnetic_te, isotropic> &electromagnetic_te_isotropic,
+        electromagnetic_te, isotropic, no_attenuation>
+        &electromagnetic_te_isotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-        elastic_psv_t, isotropic_cosserat> &elastic_psv_t_isotropic_cosserat) {
+        elastic_psv_t, isotropic_cosserat, no_attenuation>
+        &elastic_psv_t_isotropic_cosserat) {
 
   // Define the elastic medium tag based on input elastic wave type
   const specfem::element::medium_tag elastic = [elastic_wave]() {
@@ -205,6 +207,7 @@ read_materials(
               materials<specfem::dimension::type::dim2>::material_specification(
                   specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic,
+                  specfem::element::attenuation_tag::none,
                   index_acoustic_isotropic, read_values.n - 1);
 
           index_acoustic_isotropic++;
@@ -239,6 +242,7 @@ read_materials(
                     material_specification(
                         specfem::element::medium_tag::elastic_psv,
                         specfem::element::property_tag::isotropic,
+                        specfem::element::attenuation_tag::none,
                         index_elastic_isotropic, read_values.n - 1);
           } else {
             specfem::medium_container::material<specfem::dimension::type::dim2,
@@ -253,6 +257,7 @@ read_materials(
                     material_specification(
                         specfem::element::medium_tag::elastic_sh,
                         specfem::element::property_tag::isotropic,
+                        specfem::element::attenuation_tag::none,
                         index_elastic_isotropic, read_values.n - 1);
           }
 
@@ -299,6 +304,7 @@ read_materials(
               materials<specfem::dimension::type::dim2>::material_specification(
                   specfem::element::medium_tag::elastic_psv,
                   specfem::element::property_tag::anisotropic,
+                  specfem::element::attenuation_tag::none,
                   index_elastic_anisotropic, read_values.n - 1);
         } else {
 
@@ -314,6 +320,7 @@ read_materials(
               materials<specfem::dimension::type::dim2>::material_specification(
                   specfem::element::medium_tag::elastic_sh,
                   specfem::element::property_tag::anisotropic,
+                  specfem::element::attenuation_tag::none,
                   index_elastic_anisotropic, read_values.n - 1);
         }
 
@@ -354,6 +361,7 @@ read_materials(
             materials<specfem::dimension::type::dim2>::material_specification(
                 specfem::element::medium_tag::poroelastic,
                 specfem::element::property_tag::isotropic,
+                specfem::element::attenuation_tag::none,
                 index_poroelastic_isotropic, read_values.n - 1);
         index_poroelastic_isotropic++;
       } else {
@@ -388,6 +396,7 @@ read_materials(
             materials<specfem::dimension::type::dim2>::material_specification(
                 specfem::element::medium_tag::electromagnetic_te,
                 specfem::element::property_tag::isotropic,
+                specfem::element::attenuation_tag::none,
                 index_electromagnetic_te_isotropic, read_values.n - 1);
 
         index_electromagnetic_te_isotropic++;
@@ -422,6 +431,7 @@ read_materials(
             materials<specfem::dimension::type::dim2>::material_specification(
                 specfem::element::medium_tag::elastic_psv_t,
                 specfem::element::property_tag::isotropic_cosserat,
+                specfem::element::attenuation_tag::none,
                 index_elastic_psv_t_isotropic_cosserat, read_values.n - 1);
         index_elastic_psv_t_isotropic_cosserat++;
 
@@ -470,42 +480,43 @@ read_materials(
   // Create materials instances
   acoustic_isotropic =
       specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-          acoustic, isotropic>(l_acoustic_isotropic.size(),
-                               l_acoustic_isotropic);
+          acoustic, isotropic, no_attenuation>(l_acoustic_isotropic.size(),
+                                               l_acoustic_isotropic);
 
   elastic_psv_isotropic =
       specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-          elastic_psv, isotropic>(l_elastic_psv_isotropic.size(),
-                                  l_elastic_psv_isotropic);
+          elastic_psv, isotropic, no_attenuation>(
+          l_elastic_psv_isotropic.size(), l_elastic_psv_isotropic);
 
   elastic_sh_isotropic =
       specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-          elastic_sh, isotropic>(l_elastic_sh_isotropic.size(),
-                                 l_elastic_sh_isotropic);
+          elastic_sh, isotropic, no_attenuation>(l_elastic_sh_isotropic.size(),
+                                                 l_elastic_sh_isotropic);
 
   elastic_psv_anisotropic =
       specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-          elastic_psv, anisotropic>(l_elastic_psv_anisotropic.size(),
-                                    l_elastic_psv_anisotropic);
+          elastic_psv, anisotropic, no_attenuation>(
+          l_elastic_psv_anisotropic.size(), l_elastic_psv_anisotropic);
 
   elastic_sh_anisotropic =
       specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-          elastic_sh, anisotropic>(l_elastic_sh_anisotropic.size(),
-                                   l_elastic_sh_anisotropic);
+          elastic_sh, anisotropic, no_attenuation>(
+          l_elastic_sh_anisotropic.size(), l_elastic_sh_anisotropic);
 
   poroelastic_isotropic =
       specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-          poroelastic, isotropic>(l_poroelastic_isotropic.size(),
-                                  l_poroelastic_isotropic);
+          poroelastic, isotropic, no_attenuation>(
+          l_poroelastic_isotropic.size(), l_poroelastic_isotropic);
 
   electromagnetic_te_isotropic =
       specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-          electromagnetic_te, isotropic>(l_electromagnetic_te_isotropic.size(),
-                                         l_electromagnetic_te_isotropic);
+          electromagnetic_te, isotropic, no_attenuation>(
+          l_electromagnetic_te_isotropic.size(),
+          l_electromagnetic_te_isotropic);
 
   elastic_psv_t_isotropic_cosserat =
       specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-          elastic_psv_t, isotropic_cosserat>(
+          elastic_psv_t, isotropic_cosserat, no_attenuation>(
           l_elastic_psv_t_isotropic_cosserat.size(),
           l_elastic_psv_t_isotropic_cosserat);
   return index_mapping;
@@ -575,14 +586,15 @@ specfem::io::mesh::impl::fortran::dim2::read_material_properties(
   // Read material properties
   auto index_mapping = read_materials(
       stream, numat, elastic_wave, electromagnetic_wave,
-      materials.get_container<acoustic, isotropic>(),
-      materials.get_container<elastic_psv, isotropic>(),
-      materials.get_container<elastic_sh, isotropic>(),
-      materials.get_container<elastic_psv, anisotropic>(),
-      materials.get_container<elastic_sh, anisotropic>(),
-      materials.get_container<poroelastic, isotropic>(),
-      materials.get_container<electromagnetic_te, isotropic>(),
-      materials.get_container<elastic_psv_t, isotropic_cosserat>());
+      materials.get_container<acoustic, isotropic, no_attenuation>(),
+      materials.get_container<elastic_psv, isotropic, no_attenuation>(),
+      materials.get_container<elastic_sh, isotropic, no_attenuation>(),
+      materials.get_container<elastic_psv, anisotropic, no_attenuation>(),
+      materials.get_container<elastic_sh, anisotropic, no_attenuation>(),
+      materials.get_container<poroelastic, isotropic, no_attenuation>(),
+      materials.get_container<electromagnetic_te, isotropic, no_attenuation>(),
+      materials
+          .get_container<elastic_psv_t, isotropic_cosserat, no_attenuation>());
 
   // Read material indices
   read_material_indices(stream, nspec, numat, index_mapping,

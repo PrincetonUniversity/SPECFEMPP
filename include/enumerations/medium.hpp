@@ -282,7 +282,8 @@ const std::string to_string(const medium_tag &medium,
  * @return Combined string representation
  */
 const std::string to_string(const medium_tag &medium,
-                            const property_tag &property_tag);
+                            const property_tag &property_tag,
+                            const attenuation_tag &attenuation_tag);
 
 /**
  * @brief Convert medium tag to string.
@@ -307,6 +308,8 @@ const std::string to_string(const property_tag &property);
  * @return String representation
  */
 const std::string to_string(const boundary_tag &boundary);
+
+const std::string to_string(const attenuation_tag &attenuation);
 
 /**
  * @brief Type trait to identify elastic media.

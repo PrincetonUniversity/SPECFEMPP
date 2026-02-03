@@ -1,20 +1,21 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
 #include "domain_view.hpp"
 #include "enumerations/dimension.hpp"
-#include "specfem/macros.hpp"
-#include "specfem/logger.hpp"
 #include "enumerations/medium.hpp"
 #include "io/impl/medium_writer.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/assembly.hpp"
+#include "specfem/logger.hpp"
+#include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
 
 template <typename OutputLibrary, typename ContainerType>
 void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
     const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2> &element_types,
+    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+        &element_types,
     ContainerType &container) {
   using DomainView =
       specfem::kokkos::DomainView2d<type_real, 3, Kokkos::HostSpace>;
@@ -33,14 +34,16 @@ void specfem::io::impl::write_container(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       {
         const std::string name =
             std::string("/") +
-            specfem::element::to_string(_medium_tag_, _property_tag_);
+            specfem::element::to_string(_medium_tag_, _property_tag_,
+                                       _attenuation_tag_);
         typename OutputLibrary::Group group = file.createGroup(name);
         const auto element_indices =
-            element_types.get_elements_on_host(_medium_tag_, _property_tag_);
+            element_types.get_elements_on_host(_medium_tag_, _property_tag_, _attenuation_tag_);
         const int n_elements = element_indices.size();
         n_written += n_elements;
         DomainView x("xcoordinates", n_elements, ngllz, ngllx);
@@ -59,6 +62,7 @@ void specfem::io::impl::write_container(
         auto data_container =
             container.template get_container<_medium_tag_, _property_tag_>();
 
+
         data_container.for_each_host_view(
             [&](const auto view, const std::string name) mutable {
               group.createDataset(name, view).write();
@@ -74,5 +78,6 @@ void specfem::io::impl::write_container(
     throw std::runtime_error(message.str());
   }
 
-  specfem::Logger::info(output_namespace + " written to " + output_folder + "/" + output_namespace);
+  specfem::Logger::info(output_namespace + " written to " + output_folder +
+                        "/" + output_namespace);
 }

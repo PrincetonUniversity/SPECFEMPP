@@ -95,8 +95,10 @@ public:
    */
   std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
              Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-  get_indices_on_device(const specfem::element::medium_tag medium,
-                        const specfem::element::property_tag property) const;
+  get_indices_on_device(
+      const specfem::element::medium_tag medium,
+      const specfem::element::property_tag property,
+      const specfem::element::attenuation_tag attenuation) const;
 
   /**
    * @brief Get the spectral element indices in which the receivers are located
@@ -111,8 +113,10 @@ public:
    */
   std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
              Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-  get_indices_on_host(const specfem::element::medium_tag medium,
-                      const specfem::element::property_tag property) const;
+  get_indices_on_host(
+      const specfem::element::medium_tag medium,
+      const specfem::element::property_tag property,
+      const specfem::element::attenuation_tag attenuation) const;
 
   /**
    * @brief Get the seismogram types
@@ -150,8 +154,8 @@ private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
-                                    ISOTROPIC_COSSERAT)),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+                       ATTENUATION_TAG(NONE)),
                       DECLARE((IndexViewType, receiver_indices),
                               (IndexViewType::HostMirror, h_receiver_indices),
                               (IndexViewType, elements),

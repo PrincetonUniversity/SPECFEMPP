@@ -21,9 +21,10 @@ template <> struct materials<specfem::dimension::type::dim2> {
       specfem::dimension::type::dim2; ///< Dimension type
 
   struct material_specification {
-    specfem::element::medium_tag type;       ///< Type of element
-    specfem::element::property_tag property; ///< Property of element
-    int index;                               ///< Index of material property
+    specfem::element::medium_tag type;             ///< Type of element
+    specfem::element::property_tag property;       ///< Property of element
+    specfem::element::attenuation_tag attenuation; ///< Attenuation type
+    int index;          ///< Index of material property
     int database_index; ///< Index of material property in the database
 
     /**
@@ -40,27 +41,28 @@ template <> struct materials<specfem::dimension::type::dim2> {
      * @param index Index of material property
      */
     material_specification(specfem::element::medium_tag type,
-                           specfem::element::property_tag property, int index,
-                           int database_index)
-        : type(type), property(property), index(index),
-          database_index(database_index) {};
+                           specfem::element::property_tag property,
+                           specfem::element::attenuation_tag attenuation,
+                           int index, int database_index)
+        : type(type), property(property), attenuation(attenuation),
+          index(index), database_index(database_index) {};
   };
 
   template <specfem::element::medium_tag type,
-            specfem::element::property_tag property>
+            specfem::element::property_tag property,
+            specfem::element::attenuation_tag attenuation>
   struct material {
     int n_materials; ///< Number of elements
-    std::vector<specfem::medium_container::material<
-        dimension_tag, type, property,
-        specfem::element::attenuation_tag::none> >
+    std::vector<
+        specfem::medium_container::material<dimension_tag, type, property,
+                                            attenuation> >
         element_materials; ///< Material properties
 
     material() = default;
 
     material(const int n_materials,
              const std::vector<specfem::medium_container::material<
-                 dimension_tag, type, property,
-                 specfem::element::attenuation_tag::none> > &l_material);
+                 dimension_tag, type, property, attenuation> > &l_material);
   };
 
   int n_materials; ///< Total number of different materials
@@ -72,15 +74,11 @@ template <> struct materials<specfem::dimension::type::dim2> {
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T,
                   ELECTROMAGNETIC_TE),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
-                (_MEDIUM_TAG_, _PROPERTY_TAG_)),
+                (_MEDIUM_TAG_, _PROPERTY_TAG_, _ATTENUATION_TAG_)),
                material)))
-
-  specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-      specfem::element::medium_tag::electromagnetic_te,
-      specfem::element::property_tag::isotropic>
-      electromagnetic_te_isotropic; ///< Electromagnetic material propertie TE
 
   /**
    * @name Constructors
@@ -105,16 +103,17 @@ template <> struct materials<specfem::dimension::type::dim2> {
   ///@}
 
 public:
-  template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
   /**
    * @brief Material material at spectral element index
    *
    * @param index Spectral element index
    * @return std::variant Material properties
    */
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag,
+            specfem::element::attenuation_tag AttenuationTag>
   specfem::medium_container::material<dimension_tag, MediumTag, PropertyTag,
-                                      specfem::element::attenuation_tag::none>
+                                      AttenuationTag>
   get_material(const int index) const {
     const auto &material_specification = this->material_index_mapping(index);
 
@@ -122,10 +121,12 @@ public:
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE)),
         CAPTURE(material) {
           if constexpr (MediumTag == _medium_tag_ &&
-                        PropertyTag == _property_tag_) {
+                        PropertyTag == _property_tag_ &&
+                        AttenuationTag == _attenuation_tag_) {
             return _material_.element_materials[material_specification.index];
           }
         })
@@ -143,18 +144,22 @@ public:
    * @return material<MediumTag, PropertyTag>& material container
    */
   template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
-  specfem::mesh::materials<dimension_tag>::material<MediumTag, PropertyTag> &
+            specfem::element::property_tag PropertyTag,
+            specfem::element::attenuation_tag AttenuationTag>
+  specfem::mesh::materials<dimension_tag>::material<MediumTag, PropertyTag,
+                                                    AttenuationTag> &
   get_container() {
 
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE)),
         CAPTURE(material) {
           if constexpr (_medium_tag_ == MediumTag &&
-                        _property_tag_ == PropertyTag) {
+                        _property_tag_ == PropertyTag &&
+                        _attenuation_tag_ == AttenuationTag) {
             return _material_;
           }
         })

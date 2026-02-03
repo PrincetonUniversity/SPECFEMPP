@@ -26,7 +26,8 @@ void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
       (DIMENSION_TAG(DIM2, DIM3),
        MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       {
         if constexpr (DimensionTag == _dimension_tag_) {
           impl::compute_seismograms<WavefieldType, DimensionTag, NGLL,

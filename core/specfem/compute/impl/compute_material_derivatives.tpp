@@ -24,7 +24,7 @@ void specfem::compute::impl::compute_material_derivatives(
   auto &jacobian_matrix = assembly.jacobian_matrix;
 
   const auto elements =
-      assembly.element_types.get_elements_on_device(MediumTag, PropertyTag);
+      assembly.element_types.get_elements_on_device(MediumTag, PropertyTag, specfem::element::attenuation_tag::none);
 
   const int nelements = elements.extent(0);
 
