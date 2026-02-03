@@ -102,8 +102,8 @@ public:
   template <bool on_device, typename IndexType, typename PointType>
   KOKKOS_FORCEINLINE_FUNCTION void
   impl_load(const std::integral_constant<
-                specfem::data_access::AccessorType,
-                specfem::data_access::AccessorType::point> /* AccessorType */,
+                specfem::datatype::AccessorType,
+                specfem::datatype::AccessorType::point> /* AccessorType */,
             const IndexType &index, PointType &point) const {
 
     static_assert(specfem::data_access::is_point<PointType>::value,

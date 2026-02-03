@@ -27,13 +27,13 @@ template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct PropertyAccessor : public specfem::data_access::Accessor<
-                              specfem::data_access::AccessorType::point,
+                              specfem::datatype::AccessorType::point,
                               specfem::data_access::DataClassType::properties,
                               DimensionTag, UseSIMD> {
 
 public:
   using base_accessor = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::properties, DimensionTag,
       UseSIMD>; ///< Base type of
                 ///< the point
@@ -73,10 +73,10 @@ template <specfem::element::dimension_tag DimensionTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct KernelsAccessor
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::kernels, DimensionTag, UseSIMD> {
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::kernels, DimensionTag,
       UseSIMD>;                                              ///< Base type of
                                                              ///< the point

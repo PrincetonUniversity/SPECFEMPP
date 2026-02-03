@@ -24,7 +24,7 @@ template <specfem::element::dimension_tag DimensionTag, typename SIMD,
 class MappedIndex : public specfem::execution::MappedChunkElementIndex<
                         DimensionTag, SIMD, ViewType, TeamMemberType>,
                     public specfem::data_access::Accessor<
-                        specfem::data_access::AccessorType::chunk_element,
+                        specfem::datatype::AccessorType::chunk_element,
                         specfem::data_access::DataClassType::mapped_index,
                         DimensionTag, SIMD::using_simd> {
 private:

@@ -35,7 +35,7 @@ template <specfem::interface::interface_tag InterfaceTag,
 struct conforming_interface<specfem::element::dimension_tag::dim2, InterfaceTag,
                             BoundaryTag>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::conforming_interface,
           specfem::element::dimension_tag::dim2, false> {
 private:
@@ -43,7 +43,7 @@ private:
    * @brief Base accessor type alias.
    */
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::conforming_interface,
       specfem::element::dimension_tag::dim2, false>;
 

@@ -25,7 +25,7 @@ template <bool using_simd = false> struct assembly_index;
 template <>
 struct assembly_index<false>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::assembly_index,
           specfem::element::dimension_tag::dim2, false> {
   /**
@@ -74,7 +74,7 @@ struct assembly_index<false>
 template <>
 struct assembly_index<true>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::assembly_index,
           specfem::element::dimension_tag::dim2, true> {
   /**

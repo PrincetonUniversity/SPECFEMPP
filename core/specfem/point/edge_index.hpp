@@ -21,7 +21,7 @@ template <specfem::element::dimension_tag DimensionTag> struct edge_index;
 template <>
 struct edge_index<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::edge_index,
           specfem::element::dimension_tag::dim2, false> {
 
@@ -95,7 +95,7 @@ struct edge_index<specfem::element::dimension_tag::dim2>
 template <>
 struct edge_index<specfem::element::dimension_tag::dim3>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::edge_index,
           specfem::element::dimension_tag::dim3, false> {
 

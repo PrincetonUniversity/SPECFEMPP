@@ -26,7 +26,7 @@ struct index;
 template <>
 struct index<specfem::element::dimension_tag::dim2, false>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
           specfem::element::dimension_tag::dim2, false> {
   /**
@@ -73,7 +73,7 @@ struct index<specfem::element::dimension_tag::dim2, false>
 template <>
 struct index<specfem::element::dimension_tag::dim2, true>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
           specfem::element::dimension_tag::dim2, true> {
   /**
@@ -143,7 +143,7 @@ struct index<specfem::element::dimension_tag::dim2, true>
 template <>
 struct index<specfem::element::dimension_tag::dim3, false>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
           specfem::element::dimension_tag::dim3, false> {
   /**
@@ -199,7 +199,7 @@ struct index<specfem::element::dimension_tag::dim3, false>
 template <>
 struct index<specfem::element::dimension_tag::dim3, true>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
           specfem::element::dimension_tag::dim3, true> {
   /**

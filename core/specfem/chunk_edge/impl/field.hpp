@@ -158,12 +158,12 @@ template <int ChunkSize, int NGLL, specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::data_access::DataClassType DataClass, bool UseSIMD>
 class field : public specfem::data_access::Accessor<
-                  specfem::data_access::AccessorType::chunk_edge, DataClass,
+                  specfem::datatype::AccessorType::chunk_edge, DataClass,
                   DimensionTag, UseSIMD> {
 private:
   /// @brief Type alias for the base accessor class
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::chunk_edge, DataClass, DimensionTag,
+      specfem::datatype::AccessorType::chunk_edge, DataClass, DimensionTag,
       UseSIMD>;
 
 public:

@@ -128,8 +128,8 @@ private:
   template <bool on_device, typename IndexType, typename... PointTypes>
   KOKKOS_FORCEINLINE_FUNCTION void impl_load_after_expansion(
       const std::integral_constant<
-          specfem::data_access::AccessorType,
-          specfem::data_access::AccessorType::point> /* AccessorType */,
+          specfem::datatype::AccessorType,
+          specfem::datatype::AccessorType::point> /* AccessorType */,
       const IndexType &index, PointTypes &...points) const {
 
     static_assert((specfem::data_access::is_point<PointTypes>::value && ...),
@@ -162,8 +162,8 @@ private:
   template <bool on_device, typename IndexType, typename... EdgeTypes>
   KOKKOS_FORCEINLINE_FUNCTION void impl_load_after_expansion(
       const std::integral_constant<
-          specfem::data_access::AccessorType,
-          specfem::data_access::AccessorType::chunk_edge> /* AccessorType */,
+          specfem::datatype::AccessorType,
+          specfem::datatype::AccessorType::chunk_edge> /* AccessorType */,
       const IndexType &index, EdgeTypes &...edges) const {
 
     static_assert(

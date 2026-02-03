@@ -20,11 +20,11 @@ namespace specfem::data_access {
  */
 template <specfem::data_access::DataClassType DataClass,
           specfem::element::dimension_tag DimensionTag, bool UseSIMD>
-struct Accessor<specfem::data_access::AccessorType::chunk_edge, DataClass,
+struct Accessor<specfem::datatype::AccessorType::chunk_edge, DataClass,
                 DimensionTag, UseSIMD> {
   /// @brief Accessor pattern identifier
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge;
+      specfem::datatype::AccessorType::chunk_edge;
   /// @brief Data classification type
   constexpr static auto data_class = DataClass;
   /// @brief Spatial dimension
@@ -91,7 +91,7 @@ struct is_chunk_edge : std::false_type {};
 template <typename T>
 struct is_chunk_edge<
     T, std::enable_if_t<T::accessor_type ==
-                        specfem::data_access::AccessorType::chunk_edge> >
+                        specfem::datatype::AccessorType::chunk_edge> >
     : std::true_type {};
 
 } // namespace specfem::data_access

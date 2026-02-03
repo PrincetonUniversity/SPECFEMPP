@@ -19,11 +19,11 @@ template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType>
 struct source
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::source, DimensionTag, false> {
 private:
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::source, DimensionTag,
       false>; ///< Base type for the
               ///< source

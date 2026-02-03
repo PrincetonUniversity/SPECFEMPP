@@ -23,7 +23,7 @@ template <specfem::element::dimension_tag DimensionTag, typename ViewType,
 class Index : public specfem::execution::ChunkEdgeIndex<DimensionTag, ViewType,
                                                         TeamMemberType>,
               public specfem::data_access::Accessor<
-                  specfem::data_access::AccessorType::chunk_edge,
+                  specfem::datatype::AccessorType::chunk_edge,
                   specfem::data_access::DataClassType::edge_index, DimensionTag,
                   false> {
 private:

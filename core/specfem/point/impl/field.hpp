@@ -71,14 +71,14 @@ template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::data_access::DataClassType DataClass, bool UseSIMD>
 class field : public specfem::data_access::Accessor<
-                  specfem::data_access::AccessorType::point, DataClass,
+                  specfem::datatype::AccessorType::point, DataClass,
                   DimensionTag, UseSIMD> {
 private:
   /**
    * @brief Type alias for the base accessor class.
    */
   using base_type =
-      specfem::data_access::Accessor<specfem::data_access::AccessorType::point,
+      specfem::data_access::Accessor<specfem::datatype::AccessorType::point,
                                      DataClass, DimensionTag, UseSIMD>;
 
 public:

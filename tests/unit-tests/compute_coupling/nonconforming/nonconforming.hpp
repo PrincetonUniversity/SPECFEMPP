@@ -19,7 +19,7 @@ template <specfem::element::dimension_tag DimensionTag>
 class ChunkEdgeIndexSimulator {
 public:
   static constexpr auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge;
+      specfem::datatype::AccessorType::chunk_edge;
   using KokkosIndexType = Kokkos::TeamPolicy<>::member_type;
 
   KOKKOS_INLINE_FUNCTION
@@ -47,7 +47,7 @@ struct EdgeFunctionWithEmbeddedAccessor
           typename EdgeFunction2D::memory_space, Kokkos::MemoryTraits<> >,
       Accessor {
   static constexpr auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge;
+      specfem::datatype::AccessorType::chunk_edge;
   static constexpr bool using_simd = false;
 
   template <typename Init>
@@ -202,7 +202,7 @@ struct EdgeFunctionAccessor<
                          specfem::interface::interface_tag::elastic_acoustic,
                      void> >
     : specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::acceleration,
           specfem::element::dimension_tag::dim2, false> {};
 
@@ -213,7 +213,7 @@ struct EdgeFunctionAccessor<
                          specfem::interface::interface_tag::acoustic_elastic,
                      void> >
     : specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::displacement,
           specfem::element::dimension_tag::dim2, false> {};
 

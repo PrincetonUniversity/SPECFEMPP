@@ -1,8 +1,8 @@
 #pragma once
 
 #include "data_class.hpp"
-#include "enumerations/accessor_type.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/datatype.hpp"
 #include <type_traits>
 
 namespace specfem::data_access {
@@ -19,7 +19,7 @@ namespace specfem::data_access {
  * @tparam DimensionTag Spatial dimension (2D/3D)
  * @tparam UseSIMD Enable SIMD vectorization
  */
-template <specfem::data_access::AccessorType AccessorType,
+template <specfem::datatype::AccessorType AccessorType,
           specfem::data_access::DataClassType DataClass,
           specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct Accessor;
@@ -35,7 +35,7 @@ template <typename T, typename = void> struct is_accessor : std::false_type {};
 template <typename T>
 struct is_accessor<
     T, std::enable_if_t<std::is_same_v<decltype(T::accessor_type),
-                                       specfem::data_access::AccessorType> > >
+                                       specfem::datatype::AccessorType> > >
     : std::true_type {};
 
 } // namespace specfem::data_access

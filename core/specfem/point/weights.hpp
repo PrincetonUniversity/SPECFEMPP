@@ -22,7 +22,7 @@ template <specfem::element::dimension_tag DimensionTag> struct weights;
 template <>
 struct weights<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::weights,
           specfem::element::dimension_tag::dim2, false> {
   constexpr static auto dimension_tag =
@@ -63,7 +63,7 @@ struct weights<specfem::element::dimension_tag::dim2>
 template <>
 struct weights<specfem::element::dimension_tag::dim3>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::weights,
           specfem::element::dimension_tag::dim3, false> {
   constexpr static auto dimension_tag =

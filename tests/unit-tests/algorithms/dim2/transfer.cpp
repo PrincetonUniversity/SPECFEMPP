@@ -25,7 +25,7 @@ namespace specfem::algorithms_test {
 class ChunkEdgeIndex {
 public:
   static constexpr auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge;
+      specfem::datatype::AccessorType::chunk_edge;
   using KokkosIndexType = Kokkos::TeamPolicy<>::member_type;
 
   /**

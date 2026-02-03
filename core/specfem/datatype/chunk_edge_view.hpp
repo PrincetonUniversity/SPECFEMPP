@@ -1,5 +1,6 @@
 #pragma once
 
+#include "accessor_type.hpp"
 #include "enumerations/interface.hpp"
 #include "impl/chunk_edge_subview.hpp"
 #include "simd.hpp"
@@ -82,9 +83,9 @@ struct ScalarChunkEdgeViewType<T, specfem::element::dimension_tag::dim2,
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge; ///< Accessor type for
-                                                      ///< identifying the
-                                                      ///< class
+      specfem::datatype::AccessorType::chunk_edge; ///< Accessor type for
+                                                   ///< identifying the
+                                                   ///< class
 
   constexpr static int nedges = NumberOfEdges;   ///< Number of edges in
                                                  ///< the chunk
@@ -202,15 +203,15 @@ struct VectorChunkEdgeViewType<T, specfem::element::dimension_tag::dim2,
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge; ///< Accessor type for
-                                                      ///< identifying the
-                                                      ///< class
-  constexpr static int nedges = NumberOfEdges;        ///< Number of edges in
-                                                      ///< the chunk
-  constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
-                                                 ///< each element
-  constexpr static int components = Components;  ///< Number of vector values at
-                                                 ///< each GLL point
+      specfem::datatype::AccessorType::chunk_edge; ///< Accessor type for
+                                                   ///< identifying the
+                                                   ///< class
+  constexpr static int nedges = NumberOfEdges;     ///< Number of edges in
+                                                   ///< the chunk
+  constexpr static int ngll = NumberOfGLLPoints;   ///< Number of GLL points in
+                                                   ///< each element
+  constexpr static int components = Components; ///< Number of vector values at
+                                                ///< each GLL point
   ///@}
 
   /**
@@ -340,9 +341,9 @@ struct TensorChunkEdgeViewType<
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge; ///< Accessor type for
-                                                      ///< identifying the
-                                                      ///< class
+      specfem::datatype::AccessorType::chunk_edge; ///< Accessor type for
+                                                   ///< identifying the
+                                                   ///< class
 
   constexpr static int nedges = NumberOfEdges;   ///< Number of edges in
                                                  ///< the chunk

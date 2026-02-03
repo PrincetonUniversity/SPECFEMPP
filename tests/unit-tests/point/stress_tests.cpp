@@ -416,7 +416,7 @@ TYPED_TEST(PointStressTest, AccessorBaseType) {
   // Check if stress_type is derived from the correct base class
   bool is_accessor =
       std::is_base_of<specfem::data_access::Accessor<
-                          specfem::data_access::AccessorType::point,
+                          specfem::datatype::AccessorType::point,
                           specfem::data_access::DataClassType::stress,
                           specfem::element::dimension_tag::dim2, using_simd>,
                       stress_type>::value;

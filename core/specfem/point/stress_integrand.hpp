@@ -30,12 +30,12 @@ template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct stress_integrand
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::stress_integrand, DimensionTag,
           UseSIMD> {
 private:
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::stress_integrand, DimensionTag,
       UseSIMD>; ///< Base accessor
                 ///< type

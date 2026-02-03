@@ -29,12 +29,12 @@ struct jacobian_matrix;
 template <bool UseSIMD>
 struct jacobian_matrix<specfem::element::dimension_tag::dim2, false, UseSIMD>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::jacobian_matrix,
           specfem::element::dimension_tag::dim2, UseSIMD> {
 private:
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::jacobian_matrix,
       specfem::element::dimension_tag::dim2,
       UseSIMD>; ///< Base type of the point
@@ -154,12 +154,12 @@ operator*(const type_real &lhs, const PointJacobianMatrixType &rhs) {
 template <bool UseSIMD>
 struct jacobian_matrix<specfem::element::dimension_tag::dim3, false, UseSIMD>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::jacobian_matrix,
           specfem::element::dimension_tag::dim3, UseSIMD> {
 private:
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::jacobian_matrix,
       specfem::element::dimension_tag::dim3,
       UseSIMD>; ///< Base type of the point

@@ -14,7 +14,7 @@ namespace specfem::test_fixture {
 template <specfem::interface::interface_tag InterfaceTag, typename... Accessors>
 struct IntersectionDataPack
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::nonconforming_interface,
           dimension_tag_, false>,
       public Accessors... {
@@ -52,7 +52,7 @@ template <specfem::interface::interface_tag InterfaceTag,
           specfem::data_access::DataClassType... PackedTypes>
 struct IntersectionDataPack2D
     : specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::nonconforming_interface,
           specfem::element::dimension_tag::dim2, false /*UseSIMD*/>,
       specfem::test_fixture::NonconformingAccessorPatch2D<

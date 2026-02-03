@@ -22,7 +22,7 @@ template <int NQuadIntersection, specfem::element::dimension_tag DimensionTag,
           specfem::element::boundary_tag BoundaryTag>
 struct nonconforming_transfer_function
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point, DataClass, DimensionTag,
+          specfem::datatype::AccessorType::point, DataClass, DimensionTag,
           false> {
 public:
   /**
@@ -134,7 +134,7 @@ using transfer_function_coupled = impl::nonconforming_transfer_function<
 template <typename... Accessors>
 struct NonconformingAccessorPack
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::nonconforming_interface,
           specfem::element::dimension_tag::dim2, false>,
       public Accessors... {
@@ -144,7 +144,7 @@ private:
    * @brief Base accessor type alias.
    */
   using accessor_base = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::nonconforming_interface,
       specfem::element::dimension_tag::dim2, false>;
 

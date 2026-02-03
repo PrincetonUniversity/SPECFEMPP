@@ -1,5 +1,6 @@
 #pragma once
 
+#include "accessor_type.hpp"
 #include "enumerations/interface.hpp"
 #include "point_view.hpp"
 #include <Kokkos_Core.hpp>
@@ -52,9 +53,9 @@ struct ScalarElementViewType<T, specfem::element::dimension_tag::dim2,
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
-                                                         ///< identifying the
-                                                         ///< class
+      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
 
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
                                                  ///< each element
@@ -136,9 +137,9 @@ struct ScalarElementViewType<T, specfem::element::dimension_tag::dim3,
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
-                                                         ///< identifying the
-                                                         ///< class
+      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
 
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
                                                  ///< each element

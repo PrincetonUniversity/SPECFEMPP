@@ -47,7 +47,7 @@ struct transfer_function<specfem::element::dimension_tag::dim2, NumberElements,
                          NQuadIntersection, NQuadElement, DataClass,
                          InterfaceTag, BoundaryTag, MemorySpace, MemoryTraits>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge, DataClass,
+          specfem::datatype::AccessorType::chunk_edge, DataClass,
           specfem::element::dimension_tag::dim2, false> {
 
 public:
@@ -202,7 +202,7 @@ struct intersection_factor<specfem::element::dimension_tag::dim2, InterfaceTag,
                            BoundaryTag, NumberElements, NQuadIntersection,
                            MemorySpace, MemoryTraits>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::intersection_factor,
           specfem::element::dimension_tag::dim2, false> {
 
@@ -314,7 +314,7 @@ struct intersection_normal<specfem::element::dimension_tag::dim2, InterfaceTag,
                            BoundaryTag, NumberElements, NQuadIntersection,
                            MemorySpace, MemoryTraits>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::intersection_normal,
           specfem::element::dimension_tag::dim2, false> {
 
@@ -404,7 +404,7 @@ public:
 template <typename... Accessors>
 struct NonconformingAccessorPack
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::nonconforming_interface,
           specfem::element::dimension_tag::dim2, false>,
       public Accessors... {

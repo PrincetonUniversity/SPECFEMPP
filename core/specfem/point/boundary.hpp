@@ -30,7 +30,7 @@ struct boundary;
 template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct boundary<specfem::element::boundary_tag::none, DimensionTag, UseSIMD>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::boundary, DimensionTag,
           UseSIMD> {
 private:

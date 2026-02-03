@@ -288,7 +288,7 @@ TEST_F(PointSourceTest, AccessorBaseType) {
   // Check if source_type is derived from the correct base class
   bool is_accessor =
       std::is_base_of<specfem::data_access::Accessor<
-                          specfem::data_access::AccessorType::point,
+                          specfem::datatype::AccessorType::point,
                           specfem::data_access::DataClassType::source,
                           specfem::element::dimension_tag::dim2, false>,
                       source_type>::value;

@@ -56,7 +56,7 @@ class Index
     : public specfem::execution::ChunkElementIndex<DimensionTag, SIMD, ViewType,
                                                    TeamMemberType>,
       public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_element,
+          specfem::datatype::AccessorType::chunk_element,
           specfem::data_access::DataClassType::index, DimensionTag,
           SIMD::using_simd> {
 private:

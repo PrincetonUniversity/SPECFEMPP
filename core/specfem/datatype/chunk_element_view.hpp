@@ -1,5 +1,6 @@
 #pragma once
 
+#include "accessor_type.hpp"
 #include "enumerations/interface.hpp"
 #include "impl/chunk_element_subview.hpp"
 #include "point_view.hpp"
@@ -87,9 +88,9 @@ struct ScalarChunkElementViewType<T, specfem::element::dimension_tag::dim2,
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
-                                                         ///< identifying the
-                                                         ///< class
+      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
 
   constexpr static int nelements = NumberOfElements; ///< Number of elements in
                                                      ///< the chunk
@@ -190,9 +191,9 @@ struct ScalarChunkElementViewType<T, specfem::element::dimension_tag::dim3,
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
-                                                         ///< identifying the
-                                                         ///< class
+      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
 
   constexpr static int nelements = NumberOfElements; ///< Number of elements in
                                                      ///< the chunk
@@ -320,11 +321,11 @@ struct VectorChunkElementViewType<
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
-                                                         ///< identifying the
-                                                         ///< class
-  constexpr static int nelements = NumberOfElements; ///< Number of elements in
-                                                     ///< the chunk
+      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
+  constexpr static int nelements = NumberOfElements;  ///< Number of elements in
+                                                      ///< the chunk
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
                                                  ///< each element
   constexpr static int components = Components;  ///< Number of vector values at
@@ -442,11 +443,11 @@ struct VectorChunkElementViewType<
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
-                                                         ///< identifying the
-                                                         ///< class
-  constexpr static int nelements = NumberOfElements; ///< Number of elements in
-                                                     ///< the chunk
+      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
+  constexpr static int nelements = NumberOfElements;  ///< Number of elements in
+                                                      ///< the chunk
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
                                                  ///< each element
   constexpr static int components = Components;  ///< Number of vector values at
@@ -590,9 +591,9 @@ struct TensorChunkElementViewType<T, specfem::element::dimension_tag::dim2,
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
-                                                         ///< identifying the
-                                                         ///< class
+      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
 
   constexpr static int nelements = NumberOfElements; ///< Number of elements in
                                                      ///< the chunk
@@ -726,9 +727,9 @@ struct TensorChunkElementViewType<T, specfem::element::dimension_tag::dim3,
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
-                                                         ///< identifying the
-                                                         ///< class
+      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
 
   constexpr static int nelements = NumberOfElements; ///< Number of elements in
                                                      ///< the chunk
