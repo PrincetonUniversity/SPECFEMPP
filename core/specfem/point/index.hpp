@@ -64,6 +64,22 @@ struct index<specfem::dimension::type::dim2, false>
   KOKKOS_FUNCTION
   index(const int &ispec, const int &iz, const int &ix)
       : ispec(ispec), iz(iz), ix(ix) {}
+
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param other The index to copy from.
+   * @return Reference to this index.
+   */
+  KOKKOS_FUNCTION
+  index& operator=(const index &other) {
+    if (this != &other) {
+      ispec = other.ispec;
+      iz = other.iz;
+      ix = other.ix;
+    }
+    return *this;
+  }
 };
 
 /**
@@ -119,6 +135,23 @@ struct index<specfem::dimension::type::dim2, true>
   index(const int &ispec, const int &number_elements, const int &iz,
         const int &ix)
       : ispec(ispec), number_elements(number_elements), iz(iz), ix(ix) {}
+
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param other The index to copy from.
+   * @return Reference to this index.
+   */
+  KOKKOS_FUNCTION
+  index& operator=(const index &other) {
+    if (this != &other) {
+      ispec = other.ispec;
+      number_elements = other.number_elements;
+      iz = other.iz;
+      ix = other.ix;
+    }
+    return *this;
+  }
 
   /**
    * @brief Returns a boolean mask to check if the SIMD index is within the SIMD
@@ -189,6 +222,23 @@ struct index<specfem::dimension::type::dim3, false>
   KOKKOS_FUNCTION
   index(const int &ispec, const int &iz, const int &iy, const int &ix)
       : ispec(ispec), iz(iz), iy(iy), ix(ix) {};
+
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param other The index to copy from.
+   * @return Reference to this index.
+   */
+  KOKKOS_FUNCTION
+  index& operator=(const index &other) {
+    if (this != &other) {
+      ispec = other.ispec;
+      iz = other.iz;
+      iy = other.iy;
+      ix = other.ix;
+    }
+    return *this;
+  }
 };
 
 /**
@@ -253,6 +303,24 @@ struct index<specfem::dimension::type::dim3, true>
   index(const int &ispec, const int &number_elements, const int &iz,
         const int &iy, const int &ix)
       : ispec(ispec), number_elements(number_elements), iz(iz), iy(iy), ix(ix) {
+  }
+
+  /**
+   * @brief Copy assignment operator.
+   *
+   * @param other The index to copy from.
+   * @return Reference to this index.
+   */
+  KOKKOS_FUNCTION
+  index& operator=(const index &other) {
+    if (this != &other) {
+      ispec = other.ispec;
+      number_elements = other.number_elements;
+      iz = other.iz;
+      iy = other.iy;
+      ix = other.ix;
+    }
+    return *this;
   }
 
   /**

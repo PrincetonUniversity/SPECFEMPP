@@ -242,6 +242,16 @@ struct is_conforming_interface<
                                              conforming_interface> >
     : std::true_type {};
 
+/// @brief Detects global coordinate types
+template <typename T, typename = void>
+struct is_global_coordinates : std::false_type {};
+
+template <typename T>
+struct is_global_coordinates<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::global_coordinates> >
+    : std::true_type {};
+
 /// @brief Detects multi-component packed accessors
 template <typename T, typename = void>
 struct is_packed_accessor : std::false_type {};

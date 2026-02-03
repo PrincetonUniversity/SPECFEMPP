@@ -237,6 +237,10 @@ struct element<specfem::dimension::type::dim3>
     : element_grid<specfem::dimension::type::dim3> {
 
 public:
+
+  int ngll2d; ///< Points per 2D face
+  int ngll;   ///< Points per direction
+
   /**
    * @brief Default constructor.
    */
@@ -282,9 +286,7 @@ public:
   map_coordinates(const specfem::mesh_entity::dim3::type &corner) const;
 
 private:
-  int ngll2d; ///< Points per 2D face
-  int ngll;   ///< Points per direction
-
+  
   /**
    * @brief Get face coordinates by 2D indices.
    * @param face Face entity type

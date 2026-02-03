@@ -70,6 +70,9 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::assembly(
   // Currently done in the mesher!
   this->check_jacobian_matrix();
 
+
+  this->info = {*this};
+
   return;
 }
 
@@ -81,9 +84,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::print() const {
           << "  Total number of spectral elements             : "
           << this->mesh.nspec << "\n"
           << "  Total number of quadrature points per element : "
-          << this->mesh.element_grid.ngllz << "\n";
-  // << "Total number of distinct quadrature points    : "
-  // << this->mesh.nglob << "\n";
+          << this->mesh.element_grid.ngllz << "\n"
+          << this->info.string() << "\n";
 
   int total_elements = 0;
 

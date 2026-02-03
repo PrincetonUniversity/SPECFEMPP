@@ -81,5 +81,8 @@ public:
    * control nodes and shape functions.
    */
   void assemble();
+
+
+  void compute_mesh_properties();
 };
 } // namespace specfem::assembly

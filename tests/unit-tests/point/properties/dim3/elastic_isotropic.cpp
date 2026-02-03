@@ -28,6 +28,10 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
   simd_type lambda_val;
   simd_type rho_vp_val;
   simd_type rho_vs_val;
+  simd_type vp_val;
+  simd_type vs_val;
+  simd_type vmax_val;
+  simd_type vmin_val;
 
   if constexpr (using_simd) {
     // Setup test data for SIMD
@@ -42,6 +46,10 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
       lambda_val[i] = lambdaplus2mu_val[i] - 2.0 * mu[i];
       rho_vp_val[i] = rho[i] * vp;
       rho_vs_val[i] = rho[i] * vs;
+      vp_val[i] = vp;
+      vs_val[i] = vs;
+      vmax_val[i] = std::max(vp, vs);
+      vmin_val[i] = std::min(vp, vs);
     }
   } else {
     // Granite-like material for scalar test
@@ -64,6 +72,10 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
     lambda_val = lambda_scalar;
     rho_vp_val = rho_val * vp;
     rho_vs_val = rho_val * vs;
+    vp_val = vp;
+    vs_val = vs;
+    vmax_val = std::max(vp, vs);
+    vmin_val = std::min(vp, vs);
   }
 
   // Create the properties object
@@ -88,6 +100,16 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic3D) {
       << ExpectedGot(rho_vp_val, props.rho_vp());
   EXPECT_TRUE(specfem::utilities::is_close(props.rho_vs(), rho_vs_val))
       << ExpectedGot(rho_vs_val, props.rho_vs());
+
+  // New property checks
+  EXPECT_TRUE(specfem::utilities::is_close(props.vp(), vp_val))
+      << ExpectedGot(vp_val, props.vp());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vs(), vs_val))
+      << ExpectedGot(vs_val, props.vs());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmax(), vmax_val))
+      << ExpectedGot(vmax_val, props.vmax());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmin(), vmin_val))
+      << ExpectedGot(vmin_val, props.vmin());
 
   // Additional constructors and assignment tests
   PointPropertiesType props2;

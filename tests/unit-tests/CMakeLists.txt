@@ -470,6 +470,10 @@ add_executable(
   assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
   assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
 
+  # Info compute tests
+  assembly/info/compute_tests.cpp
+  assembly/info/scatter_minmax_tests.cpp
+
   # New dim3 tests
   assembly/dim3/mesh/shape_functions.cpp
   assembly/dim3/mesh/points.cpp
