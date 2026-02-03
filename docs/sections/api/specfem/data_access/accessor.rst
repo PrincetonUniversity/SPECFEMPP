@@ -1,10 +1,5 @@
 .. _specfem_api_data_access_accessor:
 
-``specfem::datatype::AccessorType``
-======================================
-
-.. doxygenenum:: specfem::datatype::AccessorType
-
 ``specfem::data_access::Accessor``
 ==================================
 
