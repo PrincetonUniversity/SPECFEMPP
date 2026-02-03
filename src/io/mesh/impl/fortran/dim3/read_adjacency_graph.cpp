@@ -1,6 +1,6 @@
 #include "io/mesh/impl/fortran/dim3/read_adjacency_graph.hpp"
 #include "io/fortranio/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 
 specfem::mesh::adjacency_graph<specfem::dimension::type::dim3>
 specfem::io::mesh::impl::fortran::dim3::read_adjacency_graph(

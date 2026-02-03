@@ -1,13 +1,12 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "execution/chunked_domain_iterator.hpp"
-#include "execution/for_each_level.hpp"
-#include "medium/medium.hpp"
-#include "parallel_configuration/chunk_config.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/assembly/impl/helper.hpp"
 #include "specfem/chunk_element.hpp"
+#include "specfem/execution.hpp"
+#include "specfem/medium_physics.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -128,7 +127,8 @@ public:
                                              using_simd>;
 
     using QuadratureType = specfem::quadrature::lagrange_derivative<
-        ngll, dimension_tag, specfem::kokkos::DevScratchSpace,
+        ngll, dimension_tag,
+        Kokkos::DefaultExecutionSpace::scratch_memory_space,
         Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
     using PointPropertyType =
@@ -178,8 +178,8 @@ public:
           }();
 
           // Call the compute_wavefield function
-          specfem::medium::compute_wavefield<dimension_tag, MediumTag,
-                                             PropertyTag>(
+          specfem::medium_physics::compute_wavefield<dimension_tag, MediumTag,
+                                                     PropertyTag>(
               chunk_index, assembly, lagrange_derivative, displacement,
               velocity, acceleration, wavefield_type, wavefield);
         });

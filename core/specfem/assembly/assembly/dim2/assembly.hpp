@@ -2,7 +2,6 @@
 
 #include "enumerations/interface.hpp"
 #include "io/reader.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
 #include "specfem/assembly/compute_source_array.hpp"
@@ -17,6 +16,7 @@
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
 
@@ -200,7 +200,7 @@ template <> struct assembly<specfem::dimension::type::dim2> {
    */
   Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   generate_wavefield_on_entire_grid(
-      const specfem::wavefield::simulation_field wavefield,
+      const specfem::simulation::field_type wavefield,
       const specfem::wavefield::type component);
 
   /**

@@ -1,5 +1,5 @@
 // Internal Includes
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "enumerations/interface.hpp"
 #include "io/fortranio/interface.hpp"
 #include "io/interface.hpp"
@@ -10,8 +10,8 @@
 #include "io/mesh/impl/fortran/dim2/read_mesh_database.hpp"
 #include "io/mesh/impl/fortran/dim2/read_parameters.hpp"
 #include "kokkos_abstractions.h"
-#include "medium/material.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/medium_container.hpp"
 #include "specfem_setup.hpp"
 
 // External/Standard Libraries

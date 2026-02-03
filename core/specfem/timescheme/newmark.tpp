@@ -1,15 +1,14 @@
 #pragma once
 
-#include "execution/for_all.hpp"
-#include "execution/range_iterator.hpp"
-#include "parallel_configuration/range_config.hpp"
+#include "specfem/execution.hpp"
+#include "specfem/parallel_configuration.hpp"
 #include "specfem/timescheme/newmark.hpp"
 #include "specfem/assembly.hpp"
 
 
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 int specfem::time_scheme::newmark_impl::corrector_phase_impl(
     const specfem::assembly::simulation_field<DimensionTag, WavefieldType> &field,
     const type_real deltatover2) {
@@ -63,7 +62,7 @@ int specfem::time_scheme::newmark_impl::corrector_phase_impl(
 
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 int specfem::time_scheme::newmark_impl::predictor_phase_impl(
     const specfem::assembly::simulation_field<DimensionTag, WavefieldType> &field,
     const type_real deltat, const type_real deltatover2,
@@ -134,7 +133,7 @@ int specfem::time_scheme::newmark<AssemblyFields,
 
 
   constexpr auto dimension_tag = AssemblyFields::dimension_tag;
-  constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
+  constexpr auto wavefield = specfem::simulation::field_type::forward;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3), MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -156,7 +155,7 @@ int specfem::time_scheme::newmark<AssemblyFields,
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto dimension_tag = AssemblyFields::dimension_tag;
-  constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
+  constexpr auto wavefield = specfem::simulation::field_type::forward;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3), MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -179,7 +178,7 @@ int specfem::time_scheme::newmark<AssemblyFields,
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto dimension_tag = AssemblyFields::dimension_tag;
-  constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
+  constexpr auto wavefield = specfem::simulation::field_type::adjoint;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3), MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -202,7 +201,7 @@ int specfem::time_scheme::newmark<AssemblyFields,
     apply_corrector_phase_backward(const specfem::element::medium_tag tag) {
 
   constexpr auto dimension_tag = AssemblyFields::dimension_tag;
-  constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
+  constexpr auto wavefield = specfem::simulation::field_type::backward;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3), MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -225,7 +224,7 @@ int specfem::time_scheme::newmark<AssemblyFields,
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto dimension_tag = AssemblyFields::dimension_tag;
-  constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
+  constexpr auto wavefield = specfem::simulation::field_type::adjoint;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3), MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -248,7 +247,7 @@ int specfem::time_scheme::newmark<AssemblyFields,
     apply_predictor_phase_backward(const specfem::element::medium_tag tag) {
 
   constexpr auto dimension_tag = AssemblyFields::dimension_tag;
-  constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
+  constexpr auto wavefield = specfem::simulation::field_type::backward;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3), MEDIUM_TAG(ELASTIC,ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,

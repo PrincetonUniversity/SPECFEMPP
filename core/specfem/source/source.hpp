@@ -3,12 +3,12 @@
 #include "constants.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
 #include "specfem/point.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
+#include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 
@@ -44,7 +44,7 @@ namespace specfem::sources {
  *     5.0, 10.0,  // coordinates (x, z)
  *     0.0,        // angle
  *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Common operations available for all sources:
@@ -171,12 +171,13 @@ public:
 
   void compute_source_time_function(
       const type_real t0, const type_real dt, const int nsteps,
-      specfem::kokkos::HostView2d<type_real> source_time_function) const {
+      Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+          source_time_function) const {
     return this->source_time_function->compute_source_time_function(
         t0, dt, nsteps, source_time_function);
   }
 
-  virtual specfem::wavefield::simulation_field get_wavefield_type() const = 0;
+  virtual specfem::simulation::field_type get_wavefield_type() const = 0;
 
   virtual bool operator==(const source &other) const {
     // Base implementation might just check type identity

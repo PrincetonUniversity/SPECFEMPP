@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "utilities/errors.hpp"
+#include "specfem/utilities/errors.hpp"
 #include <array>
 #include <tuple>
 
@@ -53,6 +53,11 @@ enum class boundary_tag {
 
   // composite boundaries
   composite_stacey_dirichlet ///< Combined Stacey-Dirichlet boundary
+};
+
+enum class attenuation_tag {
+  none,               ///< No attenuation
+  constant_isotropic, ///< Constant Q-Band attenuation
 };
 
 /**

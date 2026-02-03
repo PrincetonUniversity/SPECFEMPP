@@ -4,12 +4,12 @@
 #include "domain/domain.hpp"
 #include "io/fortranio/interface.hpp"
 #include "io/interface.hpp"
-#include "mesh/mesh.hpp"
-#include "parameter_parser/interface.hpp"
-#include "quadrature/interface.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
+#include "specfem/quadrature.hpp"
+#include "specfem/runtime_configuration.hpp"
 #include "specfem/solver.hpp"
 #include "specfem/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
@@ -116,8 +116,8 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
   specfem::domain::domain<
-      specfem::wavefield::simulation_field::forward,
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv,
+      specfem::simulation::field_type::forward, specfem::dimension::type::dim2,
+      specfem::element::medium_tag::elastic_psv,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(setup.get_dt(), assembly, qp5);
 

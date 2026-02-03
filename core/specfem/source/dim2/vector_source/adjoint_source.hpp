@@ -43,7 +43,7 @@ namespace sources {
  *
  * // Adjoint sources always return adjoint wavefield type
  * assert(adj_source.get_wavefield_type() ==
- *        specfem::wavefield::simulation_field::adjoint);
+ *        specfem::simulation::field_type::adjoint);
  * @endcode
  *
  */
@@ -66,8 +66,8 @@ public:
         network_name(Node["network_name"].as<std::string>()),
         vector_source(Node, nsteps, dt) {};
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
-    return specfem::wavefield::simulation_field::adjoint;
+  specfem::simulation::field_type get_wavefield_type() const override {
+    return specfem::simulation::field_type::adjoint;
   }
 
   std::string print() const override;
@@ -92,10 +92,11 @@ public:
    * in full waveform inversion. The adjoint source acts as a time-reversed
    * receiver that backpropagates data residuals through the medium.
    *
-   * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * @return Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
    * Unit force vector with size depending on medium type
    */
-  specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_force_vector() const override;
 
   /**
    * @brief Get the list of supported media for this source type

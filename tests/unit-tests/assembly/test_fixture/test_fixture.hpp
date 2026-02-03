@@ -3,12 +3,12 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "enumerations/interface.hpp"
 #include "io/interface.hpp"
-#include "mesh/mesh.hpp"
-#include "quadrature/quadratures.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
-#include "utilities/strings.hpp"
+#include "specfem/utilities.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <vector>

@@ -1,7 +1,7 @@
 #include "io/mesh/impl/fortran/dim3/read_materials.hpp"
 #include "io/fortranio/interface.hpp"
-#include "medium/material.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/medium_container.hpp"
+#include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 #include <fstream>
 #include <tuple>
@@ -52,14 +52,22 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                 "materials.");
           }
 
-          specfem::medium::material<specfem::dimension::type::dim3,
-                                    specfem::element::medium_tag::acoustic,
-                                    specfem::element::property_tag::isotropic>
-              material(rho, vp, Qkappa, Qmu, static_cast<type_real>(0.0));
-          const int index = materials.add_material(material);
-          mapping.push_back({ specfem::element::medium_tag::acoustic,
-                              specfem::element::property_tag::isotropic, index,
-                              imat });
+          if ((std::abs(Qmu - 9999.0) < 1e-6) || (std::abs(Qmu) < 1e-6)) {
+
+            specfem::medium_container::material<
+                specfem::dimension::type::dim3,
+                specfem::element::medium_tag::acoustic,
+                specfem::element::property_tag::isotropic,
+                specfem::element::attenuation_tag::none>
+                material(rho, vp, static_cast<type_real>(0.0));
+            const int index = materials.add_material(material);
+            mapping.push_back({ specfem::element::medium_tag::acoustic,
+                                specfem::element::property_tag::isotropic,
+                                index, imat });
+          } else {
+            throw std::runtime_error(
+                "Attenuation not yet supported for acoustic materials in 3D");
+          }
         } else if (vs > 0.0) {
           // Isotropic elastic material
           if (material_id != 2) {
@@ -68,14 +76,23 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                 "materials.");
           }
 
-          specfem::medium::material<specfem::dimension::type::dim3,
-                                    specfem::element::medium_tag::elastic,
-                                    specfem::element::property_tag::isotropic>
-              material(rho, vs, vp, Qkappa, Qmu, static_cast<type_real>(0.0));
-          const int index = materials.add_material(material);
-          mapping.push_back({ specfem::element::medium_tag::elastic,
-                              specfem::element::property_tag::isotropic, index,
-                              imat });
+          if ((std::abs(Qmu - 9999.0) < 1e-6 &&
+               std::abs(Qkappa - 9999.0) < 1e-6) ||
+              (std::abs(Qmu) < 1e-6 && std::abs(Qkappa) < 1e-6)) {
+            specfem::medium_container::material<
+                specfem::dimension::type::dim3,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic,
+                specfem::element::attenuation_tag::none>
+                material(rho, vs, vp, static_cast<type_real>(0.0));
+            const int index = materials.add_material(material);
+            mapping.push_back({ specfem::element::medium_tag::elastic,
+                                specfem::element::property_tag::isotropic,
+                                index, imat });
+          } else {
+            throw std::runtime_error(
+                "Attenuation not yet supported for elastic materials in 3D");
+          }
 
         } else {
           throw std::runtime_error("Shear wave velocity (Vs) cannot be "

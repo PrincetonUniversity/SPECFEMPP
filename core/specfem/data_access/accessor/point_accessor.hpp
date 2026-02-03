@@ -1,9 +1,8 @@
 #pragma once
 
-#include "datatypes/point_view.hpp"
-#include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/data_access/accessor.hpp"
+#include "specfem/datatype.hpp"
 
 namespace specfem::data_access {
 

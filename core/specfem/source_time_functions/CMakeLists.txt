@@ -11,7 +11,7 @@ target_link_libraries(
         read_seismogram
         Kokkos::kokkos
         specfem::point
-        utilities
+        specfem::utilities
         specfem::logger
 )
 

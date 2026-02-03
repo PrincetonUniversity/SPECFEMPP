@@ -1,5 +1,5 @@
 #include "enumerations/interface.hpp"
-#include "medium/compute_stress.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -67,7 +67,7 @@ TEST(Stress, PoroelasticIsotropic2D_Basic) {
   expected_stress.T(3, 1) = sigmap - rho_f / rho_bar * sigma_zz;
 
   const PoroStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   std::ostringstream message;
   message << "Poroelastic stress tensor is not equal to expected value: \n"
@@ -112,7 +112,7 @@ TEST(Stress, PoroelasticIsotropic2D_ZeroDerivatives) {
   }
 
   const PoroStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   PoroStressType expected_stress;
   for (int i = 0; i < 4; ++i) {

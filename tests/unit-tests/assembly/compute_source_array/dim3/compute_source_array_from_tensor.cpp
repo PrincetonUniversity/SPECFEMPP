@@ -1,7 +1,7 @@
 #include "specfem/assembly/compute_source_array/dim3/impl/compute_source_array_from_tensor.hpp"
 #include "../../test_fixture/test_fixture.hpp"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "test_macros.hpp"
@@ -295,7 +295,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor_3d) {
         1.0, 0.0, 0.0, 0.0, 0.0, 0.0, // Mxx=1, others=0
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     moment_xx.set_medium_tag(specfem::element::medium_tag::elastic);
     test_tensor_source_3d("Moment Tensor Mxx (1,0,0,0,0,0)", moment_xx, ngll);
     test_tensor_source_3d_off_gll("Moment Tensor Mxx (1,0,0,0,0,0)", moment_xx,
@@ -309,7 +309,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor_3d) {
         0.0, 1.0, 0.0, 0.0, 0.0, 0.0, // Myy=1, others=0
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     moment_yy.set_medium_tag(specfem::element::medium_tag::elastic);
     test_tensor_source_3d("Moment Tensor Myy (0,1,0,0,0,0)", moment_yy, ngll);
     test_tensor_source_3d_off_gll("Moment Tensor Myy (0,1,0,0,0,0)", moment_yy,
@@ -323,7 +323,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor_3d) {
         0.0, 0.0, 1.0, 0.0, 0.0, 0.0, // Mzz=1, others=0
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     moment_zz.set_medium_tag(specfem::element::medium_tag::elastic);
     test_tensor_source_3d("Moment Tensor Mzz (0,0,1,0,0,0)", moment_zz, ngll);
     test_tensor_source_3d_off_gll("Moment Tensor Mzz (0,0,1,0,0,0)", moment_zz,
@@ -337,7 +337,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor_3d) {
         0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // Mxy=1, others=0
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     moment_xy.set_medium_tag(specfem::element::medium_tag::elastic);
     test_tensor_source_3d("Moment Tensor Mxy (0,0,0,1,0,0)", moment_xy, ngll);
     test_tensor_source_3d_off_gll("Moment Tensor Mxy (0,0,0,1,0,0)", moment_xy,
@@ -351,7 +351,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor_3d) {
         0.0, 0.0, 0.0, 0.0, 1.0, 0.0, // Mxz=1, others=0
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     moment_xz.set_medium_tag(specfem::element::medium_tag::elastic);
     test_tensor_source_3d("Moment Tensor Mxz (0,0,0,0,1,0)", moment_xz, ngll);
     test_tensor_source_3d_off_gll("Moment Tensor Mxz (0,0,0,0,1,0)", moment_xz,
@@ -365,7 +365,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor_3d) {
         0.0, 0.0, 0.0, 0.0, 0.0, 1.0, // Myz=1, others=0
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     moment_yz.set_medium_tag(specfem::element::medium_tag::elastic);
     test_tensor_source_3d("Moment Tensor Myz (0,0,0,0,0,1)", moment_yz, ngll);
     test_tensor_source_3d_off_gll("Moment Tensor Myz (0,0,0,0,0,1)", moment_yz,
@@ -381,7 +381,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor_3d) {
                                           // off-diagonal=0
             std::make_unique<specfem::source_time_functions::Ricker>(
                 10, 0.01, 1.0, 0.0, 1.0, false),
-            specfem::wavefield::simulation_field::forward);
+            specfem::simulation::field_type::forward);
     moment_xx_yy_zz.set_medium_tag(specfem::element::medium_tag::elastic);
     test_tensor_source_3d("Moment Tensor Mxx+Myy+Mzz (1,1,1,0,0,0)",
                           moment_xx_yy_zz, ngll);
@@ -396,7 +396,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor_3d) {
         1.0, 1.0, 1.0, 1.0, 1.0, 1.0, // All components = 1
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     moment_all.set_medium_tag(specfem::element::medium_tag::elastic);
     test_tensor_source_3d("Moment Tensor All (1,1,1,1,1,1)", moment_all, ngll);
     test_tensor_source_3d_off_gll("Moment Tensor All (1,1,1,1,1,1)", moment_all,
@@ -410,7 +410,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor_3d) {
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, // All components = 0
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     moment_zero.set_medium_tag(specfem::element::medium_tag::elastic);
     test_tensor_source_3d("Moment Tensor Zero (0,0,0,0,0,0)", moment_zero,
                           ngll);
@@ -425,7 +425,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor_3d) {
                      1.0, 2.0, 3.0, 0.5, 1.5, 2.5, // Mixed values
                      std::make_unique<specfem::source_time_functions::Ricker>(
                          10, 0.01, 1.0, 0.0, 1.0, false),
-                     specfem::wavefield::simulation_field::forward);
+                     specfem::simulation::field_type::forward);
     moment_mixed.set_medium_tag(specfem::element::medium_tag::elastic);
     test_tensor_source_3d("Moment Tensor Mixed (1,2,3,0.5,1.5,2.5)",
                           moment_mixed, ngll);

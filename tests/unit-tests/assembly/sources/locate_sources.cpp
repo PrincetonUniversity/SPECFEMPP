@@ -1,14 +1,14 @@
 
 #include "../test_fixture/test_fixture.hpp"
-#include "algorithms/locate_point.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
+#include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
+#include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
 #include "test_macros.hpp"
-#include "utilities/utilities.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 

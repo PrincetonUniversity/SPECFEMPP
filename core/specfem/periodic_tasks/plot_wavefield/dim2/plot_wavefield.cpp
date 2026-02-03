@@ -4,7 +4,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/periodic_tasks/plotter.hpp"
-#include "utilities/strings.hpp"
+#include "specfem/utilities.hpp"
 
 #ifdef NO_VTK
 
@@ -65,7 +65,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
             &assembly,
         const specfem::display::format &output_format,
         const specfem::wavefield::type &wavefield_type,
-        const specfem::wavefield::simulation_field &simulation_wavefield_type,
+        const specfem::simulation::field_type &simulation_wavefield_type,
         const specfem::display::component &component, const type_real &dt,
         const int &time_interval, const boost::filesystem::path &output_folder,
         const specfem::enums::elastic_wave elastic_wave,
@@ -128,7 +128,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
             &assembly,
         const specfem::display::format &output_format,
         const specfem::wavefield::type &wavefield_type,
-        const specfem::wavefield::simulation_field &simulation_wavefield_type,
+        const specfem::simulation::field_type &simulation_wavefield_type,
         const specfem::display::component &component, const type_real &dt,
         const int &time_interval, const boost::filesystem::path &output_folder,
         const specfem::enums::elastic_wave elastic_wave,

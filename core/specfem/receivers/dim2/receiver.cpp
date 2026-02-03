@@ -2,8 +2,8 @@
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "specfem/receivers.hpp"
+#include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
 
 std::string
 specfem::receivers::receiver<specfem::dimension::type::dim2>::print() const {

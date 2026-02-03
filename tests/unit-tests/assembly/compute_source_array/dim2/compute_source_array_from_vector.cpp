@@ -1,7 +1,7 @@
 #include "specfem/assembly/compute_source_array/dim2/impl/compute_source_array_from_vector.hpp"
 #include "../../test_fixture/test_fixture.hpp"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "test_macros.hpp"
@@ -91,7 +91,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
         0.0, 0.0, 0.0, // x, z, angle (angle=0 means force in x direction)
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     force_x.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_vector_source("Force X-direction (1,0)", force_x, ngll);
   }
@@ -102,7 +102,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
         0.0, 0.0, 90.0, // angle=90 means force in z direction
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     force_z.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_vector_source("Force Z-direction (0,1)", force_z, ngll);
   }
@@ -113,7 +113,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
         0.0, 0.0, 45.0, // angle=45 means equal force in both directions
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     force_both.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_vector_source("Force Both directions (1,1)", force_both, ngll);
   }
@@ -124,7 +124,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
         0.0, 0.0, 0.0, // angle doesn't matter
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 0.0, 0.0, 1.0, false), // amplitude = 0
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     force_zero.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_vector_source("Force Zero (0,0)", force_zero, ngll);
   }
@@ -150,7 +150,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
         0.0,      // angle=0 means force in x direction
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     cosserat_x.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
     test_vector_source("Cosserat X-direction (1,0,0)", cosserat_x, ngll);
   }
@@ -163,7 +163,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
         90.0,     // angle=90 means force in z direction
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     cosserat_z.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
     test_vector_source("Cosserat Z-direction (0,1,0)", cosserat_z, ngll);
   }
@@ -177,7 +177,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
                      0.0, // angle doesn't matter for pure rotation
                      std::make_unique<specfem::source_time_functions::Ricker>(
                          10, 0.01, 1.0, 0.0, 1.0, false),
-                     specfem::wavefield::simulation_field::forward);
+                     specfem::simulation::field_type::forward);
     cosserat_rot.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
     test_vector_source("Cosserat Rotation (0,0,1)", cosserat_rot, ngll);
   }
@@ -190,7 +190,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
                      45.0,     // angle=45 means equal force in both directions
                      std::make_unique<specfem::source_time_functions::Ricker>(
                          10, 0.01, 1.0, 0.0, 1.0, false),
-                     specfem::wavefield::simulation_field::forward);
+                     specfem::simulation::field_type::forward);
     cosserat_all.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
     test_vector_source("Cosserat All directions (1,1,1)", cosserat_all, ngll);
   }
@@ -201,7 +201,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
         0.0, 0.0, // x, z
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     external.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_vector_source("External Source", external, ngll);
   }

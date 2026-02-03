@@ -2,9 +2,9 @@
 
 #include "element_types.hpp"
 #include "enumerations/interface.hpp"
-#include "execution/for_each_level.hpp"
 #include "mesh.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/execution.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>

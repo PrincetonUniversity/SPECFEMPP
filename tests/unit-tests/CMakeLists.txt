@@ -60,7 +60,7 @@ add_executable(
 target_link_libraries(
   test_mesh_utilities_mapping_2d
   mesh_utilities_mapping
-  utilities
+  specfem::utilities
   gtest_main
 )
 
@@ -72,7 +72,7 @@ add_executable(
 target_link_libraries(
   test_mesh_utilities_mapping_3d
   mesh_utilities_mapping
-  utilities
+  specfem::utilities
   gtest_main
 )
 
@@ -119,8 +119,21 @@ add_executable(
 
 target_link_libraries(
   is_close_tests
-  utilities
+  specfem::utilities
   gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
+  attenuation_tests
+  attenuation/runner.cpp
+  attenuation/compute_tau_sigma_tests.cpp
+)
+
+target_link_libraries(
+  attenuation_tests
+  gtest_main
+  specfem::attenuation
   Kokkos::kokkos
 )
 
@@ -132,7 +145,7 @@ add_executable(
 target_link_libraries(
   gll_tests
   gtest_main
-  quadrature
+  specfem::quadrature
   specfem_environment
   point
   -lpthread -lm
@@ -146,7 +159,7 @@ add_executable(
 target_link_libraries(
   lagrange_tests
   gtest_main
-  quadrature
+  specfem::quadrature
   specfem_environment
   -lpthread -lm
 )
@@ -182,11 +195,11 @@ add_executable(
 target_link_libraries(
   enumerations_tests
   enumerations
-  quadrature
+  specfem::quadrature
   shape_functions
   gtest_main
   specfem_environment
-  utilities
+  specfem::utilities
   -lpthread -lm
 )
 
@@ -194,7 +207,7 @@ set_target_properties(enumerations_tests PROPERTIES UNITY_BUILD OFF)
 
 add_executable(
   simd_tests
-  datatypes/simd_tests.cpp
+  datatype/simd_tests.cpp
 )
 target_link_libraries(
   simd_tests
@@ -284,11 +297,11 @@ add_executable(
 target_link_libraries(
   mesh_dim2_tests
   gtest_main
-  mesh
+  specfem::mesh
   specfem_environment
   yaml-cpp
   io
-  utilities
+  specfem::utilities
 
   # material_class
   -lpthread -lm
@@ -308,10 +321,10 @@ add_executable(
 target_link_libraries(
   mesh_dim3_tests
   gtest_main
-  mesh
+  specfem::mesh
   specfem_environment
   io
-  utilities
+  specfem::utilities
 
   -lpthread -lm
 )
@@ -325,12 +338,12 @@ add_executable(
 
 target_link_libraries(
   nonconforming_tests
-  mesh
+  specfem::mesh
   assembly
-  quadrature
+  specfem::quadrature
   specfem_environment
   yaml-cpp
-  utilities
+  specfem::utilities
   boost
   -lpthread -lm
   gtest_main
@@ -427,13 +440,13 @@ target_link_libraries(
   nonconforming_assembly_tests
   reader
   writer
-  mesh
+  specfem::mesh
   assembly
-  quadrature
+  specfem::quadrature
   specfem_environment
   io
   yaml-cpp
-  utilities
+  specfem::utilities
   boost
 
   -lpthread -lm
@@ -475,17 +488,17 @@ target_link_libraries(
   assembly_tests
   reader
   writer
-  mesh
+  specfem::mesh
   assembly
-  quadrature
+  specfem::quadrature
   specfem_environment
   io
 
   yaml-cpp
-  utilities
+  specfem::utilities
   enumerations
   shape_functions
-  quadrature
+  specfem::quadrature
   boost
 
   -lpthread -lm
@@ -503,9 +516,9 @@ add_executable(
 
 target_link_libraries(
   assembly_receivers_tests
-  mesh
+  specfem::mesh
   assembly
-  quadrature
+  specfem::quadrature
   specfem_environment
   yaml-cpp
   io
@@ -545,9 +558,9 @@ add_executable(
 
 target_link_libraries(
   interpolate_function
-  quadrature
+  specfem::quadrature
   specfem_environment
-  algorithms
+  specfem::algorithms
   io
   boost
   point
@@ -563,10 +576,10 @@ add_executable(
 target_link_libraries(
   locate_point_fixture_2d
   mesh_utilities_mapping
-  algorithms
+  specfem::algorithms
   jacobian
   point
-  utilities
+  specfem::utilities
   specfem_environment
   gtest_main
 )
@@ -580,10 +593,10 @@ add_executable(
 target_link_libraries(
   locate_point_fixture_3d
   mesh_utilities_mapping
-  algorithms
+  specfem::algorithms
   jacobian
   point
-  utilities
+  specfem::utilities
   specfem_environment
   gtest_main
 )
@@ -596,14 +609,13 @@ add_executable(
 
 target_link_libraries(
   gradient_tests
-  quadrature
-  algorithms
+  specfem::quadrature
+  specfem::algorithms
   gtest_main
   Kokkos::kokkos
   specfem_environment
   assembly
-  quadrature
-  utilities
+  specfem::utilities
   -lpthread -lm
 )
 
@@ -617,12 +629,12 @@ add_executable(
 
 target_link_libraries(
   transfer_tests
-  algorithms
+  specfem::algorithms
   enumerations
   gtest_main
   Kokkos::kokkos
   specfem_environment
-  utilities
+  specfem::utilities
   -lpthread -lm
 )
 
@@ -633,7 +645,7 @@ add_executable(
 
 target_link_libraries(
   policies_tests
-  mesh
+  specfem::mesh
   source_class
   specfem::receivers
   specfem_environment
@@ -699,7 +711,9 @@ add_executable(
   compute_coupling_tests
   compute_coupling/acoustic_elastic.cpp
   compute_coupling/elastic_acoustic.cpp
-  compute_coupling/nonconforming.cpp
+  compute_coupling/nonconforming/acoustic_elastic.cpp
+  compute_coupling/nonconforming/elastic_acoustic.cpp
+  compute_coupling/runner.cpp
 )
 
 target_link_libraries(
@@ -788,18 +802,18 @@ add_executable(
 
 target_link_libraries(
   displacement_newmark_2d_tests
-  quadrature
-  mesh
+  specfem::quadrature
+  specfem::mesh
   # material_class
   yaml-cpp
   specfem_environment
   assembly
-  parameter_reader
+  specfem::runtime_configuration
   compare_arrays
   timescheme
   point
-  algorithms
-  kokkos_kernels
+  specfem::algorithms
+  specfem::compute
   specfem::solver
   specfem::periodic_tasks
   boost
@@ -814,18 +828,18 @@ add_executable(
 
 target_link_libraries(
   displacement_newmark_3d_tests
-  quadrature
-  mesh
+  specfem::quadrature
+  specfem::mesh
   # material_class
   yaml-cpp
   specfem_environment
   assembly
-  parameter_reader
+  specfem::runtime_configuration
   compare_arrays
   timescheme
   point
-  algorithms
-  kokkos_kernels
+  specfem::algorithms
+  specfem::compute
   specfem::solver
   specfem::periodic_tasks
   boost
@@ -844,7 +858,7 @@ target_link_libraries(
 #   yaml-cpp
 #   specfem_environment
 #   assembly
-#   parameter_reader
+#   specfem::runtime_configuration
 #   writer
 #   periodic_tasks
 #   domain
@@ -865,7 +879,7 @@ target_link_libraries(
 #   yaml-cpp
 #   specfem_environment
 #   assembly
-#   parameter_reader
+#   specfem::runtime_configuration
 #   writer
 #   periodic_tasks
 #   domain
@@ -894,8 +908,6 @@ target_link_libraries(
 # )
 
 
-
-
 # Link to gtest only if MPI is disabled
 if(NOT MPI_PARALLEL)
   include(GoogleTest)
@@ -903,6 +915,7 @@ if(NOT MPI_PARALLEL)
     abort_tests
     assembly_receivers_tests
     assembly_tests
+    attenuation_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests
     # compute_elastic_tests

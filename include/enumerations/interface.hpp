@@ -1,5 +1,6 @@
 #pragma once
 
+#include "accessor_type.hpp"
 #include "boundary.hpp"
 #include "dimension.hpp"
 #include "display.hpp"

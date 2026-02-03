@@ -1,12 +1,12 @@
 #include "compute_source_array_from_tensor.hpp"
-#include "algorithms/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/algorithms.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/point.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 
@@ -20,6 +20,9 @@ void compute_source_array_from_tensor_and_element_jacobian(
         specfem::dimension::type::dim3> &quadrature,
     Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
         source_array) {
+
+  using ViewType =
+      Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>;
 
   const int ngllx = quadrature.N;
   const int nglly = quadrature.N;
@@ -41,8 +44,7 @@ void compute_source_array_from_tensor_and_element_jacobian(
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
           tensor_source.get_local_coordinates().gamma, ngllz, gamma);
 
-  specfem::kokkos::HostView3d<type_real> source_polynomial("source_polynomial",
-                                                           ngllz, nglly, ngllx);
+  ViewType source_polynomial("source_polynomial", ngllz, nglly, ngllx);
 
   // Use pre-computed jacobian data instead of loading from jacobian_matrix
   for (int iz = 0; iz < ngllz; ++iz) {

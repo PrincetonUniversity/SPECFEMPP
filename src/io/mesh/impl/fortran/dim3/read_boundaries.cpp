@@ -1,6 +1,6 @@
 #include "io/mesh/impl/fortran/dim3/read_boundaries.hpp"
 #include "io/fortranio/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
 #include <algorithm>
 #include <fstream>

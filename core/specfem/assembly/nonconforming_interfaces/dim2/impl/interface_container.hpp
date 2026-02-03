@@ -2,10 +2,10 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "execution/for_each_level.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/execution.hpp"
 
 namespace specfem::assembly::nonconforming_interfaces_impl {
 

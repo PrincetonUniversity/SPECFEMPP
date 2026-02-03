@@ -17,7 +17,7 @@ The following code snippet demonstrates how to compute the divergence of a vecto
 
 .. code:: cpp
 
-    #include "algorithms/divergence.hpp"
+    #include "specfem/algorithms.hpp"
 
     // Let us assume that the vector field F is given to us
     // as struct F;

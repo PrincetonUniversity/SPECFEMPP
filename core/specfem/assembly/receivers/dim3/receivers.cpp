@@ -1,9 +1,9 @@
 #include "specfem/receivers.hpp"
-#include "algorithms/locate_point.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
@@ -119,7 +119,8 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+       PROPERTY_TAG(ISOTROPIC)),
       CAPTURE(elements, h_elements, receiver_indices, h_receiver_indices) {
         int count = 0;
         int index = 0;

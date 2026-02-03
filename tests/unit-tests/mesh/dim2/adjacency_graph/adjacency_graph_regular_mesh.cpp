@@ -1,7 +1,7 @@
 
 #include "SPECFEM_Environment.hpp"
 #include "io/interface.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
 #include <gtest/gtest.h>

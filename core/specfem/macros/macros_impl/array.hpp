@@ -27,6 +27,12 @@
                   _GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                      \
                   _GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)),                      \
                   _GET_TAG(BOOST_PP_TUPLE_ELEM(3, elem)))
+#define _MAKE_ARRAY_5(elem)                                                    \
+  std::make_tuple(_GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                      \
+                  _GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                      \
+                  _GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)),                      \
+                  _GET_TAG(BOOST_PP_TUPLE_ELEM(3, elem)),                      \
+                  _GET_TAG(BOOST_PP_TUPLE_ELEM(4, elem)))
 
 /**
  * @brief Macro to create a constexpr array from a sequence

@@ -1,10 +1,10 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "../../utilities/include/interface.hpp"
 #include "io/interface.hpp"
-#include "mesh/mesh.hpp"
-#include "quadrature/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
+#include "specfem/quadrature.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>

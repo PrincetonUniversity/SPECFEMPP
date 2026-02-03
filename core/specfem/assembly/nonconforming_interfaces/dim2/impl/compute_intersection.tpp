@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Kokkos_Core_fwd.hpp"
-#include "algorithms/locate_point_impl.hpp"
+#include "specfem/algorithms/locate_point/locate_point_impl.hpp"
 #include "compute_intersection.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/mesh_entities.hpp"

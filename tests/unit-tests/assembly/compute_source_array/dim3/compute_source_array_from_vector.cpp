@@ -1,7 +1,7 @@
 #include "specfem/assembly/compute_source_array/dim3/impl/compute_source_array_from_vector.hpp"
 #include "../../test_fixture/test_fixture.hpp"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "test_macros.hpp"
@@ -102,7 +102,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
         1.0, 0.0, 0.0, // fx, fy, fz
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     force_x.set_medium_tag(specfem::element::medium_tag::elastic);
     test_vector_source_3d("Force X-direction (1,0,0)", force_x, ngll);
   }
@@ -114,7 +114,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
         0.0, 1.0, 0.0, // fx, fy, fz
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     force_y.set_medium_tag(specfem::element::medium_tag::elastic);
     test_vector_source_3d("Force Y-direction (0,1,0)", force_y, ngll);
   }
@@ -126,7 +126,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
         0.0, 0.0, 1.0, // fx, fy, fz
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     force_z.set_medium_tag(specfem::element::medium_tag::elastic);
     test_vector_source_3d("Force Z-direction (0,0,1)", force_z, ngll);
   }
@@ -138,7 +138,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
         1.0, 1.0, 1.0, // fx, fy, fz
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     force_all.set_medium_tag(specfem::element::medium_tag::elastic);
     test_vector_source_3d("Force All directions (1,1,1)", force_all, ngll);
   }
@@ -151,7 +151,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false), // normal amplitude, but zero force
                                              // components
-        specfem::wavefield::simulation_field::forward);
+        specfem::simulation::field_type::forward);
     force_zero.set_medium_tag(specfem::element::medium_tag::elastic);
     test_vector_source_3d("Force Zero (0,0,0)", force_zero, ngll);
   }
@@ -175,7 +175,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
   //       std::make_unique<specfem::source_time_functions::Ricker>(10,
   //       0.01, 1.0, 0.0,
   //                                                           1.0, false),
-  //       specfem::wavefield::simulation_field::forward);
+  //       specfem::simulation::field_type::forward);
   //   external.set_medium_tag(specfem::element::medium_tag::elastic);
   //   test_vector_source_3d("External Source", external, ngll);
   // }

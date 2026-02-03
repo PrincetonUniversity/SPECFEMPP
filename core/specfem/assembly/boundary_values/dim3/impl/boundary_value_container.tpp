@@ -21,7 +21,7 @@ specfem::assembly::boundary_values_impl::boundary_value_container<
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE(container) {
         _container_ = _boundary_medium_container<_dimension_tag_, _medium_tag_>(
             nstep, mesh, element_types, boundaries, h_property_index_mapping);

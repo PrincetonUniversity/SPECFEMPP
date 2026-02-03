@@ -231,21 +231,6 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # Add module subdirectories
 add_subdirectory(core)
 
-# Build specfem2d libraries
-add_library(
-        quadrature
-        src/quadrature/quadrature.cpp
-        src/quadrature/gll/gll_utils.cpp
-        src/quadrature/gll/gll_library.cpp
-        src/quadrature/gll/lagrange_poly.cpp
-        src/quadrature/gll/gll.cpp
-)
-
-target_link_libraries(
-        quadrature
-        Kokkos::kokkos
-)
-
 add_library(
         io
         # IO libraries
@@ -277,7 +262,7 @@ add_library(
 
 target_link_libraries(
         io
-        mesh
+        specfem::mesh
         source_class
         specfem::receivers
         yaml-cpp
@@ -329,35 +314,6 @@ target_link_libraries(
 # )
 
 add_library(
-        mesh
-        # 2-D
-        src/mesh/dim2/boundaries/forcing_boundaries.cpp
-        src/mesh/dim2/boundaries/absorbing_boundaries.cpp
-        src/mesh/dim2/boundaries/acoustic_free_surface.cpp
-        src/mesh/dim2/elements/tangential_elements.cpp
-        src/mesh/dim2/elements/axial_elements.cpp
-        # src/mesh/mpi_interfaces/mpi_interfaces.cpp
-        src/mesh/dim2/tags/tags.cpp
-        src/mesh/dim2/adjacency_graph/assert_symmetry.cpp
-        src/mesh/dim2/mesh.cpp
-        # 3-D
-
-        src/mesh/dim3/adjacency_graph/assert_symmetry.cpp
-        src/mesh/dim3/tags/tags.cpp
-        src/mesh/dim3/mesh.cpp
-)
-
-target_link_libraries(
-        mesh
-        enumerations
-        Kokkos::kokkos
-        specfem::macros
-        # material_class
-        yaml-cpp
-        ${BOOST_LIBS}
-)
-
-add_library(
         read_seismogram
         src/io/seismogram/reader.cpp
 )
@@ -366,16 +322,6 @@ target_link_libraries(
         read_seismogram
         Kokkos::kokkos
         )
-
-add_library(utilities
-        src/utilities/strings.cpp
-)
-
-target_link_libraries(
-        utilities
-        Kokkos::kokkos
-        ${BOOST_LIBS}
-)
 
 add_library(
         reader
@@ -388,49 +334,7 @@ target_link_libraries(
         assembly
         io
         read_seismogram
-        utilities
-)
-
-add_library(
-        algorithms
-        src/algorithms/dim2/locate_point.cpp
-        src/algorithms/dim2/locate_point_impl.cpp
-        src/algorithms/dim3/locate_point.cpp
-        src/algorithms/dim3/locate_point_impl.cpp
-)
-
-target_link_libraries(
-        algorithms
-        Kokkos::kokkos
-        jacobian
-        point
-        assembly
-        ${BOOST_LIBS}
-)
-
-add_library(
-        kokkos_kernels
-        src/kokkos_kernels/impl/compute_mass_matrix.cpp
-        src/kokkos_kernels/impl/invert_mass_matrix.cpp
-        src/kokkos_kernels/impl/divide_mass_matrix.cpp
-        src/kokkos_kernels/impl/compute_seismogram.cpp
-        src/kokkos_kernels/impl/compute_source_interaction.cpp
-        src/kokkos_kernels/impl/compute_stiffness_interaction.cpp
-        src/kokkos_kernels/impl/compute_material_derivatives.cpp
-        src/kokkos_kernels/impl/compute_coupling.cpp
-        src/kokkos_kernels/frechet_kernels.cpp
-)
-
-set_target_properties(kokkos_kernels PROPERTIES
-        UNITY_BUILD $<NOT:$<BOOL:${__APPLE__}>>
-        UNITY_BUILD_BATCH_SIZE $<IF:$<BOOL:${__APPLE__}>,0,4>
-)
-
-target_link_libraries(
-        kokkos_kernels
-        PRIVATE
-        assembly
-        Kokkos::kokkos
+        specfem::utilities
 )
 
 add_library(
@@ -446,42 +350,8 @@ target_link_libraries(
         assembly
         specfem::receivers
         io
-        utilities
+        specfem::utilities
 )
-
-
-add_library(
-        parameter_reader
-        src/parameter_parser/run_setup.cpp
-        src/parameter_parser/time_scheme/time_scheme.cpp
-        src/parameter_parser/database_configuration.cpp
-        src/parameter_parser/header.cpp
-        src/parameter_parser/quadrature.cpp
-        src/parameter_parser/elastic_wave.cpp
-        src/parameter_parser/electromagnetic_wave.cpp
-        src/parameter_parser/receivers.cpp
-        src/parameter_parser/writer/seismogram.cpp
-        src/parameter_parser/setup.cpp
-        src/parameter_parser/writer/wavefield.cpp
-        src/parameter_parser/writer/plot_wavefield.cpp
-        src/parameter_parser/writer/kernel.cpp
-        src/parameter_parser/writer/property.cpp
-)
-
-target_link_libraries(
-        parameter_reader
-        quadrature
-        specfem::timescheme
-        specfem::receivers
-        yaml-cpp
-        specfem::periodic_tasks
-        writer
-        reader
-        kokkos_kernels
-        specfem::solver
-        ${BOOST_LIBS}
-)
-
 
 # specfem2d executable for backward compatibility
 add_executable(specfem2d src/specfem2d.cpp)

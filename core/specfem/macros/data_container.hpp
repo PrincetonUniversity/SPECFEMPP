@@ -40,7 +40,7 @@
     const auto &mapping =                                                      \
         BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
     const std::size_t _index =                                                 \
-        specfem::medium::impl::get_flat_index(mapping, index);                 \
+        specfem::medium_container::impl::get_flat_index(mapping, index);       \
     BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_DEVICE_CONST, (f, _index), seq)     \
   }                                                                            \
   template <typename FunctorType, typename IndexType>                          \
@@ -53,7 +53,7 @@
     const auto &mapping =                                                      \
         BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
     const std::size_t _index =                                                 \
-        specfem::medium::impl::get_flat_index(mapping, index);                 \
+        specfem::medium_container::impl::get_flat_index(mapping, index);       \
     BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_DEVICE, (f, _index), seq)           \
   }                                                                            \
   template <typename FunctorType, typename IndexType,                          \
@@ -64,7 +64,7 @@
     const auto &mapping =                                                      \
         BOOST_PP_SEQ_ELEM(0, BOOST_PP_SEQ_ELEM(0, seq)).get_mapping();         \
     const std::size_t _index =                                                 \
-        specfem::medium::impl::get_flat_index(mapping, index);                 \
+        specfem::medium_container::impl::get_flat_index(mapping, index);       \
     BOOST_PP_SEQ_FOR_EACH(_CALL_FUNCTOR_ON_HOST, (f, _index), seq)             \
   }
 

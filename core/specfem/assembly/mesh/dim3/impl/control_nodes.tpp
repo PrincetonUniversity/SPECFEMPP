@@ -2,7 +2,7 @@
 
 #include "control_nodes.hpp"
 #include "enumerations/dimension.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 void initialize_control_nodes(

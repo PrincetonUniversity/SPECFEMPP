@@ -4,8 +4,8 @@
 #include "specfem/macros.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh.hpp"
-#include "parallel_configuration/chunk_config.hpp"
-#include "quadrature/interface.hpp"
+#include "specfem/parallel_configuration.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/shape_function.hpp"
@@ -15,12 +15,14 @@
 #include <tuple>
 #include <vector>
 
-namespace {
+namespace specfem::assembly::mesh_impl {
+
 using point = specfem::assembly::mesh_impl::dim2::point;
 using bounding_box = specfem::assembly::mesh_impl::dim2::bounding_box;
 
 specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
-assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
+assign_numbering(Kokkos::View<double ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+                      global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
@@ -101,7 +103,7 @@ build_assembly_adjacency_graph(
 
   return adjacency_graph;
 }
-} // namespace
+} // namespace specfem::assembly::mesh_impl
 
 specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
@@ -154,7 +156,7 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       quadratures.gll.get_N(), control_nodes_in.ngnod);
 
   adjacency_graph =
-      build_assembly_adjacency_graph(nspec, mapping, mesh_adjacency_graph);
+      specfem::assembly::mesh_impl::build_assembly_adjacency_graph(nspec, mapping, mesh_adjacency_graph);
 
   this->assemble();
 }

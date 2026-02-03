@@ -2,7 +2,7 @@
 #include "enumerations/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "specfem/assembly.hpp"
-#include "utilities/utilities.hpp"
+#include "specfem/utilities.hpp"
 #include <fstream>
 
 void specfem::io::seismogram_writer::write(

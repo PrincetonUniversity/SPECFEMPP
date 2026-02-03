@@ -1,5 +1,5 @@
+#include "specfem/utilities.hpp"
 #include "test_macros.hpp"
-#include "utilities/utilities.hpp"
 #include <gtest/gtest.h>
 
 using specfem::utilities::is_close;

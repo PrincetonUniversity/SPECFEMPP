@@ -1,7 +1,7 @@
 #include "dgaussian.hpp"
 #include "impl/time_functions.hpp"
+#include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -53,7 +53,8 @@ type_real specfem::source_time_functions::dGaussian::compute(type_real t) {
 
 void specfem::source_time_functions::dGaussian::compute_source_time_function(
     const type_real t0, const type_real dt, const int nsteps,
-    specfem::kokkos::HostView2d<type_real> source_time_function) {
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+        source_time_function) {
 
   const int ncomponents = source_time_function.extent(1);
 

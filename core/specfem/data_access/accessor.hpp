@@ -1,20 +1,11 @@
 #pragma once
 
 #include "data_class.hpp"
+#include "enumerations/accessor_type.hpp"
 #include "enumerations/interface.hpp"
 #include <type_traits>
 
 namespace specfem::data_access {
-
-/**
- * @brief Data access patterns for spectral element simulations.
- */
-enum class AccessorType {
-  point,         ///< Single quadrature point access
-  element,       ///< Full element access
-  chunk_element, ///< Chunked element access for vectorization
-  chunk_edge     ///< Chunked edge access for interfaces
-};
 
 /**
  * @brief Type-safe data accessor for simulation components.

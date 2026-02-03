@@ -2,12 +2,12 @@
 
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 
+#include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 
@@ -41,7 +41,7 @@ namespace sources {
  *     0.0,  // fy - force in y direction
  *     0.7,  // fz - force in z direction
  *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium type
@@ -70,7 +70,7 @@ public:
    * frequecy of Dirac source.
    */
   force(YAML::Node &Node, const int nsteps, const type_real dt,
-        const specfem::wavefield::simulation_field wavefield_type)
+        const specfem::simulation::field_type wavefield_type)
       : vector_source(Node, nsteps, dt), fx(Node["fx"].as<type_real>()),
         fy(Node["fy"].as<type_real>()), fz(Node["fz"].as<type_real>()),
         wavefield_type(wavefield_type) {};
@@ -88,7 +88,7 @@ public:
       type_real x, type_real y, type_real z, type_real fx, type_real fy,
       type_real fz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
-      const specfem::wavefield::simulation_field wavefield_type)
+      const specfem::simulation::field_type wavefield_type)
       : wavefield_type(wavefield_type),
         vector_source(x, y, z, std::move(source_time_function)), fx(fx), fy(fy),
         fz(fz) {};
@@ -99,7 +99,7 @@ public:
    */
   std::string print() const override;
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
+  specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
 
@@ -134,10 +134,11 @@ public:
    * The force components are applied directly as body forces, representing
    * point sources with user-specified directional amplitudes.
    *
-   * @return Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * @return Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
    * Force vector with 3 components [fx, fy, fz]
    */
-  specfem::kokkos::HostView1d<type_real> get_force_vector() const override;
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+  get_force_vector() const override;
 
   /**
    * @brief Get the list of supported media for this source type
@@ -151,12 +152,12 @@ public:
   static constexpr const char *name = "3-D force";
 
 private:
-  type_real fx;                                        ///< Force in x-direction
-  type_real fy;                                        ///< Force in y-direction
-  type_real fz;                                        ///< Force in z-direction
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
-                                                       ///< which the source
-                                                       ///< acts
+  type_real fx;                                   ///< Force in x-direction
+  type_real fy;                                   ///< Force in y-direction
+  type_real fz;                                   ///< Force in z-direction
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
+                                                  ///< which the source
+                                                  ///< acts
   const static std::vector<specfem::element::medium_tag> supported_media;
 };
 } // namespace sources

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "algorithms/locate_point.hpp"
 #include "specfem/point.hpp"
 #include "../source_medium.hpp"
 #include "specfem/assembly/compute_source_array.hpp"
@@ -40,8 +39,7 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
     auto sv_stf_array = Kokkos::subview(this->h_source_time_function, Kokkos::ALL, isource, Kokkos::ALL);
     sources[isource]->compute_source_time_function(t0, dt, nsteps, sv_stf_array);
 
-    const auto coord = sources[isource]->get_global_coordinates();
-    auto lcoord = specfem::algorithms::locate_point(coord, mesh);
+    const auto lcoord = sources[isource]->get_local_coordinates();
     this->h_source_index_mapping(isource) = lcoord.ispec;
   }
 

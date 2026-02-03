@@ -1,6 +1,6 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/jacobian.hpp"
+#include "specfem/mesh.hpp"
 
 specfem::assembly::jacobian_matrix<
     specfem::dimension::type::dim3>::jacobian_matrix(const int nspec,

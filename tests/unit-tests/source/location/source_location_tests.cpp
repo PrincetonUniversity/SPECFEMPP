@@ -1,8 +1,8 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "io/interface.hpp"
-#include "medium/material.hpp"
-#include "mesh/mesh.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/medium_container.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
@@ -106,7 +106,7 @@ TEST(SOURCES, compute_source_locations) {
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
 
   // Read mesh for binary database for the test
-  std::vector<std::shared_ptr<specfem::medium::material> > materials;
+  std::vector<std::shared_ptr<specfem::medium_container::material> > materials;
   specfem::mesh::mesh mesh =
       specfem::io::read_mesh(test_config.database_file, mpi);
 

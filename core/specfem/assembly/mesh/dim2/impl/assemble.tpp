@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/connections.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/point.hpp"
 #include <boost/graph/filtered_graph.hpp>

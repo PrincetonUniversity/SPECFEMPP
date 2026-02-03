@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "mesh/mesh.hpp"
+#include "specfem/mesh.hpp"
 
 #include <fstream>
 #include <iostream>
