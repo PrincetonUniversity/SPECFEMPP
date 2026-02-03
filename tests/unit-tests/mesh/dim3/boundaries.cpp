@@ -4,7 +4,7 @@
 
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_fixture.hpp"
 
 namespace specfem::test_configuration {

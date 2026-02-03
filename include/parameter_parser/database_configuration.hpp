@@ -1,7 +1,7 @@
 #ifndef _PARAMETER_RUNTIME_CONFIGURATION_HPP
 #define _PARAMETER_RUNTIME_CONFIGURATION_HPP
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>
 

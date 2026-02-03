@@ -1,3 +1,12 @@
+# Configure setup.hpp from setup.hpp.in
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.hpp.in
+               ${CMAKE_BINARY_DIR}/include/specfem/setup.hpp)
+
+# Add the configure files to the clean target
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    ${CMAKE_BINARY_DIR}/include/specfem/setup.hpp
+)
+
 # Add existing subdirectories
 add_subdirectory(mpi)
 add_subdirectory(logger)

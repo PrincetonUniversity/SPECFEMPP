@@ -6,7 +6,7 @@
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "initializers.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem::test_fixture {
 

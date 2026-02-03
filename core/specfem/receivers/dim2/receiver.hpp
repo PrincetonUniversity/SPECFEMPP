@@ -1,11 +1,11 @@
 #pragma once
 
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "enumerations/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <cmath>
 
 namespace specfem::receivers {

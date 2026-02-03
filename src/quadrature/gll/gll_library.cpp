@@ -1,6 +1,6 @@
 #include "quadrature/gll/gll_library.hpp"
 #include "quadrature/gll/gll_utils.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <cmath>
 #include <iostream>
 #include <stdexcept>

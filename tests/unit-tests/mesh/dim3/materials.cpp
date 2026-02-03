@@ -8,7 +8,7 @@
 #include "medium/material.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem/macros.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_fixture.hpp"
 
 namespace specfem::test_configuration {

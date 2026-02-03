@@ -1,7 +1,7 @@
 #ifndef _PARAMETER_RUN_SETUP_HPP
 #define _PARAMETER_RUN_SETUP_HPP
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>
 

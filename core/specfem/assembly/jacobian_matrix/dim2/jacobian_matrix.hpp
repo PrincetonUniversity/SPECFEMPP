@@ -7,7 +7,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {

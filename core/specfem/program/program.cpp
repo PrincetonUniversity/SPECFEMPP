@@ -11,7 +11,7 @@
 #include "specfem/solver.hpp"
 #include "specfem/source.hpp"
 #include "specfem/timescheme.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <boost/program_options.hpp>

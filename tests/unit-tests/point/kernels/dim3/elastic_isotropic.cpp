@@ -1,6 +1,6 @@
 #include "../kernels_tests.hpp"
 #include "specfem/point/kernels.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_macros.hpp"
 #include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>

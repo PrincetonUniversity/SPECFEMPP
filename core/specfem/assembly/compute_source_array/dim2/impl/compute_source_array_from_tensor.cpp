@@ -8,7 +8,7 @@
 #include "specfem/macros.hpp"
 #include "specfem/point.hpp"
 #include "specfem/source.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::compute_source_array_impl {

@@ -2,7 +2,7 @@
 #define _QUADRATURE_HPP
 
 #include "kokkos_abstractions.h"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

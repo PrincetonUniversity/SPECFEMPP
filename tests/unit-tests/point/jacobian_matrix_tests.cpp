@@ -3,7 +3,7 @@
 #include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/point/jacobian_matrix.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_helper.hpp"
 #include "test_macros.hpp"
 #include "utilities/interface.hpp"

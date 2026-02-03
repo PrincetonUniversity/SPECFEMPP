@@ -1,7 +1,7 @@
 #include "specfem/source.hpp"
 #include "kokkos_abstractions.h"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <cmath>
 
 template specfem::sources::source<specfem::dimension::type::dim3>::source(

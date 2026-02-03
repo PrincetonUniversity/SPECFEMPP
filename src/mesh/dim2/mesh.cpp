@@ -3,7 +3,7 @@
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>

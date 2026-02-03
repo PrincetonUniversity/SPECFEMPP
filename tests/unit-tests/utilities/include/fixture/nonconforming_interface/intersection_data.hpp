@@ -6,7 +6,7 @@
 #include "enumerations/dimension.hpp"
 #include "initializers.hpp"
 #include "specfem/data_access/accessor.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "transfer_function.hpp"
 
 #include <type_traits>

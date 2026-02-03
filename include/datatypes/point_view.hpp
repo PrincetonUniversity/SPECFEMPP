@@ -6,7 +6,7 @@
 
 #include "impl/register_array.hpp"
 #include "simd.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

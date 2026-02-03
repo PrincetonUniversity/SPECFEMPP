@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 #include "medium/dim2/acoustic/isotropic/properties.hpp"
 #include "medium/dim2/elastic/anisotropic/properties.hpp"

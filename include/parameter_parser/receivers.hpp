@@ -1,7 +1,7 @@
 #ifndef _RUNTIME_CONFIGURATION_RECEIVERS_HPP
 #define _RUNTIME_CONFIGURATION_RECEIVERS_HPP
 
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
 #include "yaml-cpp/yaml.h"

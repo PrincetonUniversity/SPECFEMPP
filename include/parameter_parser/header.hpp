@@ -1,7 +1,7 @@
 #ifndef _PARAMETER_HEADER_HPP
 #define _PARAMETER_HEADER_HPP
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <ctime>
 #include <tuple>

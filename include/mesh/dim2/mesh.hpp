@@ -12,7 +12,7 @@
 #include "mesh/mesh_base.hpp"
 #include "parameters/parameters.hpp"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "tags/tags.hpp"
 #include <Kokkos_Core.hpp>
 

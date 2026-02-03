@@ -1,6 +1,6 @@
 #include "enumerations/interface.hpp"
 #include "specfem/point/boundary.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_helper.hpp"
 #include "test_macros.hpp"
 #include "utilities/interface.hpp"

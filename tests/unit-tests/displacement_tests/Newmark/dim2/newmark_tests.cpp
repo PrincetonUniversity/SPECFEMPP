@@ -1,6 +1,6 @@
 #include "../../../SPECFEM_Environment.hpp"
 #include "../../../utilities/include/interface.hpp"
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "io/interface.hpp"
 #include "io/seismogram/reader.hpp"
 #include "mesh/mesh.hpp"

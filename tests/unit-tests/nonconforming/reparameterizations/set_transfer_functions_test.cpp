@@ -5,7 +5,7 @@
 
 #include "algorithms/locate_point.hpp"
 #include "specfem/assembly/nonconforming_interfaces/dim2/impl/compute_intersection.tpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <gtest/gtest.h>
 
 TEST(impl__compute_intersection, TransferFunctionCorrectness) {

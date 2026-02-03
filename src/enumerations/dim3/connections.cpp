@@ -1,7 +1,7 @@
 #include "enumerations/connections.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/mesh_entities.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <array>
 #include <stdexcept>
 #include <tuple>

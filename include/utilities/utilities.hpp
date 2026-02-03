@@ -2,7 +2,7 @@
 
 #include "datatypes/simd.hpp"
 #include "enumerations/interface.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <string>
 
 namespace specfem {

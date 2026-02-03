@@ -1,4 +1,4 @@
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/program.hpp"
 #include "specfem/program/context.hpp"

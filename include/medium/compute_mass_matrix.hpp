@@ -10,7 +10,7 @@
 #include "enumerations/medium.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

@@ -2,7 +2,6 @@
 
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
-#include "globals.h"
 #include "specfem/point.hpp"
 
 #include <Kokkos_Core.hpp>

@@ -11,7 +11,7 @@
 #include "receivers.hpp"
 #include "run_setup.hpp"
 #include "sources.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "time_scheme/interface.hpp"
 #include "writer/kernel.hpp"
 #include "writer/plot_wavefield.hpp"

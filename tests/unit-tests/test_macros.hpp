@@ -1,5 +1,5 @@
 #pragma once
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <string>
 
 // Compile-time conditional for Google Test expectations

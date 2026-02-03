@@ -1,4 +1,4 @@
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/program.hpp"
 #include <boost/program_options.hpp>

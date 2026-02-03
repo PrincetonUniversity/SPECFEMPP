@@ -2,7 +2,7 @@
 #include "kokkos_abstractions.h"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_macros.hpp"
 #include "utilities/interface.hpp"
 #include <cmath>

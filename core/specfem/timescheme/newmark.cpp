@@ -1,5 +1,5 @@
 #include "specfem/timescheme/newmark.tpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <ostream>
 
 template class specfem::time_scheme::newmark<

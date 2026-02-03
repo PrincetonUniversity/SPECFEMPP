@@ -5,7 +5,7 @@
 
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_fixture.hpp"
 #include "utilities/utilities.hpp"
 

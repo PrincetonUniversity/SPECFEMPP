@@ -4,7 +4,7 @@
 #include "../quadrature.hpp"
 #include "kokkos_abstractions.h"
 #include "lagrange_poly.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

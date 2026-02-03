@@ -1,6 +1,6 @@
 #include "quadrature/gll/lagrange_poly.hpp"
 #include "quadrature/gll/gll_library.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 using HostView1d = specfem::kokkos::HostView1d<type_real>;

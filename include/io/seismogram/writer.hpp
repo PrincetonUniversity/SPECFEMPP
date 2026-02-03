@@ -1,11 +1,11 @@
 #pragma once
 
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "enumerations/interface.hpp"
 #include "impl/channel_generator.hpp"
 #include "io/writer.hpp"
 #include "specfem/assembly.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <vector>
 
 namespace specfem {

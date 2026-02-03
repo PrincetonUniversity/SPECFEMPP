@@ -6,7 +6,7 @@
 #include "enumerations/wavefield.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_macros.hpp"
 #include "utilities/utilities.hpp"
 #include "gtest/gtest.h"

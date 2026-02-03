@@ -12,7 +12,7 @@
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
 #include "specfem/logger.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 // External/Standard Libraries
 #include <Kokkos_Core.hpp>

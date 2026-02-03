@@ -1,6 +1,6 @@
 #pragma once
 
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include <Kokkos_Core.hpp>

@@ -1,5 +1,5 @@
 #include "io/fortranio/interface.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include <fstream>
 #include <gmock/gmock.h>

@@ -9,7 +9,7 @@
 #include "quadrature/interface.hpp"
 #include "specfem/assembly/mesh/impl/quadrature.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <vector>
 
 namespace specfem::assembly {

@@ -1,5 +1,5 @@
 #include "quadrature/interface.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <ostream>
 
 std::ostream &

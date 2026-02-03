@@ -6,7 +6,7 @@
 #include "mesh/mesh_base.hpp"
 #include "specfem/macros.hpp"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <variant>
 
 namespace specfem {

@@ -1,6 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
 // #include "../../utilities/include/compare_array.h"
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "domain/domain.hpp"
 #include "io/fortranio/interface.hpp"
 #include "io/interface.hpp"
