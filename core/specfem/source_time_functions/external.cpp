@@ -1,7 +1,7 @@
 #include "external.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "io/seismogram/reader.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/io.hpp"
 #include "specfem/utilities.hpp"
 #include <fstream>
 #include <tuple>

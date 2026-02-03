@@ -10,5 +10,6 @@ target_link_libraries(
         specfem::macros
         # material_class
         yaml-cpp
+        specfem::io
         ${BOOST_LIBS}
 )

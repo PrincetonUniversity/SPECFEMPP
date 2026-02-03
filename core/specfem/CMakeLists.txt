@@ -4,6 +4,7 @@ add_subdirectory(assembly)
 add_subdirectory(attenuation)
 add_subdirectory(jacobian)
 add_subdirectory(compute)
+add_subdirectory(io)
 add_subdirectory(logger)
 add_subdirectory(macros)
 add_subdirectory(mesh)
@@ -33,6 +34,7 @@ target_link_libraries(specfem_core_interface
         specfem::assembly
         specfem::jacobian
         specfem::compute
+        specfem::io
         specfem::logger
         specfem::macros
         specfem::mesh

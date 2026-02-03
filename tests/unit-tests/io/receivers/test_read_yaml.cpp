@@ -1,6 +1,7 @@
 #include "../../SPECFEM_Environment.hpp"
+#include "../../test_macros.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
 #include "specfem/receivers.hpp"
 #include "test_receiver_solutions.hpp"
 #include <Kokkos_Core.hpp>
@@ -121,7 +122,7 @@ TEST_P(Read2DReceiversYAMLTest, ReadYAMLnode) {
   const auto &param = GetParam();
 
   if (param.expected_receivers.empty()) {
-    EXPECT_THROW(
+    LOCAL_EXPECT_THROW(
         specfem::io::read_2d_receivers(param.stations_node, param.angle),
         std::runtime_error);
     return;
@@ -165,8 +166,8 @@ TEST_P(Read3DReceiversYAMLTest, ReadYAMLnode) {
   const auto &param = GetParam();
 
   if (param.expected_receivers.empty()) {
-    EXPECT_THROW(specfem::io::read_3d_receivers(param.stations_node),
-                 std::runtime_error);
+    LOCAL_EXPECT_THROW(specfem::io::read_3d_receivers(param.stations_node),
+                       std::runtime_error);
     return;
   }
 

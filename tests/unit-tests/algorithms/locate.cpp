@@ -1,8 +1,8 @@
 #include "../SPECFEM_Environment.hpp"
-#include "io/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 

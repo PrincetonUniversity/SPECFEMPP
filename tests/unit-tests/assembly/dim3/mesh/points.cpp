@@ -3,8 +3,8 @@
 #include "enumerations/connections.hpp"
 #include "enumerations/interface.hpp"
 #include "enumerations/mesh_entities.hpp"
-#include "io/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>

@@ -1,10 +1,5 @@
 #include "wavefield.hpp"
-#include "io/ADIOS2/ADIOS2.hpp"
-#include "io/ASCII/ASCII.hpp"
-#include "io/HDF5/HDF5.hpp"
-#include "io/NPY/NPY.hpp"
-#include "io/NPZ/NPZ.hpp"
-#include "io/reader.hpp"
+#include "specfem/io.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/utilities.hpp"
 #include <boost/filesystem.hpp>

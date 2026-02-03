@@ -1,5 +1,5 @@
 #include "acoustic_free_surface.hpp"
-#include "io/fortranio/interface.hpp"
+#include "specfem/io.hpp"
 
 #include <Kokkos_Core.hpp>
 

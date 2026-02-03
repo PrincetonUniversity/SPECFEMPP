@@ -1,10 +1,8 @@
 #include "../test_fixture/test_fixture.hpp"
 #include "enumerations/dimension.hpp"
-#include "io/ASCII/ASCII.hpp"
-#include "io/property/reader.hpp"
-#include "io/property/writer.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/io.hpp"
 #include "specfem/macros.hpp"
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
