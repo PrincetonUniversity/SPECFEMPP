@@ -21,15 +21,12 @@ void create_folder_if_not_exists(const std::string &folder_name) {
   }
 }
 
-specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
-                                             const std::string &default_file) {
-  *this = setup(YAML::LoadFile(parameter_file), YAML::LoadFile(default_file));
+specfem::runtime_configuration::setup::setup(const std::string &parameter_file) {
+  *this = setup(YAML::LoadFile(parameter_file));
 }
 
-specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
-                                             const YAML::Node &default_dict) {
+specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
   const YAML::Node &runtime_config = parameter_dict["parameters"];
-  const YAML::Node &default_config = default_dict["default-parameters"];
 
   const YAML::Node &simulation_setup = runtime_config["simulation-setup"];
   const YAML::Node &n_solver = simulation_setup["solver"];
@@ -81,12 +78,13 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
     this->quadrature =
         std::make_unique<specfem::runtime_configuration::quadrature>(
             n_quadrature);
-  } else if (const YAML::Node &n_quadrature = default_config["quadrature"]) {
+  } else {
+    // Default to GLL4 quadrature if not specified
+    YAML::Node default_quadrature;
+    default_quadrature["quadrature-type"] = "GLL4";
     this->quadrature =
         std::make_unique<specfem::runtime_configuration::quadrature>(
-            n_quadrature);
-  } else {
-    throw std::runtime_error("Error reading specfem quadrature config.");
+            default_quadrature);
   }
 
   // Get Run Setup info
@@ -94,12 +92,14 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
     this->run_setup =
         std::make_unique<specfem::runtime_configuration::run_setup>(
             n_run_setup);
-  } else if (const YAML::Node &n_run_setup = default_dict["run-setup"]) {
+  } else {
+    // Default to single processor and single run if not specified
+    YAML::Node default_run_setup;
+    default_run_setup["number-of-processors"] = 1;
+    default_run_setup["number-of-runs"] = 1;
     this->run_setup =
         std::make_unique<specfem::runtime_configuration::run_setup>(
-            n_run_setup);
-  } else {
-    throw std::runtime_error("Error reading specfem runtime configuration.");
+            default_run_setup);
   }
 
   // Get Database info

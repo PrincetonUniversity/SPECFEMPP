@@ -78,7 +78,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   const std::string parameter_file = test_config.specfem_config;
 
-  specfem::runtime_configuration::setup setup(parameter_file, "parameter_files/defaults/default.yaml");
+  specfem::runtime_configuration::setup setup(parameter_file);
 
   const auto database_file = setup.get_databases();
   // std::cout << setup.print_header();

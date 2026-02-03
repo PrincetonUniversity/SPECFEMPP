@@ -14,10 +14,7 @@ boost::program_options::options_description define_args() {
 
   desc.add_options()("help,h", "Print this help message")(
       "parameters_file,p", po::value<std::string>(),
-      "Location to parameters file")(
-      "default_file,d",
-      po::value<std::string>()->default_value("parameter_files/defaults/default.yaml"),
-      "Location of default parameters file.");
+      "Location to parameters file");
 
   return desc;
 }
@@ -60,15 +57,13 @@ int main(int argc, char **argv) {
 
     // Extract parameters
     const std::string parameters_file = vm["parameters_file"].as<std::string>();
-    const std::string default_file = vm["default_file"].as<std::string>();
 
-    // Load configuration files
+    // Load configuration file
     const YAML::Node parameter_dict = YAML::LoadFile(parameters_file);
-    const YAML::Node default_dict = YAML::LoadFile(default_file);
 
     // Execute program for 3D
     const auto success =
-        specfem::program::execute("3d", parameter_dict, default_dict);
+        specfem::program::execute("3d", parameter_dict);
 
     // Check execution result
     if (!success) {

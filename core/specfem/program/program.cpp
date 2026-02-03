@@ -76,7 +76,7 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
 
 // Internal function for 2D simulations
 void program_2d(
-    const YAML::Node &parameter_dict, const YAML::Node &default_dict,
+    const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::dimension::type::dim2> > >
         tasks) {
@@ -85,7 +85,7 @@ void program_2d(
   //                    Read parameter file
   // --------------------------------------------------------------
   auto start_time = std::chrono::system_clock::now();
-  specfem::runtime_configuration::setup setup(parameter_dict, default_dict);
+  specfem::runtime_configuration::setup setup(parameter_dict);
   const auto database_filename = setup.get_databases();
 
   specfem::Logger::info(
@@ -267,7 +267,7 @@ void program_2d(
 
 // Internal function for 3D simulations
 void program_3d(
-    const YAML::Node &parameter_dict, const YAML::Node &default_dict,
+    const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::dimension::type::dim3> > >
         tasks) {
@@ -276,7 +276,7 @@ void program_3d(
   //                    Read parameter file
   // --------------------------------------------------------------
   auto start_time = std::chrono::system_clock::now();
-  specfem::runtime_configuration::setup setup(parameter_dict, default_dict);
+  specfem::runtime_configuration::setup setup(parameter_dict);
   const auto database_filename = setup.get_databases();
 
   specfem::Logger::info(
@@ -422,8 +422,7 @@ void program_3d(
   return;
 }
 
-bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
-             const YAML::Node &default_dict) {
+bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
   try {
     // Use simulation model enumeration for validation
     specfem::simulation::model simulation_model =
@@ -441,7 +440,7 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
       tasks.push_back(signal_task);
 
       // Run 2D Cartesian program
-      program_2d(parameter_dict, default_dict, tasks);
+      program_2d(parameter_dict, tasks);
 
       return true;
     }
@@ -456,7 +455,7 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
       tasks.push_back(signal_task);
 
       // Run 3D Cartesian program
-      program_3d(parameter_dict, default_dict, tasks);
+      program_3d(parameter_dict, tasks);
 
       return true;
     }
