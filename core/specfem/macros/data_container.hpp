@@ -109,7 +109,7 @@
 #define _DEFINE_DOMAIN_VIEW(r, data, elem)                                     \
   specfem::kokkos::DomainView<                                                 \
       dimension_tag, type_real,                                                \
-      specfem::dimension::dimension<dimension_tag>::dim + 1,                   \
+      specfem::element::dimension<dimension_tag>::dim + 1,                     \
       Kokkos::DefaultExecutionSpace::memory_space>                             \
       BOOST_PP_SEQ_ELEM(0, elem);                                              \
   typename decltype(BOOST_PP_SEQ_ELEM(0, elem))::HostMirror BOOST_PP_CAT(      \

@@ -4,7 +4,7 @@
 #include <string>
 
 namespace specfem {
-namespace dimension {
+namespace element {
 /**
  * @brief Compile-time dimension traits and utilities.
  *
@@ -16,7 +16,7 @@ namespace dimension {
  * @code
  * // Get dimension info at compile time
  * using dim_2d =
- * specfem::dimension::dimension<specfem::element::dimension_tag::dim2>;
+ * specfem::element::dimension<specfem::element::dimension_tag::dim2>;
  * static_assert(dim_2d::dim == 2);
  * std::string name = dim_2d::to_string(); // "2D"
  * @endcode
@@ -59,5 +59,5 @@ public:
   static std::string to_string() { return "3D"; }
 };
 
-} // namespace dimension
+} // namespace element
 } // namespace specfem

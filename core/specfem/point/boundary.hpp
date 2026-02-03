@@ -167,7 +167,7 @@ private:
    * @brief Number of spatial dimensions.
    */
   constexpr static int num_dimensions =
-      specfem::dimension::dimension<DimensionTag>::dim;
+      specfem::element::dimension<DimensionTag>::dim;
   /**
    * @name Private Typedefs
    *
