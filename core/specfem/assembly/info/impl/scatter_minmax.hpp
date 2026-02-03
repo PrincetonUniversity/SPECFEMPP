@@ -52,12 +52,13 @@ struct LocalMinMax {
  */
 template <typename T = type_real, size_t Extent = 0>
 struct ScatterMinMax {
-  using view_type = Kokkos::View<T*>;
+  using layout_type = Kokkos::DefaultExecutionSpace::array_layout;
+  using view_type = Kokkos::View<T*, layout_type>;
   using scatter_min_type = Kokkos::Experimental::ScatterView<
-      T*, Kokkos::LayoutRight, Kokkos::DefaultExecutionSpace,
+      T*, layout_type, Kokkos::DefaultExecutionSpace,
       Kokkos::Experimental::ScatterMin>;
   using scatter_max_type = Kokkos::Experimental::ScatterView<
-      T*, Kokkos::LayoutRight, Kokkos::DefaultExecutionSpace,
+      T*, layout_type, Kokkos::DefaultExecutionSpace,
       Kokkos::Experimental::ScatterMax>;
 
   view_type min_view;
