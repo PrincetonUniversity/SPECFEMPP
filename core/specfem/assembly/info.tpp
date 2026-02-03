@@ -160,17 +160,52 @@ void process_medium_elements(const specfem::assembly::assembly<DimensionTag> &as
   Kokkos::fence();
 }
 
+/// @brief Finalize element min/max by computing derived quantities
+/// @tparam DimensionTag The dimension type (dim2 or dim3)
+template <specfem::dimension::type DimensionTag>
+void finalize_element_minmax(const specfem::assembly::mesh<DimensionTag> &mesh,
+                             InfoScatters<DimensionTag> &scatters) {
+  Kokkos::parallel_for(
+      "specfem::assembly::Info::finalize_element_minmax",
+      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, mesh.nspec),
+      KOKKOS_LAMBDA(const int &ispec) {
+        // Get min and max velocities for the element
+        auto vmin = scatters.element_v.min_view[ispec];
+        auto vmax = scatters.element_v.max_view[ispec];
+
+        // Get max distance between GLL points for the element
+        auto distance_max = scatters.element_distance.max_view[ispec];
+        auto gll_distance_min = scatters.element_gll_distance.min_view[ispec];
+
+        // Get scatter accessors for the reductions
+        auto minimum_period_acc = scatters.minimum_period.access();
+        auto dt_acc = scatters.dt.access();
+
+        // Compute average GLL distance from element size
+        int fgll = mesh.element_grid.ngll - 1;
+        type_real avg_distance =
+            compute_average_gll_spacing(distance_max, fgll);
+        type_real min_period =
+            compute_minimum_period(avg_distance, vmin);
+
+        // Update minimum period scatter
+        minimum_period_acc.update(min_period);
+
+        // Suggested time step based on CFL condition
+        type_real element_dt =
+            compute_suggested_timestep(gll_distance_min, vmax);
+        dt_acc.update(element_dt);
+      });
+  scatters.minimum_period.contribute();
+  scatters.dt.contribute();
+  Kokkos::fence();
+}
+
 } // namespace specfem::assembly::info::impl
 
 template <specfem::dimension::type DimensionTag>
 specfem::assembly::Info<DimensionTag>::Info(
     specfem::assembly::assembly<dimension_tag> &assembly) {
-
-  // Get number of dimensions in this simulation
-  constexpr static int ndim =
-      specfem::dimension::dimension<dimension_tag>::dim;
-  
-  const auto &mesh = assembly.mesh;
 
   // Create all scatter reducers in a single struct
   info::impl::InfoScatters<dimension_tag> scatters(assembly.mesh.nspec);
@@ -200,41 +235,7 @@ specfem::assembly::Info<DimensionTag>::Info(
   };
 
   // Compute derived quantities (minimum period, dt) from per-element data
-  Kokkos::parallel_for(
-      "specfem::assembly::Info::finalize_element_minmax",
-      Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0,
-                                                         assembly.mesh.nspec),
-      KOKKOS_LAMBDA(const int &ispec) {
-        // Get min and max velocities for the element
-        auto vmin = scatters.element_v.min_view[ispec];
-        auto vmax = scatters.element_v.max_view[ispec];
-
-        // Get max distance between GLL points for the element
-        auto distance_max = scatters.element_distance.max_view[ispec];
-        auto gll_distance_min = scatters.element_gll_distance.min_view[ispec];
-
-        // Get scatter accessors for the reductions
-        auto minimum_period_acc = scatters.minimum_period.access();
-        auto dt_acc = scatters.dt.access();
-
-        // Compute average GLL distance from element size
-        int fgll = mesh.element_grid.ngll - 1;
-        type_real avg_distance =
-            info::impl::compute_average_gll_spacing(distance_max, fgll);
-        type_real min_period =
-            info::impl::compute_minimum_period(avg_distance, vmin);
-
-        // Update minimum period scatter
-        minimum_period_acc.update(min_period);
-
-        // Suggested time step based on CFL condition
-        type_real element_dt =
-            info::impl::compute_suggested_timestep(gll_distance_min, vmax);
-        dt_acc.update(element_dt);
-      });
-  scatters.minimum_period.contribute();
-  scatters.dt.contribute();
-  Kokkos::fence();
+  info::impl::finalize_element_minmax(assembly.mesh, scatters);
 
   // Copy results to member variables
   this->vp = scatters.vp.get_bounds();
