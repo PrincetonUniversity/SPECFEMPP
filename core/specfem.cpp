@@ -30,7 +30,7 @@ boost::program_options::options_description define_specfem_args() {
   desc.add_options()("help,h", "Print this help message")(
       "parameters_file,p", po::value<std::string>()->required(),
       "Location to parameters file")(
-      "default_file", po::value<std::string>()->default_value(__default_file__),
+      "default_file", po::value<std::string>()->default_value("parameter_files/defaults/default.yaml"),
       "Location of default parameters file.");
 
   // Add logger options

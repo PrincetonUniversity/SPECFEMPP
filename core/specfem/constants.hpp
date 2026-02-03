@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_CONSTANTS_HPP
-#define _SPECFEM_CONSTANTS_HPP
+#pragma once
 
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -36,5 +35,3 @@ namespace constants::empirical {
 }
 
 } // namespace specfem
-
-#endif

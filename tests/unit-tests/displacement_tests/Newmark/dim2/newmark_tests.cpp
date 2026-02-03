@@ -106,7 +106,7 @@ TEST_P(Newmark, 2D) {
 
   const auto parameter_file = Test.specfem_config;
 
-  specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
+  specfem::runtime_configuration::setup setup(parameter_file, "parameter_files/defaults/default.yaml");
 
   const auto database_file = setup.get_databases();
   const auto source_node = setup.get_sources();

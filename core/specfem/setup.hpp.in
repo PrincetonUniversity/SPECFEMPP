@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Kokkos_Core.hpp>
-#include <string>
 
 using type_real = @TYPE_REAL@;
 const static int ndim{ 2 };
@@ -22,5 +21,3 @@ constexpr int NLANES = 1;
 constexpr Kokkos::AUTO_t NTHREADS = Kokkos::AUTO;
 constexpr int NLANES = 1;
 #endif
-
-const std::string __default_file__ = "@CMAKE_SOURCE_DIR@/parameter_files/defaults/default.yaml";

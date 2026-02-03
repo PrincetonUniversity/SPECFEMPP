@@ -16,7 +16,7 @@ boost::program_options::options_description define_args() {
       "parameters_file,p", po::value<std::string>(),
       "Location to parameters file")(
       "default_file,d",
-      po::value<std::string>()->default_value(__default_file__),
+      po::value<std::string>()->default_value("parameter_files/defaults/default.yaml"),
       "Location of default parameters file.");
 
   return desc;
