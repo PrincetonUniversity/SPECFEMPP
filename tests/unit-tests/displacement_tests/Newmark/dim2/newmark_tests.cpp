@@ -159,7 +159,7 @@ TEST_P(Newmark, 2D) {
 
   const int max_sig_step = setup.get_max_seismogram_step();
 
-  specfem::assembly::assembly<specfem::dimension::type::dim2> assembly(
+  specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadratures, sources, receivers, seismogram_types, t0,
       setup.get_dt(), nsteps, max_sig_step, nstep_between_samples,
       setup.get_simulation_type(), false, nullptr);

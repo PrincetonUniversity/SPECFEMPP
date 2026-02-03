@@ -20,10 +20,10 @@ namespace specfem {
 
 namespace mesh {
 
-template <> struct mesh<specfem::dimension::type::dim2> {
+template <> struct mesh<specfem::element::dimension_tag::dim2> {
 
   constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension
+      specfem::element::dimension_tag::dim2; ///< Dimension
 
   int npgeo; ///< Total number of spectral element control nodes
   int nspec; ///< Total number of spectral elements

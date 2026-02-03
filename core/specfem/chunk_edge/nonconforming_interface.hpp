@@ -21,7 +21,7 @@ namespace impl {
  * @tparam MemorySpace Kokkos memory space
  * @tparam MemoryTraits Kokkos memory traits
  */
-template <specfem::dimension::type DimensionTag, int NumberElements,
+template <specfem::element::dimension_tag DimensionTag, int NumberElements,
           int NQuadIntersection, int NQuadElement,
           specfem::data_access::DataClassType DataClass,
           specfem::interface::interface_tag InterfaceTag,
@@ -43,16 +43,16 @@ template <int NumberElements, int NQuadIntersection, int NQuadElement,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, typename MemorySpace,
           typename MemoryTraits>
-struct transfer_function<specfem::dimension::type::dim2, NumberElements,
+struct transfer_function<specfem::element::dimension_tag::dim2, NumberElements,
                          NQuadIntersection, NQuadElement, DataClass,
                          InterfaceTag, BoundaryTag, MemorySpace, MemoryTraits>
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::chunk_edge, DataClass,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
 
 public:
   /// Spatial dimension (2D for this specialization)
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
   /// Number of edges in chunk
   static constexpr int chunk_size = NumberElements;
   /// Number of quadrature points on element edge
@@ -67,8 +67,8 @@ public:
   static constexpr auto connection_tag =
       specfem::connections::type::nonconforming;
   using TransferViewType = specfem::datatype::VectorChunkEdgeViewType<
-      type_real, specfem::dimension::type::dim2, NumberElements, NQuadElement,
-      NQuadIntersection, false, MemorySpace,
+      type_real, specfem::element::dimension_tag::dim2, NumberElements,
+      NQuadElement, NQuadIntersection, false, MemorySpace,
       MemoryTraits>; ///< Underlying view storing transfer function matrix data
 
 private:
@@ -136,7 +136,7 @@ public:
  * @tparam NQuadIntersection Quadrature points on intersection
  * @tparam NQuadElement Quadrature points on element edge
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadIntersection, int NQuadElement>
@@ -158,7 +158,7 @@ using transfer_function_self = impl::transfer_function<
  * @tparam NQuadIntersection Quadrature points on intersection
  * @tparam NQuadElement Quadrature points on element edge
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadIntersection, int NQuadElement>
@@ -181,7 +181,7 @@ using transfer_function_coupled = impl::transfer_function<
  * @tparam MemorySpace Kokkos memory space
  * @tparam MemoryTraits Kokkos memory traits
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadIntersection,
@@ -198,17 +198,17 @@ struct intersection_factor;
 template <specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadIntersection, typename MemorySpace, typename MemoryTraits>
-struct intersection_factor<specfem::dimension::type::dim2, InterfaceTag,
+struct intersection_factor<specfem::element::dimension_tag::dim2, InterfaceTag,
                            BoundaryTag, NumberElements, NQuadIntersection,
                            MemorySpace, MemoryTraits>
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::intersection_factor,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
 
 public:
   /// Spatial dimension (2D for this specialization)
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
   /// Interface medium type tag
   static constexpr auto interface_tag = InterfaceTag;
   /// Boundary condition tag
@@ -293,7 +293,7 @@ public:
  * @tparam MemorySpace Kokkos memory space
  * @tparam MemoryTraits Kokkos memory traits
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadIntersection,
@@ -310,17 +310,17 @@ struct intersection_normal;
 template <specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadIntersection, typename MemorySpace, typename MemoryTraits>
-struct intersection_normal<specfem::dimension::type::dim2, InterfaceTag,
+struct intersection_normal<specfem::element::dimension_tag::dim2, InterfaceTag,
                            BoundaryTag, NumberElements, NQuadIntersection,
                            MemorySpace, MemoryTraits>
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::intersection_normal,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
 
 public:
   /// Spatial dimension (2D for this specialization)
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
   /// Interface medium type tag
   static constexpr auto interface_tag = InterfaceTag;
   /// Boundary condition tag
@@ -406,7 +406,7 @@ struct NonconformingAccessorPack
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::nonconforming_interface,
-          specfem::dimension::type::dim2, false>,
+          specfem::element::dimension_tag::dim2, false>,
       public Accessors... {
 
   /// Spatial dimension inherited from first accessor
@@ -431,10 +431,10 @@ struct NonconformingAccessorPack
       specfem::data_access::DataClassType::nonconforming_interface;
 
   static_assert(
-      (std::is_same_v<
-           std::integral_constant<specfem::dimension::type,
-                                  Accessors::dimension_tag>,
-           std::integral_constant<specfem::dimension::type, dimension_tag> > &&
+      (std::is_same_v<std::integral_constant<specfem::element::dimension_tag,
+                                             Accessors::dimension_tag>,
+                      std::integral_constant<specfem::element::dimension_tag,
+                                             dimension_tag> > &&
        ...),
       "All Accessors in NonconformingAccessorPack must have the same "
       "dimension_tag");
@@ -501,7 +501,7 @@ struct NonconformingAccessorPack
  * Combines transfer function and intersection normal accessors for
  * computing coupling terms in nonconforming interface methods.
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadIntersection, int NQuadElement>
@@ -517,7 +517,7 @@ using coupling_terms_pack = NonconformingAccessorPack<
  * Provides access to intersection scaling factors for numerical integration
  * at nonconforming interfaces.
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadIntersection>

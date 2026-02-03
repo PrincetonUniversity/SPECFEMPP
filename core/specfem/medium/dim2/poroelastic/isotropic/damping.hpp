@@ -44,8 +44,8 @@ template <typename T, typename PointPropertiesType, typename PointVelocityType,
           typename PointAccelerationType>
 KOKKOS_FUNCTION void impl_compute_damping_force(
     const std::true_type,
-    const std::integral_constant<specfem::dimension::type,
-                                 specfem::dimension::type::dim2>,
+    const std::integral_constant<specfem::element::dimension_tag,
+                                 specfem::element::dimension_tag::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
                                  specfem::element::medium_tag::poroelastic>,
     const std::integral_constant<specfem::element::property_tag,

@@ -164,14 +164,14 @@ public:
    * @note The returned view uses HostSpace memory and contains
    *       specfem::point::global_coordinates data structures.
    */
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim3> *,
+                     Kokkos::HostSpace>
   coordinates() const {
     const int npoints = static_cast<int>(_coordinates.size());
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
         coord_view("coord_view", npoints);
     for (int i = 0; i < npoints; ++i) {
       coord_view(i) = { _coordinates[i][0], _coordinates[i][1],
@@ -201,8 +201,9 @@ public:
  * GLL point with a specified tolerance.
  */
 struct ExpectedJacobian3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3; ///< Compile-time dimension specification
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3; ///< Compile-time dimension
+                                             ///< specification
 
   GridExtents total_gll_points;    ///< GLL discretization parameters
   std::vector<Element3D> elements; ///< Collection of test elements

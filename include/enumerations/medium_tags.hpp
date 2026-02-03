@@ -15,19 +15,21 @@ namespace specfem::element {
  * @tparam DimensionTag The dimension of the simulation.
  * @return A constexpr array of medium types.
  */
-template <specfem::dimension::type DimensionTag> constexpr auto medium_types();
+template <specfem::element::dimension_tag DimensionTag>
+constexpr auto medium_types();
 
 /**
  * @brief Generates a list of medium types for 2D simulations.
  *
  * @return A constexpr array of medium types for 2D.
  */
-template <> constexpr auto medium_types<specfem::dimension::type::dim2>() {
+template <>
+constexpr auto medium_types<specfem::element::dimension_tag::dim2>() {
   // Use boost preprocessor library to generate a list of medium
   // types
   constexpr int total_medium_types = BOOST_PP_SEQ_SIZE(MEDIUM_TAGS_DIM2);
   constexpr std::array<
-      std::tuple<specfem::dimension::type, specfem::element::medium_tag>,
+      std::tuple<specfem::element::dimension_tag, specfem::element::medium_tag>,
       total_medium_types>
       medium_types{ _MAKE_CONSTEXPR_ARRAY(MEDIUM_TAGS_DIM2) };
 
@@ -39,12 +41,13 @@ template <> constexpr auto medium_types<specfem::dimension::type::dim2>() {
  *
  * @return A constexpr array of medium types for 3D.
  */
-template <> constexpr auto medium_types<specfem::dimension::type::dim3>() {
+template <>
+constexpr auto medium_types<specfem::element::dimension_tag::dim3>() {
   // Use boost preprocessor library to generate a list of medium
   // types
   constexpr int total_medium_types = BOOST_PP_SEQ_SIZE(MEDIUM_TAGS_DIM3);
   constexpr std::array<
-      std::tuple<specfem::dimension::type, specfem::element::medium_tag>,
+      std::tuple<specfem::element::dimension_tag, specfem::element::medium_tag>,
       total_medium_types>
       medium_types{ _MAKE_CONSTEXPR_ARRAY(MEDIUM_TAGS_DIM3) };
 
@@ -59,7 +62,7 @@ template <> constexpr auto medium_types<specfem::dimension::type::dim3>() {
  * @tparam DimensionTag The dimension of the simulation.
  * @return A constexpr array of material systems.
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 constexpr auto material_systems();
 
 /**
@@ -67,13 +70,14 @@ constexpr auto material_systems();
  *
  * @return A constexpr array of material systems for 2D.
  */
-template <> constexpr auto material_systems<specfem::dimension::type::dim2>() {
+template <>
+constexpr auto material_systems<specfem::element::dimension_tag::dim2>() {
   // Use boost preprocessor library to generate a list of
   // material systems
   constexpr int total_material_systems =
       BOOST_PP_SEQ_SIZE(MATERIAL_SYSTEMS_DIM2);
   constexpr std::array<
-      std::tuple<specfem::dimension::type, specfem::element::medium_tag,
+      std::tuple<specfem::element::dimension_tag, specfem::element::medium_tag,
                  specfem::element::property_tag,
                  specfem::element::attenuation_tag>,
       total_material_systems>
@@ -87,12 +91,13 @@ template <> constexpr auto material_systems<specfem::dimension::type::dim2>() {
  *
  * @return A constexpr array of material systems for 3D.
  */
-template <> constexpr auto material_systems<specfem::dimension::type::dim3>() {
+template <>
+constexpr auto material_systems<specfem::element::dimension_tag::dim3>() {
   // material systems
   constexpr int total_material_systems =
       BOOST_PP_SEQ_SIZE(MATERIAL_SYSTEMS_DIM3);
   constexpr std::array<
-      std::tuple<specfem::dimension::type, specfem::element::medium_tag,
+      std::tuple<specfem::element::dimension_tag, specfem::element::medium_tag,
                  specfem::element::property_tag,
                  specfem::element::attenuation_tag>,
       total_material_systems>
@@ -109,18 +114,20 @@ template <> constexpr auto material_systems<specfem::dimension::type::dim3>() {
  * @tparam DimensionTag The dimension of the simulation.
  * @return A constexpr array of element types.
  */
-template <specfem::dimension::type DimensionTag> constexpr auto element_types();
+template <specfem::element::dimension_tag DimensionTag>
+constexpr auto element_types();
 
 /**
  * @brief Generates a list of element types for 2D simulations.
  *
  * @return A constexpr array of element types for 2D.
  */
-template <> constexpr auto element_types<specfem::dimension::type::dim2>() {
+template <>
+constexpr auto element_types<specfem::element::dimension_tag::dim2>() {
   // material systems
   constexpr int total_element_types = BOOST_PP_SEQ_SIZE(ELEMENT_TYPES_DIM2);
   constexpr std::array<
-      std::tuple<specfem::dimension::type, specfem::element::medium_tag,
+      std::tuple<specfem::element::dimension_tag, specfem::element::medium_tag,
                  specfem::element::property_tag,
                  specfem::element::boundary_tag>,
       total_element_types>
@@ -134,11 +141,12 @@ template <> constexpr auto element_types<specfem::dimension::type::dim2>() {
  *
  * @return A constexpr array of element types for 3D.
  */
-template <> constexpr auto element_types<specfem::dimension::type::dim3>() {
+template <>
+constexpr auto element_types<specfem::element::dimension_tag::dim3>() {
   // material systems
   constexpr int total_element_types = BOOST_PP_SEQ_SIZE(ELEMENT_TYPES_DIM3);
   constexpr std::array<
-      std::tuple<specfem::dimension::type, specfem::element::medium_tag,
+      std::tuple<specfem::element::dimension_tag, specfem::element::medium_tag,
                  specfem::element::property_tag,
                  specfem::element::boundary_tag>,
       total_element_types>

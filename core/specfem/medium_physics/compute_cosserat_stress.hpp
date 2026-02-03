@@ -143,7 +143,7 @@ compute_cosserat_stress(const PointPropertiesType &point_properties,
                                    MediumTag>::has_cosserat_stress;
 
   using dimension_dispatch =
-      std::integral_constant<specfem::dimension::type, DimensionTag>;
+      std::integral_constant<specfem::element::dimension_tag, DimensionTag>;
 
   using medium_dispatch =
       std::integral_constant<specfem::element::medium_tag, MediumTag>;

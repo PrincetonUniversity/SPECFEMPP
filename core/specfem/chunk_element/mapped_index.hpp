@@ -19,7 +19,7 @@ namespace chunk_element {
  * @tparam ViewType Kokkos view type for index storage
  * @tparam TeamMemberType Kokkos team execution context
  */
-template <specfem::dimension::type DimensionTag, typename SIMD,
+template <specfem::element::dimension_tag DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
 class MappedIndex : public specfem::execution::MappedChunkElementIndex<
                         DimensionTag, SIMD, ViewType, TeamMemberType>,

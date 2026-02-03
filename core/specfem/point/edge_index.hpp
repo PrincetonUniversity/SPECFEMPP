@@ -8,7 +8,7 @@ namespace specfem::point {
  * @brief Primary template for edge index in spectral element meshes
  * @tparam DimensionTag Spatial dimension (dim2 or dim3)
  */
-template <specfem::dimension::type DimensionTag> struct edge_index;
+template <specfem::element::dimension_tag DimensionTag> struct edge_index;
 
 /**
  * @brief 2D edge index for spectral element edge access
@@ -19,16 +19,16 @@ template <specfem::dimension::type DimensionTag> struct edge_index;
  * within the edge.
  */
 template <>
-struct edge_index<specfem::dimension::type::dim2>
+struct edge_index<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::point,
           specfem::data_access::DataClassType::edge_index,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
 
   /**
    * @brief Dimension tag for 2D specialization.
    */
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
 
   /**
    * @brief Spectral element index.
@@ -93,16 +93,16 @@ struct edge_index<specfem::dimension::type::dim2>
  * within the edge.
  */
 template <>
-struct edge_index<specfem::dimension::type::dim3>
+struct edge_index<specfem::element::dimension_tag::dim3>
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::point,
           specfem::data_access::DataClassType::edge_index,
-          specfem::dimension::type::dim3, false> {
+          specfem::element::dimension_tag::dim3, false> {
 
   /**
    * @brief Dimension tag for 3D specialization.
    */
-  static constexpr auto dimension_tag = specfem::dimension::type::dim3;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Spectral element index.

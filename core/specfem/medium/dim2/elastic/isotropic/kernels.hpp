@@ -34,7 +34,7 @@ namespace specfem::medium_container::kernels {
  *   @code KOKKOS_INLINE_FUNCTION const value_type beta() const @endcode
  *
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct point_container<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic, UseSIMD,

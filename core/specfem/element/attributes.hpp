@@ -21,13 +21,13 @@ namespace element {
  * @code
  * // Get attributes for 2D elastic PSV medium
  * using attrs = specfem::element::attributes<
- *   specfem::dimension::type::dim2,
+ *   specfem::element::dimension_tag::dim2,
  *   specfem::element::medium_tag::elastic_psv>;
  * static_assert(attrs::components == 2); // u_x, u_z components
  * static_assert(attrs::dimension == 2);
  * @endcode
  */
-template <specfem::dimension::type Dimension,
+template <specfem::element::dimension_tag Dimension,
           specfem::element::medium_tag MediumTag>
 class attributes {
   static_assert(specfem::utilities::always_false<Dimension, MediumTag>,
@@ -44,7 +44,7 @@ class attributes {
  * Handles in-plane wave propagation with displacement components u_x and u_z.
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::elastic_psv> {
 
 public:
@@ -64,7 +64,7 @@ public:
  * Handles anti-plane wave propagation with single displacement component u_y.
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::elastic_sh> {
 
 public:
@@ -86,7 +86,7 @@ public:
  * materials. Includes displacement (u_x, u_z) and rotation (ω_y) components.
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::elastic_psv_t> {
 
 public:
@@ -108,7 +108,7 @@ public:
  * Handles compressional wave propagation in fluid media with scalar pressure.
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::acoustic> {
 
 public:
@@ -131,7 +131,7 @@ public:
  * w^z).
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::poroelastic> {
 public:
   inline static constexpr int dimension = 2; ///< Spatial dimension
@@ -152,7 +152,7 @@ public:
  * and E_y.
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::electromagnetic_te> {
 public:
   inline static constexpr int dimension = 2;  ///< Spatial dimension
@@ -177,7 +177,7 @@ public:
  * pressure.
  */
 template <>
-class attributes<specfem::dimension::type::dim3,
+class attributes<specfem::element::dimension_tag::dim3,
                  specfem::element::medium_tag::acoustic> {
 public:
   inline static constexpr int dimension = 3;  ///< Spatial dimension
@@ -197,7 +197,7 @@ public:
  * u_z.
  */
 template <>
-class attributes<specfem::dimension::type::dim3,
+class attributes<specfem::element::dimension_tag::dim3,
                  specfem::element::medium_tag::elastic> {
 public:
   inline static constexpr int dimension = 3; ///< Spatial dimension

@@ -1,9 +1,11 @@
 #include "specfem/assembly/element_types.hpp"
 
-specfem::assembly::element_types<specfem::dimension::type::dim2>::element_types(
-    const int nspec, const int ngllz, const int ngllx,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
+specfem::assembly::element_types<specfem::element::dimension_tag::dim2>::
+    element_types(
+        const int nspec, const int ngllz, const int ngllx,
+        const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+            &mesh,
+        const specfem::mesh::tags<specfem::element::dimension_tag::dim2> &tags)
     : nspec(nspec),
       medium_tags("specfem::assembly::element_types::medium_tags", nspec),
       property_tags("specfem::assembly::element_types::property_tags", nspec),
@@ -113,7 +115,7 @@ specfem::assembly::element_types<specfem::dimension::type::dim2>::element_types(
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-specfem::assembly::element_types<specfem::dimension::type::dim2>::
+specfem::assembly::element_types<specfem::element::dimension_tag::dim2>::
     get_elements_on_host(const specfem::element::medium_tag medium_tag) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -127,8 +129,9 @@ specfem::assembly::element_types<specfem::dimension::type::dim2>::
   throw std::runtime_error("Medium tag not found");
 }
 
-Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
-    element_types<specfem::dimension::type::dim2>::get_elements_on_device(
+Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
+specfem::assembly::element_types<specfem::element::dimension_tag::dim2>::
+    get_elements_on_device(
         const specfem::element::medium_tag medium_tag) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -143,7 +146,7 @@ Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
-    element_types<specfem::dimension::type::dim2>::get_elements_on_host(
+    element_types<specfem::element::dimension_tag::dim2>::get_elements_on_host(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::attenuation_tag attenuation_tag) const {
@@ -164,8 +167,9 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
   throw std::runtime_error("Medium tag or property tag not found");
 }
 
-Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
-    element_types<specfem::dimension::type::dim2>::get_elements_on_device(
+Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
+specfem::assembly::element_types<specfem::element::dimension_tag::dim2>::
+    get_elements_on_device(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::attenuation_tag attenuation_tag) const {
@@ -187,7 +191,7 @@ Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
-    element_types<specfem::dimension::type::dim2>::get_elements_on_host(
+    element_types<specfem::element::dimension_tag::dim2>::get_elements_on_host(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {
@@ -209,8 +213,9 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
       "Medium tag, property tag or boundary tag not found");
 }
 
-Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::assembly::
-    element_types<specfem::dimension::type::dim2>::get_elements_on_device(
+Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
+specfem::assembly::element_types<specfem::element::dimension_tag::dim2>::
+    get_elements_on_device(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
         const specfem::element::boundary_tag boundary_tag) const {

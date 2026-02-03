@@ -18,14 +18,14 @@ namespace point {
  * View<int*> mapped_indices("mapped_indices", n_points);
  * // The following code associates the 0-th mapped index with the quadrature
  * point at (0, 1, 1)
- * specfem::point::mapped_index<specfem::dimension::type::dim2, false> index(
- *     specfem::point::index(0, 1, 1), 0);
+ * specfem::point::mapped_index<specfem::element::dimension_tag::dim2, false>
+ * index( specfem::point::index(0, 1, 1), 0);
  * @endcode
  * @tparam DimensionTag Dimension of the element where the quadrature point is
  * located
  * @tparam UseSIMD Flag to indicate if this is a SIMD index
  */
-template <specfem::dimension::type DimensionTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct mapped_index : public index<DimensionTag, UseSIMD> {
 private:
   /**

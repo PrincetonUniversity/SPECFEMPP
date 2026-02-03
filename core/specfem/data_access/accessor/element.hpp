@@ -8,7 +8,7 @@
 namespace specfem::data_access {
 
 template <specfem::data_access::DataClassType DataClass,
-          specfem::dimension::type DimensionTag, bool UseSIMD>
+          specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct Accessor<specfem::data_access::AccessorType::element, DataClass,
                 DimensionTag, UseSIMD> {
   constexpr static auto accessor_type =

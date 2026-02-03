@@ -12,7 +12,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,

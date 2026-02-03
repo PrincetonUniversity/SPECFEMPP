@@ -15,10 +15,10 @@ template <typename TransferView1, typename TransferView2,
           typename TransferView3, typename TransferView4>
 void specfem::assembly::nonconforming_interfaces_impl::set_transfer_functions(
     const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
         Kokkos::HostSpace> &element1,
     const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
         Kokkos::HostSpace> &element2,
     const specfem::mesh_entity::dim2::type &edge1,
     const specfem::mesh_entity::dim2::type &edge2,
@@ -102,10 +102,10 @@ void specfem::assembly::nonconforming_interfaces_impl::set_transfer_functions(
 template <typename TransferView1, typename TransferView2>
 void specfem::assembly::nonconforming_interfaces_impl::set_transfer_functions(
     const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
         Kokkos::HostSpace> &element1,
     const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
         Kokkos::HostSpace> &element2,
     const specfem::mesh_entity::dim2::type &edge1,
     const specfem::mesh_entity::dim2::type &edge2,

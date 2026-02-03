@@ -1,21 +1,10 @@
 #pragma once
 
+#include "tags.hpp"
 #include <string>
 
 namespace specfem {
 namespace dimension {
-
-/**
- * @brief Spatial dimension types for finite element simulations.
- *
- * Used as template parameters throughout the codebase to distinguish
- * between 2D and 3D implementations.
- */
-enum class type {
-  dim2, ///< 2D spatial dimension
-  dim3  ///< 3D spatial dimension
-};
-
 /**
  * @brief Compile-time dimension traits and utilities.
  *
@@ -26,23 +15,24 @@ enum class type {
  *
  * @code
  * // Get dimension info at compile time
- * using dim_2d = specfem::dimension::dimension<specfem::dimension::type::dim2>;
+ * using dim_2d =
+ * specfem::dimension::dimension<specfem::element::dimension_tag::dim2>;
  * static_assert(dim_2d::dim == 2);
  * std::string name = dim_2d::to_string(); // "2D"
  * @endcode
  */
-template <specfem::dimension::type DimensionTag> class dimension;
+template <specfem::element::dimension_tag DimensionTag> class dimension;
 
 /**
  * @brief 2D dimension specialization.
  *
  * Provides compile-time constants for 2D finite element computations.
  */
-template <> class dimension<specfem::dimension::type::dim2> {
+template <> class dimension<specfem::element::dimension_tag::dim2> {
 public:
   static constexpr auto value =
-      specfem::dimension::type::dim2; ///< Dimension type tag
-  static constexpr int dim = 2;       ///< Spatial dimension count
+      specfem::element::dimension_tag::dim2; ///< Dimension type tag
+  static constexpr int dim = 2;              ///< Spatial dimension count
 
   /**
    * @brief Get dimension as string.
@@ -56,11 +46,11 @@ public:
  *
  * Provides compile-time constants for 3D finite element computations.
  */
-template <> class dimension<specfem::dimension::type::dim3> {
+template <> class dimension<specfem::element::dimension_tag::dim3> {
 public:
   static constexpr auto value =
-      specfem::dimension::type::dim3; ///< Dimension type tag
-  static constexpr int dim = 3;       ///< Spatial dimension count
+      specfem::element::dimension_tag::dim3; ///< Dimension type tag
+  static constexpr int dim = 3;              ///< Spatial dimension count
 
   /**
    * @brief Get dimension as string.

@@ -2,5 +2,5 @@
 #include "enumerations/interface.hpp"
 #include "fields.tpp"
 
-template class specfem::assembly::fields<specfem::dimension::type::dim2>;
-template class specfem::assembly::fields<specfem::dimension::type::dim3>;
+template class specfem::assembly::fields<specfem::element::dimension_tag::dim2>;
+template class specfem::assembly::fields<specfem::element::dimension_tag::dim3>;

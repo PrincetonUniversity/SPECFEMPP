@@ -10,7 +10,8 @@ namespace specfem::medium_container::impl {
 // Helper function to get flat index from mapping for dim2
 template <typename MappingType, typename IndexType>
 KOKKOS_FORCEINLINE_FUNCTION
-    std::enable_if_t<IndexType::dimension_tag == specfem::dimension::type::dim2,
+    std::enable_if_t<IndexType::dimension_tag ==
+                         specfem::element::dimension_tag::dim2,
                      std::size_t>
     get_flat_index(const MappingType &mapping, const IndexType &index) {
   return mapping(index.ispec, index.iz, index.ix);
@@ -19,7 +20,8 @@ KOKKOS_FORCEINLINE_FUNCTION
 // Helper function to get flat index from mapping for dim3
 template <typename MappingType, typename IndexType>
 KOKKOS_FORCEINLINE_FUNCTION
-    std::enable_if_t<IndexType::dimension_tag == specfem::dimension::type::dim3,
+    std::enable_if_t<IndexType::dimension_tag ==
+                         specfem::element::dimension_tag::dim3,
                      std::size_t>
     get_flat_index(const MappingType &mapping, const IndexType &index) {
   return mapping(index.ispec, index.iz, index.iy, index.ix);
@@ -37,7 +39,7 @@ namespace specfem::medium_container::properties {
  * DATA_CONTAINER macro to generate efficient Kokkos-based storage with
  * device/host synchronization capabilities.
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename Enable = void>
 struct data_container;
@@ -54,7 +56,7 @@ namespace specfem::medium_container::kernels {
  * parameters and are accumulated during adjoint simulations from
  * forward/adjoint wavefield correlations.
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename Enable = void>
 struct data_container;

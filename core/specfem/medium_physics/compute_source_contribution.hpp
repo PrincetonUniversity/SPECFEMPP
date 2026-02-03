@@ -66,7 +66,7 @@ compute_source_contribution(const PointSourceType &point_source,
                 "point_properties should be a non SIMD type for this function");
 
   using dimension_dispatch =
-      std::integral_constant<specfem::dimension::type,
+      std::integral_constant<specfem::element::dimension_tag,
                              PointSourceType::dimension_tag>;
 
   using medium_dispatch = std::integral_constant<specfem::element::medium_tag,

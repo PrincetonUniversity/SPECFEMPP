@@ -4,7 +4,7 @@
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-specfem::assembly::impl::domain_properties<specfem::dimension::type::dim2, MediumTag,
+specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
                                       PropertyTag>::
     domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
@@ -49,7 +49,7 @@ specfem::assembly::impl::domain_properties<specfem::dimension::type::dim2, Mediu
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-specfem::assembly::impl::domain_properties<specfem::dimension::type::dim3, MediumTag,
+specfem::assembly::impl::domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
                                       PropertyTag>::
     domain_properties(
         const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,

@@ -16,7 +16,7 @@
 #include <Kokkos_Core.hpp>
 
 template <specfem::simulation::field_type WavefieldType,
-            specfem::dimension::type DimensionTag,
+            specfem::element::dimension_tag DimensionTag,
           int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
@@ -66,7 +66,7 @@ void specfem::compute::impl::compute_seismograms(
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
   constexpr int nthreads = 32;
   constexpr int lane_size = 1;
-  constexpr int chunk_size = (dimension_tag == specfem::dimension::type::dim2) ? 16 : 4;
+  constexpr int chunk_size = (dimension_tag == specfem::element::dimension_tag::dim2) ? 16 : 4;
 #else
   constexpr int nthreads = 1;
   constexpr int lane_size = 1;
@@ -92,7 +92,7 @@ void specfem::compute::impl::compute_seismograms(
       Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   using ViewType = std::conditional_t<
-      dimension_tag == specfem::dimension::type::dim2,
+      dimension_tag == specfem::element::dimension_tag::dim2,
       Kokkos::View<type_real[ParallelConfig::chunk_size][ngll][ngll][2],
                    Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace::scratch_memory_space,
                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>,
@@ -101,7 +101,7 @@ void specfem::compute::impl::compute_seismograms(
                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>>;
 
   using ResultsViewType = std::conditional_t<
-      dimension_tag == specfem::dimension::type::dim2,
+      dimension_tag == specfem::element::dimension_tag::dim2,
       Kokkos::View<type_real[ParallelConfig::chunk_size][2], Kokkos::LayoutLeft,
                    Kokkos::DefaultExecutionSpace::scratch_memory_space,
                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>,

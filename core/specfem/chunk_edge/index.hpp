@@ -18,7 +18,7 @@ namespace specfem::chunk_edge {
  * @tparam ViewType Kokkos view type for edge index storage
  * @tparam TeamMemberType Kokkos team execution context
  */
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename TeamMemberType>
 class Index : public specfem::execution::ChunkEdgeIndex<DimensionTag, ViewType,
                                                         TeamMemberType>,

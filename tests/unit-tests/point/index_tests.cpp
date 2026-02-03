@@ -22,11 +22,11 @@ protected:
 // Test 2D index default constructor
 TEST_F(PointIndexTest, DefaultConstructor2D) {
   // Default constructor
-  specfem::point::index<specfem::dimension::type::dim2> idx;
+  specfem::point::index<specfem::element::dimension_tag::dim2> idx;
 
   // Verify static members
   EXPECT_FALSE(idx.using_simd);
-  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim2);
+  EXPECT_EQ(idx.dimension_tag, specfem::element::dimension_tag::dim2);
 }
 
 // Test 2D index parameterized constructor
@@ -37,7 +37,8 @@ TEST_F(PointIndexTest, ParameterizedConstructor2D) {
   const int ix = 2;
 
   // Constructor with parameters
-  specfem::point::index<specfem::dimension::type::dim2> idx(ispec, iz, ix);
+  specfem::point::index<specfem::element::dimension_tag::dim2> idx(ispec, iz,
+                                                                   ix);
 
   // Check values
   EXPECT_EQ(idx.ispec, ispec);
@@ -46,7 +47,7 @@ TEST_F(PointIndexTest, ParameterizedConstructor2D) {
 
   // Verify static members
   EXPECT_FALSE(idx.using_simd);
-  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim2);
+  EXPECT_EQ(idx.dimension_tag, specfem::element::dimension_tag::dim2);
 }
 
 // Tests for 2D SIMD index
@@ -54,11 +55,11 @@ TEST_F(PointIndexTest, ParameterizedConstructor2D) {
 // Test 2D SIMD index default constructor
 TEST_F(PointIndexTest, DefaultConstructor2D_SIMD) {
   // Default constructor
-  specfem::point::index<specfem::dimension::type::dim2, true> idx;
+  specfem::point::index<specfem::element::dimension_tag::dim2, true> idx;
 
   // Verify static members
   EXPECT_TRUE(idx.using_simd);
-  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim2);
+  EXPECT_EQ(idx.dimension_tag, specfem::element::dimension_tag::dim2);
 }
 
 // Test 2D SIMD index parameterized constructor
@@ -70,7 +71,7 @@ TEST_F(PointIndexTest, ParameterizedConstructor2D_SIMD) {
   const int ix = 2;
 
   // Constructor with parameters
-  specfem::point::index<specfem::dimension::type::dim2, true> idx(
+  specfem::point::index<specfem::element::dimension_tag::dim2, true> idx(
       ispec, number_elements, iz, ix);
 
   // Check values
@@ -81,7 +82,7 @@ TEST_F(PointIndexTest, ParameterizedConstructor2D_SIMD) {
 
   // Verify static members
   EXPECT_TRUE(idx.using_simd);
-  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim2);
+  EXPECT_EQ(idx.dimension_tag, specfem::element::dimension_tag::dim2);
 }
 
 // Test 2D SIMD index mask function
@@ -93,7 +94,7 @@ TEST_F(PointIndexTest, MaskFunction2D_SIMD) {
   const int ix = 2;
 
   // Constructor with parameters
-  specfem::point::index<specfem::dimension::type::dim2, true> idx(
+  specfem::point::index<specfem::element::dimension_tag::dim2, true> idx(
       ispec, number_elements, iz, ix);
 
   // Test mask function
@@ -108,11 +109,11 @@ TEST_F(PointIndexTest, MaskFunction2D_SIMD) {
 // Test 3D index default constructor
 TEST_F(PointIndexTest, DefaultConstructor3D) {
   // Default constructor
-  specfem::point::index<specfem::dimension::type::dim3> idx;
+  specfem::point::index<specfem::element::dimension_tag::dim3> idx;
 
   // Verify static members
   EXPECT_FALSE(idx.using_simd);
-  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim3);
+  EXPECT_EQ(idx.dimension_tag, specfem::element::dimension_tag::dim3);
 }
 
 // Test 3D index parameterized constructor
@@ -124,7 +125,8 @@ TEST_F(PointIndexTest, ParameterizedConstructor3D) {
   const int ix = 2;
 
   // Constructor with parameters
-  specfem::point::index<specfem::dimension::type::dim3> idx(ispec, iz, iy, ix);
+  specfem::point::index<specfem::element::dimension_tag::dim3> idx(ispec, iz,
+                                                                   iy, ix);
 
   // Check values
   EXPECT_EQ(idx.ispec, ispec);
@@ -134,7 +136,7 @@ TEST_F(PointIndexTest, ParameterizedConstructor3D) {
 
   // Verify static members
   EXPECT_FALSE(idx.using_simd);
-  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim3);
+  EXPECT_EQ(idx.dimension_tag, specfem::element::dimension_tag::dim3);
 }
 
 // Tests for 3D SIMD index
@@ -142,11 +144,11 @@ TEST_F(PointIndexTest, ParameterizedConstructor3D) {
 // Test 3D SIMD index default constructor
 TEST_F(PointIndexTest, DefaultConstructor3D_SIMD) {
   // Default constructor
-  specfem::point::index<specfem::dimension::type::dim3, true> idx;
+  specfem::point::index<specfem::element::dimension_tag::dim3, true> idx;
 
   // Verify static members
   EXPECT_TRUE(idx.using_simd);
-  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim3);
+  EXPECT_EQ(idx.dimension_tag, specfem::element::dimension_tag::dim3);
 }
 
 // Test 3D SIMD index parameterized constructor
@@ -159,7 +161,7 @@ TEST_F(PointIndexTest, ParameterizedConstructor3D_SIMD) {
   const int ix = 2;
 
   // Constructor with parameters
-  specfem::point::index<specfem::dimension::type::dim3, true> idx(
+  specfem::point::index<specfem::element::dimension_tag::dim3, true> idx(
       ispec, number_elements, iz, iy, ix);
 
   // Check values
@@ -171,7 +173,7 @@ TEST_F(PointIndexTest, ParameterizedConstructor3D_SIMD) {
 
   // Verify static members
   EXPECT_TRUE(idx.using_simd);
-  EXPECT_EQ(idx.dimension_tag, specfem::dimension::type::dim3);
+  EXPECT_EQ(idx.dimension_tag, specfem::element::dimension_tag::dim3);
 }
 
 // Test 3D SIMD index mask function
@@ -184,7 +186,7 @@ TEST_F(PointIndexTest, MaskFunction3D_SIMD) {
   const int ix = 2;
 
   // Constructor with parameters
-  specfem::point::index<specfem::dimension::type::dim3, true> idx(
+  specfem::point::index<specfem::element::dimension_tag::dim3, true> idx(
       ispec, number_elements, iz, iy, ix);
 
   // Test mask function
@@ -202,7 +204,8 @@ TEST_F(PointIndexTest, NegativeIndices2D) {
   const int ix = -3;
 
   // Constructor with parameters
-  specfem::point::index<specfem::dimension::type::dim2> idx(ispec, iz, ix);
+  specfem::point::index<specfem::element::dimension_tag::dim2> idx(ispec, iz,
+                                                                   ix);
 
   // Check values
   EXPECT_EQ(idx.ispec, ispec);
@@ -218,7 +221,8 @@ TEST_F(PointIndexTest, NegativeIndices3D) {
   const int ix = -4;
 
   // Constructor with parameters
-  specfem::point::index<specfem::dimension::type::dim3> idx(ispec, iz, iy, ix);
+  specfem::point::index<specfem::element::dimension_tag::dim3> idx(ispec, iz,
+                                                                   iy, ix);
 
   // Check values
   EXPECT_EQ(idx.ispec, ispec);
@@ -236,7 +240,7 @@ TEST_F(PointIndexTest, ZeroElements2D_SIMD) {
   const int ix = 2;
 
   // Constructor with parameters
-  specfem::point::index<specfem::dimension::type::dim2, true> idx(
+  specfem::point::index<specfem::element::dimension_tag::dim2, true> idx(
       ispec, number_elements, iz, ix);
 
   // Check values
@@ -256,7 +260,7 @@ TEST_F(PointIndexTest, ZeroElements3D) {
   const int ix = 2;
 
   // Constructor with parameters
-  specfem::point::index<specfem::dimension::type::dim3, true> idx(
+  specfem::point::index<specfem::element::dimension_tag::dim3, true> idx(
       ispec, number_elements, iz, iy, ix);
 
   // Check values

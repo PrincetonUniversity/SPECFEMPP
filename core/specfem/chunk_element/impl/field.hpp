@@ -43,7 +43,7 @@ namespace specfem::chunk_element::impl {
  *
  */
 // clang-format on
-template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
+template <int ChunkSize, int NGLL, specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::data_access::DataClassType DataClass, bool UseSIMD>
 class field : public specfem::data_access::Accessor<

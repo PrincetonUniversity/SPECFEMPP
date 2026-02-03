@@ -19,8 +19,9 @@ public:
    * @param assembly 2D Assembly object
    *
    */
-  virtual void write(specfem::assembly::assembly<specfem::dimension::type::dim2>
-                         &assembly) = 0;
+  virtual void
+  write(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+            &assembly) = 0;
 
   /**
    * @brief Method to execute the write operation
@@ -28,8 +29,9 @@ public:
    * @param assembly 3D Assembly object
    *
    */
-  virtual void write(specfem::assembly::assembly<specfem::dimension::type::dim3>
-                         &assembly) = 0;
+  virtual void
+  write(specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+            &assembly) = 0;
 };
 
 } // namespace io

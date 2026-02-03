@@ -40,9 +40,10 @@ namespace specfem::assembly {
  *
  * @code
  * // Example usage in GPU kernel
- * specfem::point::index<specfem::dimension::type::dim2> idx(ispec, iz, ix);
- * specfem::point::jacobian_matrix<specfem::dimension::type::dim2> point_jac;
- * specfem::assembly::load_on_device(idx, jacobian_container, point_jac);
+ * specfem::point::index<specfem::element::dimension_tag::dim2> idx(ispec, iz,
+ * ix); specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2>
+ * point_jac; specfem::assembly::load_on_device(idx, jacobian_container,
+ * point_jac);
  *
  * // Access loaded values
  * type_real xix_val = point_jac.xix;          // ∂ξ/∂x

@@ -62,8 +62,8 @@ KOKKOS_FUNCTION specfem::point::kernels<
     PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
     PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
 impl_compute_frechet_derivatives(
-    const std::integral_constant<specfem::dimension::type,
-                                 specfem::dimension::type::dim2>,
+    const std::integral_constant<specfem::element::dimension_tag,
+                                 specfem::element::dimension_tag::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
                                  specfem::element::medium_tag::poroelastic>,
     const std::integral_constant<specfem::element::property_tag,

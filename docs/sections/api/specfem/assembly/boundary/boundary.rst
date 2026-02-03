@@ -10,7 +10,7 @@
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenclass:: specfem::assembly::boundaries< specfem::dimension::type::dim2 >
+.. doxygenclass:: specfem::assembly::boundaries< specfem::element::dimension_tag::dim2 >
     :members:
 
 Data Access Functions

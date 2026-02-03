@@ -160,8 +160,8 @@ init_jacobian(const JacobianInitializer2D::TWO_ELEMENT &) {
  * @tparam Initializer Tag describing which init_jacobian overload to invoke
  */
 template <typename Initializer> struct JacobianMatrix2D {
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim2;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim2;
 
 private:
   std::vector<
@@ -419,8 +419,8 @@ auto init_function(const FunctionInitializer2D::TWO_ELEMENT &) {
  * @tparam Initializer Tag selecting which init_function overload to invoke
  */
 template <typename Initializer> struct Function2D {
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim2;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim2;
   constexpr static int components = 1; ///< Scalar field (single component)
 
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
@@ -606,7 +606,7 @@ execute(const Jacobian &jacobian_matrix, const Quadrature2D &quadrature,
       Kokkos::DefaultExecutionSpace(), h_element_indices);
 
   using ParallelConfig = specfem::parallel_configuration::chunk_config<
-      specfem::dimension::type::dim2, 1, 1, 1, 1, simd,
+      specfem::element::dimension_tag::dim2, 1, 1, 1, 1, simd,
       Kokkos::DefaultExecutionSpace>;
 
   const specfem::mesh_entity::element_grid element_grid(ngll, ngll);
@@ -619,7 +619,7 @@ execute(const Jacobian &jacobian_matrix, const Quadrature2D &quadrature,
   const auto function_view = function.view();
 
   using Function2DView = specfem::datatype::VectorChunkElementViewType<
-      type_real, specfem::dimension::type::dim2, 1, ngll, 1, false,
+      type_real, specfem::element::dimension_tag::dim2, 1, ngll, 1, false,
       Kokkos::DefaultExecutionSpace::memory_space, Kokkos::MemoryTraits<> >;
 
   Kokkos::View<type_real ****, Kokkos::LayoutLeft,

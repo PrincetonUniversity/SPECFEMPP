@@ -17,7 +17,7 @@ using HostView5d =
  * Test-specific mesh utilities for locate_point testing
  * These are copies of the mesh utilities functionality to avoid dependency
  * on core implementation that will be deprecated.
- * Templated for 2D and 3D support using specfem::dimension::type.
+ * Templated for 2D and 3D support using specfem::element::dimension_tag.
  */
 
 namespace specfem::test {
@@ -27,12 +27,12 @@ namespace mesh_utilities {
  * @brief Templated point structure for 2D and 3D coordinates
  * @tparam DimensionTag dimension type (dim2 or dim3)
  */
-template <specfem::dimension::type DimensionTag> struct point;
+template <specfem::element::dimension_tag DimensionTag> struct point;
 
 /**
  * @brief 2D point specialization
  */
-template <> struct point<specfem::dimension::type::dim2> {
+template <> struct point<specfem::element::dimension_tag::dim2> {
   type_real x = 0, z = 0;
   int iloc = 0, iglob = 0;
 };
@@ -40,7 +40,7 @@ template <> struct point<specfem::dimension::type::dim2> {
 /**
  * @brief 3D point specialization
  */
-template <> struct point<specfem::dimension::type::dim3> {
+template <> struct point<specfem::element::dimension_tag::dim3> {
   type_real x = 0, y = 0, z = 0;
   int iloc = 0, iglob = 0;
 };
@@ -49,12 +49,12 @@ template <> struct point<specfem::dimension::type::dim3> {
  * @brief Templated bounding box structure for 2D and 3D
  * @tparam DimensionTag dimension type (dim2 or dim3)
  */
-template <specfem::dimension::type DimensionTag> struct bounding_box;
+template <specfem::element::dimension_tag DimensionTag> struct bounding_box;
 
 /**
  * @brief 2D bounding box specialization
  */
-template <> struct bounding_box<specfem::dimension::type::dim2> {
+template <> struct bounding_box<specfem::element::dimension_tag::dim2> {
   type_real xmin = std::numeric_limits<type_real>::max();
   type_real xmax = std::numeric_limits<type_real>::min();
   type_real zmin = std::numeric_limits<type_real>::max();
@@ -64,7 +64,7 @@ template <> struct bounding_box<specfem::dimension::type::dim2> {
 /**
  * @brief 3D bounding box specialization
  */
-template <> struct bounding_box<specfem::dimension::type::dim3> {
+template <> struct bounding_box<specfem::element::dimension_tag::dim3> {
   type_real xmin = std::numeric_limits<type_real>::max();
   type_real xmax = std::numeric_limits<type_real>::min();
   type_real ymin = std::numeric_limits<type_real>::max();
@@ -75,11 +75,11 @@ template <> struct bounding_box<specfem::dimension::type::dim3> {
 
 //-------------------------- Type Aliases for Convenience
 //----------------------//
-using point_2d = point<specfem::dimension::type::dim2>;
-using bounding_box_2d = bounding_box<specfem::dimension::type::dim2>;
+using point_2d = point<specfem::element::dimension_tag::dim2>;
+using bounding_box_2d = bounding_box<specfem::element::dimension_tag::dim2>;
 
-using point_3d = point<specfem::dimension::type::dim3>;
-using bounding_box_3d = bounding_box<specfem::dimension::type::dim3>;
+using point_3d = point<specfem::element::dimension_tag::dim3>;
+using bounding_box_3d = bounding_box<specfem::element::dimension_tag::dim3>;
 
 //-------------------------- Function Overloads for 2D and 3D
 //----------------------//

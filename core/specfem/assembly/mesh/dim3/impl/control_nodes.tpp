@@ -6,9 +6,9 @@
 #include <Kokkos_Core.hpp>
 
 void initialize_control_nodes(
-    specfem::assembly::mesh_impl::control_nodes<specfem::dimension::type::dim3>
+    specfem::assembly::mesh_impl::control_nodes<specfem::element::dimension_tag::dim3>
         &dest,
-    const specfem::mesh::control_nodes<specfem::dimension::type::dim3>
+    const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &src) {
 
   // We use the device by default for better performance.
@@ -40,8 +40,8 @@ void initialize_control_nodes(
   return;
 }
 
-specfem::assembly::mesh_impl::control_nodes<specfem::dimension::type::dim3>::
-    control_nodes(const specfem::mesh::control_nodes<specfem::dimension::type::dim3>
+specfem::assembly::mesh_impl::control_nodes<specfem::element::dimension_tag::dim3>::
+    control_nodes(const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
                       &control_nodes)
     : nspec(control_nodes.nspec), ngnod(control_nodes.ngnod),
       control_node_index("specfem::assembly::mesh::control_nodes::index",

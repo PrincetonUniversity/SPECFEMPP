@@ -13,7 +13,7 @@ namespace medium_container {
 
 namespace impl {
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct AttenuationValues<
     DimensionTag, specfem::element::medium_tag::poroelastic,
     specfem::element::attenuation_tag::constant_isotropic> {
@@ -47,7 +47,7 @@ public:
  * properties
  *
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::attenuation_tag AttenuationTag>
 class material<DimensionTag, specfem::element::medium_tag::poroelastic,
                specfem::element::property_tag::isotropic, AttenuationTag>

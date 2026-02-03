@@ -35,7 +35,7 @@ namespace specfem::point::impl {
  * @code{.cpp}
  * // Example: Creating displacement field accessors for 2D elastic medium
  * using DisplacementField = specfem::point::impl::field<
- *     specfem::dimension::type::dim2,
+ *     specfem::element::dimension_tag::dim2,
  *     specfem::element::medium_tag::elastic,
  *     specfem::data_access::DataClassType::displacement,
  *     false>;  // No SIMD
@@ -55,7 +55,7 @@ namespace specfem::point::impl {
  * @code{.cpp}
  * // Example: Creating velocity field with SIMD optimization
  * using VelocityField = specfem::point::impl::field<
- *     specfem::dimension::type::dim3,
+ *     specfem::element::dimension_tag::dim3,
  *     specfem::element::medium_tag::acoustic,
  *     specfem::data_access::DataClassType::velocity,
  *     true>;   // Enable SIMD
@@ -67,7 +67,7 @@ namespace specfem::point::impl {
  * specfem::assembly::load_on_device(point_index, field_container, v_field);
  * @endcode
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::data_access::DataClassType DataClass, bool UseSIMD>
 class field : public specfem::data_access::Accessor<

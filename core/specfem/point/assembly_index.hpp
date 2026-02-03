@@ -27,7 +27,7 @@ struct assembly_index<false>
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::point,
           specfem::data_access::DataClassType::assembly_index,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
   /**
    * @brief Global index number of the quadrature point.
    *
@@ -76,7 +76,7 @@ struct assembly_index<true>
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::point,
           specfem::data_access::DataClassType::assembly_index,
-          specfem::dimension::type::dim2, true> {
+          specfem::element::dimension_tag::dim2, true> {
   /**
    * @brief Number of active points in the SIMD vector.
    *

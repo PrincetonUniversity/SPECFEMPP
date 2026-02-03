@@ -23,7 +23,7 @@ namespace properties {
  * @tparam PropertyTag The type of the properties
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct PropertyAccessor : public specfem::data_access::Accessor<
@@ -59,7 +59,7 @@ public:
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  * @tparam Enable SFINAE enable parameter
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>
@@ -68,7 +68,7 @@ struct point_container;
 
 namespace kernels {
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct KernelsAccessor
@@ -99,7 +99,7 @@ struct KernelsAccessor
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  * @tparam Enable SFINAE enable parameter
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>

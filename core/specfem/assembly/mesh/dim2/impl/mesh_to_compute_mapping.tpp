@@ -6,9 +6,9 @@
 #include <vector>
 
 specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-    specfem::dimension::type::dim2>::
+    specfem::element::dimension_tag::dim2>::
     mesh_to_compute_mapping(
-        const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
+        const specfem::mesh::tags<specfem::element::dimension_tag::dim2> &tags)
     : compute_to_mesh("specfem::assembly::mesh_to_compute_mapping", tags.nspec),
       mesh_to_compute("specfem::assembly::mesh_to_compute_mapping",
                       tags.nspec) {

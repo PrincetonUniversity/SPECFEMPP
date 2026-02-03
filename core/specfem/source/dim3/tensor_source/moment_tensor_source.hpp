@@ -36,8 +36,8 @@ namespace sources {
  *
  * // Create a 3D moment tensor source at (10.0, 15.0, 20.0)
  * auto mt_source =
- * specfem::sources::moment_tensor<specfem::dimension::type::dim3>( 10.0,  //
- * x-coordinate 15.0,  // y-coordinate 20.0,  // z-coordinate 1.2,   // Mxx -
+ * specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>( 10.0,
+ * // x-coordinate 15.0,  // y-coordinate 20.0,  // z-coordinate 1.2,   // Mxx -
  * normal stress in x direction 0.8,   // Myy - normal stress in y direction
  *     1.5,   // Mzz - normal stress in z direction
  *     0.3,   // Mxy - shear stress component
@@ -56,8 +56,8 @@ namespace sources {
  *
  */
 template <>
-class moment_tensor<specfem::dimension::type::dim3>
-    : public tensor_source<specfem::dimension::type::dim3> {
+class moment_tensor<specfem::element::dimension_tag::dim3>
+    : public tensor_source<specfem::element::dimension_tag::dim3> {
 
 public:
   /**
@@ -155,10 +155,12 @@ public:
     return wavefield_type;
   }
 
-  bool operator==(const specfem::sources::source<specfem::dimension::type::dim3>
-                      &other) const override;
-  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim3>
-                      &other) const override;
+  bool operator==(
+      const specfem::sources::source<specfem::element::dimension_tag::dim3>
+          &other) const override;
+  bool operator!=(
+      const specfem::sources::source<specfem::element::dimension_tag::dim3>
+          &other) const override;
 
   /**
    * @brief Get the source tensor

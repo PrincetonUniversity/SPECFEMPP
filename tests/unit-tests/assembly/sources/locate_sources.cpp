@@ -16,8 +16,8 @@ TEST_F(Assembly2D, locate_sources) {
     const auto Test = std::get<0>(parameters);
     const auto source_solution = Test.solutions.source;
     auto sources = std::get<2>(parameters);
-    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
-        std::get<5>(parameters);
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        assembly = std::get<5>(parameters);
 
     // Use SCOPED_TRACE to make each iteration identifiable in test output
     SCOPED_TRACE(Test.name);

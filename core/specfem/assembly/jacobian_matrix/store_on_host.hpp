@@ -39,8 +39,10 @@ namespace specfem::assembly {
  *
  * @code
  * // Example usage during mesh initialization
- * specfem::point::index<specfem::dimension::type::dim3> idx(ispec, iz, iy, ix);
- * specfem::point::jacobian_matrix<specfem::dimension::type::dim3> computed_jac;
+ * specfem::point::index<specfem::element::dimension_tag::dim3> idx(ispec, iz,
+ * iy, ix);
+ * specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3>
+ * computed_jac;
  *
  * // Compute Jacobian from mesh coordinates
  * compute_jacobian_from_coordinates(mesh_coords, computed_jac);

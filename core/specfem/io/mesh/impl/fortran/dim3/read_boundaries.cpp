@@ -31,7 +31,7 @@
  *       for mesh quality assessment and numerical stability calculations.
  */
 type_real characteristic_length(
-    const specfem::mesh::control_nodes<specfem::dimension::type::dim3>
+    const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &control_nodes,
     const int element_index) {
   const int nodes_per_element = control_nodes.ngnod;
@@ -80,7 +80,7 @@ type_real characteristic_length(
  * tolerance or if an invalid face type is encountered
  */
 specfem::mesh_entity::dim3::type find_face_from_nodes(
-    const specfem::mesh::control_nodes<specfem::dimension::type::dim3>
+    const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &control_nodes,
     const int element_index, const std::vector<int> &face_nodes) {
 
@@ -89,9 +89,9 @@ specfem::mesh_entity::dim3::type find_face_from_nodes(
   const auto &control_node_index = control_nodes.control_node_index;
 
   // find coordinates of midpoint for each face
-  std::unordered_map<
-      specfem::mesh_entity::dim3::type,
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> >
+  std::unordered_map<specfem::mesh_entity::dim3::type,
+                     specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim3> >
       face_midpoints;
 
   auto corner_id_on_face =
@@ -116,9 +116,8 @@ specfem::mesh_entity::dim3::type find_face_from_nodes(
 
   for (const auto &face_type : specfem::mesh_entity::dim3::faces) {
     const auto corner_ids = corner_id_on_face(face_type);
-    specfem::point::global_coordinates<specfem::dimension::type::dim3> midpoint{
-      0.0, 0.0, 0.0
-    };
+    specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+        midpoint{ 0.0, 0.0, 0.0 };
     for (const auto corner_id : corner_ids) {
       const int node_id = control_node_index(element_index, corner_id);
       midpoint.x += coordinates(node_id, 0);
@@ -132,7 +131,7 @@ specfem::mesh_entity::dim3::type find_face_from_nodes(
   }
 
   // find midpoint of face_nodes
-  specfem::point::global_coordinates<specfem::dimension::type::dim3>
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
       face_nodes_midpoint{ 0.0, 0.0, 0.0 };
   for (const auto node : face_nodes) {
     face_nodes_midpoint.x += coordinates(node, 0);
@@ -173,17 +172,17 @@ specfem::mesh_entity::dim3::type find_face_from_nodes(
   return closest_face;
 }
 
-specfem::mesh::boundaries<specfem::dimension::type::dim3>
+specfem::mesh::boundaries<specfem::element::dimension_tag::dim3>
 specfem::io::mesh::impl::fortran::dim3::read_boundaries(
     std::ifstream &stream, const int nspec,
-    const specfem::mesh::control_nodes<specfem::dimension::type::dim3>
+    const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &control_nodes) {
 
   int boundary_number;
   std::array<int, 6> nfaces_per_direction;
 
   using BoundaryType =
-      specfem::mesh::boundaries<specfem::dimension::type::dim3>;
+      specfem::mesh::boundaries<specfem::element::dimension_tag::dim3>;
 
   using face_direction = BoundaryType::FaceDirection;
 

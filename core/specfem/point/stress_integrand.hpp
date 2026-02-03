@@ -26,7 +26,7 @@ namespace point {
  * located
  * @tparam UseSIMD Use SIMD instructions
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct stress_integrand
     : public specfem::data_access::Accessor<

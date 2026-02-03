@@ -32,8 +32,9 @@ namespace specfem::medium_physics {
  */
 template <typename PointSourceType, typename PointPropertiesType>
 KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
-    const std::integral_constant<specfem::dimension::type,
-                                 specfem::dimension::type::dim3> /*unused*/,
+    const std::integral_constant<
+        specfem::element::dimension_tag,
+        specfem::element::dimension_tag::dim3> /*unused*/,
     const std::integral_constant<
         specfem::element::medium_tag,
         specfem::element::medium_tag::acoustic> /*unused*/,
@@ -45,7 +46,7 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
   constexpr bool using_simd = PointPropertiesType::simd::using_simd;
 
   using PointAccelerationType =
-      specfem::point::acceleration<specfem::dimension::type::dim3,
+      specfem::point::acceleration<specfem::element::dimension_tag::dim3,
                                    specfem::element::medium_tag::acoustic,
                                    using_simd>;
 

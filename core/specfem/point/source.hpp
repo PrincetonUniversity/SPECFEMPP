@@ -14,7 +14,7 @@ namespace point {
  * @tparam MediumTag Medium tag of the spectral element
  * @tparam WavefieldType Wavefield type on which the source is applied
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::simulation::field_type WavefieldType>
 struct source

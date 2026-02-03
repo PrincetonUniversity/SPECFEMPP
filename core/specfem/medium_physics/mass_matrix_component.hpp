@@ -36,7 +36,7 @@ namespace medium_physics {
  * @endcode
  */
 // clang-format on
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 KOKKOS_INLINE_FUNCTION

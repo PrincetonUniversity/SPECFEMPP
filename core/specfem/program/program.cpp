@@ -20,7 +20,7 @@
 
 namespace specfem::program {
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 std::string
 print_header(const specfem::runtime_configuration::setup &setup,
              const std::chrono::time_point<std::chrono::system_clock> now) {
@@ -32,9 +32,9 @@ print_header(const specfem::runtime_configuration::setup &setup,
 
   std::string dim;
 
-  if constexpr (DimensionTag == specfem::dimension::type::dim2) {
+  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
     dim = "2D";
-  } else if constexpr (DimensionTag == specfem::dimension::type::dim3) {
+  } else if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
     dim = "3D";
   } else {
     throw std::runtime_error("Unsupported dimension for header print.");
@@ -78,7 +78,7 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
 void program_2d(
     const YAML::Node &parameter_dict, const YAML::Node &default_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
-        specfem::dimension::type::dim2> > >
+        specfem::element::dimension_tag::dim2> > >
         tasks) {
 
   // --------------------------------------------------------------
@@ -89,7 +89,7 @@ void program_2d(
   const auto database_filename = setup.get_databases();
 
   specfem::Logger::info(
-      print_header<specfem::dimension::type::dim2>(setup, start_time));
+      print_header<specfem::element::dimension_tag::dim2>(setup, start_time));
 
   // --------------------------------------------------------------
 
@@ -150,7 +150,7 @@ void program_2d(
   const type_real dt = setup.get_dt();
   const int max_seismogram_time_step = setup.get_max_seismogram_step();
   const int nstep_between_samples = setup.get_nstep_between_samples();
-  specfem::assembly::assembly<specfem::dimension::type::dim2> assembly(
+  specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
@@ -183,8 +183,8 @@ void program_2d(
   // --------------------------------------------------------------
   //                   Read wavefields
   // --------------------------------------------------------------
-  const auto wavefield_reader =
-      setup.instantiate_wavefield_reader<specfem::dimension::type::dim2>();
+  const auto wavefield_reader = setup.instantiate_wavefield_reader<
+      specfem::element::dimension_tag::dim2>();
   if (wavefield_reader) {
     tasks.push_back(wavefield_reader);
   }
@@ -193,8 +193,8 @@ void program_2d(
   // --------------------------------------------------------------
   //                  Write Forward Wavefields
   // --------------------------------------------------------------
-  const auto wavefield_writer =
-      setup.instantiate_wavefield_writer<specfem::dimension::type::dim2>();
+  const auto wavefield_writer = setup.instantiate_wavefield_writer<
+      specfem::element::dimension_tag::dim2>();
   if (wavefield_writer) {
     tasks.push_back(wavefield_writer);
   }
@@ -269,7 +269,7 @@ void program_2d(
 void program_3d(
     const YAML::Node &parameter_dict, const YAML::Node &default_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
-        specfem::dimension::type::dim3> > >
+        specfem::element::dimension_tag::dim3> > >
         tasks) {
 
   // --------------------------------------------------------------
@@ -280,7 +280,7 @@ void program_3d(
   const auto database_filename = setup.get_databases();
 
   specfem::Logger::info(
-      print_header<specfem::dimension::type::dim3>(setup, start_time));
+      print_header<specfem::element::dimension_tag::dim3>(setup, start_time));
 
   // Get simulation parameters
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
@@ -348,7 +348,7 @@ void program_3d(
   specfem::Logger::info("-------------------------------");
   const int max_seismogram_time_step = setup.get_max_seismogram_step();
   const int nstep_between_samples = setup.get_nstep_between_samples();
-  specfem::assembly::assembly<specfem::dimension::type::dim3> assembly(
+  specfem::assembly::assembly<specfem::element::dimension_tag::dim3> assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
@@ -432,7 +432,7 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
     switch (simulation_model) {
     case specfem::simulation::model::Cartesian2D: {
       // Setup periodic tasks (signal checking)
-      const auto dimension_tag = specfem::dimension::type::dim2;
+      const auto dimension_tag = specfem::element::dimension_tag::dim2;
       std::vector<std::shared_ptr<
           specfem::periodic_tasks::periodic_task<dimension_tag> > >
           tasks;
@@ -447,7 +447,7 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
     }
     case specfem::simulation::model::Cartesian3D: {
       // Setup periodic tasks (signal checking)
-      const auto dimension_tag = specfem::dimension::type::dim3;
+      const auto dimension_tag = specfem::element::dimension_tag::dim3;
       std::vector<std::shared_ptr<
           specfem::periodic_tasks::periodic_task<dimension_tag> > >
           tasks;

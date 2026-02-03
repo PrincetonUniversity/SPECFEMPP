@@ -31,8 +31,8 @@ namespace specfem::assembly {
  *
  * @code
  * // Construct 2D element types from mesh data
- * specfem::assembly::element_types<specfem::dimension::type::dim2> etypes(
- *     nspec, ngllz, ngllx, mesh, tags);
+ * specfem::assembly::element_types<specfem::element::dimension_tag::dim2>
+ * etypes( nspec, ngllz, ngllx, mesh, tags);
  *
  * // Query elastic P-SV elements for solver
  * auto psv_elements = etypes.get_elements_on_device(
@@ -44,7 +44,7 @@ namespace specfem::assembly {
  *     specfem::element::property_tag::isotropic);
  * @endcode
  */
-template <> struct element_types<specfem::dimension::type::dim2> {
+template <> struct element_types<specfem::element::dimension_tag::dim2> {
 protected:
   /**
    * @brief Kokkos view type for storing medium tags in host memory.
@@ -102,7 +102,7 @@ public:
   int ngllx; ///< number of quadrature points in x dimension
 
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
 
   MediumTagViewType medium_tags;           ///< View to store medium tags
   PropertyTagViewType property_tags;       ///< View to store property tags
@@ -132,8 +132,8 @@ public:
    * boundary tags
    *
    * @code
-   * specfem::assembly::element_types<specfem::dimension::type::dim2> etypes(
-   *     1000, 5, 5, assembly_mesh, mesh_tags);
+   * specfem::assembly::element_types<specfem::element::dimension_tag::dim2>
+   * etypes( 1000, 5, 5, assembly_mesh, mesh_tags);
    * @endcode
    */
   element_types(const int nspec, const int ngllz, const int ngllx,

@@ -82,7 +82,7 @@ TEST(ASSEMBLY_MESH, compute_ibool) {
       specfem::enums::electromagnetic_wave::te);
 
   // Setup compute structs
-  specfem::assembly::mesh<specfem::dimension::type::dim2> compute_mesh(
+  specfem::assembly::mesh<specfem::element::dimension_tag::dim2> compute_mesh(
       mesh.tags, mesh.control_nodes, quadratures,
       mesh.adjacency_graph); // mesh assembly
 

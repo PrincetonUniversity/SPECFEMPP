@@ -28,10 +28,10 @@ namespace medium_container {
  * @tparam Enable The enable_if condition that must be satisfied
  *
  * @see specfem::element::is_elastic
- * @see specfem::dimension::type::dim2
+ * @see specfem::element::dimension_tag::dim2
  * @see specfem::medium_container::material
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 class material<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic_cosserat,

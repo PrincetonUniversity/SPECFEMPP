@@ -36,8 +36,8 @@ namespace specfem::assembly {
  *
  * @code
  * // Construct 3D element types from mesh data
- * specfem::assembly::element_types<specfem::dimension::type::dim3> etypes(
- *     nspec, ngllz, nglly, ngllx, mesh, tags);
+ * specfem::assembly::element_types<specfem::element::dimension_tag::dim3>
+ * etypes( nspec, ngllz, nglly, ngllx, mesh, tags);
  *
  * // Query 3D elastic elements for solver
  * auto elastic_elements = etypes.get_elements_on_device(
@@ -49,7 +49,7 @@ namespace specfem::assembly {
  *     specfem::element::property_tag::isotropic);
  * @endcode
  */
-template <> struct element_types<specfem::dimension::type::dim3> {
+template <> struct element_types<specfem::element::dimension_tag::dim3> {
 protected:
   /**
    * @brief Kokkos view type for storing 3D medium tags in host memory.
@@ -108,7 +108,7 @@ public:
   int ngllx; ///< number of quadrature points in x dimension
 
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
 
   MediumTagViewType medium_tags;           ///< View to store medium tags
   PropertyTagViewType property_tags;       ///< View to store property tags

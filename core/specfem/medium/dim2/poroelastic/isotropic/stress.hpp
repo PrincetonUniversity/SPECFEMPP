@@ -56,15 +56,15 @@ namespace medium_physics {
  */
 template <bool UseSIMD>
 KOKKOS_INLINE_FUNCTION
-    specfem::point::stress<specfem::dimension::type::dim2,
+    specfem::point::stress<specfem::element::dimension_tag::dim2,
                            specfem::element::medium_tag::poroelastic, UseSIMD>
     impl_compute_stress(
         const specfem::point::properties<
-            specfem::dimension::type::dim2,
+            specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::poroelastic,
             specfem::element::property_tag::isotropic, UseSIMD> &properties,
         const specfem::point::field_derivatives<
-            specfem::dimension::type::dim2,
+            specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::poroelastic, UseSIMD>
             &field_derivatives) {
 

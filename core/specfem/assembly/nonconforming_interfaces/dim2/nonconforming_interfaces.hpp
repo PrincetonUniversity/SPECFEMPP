@@ -12,13 +12,13 @@
 namespace specfem::assembly {
 
 template <>
-class nonconforming_interfaces<specfem::dimension::type::dim2>
+class nonconforming_interfaces<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::edge,
           specfem::data_access::DataClassType::nonconforming_interface,
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2> {
 public:
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
 
 private:
   template <specfem::interface::interface_tag InterfaceTag,
@@ -66,9 +66,9 @@ public:
 
 #ifndef NDEBUG
     // Debug check: abort if no matching specialization found
-    KOKKOS_ABORT_WITH_LOCATION(
-        "specfem::assembly::nonconforming_interfaces::get_interface_container(): No "
-        "matching specialization found.");
+    KOKKOS_ABORT_WITH_LOCATION("specfem::assembly::nonconforming_interfaces::"
+                               "get_interface_container(): No "
+                               "matching specialization found.");
 #endif
 
     // Unreachable code - satisfy compiler return requirements

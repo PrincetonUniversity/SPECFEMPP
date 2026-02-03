@@ -22,7 +22,7 @@ namespace impl {
  * @param assembly SPECFEM++ assembly object.
  * @param dt Time step size (used for time-dependent computations)
  */
-template <specfem::dimension::type DimensionTag, int NGLL,
+template <specfem::element::dimension_tag DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void compute_material_derivatives(

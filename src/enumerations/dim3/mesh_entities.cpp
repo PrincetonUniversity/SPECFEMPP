@@ -190,16 +190,16 @@ const std::string specfem::mesh_entity::dim3::to_string(
   }
 }
 
-specfem::mesh_entity::element<specfem::dimension::type::dim3>::element(
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::element(
     const int ngll)
     : element(ngll, ngll, ngll) {}
 
-specfem::mesh_entity::element<specfem::dimension::type::dim3>::element(
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::element(
     const int ngllz, const int nglly, const int ngllx)
     : element_grid(ngllz, nglly, ngllx), ngll2d(ngllz * ngllx), ngll(ngllz) {}
 
 std::tuple<int, int, int>
-specfem::mesh_entity::element<specfem::dimension::type::dim3>::
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::
     get_face_coordinates(const specfem::mesh_entity::dim3::type &face,
                          const int ipoint, const int jpoint) const {
   // xmin = left, xmax = right
@@ -224,7 +224,7 @@ specfem::mesh_entity::element<specfem::dimension::type::dim3>::
 }
 
 std::tuple<int, int, int>
-specfem::mesh_entity::element<specfem::dimension::type::dim3>::
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::
     get_edge_coordinates(const specfem::mesh_entity::dim3::type &edge,
                          const int point) const {
   switch (edge) {
@@ -258,7 +258,7 @@ specfem::mesh_entity::element<specfem::dimension::type::dim3>::
 }
 
 std::tuple<int, int, int> specfem::mesh_entity::
-    element<specfem::dimension::type::dim3>::get_corner_coordinates(
+    element<specfem::element::dimension_tag::dim3>::get_corner_coordinates(
         const specfem::mesh_entity::dim3::type &corner) const {
   switch (corner) {
   case specfem::mesh_entity::dim3::type::bottom_front_left:
@@ -282,7 +282,7 @@ std::tuple<int, int, int> specfem::mesh_entity::
   }
 }
 
-int specfem::mesh_entity::element<specfem::dimension::type::dim3>::
+int specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::
     number_of_points_on_orientation(
         const specfem::mesh_entity::dim3::type &entity) const {
 
@@ -300,8 +300,9 @@ int specfem::mesh_entity::element<specfem::dimension::type::dim3>::
 }
 
 std::tuple<int, int, int>
-specfem::mesh_entity::element<specfem::dimension::type::dim3>::map_coordinates(
-    const specfem::mesh_entity::dim3::type &entity, const int point) const {
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::
+    map_coordinates(const specfem::mesh_entity::dim3::type &entity,
+                    const int point) const {
 
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::corners,
                                      entity)) {
@@ -326,8 +327,8 @@ specfem::mesh_entity::element<specfem::dimension::type::dim3>::map_coordinates(
 }
 
 std::tuple<int, int, int>
-specfem::mesh_entity::element<specfem::dimension::type::dim3>::map_coordinates(
-    const specfem::mesh_entity::dim3::type &corner) const {
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::
+    map_coordinates(const specfem::mesh_entity::dim3::type &corner) const {
   if (!specfem::mesh_entity::contains(specfem::mesh_entity::dim3::corners,
                                       corner)) {
     throw std::runtime_error("The argument is not a corner");

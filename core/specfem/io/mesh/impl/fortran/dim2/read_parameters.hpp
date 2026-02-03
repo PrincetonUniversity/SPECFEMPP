@@ -13,10 +13,10 @@ namespace dim2 {
  * @brief Read paramters from 2D mesh database
  *
  * @param stream Input stream
- * @return specfem::mesh::parameters<specfem::dimension::type::dim2> Mesh
+ * @return specfem::mesh::parameters<specfem::element::dimension_tag::dim2> Mesh
  * parameters
  */
-specfem::mesh::parameters<specfem::dimension::type::dim2>
+specfem::mesh::parameters<specfem::element::dimension_tag::dim2>
 read_mesh_parameters(std::ifstream &stream);
 
 } // namespace dim2

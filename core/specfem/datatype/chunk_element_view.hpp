@@ -8,7 +8,8 @@
 
 // Forward declarations
 namespace specfem::point {
-template <specfem::dimension::type DimensionTag, bool UseSIMD> struct index;
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
+struct index;
 } // namespace specfem::point
 
 namespace specfem {
@@ -27,7 +28,7 @@ namespace datatype {
  * @tparam UseSIMD Use SIMD datatypes for the array. If true, value_type is a
  * SIMD type
  */
-template <typename T, specfem::dimension::type DimensionTag,
+template <typename T, specfem::element::dimension_tag DimensionTag,
           int NumberOfElements, int NumberOfGLLPoints, bool UseSIMD = false,
           typename MemorySpace =
               Kokkos::DefaultExecutionSpace::scratch_memory_space,
@@ -47,7 +48,7 @@ struct ScalarChunkElementViewType;
  */
 template <typename T, int NumberOfElements, int NumberOfGLLPoints, bool UseSIMD,
           typename MemorySpace, typename MemoryTraits>
-struct ScalarChunkElementViewType<T, specfem::dimension::type::dim2,
+struct ScalarChunkElementViewType<T, specfem::element::dimension_tag::dim2,
                                   NumberOfElements, NumberOfGLLPoints, UseSIMD,
                                   MemorySpace, MemoryTraits>
     : public Kokkos::View<
@@ -69,7 +70,7 @@ struct ScalarChunkElementViewType<T, specfem::dimension::type::dim2,
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
   using index_type =
       typename specfem::point::index<dimension_tag,
                                      UseSIMD>; ///< index type for accessing at
@@ -150,7 +151,7 @@ struct ScalarChunkElementViewType<T, specfem::dimension::type::dim2,
  */
 template <typename T, int NumberOfElements, int NumberOfGLLPoints, bool UseSIMD,
           typename MemorySpace, typename MemoryTraits>
-struct ScalarChunkElementViewType<T, specfem::dimension::type::dim3,
+struct ScalarChunkElementViewType<T, specfem::element::dimension_tag::dim3,
                                   NumberOfElements, NumberOfGLLPoints, UseSIMD,
                                   MemorySpace, MemoryTraits>
     : public Kokkos::View<typename specfem::datatype::simd<T, UseSIMD>::datatype
@@ -172,7 +173,7 @@ struct ScalarChunkElementViewType<T, specfem::dimension::type::dim3,
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   using index_type =
       typename specfem::point::index<dimension_tag,
                                      UseSIMD>; ///< index type for accessing at
@@ -254,11 +255,12 @@ struct ScalarChunkElementViewType<T, specfem::dimension::type::dim3,
  * @tparam UseSIMD Use SIMD datatypes for the array. If true, value_type is a
  * SIMD type
  */
-template <
-    typename T, specfem::dimension::type DimensionTag, int NumberOfElements,
-    int NumberOfGLLPoints, int Components, bool UseSIMD = false,
-    typename MemorySpace = Kokkos::DefaultExecutionSpace::scratch_memory_space,
-    typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+template <typename T, specfem::element::dimension_tag DimensionTag,
+          int NumberOfElements, int NumberOfGLLPoints, int Components,
+          bool UseSIMD = false,
+          typename MemorySpace =
+              Kokkos::DefaultExecutionSpace::scratch_memory_space,
+          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
 struct VectorChunkElementViewType;
 
 /**
@@ -277,8 +279,8 @@ template <typename T, int NumberOfElements, int NumberOfGLLPoints,
           int Components, bool UseSIMD, typename MemorySpace,
           typename MemoryTraits>
 struct VectorChunkElementViewType<
-    T, specfem::dimension::type::dim2, NumberOfElements, NumberOfGLLPoints,
-    Components, UseSIMD, MemorySpace, MemoryTraits>
+    T, specfem::element::dimension_tag::dim2, NumberOfElements,
+    NumberOfGLLPoints, Components, UseSIMD, MemorySpace, MemoryTraits>
     : public Kokkos::View<typename specfem::datatype::simd<T, UseSIMD>::datatype
                               [NumberOfElements][NumberOfGLLPoints]
                               [NumberOfGLLPoints][Components],
@@ -298,7 +300,7 @@ struct VectorChunkElementViewType<
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
   using index_type =
       typename specfem::point::index<dimension_tag,
                                      UseSIMD>; ///< index type for accessing at
@@ -398,8 +400,8 @@ template <typename T, int NumberOfElements, int NumberOfGLLPoints,
           int Components, bool UseSIMD, typename MemorySpace,
           typename MemoryTraits>
 struct VectorChunkElementViewType<
-    T, specfem::dimension::type::dim3, NumberOfElements, NumberOfGLLPoints,
-    Components, UseSIMD, MemorySpace, MemoryTraits>
+    T, specfem::element::dimension_tag::dim3, NumberOfElements,
+    NumberOfGLLPoints, Components, UseSIMD, MemorySpace, MemoryTraits>
     : public Kokkos::View<
           typename specfem::datatype::simd<T, UseSIMD>::datatype
               [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
@@ -420,7 +422,7 @@ struct VectorChunkElementViewType<
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   using index_type =
       typename specfem::point::index<dimension_tag,
                                      UseSIMD>; ///< index type for accessing at
@@ -520,7 +522,7 @@ struct VectorChunkElementViewType<
  * @tparam UseSIMD Use SIMD datatypes for the array. If true, value_type is a
  * SIMD type
  */
-template <typename T, specfem::dimension::type DimensionTag,
+template <typename T, specfem::element::dimension_tag DimensionTag,
           int NumberOfElements, int NumberOfGLLPoints, int Components,
           int NumberOfDimensions, bool UseSIMD = false,
           typename MemorySpace =
@@ -544,9 +546,10 @@ struct TensorChunkElementViewType;
 template <typename T, int NumberOfElements, int NumberOfGLLPoints,
           int Components, int NumberOfDimensions, bool UseSIMD,
           typename MemorySpace, typename MemoryTraits>
-struct TensorChunkElementViewType<
-    T, specfem::dimension::type::dim2, NumberOfElements, NumberOfGLLPoints,
-    Components, NumberOfDimensions, UseSIMD, MemorySpace, MemoryTraits>
+struct TensorChunkElementViewType<T, specfem::element::dimension_tag::dim2,
+                                  NumberOfElements, NumberOfGLLPoints,
+                                  Components, NumberOfDimensions, UseSIMD,
+                                  MemorySpace, MemoryTraits>
     : public Kokkos::View<
           typename specfem::datatype::simd<T, UseSIMD>::datatype
               [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
@@ -567,7 +570,7 @@ struct TensorChunkElementViewType<
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
   using index_type =
       typename specfem::point::index<dimension_tag, UseSIMD>; ///< index type
                                                               ///< for accessing
@@ -679,9 +682,10 @@ struct TensorChunkElementViewType<
 template <typename T, int NumberOfElements, int NumberOfGLLPoints,
           int Components, int NumberOfDimensions, bool UseSIMD,
           typename MemorySpace, typename MemoryTraits>
-struct TensorChunkElementViewType<
-    T, specfem::dimension::type::dim3, NumberOfElements, NumberOfGLLPoints,
-    Components, NumberOfDimensions, UseSIMD, MemorySpace, MemoryTraits>
+struct TensorChunkElementViewType<T, specfem::element::dimension_tag::dim3,
+                                  NumberOfElements, NumberOfGLLPoints,
+                                  Components, NumberOfDimensions, UseSIMD,
+                                  MemorySpace, MemoryTraits>
     : public Kokkos::View<
           typename specfem::datatype::simd<T, UseSIMD>::datatype
               [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
@@ -702,7 +706,7 @@ struct TensorChunkElementViewType<
                                                 ///< the elements of the array
   using base_type = T;                          ///< Base type of the array
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   using index_type =
       typename specfem::point::index<dimension_tag, UseSIMD>; ///< index type
                                                               ///< for accessing

@@ -25,7 +25,7 @@ namespace impl {
  * @param isig_step Time step for which the seismograms are computed
  */
 template <specfem::simulation::field_type WavefieldType,
-          specfem::dimension::type DimensionTag, int NGLL,
+          specfem::element::dimension_tag DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,

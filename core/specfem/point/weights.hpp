@@ -10,7 +10,7 @@ namespace specfem::point {
  *
  * @tparam using_simd Flag to indicate if this is a simd index
  */
-template <specfem::dimension::type DimensionTag> struct weights;
+template <specfem::element::dimension_tag DimensionTag> struct weights;
 
 /**
  * @brief Struct to store the assembled index for a quadrature point
@@ -20,13 +20,13 @@ template <specfem::dimension::type DimensionTag> struct weights;
  *
  */
 template <>
-struct weights<specfem::dimension::type::dim2>
+struct weights<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::point,
           specfem::data_access::DataClassType::weights,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
   type_real wz; ///< Weight of the quadrature point in the z direction within
                 ///< the spectral element
   type_real wx; ///< Weight of the quadrature point in the x direction within
@@ -61,13 +61,13 @@ struct weights<specfem::dimension::type::dim2>
 };
 
 template <>
-struct weights<specfem::dimension::type::dim3>
+struct weights<specfem::element::dimension_tag::dim3>
     : public specfem::data_access::Accessor<
           specfem::data_access::AccessorType::point,
           specfem::data_access::DataClassType::weights,
-          specfem::dimension::type::dim3, false> {
+          specfem::element::dimension_tag::dim3, false> {
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   type_real wz; ///< Weight of the quadrature point in the z direction within
                 ///< the spectral element
   type_real wy; ///< Weight of the quadrature point in the y direction within

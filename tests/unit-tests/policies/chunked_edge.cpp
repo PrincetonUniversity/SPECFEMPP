@@ -14,14 +14,14 @@ class ChunkedIteratorTestBase {
 public:
   using ParallelConfig =
       specfem::parallel_configuration::default_chunk_edge_config<
-          specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
+          specfem::element::dimension_tag::dim2, Kokkos::DefaultExecutionSpace>;
 
   constexpr static int num_points = 5;
   using StorageViewType =
       Kokkos::View<int *[num_points], Kokkos::DefaultExecutionSpace>;
-  using EdgesViewType =
-      Kokkos::View<specfem::mesh_entity::edge<specfem::dimension::type::dim2> *,
-                   Kokkos::DefaultExecutionSpace>;
+  using EdgesViewType = Kokkos::View<
+      specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2> *,
+      Kokkos::DefaultExecutionSpace>;
 };
 
 // Test parameter structs (no Kokkos views here)
@@ -104,9 +104,10 @@ public:
         KOKKOS_CLASS_LAMBDA(const int i) {
           for (int j = 0; j < num_points; ++j)
             view(i, j) = 0;
-          edges(i) = specfem::mesh_entity::edge<specfem::dimension::type::dim2>(
-              static_cast<int>(i), static_cast<int>(i),
-              specfem::mesh_entity::dim2::type::top);
+          edges(i) =
+              specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(
+                  static_cast<int>(i), static_cast<int>(i),
+                  specfem::mesh_entity::dim2::type::top);
         });
   }
 };
@@ -178,11 +179,12 @@ public:
             self_view(i, j) = 0;
             coupled_view(i, j) = 0;
           }
-          edges(i) = specfem::mesh_entity::edge<specfem::dimension::type::dim2>(
-              static_cast<int>(i), static_cast<int>(i),
-              specfem::mesh_entity::dim2::type::top);
+          edges(i) =
+              specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(
+                  static_cast<int>(i), static_cast<int>(i),
+                  specfem::mesh_entity::dim2::type::top);
           intersection_edges(i) =
-              specfem::mesh_entity::edge<specfem::dimension::type::dim2>(
+              specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(
                   static_cast<int>(number_of_edges - i - 1),
                   static_cast<int>(i),
                   specfem::mesh_entity::dim2::type::bottom);

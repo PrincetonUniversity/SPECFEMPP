@@ -81,8 +81,8 @@ struct ElementTags {
  * and boundary condition assignment.
  */
 struct ExpectedTags3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   int nspec;                             ///< Total number of spectral elements
   std::vector<ElementTags> element_tags; ///< List of expected element tags
 

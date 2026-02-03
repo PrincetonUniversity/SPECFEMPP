@@ -2,9 +2,10 @@
 #include "kokkos_abstractions.h"
 #include "specfem/element.hpp"
 
-specfem::mesh::tags<specfem::dimension::type::dim2>::tags(
-    const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
-    const specfem::mesh::boundaries<specfem::dimension::type::dim2>
+specfem::mesh::tags<specfem::element::dimension_tag::dim2>::tags(
+    const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
+        &materials,
+    const specfem::mesh::boundaries<specfem::element::dimension_tag::dim2>
         &boundaries) {
 
   this->nspec = materials.material_index_mapping.extent(0);

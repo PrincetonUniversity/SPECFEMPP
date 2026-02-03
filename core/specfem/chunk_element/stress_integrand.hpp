@@ -28,7 +28,8 @@ namespace chunk_element {
  * @tparam MemoryTraits Memory traits for data storage.
  * @tparam UseSIMD Flag to indicate if SIMD should be used.
  */
-template <int NumberElements, int NGLL, specfem::dimension::type DimensionTag,
+template <int NumberElements, int NGLL,
+          specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, typename MemorySpace,
           typename MemoryTraits, bool UseSIMD>
 struct stress_integrand {

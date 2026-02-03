@@ -3,5 +3,5 @@
 2D ``specfem::assembly::mesh_impl::control_nodes``
 ==================================================
 
-.. doxygenstruct:: specfem::assembly::mesh_impl::control_nodes< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::assembly::mesh_impl::control_nodes< specfem::element::dimension_tag::dim2 >
     :members:

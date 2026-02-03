@@ -9,10 +9,10 @@
 namespace specfem {
 namespace mesh {
 
-template <> struct tags<specfem::dimension::type::dim2> {
+template <> struct tags<specfem::element::dimension_tag::dim2> {
 
   constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension
+      specfem::element::dimension_tag::dim2; ///< Dimension
 
   int nspec; ///< Total number of spectral elements
   Kokkos::View<specfem::mesh::impl::tags_container *, Kokkos::HostSpace>
@@ -40,10 +40,10 @@ template <> struct tags<specfem::dimension::type::dim2> {
    * @param materials Material properties
    * @param boundaries Boundary information
    */
-  tags(
-      const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
-      const specfem::mesh::boundaries<specfem::dimension::type::dim2>
-          &boundaries);
+  tags(const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
+           &materials,
+       const specfem::mesh::boundaries<specfem::element::dimension_tag::dim2>
+           &boundaries);
   ///@}
 };
 } // namespace mesh

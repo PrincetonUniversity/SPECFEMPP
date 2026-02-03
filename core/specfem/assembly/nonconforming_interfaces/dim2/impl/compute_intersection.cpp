@@ -11,13 +11,12 @@
 #include <stdexcept>
 
 inline std::pair<
-    specfem::point::global_coordinates<specfem::dimension::type::dim2>,
-    specfem::point::global_coordinates<specfem::dimension::type::dim2> >
-edge_extents(
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &element_coordinates,
-    const specfem::mesh_entity::dim2::type &side) {
+    specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>,
+    specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> >
+edge_extents(const Kokkos::View<specfem::point::global_coordinates<
+                                    specfem::element::dimension_tag::dim2> *,
+                                Kokkos::HostSpace> &element_coordinates,
+             const specfem::mesh_entity::dim2::type &side) {
   switch (side) {
   case specfem::mesh_entity::dim2::type::bottom:
     // control nodes 0 and 1
@@ -40,12 +39,12 @@ edge_extents(
 
 std::vector<std::pair<type_real, type_real> >
 specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &element1,
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &element2,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &element1,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &element2,
     const specfem::mesh_entity::dim2::type &edge1,
     const specfem::mesh_entity::dim2::type &edge2,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature) {
@@ -90,7 +89,8 @@ specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
     // no intersection
     std::ostringstream oss;
 
-    specfem::point::global_coordinates<specfem::dimension::type::dim2> center1;
+    specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+        center1;
     if (element1.extent(0) == 9) {
       center1 = element1(8);
     } else {
@@ -100,7 +100,8 @@ specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
           (element1(0).z + element1(1).z + element1(2).z + element1(3).z) / 4;
     }
 
-    specfem::point::global_coordinates<specfem::dimension::type::dim2> center2;
+    specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+        center2;
     if (element2.extent(0) == 9) {
       center2 = element2(8);
     } else {

@@ -25,7 +25,7 @@ namespace dim2 {
  * from the database file
  */
 
-specfem::mesh::materials<specfem::dimension::type::dim2>
+specfem::mesh::materials<specfem::element::dimension_tag::dim2>
 read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
     const specfem::enums::elastic_wave wave,

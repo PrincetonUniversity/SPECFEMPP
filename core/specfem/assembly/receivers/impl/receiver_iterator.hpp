@@ -98,7 +98,8 @@ protected:
 };
 
 // Primary template declaration for SeismogramIterator
-template <specfem::dimension::type DimensionTag> class SeismogramIterator;
+template <specfem::element::dimension_tag DimensionTag>
+class SeismogramIterator;
 
 } // namespace specfem::assembly::receivers_impl
 

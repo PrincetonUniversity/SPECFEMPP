@@ -26,7 +26,7 @@ namespace impl {
  * @param dt Time step size (used for time-dependent mass matrix computations)
  * @param assembly SPECFEM++ assembly object.
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,

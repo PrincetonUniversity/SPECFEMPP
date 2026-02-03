@@ -29,19 +29,19 @@ namespace specfem::medium_container::properties {
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct point_container<
-    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::dimension_tag::dim2, MediumTag,
     specfem::element::property_tag::isotropic_cosserat, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
     /// @cond
     : public PropertyAccessor<
-          specfem::dimension::type::dim2, MediumTag,
+          specfem::element::dimension_tag::dim2, MediumTag,
           specfem::element::property_tag::isotropic_cosserat, UseSIMD>
 /// @endcond
 {
 
 private:
   using base_type =
-      PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+      PropertyAccessor<specfem::element::dimension_tag::dim2, MediumTag,
                        specfem::element::property_tag::isotropic_cosserat,
                        UseSIMD>; ///< Base type of the
                                  ///< point properties

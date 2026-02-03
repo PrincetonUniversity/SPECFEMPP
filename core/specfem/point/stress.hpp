@@ -32,7 +32,8 @@ namespace point {
  *
  * @code
  * // Example: Create stress tensor for 2D elastic medium
- * using stress_type = specfem::point::stress<specfem::dimension::type::dim2,
+ * using stress_type =
+ * specfem::point::stress<specfem::element::dimension_tag::dim2,
  *                                           specfem::element::medium_tag::elastic_psv,
  *                                           false>;
  *
@@ -48,7 +49,7 @@ namespace point {
  * @see specfem::point::jacobian_matrix
  * @see specfem::data_access::Accessor
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct stress
     : public specfem::data_access::Accessor<
@@ -75,7 +76,7 @@ public:
       specfem::element::attributes<DimensionTag, MediumTag>::components;
 
   /** @brief Template parameter for spatial dimension */
-  constexpr static specfem::dimension::type dimension_tag = DimensionTag;
+  constexpr static specfem::element::dimension_tag dimension_tag = DimensionTag;
 
   /** @brief Template parameter for medium type */
   constexpr static specfem::element::medium_tag medium_tag = MediumTag;
@@ -164,10 +165,9 @@ public:
    * @endcode
    */
   KOKKOS_INLINE_FUNCTION
-  value_type operator*(
-      const specfem::point::jacobian_matrix<specfem::dimension::type::dim2,
-                                            true, UseSIMD> &jacobian_matrix)
-      const {
+  value_type operator*(const specfem::point::jacobian_matrix<
+                       specfem::element::dimension_tag::dim2, true, UseSIMD>
+                           &jacobian_matrix) const {
     value_type F;
 
     for (int icomponent = 0; icomponent < components; ++icomponent) {
@@ -215,10 +215,9 @@ public:
    * @endcode
    */
   KOKKOS_INLINE_FUNCTION
-  value_type operator*(
-      const specfem::point::jacobian_matrix<specfem::dimension::type::dim3,
-                                            true, UseSIMD> &jacobian_matrix)
-      const {
+  value_type operator*(const specfem::point::jacobian_matrix<
+                       specfem::element::dimension_tag::dim3, true, UseSIMD>
+                           &jacobian_matrix) const {
     value_type F;
 
     for (int icomponent = 0; icomponent < components; ++icomponent) {

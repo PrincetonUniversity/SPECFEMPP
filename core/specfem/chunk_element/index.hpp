@@ -50,7 +50,7 @@ namespace chunk_element {
  * @see specfem::execution::ChunkElementIndex for iteration functionality
  */
 // clang-format on
-template <specfem::dimension::type DimensionTag, typename SIMD,
+template <specfem::element::dimension_tag DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
 class Index
     : public specfem::execution::ChunkElementIndex<DimensionTag, SIMD, ViewType,

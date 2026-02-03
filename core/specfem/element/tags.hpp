@@ -4,6 +4,17 @@ namespace specfem {
 namespace element {
 
 /**
+ * @brief Spatial dimension types.
+ *
+ * Used as template parameters throughout the codebase to distinguish
+ * between 2D and 3D implementations.
+ */
+enum class dimension_tag {
+  dim2, ///< 2D spatial dimension
+  dim3  ///< 3D spatial dimension
+};
+
+/**
  * @brief Element medium types for physics simulations.
  *
  * Defines wave propagation physics: elastic (P/SV/SH waves), acoustic (pressure

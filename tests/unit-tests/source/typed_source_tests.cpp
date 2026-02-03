@@ -10,13 +10,13 @@
 
 // Type definitions for 2D sources
 using SourceTypes = ::testing::Types<
-    specfem::sources::force<specfem::dimension::type::dim2>,
-    specfem::sources::external<specfem::dimension::type::dim2>,
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2>,
-    specfem::sources::adjoint_source<specfem::dimension::type::dim2>,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2>,
-    specfem::sources::force<specfem::dimension::type::dim3>,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim3> >;
+    specfem::sources::force<specfem::element::dimension_tag::dim2>,
+    specfem::sources::external<specfem::element::dimension_tag::dim2>,
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>,
+    specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2>,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>,
+    specfem::sources::force<specfem::element::dimension_tag::dim3>,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> >;
 
 // Template test fixture for all sources
 template <typename T> class SourceTest : public ::testing::Test {
