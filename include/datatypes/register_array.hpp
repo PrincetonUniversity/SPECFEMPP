@@ -13,7 +13,6 @@
 
 namespace specfem {
 namespace datatype {
-namespace impl {
 
 /**
  * @brief Compute total size from static extents
@@ -58,7 +57,7 @@ private:
   /// Array rank (number of dimensions)
   constexpr static std::size_t rank = Extents::rank();
   /// Total number of elements
-  constexpr static std::size_t size = impl::compute_size<Extents>();
+  constexpr static std::size_t size = compute_size<Extents>();
   /// Memory layout mapping type
   using mapping = typename Layout::template mapping<Extents>;
 
@@ -251,6 +250,5 @@ private:
   }
 };
 
-} // namespace impl
 } // namespace datatype
 } // namespace specfem

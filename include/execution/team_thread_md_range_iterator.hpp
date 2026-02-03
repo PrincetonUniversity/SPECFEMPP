@@ -1,6 +1,6 @@
 #pragma once
 
-#include "datatypes/impl/register_array.hpp"
+#include "datatypes/register_array.hpp"
 #include "policy.hpp"
 #include "void_iterator.hpp"
 #include <Kokkos_Core.hpp>
@@ -32,7 +32,7 @@ public:
   using base_policy_type =
       typename base_type::base_policy_type; ///< Base policy type. Evaluates to
                                             ///< @c Kokkos::TeamThreadRange
-  using index_type = specfem::datatype::impl::RegisterArray<
+  using index_type = specfem::datatype::RegisterArray<
       int, Kokkos::extents<std::size_t, rank>,
       Kokkos::layout_left>; ///< Underlying index type. This
                             ///< index will be passed to the

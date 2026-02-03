@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "impl/register_array.hpp"
+#include "register_array.hpp"
 #include "simd.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -24,7 +24,7 @@ namespace datatype {
  */
 template <typename T, std::size_t Components, bool UseSIMD>
 struct VectorPointViewType
-    : public impl::RegisterArray<
+    : public RegisterArray<
           typename specfem::datatype::simd<T, UseSIMD>::datatype,
           Kokkos::extents<std::size_t, Components>, Kokkos::layout_left> {
   /**
@@ -32,7 +32,7 @@ struct VectorPointViewType
    *
    */
   ///@{
-  using base_type = impl::RegisterArray<
+  using base_type = RegisterArray<
       typename specfem::datatype::simd<T, UseSIMD>::datatype,
       Kokkos::extents<std::size_t, Components>,
       Kokkos::layout_left>; ///< Underlying data type used to
@@ -114,7 +114,7 @@ struct VectorPointViewType
  */
 template <typename T, int Components, int Dimensions, bool UseSIMD>
 struct TensorPointViewType
-    : public impl::RegisterArray<
+    : public RegisterArray<
           typename specfem::datatype::simd<T, UseSIMD>::datatype,
           Kokkos::extents<std::size_t, Components, Dimensions>,
           Kokkos::layout_left> {
@@ -124,7 +124,7 @@ struct TensorPointViewType
    *
    */
   ///@{
-  using base_type = impl::RegisterArray<
+  using base_type = RegisterArray<
       typename specfem::datatype::simd<T, UseSIMD>::datatype,
       Kokkos::extents<std::size_t, Components, Dimensions>,
       Kokkos::layout_left>; ///< Underlying data type used to
