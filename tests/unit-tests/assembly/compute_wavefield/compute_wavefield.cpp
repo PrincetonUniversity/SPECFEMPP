@@ -1,7 +1,7 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "generate_data.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include "test_helper.hpp"
 #include <gtest/gtest.h>

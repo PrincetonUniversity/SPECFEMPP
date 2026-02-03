@@ -3,7 +3,7 @@
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/datatype.hpp"
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/medium_physics.hpp"

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include <array>
 #include <boost/preprocessor.hpp>

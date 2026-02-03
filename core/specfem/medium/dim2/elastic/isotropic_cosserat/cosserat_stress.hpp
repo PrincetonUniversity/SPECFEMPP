@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

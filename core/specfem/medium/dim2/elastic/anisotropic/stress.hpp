@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 
 namespace specfem {

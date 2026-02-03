@@ -1,9 +1,9 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
 #include "impl/compute_material_derivatives.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 
 namespace specfem {

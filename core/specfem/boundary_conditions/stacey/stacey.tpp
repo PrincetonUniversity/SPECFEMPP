@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/boundary_conditions.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include "stacey.hpp"
 #include <Kokkos_Core.hpp>

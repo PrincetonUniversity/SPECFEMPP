@@ -1,5 +1,6 @@
-#include "enumerations/medium.hpp"
+#include "to_string.hpp"
 #include <stdexcept>
+#include <string>
 
 const std::string specfem::element::to_string(
     const specfem::element::medium_tag &medium,

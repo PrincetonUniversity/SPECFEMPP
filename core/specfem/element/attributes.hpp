@@ -2,63 +2,12 @@
 
 #include "enumerations/dimension.hpp"
 #include "specfem/utilities/errors.hpp"
+#include "tags.hpp"
 #include <array>
 #include <tuple>
 
 namespace specfem {
 namespace element {
-
-/**
- * @brief Element medium types for physics simulations.
- *
- * Defines wave propagation physics: elastic (P/SV/SH waves), acoustic (pressure
- * waves), poroelastic (fluid-solid interaction), and electromagnetic (TE/TM
- * modes).
- */
-enum class medium_tag {
-  elastic_psv,        ///< 2D elastic medium with P and SV waves
-  elastic_sh,         ///< 2D elastic medium with SH waves
-  elastic_psv_t,      ///< 2D elastic PSV with transverse spin (Cosserat)
-  acoustic,           ///< Acoustic medium (pressure waves)
-  poroelastic,        ///< Poroelastic medium (Biot theory)
-  electromagnetic_te, ///< 2D electromagnetic TE modes
-  elastic,            ///< 3D elastic medium (full displacement field)
-  elastic_spin,       ///< Elastic medium with spin dynamics
-  electromagnetic,    ///< Electromagnetic medium (TE and TM modes)
-};
-
-/**
- * @brief Material property symmetries.
- *
- * Controls material tensor structure: isotropic (scalar properties),
- * anisotropic (full tensor), isotropic_cosserat (with microrotation).
- */
-enum class property_tag {
-  isotropic,         ///< Isotropic material (scalar properties)
-  anisotropic,       ///< Anisotropic material (full tensor)
-  isotropic_cosserat ///< Isotropic Cosserat material (with microrotation)
-};
-
-/**
- * @brief Boundary condition types for domain edges.
- *
- * Defines how waves interact with domain boundaries: free surfaces,
- * absorbing conditions (Stacey), and composite boundary treatments.
- */
-enum class boundary_tag {
-  // primary boundaries
-  none,                  ///< No boundary condition
-  acoustic_free_surface, ///< Acoustic free surface (zero pressure)
-  stacey,                ///< Stacey absorbing boundary condition
-
-  // composite boundaries
-  composite_stacey_dirichlet ///< Combined Stacey-Dirichlet boundary
-};
-
-enum class attenuation_tag {
-  none,               ///< No attenuation
-  constant_isotropic, ///< Constant Q-Band attenuation
-};
 
 /**
  * @brief Element physics attributes for different media.
@@ -263,55 +212,6 @@ public:
 };
 
 /**
- * @brief Convert medium, property, and boundary tags to string.
- *
- * @param medium Medium type
- * @param property_tag Property type
- * @param boundary_tag Boundary condition type
- * @return Combined string representation
- */
-const std::string to_string(const medium_tag &medium,
-                            const property_tag &property_tag,
-                            const boundary_tag &boundary_tag);
-
-/**
- * @brief Convert medium and property tags to string.
- *
- * @param medium Medium type
- * @param property_tag Property type
- * @return Combined string representation
- */
-const std::string to_string(const medium_tag &medium,
-                            const property_tag &property_tag,
-                            const attenuation_tag &attenuation_tag);
-
-/**
- * @brief Convert medium tag to string.
- *
- * @param medium Medium type
- * @return String representation
- */
-const std::string to_string(const medium_tag &medium);
-
-/**
- * @brief Convert property tag to string.
- *
- * @param property Property type
- * @return String representation
- */
-const std::string to_string(const property_tag &property);
-
-/**
- * @brief Convert boundary tag to string.
- *
- * @param boundary Boundary condition type
- * @return String representation
- */
-const std::string to_string(const boundary_tag &boundary);
-
-const std::string to_string(const attenuation_tag &attenuation);
-
-/**
  * @brief Type trait to identify elastic media.
  *
  * @tparam MediumTag Medium type to check
@@ -341,15 +241,6 @@ using is_electromagnetic = typename std::conditional_t<
     (MediumTag == specfem::element::medium_tag::electromagnetic ||
      MediumTag == specfem::element::medium_tag::electromagnetic_te),
     std::true_type, std::false_type>::type;
-
-/**
- * @brief Parse medium tag from string representation.
- *
- * @param medium_tag String representation of medium type
- * @return Corresponding medium_tag enumeration value
- * @throws std::runtime_error if string is not recognized
- */
-specfem::element::medium_tag from_string(const std::string &medium_tag);
 
 } // namespace element
 } // namespace specfem

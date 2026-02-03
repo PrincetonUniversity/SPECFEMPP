@@ -1,7 +1,6 @@
 #pragma once
 
-#include "enumerations/boundary.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/mesh/dim2/boundaries/boundaries.hpp"
 #include "specfem/mesh/dim2/materials/materials.hpp"
 #include "specfem/mesh/impl/tags_container.hpp"

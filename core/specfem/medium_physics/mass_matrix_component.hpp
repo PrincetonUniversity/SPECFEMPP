@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/medium/dim2/acoustic/isotropic/mass_matrix.tpp"
 #include "specfem/medium/dim2/elastic/anisotropic/mass_matrix.tpp"

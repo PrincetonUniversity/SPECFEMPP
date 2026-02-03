@@ -2,7 +2,7 @@
 
 #include "domain_view.hpp"
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/assembly.hpp"

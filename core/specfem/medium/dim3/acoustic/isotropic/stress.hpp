@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 

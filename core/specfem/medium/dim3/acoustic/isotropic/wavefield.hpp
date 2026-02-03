@@ -5,10 +5,10 @@
 #include "Kokkos_Core.hpp"
 
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/element.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 

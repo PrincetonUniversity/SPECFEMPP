@@ -4,7 +4,7 @@
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/boundary_conditions/dirichlet/dirichlet.hpp"
 #include "specfem/boundary_conditions/stacey/stacey.hpp"
-#include "enumerations/boundary.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 

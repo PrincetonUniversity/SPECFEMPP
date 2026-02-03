@@ -2,7 +2,7 @@
 
 #include "connections.hpp"
 #include "dimension.hpp"
-#include "medium.hpp"
+#include "specfem/element.hpp"
 
 namespace specfem::point {
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "domain_accessor.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/medium_container.hpp"
 #include <Kokkos_Core.hpp>
 

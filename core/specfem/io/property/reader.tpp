@@ -2,7 +2,7 @@
 
 #include "specfem/assembly.hpp"
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/io/property/reader.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/point.hpp"

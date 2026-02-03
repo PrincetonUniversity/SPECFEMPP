@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
 #include "specfem/algorithms.hpp"
+#include "specfem/element.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>

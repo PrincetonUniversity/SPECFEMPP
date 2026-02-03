@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element.hpp"
 #include "specfem/medium/dim2/elastic/isotropic_cosserat/cosserat_couple_stress.hpp"
 #include "specfem/point.hpp"
 #include "specfem/utilities.hpp"

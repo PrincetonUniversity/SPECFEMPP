@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
