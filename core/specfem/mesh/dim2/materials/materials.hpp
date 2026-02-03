@@ -143,8 +143,6 @@ public:
         })
 
     Kokkos::abort("Invalid material type detected in material specification");
-
-    return {};
   }
 
   /**
@@ -160,6 +158,30 @@ public:
   specfem::mesh::materials<dimension_tag>::material<MediumTag, PropertyTag,
                                                     AttenuationTag> &
   get_container() {
+
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM2),
+         MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                    ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+        CAPTURE(material) {
+          if constexpr (_medium_tag_ == MediumTag &&
+                        _property_tag_ == PropertyTag &&
+                        _attenuation_tag_ == AttenuationTag) {
+            return _material_;
+          }
+        })
+
+    Kokkos::abort("Invalid material type detected in material specification");
+  }
+
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag,
+            specfem::element::attenuation_tag AttenuationTag>
+  const specfem::mesh::materials<dimension_tag>::material<
+      MediumTag, PropertyTag, AttenuationTag> &
+  get_container() const {
 
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
@@ -210,6 +232,8 @@ public:
     return std::make_tuple(material_specification.type,
                            material_specification.property);
   }
+
+  void print() const;
 };
 
 } // namespace mesh

@@ -117,7 +117,17 @@ read_materials(
         const type_real Qkappa = static_cast<type_real>(read_values.val5);
         const type_real Qmu = static_cast<type_real>(read_values.val6);
 
-        if (std::abs(Qmu - 9999.0) < 1e-6) {
+        if (std::abs(Qmu - 9999.0) > 1e-6) {
+          std::ostringstream msg;
+          msg << "Shear attenuation Qmu specified for acoustic material "
+                 "in material set "
+              << read_values.n
+              << ". Please set Qmu to 9999 to indicate no shear attenuation."
+              << " [" << __FILE__ << ":" << __LINE__ << "]\n";
+          throw std::runtime_error(msg.str());
+        }
+
+        if (std::abs(Qkappa - 9999.0) < 1e-6) {
           auto index = materials.add_material(
               specfem::medium_container::material<
                   specfem::dimension::type::dim2, acoustic, isotropic,
@@ -365,40 +375,14 @@ read_materials(
       throw std::runtime_error(message.str());
     }
   }
-  // Sum materials and check if the total number of materials is correct
-  int total_materials = 0;
-  FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ACOUSTIC, ELASTIC_PSV, ELASTIC_SH, POROELASTIC, ELASTIC_PSV_T,
-                  ELECTROMAGNETIC_TE),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-      {
-        // Print material information
-        const auto material_container =
-            materials.get_container<_medium_tag_, _property_tag_,
-                                    _attenuation_tag_>();
-        for (const auto &mat : material_container.element_materials) {
-          mat.print();
-        }
 
-        // Update total materials
-        total_materials += material_container.n_materials;
-      })
+  materials.print();
 
-  if (total_materials != materials.n_materials) {
+  if (materials.n_materials != numat) {
     std::ostringstream message;
-    message << "Total number of materials mismatch: counted " << total_materials
-            << " but stored " << materials.n_materials << " [" << __FILE__
+    message << "Number of materials read (" << materials.n_materials
+            << ") does not match expected (" << numat << ") [" << __FILE__
             << ":" << __LINE__ << "]\n";
-    throw std::runtime_error(message.str());
-  }
-
-  if (total_materials != numat) {
-    std::ostringstream message;
-    message << "Total number of materials mismatch: counted " << total_materials
-            << " but expected " << numat << " [" << __FILE__ << ":" << __LINE__
-            << "]\n";
     throw std::runtime_error(message.str());
   }
 

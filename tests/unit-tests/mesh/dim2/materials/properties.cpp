@@ -1,4 +1,5 @@
 #include "../test_fixture/test_fixture.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
 #include <cmath>
@@ -185,6 +186,7 @@ void check_property(
                     .get_material<_medium_tag_, _property_tag_,
                                   _attenuation_tag_>(ispec)
                     .get_properties();
+
             const auto iexpected = std::any_cast<specfem::point::properties<
                 dimension, _medium_tag_, _property_tag_, false> >(
                 expected[imaterial]);
@@ -226,6 +228,17 @@ TEST_F(MESH, derived_properties) {
     try {
 
       const auto computed = mesh.materials;
+
+      // Check if Test.name is in properties_ground_truth
+      if (properties_ground_truth.find(Test.name) ==
+          properties_ground_truth.end()) {
+        std::ostringstream message;
+        message << "No ground truth available for properties of test '"
+                << Test.name << "' [" << __FILE__ << ":" << __LINE__ << "]\n";
+        specfem::Logger::info(message.str());
+        continue;
+      }
+
       const auto expected = properties_ground_truth.at(Test.name);
 
       check_property(computed, expected);

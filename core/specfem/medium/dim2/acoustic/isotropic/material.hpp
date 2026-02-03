@@ -19,6 +19,8 @@ struct AttenuationValues<
 public:
   type_real Qkappa; ///< Attenuation factor for bulk modulus
 
+  AttenuationValues() = default;
+
   AttenuationValues(const type_real &Qkappa) : Qkappa(Qkappa) {
     if (this->Qkappa <= 0.0) {
       throw std::runtime_error(

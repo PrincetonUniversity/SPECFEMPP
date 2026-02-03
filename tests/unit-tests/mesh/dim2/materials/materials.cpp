@@ -115,6 +115,14 @@ const static std::unordered_map<std::string, MaterialVectorType>
             specfem::element::attenuation_tag::none>(
             2650.0, 880.0, 0.1, 2.0, 1.0e-9, 0.0, 1.0e-9, 12.2e9, 1.985e9,
             9.6e9, 0.0, 5.1e9) }) },
+      { "Poroelastic mesh - Homogeneous isotropic material w attenuation",
+        MaterialVectorType({ specfem::medium_container::material<
+            specfem::dimension::type::dim2,
+            specfem::element::medium_tag::poroelastic,
+            specfem::element::property_tag::isotropic,
+            specfem::element::attenuation_tag::constant_isotropic>(
+            2650.0, 880.0, 0.1, 2.0, 1.0e-9, 0.0, 1.0e-9, 12.2e9, 1.985e9,
+            9.6e9, 0.0, 5.1e9, 100.0) }) },
       { "Electro-magnetic mesh example from Morency 2020",
         MaterialVectorType(
             { specfem::medium_container::material<
@@ -172,7 +180,7 @@ void check_material(
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
          PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-         ATTENUATION_TAG(NONE)),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
         {
           if ((medium_tag == _medium_tag_) &&
               (property_tag == _property_tag_) &&

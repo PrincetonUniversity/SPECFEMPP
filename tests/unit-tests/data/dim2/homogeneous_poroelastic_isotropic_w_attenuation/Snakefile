@@ -1,0 +1,6 @@
+include: "../../meshfem2d.smk"
+
+rule all:
+    input:
+        "<cwd>/database.bin",
+    localrule: True

@@ -52,7 +52,16 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                 "materials.");
           }
 
-          if ((std::abs(Qmu - 9999.0) < 1e-6) || (std::abs(Qmu) < 1e-6)) {
+          if (!((std::abs(Qmu - 9999.0) < 1e-6) || (std::abs(Qmu) < 1e-6))) {
+            std::ostringstream error_message;
+            error_message
+                << "Qmu should be set to 9999 or 0 for acoustic materials. "
+                << "Found Qmu = " << Qmu << " for material index " << imat
+                << "." << "[" << __FILE__ << ":" << __LINE__ << "]\n";
+            throw std::runtime_error(error_message.str());
+          }
+
+          if ((std::abs(Qkappa - 9999.0) < 1e-6) || (std::abs(Qkappa) < 1e-6)) {
 
             specfem::medium_container::material<
                 specfem::dimension::type::dim3,
