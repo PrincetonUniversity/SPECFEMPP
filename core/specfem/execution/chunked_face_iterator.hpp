@@ -98,7 +98,7 @@ public:
    * point
    */
   KOKKOS_INLINE_FUNCTION
-  constexpr const iterator_type get_iterator() const { return iterator_type{}; }
+  constexpr const iterator_type &get_iterator() const { return iterator_type{}; }
 
 private:
   index_type index;       ///< Local element coordinates of the face point
