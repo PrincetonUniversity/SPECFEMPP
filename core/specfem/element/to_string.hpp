@@ -3,6 +3,7 @@
 #include "specfem/utilities/errors.hpp"
 #include "tags.hpp"
 #include <array>
+#include <string>
 #include <tuple>
 
 namespace specfem {
