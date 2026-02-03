@@ -70,7 +70,7 @@ nbmodels                        = 2
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
 #   tomo:        model_number -1 0 9999 9999 A 0 0 9999 9999 0 0 0 0 0
 1 1 2500.d0 3400.d0 1963.d0 0 0 100.d0 150.d0 0 0 0 0 0 0
-2 1 1020.d0 1500.d0 0.d0 0 0 250.d0 350.d0 0 0 0 0 0 0
+2 1 1020.d0 1500.d0 0.d0 0 0 250.d0 9999 0 0 0 0 0 0
 
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
