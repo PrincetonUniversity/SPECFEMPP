@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh/mesh_base.hpp"

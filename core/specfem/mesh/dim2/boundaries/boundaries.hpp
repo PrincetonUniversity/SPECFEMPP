@@ -2,8 +2,8 @@
 
 #include "absorbing_boundary.hpp"
 #include "acoustic_free_surface.hpp"
-#include "enumerations/dimension.hpp"
 #include "forcing_boundaries.hpp"
+#include "specfem/element.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
 namespace specfem {

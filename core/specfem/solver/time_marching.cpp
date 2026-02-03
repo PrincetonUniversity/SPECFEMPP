@@ -1,6 +1,6 @@
 #include "specfem/solver/time_marching.hpp"
-#include "enumerations/dimension.hpp"
 #include "enumerations/simulation.hpp"
+#include "specfem/element.hpp"
 #include "specfem/solver/time_marching.tpp"
 
 // Explcit template instantiation

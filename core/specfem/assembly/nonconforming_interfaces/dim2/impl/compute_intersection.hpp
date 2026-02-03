@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "enumerations/mesh_entities.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"
 

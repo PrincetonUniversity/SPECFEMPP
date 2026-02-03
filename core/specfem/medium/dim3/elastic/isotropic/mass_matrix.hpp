@@ -1,6 +1,5 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "globals.h"
 #include "specfem/element.hpp"
 #include "specfem/point.hpp"

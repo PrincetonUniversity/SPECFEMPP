@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/assembly.hpp"
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/property/reader.hpp"
 #include "kokkos_abstractions.h"

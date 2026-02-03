@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
+#include "dimension.hpp"
 #include "specfem/utilities/errors.hpp"
 #include "tags.hpp"
 #include <array>

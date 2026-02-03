@@ -3,7 +3,6 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "Kokkos_Core_fwd.hpp"
 #include "enumerations/coupled_interface.hpp"
-#include "enumerations/dimension.hpp"
 #include "specfem/chunk_edge.hpp"
 #include "specfem/data_access/accessor.hpp"
 #include "specfem/element.hpp"

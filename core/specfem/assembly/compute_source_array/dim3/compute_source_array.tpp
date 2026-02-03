@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/assembly/compute_source_array.hpp"
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include "impl/compute_source_array_from_tensor.hpp"
 #include "impl/compute_source_array_from_vector.hpp"
 #include "kokkos_abstractions.h"

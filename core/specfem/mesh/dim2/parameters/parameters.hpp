@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
 namespace specfem {

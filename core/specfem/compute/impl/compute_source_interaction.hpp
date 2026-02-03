@@ -1,6 +1,5 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/element.hpp"

@@ -2,7 +2,6 @@
 
 #include "enumerations/connections.hpp"
 #include "enumerations/coupled_interface.hpp"
-#include "enumerations/dimension.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include <array>

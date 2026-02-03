@@ -1,6 +1,5 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/element.hpp"
 #include "specfem/medium/dim2/elastic/isotropic_cosserat/cosserat_couple_stress.hpp"

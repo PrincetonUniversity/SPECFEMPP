@@ -1,9 +1,9 @@
 #pragma once
 
 #include "enumerations/coupled_interface.hpp"
-#include "enumerations/dimension.hpp"
 #include "initializers.hpp"
 #include "specfem/data_access/accessor.hpp"
+#include "specfem/element.hpp"
 #include "specfem_setup.hpp"
 
 #include <type_traits>

@@ -1,5 +1,4 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "enumerations/dimension.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"

@@ -6,7 +6,7 @@
  */
 #pragma once
 
-#include "dimension.hpp"
+#include "specfem/element.hpp"
 #include <string>
 
 namespace specfem::connections {

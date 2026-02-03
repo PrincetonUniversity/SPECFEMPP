@@ -1,6 +1,6 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "enumerations/dimension.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/element.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/macros.hpp"
 #include "specfem_setup.hpp"

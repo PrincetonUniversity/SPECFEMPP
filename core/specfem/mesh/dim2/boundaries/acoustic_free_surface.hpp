@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/element.hpp"
 
 namespace specfem {
 namespace mesh {

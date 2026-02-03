@@ -1,8 +1,8 @@
 #ifndef _FORCING_BOUNDARIES_HPP
 #define _FORCING_BOUNDARIES_HPP
 
-#include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/element.hpp"
 
 namespace specfem {
 namespace mesh {

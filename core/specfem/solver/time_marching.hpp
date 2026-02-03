@@ -1,10 +1,10 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/wavefield.hpp"
 #include "solver.hpp"
 #include "specfem/compute.hpp"
+#include "specfem/element.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/timescheme.hpp"
 

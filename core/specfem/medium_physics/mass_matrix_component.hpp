@@ -1,6 +1,5 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/medium/dim2/acoustic/isotropic/mass_matrix.tpp"
