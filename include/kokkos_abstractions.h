@@ -1,7 +1,7 @@
 #ifndef KOKKOS_ABSTRACTION_H
 #define KOKKOS_ABSTRACTION_H
 
-#include "../include/specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_SIMD.hpp>
 #include <Kokkos_ScatterView.hpp>

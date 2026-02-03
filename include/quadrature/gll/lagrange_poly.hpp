@@ -2,7 +2,7 @@
 #define LAGRANGE_H
 
 #include "../include/kokkos_abstractions.h"
-#include "../include/specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
