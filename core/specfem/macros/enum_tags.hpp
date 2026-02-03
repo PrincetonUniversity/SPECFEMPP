@@ -62,4 +62,6 @@
  */
 #define _ENUM_ID_FLUX_SCHEME_TAG 6
 
+#define _ENUM_ID_ATTENUATION_TAG 7
+
 /** @} */ // end of material_iterator_enum_tags

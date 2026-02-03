@@ -120,7 +120,7 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC)),
+       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
       CAPTURE(elements, h_elements, receiver_indices, h_receiver_indices) {
         int count = 0;
         int index = 0;
@@ -128,7 +128,8 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
         for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
           int ispec = h_elements(ireceiver);
           if (element_types.get_medium_tag(ispec) == _medium_tag_ &&
-              element_types.get_property_tag(ispec) == _property_tag_) {
+              element_types.get_property_tag(ispec) == _property_tag_ &&
+              element_types.get_attenuation_tag(ispec) == _attenuation_tag_) {
             count++;
           }
         }
@@ -143,7 +144,8 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
         for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
           int ispec = h_elements(ireceiver);
           if (element_types.get_medium_tag(ispec) == _medium_tag_ &&
-              element_types.get_property_tag(ispec) == _property_tag_) {
+              element_types.get_property_tag(ispec) == _property_tag_ &&
+              element_types.get_attenuation_tag(ispec) == _attenuation_tag_) {
             _h_elements_(index) = ispec;
             _h_receiver_indices_(index) = ireceiver;
             index++;
@@ -165,13 +167,16 @@ std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
 specfem::assembly::receivers<specfem::dimension::type::dim3>::
     get_indices_on_host(
         const specfem::element::medium_tag medium_tag,
-        const specfem::element::property_tag property_tag) const {
+        const specfem::element::property_tag property_tag,
+        const specfem::element::attenuation_tag attenuation_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       CAPTURE(h_elements, h_receiver_indices) {
-        if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
+        if (medium_tag == _medium_tag_ && property_tag == _property_tag_ &&
+            attenuation_tag == _attenuation_tag_) {
           return std::make_tuple(_h_elements_, _h_receiver_indices_);
         }
       })
@@ -188,13 +193,16 @@ std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
 specfem::assembly::receivers<specfem::dimension::type::dim3>::
     get_indices_on_device(
         const specfem::element::medium_tag medium_tag,
-        const specfem::element::property_tag property_tag) const {
+        const specfem::element::property_tag property_tag,
+        const specfem::element::attenuation_tag attenuation_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       CAPTURE(elements, receiver_indices) {
-        if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
+        if (medium_tag == _medium_tag_ && property_tag == _property_tag_ &&
+            attenuation_tag == _attenuation_tag_) {
           return std::make_tuple(_elements_, _receiver_indices_);
         }
       })

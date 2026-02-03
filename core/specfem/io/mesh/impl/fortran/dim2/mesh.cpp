@@ -174,10 +174,13 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T,
                   ELECTROMAGNETIC_TE),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       {
         for (const auto material :
-             mesh.materials.get_container<_medium_tag_, _property_tag_>()
+             mesh.materials
+                 .get_container<_medium_tag_, _property_tag_,
+                                _attenuation_tag_>()
                  .element_materials) {
           specfem::Logger::debug(material.print());
         }
@@ -189,11 +192,13 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T,
                   ELECTROMAGNETIC_TE),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       {
-        total_materials_read +=
-            mesh.materials.get_container<_medium_tag_, _property_tag_>()
-                .element_materials.size();
+        total_materials_read += mesh.materials
+                                    .get_container<_medium_tag_, _property_tag_,
+                                                   _attenuation_tag_>()
+                                    .element_materials.size();
       })
 
   if (total_materials_read != mesh.materials.n_materials) {

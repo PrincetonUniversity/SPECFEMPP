@@ -11,8 +11,9 @@ void specfem::mesh::mesh<
       const auto target = boost::target(e, graph);
       auto &edge_props = graph[e];
 
-      const auto [self_medium, self_property] = materials.get_material_type(v);
-      const auto [neighbor_medium, neighbor_property] =
+      const auto [self_medium, self_property, self_attenuation] =
+          materials.get_material_type(v);
+      const auto [neighbor_medium, neighbor_property, neighbor_attenuation] =
           materials.get_material_type(target);
       if ((self_medium != neighbor_medium) &&
           (edge_props.connection ==

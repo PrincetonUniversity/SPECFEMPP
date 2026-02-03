@@ -88,8 +88,8 @@ public:
     // Get the element grid (ngllx, nglly, ngllz)
     const auto &element_grid = assembly.mesh.element_grid;
 
-    const auto elements =
-        assembly.element_types.get_elements_on_device(medium_tag, property_tag);
+    const auto elements = assembly.element_types.get_elements_on_device(
+        medium_tag, property_tag, specfem::element::attenuation_tag::none);
 
     const int nelements = elements.extent(0);
 

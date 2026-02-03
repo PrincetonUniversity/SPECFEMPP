@@ -26,7 +26,7 @@ specfem::assembly::impl::domain_properties<specfem::dimension::type::dim2, Mediu
         for (int ix = 0; ix < ngllx; ++ix) {
           // Get the material at index from mesh::materials
           auto material =
-              materials.template get_material<medium_tag, property_tag>(
+              materials.template get_material<medium_tag, property_tag, specfem::element::attenuation_tag::none>(
                   mesh_ispec);
 
           // Assign the material property to the property container
@@ -72,7 +72,7 @@ specfem::assembly::impl::domain_properties<specfem::dimension::type::dim3, Mediu
             property_tag == specfem::element::property_tag::isotropic) {
           // Handle the specific case
           const auto point_property =
-              materials.template get_properties<medium_tag, property_tag>(
+              materials.template get_properties<medium_tag, property_tag, specfem::element::attenuation_tag::none>(
                   ispec);
           this->store_host_values(
               specfem::point::index<dimension_tag, false>(count, iz, iy, ix),

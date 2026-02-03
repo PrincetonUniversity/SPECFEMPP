@@ -32,14 +32,14 @@ specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
       "specfem::mesh::tags::copy_tags",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nspec),
       [=, *this](const int ispec) {
-        const auto [material_tag, property_tag] =
+        const auto [material_tag, property_tag, attenuation_tag] =
             materials.get_material_type(ispec);
 
         // Set to none since other boundary conditions are not yet implemented
         const auto boundary_tag = specfem::element::boundary_tag::none;
 
         this->tags_container(ispec) = { material_tag, property_tag,
-                                        boundary_tag };
+                                        attenuation_tag, boundary_tag };
       });
 
   return;

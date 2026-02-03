@@ -24,7 +24,7 @@ void compute_derivatives(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC), ATTENUATION_TAG(NONE)),
       {
         if constexpr (DimensionTag == _dimension_tag_) {
           impl::compute_material_derivatives<DimensionTag, NGLL, _medium_tag_,

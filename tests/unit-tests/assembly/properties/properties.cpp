@@ -203,8 +203,8 @@ void check_compute_to_mesh(
   const auto &materials = mesh.materials;
 
   // Get all elements of the given type
-  const auto elements =
-      element_types.get_elements_on_host(MediumTag, PropertyTag);
+  const auto elements = element_types.get_elements_on_host(
+      MediumTag, PropertyTag, specfem::element::attenuation_tag::none);
 
   using PointType = specfem::point::properties<specfem::dimension::type::dim2,
                                                MediumTag, PropertyTag, false>;
