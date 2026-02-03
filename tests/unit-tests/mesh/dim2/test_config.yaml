@@ -47,6 +47,17 @@ Tests:
       sources : "data/dim2/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
       stations : "data/dim2/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
 
+  - name : "Simple mesh with flat ocean bottom and attenuation"
+    description: >
+      Testing mesh reader on a simple mesh with flat ocean bottom. Fluid-solid interface is at the ocean bottom.
+    config:
+      nproc : 1
+      elastic_wave: "P_SV"
+    databases:
+      mesh : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/database.bin"
+      sources : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/sources.yaml"
+      stations : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/STATIONS"
+
 # Curved ocean bottom
   - name : "Simple mesh with curved ocean bottom"
     description: >
