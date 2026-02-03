@@ -1,4 +1,5 @@
 #include "specfem/mesh/dim2/adjacency_graph/adjacency_graph.hpp"
+#include "../../../test_macros.hpp"
 #include "enumerations/interface.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <gtest/gtest.h>
@@ -196,7 +197,7 @@ TEST(AdjacencyGraphTest, AssertSymmetryWithSymmetricGraph) {
                          specfem::mesh_entity::dim2::type::left);
 
   // Should not throw
-  EXPECT_NO_THROW(graph.assert_symmetry());
+  LOCAL_EXPECT_NO_THROW(graph.assert_symmetry());
 }
 
 /**
@@ -211,7 +212,7 @@ TEST(AdjacencyGraphTest, AssertSymmetryWithAsymmetricGraph) {
                           specfem::mesh_entity::dim2::type::right);
 
   // Should throw std::runtime_error
-  EXPECT_THROW(graph.assert_symmetry(), std::runtime_error);
+  LOCAL_EXPECT_THROW(graph.assert_symmetry(), std::runtime_error);
 }
 
 /**
@@ -221,7 +222,7 @@ TEST(AdjacencyGraphTest, AssertSymmetryWithEmptyGraph) {
   specfem::mesh::adjacency_graph<specfem::dimension::type::dim2> empty_graph;
 
   // Empty graph should be considered symmetric
-  EXPECT_NO_THROW(empty_graph.assert_symmetry());
+  LOCAL_EXPECT_NO_THROW(empty_graph.assert_symmetry());
 }
 
 /**
@@ -231,7 +232,7 @@ TEST(AdjacencyGraphTest, AssertSymmetryWithNoEdges) {
   specfem::mesh::adjacency_graph<specfem::dimension::type::dim2> graph(5);
 
   // Graph with vertices but no edges should be symmetric
-  EXPECT_NO_THROW(graph.assert_symmetry());
+  LOCAL_EXPECT_NO_THROW(graph.assert_symmetry());
 }
 
 /**
@@ -246,7 +247,7 @@ TEST(AdjacencyGraphTest, AssertSymmetryWithSelfLoops) {
                           specfem::mesh_entity::dim2::type::bottom);
 
   // Self-loops are inherently symmetric
-  EXPECT_NO_THROW(graph.assert_symmetry());
+  LOCAL_EXPECT_NO_THROW(graph.assert_symmetry());
 }
 
 /**
@@ -267,7 +268,7 @@ TEST(AdjacencyGraphTest, AssertSymmetryWithPartiallySymmetricGraph) {
                           specfem::mesh_entity::dim2::type::top);
 
   // Should throw because of the asymmetric edge
-  EXPECT_THROW(graph.assert_symmetry(), std::runtime_error);
+  LOCAL_EXPECT_THROW(graph.assert_symmetry(), std::runtime_error);
 }
 
 // ===== Complex Graph Tests =====
@@ -307,7 +308,7 @@ TEST(AdjacencyGraphTest, ComplexSymmetricGraph) {
   EXPECT_EQ(boost::num_vertices(graph.graph()), 6);
   EXPECT_EQ(boost::num_edges(graph.graph()),
             12); // 6 bidirectional edges = 12 directed edges
-  EXPECT_NO_THROW(graph.assert_symmetry());
+  LOCAL_EXPECT_NO_THROW(graph.assert_symmetry());
 }
 
 /**
@@ -394,5 +395,5 @@ TEST(AdjacencyGraphTest, LargeGraph) {
                          specfem::mesh_entity::dim2::type::bottom,
                          specfem::mesh_entity::dim2::type::top);
 
-  EXPECT_NO_THROW(graph.assert_symmetry());
+  LOCAL_EXPECT_NO_THROW(graph.assert_symmetry());
 }

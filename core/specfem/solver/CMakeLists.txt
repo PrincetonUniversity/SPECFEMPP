@@ -13,4 +13,5 @@ target_link_libraries(
         specfem::compute
         specfem::periodic_tasks
         specfem::logger
+        specfem::io
 )

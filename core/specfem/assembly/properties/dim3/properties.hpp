@@ -6,6 +6,7 @@
 #include "specfem/assembly/impl/domain_properties.hpp"
 #include "specfem/assembly/impl/value_containers.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/properties.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "io/reader.hpp"
-#include "io/writer.hpp"
+#include "specfem/io.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {

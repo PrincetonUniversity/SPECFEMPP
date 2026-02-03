@@ -1,6 +1,6 @@
 #include "test_fixture.hpp"
 #include "SPECFEM_Environment.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
 #include "test_fixture.tpp"
 // ------------------------------------------------------------------------
 // Reading test config

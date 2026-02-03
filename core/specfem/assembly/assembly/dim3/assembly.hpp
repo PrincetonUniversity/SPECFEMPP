@@ -1,7 +1,6 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "io/reader.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
 #include "specfem/assembly/compute_source_array.hpp"
@@ -16,6 +15,10 @@
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
+
+namespace specfem::io {
+class reader;
+}
 
 namespace specfem::assembly {
 

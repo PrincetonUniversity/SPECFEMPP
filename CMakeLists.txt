@@ -232,56 +232,6 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 add_subdirectory(core)
 
 add_library(
-        io
-        # IO libraries
-        src/io/NPY/impl/npy_header.cpp
-        # SPECFEM IO
-        src/io/fortranio/fortran_io.cpp
-        src/io/sources/dim2/read_sources.cpp
-        src/io/sources/dim3/read_sources.cpp
-        src/io/receivers/dim2/read_receivers.cpp
-        src/io/receivers/dim3/read_receivers.cpp
-        src/io/seismogram/impl/channel_generator.cpp
-        # Fortran 2D part
-        src/io/mesh/impl/fortran/dim2/mesh.cpp
-        src/io/mesh/impl/fortran/dim2/read_boundaries.cpp
-        src/io/mesh/impl/fortran/dim2/read_elements.cpp
-        src/io/mesh/impl/fortran/dim2/read_material_properties.cpp
-        src/io/mesh/impl/fortran/dim2/read_mesh_database.cpp
-        src/io/mesh/impl/fortran/dim2/read_parameters.cpp
-        src/io/mesh/impl/fortran/dim2/read_adjacency_graph.cpp
-        # Fortran 3D meshfem part
-        src/io/mesh/impl/fortran/dim3/mesh.cpp
-        src/io/mesh/impl/fortran/dim3/read_boundaries.cpp
-        src/io/mesh/impl/fortran/dim3/read_control_nodes.cpp
-        src/io/mesh/impl/fortran/dim3/read_materials.cpp
-        src/io/mesh/impl/fortran/dim3/read_mpi_interfaces.cpp
-        src/io/mesh/impl/fortran/dim3/read_pml_boundaries.cpp
-        src/io/mesh/impl/fortran/dim3/read_adjacency_graph.cpp
-)
-
-target_link_libraries(
-        io
-        specfem::mesh
-        source_class
-        specfem::receivers
-        yaml-cpp
-        specfem::logger
-        boost
-        $<$<BOOL:${SPECFEM_ENABLE_NPZ}>:zlib>
-        $<$<BOOL:${SPECFEM_ENABLE_HDF5}>:hdf5>
-        $<$<BOOL:${SPECFEM_ENABLE_ADIOS2}>:adios2>
-)
-
-target_compile_definitions(
-        io
-        PUBLIC
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_NPZ}>>:-DNO_NPZ>
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
-        $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
-)
-
-add_library(
         enumerations
         src/enumerations/medium.cpp
         src/enumerations/display.cpp
@@ -298,59 +248,6 @@ target_link_libraries(
         enumerations
         ${BOOST_LIBS}
         Kokkos::kokkos
-)
-
-
-
-# add_library(
-#         material_class
-#         src/material/elastic_isotropic_material.cpp
-#         src/material/acoustic_isotropic_material.cpp
-# )
-
-# target_link_libraries(
-#         material_class
-#         Kokkos::kokkos
-# )
-
-add_library(
-        read_seismogram
-        src/io/seismogram/reader.cpp
-)
-
-target_link_libraries(
-        read_seismogram
-        Kokkos::kokkos
-        )
-
-add_library(
-        reader
-        src/io/property/reader.cpp
-        src/io/wavefield/reader.cpp
-)
-
-target_link_libraries(
-        reader
-        assembly
-        io
-        read_seismogram
-        specfem::utilities
-)
-
-add_library(
-        writer
-        src/io/seismogram/writer.cpp
-        src/io/kernel/writer.cpp
-        src/io/property/writer.cpp
-        src/io/wavefield/writer.cpp
-)
-
-target_link_libraries(
-        writer
-        assembly
-        specfem::receivers
-        io
-        specfem::utilities
 )
 
 # specfem2d executable for backward compatibility
