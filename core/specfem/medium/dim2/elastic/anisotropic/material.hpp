@@ -32,21 +32,40 @@ namespace medium_container {
  * @see specfem::dimension::type::dim2
  * @see specfem::medium_container::material
  */
-template <specfem::element::medium_tag MediumTag>
-struct material<specfem::dimension::type::dim2, MediumTag,
-                specfem::element::property_tag::anisotropic>
-    : specfem::element::is_elastic<MediumTag> {
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::attenuation_tag AttenuationTag>
+struct material<
+    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::property_tag::anisotropic, AttenuationTag,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
+    : impl::AttenuationValues<specfem::dimension::type::dim2, MediumTag,
+                              AttenuationTag> {
 public:
   constexpr static auto dimension_tag =
       specfem::dimension::type::dim2;           ///< Dimension of the material
   constexpr static auto medium_tag = MediumTag; ///< Medium tag
   constexpr static auto property_tag =
-      specfem::element::property_tag::anisotropic; ///< Property tag
+      specfem::element::property_tag::anisotropic;        ///< Property tag
+  constexpr static auto attenuation_tag = AttenuationTag; ///< Attenuation tag
+
+  using attenuation =
+      impl::AttenuationValues<dimension_tag, medium_tag,
+                              attenuation_tag>; ///< Attenuation values
 
   /**
    * @name Constructors
    */
   ///@{
+
+  template <
+      specfem::element::attenuation_tag T = AttenuationTag,
+      std::enable_if_t<T == specfem::element::attenuation_tag::none, int> = 0>
+  material(const type_real &density, const type_real &c11, const type_real &c13,
+           const type_real &c15, const type_real &c33, const type_real &c35,
+           const type_real &c55, const type_real &c12, const type_real &c23,
+           const type_real &c25)
+      : density(density), c11(c11), c13(c13), c15(c15), c33(c33), c35(c35),
+        c55(c55), c12(c12), c23(c23), c25(c25) {}
   /**
    * @brief Construct a new elastic anisotropic material
    * @param density Density of the material
@@ -62,21 +81,16 @@ public:
    * @param Qkappa Attenuation factor for bulk modulus
    * @param Qmu Attenuation factor for shear modulus
    */
+  template <
+      specfem::element::attenuation_tag T = AttenuationTag,
+      std::enable_if_t<
+          T == specfem::element::attenuation_tag::constant_isotropic, int> = 0>
   material(const type_real &density, const type_real &c11, const type_real &c13,
            const type_real &c15, const type_real &c33, const type_real &c35,
            const type_real &c55, const type_real &c12, const type_real &c23,
            const type_real &c25, const type_real &Qkappa, const type_real &Qmu)
-      : density(density), c11(c11), c13(c13), c15(c15), c33(c33), c35(c35),
-        c55(c55), c12(c12), c23(c23), c25(c25), Qkappa(Qkappa), Qmu(Qmu) {
-
-    if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
-      std::runtime_error(
-          "negative or null values of Q attenuation factor not allowed; set "
-          "them equal to 9999 to indicate no attenuation");
-    }
-
-    /// @todo Add checks for the elastic constants
-  };
+      : attenuation(Qkappa, Qmu), density(density), c11(c11), c13(c13),
+        c15(c15), c33(c33), c35(c35), c55(c55), c12(c12), c23(c23), c25(c25) {}
 
   /**
    * @brief Default constructor
@@ -93,8 +107,8 @@ public:
    * @return true If the materials have the same properties
    */
   bool operator==(const material<dimension_tag, medium_tag,
-                                 specfem::element::property_tag::anisotropic>
-                      &other) const {
+                                 specfem::element::property_tag::anisotropic,
+                                 attenuation_tag> &other) const {
     return (std::abs(this->density - other.density) < 1e-6 &&
             std::abs(this->c11 - other.c11) < 1e-6 &&
             std::abs(this->c13 - other.c13) < 1e-6 &&
@@ -105,8 +119,7 @@ public:
             std::abs(this->c12 - other.c12) < 1e-6 &&
             std::abs(this->c23 - other.c23) < 1e-6 &&
             std::abs(this->c25 - other.c25) < 1e-6 &&
-            std::abs(this->Qkappa - other.Qkappa) < 1e-6 &&
-            std::abs(this->Qmu - other.Qmu) < 1e-6);
+            attenuation::operator==(other));
   }
 
   /**
@@ -116,8 +129,8 @@ public:
    * @return true If the materials have different properties
    */
   bool operator!=(const material<dimension_tag, medium_tag,
-                                 specfem::element::property_tag::anisotropic>
-                      &other) const {
+                                 specfem::element::property_tag::anisotropic,
+                                 attenuation_tag> &other) const {
     return !(*this == other);
   }
 
@@ -152,8 +165,7 @@ public:
             << "      c12 : " << this->c12 << "\n"
             << "      c23 : " << this->c23 << "\n"
             << "      c25 : " << this->c25 << "\n"
-            << "      Qkappa : " << this->Qkappa << "\n"
-            << "      Qmu : " << this->Qmu << "\n";
+            << static_cast<const attenuation &>(*this).print();
     return message.str();
   }
 
@@ -168,8 +180,6 @@ protected:
   type_real c12;     ///< Elastic constant
   type_real c23;     ///< Elastic constant
   type_real c25;     ///< Elastic constant
-  type_real Qkappa;  ///< Attenuation factor for bulk modulus
-  type_real Qmu;     ///< Attenuation factor for shear modulus
 };
 
 } // namespace medium_container

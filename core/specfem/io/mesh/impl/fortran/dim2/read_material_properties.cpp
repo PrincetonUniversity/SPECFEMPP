@@ -22,6 +22,9 @@ constexpr auto isotropic = specfem::element::property_tag::isotropic;
 constexpr auto isotropic_cosserat =
     specfem::element::property_tag::isotropic_cosserat;
 constexpr auto anisotropic = specfem::element::property_tag::anisotropic;
+constexpr auto no_attenuation = specfem::element::attenuation_tag::none;
+constexpr auto constant_isotropic_attenuation =
+    specfem::element::attenuation_tag::constant_isotropic;
 
 struct input_holder {
   // Struct to hold temporary variables read from database file
@@ -97,20 +100,19 @@ read_materials(
 
   // Section for acoustic isotropic
   std::vector<specfem::medium_container::material<
-      specfem::dimension::type::dim2, acoustic, isotropic> >
+      specfem::dimension::type::dim2, acoustic, isotropic, no_attenuation> >
       l_acoustic_isotropic;
 
   l_acoustic_isotropic.reserve(numat);
 
   int index_acoustic_isotropic = 0;
 
-  // Section for elastic isotropic
   std::vector<specfem::medium_container::material<
-      specfem::dimension::type::dim2, elastic_psv, isotropic> >
+      specfem::dimension::type::dim2, elastic_psv, isotropic, no_attenuation> >
       l_elastic_psv_isotropic;
 
   std::vector<specfem::medium_container::material<
-      specfem::dimension::type::dim2, elastic_sh, isotropic> >
+      specfem::dimension::type::dim2, elastic_sh, isotropic, no_attenuation> >
       l_elastic_sh_isotropic;
 
   l_elastic_psv_isotropic.reserve(numat);
@@ -120,11 +122,12 @@ read_materials(
 
   // Section for elastic anisotropic
   std::vector<specfem::medium_container::material<
-      specfem::dimension::type::dim2, elastic_psv, anisotropic> >
+      specfem::dimension::type::dim2, elastic_psv, anisotropic,
+      no_attenuation> >
       l_elastic_psv_anisotropic;
 
   std::vector<specfem::medium_container::material<
-      specfem::dimension::type::dim2, elastic_sh, anisotropic> >
+      specfem::dimension::type::dim2, elastic_sh, anisotropic, no_attenuation> >
       l_elastic_sh_anisotropic;
 
   l_elastic_psv_anisotropic.reserve(numat);
@@ -134,7 +137,8 @@ read_materials(
 
   // Section for elastic isotropic cosserat medium psv
   std::vector<specfem::medium_container::material<
-      specfem::dimension::type::dim2, elastic_psv_t, isotropic_cosserat> >
+      specfem::dimension::type::dim2, elastic_psv_t, isotropic_cosserat,
+      no_attenuation> >
       l_elastic_psv_t_isotropic_cosserat;
 
   l_elastic_psv_t_isotropic_cosserat.reserve(numat);
@@ -143,14 +147,15 @@ read_materials(
 
   // Section for poroelastic isotropic
   std::vector<specfem::medium_container::material<
-      specfem::dimension::type::dim2, poroelastic, isotropic> >
+      specfem::dimension::type::dim2, poroelastic, isotropic, no_attenuation> >
       l_poroelastic_isotropic;
   l_poroelastic_isotropic.reserve(numat);
   int index_poroelastic_isotropic = 0;
 
   // Section for electromagnetic isotropic
   std::vector<specfem::medium_container::material<
-      specfem::dimension::type::dim2, electromagnetic_te, isotropic> >
+      specfem::dimension::type::dim2, electromagnetic_te, isotropic,
+      no_attenuation> >
       l_electromagnetic_te_isotropic;
 
   l_electromagnetic_te_isotropic.reserve(numat);
@@ -186,22 +191,28 @@ read_materials(
         const type_real Qkappa = static_cast<type_real>(read_values.val5);
         const type_real Qmu = static_cast<type_real>(read_values.val6);
 
-        specfem::medium_container::material<specfem::dimension::type::dim2,
-                                            acoustic, isotropic>
-            acoustic_isotropic_holder(density, cp, Qkappa, Qmu,
-                                      compaction_grad);
+        if (std::abs(Qmu - 9999.0) < 1e-6) {
+          specfem::medium_container::material<specfem::dimension::type::dim2,
+                                              acoustic, isotropic,
+                                              no_attenuation>
+              acoustic_isotropic_holder(density, cp, compaction_grad);
 
-        acoustic_isotropic_holder.print();
+          acoustic_isotropic_holder.print();
 
-        l_acoustic_isotropic.push_back(acoustic_isotropic_holder);
+          l_acoustic_isotropic.push_back(acoustic_isotropic_holder);
 
-        index_mapping[i] = specfem::mesh::
-            materials<specfem::dimension::type::dim2>::material_specification(
-                specfem::element::medium_tag::acoustic,
-                specfem::element::property_tag::isotropic,
-                index_acoustic_isotropic, read_values.n - 1);
+          index_mapping[i] = specfem::mesh::
+              materials<specfem::dimension::type::dim2>::material_specification(
+                  specfem::element::medium_tag::acoustic,
+                  specfem::element::property_tag::isotropic,
+                  index_acoustic_isotropic, read_values.n - 1);
 
-        index_acoustic_isotropic++;
+          index_acoustic_isotropic++;
+        } else {
+          // W Attenuation
+          std::runtime_error(
+              "Attenuation not yet supported in material reading");
+        }
 
       } else {
 
@@ -213,39 +224,49 @@ read_materials(
         const type_real Qkappa = static_cast<type_real>(read_values.val5);
         const type_real Qmu = static_cast<type_real>(read_values.val6);
 
-        if (elastic_wave == specfem::enums::elastic_wave::psv) {
-          specfem::medium_container::material<specfem::dimension::type::dim2,
-                                              elastic_psv, isotropic>
-              elastic_isotropic_holder(density, cs, cp, Qkappa, Qmu,
-                                       compaction_grad);
+        if (std::abs(Qmu - 9999.0) < 1e-6 && std::abs(Qkappa - 9999.0) < 1e-6) {
 
-          elastic_isotropic_holder.print();
-          l_elastic_psv_isotropic.push_back(elastic_isotropic_holder);
-          index_mapping[i] = specfem::mesh::
-              materials<specfem::dimension::type::dim2>::material_specification(
-                  specfem::element::medium_tag::elastic_psv,
-                  specfem::element::property_tag::isotropic,
-                  index_elastic_isotropic, read_values.n - 1);
+          if (elastic_wave == specfem::enums::elastic_wave::psv) {
+            specfem::medium_container::material<specfem::dimension::type::dim2,
+                                                elastic_psv, isotropic,
+                                                no_attenuation>
+                elastic_isotropic_holder(density, cs, cp, compaction_grad);
+
+            elastic_isotropic_holder.print();
+            l_elastic_psv_isotropic.push_back(elastic_isotropic_holder);
+            index_mapping[i] =
+                specfem::mesh::materials<specfem::dimension::type::dim2>::
+                    material_specification(
+                        specfem::element::medium_tag::elastic_psv,
+                        specfem::element::property_tag::isotropic,
+                        index_elastic_isotropic, read_values.n - 1);
+          } else {
+            specfem::medium_container::material<specfem::dimension::type::dim2,
+                                                elastic_sh, isotropic,
+                                                no_attenuation>
+                elastic_isotropic_holder(density, cs, cp, compaction_grad);
+
+            elastic_isotropic_holder.print();
+            l_elastic_sh_isotropic.push_back(elastic_isotropic_holder);
+            index_mapping[i] =
+                specfem::mesh::materials<specfem::dimension::type::dim2>::
+                    material_specification(
+                        specfem::element::medium_tag::elastic_sh,
+                        specfem::element::property_tag::isotropic,
+                        index_elastic_isotropic, read_values.n - 1);
+          }
+
+          // index_mapping[i] =
+          // specfem::mesh::materials::material_specification(
+          //     elastic, specfem::element::property_tag::isotropic,
+          //     index_elastic_isotropic, read_values.n - 1);
+
+          index_elastic_isotropic++;
         } else {
-          specfem::medium_container::material<specfem::dimension::type::dim2,
-                                              elastic_sh, isotropic>
-              elastic_isotropic_holder(density, cs, cp, Qkappa, Qmu,
-                                       compaction_grad);
-
-          elastic_isotropic_holder.print();
-          l_elastic_sh_isotropic.push_back(elastic_isotropic_holder);
-          index_mapping[i] = specfem::mesh::
-              materials<specfem::dimension::type::dim2>::material_specification(
-                  specfem::element::medium_tag::elastic_sh,
-                  specfem::element::property_tag::isotropic,
-                  index_elastic_isotropic, read_values.n - 1);
+          // W Attenuation
+          std::runtime_error(
+              "Attenuation not yet supported in material reading");
         }
-
-        // index_mapping[i] = specfem::mesh::materials::material_specification(
-        //     elastic, specfem::element::property_tag::isotropic,
-        //     index_elastic_isotropic, read_values.n - 1);
-
-        index_elastic_isotropic++;
       }
     }
 
@@ -264,42 +285,47 @@ read_materials(
       const type_real Qkappa = static_cast<type_real>(read_values.val11);
       const type_real Qmu = static_cast<type_real>(read_values.val12);
 
-      if (elastic_wave == specfem::enums::elastic_wave::psv) {
+      if (std::abs(Qmu - 9999.0) < 1e-6 && std::abs(Qkappa - 9999.0) < 1e-6) {
+        if (elastic_wave == specfem::enums::elastic_wave::psv) {
+          specfem::medium_container::material<specfem::dimension::type::dim2,
+                                              elastic_psv, anisotropic,
+                                              no_attenuation>
+              elastic_anisotropic_holder(density, c11, c13, c15, c33, c35, c55,
+                                         c12, c23, c25);
 
-        specfem::medium_container::material<specfem::dimension::type::dim2,
-                                            elastic_psv, anisotropic>
-            elastic_anisotropic_holder(density, c11, c13, c15, c33, c35, c55,
-                                       c12, c23, c25, Qkappa, Qmu);
+          elastic_anisotropic_holder.print();
+          l_elastic_psv_anisotropic.push_back(elastic_anisotropic_holder);
+          index_mapping[i] = specfem::mesh::
+              materials<specfem::dimension::type::dim2>::material_specification(
+                  specfem::element::medium_tag::elastic_psv,
+                  specfem::element::property_tag::anisotropic,
+                  index_elastic_anisotropic, read_values.n - 1);
+        } else {
 
-        elastic_anisotropic_holder.print();
-        l_elastic_psv_anisotropic.push_back(elastic_anisotropic_holder);
-        index_mapping[i] = specfem::mesh::
-            materials<specfem::dimension::type::dim2>::material_specification(
-                specfem::element::medium_tag::elastic_psv,
-                specfem::element::property_tag::anisotropic,
-                index_elastic_anisotropic, read_values.n - 1);
+          specfem::medium_container::material<specfem::dimension::type::dim2,
+                                              elastic_sh, anisotropic,
+                                              no_attenuation>
+              elastic_anisotropic_holder(density, c11, c13, c15, c33, c35, c55,
+                                         c12, c23, c25);
+
+          elastic_anisotropic_holder.print();
+          l_elastic_sh_anisotropic.push_back(elastic_anisotropic_holder);
+          index_mapping[i] = specfem::mesh::
+              materials<specfem::dimension::type::dim2>::material_specification(
+                  specfem::element::medium_tag::elastic_sh,
+                  specfem::element::property_tag::anisotropic,
+                  index_elastic_anisotropic, read_values.n - 1);
+        }
+
+        // index_mapping[i] = specfem::mesh::materials::material_specification(
+        //     elastic, specfem::element::property_tag::anisotropic,
+        //     index_elastic_anisotropic, read_values.n - 1);
+
+        index_elastic_anisotropic++;
       } else {
-
-        specfem::medium_container::material<specfem::dimension::type::dim2,
-                                            elastic_sh, anisotropic>
-            elastic_anisotropic_holder(density, c11, c13, c15, c33, c35, c55,
-                                       c12, c23, c25, Qkappa, Qmu);
-
-        elastic_anisotropic_holder.print();
-        l_elastic_sh_anisotropic.push_back(elastic_anisotropic_holder);
-        index_mapping[i] = specfem::mesh::
-            materials<specfem::dimension::type::dim2>::material_specification(
-                specfem::element::medium_tag::elastic_sh,
-                specfem::element::property_tag::anisotropic,
-                index_elastic_anisotropic, read_values.n - 1);
+        // W Attenuation
+        std::runtime_error("Attenuation not yet supported in material reading");
       }
-
-      // index_mapping[i] = specfem::mesh::materials::material_specification(
-      //     elastic, specfem::element::property_tag::anisotropic,
-      //     index_elastic_anisotropic, read_values.n - 1);
-
-      index_elastic_anisotropic++;
-
     } else if (read_values.indic == 3) {
       const type_real rhos = static_cast<type_real>(read_values.val0);
       const type_real rhof = static_cast<type_real>(read_values.val1);
@@ -315,23 +341,25 @@ read_materials(
       const type_real mufr = static_cast<type_real>(read_values.val11);
       const type_real Qmu = static_cast<type_real>(read_values.val12);
 
-      specfem::medium_container::material<specfem::dimension::type::dim2,
-                                          poroelastic, isotropic>
-          poroelastic_isotropic_holder(rhos, rhof, phi, c, kxx, kxz, kzz, Ks,
-                                       Kf, Kfr, etaf, mufr, Qmu);
-      poroelastic_isotropic_holder.print();
+      if (std::abs(Qmu - 9999.0) < 1e-6) {
+        specfem::medium_container::material<specfem::dimension::type::dim2,
+                                            poroelastic, isotropic,
+                                            no_attenuation>
+            poroelastic_isotropic_holder(rhos, rhof, phi, c, kxx, kxz, kzz, Ks,
+                                         Kf, Kfr, etaf, mufr);
+        poroelastic_isotropic_holder.print();
 
-      l_poroelastic_isotropic.push_back(poroelastic_isotropic_holder);
-      index_mapping[i] =
-          specfem::mesh::materials<specfem::dimension::type::dim2>::
-              material_specification(specfem::element::medium_tag::poroelastic,
-                                     specfem::element::property_tag::isotropic,
-                                     index_poroelastic_isotropic,
-                                     read_values.n - 1);
-      index_poroelastic_isotropic++;
-    }
-    // Electromagnetic material
-    else if (read_values.indic == 4) {
+        l_poroelastic_isotropic.push_back(poroelastic_isotropic_holder);
+        index_mapping[i] = specfem::mesh::
+            materials<specfem::dimension::type::dim2>::material_specification(
+                specfem::element::medium_tag::poroelastic,
+                specfem::element::property_tag::isotropic,
+                index_poroelastic_isotropic, read_values.n - 1);
+        index_poroelastic_isotropic++;
+      } else {
+        std::runtime_error("Attenuation not yet supported in material reading");
+      }
+    } else if (read_values.indic == 4) {
 
       const type_real mu0 = static_cast<type_real>(read_values.val0);
       const type_real e0 = static_cast<type_real>(read_values.val1);
@@ -346,7 +374,8 @@ read_materials(
 
       if (elastic_wave == specfem::enums::elastic_wave::psv) {
         specfem::medium_container::material<specfem::dimension::type::dim2,
-                                            electromagnetic_te, isotropic>
+                                            electromagnetic_te, isotropic,
+                                            no_attenuation>
             electromagnetic_te_isotropic_holder(mu0, e0, e11, e33, sig11, sig33,
                                                 Qe11, Qe33, Qs11, Qs33);
 
@@ -377,7 +406,8 @@ read_materials(
 
         // Create the material
         specfem::medium_container::material<specfem::dimension::type::dim2,
-                                            elastic_psv_t, isotropic_cosserat>
+                                            elastic_psv_t, isotropic_cosserat,
+                                            no_attenuation>
             elastic_psv_t_isotropic_cosserat_holder(rho, kappa, mu, nu, j,
                                                     lambda_c, mu_c, nu_c);
         // Print the material properties
@@ -401,7 +431,6 @@ read_materials(
                 << __FILE__ << ":" << __LINE__ << "]\n";
         throw std::runtime_error(message.str());
       }
-
     } else {
       std::ostringstream message;
       message << "Material type " << read_values.indic << " not supported ["
