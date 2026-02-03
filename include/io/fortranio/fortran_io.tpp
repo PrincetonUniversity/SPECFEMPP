@@ -2,7 +2,7 @@
 #define _FORTRAN_IO_TPP
 
 #include "io/fortranio/fortran_io.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <fstream>
 #include <iostream>
 

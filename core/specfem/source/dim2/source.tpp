@@ -2,7 +2,7 @@
 #include "specfem/source.hpp"
 #include "kokkos_abstractions.h"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <yaml-cpp/yaml.h>
 #include <cmath>
 
