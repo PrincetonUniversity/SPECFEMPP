@@ -315,8 +315,8 @@
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 #define FOR_EACH_IN_PRODUCT(seq, ...)                                          \
-  BOOST_PP_SEQ_FOR_EACH(                                                       \
-      _FOR_ONE_TAG_SEQ, (seq)BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),            \
-      BOOST_PP_CAT(_SEQ_FOR_TAGS_, BOOST_PP_TUPLE_SIZE(seq)))
+  BOOST_PP_SEQ_FOR_EACH(_FOR_ONE_TAG_SEQ,                                      \
+                        (seq)BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),            \
+                        _GET_VALID_SEQS(BOOST_PP_TUPLE_SIZE(seq)))
 
 #include "interface_iterators.hpp"
