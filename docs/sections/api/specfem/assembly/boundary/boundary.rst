@@ -14,7 +14,7 @@ Dimension-Specific Implementations
     :members:
 
 Data Access Functions
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygengroup:: BoundaryConditionDataAccess
     :content-only:

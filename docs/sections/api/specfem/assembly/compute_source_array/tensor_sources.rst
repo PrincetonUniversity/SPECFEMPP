@@ -1,7 +1,7 @@
 .. _assembly_compute_source_array_tensor:
 
 Tensor Source Implementation
-=============================
+============================
 
 2D Tensor Sources
 -----------------

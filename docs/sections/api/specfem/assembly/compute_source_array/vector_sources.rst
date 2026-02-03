@@ -1,7 +1,7 @@
 .. _assembly_compute_source_array_vector:
 
 Vector Source Implementation
-=============================
+============================
 
 2D Vector Sources
 -----------------

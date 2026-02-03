@@ -2,7 +2,7 @@
 .. _specfem_api_enumerations_wavefield:
 
 ``specfem::simulation::field_type``
-=======================================
+===================================
 
 .. doxygenenum:: specfem::simulation::field_type
 

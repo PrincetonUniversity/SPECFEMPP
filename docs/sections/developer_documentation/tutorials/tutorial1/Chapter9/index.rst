@@ -123,6 +123,6 @@ Implemeting the Time Scheme
     }
 
 Implementation within SPECFEM++
---------------------------------
+-------------------------------
 
 The implemetation details of the time-scheme within SPECFEM++ can be found :ref:`here <timescheme>`.`

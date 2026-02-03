@@ -1,5 +1,5 @@
 2D ``specfem::sources::external``
-==================================
+=================================
 
 External source implementation for 2D simulations
 

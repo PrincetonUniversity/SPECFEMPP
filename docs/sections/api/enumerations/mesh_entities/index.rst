@@ -53,12 +53,12 @@ Dimension-Specific Implementations
 .. doxygenenum:: specfem::mesh_entity::dim3::type
 
 ``specfem::mesh_entity::dim2::to_string``
-==========================================
+=========================================
 
 .. doxygenfunction:: specfem::mesh_entity::dim2::to_string(const specfem::mesh_entity::dim2::type& type)
 
 ``specfem::mesh_entity::dim3::to_string``
-==========================================
+=========================================
 
 .. doxygenfunction:: specfem::mesh_entity::dim3::to_string(const specfem::mesh_entity::dim3::type& type)
 

@@ -16,7 +16,7 @@
 .. doxygenenum:: specfem::element::boundary_tag
 
 ``specfem::element::to_string``
-================================
+===============================
 
 .. doxygenfunction:: specfem::element::to_string(const medium_tag &medium)
 
@@ -36,7 +36,7 @@
    :members:
 
 Attribute Specializations
---------------------------
+-------------------------
 
 .. doxygenclass:: specfem::element::attributes< specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv >
     :members:
