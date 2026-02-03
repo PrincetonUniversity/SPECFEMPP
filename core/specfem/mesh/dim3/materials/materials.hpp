@@ -119,7 +119,10 @@ template <> struct materials<specfem::dimension::type::dim3> {
 
     /** @brief Storage for material objects of this type/property combination */
     std::vector<
-        specfem::medium_container::material<dimension_tag, type, property> >
+
+        specfem::medium_container::material<
+            dimension_tag, type, property,
+            specfem::element::attenuation_tag::none> >
         element_materials;
 
     /** @brief Default constructor creating empty container */
@@ -133,7 +136,8 @@ template <> struct materials<specfem::dimension::type::dim3> {
      */
     material(const int n_materials,
              const std::vector<specfem::medium_container::material<
-                 dimension_tag, type, property> > &l_material);
+                 dimension_tag, type, property,
+                 specfem::element::attenuation_tag::none> > &l_material);
   };
 
   /** @name Core Data Members */
@@ -236,7 +240,8 @@ public:
    */
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
-  specfem::medium_container::material<dimension_tag, MediumTag, PropertyTag>
+  specfem::medium_container::material<dimension_tag, MediumTag, PropertyTag,
+                                      specfem::element::attenuation_tag::none>
   get_material(const int index) const {
 #ifndef NDEBUG
     if (index < 0 || index >= this->nspec) {
@@ -340,7 +345,8 @@ public:
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
   int add_material(const specfem::medium_container::material<
-                   dimension_tag, MediumTag, PropertyTag> &new_material) {
+                   dimension_tag, MediumTag, PropertyTag,
+                   specfem::element::attenuation_tag::none> &new_material) {
     this->n_materials += 1;
     auto &material_container = this->get_container<MediumTag, PropertyTag>();
     material_container.element_materials.push_back(new_material);

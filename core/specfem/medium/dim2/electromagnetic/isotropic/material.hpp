@@ -27,6 +27,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 class material<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic,
+    specfem::element::attenuation_tag::none,
     std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> > {
 public:
   constexpr static auto dimension_tag =
@@ -34,6 +35,8 @@ public:
   constexpr static auto medium_tag = MediumTag; ///< Medium tag
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic; ///< Property tag
+  constexpr static auto attenuation_tag =
+      specfem::element::attenuation_tag::none; ///< Attenuation tag
 
   /**
    * @name Constructors
@@ -82,7 +85,8 @@ public:
    */
   bool operator==(
       const material<dimension_tag, medium_tag,
-                     specfem::element::property_tag::isotropic> &other) const {
+                     specfem::element::property_tag::isotropic,
+                     specfem::element::attenuation_tag::none> &other) const {
 
     return (std::abs(this->mu0 - other.mu0) < 1e-6 &&
             std::abs(this->e0 - other.e0) < 1e-6 &&
@@ -105,7 +109,8 @@ public:
   bool operator!=(
       const material<dimension_tag,
                      specfem::element::medium_tag::electromagnetic_te,
-                     specfem::element::property_tag::isotropic> &other) const {
+                     specfem::element::property_tag::isotropic,
+                     specfem::element::attenuation_tag::none> &other) const {
     return !(*this == other);
   }
 

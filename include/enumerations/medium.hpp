@@ -55,6 +55,11 @@ enum class boundary_tag {
   composite_stacey_dirichlet ///< Combined Stacey-Dirichlet boundary
 };
 
+enum class attenuation_tag {
+  none,               ///< No attenuation
+  constant_isotropic, ///< Constant Q-Band attenuation
+};
+
 /**
  * @brief Element physics attributes for different media.
  *
