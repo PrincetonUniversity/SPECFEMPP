@@ -14,6 +14,8 @@
 namespace specfem {
 namespace datatype {
 
+namespace impl {
+
 /**
  * @brief Compute total size from static extents
  * @tparam Extents Extent specification type
@@ -41,6 +43,8 @@ KOKKOS_INLINE_FUNCTION constexpr bool check_bounds(const IndexType &...i) {
   return ((i >= 0 && i < Extents::static_extent(index++)) && ...);
 }
 
+} // namespace impl
+
 /**
  * @brief Stack-allocated multi-dimensional array with compile-time layout
  *
@@ -57,7 +61,7 @@ private:
   /// Array rank (number of dimensions)
   constexpr static std::size_t rank = Extents::rank();
   /// Total number of elements
-  constexpr static std::size_t size = compute_size<Extents>();
+  constexpr static std::size_t size = impl::compute_size<Extents>();
   /// Memory layout mapping type
   using mapping = typename Layout::template mapping<Extents>;
 
@@ -131,7 +135,7 @@ public:
   operator()(const IndexType &...i) {
 #ifndef NDEBUG
     // check if the indices are within bounds
-    if (!check_bounds<Extents>(i...)) {
+    if (!impl::check_bounds<Extents>(i...)) {
       // Abort the program with an error message
       Kokkos::abort("Index out of bounds");
     }
@@ -150,7 +154,7 @@ public:
   operator()(const IndexType &...i) const {
 #ifndef NDEBUG
     // check if the indices are within bounds
-    if (!check_bounds<Extents>(i...)) {
+    if (!impl::check_bounds<Extents>(i...)) {
       // Abort the program with an error message
       Kokkos::abort("Index out of bounds");
     }
