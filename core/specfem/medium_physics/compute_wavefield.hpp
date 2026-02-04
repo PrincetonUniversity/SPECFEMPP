@@ -39,7 +39,7 @@ namespace medium_physics {
  * @param wavefield_component Type of wavefield to compute
  * @param wavefield_on_entire_grid Output wavefield values on GLL grid
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename ChunkIndexType,
           typename DisplacementFieldType, typename VelocityFieldType,
@@ -56,9 +56,9 @@ compute_wavefield(const ChunkIndexType &chunk_index,
                   WavefieldViewType wavefield_on_entire_grid) {
 
   static_assert((WavefieldViewType::rank() == 4 &&
-                 DimensionTag == specfem::dimension::type::dim2) ||
+                 DimensionTag == specfem::element::dimension_tag::dim2) ||
                     (WavefieldViewType::rank() == 5 &&
-                     DimensionTag == specfem::dimension::type::dim3),
+                     DimensionTag == specfem::element::dimension_tag::dim3),
                 "wavefield_on_entire_grid needs to be a 4D for 2D view and 5D "
                 "for 3D view");
 
@@ -83,7 +83,7 @@ compute_wavefield(const ChunkIndexType &chunk_index,
       "All field types must be chunk view types");
 
   using dimension_dispatch =
-      std::integral_constant<specfem::dimension::type, DimensionTag>;
+      std::integral_constant<specfem::element::dimension_tag, DimensionTag>;
   using medium_dispatch =
       std::integral_constant<specfem::element::medium_tag, MediumTag>;
   using property_dispatch =

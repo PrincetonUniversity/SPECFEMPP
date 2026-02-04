@@ -23,7 +23,8 @@ namespace specfem::assembly {
  * elastic-acoustic, acoustic-elastic) and the boundary conditions applied
  * (e.g., free surface, Stacey absorbing).
  *
- * @tparam specfem::dimension::type::dim2 Template specialization for 2D domain
+ * @tparam specfem::element::dimension_tag::dim2 Template specialization for 2D
+ * domain
  *
  * @note This is a template specialization for 2D domains. The primary template
  *       is declared elsewhere and specialized here for dimension-specific
@@ -35,11 +36,11 @@ namespace specfem::assembly {
  * @see specfem::assembly::mesh
  */
 template <>
-class conforming_interfaces<specfem::dimension::type::dim2>
+class conforming_interfaces<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::edge,
           specfem::data_access::DataClassType::conforming_interface,
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2> {
 public:
   /**
    * @brief Dimension tag for this specialization
@@ -47,7 +48,7 @@ public:
    * Static constant member that identifies this specialization as operating
    * in 2D space. Used for compile-time dispatch and type checking.
    */
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
 
 private:
   template <specfem::interface::interface_tag InterfaceTag,

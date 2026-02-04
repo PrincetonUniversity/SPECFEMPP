@@ -10,6 +10,7 @@
 .. toctree::
     :maxdepth: 1
 
+    accessor_type
     simd
     vector_point_view
     tensor_point_view

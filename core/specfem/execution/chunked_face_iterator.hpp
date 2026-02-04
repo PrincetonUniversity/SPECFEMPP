@@ -23,7 +23,7 @@
 
 namespace specfem::chunk_face {
 // Forward declaration for FaceIndex
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename TeamMemberType>
 class Index;
 } // namespace specfem::chunk_face
@@ -41,7 +41,7 @@ namespace specfem::execution {
  * @tparam KokkosIndexType Type of the underlying Kokkos policy index
  * @tparam ExecutionSpace Kokkos execution space for parallel operations
  */
-template <specfem::dimension::type DimensionTag, typename KokkosIndexType,
+template <specfem::element::dimension_tag DimensionTag, typename KokkosIndexType,
           typename ExecutionSpace>
 class FacePointIndex {
 public:
@@ -120,7 +120,7 @@ private:
  * @tparam ViewType Kokkos view type containing mesh faces
  * @tparam TeamMemberType Kokkos team member type
  */
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename TeamMemberType>
 class ChunkFaceIterator : public TeamThreadRangePolicy<TeamMemberType, int> {
 private:
@@ -187,7 +187,7 @@ private:
  * @tparam KokkosIndexType Type of the underlying Kokkos policy index (team
  * member)
  */
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename KokkosIndexType>
 class ChunkFaceIndex {
 private:

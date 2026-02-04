@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/connections.hpp"
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include "enumerations/mesh_entities.hpp"
 #include "predicate.hpp"
 #include <gtest/gtest.h>
@@ -37,7 +37,7 @@ std::string connects::str() const {
   return str.str();
 }
 
-template <specfem::dimension::type dimension>
+template <specfem::element::dimension_tag dimension>
 void connects::expect_in(
     const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const {
   const auto &g = adjacency_graph.graph();
@@ -96,7 +96,7 @@ void connects::expect_in(
     }
   }
 }
-template <specfem::dimension::type dimension>
+template <specfem::element::dimension_tag dimension>
 void number_of_out_edges::expect_in(
     const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const {
 
@@ -118,7 +118,7 @@ void number_of_out_edges::expect_in(
   }
 }
 
-template <specfem::dimension::type dimension>
+template <specfem::element::dimension_tag dimension>
 void verify(const variant &predicate,
             const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) {
   std::visit(

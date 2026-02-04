@@ -1,7 +1,7 @@
 #pragma once
 
 #include "constants.hpp"
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::parallel_configuration {
@@ -21,7 +21,7 @@ namespace specfem::parallel_configuration {
  * @see specfem::execution
  * @see specfem::parallel_configuration::default_chunk_face_config
  */
-template <specfem::dimension::type DimensionTag, int ChunkSize,
+template <specfem::element::dimension_tag DimensionTag, int ChunkSize,
           typename ExecutionSpace>
 struct face_chunk_config {
   constexpr static auto dimension = DimensionTag; ///< Dimension type
@@ -47,37 +47,37 @@ struct face_chunk_config {
  *
  * @see specfem::execution
  */
-template <specfem::dimension::type DimensionTag, typename ExecutionSpace>
+template <specfem::element::dimension_tag DimensionTag, typename ExecutionSpace>
 struct default_chunk_face_config;
 
 #if defined(KOKKOS_ENABLE_CUDA)
 template <>
-struct default_chunk_face_config<specfem::dimension::type::dim3, Kokkos::Cuda>
-    : face_chunk_config<specfem::dimension::type::dim3, 4, Kokkos::Cuda> {};
+struct default_chunk_face_config<specfem::element::dimension_tag::dim3, Kokkos::Cuda>
+    : face_chunk_config<specfem::element::dimension_tag::dim3, 4, Kokkos::Cuda> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_HIP)
 
 template <>
-struct default_chunk_face_config<specfem::dimension::type::dim3, Kokkos::HIP>
-    : face_chunk_config<specfem::dimension::type::dim3, 8, Kokkos::HIP> {};
+struct default_chunk_face_config<specfem::element::dimension_tag::dim3, Kokkos::HIP>
+    : face_chunk_config<specfem::element::dimension_tag::dim3, 8, Kokkos::HIP> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_OPENMP)
 template <>
-struct default_chunk_face_config<specfem::dimension::type::dim3, Kokkos::OpenMP>
-    : face_chunk_config<specfem::dimension::type::dim3, 1, Kokkos::OpenMP> {};
+struct default_chunk_face_config<specfem::element::dimension_tag::dim3, Kokkos::OpenMP>
+    : face_chunk_config<specfem::element::dimension_tag::dim3, 1, Kokkos::OpenMP> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_SERIAL)
 template <>
-struct default_chunk_face_config<specfem::dimension::type::dim3, Kokkos::Serial>
-    : face_chunk_config<specfem::dimension::type::dim3, 1, Kokkos::Serial> {};
+struct default_chunk_face_config<specfem::element::dimension_tag::dim3, Kokkos::Serial>
+    : face_chunk_config<specfem::element::dimension_tag::dim3, 1, Kokkos::Serial> {};
 
 template <>
-struct default_chunk_face_config<specfem::dimension::type::dim3,
+struct default_chunk_face_config<specfem::element::dimension_tag::dim3,
                                  Kokkos::HostSpace>
-    : default_chunk_face_config<specfem::dimension::type::dim3,
+    : default_chunk_face_config<specfem::element::dimension_tag::dim3,
                                 Kokkos::Serial> {};
 
 #endif

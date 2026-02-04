@@ -4,4 +4,4 @@
 #include "boundary_values/dim2/impl/boundary_value_container.tpp"
 
 template class specfem::assembly::boundary_values<
-    specfem::dimension::type::dim2>;
+    specfem::element::dimension_tag::dim2>;

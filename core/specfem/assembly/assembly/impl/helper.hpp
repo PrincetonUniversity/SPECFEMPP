@@ -42,7 +42,7 @@ template <typename T> struct ExtentImpl<T, 0> {
   using type = T;
 };
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, int NGLL>
 class helper {
@@ -57,7 +57,7 @@ public:
    * @brief Number of spatial dimensions (2 for 2D, 3 for 3D)
    */
   constexpr static auto ndim =
-      (dimension_tag == specfem::dimension::type::dim2) ? 2 : 3;
+      (dimension_tag == specfem::element::dimension_tag::dim2) ? 2 : 3;
 
   /**
    * @brief Rank of source array (4 for 2D: [sources][components][z][x],
@@ -101,7 +101,7 @@ public:
     constexpr int nthreads = 32;
     constexpr int lane_size = 1;
     constexpr int chunk_size =
-        (dimension_tag == specfem::dimension::type::dim2) ? 16 : 4;
+        (dimension_tag == specfem::element::dimension_tag::dim2) ? 16 : 4;
 #else
     constexpr int nthreads = 1;
     constexpr int lane_size = 1;
@@ -166,7 +166,8 @@ public:
 
           // Get the wavefield subview based on dimension
           const auto wavefield = [&]() {
-            if constexpr (dimension_tag == specfem::dimension::type::dim3) {
+            if constexpr (dimension_tag ==
+                          specfem::element::dimension_tag::dim3) {
               return Kokkos::subview(wavefield_on_entire_grid,
                                      chunk_index.get_range(), Kokkos::ALL,
                                      Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);

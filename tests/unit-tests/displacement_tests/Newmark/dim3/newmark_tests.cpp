@@ -170,7 +170,7 @@ TEST_P(Newmark, 3D) {
   specfem::Logger::info("Creating the Assembly...");
 
   auto start = std::chrono::high_resolution_clock::now();
-  specfem::assembly::assembly<specfem::dimension::type::dim3> assembly(
+  specfem::assembly::assembly<specfem::element::dimension_tag::dim3> assembly(
       mesh, quadratures, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_sig_step, nstep_between_samples,
       setup.get_simulation_type(), setup.allocate_boundary_values(),

@@ -10,11 +10,11 @@
 Dimension-specific Specializations
 ----------------------------------
 
-.. doxygenstruct:: specfem::assembly::impl::domain_properties< specfem::dimension::type::dim2, MediumTag, PropertyTag >
+.. doxygenstruct:: specfem::assembly::impl::domain_properties< specfem::element::dimension_tag::dim2, MediumTag, PropertyTag >
     :members:
     :private-members:
 
-.. doxygenstruct:: specfem::assembly::impl::domain_properties< specfem::dimension::type::dim3, MediumTag, PropertyTag >
+.. doxygenstruct:: specfem::assembly::impl::domain_properties< specfem::element::dimension_tag::dim3, MediumTag, PropertyTag >
     :members:
     :private-members:
 

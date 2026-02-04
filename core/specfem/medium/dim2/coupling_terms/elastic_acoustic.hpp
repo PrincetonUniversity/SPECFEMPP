@@ -13,8 +13,8 @@ template <typename CoupledInterfaceType, typename CoupledFieldType,
           typename SelfFieldType>
 KOKKOS_INLINE_FUNCTION void compute_coupling(
     const std::integral_constant<
-        specfem::dimension::type,
-        specfem::dimension::type::dim2> /*dimension_dispatch*/,
+        specfem::element::dimension_tag,
+        specfem::element::dimension_tag::dim2> /*dimension_dispatch*/,
     const std::integral_constant<
         specfem::connections::type,
         specfem::connections::type::weakly_conforming> /*connection_dispatch*/,
@@ -40,8 +40,8 @@ template <typename IndexType, typename TransferFunctionType,
           typename IntersectionFieldViewType>
 KOKKOS_INLINE_FUNCTION void compute_coupling(
     const std::integral_constant<
-        specfem::dimension::type,
-        specfem::dimension::type::dim2> /*dimension_dispatch*/,
+        specfem::element::dimension_tag,
+        specfem::element::dimension_tag::dim2> /*dimension_dispatch*/,
     const std::integral_constant<
         specfem::connections::type,
         specfem::connections::type::nonconforming> /*connection_dispatch*/,

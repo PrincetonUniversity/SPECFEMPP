@@ -35,14 +35,14 @@ namespace impl {
  */
 template <typename VectorFieldType, typename QuadratureType,
           typename std::enable_if_t<VectorFieldType::dimension_tag ==
-                                        specfem::dimension::type::dim2,
+                                        specfem::element::dimension_tag::dim2,
                                     int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
     const VectorFieldType &f,
-    const specfem::point::index<specfem::dimension::type::dim2,
+    const specfem::point::index<specfem::element::dimension_tag::dim2,
                                 VectorFieldType::using_simd> &local_index,
-    const specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
-                                          VectorFieldType::using_simd>
+    const specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                          false, VectorFieldType::using_simd>
         &point_jacobian_matrix,
     const QuadratureType &lagrange_derivative,
     typename VectorFieldType::simd::datatype (
@@ -98,14 +98,14 @@ KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
  */
 template <typename VectorFieldType, typename QuadratureType,
           typename std::enable_if_t<VectorFieldType::dimension_tag ==
-                                        specfem::dimension::type::dim3,
+                                        specfem::element::dimension_tag::dim3,
                                     int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
     const VectorFieldType &f,
-    const specfem::point::index<specfem::dimension::type::dim3,
+    const specfem::point::index<specfem::element::dimension_tag::dim3,
                                 VectorFieldType::using_simd> &local_index,
-    const specfem::point::jacobian_matrix<specfem::dimension::type::dim3, false,
-                                          VectorFieldType::using_simd>
+    const specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                          false, VectorFieldType::using_simd>
         &point_jacobian_matrix,
     const QuadratureType &lagrange_derivative,
     typename VectorFieldType::simd::datatype (
@@ -181,19 +181,19 @@ KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
  * VectorFieldType::components>)
  * @endcode
  */
-template <
-    typename ChunkIndexType, typename VectorFieldType, typename QuadratureType,
-    typename CallbackFunctor,
-    std::enable_if_t<
-        specfem::data_access::is_chunk_element<VectorFieldType>::value &&
-            VectorFieldType::dimension_tag == specfem::dimension::type::dim2,
-        int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void gradient(
-    const ChunkIndexType &chunk_index,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
-        &jacobian_matrix,
-    const QuadratureType &quadrature, const VectorFieldType &f,
-    const CallbackFunctor &callback) {
+template <typename ChunkIndexType, typename VectorFieldType,
+          typename QuadratureType, typename CallbackFunctor,
+          std::enable_if_t<
+              specfem::data_access::is_chunk_element<VectorFieldType>::value &&
+                  VectorFieldType::dimension_tag ==
+                      specfem::element::dimension_tag::dim2,
+              int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+gradient(const ChunkIndexType &chunk_index,
+         const specfem::assembly::jacobian_matrix<
+             specfem::element::dimension_tag::dim2> &jacobian_matrix,
+         const QuadratureType &quadrature, const VectorFieldType &f,
+         const CallbackFunctor &callback) {
   constexpr int components = VectorFieldType::components;
   constexpr int dimension = 2;
   constexpr bool using_simd = VectorFieldType::simd::using_simd;
@@ -221,8 +221,8 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
         const auto local_index = iterator_index.get_local_index();
         datatype df_dxi[components] = { 0.0 };
         datatype df_dgamma[components] = { 0.0 };
-        specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
-                                        using_simd>
+        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                        false, using_simd>
             point_jacobian_matrix;
 
         specfem::assembly::load_on_device(index, jacobian_matrix,
@@ -260,19 +260,19 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
  * VectorFieldType::components>)
  * @endcode
  */
-template <
-    typename ChunkIndexType, typename VectorFieldType, typename QuadratureType,
-    typename CallbackFunctor,
-    std::enable_if_t<
-        specfem::data_access::is_chunk_element<VectorFieldType>::value &&
-            VectorFieldType::dimension_tag == specfem::dimension::type::dim2,
-        int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void gradient(
-    const ChunkIndexType &chunk_index,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
-        &jacobian_matrix,
-    const QuadratureType &quadrature, const VectorFieldType &f,
-    const VectorFieldType &g, const CallbackFunctor &callback) {
+template <typename ChunkIndexType, typename VectorFieldType,
+          typename QuadratureType, typename CallbackFunctor,
+          std::enable_if_t<
+              specfem::data_access::is_chunk_element<VectorFieldType>::value &&
+                  VectorFieldType::dimension_tag ==
+                      specfem::element::dimension_tag::dim2,
+              int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+gradient(const ChunkIndexType &chunk_index,
+         const specfem::assembly::jacobian_matrix<
+             specfem::element::dimension_tag::dim2> &jacobian_matrix,
+         const QuadratureType &quadrature, const VectorFieldType &f,
+         const VectorFieldType &g, const CallbackFunctor &callback) {
   constexpr int components = VectorFieldType::components;
   constexpr bool using_simd = VectorFieldType::simd::using_simd;
   constexpr int dimension = 2;
@@ -301,8 +301,8 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
         const auto local_index = iterator_index.get_local_index();
         datatype df_dxi[components] = { 0.0 };
         datatype df_dgamma[components] = { 0.0 };
-        specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
-                                        using_simd>
+        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                        false, using_simd>
             point_jacobian_matrix;
 
         specfem::assembly::load_on_device(index, jacobian_matrix,
@@ -340,19 +340,19 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
  * VectorFieldType::components>)
  * @endcode
  */
-template <
-    typename ChunkIndexType, typename VectorFieldType, typename QuadratureType,
-    typename CallbackFunctor,
-    std::enable_if_t<
-        specfem::data_access::is_chunk_element<VectorFieldType>::value &&
-            VectorFieldType::dimension_tag == specfem::dimension::type::dim3,
-        int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void gradient(
-    const ChunkIndexType &chunk_index,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>
-        &jacobian_matrix,
-    const QuadratureType &quadrature, const VectorFieldType &f,
-    const CallbackFunctor &callback) {
+template <typename ChunkIndexType, typename VectorFieldType,
+          typename QuadratureType, typename CallbackFunctor,
+          std::enable_if_t<
+              specfem::data_access::is_chunk_element<VectorFieldType>::value &&
+                  VectorFieldType::dimension_tag ==
+                      specfem::element::dimension_tag::dim3,
+              int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+gradient(const ChunkIndexType &chunk_index,
+         const specfem::assembly::jacobian_matrix<
+             specfem::element::dimension_tag::dim3> &jacobian_matrix,
+         const QuadratureType &quadrature, const VectorFieldType &f,
+         const CallbackFunctor &callback) {
   constexpr int components = VectorFieldType::components;
   constexpr int dimension = 3;
   constexpr bool using_simd = VectorFieldType::simd::using_simd;
@@ -382,8 +382,8 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
         datatype df_dxi[components] = { 0.0 };
         datatype df_deta[components] = { 0.0 };
         datatype df_dgamma[components] = { 0.0 };
-        specfem::point::jacobian_matrix<specfem::dimension::type::dim3, false,
-                                        using_simd>
+        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                        false, using_simd>
             point_jacobian_matrix;
 
         specfem::assembly::load_on_device(index, jacobian_matrix,
@@ -421,19 +421,19 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
  * VectorFieldType::components>)
  * @endcode
  */
-template <
-    typename ChunkIndexType, typename VectorFieldType, typename QuadratureType,
-    typename CallbackFunctor,
-    std::enable_if_t<
-        specfem::data_access::is_chunk_element<VectorFieldType>::value &&
-            VectorFieldType::dimension_tag == specfem::dimension::type::dim3,
-        int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void gradient(
-    const ChunkIndexType &chunk_index,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>
-        &jacobian_matrix,
-    const QuadratureType &quadrature, const VectorFieldType &f,
-    const VectorFieldType &g, const CallbackFunctor &callback) {
+template <typename ChunkIndexType, typename VectorFieldType,
+          typename QuadratureType, typename CallbackFunctor,
+          std::enable_if_t<
+              specfem::data_access::is_chunk_element<VectorFieldType>::value &&
+                  VectorFieldType::dimension_tag ==
+                      specfem::element::dimension_tag::dim3,
+              int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+gradient(const ChunkIndexType &chunk_index,
+         const specfem::assembly::jacobian_matrix<
+             specfem::element::dimension_tag::dim3> &jacobian_matrix,
+         const QuadratureType &quadrature, const VectorFieldType &f,
+         const VectorFieldType &g, const CallbackFunctor &callback) {
   constexpr int components = VectorFieldType::components;
   constexpr bool using_simd = VectorFieldType::simd::using_simd;
   constexpr int dimension = 3;
@@ -466,8 +466,8 @@ KOKKOS_FORCEINLINE_FUNCTION void gradient(
         datatype dg_dxi[components] = { 0.0 };
         datatype dg_deta[components] = { 0.0 };
         datatype dg_dgamma[components] = { 0.0 };
-        specfem::point::jacobian_matrix<specfem::dimension::type::dim3, false,
-                                        using_simd>
+        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                        false, using_simd>
             point_jacobian_matrix;
 
         specfem::assembly::load_on_device(index, jacobian_matrix,

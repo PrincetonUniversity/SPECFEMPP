@@ -16,7 +16,7 @@ class ChunkedIteratorTestBase {
 public:
   using ParallelConfig =
       specfem::parallel_configuration::default_chunk_edge_config<
-          specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
+          specfem::element::dimension_tag::dim2, Kokkos::DefaultExecutionSpace>;
 
   constexpr static int num_points = 5;
   // Storage view indexed by [edge][ipoint]
@@ -61,7 +61,7 @@ public:
   EdgesViewType edges;
   std::string name;
   int number_of_edges;
-  specfem::mesh_entity::element<specfem::dimension::type::dim2> elem;
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim2> elem;
 
   EdgeIterator(const EdgeIteratorTestParams &params)
       : view("view", params.number_of_edges, num_points),
@@ -159,7 +159,7 @@ public:
   EdgesViewType intersection_edges;
   std::string name;
   int number_of_edges;
-  specfem::mesh_entity::element<specfem::dimension::type::dim2> elem;
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim2> elem;
 
   IntersectionIterator(const IntersectionIteratorTestParams &params)
       : self_view("self_view", params.number_of_edges, num_points),

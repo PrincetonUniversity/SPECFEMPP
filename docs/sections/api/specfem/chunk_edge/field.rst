@@ -8,7 +8,7 @@
     :private-members:
 
 ``specfem::chunk_edge::velocity``
-================================
+=================================
 
 .. doxygenclass:: specfem::chunk_edge::velocity
     :members:

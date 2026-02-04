@@ -3,8 +3,8 @@
 #include "specfem/algorithms.hpp"
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/datatype.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/medium_physics.hpp"
@@ -16,7 +16,7 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -67,7 +67,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
   constexpr bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd = (DimensionTag == specfem::dimension::type::dim2) ? true : false;
+  constexpr bool using_simd = (DimensionTag == specfem::element::dimension_tag::dim2) ? true : false;
 #endif
 
   using simd = specfem::datatype::simd<type_real, using_simd>;

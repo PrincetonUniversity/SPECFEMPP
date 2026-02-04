@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "specfem/data_access/accessor.hpp"
+#include "specfem/element.hpp"
+
 #include "specfem/datatype.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -20,12 +20,12 @@ namespace specfem::data_access {
  * @tparam UseSIMD Enable SIMD vectorization
  */
 template <specfem::data_access::DataClassType DataClass,
-          specfem::dimension::type DimensionTag, bool UseSIMD>
-struct Accessor<specfem::data_access::AccessorType::chunk_face, DataClass,
+          specfem::element::dimension_tag DimensionTag, bool UseSIMD>
+struct Accessor<specfem::datatype::AccessorType::chunk_face, DataClass,
                 DimensionTag, UseSIMD> {
   /// @brief Accessor pattern identifier
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_face;
+      specfem::datatype::AccessorType::chunk_face;
   /// @brief Data classification type
   constexpr static auto data_class = DataClass;
   /// @brief Spatial dimension
@@ -92,7 +92,7 @@ struct is_chunk_face : std::false_type {};
 template <typename T>
 struct is_chunk_face<
     T, std::enable_if_t<T::accessor_type ==
-                        specfem::data_access::AccessorType::chunk_face> >
+                        specfem::datatype::AccessorType::chunk_face> >
     : std::true_type {};
 
 } // namespace specfem::data_access

@@ -34,7 +34,7 @@ namespace impl {
 template <typename TensorFieldType, typename WeightsType,
           typename QuadratureType,
           typename std::enable_if_t<TensorFieldType::dimension_tag ==
-                                        specfem::dimension::type::dim2,
+                                        specfem::element::dimension_tag::dim2,
                                     int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION auto
 element_divergence(const TensorFieldType &f,
@@ -89,7 +89,7 @@ element_divergence(const TensorFieldType &f,
 template <typename TensorFieldType, typename WeightsType,
           typename QuadratureType,
           typename std::enable_if_t<TensorFieldType::dimension_tag ==
-                                        specfem::dimension::type::dim3,
+                                        specfem::element::dimension_tag::dim3,
                                     int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION auto
 element_divergence(const TensorFieldType &f,

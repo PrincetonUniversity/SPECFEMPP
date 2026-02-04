@@ -125,7 +125,7 @@ public:
    * @tparam dimension - dimension of the adjacency graph
    * @param adjacency_graph - graph to verify has the connection
    */
-  template <specfem::dimension::type dimension>
+  template <specfem::element::dimension_tag dimension>
   void expect_in(
       const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const;
 
@@ -163,7 +163,7 @@ public:
    * @tparam dimension - dimension of the adjacency graph
    * @param adjacency_graph - graph to verify has the connections
    */
-  template <specfem::dimension::type dimension>
+  template <specfem::element::dimension_tag dimension>
   void expect_in(
       const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const;
 };
@@ -178,7 +178,7 @@ using variant = std::variant<connects, number_of_out_edges>;
  * @param predicate - test to apply to adjacency_graph
  * @param adjacency_graph - graph to check
  */
-template <specfem::dimension::type dimension>
+template <specfem::element::dimension_tag dimension>
 void verify(const variant &predicate,
             const specfem::mesh::adjacency_graph<dimension> &adjacency_graph);
 

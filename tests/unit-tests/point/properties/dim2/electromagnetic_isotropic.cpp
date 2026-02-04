@@ -57,7 +57,7 @@ TYPED_TEST(PointPropertiesTest, ElectromagneticIsotropic2D) {
 
   // Create the properties object
   using PointPropertiesType =
-      specfem::point::properties<specfem::dimension::type::dim2,
+      specfem::point::properties<specfem::element::dimension_tag::dim2,
                                  specfem::element::medium_tag::electromagnetic,
                                  specfem::element::property_tag::isotropic,
                                  using_simd>;

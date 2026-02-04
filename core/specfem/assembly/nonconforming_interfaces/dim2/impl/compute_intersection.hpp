@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "enumerations/mesh_entities.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"
 
@@ -29,12 +29,12 @@ namespace specfem::assembly::nonconforming_interfaces_impl {
  *      knot mortar_quadrature(i).
  */
 std::vector<std::pair<type_real, type_real> > compute_intersection(
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &element1,
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &element2,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &element1,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &element2,
     const specfem::mesh_entity::dim2::type &edge1,
     const specfem::mesh_entity::dim2::type &edge2,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature);
@@ -57,12 +57,12 @@ std::vector<std::pair<type_real, type_real> > compute_intersection(
  */
 template <typename TransferView1, typename TransferView2>
 void set_transfer_functions(
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &element1,
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &element2,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &element1,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &element2,
     const specfem::mesh_entity::dim2::type &edge1,
     const specfem::mesh_entity::dim2::type &edge2,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature,
@@ -92,12 +92,12 @@ void set_transfer_functions(
 template <typename TransferView1, typename TransferView2,
           typename TransferView3, typename TransferView4>
 void set_transfer_functions(
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &element1,
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &element2,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &element1,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &element2,
     const specfem::mesh_entity::dim2::type &edge1,
     const specfem::mesh_entity::dim2::type &edge2,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature,

@@ -4,7 +4,7 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>::
+specfem::mesh::absorbing_boundary<specfem::element::dimension_tag::dim2>::
     absorbing_boundary(const int num_abs_boundary_faces) {
   if (num_abs_boundary_faces > 0) {
     this->nelements = num_abs_boundary_faces;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element.hpp"
 #include "specfem/medium/dim2/poroelastic/isotropic/damping.hpp"
 #include "specfem/utilities.hpp"
 #include <Kokkos_Core.hpp>
@@ -144,7 +144,7 @@ KOKKOS_INLINE_FUNCTION void compute_damping_force(
       specfem::element::attributes<DimensionTag, MediumTag>::has_damping_force;
 
   using dimension_dispatch =
-      std::integral_constant<specfem::dimension::type, DimensionTag>;
+      std::integral_constant<specfem::element::dimension_tag, DimensionTag>;
 
   using medium_dispatch =
       std::integral_constant<specfem::element::medium_tag, MediumTag>;

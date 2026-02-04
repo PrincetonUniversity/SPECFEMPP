@@ -28,7 +28,7 @@ namespace specfem::point {
  * @code{.cpp}
  * // Example: Creating 3D elastic displacement field accessor
  * using DispField = specfem::point::displacement<
- *     specfem::dimension::type::dim3,
+ *     specfem::element::dimension_tag::dim3,
  *     specfem::element::medium_tag::elastic,
  *     true>;   // Enable SIMD
  *
@@ -62,7 +62,7 @@ namespace specfem::point {
  * @see specfem::point::acceleration for acceleration field accessor
  * @see specfem::point::mass_inverse for inverse mass matrix field accessor
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 class displacement
     : public impl::field<DimensionTag, MediumTag,

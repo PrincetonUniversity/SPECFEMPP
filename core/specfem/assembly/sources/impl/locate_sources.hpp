@@ -25,16 +25,17 @@ namespace specfem::assembly::sources_impl {
  * @throws std::invalid_argument If coordinates are invalid or mesh is malformed
  *
  * @code
- * std::vector<std::shared_ptr<specfem::sources::source<specfem::dimension::type::dim2>>>
+ * std::vector<std::shared_ptr<specfem::sources::source<specfem::element::dimension_tag::dim2>>>
  * sources;
  * // ... populate sources
- * locate_sources<specfem::dimension::type::dim2>(element_types, mesh, sources);
+ * locate_sources<specfem::element::dimension_tag::dim2>(element_types, mesh,
+ * sources);
  * @endcode
  *
  * @note This function is an implementation detail and should be only called
  * within @ref specfem::assembly::sources construction.
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 void locate_sources(
     const specfem::assembly::element_types<DimensionTag> &element_types,
     const specfem::assembly::mesh<DimensionTag> &mesh,

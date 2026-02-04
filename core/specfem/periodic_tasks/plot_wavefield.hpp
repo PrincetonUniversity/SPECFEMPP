@@ -22,7 +22,7 @@ namespace specfem::periodic_tasks {
  *
  * @see specfem::periodic_tasks::plotter
  */
-template <specfem::dimension::type DimensionTag> class plot_wavefield;
+template <specfem::element::dimension_tag DimensionTag> class plot_wavefield;
 
 } // namespace specfem::periodic_tasks
 

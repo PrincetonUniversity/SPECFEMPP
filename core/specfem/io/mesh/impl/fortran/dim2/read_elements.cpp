@@ -3,13 +3,13 @@
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/mesh.hpp"
 
-specfem::mesh::elements::axial_elements<specfem::dimension::type::dim2>
+specfem::mesh::elements::axial_elements<specfem::element::dimension_tag::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_axial_elements(
     std::ifstream &stream, const int nelem_on_the_axis, const int nspec) {
 
   int ispec;
 
-  specfem::mesh::elements::axial_elements<specfem::dimension::type::dim2>
+  specfem::mesh::elements::axial_elements<specfem::element::dimension_tag::dim2>
       axial_elements(nspec);
 
   for (int inum = 0; inum < nelem_on_the_axis; inum++) {
@@ -23,13 +23,14 @@ specfem::io::mesh::impl::fortran::dim2::read_axial_elements(
   return axial_elements;
 }
 
-specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>
+specfem::mesh::elements::tangential_elements<
+    specfem::element::dimension_tag::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_tangential_elements(
     std::ifstream &stream, const int nnodes_tangential_curve) {
   double xread, yread;
 
   auto tangential_elements = specfem::mesh::elements::tangential_elements<
-      specfem::dimension::type::dim2>(nnodes_tangential_curve);
+      specfem::element::dimension_tag::dim2>(nnodes_tangential_curve);
 
   specfem::io::fortran_read_line(stream,
                                  &tangential_elements.force_normal_to_surface,

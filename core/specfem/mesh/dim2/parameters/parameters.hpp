@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
 namespace specfem {
@@ -11,18 +11,18 @@ namespace mesh {
  *
  * @tparam DimensionTag Dimension type for the mesh (2D or 3D)
  */
-template <specfem::dimension::type DimensionTag> struct parameters;
+template <specfem::element::dimension_tag DimensionTag> struct parameters;
 
 /**
  * @brief Template specialization for 2D mesh parameters
  */
-template <> struct parameters<specfem::dimension::type::dim2> {
+template <> struct parameters<specfem::element::dimension_tag::dim2> {
   constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension
-                                      ///< type
-  int numat;                          ///< Total number of different materials
-  int ngnod;                          ///< Number of control nodes
-  int nspec;                          ///< Number of spectral elements
+      specfem::element::dimension_tag::dim2; ///< Dimension
+                                             ///< type
+  int numat;           ///< Total number of different materials
+  int ngnod;           ///< Number of control nodes
+  int nspec;           ///< Number of spectral elements
   int pointsdisp;      // Total number of points to display (Only used for
                        // visualization)
   int nelemabs;        ///< Number of elements on absorbing boundary

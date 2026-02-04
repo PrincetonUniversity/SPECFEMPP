@@ -18,12 +18,12 @@ namespace specfem::chunk_face {
  * @tparam ViewType Kokkos view type for face index storage
  * @tparam TeamMemberType Kokkos team execution context
  */
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename TeamMemberType>
 class Index : public specfem::execution::ChunkFaceIndex<DimensionTag, ViewType,
                                                         TeamMemberType>,
               public specfem::data_access::Accessor<
-                  specfem::data_access::AccessorType::chunk_face,
+                  specfem::datatype::AccessorType::chunk_face,
                   specfem::data_access::DataClassType::face_index, DimensionTag,
                   false> {
 private:

@@ -16,7 +16,7 @@ struct InitializeFacesFunctor {
   specfem::mesh_entity::dim3::type face_type;
   int num_points;
   int element_multiplier;
-  specfem::mesh_entity::element<specfem::dimension::type::dim3> elem;
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim3> elem;
 
   InitializeFacesFunctor(FaceViewType view_,
                          specfem::mesh_entity::dim3::type face_type_,
@@ -83,7 +83,7 @@ struct InitCoords2DFunctor {
   StorageType ix_storage;
   specfem::mesh_entity::dim3::type face_type;
   int num_points;
-  specfem::mesh_entity::element<specfem::dimension::type::dim3> elem;
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim3> elem;
 
   InitCoords2DFunctor(StorageType iz_, StorageType iy_, StorageType ix_,
                       specfem::mesh_entity::dim3::type face_type_,
@@ -121,7 +121,7 @@ struct TestFaceOperatorFunctor {
   void operator()(const int) const {
     using Face = specfem::assembly::Face<Kokkos::DefaultExecutionSpace>;
     using FaceIndex =
-        specfem::point::face_index<specfem::dimension::type::dim3>;
+        specfem::point::face_index<specfem::element::dimension_tag::dim3>;
 
     auto iz_strided =
         Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
@@ -164,7 +164,7 @@ struct TestFaceTypeFunctor {
   void operator()(const int) const {
     using Face = specfem::assembly::Face<Kokkos::DefaultExecutionSpace>;
     using FaceIndex =
-        specfem::point::face_index<specfem::dimension::type::dim3>;
+        specfem::point::face_index<specfem::element::dimension_tag::dim3>;
 
     auto iz_strided =
         Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
@@ -311,7 +311,7 @@ TEST_F(AssemblyFaceTest, OperatorPointAccess) {
   Kokkos::fence();
 
   // Test Face operator()
-  using FaceIndex = specfem::point::face_index<specfem::dimension::type::dim3>;
+  using FaceIndex = specfem::point::face_index<specfem::element::dimension_tag::dim3>;
   Kokkos::View<int[8], Kokkos::DefaultExecutionSpace> results("results");
 
   Kokkos::parallel_for(
@@ -345,7 +345,7 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
                                                                   num_points,
                                                                   num_points);
 
-  using FaceIndex = specfem::point::face_index<specfem::dimension::type::dim3>;
+  using FaceIndex = specfem::point::face_index<specfem::element::dimension_tag::dim3>;
   using StorageType = decltype(iz_storage);
 
   // Test bottom face (z = 0)

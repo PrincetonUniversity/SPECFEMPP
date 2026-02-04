@@ -7,14 +7,15 @@
 #include <map>
 #include <sstream>
 
-specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>
+specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
     const int nspec, std::ifstream &stream) {
 
   using EdgeProperties = specfem::mesh::adjacency_graph<
-      specfem::dimension::type::dim2>::EdgeProperties;
+      specfem::element::dimension_tag::dim2>::EdgeProperties;
 
-  specfem::mesh::adjacency_graph<specfem::dimension::type::dim2> graph(nspec);
+  specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph(
+      nspec);
 
   auto &g = graph.graph();
 

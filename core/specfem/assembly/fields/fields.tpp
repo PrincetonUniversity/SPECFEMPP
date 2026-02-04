@@ -7,7 +7,7 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 specfem::assembly::fields<DimensionTag>::fields(
     const specfem::assembly::mesh<dimension_tag> &mesh,
     const specfem::assembly::element_types<dimension_tag> &element_types,
@@ -60,7 +60,7 @@ specfem::assembly::fields<DimensionTag>::fields(
         }
       }()) {}
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 void specfem::assembly::fields<DimensionTag>::copy_to_device() {
   buffer.copy_to_device();
   forward.copy_to_device();
@@ -68,7 +68,7 @@ void specfem::assembly::fields<DimensionTag>::copy_to_device() {
   backward.copy_to_device();
 }
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 void specfem::assembly::fields<DimensionTag>::copy_to_host() {
   buffer.copy_to_host();
   forward.copy_to_host();

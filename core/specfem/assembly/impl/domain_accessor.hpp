@@ -20,7 +20,7 @@ namespace specfem::assembly::impl {
  * @tparam DataContainer Container type inheriting from this accessor
  *
  */
-template <specfem::dimension::type DimensionTag, typename DataContainer>
+template <specfem::element::dimension_tag DimensionTag, typename DataContainer>
 class DomainAccessor {
 
 private:

@@ -55,7 +55,7 @@ namespace dim2 {
  * @param n_acoustic_surface Number of acoustic surfaces
  * @return specfem::mesh::boundaries
  */
-specfem::mesh::boundaries<specfem::dimension::type::dim2>
+specfem::mesh::boundaries<specfem::element::dimension_tag::dim2>
 read_boundaries(std::ifstream &stream, const int nspec, const int n_absorbing,
                 const int n_acoustic_surface, const int n_acforcing,
                 const Kokkos::View<int **, Kokkos::HostSpace> knods);

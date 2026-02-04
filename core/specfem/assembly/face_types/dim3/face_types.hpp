@@ -56,7 +56,7 @@ template <typename ExecutionSpace> struct Face {
    * @return 3D face index structure for the specified quadrature point
    */
   KOKKOS_INLINE_FUNCTION
-  specfem::point::face_index<specfem::dimension::type::dim3>
+  specfem::point::face_index<specfem::element::dimension_tag::dim3>
   operator()(const int ipoint_i, const int ipoint_j) const {
     return { element_index,
              face_index,
@@ -195,7 +195,7 @@ struct FaceView {
  *
  * @code
  * // Construct 3D face types from mesh data
- * specfem::assembly::face_types<specfem::dimension::type::dim3> faces(
+ * specfem::assembly::face_types<specfem::element::dimension_tag::dim3> faces(
  *     ngllx, nglly, ngllz, mesh, element_types);
  *
  * // Get elastic-acoustic coupling faces on device
@@ -205,11 +205,11 @@ struct FaceView {
  *     specfem::element::boundary_tag::none);
  * @endcode
  */
-template <> struct face_types<specfem::dimension::type::dim3> {
+template <> struct face_types<specfem::element::dimension_tag::dim3> {
 
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
 
 public:
   /**

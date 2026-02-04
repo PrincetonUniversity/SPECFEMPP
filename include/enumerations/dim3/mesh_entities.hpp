@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <list>
@@ -132,16 +132,18 @@ template <typename T> bool contains(const T &list, const dim3::type &value) {
 std::vector<int>
 nodes_on_orientation(const specfem::mesh_entity::dim3::type &entity);
 
-template <specfem::dimension::type Dimension> struct face;
+template <specfem::element::dimension_tag DimensionTag> struct face;
 
 /**
  * @brief 3D face entity for hexahedral elements.
  */
-template <> struct face<specfem::dimension::type::dim3> {
+template <> struct face<specfem::element::dimension_tag::dim3> {
   specfem::mesh_entity::dim3::type face_type; ///< Face type
   int ispec;                                  ///< Element index
   int face_index;                             ///< Global face index
   bool reverse_orientation;                   ///< Orientation flag
+  constexpr static auto dimension_tag =
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
 
   /**
    * @brief Construct face with parameters.
@@ -163,15 +165,17 @@ template <> struct face<specfem::dimension::type::dim3> {
   face() = default;
 };
 
-template <specfem::dimension::type Dimension> struct edge;
+template <specfem::element::dimension_tag DimensionTag> struct edge;
 
 /**
  * @brief 3D edge entity for hexahedral elements.
  */
-template <> struct edge<specfem::dimension::type::dim3> {
+template <> struct edge<specfem::element::dimension_tag::dim3> {
   specfem::mesh_entity::dim3::type edge_type; ///< Edge type
   int ispec;                                  ///< Element index
   bool reverse_orientation;                   ///< Orientation flag
+  constexpr static auto dimension_tag =
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
 
   /**
    * @brief Construct edge with parameters.
@@ -192,13 +196,13 @@ template <> struct edge<specfem::dimension::type::dim3> {
   edge() = default;
 };
 
-template <specfem::dimension::type Dimension> struct element;
-template <specfem::dimension::type Dimension> struct element_grid;
+template <specfem::element::dimension_tag Dimension> struct element;
+template <specfem::element::dimension_tag Dimension> struct element_grid;
 
 /**
  * @brief 3D element grid with GLL point configuration.
  */
-template <> struct element_grid<specfem::dimension::type::dim3> {
+template <> struct element_grid<specfem::element::dimension_tag::dim3> {
 
 public:
   int ngllz;  ///< Number of GLL points in z-direction
@@ -264,8 +268,8 @@ public:
  * @brief 3D element with coordinate mapping capabilities.
  */
 template <>
-struct element<specfem::dimension::type::dim3>
-    : element_grid<specfem::dimension::type::dim3> {
+struct element<specfem::element::dimension_tag::dim3>
+    : element_grid<specfem::element::dimension_tag::dim3> {
 
 public:
   int ngll2d; ///< Points per 2D face

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "enumerations/boundary.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 
 namespace specfem {
 namespace mesh {

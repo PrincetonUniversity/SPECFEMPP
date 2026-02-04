@@ -24,9 +24,10 @@ namespace specfem::io::mesh::impl::fortran::dim3 {
  * @throws std::runtime_error If database format is invalid or face matching
  * fails
  */
-specfem::mesh::boundaries<specfem::dimension::type::dim3> read_boundaries(
+specfem::mesh::boundaries<specfem::element::dimension_tag::dim3>
+read_boundaries(
     std::ifstream &stream, const int nspec,
-    const specfem::mesh::control_nodes<specfem::dimension::type::dim3>
+    const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
         &control_nodes);
 
 } // namespace specfem::io::mesh::impl::fortran::dim3

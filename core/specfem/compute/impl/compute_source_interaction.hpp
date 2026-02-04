@@ -1,9 +1,8 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/element.hpp"
 
 namespace specfem {
 namespace compute {
@@ -26,7 +25,7 @@ namespace impl {
  * @param assembly SPECFEM++ assembly object.
  * @param timestep Time step for which the source interaction is computed
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,

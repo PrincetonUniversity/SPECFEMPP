@@ -3,7 +3,7 @@
 #include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
 
-specfem::mesh::parameters<specfem::dimension::type::dim2>
+specfem::mesh::parameters<specfem::element::dimension_tag::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_mesh_parameters(
     std::ifstream &stream) {
   // ---------------------------------------------------------------------

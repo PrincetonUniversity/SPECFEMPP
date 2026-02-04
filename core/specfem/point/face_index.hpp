@@ -8,7 +8,7 @@ namespace specfem::point {
  * @brief Primary template for face index in 3D spectral element meshes
  * @tparam DimensionTag Spatial dimension (dim3 only)
  */
-template <specfem::dimension::type DimensionTag> struct face_index;
+template <specfem::element::dimension_tag DimensionTag> struct face_index;
 
 /**
  * @brief 3D face index for spectral element face access
@@ -19,16 +19,16 @@ template <specfem::dimension::type DimensionTag> struct face_index;
  * within the face (2D surface with ngll x ngll points).
  */
 template <>
-struct face_index<specfem::dimension::type::dim3>
+struct face_index<specfem::element::dimension_tag::dim3>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::face_index,
-          specfem::dimension::type::dim3, false> {
+          specfem::element::dimension_tag::dim3, false> {
 
   /**
    * @brief Dimension tag for 3D specialization.
    */
-  static constexpr auto dimension_tag = specfem::dimension::type::dim3;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Spectral element index.

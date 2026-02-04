@@ -71,7 +71,7 @@ class ChunkedFaceIteratorTestBase {
 public:
   using ParallelConfig =
       specfem::parallel_configuration::default_chunk_face_config<
-          specfem::dimension::type::dim3, Kokkos::DefaultExecutionSpace>;
+          specfem::element::dimension_tag::dim3, Kokkos::DefaultExecutionSpace>;
 
   constexpr static int num_points = 5; // ngll per face dimension
   // Storage view indexed by [face][ipoint_i][ipoint_j]
@@ -102,7 +102,7 @@ public:
   FacesViewType faces;
   std::string name;
   int number_of_faces;
-  specfem::mesh_entity::element<specfem::dimension::type::dim3> elem;
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim3> elem;
 
   FaceIterator(const FaceIteratorTestParams &params)
       : view("view", params.number_of_faces, num_points, num_points),
@@ -266,7 +266,7 @@ INSTANTIATE_TEST_SUITE_P(
 class FaceCoordinateMappingTest : public ::testing::Test {
 protected:
   static constexpr int ngll = 5;
-  specfem::mesh_entity::element<specfem::dimension::type::dim3> elem{ ngll };
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim3> elem{ ngll };
 };
 
 TEST_F(FaceCoordinateMappingTest, BottomFace) {

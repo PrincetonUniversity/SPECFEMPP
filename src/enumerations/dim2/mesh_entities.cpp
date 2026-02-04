@@ -95,15 +95,15 @@ std::vector<int> specfem::mesh_entity::nodes_on_orientation(
   }
 }
 
-specfem::mesh_entity::element<specfem::dimension::type::dim2>::element(
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::element(
     const int ngllz, const int ngllx)
     : base(ngllz, ngllx) {}
 
-specfem::mesh_entity::element<specfem::dimension::type::dim2>::element(
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::element(
     const int ngll)
     : element(ngll, ngll) {}
 
-int specfem::mesh_entity::element<specfem::dimension::type::dim2>::
+int specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::
     number_of_points_on_orientation(
         const specfem::mesh_entity::dim2::type &entity) const {
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::edges,
@@ -120,7 +120,7 @@ int specfem::mesh_entity::element<specfem::dimension::type::dim2>::
 }
 
 std::tuple<int, int>
-specfem::mesh_entity::element<specfem::dimension::type::dim2>::map_coordinates(
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::map_coordinates(
     const specfem::mesh_entity::dim2::type &entity, const int point) const {
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::edges,
                                      entity)) {
@@ -140,8 +140,8 @@ specfem::mesh_entity::element<specfem::dimension::type::dim2>::map_coordinates(
 }
 
 std::tuple<int, int>
-specfem::mesh_entity::element<specfem::dimension::type::dim2>::map_coordinates(
-    const specfem::mesh_entity::dim2::type &corner) const {
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::
+    map_coordinates(const specfem::mesh_entity::dim2::type &corner) const {
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::corners,
                                      corner)) {
     int iz, ix;

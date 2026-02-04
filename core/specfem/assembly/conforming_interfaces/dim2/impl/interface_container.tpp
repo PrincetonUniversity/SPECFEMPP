@@ -11,11 +11,11 @@
 template <specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
 specfem::assembly::conforming_interfaces_impl::interface_container<
-    specfem::dimension::type::dim2, InterfaceTag, BoundaryTag,
+    specfem::element::dimension_tag::dim2, InterfaceTag, BoundaryTag,
     specfem::connections::type::weakly_conforming>::
     interface_container(
         const int ngllz, const int ngllx,
-        const specfem::assembly::edge_types<specfem::dimension::type::dim2>
+        const specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>
             &edge_types,
         const specfem::assembly::jacobian_matrix<dimension_tag>
             &jacobian_matrix,
@@ -50,10 +50,10 @@ specfem::assembly::conforming_interfaces_impl::interface_container<
     const auto edge = self_edges(i);
     for (int ipoint = 0; ipoint < npoints; ++ipoint) {
       const auto edge_index = edge(ipoint);
-      specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2, true,
                                       false>
           point_jacobian_matrix;
-      specfem::point::index<specfem::dimension::type::dim2, false> point_index{
+      specfem::point::index<specfem::element::dimension_tag::dim2, false> point_index{
         edge_index.ispec, edge_index.iz, edge_index.ix
       };
       specfem::assembly::load_on_host(point_index, jacobian_matrix,

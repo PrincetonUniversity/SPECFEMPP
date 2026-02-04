@@ -5,7 +5,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/source.hpp"
 
-template<specfem::dimension::type DimensionTag>
+template<specfem::element::dimension_tag DimensionTag>
 void specfem::assembly::sources_impl::locate_sources(
     const specfem::assembly::element_types<DimensionTag>
         &element_types,

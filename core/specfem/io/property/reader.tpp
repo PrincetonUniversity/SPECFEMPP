@@ -1,8 +1,8 @@
 #pragma once
 
 #include "specfem/assembly.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element.hpp"
 #include "specfem/io/property/reader.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/point.hpp"
@@ -15,7 +15,7 @@ specfem::io::property_reader<InputLibrary>::property_reader(
 
 template <typename InputLibrary>
 void specfem::io::property_reader<InputLibrary>::read(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly) {
   auto &properties = assembly.properties;
 
   typename InputLibrary::File file(input_folder + "/Properties");

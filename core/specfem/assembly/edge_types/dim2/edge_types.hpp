@@ -9,14 +9,14 @@
 namespace specfem::assembly {
 
 /**
-   * @brief Individual 2D edge representation with quadrature point access
-   *
-   * This structure represents a single edge in the 2D spectral element mesh,
-   * providing access to quadrature points along the edge for coupling
-   * computations, boundary condition enforcement, and flux calculations.
-   *
-   * @tparam ExecutionSpace Kokkos execution space (host or device)
-   */
+ * @brief Individual 2D edge representation with quadrature point access
+ *
+ * This structure represents a single edge in the 2D spectral element mesh,
+ * providing access to quadrature points along the edge for coupling
+ * computations, boundary condition enforcement, and flux calculations.
+ *
+ * @tparam ExecutionSpace Kokkos execution space (host or device)
+ */
   template <typename ExecutionSpace> struct Edge {
     int n_points; ///< Number of quadrature points on this edge
     using IndexView = Kokkos::View<int *, Kokkos::LayoutStride,
@@ -55,7 +55,7 @@ namespace specfem::assembly {
      * @return 2D edge index structure for the specified quadrature point
      */
     KOKKOS_INLINE_FUNCTION
-    specfem::point::edge_index<specfem::dimension::type::dim2>
+    specfem::point::edge_index<specfem::element::dimension_tag::dim2>
     operator()(const int point_id) const {
       return { element_index, edge_index,   point_id,
                iz(point_id),  ix(point_id), edge_type };
@@ -182,7 +182,7 @@ struct EdgeView {
  *
  * @code
  * // Construct 2D edge types from mesh data
- * specfem::assembly::edge_types<specfem::dimension::type::dim2> edges(
+ * specfem::assembly::edge_types<specfem::element::dimension_tag::dim2> edges(
  *     ngllx, ngllz, mesh, element_types);
  *
  * // Get elastic-acoustic coupling edges on device
@@ -192,11 +192,11 @@ struct EdgeView {
  *     specfem::element::boundary_tag::none);
  * @endcode
  */
-template <> struct edge_types<specfem::dimension::type::dim2> {
+template <> struct edge_types<specfem::element::dimension_tag::dim2> {
 
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
 
 
 public:

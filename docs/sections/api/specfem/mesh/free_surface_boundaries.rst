@@ -10,6 +10,6 @@
 Dimension-Specific Specializations
 ----------------------------------
 
-.. doxygenstruct:: specfem::mesh::free_surface_boundaries< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::mesh::free_surface_boundaries< specfem::element::dimension_tag::dim2 >
     :members:
     :private-members:

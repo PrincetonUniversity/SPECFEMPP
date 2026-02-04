@@ -8,7 +8,7 @@
 namespace {
 
 TEST(Source, PoroelasticIsotropic2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::poroelastic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
@@ -68,7 +68,7 @@ TEST(Source, PoroelasticIsotropic2D) {
 }
 
 TEST(Source, PoroelasticIsotropic2D_ZeroSource) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::poroelastic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;

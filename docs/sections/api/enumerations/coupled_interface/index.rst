@@ -14,8 +14,8 @@
 Attribute Specializations
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenclass:: specfem::interface::attributes< specfem::dimension::type::dim2, specfem::interface::interface_tag::elastic_acoustic >
+.. doxygenclass:: specfem::interface::attributes< specfem::element::dimension_tag::dim2, specfem::interface::interface_tag::elastic_acoustic >
     :members:
 
-.. doxygenclass:: specfem::interface::attributes< specfem::dimension::type::dim2, specfem::interface::interface_tag::acoustic_elastic >
+.. doxygenclass:: specfem::interface::attributes< specfem::element::dimension_tag::dim2, specfem::interface::interface_tag::acoustic_elastic >
     :members:

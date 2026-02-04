@@ -12,7 +12,7 @@
 #include <Kokkos_Core.hpp>
 #include "specfem/macros.hpp"
 
-specfem::assembly::boundaries_impl::stacey<specfem::dimension::type::dim2>::
+specfem::assembly::boundaries_impl::stacey<specfem::element::dimension_tag::dim2>::
     stacey(const int nspec, const int ngllz, const int ngllx,
            const specfem::mesh::absorbing_boundary<dimension_tag> &stacey,
            const specfem::assembly::mesh<dimension_tag> &mesh,

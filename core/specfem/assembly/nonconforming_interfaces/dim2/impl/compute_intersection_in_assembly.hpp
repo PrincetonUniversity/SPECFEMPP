@@ -17,10 +17,10 @@ namespace specfem::assembly::nonconforming_interfaces_impl {
  *               construct the intersection between.
  * @return std::tuple<
  * Kokkos::View<
- * specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+ * specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
  * Kokkos::HostSpace>,
  * Kokkos::View<
- * specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+ * specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
  * Kokkos::HostSpace>,
  * specfem::mesh_entity::dim2::type, specfem::mesh_entity::dim2::type> - in
  * order: the cooordinates of the source element, the coordinates of the target
@@ -28,16 +28,15 @@ namespace specfem::assembly::nonconforming_interfaces_impl {
  * orientation on the target element in the intersection.
  */
 template <typename EdgeType>
-std::tuple<
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace>,
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace>,
-    specfem::mesh_entity::dim2::type, specfem::mesh_entity::dim2::type>
+std::tuple<Kokkos::View<specfem::point::global_coordinates<
+                            specfem::element::dimension_tag::dim2> *,
+                        Kokkos::HostSpace>,
+           Kokkos::View<specfem::point::global_coordinates<
+                            specfem::element::dimension_tag::dim2> *,
+                        Kokkos::HostSpace>,
+           specfem::mesh_entity::dim2::type, specfem::mesh_entity::dim2::type>
 expand_edge_index(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const EdgeType &edge);
 
 /**
@@ -61,7 +60,7 @@ expand_edge_index(
  */
 template <typename EdgeType>
 std::vector<std::pair<type_real, type_real> > compute_intersection(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const EdgeType &edge,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature);
 } // namespace specfem::assembly::nonconforming_interfaces_impl
@@ -84,7 +83,7 @@ std::vector<std::pair<type_real, type_real> > compute_intersection(
  */
 template <typename EdgeType>
 void set_transfer_functions(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const EdgeType &edge,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &element_quadrature,
@@ -113,7 +112,7 @@ void set_transfer_functions(
  */
 template <typename EdgeType>
 void set_transfer_functions(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const EdgeType &edge,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &element_quadrature,

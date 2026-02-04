@@ -3,5 +3,5 @@
 
 Adjoint source implementation for 2D simulations
 
-.. doxygenclass:: specfem::sources::adjoint_source< specfem::dimension::type::dim2 >
+.. doxygenclass:: specfem::sources::adjoint_source< specfem::element::dimension_tag::dim2 >
     :members:

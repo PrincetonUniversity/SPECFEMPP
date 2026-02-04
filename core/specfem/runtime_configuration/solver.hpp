@@ -42,7 +42,7 @@ public:
    * @param quadrature Quadrature points object
    * @return std::shared_ptr<specfem::solver::solver> Solver object
    */
-  template <int NGLL, specfem::dimension::type DimensionTag>
+  template <int NGLL, specfem::element::dimension_tag DimensionTag>
   std::shared_ptr<specfem::solver::solver>
   instantiate(const type_real dt,
               const specfem::assembly::assembly<DimensionTag> &assembly,

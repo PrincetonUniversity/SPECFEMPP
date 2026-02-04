@@ -12,6 +12,7 @@ target_link_libraries(
         specfem::utilities
         specfem::source_time_functions
         yaml-cpp
+        specfem::element
         enumerations
         specfem::algorithms
         ${BOOST_LIBS}

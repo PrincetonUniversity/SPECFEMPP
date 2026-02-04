@@ -1,8 +1,8 @@
 #ifndef _FORCING_BOUNDARIES_HPP
 #define _FORCING_BOUNDARIES_HPP
 
-#include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/element.hpp"
 
 namespace specfem {
 namespace mesh {
@@ -11,17 +11,17 @@ namespace mesh {
  *
  * @tparam DimensionTag Dimension type for the mesh
  */
-template <specfem::dimension::type DimensionTag> struct forcing_boundary;
+template <specfem::element::dimension_tag DimensionTag> struct forcing_boundary;
 
 /**
  * @brief Forcing boundary information
  *
  */
-template <> struct forcing_boundary<specfem::dimension::type::dim2> {
+template <> struct forcing_boundary<specfem::element::dimension_tag::dim2> {
 
   constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension
-                                      ///< type
+      specfem::element::dimension_tag::dim2; ///< Dimension
+                                             ///< type
 
   Kokkos::View<int *, Kokkos::HostSpace> numacforcing;  ///< ispec value for the
                                                         ///< the element on the

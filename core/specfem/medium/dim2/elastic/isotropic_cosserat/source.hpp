@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -39,8 +39,8 @@ namespace medium_physics {
  */
 template <typename PointSourcesType, typename PointPropertiesType>
 KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
-    const std::integral_constant<specfem::dimension::type,
-                                 specfem::dimension::type::dim2>,
+    const std::integral_constant<specfem::element::dimension_tag,
+                                 specfem::element::dimension_tag::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
                                  specfem::element::medium_tag::elastic_psv_t>,
     const std::integral_constant<
@@ -51,7 +51,7 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
   constexpr bool using_simd = PointPropertiesType::simd::using_simd;
 
   using PointAccelerationType =
-      specfem::point::acceleration<specfem::dimension::type::dim2,
+      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::elastic_psv_t,
                                    using_simd>;
 

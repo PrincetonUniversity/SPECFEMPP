@@ -14,7 +14,7 @@ specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::initialize(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly) {
   auto &forward = assembly.fields.forward;
   auto &mesh = assembly.mesh;
   auto &element_types = assembly.element_types;
@@ -113,7 +113,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::run(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly,
     const int istep) {
   auto &forward = assembly.fields.forward;
 
@@ -157,7 +157,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::run(
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::finalize(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly) {
 
   typename OutputLibrary::Group boundary_group =
       file.createGroup(std::string("/BoundaryValues"));

@@ -28,11 +28,11 @@ namespace periodic_tasks {
  * @brief Writer to plot the wavefield for 3D simulations
  */
 template <>
-class plot_wavefield<specfem::dimension::type::dim3>
-    : public plotter<specfem::dimension::type::dim3> {
+class plot_wavefield<specfem::element::dimension_tag::dim3>
+    : public plotter<specfem::element::dimension_tag::dim3> {
 public:
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Construct a new plotter object
@@ -46,7 +46,7 @@ public:
    * @param output_folder Path to output folder where plots will be stored
    */
   plot_wavefield(
-      const specfem::assembly::assembly<specfem::dimension::type::dim3>
+      const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
           &assembly,
       const specfem::display::format &output_format,
       const specfem::wavefield::type &wavefield_type,

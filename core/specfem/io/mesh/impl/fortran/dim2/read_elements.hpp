@@ -18,7 +18,8 @@ namespace dim2 {
  * @return specfem::mesh::elements::tangential_elements
  *
  */
-specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>
+specfem::mesh::elements::tangential_elements<
+    specfem::element::dimension_tag::dim2>
 read_tangential_elements(std::ifstream &stream,
                          const int nnodes_tangential_curve);
 
@@ -31,7 +32,7 @@ read_tangential_elements(std::ifstream &stream,
  * @return specfem::mesh::elements::axial_elements
  *
  */
-specfem::mesh::elements::axial_elements<specfem::dimension::type::dim2>
+specfem::mesh::elements::axial_elements<specfem::element::dimension_tag::dim2>
 read_axial_elements(std::ifstream &stream, const int nelem_on_the_axis,
                     const int nspec);
 

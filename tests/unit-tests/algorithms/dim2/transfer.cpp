@@ -25,7 +25,7 @@ namespace specfem::algorithms_test {
 class ChunkEdgeIndex {
 public:
   static constexpr auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge;
+      specfem::datatype::AccessorType::chunk_edge;
   using KokkosIndexType = Kokkos::TeamPolicy<>::member_type;
 
   /**
@@ -58,7 +58,7 @@ private:
 };
 
 /** Test dimension (2D) */
-constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
 /** Interface type (dummy for testing) */
 constexpr static auto interface_tag =
     specfem::interface::interface_tag::acoustic_elastic;

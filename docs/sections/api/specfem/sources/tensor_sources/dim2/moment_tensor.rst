@@ -4,5 +4,5 @@
 
 Moment-Tensor implementation
 
-.. doxygenclass:: specfem::sources::moment_tensor< specfem::dimension::type::dim2 >
+.. doxygenclass:: specfem::sources::moment_tensor< specfem::element::dimension_tag::dim2 >
     :members:

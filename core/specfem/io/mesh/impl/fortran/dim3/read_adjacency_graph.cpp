@@ -2,11 +2,12 @@
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/mesh.hpp"
 
-specfem::mesh::adjacency_graph<specfem::dimension::type::dim3>
+specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
 specfem::io::mesh::impl::fortran::dim3::read_adjacency_graph(
     std::ifstream &stream, const int nspec) {
 
-  specfem::mesh::adjacency_graph<specfem::dimension::type::dim3> graph(nspec);
+  specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3> graph(
+      nspec);
 
   auto &g = graph.graph();
 
@@ -14,7 +15,7 @@ specfem::io::mesh::impl::fortran::dim3::read_adjacency_graph(
   specfem::io::fortran_read_line(stream, &total_adjacencies);
 
   using EdgeProperties = specfem::mesh::adjacency_graph<
-      specfem::dimension::type::dim3>::EdgeProperties;
+      specfem::element::dimension_tag::dim3>::EdgeProperties;
 
   for (int i = 0; i < total_adjacencies; ++i) {
     int elem1, elem2;

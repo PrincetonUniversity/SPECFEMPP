@@ -3,8 +3,8 @@
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/datatype.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
@@ -12,7 +12,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,

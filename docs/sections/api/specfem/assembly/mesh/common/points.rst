@@ -1,7 +1,7 @@
 .. _assembly_mesh_points:
 
-``specfem::assembly::mesh_impl::points`` Template
-==================================================
+``specfem::assembly::mesh_impl::points``
+========================================
 
 Base template for spectral element assembly point information across dimensions.
 
