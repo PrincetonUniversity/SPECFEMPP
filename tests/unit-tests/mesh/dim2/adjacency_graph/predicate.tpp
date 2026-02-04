@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/connections.hpp"
+#include "specfem/element_connections.hpp"
 #include "specfem/element.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/mesh_entities.hpp"
 #include "predicate.hpp"
 #include <gtest/gtest.h>
 #include <sstream>

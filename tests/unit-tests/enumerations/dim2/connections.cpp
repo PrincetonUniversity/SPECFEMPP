@@ -16,9 +16,9 @@
  * @see specfem::connections::connection_mapping<dim2>
  */
 
-#include "enumerations/connections.hpp"
-#include "enumerations/mesh_entities.hpp"
 #include "specfem/element.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/mesh_entities.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
 #include "specfem/utilities.hpp"

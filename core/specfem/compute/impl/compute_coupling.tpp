@@ -1,7 +1,7 @@
 #pragma once
 
 #include "compute_coupling.hpp"
-#include "enumerations/connections.hpp"
+#include "specfem/element_connections.hpp"
 #include "enumerations/interface.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/algorithms.hpp"

@@ -1,11 +1,11 @@
 #include "../test_fixture.hpp"
 #include "SPECFEM_Environment.hpp"
-#include "enumerations/connections.hpp"
 #include "enumerations/interface.hpp"
-#include "enumerations/mesh_entities.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/element_connections.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/mesh_entities.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <gtest/gtest.h>

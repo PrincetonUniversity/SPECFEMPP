@@ -47,8 +47,8 @@ class connection_mapping;
 
 } // namespace specfem::connections
 
-#include "dim2/connections.hpp"
-#include "dim3/connections.hpp"
+#include "element_connections/dim2/connections.hpp"
+#include "element_connections/dim3/connections.hpp"
 
 namespace specfem::connections {
 

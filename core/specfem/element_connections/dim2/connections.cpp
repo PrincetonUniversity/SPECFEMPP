@@ -1,6 +1,5 @@
-
-#include "enumerations/connections.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/mesh_entities.hpp"
 #include <functional>
 #include <stdexcept>
 #include <string>

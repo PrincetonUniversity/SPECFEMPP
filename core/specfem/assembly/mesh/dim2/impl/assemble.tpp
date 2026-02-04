@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/connections.hpp"
+#include "specfem/element_connections.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/point.hpp"

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "connections.hpp"
 #include "specfem/element.hpp"
+#include "specfem/element_connections.hpp"
 
 namespace specfem::point {
 
