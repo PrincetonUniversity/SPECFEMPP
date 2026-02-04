@@ -3,7 +3,7 @@
 
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem {
 namespace mesh {

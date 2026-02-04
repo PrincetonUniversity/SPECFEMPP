@@ -2,7 +2,7 @@
 
 #include "enumerations/interface.hpp"
 #include "specfem/assembly/fields/impl/field_impl.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {

@@ -1,7 +1,7 @@
 #include "enumerations/interface.hpp"
 #include "specfem/point/stress_integrand.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_helper.hpp"
 #include "test_macros.hpp"
 #include <Kokkos_Core.hpp>

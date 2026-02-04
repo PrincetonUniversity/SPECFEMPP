@@ -1,6 +1,6 @@
 #include "../../../SPECFEM_Environment.hpp"
 #include "../../../utilities/include/interface.hpp"
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
@@ -105,7 +105,7 @@ TEST_P(Newmark, 2D) {
 
   const auto parameter_file = Test.specfem_config;
 
-  specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
+  specfem::runtime_configuration::setup setup(parameter_file);
 
   const auto database_file = setup.get_databases();
   const auto source_node = setup.get_sources();

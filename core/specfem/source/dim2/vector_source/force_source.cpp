@@ -1,9 +1,8 @@
 #include "enumerations/interface.hpp"
-#include "globals.h"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 

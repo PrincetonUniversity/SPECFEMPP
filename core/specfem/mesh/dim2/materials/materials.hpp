@@ -6,7 +6,7 @@
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <variant>
 
 namespace specfem {

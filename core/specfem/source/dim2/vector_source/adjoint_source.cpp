@@ -1,5 +1,4 @@
 #include "enumerations/interface.hpp"
-#include "globals.h"
 #include "specfem/algorithms.hpp"
 #include "specfem/source.hpp"
 

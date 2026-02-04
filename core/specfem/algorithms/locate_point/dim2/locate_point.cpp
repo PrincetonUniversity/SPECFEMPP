@@ -5,7 +5,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
 

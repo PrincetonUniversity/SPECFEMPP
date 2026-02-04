@@ -1,9 +1,8 @@
 #include "enumerations/interface.hpp"
-#include "globals.h"
 #include "kokkos_abstractions.h"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 // #include "utilities.cpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>

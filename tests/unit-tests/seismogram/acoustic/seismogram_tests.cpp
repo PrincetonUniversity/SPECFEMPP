@@ -1,6 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
 // #include "../../utilities/include/compare_array.h"
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "domain/domain.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/io.hpp"
@@ -77,7 +77,7 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
 
   const std::string parameter_file = test_config.specfem_config;
 
-  specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
+  specfem::runtime_configuration::setup setup(parameter_file);
 
   const auto database_file = setup.get_databases();
   // std::cout << setup.print_header();

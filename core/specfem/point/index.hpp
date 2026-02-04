@@ -2,7 +2,7 @@
 
 #include "enumerations/dimension.hpp"
 #include "specfem/data_access.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem {
 namespace point {

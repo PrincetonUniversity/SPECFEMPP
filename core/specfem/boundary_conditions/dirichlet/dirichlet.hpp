@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/boundary.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_SIMD.hpp>
 

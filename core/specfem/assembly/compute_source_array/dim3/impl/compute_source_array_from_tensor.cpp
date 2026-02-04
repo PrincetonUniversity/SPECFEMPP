@@ -8,7 +8,7 @@
 #include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem::assembly::compute_source_array_impl {
 

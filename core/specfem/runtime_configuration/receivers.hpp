@@ -1,6 +1,6 @@
 #pragma once
 
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
 #include "yaml-cpp/yaml.h"

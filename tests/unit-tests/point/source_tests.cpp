@@ -3,7 +3,7 @@
 #include "specfem/data_access.hpp"
 #include "specfem/point/properties.hpp"
 #include "specfem/point/source.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>

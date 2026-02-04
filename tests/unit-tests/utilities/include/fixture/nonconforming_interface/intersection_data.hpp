@@ -4,7 +4,7 @@
 #include "enumerations/dimension.hpp"
 #include "initializers.hpp"
 #include "specfem/data_access/accessor.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 #include <type_traits>
 static constexpr specfem::dimension::type dimension_tag_ =

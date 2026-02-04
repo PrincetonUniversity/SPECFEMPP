@@ -4,7 +4,7 @@
 #include "enumerations/wavefield.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/timescheme/timescheme.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem {
 namespace time_scheme {

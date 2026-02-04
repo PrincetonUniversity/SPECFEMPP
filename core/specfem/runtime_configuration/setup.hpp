@@ -11,7 +11,7 @@
 #include "solver.tpp"
 #include "sources.hpp"
 #include "specfem/io.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "time_scheme.hpp"
 #include "writer/kernel.hpp"
 #include "writer/plot_wavefield.hpp"
@@ -52,18 +52,29 @@ public:
    *
    * @param parameter_file Path to a configuration YAML file
    * @param default_file Path to a YAML file to be used to instantiate default
-   * parameters
-   * @param binding_python Flag to indicate if the setup is being used in a
-   * pybind environment
+   * parameters (DEPRECATED - ignored for backward compatibility)
    */
   setup(const std::string &parameter_file, const std::string &default_file);
   /**
    * @brief Construct a new setup object
    *
+   * @param parameter_file Path to a configuration YAML file
+   */
+  setup(const std::string &parameter_file);
+  /**
+   * @brief Construct a new setup object
+   *
    * @param parameter_dict Configuration YAML Node
    * @param default_dict YAML Node to be used to instantiate default parameters
+   * (DEPRECATED - ignored for backward compatibility)
    */
   setup(const YAML::Node &parameter_dict, const YAML::Node &default_dict);
+  /**
+   * @brief Construct a new setup object
+   *
+   * @param parameter_dict Configuration YAML Node
+   */
+  setup(const YAML::Node &parameter_dict);
   /**
    * @brief Instantiate quadrature objects in x and z dimensions
    *

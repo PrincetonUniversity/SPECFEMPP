@@ -6,7 +6,7 @@
 #define COMPARE_ARRAY_H
 
 #include "kokkos_abstractions.h"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <string>
 
 namespace specfem {

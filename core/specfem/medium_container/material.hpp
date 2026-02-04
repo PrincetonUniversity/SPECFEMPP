@@ -2,7 +2,7 @@
 
 #include "enumerations/specfem_enums.hpp"
 #include "impl/attenuation_values.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <ostream>
 #include <tuple>
 

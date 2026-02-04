@@ -2,7 +2,7 @@
 #include "kokkos_abstractions.h"
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/mpi.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <fstream>
 #include <iostream>

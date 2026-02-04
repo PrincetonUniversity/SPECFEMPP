@@ -1,6 +1,6 @@
 #pragma once
 
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "enumerations/dimension.hpp"
 #include "specfem/datatype.hpp"
 #include <Kokkos_Core.hpp>

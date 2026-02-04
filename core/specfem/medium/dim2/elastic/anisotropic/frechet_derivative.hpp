@@ -1,7 +1,6 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "globals.h"
 #include "specfem/algorithms.hpp"
 #include "specfem/point.hpp"
 

@@ -1,9 +1,8 @@
 #include "enumerations/interface.hpp"
-#include "globals.h"
 #include "kokkos_abstractions.h"
 #include "specfem/receivers.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 std::string
 specfem::receivers::receiver<specfem::dimension::type::dim2>::print() const {

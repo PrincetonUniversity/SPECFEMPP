@@ -2,7 +2,7 @@
 #include "specfem/io.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 
 // External Includes
