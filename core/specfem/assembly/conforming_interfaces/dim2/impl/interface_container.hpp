@@ -6,6 +6,7 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element_coupling.hpp"
 
 namespace specfem::assembly::conforming_interfaces_impl {
 

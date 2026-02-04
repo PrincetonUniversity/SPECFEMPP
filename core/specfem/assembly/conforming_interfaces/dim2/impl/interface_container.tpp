@@ -1,6 +1,8 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element_coupling.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"

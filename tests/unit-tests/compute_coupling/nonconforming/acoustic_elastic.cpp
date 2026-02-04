@@ -1,5 +1,5 @@
-#include "enumerations/coupled_interface.hpp"
 #include "nonconforming.hpp"
+#include "specfem/element_coupling.hpp"
 #include "utilities/include/fixture/nonconforming_interface/analytical_function.hpp"
 #include "utilities/include/fixture/nonconforming_interface/edge_function.hpp"
 #include "utilities/include/fixture/nonconforming_interface/intersection_function.hpp"

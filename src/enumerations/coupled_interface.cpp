@@ -1,4 +1,4 @@
-#include "enumerations/coupled_interface.hpp"
+#include "specfem/element_coupling.hpp"
 
 namespace specfem::interface {
 std::string to_string(const interface_tag &interface_tag) {

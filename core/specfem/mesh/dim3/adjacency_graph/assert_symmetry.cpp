@@ -1,4 +1,5 @@
 #include "adjacency_graph.hpp"
+#include "specfem/element_connections.hpp"
 #include <boost/range/iterator_range.hpp>
 #include <sstream>
 #include <stdexcept>

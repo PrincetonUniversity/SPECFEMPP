@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/coupled_interface.hpp"
 #include "specfem/element.hpp"
 #include "specfem/element_connections.hpp"
+#include "specfem/element_coupling.hpp"
 #include "specfem/macros.hpp"
 #include <array>
 #include <boost/preprocessor.hpp>
