@@ -37,8 +37,21 @@ namespace optimization {
  * Converges slowly but robustly for problems with few variables (N < 10).
  */
 struct NelderMeadSimplex {};
-// struct BFGS {};              // Future: gradient-based
-// struct ConjugateGradient {}; // Future: gradient-based
+
+/**
+ * @brief Tag for steepest descent (gradient descent) algorithm
+ *
+ * First-order gradient-based method using backtracking line search.
+ * Computes gradient numerically via central finite differences.
+ * Faster than Nelder-Mead for smooth functions but requires differentiability.
+ *
+ * @note This is mainly intended for educational purposes, just to show how to
+ * implement interfaces with and without gradients.
+ */
+struct SteepestDescent {};
+
+// struct BFGS {};              // Future: quasi-Newton
+// struct ConjugateGradient {}; // Future: conjugate gradient
 
 // ============================================================================
 // Result
@@ -86,8 +99,32 @@ template <typename AlgorithmTag, int N, typename Func, typename Options>
 OptimizationResult<N> optimize(AlgorithmTag tag, Func &&objective,
                                Options options);
 
+/**
+ * @brief Generic optimization interface with user-provided gradient
+ *
+ * @tparam AlgorithmTag Algorithm selector (e.g., SteepestDescent)
+ * @tparam N Dimension of optimization problem
+ * @tparam Func Objective function type: type_real(View<type_real[N]>)
+ * @tparam GradFunc Gradient function type: void(View<type_real[N]> x,
+ *                                               View<type_real[N]> grad_out)
+ * @tparam Options Algorithm-specific options structure
+ *
+ * @param tag Algorithm tag selecting the optimization method
+ * @param objective Function to minimize
+ * @param gradient Function computing gradient at a point
+ * @param options Algorithm configuration and initial point
+ * @return OptimizationResult containing solution and diagnostics
+ *
+ * @note Only supported by gradient-based algorithms (e.g., SteepestDescent).
+ */
+template <typename AlgorithmTag, int N, typename Func, typename GradFunc,
+          typename Options>
+OptimizationResult<N> optimize(AlgorithmTag tag, Func &&objective,
+                               GradFunc &&gradient, Options options);
+
 } // namespace optimization
 } // namespace specfem
 
 // Include algorithm implementations
 #include "optimization/neldermeadsimplex.hpp"
+#include "optimization/steepestdescent.hpp"

@@ -143,6 +143,7 @@ add_executable(
   optimization_tests
   optimization/runner.cpp
   optimization/neldermead_tests.cpp
+  optimization/steepestdescent_tests.cpp
 )
 
 target_link_libraries(
