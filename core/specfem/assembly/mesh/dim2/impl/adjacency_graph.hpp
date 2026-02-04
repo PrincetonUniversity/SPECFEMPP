@@ -13,12 +13,13 @@ namespace specfem::assembly::mesh_impl {
  * @see specfem::mesh::adjacency_graph
  */
 template <>
-class adjacency_graph<specfem::dimension::type::dim2>
-    : public specfem::mesh::adjacency_graph<specfem::dimension::type::dim2> {
+class adjacency_graph<specfem::element::dimension_tag::dim2>
+    : public specfem::mesh::adjacency_graph<
+          specfem::element::dimension_tag::dim2> {
 
 private:
   using base_type =
-      specfem::mesh::adjacency_graph<specfem::dimension::type::dim2>;
+      specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2>;
 
 public:
   /**

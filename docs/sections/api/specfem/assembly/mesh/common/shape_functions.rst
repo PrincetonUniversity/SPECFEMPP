@@ -1,7 +1,7 @@
 .. _assembly_mesh_shape_functions_common:
 
-``specfem::assembly::mesh_impl::shape_functions`` Template
-===========================================================
+``specfem::assembly::mesh_impl::shape_functions``
+=================================================
 
 Base template for shape function calculations across dimensions.
 

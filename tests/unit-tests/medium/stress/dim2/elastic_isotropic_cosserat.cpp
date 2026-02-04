@@ -7,7 +7,7 @@
 namespace {
 
 TEST(Stress, ElasticIsotropicCosserat2D_Basic) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic_cosserat;
   static constexpr auto CosseratTag =
@@ -73,7 +73,7 @@ TEST(Stress, ElasticIsotropicCosserat2D_Basic) {
 }
 
 TEST(Stress, ElasticIsotropicCosserat2D_ZeroDerivatives) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic_cosserat;
   static constexpr auto CosseratTag =
@@ -122,7 +122,7 @@ TEST(Stress, ElasticIsotropicCosserat2D_ZeroDerivatives) {
 }
 
 TEST(Stress, ElasticIsotropicCosserat2D_SymmetricWhenNuZero) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic_cosserat;
   static constexpr auto CosseratTag =

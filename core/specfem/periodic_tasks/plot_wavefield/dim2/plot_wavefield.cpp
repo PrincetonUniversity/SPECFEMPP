@@ -59,9 +59,9 @@
 #ifdef NO_VTK
 
 // Add this constructor implementation for NO_VTK builds
-specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
+specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
     plot_wavefield(
-        const specfem::assembly::assembly<specfem::dimension::type::dim2>
+        const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
             &assembly,
         const specfem::display::format &output_format,
         const specfem::wavefield::type &wavefield_type,
@@ -72,7 +72,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
         const specfem::enums::electromagnetic_wave electromagnetic_wave)
     : assembly(assembly), simulation_wavefield_type(simulation_wavefield_type),
       wavefield_type(wavefield_type),
-      plotter<specfem::dimension::type::dim2>(time_interval),
+      plotter<specfem::element::dimension_tag::dim2>(time_interval),
       output_format(output_format), output_folder(output_folder),
       component(component), nspec(assembly.mesh.nspec), dt(dt),
       elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
@@ -86,8 +86,10 @@ specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
   throw std::runtime_error(message.str());
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    run(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::run(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+            &assembly,
         const int istep) {
   std::ostringstream message;
   message
@@ -97,9 +99,10 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
   throw std::runtime_error(message.str());
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    initialize(
-        specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::initialize(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+            &assembly) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -108,9 +111,10 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
   throw std::runtime_error(message.str());
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    finalize(
-        specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::finalize(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+            &assembly) {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -122,9 +126,9 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
 #else
 
 // Constructor
-specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
+specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
     plot_wavefield(
-        const specfem::assembly::assembly<specfem::dimension::type::dim2>
+        const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
             &assembly,
         const specfem::display::format &output_format,
         const specfem::wavefield::type &wavefield_type,
@@ -135,7 +139,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
         const specfem::enums::electromagnetic_wave electromagnetic_wave)
     : assembly(assembly), simulation_wavefield_type(simulation_wavefield_type),
       wavefield_type(wavefield_type),
-      plotter<specfem::dimension::type::dim2>(time_interval),
+      plotter<specfem::element::dimension_tag::dim2>(time_interval),
       output_format(output_format), output_folder(output_folder),
       component(component), nspec(assembly.mesh.nspec), dt(dt),
       elastic_wave(elastic_wave), electromagnetic_wave(electromagnetic_wave),
@@ -175,14 +179,14 @@ specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
 
 // Sigmoid function centered at 0.0
 double specfem::periodic_tasks::plot_wavefield<
-    specfem::dimension::type::dim2>::sigmoid(double x, double scale,
-                                             double offset) {
+    specfem::element::dimension_tag::dim2>::sigmoid(double x, double scale,
+                                                    double offset) {
   return (1 / (1 + std::exp(-scale * (x - offset))));
 }
 
 // Get wavefield type to display
 specfem::wavefield::type specfem::periodic_tasks::plot_wavefield<
-    specfem::dimension::type::dim2>::get_wavefield_type() {
+    specfem::element::dimension_tag::dim2>::get_wavefield_type() {
   if (wavefield_type == specfem::wavefield::type::displacement) {
     return specfem::wavefield::type::displacement;
   } else if (wavefield_type == specfem::wavefield::type::velocity) {
@@ -208,7 +212,7 @@ specfem::wavefield::type specfem::periodic_tasks::plot_wavefield<
 
 // Maps different materials to different colors
 vtkSmartPointer<vtkDataSetMapper> specfem::periodic_tasks::plot_wavefield<
-    specfem::dimension::type::dim2>::map_materials_with_color() {
+    specfem::element::dimension_tag::dim2>::map_materials_with_color() {
 
   const auto &element_types = assembly.element_types;
 
@@ -286,7 +290,8 @@ vtkSmartPointer<vtkDataSetMapper> specfem::periodic_tasks::plot_wavefield<
 }
 
 // Helper function to get scalar value at a given point
-float specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
+float specfem::periodic_tasks::plot_wavefield<
+    specfem::element::dimension_tag::dim2>::
     get_scalar_value_at_point(
         const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                            Kokkos::HostSpace> &wavefield_data,
@@ -354,7 +359,7 @@ float specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
  * @return vtkSmartPointer<vtkUnstructuredGrid>
  */
 void specfem::periodic_tasks::plot_wavefield<
-    specfem::dimension::type::dim2>::create_biquad_grid() {
+    specfem::element::dimension_tag::dim2>::create_biquad_grid() {
   const auto &coordinates = assembly.mesh.h_coord;
 
   const int ncells = nspec;
@@ -413,7 +418,7 @@ void specfem::periodic_tasks::plot_wavefield<
  * with 25 control points arranged in a structured 5x5 grid.
  */
 void specfem::periodic_tasks::plot_wavefield<
-    specfem::dimension::type::dim2>::create_lagrange_quad_grid() {
+    specfem::element::dimension_tag::dim2>::create_lagrange_quad_grid() {
   const auto &coordinates = assembly.mesh.h_coord;
 
   // Each spectral element becomes one Lagrange quadrilateral
@@ -497,7 +502,7 @@ void specfem::periodic_tasks::plot_wavefield<
  *
  */
 void specfem::periodic_tasks::plot_wavefield<
-    specfem::dimension::type::dim2>::create_quad_grid() {
+    specfem::element::dimension_tag::dim2>::create_quad_grid() {
   const auto &coordinates = assembly.mesh.h_coord;
 
   // For ngll = 5, each spectral element has 16 cells
@@ -550,9 +555,11 @@ void specfem::periodic_tasks::plot_wavefield<
 }
 
 // Compute wavefield scalar values for the grid points
-vtkSmartPointer<vtkFloatArray> specfem::periodic_tasks::
-    plot_wavefield<specfem::dimension::type::dim2>::compute_wavefield_scalars(
-        specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+vtkSmartPointer<vtkFloatArray>
+specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim2>::
+    compute_wavefield_scalars(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+            &assembly) {
   const auto wavefield_type = get_wavefield_type();
   const auto &wavefield_data = assembly.generate_wavefield_on_entire_grid(
       simulation_wavefield_type, wavefield_type);
@@ -634,8 +641,9 @@ vtkSmartPointer<vtkFloatArray> specfem::periodic_tasks::
 }
 
 template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    initialize<specfem::display::format::vtkhdf>(
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::initialize<
+        specfem::display::format::vtkhdf>(
         vtkSmartPointer<vtkFloatArray> &scalars) {
 
 #ifndef NO_HDF5
@@ -936,8 +944,9 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
 #endif
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    initialize_display(vtkSmartPointer<vtkFloatArray> &scalars) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::initialize_display(
+        vtkSmartPointer<vtkFloatArray> &scalars) {
   const auto wavefield_type = get_wavefield_type();
 
   // Create VTK objects that will persist between calls
@@ -1111,12 +1120,13 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
 }
 
 template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    initialize<specfem::display::format::on_screen>(
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::initialize<
+        specfem::display::format::on_screen>(
         vtkSmartPointer<vtkFloatArray> &scalars) {
 
   specfem::periodic_tasks::plot_wavefield<
-      specfem::dimension::type::dim2>::initialize_display(scalars);
+      specfem::element::dimension_tag::dim2>::initialize_display(scalars);
 
   // Create render window interactor
   this->render_window_interactor =
@@ -1125,12 +1135,13 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
 }
 
 template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    initialize<specfem::display::format::PNG>(
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::initialize<
+        specfem::display::format::PNG>(
         vtkSmartPointer<vtkFloatArray> &scalars) {
 
   specfem::periodic_tasks::plot_wavefield<
-      specfem::dimension::type::dim2>::initialize_display(scalars);
+      specfem::element::dimension_tag::dim2>::initialize_display(scalars);
 
   // Set off screen rendering
   vtkSmartPointer<vtkGraphicsFactory> graphics_factory;
@@ -1140,12 +1151,13 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
 }
 
 template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    initialize<specfem::display::format::JPG>(
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::initialize<
+        specfem::display::format::JPG>(
         vtkSmartPointer<vtkFloatArray> &scalars) {
 
   specfem::periodic_tasks::plot_wavefield<
-      specfem::dimension::type::dim2>::initialize_display(scalars);
+      specfem::element::dimension_tag::dim2>::initialize_display(scalars);
 
   // Set off screen rendering
   vtkSmartPointer<vtkGraphicsFactory> graphics_factory;
@@ -1157,9 +1169,10 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
   this->renderer->ResetCamera();
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    initialize(
-        specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::initialize(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+            &assembly) {
 
   // Create the grid structure
   create_lagrange_quad_grid(); // or create_quad_grid() or create_biquad_grid()
@@ -1189,8 +1202,9 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
   return;
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    run_render(vtkSmartPointer<vtkFloatArray> &scalars) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::run_render(
+        vtkSmartPointer<vtkFloatArray> &scalars) {
 
   const auto wavefield_type = get_wavefield_type();
 
@@ -1214,15 +1228,17 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
 };
 
 template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    run<specfem::display::format::on_screen>(
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::run<
+        specfem::display::format::on_screen>(
         vtkSmartPointer<vtkFloatArray> &scalars, const int istep) {
   this->run_render(scalars);
 }
 
 template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    run<specfem::display::format::PNG>(vtkSmartPointer<vtkFloatArray> &scalars,
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::run<
+        specfem::display::format::PNG>(vtkSmartPointer<vtkFloatArray> &scalars,
                                        const int istep) {
 
   // Render the field
@@ -1245,8 +1261,9 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
 }
 
 template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    run<specfem::display::format::JPG>(vtkSmartPointer<vtkFloatArray> &scalars,
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::run<
+        specfem::display::format::JPG>(vtkSmartPointer<vtkFloatArray> &scalars,
                                        const int istep) {
 
   // Render the field
@@ -1268,8 +1285,9 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
 }
 
 template <>
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    run<specfem::display::format::vtkhdf>(
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::run<
+        specfem::display::format::vtkhdf>(
         vtkSmartPointer<vtkFloatArray> &scalars, const int istep) {
 
 #ifndef NO_HDF5
@@ -1491,8 +1509,10 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
 #endif
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    run(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::run(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+            &assembly,
         const int istep) {
 
   // Update the wavefield scalars only
@@ -1523,9 +1543,10 @@ void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
   }
 }
 
-void specfem::periodic_tasks::plot_wavefield<specfem::dimension::type::dim2>::
-    finalize(
-        specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+void specfem::periodic_tasks::
+    plot_wavefield<specfem::element::dimension_tag::dim2>::finalize(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+            &assembly) {
 
   // If interactive, start the event loop if it hasn't been started
   if (output_format == specfem::display::format::on_screen &&

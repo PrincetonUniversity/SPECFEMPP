@@ -15,7 +15,7 @@ namespace specfem::mesh {
  *
  * @tparam Dimension The spatial dimension of the mesh (dim2 or dim3)
  */
-template <specfem::dimension::type Dimension> struct adjacency_graph {
+template <specfem::element::dimension_tag Dimension> struct adjacency_graph {
 
 public:
   /**

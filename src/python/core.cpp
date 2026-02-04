@@ -41,7 +41,7 @@ bool _execute(const std::string &parameter_string,
   const YAML::Node default_dict = YAML::Load(default_string);
 
   // Setup periodic tasks (signal checking)
-  const auto dimension_tag = specfem::dimension::type::dim2;
+  const auto dimension_tag = specfem::element::dimension_tag::dim2;
   std::vector<
       std::shared_ptr<specfem::periodic_tasks::periodic_task<dimension_tag> > >
       tasks;

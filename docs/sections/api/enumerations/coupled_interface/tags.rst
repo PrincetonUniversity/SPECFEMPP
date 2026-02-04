@@ -8,4 +8,4 @@
 2D specialization
 ^^^^^^^^^^^^^^^^^
 
-.. doxygenfunction:: specfem::interface::edges< specfem::dimension::type::dim2 >()
+.. doxygenfunction:: specfem::interface::edges< specfem::element::dimension_tag::dim2 >()

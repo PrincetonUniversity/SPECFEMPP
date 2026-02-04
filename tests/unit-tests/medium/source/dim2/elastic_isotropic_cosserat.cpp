@@ -8,7 +8,7 @@
 namespace {
 
 TEST(Source, ElasticIsotropicCosserat2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag =
       specfem::element::medium_tag::elastic_psv_t;
   static constexpr auto property_tag =
@@ -62,7 +62,7 @@ TEST(Source, ElasticIsotropicCosserat2D) {
 }
 
 TEST(Source, ElasticIsotropicCosserat2D_ZeroSource) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag =
       specfem::element::medium_tag::elastic_psv_t;
   static constexpr auto property_tag =

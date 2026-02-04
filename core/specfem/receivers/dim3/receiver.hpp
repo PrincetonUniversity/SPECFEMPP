@@ -10,15 +10,15 @@
 
 namespace specfem::receivers {
 
-template <> class receiver<specfem::dimension::type::dim3> {
+template <> class receiver<specfem::element::dimension_tag::dim3> {
 
 public:
   /**
    * Compile-time constants
    * @{
    */
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim3;
   /// @}
 
   /**

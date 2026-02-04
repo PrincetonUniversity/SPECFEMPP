@@ -35,12 +35,12 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void read(specfem::assembly::assembly<specfem::dimension::type::dim2>
+  void read(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
                 &assembly) override;
 
 private:
   std::string input_folder; ///< Path to output folder
-  specfem::assembly::properties<specfem::dimension::type::dim2>
+  specfem::assembly::properties<specfem::element::dimension_tag::dim2>
       properties; ///< Properties object
 };
 } // namespace io

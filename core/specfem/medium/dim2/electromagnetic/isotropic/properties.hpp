@@ -36,21 +36,22 @@ namespace specfem::medium_container::properties {
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct point_container<
-    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::dimension_tag::dim2, MediumTag,
     specfem::element::property_tag::isotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> >
     /// @cond
-    : public PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
+    : public PropertyAccessor<specfem::element::dimension_tag::dim2, MediumTag,
                               specfem::element::property_tag::isotropic,
                               UseSIMD>
 /// @endcond
 {
 
 private:
-  using base_type = PropertyAccessor<specfem::dimension::type::dim2, MediumTag,
-                                     specfem::element::property_tag::isotropic,
-                                     UseSIMD>; ///< Base type of the
-                                               ///< point properties
+  using base_type =
+      PropertyAccessor<specfem::element::dimension_tag::dim2, MediumTag,
+                       specfem::element::property_tag::isotropic,
+                       UseSIMD>; ///< Base type of the
+                                 ///< point properties
 
 public:
   using value_type = typename base_type::value_type; ///< Type of the properties

@@ -46,7 +46,7 @@ namespace specfem::assembly::boundaries_impl {
  * - Both device and host storage for hybrid CPU/GPU execution
  *
  */
-template <> struct stacey<specfem::dimension::type::dim2> {
+template <> struct stacey<specfem::element::dimension_tag::dim2> {
 private:
   /**
    * @name Private Constants
@@ -66,7 +66,7 @@ public:
   /**
    * @brief Dimension tag indicating this is a 2D implementation
    */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
   ///@}
 
   /**

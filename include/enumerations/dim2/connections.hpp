@@ -14,13 +14,13 @@ namespace specfem::connections {
  * Maps coordinates between mesh entities (edges, corners) of adjacent
  * quadrilateral elements.
  */
-template <> class connection_mapping<specfem::dimension::type::dim2> {
+template <> class connection_mapping<specfem::element::dimension_tag::dim2> {
 private:
   using ElementIndexView =
       Kokkos::View<int *, Kokkos::LayoutStride, Kokkos::HostSpace>;
 
 public:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
 
   /**
    * @brief Construct 2D connection mapping.

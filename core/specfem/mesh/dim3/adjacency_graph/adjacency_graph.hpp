@@ -6,7 +6,7 @@
 
 namespace specfem::mesh {
 
-template <specfem::dimension::type DimensionTag> struct adjacency_graph;
+template <specfem::element::dimension_tag DimensionTag> struct adjacency_graph;
 
 /**
  * @brief 3D adjacency graph for MESHFEM3D spectral element connectivity
@@ -27,7 +27,8 @@ template <specfem::dimension::type DimensionTag> struct adjacency_graph;
  * - Discontinuous Galerkin coupling
  * - Boundary condition enforcement
  *
- * @tparam specfem::dimension::type::dim3 Template specialization for 3D meshes
+ * @tparam specfem::element::dimension_tag::dim3 Template specialization for 3D
+ * meshes
  *
  * @see specfem::mesh::adjacency (CSR-based adjacency for solver)
  * @see specfem::connections::type
@@ -35,7 +36,7 @@ template <specfem::dimension::type DimensionTag> struct adjacency_graph;
  *
  * @code
  * // Example: Building adjacency graph from MESHFEM3D data
- * specfem::mesh::adjacency_graph<specfem::dimension::type::dim3>
+ * specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
  *     adj_graph(nspec);
  *
  * // Add element connections with properties
@@ -56,7 +57,7 @@ template <specfem::dimension::type DimensionTag> struct adjacency_graph;
  *       Runtime computations typically use the more efficient CSR format
  *       in specfem::mesh::adjacency.
  */
-template <> struct adjacency_graph<specfem::dimension::type::dim3> {
+template <> struct adjacency_graph<specfem::element::dimension_tag::dim3> {
 public:
   /**
    * @brief Edge properties for element interface characterization
@@ -167,7 +168,7 @@ public:
    * Elements and connections must be added explicitly after construction.
    *
    * @code
-   * specfem::mesh::adjacency_graph<specfem::dimension::type::dim3>
+   * specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
    *     empty_graph;
    * // Graph must be populated with add_vertex/add_edge operations
    * @endcode
@@ -185,7 +186,7 @@ public:
    *
    * @code
    * // Create graph for mesh with 1000 spectral elements
-   * specfem::mesh::adjacency_graph<specfem::dimension::type::dim3>
+   * specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
    *     graph(1000);
    * // Vertices 0-999 are pre-allocated and ready for edge addition
    * @endcode

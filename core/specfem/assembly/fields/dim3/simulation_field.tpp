@@ -32,7 +32,7 @@ template <typename ViewType> int compute_nglob3D(const ViewType index_mapping) {
 } // namespace specfem::assembly::simulation_fields_impl
 
 template <specfem::simulation::field_type WavefieldType>
-specfem::assembly::simulation_field<specfem::dimension::type::dim3,
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
                                     WavefieldType>::
     simulation_field(
         const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -67,7 +67,7 @@ specfem::assembly::simulation_field<specfem::dimension::type::dim3,
 
 template <specfem::simulation::field_type WavefieldType>
 int specfem::assembly::simulation_field<
-    specfem::dimension::type::dim3,
+    specfem::element::dimension_tag::dim3,
     WavefieldType>::get_total_degrees_of_freedom() {
   if (total_degrees_of_freedom != 0) {
     return total_degrees_of_freedom;
@@ -85,7 +85,7 @@ int specfem::assembly::simulation_field<
 
 template <specfem::simulation::field_type WavefieldType>
 template <specfem::sync::kind sync>
-void specfem::assembly::simulation_field<specfem::dimension::type::dim3,
+void specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
                                          WavefieldType>::sync_fields() {
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       CAPTURE(field) { _field_.template sync_fields<sync>(); })

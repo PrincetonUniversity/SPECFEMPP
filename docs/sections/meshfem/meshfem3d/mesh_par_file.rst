@@ -441,7 +441,7 @@ Number of materials in the model.
 Defines the properties for each material. The format depends on the material type.
 
 Acoustic/Elastic Materials
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For acoustic or elastic materials, use the following format:
 

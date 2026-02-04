@@ -13,6 +13,6 @@ Dimension-Specific Specializations
 2D Specialization
 ^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::chunk_edge::intersection_factor< specfem::dimension::type::dim2, InterfaceTag, BoundaryTag, NumberElements, NQuadIntersection, MemorySpace, MemoryTraits >
+.. doxygenstruct:: specfem::chunk_edge::intersection_factor< specfem::element::dimension_tag::dim2, InterfaceTag, BoundaryTag, NumberElements, NQuadIntersection, MemorySpace, MemoryTraits >
     :members:
     :private-members:

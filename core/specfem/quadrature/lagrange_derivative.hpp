@@ -21,8 +21,8 @@ namespace quadrature {
  * @tparam MemorySpace Memory space for the views
  * @tparam MemoryTraits Memory traits for the views
  */
-template <int NGLL, specfem::dimension::type DimensionTag, typename MemorySpace,
-          typename MemoryTraits>
+template <int NGLL, specfem::element::dimension_tag DimensionTag,
+          typename MemorySpace, typename MemoryTraits>
 struct lagrange_derivative {
   /**
    * @name Typedefs
@@ -108,9 +108,9 @@ struct lagrange_derivative {
    * @param iy Index of the GLL point
    * @return Reference to the derivative value
    */
-  template <
-      specfem::dimension::type D = DimensionTag,
-      typename std::enable_if_t<D == specfem::dimension::type::dim3, int> = 0>
+  template <specfem::element::dimension_tag D = DimensionTag,
+            typename std::enable_if_t<
+                D == specfem::element::dimension_tag::dim3, int> = 0>
   KOKKOS_INLINE_FUNCTION constexpr const auto &eta(const int l,
                                                    const int iy) const {
     return hprime_gll(l, iy);

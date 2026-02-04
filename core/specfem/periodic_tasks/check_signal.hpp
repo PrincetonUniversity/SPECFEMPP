@@ -13,7 +13,7 @@ namespace periodic_tasks {
  * @brief Signal checker class for handling interrupts during simulation
  *
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 class check_signal : public periodic_task<DimensionTag> {
   using periodic_task<DimensionTag>::periodic_task;
 

@@ -26,10 +26,10 @@ namespace specfem::assembly {
  *
  * @code
  * // 1. Initialize source assembly from configuration
- * std::vector<std::shared_ptr<specfem::sources::source<specfem::dimension::type::dim3>>> sources;
+ * std::vector<std::shared_ptr<specfem::sources::source<specfem::element::dimension_tag::dim3>>> sources;
  * // ... populate sources from input files
  *
- * auto source_assembly = specfem::assembly::sources<specfem::dimension::type::dim3>(
+ * auto source_assembly = specfem::assembly::sources<specfem::element::dimension_tag::dim3>(
  *     sources, mesh, jacobian, element_types, 0.0, 0.01, 1000);
  *
  * // 2. Filter sources by criteria
@@ -47,7 +47,7 @@ namespace specfem::assembly {
  *     Kokkos::parallel_for("apply_sources",
  *         Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, nsources),
  *         KOKKOS_LAMBDA(const int isource) {
- *             specfem::point::mapped_index<specfem::dimension::type::dim3> index;
+ *             specfem::point::mapped_index<specfem::element::dimension_tag::dim3> index;
  *             specfem::point::source<...> point_source;
  *             load_on_device(index, source_assembly, point_source);
  *             // ... use point_source for assembly
@@ -57,7 +57,7 @@ namespace specfem::assembly {
  *
  */
 // clang-format on
-template <> struct sources<specfem::dimension::type::dim3> {
+template <> struct sources<specfem::element::dimension_tag::dim3> {
 
 public:
   /**
@@ -67,7 +67,7 @@ public:
   /**
    * @brief Dimension tag indicating this is a 3D implementation
    */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
   ///@}
 
 private:
@@ -169,8 +169,8 @@ public:
    * @code
    * // Initialize 3D source assembly
    * auto source_assembly =
-   * specfem::assembly::sources<specfem::dimension::type::dim3>( source_vector,
-   * mesh, jacobian, element_types, 0.0, 0.01, 1000);
+   * specfem::assembly::sources<specfem::element::dimension_tag::dim3>(
+   * source_vector, mesh, jacobian, element_types, 0.0, 0.01, 1000);
    *
    * // Use in simulation
    * source_assembly.update_timestep(current_step);
@@ -447,26 +447,28 @@ private:
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void load_on_device(
       const IndexType index,
-      const specfem::assembly::sources<specfem::dimension::type::dim3> &sources,
+      const specfem::assembly::sources<specfem::element::dimension_tag::dim3>
+          &sources,
       PointSourceType &point_source);
 
   template <typename IndexType, typename PointSourceType>
   friend void load_on_host(
       const IndexType index,
-      const specfem::assembly::sources<specfem::dimension::type::dim3> &sources,
+      const specfem::assembly::sources<specfem::element::dimension_tag::dim3>
+          &sources,
       PointSourceType &point_source);
 
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void store_on_device(
       const IndexType index, const PointSourceType &point_source,
-      const specfem::assembly::sources<specfem::dimension::type::dim3>
+      const specfem::assembly::sources<specfem::element::dimension_tag::dim3>
           &sources);
 
   template <typename IndexType, typename PointSourceType>
-  friend void
-  store_on_host(const IndexType index, const PointSourceType &point_source,
-                const specfem::assembly::sources<specfem::dimension::type::dim3>
-                    &sources);
+  friend void store_on_host(
+      const IndexType index, const PointSourceType &point_source,
+      const specfem::assembly::sources<specfem::element::dimension_tag::dim3>
+          &sources);
 };
 
 /**
@@ -495,7 +497,7 @@ private:
  *
  * @code
  * // Usage in 3D device kernel
- * specfem::point::mapped_index<specfem::dimension::type::dim3> idx;
+ * specfem::point::mapped_index<specfem::element::dimension_tag::dim3> idx;
  * specfem::point::source<...> src;
  * load_on_device(idx, source_assembly, src);
  * @endcode
@@ -503,7 +505,8 @@ private:
 template <typename IndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void load_on_device(
     const IndexType index,
-    const specfem::assembly::sources<specfem::dimension::type::dim3> &sources,
+    const specfem::assembly::sources<specfem::element::dimension_tag::dim3>
+        &sources,
     PointSourceType &point_source) {
 
   static_assert(IndexType::using_simd == false,
@@ -515,10 +518,11 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
       "PointSourceType must be a point source type specfem::point::source");
 
   static_assert(PointSourceType::dimension_tag ==
-                    specfem::dimension::type::dim3,
+                    specfem::element::dimension_tag::dim3,
                 "PointSourceType must be a 3D point source type");
 
-  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim3,
+  static_assert(IndexType::dimension_tag ==
+                    specfem::element::dimension_tag::dim3,
                 "IndexType must be a 3D index type");
 
 #ifndef NDEBUG
@@ -542,7 +546,8 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
-        if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
+        if constexpr (_dimension_tag_ ==
+                      specfem::element::dimension_tag::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
             _source_.load_on_device(sources.timestep, index, point_source);
           }
@@ -573,7 +578,7 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
  *
  * @code
  * // Usage in 3D host code
- * specfem::point::mapped_index<specfem::dimension::type::dim3> idx;
+ * specfem::point::mapped_index<specfem::element::dimension_tag::dim3> idx;
  * specfem::point::source<...> src;
  * load_on_host(idx, source_assembly, src);
  * @endcode
@@ -581,7 +586,8 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
 template <typename IndexType, typename PointSourceType>
 void load_on_host(
     const IndexType index,
-    const specfem::assembly::sources<specfem::dimension::type::dim3> &sources,
+    const specfem::assembly::sources<specfem::element::dimension_tag::dim3>
+        &sources,
     PointSourceType &point_source) {
 
   // Get the mapping from the iterator index
@@ -595,10 +601,11 @@ void load_on_host(
       "PointSourceType must be a point source type specfem::point::source");
 
   static_assert(PointSourceType::dimension_tag ==
-                    specfem::dimension::type::dim3,
+                    specfem::element::dimension_tag::dim3,
                 "PointSourceType must be a 3D point source type");
 
-  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim3,
+  static_assert(IndexType::dimension_tag ==
+                    specfem::element::dimension_tag::dim3,
                 "IndexType must be a 3D index type");
 
 #ifndef NDEBUG
@@ -621,7 +628,8 @@ void load_on_host(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
-        if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
+        if constexpr (_dimension_tag_ ==
+                      specfem::element::dimension_tag::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
             _source_.load_on_host(sources.timestep, index, point_source);
           }
@@ -660,7 +668,8 @@ void load_on_host(
 template <typename IndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void store_on_device(
     const IndexType index, const PointSourceType &point_source,
-    const specfem::assembly::sources<specfem::dimension::type::dim3> &sources) {
+    const specfem::assembly::sources<specfem::element::dimension_tag::dim3>
+        &sources) {
 
   static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when storing sources");
@@ -671,10 +680,11 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
       "PointSourceType must be a point source type specfem::point::source");
 
   static_assert(PointSourceType::dimension_tag ==
-                    specfem::dimension::type::dim3,
+                    specfem::element::dimension_tag::dim3,
                 "PointSourceType must be a 3D point source type");
 
-  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim3,
+  static_assert(IndexType::dimension_tag ==
+                    specfem::element::dimension_tag::dim3,
                 "IndexType must be a 3D index type");
 
 #ifndef NDEBUG
@@ -696,7 +706,8 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
-        if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
+        if constexpr (_dimension_tag_ ==
+                      specfem::element::dimension_tag::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
             _source_.store_on_device(sources.timestep, index, point_source);
           }
@@ -735,7 +746,8 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
 template <typename IndexType, typename PointSourceType>
 void store_on_host(
     const IndexType index, const PointSourceType &point_source,
-    const specfem::assembly::sources<specfem::dimension::type::dim3> &sources) {
+    const specfem::assembly::sources<specfem::element::dimension_tag::dim3>
+        &sources) {
 
   static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when storing sources");
@@ -746,10 +758,11 @@ void store_on_host(
       "PointSourceType must be a point source type specfem::point::source");
 
   static_assert(PointSourceType::dimension_tag ==
-                    specfem::dimension::type::dim3,
+                    specfem::element::dimension_tag::dim3,
                 "PointSourceType must be a 3D point source type");
 
-  static_assert(IndexType::dimension_tag == specfem::dimension::type::dim3,
+  static_assert(IndexType::dimension_tag ==
+                    specfem::element::dimension_tag::dim3,
                 "IndexType must be a 3D index type");
 
 #ifndef NDEBUG
@@ -771,7 +784,8 @@ void store_on_host(
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((source, sources.source)) {
-        if constexpr (_dimension_tag_ == specfem::dimension::type::dim3) {
+        if constexpr (_dimension_tag_ ==
+                      specfem::element::dimension_tag::dim3) {
           if constexpr (_medium_tag_ == PointSourceType::medium_tag) {
             _source_.store_on_host(sources.timestep, index, point_source);
           }

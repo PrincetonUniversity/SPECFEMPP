@@ -72,7 +72,7 @@ compute_coupling(const CoupledInterfaceType &interface_data,
       "Inconsistent coupled medium tag between interface and coupled field");
 
   using dimension_dispatch =
-      std::integral_constant<specfem::dimension::type, dimension_tag>;
+      std::integral_constant<specfem::element::dimension_tag, dimension_tag>;
   using connection_dispatch =
       std::integral_constant<specfem::connections::type, connection_tag>;
   using interface_dispatch =
@@ -157,7 +157,7 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
       "Inconsistent coupled medium tag between interface and coupled field");
 
   using dimension_dispatch =
-      std::integral_constant<specfem::dimension::type, dimension_tag>;
+      std::integral_constant<specfem::element::dimension_tag, dimension_tag>;
   using connection_dispatch =
       std::integral_constant<specfem::connections::type, connection_tag>;
   using interface_dispatch =

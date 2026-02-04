@@ -29,18 +29,18 @@ namespace specfem::assembly {
  * @see specfem::mesh::mesh
  */
 template <>
-struct mesh<specfem::dimension::type::dim3>
+struct mesh<specfem::element::dimension_tag::dim3>
     : public specfem::assembly::mesh_impl::points<
-          specfem::dimension::type::dim3>,
+          specfem::element::dimension_tag::dim3>,
       public specfem::assembly::mesh_impl::quadrature<
-          specfem::dimension::type::dim3>,
+          specfem::element::dimension_tag::dim3>,
       public specfem::assembly::mesh_impl::control_nodes<
-          specfem::dimension::type::dim3>,
+          specfem::element::dimension_tag::dim3>,
       public specfem::assembly::mesh_impl::shape_functions<
-          specfem::dimension::type::dim3> {
+          specfem::element::dimension_tag::dim3> {
 
 public:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
   constexpr static int ndim = 3;
 
   int nspec; ///< Number of spectral elements

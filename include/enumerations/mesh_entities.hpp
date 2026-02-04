@@ -1,5 +1,5 @@
 #pragma once
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 
 namespace specfem::mesh_entity {
 
@@ -7,19 +7,19 @@ namespace specfem::mesh_entity {
  * @brief Edge entities for spectral element connectivity.
  * @tparam DimensionTag Spatial dimension (2D or 3D)
  */
-template <specfem::dimension::type DimensionTag> struct edge;
+template <specfem::element::dimension_tag DimensionTag> struct edge;
 
 /**
  * @brief Element grid structure with GLL point configuration.
  * @tparam DimensionTag Spatial dimension (2D or 3D)
  */
-template <specfem::dimension::type DimensionTag> struct element_grid;
+template <specfem::element::dimension_tag DimensionTag> struct element_grid;
 
 /**
  * @brief Element structure with coordinate mapping capabilities.
  * @tparam DimensionTag Spatial dimension (2D or 3D)
  */
-template <specfem::dimension::type DimensionTag> struct element;
+template <specfem::element::dimension_tag DimensionTag> struct element;
 
 } // namespace specfem::mesh_entity
 
@@ -33,14 +33,14 @@ namespace specfem::mesh_entity {
  */
 ///@{
 element_grid(const int, const int)
-    -> element_grid<specfem::dimension::type::dim2>;
+    -> element_grid<specfem::element::dimension_tag::dim2>;
 
 element_grid(const int, const int, const int)
-    -> element_grid<specfem::dimension::type::dim3>;
+    -> element_grid<specfem::element::dimension_tag::dim3>;
 
-element(const int, const int) -> element<specfem::dimension::type::dim2>;
+element(const int, const int) -> element<specfem::element::dimension_tag::dim2>;
 
 element(const int, const int, const int)
-    -> element<specfem::dimension::type::dim3>;
+    -> element<specfem::element::dimension_tag::dim3>;
 ///@}
 } // namespace specfem::mesh_entity

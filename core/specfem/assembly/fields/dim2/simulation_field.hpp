@@ -25,7 +25,7 @@ namespace specfem::assembly {
  * backward, buffer)
  */
 template <specfem::simulation::field_type SimulationWavefieldType>
-struct simulation_field<specfem::dimension::type::dim2,
+struct simulation_field<specfem::element::dimension_tag::dim2,
                         SimulationWavefieldType> {
 
 private:
@@ -49,7 +49,7 @@ private:
 
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
   constexpr static auto simulation_wavefield =
       SimulationWavefieldType; ///< Simulation wavefield type
 
@@ -221,24 +221,26 @@ public:
     return -1;
   }
 
-  template <bool on_device, typename IndexType,
-            typename std::enable_if_t<
-                specfem::data_access::is_index_type<IndexType>::value &&
-                    IndexType::using_simd == false &&
-                    IndexType::dimension_tag == specfem::dimension::type::dim2,
-                int> = 0>
+  template <
+      bool on_device, typename IndexType,
+      typename std::enable_if_t<
+          specfem::data_access::is_index_type<IndexType>::value &&
+              IndexType::using_simd == false &&
+              IndexType::dimension_tag == specfem::element::dimension_tag::dim2,
+          int> = 0>
   KOKKOS_INLINE_FUNCTION constexpr int
   get_iglob(const IndexType &index,
             const specfem::element::medium_tag MediumTag) const {
     return get_iglob<on_device>(index.ispec, index.iz, index.ix, MediumTag);
   }
 
-  template <bool on_device, typename IndexType,
-            typename std::enable_if_t<
-                specfem::data_access::is_index_type<IndexType>::value &&
-                    IndexType::using_simd == true &&
-                    IndexType::dimension_tag == specfem::dimension::type::dim2,
-                int> = 0>
+  template <
+      bool on_device, typename IndexType,
+      typename std::enable_if_t<
+          specfem::data_access::is_index_type<IndexType>::value &&
+              IndexType::using_simd == true &&
+              IndexType::dimension_tag == specfem::element::dimension_tag::dim2,
+          int> = 0>
   KOKKOS_INLINE_FUNCTION constexpr int
   get_iglob(const IndexType &index, const int &lane,
             const specfem::element::medium_tag MediumTag) const {
@@ -305,9 +307,9 @@ private:
  */
 template <typename SimulationWavefieldType1, typename SimulationWavefieldType2,
           typename std::enable_if_t<((SimulationWavefieldType1::dimension_tag ==
-                                      specfem::dimension::type::dim2) &&
+                                      specfem::element::dimension_tag::dim2) &&
                                      (SimulationWavefieldType2::dimension_tag ==
-                                      specfem::dimension::type::dim2)),
+                                      specfem::element::dimension_tag::dim2)),
                                     int> = 0>
 inline void deep_copy(SimulationWavefieldType1 &dst,
                       const SimulationWavefieldType2 &src) {

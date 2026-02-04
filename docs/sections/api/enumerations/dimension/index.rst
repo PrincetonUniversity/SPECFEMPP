@@ -1,22 +1,22 @@
 
 .. _specfem_api_enumerations_dimension:
 
-``specfem::dimension::type``
-============================
+``specfem::element::dimension_tag``
+===================================
 
-.. doxygenenum:: specfem::dimension::type
+.. doxygenenum:: specfem::element::dimension_tag
 
-``specfem::dimension::dimension``
-=================================
+``specfem::element::dimension``
+===============================
 
-.. doxygenclass:: specfem::dimension::dimension
+.. doxygenclass:: specfem::element::dimension
    :members:
 
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenclass:: specfem::dimension::dimension< specfem::dimension::type::dim2 >
+.. doxygenclass:: specfem::element::dimension< specfem::element::dimension_tag::dim2 >
     :members:
 
-.. doxygenclass:: specfem::dimension::dimension< specfem::dimension::type::dim3 >
+.. doxygenclass:: specfem::element::dimension< specfem::element::dimension_tag::dim3 >
     :members:

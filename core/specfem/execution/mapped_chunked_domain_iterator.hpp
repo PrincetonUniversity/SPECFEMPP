@@ -11,7 +11,7 @@ namespace specfem {
 namespace chunk_element {
 
 // Forward declaration for PointIndex
-template <specfem::dimension::type DimensionTag, typename SIMD,
+template <specfem::element::dimension_tag DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
 class MappedIndex;
 } // namespace chunk_element
@@ -20,8 +20,8 @@ class MappedIndex;
 namespace specfem {
 namespace execution {
 
-template <specfem::dimension::type DimensionTag, typename KokkosIndexType,
-          bool UseSIMD, typename ExecutionSpace>
+template <specfem::element::dimension_tag DimensionTag,
+          typename KokkosIndexType, bool UseSIMD, typename ExecutionSpace>
 class MappedPointIndex {
 private:
   using index_type =
@@ -71,7 +71,7 @@ private:
   KokkosIndexType kokkos_index; ///< Kokkos index type
 };
 
-template <specfem::dimension::type DimensionTag, typename SIMD,
+template <specfem::element::dimension_tag DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
 class MappedChunkElementIterator
     : public ChunkElementIterator<DimensionTag, SIMD, ViewType,
@@ -110,7 +110,7 @@ private:
   ViewType mapping;
 };
 
-template <specfem::dimension::type DimensionTag, typename SIMD,
+template <specfem::element::dimension_tag DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
 class MappedChunkElementIndex
     : public ChunkElementIndex<DimensionTag, SIMD, ViewType, TeamMemberType> {
@@ -148,7 +148,7 @@ private:
   iterator_type iterator;
 };
 
-template <specfem::dimension::type DimensionTag, typename ParallelConfig,
+template <specfem::element::dimension_tag DimensionTag, typename ParallelConfig,
           typename ViewType>
 class MappedChunkedDomainIterator
     : public ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType> {
@@ -210,13 +210,13 @@ private:
 
 // Template argument deduction guides
 template <typename ParallelConfig, typename ViewType,
-          specfem::dimension::type DimensionTag>
+          specfem::element::dimension_tag DimensionTag>
 MappedChunkedDomainIterator(
     ParallelConfig, ViewType, ViewType,
     const specfem::mesh_entity::element_grid<DimensionTag> &)
     -> MappedChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType>;
 
-template <typename ViewType, specfem::dimension::type DimensionTag>
+template <typename ViewType, specfem::element::dimension_tag DimensionTag>
 MappedChunkedDomainIterator(
     ViewType, ViewType,
     const specfem::mesh_entity::element_grid<DimensionTag> &)

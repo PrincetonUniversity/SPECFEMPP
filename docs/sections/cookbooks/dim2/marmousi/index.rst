@@ -1,7 +1,7 @@
 .. _marmousi_example:
 
 Wave propagation through the Marmousi2 model
-=============================================
+============================================
 
 In this example (see :repo-file:`benchmarks/src/dim2/marmousi`) we simulate wave propagation through the 2-dimensional Marmousi2 model,
 a complex synthetic velocity model commonly used for testing seismic wave propagation
@@ -34,7 +34,7 @@ making it an excellent benchmark for validating numerical methods.
 * **CUBIT meshing workflow**: Daniel Peter (Python scripts for streamlined mesh generation)
 
 Setting up your workspace
---------------------------
+-------------------------
 
 Let's start by creating a workspace from where we can run this example.
 
@@ -126,7 +126,7 @@ Material assignments for each element
    :lines: 1-20
 
 nummaterial_velocity_file_marmousi2
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Velocity model properties
 
@@ -153,7 +153,7 @@ Absorbing boundary conditions
    :lines: 1-20
 
 Generating the mesh database
------------------------------
+----------------------------
 
 To generate the mesh database for SPECFEM++ we need a parameter file (``Par_file``),
 the mesh files (in ``MESH-default``), and the mesher executable (``xmeshfem2D``).

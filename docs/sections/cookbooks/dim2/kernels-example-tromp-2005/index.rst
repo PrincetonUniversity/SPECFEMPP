@@ -9,7 +9,7 @@ donut kernels. We will reproduce the results from Fig 9 of `Tromp et al. 2005
 <https://doi.org/10.1111/j.1365-246X.2004.02453.x>`_.
 
 Setting up the workspace
--------------------------
+------------------------
 
 Let's start by creating a workspace from where we can run this example.
 
@@ -240,7 +240,7 @@ The kernels are stored in the directory specified in the input file. We can now
 plot the kernels to visualize the banana donut kernels.
 
 Visualizing the kernels
-------------------------
+-----------------------
 
 Lastly if the kernels are stored in ASCII format, we can use numpy to read the
 kernels and plot them.

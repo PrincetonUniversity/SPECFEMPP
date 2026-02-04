@@ -1,9 +1,9 @@
 #include "specfem/assembly/kernels.hpp"
 
-specfem::assembly::kernels<specfem::dimension::type::dim3>::kernels(
+specfem::assembly::kernels<specfem::element::dimension_tag::dim3>::kernels(
     const int nspec, const int ngllz, const int nglly, const int ngllx,
-    const specfem::assembly::element_types<specfem::dimension::type::dim3>
-        &element_types) {
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim3> &element_types) {
 
   this->nspec = nspec;
   this->ngllz = ngllz;

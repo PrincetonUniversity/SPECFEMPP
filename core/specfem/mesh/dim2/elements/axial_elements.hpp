@@ -13,11 +13,11 @@ namespace elements {
  * @note Need to still document this section
  *
  */
-template <specfem::dimension::type DimensionTag> struct axial_elements;
+template <specfem::element::dimension_tag DimensionTag> struct axial_elements;
 
-template <> struct axial_elements<specfem::dimension::type::dim2> {
+template <> struct axial_elements<specfem::element::dimension_tag::dim2> {
 
-  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto dimension = specfem::element::dimension_tag::dim2;
 
   Kokkos::View<bool *, Kokkos::HostSpace> is_on_the_axis;
 

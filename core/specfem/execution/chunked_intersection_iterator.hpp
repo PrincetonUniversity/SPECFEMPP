@@ -14,15 +14,15 @@
  *
  * using ParallelConfig =
  * specfem::parallel_configuration::default_chunk_edge_config<
- *     specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
+ *     specfem::element::dimension_tag::dim2, Kokkos::DefaultExecutionSpace>;
  *
  * // Create views for edge intersections
  * constexpr int num_intersections = 1000;
  * constexpr int num_points = 5;
  *
- * Kokkos::View<specfem::mesh_entity::edge<specfem::dimension::type::dim2>*>
+ * Kokkos::View<specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>*>
  * self_edges("self_edges", num_intersections);
- * Kokkos::View<specfem::mesh_entity::edge<specfem::dimension::type::dim2>*>
+ * Kokkos::View<specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>*>
  * coupled_edges("coupled_edges", num_intersections);
  * Kokkos::View<int*[num_points]> self_storage("self_storage",
  * num_intersections); Kokkos::View<int*[num_points]>
@@ -31,9 +31,9 @@
  * // Initialize intersection edges
  * Kokkos::parallel_for("init_intersections", num_intersections,
  * KOKKOS_LAMBDA(int i) { self_edges(i) =
- * specfem::mesh_entity::edge<specfem::dimension::type::dim2>(i,
+ * specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(i,
  * specfem::mesh_entity::dim2::type::top); coupled_edges(i) =
- * specfem::mesh_entity::edge<specfem::dimension::type::dim2>(num_intersections-i-1,
+ * specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(num_intersections-i-1,
  *                                                   specfem::mesh_entity::dim2::type::bottom);
  * });
  *
@@ -96,8 +96,8 @@ namespace specfem::execution {
  *     });
  * @endcode
  */
-template <specfem::dimension::type DimensionTag, typename KokkosIndexType,
-          typename ExecutionSpace>
+template <specfem::element::dimension_tag DimensionTag,
+          typename KokkosIndexType, typename ExecutionSpace>
 class InterfacePointIndex {
 public:
   using index_type = specfem::point::interface_index<DimensionTag>;
@@ -191,7 +191,7 @@ private:
  * // Creates interface points from self and coupled edge iterators
  * @endcode
  */
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename TeamMemberType>
 class ChunkedEdgeIntersectionIterator
     : public TeamThreadRangePolicy<TeamMemberType, int> {
@@ -333,7 +333,7 @@ private:
  * - Multi-physics interface operations
  * - Periodic boundary condition enforcement
  */
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename KokkosIndexType>
 class ChunkEdgeIntersectionIndex {
 private:
@@ -471,15 +471,15 @@ private:
  * // Define parallel configuration
  * using ParallelConfig =
  * specfem::parallel_configuration::default_chunk_edge_config<
- *     specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
+ *     specfem::element::dimension_tag::dim2, Kokkos::DefaultExecutionSpace>;
  *
  * // Create edge views for intersection
  * constexpr int num_intersections = 5000;
  * constexpr int num_points = 5;
  *
- * Kokkos::View<specfem::mesh_entity::edge<specfem::dimension::type::dim2>*>
+ * Kokkos::View<specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>*>
  * self_edges("self_edges", num_intersections);
- * Kokkos::View<specfem::mesh_entity::edge<specfem::dimension::type::dim2>*>
+ * Kokkos::View<specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>*>
  * coupled_edges("coupled_edges", num_intersections);
  *
  * // Initialize intersection pairs
@@ -487,12 +487,13 @@ private:
  * KOKKOS_LAMBDA(int i) {
  *     // Self edges from domain A
  *     self_edges(i) =
- * specfem::mesh_entity::edge<specfem::dimension::type::dim2>(i,
+ * specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(i,
  * specfem::mesh_entity::dim2::type::top);
  *
  *     // Coupled edges from domain B (often with different orientation)
  *     coupled_edges(i) =
- * specfem::mesh_entity::edge<specfem::dimension::type::dim2>( num_intersections
+ * specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(
+ * num_intersections
  * - i - 1, specfem::mesh_entity::dim2::type::bottom);
  * });
  *
