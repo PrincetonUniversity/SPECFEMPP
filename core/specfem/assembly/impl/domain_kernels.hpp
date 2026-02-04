@@ -83,7 +83,9 @@ struct domain_kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag>
   domain_kernels(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const int ngllz, const int ngllx,
-      const specfem::kokkos::HostView1d<int> property_index_mapping)
+      const Kokkos::View<int *, Kokkos::LayoutRight,
+                         Kokkos::DefaultHostExecutionSpace>
+          property_index_mapping)
       : base_type(elements.extent(0), ngllz, ngllx) {
     const int nelement = elements.extent(0);
     int count = 0;
@@ -150,7 +152,9 @@ struct domain_kernels<specfem::dimension::type::dim3, MediumTag, PropertyTag>
   domain_kernels(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const int ngllz, const int nglly, const int ngllx,
-      const specfem::kokkos::HostView1d<int> property_index_mapping)
+      const Kokkos::View<int *, Kokkos::LayoutRight,
+                         Kokkos::DefaultHostExecutionSpace>
+          property_index_mapping)
       : base_type(elements.extent(0), ngllz, nglly, ngllx) {
     const int nelement = elements.extent(0);
     int count = 0;

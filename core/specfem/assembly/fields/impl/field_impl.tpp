@@ -1,8 +1,7 @@
 #pragma once
 
-#include "field_impl.hpp"
 #include "assign_assembly_index_mapping.hpp"
-
+#include "field_impl.hpp"
 
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
@@ -23,8 +22,8 @@ specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
     Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
         assembly_index_mapping) {
 
-  specfem::assembly::fields_impl::assign_assembly_index_mapping(mesh, element_types, assembly_index_mapping,
-                                nglob, MediumTag);
+  specfem::assembly::fields_impl::assign_assembly_index_mapping(
+      mesh, element_types, assembly_index_mapping, nglob, MediumTag);
 
   static_cast<displacement_base_type &>(*this) =
       displacement_base_type(nglob, "specfem::assembly::fields::displacement");
@@ -40,10 +39,18 @@ specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
 
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
-template <specfem::sync::kind sync>
-void specfem::assembly::fields_impl::field_impl<
-    DimensionTag, MediumTag>::sync_fields() const {
-  displacement_base_type::template sync<sync>();
-  velocity_base_type::template sync<sync>();
-  acceleration_base_type::template sync<sync>();
+void specfem::assembly::fields_impl::field_impl<DimensionTag,
+                                                MediumTag>::copy_to_host() {
+  displacement_base_type::copy_to_host();
+  velocity_base_type::copy_to_host();
+  acceleration_base_type::copy_to_host();
+}
+
+template <specfem::dimension::type DimensionTag,
+          specfem::element::medium_tag MediumTag>
+void specfem::assembly::fields_impl::field_impl<DimensionTag,
+                                                MediumTag>::copy_to_device() {
+  displacement_base_type::copy_to_device();
+  velocity_base_type::copy_to_device();
+  acceleration_base_type::copy_to_device();
 }

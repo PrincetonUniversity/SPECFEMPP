@@ -1,6 +1,5 @@
 #pragma once
 
-#include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

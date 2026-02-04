@@ -8,11 +8,16 @@
 #include <vector>
 
 static std::tuple<
-    specfem::kokkos::HostView1d<int>,
-    specfem::kokkos::HostView1d<specfem::mesh_entity::dim2::type> >
-find_corners(const specfem::kokkos::HostView1d<int> ispec_edge,
-             const specfem::kokkos::HostView1d<specfem::mesh_entity::dim2::type>
-                 type_edge) {
+    Kokkos::View<int *, Kokkos::LayoutRight, Kokkos::DefaultHostExecutionSpace>,
+    Kokkos::View<specfem::mesh_entity::dim2::type *, Kokkos::LayoutRight,
+                 Kokkos::DefaultHostExecutionSpace> >
+find_corners(
+    const Kokkos::View<int *, Kokkos::LayoutRight,
+                       Kokkos::DefaultHostExecutionSpace>
+        ispec_edge,
+    const Kokkos::View<specfem::mesh_entity::dim2::type *, Kokkos::LayoutRight,
+                       Kokkos::DefaultHostExecutionSpace>
+        type_edge) {
 
   int ncorner = 0;
   int num_abs_boundary_faces = ispec_edge.extent(0);
@@ -49,15 +54,18 @@ find_corners(const specfem::kokkos::HostView1d<int> ispec_edge,
     }
   }
 
-  specfem::kokkos::HostView1d<int> ispec_corners(
-      "specfem:io::mesh::impl::fortran::read_boundaries::find_corners::ispec_"
-      "corners",
-      ncorner);
+  Kokkos::View<int *, Kokkos::LayoutRight, Kokkos::DefaultHostExecutionSpace>
+      ispec_corners("specfem:io::mesh::impl::fortran::read_boundaries::find_"
+                    "corners::ispec_"
+                    "corners",
+                    ncorner);
 
-  specfem::kokkos::HostView1d<specfem::mesh_entity::dim2::type> type_corners(
-      "specfem:io::mesh::impl::fortran::read_boundaries::find_corners::type_"
-      "corners",
-      ncorner);
+  Kokkos::View<specfem::mesh_entity::dim2::type *, Kokkos::LayoutRight,
+               Kokkos::DefaultHostExecutionSpace>
+      type_corners("specfem:io::mesh::impl::fortran::read_boundaries::find_"
+                   "corners::type_"
+                   "corners",
+                   ncorner);
 
   int icorner = 0;
 
@@ -109,12 +117,19 @@ find_corners(const specfem::kokkos::HostView1d<int> ispec_edge,
   return std::make_tuple(ispec_corners, type_corners);
 }
 
-inline void calculate_ib(const specfem::kokkos::HostView2d<bool> code,
-                         specfem::kokkos::HostView1d<int> ib_bottom,
-                         specfem::kokkos::HostView1d<int> ib_top,
-                         specfem::kokkos::HostView1d<int> ib_left,
-                         specfem::kokkos::HostView1d<int> ib_right,
-                         const int nelements) {
+inline void calculate_ib(
+    const Kokkos::View<bool **, Kokkos::LayoutRight,
+                       Kokkos::DefaultHostExecutionSpace>
+        code,
+    Kokkos::View<int *, Kokkos::LayoutRight, Kokkos::DefaultHostExecutionSpace>
+        ib_bottom,
+    Kokkos::View<int *, Kokkos::LayoutRight, Kokkos::DefaultHostExecutionSpace>
+        ib_top,
+    Kokkos::View<int *, Kokkos::LayoutRight, Kokkos::DefaultHostExecutionSpace>
+        ib_left,
+    Kokkos::View<int *, Kokkos::LayoutRight, Kokkos::DefaultHostExecutionSpace>
+        ib_right,
+    const int nelements) {
 
   int nspec_left = 0, nspec_right = 0, nspec_top = 0, nspec_bottom = 0;
   for (int inum = 0; inum < nelements; inum++) {
@@ -157,11 +172,14 @@ read_absorbing_boundaries(std::ifstream &stream, int num_abs_boundary_faces,
     num_abs_boundary_faces = 0;
   }
 
-  specfem::kokkos::HostView1d<specfem::mesh_entity::dim2::type> type_edge(
-      "specfem::mesh::absorbing_boundary::type_edge", num_abs_boundary_faces);
+  Kokkos::View<specfem::mesh_entity::dim2::type *, Kokkos::LayoutRight,
+               Kokkos::DefaultHostExecutionSpace>
+      type_edge("specfem::mesh::absorbing_boundary::type_edge",
+                num_abs_boundary_faces);
 
-  specfem::kokkos::HostView1d<int> ispec_edge(
-      "specfem::mesh::absorbing_boundary::ispec_edge", num_abs_boundary_faces);
+  Kokkos::View<int *, Kokkos::LayoutRight, Kokkos::DefaultHostExecutionSpace>
+      ispec_edge("specfem::mesh::absorbing_boundary::ispec_edge",
+                 num_abs_boundary_faces);
 
   if (num_abs_boundary_faces > 0) {
     for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
@@ -223,7 +241,8 @@ read_absorbing_boundaries(std::ifstream &stream, int num_abs_boundary_faces,
 }
 
 using view_type =
-    Kokkos::Subview<specfem::kokkos::HostView2d<int>,
+    Kokkos::Subview<Kokkos::View<int **, Kokkos::LayoutRight,
+                                 Kokkos::DefaultHostExecutionSpace>,
                     std::remove_const_t<decltype(Kokkos::ALL)>, int>;
 
 /**

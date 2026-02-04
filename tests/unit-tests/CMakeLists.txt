@@ -30,18 +30,6 @@ target_link_libraries(
   specfem_program
 )
 
-
-add_library(
-  compare_arrays
-  utilities/src/compare_array.cpp
-)
-
-target_link_libraries(
-  compare_arrays
-  Kokkos::kokkos
-  specfem::io
-)
-
 add_library(
   mesh_utilities_mapping
   mesh_utilities/mapping.cpp
@@ -805,7 +793,6 @@ target_link_libraries(
   specfem_environment
   assembly
   specfem::runtime_configuration
-  compare_arrays
   timescheme
   point
   specfem::algorithms
@@ -831,7 +818,6 @@ target_link_libraries(
   specfem_environment
   assembly
   specfem::runtime_configuration
-  compare_arrays
   timescheme
   point
   specfem::algorithms

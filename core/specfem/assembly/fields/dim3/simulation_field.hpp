@@ -85,7 +85,7 @@ public:
    * device-accessible memory to host memory for post-processing, I/O, or
    * debugging operations. Handles the full 3D tensor structure efficiently.
    */
-  void copy_to_host() { sync_fields<specfem::sync::kind::DeviceToHost>(); }
+  void copy_to_host();
 
   /**
    * @brief Copy 3D simulation field data from host to device memory.
@@ -93,7 +93,7 @@ public:
    * Synchronizes all 3D field components and index mappings from host memory
    * to device-accessible memory for GPU-accelerated 3D computations.
    */
-  void copy_to_device() { sync_fields<specfem::sync::kind::HostToDevice>(); }
+  void copy_to_device();
 
   /**
    * @brief Assignment operator for copying between 3D wavefield types.
@@ -275,12 +275,6 @@ public:
   int get_total_degrees_of_freedom();
 
 private:
-  /**
-   * @brief Synchronize 3D field data between host and device memory.
-   *
-   * @tparam sync Synchronization direction (HostToDevice or DeviceToHost)
-   */
-  template <specfem::sync::kind sync> void sync_fields();
   int total_degrees_of_freedom = 0; ///< Total number of degrees of freedom
 };
 

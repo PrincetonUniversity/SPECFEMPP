@@ -1,5 +1,5 @@
 #pragma once
-#include "kokkos_abstractions.h"
+
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/source.hpp"
 #include <Kokkos_Core.hpp>

@@ -1,5 +1,5 @@
 #pragma once
-#include "kokkos_abstractions.h"
+
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/source.hpp"

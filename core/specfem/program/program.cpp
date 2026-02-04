@@ -1,7 +1,7 @@
 #include "specfem/program.hpp"
 #include "context.hpp"
 #include "enumerations/dimension.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/assembly.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"

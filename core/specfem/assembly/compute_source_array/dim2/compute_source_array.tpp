@@ -1,16 +1,16 @@
 #pragma once
 
-#include "specfem/assembly/compute_source_array.hpp"
 #include "enumerations/dimension.hpp"
 #include "impl/compute_source_array_from_tensor.hpp"
 #include "impl/compute_source_array_from_vector.hpp"
-#include "kokkos_abstractions.h"
+#include "specfem/assembly/compute_source_array.hpp"
+
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template<typename SourceArrayViewType>
+template <typename SourceArrayViewType>
 void specfem::assembly::compute_source_array(
     const std::shared_ptr<
         specfem::sources::source<specfem::dimension::type::dim2> > &source,
@@ -20,7 +20,8 @@ void specfem::assembly::compute_source_array(
     SourceArrayViewType &source_array) {
 
   // Ensure source_array is a 3D view
-  static_assert(SourceArrayViewType::rank() == 3, "Source array must be in rank 3.");
+  static_assert(SourceArrayViewType::rank() == 3,
+                "Source array must be in rank 3.");
 
   switch (source->get_source_type()) {
   case specfem::sources::source_type::vector_source: {

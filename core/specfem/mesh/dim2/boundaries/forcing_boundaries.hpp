@@ -2,7 +2,6 @@
 #define _FORCING_BOUNDARIES_HPP
 
 #include "enumerations/dimension.hpp"
-#include "kokkos_abstractions.h"
 
 namespace specfem {
 namespace mesh {

@@ -2,7 +2,6 @@
 #define _AXIAL_ELEMENTS_HPP
 
 #include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
 
 namespace specfem {
 namespace mesh {

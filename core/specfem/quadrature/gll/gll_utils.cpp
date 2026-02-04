@@ -1,5 +1,5 @@
 #include "gll_utils.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Sort.hpp>

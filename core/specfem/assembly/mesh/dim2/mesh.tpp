@@ -2,14 +2,14 @@
 
 #include "enumerations/interface.hpp"
 #include "specfem/macros.hpp"
-#include "kokkos_abstractions.h"
+
+#include "impl/utilities.hpp"
 #include "mesh.hpp"
-#include "specfem/parallel_configuration.hpp"
-#include "specfem/quadrature.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
+#include "specfem/parallel_configuration.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
-#include "impl/utilities.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
@@ -21,8 +21,9 @@ using point = specfem::assembly::mesh_impl::dim2::point;
 using bounding_box = specfem::assembly::mesh_impl::dim2::bounding_box;
 
 specfem::assembly::mesh_impl::points<specfem::dimension::type::dim2>
-assign_numbering(Kokkos::View<double ****, Kokkos::LayoutRight, Kokkos::HostSpace>
-                      global_coordinates) {
+assign_numbering(
+    Kokkos::View<double ****, Kokkos::LayoutRight, Kokkos::HostSpace>
+        global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
@@ -138,9 +139,8 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       static_cast<specfem::assembly::mesh_impl::adjacency_graph<
           specfem::dimension::type::dim2> &>(*this);
 
-  auto &control_nodes =
-      static_cast<specfem::assembly::mesh_impl::control_nodes<
-          specfem::dimension::type::dim2> &>(*this);
+  auto &control_nodes = static_cast<specfem::assembly::mesh_impl::control_nodes<
+      specfem::dimension::type::dim2> &>(*this);
 
   mapping = specfem::assembly::mesh_impl::mesh_to_compute_mapping<
       specfem::dimension::type::dim2>(tags);
@@ -156,7 +156,8 @@ specfem::assembly::mesh<specfem::dimension::type::dim2>::mesh(
       quadratures.gll.get_N(), control_nodes_in.ngnod);
 
   adjacency_graph =
-      specfem::assembly::mesh_impl::build_assembly_adjacency_graph(nspec, mapping, mesh_adjacency_graph);
+      specfem::assembly::mesh_impl::build_assembly_adjacency_graph(
+          nspec, mapping, mesh_adjacency_graph);
 
   this->assemble();
 }

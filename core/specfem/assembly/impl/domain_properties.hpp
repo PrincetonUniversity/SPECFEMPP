@@ -97,7 +97,9 @@ struct domain_properties<specfem::dimension::type::dim2, MediumTag, PropertyTag>
       const specfem::assembly::mesh<dimension_tag> &mesh, const int ngllz,
       const int ngllx, const specfem::mesh::materials<dimension_tag> &materials,
       const bool has_gll_model,
-      const specfem::kokkos::HostView1d<int> property_index_mapping);
+      const Kokkos::View<int *, Kokkos::LayoutRight,
+                         Kokkos::DefaultHostExecutionSpace>
+          property_index_mapping);
 
   /// Device value access disabled for this container type
   template <typename PointValues, typename IndexType>
@@ -162,7 +164,9 @@ struct domain_properties<specfem::dimension::type::dim3, MediumTag, PropertyTag>
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const int nspec, const int ngllz, const int nglly, const int ngllx,
       const specfem::mesh::materials<dimension_tag> &materials,
-      const specfem::kokkos::HostView1d<int> property_index_mapping);
+      const Kokkos::View<int *, Kokkos::LayoutRight,
+                         Kokkos::DefaultHostExecutionSpace>
+          property_index_mapping);
 
   /// Device value access disabled for this container type
   template <typename PointValues, typename IndexType>

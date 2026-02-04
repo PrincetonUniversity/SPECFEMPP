@@ -1,6 +1,5 @@
 #include "tags.hpp"
 #include "enumerations/dimension.hpp"
-#include "kokkos_abstractions.h"
 
 specfem::mesh::tags<specfem::dimension::type::dim2>::tags(
     const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,

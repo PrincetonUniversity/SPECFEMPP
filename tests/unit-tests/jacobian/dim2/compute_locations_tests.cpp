@@ -1,5 +1,5 @@
 #include "SPECFEM_Environment.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include "specfem/utilities.hpp"

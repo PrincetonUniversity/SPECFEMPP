@@ -1,6 +1,5 @@
 #pragma once
 
-#include "kokkos_abstractions.h"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
@@ -89,13 +88,9 @@ public:
     }
   }
 
-  template <specfem::sync::kind SyncType> void sync() const {
-    if constexpr (SyncType == specfem::sync::kind::HostToDevice) {
-      Kokkos::deep_copy(data, h_data);
-    } else if constexpr (SyncType == specfem::sync::kind::DeviceToHost) {
-      Kokkos::deep_copy(h_data, data);
-    }
-  }
+  void copy_to_host() { Kokkos::deep_copy(h_data, data); }
+
+  void copy_to_device() { Kokkos::deep_copy(data, h_data); }
 
 private:
   /// @brief Device-accessible view type for field data storage (nglob ×
@@ -234,17 +229,9 @@ public:
    */
   field_impl(const int nglob);
 
-  /**
-   * @brief Synchronize all field components between host and device memory.
-   *
-   * Performs synchronization of all field components (displacement, velocity,
-   * acceleration, mass matrix) in a single operation. This is more efficient
-   * than synchronizing each field individually when all fields need to be
-   * transferred.
-   *
-   * @tparam SyncField Synchronization direction (HostToDevice or DeviceToHost)
-   */
-  template <specfem::sync::kind SyncField> void sync_fields() const;
+  void copy_to_host();
+
+  void copy_to_device();
 
   int nglob; ///< Number of global points in this field implementation
 

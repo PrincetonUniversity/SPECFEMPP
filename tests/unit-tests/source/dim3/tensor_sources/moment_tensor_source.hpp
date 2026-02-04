@@ -1,6 +1,6 @@
 #include "../../source.hpp"
 #include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "specfem_setup.hpp"
@@ -49,8 +49,9 @@ public:
                   std::vector<std::vector<type_real> > source_tensor)
       : x(x), y(y), z(z), Mxx(Mxx), Myy(Myy), Mzz(Mzz), Mxy(Mxy), Mxz(Mxz),
         Myz(Myz) {
-    this->source_tensor = specfem::kokkos::HostView2d<type_real>(
-        "source_tensor", source_tensor.size(), source_tensor[0].size());
+    this->source_tensor =
+        Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>(
+            "source_tensor", source_tensor.size(), source_tensor[0].size());
     for (size_t i = 0; i < source_tensor.size(); ++i) {
       for (size_t j = 0; j < source_tensor[i].size(); ++j) {
         this->source_tensor(i, j) = source_tensor[i][j];
@@ -67,8 +68,9 @@ public:
   type_real Mxy; ///< Mxy component of moment tensor
   type_real Mxz; ///< Mxz component of moment tensor
   type_real Myz; ///< Myz component of moment tensor
-  specfem::kokkos::HostView2d<type_real> source_tensor; ///< Source tensor in
-                                                        ///< Kokkos format
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      source_tensor; ///< Source tensor in
+                     ///< Kokkos format
 };
 
 // Vector of pairs of moment tensor parameters and corresponding tensor
