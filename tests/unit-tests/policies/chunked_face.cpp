@@ -13,62 +13,11 @@
 
 namespace {
 
-/**
- * @brief Helper function to compute element coordinates from face type and
- * local face point indices
- *
- * Maps face-local (ipoint_i, ipoint_j) coordinates to element-local (iz, iy,
- * ix) coordinates based on face type.
- */
-KOKKOS_INLINE_FUNCTION
-void get_face_coordinates(const specfem::mesh_entity::dim3::type face_type,
-                          const int ipoint_i, const int ipoint_j,
-                          const int ngll, int &iz, int &iy, int &ix) {
-  switch (face_type) {
-  case specfem::mesh_entity::dim3::type::bottom:
-    iz = 0;
-    iy = ipoint_i;
-    ix = ipoint_j;
-    break;
-  case specfem::mesh_entity::dim3::type::top:
-    iz = ngll - 1;
-    iy = ipoint_i;
-    ix = ipoint_j;
-    break;
-  case specfem::mesh_entity::dim3::type::front:
-    iz = ipoint_i;
-    iy = 0;
-    ix = ipoint_j;
-    break;
-  case specfem::mesh_entity::dim3::type::back:
-    iz = ipoint_i;
-    iy = ngll - 1;
-    ix = ipoint_j;
-    break;
-  case specfem::mesh_entity::dim3::type::left:
-    iz = ipoint_i;
-    iy = ipoint_j;
-    ix = 0;
-    break;
-  case specfem::mesh_entity::dim3::type::right:
-    iz = ipoint_i;
-    iy = ipoint_j;
-    ix = ngll - 1;
-    break;
-  default:
-    iz = -1;
-    iy = -1;
-    ix = -1;
-    break;
-  }
-}
-
 // Functors to replace lambdas for CUDA compatibility
 // (CUDA does not allow extended __host__ __device__ lambdas inside
 // functions with private/protected access, such as TEST_F's TestBody)
 
-template <typename FaceViewType>
-struct InitFaceViewIndicesFunctor {
+template <typename FaceViewType> struct InitFaceViewIndicesFunctor {
   FaceViewType faces;
 
   InitFaceViewIndicesFunctor(FaceViewType faces_) : faces(faces_) {}
@@ -80,8 +29,7 @@ struct InitFaceViewIndicesFunctor {
   }
 };
 
-template <typename FaceViewType>
-struct InitFaceViewFullFunctor {
+template <typename FaceViewType> struct InitFaceViewFullFunctor {
   FaceViewType faces;
   int n_points;
 
@@ -103,8 +51,7 @@ struct InitFaceViewFullFunctor {
   }
 };
 
-template <typename FaceViewType>
-struct TestFaceAccessFunctor {
+template <typename FaceViewType> struct TestFaceAccessFunctor {
   FaceViewType faces;
 
   TestFaceAccessFunctor(FaceViewType faces_) : faces(faces_) {}
@@ -128,9 +75,9 @@ public:
 
   constexpr static int num_points = 5; // ngll per face dimension
   // Storage view indexed by [face][ipoint_i][ipoint_j]
-  using StorageViewType =
-      Kokkos::View<int ***, Kokkos::DefaultExecutionSpace>;
-  using FacesViewType = specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
+  using StorageViewType = Kokkos::View<int ***, Kokkos::DefaultExecutionSpace>;
+  using FacesViewType =
+      specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
 };
 
 // Test parameter structs
@@ -142,7 +89,8 @@ struct FaceIteratorTestParams {
       : number_of_faces(n), name(test_name) {}
 };
 
-std::ostream &operator<<(std::ostream &os, const FaceIteratorTestParams &params) {
+std::ostream &operator<<(std::ostream &os,
+                         const FaceIteratorTestParams &params) {
   os << params.name;
   return os;
 }
@@ -154,11 +102,12 @@ public:
   FacesViewType faces;
   std::string name;
   int number_of_faces;
+  specfem::mesh_entity::element<specfem::dimension::type::dim3> elem;
 
   FaceIterator(const FaceIteratorTestParams &params)
       : view("view", params.number_of_faces, num_points, num_points),
         faces("faces", params.number_of_faces, num_points), name(params.name),
-        number_of_faces(params.number_of_faces) {
+        number_of_faces(params.number_of_faces), elem(num_points) {
 
     this->reset();
     Kokkos::fence();
@@ -169,8 +118,8 @@ public:
                                                      this->faces);
     specfem::execution::for_all(
         "test_chunked_face_iterator", iterator,
-        KOKKOS_CLASS_LAMBDA(
-            const typename decltype(iterator)::base_index_type &iterator_index) {
+        KOKKOS_CLASS_LAMBDA(const typename decltype(
+            iterator)::base_index_type &iterator_index) {
           const auto index = iterator_index.get_index();
           Kokkos::atomic_add(&view(index.iface, index.ipoint_i, index.ipoint_j),
                              1);
@@ -248,8 +197,8 @@ public:
           for (int ipoint_i = 0; ipoint_i < num_points; ++ipoint_i) {
             for (int ipoint_j = 0; ipoint_j < num_points; ++ipoint_j) {
               int iz_val, iy_val, ix_val;
-              get_face_coordinates(faces.face_types(i), ipoint_i, ipoint_j,
-                                   num_points, iz_val, iy_val, ix_val);
+              elem.get_face_coordinates(faces.face_types(i), ipoint_i, ipoint_j,
+                                        iz_val, iy_val, ix_val);
               faces.iz(i, ipoint_i, ipoint_j) = iz_val;
               faces.iy(i, ipoint_i, ipoint_j) = iy_val;
               faces.ix(i, ipoint_i, ipoint_j) = ix_val;
@@ -317,6 +266,7 @@ INSTANTIATE_TEST_SUITE_P(
 class FaceCoordinateMappingTest : public ::testing::Test {
 protected:
   static constexpr int ngll = 5;
+  specfem::mesh_entity::element<specfem::dimension::type::dim3> elem{ ngll };
 };
 
 TEST_F(FaceCoordinateMappingTest, BottomFace) {
@@ -324,7 +274,7 @@ TEST_F(FaceCoordinateMappingTest, BottomFace) {
   for (int i = 0; i < ngll; ++i) {
     for (int j = 0; j < ngll; ++j) {
       int iz, iy, ix;
-      get_face_coordinates(type::bottom, i, j, ngll, iz, iy, ix);
+      elem.get_face_coordinates(type::bottom, i, j, iz, iy, ix);
       EXPECT_EQ(iz, 0) << "Bottom face z-coordinate should be 0";
       EXPECT_EQ(iy, i) << "Bottom face y-coordinate should be ipoint_i";
       EXPECT_EQ(ix, j) << "Bottom face x-coordinate should be ipoint_j";
@@ -337,7 +287,7 @@ TEST_F(FaceCoordinateMappingTest, TopFace) {
   for (int i = 0; i < ngll; ++i) {
     for (int j = 0; j < ngll; ++j) {
       int iz, iy, ix;
-      get_face_coordinates(type::top, i, j, ngll, iz, iy, ix);
+      elem.get_face_coordinates(type::top, i, j, iz, iy, ix);
       EXPECT_EQ(iz, ngll - 1) << "Top face z-coordinate should be ngll-1";
       EXPECT_EQ(iy, i) << "Top face y-coordinate should be ipoint_i";
       EXPECT_EQ(ix, j) << "Top face x-coordinate should be ipoint_j";
@@ -350,7 +300,7 @@ TEST_F(FaceCoordinateMappingTest, FrontFace) {
   for (int i = 0; i < ngll; ++i) {
     for (int j = 0; j < ngll; ++j) {
       int iz, iy, ix;
-      get_face_coordinates(type::front, i, j, ngll, iz, iy, ix);
+      elem.get_face_coordinates(type::front, i, j, iz, iy, ix);
       EXPECT_EQ(iz, i) << "Front face z-coordinate should be ipoint_i";
       EXPECT_EQ(iy, 0) << "Front face y-coordinate should be 0";
       EXPECT_EQ(ix, j) << "Front face x-coordinate should be ipoint_j";
@@ -363,7 +313,7 @@ TEST_F(FaceCoordinateMappingTest, BackFace) {
   for (int i = 0; i < ngll; ++i) {
     for (int j = 0; j < ngll; ++j) {
       int iz, iy, ix;
-      get_face_coordinates(type::back, i, j, ngll, iz, iy, ix);
+      elem.get_face_coordinates(type::back, i, j, iz, iy, ix);
       EXPECT_EQ(iz, i) << "Back face z-coordinate should be ipoint_i";
       EXPECT_EQ(iy, ngll - 1) << "Back face y-coordinate should be ngll-1";
       EXPECT_EQ(ix, j) << "Back face x-coordinate should be ipoint_j";
@@ -376,7 +326,7 @@ TEST_F(FaceCoordinateMappingTest, LeftFace) {
   for (int i = 0; i < ngll; ++i) {
     for (int j = 0; j < ngll; ++j) {
       int iz, iy, ix;
-      get_face_coordinates(type::left, i, j, ngll, iz, iy, ix);
+      elem.get_face_coordinates(type::left, i, j, iz, iy, ix);
       EXPECT_EQ(iz, i) << "Left face z-coordinate should be ipoint_i";
       EXPECT_EQ(iy, j) << "Left face y-coordinate should be ipoint_j";
       EXPECT_EQ(ix, 0) << "Left face x-coordinate should be 0";
@@ -389,7 +339,7 @@ TEST_F(FaceCoordinateMappingTest, RightFace) {
   for (int i = 0; i < ngll; ++i) {
     for (int j = 0; j < ngll; ++j) {
       int iz, iy, ix;
-      get_face_coordinates(type::right, i, j, ngll, iz, iy, ix);
+      elem.get_face_coordinates(type::right, i, j, iz, iy, ix);
       EXPECT_EQ(iz, i) << "Right face z-coordinate should be ipoint_i";
       EXPECT_EQ(iy, j) << "Right face y-coordinate should be ipoint_j";
       EXPECT_EQ(ix, ngll - 1) << "Right face x-coordinate should be ngll-1";
@@ -407,14 +357,15 @@ protected:
 };
 
 TEST_F(FaceViewTest, Construction) {
-  specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace> faces("test_faces", n_faces,
-                                                 n_points);
+  specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace> faces(
+      "test_faces", n_faces, n_points);
   EXPECT_EQ(faces.n_faces, n_faces);
   EXPECT_EQ(faces.n_points, n_points);
 }
 
 TEST_F(FaceViewTest, SubviewExtraction) {
-  using FaceViewType = specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
+  using FaceViewType =
+      specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
   FaceViewType faces("test_faces", n_faces, n_points);
 
   // Initialize some data
@@ -438,7 +389,8 @@ TEST_F(FaceViewTest, SubviewExtraction) {
 }
 
 TEST_F(FaceViewTest, FaceAccess) {
-  using FaceViewType = specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
+  using FaceViewType =
+      specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
   FaceViewType faces("test_faces", n_faces, n_points);
 
   // Initialize

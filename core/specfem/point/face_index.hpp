@@ -71,11 +71,6 @@ struct face_index<specfem::dimension::type::dim3>
   specfem::mesh_entity::dim3::type face_type;
 
   /**
-   * @brief Global face index within the mesh.
-   */
-  int face_index_global;
-
-  /**
    * @brief Default constructor.
    */
   KOKKOS_INLINE_FUNCTION
@@ -98,30 +93,7 @@ struct face_index<specfem::dimension::type::dim3>
              const int ipoint_j_, const int iz_, const int iy_, const int ix_,
              const specfem::mesh_entity::dim3::type face_type_)
       : ispec(ispec_), iface(iface_), ipoint_i(ipoint_i_), ipoint_j(ipoint_j_),
-        iz(iz_), iy(iy_), ix(ix_), face_type(face_type_), face_index_global(-1) {
-  }
-
-  /**
-   * @brief Constructs face index with global face index.
-   *
-   * @param ispec_ Element index.
-   * @param iface_ Face index (0-5 for 3D hexahedral elements).
-   * @param ipoint_i_ First point index on face.
-   * @param ipoint_j_ Second point index on face.
-   * @param iz_ Local z-coordinate index.
-   * @param iy_ Local y-coordinate index.
-   * @param ix_ Local x-coordinate index.
-   * @param face_type_ Mesh entity type for the face.
-   * @param face_index_global_ Global face index in the mesh.
-   */
-  KOKKOS_INLINE_FUNCTION
-  face_index(const int ispec_, const int iface_, const int ipoint_i_,
-             const int ipoint_j_, const int iz_, const int iy_, const int ix_,
-             const specfem::mesh_entity::dim3::type face_type_,
-             const int face_index_global_)
-      : ispec(ispec_), iface(iface_), ipoint_i(ipoint_i_), ipoint_j(ipoint_j_),
-        iz(iz_), iy(iy_), ix(ix_), face_type(face_type_),
-        face_index_global(face_index_global_) {}
+        iz(iz_), iy(iy_), ix(ix_), face_type(face_type_) {}
 };
 
 } // namespace specfem::point

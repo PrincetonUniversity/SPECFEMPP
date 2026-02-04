@@ -51,30 +51,34 @@ template <specfem::dimension::type DimensionTag, typename ExecutionSpace>
 struct default_chunk_face_config;
 
 #if defined(KOKKOS_ENABLE_CUDA)
-template <specfem::dimension::type DimensionTag>
-struct default_chunk_face_config<DimensionTag, Kokkos::Cuda>
-    : face_chunk_config<DimensionTag, 16, Kokkos::Cuda> {};
+template <>
+struct default_chunk_face_config<specfem::dimension::type::dim3, Kokkos::Cuda>
+    : face_chunk_config<specfem::dimension::type::dim3, 4, Kokkos::Cuda> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_HIP)
-template <specfem::dimension::type DimensionTag>
-struct default_chunk_face_config<DimensionTag, Kokkos::HIP>
-    : face_chunk_config<DimensionTag, 32, Kokkos::HIP> {};
+
+template <>
+struct default_chunk_face_config<specfem::dimension::type::dim3, Kokkos::HIP>
+    : face_chunk_config<specfem::dimension::type::dim3, 8, Kokkos::HIP> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_OPENMP)
-template <specfem::dimension::type DimensionTag>
-struct default_chunk_face_config<DimensionTag, Kokkos::OpenMP>
-    : face_chunk_config<DimensionTag, 1, Kokkos::OpenMP> {};
+template <>
+struct default_chunk_face_config<specfem::dimension::type::dim3, Kokkos::OpenMP>
+    : face_chunk_config<specfem::dimension::type::dim3, 1, Kokkos::OpenMP> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_SERIAL)
-template <specfem::dimension::type DimensionTag>
-struct default_chunk_face_config<DimensionTag, Kokkos::Serial>
-    : face_chunk_config<DimensionTag, 1, Kokkos::Serial> {};
+template <>
+struct default_chunk_face_config<specfem::dimension::type::dim3, Kokkos::Serial>
+    : face_chunk_config<specfem::dimension::type::dim3, 1, Kokkos::Serial> {};
 
-template <specfem::dimension::type DimensionTag>
-struct default_chunk_face_config<DimensionTag, Kokkos::HostSpace>
-    : default_chunk_face_config<DimensionTag, Kokkos::Serial> {};
+template <>
+struct default_chunk_face_config<specfem::dimension::type::dim3,
+                                 Kokkos::HostSpace>
+    : default_chunk_face_config<specfem::dimension::type::dim3,
+                                Kokkos::Serial> {};
+
 #endif
 } // namespace specfem::parallel_configuration

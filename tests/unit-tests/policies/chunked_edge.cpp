@@ -1,7 +1,7 @@
 #include "../SPECFEM_Environment.hpp"
 #include "enumerations/interface.hpp"
-#include "specfem/execution.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -10,45 +10,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
-
-namespace {
-
-/**
- * @brief Helper function to compute element coordinates from edge type and
- * local edge point index
- *
- * Maps edge-local ipoint coordinate to element-local (iz, ix) coordinates
- * based on edge type.
- */
-KOKKOS_INLINE_FUNCTION
-void get_edge_coordinates(const specfem::mesh_entity::dim2::type edge_type,
-                          const int ipoint, const int ngll, int &iz, int &ix) {
-  switch (edge_type) {
-  case specfem::mesh_entity::dim2::type::bottom:
-    iz = 0;
-    ix = ipoint;
-    break;
-  case specfem::mesh_entity::dim2::type::top:
-    iz = ngll - 1;
-    ix = ipoint;
-    break;
-  case specfem::mesh_entity::dim2::type::left:
-    iz = ipoint;
-    ix = 0;
-    break;
-  case specfem::mesh_entity::dim2::type::right:
-    iz = ipoint;
-    ix = ngll - 1;
-    break;
-  default:
-    iz = -1;
-    ix = -1;
-    break;
-  }
-}
-
-} // namespace
-
 
 // Base fixture for common functionality
 class ChunkedIteratorTestBase {
@@ -59,9 +20,9 @@ public:
 
   constexpr static int num_points = 5;
   // Storage view indexed by [edge][ipoint]
-  using StorageViewType =
-      Kokkos::View<int **, Kokkos::DefaultExecutionSpace>;
-  using EdgesViewType = specfem::assembly::EdgeView<Kokkos::DefaultExecutionSpace>;
+  using StorageViewType = Kokkos::View<int **, Kokkos::DefaultExecutionSpace>;
+  using EdgesViewType =
+      specfem::assembly::EdgeView<Kokkos::DefaultExecutionSpace>;
 };
 
 // Test parameter structs (no Kokkos views here)
@@ -100,11 +61,12 @@ public:
   EdgesViewType edges;
   std::string name;
   int number_of_edges;
+  specfem::mesh_entity::element<specfem::dimension::type::dim2> elem;
 
   EdgeIterator(const EdgeIteratorTestParams &params)
       : view("view", params.number_of_edges, num_points),
         edges("edges", params.number_of_edges, num_points), name(params.name),
-        number_of_edges(params.number_of_edges) {
+        number_of_edges(params.number_of_edges), elem(num_points) {
 
     this->reset();
     Kokkos::fence();
@@ -179,8 +141,8 @@ public:
           // Set up quadrature point coordinates based on edge type
           for (int ipoint = 0; ipoint < num_points; ++ipoint) {
             int iz_val, ix_val;
-            get_edge_coordinates(edges.edge_types(i), ipoint, num_points,
-                                 iz_val, ix_val);
+            elem.get_edge_coordinates(edges.edge_types(i), ipoint, iz_val,
+                                      ix_val);
             edges.iz(i, ipoint) = iz_val;
             edges.ix(i, ipoint) = ix_val;
           }
@@ -197,6 +159,7 @@ public:
   EdgesViewType intersection_edges;
   std::string name;
   int number_of_edges;
+  specfem::mesh_entity::element<specfem::dimension::type::dim2> elem;
 
   IntersectionIterator(const IntersectionIteratorTestParams &params)
       : self_view("self_view", params.number_of_edges, num_points),
@@ -204,7 +167,8 @@ public:
         edges("edges", params.number_of_edges, num_points),
         intersection_edges("intersection_edges", params.number_of_edges,
                            num_points),
-        name(params.name), number_of_edges(params.number_of_edges) {
+        name(params.name), number_of_edges(params.number_of_edges),
+        elem(num_points) {
 
     this->reset();
     Kokkos::fence();
@@ -281,11 +245,11 @@ public:
           // Set up quadrature point coordinates
           for (int ipoint = 0; ipoint < num_points; ++ipoint) {
             int iz_val, ix_val;
-            get_edge_coordinates(top, ipoint, num_points, iz_val, ix_val);
+            elem.get_edge_coordinates(top, ipoint, iz_val, ix_val);
             edges.iz(i, ipoint) = iz_val;
             edges.ix(i, ipoint) = ix_val;
 
-            get_edge_coordinates(bottom, ipoint, num_points, iz_val, ix_val);
+            elem.get_edge_coordinates(bottom, ipoint, iz_val, ix_val);
             intersection_edges.iz(i, ipoint) = iz_val;
             intersection_edges.ix(i, ipoint) = ix_val;
           }
