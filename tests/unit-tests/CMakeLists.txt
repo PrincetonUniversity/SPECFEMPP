@@ -128,7 +128,6 @@ add_executable(
   attenuation_tests
   attenuation/runner.cpp
   attenuation/compute_tau_sigma_tests.cpp
-  attenuation/optimization_tests.cpp
   attenuation/maxwell_tests.cpp
   attenuation/compute_tau_eps_tests.cpp
 )
@@ -137,6 +136,18 @@ target_link_libraries(
   attenuation_tests
   gtest_main
   specfem::attenuation
+  Kokkos::kokkos
+)
+
+add_executable(
+  optimization_tests
+  optimization/runner.cpp
+  optimization/neldermead_tests.cpp
+)
+
+target_link_libraries(
+  optimization_tests
+  gtest_main
   Kokkos::kokkos
 )
 
@@ -919,6 +930,7 @@ if(NOT MPI_PARALLEL)
     assembly_receivers_tests
     assembly_tests
     attenuation_tests
+    optimization_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests
     # compute_elastic_tests

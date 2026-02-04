@@ -2,7 +2,7 @@
 #include "compute_tau_eps.hpp"
 #include "maxwell.hpp"
 #include "constants.hpp"
-#include "impl/optimization.hpp"
+#include "specfem/optimization.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
@@ -56,13 +56,16 @@ compute_tau_eps(
 
   // Run Nelder-Mead optimization
   // Use default tolerances matching Fortran SPECFEM3D
-  auto result = impl::fmin_search<N_SLS>(objective, x0,
-                                         -1,     // default max iterations
-                                         1.0e-4, // tol_f
-                                         1.0e-4  // tol_x
-  );
+  optimization::NelderMeadOptions<N_SLS> options;
+  options.x0 = x0;
+  options.max_iterations = -1;  // default max iterations
+  options.tol_f = 1.0e-4;
+  options.tol_x = 1.0e-4;
 
-  return result.x;
+  auto result = optimization::optimize(optimization::NelderMeadSimplex{},
+                                        objective, options);
+
+  return result();
 }
 
 } // namespace attenuation

@@ -4,78 +4,82 @@
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <cmath>
-#include <functional>
-#include <numeric>
 
 namespace specfem {
-namespace attenuation {
-namespace impl {
+namespace optimization {
+
+// ============================================================================
+// Nelder-Mead Options
+// ============================================================================
 
 /**
- * @brief Result from Nelder-Mead optimization
+ * @brief Configuration for Nelder-Mead simplex algorithm
  *
- * @tparam N Number of optimization variables \f$N\f$
+ * Controls convergence criteria and simplex transformation coefficients.
+ * Default values work well for most problems.
+ *
+ * @tparam N Number of optimization variables
  */
-template <int N>
-struct OptimizationResult {
-  Kokkos::View<type_real[N], Kokkos::LayoutRight, Kokkos::HostSpace> x;
-  type_real min_value;
-  int iterations;
-  bool converged;
+template <int N> struct NelderMeadOptions {
+  Kokkos::View<type_real[N], Kokkos::LayoutRight, Kokkos::HostSpace>
+      x0;                   ///< Initial guess
+  int max_iterations = -1;  ///< Maximum iterations (-1 = 200*N)
+  type_real tol_f = 1.0e-4; ///< Tolerance on function value spread
+  type_real tol_x = 1.0e-4; ///< Tolerance on simplex diameter
+
+  // Simplex transformation coefficients (standard values recommended)
+  type_real reflection = 1.0;  ///< Reflection coefficient
+  type_real expansion = 2.0;   ///< Expansion coefficient
+  type_real contraction = 0.5; ///< Contraction coefficient
+  type_real shrink = 0.5;      ///< Shrink coefficient
 };
 
+// ============================================================================
+// Nelder-Mead optimize specialization
+// ============================================================================
+
 /**
- * @brief Nelder-Mead simplex minimization algorithm
+ * @brief Nelder-Mead downhill simplex minimization
  *
- * Implements the Nelder-Mead (downhill simplex) method for derivative-free
- * optimization. This algorithm iteratively updates a simplex of \f$N+1\f$ points
- * in \f$N\f$-dimensional space to find a local minimum.
+ * Derivative-free optimization using @f$N+1@f$ simplex vertices in
+ * @f$N@f$-dimensional space. Iteratively applies reflection, expansion,
+ * contraction, and shrink operations to locate a local minimum.
  *
- * The algorithm uses the following operations:
- * - Reflection: reflect the worst point through the centroid
- * - Expansion: if reflection is good, try expanding further
- * - Contraction: if reflection is bad, try contracting
- * - Shrink: if all else fails, shrink the simplex toward the best point
+ * @tparam N Problem dimension
+ * @tparam Func Callable with signature: type_real(View<type_real[N]>)
  *
- * Matching SPECFEM3D Fortran implementation constants:
- * - \f$\rho = 1.0\f$ (reflection coefficient)
- * - \f$\chi = 2.0\f$ (expansion coefficient)
- * - \f$\psi = 0.5\f$ (contraction coefficient)
- * - \f$\sigma = 0.5\f$ (shrink coefficient)
+ * @param tag Algorithm selector (NelderMeadSimplex{})
+ * @param objective Function to minimize
+ * @param options Configuration with initial guess and tolerances
+ * @return OptimizationResult with solution, value, iterations, and convergence
+ * flag
  *
- * @tparam N Number of optimization variables \f$N\f$
- * @tparam Func Callable type with signature type_real(View<type_real[N]>)
- *
- * @param objective The objective function \f$f(\mathbf{x})\f$ to minimize
- * @param x0 Initial guess \f$\mathbf{x}_0\f$ (\f$N\f$-dimensional point)
- * @param max_iterations Maximum iterations (\f$-1\f$ for default \f$200N\f$)
- * @param tol_f Function value tolerance for convergence
- * @param tol_x Variable tolerance for convergence
- *
- * @return OptimizationResult containing the minimum point, value, iteration
- * count, and convergence status
+ * Convergence occurs when both:
+ * - Function value spread < tol_f
+ * - Simplex diameter < tol_x
  *
  * @code
- * // Example: minimize (x-1)^2 + (y-2)^2
- * auto objective = [](auto x) { return (x(0)-1)*(x(0)-1) + (x(1)-2)*(x(1)-2);
- * }; Kokkos::View<type_real[2], Kokkos::LayoutRight, Kokkos::HostSpace>
- * x0("x0"); x0(0) = 0.0; x0(1) = 0.0; auto result = fmin_search<2>(objective,
- * x0);
+ * // Minimize (x-1)^2 + (y-2)^2
+ * auto f = [](auto x) { return (x(0)-1)*(x(0)-1) + (x(1)-2)*(x(1)-2); };
+ * Kokkos::View<type_real[2], Kokkos::LayoutRight, Kokkos::HostSpace> x0("x0");
+ * x0(0) = 0.0; x0(1) = 0.0;
+ * NelderMeadOptions<2> opts{x0};
+ * auto result = optimize(NelderMeadSimplex{}, f, opts);
  * // result.x(0) ≈ 1.0, result.x(1) ≈ 2.0
  * @endcode
  */
 template <int N, typename Func>
-OptimizationResult<N>
-fmin_search(Func &&objective,
-            Kokkos::View<type_real[N], Kokkos::LayoutRight, Kokkos::HostSpace>
-                x0,
-            int max_iterations = -1, type_real tol_f = 1.0e-4,
-            type_real tol_x = 1.0e-4) {
-  // Nelder-Mead parameters (matching Fortran SPECFEM3D)
-  constexpr type_real rho = 1.0;   // reflection coefficient
-  constexpr type_real chi = 2.0;   // expansion coefficient
-  constexpr type_real psi = 0.5;   // contraction coefficient
-  constexpr type_real sigma = 0.5; // shrink coefficient
+OptimizationResult<N> optimize(NelderMeadSimplex, Func &&objective,
+                               NelderMeadOptions<N> options) {
+  // Extract options
+  auto x0 = options.x0;
+  int max_iterations = options.max_iterations;
+  const type_real tol_f = options.tol_f;
+  const type_real tol_x = options.tol_x;
+  const type_real rho = options.reflection;
+  const type_real chi = options.expansion;
+  const type_real psi = options.contraction;
+  const type_real sigma = options.shrink;
 
   // Initial simplex construction parameters
   constexpr type_real usual_delta = 0.05;
@@ -266,7 +270,8 @@ fmin_search(Func &&objective,
         // Shrink: move all points toward the best
         for (int i = 1; i <= N; ++i) {
           for (int j = 0; j < N; ++j) {
-            simplex(i, j) = simplex(0, j) + sigma * (simplex(i, j) - simplex(0, j));
+            simplex(i, j) =
+                simplex(0, j) + sigma * (simplex(i, j) - simplex(0, j));
             point(j) = simplex(i, j);
           }
           fvals(i) = objective(point);
@@ -309,6 +314,5 @@ fmin_search(Func &&objective,
   return result;
 }
 
-} // namespace impl
-} // namespace attenuation
+} // namespace optimization
 } // namespace specfem

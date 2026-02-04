@@ -1,9 +1,9 @@
 #pragma once
 
-#include "maxwell.hpp"
 #include "compute_tau_sigma.hpp"
 #include "constants.hpp"
-#include "impl/optimization.hpp"
+#include "maxwell.hpp"
+#include "specfem/optimization.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
@@ -34,11 +34,11 @@ constexpr int NF_ATTENUATION = 100;
  *
  * @tparam N_SLS Number of standard linear solids
  */
-template <int N_SLS>
-struct AttenuationObjective {
+template <int N_SLS> struct AttenuationObjective {
   type_real Q;  ///< Target quality factor \f$Q\f$
   type_real iQ; ///< \f$1/Q\f$ (target \f$\tan\delta\f$)
-  Kokkos::View<type_real[NF_ATTENUATION], Kokkos::LayoutRight, Kokkos::HostSpace>
+  Kokkos::View<type_real[NF_ATTENUATION], Kokkos::LayoutRight,
+               Kokkos::HostSpace>
       f; ///< Evaluation frequencies \f$f\f$ (Hz)
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
       tau_sigma; ///< Stress relaxation times \f$\tau_\sigma\f$
@@ -72,30 +72,35 @@ struct AttenuationObjective {
 /**
  * @brief Compute strain relaxation times via simplex optimization
  *
- * This function finds the strain relaxation times \f$\tau_\epsilon\f$ that achieve
- * a target quality factor \f$Q\f$ for a generalized Maxwell solid with \f$N_\text{SLS}\f$
- * standard linear solids.
+ * This function finds the strain relaxation times \f$\tau_\epsilon\f$ that
+ * achieve a target quality factor \f$Q\f$ for a generalized Maxwell solid with
+ * \f$N_\text{SLS}\f$ standard linear solids.
  *
  * The algorithm:
  * 1. Computes \f$\tau_\sigma\f$ from the period range using compute_tau_sigma
- * 2. Sets up \f$N_F=100\f$ evaluation frequencies equally spaced in \f$\log_{10}\f$
+ * 2. Sets up \f$N_F=100\f$ evaluation frequencies equally spaced in
+ * \f$\log_{10}\f$
  * 3. Uses Nelder-Mead simplex to minimize the misfit between achieved
  *    and target \f$1/Q\f$ values over the frequency range
  *
- * The initial guess for \f$\tau_\epsilon\f$ is \f$\tau_\sigma\f$ (no attenuation), and the
- * optimization typically converges within a few hundred iterations.
+ * The initial guess for \f$\tau_\epsilon\f$ is \f$\tau_\sigma\f$ (no
+ * attenuation), and the optimization typically converges within a few hundred
+ * iterations.
  *
- * @tparam N_SLS Number of standard linear solids (requires \f$N_\text{SLS} > 1\f$)
+ * @tparam N_SLS Number of standard linear solids (requires \f$N_\text{SLS} >
+ * 1\f$)
  *
  * @param Q Target quality factor \f$Q\f$ (must be positive)
- * @param tau_sigma Pre-computed stress relaxation times \f$\tau_\sigma\f$ from compute_tau_sigma
+ * @param tau_sigma Pre-computed stress relaxation times \f$\tau_\sigma\f$ from
+ * compute_tau_sigma
  * @param min_period Minimum period \f$T_\text{min}\f$ (s) for frequency range
  * @param max_period Maximum period \f$T_\text{max}\f$ (s) for frequency range
  *
- * @return View containing \f$N_\text{SLS}\f$ strain relaxation times \f$\tau_\epsilon\f$
+ * @return View containing \f$N_\text{SLS}\f$ strain relaxation times
+ * \f$\tau_\epsilon\f$
  *
- * @note The returned \f$\tau_\epsilon\f$ values should satisfy \f$\tau_\epsilon > \tau_\sigma\f$ for
- *       positive \f$Q\f$ (physical attenuation).
+ * @note The returned \f$\tau_\epsilon\f$ values should satisfy \f$\tau_\epsilon
+ * > \tau_\sigma\f$ for positive \f$Q\f$ (physical attenuation).
  *
  * @code
  * // Example: compute tau_eps for Q=200 with 3 SLS
