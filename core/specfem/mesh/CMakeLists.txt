@@ -8,7 +8,7 @@ target_link_libraries(
         enumerations
         Kokkos::kokkos
         specfem::macros
-        specfem::mesh_entities
+        specfem::mesh_entity
         specfem::element
         specfem::element_connections
         # material_class

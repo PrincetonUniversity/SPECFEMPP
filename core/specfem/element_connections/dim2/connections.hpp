@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <functional>
 #include <stdexcept>
 #include <tuple>

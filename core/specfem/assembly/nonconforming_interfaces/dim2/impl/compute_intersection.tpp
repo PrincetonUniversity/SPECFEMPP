@@ -4,7 +4,7 @@
 #include "specfem/algorithms/locate_point/locate_point_impl.hpp"
 #include "compute_intersection.hpp"
 #include "specfem/element.hpp"
-#include "specfem/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/jacobian/dim2/jacobian.hpp"
 #include "specfem/point/global_coordinates.hpp"
 #include "specfem_setup.hpp"

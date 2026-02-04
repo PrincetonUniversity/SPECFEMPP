@@ -2,7 +2,7 @@
 
 #include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
-#include "specfem/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

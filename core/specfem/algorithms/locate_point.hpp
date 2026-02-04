@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/assembly.hpp"
-#include "specfem/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
 
 namespace specfem {

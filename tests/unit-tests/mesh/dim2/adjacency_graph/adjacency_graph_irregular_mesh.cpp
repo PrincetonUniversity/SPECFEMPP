@@ -3,7 +3,7 @@
 #include "SPECFEM_Environment.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
-#include "specfem/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
 #include <gtest/gtest.h>

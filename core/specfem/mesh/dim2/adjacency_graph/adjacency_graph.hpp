@@ -2,7 +2,7 @@
 
 #include "enumerations/interface.hpp"
 #include "specfem/element_coupling.hpp"
-#include "specfem/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <memory>
 
