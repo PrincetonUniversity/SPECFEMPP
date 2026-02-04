@@ -6,37 +6,6 @@
 
 namespace {
 
-/**
- * @brief Helper function to compute element coordinates from edge type and
- * local edge point index
- */
-KOKKOS_INLINE_FUNCTION
-void get_edge_coordinates(const specfem::mesh_entity::dim2::type edge_type,
-                          const int ipoint, const int ngll, int &iz, int &ix) {
-  switch (edge_type) {
-  case specfem::mesh_entity::dim2::type::bottom:
-    iz = 0;
-    ix = ipoint;
-    break;
-  case specfem::mesh_entity::dim2::type::top:
-    iz = ngll - 1;
-    ix = ipoint;
-    break;
-  case specfem::mesh_entity::dim2::type::left:
-    iz = ipoint;
-    ix = 0;
-    break;
-  case specfem::mesh_entity::dim2::type::right:
-    iz = ipoint;
-    ix = ngll - 1;
-    break;
-  default:
-    iz = -1;
-    ix = -1;
-    break;
-  }
-}
-
 // Functors to replace lambdas for CUDA compatibility
 // (CUDA does not allow extended __host__ __device__ lambdas inside
 // functions with private/protected access, such as TEST_F's TestBody)
@@ -47,12 +16,13 @@ struct InitializeEdgesFunctor {
   specfem::mesh_entity::dim2::type edge_type;
   int num_points;
   int element_multiplier;
+  specfem::mesh_entity::element<specfem::dimension::type::dim2> elem;
 
   InitializeEdgesFunctor(EdgeViewType view_,
                          specfem::mesh_entity::dim2::type edge_type_,
                          int num_points_, int element_multiplier_)
       : view(view_), edge_type(edge_type_), num_points(num_points_),
-        element_multiplier(element_multiplier_) {}
+        element_multiplier(element_multiplier_), elem(num_points_) {}
 
   KOKKOS_INLINE_FUNCTION
   void operator()(const int i) const {
@@ -61,7 +31,7 @@ struct InitializeEdgesFunctor {
     view.edge_types(i) = edge_type;
     for (int j = 0; j < num_points; ++j) {
       int iz_val, ix_val;
-      get_edge_coordinates(edge_type, j, num_points, iz_val, ix_val);
+      elem.get_edge_coordinates(edge_type, j, iz_val, ix_val);
       view.iz(i, j) = iz_val;
       view.ix(i, j) = ix_val;
     }
@@ -109,16 +79,17 @@ struct InitCoordsFunctor {
   StorageType ix_storage;
   specfem::mesh_entity::dim2::type edge_type;
   int num_points;
+  specfem::mesh_entity::element<specfem::dimension::type::dim2> elem;
 
   InitCoordsFunctor(StorageType iz_, StorageType ix_,
                     specfem::mesh_entity::dim2::type edge_type_, int num_points_)
       : iz_storage(iz_), ix_storage(ix_), edge_type(edge_type_),
-        num_points(num_points_) {}
+        num_points(num_points_), elem(num_points_) {}
 
   KOKKOS_INLINE_FUNCTION
   void operator()(const int j) const {
     int iz_val, ix_val;
-    get_edge_coordinates(edge_type, j, num_points, iz_val, ix_val);
+    elem.get_edge_coordinates(edge_type, j, iz_val, ix_val);
     iz_storage(j) = iz_val;
     ix_storage(j) = ix_val;
   }

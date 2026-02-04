@@ -6,59 +6,6 @@
 
 namespace {
 
-/**
- * @brief Helper function to compute element coordinates from face type and
- * local face point indices
- */
-KOKKOS_INLINE_FUNCTION
-void get_face_coordinates(const specfem::mesh_entity::dim3::type face_type,
-                          const int ipoint_i, const int ipoint_j,
-                          const int ngll, int &iz, int &iy, int &ix) {
-  switch (face_type) {
-  case specfem::mesh_entity::dim3::type::bottom:
-    // z = 0 plane
-    iz = 0;
-    iy = ipoint_i;
-    ix = ipoint_j;
-    break;
-  case specfem::mesh_entity::dim3::type::top:
-    // z = ngll-1 plane
-    iz = ngll - 1;
-    iy = ipoint_i;
-    ix = ipoint_j;
-    break;
-  case specfem::mesh_entity::dim3::type::left:
-    // x = 0 plane
-    iz = ipoint_i;
-    iy = ipoint_j;
-    ix = 0;
-    break;
-  case specfem::mesh_entity::dim3::type::right:
-    // x = ngll-1 plane
-    iz = ipoint_i;
-    iy = ipoint_j;
-    ix = ngll - 1;
-    break;
-  case specfem::mesh_entity::dim3::type::front:
-    // y = 0 plane
-    iz = ipoint_i;
-    iy = 0;
-    ix = ipoint_j;
-    break;
-  case specfem::mesh_entity::dim3::type::back:
-    // y = ngll-1 plane
-    iz = ipoint_i;
-    iy = ngll - 1;
-    ix = ipoint_j;
-    break;
-  default:
-    iz = -1;
-    iy = -1;
-    ix = -1;
-    break;
-  }
-}
-
 // Functors to replace lambdas for CUDA compatibility
 // (CUDA does not allow extended __host__ __device__ lambdas inside
 // functions with private/protected access, such as TEST_F's TestBody)
@@ -69,12 +16,13 @@ struct InitializeFacesFunctor {
   specfem::mesh_entity::dim3::type face_type;
   int num_points;
   int element_multiplier;
+  specfem::mesh_entity::element<specfem::dimension::type::dim3> elem;
 
   InitializeFacesFunctor(FaceViewType view_,
                          specfem::mesh_entity::dim3::type face_type_,
                          int num_points_, int element_multiplier_)
       : view(view_), face_type(face_type_), num_points(num_points_),
-        element_multiplier(element_multiplier_) {}
+        element_multiplier(element_multiplier_), elem(num_points_) {}
 
   KOKKOS_INLINE_FUNCTION
   void operator()(const int i) const {
@@ -84,8 +32,7 @@ struct InitializeFacesFunctor {
     for (int j = 0; j < num_points; ++j) {
       for (int k = 0; k < num_points; ++k) {
         int iz_val, iy_val, ix_val;
-        get_face_coordinates(face_type, j, k, num_points, iz_val, iy_val,
-                             ix_val);
+        elem.get_face_coordinates(face_type, j, k, iz_val, iy_val, ix_val);
         view.iz(i, j, k) = iz_val;
         view.iy(i, j, k) = iy_val;
         view.ix(i, j, k) = ix_val;
@@ -136,17 +83,18 @@ struct InitCoords2DFunctor {
   StorageType ix_storage;
   specfem::mesh_entity::dim3::type face_type;
   int num_points;
+  specfem::mesh_entity::element<specfem::dimension::type::dim3> elem;
 
   InitCoords2DFunctor(StorageType iz_, StorageType iy_, StorageType ix_,
                       specfem::mesh_entity::dim3::type face_type_,
                       int num_points_)
       : iz_storage(iz_), iy_storage(iy_), ix_storage(ix_), face_type(face_type_),
-        num_points(num_points_) {}
+        num_points(num_points_), elem(num_points_) {}
 
   KOKKOS_INLINE_FUNCTION
   void operator()(const int i, const int j) const {
     int iz_val, iy_val, ix_val;
-    get_face_coordinates(face_type, i, j, num_points, iz_val, iy_val, ix_val);
+    elem.get_face_coordinates(face_type, i, j, iz_val, iy_val, ix_val);
     iz_storage(i, j) = iz_val;
     iy_storage(i, j) = iy_val;
     ix_storage(i, j) = ix_val;
