@@ -9,6 +9,27 @@ namespace specfem {
 namespace optimization {
 
 // ============================================================================
+// Steepest Descent Tag
+// ============================================================================
+
+/**
+ * @brief Tag for steepest descent (gradient descent) algorithm
+ *
+ * First-order gradient-based method using backtracking line search.
+ * Computes gradient numerically via central finite differences.
+ * Faster than Nelder-Mead for smooth functions but requires differentiability.
+ *
+ * @note This is mainly intended for educational purposes, just to show how to
+ * implement interfaces with and without gradients.
+ *
+ * @see optimize(SteepestDescent, Func &&objective, SteepestDescentOptions<N>
+ * options)
+ * @see optimize(SteepestDescent, Func &&objective, GradFunc &&gradient,
+ * SteepestDescentOptions<N> options)
+ */
+struct SteepestDescent {};
+
+// ============================================================================
 // Steepest Descent Options
 // ============================================================================
 

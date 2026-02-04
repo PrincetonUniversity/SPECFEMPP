@@ -41,41 +41,6 @@ namespace specfem {
 namespace optimization {
 
 // ============================================================================
-// Algorithm Tags
-// ============================================================================
-
-/**
- * @brief Tag for Nelder-Mead simplex algorithm
- *
- * Derivative-free method suitable for non-smooth objective functions.
- * Converges slowly but robustly for problems with few variables (N < 10).
- *
- * @see optimize(NelderMeadSimplex, Func &&objective, NelderMeadOptions<N>
- * options)
- */
-struct NelderMeadSimplex {};
-
-/**
- * @brief Tag for steepest descent (gradient descent) algorithm
- *
- * First-order gradient-based method using backtracking line search.
- * Computes gradient numerically via central finite differences.
- * Faster than Nelder-Mead for smooth functions but requires differentiability.
- *
- * @note This is mainly intended for educational purposes, just to show how to
- * implement interfaces with and without gradients.
- *
- * @see optimize(SteepestDescent, Func &&objective, SteepestDescentOptions<N>
- * options)
- * @see optimize(SteepestDescent, Func &&objective, GradFunc &&gradient,
- * SteepestDescentOptions<N> options)
- */
-struct SteepestDescent {};
-
-// struct BFGS {};              // Future: quasi-Newton
-// struct ConjugateGradient {}; // Future: conjugate gradient
-
-// ============================================================================
 // Result
 // ============================================================================
 
@@ -148,5 +113,5 @@ OptimizationResult<N> optimize(AlgorithmTag tag, Func &&objective,
 } // namespace specfem
 
 // Include algorithm implementations
-#include "optimization/neldermeadsimplex.hpp"
-#include "optimization/steepestdescent.hpp"
+#include "optimization/NelderMeadSimplex.hpp"
+#include "optimization/SteepestDescent.hpp"
