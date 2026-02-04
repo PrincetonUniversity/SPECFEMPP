@@ -3,6 +3,7 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
+#include <limits>
 
 namespace specfem {
 namespace optimization {
@@ -34,7 +35,11 @@ template <int N> struct SteepestDescentOptions {
   int max_line_search = 50;      ///< Maximum line search iterations
 
   // Numerical gradient parameters (only used when gradient not provided)
-  type_real grad_epsilon = 1.0e-8; ///< Finite difference step size
+  // Use sqrt(machine epsilon) for finite difference step size
+  // For float: ~1e-4, for double: ~1e-8
+  type_real grad_epsilon = std::sqrt(
+      std::numeric_limits<type_real>::epsilon()); ///< Finite difference step
+                                                  ///< size
 };
 
 // ============================================================================
@@ -260,16 +265,18 @@ OptimizationResult<N> optimize(SteepestDescent, Func &&objective,
                                SteepestDescentOptions<N> options) {
   const type_real grad_epsilon = options.grad_epsilon;
 
-  // Working array for finite difference computation
+  // Working array for finite difference computation - use unique label
   Kokkos::View<type_real[N], Kokkos::LayoutRight, Kokkos::HostSpace> x_temp(
-      "x_temp");
+      "x_temp_for_numerical_gradient");
 
-  // Create numerical gradient functor
-  auto numerical_gradient = [&objective, &x_temp,
-                             grad_epsilon](const auto &point, auto &grad_out) {
-    for (int j = 0; j < N; ++j) {
+  // Create numerical gradient functor - capture x_temp by value
+  auto numerical_gradient = [objective, x_temp, grad_epsilon](
+                                const auto &point, auto &grad_out) mutable {
+    const int dim = point.extent(0); // Get dimension from the View itself
+
+    for (int j = 0; j < dim; ++j) {
       // Copy point to temp
-      for (int k = 0; k < N; ++k) {
+      for (int k = 0; k < dim; ++k) {
         x_temp(k) = point(k);
       }
 
@@ -286,9 +293,8 @@ OptimizationResult<N> optimize(SteepestDescent, Func &&objective,
     }
   };
 
-  // Delegate to the gradient-accepting overload
-  return optimize(SteepestDescent{}, std::forward<Func>(objective),
-                  numerical_gradient, options);
+  // Don't forward objective since we captured it by value in the lambda
+  return optimize(SteepestDescent{}, objective, numerical_gradient, options);
 }
 
 } // namespace optimization
