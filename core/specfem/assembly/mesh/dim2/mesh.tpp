@@ -10,7 +10,7 @@
 #include "specfem/jacobian.hpp"
 #include "specfem/shape_function.hpp"
 #include "impl/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 #include <vector>
