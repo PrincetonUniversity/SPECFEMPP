@@ -33,7 +33,7 @@ specfem::source_time_functions::Heaviside::Heaviside(
   // Approximate the half duration based on the empirical relation to
   // of a triangular source time function
   this->hdur_ =
-      this->hdur_ / specfem::constants::empirical::SOURCE_DECAY_MIMIC_TRIANGLE;
+      this->hdur_ / specfem::constants::SOURCE_DECAY_MIMIC_TRIANGLE;
 }
 
 specfem::source_time_functions::Heaviside::Heaviside(

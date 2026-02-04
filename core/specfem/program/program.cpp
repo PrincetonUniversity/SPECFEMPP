@@ -422,13 +422,6 @@ void program_3d(
   return;
 }
 
-bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
-             const YAML::Node &default_dict) {
-  // For backward compatibility, ignore default_dict
-  (void)default_dict;
-  return execute(dimension, parameter_dict);
-}
-
 bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
   try {
     // Use simulation model enumeration for validation

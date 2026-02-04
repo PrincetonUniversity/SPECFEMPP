@@ -21,23 +21,8 @@ void create_folder_if_not_exists(const std::string &folder_name) {
   }
 }
 
-specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
-                                             const std::string &default_file) {
-  // For backward compatibility, load both files but only use parameter_file's content
-  // The default_file parameter is deprecated and ignored
-  (void)default_file; // Mark as unused
-  *this = setup(YAML::LoadFile(parameter_file));
-}
-
 specfem::runtime_configuration::setup::setup(const std::string &parameter_file) {
   *this = setup(YAML::LoadFile(parameter_file));
-}
-
-specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
-                                             const YAML::Node &default_dict) {
-  // For backward compatibility, accept but ignore default_dict
-  (void)default_dict; // Mark as unused
-  *this = setup(parameter_dict);
 }
 
 specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {

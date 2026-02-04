@@ -16,20 +16,7 @@ enum type {
 };
 } // namespace wave
 
-} // namespace specfem
-
-namespace specfem {
-namespace build_configuration {
-namespace chunk {
-constexpr static int chunk_size = 32;
-constexpr static int num_chunks = 1;
-constexpr static int num_threads = 160;
-constexpr static int vector_lanes = 1;
-}
-}
-
-
-namespace constants::empirical {
+namespace constants {
   /**
    * @brief Source decay rate to mimic a triangle source time function
    *

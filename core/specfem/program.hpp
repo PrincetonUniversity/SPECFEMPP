@@ -37,17 +37,6 @@ namespace specfem::program {
  */
 bool execute(const std::string &dimension, const YAML::Node &parameter_dict);
 
-/**
- * @brief Execute complete SPECFEM simulation (deprecated overload)
- *
- * @param dimension Simulation dimension: "2d" or "3d"
- * @param parameter_dict User-provided YAML configuration
- * @param default_dict DEPRECATED - ignored for backward compatibility
- * @return true on successful completion, false on failure
- */
-bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
-             const YAML::Node &default_dict);
-
 } // namespace specfem::program
 
 #include "program/abort.hpp"
