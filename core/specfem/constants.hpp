@@ -9,13 +9,6 @@ const type_real pi = 2 * Kokkos::acos(0.0);
 
 namespace specfem {
 
-namespace wave {
-enum type {
-  p_sv, ///< P-SV wave
-  sh    ///< SH wave
-};
-} // namespace wave
-
 namespace constants {
   /**
    * @brief Source decay rate to mimic a triangle source time function
