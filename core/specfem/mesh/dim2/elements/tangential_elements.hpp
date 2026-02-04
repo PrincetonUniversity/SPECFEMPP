@@ -2,6 +2,7 @@
 #define _TANGENTIAL_ELEMENTS_HPP
 
 #include "enumerations/interface.hpp"
+#include "specfem_setup.hpp"
 
 namespace specfem {
 namespace mesh {

@@ -22,7 +22,7 @@ specfem::io::impl::NPZ::Dataset<ViewType, OpType>::Dataset(
 
 template <typename ViewType, typename OpType>
 void specfem::io::impl::NPZ::Dataset<ViewType, OpType>::write() {
-  if (std::is_same_v<MemSpace, Kokkos::HostMemSpace>) {
+  if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
     file.write(data.data(), dims, path);
   } else if (std::is_same_v<MemSpace,
                             Kokkos::DefaultExecutionSpace::memory_space>) {
@@ -37,7 +37,7 @@ void specfem::io::impl::NPZ::Dataset<ViewType, OpType>::write() {
 
 template <typename ViewType, typename OpType>
 void specfem::io::impl::NPZ::Dataset<ViewType, OpType>::read() {
-  if (std::is_same_v<MemSpace, Kokkos::HostMemSpace>) {
+  if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
     file.read(data.data(), dims, path);
   } else if (std::is_same_v<MemSpace,
                             Kokkos::DefaultExecutionSpace::memory_space>) {

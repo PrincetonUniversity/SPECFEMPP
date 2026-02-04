@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
+#include "specfem_setup.hpp"
 #include <iostream>
 #include <string>
 #include <vector>

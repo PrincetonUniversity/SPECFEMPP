@@ -46,7 +46,7 @@ specfem::io::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
 
 template <typename ViewType, typename OpType>
 void specfem::io::impl::HDF5::Dataset<ViewType, OpType>::write() {
-  if (std::is_same_v<MemSpace, Kokkos::HostMemSpace>) {
+  if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
     DatasetBase<OpType>::write(data.data());
   } else if (std::is_same_v<MemSpace,
                             Kokkos::DefaultExecutionSpace::memory_space>) {
