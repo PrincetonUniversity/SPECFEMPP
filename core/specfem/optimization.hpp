@@ -24,6 +24,20 @@
  * @endcode
  */
 namespace specfem {
+
+/**
+ * @brief This namespace contains optimization algorithms and related types
+ *
+ * The main interface is the optimize() function, which is overloaded for
+ * different algorithms and supports both numerical and user-provided gradients.
+ *
+ * For implementing a new algorithm simply define a new tag struct (e.g.,
+ * MyAlgorithm) and provide specializations of optimize() for that tag. This
+ * design allows for a clean separation of algorithms and a consistent user
+ * interface.
+ *
+ *
+ */
 namespace optimization {
 
 // ============================================================================
@@ -35,6 +49,9 @@ namespace optimization {
  *
  * Derivative-free method suitable for non-smooth objective functions.
  * Converges slowly but robustly for problems with few variables (N < 10).
+ *
+ * @see optimize(NelderMeadSimplex, Func &&objective, NelderMeadOptions<N>
+ * options)
  */
 struct NelderMeadSimplex {};
 
@@ -47,6 +64,11 @@ struct NelderMeadSimplex {};
  *
  * @note This is mainly intended for educational purposes, just to show how to
  * implement interfaces with and without gradients.
+ *
+ * @see optimize(SteepestDescent, Func &&objective, SteepestDescentOptions<N>
+ * options)
+ * @see optimize(SteepestDescent, Func &&objective, GradFunc &&gradient,
+ * SteepestDescentOptions<N> options)
  */
 struct SteepestDescent {};
 
