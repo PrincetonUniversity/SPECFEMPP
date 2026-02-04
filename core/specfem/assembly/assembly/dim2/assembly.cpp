@@ -1,6 +1,6 @@
-#include "assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "enumerations/interface.hpp"
-#include "io/reader.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 
 specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
@@ -109,14 +109,12 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
   bool is_psv = false;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       {
         // Getting the number of elements per medium
-        int n_elements = this->element_types.get_number_of_elements(
-            _medium_tag_, _property_tag_);
+        int n_elements =
+            this->element_types.get_number_of_elements(_medium_tag_);
 
         // Printing the number of elements if more than 0
         if (n_elements > 0) {
@@ -124,8 +122,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
           total_elements += n_elements;
 
           message << "   Total number of elements of type "
-                  << specfem::element::to_string(_medium_tag_, _property_tag_)
-                  << " : " << n_elements << "\n";
+                  << specfem::element::to_string(_medium_tag_) << " : "
+                  << n_elements << "\n";
           if (_medium_tag_ == specfem::element::medium_tag::elastic_sh) {
             is_sh = true;
           } else if (_medium_tag_ ==

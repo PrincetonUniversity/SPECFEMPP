@@ -2,8 +2,8 @@
 
 #include "../../SPECFEM_Environment.hpp"
 #include "enumerations/interface.hpp"
-#include "io/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/receivers.hpp"

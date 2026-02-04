@@ -75,7 +75,8 @@ template <> constexpr auto material_systems<specfem::dimension::type::dim2>() {
       BOOST_PP_SEQ_SIZE(MATERIAL_SYSTEMS_DIM2);
   constexpr std::array<
       std::tuple<specfem::dimension::type, specfem::element::medium_tag,
-                 specfem::element::property_tag>,
+                 specfem::element::property_tag,
+                 specfem::element::attenuation_tag>,
       total_material_systems>
       material_systems{ _MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS_DIM2) };
 
@@ -93,7 +94,8 @@ template <> constexpr auto material_systems<specfem::dimension::type::dim3>() {
       BOOST_PP_SEQ_SIZE(MATERIAL_SYSTEMS_DIM3);
   constexpr std::array<
       std::tuple<specfem::dimension::type, specfem::element::medium_tag,
-                 specfem::element::property_tag>,
+                 specfem::element::property_tag,
+                 specfem::element::attenuation_tag>,
       total_material_systems>
       material_systems{ _MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS_DIM3) };
 

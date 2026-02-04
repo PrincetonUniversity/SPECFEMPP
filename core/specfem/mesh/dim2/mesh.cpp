@@ -1,7 +1,7 @@
 #include "specfem/mesh.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "medium/material.hpp"
+#include "specfem/medium_container.hpp"
 
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

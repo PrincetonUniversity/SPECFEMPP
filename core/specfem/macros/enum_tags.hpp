@@ -54,4 +54,14 @@
  */
 #define _ENUM_ID_INTERFACE_TAG 5
 
+/**
+ * @brief ID for flux scheme tags
+ *
+ * Used to identify flux scheme tags in interface definitions.
+ * See @ref interface_iterator_macros.
+ */
+#define _ENUM_ID_FLUX_SCHEME_TAG 6
+
+#define _ENUM_ID_ATTENUATION_TAG 7
+
 /** @} */ // end of material_iterator_enum_tags

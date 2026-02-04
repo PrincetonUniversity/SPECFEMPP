@@ -1,10 +1,10 @@
 
 .. _specfem_api_enumerations_wavefield:
 
-``specfem::wavefield::simulation_field``
+``specfem::simulation::field_type``
 =======================================
 
-.. doxygenenum:: specfem::wavefield::simulation_field
+.. doxygenenum:: specfem::simulation::field_type
 
 ``specfem::wavefield::type``
 ============================

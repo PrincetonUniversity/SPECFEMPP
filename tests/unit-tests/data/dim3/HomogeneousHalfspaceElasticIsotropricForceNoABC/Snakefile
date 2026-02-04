@@ -1,0 +1,45 @@
+# Snakemake workflow to generate database for 4-node elastic problem in 3D
+
+rule all:
+    input:
+        database = "database.bin"
+    shell:
+        "echo 'All tasks completed successfully.'"
+
+rule check_executible:
+    output:
+        executable_checked = "executable_checked.txt",
+    shell:
+        """
+        # Check if the xmeshfem3D executable exists in path
+        if ! command -v xmeshfem3D &> /dev/null; then
+            echo "Error: xmeshfem3D executable not found in PATH."
+            exit 1
+        fi
+        touch {output}
+        """
+
+rule generate_database:
+    input:
+        executable_checked = "executable_checked.txt",
+        par_file = "provenance/DATA/meshfem3D_files/Mesh_Par_file",
+        artifacts = expand("provenance/DATA/meshfem3D_files/{file}", file=["interfaces.txt", "interface1.txt"]),
+    output:
+        database = "database.bin",
+    shell:
+        """
+        # Run the meshfem3D command to generate the database
+        mkdir -p OUTPUT_FILES
+        mkdir -p OUTPUT_FILES/DATABASES_MPI
+        xmeshfem3D -p {input.par_file}
+        mv OUTPUT_FILES/DATABASES_MPI/proc000000_Database.bin {output.database}
+        """
+
+rule clean:
+    shell:
+        """
+        # Clean up intermediate files
+        rm -rf OUTPUT_FILES
+        rm -f executable_checked.txt
+        rm -f database.bin
+        """

@@ -2,7 +2,7 @@
 
 #include "SPECFEM_Environment.hpp"
 #include "enumerations/interface.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include <gtest/gtest.h>
 #include <string>

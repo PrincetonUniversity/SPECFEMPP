@@ -1,7 +1,7 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "../../utilities/include/interface.hpp"
-#include "io/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "yaml-cpp/yaml.h"

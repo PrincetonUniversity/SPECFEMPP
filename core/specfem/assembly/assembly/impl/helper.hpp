@@ -1,11 +1,11 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "medium/medium.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/assembly/impl/helper.hpp"
 #include "specfem/chunk_element.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -88,8 +88,8 @@ public:
     // Get the element grid (ngllx, nglly, ngllz)
     const auto &element_grid = assembly.mesh.element_grid;
 
-    const auto elements =
-        assembly.element_types.get_elements_on_device(medium_tag, property_tag);
+    const auto elements = assembly.element_types.get_elements_on_device(
+        medium_tag, property_tag, specfem::element::attenuation_tag::none);
 
     const int nelements = elements.extent(0);
 
@@ -178,8 +178,8 @@ public:
           }();
 
           // Call the compute_wavefield function
-          specfem::medium::compute_wavefield<dimension_tag, MediumTag,
-                                             PropertyTag>(
+          specfem::medium_physics::compute_wavefield<dimension_tag, MediumTag,
+                                                     PropertyTag>(
               chunk_index, assembly, lagrange_derivative, displacement,
               velocity, acceleration, wavefield_type, wavefield);
         });

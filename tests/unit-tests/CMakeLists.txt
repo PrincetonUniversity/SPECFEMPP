@@ -39,7 +39,7 @@ add_library(
 target_link_libraries(
   compare_arrays
   Kokkos::kokkos
-  io
+  specfem::io
 )
 
 add_library(
@@ -82,8 +82,8 @@ add_executable(
 )
 
 target_link_libraries(io_framework_tests PRIVATE
-  io
-  boost
+  specfem::io
+  ${BOOST_LIBS}
   gtest_main
   Kokkos::kokkos
   specfem_environment
@@ -121,6 +121,19 @@ target_link_libraries(
   is_close_tests
   specfem::utilities
   gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
+  attenuation_tests
+  attenuation/runner.cpp
+  attenuation/compute_tau_sigma_tests.cpp
+)
+
+target_link_libraries(
+  attenuation_tests
+  gtest_main
+  specfem::attenuation
   Kokkos::kokkos
 )
 
@@ -213,7 +226,7 @@ target_link_libraries(
   fortranio_test
   gtest_main
   gmock_main
-  io
+  specfem::io
   -lpthread -lm
 )
 
@@ -266,7 +279,7 @@ target_link_libraries(
   specfem::receivers
   specfem_environment
   yaml-cpp
-  boost
+  ${BOOST_LIBS}
   -lpthread -lm
 )
 
@@ -287,7 +300,7 @@ target_link_libraries(
   specfem::mesh
   specfem_environment
   yaml-cpp
-  io
+  specfem::io
   specfem::utilities
 
   # material_class
@@ -310,7 +323,7 @@ target_link_libraries(
   gtest_main
   specfem::mesh
   specfem_environment
-  io
+  specfem::io
   specfem::utilities
 
   -lpthread -lm
@@ -331,7 +344,7 @@ target_link_libraries(
   specfem_environment
   yaml-cpp
   specfem::utilities
-  boost
+  ${BOOST_LIBS}
   -lpthread -lm
   gtest_main
 )
@@ -425,16 +438,14 @@ add_executable(
 )
 target_link_libraries(
   nonconforming_assembly_tests
-  reader
-  writer
+  specfem::io
   specfem::mesh
   specfem::assembly
   specfem::quadrature
   specfem_environment
-  io
   yaml-cpp
   specfem::utilities
-  boost
+  ${BOOST_LIBS}
 
   -lpthread -lm
   gtest_main
@@ -479,20 +490,18 @@ set_target_properties(assembly_tests PROPERTIES UNITY_BUILD OFF)
 
 target_link_libraries(
   assembly_tests
-  reader
-  writer
   specfem::mesh
   specfem::assembly
   specfem::quadrature
   specfem_environment
-  io
+  specfem::io
 
   yaml-cpp
   specfem::utilities
   enumerations
   shape_functions
   specfem::quadrature
-  boost
+  ${BOOST_LIBS}
 
   -lpthread -lm
   gtest_main
@@ -514,8 +523,8 @@ target_link_libraries(
   specfem::quadrature
   specfem_environment
   yaml-cpp
-  io
-  boost
+  specfem::io
+  ${BOOST_LIBS}
 
   gtest
   gtest_main
@@ -534,12 +543,12 @@ add_executable(
 
 target_link_libraries(
   io_tests
-  io
+  specfem::io
   gtest_main
 
   yaml-cpp
   enumerations
-  boost
+  ${BOOST_LIBS}
 )
 
 add_executable(
@@ -554,8 +563,8 @@ target_link_libraries(
   specfem::quadrature
   specfem_environment
   specfem::algorithms
-  io
-  boost
+  specfem::io
+  ${BOOST_LIBS}
   point
 )
 
@@ -643,7 +652,7 @@ target_link_libraries(
   specfem::receivers
   specfem_environment
   yaml-cpp
-  boost
+  ${BOOST_LIBS}
   -lpthread -lm
 )
 
@@ -719,7 +728,9 @@ add_executable(
   compute_coupling_tests
   compute_coupling/acoustic_elastic.cpp
   compute_coupling/elastic_acoustic.cpp
-  compute_coupling/nonconforming.cpp
+  compute_coupling/nonconforming/acoustic_elastic.cpp
+  compute_coupling/nonconforming/elastic_acoustic.cpp
+  compute_coupling/runner.cpp
 )
 
 target_link_libraries(
@@ -819,10 +830,10 @@ target_link_libraries(
   timescheme
   point
   specfem::algorithms
-  specfem::kokkos_kernels
+  specfem::compute
   specfem::solver
   specfem::periodic_tasks
-  boost
+  ${BOOST_LIBS}
   -lpthread -lm
 )
 
@@ -845,10 +856,10 @@ target_link_libraries(
   timescheme
   point
   specfem::algorithms
-  specfem::kokkos_kernels
+  specfem::compute
   specfem::solver
   specfem::periodic_tasks
-  boost
+  ${BOOST_LIBS}
   -lpthread -lm
 )
 
@@ -914,8 +925,6 @@ target_link_libraries(
 # )
 
 
-
-
 # Link to gtest only if MPI is disabled
 if(NOT MPI_PARALLEL)
   include(GoogleTest)
@@ -923,6 +932,7 @@ if(NOT MPI_PARALLEL)
     abort_tests
     assembly_receivers_tests
     assembly_tests
+    attenuation_tests
     chunked_edge_tests
     chunked_face_tests
     # compute_acoustic_tests

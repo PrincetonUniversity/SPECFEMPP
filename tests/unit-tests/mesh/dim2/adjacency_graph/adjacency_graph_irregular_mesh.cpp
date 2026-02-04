@@ -1,7 +1,8 @@
 
+#include "../../../test_macros.hpp"
 #include "SPECFEM_Environment.hpp"
 #include "enumerations/mesh_entities.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
@@ -72,7 +73,7 @@ TEST_P(CheckConnections, Test) {
 
   const auto &adjacency_graph = mesh.adjacency_graph;
 
-  EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
+  LOCAL_EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
 
   for (const auto &rule : expected_adjacency_rules.at(mesh_name)) {
     specfem::testing::predicate::verify(rule, adjacency_graph);

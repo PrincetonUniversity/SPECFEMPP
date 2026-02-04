@@ -1,6 +1,6 @@
 #include "elements.hpp"
 #include "enumerations/interface.hpp"
-#include "io/fortranio/interface.hpp"
+#include "specfem/io.hpp"
 
 specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>::
     tangential_elements(const int nnodes_tangential_curve) {

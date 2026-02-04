@@ -3,12 +3,14 @@
 
 const std::string specfem::element::to_string(
     const specfem::element::medium_tag &medium,
-    const specfem::element::property_tag &property_tag) {
+    const specfem::element::property_tag &property_tag,
+    const specfem::element::attenuation_tag &attenuation_tag) {
 
   std::string medium_string = specfem::element::to_string(medium);
   std::string property_string = specfem::element::to_string(property_tag);
+  std::string attenuation_string = specfem::element::to_string(attenuation_tag);
 
-  return medium_string + "_" + property_string;
+  return medium_string + "_" + property_string + "_" + attenuation_string;
 }
 
 const std::string
@@ -101,6 +103,26 @@ specfem::element::to_string(const specfem::element::boundary_tag &boundary) {
   }
 
   return boundary_string;
+}
+
+const std::string specfem::element::to_string(
+    const specfem::element::attenuation_tag &attenuation) {
+
+  std::string attenuation_string;
+
+  switch (attenuation) {
+  case specfem::element::attenuation_tag::none:
+    attenuation_string = "none";
+    break;
+  case specfem::element::attenuation_tag::constant_isotropic:
+    attenuation_string = "constant_isotropic";
+    break;
+  default:
+    attenuation_string = "unknown";
+    break;
+  }
+
+  return attenuation_string;
 }
 
 specfem::element::medium_tag

@@ -441,10 +441,18 @@ TEST_F(LocatePoint3D, CoreOutsideMesh) {
     2.0, 2.0, 2.0
   };
 
-  EXPECT_THROW(specfem::algorithms::locate_point_impl::locate_point_core(
-                   target, geom.global_coords, geom.index_mapping,
-                   geom.control_nodes, geom.ngnod, geom.ngllx),
-               std::runtime_error);
+  {
+    bool captured = false;
+    try {
+      specfem::algorithms::locate_point_impl::locate_point_core(
+          target, geom.global_coords, geom.index_mapping, geom.control_nodes,
+          geom.ngnod, geom.ngllx);
+    } catch (const std::runtime_error &) {
+      captured = true;
+    }
+    if (!captured)
+      ADD_FAILURE() << "Expected std::runtime_error";
+  }
 }
 
 // Helper function tests - testing individual components of locate_point_core

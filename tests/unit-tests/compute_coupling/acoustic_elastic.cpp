@@ -1,7 +1,9 @@
-#include "medium/compute_coupling.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
+
+#include <string>
 
 struct AcousticElasticTestParams {
   type_real edge_factor;
@@ -11,6 +13,8 @@ struct AcousticElasticTestParams {
   type_real tolerance;
   std::string name;
 };
+
+void PrintTo(const AcousticElasticTestParams &, std::ostream *os) { *os << ""; }
 
 std::ostream &operator<<(std::ostream &os,
                          const AcousticElasticTestParams &params) {
@@ -45,7 +49,8 @@ TEST_P(AcousticElasticCouplingTest, CouplingCalculation) {
       self_field;
 
   // Perform coupling computation
-  specfem::medium::compute_coupling(interface_data, coupled_field, self_field);
+  specfem::medium_physics::compute_coupling(interface_data, coupled_field,
+                                            self_field);
 
   // Verify result
   EXPECT_NEAR(self_field(0), params.expected_result, params.tolerance);
@@ -93,4 +98,6 @@ INSTANTIATE_TEST_SUITE_P(
             1.414213562, // expected_result (1e6 * (0.707106781 * 1e-6 +
                          // 0.707106781 * 1e-6) = 1.414213562)
             1e-6,        // tolerance (relaxed for large numbers)
-            "LargeValuesTest" }));
+            "LargeValuesTest" }),
+    [](const ::testing::TestParamInfo<AcousticElasticTestParams> &info)
+        -> std::string { return info.param.name; });

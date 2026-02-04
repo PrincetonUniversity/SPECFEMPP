@@ -1,5 +1,5 @@
 #include "enumerations/interface.hpp"
-#include "medium/compute_stress.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -31,7 +31,7 @@ TEST(Stress, ElasticIsotropic2D_PSV_Basic) {
   field_derivatives.du(1, 0) = 4.0;
 
   const PSVStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   PSVStressType expected_stress;
   expected_stress.T(0, 0) = (lambda + 2 * mu) * 1.0 + lambda * 2.0;
@@ -70,7 +70,7 @@ TEST(Stress, ElasticIsotropic2D_PSV_ZeroDerivatives) {
   field_derivatives.du(1, 0) = 0.0;
 
   const PSVStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   PSVStressType expected_stress;
   expected_stress.T(0, 0) = 0.0;
@@ -107,7 +107,7 @@ TEST(Stress, ElasticIsotropic2D_SH_Basic) {
   field_derivatives.du(0, 1) = 2.0;
 
   const SHStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   SHStressType expected_stress;
   expected_stress.T(0, 0) = mu * 1.0;
@@ -142,7 +142,7 @@ TEST(Stress, ElasticIsotropic2D_SH_ZeroDerivatives) {
   field_derivatives.du(0, 1) = 0.0;
 
   const SHStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   SHStressType expected_stress;
   expected_stress.T(0, 0) = 0.0;

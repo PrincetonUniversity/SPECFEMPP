@@ -2,7 +2,7 @@
 
 #include "SPECFEM_Environment.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/source.hpp"
 #include "specfem/utilities.hpp"

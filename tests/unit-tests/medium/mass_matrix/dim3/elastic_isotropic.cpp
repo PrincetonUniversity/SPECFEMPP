@@ -1,4 +1,4 @@
-#include "medium/compute_mass_matrix.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -16,7 +16,7 @@ TEST(MassMatrix, ElasticIsotropicTrivialSolution3D) {
   const PointPropertiesType properties(0.0, 0.0, 0.0);
 
   const PointMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component(properties);
 
   const PointMassMatrixType expected_mass_matrix(0.0, 0.0, 0.0);
 
@@ -38,7 +38,7 @@ TEST(MassMatrix, ElasticIsotropic3D) {
   const PointPropertiesType properties(0.0, 0.0, rho);
 
   const PointMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component(properties);
 
   const PointMassMatrixType expected_mass_matrix(rho, rho, rho);
 

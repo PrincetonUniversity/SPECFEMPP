@@ -15,7 +15,7 @@ specfem::assembly::fields<DimensionTag>::fields(
     : // Initialize the forward field only if the simulation type is forward
       forward([&]() -> specfem::assembly::simulation_field<
                         dimension_tag,
-                        specfem::wavefield::simulation_field::forward> {
+                        specfem::simulation::field_type::forward> {
         if (simulation == specfem::simulation::type::forward) {
           return { mesh, element_types };
         } else if (simulation == specfem::simulation::type::combined) {
@@ -27,7 +27,7 @@ specfem::assembly::fields<DimensionTag>::fields(
       // Initiaze the adjoint field only if the simulation type is adjoint
       adjoint([&]() -> specfem::assembly::simulation_field<
                         dimension_tag,
-                        specfem::wavefield::simulation_field::adjoint> {
+                        specfem::simulation::field_type::adjoint> {
         if (simulation == specfem::simulation::type::forward) {
           return {};
         } else if (simulation == specfem::simulation::type::combined) {
@@ -39,7 +39,7 @@ specfem::assembly::fields<DimensionTag>::fields(
       // Initialize the backward field only if the simulation type is adjoint
       backward([&]() -> specfem::assembly::simulation_field<
                          dimension_tag,
-                         specfem::wavefield::simulation_field::backward> {
+                         specfem::simulation::field_type::backward> {
         if (simulation == specfem::simulation::type::forward) {
           return {};
         } else if (simulation == specfem::simulation::type::combined) {
@@ -50,7 +50,7 @@ specfem::assembly::fields<DimensionTag>::fields(
       }()),
       // Initialize the buffer field only if the simulation type is adjoint
       buffer([&]() -> specfem::assembly::simulation_field<dimension_tag,
-                       specfem::wavefield::simulation_field::buffer> {
+                       specfem::simulation::field_type::buffer> {
         if (simulation == specfem::simulation::type::forward) {
           return { mesh, element_types };
         } else if (simulation == specfem::simulation::type::combined) {

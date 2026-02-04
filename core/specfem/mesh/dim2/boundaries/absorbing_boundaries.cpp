@@ -1,5 +1,5 @@
 #include "absorbing_boundary.hpp"
-#include "io/fortranio/interface.hpp"
+#include "specfem/io.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <vector>
