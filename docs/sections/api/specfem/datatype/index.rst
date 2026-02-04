@@ -11,6 +11,7 @@
     :maxdepth: 1
 
     simd
+    register_array
     vector_point_view
     tensor_point_view
     scalar_chunk_element_view
