@@ -46,9 +46,9 @@ public:
   /**
    * @brief Get the types of seismogram requested
    *
-   * @return std::vector<specfem::wavefield::type> vector seismogram types
+   * @return std::vector<specfem::enums::wavefield> vector seismogram types
    */
-  std::vector<specfem::wavefield::type> get_seismogram_types() const;
+  std::vector<specfem::enums::wavefield> get_seismogram_types() const;
 
 private:
   YAML::Node receivers_node; /// Node that contains receiver information

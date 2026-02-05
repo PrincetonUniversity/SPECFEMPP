@@ -33,15 +33,15 @@ std::string specfem::io::impl::ChannelGenerator::get_channel_code(
 }
 
 std::string specfem::io::impl::ChannelGenerator::get_file_extension(
-    specfem::wavefield::type seismogram_type) {
+    specfem::enums::wavefield seismogram_type) {
   switch (seismogram_type) {
-  case specfem::wavefield::type::displacement:
+  case specfem::enums::wavefield::displacement:
     return "semd";
-  case specfem::wavefield::type::velocity:
+  case specfem::enums::wavefield::velocity:
     return "semv";
-  case specfem::wavefield::type::acceleration:
+  case specfem::enums::wavefield::acceleration:
     return "sema";
-  case specfem::wavefield::type::pressure:
+  case specfem::enums::wavefield::pressure:
     return "semp";
   default:
     throw std::runtime_error("Unknown seismogram type for file extension.");
@@ -52,7 +52,7 @@ std::vector<std::string>
 specfem::io::impl::ChannelGenerator::get_station_filenames(
     const std::string &network_name, const std::string &station_name,
     const std::string &location_code,
-    const specfem::wavefield::type seismogram_type) {
+    const specfem::enums::wavefield seismogram_type) {
 
   std::string channel_code;
   std::vector<std::string> filenames;
@@ -70,7 +70,7 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
 
   // Create a filename vector depending on seismogram type
   switch (seismogram_type) {
-  case specfem::wavefield::type::displacement:
+  case specfem::enums::wavefield::displacement:
     for (const auto &component_letter : component_letters) {
 
       // Get the channel code based on component and timestep
@@ -85,7 +85,7 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
     }
     break;
 
-  case specfem::wavefield::type::velocity:
+  case specfem::enums::wavefield::velocity:
 
     for (const auto &component_letter : component_letters) {
 
@@ -101,7 +101,7 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
     }
     break;
 
-  case specfem::wavefield::type::acceleration:
+  case specfem::enums::wavefield::acceleration:
 
     for (const auto &component_letter : component_letters) {
 
@@ -116,7 +116,7 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
     }
     break;
 
-  case specfem::wavefield::type::pressure:
+  case specfem::enums::wavefield::pressure:
 
     channel_code = this->get_channel_code('P');
     filenames = { output_folder + "/" + network_name + "." + station_name +
@@ -128,7 +128,7 @@ specfem::io::impl::ChannelGenerator::get_station_filenames(
     message << "Error reading specfem receiver configuration. (" << __FILE__
             << ":" << __LINE__ << ")\n";
     message << "Unknown seismogram type: "
-            << specfem::wavefield::to_string(seismogram_type) << "\n";
+            << specfem::enums::to_string(seismogram_type) << "\n";
     message << "Valid seismogram types are: displacement, velocity, "
             << "acceleration, pressure, rotation, intrinsic_rotation, curl.\n";
     message << "Please check your configuration file.\n";

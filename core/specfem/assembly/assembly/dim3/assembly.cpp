@@ -11,7 +11,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const std::vector<
         std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
         &receivers,
-    const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
+    const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
     const int nsteps_between_samples,
     const specfem::simulation::type simulation,

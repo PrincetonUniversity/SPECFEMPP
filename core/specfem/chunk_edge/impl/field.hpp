@@ -16,13 +16,13 @@ namespace specfem::chunk_edge::impl {
  *
  * @code{.cpp}
  * // Example usage of field_without_accessor
- * const specfem::wavefield::type wavefield_type = ...;
+ * const specfem::enums::wavefield wavefield_type = ...;
  * const auto field = [&]() {
- *   if (wavefield_type == specfem::wavefield::type::displacement) {
+ *   if (wavefield_type == specfem::enums::wavefield::displacement) {
  *     return displacement_field.field_without_accessor();
- *   } else if (wavefield_type == specfem::wavefield::type::velocity) {
+ *   } else if (wavefield_type == specfem::enums::wavefield::velocity) {
  *     return velocity_field.field_without_accessor();
- *   } else if (wavefield_type == specfem::wavefield::type::acceleration) {
+ *   } else if (wavefield_type == specfem::enums::wavefield::acceleration) {
  *     return acceleration_field.field_without_accessor();
  *   } else {
  *     throw std::runtime_error("Unsupported wavefield type");
@@ -271,13 +271,13 @@ public:
    *
    * @code{.cpp}
    * // Example usage of field_without_accessor
-   * const specfem::wavefield::type wavefield_type = ...;
+   * const specfem::enums::wavefield wavefield_type = ...;
    * const auto field = [&]() {
-   *   if (wavefield_type == specfem::wavefield::type::displacement) {
+   *   if (wavefield_type == specfem::enums::wavefield::displacement) {
    *     return displacement_field.field_without_accessor();
-   *   } else if (wavefield_type == specfem::wavefield::type::velocity) {
+   *   } else if (wavefield_type == specfem::enums::wavefield::velocity) {
    *     return velocity_field.field_without_accessor();
-   *   } else if (wavefield_type == specfem::wavefield::type::acceleration) {
+   *   } else if (wavefield_type == specfem::enums::wavefield::acceleration) {
    *     return acceleration_field.field_without_accessor();
    *   } else {
    *     throw std::runtime_error("Unsupported wavefield type");

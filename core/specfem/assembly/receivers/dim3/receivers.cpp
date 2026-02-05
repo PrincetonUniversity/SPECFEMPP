@@ -14,7 +14,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     const std::vector<std::shared_ptr<
         specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
         &receivers,
-    const std::vector<specfem::wavefield::type> &stypes,
+    const std::vector<specfem::enums::wavefield> &stypes,
     const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
     const specfem::mesh::tags<specfem::element::dimension_tag::dim3> &tags,
     const specfem::assembly::element_types<
@@ -41,18 +41,18 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   for (int isies = 0; isies < stypes.size(); ++isies) {
     auto seis_type = stypes[isies];
 
-    if (seis_type != specfem::wavefield::type::displacement &&
-        seis_type != specfem::wavefield::type::velocity &&
-        seis_type != specfem::wavefield::type::acceleration &&
-        seis_type != specfem::wavefield::type::pressure &&
-        seis_type != specfem::wavefield::type::rotation &&
-        seis_type != specfem::wavefield::type::intrinsic_rotation &&
-        seis_type != specfem::wavefield::type::curl) {
+    if (seis_type != specfem::enums::wavefield::displacement &&
+        seis_type != specfem::enums::wavefield::velocity &&
+        seis_type != specfem::enums::wavefield::acceleration &&
+        seis_type != specfem::enums::wavefield::pressure &&
+        seis_type != specfem::enums::wavefield::rotation &&
+        seis_type != specfem::enums::wavefield::intrinsic_rotation &&
+        seis_type != specfem::enums::wavefield::curl) {
       std::ostringstream message;
       message << "Error reading specfem receiver configuration.(" << __FILE__
               << ":" << __LINE__ << ")\n";
       message << "Unknown seismogram type: "
-              << specfem::wavefield::to_string(seis_type) << "\n";
+              << specfem::enums::to_string(seis_type) << "\n";
       message
           << "Valid seismogram types are: displacement, velocity, "
           << "acceleration, pressure, rotation, intrinsic_rotation, curl.\n";

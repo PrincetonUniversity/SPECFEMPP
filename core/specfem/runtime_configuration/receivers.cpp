@@ -10,10 +10,10 @@
 #include <string>
 #include <vector>
 
-std::vector<specfem::wavefield::type>
+std::vector<specfem::enums::wavefield>
 specfem::runtime_configuration::receivers::get_seismogram_types() const {
 
-  std::vector<specfem::wavefield::type> stypes;
+  std::vector<specfem::enums::wavefield> stypes;
 
   // Allocate seismogram types
   assert(this->receivers_node["seismogram-type"].IsSequence());
@@ -21,25 +21,25 @@ specfem::runtime_configuration::receivers::get_seismogram_types() const {
   for (YAML::Node seismogram_type : this->receivers_node["seismogram-type"]) {
     if (specfem::utilities::is_displacement_string(
             seismogram_type.as<std::string>())) {
-      stypes.push_back(specfem::wavefield::type::displacement);
+      stypes.push_back(specfem::enums::wavefield::displacement);
     } else if (specfem::utilities::is_velocity_string(
                    seismogram_type.as<std::string>())) {
-      stypes.push_back(specfem::wavefield::type::velocity);
+      stypes.push_back(specfem::enums::wavefield::velocity);
     } else if (specfem::utilities::is_acceleration_string(
                    seismogram_type.as<std::string>())) {
-      stypes.push_back(specfem::wavefield::type::acceleration);
+      stypes.push_back(specfem::enums::wavefield::acceleration);
     } else if (specfem::utilities::is_pressure_string(
                    seismogram_type.as<std::string>())) {
-      stypes.push_back(specfem::wavefield::type::pressure);
+      stypes.push_back(specfem::enums::wavefield::pressure);
     } else if (specfem::utilities::is_rotation_string(
                    seismogram_type.as<std::string>())) {
-      stypes.push_back(specfem::wavefield::type::rotation);
+      stypes.push_back(specfem::enums::wavefield::rotation);
     } else if (specfem::utilities::is_intrinsic_rotation_string(
                    seismogram_type.as<std::string>())) {
-      stypes.push_back(specfem::wavefield::type::intrinsic_rotation);
+      stypes.push_back(specfem::enums::wavefield::intrinsic_rotation);
     } else if (specfem::utilities::is_curl_string(
                    seismogram_type.as<std::string>())) {
-      stypes.push_back(specfem::wavefield::type::curl);
+      stypes.push_back(specfem::enums::wavefield::curl);
     } else {
       std::ostringstream message;
 

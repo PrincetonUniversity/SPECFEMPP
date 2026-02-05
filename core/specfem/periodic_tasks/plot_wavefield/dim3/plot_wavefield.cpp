@@ -37,7 +37,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim3>::
     plot_wavefield(
         const specfem::assembly::assembly<dimension_tag> &assembly,
         const specfem::display::format &output_format,
-        const specfem::wavefield::type &wavefield_type,
+        const specfem::enums::wavefield &wavefield_type,
         const specfem::simulation::field_type &simulation_wavefield_type,
         const specfem::display::component &component, const type_real &dt,
         const int &time_interval, const boost::filesystem::path &output_folder)
@@ -96,7 +96,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim3>::
     plot_wavefield(
         const specfem::assembly::assembly<dimension_tag> &assembly,
         const specfem::display::format &output_format,
-        const specfem::wavefield::type &wavefield_type,
+        const specfem::enums::wavefield &wavefield_type,
         const specfem::simulation::field_type &simulation_wavefield_type,
         const specfem::display::component &component, const type_real &dt,
         const int &time_interval, const boost::filesystem::path &output_folder)
@@ -115,14 +115,14 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim3>::
 };
 
 // Get wavefield type to display
-specfem::wavefield::type specfem::periodic_tasks::plot_wavefield<
+specfem::enums::wavefield specfem::periodic_tasks::plot_wavefield<
     specfem::element::dimension_tag::dim3>::get_wavefield_type() {
-  if (wavefield_type == specfem::wavefield::type::displacement) {
-    return specfem::wavefield::type::displacement;
-  } else if (wavefield_type == specfem::wavefield::type::velocity) {
-    return specfem::wavefield::type::velocity;
-  } else if (wavefield_type == specfem::wavefield::type::acceleration) {
-    return specfem::wavefield::type::acceleration;
+  if (wavefield_type == specfem::enums::wavefield::displacement) {
+    return specfem::enums::wavefield::displacement;
+  } else if (wavefield_type == specfem::enums::wavefield::velocity) {
+    return specfem::enums::wavefield::velocity;
+  } else if (wavefield_type == specfem::enums::wavefield::acceleration) {
+    return specfem::enums::wavefield::acceleration;
   } else {
     throw std::runtime_error("Wavefield type not supported");
   }
@@ -134,14 +134,14 @@ float specfem::periodic_tasks::plot_wavefield<
     get_scalar_value_at_point(
         const Kokkos::View<type_real *****, Kokkos::LayoutLeft,
                            Kokkos::HostSpace> &wavefield_data,
-        const specfem::wavefield::type &wavefield_type,
+        const specfem::enums::wavefield &wavefield_type,
         const specfem::display::component &component, const int ispec,
         const int iz, const int iy, const int ix) {
 
-  if (wavefield_type == specfem::wavefield::type::pressure ||
-      wavefield_type == specfem::wavefield::type::rotation ||
-      wavefield_type == specfem::wavefield::type::intrinsic_rotation ||
-      wavefield_type == specfem::wavefield::type::curl) {
+  if (wavefield_type == specfem::enums::wavefield::pressure ||
+      wavefield_type == specfem::enums::wavefield::rotation ||
+      wavefield_type == specfem::enums::wavefield::intrinsic_rotation ||
+      wavefield_type == specfem::enums::wavefield::curl) {
     return std::abs(wavefield_data(ispec, iz, iy, ix, 0));
   }
 

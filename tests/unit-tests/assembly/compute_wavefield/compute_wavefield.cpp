@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <vector>
 
-template <specfem::wavefield::type component>
+template <specfem::enums::wavefield component>
 void test_element_wavefield(
     const int ispec,
     const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
@@ -58,7 +58,7 @@ void test_element_wavefield(
   }
 }
 
-template <specfem::wavefield::type component,
+template <specfem::enums::wavefield component,
           specfem::simulation::field_type type>
 void test_compute_wavefield(
     specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
@@ -71,7 +71,7 @@ void test_compute_wavefield(
   const auto sh_ispec = assembly.element_types.get_elements_on_host(
       specfem::element::medium_tag::elastic_sh);
 
-  if (component == specfem::wavefield::type::pressure &&
+  if (component == specfem::enums::wavefield::pressure &&
       (sh_ispec.extent(0) != 0)) {
     return;
   }
@@ -90,7 +90,7 @@ void test_compute_wavefield(
         &assembly) {
 
   try {
-    test_compute_wavefield<specfem::wavefield::type::displacement,
+    test_compute_wavefield<specfem::enums::wavefield::displacement,
                            specfem::simulation::field_type::forward>(assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
@@ -99,7 +99,7 @@ void test_compute_wavefield(
   }
 
   try {
-    test_compute_wavefield<specfem::wavefield::type::velocity,
+    test_compute_wavefield<specfem::enums::wavefield::velocity,
                            specfem::simulation::field_type::forward>(assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
@@ -108,7 +108,7 @@ void test_compute_wavefield(
   }
 
   try {
-    test_compute_wavefield<specfem::wavefield::type::acceleration,
+    test_compute_wavefield<specfem::enums::wavefield::acceleration,
                            specfem::simulation::field_type::forward>(assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
@@ -117,7 +117,7 @@ void test_compute_wavefield(
   }
 
   try {
-    test_compute_wavefield<specfem::wavefield::type::pressure,
+    test_compute_wavefield<specfem::enums::wavefield::pressure,
                            specfem::simulation::field_type::forward>(assembly);
   } catch (std::exception &e) {
     std::ostringstream message;

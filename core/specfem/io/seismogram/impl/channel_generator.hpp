@@ -21,7 +21,7 @@ namespace specfem::io::impl {
  * wavefield types (displacement, velocity, acceleration, pressure) and component orientations.
  *
  * @see specfem::io::seismogram_writer
- * @see specfem::wavefield::type
+ * @see specfem::enums::wavefield
  *
  * @code
  * // Example: Create a channel generator for a 50 Hz simulation
@@ -31,7 +31,7 @@ namespace specfem::io::impl {
  *
  * // Generate displacement seismogram filenames for a station
  * auto filenames = generator.get_station_filenames(
- *     "II", "ANMO", specfem::wavefield::type::displacement);
+ *     "II", "ANMO", specfem::enums::wavefield::displacement);
  *
  * // Result: filenames contains:
  * // "OUTPUT_FILES/II.ANMO.BXX.semd"
@@ -88,13 +88,13 @@ public:
    * @code
    * // Example 1: Generate velocity seismogram filenames (100 Hz, band H)
    * specfem::io::ChannelGenerator gen("OUTPUT_FILES", 0.01);
-   * auto files = gen.get_station_filenames("SY", "STA01", specfem::wavefield::type::velocity);
+   * auto files = gen.get_station_filenames("SY", "STA01", specfem::enums::wavefield::velocity);
    * // Returns: ["OUTPUT_FILES/SY.STA01.HXX.semv",
    * //           "OUTPUT_FILES/SY.STA01.HXY.semv",
    * //           "OUTPUT_FILES/SY.STA01.HXZ.semv"]
    *
    * // Example 2: Generate pressure seismogram filename (acoustic)
-   * auto press_files = gen.get_station_filenames("AC", "HYD01", specfem::wavefield::type::pressure);
+   * auto press_files = gen.get_station_filenames("AC", "HYD01", specfem::enums::wavefield::pressure);
    * // Returns: ["OUTPUT_FILES/AC.HYD01.HXP.semp"]
    * @endcode
    *
@@ -105,7 +105,7 @@ public:
   get_station_filenames(const std::string &network_name,
                         const std::string &station_name,
                         const std::string &location_code,
-                        specfem::wavefield::type seismogram_type);
+                        specfem::enums::wavefield seismogram_type);
 
   /**
    * @brief Returns the SEED band code for this generator.
@@ -171,7 +171,7 @@ public:
    *
    * @throws std::runtime_error If seismogram_type is not supported
    */
-  std::string get_file_extension(specfem::wavefield::type seismogram_type);
+  std::string get_file_extension(specfem::enums::wavefield seismogram_type);
 
 private:
   std::string output_folder;   ///< Directory path for seismogram output files

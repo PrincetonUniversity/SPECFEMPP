@@ -133,20 +133,20 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   const auto field_type = [&]() {
     if (specfem::utilities::is_displacement_string(this->field_type)) {
-      return specfem::wavefield::type::displacement;
+      return specfem::enums::wavefield::displacement;
     } else if (specfem::utilities::is_velocity_string(this->field_type)) {
-      return specfem::wavefield::type::velocity;
+      return specfem::enums::wavefield::velocity;
     } else if (specfem::utilities::is_acceleration_string(this->field_type)) {
-      return specfem::wavefield::type::acceleration;
+      return specfem::enums::wavefield::acceleration;
     } else if (specfem::utilities::is_pressure_string(this->field_type)) {
-      return specfem::wavefield::type::pressure;
+      return specfem::enums::wavefield::pressure;
     } else if (specfem::utilities::is_rotation_string(this->field_type)) {
-      return specfem::wavefield::type::rotation;
+      return specfem::enums::wavefield::rotation;
     } else if (specfem::utilities::is_intrinsic_rotation_string(
                    this->field_type)) {
-      return specfem::wavefield::type::intrinsic_rotation;
+      return specfem::enums::wavefield::intrinsic_rotation;
     } else if (specfem::utilities::is_curl_string(this->field_type)) {
-      return specfem::wavefield::type::curl;
+      return specfem::enums::wavefield::curl;
     } else {
       throw std::runtime_error(
           "Unknown wavefield component in the display section");

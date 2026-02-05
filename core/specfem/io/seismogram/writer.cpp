@@ -19,7 +19,7 @@ void specfem::io::seismogram_writer::write(
 
       std::vector<std::string> filenames;
       switch (seismogram_type) {
-      case specfem::wavefield::type::displacement:
+      case specfem::enums::wavefield::displacement:
         if (this->elastic_wave == specfem::enums::elastic_wave::sh) {
           filenames = { this->output_folder + "/" + network_name + "." +
                         station_name + ".S2.BXY.semd" };
@@ -30,7 +30,7 @@ void specfem::io::seismogram_writer::write(
                             station_name + ".S2.BXZ.semd" };
         }
         break;
-      case specfem::wavefield::type::velocity:
+      case specfem::enums::wavefield::velocity:
         if (this->elastic_wave == specfem::enums::elastic_wave::sh) {
           filenames = { this->output_folder + "/" + network_name + "." +
                         station_name + ".S2.BXY.semv" };
@@ -41,7 +41,7 @@ void specfem::io::seismogram_writer::write(
                             station_name + ".S2.BXZ.semv" };
         }
         break;
-      case specfem::wavefield::type::acceleration:
+      case specfem::enums::wavefield::acceleration:
         if (this->elastic_wave == specfem::enums::elastic_wave::sh) {
           filenames = { this->output_folder + "/" + network_name + "." +
                         station_name + ".S2.BXY.sema" };
@@ -52,7 +52,7 @@ void specfem::io::seismogram_writer::write(
                             station_name + ".S2.BXZ.sema" };
         }
         break;
-      case specfem::wavefield::type::pressure:
+      case specfem::enums::wavefield::pressure:
         if (this->elastic_wave == specfem::enums::elastic_wave::sh) {
           throw std::runtime_error(
               "Pressure seismograms are not supported for SH waves");
@@ -64,7 +64,7 @@ void specfem::io::seismogram_writer::write(
       // There is no naming convention for rotation so we use [B]road [X]
       // computer generated [Y] rotation axis for `P_SV_T` and extension `.semr`
       // for spectral element rotation
-      case specfem::wavefield::type::rotation:
+      case specfem::enums::wavefield::rotation:
         if (this->elastic_wave == specfem::enums::elastic_wave::psv) {
           filenames = { this->output_folder + "/" + network_name + "." +
                         station_name + ".S2.BXY.semr" };
@@ -80,7 +80,7 @@ void specfem::io::seismogram_writer::write(
         }
         break;
         // There is no naming convention for intrinsic rotation so
-      case specfem::wavefield::type::intrinsic_rotation:
+      case specfem::enums::wavefield::intrinsic_rotation:
         if (this->elastic_wave == specfem::enums::elastic_wave::psv) {
           filenames = { this->output_folder + "/" + network_name + "." +
                         station_name + ".S2.BXY.semir" };
@@ -95,7 +95,7 @@ void specfem::io::seismogram_writer::write(
               "Intrinsic rotation seismograms are not supported for SH waves");
         }
         break;
-      case specfem::wavefield::type::curl:
+      case specfem::enums::wavefield::curl:
         if (this->elastic_wave == specfem::enums::elastic_wave::psv) {
           filenames = { this->output_folder + "/" + network_name + "." +
                         station_name + ".S2.BXY.semc" };
@@ -111,7 +111,7 @@ void specfem::io::seismogram_writer::write(
         message << "Error reading specfem receiver configuration. (" << __FILE__
                 << ":" << __LINE__ << ")\n";
         message << "Unknown seismogram type: "
-                << specfem::wavefield::to_string(seismogram_type) << "\n";
+                << specfem::enums::to_string(seismogram_type) << "\n";
         message
             << "Valid seismogram types are: displacement, velocity, "
             << "acceleration, pressure, rotation, intrinsic_rotation, curl.\n";

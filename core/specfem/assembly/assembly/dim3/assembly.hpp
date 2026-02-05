@@ -142,7 +142,7 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
       const std::vector<
           std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
           &receivers,
-      const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
+      const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
       const type_real dt, const int max_timesteps, const int max_sig_step,
       const int nsteps_between_samples,
       const specfem::simulation::type simulation,
@@ -164,7 +164,7 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
   Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   generate_wavefield_on_entire_grid(
       const specfem::simulation::field_type wavefield,
-      const specfem::wavefield::type component);
+      const specfem::enums::wavefield component);
 
   /**
    * @brief Get the total number of spectral elements in the mesh

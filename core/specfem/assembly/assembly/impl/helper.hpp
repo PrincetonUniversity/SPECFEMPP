@@ -82,7 +82,7 @@ public:
     }
   };
 
-  void operator()(const specfem::wavefield::type wavefield_type) {
+  void operator()(const specfem::enums::wavefield wavefield_type) {
     const auto buffer = assembly.fields.buffer;
 
     // Get the element grid (ngllx, nglly, ngllz)
