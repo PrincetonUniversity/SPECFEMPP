@@ -1,5 +1,4 @@
-#ifndef _FORCING_BOUNDARIES_HPP
-#define _FORCING_BOUNDARIES_HPP
+#pragma once
 
 #include "kokkos_abstractions.h"
 #include "specfem/element.hpp"
@@ -141,5 +140,3 @@ template <> struct forcing_boundary<specfem::element::dimension_tag::dim2> {
 
 } // namespace mesh
 } // namespace specfem
-
-#endif
