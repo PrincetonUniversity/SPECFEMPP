@@ -5,7 +5,8 @@
 #include "specfem/setup.hpp"
 
 std::string
-specfem::receivers::receiver<specfem::dimension::type::dim3>::print() const {
+specfem::receivers::receiver<specfem::element::dimension_tag::dim3>::print()
+    const {
   std::ostringstream message;
   message << " - Receiver:\n"
           << "      Station Name = " << this->station_name << "\n"
@@ -18,8 +19,8 @@ specfem::receivers::receiver<specfem::dimension::type::dim3>::print() const {
   return message.str();
 }
 
-bool specfem::receivers::receiver<specfem::dimension::type::dim3>::operator==(
-    const receiver &other) const {
+bool specfem::receivers::receiver<specfem::element::dimension_tag::dim3>::
+operator==(const receiver &other) const {
   return (this->network_name == other.network_name) &&
          (this->station_name == other.station_name) &&
          specfem::utilities::is_close(this->x, other.x) &&

@@ -9,8 +9,8 @@
 
 namespace specfem::test_configuration {
 struct ActualMesh3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   specfem::mesh::mesh<dimension> mesh;
 
   ActualMesh3D() = default;
@@ -24,8 +24,8 @@ struct ActualMesh3D {
 // Setup a fixture for parameterized tests
 class Mesh3DTest : public ::testing::TestWithParam<std::string> {
 protected:
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   specfem::test_configuration::ActualMesh3D mesh;
 
   Mesh3DTest() = default;

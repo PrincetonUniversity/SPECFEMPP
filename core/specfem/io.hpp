@@ -50,7 +50,7 @@ namespace io {
  * @return specfem::mesh::mesh Specfem mesh object for dimension type dim2
  *
  */
-specfem::mesh::mesh<specfem::dimension::type::dim2>
+specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
 read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
              const specfem::enums::electromagnetic_wave electromagnetic_wave);
@@ -59,7 +59,7 @@ read_2d_mesh(const std::string &filename,
  * @brief Construct a 3D mesh object from MESHFEM3D Fortran binary database file
  *
  * @param database_file MESHFEM3D database file
- * @return specfem::mesh::mesh<specfem::dimension::type::dim3>
+ * @return specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
  *         Specfem mesh object for dimension type dim3
  *
  * @code
@@ -67,7 +67,7 @@ read_2d_mesh(const std::string &filename,
  * auto mesh = specfem::io::read_3d_mesh("DATABASES_MPI");
  * @endcode
  */
-specfem::mesh::mesh<specfem::dimension::type::dim3>
+specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
 read_3d_mesh(const std::string &database_file);
 
 /**
@@ -81,7 +81,7 @@ read_3d_mesh(const std::string &database_file);
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
 read_2d_receivers(const std::string &stations_file, const type_real angle);
 
 /**
@@ -108,7 +108,7 @@ read_2d_receivers(const std::string &stations_file, const type_real angle);
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
 read_2d_receivers(const YAML::Node &stations, const type_real angle);
 
 /**
@@ -121,7 +121,7 @@ read_2d_receivers(const YAML::Node &stations, const type_real angle);
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::dimension::type::dim3> > >
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
 read_3d_receivers(const std::string &stations_file);
 
 /**
@@ -148,7 +148,7 @@ read_3d_receivers(const std::string &stations_file);
  * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::dimension::type::dim3> > >
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
 read_3d_receivers(const YAML::Node &stations);
 
 /**
@@ -166,8 +166,8 @@ read_3d_receivers(const YAML::Node &stations);
  * @return std::vector<specfem::sources::source *> vector of instantiated source
  * objects
  */
-std::tuple<std::vector<std::shared_ptr<
-               specfem::sources::source<specfem::dimension::type::dim2> > >,
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
+               specfem::element::dimension_tag::dim2> > >,
            type_real>
 read_2d_sources(const std::string &sources_file, const int nsteps,
                 const type_real user_t0, const type_real dt,
@@ -187,8 +187,8 @@ read_2d_sources(const std::string &sources_file, const int nsteps,
  * @return std::vector<specfem::sources::source *> vector of instantiated source
  * objects
  */
-std::tuple<std::vector<std::shared_ptr<
-               specfem::sources::source<specfem::dimension::type::dim2> > >,
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
+               specfem::element::dimension_tag::dim2> > >,
            type_real>
 read_2d_sources(const YAML::Node yaml, const int nsteps,
                 const type_real user_t0, const type_real dt,
@@ -209,8 +209,8 @@ read_2d_sources(const YAML::Node yaml, const int nsteps,
  * @return std::vector<specfem::sources::source *> vector of instantiated source
  * objects
  */
-std::tuple<std::vector<std::shared_ptr<
-               specfem::sources::source<specfem::dimension::type::dim3> > >,
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
+               specfem::element::dimension_tag::dim3> > >,
            type_real>
 read_3d_sources(const std::string &sources_file, const int nsteps,
                 const type_real user_t0, const type_real dt,
@@ -230,8 +230,8 @@ read_3d_sources(const std::string &sources_file, const int nsteps,
  * @return std::vector<specfem::sources::source *> vector of instantiated source
  * objects
  */
-std::tuple<std::vector<std::shared_ptr<
-               specfem::sources::source<specfem::dimension::type::dim3> > >,
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
+               specfem::element::dimension_tag::dim3> > >,
            type_real>
 read_3d_sources(const YAML::Node yaml, const int nsteps,
                 const type_real user_t0, const type_real dt,

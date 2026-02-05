@@ -4,7 +4,7 @@
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/boundary_conditions/dirichlet/dirichlet.hpp"
 #include "specfem/boundary_conditions/stacey/stacey.hpp"
-#include "enumerations/boundary.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -21,7 +21,7 @@ specfem::boundary_conditions::impl_apply_boundary_conditions(
                 "Boundary tag must be composite_stacey_dirichlet");
 
   const auto &stacey_boundary = static_cast<
-      const specfem::point::boundary<specfem::element::boundary_tag::stacey, specfem::dimension::type::dim2,
+      const specfem::point::boundary<specfem::element::boundary_tag::stacey, specfem::element::dimension_tag::dim2,
                                      PointBoundaryType::simd::using_simd> &>(
       boundary);
 
@@ -32,7 +32,7 @@ specfem::boundary_conditions::impl_apply_boundary_conditions(
 
   const auto &acoustic_free_surface_boundary =
       static_cast<const specfem::point::boundary<
-          specfem::element::boundary_tag::acoustic_free_surface, specfem::dimension::type::dim2,
+          specfem::element::boundary_tag::acoustic_free_surface, specfem::element::dimension_tag::dim2,
           PointBoundaryType::simd::using_simd> &>(boundary);
 
   impl_apply_boundary_conditions(
@@ -57,7 +57,7 @@ specfem::boundary_conditions::impl_compute_mass_matrix_terms(
                 "Boundary tag must be composite_stacey_dirichlet");
 
   const auto &stacey_boundary = static_cast<
-      const specfem::point::boundary<specfem::element::boundary_tag::stacey, specfem::dimension::type::dim2,
+      const specfem::point::boundary<specfem::element::boundary_tag::stacey, specfem::element::dimension_tag::dim2,
                                      PointBoundaryType::simd::using_simd> &>(
       boundary);
 
@@ -68,7 +68,7 @@ specfem::boundary_conditions::impl_compute_mass_matrix_terms(
 
   const auto &acoustic_free_surface_boundary =
       static_cast<const specfem::point::boundary<
-          specfem::element::boundary_tag::acoustic_free_surface, specfem::dimension::type::dim2,
+          specfem::element::boundary_tag::acoustic_free_surface, specfem::element::dimension_tag::dim2,
           PointBoundaryType::simd::using_simd> &>(boundary);
 
   impl_compute_mass_matrix_terms(

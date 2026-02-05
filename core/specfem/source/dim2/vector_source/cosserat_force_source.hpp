@@ -35,8 +35,8 @@ namespace sources {
  *
  * // Create a 2D Cosserat force source at (3.2, 4.8)
  * auto cosserat_source =
- * specfem::sources::cosserat_force<specfem::dimension::type::dim2>( 3.2,   //
- * x-coordinate 4.8,   // z-coordinate 1.5,   // f - elastic force scaling
+ * specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>( 3.2,
+ * // x-coordinate 4.8,   // z-coordinate 1.5,   // f - elastic force scaling
  * factor 0.8,   // fc - rotational force scaling factor 30.0,  // angle in
  * degrees std::move(stf), specfem::simulation::field_type::forward
  * );
@@ -50,8 +50,8 @@ namespace sources {
  *
  */
 template <>
-class cosserat_force<specfem::dimension::type::dim2>
-    : public vector_source<specfem::dimension::type::dim2> {
+class cosserat_force<specfem::element::dimension_tag::dim2>
+    : public vector_source<specfem::element::dimension_tag::dim2> {
 
 public:
   /**
@@ -108,10 +108,12 @@ public:
     return wavefield_type;
   }
 
-  bool operator==(const specfem::sources::source<specfem::dimension::type::dim2>
-                      &other) const override;
-  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
-                      &other) const override;
+  bool operator==(
+      const specfem::sources::source<specfem::element::dimension_tag::dim2>
+          &other) const override;
+  bool operator!=(
+      const specfem::sources::source<specfem::element::dimension_tag::dim2>
+          &other) const override;
 
   /**
    * @brief Get the force vector

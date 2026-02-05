@@ -5,11 +5,11 @@
 #include "control_nodes/control_nodes.hpp"
 #include "elements/axial_elements.hpp"
 #include "elements/tangential_elements.hpp"
-#include "enumerations/dimension.hpp"
 #include "enumerations/interface.hpp"
 #include "materials/materials.hpp"
 #include "materials/materials.tpp"
 #include "parameters/parameters.hpp"
+#include "specfem/element.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
 #include "specfem/setup.hpp"
@@ -20,10 +20,10 @@ namespace specfem {
 
 namespace mesh {
 
-template <> struct mesh<specfem::dimension::type::dim2> {
+template <> struct mesh<specfem::element::dimension_tag::dim2> {
 
   constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension
+      specfem::element::dimension_tag::dim2; ///< Dimension
 
   int npgeo; ///< Total number of spectral element control nodes
   int nspec; ///< Total number of spectral elements

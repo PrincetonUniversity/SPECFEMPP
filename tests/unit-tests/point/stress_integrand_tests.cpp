@@ -44,15 +44,15 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DAcoustic) {
 
   // Define the stress_integrand type for 2D acoustic medium
   using stress_integrand_type =
-      point::stress_integrand<dimension::type::dim2,
+      point::stress_integrand<specfem::element::dimension_tag::dim2,
                               element::medium_tag::acoustic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::acoustic>::dimension;
   constexpr int expected_components =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::acoustic>::components;
 
   EXPECT_EQ(stress_integrand_type::dimension, expected_dimension);
@@ -86,15 +86,15 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DElastic) {
 
   // Define the stress_integrand type for 2D elastic medium
   using stress_integrand_type =
-      point::stress_integrand<dimension::type::dim2,
+      point::stress_integrand<specfem::element::dimension_tag::dim2,
                               element::medium_tag::elastic_psv, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::elastic_psv>::dimension;
   constexpr int expected_components =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::elastic_psv>::components;
 
   EXPECT_EQ(stress_integrand_type::dimension, expected_dimension);
@@ -142,15 +142,15 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand2DPoroelastic) {
 
   // Define the stress_integrand type for 2D poroelastic medium
   using stress_integrand_type =
-      point::stress_integrand<dimension::type::dim2,
+      point::stress_integrand<specfem::element::dimension_tag::dim2,
                               element::medium_tag::poroelastic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::poroelastic>::dimension;
   constexpr int expected_components =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::poroelastic>::components;
 
   EXPECT_EQ(stress_integrand_type::dimension, expected_dimension);
@@ -196,15 +196,15 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DAcoustic) {
 
   // Define the stress_integrand type for 3D acoustic medium
   using stress_integrand_type =
-      point::stress_integrand<dimension::type::dim3,
+      point::stress_integrand<specfem::element::dimension_tag::dim3,
                               element::medium_tag::acoustic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
-      element::attributes<dimension::type::dim3,
+      element::attributes<specfem::element::dimension_tag::dim3,
                           element::medium_tag::acoustic>::dimension;
   constexpr int expected_components =
-      element::attributes<dimension::type::dim3,
+      element::attributes<specfem::element::dimension_tag::dim3,
                           element::medium_tag::acoustic>::components;
 
   EXPECT_EQ(stress_integrand_type::dimension, expected_dimension);
@@ -240,15 +240,15 @@ TYPED_TEST(PointStressIntegrandTest, StressIntegrand3DElastic) {
 
   // Define the stress_integrand type for 3D elastic medium
   using stress_integrand_type =
-      point::stress_integrand<dimension::type::dim3,
+      point::stress_integrand<specfem::element::dimension_tag::dim3,
                               element::medium_tag::elastic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
-      element::attributes<dimension::type::dim3,
+      element::attributes<specfem::element::dimension_tag::dim3,
                           element::medium_tag::elastic>::dimension;
   constexpr int expected_components =
-      element::attributes<dimension::type::dim3,
+      element::attributes<specfem::element::dimension_tag::dim3,
                           element::medium_tag::elastic>::components;
 
   EXPECT_EQ(stress_integrand_type::dimension, expected_dimension);
@@ -293,7 +293,7 @@ TYPED_TEST(PointStressIntegrandTest, DefaultConstructor) {
 
   // Define the stress_integrand type for 2D acoustic medium
   using stress_integrand_type =
-      point::stress_integrand<dimension::type::dim2,
+      point::stress_integrand<specfem::element::dimension_tag::dim2,
                               element::medium_tag::acoustic, using_simd>;
 
   // Create stress_integrand with default constructor
@@ -319,7 +319,7 @@ TYPED_TEST(PointStressIntegrandTest, ConstantConstructor) {
 
   // Define the stress_integrand type for 2D elastic medium
   using stress_integrand_type =
-      point::stress_integrand<dimension::type::dim2,
+      point::stress_integrand<specfem::element::dimension_tag::dim2,
                               element::medium_tag::elastic_psv, using_simd>;
 
   // Create a constant value
@@ -349,15 +349,15 @@ TYPED_TEST(PointStressIntegrandTest, AccessorBaseType) {
   constexpr bool using_simd = TypeParam::value;
 
   using stress_integrand_type =
-      point::stress_integrand<dimension::type::dim2,
+      point::stress_integrand<specfem::element::dimension_tag::dim2,
                               element::medium_tag::acoustic, using_simd>;
 
   // Check if stress_integrand_type is derived from the correct base class
   bool is_accessor =
       std::is_base_of<specfem::data_access::Accessor<
-                          specfem::data_access::AccessorType::point,
+                          specfem::datatype::AccessorType::point,
                           specfem::data_access::DataClassType::stress_integrand,
-                          dimension::type::dim2, using_simd>,
+                          specfem::element::dimension_tag::dim2, using_simd>,
                       stress_integrand_type>::value;
 
   EXPECT_TRUE(is_accessor);
@@ -369,19 +369,19 @@ TYPED_TEST(PointStressIntegrandTest, TensorShape) {
 
   // Test various element types and dimensions
   using acoustic_2d =
-      point::stress_integrand<dimension::type::dim2,
+      point::stress_integrand<specfem::element::dimension_tag::dim2,
                               element::medium_tag::acoustic, using_simd>;
   using elastic_2d =
-      point::stress_integrand<dimension::type::dim2,
+      point::stress_integrand<specfem::element::dimension_tag::dim2,
                               element::medium_tag::elastic_psv, using_simd>;
   using acoustic_3d =
-      point::stress_integrand<dimension::type::dim3,
+      point::stress_integrand<specfem::element::dimension_tag::dim3,
                               element::medium_tag::acoustic, using_simd>;
   using elastic_3d =
-      point::stress_integrand<dimension::type::dim3,
+      point::stress_integrand<specfem::element::dimension_tag::dim3,
                               element::medium_tag::elastic, using_simd>;
   using poro_2d =
-      point::stress_integrand<dimension::type::dim2,
+      point::stress_integrand<specfem::element::dimension_tag::dim2,
                               element::medium_tag::poroelastic, using_simd>;
 
   // Verify tensor shapes
@@ -406,7 +406,7 @@ TYPED_TEST(PointStressIntegrandTest, SIMDTypePropagation) {
   constexpr bool using_simd = TypeParam::value;
 
   using stress_integrand_type =
-      point::stress_integrand<dimension::type::dim2,
+      point::stress_integrand<specfem::element::dimension_tag::dim2,
                               element::medium_tag::acoustic, using_simd>;
 
   using expected_simd_type = specfem::datatype::simd<type_real, using_simd>;

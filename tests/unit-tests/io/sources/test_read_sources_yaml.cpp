@@ -22,7 +22,8 @@ extern type_real user_t0;
  *
  * @tparam DimensionTag
  */
-template <specfem::dimension::type DimensionTag> struct SourceYAMLTestParam {
+template <specfem::element::dimension_tag DimensionTag>
+struct SourceYAMLTestParam {
   std::string testname;
   YAML::Node sources_node;
   std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
@@ -37,7 +38,7 @@ template <specfem::dimension::type DimensionTag> struct SourceYAMLTestParam {
  * @param params
  * @return std::ostream&
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 std::ostream &operator<<(std::ostream &os,
                          const SourceYAMLTestParam<DimensionTag> &params) {
   os << params.testname;
@@ -45,9 +46,9 @@ std::ostream &operator<<(std::ostream &os,
 }
 
 using SourceYAMLTestParam2D =
-    SourceYAMLTestParam<specfem::dimension::type::dim2>;
+    SourceYAMLTestParam<specfem::element::dimension_tag::dim2>;
 using SourceYAMLTestParam3D =
-    SourceYAMLTestParam<specfem::dimension::type::dim3>;
+    SourceYAMLTestParam<specfem::element::dimension_tag::dim3>;
 
 // YAML node test data for 2D sources
 const static YAML::Node single_moment_tensor_yaml_2d = []() {

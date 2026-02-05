@@ -216,7 +216,7 @@ public:
    * @return Shared pointer to wavefield writer task or nullptr if not
    * configured
    */
-  template <specfem::dimension::type DimensionTag>
+  template <specfem::element::dimension_tag DimensionTag>
   std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
   instantiate_wavefield_writer() const {
     if (this->wavefield) {
@@ -234,7 +234,7 @@ public:
    * @return Shared pointer to wavefield reader task or nullptr if not
    * configured
    */
-  template <specfem::dimension::type DimensionTag>
+  template <specfem::element::dimension_tag DimensionTag>
   std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
   instantiate_wavefield_reader() const {
     if (this->wavefield) {
@@ -253,10 +253,10 @@ public:
 
    * @return Shared pointer to 2D wavefield plotter or nullptr if not configured
    */
-  std::shared_ptr<
-      specfem::periodic_tasks::periodic_task<specfem::dimension::type::dim2> >
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<
+      specfem::element::dimension_tag::dim2> >
   instantiate_wavefield_plotter(
-      const specfem::assembly::assembly<specfem::dimension::type::dim2>
+      const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
           &assembly,
       const type_real &dt) const {
     if (this->plot_wavefield) {
@@ -273,10 +273,10 @@ public:
    * @param dt Time step size
    * @return Shared pointer to 3D wavefield plotter or nullptr if not configured
    */
-  std::shared_ptr<
-      specfem::periodic_tasks::periodic_task<specfem::dimension::type::dim3> >
+  std::shared_ptr<specfem::periodic_tasks::periodic_task<
+      specfem::element::dimension_tag::dim3> >
   instantiate_wavefield_plotter(
-      const specfem::assembly::assembly<specfem::dimension::type::dim3>
+      const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
           &assembly,
       const type_real &dt) const {
     if (this->plot_wavefield) {
@@ -345,7 +345,7 @@ public:
    * @param tasks Periodic tasks to execute during simulation
    * @return Shared pointer to configured solver
    */
-  template <int NGLL, specfem::dimension::type DimensionTag>
+  template <int NGLL, specfem::element::dimension_tag DimensionTag>
   std::shared_ptr<specfem::solver::solver> instantiate_solver(
       const type_real dt,
       const specfem::assembly::assembly<DimensionTag> &assembly,

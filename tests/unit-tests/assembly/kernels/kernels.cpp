@@ -1,6 +1,6 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "enumerations/dimension.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/element.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"
@@ -8,7 +8,7 @@
 
 template <bool using_simd, typename ExecutionSpace>
 using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
-    specfem::dimension::type::dim2,
+    specfem::element::dimension_tag::dim2,
     specfem::datatype::simd<type_real, using_simd>, ExecutionSpace>;
 
 template <specfem::element::medium_tag MediumTag,
@@ -19,15 +19,17 @@ std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                  void>
 set_kernel_value(
     const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     const type_real offset) {
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
 
-  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
-                                            MediumTag, PropertyTag, using_simd>;
+  using PointType =
+      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
+                              PropertyTag, using_simd>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -52,14 +54,16 @@ std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                  void>
 check_kernel_value(
     const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     const type_real offset) {
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
-  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
-                                            MediumTag, PropertyTag, using_simd>;
+  using PointType =
+      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
+                              PropertyTag, using_simd>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -109,15 +113,17 @@ std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultHostExecutionSpace>,
                  void>
 add_value(const ViewType elements,
-          specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+          specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+              &assembly,
           const type_real offset) {
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
 
-  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
-                                            MediumTag, PropertyTag, using_simd>;
+  using PointType =
+      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
+                              PropertyTag, using_simd>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -144,15 +150,17 @@ std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                  void>
 set_kernel_value(
     const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     const type_real offset) {
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
 
-  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
-                                            MediumTag, PropertyTag, using_simd>;
+  using PointType =
+      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
+                              PropertyTag, using_simd>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultExecutionSpace>(), elements,
@@ -179,17 +187,19 @@ std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                  void>
 check_kernel_value(
     const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     const type_real offset) {
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const int nspec = assembly.mesh.nspec;
   const int ngll = assembly.mesh.element_grid.ngllx;
   const auto &kernels = assembly.kernels;
 
-  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
-                                            MediumTag, PropertyTag, using_simd>;
+  using PointType =
+      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
+                              PropertyTag, using_simd>;
 
   Kokkos::View<PointType ***, Kokkos::DefaultExecutionSpace> point_view(
       "point_view", nspec, ngll, ngll);
@@ -270,15 +280,17 @@ std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                                 Kokkos::DefaultExecutionSpace>,
                  void>
 add_value(const ViewType elements,
-          specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+          specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+              &assembly,
           const type_real offset) {
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &kernels = assembly.kernels;
 
-  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
-                                            MediumTag, PropertyTag, using_simd>;
+  using PointType =
+      specfem::point::kernels<specfem::element::dimension_tag::dim2, MediumTag,
+                              PropertyTag, using_simd>;
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultExecutionSpace>(), elements,
       assembly.mesh.element_grid);

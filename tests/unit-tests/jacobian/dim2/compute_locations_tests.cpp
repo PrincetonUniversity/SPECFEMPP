@@ -21,13 +21,13 @@ protected:
   }
 
   // Helper to create unit square element [0,1] x [0,1]
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
   create_unit_square_4node() {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim2> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 4);
     coorg(0) = { 0.0, 0.0 }; // Bottom-left
     coorg(1) = { 1.0, 0.0 }; // Bottom-right
@@ -37,14 +37,14 @@ protected:
   }
 
   // Helper to create scaled and translated square element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
   create_scaled_translated_square_4node(type_real xmin, type_real xmax,
                                         type_real zmin, type_real zmax) {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim2> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 4);
     coorg(0) = { xmin, zmin }; // Bottom-left
     coorg(1) = { xmax, zmin }; // Bottom-right
@@ -54,14 +54,14 @@ protected:
   }
 
   // Helper to create arbitrary quadrilateral element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
   create_quadrilateral_4node(
       const std::array<std::array<type_real, 2>, 4> &corners) {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim2> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 4);
     for (int i = 0; i < 4; ++i) {
       coorg(i) = { corners[i][0], corners[i][1] };
@@ -70,13 +70,13 @@ protected:
   }
 
   // Helper to create 9-node unit square element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
   create_unit_square_9node() {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim2> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 9);
     coorg(0) = { 0.0, 0.0 }; // Corner 0: (0,0)
     coorg(1) = { 1.0, 0.0 }; // Corner 1: (1,0)
@@ -244,9 +244,9 @@ TEST_F(ComputeLocationsDim2Test, NineNodeElement) {
 TEST_F(ComputeLocationsDim2Test, BilinearMapping) {
   // Test that the mapping is indeed bilinear for 4-node elements
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Unit square
@@ -289,9 +289,9 @@ TEST_F(ComputeLocationsDim2Test, BilinearMapping) {
 TEST_F(ComputeLocationsDim2Test, EdgeMidpoints) {
   // Test that edge midpoints map correctly for 4-node elements
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   coorg(0) = { 0.0, 0.0 };

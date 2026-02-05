@@ -8,7 +8,7 @@
 #include "utilities.hpp"
 #include "specfem/macros.hpp"
 
-specfem::assembly::boundaries_impl::acoustic_free_surface<specfem::dimension::type::dim2>::
+specfem::assembly::boundaries_impl::acoustic_free_surface<specfem::element::dimension_tag::dim2>::
     acoustic_free_surface(
         const int nspec, const int ngllz, const int ngllx,
         const specfem::mesh::acoustic_free_surface<dimension_tag>

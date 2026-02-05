@@ -30,7 +30,7 @@ namespace specfem::chunk_element {
  * @see specfem::chunk_element::displacement for displacement field accessor
  * @see specfem::chunk_element::acceleration for acceleration field accessor
  */
-template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
+template <int ChunkSize, int NGLL, specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 class velocity
     : public impl::field<ChunkSize, NGLL, DimensionTag, MediumTag,

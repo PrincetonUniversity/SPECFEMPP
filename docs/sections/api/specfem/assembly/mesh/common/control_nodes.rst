@@ -1,7 +1,7 @@
 .. _assembly_mesh_control_nodes_common:
 
-``specfem::assembly::mesh_impl::control_nodes`` Template
-=========================================================
+``specfem::assembly::mesh_impl::control_nodes``
+===============================================
 
 Base template for control node information across dimensions.
 

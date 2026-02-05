@@ -7,7 +7,7 @@
 #include <tuple>
 
 namespace specfem::point {
-template <specfem::dimension::type Dimension,
+template <specfem::element::dimension_tag Dimension,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct properties;
@@ -32,7 +32,7 @@ namespace specfem::medium_container {
  * @code
  * // Create 2D elastic isotropic material
  * using Mat = specfem::medium_container::material<
- *     specfem::dimension::type::dim2,
+ *     specfem::element::dimension_tag::dim2,
  *     specfem::element::medium_tag::elastic,
  *     specfem::element::property_tag::isotropic>;
  *
@@ -49,7 +49,7 @@ namespace specfem::medium_container {
  * @note This stores properties for a domain section. For GLL-level properties,
  * use specfem::assembly::properties.
  */
-template <specfem::dimension::type dimension_tag,
+template <specfem::element::dimension_tag dimension_tag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::attenuation_tag AttenuationTag,

@@ -10,8 +10,8 @@
 
 template <>
 struct source_parameters<
-    specfem::dimension::type::dim2,
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2> > {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2> > {
   source_parameters() : x(0.0), z(0.0), f(0.0), fc(0.0), angle(0.0) {};
   source_parameters(std::string name, type_real x, type_real z, type_real f,
                     type_real fc, type_real angle,
@@ -32,8 +32,8 @@ struct source_parameters<
 
 template <>
 struct source_solution<
-    specfem::dimension::type::dim2,
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2> > {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2> > {
 public:
   source_solution(type_real x, type_real z, type_real f, type_real fc,
                   type_real angle, std::vector<type_real> force_vector)
@@ -56,11 +56,11 @@ public:
 
 // Defining short hands for the source parameters and solution types
 using CosseratForceSource2DSolution = source_solution<
-    specfem::dimension::type::dim2,
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2> >;
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2> >;
 using CosseratForceSource2DParameters = source_parameters<
-    specfem::dimension::type::dim2,
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2> >;
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2> >;
 
 using CosseratForceSource2DParametersAndSolution =
     std::tuple<CosseratForceSource2DParameters, CosseratForceSource2DSolution>;
@@ -68,9 +68,9 @@ using CosseratForceSource2DParametersAndSolution =
 // solutions
 template <>
 std::vector<CosseratForceSource2DParametersAndSolution>
-get_parameters_and_solutions<
-    specfem::dimension::type::dim2,
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2> >() {
+get_parameters_and_solutions<specfem::element::dimension_tag::dim2,
+                             specfem::sources::cosserat_force<
+                                 specfem::element::dimension_tag::dim2> >() {
   type_real sqrt2over2 = std::sqrt(2.0) / 2.0;
 
   return std::vector<CosseratForceSource2DParametersAndSolution>{
@@ -114,14 +114,16 @@ get_parameters_and_solutions<
 
 // Factory function specialization for 2D Cosserat Force Source
 template <>
-specfem::sources::cosserat_force<specfem::dimension::type::dim2> create_source<
-    specfem::dimension::type::dim2,
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2> >(
-    const source_parameters<
-        specfem::dimension::type::dim2,
-        specfem::sources::cosserat_force<specfem::dimension::type::dim2> >
+specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>
+create_source<
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2> >(
+    const source_parameters<specfem::element::dimension_tag::dim2,
+                            specfem::sources::cosserat_force<
+                                specfem::element::dimension_tag::dim2> >
         &parameters) {
-  return specfem::sources::cosserat_force<specfem::dimension::type::dim2>(
+  return specfem::sources::cosserat_force<
+      specfem::element::dimension_tag::dim2>(
       parameters.x, parameters.z, parameters.f, parameters.fc, parameters.angle,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
                                                                0.0, 1.0, false),

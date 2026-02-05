@@ -1,7 +1,7 @@
 
 #include "enumerations/connections.hpp"
-#include "enumerations/dimension.hpp"
 #include "enumerations/mesh_entities.hpp"
+#include "specfem/element.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
 #include "specfem/utilities.hpp"
@@ -390,7 +390,8 @@ TEST_P(CoupledElements3D, FaceConnections) {
   // Create connection mapping between the two elements
   specfem::mesh_entity::element mapping(5, 5, 5);
 
-  specfem::connections::connection_mapping<specfem::dimension::type::dim3>
+  specfem::connections::connection_mapping<
+      specfem::element::dimension_tag::dim3>
       connection(5, 5, 5, element1.control_nodes, element2.control_nodes);
 
   const int num_points =
@@ -423,7 +424,8 @@ TEST_P(CoupledElements3D, EdgeConnections) {
   // Create connection mapping between the two elements
   specfem::mesh_entity::element mapping(5, 5, 5);
 
-  specfem::connections::connection_mapping<specfem::dimension::type::dim3>
+  specfem::connections::connection_mapping<
+      specfem::element::dimension_tag::dim3>
       connection(5, 5, 5, element1.control_nodes, element2.control_nodes);
 
   // Test edge connections
@@ -463,7 +465,8 @@ TEST_P(CoupledElements3D, NodeConnections) {
   // Create connection mapping between the two elements
   specfem::mesh_entity::element mapping(5, 5, 5);
 
-  specfem::connections::connection_mapping<specfem::dimension::type::dim3>
+  specfem::connections::connection_mapping<
+      specfem::element::dimension_tag::dim3>
       connection(5, 5, 5, element1.control_nodes, element2.control_nodes);
 
   const auto element_coord1 = compute_coordinates3D(element1);

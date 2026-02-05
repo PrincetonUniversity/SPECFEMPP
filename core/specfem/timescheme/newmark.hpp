@@ -31,7 +31,7 @@ namespace newmark_impl {
  * @param deltatover2 Half of the timestep (dt/2, or -dt/2 for backward)
  * @return Number of degrees of freedom updated
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::simulation::field_type WavefieldType>
 int corrector_phase_impl(
@@ -63,7 +63,7 @@ int corrector_phase_impl(
  * @param deltasquareover2 Half of squared timestep (dt²/2)
  * @return Number of degrees of freedom updated
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::simulation::field_type WavefieldType>
 int predictor_phase_impl(

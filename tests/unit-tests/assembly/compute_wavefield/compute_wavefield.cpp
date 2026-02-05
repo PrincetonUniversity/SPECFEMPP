@@ -1,7 +1,7 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "generate_data.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include "test_helper.hpp"
 #include <gtest/gtest.h>
@@ -15,7 +15,8 @@ void test_element_wavefield(
     const int ispec,
     const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &wavefield,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
 
   const auto element_types = assembly.element_types;
 
@@ -60,7 +61,8 @@ void test_element_wavefield(
 template <specfem::wavefield::type component,
           specfem::simulation::field_type type>
 void test_compute_wavefield(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
 
   const auto ispecs = generate_data<component, type>(assembly);
 
@@ -84,7 +86,8 @@ void test_compute_wavefield(
 }
 
 void test_compute_wavefield(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
 
   try {
     test_compute_wavefield<specfem::wavefield::type::displacement,
@@ -126,8 +129,8 @@ void test_compute_wavefield(
 TEST_F(Assembly2D, compute_wavefield) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
-        std::get<5>(parameters);
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        assembly = std::get<5>(parameters);
 
     try {
       test_compute_wavefield(assembly);

@@ -5,9 +5,11 @@
 
 namespace specfem::assembly::impl {
 
-template <template <specfem::dimension::type, specfem::element::medium_tag,
-                    specfem::element::property_tag> class containers_type>
-struct value_containers<specfem::dimension::type::dim3, containers_type> {
+template <
+    template <specfem::element::dimension_tag, specfem::element::medium_tag,
+              specfem::element::property_tag> class containers_type>
+struct value_containers<specfem::element::dimension_tag::dim3,
+                        containers_type> {
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
@@ -16,7 +18,7 @@ struct value_containers<specfem::dimension::type::dim3, containers_type> {
   int ngllx; ///< Number of quadrature points in x dimension
   int nglly; ///< Number of quadrature points in y dimension
 
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   IndexViewType property_index_mapping; ///< View to store property index
                                         ///< mapping

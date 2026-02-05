@@ -6,7 +6,7 @@
 #include <cmath>
 
 std::vector<specfem::element::medium_tag> specfem::sources::external<
-    specfem::dimension::type::dim2>::get_supported_media() const {
+    specfem::element::dimension_tag::dim2>::get_supported_media() const {
   return {
     specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::elastic_psv,
@@ -18,8 +18,8 @@ std::vector<specfem::element::medium_tag> specfem::sources::external<
 }
 
 Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
-specfem::sources::external<specfem::dimension::type::dim2>::get_force_vector()
-    const {
+specfem::sources::external<
+    specfem::element::dimension_tag::dim2>::get_force_vector() const {
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
@@ -75,7 +75,8 @@ specfem::sources::external<specfem::dimension::type::dim2>::get_force_vector()
 }
 
 std::string
-specfem::sources::external<specfem::dimension::type::dim2>::print() const {
+specfem::sources::external<specfem::element::dimension_tag::dim2>::print()
+    const {
 
   const auto gcoord = this->get_global_coordinates();
 

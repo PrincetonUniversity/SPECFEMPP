@@ -1,13 +1,12 @@
 #pragma once
 
-#include "specfem/macros.hpp"
-#include <array>
-#include <tuple>
-#include <boost/preprocessor.hpp>
-#include "enumerations/dimension.hpp"
 #include "enumerations/connections.hpp"
 #include "enumerations/coupled_interface.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
+#include "specfem/macros.hpp"
+#include <array>
+#include <boost/preprocessor.hpp>
+#include <tuple>
 
 namespace specfem::interface {
 /**
@@ -18,17 +17,17 @@ namespace specfem::interface {
  *
  * @return constexpr auto list of edges
  */
-template <specfem::dimension::type DimensionTag> constexpr auto edges();
+template <specfem::element::dimension_tag DimensionTag> constexpr auto edges();
 
 /**
  * @brief 2D specialization of the edges function
  *
  * @return constexpr auto list of edges for 2D
  */
-template <> constexpr auto edges<specfem::dimension::type::dim2>() {
+template <> constexpr auto edges<specfem::element::dimension_tag::dim2>() {
   constexpr int total_edges = BOOST_PP_SEQ_SIZE(EDGES);
   constexpr std::array<
-      std::tuple<specfem::dimension::type, specfem::connections::type,
+      std::tuple<specfem::element::dimension_tag, specfem::connections::type,
                  specfem::interface::interface_tag,
                  specfem::element::boundary_tag>,
       total_edges>

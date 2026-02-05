@@ -9,7 +9,7 @@
 
 namespace specfem::assembly {
 
-template <specfem::dimension::type DimensionTag> class boundary_values {
+template <specfem::element::dimension_tag DimensionTag> class boundary_values {
 public:
   constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
   boundary_values() = default;

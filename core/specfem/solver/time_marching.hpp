@@ -1,10 +1,10 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/wavefield.hpp"
 #include "solver.hpp"
 #include "specfem/compute.hpp"
+#include "specfem/element.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/timescheme.hpp"
 
@@ -22,13 +22,13 @@ namespace solver {
  * @tparam NGLL Number of Gauss-Lobatto-Legendre quadrature points per element
  */
 template <specfem::simulation::type Simulation,
-          specfem::dimension::type DimensionTag, int NGLL>
+          specfem::element::dimension_tag DimensionTag, int NGLL>
 class time_marching;
 
 /**
  * @brief Time marching solver for forward simulation
  */
-template <specfem::dimension::type DimensionTag, int NGLL>
+template <specfem::element::dimension_tag DimensionTag, int NGLL>
 class time_marching<specfem::simulation::type::forward, DimensionTag, NGLL>
     : public solver {
 public:
@@ -93,7 +93,7 @@ private:
 /**
  * @brief Time marching solver for combined adjoint and backward simulations
  */
-template <specfem::dimension::type DimensionTag, int NGLL>
+template <specfem::element::dimension_tag DimensionTag, int NGLL>
 class time_marching<specfem::simulation::type::combined, DimensionTag, NGLL>
     : public solver {
 public:

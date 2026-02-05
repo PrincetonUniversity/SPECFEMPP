@@ -10,13 +10,13 @@
 
 TEST(impl__compute_intersection, TransferFunctionCorrectness) {
   const int ngnod = 4;
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       coorg1("coorg1", ngnod);
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       coorg2("coorg2", ngnod);
   // element 1 lies on [0,1] x [0,1]
   coorg1(0) = { 0, 0 };

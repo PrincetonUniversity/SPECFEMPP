@@ -32,7 +32,7 @@ namespace specfem::assembly {
  *
  * @code
  * // Construct fields for forward simulation
- * specfem::assembly::fields<specfem::dimension::type::dim2> sim_fields(
+ * specfem::assembly::fields<specfem::element::dimension_tag::dim2> sim_fields(
  *     mesh, element_types, specfem::simulation::type::forward);
  *
  * // Access forward wavefield
@@ -43,7 +43,7 @@ namespace specfem::assembly {
  * sim_fields.copy_to_device();
  * @endcode
  */
-template <specfem::dimension::type DimensionTag> struct fields {
+template <specfem::element::dimension_tag DimensionTag> struct fields {
   constexpr static auto dimension_tag = DimensionTag;
 
   /**
@@ -66,7 +66,7 @@ template <specfem::dimension::type DimensionTag> struct fields {
    * @param simulation Simulation type determining which fields to initialize
    *
    * @code
-   * specfem::assembly::fields<specfem::dimension::type::dim2> fields(
+   * specfem::assembly::fields<specfem::element::dimension_tag::dim2> fields(
    *     mesh, element_types, specfem::simulation::type::forward_adjoint);
    * @endcode
    */

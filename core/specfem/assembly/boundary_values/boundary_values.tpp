@@ -8,7 +8,7 @@
 
 // Explicit template instantiations
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 specfem::assembly::boundary_values<DimensionTag>::boundary_values(
     const int nstep, const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::element_types<dimension_tag> &element_types,

@@ -7,7 +7,7 @@
 
 
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 void specfem::sources::source<DimensionTag>::set_source_time_function(
     YAML::Node &Node, const int nsteps, const type_real dt) {
 
@@ -18,7 +18,7 @@ void specfem::sources::source<DimensionTag>::set_source_time_function(
 
     // Determine t0_factor based on dimension
     constexpr type_real t0_factor =
-        (DimensionTag == specfem::dimension::type::dim2) ? 2.0 : 1.5;
+        (DimensionTag == specfem::element::dimension_tag::dim2) ? 2.0 : 1.5;
 
     if (Gaussian["hdur"]) {
       type_real hdur = Gaussian["hdur"].as<type_real>();
@@ -54,7 +54,7 @@ void specfem::sources::source<DimensionTag>::set_source_time_function(
 
     // Determine t0_factor based on dimension
     constexpr type_real t0_factor =
-        (DimensionTag == specfem::dimension::type::dim2) ? 2.0 : 1.5;
+        (DimensionTag == specfem::element::dimension_tag::dim2) ? 2.0 : 1.5;
 
     this->source_time_function =
         std::make_unique<specfem::source_time_functions::Heaviside>(

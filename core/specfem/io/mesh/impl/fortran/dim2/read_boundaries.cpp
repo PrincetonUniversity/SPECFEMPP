@@ -138,12 +138,12 @@ inline void calculate_ib(const specfem::kokkos::HostView2d<bool> code,
   assert(nspec_left + nspec_right + nspec_bottom + nspec_top == nelements);
 }
 
-specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
+specfem::mesh::absorbing_boundary<specfem::element::dimension_tag::dim2>
 read_absorbing_boundaries(std::ifstream &stream, int num_abs_boundary_faces,
                           const int nspec) {
 
   // Create base instance of the absorbing boundary
-  specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
+  specfem::mesh::absorbing_boundary<specfem::element::dimension_tag::dim2>
       absorbing_boundary(num_abs_boundary_faces);
 
   // I have to do this because std::vector<bool> is a fake container type that
@@ -273,13 +273,13 @@ get_boundary_type(const int type, const int e1, const int e2,
   }
 }
 
-specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
+specfem::mesh::acoustic_free_surface<specfem::element::dimension_tag::dim2>
 read_acoustic_free_surface(
     std::ifstream &stream, const int &nelem_acoustic_surface,
     const Kokkos::View<int **, Kokkos::HostSpace> knods) {
 
   std::vector<int> acfree_edge(4, 0);
-  specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
+  specfem::mesh::acoustic_free_surface<specfem::element::dimension_tag::dim2>
       acoustic_free_surface(nelem_acoustic_surface);
 
   if (nelem_acoustic_surface > 0) {
@@ -299,7 +299,7 @@ read_acoustic_free_surface(
   return acoustic_free_surface;
 }
 
-specfem::mesh::forcing_boundary<specfem::dimension::type::dim2>
+specfem::mesh::forcing_boundary<specfem::element::dimension_tag::dim2>
 read_forcing_boundaries(std::ifstream &stream, const int nelement_acforcing,
                         const int nspec) {
 
@@ -308,7 +308,7 @@ read_forcing_boundaries(std::ifstream &stream, const int nelement_acforcing,
   std::vector<int> iedgeread(8, 0);
   int numacread, typeacread;
 
-  specfem::mesh::forcing_boundary<specfem::dimension::type::dim2>
+  specfem::mesh::forcing_boundary<specfem::element::dimension_tag::dim2>
       forcing_boundary(nelement_acforcing);
 
   if (nelement_acforcing > 0) {
@@ -353,7 +353,7 @@ read_forcing_boundaries(std::ifstream &stream, const int nelement_acforcing,
   return forcing_boundary;
 }
 
-specfem::mesh::boundaries<specfem::dimension::type::dim2>
+specfem::mesh::boundaries<specfem::element::dimension_tag::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_boundaries(
     std::ifstream &stream, const int nspec, const int n_absorbing,
     const int n_acoustic_surface, const int n_acforcing,

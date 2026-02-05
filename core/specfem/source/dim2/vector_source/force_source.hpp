@@ -32,11 +32,9 @@ namespace sources {
  * );
  *
  * // Create a 2D force source at (2.5, 3.0) with 45-degree angle
- * auto force_source = specfem::sources::force<specfem::dimension::type::dim2>(
- *     2.5,  // x-coordinate
- *     3.0,  // z-coordinate
- *     45.0, // angle in degrees
- *     std::move(stf),
+ * auto force_source =
+ * specfem::sources::force<specfem::element::dimension_tag::dim2>( 2.5,  //
+ * x-coordinate 3.0,  // z-coordinate 45.0, // angle in degrees std::move(stf),
  *     specfem::simulation::field_type::forward
  * );
  *
@@ -49,8 +47,8 @@ namespace sources {
  *
  */
 template <>
-class force<specfem::dimension::type::dim2>
-    : public vector_source<specfem::dimension::type::dim2> {
+class force<specfem::element::dimension_tag::dim2>
+    : public vector_source<specfem::element::dimension_tag::dim2> {
 
 public:
   /**
@@ -113,10 +111,12 @@ public:
    * @brief Get the forcing function
    *
    */
-  bool operator==(const specfem::sources::source<specfem::dimension::type::dim2>
-                      &other) const override;
-  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
-                      &other) const override;
+  bool operator==(
+      const specfem::sources::source<specfem::element::dimension_tag::dim2>
+          &other) const override;
+  bool operator!=(
+      const specfem::sources::source<specfem::element::dimension_tag::dim2>
+          &other) const override;
 
   /**
    * @brief Get the force vector

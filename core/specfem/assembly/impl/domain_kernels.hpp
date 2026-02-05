@@ -23,7 +23,7 @@ namespace specfem::assembly::impl {
  * @tparam PropertyTag Material property type
  *
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 struct domain_kernels;
@@ -45,16 +45,18 @@ struct domain_kernels;
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct domain_kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag>
+struct domain_kernels<specfem::element::dimension_tag::dim2, MediumTag,
+                      PropertyTag>
     : public specfem::medium_container::kernels::data_container<
-          specfem::dimension::type::dim2, MediumTag, PropertyTag>,
-      public DomainAccessor<specfem::dimension::type::dim2,
-                            domain_kernels<specfem::dimension::type::dim2,
-                                           MediumTag, PropertyTag> > {
+          specfem::element::dimension_tag::dim2, MediumTag, PropertyTag>,
+      public DomainAccessor<
+          specfem::element::dimension_tag::dim2,
+          domain_kernels<specfem::element::dimension_tag::dim2, MediumTag,
+                         PropertyTag> > {
 
   /// Base kernels data container type
   using base_type = specfem::medium_container::kernels::data_container<
-      specfem::dimension::type::dim2, MediumTag, PropertyTag>;
+      specfem::element::dimension_tag::dim2, MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =
@@ -111,16 +113,18 @@ struct domain_kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag>
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct domain_kernels<specfem::dimension::type::dim3, MediumTag, PropertyTag>
+struct domain_kernels<specfem::element::dimension_tag::dim3, MediumTag,
+                      PropertyTag>
     : public specfem::medium_container::kernels::data_container<
-          specfem::dimension::type::dim3, MediumTag, PropertyTag>,
-      public DomainAccessor<specfem::dimension::type::dim3,
-                            domain_kernels<specfem::dimension::type::dim3,
-                                           MediumTag, PropertyTag> > {
+          specfem::element::dimension_tag::dim3, MediumTag, PropertyTag>,
+      public DomainAccessor<
+          specfem::element::dimension_tag::dim3,
+          domain_kernels<specfem::element::dimension_tag::dim3, MediumTag,
+                         PropertyTag> > {
 
   /// Base kernels data container type
   using base_type = specfem::medium_container::kernels::data_container<
-      specfem::dimension::type::dim3, MediumTag, PropertyTag>;
+      specfem::element::dimension_tag::dim3, MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =

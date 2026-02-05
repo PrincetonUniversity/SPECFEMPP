@@ -304,10 +304,12 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
 // Explicit template instantiations for instantiate_timescheme
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::setup::instantiate_timescheme<
-    specfem::assembly::fields<specfem::dimension::type::dim2> >(
-    specfem::assembly::fields<specfem::dimension::type::dim2> &fields) const;
+    specfem::assembly::fields<specfem::element::dimension_tag::dim2> >(
+    specfem::assembly::fields<specfem::element::dimension_tag::dim2> &fields)
+    const;
 
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::setup::instantiate_timescheme<
-    specfem::assembly::fields<specfem::dimension::type::dim3> >(
-    specfem::assembly::fields<specfem::dimension::type::dim3> &fields) const;
+    specfem::assembly::fields<specfem::element::dimension_tag::dim3> >(
+    specfem::assembly::fields<specfem::element::dimension_tag::dim3> &fields)
+    const;

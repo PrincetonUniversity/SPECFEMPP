@@ -10,7 +10,7 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionTag, int NGLL,
+template <specfem::element::dimension_tag DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void specfem::compute::impl::compute_material_derivatives(
@@ -45,7 +45,7 @@ void specfem::compute::impl::compute_material_derivatives(
   constexpr bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd = (DimensionTag == specfem::dimension::type::dim2) ? true : false;
+  constexpr bool using_simd = (DimensionTag == specfem::element::dimension_tag::dim2) ? true : false;
 #endif
 
 

@@ -11,7 +11,7 @@ specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
 
 template <typename IOLibrary>
 void specfem::io::wavefield_reader<IOLibrary>::initialize(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly) {
 
   auto &buffer = assembly.fields.buffer;
   int ngroups = 0;
@@ -88,7 +88,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
 
 template <typename IOLibrary>
 void specfem::io::wavefield_reader<IOLibrary>::run(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly,
     const int istep) {
   auto &buffer = assembly.fields.buffer;
   auto &boundary_values = assembly.boundary_values;

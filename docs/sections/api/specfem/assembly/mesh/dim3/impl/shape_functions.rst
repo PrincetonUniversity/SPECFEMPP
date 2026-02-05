@@ -3,5 +3,5 @@
 3D ``specfem::assembly::mesh_impl::shape_functions``
 ====================================================
 
-.. doxygenstruct:: specfem::assembly::mesh_impl::shape_functions< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::assembly::mesh_impl::shape_functions< specfem::element::dimension_tag::dim3 >
     :members:

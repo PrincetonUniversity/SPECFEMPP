@@ -221,7 +221,6 @@ add_subdirectory(core)
 
 add_library(
         enumerations
-        src/enumerations/medium.cpp
         src/enumerations/display.cpp
         src/enumerations/wavefield.cpp
         src/enumerations/dim2/connections.cpp

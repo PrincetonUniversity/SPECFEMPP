@@ -19,7 +19,7 @@ namespace specfem::compute {
  * @param dt Time step for the simulation
  */
 template <specfem::simulation::field_type WavefieldType,
-          specfem::dimension::type DimensionTag, int NGLL>
+          specfem::element::dimension_tag DimensionTag, int NGLL>
 void initialize_mass_matrix(specfem::assembly::assembly<DimensionTag> &assembly,
                             const type_real &dt) {
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2, DIM3),

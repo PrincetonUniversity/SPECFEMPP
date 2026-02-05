@@ -18,18 +18,18 @@ namespace specfem::medium_container::kernels {
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct point_container<
-    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::dimension_tag::dim2, MediumTag,
     specfem::element::property_tag::isotropic_cosserat, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
     /// @cond
-    : public KernelsAccessor<specfem::dimension::type::dim2, MediumTag,
+    : public KernelsAccessor<specfem::element::dimension_tag::dim2, MediumTag,
                              specfem::element::property_tag::isotropic_cosserat,
                              UseSIMD>
 /// @endcond
 {
 
   using base_type =
-      KernelsAccessor<specfem::dimension::type::dim2, MediumTag,
+      KernelsAccessor<specfem::element::dimension_tag::dim2, MediumTag,
                       specfem::element::property_tag::isotropic_cosserat,
                       UseSIMD>;
 

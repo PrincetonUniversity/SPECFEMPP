@@ -23,12 +23,12 @@ namespace impl {
  * @brief Maps container and dimension types to appropriate Kokkos view layouts.
  */
 template <specfem::data_access::ContainerType ContainerType,
-          specfem::dimension::type DimensionTag>
+          specfem::element::dimension_tag DimensionTag>
 struct ContainerValueType;
 
 template <>
 struct ContainerValueType<specfem::data_access::ContainerType::domain,
-                          specfem::dimension::type::dim2> {
+                          specfem::element::dimension_tag::dim2> {
   template <typename T, typename MemorySpace>
   using scalar_type = specfem::kokkos::DomainView2d<T, 3, MemorySpace>;
   template <typename T, typename MemorySpace>
@@ -39,7 +39,7 @@ struct ContainerValueType<specfem::data_access::ContainerType::domain,
 
 template <>
 struct ContainerValueType<specfem::data_access::ContainerType::domain,
-                          specfem::dimension::type::dim3> {
+                          specfem::element::dimension_tag::dim3> {
   template <typename T, typename MemorySpace>
   using scalar_type = Kokkos::View<T ****, Kokkos::LayoutLeft, MemorySpace>;
   template <typename T, typename MemorySpace>
@@ -50,7 +50,7 @@ struct ContainerValueType<specfem::data_access::ContainerType::domain,
 
 template <>
 struct ContainerValueType<specfem::data_access::ContainerType::edge,
-                          specfem::dimension::type::dim2> {
+                          specfem::element::dimension_tag::dim2> {
   template <typename T, typename MemorySpace>
   using scalar_type = Kokkos::View<T **, Kokkos::LayoutLeft, MemorySpace>;
   template <typename T, typename MemorySpace>
@@ -74,7 +74,7 @@ struct ContainerValueType<specfem::data_access::ContainerType::edge,
  * using density_container = specfem::data_access::Container<
  *     specfem::data_access::ContainerType::domain,
  *     // density data-class not explicitly defined
- *     specfem::dimension::type::dim2>;
+ *     specfem::element::dimension_tag::dim2>;
  * using scalar_view = density_container::scalar_type<float,
  *                                                     Kokkos::HostSpace>;
  * scalar_view density("density", nspec, ngllz, ngllx);
@@ -87,7 +87,7 @@ struct ContainerValueType<specfem::data_access::ContainerType::edge,
  */
 template <specfem::data_access::ContainerType ContainerType,
           specfem::data_access::DataClassType DataClass,
-          specfem::dimension::type DimensionTag>
+          specfem::element::dimension_tag DimensionTag>
 struct Container {
   constexpr static auto container_type =
       ContainerType;                            ///< Container layout type

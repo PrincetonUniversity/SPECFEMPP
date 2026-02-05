@@ -14,7 +14,7 @@ namespace specfem::assembly {
  *
  * @tparam DimensionTag The spatial dimension (dim2 or dim3)
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct sources; ///< Forward declaration of sources class
 
 } // namespace specfem::assembly

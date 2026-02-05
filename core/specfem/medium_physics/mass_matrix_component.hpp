@@ -1,7 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/medium/dim2/acoustic/isotropic/mass_matrix.tpp"
 #include "specfem/medium/dim2/elastic/anisotropic/mass_matrix.tpp"
@@ -37,7 +36,7 @@ namespace medium_physics {
  * @endcode
  */
 // clang-format on
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 KOKKOS_INLINE_FUNCTION

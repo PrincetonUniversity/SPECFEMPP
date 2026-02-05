@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/element.hpp"
 
 namespace specfem {
 namespace mesh {
@@ -10,17 +10,19 @@ namespace mesh {
  *
  * @tparam DimensionTag Dimension type for the mesh
  */
-template <specfem::dimension::type DimensionTag> struct acoustic_free_surface;
+template <specfem::element::dimension_tag DimensionTag>
+struct acoustic_free_surface;
 
 /**
  * @brief Acoustic free surface boundary information
  *
  */
-template <> struct acoustic_free_surface<specfem::dimension::type::dim2> {
+template <>
+struct acoustic_free_surface<specfem::element::dimension_tag::dim2> {
 
   constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension
-                                      ///< type
+      specfem::element::dimension_tag::dim2; ///< Dimension
+                                             ///< type
   /**
    * @name Constructors
    *

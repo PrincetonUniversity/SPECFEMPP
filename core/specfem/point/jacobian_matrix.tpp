@@ -5,7 +5,7 @@
 template <bool UseSIMD>
 specfem::datatype::VectorPointViewType<type_real, 2, UseSIMD>
 specfem::point::jacobian_matrix<
-    specfem::dimension::type::dim2, true,
+    specfem::element::dimension_tag::dim2, true,
     UseSIMD>::compute_normal(const specfem::mesh_entity::dim2::type &type) const {
   switch (type) {
   case specfem::mesh_entity::dim2::type::bottom:
@@ -24,7 +24,7 @@ specfem::point::jacobian_matrix<
 template <bool UseSIMD>
 specfem::datatype::VectorPointViewType<type_real, 3, UseSIMD>
 specfem::point::jacobian_matrix<
-    specfem::dimension::type::dim3, true,
+    specfem::element::dimension_tag::dim3, true,
     UseSIMD>::compute_normal(const specfem::mesh_entity::dim3::type &type) const {
   // For 3D, we handle all the face types (including edges and corners)
   // by returning the normal for the primary face direction

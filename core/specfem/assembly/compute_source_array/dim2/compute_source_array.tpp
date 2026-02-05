@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/assembly/compute_source_array.hpp"
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include "impl/compute_source_array_from_tensor.hpp"
 #include "impl/compute_source_array_from_vector.hpp"
 #include "kokkos_abstractions.h"
@@ -13,9 +13,9 @@
 template<typename SourceArrayViewType>
 void specfem::assembly::compute_source_array(
     const std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > &source,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
+        specfem::sources::source<specfem::element::dimension_tag::dim2> > &source,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim2>
         &jacobian_matrix,
     SourceArrayViewType &source_array) {
 
@@ -27,7 +27,7 @@ void specfem::assembly::compute_source_array(
 
     // Cast to derived class to access specific methods
     auto vector_source = static_cast<const specfem::sources::vector_source<
-        specfem::dimension::type::dim2> *>(source.get());
+        specfem::element::dimension_tag::dim2> *>(source.get());
 
     if (!vector_source) {
       KOKKOS_ABORT_WITH_LOCATION(
@@ -42,7 +42,7 @@ void specfem::assembly::compute_source_array(
 
     // Cast to derived class to access specific methods
     auto tensor_source = static_cast<const specfem::sources::tensor_source<
-        specfem::dimension::type::dim2> *>(source.get());
+        specfem::element::dimension_tag::dim2> *>(source.get());
 
     if (!tensor_source) {
       KOKKOS_ABORT_WITH_LOCATION(

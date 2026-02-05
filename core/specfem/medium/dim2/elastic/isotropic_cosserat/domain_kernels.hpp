@@ -4,7 +4,7 @@
 
 namespace specfem::medium_container::kernels {
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 struct data_container<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic_cosserat,

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "medium.hpp"
+#include "tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
 

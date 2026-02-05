@@ -9,7 +9,7 @@
 #include <Kokkos_Core.hpp>
 
 template <specfem::simulation::field_type WavefieldType>
-specfem::assembly::simulation_field<specfem::dimension::type::dim2,
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
                                     WavefieldType>::
     simulation_field(const specfem::assembly::mesh<dimension_tag> &mesh,
                      const specfem::assembly::element_types<dimension_tag> &element_types) {
@@ -44,7 +44,7 @@ specfem::assembly::simulation_field<specfem::dimension::type::dim2,
 
 template <specfem::simulation::field_type WavefieldType>
 int specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
+    specfem::element::dimension_tag::dim2,
     WavefieldType>::get_total_degrees_of_freedom() {
   if (total_degrees_of_freedom != 0) {
     return total_degrees_of_freedom;
@@ -65,7 +65,7 @@ int specfem::assembly::simulation_field<
 
 template <specfem::simulation::field_type WavefieldType>
 template <specfem::sync::kind sync>
-void specfem::assembly::simulation_field<specfem::dimension::type::dim2,
+void specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
                                          WavefieldType>::sync_fields() {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,

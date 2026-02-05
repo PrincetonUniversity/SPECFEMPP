@@ -12,7 +12,7 @@ namespace specfem::assembly::mesh_impl {
  * Stores Gauss-Lobatto-Legendre quadrature data using Kokkos views
  * for device/host access.
  */
-template <specfem::dimension::type DimensionTag> struct GLLQuadrature {
+template <specfem::element::dimension_tag DimensionTag> struct GLLQuadrature {
   constexpr static auto dimension_tag = DimensionTag;
 
   using ViewType = Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace>;
@@ -47,7 +47,7 @@ template <specfem::dimension::type DimensionTag> struct GLLQuadrature {
  *
  * Inherits GLL quadrature functionality for use in assembly operations.
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct quadrature
     : public specfem::assembly::mesh_impl::GLLQuadrature<DimensionTag> {
 public:

@@ -7,9 +7,9 @@
 #include <tuple>
 
 specfem::assembly::jacobian_matrix<
-    specfem::dimension::type::dim2>::jacobian_matrix(const int nspec,
-                                                     const int ngllz,
-                                                     const int ngllx)
+    specfem::element::dimension_tag::dim2>::jacobian_matrix(const int nspec,
+                                                            const int ngllz,
+                                                            const int ngllx)
     : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
       xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, ngllx),
       xiz("specfem::assembly::jacobian_matrix::xiz", nspec, ngllz, ngllx),
@@ -25,9 +25,10 @@ specfem::assembly::jacobian_matrix<
   return;
 };
 
-specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
+specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim2>::
     jacobian_matrix(
-        const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh)
+        const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+            &mesh)
     : nspec(mesh.nspec), ngllz(mesh.element_grid.ngllz),
       ngllx(mesh.element_grid.ngllx),
       xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, ngllx),
@@ -47,8 +48,9 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
   for (int ispec = 0; ispec < nspec; ++ispec) {
 
     //----- Load coorgx, coorgz in level 0 cache to be utilized later
-    Kokkos::View<point::global_coordinates<specfem::dimension::type::dim2> *,
-                 Kokkos::HostSpace>
+    Kokkos::View<
+        point::global_coordinates<specfem::element::dimension_tag::dim2> *,
+        Kokkos::HostSpace>
         coorg("coorg", ngnod);
 
     // This loop is not vectorizable because access to coorg via
@@ -93,7 +95,7 @@ specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>::
 }
 
 void specfem::assembly::jacobian_matrix<
-    specfem::dimension::type::dim2>::sync_views() {
+    specfem::element::dimension_tag::dim2>::sync_views() {
   specfem::kokkos::deep_copy(xix, h_xix);
   specfem::kokkos::deep_copy(xiz, h_xiz);
   specfem::kokkos::deep_copy(gammax, h_gammax);
@@ -103,13 +105,13 @@ void specfem::assembly::jacobian_matrix<
 
 std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
 specfem::assembly::jacobian_matrix<
-    specfem::dimension::type::dim2>::check_small_jacobian() const {
+    specfem::element::dimension_tag::dim2>::check_small_jacobian() const {
   Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
       "specfem::assembly::jacobian_matrix::negative", nspec);
 
   Kokkos::deep_copy(small_jacobian, false);
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const type_real threshold = 1e-10;
 

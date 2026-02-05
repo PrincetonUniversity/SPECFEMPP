@@ -47,8 +47,8 @@ struct ElementMaterial {
 };
 
 struct ExpectedMaterials3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   TotalMaterials total_materials; ///< Total materials and elements in the mesh
   std::vector<ElementMaterial> element_materials; ///< List of expected element
                                                   ///< materials
@@ -137,7 +137,7 @@ static const std::unordered_map<std::string, ExpectedMaterials3D>
               ElementMaterial(specfem::element::medium_tag::elastic,
                               specfem::element::property_tag::isotropic, 0,
                               specfem::medium_container::material<
-                                  specfem::dimension::type::dim3,
+                                  specfem::element::dimension_tag::dim3,
                                   specfem::element::medium_tag::elastic,
                                   specfem::element::property_tag::isotropic,
                                   specfem::element::attenuation_tag::none>(
@@ -146,7 +146,7 @@ static const std::unordered_map<std::string, ExpectedMaterials3D>
               ElementMaterial(specfem::element::medium_tag::elastic,
                               specfem::element::property_tag::isotropic, 5,
                               specfem::medium_container::material<
-                                  specfem::dimension::type::dim3,
+                                  specfem::element::dimension_tag::dim3,
                                   specfem::element::medium_tag::elastic,
                                   specfem::element::property_tag::isotropic,
                                   specfem::element::attenuation_tag::none>(

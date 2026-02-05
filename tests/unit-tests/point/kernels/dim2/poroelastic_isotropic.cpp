@@ -110,9 +110,11 @@ TYPED_TEST(PointKernelsTest, PoroelasticIsotropic2D) {
   }
 
   // Create the kernels object
-  using PointKernelType = specfem::point::kernels<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
-      specfem::element::property_tag::isotropic, using_simd>;
+  using PointKernelType =
+      specfem::point::kernels<specfem::element::dimension_tag::dim2,
+                              specfem::element::medium_tag::poroelastic,
+                              specfem::element::property_tag::isotropic,
+                              using_simd>;
   PointKernelType kernels(rhot, rhof, eta, sm, mu_fr, B, C, M, cpI, cpII, cs,
                           rhobb, rhofbb, ratio, phib);
 

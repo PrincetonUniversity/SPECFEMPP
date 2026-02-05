@@ -9,11 +9,12 @@
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
 
-specfem::point::local_coordinates<specfem::dimension::type::dim2>
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
 specfem::algorithms::locate_point(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+        &mesh) {
 
   // Extract mesh data and delegate to core implementation
   return specfem::algorithms::locate_point_impl::locate_point_core(
@@ -21,11 +22,12 @@ specfem::algorithms::locate_point(
       mesh.ngnod);
 }
 
-specfem::point::global_coordinates<specfem::dimension::type::dim2>
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
 specfem::algorithms::locate_point(
-    const specfem::point::local_coordinates<specfem::dimension::type::dim2>
-        &coordinate,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinate,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+        &mesh) {
 
   const int ispec = coordinate.ispec;
   const type_real xi = coordinate.xi;
@@ -34,7 +36,7 @@ specfem::algorithms::locate_point(
   const int ngnod = mesh.ngnod;
 
   const Kokkos::View<
-      point::global_coordinates<specfem::dimension::type::dim2> *,
+      point::global_coordinates<specfem::element::dimension_tag::dim2> *,
       Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
@@ -47,13 +49,14 @@ specfem::algorithms::locate_point(
 }
 
 // Except for the tests this function is not used in the codebase.
-specfem::point::global_coordinates<specfem::dimension::type::dim2>
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
 specfem::algorithms::locate_point(
     const Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type
         &team_member,
-    const specfem::point::local_coordinates<specfem::dimension::type::dim2>
-        &coordinate,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh) {
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinate,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+        &mesh) {
 
   const int ispec = coordinate.ispec;
   const type_real xi = coordinate.xi;
@@ -62,7 +65,7 @@ specfem::algorithms::locate_point(
   const int ngnod = mesh.ngnod;
 
   const Kokkos::View<
-      point::global_coordinates<specfem::dimension::type::dim2> *,
+      point::global_coordinates<specfem::element::dimension_tag::dim2> *,
       Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
@@ -78,9 +81,9 @@ specfem::algorithms::locate_point(
 }
 
 std::pair<type_real, bool> specfem::algorithms::locate_point_on_edge(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const int &ispec, const specfem::mesh_entity::dim2::type &mesh_entity) {
 
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::corners,
@@ -89,9 +92,9 @@ std::pair<type_real, bool> specfem::algorithms::locate_point_on_edge(
         "locate_point_on_edge mesh_entity must be an edge. Found a corner.");
     return { 0, false };
   }
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       coorg("coorg", mesh.ngnod);
   for (int i = 0; i < mesh.ngnod; i++) {
     coorg(i).x = mesh.h_control_node_coord(0, ispec, i);
@@ -103,10 +106,10 @@ std::pair<type_real, bool> specfem::algorithms::locate_point_on_edge(
       coordinates, coorg, mesh_entity, 0);
 }
 
-specfem::point::global_coordinates<specfem::dimension::type::dim2>
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
 specfem::algorithms::locate_point_on_edge(
     const type_real &coordinate,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const int &ispec, const specfem::mesh_entity::dim2::type &mesh_entity) {
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::corners,
                                      mesh_entity)) {
@@ -132,7 +135,7 @@ specfem::algorithms::locate_point_on_edge(
   const int ngnod = mesh.ngnod;
 
   const Kokkos::View<
-      point::global_coordinates<specfem::dimension::type::dim2> *,
+      point::global_coordinates<specfem::element::dimension_tag::dim2> *,
       Kokkos::HostSpace>
       coorg("coorg", ngnod);
 

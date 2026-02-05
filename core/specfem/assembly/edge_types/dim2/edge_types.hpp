@@ -18,7 +18,7 @@ namespace specfem::assembly {
  *
  * @code
  * // Construct 2D edge types from mesh data
- * specfem::assembly::edge_types<specfem::dimension::type::dim2> edges(
+ * specfem::assembly::edge_types<specfem::element::dimension_tag::dim2> edges(
  *     ngllx, ngllz, mesh, element_types);
  *
  * // Get elastic-acoustic coupling edges on device
@@ -28,11 +28,11 @@ namespace specfem::assembly {
  *     specfem::element::boundary_tag::none);
  * @endcode
  */
-template <> struct edge_types<specfem::dimension::type::dim2> {
+template <> struct edge_types<specfem::element::dimension_tag::dim2> {
 
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
 
   /**
    * @brief Individual 2D edge representation with quadrature point access
@@ -81,7 +81,7 @@ public:
      * @return 2D edge index structure for the specified quadrature point
      */
     KOKKOS_INLINE_FUNCTION
-    specfem::point::edge_index<specfem::dimension::type::dim2>
+    specfem::point::edge_index<specfem::element::dimension_tag::dim2>
     operator()(const int point_id) const {
       return { element_index, edge_index,   point_id,
                iz(point_id),  ix(point_id), edge_type };

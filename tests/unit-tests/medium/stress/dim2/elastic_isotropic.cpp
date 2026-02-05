@@ -7,7 +7,7 @@
 namespace {
 
 TEST(Stress, ElasticIsotropic2D_PSV_Basic) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
@@ -48,7 +48,7 @@ TEST(Stress, ElasticIsotropic2D_PSV_Basic) {
 }
 
 TEST(Stress, ElasticIsotropic2D_PSV_ZeroDerivatives) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
@@ -87,7 +87,7 @@ TEST(Stress, ElasticIsotropic2D_PSV_ZeroDerivatives) {
 }
 
 TEST(Stress, ElasticIsotropic2D_SH_Basic) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;
@@ -122,7 +122,7 @@ TEST(Stress, ElasticIsotropic2D_SH_Basic) {
 }
 
 TEST(Stress, ElasticIsotropic2D_SH_ZeroDerivatives) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;

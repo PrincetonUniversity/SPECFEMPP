@@ -33,15 +33,11 @@ namespace sources {
  * );
  *
  * // Create a 3D force source at (1.0, 2.0, 3.0) with force components
- * auto force_source = specfem::sources::force<specfem::dimension::type::dim3>(
- *     1.0,  // x-coordinate
- *     2.0,  // y-coordinate
- *     3.0,  // z-coordinate
- *     0.7,  // fx - force in x direction
- *     0.0,  // fy - force in y direction
- *     0.7,  // fz - force in z direction
- *     std::move(stf),
- *     specfem::simulation::field_type::forward
+ * auto force_source =
+ * specfem::sources::force<specfem::element::dimension_tag::dim3>( 1.0,  //
+ * x-coordinate 2.0,  // y-coordinate 3.0,  // z-coordinate 0.7,  // fx - force
+ * in x direction 0.0,  // fy - force in y direction 0.7,  // fz - force in z
+ * direction std::move(stf), specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium type
@@ -53,8 +49,8 @@ namespace sources {
  *
  */
 template <>
-class force<specfem::dimension::type::dim3>
-    : public vector_source<specfem::dimension::type::dim3> {
+class force<specfem::element::dimension_tag::dim3>
+    : public vector_source<specfem::element::dimension_tag::dim3> {
 
 public:
   /**
@@ -107,10 +103,12 @@ public:
    * @brief Get the forcing function
    *
    */
-  bool operator==(const specfem::sources::source<specfem::dimension::type::dim3>
-                      &other) const override;
-  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim3>
-                      &other) const override;
+  bool operator==(
+      const specfem::sources::source<specfem::element::dimension_tag::dim3>
+          &other) const override;
+  bool operator!=(
+      const specfem::sources::source<specfem::element::dimension_tag::dim3>
+          &other) const override;
 
   /**
    * @brief Get the force vector

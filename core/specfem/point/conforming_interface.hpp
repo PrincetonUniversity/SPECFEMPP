@@ -15,7 +15,7 @@ namespace specfem::point {
  * @tparam InterfaceTag Interface type (elastic-acoustic, acoustic-elastic)
  * @tparam BoundaryTag Boundary condition type
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
 struct conforming_interface;
@@ -32,26 +32,26 @@ struct conforming_interface;
  */
 template <specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
-struct conforming_interface<specfem::dimension::type::dim2, InterfaceTag,
+struct conforming_interface<specfem::element::dimension_tag::dim2, InterfaceTag,
                             BoundaryTag>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::conforming_interface,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
 private:
   /**
    * @brief Base accessor type alias.
    */
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::conforming_interface,
-      specfem::dimension::type::dim2, false>;
+      specfem::element::dimension_tag::dim2, false>;
 
 public:
   /**
    * @brief Dimension tag for 2D specialization.
    */
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
 
   /**
    * @brief Connection type between elements.

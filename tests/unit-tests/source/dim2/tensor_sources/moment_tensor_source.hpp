@@ -9,8 +9,8 @@
 
 template <>
 struct source_parameters<
-    specfem::dimension::type::dim2,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> > {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> > {
   source_parameters() : x(0.0), z(0.0), Mxx(0.0), Mzz(0.0), Mxz(0.0) {};
   source_parameters(std::string name, type_real x, type_real z, type_real Mxx,
                     type_real Mzz, type_real Mxz,
@@ -31,8 +31,8 @@ struct source_parameters<
 
 template <>
 struct source_solution<
-    specfem::dimension::type::dim2,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> > {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> > {
 public:
   source_solution(type_real x, type_real z, type_real Mxx, type_real Mzz,
                   type_real Mxz,
@@ -58,11 +58,11 @@ public:
 
 // Defining short hands for the source parameters and solution types
 using MomentTensorSource2DSolution = source_solution<
-    specfem::dimension::type::dim2,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> >;
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >;
 using MomentTensorSource2DParameters = source_parameters<
-    specfem::dimension::type::dim2,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> >;
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >;
 
 using MomentTensorSource2DParametersAndSolution =
     std::tuple<MomentTensorSource2DParameters, MomentTensorSource2DSolution>;
@@ -71,8 +71,8 @@ using MomentTensorSource2DParametersAndSolution =
 template <>
 std::vector<MomentTensorSource2DParametersAndSolution>
 get_parameters_and_solutions<
-    specfem::dimension::type::dim2,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> >() {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >() {
   return std::vector<MomentTensorSource2DParametersAndSolution>{
     // Test elastic P-SV moment tensor source
 
@@ -117,14 +117,15 @@ get_parameters_and_solutions<
 
 // Factory function specialization for 2D Moment Tensor Source
 template <>
-specfem::sources::moment_tensor<specfem::dimension::type::dim2>
-create_source<specfem::dimension::type::dim2,
-              specfem::sources::moment_tensor<specfem::dimension::type::dim2> >(
+specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>
+create_source<
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >(
     const source_parameters<
-        specfem::dimension::type::dim2,
-        specfem::sources::moment_tensor<specfem::dimension::type::dim2> >
+        specfem::element::dimension_tag::dim2,
+        specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >
         &parameters) {
-  return specfem::sources::moment_tensor<specfem::dimension::type::dim2>(
+  return specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>(
       parameters.x, parameters.z, parameters.Mxx, parameters.Mzz,
       parameters.Mxz,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,

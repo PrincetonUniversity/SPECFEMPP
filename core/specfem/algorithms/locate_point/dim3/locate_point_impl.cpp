@@ -11,10 +11,10 @@ namespace locate_point_impl {
 
 // 3D implementations moved from anonymous namespace
 
-std::tuple<int, int, int, int> rough_location(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
-        &global,
-    const MeshHostCoordinatesViewType3D coord) {
+std::tuple<int, int, int, int>
+rough_location(const specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> &global,
+               const MeshHostCoordinatesViewType3D coord) {
 
   const int nspec = coord.extent(0);
   const int ngllz = coord.extent(1);
@@ -31,7 +31,7 @@ std::tuple<int, int, int, int> rough_location(
 
           // Get the global coordinates of the quadrature point
           const specfem::point::global_coordinates<
-              specfem::dimension::type::dim3>
+              specfem::element::dimension_tag::dim3>
               cart_coord = { coord(ispec, k, j, i, 0), coord(ispec, k, j, i, 1),
                              coord(ispec, k, j, i, 2) };
 
@@ -108,11 +108,11 @@ std::vector<int> get_best_candidates(
 }
 
 std::tuple<type_real, type_real, type_real> get_local_coordinates(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
-        &global,
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace> &coorg,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &global,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim3> *,
+                       Kokkos::HostSpace> &coorg,
     type_real xi, type_real eta, type_real gamma) {
 
   const int ngnod = coorg.extent(0);
@@ -255,10 +255,10 @@ std::tuple<type_real, type_real, type_real> get_local_coordinates(
 }
 
 // Core locate_point logic extracted for testability
-specfem::point::local_coordinates<specfem::dimension::type::dim3>
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
 locate_point_core(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
-        &coordinates,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
     const MeshHostCoordinatesViewType3D &global_coordinates,
     const Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &index_mapping,
@@ -279,12 +279,12 @@ locate_point_core(
   type_real xi_selected = -9999.0;
   type_real eta_selected = -9999.0;
   type_real gamma_selected = -9999.0;
-  specfem::point::global_coordinates<specfem::dimension::type::dim3>
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
       coord_point;
 
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim3> *,
+                     Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   for (auto &ispec : best_candidates) {
@@ -306,7 +306,8 @@ locate_point_core(
     // Compute the global coordinates from the found local coordinates
     auto coord_computed = specfem::jacobian::compute_locations(
         coorg, ngnod, xi_guess, eta_guess, gamma_guess);
-    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3>
         cart_coord = { coord_computed.x, coord_computed.y, coord_computed.z };
 
     // Compute the distance from target to found location

@@ -12,7 +12,8 @@ template <
     typename PointType,
     typename std::enable_if_t<
         specfem::data_access::is_index_type<PointIndexType>::value &&
-            PointIndexType::dimension_tag == specfem::dimension::type::dim3 &&
+            PointIndexType::dimension_tag ==
+                specfem::element::dimension_tag::dim3 &&
             !PointIndexType::using_simd && !PointType::simd::using_simd &&
             specfem::data_access::is_jacobian_matrix<ContainerType>::value,
         int> = 0>

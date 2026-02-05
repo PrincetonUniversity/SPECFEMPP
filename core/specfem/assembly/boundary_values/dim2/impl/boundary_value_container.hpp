@@ -10,10 +10,11 @@
 namespace specfem::assembly::boundary_values_impl {
 
 template <specfem::element::boundary_tag BoundaryTag>
-class boundary_value_container<specfem::dimension::type::dim2, BoundaryTag> {
+class boundary_value_container<specfem::element::dimension_tag::dim2,
+                               BoundaryTag> {
 
 private:
-  template <specfem::dimension::type _DimensionTag,
+  template <specfem::element::dimension_tag _DimensionTag,
             specfem::element::medium_tag _MediumTag>
   using _boundary_medium_container =
       boundary_medium_container<_DimensionTag, _MediumTag, BoundaryTag>;
@@ -21,7 +22,7 @@ private:
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
 public:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
   constexpr static auto boundary_tag = BoundaryTag;
 
   IndexViewType property_index_mapping;

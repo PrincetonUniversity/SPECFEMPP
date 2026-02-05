@@ -21,7 +21,7 @@ namespace specfem::compute {
  * @return int Number of elements updated
  */
 template <specfem::simulation::field_type WavefieldType,
-          specfem::dimension::type DimensionTag, int NGLL,
+          specfem::element::dimension_tag DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag>
 int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
                       const int istep);

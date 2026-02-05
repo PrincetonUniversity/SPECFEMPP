@@ -10,13 +10,14 @@ namespace specfem::assembly::boundaries_impl {
  * General template declaration for acoustic free surface boundary conditions.
  *
  * @see
- * specfem::assembly::boundaries_impl::acoustic_free_surface<specfem::dimension::type::dim2>
+ * specfem::assembly::boundaries_impl::acoustic_free_surface<specfem::element::dimension_tag::dim2>
  * for 2D specialization.
  * @see
- * specfem::assembly::boundaries_impl::acoustic_free_surface<specfem::dimension::type::dim3>
+ * specfem::assembly::boundaries_impl::acoustic_free_surface<specfem::element::dimension_tag::dim3>
  * for 3D specialization.
  */
-template <specfem::dimension::type DimensionTag> struct acoustic_free_surface;
+template <specfem::element::dimension_tag DimensionTag>
+struct acoustic_free_surface;
 
 /**
  * @brief Data required to compute Stacey boundary conditions
@@ -24,7 +25,7 @@ template <specfem::dimension::type DimensionTag> struct acoustic_free_surface;
  * General template declaration for Stacey boundary conditions.
  *
  */
-template <specfem::dimension::type DimensionTag> struct stacey;
+template <specfem::element::dimension_tag DimensionTag> struct stacey;
 
 } // namespace specfem::assembly::boundaries_impl
 
@@ -39,7 +40,7 @@ namespace specfem::assembly {
  * store data required for different types of boundary conditions (e.g.,
  * acoustic free surface, Stacey boundary conditions, etc.)
  */
-template <specfem::dimension::type DimensionTag> class boundaries;
+template <specfem::element::dimension_tag DimensionTag> class boundaries;
 
 } // namespace specfem::assembly
 

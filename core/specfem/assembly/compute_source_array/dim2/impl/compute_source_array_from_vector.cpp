@@ -12,7 +12,7 @@
 #include <Kokkos_Core.hpp>
 
 void specfem::assembly::compute_source_array_impl::from_vector(
-    const specfem::sources::vector_source<specfem::dimension::type::dim2>
+    const specfem::sources::vector_source<specfem::element::dimension_tag::dim2>
         &vector_source,
     Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
         source_array) {

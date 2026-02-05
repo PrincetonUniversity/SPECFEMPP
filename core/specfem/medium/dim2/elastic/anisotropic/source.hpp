@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -35,8 +35,8 @@ namespace medium_physics {
  */
 template <typename PointSourceType, typename PointPropertiesType>
 KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
-    const std::integral_constant<specfem::dimension::type,
-                                 specfem::dimension::type::dim2>,
+    const std::integral_constant<specfem::element::dimension_tag,
+                                 specfem::element::dimension_tag::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
                                  specfem::element::medium_tag::elastic_psv>,
     const std::integral_constant<specfem::element::property_tag,
@@ -46,7 +46,7 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
   constexpr bool using_simd = PointPropertiesType::simd::using_simd;
 
   using PointAccelerationType =
-      specfem::point::acceleration<specfem::dimension::type::dim2,
+      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::elastic_psv,
                                    using_simd>;
 
@@ -80,8 +80,8 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
  */
 template <typename PointSourceType, typename PointPropertiesType>
 KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
-    const std::integral_constant<specfem::dimension::type,
-                                 specfem::dimension::type::dim2>,
+    const std::integral_constant<specfem::element::dimension_tag,
+                                 specfem::element::dimension_tag::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
                                  specfem::element::medium_tag::elastic_sh>,
     const std::integral_constant<specfem::element::property_tag,
@@ -92,7 +92,7 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
   constexpr bool using_simd = PointPropertiesType::simd::using_simd;
 
   using PointAccelerationType =
-      specfem::point::acceleration<specfem::dimension::type::dim2,
+      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::elastic_sh,
                                    using_simd>;
 

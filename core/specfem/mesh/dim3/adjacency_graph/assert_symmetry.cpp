@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 void specfem::mesh::adjacency_graph<
-    specfem::dimension::type::dim3>::assert_symmetry() const {
+    specfem::element::dimension_tag::dim3>::assert_symmetry() const {
   const auto &g = this->graph();
 
   for (const auto &edge : boost::make_iterator_range(boost::edges(g))) {

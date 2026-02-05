@@ -39,6 +39,6 @@ The ``run`` method will be responsible for iterating over the time-steps and upd
     }
 
 Implementation within SPECFEM++
---------------------------------
+-------------------------------
 
 The implemetation details of the solver within SPECFEM++ can be found :ref:`here <solver>`.`

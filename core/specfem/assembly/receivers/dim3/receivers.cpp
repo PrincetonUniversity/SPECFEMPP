@@ -7,17 +7,17 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
+specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     const int max_sig_step, const type_real dt, const type_real t0,
     const int nsteps_between_samples,
     const std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::dimension::type::dim3> > >
+        specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >
         &receivers,
     const std::vector<specfem::wavefield::type> &stypes,
-    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
-    const specfem::mesh::tags<specfem::dimension::type::dim3> &tags,
-    const specfem::assembly::element_types<specfem::dimension::type::dim3>
-        &element_types)
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const specfem::mesh::tags<specfem::element::dimension_tag::dim3> &tags,
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim3> &element_types)
     : lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
                            receivers.size(), mesh.element_grid.ngllz,
                            mesh.element_grid.nglly, mesh.element_grid.ngllx, 3),
@@ -28,9 +28,9 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
       specfem::assembly::receivers_impl::StationIterator(receivers.size(),
                                                          stypes),
       specfem::assembly::receivers_impl::SeismogramIterator<
-          specfem::dimension::type::dim3>(receivers.size(), stypes.size(),
-                                          max_sig_step, dt, t0,
-                                          nsteps_between_samples) {
+          specfem::element::dimension_tag::dim3>(
+          receivers.size(), stypes.size(), max_sig_step, dt, t0,
+          nsteps_between_samples) {
 
   // Discretization from the mesh
   this->nspec = mesh.nspec;
@@ -71,10 +71,10 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
     network_names_.push_back(network_name);
     station_network_map[station_name][network_name] = ireceiver;
 
-    const auto gcoord =
-        specfem::point::global_coordinates<specfem::dimension::type::dim3>{
-          receiver->get_x(), receiver->get_y(), receiver->get_z()
-        };
+    const auto gcoord = specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3>{ receiver->get_x(),
+                                                receiver->get_y(),
+                                                receiver->get_z() };
     const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
 
     h_elements(ireceiver) = lcoord.ispec;
@@ -163,7 +163,7 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::receivers(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::receivers<specfem::dimension::type::dim3>::
+specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::
     get_indices_on_host(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,
@@ -189,7 +189,7 @@ specfem::assembly::receivers<specfem::dimension::type::dim3>::
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::receivers<specfem::dimension::type::dim3>::
+specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::
     get_indices_on_device(
         const specfem::element::medium_tag medium_tag,
         const specfem::element::property_tag property_tag,

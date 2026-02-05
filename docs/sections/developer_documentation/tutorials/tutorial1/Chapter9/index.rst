@@ -60,10 +60,10 @@ Implemeting the Time Scheme
         using LoadFieldType =
             point::field<dim2, elastic, false, true, true, false, using_simd>
         using AddFieldType =
-            specfem::point::field<specfem::dimension::type::dim2, MediumTag, true,
+            specfem::point::field<specfem::element::dimension_tag::dim2, MediumTag, true,
                                     true, false, false, using_simd>;
         using StoreFieldType =
-            specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
+            specfem::point::field<specfem::element::dimension_tag::dim2, MediumTag, false,
                                     false, true, false, using_simd>;
 
         RangePolicyType range(nglob);
@@ -123,6 +123,6 @@ Implemeting the Time Scheme
     }
 
 Implementation within SPECFEM++
---------------------------------
+-------------------------------
 
 The implemetation details of the time-scheme within SPECFEM++ can be found :ref:`here <timescheme>`.`

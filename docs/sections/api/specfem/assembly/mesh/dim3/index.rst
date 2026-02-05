@@ -5,7 +5,7 @@
 ==============================
 
 
-.. doxygenstruct:: specfem::assembly::mesh< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::assembly::mesh< specfem::element::dimension_tag::dim3 >
     :members:
 
 Implementation Components

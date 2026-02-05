@@ -12,8 +12,8 @@
 #include <string>
 #include <vector>
 
-std::tuple<std::vector<std::shared_ptr<
-               specfem::sources::source<specfem::dimension::type::dim3> > >,
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
+               specfem::element::dimension_tag::dim3> > >,
            type_real>
 specfem::io::read_3d_sources(const std::string &sources_file, const int nsteps,
                              const type_real user_t0, const type_real dt,
@@ -22,8 +22,8 @@ specfem::io::read_3d_sources(const std::string &sources_file, const int nsteps,
   return read_3d_sources(source_node, nsteps, user_t0, dt, simulation_type);
 }
 
-std::tuple<std::vector<std::shared_ptr<
-               specfem::sources::source<specfem::dimension::type::dim3> > >,
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source<
+               specfem::element::dimension_tag::dim3> > >,
            type_real>
 specfem::io::read_3d_sources(const YAML::Node source_node, const int nsteps,
                              const type_real user_t0, const type_real dt,
@@ -69,7 +69,7 @@ specfem::io::read_3d_sources(const YAML::Node source_node, const int nsteps,
 
   // read sources file
   std::vector<std::shared_ptr<
-      specfem::sources::source<specfem::dimension::type::dim3> > >
+      specfem::sources::source<specfem::element::dimension_tag::dim3> > >
       sources;
 
   // Note: Make sure you name the YAML node different from the name of the
@@ -82,14 +82,13 @@ specfem::io::read_3d_sources(const YAML::Node source_node, const int nsteps,
     if (YAML::Node force_source = N["force"]) {
       sources.push_back(
           std::make_shared<
-              specfem::sources::force<specfem::dimension::type::dim3> >(
+              specfem::sources::force<specfem::element::dimension_tag::dim3> >(
               force_source, nsteps, dt, source_wavefield_type));
       number_of_sources++;
     } else if (YAML::Node moment_tensor_source = N["moment-tensor"]) {
-      sources.push_back(
-          std::make_shared<
-              specfem::sources::moment_tensor<specfem::dimension::type::dim3> >(
-              moment_tensor_source, nsteps, dt, source_wavefield_type));
+      sources.push_back(std::make_shared<specfem::sources::moment_tensor<
+                            specfem::element::dimension_tag::dim3> >(
+          moment_tensor_source, nsteps, dt, source_wavefield_type));
       number_of_sources++;
     } else {
       throw std::runtime_error("Unknown source type");

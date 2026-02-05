@@ -22,7 +22,7 @@ namespace specfem::assembly {
  *
  * @tparam DimensionTag The spatial dimension (dim2 or dim3)
  */
-template <specfem::dimension::type DimensionTag> struct receivers;
+template <specfem::element::dimension_tag DimensionTag> struct receivers;
 
 } // namespace specfem::assembly
 

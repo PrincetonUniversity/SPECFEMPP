@@ -111,7 +111,7 @@ Thus we can design the domain class in an element agnostic way. The domain class
     Later we will see a similar analogy of separating the physics from parallelism can be drawn between coupled interface and finite element edges.
 
 Understanding the parallelism
-------------------------------
+-----------------------------
 
 Let us now look at a naive serial implementation for the above formulation in 3D.
 
