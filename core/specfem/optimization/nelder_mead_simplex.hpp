@@ -15,6 +15,7 @@ namespace optimization {
 /**
  * @brief Tag for Nelder-Mead simplex algorithm
  *
+ *
  * Derivative-free method suitable for non-smooth objective functions.
  * Converges slowly but robustly for problems with few variables (N < 10).
  *

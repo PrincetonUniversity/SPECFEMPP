@@ -39,6 +39,7 @@ struct SteepestDescent {};
  * Controls convergence criteria and step size parameters.
  * Uses backtracking line search with Armijo condition.
  *
+ *
  * @tparam N Number of optimization variables
  */
 template <int N> struct SteepestDescentOptions {
@@ -61,7 +62,6 @@ template <int N> struct SteepestDescentOptions {
   type_real grad_epsilon = std::sqrt(
       std::numeric_limits<type_real>::epsilon()); ///< Finite difference step
                                                   ///< size
-
 };
 
 // ============================================================================
