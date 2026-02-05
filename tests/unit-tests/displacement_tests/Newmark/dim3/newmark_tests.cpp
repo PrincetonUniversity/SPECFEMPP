@@ -238,7 +238,7 @@ TEST_P(Newmark, 3D) {
         const auto trace =
             Kokkos::subview(traces, icomp, Kokkos::ALL, Kokkos::ALL);
         specfem::io::seismogram_reader reader(
-            filenames[icomp], specfem::enums::seismogram::format::ascii, trace);
+            filenames[icomp], specfem::enums::seismogram_format::ascii, trace);
         reader.read();
       }
 

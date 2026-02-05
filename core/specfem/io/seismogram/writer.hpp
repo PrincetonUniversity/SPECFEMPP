@@ -31,7 +31,7 @@ public:
    * sampling (seismogram sampling frequency)
    */
   seismogram_writer(
-      const specfem::enums::seismogram::format type,
+      const specfem::enums::seismogram_format type,
       const specfem::enums::elastic_wave elastic_wave,
       const specfem::enums::electromagnetic_wave electromagnetic_wave,
       const std::string output_folder, const type_real dt, const type_real t0,
@@ -60,8 +60,8 @@ public:
                  &assembly) override;
 
 private:
-  specfem::enums::seismogram::format type; ///< Output format of the seismogram
-                                           ///< file
+  specfem::enums::seismogram_format type; ///< Output format of the seismogram
+                                          ///< file
   std::string output_folder; ///< Path to output folder where results will be
                              ///< stored
   type_real dt;              ///< Time interval between subsequent timesteps

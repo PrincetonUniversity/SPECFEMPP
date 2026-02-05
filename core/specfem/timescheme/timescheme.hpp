@@ -3,6 +3,13 @@
 #include "specfem/timescheme/impl/time_iterators.hpp"
 
 namespace specfem::time_scheme {
+/**
+ * @brief Time scheme enumeration
+ *
+ */
+enum class type {
+  newmark, ///< Newmark time scheme
+};
 
 /**
  * @brief Base class for time integration schemes
@@ -167,7 +174,7 @@ public:
    *
    * @return Type of time integration scheme (e.g., Newmark)
    */
-  virtual specfem::enums::time_scheme::type timescheme() const = 0;
+  virtual specfem::time_scheme::type timescheme() const = 0;
 
   virtual ~time_scheme() = default;
 

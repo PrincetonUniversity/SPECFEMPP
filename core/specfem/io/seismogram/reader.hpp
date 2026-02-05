@@ -23,12 +23,12 @@ class seismogram_reader {
 public:
   seismogram_reader() {};
   seismogram_reader(const char *filename,
-                    const specfem::enums::seismogram::format type,
+                    const specfem::enums::seismogram_format type,
                     specfem::kokkos::HostView2d<type_real> source_time_function)
       : filename(filename), type(type),
         source_time_function(source_time_function) {}
   seismogram_reader(const std::string &filename,
-                    const specfem::enums::seismogram::format type,
+                    const specfem::enums::seismogram_format type,
                     specfem::kokkos::HostView2d<type_real> source_time_function)
       : filename(filename), type(type),
         source_time_function(source_time_function) {}
@@ -37,7 +37,7 @@ public:
 private:
   std::string filename;
   type_real dt;
-  specfem::enums::seismogram::format type;
+  specfem::enums::seismogram_format type;
   specfem::kokkos::HostView2d<type_real> source_time_function;
 };
 } // namespace io

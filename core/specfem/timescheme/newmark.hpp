@@ -207,10 +207,10 @@ public:
   /**
    * @brief Get the timescheme type
    *
-   * @return specfem::enums::time_scheme::type Timescheme type
+   * @return specfem::time_scheme::type Timescheme type
    */
-  specfem::enums::time_scheme::type timescheme() const override {
-    return specfem::enums::time_scheme::type::newmark;
+  specfem::time_scheme::type timescheme() const override {
+    return specfem::time_scheme::type::newmark;
   }
 
   /**
@@ -357,10 +357,10 @@ public:
   /**
    * @brief Get the timescheme type
    *
-   * @return specfem::enums::time_scheme::type Timescheme type
+   * @return specfem::time_scheme::type Timescheme type
    */
-  specfem::enums::time_scheme::type timescheme() const override {
-    return specfem::enums::time_scheme::type::newmark;
+  specfem::time_scheme::type timescheme() const override {
+    return specfem::time_scheme::type::newmark;
   }
 
   /**

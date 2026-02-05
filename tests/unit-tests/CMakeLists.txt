@@ -667,7 +667,7 @@ target_link_libraries(
   Kokkos::kokkos
   specfem_environment
   specfem::assembly
-  enumerations
+  specfem::enums
   ${BOOST_LIBS}
   -lpthread -lm
 )
@@ -682,7 +682,7 @@ target_link_libraries(
   gtest_main
   Kokkos::kokkos
   specfem_environment
-  enumerations
+  specfem::enums
   point
   -lpthread -lm
 )

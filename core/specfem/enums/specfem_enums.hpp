@@ -27,52 +27,10 @@ enum class electromagnetic_wave { te, tm };
 enum class elastic_spin_wave { psv_t, sh_vl };
 
 /**
- * @brief Cartesian axes enumeration
- *
- */
-enum class axes { x, y, z };
-
-namespace seismogram {
-
-/**
  * @brief Output format of seismogram enumeration
  *
  */
-enum format { seismic_unix, ascii };
-
-} // namespace seismogram
-
-/**
- * @namespace edge namespace is used to store enumerations used to describe the
- * edges
- *
- */
-namespace edge {
-/**
- * @brief Edge type enumeration
- *
- */
-enum type {
-  NONE = 0,   /// Not an edge
-  TOP = 1,    ///< Top edge
-  BOTTOM = 2, ///< Bottom edge
-  LEFT = 3,   ///< Left edge
-  RIGHT = 4   ///< Right edge
-};
-
-constexpr int num_edges = 5; ///< Number of edges in the mesh
-} // namespace edge
-
-namespace time_scheme {
-/**
- * @brief Time scheme enumeration
- *
- */
-enum class type {
-  newmark, ///< Newmark time scheme
-};
-
-} // namespace time_scheme
+enum class seismogram_format { seismic_unix, ascii };
 
 } // namespace enums
 } // namespace specfem
