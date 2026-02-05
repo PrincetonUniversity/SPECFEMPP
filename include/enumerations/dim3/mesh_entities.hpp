@@ -319,8 +319,6 @@ public:
    */
   std::tuple<int, int, int>
   map_coordinates(const specfem::mesh_entity::dim3::type &corner) const;
-
-private:
   
   /**
    * @brief Get face coordinates by 2D indices.
@@ -373,6 +371,7 @@ private:
       break;
     }
   }
+
 
   /**
    * @brief Get edge coordinates by 1D index.
