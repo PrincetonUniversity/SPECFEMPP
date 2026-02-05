@@ -10,7 +10,7 @@ target_link_libraries(
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
         PRIVATE
         specfem::algorithms
-        enumerations
+        specfem::element
         specfem::quadrature
         specfem::mesh
         source_class

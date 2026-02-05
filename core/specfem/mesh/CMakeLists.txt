@@ -8,6 +8,7 @@ target_link_libraries(
         enumerations
         Kokkos::kokkos
         specfem::macros
+        specfem::element
         # material_class
         yaml-cpp
         specfem::io

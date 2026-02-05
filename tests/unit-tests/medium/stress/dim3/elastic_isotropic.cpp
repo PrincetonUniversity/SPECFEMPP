@@ -7,7 +7,7 @@
 namespace {
 
 TEST(Stress, ElasticIsotropic3D_Basic) {
-  static constexpr auto dimension = specfem::dimension::type::dim3;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto elasticTag = specfem::element::medium_tag::elastic;
@@ -63,7 +63,7 @@ TEST(Stress, ElasticIsotropic3D_Basic) {
 }
 
 TEST(Stress, ElasticIsotropic3D_ZeroDerivatives) {
-  static constexpr auto dimension = specfem::dimension::type::dim3;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto elasticTag = specfem::element::medium_tag::elastic;

@@ -39,7 +39,7 @@ namespace specfem::medium_container::properties {
  *   @endcode
  *
  */
-template <specfem::dimension::type DimensionTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct point_container<DimensionTag, specfem::element::medium_tag::acoustic,
                        specfem::element::property_tag::isotropic, UseSIMD>
     /// @cond

@@ -10,10 +10,10 @@
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::assembly::kernels< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::assembly::kernels< specfem::element::dimension_tag::dim2 >
     :members:
 
-.. doxygenstruct:: specfem::assembly::kernels< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::assembly::kernels< specfem::element::dimension_tag::dim3 >
     :members:
 
 Data Access Functions

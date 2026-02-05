@@ -1,8 +1,7 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element.hpp"
 #include "specfem/medium/dim2/elastic/isotropic_cosserat/cosserat_couple_stress.hpp"
 #include "specfem/point.hpp"
 #include "specfem/utilities.hpp"
@@ -162,7 +161,7 @@ KOKKOS_INLINE_FUNCTION void compute_cosserat_couple_stress(
                                    MediumTag>::has_cosserat_couple_stress;
 
   using dimension_dispatch =
-      std::integral_constant<specfem::dimension::type, DimensionTag>;
+      std::integral_constant<specfem::element::dimension_tag, DimensionTag>;
   using medium_dispatch =
       std::integral_constant<specfem::element::medium_tag, MediumTag>;
   using property_dispatch =

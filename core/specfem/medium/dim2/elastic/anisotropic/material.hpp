@@ -29,20 +29,20 @@ namespace medium_container {
  * @tparam Enable The enable_if condition that must be satisfied
  *
  * @see specfem::element::is_elastic
- * @see specfem::dimension::type::dim2
+ * @see specfem::element::dimension_tag::dim2
  * @see specfem::medium_container::material
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::attenuation_tag AttenuationTag>
 struct material<
-    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::dimension_tag::dim2, MediumTag,
     specfem::element::property_tag::anisotropic, AttenuationTag,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : impl::AttenuationValues<specfem::dimension::type::dim2, MediumTag,
+    : impl::AttenuationValues<specfem::element::dimension_tag::dim2, MediumTag,
                               AttenuationTag> {
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2;           ///< Dimension of the material
+      specfem::element::dimension_tag::dim2;    ///< Dimension of the material
   constexpr static auto medium_tag = MediumTag; ///< Medium tag
   constexpr static auto property_tag =
       specfem::element::property_tag::anisotropic;        ///< Property tag

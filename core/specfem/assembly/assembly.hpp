@@ -31,7 +31,7 @@ namespace specfem::assembly {
  * The assembly class is specialized for 2D and 3D
  * problems.
  */
-template <specfem::dimension::type DimensionTag> struct assembly;
+template <specfem::element::dimension_tag DimensionTag> struct assembly;
 
 } // namespace specfem::assembly
 

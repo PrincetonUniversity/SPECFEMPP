@@ -8,7 +8,7 @@
 
 namespace specfem::mesh {
 
-template <specfem::dimension::type Dimension> struct materials;
+template <specfem::element::dimension_tag Dimension> struct materials;
 
 /**
  * @brief 3D specialization for MESHFEM3D material database management
@@ -29,7 +29,7 @@ template <specfem::dimension::type Dimension> struct materials;
  *
  * @code
  * // Create materials database for 1000 elements with 5 unique materials
- * spectral::mesh::meshfem3d::materials<specfem::dimension::type::dim3>
+ * spectral::mesh::meshfem3d::materials<specfem::element::dimension_tag::dim3>
  *     materials(1000, 5);
  *
  * // Add an isotropic elastic material from MESHFEM3D database
@@ -42,14 +42,14 @@ template <specfem::dimension::type Dimension> struct materials;
  *                                       specfem::element::property_tag::isotropic>(elem_id);
  * @endcode
  */
-template <> struct materials<specfem::dimension::type::dim3> {
+template <> struct materials<specfem::element::dimension_tag::dim3> {
   /**
    * @brief Dimension tag for compile-time type identification
    *
    * Fixed to dim3 for this specialization, used for template metaprogramming
    * and ensuring compatibility with the SPECFEM++ dimension system.
    */
-  static constexpr auto dimension_tag = specfem::dimension::type::dim3;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Material specification linking elements to material database entries

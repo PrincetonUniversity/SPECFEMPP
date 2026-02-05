@@ -35,7 +35,7 @@ template <
     typename PointType,
     typename std::enable_if_t<
         specfem::data_access::is_index_type<IndexType>::value &&
-            IndexType::dimension_tag == specfem::dimension::type::dim2 &&
+            IndexType::dimension_tag == specfem::element::dimension_tag::dim2 &&
             specfem::data_access::is_global_coordinates<ContainerType>::value &&
             specfem::data_access::is_global_coordinates<PointType>::value,
         int> = 0>
@@ -78,7 +78,7 @@ template <
     typename PointType,
     typename std::enable_if_t<
         specfem::data_access::is_index_type<IndexType>::value &&
-            IndexType::dimension_tag == specfem::dimension::type::dim3 &&
+            IndexType::dimension_tag == specfem::element::dimension_tag::dim3 &&
             specfem::data_access::is_global_coordinates<ContainerType>::value &&
             specfem::data_access::is_global_coordinates<PointType>::value,
         int> = 0>
@@ -130,8 +130,8 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(const IndexType &index,
  *
  * @code
  * // Example usage in GPU kernel
- * specfem::point::index<specfem::dimension::type::dim2> idx(ispec, iz, ix);
- * specfem::point::global_coordinates<specfem::dimension::type::dim2>
+ * specfem::point::index<specfem::element::dimension_tag::dim2> idx(ispec, iz, ix);
+ * specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
  * point_coord; specfem::assembly::load_on_device(idx, mesh.points, point_coord);
  *
  * // Access loaded values
@@ -185,8 +185,8 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
  *
  * @code
  * // Example usage in host code
- * specfem::point::index<specfem::dimension::type::dim3> idx(ispec, iz, iy, ix);
- * specfem::point::global_coordinates<specfem::dimension::type::dim3>
+ * specfem::point::index<specfem::element::dimension_tag::dim3> idx(ispec, iz, iy, ix);
+ * specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
  * point_coord; specfem::assembly::load_on_host(idx, mesh.points, point_coord);
  *
  * // Process loaded coordinate data

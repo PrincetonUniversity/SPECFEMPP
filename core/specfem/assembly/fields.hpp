@@ -11,7 +11,7 @@ namespace specfem::assembly {
  * field (forward, adjoint, backward, or buffer) in spectral element
  * computations.
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type SimulationWavefieldType>
 struct simulation_field;
 

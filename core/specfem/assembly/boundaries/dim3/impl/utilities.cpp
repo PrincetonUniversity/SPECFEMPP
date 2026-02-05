@@ -58,8 +58,8 @@ bool is_on_boundary(specfem::mesh_entity::dim3::type type, int iz, int iy,
 std::tuple<std::array<type_real, 3>, type_real> get_boundary_face_and_weight(
     specfem::mesh_entity::dim3::type type,
     const std::array<type_real, 3> &weights,
-    const specfem::point::jacobian_matrix<specfem::dimension::type::dim3, true,
-                                          false> &point_jacobian_matrix) {
+    const specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                          true, false> &point_jacobian_matrix) {
 
   if (type == specfem::mesh_entity::dim3::type::bottom_front_left ||
       type == specfem::mesh_entity::dim3::type::bottom_back_left ||

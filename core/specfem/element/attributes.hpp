@@ -1,64 +1,13 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
+#include "dimension.hpp"
 #include "specfem/utilities/errors.hpp"
+#include "tags.hpp"
 #include <array>
 #include <tuple>
 
 namespace specfem {
 namespace element {
-
-/**
- * @brief Element medium types for physics simulations.
- *
- * Defines wave propagation physics: elastic (P/SV/SH waves), acoustic (pressure
- * waves), poroelastic (fluid-solid interaction), and electromagnetic (TE/TM
- * modes).
- */
-enum class medium_tag {
-  elastic_psv,        ///< 2D elastic medium with P and SV waves
-  elastic_sh,         ///< 2D elastic medium with SH waves
-  elastic_psv_t,      ///< 2D elastic PSV with transverse spin (Cosserat)
-  acoustic,           ///< Acoustic medium (pressure waves)
-  poroelastic,        ///< Poroelastic medium (Biot theory)
-  electromagnetic_te, ///< 2D electromagnetic TE modes
-  elastic,            ///< 3D elastic medium (full displacement field)
-  elastic_spin,       ///< Elastic medium with spin dynamics
-  electromagnetic,    ///< Electromagnetic medium (TE and TM modes)
-};
-
-/**
- * @brief Material property symmetries.
- *
- * Controls material tensor structure: isotropic (scalar properties),
- * anisotropic (full tensor), isotropic_cosserat (with microrotation).
- */
-enum class property_tag {
-  isotropic,         ///< Isotropic material (scalar properties)
-  anisotropic,       ///< Anisotropic material (full tensor)
-  isotropic_cosserat ///< Isotropic Cosserat material (with microrotation)
-};
-
-/**
- * @brief Boundary condition types for domain edges.
- *
- * Defines how waves interact with domain boundaries: free surfaces,
- * absorbing conditions (Stacey), and composite boundary treatments.
- */
-enum class boundary_tag {
-  // primary boundaries
-  none,                  ///< No boundary condition
-  acoustic_free_surface, ///< Acoustic free surface (zero pressure)
-  stacey,                ///< Stacey absorbing boundary condition
-
-  // composite boundaries
-  composite_stacey_dirichlet ///< Combined Stacey-Dirichlet boundary
-};
-
-enum class attenuation_tag {
-  none,               ///< No attenuation
-  constant_isotropic, ///< Constant Q-Band attenuation
-};
 
 /**
  * @brief Element physics attributes for different media.
@@ -72,13 +21,13 @@ enum class attenuation_tag {
  * @code
  * // Get attributes for 2D elastic PSV medium
  * using attrs = specfem::element::attributes<
- *   specfem::dimension::type::dim2,
+ *   specfem::element::dimension_tag::dim2,
  *   specfem::element::medium_tag::elastic_psv>;
  * static_assert(attrs::components == 2); // u_x, u_z components
  * static_assert(attrs::dimension == 2);
  * @endcode
  */
-template <specfem::dimension::type Dimension,
+template <specfem::element::dimension_tag Dimension,
           specfem::element::medium_tag MediumTag>
 class attributes {
   static_assert(specfem::utilities::always_false<Dimension, MediumTag>,
@@ -95,7 +44,7 @@ class attributes {
  * Handles in-plane wave propagation with displacement components u_x and u_z.
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::elastic_psv> {
 
 public:
@@ -115,7 +64,7 @@ public:
  * Handles anti-plane wave propagation with single displacement component u_y.
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::elastic_sh> {
 
 public:
@@ -137,7 +86,7 @@ public:
  * materials. Includes displacement (u_x, u_z) and rotation (ω_y) components.
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::elastic_psv_t> {
 
 public:
@@ -159,7 +108,7 @@ public:
  * Handles compressional wave propagation in fluid media with scalar pressure.
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::acoustic> {
 
 public:
@@ -182,7 +131,7 @@ public:
  * w^z).
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::poroelastic> {
 public:
   inline static constexpr int dimension = 2; ///< Spatial dimension
@@ -203,7 +152,7 @@ public:
  * and E_y.
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::element::medium_tag::electromagnetic_te> {
 public:
   inline static constexpr int dimension = 2;  ///< Spatial dimension
@@ -228,7 +177,7 @@ public:
  * pressure.
  */
 template <>
-class attributes<specfem::dimension::type::dim3,
+class attributes<specfem::element::dimension_tag::dim3,
                  specfem::element::medium_tag::acoustic> {
 public:
   inline static constexpr int dimension = 3;  ///< Spatial dimension
@@ -248,7 +197,7 @@ public:
  * u_z.
  */
 template <>
-class attributes<specfem::dimension::type::dim3,
+class attributes<specfem::element::dimension_tag::dim3,
                  specfem::element::medium_tag::elastic> {
 public:
   inline static constexpr int dimension = 3; ///< Spatial dimension
@@ -261,55 +210,6 @@ public:
   inline constexpr static bool has_cosserat_couple_stress =
       false; ///< No couple stress
 };
-
-/**
- * @brief Convert medium, property, and boundary tags to string.
- *
- * @param medium Medium type
- * @param property_tag Property type
- * @param boundary_tag Boundary condition type
- * @return Combined string representation
- */
-const std::string to_string(const medium_tag &medium,
-                            const property_tag &property_tag,
-                            const boundary_tag &boundary_tag);
-
-/**
- * @brief Convert medium and property tags to string.
- *
- * @param medium Medium type
- * @param property_tag Property type
- * @return Combined string representation
- */
-const std::string to_string(const medium_tag &medium,
-                            const property_tag &property_tag,
-                            const attenuation_tag &attenuation_tag);
-
-/**
- * @brief Convert medium tag to string.
- *
- * @param medium Medium type
- * @return String representation
- */
-const std::string to_string(const medium_tag &medium);
-
-/**
- * @brief Convert property tag to string.
- *
- * @param property Property type
- * @return String representation
- */
-const std::string to_string(const property_tag &property);
-
-/**
- * @brief Convert boundary tag to string.
- *
- * @param boundary Boundary condition type
- * @return String representation
- */
-const std::string to_string(const boundary_tag &boundary);
-
-const std::string to_string(const attenuation_tag &attenuation);
 
 /**
  * @brief Type trait to identify elastic media.
@@ -341,15 +241,6 @@ using is_electromagnetic = typename std::conditional_t<
     (MediumTag == specfem::element::medium_tag::electromagnetic ||
      MediumTag == specfem::element::medium_tag::electromagnetic_te),
     std::true_type, std::false_type>::type;
-
-/**
- * @brief Parse medium tag from string representation.
- *
- * @param medium_tag String representation of medium type
- * @return Corresponding medium_tag enumeration value
- * @throws std::runtime_error if string is not recognized
- */
-specfem::element::medium_tag from_string(const std::string &medium_tag);
 
 } // namespace element
 } // namespace specfem

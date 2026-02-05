@@ -13,11 +13,12 @@ namespace elements {
  * @note Need to still document this section
  *
  */
-template <specfem::dimension::type DimensionTag> struct tangential_elements;
+template <specfem::element::dimension_tag DimensionTag>
+struct tangential_elements;
 
-template <> struct tangential_elements<specfem::dimension::type::dim2> {
+template <> struct tangential_elements<specfem::element::dimension_tag::dim2> {
 
-  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto dimension = specfem::element::dimension_tag::dim2;
 
   bool force_normal_to_surface, rec_normal_to_surface;
   Kokkos::View<type_real *, Kokkos::HostSpace> x;

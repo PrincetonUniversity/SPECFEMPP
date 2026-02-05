@@ -9,5 +9,5 @@
 2D Specialization
 -----------------
 
-.. doxygenstruct:: specfem::point::conforming_interface< specfem::dimension::type::dim2, InterfaceTag, BoundaryTag >
+.. doxygenstruct:: specfem::point::conforming_interface< specfem::element::dimension_tag::dim2, InterfaceTag, BoundaryTag >
     :members:

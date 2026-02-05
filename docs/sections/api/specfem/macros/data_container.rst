@@ -75,7 +75,7 @@ In Context of SPECFEMPP
      template <>
      struct data_container<specfem::element::medium_tag::elastic,
                           specfem::element::property_tag::isotropic> {
-       constexpr static auto dimension = specfem::dimension::type::dim2;
+       constexpr static auto dimension = specfem::element::dimension_tag::dim2;
        constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
        constexpr static auto property_tag = specfem::element::property_tag::isotropic;
 

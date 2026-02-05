@@ -6,11 +6,11 @@
 #include "mesh_to_compute_mapping.hpp"
 #include <Kokkos_Core.hpp>
 
-specfem::assembly::mesh_impl::control_nodes<specfem::dimension::type::dim2>::
+specfem::assembly::mesh_impl::control_nodes<specfem::element::dimension_tag::dim2>::
     control_nodes(
         const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-            specfem::dimension::type::dim2> &mapping,
-        const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+            specfem::element::dimension_tag::dim2> &mapping,
+        const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim2>
             &control_nodes)
     : ngnod(control_nodes.ngnod), nspec(control_nodes.nspec),
       control_node_mapping(

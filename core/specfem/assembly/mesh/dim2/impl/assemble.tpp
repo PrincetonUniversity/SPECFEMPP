@@ -6,7 +6,7 @@
 #include "specfem/point.hpp"
 #include <boost/graph/filtered_graph.hpp>
 
-void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
+void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() {
 
   const int nspec = this->nspec;
   const int ngllx = this->element_grid.ngllx;
@@ -28,7 +28,7 @@ void specfem::assembly::mesh<specfem::dimension::type::dim2>::assemble() {
   // Get the coordinates for each quadrature point
   // ----
   Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> ***,
+      specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> ***,
       Kokkos::DefaultHostExecutionSpace>
       global_coordinates("specfem::assembly::mesh::h_coord", nspec, ngllz,
                          ngllx);

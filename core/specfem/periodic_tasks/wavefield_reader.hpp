@@ -12,7 +12,7 @@ namespace periodic_tasks {
  *
  * @tparam IOLibrary Template for the I/O library to use for reading
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           template <typename OpType> class IOLibrary>
 class wavefield_reader : public periodic_task<DimensionTag> {
 private:

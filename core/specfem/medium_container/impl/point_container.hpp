@@ -23,17 +23,17 @@ namespace properties {
  * @tparam PropertyTag The type of the properties
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct PropertyAccessor : public specfem::data_access::Accessor<
-                              specfem::data_access::AccessorType::point,
+                              specfem::datatype::AccessorType::point,
                               specfem::data_access::DataClassType::properties,
                               DimensionTag, UseSIMD> {
 
 public:
   using base_accessor = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::properties, DimensionTag,
       UseSIMD>; ///< Base type of
                 ///< the point
@@ -59,7 +59,7 @@ public:
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  * @tparam Enable SFINAE enable parameter
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>
@@ -68,15 +68,15 @@ struct point_container;
 
 namespace kernels {
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct KernelsAccessor
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::kernels, DimensionTag, UseSIMD> {
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::point,
+      specfem::datatype::AccessorType::point,
       specfem::data_access::DataClassType::kernels, DimensionTag,
       UseSIMD>;                                              ///< Base type of
                                                              ///< the point
@@ -99,7 +99,7 @@ struct KernelsAccessor
  * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics
  * @tparam Enable SFINAE enable parameter
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>

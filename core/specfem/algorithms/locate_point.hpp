@@ -14,10 +14,11 @@ namespace algorithms {
  * @param mesh 2D spectral element mesh
  * @return Local coordinates within the containing element
  */
-specfem::point::local_coordinates<specfem::dimension::type::dim2> locate_point(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh);
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
+locate_point(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
 
 /**
  * @brief Convert local coordinates to global coordinates in a 2D mesh
@@ -26,10 +27,11 @@ specfem::point::local_coordinates<specfem::dimension::type::dim2> locate_point(
  * @param mesh 2D spectral element mesh
  * @return Global coordinates in physical space
  */
-specfem::point::global_coordinates<specfem::dimension::type::dim2> locate_point(
-    const specfem::point::local_coordinates<specfem::dimension::type::dim2>
-        &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh);
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+locate_point(
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
 
 /**
  * @brief Convert local coordinates to global coordinates in a 2D mesh using
@@ -40,12 +42,13 @@ specfem::point::global_coordinates<specfem::dimension::type::dim2> locate_point(
  * @param mesh 2D spectral element mesh
  * @return Global coordinates in physical space
  */
-specfem::point::global_coordinates<specfem::dimension::type::dim2> locate_point(
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+locate_point(
     const Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type
         &team_member,
-    const specfem::point::local_coordinates<specfem::dimension::type::dim2>
-        &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh);
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh);
 
 /**
  * @brief Convert global coordinates to local coordinates in a 3D mesh
@@ -54,10 +57,11 @@ specfem::point::global_coordinates<specfem::dimension::type::dim2> locate_point(
  * @param mesh 3D spectral element mesh
  * @return Local coordinates within the containing element
  */
-specfem::point::local_coordinates<specfem::dimension::type::dim3> locate_point(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
-        &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh);
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
+locate_point(
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
 
 /**
  * @brief Convert local coordinates to global coordinates in a 3D mesh
@@ -66,10 +70,11 @@ specfem::point::local_coordinates<specfem::dimension::type::dim3> locate_point(
  * @param mesh 3D spectral element mesh
  * @return Global coordinates in physical space
  */
-specfem::point::global_coordinates<specfem::dimension::type::dim3> locate_point(
-    const specfem::point::local_coordinates<specfem::dimension::type::dim3>
-        &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh);
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+locate_point(
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
 
 /**
  * @brief Convert local coordinates to global coordinates in a 3D mesh using
@@ -80,12 +85,13 @@ specfem::point::global_coordinates<specfem::dimension::type::dim3> locate_point(
  * @param mesh 3D spectral element mesh
  * @return Global coordinates in physical space
  */
-specfem::point::global_coordinates<specfem::dimension::type::dim3> locate_point(
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+locate_point(
     const Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type
         &team_member,
-    const specfem::point::local_coordinates<specfem::dimension::type::dim3>
-        &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh);
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh);
 
 /**
  * @brief Given an edge (ispec, constraint), finds the best fit local coordinate
@@ -102,9 +108,9 @@ specfem::point::global_coordinates<specfem::dimension::type::dim3> locate_point(
  * coordinate is out of bounds).
  */
 std::pair<type_real, bool> locate_point_on_edge(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const int &ispec, const specfem::mesh_entity::dim2::type &constraint);
 /**
  * @brief Convert edge coordinate to global coordinates
@@ -118,10 +124,10 @@ std::pair<type_real, bool> locate_point_on_edge(
  * @param constraint Edge to compute for
  * @return Global coordinates of the point
  */
-specfem::point::global_coordinates<specfem::dimension::type::dim2>
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
 locate_point_on_edge(
     const type_real &coordinate,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const int &ispec, const specfem::mesh_entity::dim2::type &constraint);
 
 } // namespace algorithms

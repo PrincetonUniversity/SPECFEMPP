@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/element.hpp"
 #include "specfem_setup.hpp"
 #include "specfem/assembly/info/impl/bounds.hpp"
 #include "specfem/assembly/info/impl/bounding_box.hpp"
@@ -31,7 +31,7 @@ avg_distance = elemsize_max / ( NGLLX - 1)  ! since NGLLX = NGLLY = NGLLZ
 !          seismograms become just more and more inaccurate for periods shorter than this estimate.
 */
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct Info {
   constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
 

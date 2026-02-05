@@ -36,7 +36,7 @@ namespace specfem::point {
  *
  * // Define types
  * using namespace specfem::element;
- * constexpr auto dim = specfem::dimension::type::dim2;
+ * constexpr auto dim = specfem::element::dimension_tag::dim2;
  * constexpr bool use_simd = false;
  *
  * // Instantiate kernels for 2D Elastic Isotropic medium
@@ -62,7 +62,7 @@ namespace specfem::point {
  * - specfem::medium_container::kernels::point_container
  * - specfem::compute::frechet_derivative
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD,
           typename Enable = void>

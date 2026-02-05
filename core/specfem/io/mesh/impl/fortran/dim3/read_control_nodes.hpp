@@ -18,7 +18,7 @@ namespace specfem::io::mesh::impl::fortran::dim3 {
  * @return ControlNodes object containing node count and 3D coordinates
  * @throws std::runtime_error if file reading fails
  */
-specfem::mesh::control_nodes<specfem::dimension::type::dim3>
+specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
 read_control_nodes(std::ifstream &stream);
 
 } // namespace specfem::io::mesh::impl::fortran::dim3

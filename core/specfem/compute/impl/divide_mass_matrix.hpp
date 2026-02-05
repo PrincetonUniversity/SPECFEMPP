@@ -1,9 +1,8 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/element.hpp"
 
 namespace specfem {
 namespace compute {
@@ -23,7 +22,7 @@ namespace impl {
  * @tparam BoundaryTag Boundary tag (e.g., none, stacey)
  *
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType,
           specfem::element::medium_tag MediumTag>
 void divide_mass_matrix(

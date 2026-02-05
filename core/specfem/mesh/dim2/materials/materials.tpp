@@ -9,7 +9,7 @@
 template <specfem::element::medium_tag type,
           specfem::element::property_tag property,
           specfem::element::attenuation_tag attenuation>
-specfem::mesh::materials<specfem::dimension::type::dim2>::
+specfem::mesh::materials<specfem::element::dimension_tag::dim2>::
     material<type, property, attenuation>::material(
         const int n_materials,
         const std::vector<specfem::medium_container::material<

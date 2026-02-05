@@ -22,8 +22,8 @@ bool is_on_boundary(specfem::mesh_entity::dim2::type type, int iz, int ix,
 std::tuple<std::array<type_real, 2>, type_real> get_boundary_edge_and_weight(
     specfem::mesh_entity::dim2::type type,
     const std::array<type_real, 2> &weights,
-    const specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true,
-                                          false> &point_jacobian_matrix) {
+    const specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                          true, false> &point_jacobian_matrix) {
 
   if (type == specfem::mesh_entity::dim2::type::bottom_left ||
       type == specfem::mesh_entity::dim2::type::top_left ||

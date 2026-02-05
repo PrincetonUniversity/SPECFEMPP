@@ -1,7 +1,7 @@
 #pragma once
 
 #include "control_nodes.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/element.hpp"
 #include "shape_functions.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/mesh.hpp"
@@ -18,11 +18,11 @@ namespace specfem::assembly::mesh_impl {
  * @see specfem::assembly::mesh_impl::control_nodes,
  * specfem::assembly::mesh_impl::shape_functions
  */
-template <> struct points<specfem::dimension::type::dim3> {
+template <> struct points<specfem::element::dimension_tag::dim3> {
 public:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
   constexpr static auto data_class =
       specfem::data_access::DataClassType::global_coordinates; ///< Data class
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Index mapping view type.
@@ -41,7 +41,8 @@ public:
                                      Kokkos::DefaultExecutionSpace>;
 
 private:
-  constexpr static int ndim = 3;
+  constexpr static int ndim = specfem::element::dimension<
+      specfem::element::dimension_tag::dim3>::dim; ///< Number of dimensions
 
 public:
   IndexMappingViewType index_mapping;               ///< Device index mapping

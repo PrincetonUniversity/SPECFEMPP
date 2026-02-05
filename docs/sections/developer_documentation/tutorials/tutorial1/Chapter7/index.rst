@@ -2,7 +2,7 @@
 .. _Chapter7:
 
 Chapter 7: Operators
-=====================
+====================
 
 SPECFEM++ provides a set of spectral element operators that are commonly used in seismic wave propagation simulations.
 

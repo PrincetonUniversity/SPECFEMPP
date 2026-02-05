@@ -1,9 +1,8 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
 #include "impl/compute_material_derivatives.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 
 namespace specfem {
@@ -17,7 +16,7 @@ namespace compute {
  * @param assembly Assembly object.
  * @param dt Time interval.
  */
-template <specfem::dimension::type DimensionTag, int NGLL>
+template <specfem::element::dimension_tag DimensionTag, int NGLL>
 void compute_derivatives(
     const specfem::assembly::assembly<DimensionTag> &assembly,
     const type_real &dt) {

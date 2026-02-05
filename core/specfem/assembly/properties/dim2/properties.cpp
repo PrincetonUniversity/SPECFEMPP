@@ -4,13 +4,16 @@
 #include "specfem/assembly/impl/domain_properties.tpp"
 #include "specfem/assembly/mesh.hpp"
 
-specfem::assembly::properties<specfem::dimension::type::dim2>::properties(
-    const int nspec, const int ngllz, const int ngllx,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
-    const bool has_gll_model) {
+specfem::assembly::properties<specfem::element::dimension_tag::dim2>::
+    properties(
+        const int nspec, const int ngllz, const int ngllx,
+        const specfem::assembly::element_types<
+            specfem::element::dimension_tag::dim2> &element_types,
+        const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+            &mesh,
+        const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
+            &materials,
+        const bool has_gll_model) {
 
   this->nspec = nspec;
   this->ngllz = ngllz;

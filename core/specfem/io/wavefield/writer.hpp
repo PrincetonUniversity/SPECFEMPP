@@ -40,15 +40,17 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void initialize(
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly);
+  void
+  initialize(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+                 &assembly);
+
+  void run(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+               &assembly,
+           const int istep);
 
   void
-  run(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-      const int istep);
-
-  void finalize(
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly);
+  finalize(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+               &assembly);
 
 private:
   std::string output_folder; ///< Path to output folder

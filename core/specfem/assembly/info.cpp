@@ -1,7 +1,7 @@
 #include "specfem/assembly/info.hpp"
 
 template <>
-std::string specfem::assembly::Info<specfem::dimension::type::dim2>::string() const {
+std::string specfem::assembly::Info<specfem::element::dimension_tag::dim2>::string() const {
   std::ostringstream oss;
   oss << "Mesh Information (2D):\n";
   oss << " Domain X: ............... [" << domain_bounds.x().min << ", " << domain_bounds.x().max << "]\n";
@@ -19,7 +19,7 @@ std::string specfem::assembly::Info<specfem::dimension::type::dim2>::string() co
 
 
 template <>
-std::string specfem::assembly::Info<specfem::dimension::type::dim3>::string() const {
+std::string specfem::assembly::Info<specfem::element::dimension_tag::dim3>::string() const {
   std::ostringstream oss;
   oss << "Mesh Information (3D):\n";
   oss << " Domain X: ............... [" << domain_bounds.x().min << ", " << domain_bounds.x().max << "]\n";

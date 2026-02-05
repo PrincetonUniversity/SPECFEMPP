@@ -73,9 +73,11 @@ TYPED_TEST(PointKernelsTest, ElasticAnisotropic2D) {
   }
 
   // Create the kernels object
-  using PointKernelType = specfem::point::kernels<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic, using_simd>;
+  using PointKernelType =
+      specfem::point::kernels<specfem::element::dimension_tag::dim2,
+                              specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::anisotropic,
+                              using_simd>;
   PointKernelType kernels(rho, c11, c13, c15, c33, c35, c55);
 
   // Additional constructors and assignment tests

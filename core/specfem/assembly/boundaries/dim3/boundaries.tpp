@@ -5,7 +5,7 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::assembly::boundaries<specfem::dimension::type::dim3>::boundaries(
+specfem::assembly::boundaries<specfem::element::dimension_tag::dim3>::boundaries(
     const int nspec, const int ngllz, const int nglly, const int ngllx,
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::assembly::mesh<dimension_tag> &mesh_assembly,

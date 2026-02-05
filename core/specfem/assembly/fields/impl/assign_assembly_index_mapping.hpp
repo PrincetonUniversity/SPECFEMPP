@@ -7,7 +7,7 @@
 
 namespace specfem::assembly::fields_impl {
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 void assign_assembly_index_mapping(
     const specfem::assembly::mesh<DimensionTag> &mesh,
     const specfem::assembly::element_types<DimensionTag> &element_types,

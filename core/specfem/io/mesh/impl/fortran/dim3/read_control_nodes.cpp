@@ -4,12 +4,12 @@
 #include "specfem/mesh.hpp"
 #include <fstream>
 
-specfem::mesh::control_nodes<specfem::dimension::type::dim3>
+specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>
 specfem::io::mesh::impl::fortran::dim3::read_control_nodes(
     std::ifstream &stream) {
 
   using ControlNodesType =
-      specfem::mesh::control_nodes<specfem::dimension::type::dim3>;
+      specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>;
 
   int ngnod;
   specfem::io::fortran_read_line(stream, &ngnod);

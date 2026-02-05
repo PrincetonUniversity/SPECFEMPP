@@ -6,7 +6,7 @@
 #include "specfem/logger.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionTag, int NGLL>
+template <specfem::element::dimension_tag DimensionTag, int NGLL>
 void specfem::solver::time_marching<specfem::simulation::type::forward,
                                     DimensionTag, NGLL>::run() {
 
@@ -131,7 +131,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   return;
 }
 
-template <specfem::dimension::type DimensionTag, int NGLL>
+template <specfem::element::dimension_tag DimensionTag, int NGLL>
 void specfem::solver::time_marching<specfem::simulation::type::combined,
                                     DimensionTag, NGLL>::run() {
 

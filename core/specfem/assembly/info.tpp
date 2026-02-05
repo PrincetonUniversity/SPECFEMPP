@@ -17,11 +17,11 @@ namespace specfem::assembly::info::impl {
 
 /// @brief Container for all scatter min/max reducers used in Info computation
 /// @tparam ndim Number of spatial dimensions for bounding box
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct InfoScatters {
 
   constexpr static int ndim =
-      specfem::dimension::dimension<DimensionTag>::dim;
+      specfem::element::dimension<DimensionTag>::dim;
 
   using ScatterT = ScatterMinMax<type_real>;
   using ScatterBoundsT = ScatterMinMax<type_real, ndim>;
@@ -60,7 +60,7 @@ struct InfoScatters {
 /// @tparam DimensionTag The dimension type (dim2 or dim3)
 /// @tparam MediumTag The medium type (elastic, acoustic, etc.)
 /// @tparam PropertyTag The property type (isotropic, anisotropic, etc.)
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void process_medium_elements(
@@ -69,7 +69,7 @@ void process_medium_elements(
     const specfem::assembly::element_types<DimensionTag> &element_types,
     InfoScatters<DimensionTag> &scatters) {
 
-  constexpr specfem::dimension::type dimension_tag = DimensionTag;
+  constexpr specfem::element::dimension_tag dimension_tag = DimensionTag;
   constexpr specfem::element::medium_tag medium_tag = MediumTag;
   constexpr specfem::element::property_tag property_tag = PropertyTag;
 
@@ -159,7 +159,7 @@ void process_medium_elements(
 
 /// @brief Finalize element min/max by computing derived quantities
 /// @tparam DimensionTag The dimension type (dim2 or dim3)
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 void finalize_element_minmax(const specfem::assembly::mesh<DimensionTag> &mesh,
                              InfoScatters<DimensionTag> &scatters) {
   Kokkos::parallel_for(
@@ -200,7 +200,7 @@ void finalize_element_minmax(const specfem::assembly::mesh<DimensionTag> &mesh,
 
 } // namespace specfem::assembly::info::impl
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 specfem::assembly::Info<DimensionTag>::Info(
     const specfem::assembly::mesh<dimension_tag> &mesh,
     const specfem::assembly::properties<dimension_tag> &properties,
@@ -210,7 +210,7 @@ specfem::assembly::Info<DimensionTag>::Info(
   info::impl::InfoScatters<dimension_tag> scatters(mesh.nspec);
 
   // Process each medium/property combination
-  if constexpr (specfem::dimension::type::dim2 == dimension_tag) {
+  if constexpr (specfem::element::dimension_tag::dim2 == dimension_tag) {
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,

@@ -27,14 +27,15 @@ namespace specfem::assembly {
  * interface for receiver management and seismogram recording.
  */
 template <>
-struct receivers<specfem::dimension::type::dim3>
+struct receivers<specfem::element::dimension_tag::dim3>
     : public receivers_impl::StationIterator,
       public receivers_impl::SeismogramIterator<
-          specfem::dimension::type::dim3> {
+          specfem::element::dimension_tag::dim3> {
 
 public:
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag for this assembly
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim3; ///< Dimension tag for this
+                                             ///< assembly
 
 private:
   using IndexViewType =
@@ -194,10 +195,10 @@ private:
  * receivers in the iterator
  */
 template <typename ChunkIndexType, typename ViewType>
-KOKKOS_FUNCTION void
-load_on_device(const ChunkIndexType &chunk_index,
-               const receivers<specfem::dimension::type::dim3> &receivers,
-               ViewType &lagrange_interpolant) {
+KOKKOS_FUNCTION void load_on_device(
+    const ChunkIndexType &chunk_index,
+    const receivers<specfem::element::dimension_tag::dim3> &receivers,
+    ViewType &lagrange_interpolant) {
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
@@ -248,10 +249,10 @@ load_on_device(const ChunkIndexType &chunk_index,
  * @param receivers Receivers object containing the receiver information
  */
 template <typename ChunkIndexType, typename SeismogramViewType>
-KOKKOS_FUNCTION void
-store_on_device(const ChunkIndexType &chunk_index,
-                const SeismogramViewType &seismogram_components,
-                const receivers<specfem::dimension::type::dim3> &receivers) {
+KOKKOS_FUNCTION void store_on_device(
+    const ChunkIndexType &chunk_index,
+    const SeismogramViewType &seismogram_components,
+    const receivers<specfem::element::dimension_tag::dim3> &receivers) {
 
   const int isig_step = receivers.get_seismogram_step();
   const int iseis = receivers.get_seis_type();

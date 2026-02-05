@@ -9,5 +9,5 @@
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::assembly::edge_types< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::assembly::edge_types< specfem::element::dimension_tag::dim2 >
     :members:

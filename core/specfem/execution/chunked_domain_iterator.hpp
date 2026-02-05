@@ -10,7 +10,7 @@ namespace specfem {
 namespace chunk_element {
 
 // Forward declaration for PointIndex
-template <specfem::dimension::type DimensionTag, typename SIMD,
+template <specfem::element::dimension_tag DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
 class Index;
 } // namespace chunk_element
@@ -30,8 +30,8 @@ namespace execution {
  * @tparam ExecutionSpace The execution space type where the index will be
  * executed.
  */
-template <specfem::dimension::type DimensionTag, typename KokkosIndexType,
-          bool UseSIMD, typename ExecutionSpace>
+template <specfem::element::dimension_tag DimensionTag,
+          typename KokkosIndexType, bool UseSIMD, typename ExecutionSpace>
 class PointIndex {
 private:
   constexpr static auto dimension_tag = DimensionTag;
@@ -97,9 +97,9 @@ public:
    * chunk.
    * @param kokkos_index The Kokkos index type.
    */
-  template <bool U = UseSIMD, specfem::dimension::type D = DimensionTag,
-            typename std::enable_if<U && D == specfem::dimension::type::dim2,
-                                    int>::type = 0>
+  template <bool U = UseSIMD, specfem::element::dimension_tag D = DimensionTag,
+            typename std::enable_if<
+                U && D == specfem::element::dimension_tag::dim2, int>::type = 0>
   KOKKOS_INLINE_FUNCTION PointIndex(const int &ispec,
                                     const int &number_elements, const int &iz,
                                     const int &ix, const int &ielement,
@@ -116,9 +116,10 @@ public:
    * @param ix The x-coordinate of the GLL point.
    * @param kokkos_index The Kokkos index type.
    */
-  template <bool U = UseSIMD, specfem::dimension::type D = DimensionTag,
-            typename std::enable_if<!U && D == specfem::dimension::type::dim2,
-                                    int>::type = 0>
+  template <
+      bool U = UseSIMD, specfem::element::dimension_tag D = DimensionTag,
+      typename std::enable_if<!U && D == specfem::element::dimension_tag::dim2,
+                              int>::type = 0>
   KOKKOS_INLINE_FUNCTION PointIndex(const int &ispec, const int &iz,
                                     const int &ix, const int &ielement,
                                     const KokkosIndexType &kokkos_index)
@@ -137,9 +138,9 @@ public:
    * chunk.
    * @param kokkos_index The Kokkos index type.
    */
-  template <bool U = UseSIMD, specfem::dimension::type D = DimensionTag,
-            typename std::enable_if<U && D == specfem::dimension::type::dim3,
-                                    int>::type = 0>
+  template <bool U = UseSIMD, specfem::element::dimension_tag D = DimensionTag,
+            typename std::enable_if<
+                U && D == specfem::element::dimension_tag::dim3, int>::type = 0>
   KOKKOS_INLINE_FUNCTION
   PointIndex(const int &ispec, const int &number_elements, const int &iz,
              const int &iy, const int &ix, const int &ielement,
@@ -159,9 +160,10 @@ public:
    * chunk.
    * @param kokkos_index The Kokkos index type.
    */
-  template <bool U = UseSIMD, specfem::dimension::type D = DimensionTag,
-            typename std::enable_if<!U && D == specfem::dimension::type::dim3,
-                                    int>::type = 0>
+  template <
+      bool U = UseSIMD, specfem::element::dimension_tag D = DimensionTag,
+      typename std::enable_if<!U && D == specfem::element::dimension_tag::dim3,
+                              int>::type = 0>
   KOKKOS_INLINE_FUNCTION
   PointIndex(const int &ispec, const int &iz, const int &iy, const int &ix,
              const int &ielement, const KokkosIndexType &kokkos_index)
@@ -193,7 +195,7 @@ private:
  * @tparam TeamMemberType The type of the Kokkos team member.
  *
  */
-template <specfem::dimension::type DimensionTag, typename SIMD,
+template <specfem::element::dimension_tag DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
 class ChunkElementIterator
     : public TeamThreadRangePolicy<TeamMemberType,
@@ -229,9 +231,10 @@ public:
    * @param i The policy index to convert to an index.
    * @return const index_type The index corresponding to the policy index.
    */
-  template <bool U = using_simd, specfem::dimension::type D = dimension_tag>
+  template <bool U = using_simd,
+            specfem::element::dimension_tag D = dimension_tag>
   KOKKOS_INLINE_FUNCTION
-      typename std::enable_if<U && D == specfem::dimension::type::dim2,
+      typename std::enable_if<U && D == specfem::element::dimension_tag::dim2,
                               const index_type>::type
       operator()(const policy_index_type &i) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
@@ -256,9 +259,10 @@ public:
     return index_type(ispec, simd_elements, iz, ix, ielement, i);
   }
 
-  template <bool U = using_simd, specfem::dimension::type D = dimension_tag>
+  template <bool U = using_simd,
+            specfem::element::dimension_tag D = dimension_tag>
   KOKKOS_INLINE_FUNCTION
-      typename std::enable_if<!U && D == specfem::dimension::type::dim2,
+      typename std::enable_if<!U && D == specfem::element::dimension_tag::dim2,
                               const index_type>::type
       operator()(const policy_index_type &i) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
@@ -282,9 +286,10 @@ public:
    * @param i The policy index to convert to an index.
    * @return const index_type The index corresponding to the policy index.
    */
-  template <bool U = using_simd, specfem::dimension::type D = dimension_tag>
+  template <bool U = using_simd,
+            specfem::element::dimension_tag D = dimension_tag>
   KOKKOS_INLINE_FUNCTION
-      typename std::enable_if<U && D == specfem::dimension::type::dim3,
+      typename std::enable_if<U && D == specfem::element::dimension_tag::dim3,
                               const index_type>::type
       operator()(const policy_index_type &i) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
@@ -313,9 +318,10 @@ public:
     return index_type(ispec, simd_elements, iz, iy, ix, ielement, i);
   }
 
-  template <bool U = using_simd, specfem::dimension::type D = dimension_tag>
+  template <bool U = using_simd,
+            specfem::element::dimension_tag D = dimension_tag>
   KOKKOS_INLINE_FUNCTION
-      typename std::enable_if<!U && D == specfem::dimension::type::dim3,
+      typename std::enable_if<!U && D == specfem::element::dimension_tag::dim3,
                               const index_type>::type
       operator()(const policy_index_type &i) const {
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
@@ -376,7 +382,7 @@ private:
  * @tparam ViewType The type of the view containing indices of elements.
  * @tparam TeamMemberType The type of the Kokkos team member.
  */
-template <specfem::dimension::type DimensionTag, typename SIMD,
+template <specfem::element::dimension_tag DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
 class ChunkElementIndex {
 private:
@@ -474,7 +480,7 @@ private:
  * specfem::parallel_configurationuration::chunk_config
  * @tparam ViewType Type of the view containing indices of elements.
  */
-template <specfem::dimension::type DimensionTag, typename ParallelConfig,
+template <specfem::element::dimension_tag DimensionTag, typename ParallelConfig,
           typename ViewType>
 class ChunkedDomainIterator : public TeamPolicy<ParallelConfig> {
 private:
@@ -585,12 +591,12 @@ protected:
 
 // Template argument deduction guides
 template <typename ParallelConfig, typename ViewType,
-          specfem::dimension::type DimensionTag>
+          specfem::element::dimension_tag DimensionTag>
 ChunkedDomainIterator(ParallelConfig, ViewType,
                       const specfem::mesh_entity::element_grid<DimensionTag> &)
     -> ChunkedDomainIterator<DimensionTag, ParallelConfig, ViewType>;
 
-template <typename ViewType, specfem::dimension::type DimensionTag>
+template <typename ViewType, specfem::element::dimension_tag DimensionTag>
 ChunkedDomainIterator(ViewType,
                       const specfem::mesh_entity::element_grid<DimensionTag> &)
     -> ChunkedDomainIterator<

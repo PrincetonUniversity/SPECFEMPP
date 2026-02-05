@@ -1,7 +1,7 @@
 #include "specfem/mesh.hpp"
 
 void specfem::mesh::mesh<
-    specfem::dimension::type::dim3>::setup_coupled_interfaces() {
+    specfem::element::dimension_tag::dim3>::setup_coupled_interfaces() {
   auto &graph = this->adjacency_graph.graph();
   auto &materials = this->materials;
 

@@ -8,7 +8,7 @@
 
 using MaterialVectorType = std::vector<std::any>; /// NOLINT
 
-constexpr static auto dimension = specfem::dimension::type::dim2;
+constexpr static auto dimension = specfem::element::dimension_tag::dim2;
 
 const static std::unordered_map<std::string, MaterialVectorType>
     properties_ground_truth = {
@@ -146,7 +146,8 @@ const static std::unordered_map<std::string, MaterialVectorType>
     };
 
 void check_property(
-    const specfem::mesh::materials<specfem::dimension::type::dim2> &computed,
+    const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
+        &computed,
     const MaterialVectorType &expected) {
 
   if (computed.n_materials != expected.size()) {

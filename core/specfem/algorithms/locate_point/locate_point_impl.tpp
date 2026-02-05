@@ -9,10 +9,10 @@
 namespace specfem::algorithms::locate_point_impl {
 
 template <typename GraphType>
-specfem::point::local_coordinates<specfem::dimension::type::dim2>
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
 locate_point_core(
     const GraphType &graph,
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+    const specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
         &coordinates,
     const Kokkos::View<
         type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {
@@ -14,7 +14,7 @@ namespace point {
  * located
  * @tparam using_simd Flag to indicate if this is a simd index
  */
-template <specfem::dimension::type DimensionTag, bool using_simd = false>
+template <specfem::element::dimension_tag DimensionTag, bool using_simd = false>
 struct index;
 
 //--------------------------- 2D Specializations -----------------------------//
@@ -24,11 +24,11 @@ struct index;
  *
  */
 template <>
-struct index<specfem::dimension::type::dim2, false>
+struct index<specfem::element::dimension_tag::dim2, false>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
-          specfem::dimension::type::dim2, false> {
+          specfem::element::dimension_tag::dim2, false> {
   /**
    * @brief Index of the spectral element.
    */
@@ -87,11 +87,11 @@ struct index<specfem::dimension::type::dim2, false>
  *
  */
 template <>
-struct index<specfem::dimension::type::dim2, true>
+struct index<specfem::element::dimension_tag::dim2, true>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
-          specfem::dimension::type::dim2, true> {
+          specfem::element::dimension_tag::dim2, true> {
   /**
    * @brief Index associated with the spectral element at the start of the SIMD
    * vector.
@@ -174,11 +174,11 @@ struct index<specfem::dimension::type::dim2, true>
  *
  */
 template <>
-struct index<specfem::dimension::type::dim3, false>
+struct index<specfem::element::dimension_tag::dim3, false>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
-          specfem::dimension::type::dim3, false> {
+          specfem::element::dimension_tag::dim3, false> {
   /**
    * @brief Index of the spectral element.
    */
@@ -247,11 +247,11 @@ struct index<specfem::dimension::type::dim3, false>
  *
  */
 template <>
-struct index<specfem::dimension::type::dim3, true>
+struct index<specfem::element::dimension_tag::dim3, true>
     : public specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::point,
+          specfem::datatype::AccessorType::point,
           specfem::data_access::DataClassType::index,
-          specfem::dimension::type::dim3, true> {
+          specfem::element::dimension_tag::dim3, true> {
   /**
    * @brief Index associated with the spectral element at the start of the SIMD
    * vector.

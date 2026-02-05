@@ -35,7 +35,7 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void write(specfem::assembly::assembly<specfem::dimension::type::dim2>
+  void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
                  &assembly) override;
 
   /**
@@ -44,7 +44,7 @@ public:
    * @param assembly SPECFEM++ 3D assembly
    *
    */
-  void write(specfem::assembly::assembly<specfem::dimension::type::dim3>
+  void write(specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
                  &assembly) override {
     throw std::runtime_error("3D property writing not yet implemented");
   };

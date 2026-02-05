@@ -1,16 +1,15 @@
 #pragma once
 
 #include "connections.hpp"
-#include "dimension.hpp"
-#include "medium.hpp"
+#include "specfem/element.hpp"
 
 namespace specfem::point {
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct acceleration;
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct displacement;
 
@@ -52,7 +51,7 @@ enum class flux_scheme_tag {
  * static_assert(attrs::self_medium() == medium_tag::elastic_psv);
  * @endcode
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::interface::interface_tag InterfaceTag>
 class attributes;
 
@@ -63,7 +62,7 @@ class attributes;
  * acceleration).
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::interface::interface_tag::elastic_acoustic> {
 public:
   /**
@@ -107,11 +106,11 @@ public:
  * @brief 2D weakly conforming elastic→acoustic self field type.
  */
 template <>
-struct attributes<specfem::dimension::type::dim2,
+struct attributes<specfem::element::dimension_tag::dim2,
                   specfem::interface::interface_tag::elastic_acoustic>::
     self_field<specfem::connections::type::weakly_conforming> {
   using type =
-      specfem::point::acceleration<specfem::dimension::type::dim2,
+      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::elastic_psv,
                                    false>; ///< vector acceleration
 };
@@ -120,11 +119,11 @@ struct attributes<specfem::dimension::type::dim2,
  * @brief 2D weakly conforming elastic→acoustic coupled field type.
  */
 template <>
-struct attributes<specfem::dimension::type::dim2,
+struct attributes<specfem::element::dimension_tag::dim2,
                   specfem::interface::interface_tag::elastic_acoustic>::
     coupled_field<specfem::connections::type::weakly_conforming> {
   using type =
-      specfem::point::acceleration<specfem::dimension::type::dim2,
+      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::acoustic,
                                    false>; ///< scalar acceleration
 };
@@ -136,7 +135,7 @@ struct attributes<specfem::dimension::type::dim2,
  * displacement).
  */
 template <>
-class attributes<specfem::dimension::type::dim2,
+class attributes<specfem::element::dimension_tag::dim2,
                  specfem::interface::interface_tag::acoustic_elastic> {
 public:
   /**
@@ -180,11 +179,11 @@ public:
  * @brief 2D weakly conforming acoustic→elastic self field type.
  */
 template <>
-struct attributes<specfem::dimension::type::dim2,
+struct attributes<specfem::element::dimension_tag::dim2,
                   specfem::interface::interface_tag::acoustic_elastic>::
     self_field<specfem::connections::type::weakly_conforming> {
   using type =
-      specfem::point::acceleration<specfem::dimension::type::dim2,
+      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::acoustic,
                                    false>; ///< scalar acceleration
 };
@@ -193,11 +192,11 @@ struct attributes<specfem::dimension::type::dim2,
  * @brief 2D weakly conforming acoustic→elastic coupled field type.
  */
 template <>
-struct attributes<specfem::dimension::type::dim2,
+struct attributes<specfem::element::dimension_tag::dim2,
                   specfem::interface::interface_tag::acoustic_elastic>::
     coupled_field<specfem::connections::type::weakly_conforming> {
   using type =
-      specfem::point::displacement<specfem::dimension::type::dim2,
+      specfem::point::displacement<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::elastic_psv,
                                    false>; ///< vector displacement
 };

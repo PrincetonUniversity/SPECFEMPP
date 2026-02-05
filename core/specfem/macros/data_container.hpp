@@ -34,7 +34,7 @@
   template <typename FunctorType, typename IndexType>                          \
   KOKKOS_INLINE_FUNCTION std::enable_if_t<                                     \
       (std::is_invocable_v<FunctorType, const type_real &, std::size_t> &&     \
-       IndexType::dimension_tag == specfem::dimension::type::dim2),            \
+       IndexType::dimension_tag == specfem::element::dimension_tag::dim2),     \
       void>                                                                    \
   for_each_on_device(const IndexType &index, FunctorType f) const {            \
     const auto &mapping =                                                      \
@@ -47,7 +47,7 @@
   KOKKOS_INLINE_FUNCTION std::enable_if_t<                                     \
       (!std::is_invocable_v<FunctorType, const type_real &, std::size_t> &&    \
        std::is_invocable_v<FunctorType, type_real &, std::size_t> &&           \
-       IndexType::dimension_tag == specfem::dimension::type::dim2),            \
+       IndexType::dimension_tag == specfem::element::dimension_tag::dim2),     \
       void>                                                                    \
   for_each_on_device(const IndexType &index, FunctorType f) const {            \
     const auto &mapping =                                                      \
@@ -58,7 +58,7 @@
   }                                                                            \
   template <typename FunctorType, typename IndexType,                          \
             std::enable_if_t<(IndexType::dimension_tag ==                      \
-                              specfem::dimension::type::dim2),                 \
+                              specfem::element::dimension_tag::dim2),          \
                              int> = 0>                                         \
   void for_each_on_host(const IndexType &index, FunctorType f) const {         \
     const auto &mapping =                                                      \
@@ -72,7 +72,7 @@
   template <typename FunctorType, typename IndexType>                          \
   KOKKOS_INLINE_FUNCTION std::enable_if_t<                                     \
       (std::is_invocable_v<FunctorType, const type_real &, std::size_t> &&     \
-       IndexType::dimension_tag == specfem::dimension::type::dim3),            \
+       IndexType::dimension_tag == specfem::element::dimension_tag::dim3),     \
       void>                                                                    \
   for_each_on_device(const IndexType &index, FunctorType f) const {            \
     const auto &mapping =                                                      \
@@ -85,7 +85,7 @@
   KOKKOS_INLINE_FUNCTION std::enable_if_t<                                     \
       (!std::is_invocable_v<FunctorType, const type_real &, std::size_t> &&    \
        std::is_invocable_v<FunctorType, type_real &, std::size_t> &&           \
-       IndexType::dimension_tag == specfem::dimension::type::dim3),            \
+       IndexType::dimension_tag == specfem::element::dimension_tag::dim3),     \
       void>                                                                    \
   for_each_on_device(const IndexType &index, FunctorType f) const {            \
     const auto &mapping =                                                      \
@@ -96,7 +96,7 @@
   }                                                                            \
   template <typename FunctorType, typename IndexType,                          \
             std::enable_if_t<(IndexType::dimension_tag ==                      \
-                              specfem::dimension::type::dim3),                 \
+                              specfem::element::dimension_tag::dim3),          \
                              int> = 0>                                         \
   void for_each_on_host(const IndexType &index, FunctorType f) const {         \
     const auto &mapping =                                                      \
@@ -109,7 +109,7 @@
 #define _DEFINE_DOMAIN_VIEW(r, data, elem)                                     \
   specfem::kokkos::DomainView<                                                 \
       dimension_tag, type_real,                                                \
-      specfem::dimension::dimension<dimension_tag>::dim + 1,                   \
+      specfem::element::dimension<dimension_tag>::dim + 1,                     \
       Kokkos::DefaultExecutionSpace::memory_space>                             \
       BOOST_PP_SEQ_ELEM(0, elem);                                              \
   typename decltype(BOOST_PP_SEQ_ELEM(0, elem))::HostMirror BOOST_PP_CAT(      \
@@ -131,15 +131,17 @@
 
 #define _DATA_CONSTRUCTORS(seq)                                                \
   data_container() = default;                                                  \
-  template <specfem::dimension::type U = dimension_tag,                        \
-            std::enable_if_t<U == specfem::dimension::type::dim2, int> = 0>    \
+  template <                                                                   \
+      specfem::element::dimension_tag U = dimension_tag,                       \
+      std::enable_if_t<U == specfem::element::dimension_tag::dim2, int> = 0>   \
   data_container(const int nspec, const int ngllz, const int ngllx)            \
       : BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_DEVICE_VIEW2D, _, seq)),          \
         BOOST_PP_SEQ_ENUM(                                                     \
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {}            \
-  template <specfem::dimension::type U = dimension_tag,                        \
-            std::enable_if_t<U == specfem::dimension::type::dim3, int> = 0>    \
+  template <                                                                   \
+      specfem::element::dimension_tag U = dimension_tag,                       \
+      std::enable_if_t<U == specfem::element::dimension_tag::dim3, int> = 0>   \
   data_container(const int nspec, const int ngllz, const int nglly,            \
                  const int ngllx)                                              \
       : BOOST_PP_SEQ_ENUM(                                                     \
@@ -229,14 +231,14 @@
  *       kappa("kappa", nspec, ngllz, ngllx),
  *       h_rho(specfem::kokkos::create_mirror_view(rho)),
  *       h_kappa(specfem::kokkos::create_mirror_view(kappa)) {
- *  static_assert(dimension_tag == specfem::dimension::type::dim2,
+ *  static_assert(dimension_tag == specfem::element::dimension_tag::dim2,
  *                "Calling 2D constructor from non-2D container");
  * }
  * data_container(const int nspec, const int ngllz, const int nglly, const int
  * ngllx) : rho("rho", nspec, ngllz, ngllx), kappa("kappa", nspec, ngllz,
  * ngllx), h_rho(specfem::kokkos::create_mirror_view(rho)),
  *       h_kappa(specfem::kokkos::create_mirror_view(kappa)) {
- *  static_assert(dimension_tag == specfem::dimension::type::dim3,
+ *  static_assert(dimension_tag == specfem::element::dimension_tag::dim3,
  *                "Calling 3D constructor from non-3D container");
  * }
  * template <typename FunctorType, typename IndexType>

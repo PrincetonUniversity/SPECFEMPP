@@ -22,17 +22,17 @@ TEST(ALGORITHMS, locate_point) {
   // Assemble
   specfem::assembly::mesh assembly(mesh.tags, mesh.control_nodes, quadratures);
 
-  specfem::kokkos::HostView1d<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> >
+  specfem::kokkos::HostView1d<specfem::point::global_coordinates<
+      specfem::element::dimension_tag::dim2> >
       coordinates_ref("coordinates_ref", 5);
   specfem::kokkos::HostView1d<
-      specfem::point::local_coordinates<specfem::dimension::type::dim2> >
+      specfem::point::local_coordinates<specfem::element::dimension_tag::dim2> >
       lcoord_ref("lcoord_ref", 5);
   specfem::kokkos::HostView1d<
-      specfem::point::local_coordinates<specfem::dimension::type::dim2> >
+      specfem::point::local_coordinates<specfem::element::dimension_tag::dim2> >
       lcoord("lcoord", 5);
-  specfem::kokkos::HostView1d<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> >
+  specfem::kokkos::HostView1d<specfem::point::global_coordinates<
+      specfem::element::dimension_tag::dim2> >
       gcoord("gcoord", 5);
 
   coordinates_ref(0) = { 606.313, 957.341 };

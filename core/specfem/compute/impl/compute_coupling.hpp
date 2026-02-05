@@ -6,7 +6,7 @@
 
 namespace specfem::compute::impl {
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
@@ -14,7 +14,7 @@ template <specfem::dimension::type DimensionTag,
 void compute_coupling_weakly_conforming(
     const specfem::assembly::assembly<DimensionTag> &assembly);
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
           int NQuad_interface, specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
@@ -39,7 +39,7 @@ void compute_coupling_nonconforming(
  *
  * @param assembly SPECFEM++ assembly object.
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::connections::type ConnectionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
           int NQuad_intersection,

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace specfem::data_access {
+namespace specfem::datatype {
 
 /**
  * @brief Data access patterns for spectral element simulations.
@@ -12,4 +12,4 @@ enum class AccessorType {
   chunk_edge     ///< Chunked edge access for interfaces
 };
 
-} // namespace specfem::data_access
+} // namespace specfem::datatype

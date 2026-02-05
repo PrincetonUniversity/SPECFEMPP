@@ -32,7 +32,7 @@ namespace specfem::assembly {
  * required for & computed during 2D SEM simulations
  *
  */
-template <> struct assembly<specfem::dimension::type::dim2> {
+template <> struct assembly<specfem::element::dimension_tag::dim2> {
 
   /**
    * @name Public Constants
@@ -40,7 +40,7 @@ template <> struct assembly<specfem::dimension::type::dim2> {
    */
   ///@{
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
   ///@}
 
   /** @name Data Containers

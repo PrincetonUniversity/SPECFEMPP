@@ -30,19 +30,19 @@ TEST_P(ElasticAcousticCouplingTest, CouplingCalculation) {
 
   // Create interface data
   specfem::point::conforming_interface<
-      specfem::dimension::type::dim2,
+      specfem::element::dimension_tag::dim2,
       specfem::interface::interface_tag::elastic_acoustic,
       specfem::element::boundary_tag::none>
       interface_data(params.edge_factor,
                      { params.normal[0], params.normal[1] });
 
   // Create coupled field (acceleration from elastic medium)
-  specfem::point::acceleration<specfem::dimension::type::dim2,
+  specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                specfem::element::medium_tag::acoustic, false>
       coupled_field;
   coupled_field(0) = params.acceleration;
 
-  specfem::point::acceleration<specfem::dimension::type::dim2,
+  specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                specfem::element::medium_tag::elastic_psv, false>
       self_field;
 

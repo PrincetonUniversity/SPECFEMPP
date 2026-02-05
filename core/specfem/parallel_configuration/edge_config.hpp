@@ -19,7 +19,7 @@ namespace parallel_configuration {
  * @see specfem::execution
  * @see specfem::parallel_configuration::default_edge_config
  */
-template <specfem::dimension::type DimensionTag, int NumThreads,
+template <specfem::element::dimension_tag DimensionTag, int NumThreads,
           int VectorLanes, typename ExecutionSpace>
 struct edge_config {
   constexpr static auto dimension = DimensionTag;  ///< Dimension type
@@ -43,31 +43,36 @@ struct edge_config {
  * // Automatically uses: num_threads=32, vector_lanes=1 for CUDA
  * @endcode
  */
-template <specfem::dimension::type DimensionTag, typename ExecutionSpace>
+template <specfem::element::dimension_tag DimensionTag, typename ExecutionSpace>
 struct default_edge_config;
 
 #if defined(KOKKOS_ENABLE_CUDA)
 template <>
-struct default_edge_config<specfem::dimension::type::dim2, Kokkos::Cuda>
-    : edge_config<specfem::dimension::type::dim2, 32, 1, Kokkos::Cuda> {};
+struct default_edge_config<specfem::element::dimension_tag::dim2, Kokkos::Cuda>
+    : edge_config<specfem::element::dimension_tag::dim2, 32, 1, Kokkos::Cuda> {
+};
 #endif
 
 #if defined(KOKKOS_ENABLE_HIP)
 template <>
-struct default_edge_config<specfem::dimension::type::dim2, Kokkos::HIP>
-    : edge_config<specfem::dimension::type::dim2, 32, 1, Kokkos::HIP> {};
+struct default_edge_config<specfem::element::dimension_tag::dim2, Kokkos::HIP>
+    : edge_config<specfem::element::dimension_tag::dim2, 32, 1, Kokkos::HIP> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_OPENMP)
 template <>
-struct default_edge_config<specfem::dimension::type::dim2, Kokkos::OpenMP>
-    : edge_config<specfem::dimension::type::dim2, 1, 1, Kokkos::OpenMP> {};
+struct default_edge_config<specfem::element::dimension_tag::dim2,
+                           Kokkos::OpenMP>
+    : edge_config<specfem::element::dimension_tag::dim2, 1, 1, Kokkos::OpenMP> {
+};
 #endif
 
 #if defined(KOKKOS_ENABLE_SERIAL)
 template <>
-struct default_edge_config<specfem::dimension::type::dim2, Kokkos::Serial>
-    : edge_config<specfem::dimension::type::dim2, 1, 1, Kokkos::Serial> {};
+struct default_edge_config<specfem::element::dimension_tag::dim2,
+                           Kokkos::Serial>
+    : edge_config<specfem::element::dimension_tag::dim2, 1, 1, Kokkos::Serial> {
+};
 #endif
 
 } // namespace parallel_configuration

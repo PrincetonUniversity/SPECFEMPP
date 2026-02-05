@@ -131,7 +131,7 @@ we believe the parameters are fairly self-explanatory. See the
 :ref:`parameter_documentation` for additional details.
 
 Step 2: Convert SOURCE to source.yaml
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The original ``SOURCE`` file uses Fortran-style parameters:
 

@@ -12,7 +12,7 @@ namespace specfem::assembly::receivers_impl {
 //
 // DIM3 SPECIALIZATION
 //
-template <> class SeismogramIterator<specfem::dimension::type::dim3> {
+template <> class SeismogramIterator<specfem::element::dimension_tag::dim3> {
 private:
   static constexpr int ncomponents = 3;
 

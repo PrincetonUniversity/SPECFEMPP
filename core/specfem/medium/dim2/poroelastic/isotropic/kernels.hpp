@@ -59,18 +59,18 @@ namespace specfem::medium_container::kernels {
  *   @code KOKKOS_INLINE_FUNCTION const value_type phib() const @endcode
  */
 template <bool UseSIMD>
-struct point_container<specfem::dimension::type::dim2,
+struct point_container<specfem::element::dimension_tag::dim2,
                        specfem::element::medium_tag::poroelastic,
                        specfem::element::property_tag::isotropic, UseSIMD>
     /// @cond
-    : public KernelsAccessor<specfem::dimension::type::dim2,
+    : public KernelsAccessor<specfem::element::dimension_tag::dim2,
                              specfem::element::medium_tag::poroelastic,
                              specfem::element::property_tag::isotropic, UseSIMD>
 /// @endcond
 {
 
   using base_type =
-      KernelsAccessor<specfem::dimension::type::dim2,
+      KernelsAccessor<specfem::element::dimension_tag::dim2,
                       specfem::element::medium_tag::poroelastic,
                       specfem::element::property_tag::isotropic, UseSIMD>;
   using value_type = typename base_type::value_type;

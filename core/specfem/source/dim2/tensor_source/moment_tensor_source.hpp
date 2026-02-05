@@ -35,9 +35,9 @@ namespace sources {
  *
  * // Create a 2D moment tensor source at (5.0, 8.0)
  * auto mt_source =
- * specfem::sources::moment_tensor<specfem::dimension::type::dim2>( 5.0,  //
- * x-coordinate 8.0,  // z-coordinate 1.0,  // Mxx - normal double couple in x
- * direction 2.0,  // Mzz - normal double couple in z direction 0.5,  // Mxz -
+ * specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>( 5.0,
+ * // x-coordinate 8.0,  // z-coordinate 1.0,  // Mxx - normal double couple in
+ * x direction 2.0,  // Mzz - normal double couple in z direction 0.5,  // Mxz -
  * shear double couple in x-z plane std::move(stf),
  *     specfem::simulation::field_type::forward
  * );
@@ -53,8 +53,8 @@ namespace sources {
  *
  */
 template <>
-class moment_tensor<specfem::dimension::type::dim2>
-    : public tensor_source<specfem::dimension::type::dim2> {
+class moment_tensor<specfem::element::dimension_tag::dim2>
+    : public tensor_source<specfem::element::dimension_tag::dim2> {
 
 public:
   /**
@@ -92,7 +92,8 @@ public:
                 const specfem::simulation::field_type wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
         Mxz(Node["Mxz"].as<type_real>()), wavefield_type(wavefield_type),
-        tensor_source<specfem::dimension::type::dim2>(Node, nsteps, dt) {};
+        tensor_source<specfem::element::dimension_tag::dim2>(Node, nsteps, dt) {
+        };
 
   /**
    * @brief Costruct new moment tensor source using forcing function
@@ -112,7 +113,7 @@ public:
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
       const specfem::simulation::field_type wavefield_type)
       : Mxx(Mxx), Mzz(Mzz), Mxz(Mxz), wavefield_type(wavefield_type),
-        tensor_source<specfem::dimension::type::dim2>(
+        tensor_source<specfem::element::dimension_tag::dim2>(
             x, z, std::move(source_time_function)) {};
 
   /**
@@ -125,10 +126,12 @@ public:
     return wavefield_type;
   }
 
-  bool operator==(const specfem::sources::source<specfem::dimension::type::dim2>
-                      &other) const override;
-  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
-                      &other) const override;
+  bool operator==(
+      const specfem::sources::source<specfem::element::dimension_tag::dim2>
+          &other) const override;
+  bool operator!=(
+      const specfem::sources::source<specfem::element::dimension_tag::dim2>
+          &other) const override;
 
   /**
    * @brief Get the source tensor

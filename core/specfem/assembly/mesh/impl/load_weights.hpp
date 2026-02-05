@@ -25,7 +25,8 @@ KOKKOS_INLINE_FUNCTION void
 impl_load(const IndexType &index, const ViewType &weights,
           specfem::point::weights<IndexType::dimension_tag> &point_weights) {
   point_weights.wz = weights(index.iz);
-  if constexpr (IndexType::dimension_tag == specfem::dimension::type::dim3) {
+  if constexpr (IndexType::dimension_tag ==
+                specfem::element::dimension_tag::dim3) {
     point_weights.wy = weights(index.iy);
   }
   point_weights.wx = weights(index.ix);

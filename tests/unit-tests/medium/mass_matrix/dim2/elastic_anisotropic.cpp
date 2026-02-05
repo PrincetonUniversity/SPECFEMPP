@@ -4,7 +4,7 @@
 #include <sstream>
 
 TEST(MassMatrix, ElasticPSVAnIsotropicTrivialSolution2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::anisotropic;
 
@@ -27,7 +27,7 @@ TEST(MassMatrix, ElasticPSVAnIsotropicTrivialSolution2D) {
 }
 
 TEST(MassMatrix, ElasticSHAnIsotropicTrivialSolution2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::anisotropic;
 
@@ -48,7 +48,7 @@ TEST(MassMatrix, ElasticSHAnIsotropicTrivialSolution2D) {
 }
 
 TEST(MassMatrix, ElasticPSVAnIsotropic2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::anisotropic;
 
@@ -73,7 +73,7 @@ TEST(MassMatrix, ElasticPSVAnIsotropic2D) {
 }
 
 TEST(MassMatrix, ElasticSHAnIsotropic2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::anisotropic;
 

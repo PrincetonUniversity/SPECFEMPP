@@ -28,7 +28,7 @@ namespace specfem::medium_container::properties {
  *
  * @see DATA_CONTAINER macro for details on generated members and methods.
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct data_container<DimensionTag, specfem::element::medium_tag::poroelastic,
                       specfem::element::property_tag::isotropic> {
   constexpr static auto dimension_tag = DimensionTag;

@@ -25,8 +25,8 @@ struct ControlNode3D {
 };
 
 struct ExpectedControlNodes3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   TotalControlNodes total_control_nodes;
   std::vector<ControlNode3D> nodes;
 

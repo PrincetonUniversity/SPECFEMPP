@@ -90,11 +90,11 @@ namespace specfem::medium_container::properties {
  *   @code KOKKOS_INLINE_FUNCTION const value_type vs() const @endcode
  */
 template <bool UseSIMD>
-struct point_container<specfem::dimension::type::dim2,
+struct point_container<specfem::element::dimension_tag::dim2,
                        specfem::element::medium_tag::poroelastic,
                        specfem::element::property_tag::isotropic, UseSIMD>
     /// @cond
-    : public PropertyAccessor<specfem::dimension::type::dim2,
+    : public PropertyAccessor<specfem::element::dimension_tag::dim2,
                               specfem::element::medium_tag::poroelastic,
                               specfem::element::property_tag::isotropic,
                               UseSIMD>
@@ -102,10 +102,11 @@ struct point_container<specfem::dimension::type::dim2,
 {
 
 private:
-  using base_type = PropertyAccessor<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
-      specfem::element::property_tag::isotropic, UseSIMD>; ///< Base type of the
-                                                           ///< point properties
+  using base_type = PropertyAccessor<specfem::element::dimension_tag::dim2,
+                                     specfem::element::medium_tag::poroelastic,
+                                     specfem::element::property_tag::isotropic,
+                                     UseSIMD>; ///< Base type of the
+                                               ///< point properties
 
 public:
   using value_type = typename base_type::value_type; ///< Type of the properties

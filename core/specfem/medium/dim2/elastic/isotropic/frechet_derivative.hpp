@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
 #include "globals.h"
 #include "specfem/algorithms.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 
 #include <Kokkos_Core.hpp>
@@ -60,8 +60,8 @@ KOKKOS_FUNCTION specfem::point::kernels<
     PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
     PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
 impl_compute_frechet_derivatives(
-    const std::integral_constant<specfem::dimension::type,
-                                 specfem::dimension::type::dim2>,
+    const std::integral_constant<specfem::element::dimension_tag,
+                                 specfem::element::dimension_tag::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
                                  specfem::element::medium_tag::elastic_psv>,
     const std::integral_constant<specfem::element::property_tag,
@@ -224,8 +224,8 @@ KOKKOS_FUNCTION specfem::point::kernels<
     PointPropertiesType::dimension_tag, PointPropertiesType::medium_tag,
     PointPropertiesType::property_tag, PointPropertiesType::simd::using_simd>
 impl_compute_frechet_derivatives(
-    const std::integral_constant<specfem::dimension::type,
-                                 specfem::dimension::type::dim2>,
+    const std::integral_constant<specfem::element::dimension_tag,
+                                 specfem::element::dimension_tag::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
                                  specfem::element::medium_tag::elastic_sh>,
     const std::integral_constant<specfem::element::property_tag,

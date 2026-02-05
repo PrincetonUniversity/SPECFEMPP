@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <list>
@@ -86,7 +86,7 @@ nodes_on_orientation(const specfem::mesh_entity::dim2::type &entity);
 /**
  * @brief 2D edge entity for quadrilateral elements.
  */
-template <> struct edge<specfem::dimension::type::dim2> {
+template <> struct edge<specfem::element::dimension_tag::dim2> {
   specfem::mesh_entity::dim2::type edge_type; ///< Edge type
   int ispec;                                  ///< Element index
   int iedge;                                  ///< Local edge index
@@ -106,13 +106,13 @@ template <> struct edge<specfem::dimension::type::dim2> {
   edge() = default;
 };
 
-template <specfem::dimension::type Dimension> struct element;
-template <specfem::dimension::type Dimension> struct element_grid;
+template <specfem::element::dimension_tag Dimension> struct element;
+template <specfem::element::dimension_tag Dimension> struct element_grid;
 
 /**
  * @brief 2D element grid with GLL point configuration.
  */
-template <> struct element_grid<specfem::dimension::type::dim2> {
+template <> struct element_grid<specfem::element::dimension_tag::dim2> {
 
 public:
   int ngllz;  ///< Number of GLL points in z-direction
@@ -171,10 +171,10 @@ public:
  * @brief 2D element with coordinate mapping capabilities.
  */
 template <>
-struct element<specfem::dimension::type::dim2>
-    : public element_grid<specfem::dimension::type::dim2> {
+struct element<specfem::element::dimension_tag::dim2>
+    : public element_grid<specfem::element::dimension_tag::dim2> {
 private:
-  using base = element_grid<specfem::dimension::type::dim2>;
+  using base = element_grid<specfem::element::dimension_tag::dim2>;
 
 public:
   /**
