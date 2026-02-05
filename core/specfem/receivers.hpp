@@ -12,10 +12,10 @@
  * spatial dimensions.
  *
  * <b>2D receiver implementations</b>
- * - @ref specfem::receivers::receiver<specfem::dimension::type::dim2>
+ * - @ref specfem::receivers::receiver<specfem::element::dimension_tag::dim2>
  *
  * <b>3D receiver implementations</b>
- * - @ref specfem::receivers::receiver<specfem::dimension::type::dim3>
+ * - @ref specfem::receivers::receiver<specfem::element::dimension_tag::dim3>
  *
  * Receivers are responsible for:
  * - Recording displacement, velocity, or acceleration at specific coordinates
@@ -37,7 +37,7 @@ namespace specfem::receivers {
  * @tparam DimensionTag The dimension tag (2D or 3D) for the receiver.
  *
  */
-template <specfem::dimension::type DimensionTag> class receiver;
+template <specfem::element::dimension_tag DimensionTag> class receiver;
 
 } // namespace specfem::receivers
 

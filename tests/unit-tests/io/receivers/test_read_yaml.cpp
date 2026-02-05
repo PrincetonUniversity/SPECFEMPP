@@ -14,7 +14,8 @@
  *
  * @tparam DimensionTag
  */
-template <specfem::dimension::type DimensionTag> struct ReceiverYAMLTestParam {
+template <specfem::element::dimension_tag DimensionTag>
+struct ReceiverYAMLTestParam {
   std::string testname;
   YAML::Node stations_node;
   std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionTag> > >
@@ -30,7 +31,7 @@ template <specfem::dimension::type DimensionTag> struct ReceiverYAMLTestParam {
  * @param params
  * @return std::ostream&
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 std::ostream &operator<<(std::ostream &os,
                          const ReceiverYAMLTestParam<DimensionTag> &params) {
   os << params.testname;
@@ -38,7 +39,7 @@ std::ostream &operator<<(std::ostream &os,
 }
 
 using ReceiverYAMLTestParam2D =
-    ReceiverYAMLTestParam<specfem::dimension::type::dim2>;
+    ReceiverYAMLTestParam<specfem::element::dimension_tag::dim2>;
 
 // YAML node test data for 2D receivers
 const static YAML::Node empty_stations_yaml_2d = []() {
@@ -157,7 +158,7 @@ INSTANTIATE_TEST_SUITE_P(
                                                two_receivers_2d, 0.0 }));
 
 using ReceiverYAMLTestParam3D =
-    ReceiverYAMLTestParam<specfem::dimension::type::dim3>;
+    ReceiverYAMLTestParam<specfem::element::dimension_tag::dim3>;
 
 class Read3DReceiversYAMLTest
     : public ::testing::TestWithParam<ReceiverYAMLTestParam3D> {};

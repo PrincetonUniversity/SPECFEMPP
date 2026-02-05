@@ -24,8 +24,9 @@ public:
    */
   wavefield_reader(const std::string &output_folder);
 
-  void initialize(
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly);
+  void
+  initialize(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+                 &assembly);
 
   /**
    * @brief Read the wavefield data from disk
@@ -33,12 +34,13 @@ public:
    * @param assembly SPECFEM++ assembly
    *
    */
-  void
-  run(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-      const int istep);
+  void run(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+               &assembly,
+           const int istep);
 
-  void finalize(
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {}
+  void
+  finalize(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+               &assembly) {}
 
 private:
   std::string output_folder;     ///< Path to output folder

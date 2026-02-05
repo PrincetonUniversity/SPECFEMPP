@@ -30,15 +30,15 @@ protected:
 // Test source construction for 2D Acoustic
 TEST_F(PointSourceTest, Source2DAcoustic) {
   // Define the source type
-  using source_type =
-      point::source<dimension::type::dim2, element::medium_tag::acoustic,
-                    simulation::field_type::forward>;
+  using source_type = point::source<specfem::element::dimension_tag::dim2,
+                                    element::medium_tag::acoustic,
+                                    simulation::field_type::forward>;
 
   // Verify static properties
   EXPECT_EQ(source_type::medium_tag, element::medium_tag::acoustic);
   EXPECT_EQ(source_type::wavefield_tag, simulation::field_type::forward);
   constexpr auto components =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::acoustic>::components;
   EXPECT_EQ(source_type::components, components);
 
@@ -57,15 +57,15 @@ TEST_F(PointSourceTest, Source2DAcoustic) {
 // Test source construction for 2D Elastic
 TEST_F(PointSourceTest, Source2DElastic) {
   // Define the source type
-  using source_type =
-      point::source<dimension::type::dim2, element::medium_tag::elastic_psv,
-                    simulation::field_type::forward>;
+  using source_type = point::source<specfem::element::dimension_tag::dim2,
+                                    element::medium_tag::elastic_psv,
+                                    simulation::field_type::forward>;
 
   // Verify static properties
   EXPECT_EQ(source_type::medium_tag, element::medium_tag::elastic_psv);
   EXPECT_EQ(source_type::wavefield_tag, simulation::field_type::forward);
   constexpr auto components =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::elastic_psv>::components;
   EXPECT_EQ(source_type::components, components);
 
@@ -89,15 +89,15 @@ TEST_F(PointSourceTest, Source2DElastic) {
 // Test source construction for 2D Poroelastic
 TEST_F(PointSourceTest, Source2DPoroelastic) {
   // Define the source type
-  using source_type =
-      point::source<dimension::type::dim2, element::medium_tag::poroelastic,
-                    simulation::field_type::forward>;
+  using source_type = point::source<specfem::element::dimension_tag::dim2,
+                                    element::medium_tag::poroelastic,
+                                    simulation::field_type::forward>;
 
   // Verify static properties
   EXPECT_EQ(source_type::medium_tag, element::medium_tag::poroelastic);
   EXPECT_EQ(source_type::wavefield_tag, simulation::field_type::forward);
   constexpr auto components =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::poroelastic>::components;
   EXPECT_EQ(source_type::components, components);
 
@@ -125,15 +125,15 @@ TEST_F(PointSourceTest, Source2DPoroelastic) {
 // Test source construction for 3D Acoustic
 TEST_F(PointSourceTest, Source3DAcoustic) {
   // Define the source type
-  using source_type =
-      point::source<dimension::type::dim3, element::medium_tag::acoustic,
-                    simulation::field_type::forward>;
+  using source_type = point::source<specfem::element::dimension_tag::dim3,
+                                    element::medium_tag::acoustic,
+                                    simulation::field_type::forward>;
 
   // Verify static properties
   EXPECT_EQ(source_type::medium_tag, element::medium_tag::acoustic);
   EXPECT_EQ(source_type::wavefield_tag, simulation::field_type::forward);
   constexpr auto components =
-      element::attributes<dimension::type::dim3,
+      element::attributes<specfem::element::dimension_tag::dim3,
                           element::medium_tag::acoustic>::components;
   EXPECT_EQ(source_type::components, components);
 
@@ -155,15 +155,15 @@ TEST_F(PointSourceTest, Source3DAcoustic) {
 // Test source construction for 3D Elastic
 TEST_F(PointSourceTest, Source3DElastic) {
   // Define the source type
-  using source_type =
-      point::source<dimension::type::dim3, element::medium_tag::elastic,
-                    simulation::field_type::forward>;
+  using source_type = point::source<specfem::element::dimension_tag::dim3,
+                                    element::medium_tag::elastic,
+                                    simulation::field_type::forward>;
 
   // Verify static properties
   EXPECT_EQ(source_type::medium_tag, element::medium_tag::elastic);
   EXPECT_EQ(source_type::wavefield_tag, simulation::field_type::forward);
   constexpr auto components =
-      element::attributes<dimension::type::dim3,
+      element::attributes<specfem::element::dimension_tag::dim3,
                           element::medium_tag::elastic>::components;
   EXPECT_EQ(source_type::components, components);
 
@@ -189,15 +189,15 @@ TEST_F(PointSourceTest, Source3DElastic) {
 // Test source for adjoint wavefield
 TEST_F(PointSourceTest, SourceForAdjoint) {
   // Define the source type
-  using source_type =
-      point::source<dimension::type::dim2, element::medium_tag::acoustic,
-                    simulation::field_type::adjoint>;
+  using source_type = point::source<specfem::element::dimension_tag::dim2,
+                                    element::medium_tag::acoustic,
+                                    simulation::field_type::adjoint>;
 
   // Verify static properties
   EXPECT_EQ(source_type::medium_tag, element::medium_tag::acoustic);
   EXPECT_EQ(source_type::wavefield_tag, simulation::field_type::adjoint);
   constexpr auto components =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::acoustic>::components;
   EXPECT_EQ(source_type::components, components);
 
@@ -216,9 +216,9 @@ TEST_F(PointSourceTest, SourceForAdjoint) {
 // Test source for backward wavefield
 TEST_F(PointSourceTest, SourceForBackward) {
   // Define the source type
-  using source_type =
-      point::source<dimension::type::dim2, element::medium_tag::elastic_psv,
-                    simulation::field_type::backward>;
+  using source_type = point::source<specfem::element::dimension_tag::dim2,
+                                    element::medium_tag::elastic_psv,
+                                    simulation::field_type::backward>;
 
   // Verify static properties
   EXPECT_EQ(source_type::medium_tag, element::medium_tag::elastic_psv);
@@ -241,9 +241,9 @@ TEST_F(PointSourceTest, SourceForBackward) {
 // Test source for buffer wavefield
 TEST_F(PointSourceTest, SourceForBuffer) {
   // Define the source type
-  using source_type =
-      point::source<dimension::type::dim2, element::medium_tag::elastic_psv,
-                    simulation::field_type::buffer>;
+  using source_type = point::source<specfem::element::dimension_tag::dim2,
+                                    element::medium_tag::elastic_psv,
+                                    simulation::field_type::buffer>;
 
   // Verify static properties
   EXPECT_EQ(source_type::medium_tag, element::medium_tag::elastic_psv);
@@ -266,9 +266,9 @@ TEST_F(PointSourceTest, SourceForBuffer) {
 // Test default constructor
 TEST_F(PointSourceTest, DefaultConstructor) {
   // Define the source type
-  using source_type =
-      point::source<dimension::type::dim2, element::medium_tag::acoustic,
-                    simulation::field_type::forward>;
+  using source_type = point::source<specfem::element::dimension_tag::dim2,
+                                    element::medium_tag::acoustic,
+                                    simulation::field_type::forward>;
 
   // Create source with default constructor
   source_type src;
@@ -281,16 +281,16 @@ TEST_F(PointSourceTest, DefaultConstructor) {
 
 // Test accessor base type inheritance
 TEST_F(PointSourceTest, AccessorBaseType) {
-  using source_type =
-      point::source<dimension::type::dim2, element::medium_tag::acoustic,
-                    simulation::field_type::forward>;
+  using source_type = point::source<specfem::element::dimension_tag::dim2,
+                                    element::medium_tag::acoustic,
+                                    simulation::field_type::forward>;
 
   // Check if source_type is derived from the correct base class
   bool is_accessor =
       std::is_base_of<specfem::data_access::Accessor<
-                          specfem::data_access::AccessorType::point,
+                          specfem::datatype::AccessorType::point,
                           specfem::data_access::DataClassType::source,
-                          dimension::type::dim2, false>,
+                          specfem::element::dimension_tag::dim2, false>,
                       source_type>::value;
 
   EXPECT_TRUE(is_accessor);

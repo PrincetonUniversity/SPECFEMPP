@@ -37,17 +37,17 @@ namespace specfem::medium_container::kernels {
  */
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct point_container<
-    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::dimension_tag::dim2, MediumTag,
     specfem::element::property_tag::anisotropic, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
     /// @cond
-    : public KernelsAccessor<specfem::dimension::type::dim2, MediumTag,
+    : public KernelsAccessor<specfem::element::dimension_tag::dim2, MediumTag,
                              specfem::element::property_tag::anisotropic,
                              UseSIMD>
 /// @endcond
 {
   using base_type =
-      KernelsAccessor<specfem::dimension::type::dim2, MediumTag,
+      KernelsAccessor<specfem::element::dimension_tag::dim2, MediumTag,
                       specfem::element::property_tag::anisotropic, UseSIMD>;
 
   using value_type = typename base_type::value_type;

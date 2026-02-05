@@ -11,7 +11,8 @@ template <specfem::wavefield::type component,
           specfem::element::medium_tag medium,
           specfem::element::property_tag property>
 void generate_data(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     std::vector<int> &ispecs) {
 
   auto field = assembly.fields.template get_simulation_field<type>();
@@ -23,20 +24,21 @@ void generate_data(
       medium, property, specfem::element::attenuation_tag::none);
 
   constexpr int num_components =
-      specfem::element::attributes<specfem::dimension::type::dim2,
+      specfem::element::attributes<specfem::element::dimension_tag::dim2,
                                    medium>::components;
 
   using PointDisplacementType =
-      specfem::point::displacement<specfem::dimension::type::dim2, medium,
-                                   false>;
+      specfem::point::displacement<specfem::element::dimension_tag::dim2,
+                                   medium, false>;
   using PointVelocityType =
-      specfem::point::velocity<specfem::dimension ::type::dim2, medium, false>;
+      specfem::point::velocity<specfem::element::dimension_tag::dim2, medium,
+                               false>;
   using PointAccelerationType =
-      specfem::point::acceleration<specfem::dimension::type::dim2, medium,
-                                   false>;
+      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
+                                   medium, false>;
 
   using IndexType =
-      specfem::point::index<specfem::dimension::type::dim2, false>;
+      specfem::point::index<specfem::element::dimension_tag::dim2, false>;
 
   const int nelements = elements.size();
 
@@ -64,8 +66,9 @@ void generate_data(
 
 template <specfem::wavefield::type component,
           specfem::simulation::field_type type>
-std::vector<int> generate_data(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+std::vector<int>
+generate_data(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+                  &assembly) {
 
   std::vector<int> ispecs;
 

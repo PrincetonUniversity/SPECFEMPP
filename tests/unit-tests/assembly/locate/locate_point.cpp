@@ -7,10 +7,10 @@ using specfem::point::global_coordinates;
 using specfem::point::local_coordinates;
 
 void test_locate_point(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2>
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly) {
 
-  constexpr auto dim = specfem::dimension::type::dim2;
+  constexpr auto dim = specfem::element::dimension_tag::dim2;
 
   const type_real xmin = assembly.mesh.xmin;
   const type_real xmax = assembly.mesh.xmax;
@@ -72,8 +72,8 @@ void test_locate_point(
 TEST_F(Assembly2D, LocatePoint) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
-        std::get<5>(parameters);
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        assembly = std::get<5>(parameters);
 
     try {
       test_locate_point(assembly);

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "policy.hpp"
-#include "specfem/datatype/impl/register_array.hpp"
+#include "specfem/datatype/register_array.hpp"
 #include "void_iterator.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -32,13 +32,18 @@ public:
   using base_policy_type =
       typename base_type::base_policy_type; ///< Base policy type. Evaluates to
                                             ///< @c Kokkos::TeamThreadRange
-  using index_type = specfem::datatype::impl::RegisterArray<
+  using index_type = specfem::datatype::RegisterArray<
       int, Kokkos::extents<std::size_t, rank>,
-      Kokkos::layout_left>; ///< Underlying index type. This
-                            ///< index will be passed to the
-                            ///< closure when calling @ref
-                            ///< kokkos::parallel_for with
-                            ///< this iterator.
+      Kokkos::layout_left>; ///< Underlying
+                            ///< index type.
+                            ///< This index
+                            ///< will be passed
+                            ///< to the closure
+                            ///< when calling
+                            ///< @ref
+                            ///< kokkos::parallel_for
+                            ///< with this
+                            ///< iterator.
 
   using execution_space =
       typename base_type::execution_space; ///< Execution space type.

@@ -19,7 +19,7 @@
  * @param nspec Number of spectral elements
  * @param materials Materials container with material data
  */
-specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
+specfem::mesh::tags<specfem::element::dimension_tag::dim3>::tags(
     const int nspec, specfem::mesh::materials<dimension_tag> &materials) {
 
   this->nspec = nspec;

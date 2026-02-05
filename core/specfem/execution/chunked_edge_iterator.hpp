@@ -16,18 +16,19 @@
  *
  * using ParallelConfig =
  * specfem::parallel_configuration::default_chunk_edge_config<
- *     specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
+ *     specfem::element::dimension_tag::dim2, Kokkos::DefaultExecutionSpace>;
  *
  * // Create views for storage and edges
  * constexpr int num_points = 5;
  * Kokkos::View<int*[num_points], Kokkos::DefaultExecutionSpace>
  * storage("storage", num_edges);
- * Kokkos::View<specfem::mesh_entity::edge<specfem::dimension::type::dim2>*,
+ * Kokkos::View<specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>*,
  * Kokkos::DefaultExecutionSpace> edges("edges", num_edges);
  *
  * // Initialize edges
  * Kokkos::parallel_for("init_edges", num_edges, KOKKOS_LAMBDA(int i) {
- *     edges(i) = specfem::mesh_entity::edge<specfem::dimension::type::dim2>(i,
+ *     edges(i) =
+ * specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(i,
  * specfem::mesh_entity::dim2::type::top);
  * });
  *
@@ -59,7 +60,7 @@
 
 namespace specfem::chunk_edge {
 // Forward declaration for EdgeIndex
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename TeamMemberType>
 class Index;
 } // namespace specfem::chunk_edge
@@ -94,8 +95,8 @@ namespace specfem::execution {
  * @endcode
  */
 // clang-format on
-template <specfem::dimension::type DimensionTag, typename KokkosIndexType,
-          typename ExecutionSpace>
+template <specfem::element::dimension_tag DimensionTag,
+          typename KokkosIndexType, typename ExecutionSpace>
 class EdgePointIndex {
 public:
   using index_type = specfem::point::edge_index<DimensionTag>;
@@ -184,7 +185,7 @@ private:
  * // Access through the chunked iterator's operator()
  * @endcode
  */
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename TeamMemberType>
 class ChunkEdgeIterator : public TeamThreadRangePolicy<TeamMemberType, int> {
 private:
@@ -276,7 +277,7 @@ private:
  * - Provides access to team-level iterator for edge processing
  * - Bridges between chunk-level and point-level operations
  */
-template <specfem::dimension::type DimensionTag, typename ViewType,
+template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename KokkosIndexType>
 class ChunkEdgeIndex {
 private:
@@ -373,17 +374,18 @@ private:
  * // Define parallel configuration
  * using ParallelConfig =
  * specfem::parallel_configuration::default_chunk_edge_config<
- *     specfem::dimension::type::dim2, Kokkos::DefaultExecutionSpace>;
+ *     specfem::element::dimension_tag::dim2, Kokkos::DefaultExecutionSpace>;
  *
  * // Create edge view and initialize
  * constexpr int num_edges = 10000;
  * constexpr int num_points = 5;
- * Kokkos::View<specfem::mesh_entity::edge<specfem::dimension::type::dim2>*>
+ * Kokkos::View<specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>*>
  * edges("edges", num_edges);
  *
  * // Initialize edges with proper element indices and types
  * Kokkos::parallel_for("init_edges", num_edges, KOKKOS_LAMBDA(int i) {
- *     edges(i) = specfem::mesh_entity::edge<specfem::dimension::type::dim2>(i,
+ *     edges(i) =
+ * specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(i,
  * specfem::mesh_entity::dim2::type::top);
  * });
  *

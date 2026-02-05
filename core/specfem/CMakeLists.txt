@@ -2,6 +2,7 @@
 add_subdirectory(algorithms)
 add_subdirectory(assembly)
 add_subdirectory(attenuation)
+add_subdirectory(element)
 add_subdirectory(jacobian)
 add_subdirectory(compute)
 add_subdirectory(io)
@@ -34,6 +35,7 @@ target_link_libraries(specfem_core_interface
         specfem::assembly
         specfem::jacobian
         specfem::compute
+        specfem::element
         specfem::io
         specfem::logger
         specfem::macros

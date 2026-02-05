@@ -3,13 +3,13 @@
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 
-specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
+specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
     std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
         &sources,
     const std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+        specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
         &receivers,
     const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
@@ -93,7 +93,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
 }
 
 std::string
-specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
+specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::print()
+    const {
   std::ostringstream message;
   message << "Assembly information:\n"
           << "------------------------------\n"

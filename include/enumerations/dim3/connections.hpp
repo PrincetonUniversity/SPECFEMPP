@@ -27,7 +27,7 @@ namespace specfem::connections {
  *     mesh_entity::left, mesh_entity::right, 2, 1, 0);
  * @endcode
  */
-template <> class connection_mapping<specfem::dimension::type::dim3> {
+template <> class connection_mapping<specfem::element::dimension_tag::dim3> {
 private:
   /// Kokkos view for element control node indices
   using ElementIndexView =
@@ -35,7 +35,7 @@ private:
 
 public:
   /** @brief Dimension tag for 3D spectral elements */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Construct 3D connection mapping.

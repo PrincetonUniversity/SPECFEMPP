@@ -64,12 +64,12 @@ specfem::runtime_configuration::time_scheme::time_scheme(
 // Explicit template instantiations for dim2 and dim3 assembly fields
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::time_scheme::instantiate<
-    specfem::assembly::fields<specfem::dimension::type::dim2> >(
-    specfem::assembly::fields<specfem::dimension::type::dim2> &fields,
+    specfem::assembly::fields<specfem::element::dimension_tag::dim2> >(
+    specfem::assembly::fields<specfem::element::dimension_tag::dim2> &fields,
     const int nstep_between_samples);
 
 template std::shared_ptr<specfem::time_scheme::time_scheme>
 specfem::runtime_configuration::time_scheme::instantiate<
-    specfem::assembly::fields<specfem::dimension::type::dim3> >(
-    specfem::assembly::fields<specfem::dimension::type::dim3> &fields,
+    specfem::assembly::fields<specfem::element::dimension_tag::dim3> >(
+    specfem::assembly::fields<specfem::element::dimension_tag::dim3> &fields,
     const int nstep_between_samples);

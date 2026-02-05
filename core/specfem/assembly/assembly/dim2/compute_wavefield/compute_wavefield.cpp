@@ -12,7 +12,8 @@ template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void get_wavefield_on_entire_grid(
     const specfem::wavefield::type component,
-    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                  Kokkos::DefaultExecutionSpace>
         wavefield_on_entire_grid) {
@@ -20,13 +21,13 @@ void get_wavefield_on_entire_grid(
   const auto &element_grid = assembly.mesh.element_grid;
 
   if (element_grid == 5) {
-    specfem::assembly::assembly_impl::helper<specfem::dimension::type::dim2,
-                                             MediumTag, PropertyTag, 5>
+    specfem::assembly::assembly_impl::helper<
+        specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, 5>
         helper(assembly, wavefield_on_entire_grid);
     helper(component);
   } else if (element_grid == 8) {
-    specfem::assembly::assembly_impl::helper<specfem::dimension::type::dim2,
-                                             MediumTag, PropertyTag, 8>
+    specfem::assembly::assembly_impl::helper<
+        specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, 8>
         helper(assembly, wavefield_on_entire_grid);
     helper(component);
   } else {
@@ -39,7 +40,7 @@ void get_wavefield_on_entire_grid(
 } // namespace
 
 Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
-specfem::assembly::assembly<specfem::dimension::type::dim2>::
+specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::
     generate_wavefield_on_entire_grid(
         const specfem::simulation::field_type wavefield,
         const specfem::wavefield::type component) {
@@ -94,7 +95,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
        ATTENUATION_TAG(NONE)),
       {
-        if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
+        if constexpr (_dimension_tag_ ==
+                      specfem::element::dimension_tag::dim2) {
           get_wavefield_on_entire_grid<_medium_tag_, _property_tag_>(
               component, *this, wavefield_on_entire_grid);
         }

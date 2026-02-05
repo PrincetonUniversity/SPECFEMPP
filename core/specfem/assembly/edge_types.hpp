@@ -21,7 +21,7 @@ namespace specfem::assembly {
  *
  * @tparam DimensionTag Spatial dimension (2D or 3D)
  */
-template <specfem::dimension::type DimensionTag> struct edge_types;
+template <specfem::element::dimension_tag DimensionTag> struct edge_types;
 
 } // namespace specfem::assembly
 

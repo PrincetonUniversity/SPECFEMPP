@@ -9,10 +9,10 @@
 Dimension-specific Specializations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::assembly::receivers< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::assembly::receivers< specfem::element::dimension_tag::dim2 >
    :members:
 
-.. doxygenstruct:: specfem::assembly::receivers< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::assembly::receivers< specfem::element::dimension_tag::dim3 >
    :members:
 
 Data Access Functions

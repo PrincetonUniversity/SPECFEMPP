@@ -47,11 +47,11 @@ int edge_transform(const std::array<int, 2> &from_nodes,
   }
 }
 
-std::tuple<int, int>
-specfem::connections::connection_mapping<specfem::dimension::type::dim2>::
-    map_coordinates(const specfem::mesh_entity::dim2::type &from,
-                    const specfem::mesh_entity::dim2::type &to, const int iz,
-                    const int ix) const {
+std::tuple<int, int> specfem::connections::
+    connection_mapping<specfem::element::dimension_tag::dim2>::map_coordinates(
+        const specfem::mesh_entity::dim2::type &from,
+        const specfem::mesh_entity::dim2::type &to, const int iz,
+        const int ix) const {
 
   // get nodes associated with edges
   const auto edge1_nodes = get_edge_nodes(from, element1);
@@ -88,10 +88,10 @@ specfem::connections::connection_mapping<specfem::dimension::type::dim2>::
   }(i_prime);
 }
 
-std::tuple<int, int>
-specfem::connections::connection_mapping<specfem::dimension::type::dim2>::
-    map_coordinates(const specfem::mesh_entity::dim2::type &from,
-                    const specfem::mesh_entity::dim2::type &to) const {
+std::tuple<int, int> specfem::connections::
+    connection_mapping<specfem::element::dimension_tag::dim2>::map_coordinates(
+        const specfem::mesh_entity::dim2::type &from,
+        const specfem::mesh_entity::dim2::type &to) const {
   // Implementation of coordinate mapping logic for 2D entities without point
   // specification goes here
   if (!(specfem::mesh_entity::contains(specfem::mesh_entity::dim2::corners,

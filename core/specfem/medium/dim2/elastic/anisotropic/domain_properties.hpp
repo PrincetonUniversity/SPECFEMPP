@@ -31,10 +31,10 @@ namespace specfem::medium_container::properties {
  */
 template <specfem::element::medium_tag MediumTag>
 struct data_container<
-    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::dimension_tag::dim2, MediumTag,
     specfem::element::property_tag::anisotropic,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
   constexpr static auto medium_tag = MediumTag;
   constexpr static auto property_tag =
       specfem::element::property_tag::anisotropic;

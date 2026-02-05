@@ -4,12 +4,12 @@
 
 namespace specfem::assembly::boundary_values_impl {
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::boundary_tag BoundaryTag>
 class boundary_medium_container;
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::boundary_tag BoundaryTag>
 class boundary_value_container;
 

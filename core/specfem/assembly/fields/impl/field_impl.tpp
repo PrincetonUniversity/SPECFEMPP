@@ -4,7 +4,7 @@
 #include "assign_assembly_index_mapping.hpp"
 
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
     const int nglob)
@@ -15,7 +15,7 @@ specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
       mass_inverse_base_type(nglob, "specfem::assembly::fields::mass_inverse") {
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
     const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -38,7 +38,7 @@ specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
   return;
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 template <specfem::sync::kind sync>
 void specfem::assembly::fields_impl::field_impl<

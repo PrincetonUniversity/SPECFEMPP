@@ -7,8 +7,8 @@
 namespace specfem::algorithms::locate_point_impl {
 
 std::tuple<int, int, int> rough_location(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &global,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &global,
     const Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
         coord);
 
@@ -18,26 +18,26 @@ std::vector<int> get_best_candidates(
         index_mapping);
 
 std::tuple<type_real, type_real> get_local_coordinates(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &global,
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &coorg,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &global,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &coorg,
     type_real xi, type_real gamma);
 
 std::pair<type_real, bool> get_local_edge_coordinate(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &global,
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &coorg,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &global,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &coorg,
     const specfem::mesh_entity::dim2::type &mesh_entity, type_real coord);
 
 // Core locate_point logic that can be tested with raw data arrays
-specfem::point::local_coordinates<specfem::dimension::type::dim2>
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
 locate_point_core(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &coordinates,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
     const Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
         &global_coordinates,
     const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
@@ -47,22 +47,21 @@ locate_point_core(
     const int ngnod, const int ngllx);
 
 template <typename GraphType>
-specfem::point::local_coordinates<specfem::dimension::type::dim2>
-locate_point_core(
-    const GraphType &graph,
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &coordinates,
-    const Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
-        &global_coordinates,
-    const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
-        &control_node_coord,
-    const int ngnod);
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
+locate_point_core(const GraphType &graph,
+                  const specfem::point::global_coordinates<
+                      specfem::element::dimension_tag::dim2> &coordinates,
+                  const Kokkos::View<type_real ****, Kokkos::LayoutRight,
+                                     Kokkos::HostSpace> &global_coordinates,
+                  const Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                                     Kokkos::HostSpace> &control_node_coord,
+                  const int ngnod);
 
-specfem::point::local_coordinates<specfem::dimension::type::dim2>
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
 locate_point_from_best_candidates(
     const std::vector<int> &best_candidates,
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
-        &coordinates,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2> &coordinates,
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coord,
     const int ngnod);
@@ -73,10 +72,10 @@ locate_point_from_best_candidates(
 using MeshHostCoordinatesViewType3D =
     Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>;
 
-std::tuple<int, int, int, int> rough_location(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
-        &global,
-    const MeshHostCoordinatesViewType3D coord);
+std::tuple<int, int, int, int>
+rough_location(const specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> &global,
+               const MeshHostCoordinatesViewType3D coord);
 
 std::vector<int> get_best_candidates(
     const int ispec_guess,
@@ -84,18 +83,18 @@ std::vector<int> get_best_candidates(
         index_mapping);
 
 std::tuple<type_real, type_real, type_real> get_local_coordinates(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
-        &global,
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace> &coorg,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &global,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim3> *,
+                       Kokkos::HostSpace> &coorg,
     type_real xi, type_real eta, type_real gamma);
 
 // Core locate_point logic that can be tested with raw data arrays
-specfem::point::local_coordinates<specfem::dimension::type::dim3>
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
 locate_point_core(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
-        &coordinates,
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
     const MeshHostCoordinatesViewType3D &global_coordinates,
     const Kokkos::View<int ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &index_mapping,

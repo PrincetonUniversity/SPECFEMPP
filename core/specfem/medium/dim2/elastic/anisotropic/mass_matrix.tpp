@@ -6,15 +6,15 @@
 // therefore not needed.
 
 // template <bool UseSIMD, specfem::element::property_tag PropertyTag>
-// KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
+// KOKKOS_FUNCTION specfem::point::field<specfem::element::dimension_tag::dim2,
 //                                       specfem::element::medium_tag::elastic,
 //                                       false, false, false, true, UseSIMD>
 // specfem::medium_physics::impl_mass_matrix_component(
 //     const specfem::point::properties<
-//         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+//         specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic,
 //         PropertyTag, UseSIMD> &properties,
 //     const specfem::point::jacobian_matrix<
-//         specfem::dimension::type::dim2, true, UseSIMD> &jacobian_matrix) {
+//         specfem::element::dimension_tag::dim2, true, UseSIMD> &jacobian_matrix) {
 
 //   if constexpr (specfem::globals::simulation_wave == specfem::wave::p_sv) {
 //     return specfem::datatype::VectorPointViewType<type_real, 2, UseSIMD>(

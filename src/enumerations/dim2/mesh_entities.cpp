@@ -95,46 +95,15 @@ std::vector<int> specfem::mesh_entity::nodes_on_orientation(
   }
 }
 
-specfem::mesh_entity::element<specfem::dimension::type::dim2>::element(
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::element(
     const int ngllz, const int ngllx)
-    : base(ngllz, ngllx) {
+    : base(ngllz, ngllx) {}
 
-  // corner coordinates
-  corner_coordinates[specfem::mesh_entity::dim2::type::top_left] =
-      std::make_tuple(ngllz - 1, 0);
-  corner_coordinates[specfem::mesh_entity::dim2::type::top_right] =
-      std::make_tuple(ngllz - 1, ngllx - 1);
-  corner_coordinates[specfem::mesh_entity::dim2::type::bottom_right] =
-      std::make_tuple(0, ngllx - 1);
-  corner_coordinates[specfem::mesh_entity::dim2::type::bottom_left] =
-      std::make_tuple(0, 0);
-
-  // coordinates along edges
-  // The element is defined as (z, x) in 2D
-  // Where the diagram is as follows:
-  // 3 --- 2
-  // |     |
-  // |     |
-  // 0 --- 1
-
-  edge_coordinates[specfem::mesh_entity::dim2::type::top] =
-      [ngllx, ngllz](int point) { return std::make_tuple(ngllz - 1, point); };
-
-  edge_coordinates[specfem::mesh_entity::dim2::type::bottom] =
-      [ngllx, ngllz](int point) { return std::make_tuple(0, point); };
-
-  edge_coordinates[specfem::mesh_entity::dim2::type::left] =
-      [ngllx, ngllz](int point) { return std::make_tuple(point, 0); };
-
-  edge_coordinates[specfem::mesh_entity::dim2::type::right] =
-      [ngllx, ngllz](int point) { return std::make_tuple(point, ngllx - 1); };
-}
-
-specfem::mesh_entity::element<specfem::dimension::type::dim2>::element(
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::element(
     const int ngll)
     : element(ngll, ngll) {}
 
-int specfem::mesh_entity::element<specfem::dimension::type::dim2>::
+int specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::
     number_of_points_on_orientation(
         const specfem::mesh_entity::dim2::type &entity) const {
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::edges,
@@ -151,10 +120,14 @@ int specfem::mesh_entity::element<specfem::dimension::type::dim2>::
 }
 
 std::tuple<int, int>
-specfem::mesh_entity::element<specfem::dimension::type::dim2>::map_coordinates(
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::map_coordinates(
     const specfem::mesh_entity::dim2::type &entity, const int point) const {
-  if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::edges, entity))
-    return edge_coordinates.at(entity)(point);
+  if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::edges,
+                                     entity)) {
+    int iz, ix;
+    get_edge_coordinates(entity, point, iz, ix);
+    return std::make_tuple(iz, ix);
+  }
 
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::corners,
                                      entity)) {
@@ -167,11 +140,13 @@ specfem::mesh_entity::element<specfem::dimension::type::dim2>::map_coordinates(
 }
 
 std::tuple<int, int>
-specfem::mesh_entity::element<specfem::dimension::type::dim2>::map_coordinates(
-    const specfem::mesh_entity::dim2::type &corner) const {
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::
+    map_coordinates(const specfem::mesh_entity::dim2::type &corner) const {
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::corners,
                                      corner)) {
-    return corner_coordinates.at(corner);
+    int iz, ix;
+    get_corner_coordinates(corner, iz, ix);
+    return std::make_tuple(iz, ix);
   }
 
   throw std::runtime_error("The argument is not a corner entity");

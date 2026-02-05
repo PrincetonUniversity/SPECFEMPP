@@ -295,9 +295,8 @@ TEST_F(LocatePoint3D, CoreUnitCube) {
 
   // Test point at center of unit cube (0.5, 0.5, 0.5)
   // Should map to local coordinates (0, 0, 0)
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> target = {
-    0.5, 0.5, 0.5
-  };
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      target = { 0.5, 0.5, 0.5 };
 
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
@@ -347,9 +346,8 @@ TEST_F(LocatePoint3D, LocatePoint3DCoreTwoAdjacentElements) {
   auto geom = create_two_adjacent_elements_3d_2x2x2();
 
   // Test point in left element (0.25, 0.25, 0.25)
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> target = {
-    0.25, 0.25, 0.25
-  };
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      target = { 0.25, 0.25, 0.25 };
 
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
@@ -396,9 +394,8 @@ TEST_F(LocatePoint3D, Core2x2x2Grid) {
   // Test points in different elements
 
   // Element 0: (0.5, 0.5, 0.5)
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> target = {
-    0.5, 0.5, 0.5
-  };
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      target = { 0.5, 0.5, 0.5 };
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
       geom.ngnod, geom.ngllx);
@@ -437,9 +434,8 @@ TEST_F(LocatePoint3D, CoreOutsideMesh) {
   auto geom = create_single_unit_cube_2x2x2();
 
   // Point outside mesh should throw exception
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> target = {
-    2.0, 2.0, 2.0
-  };
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      target = { 2.0, 2.0, 2.0 };
 
   {
     bool captured = false;
@@ -462,7 +458,7 @@ TEST_F(LocatePoint3D, RoughLocationSimple3D) {
   auto geom = create_two_adjacent_elements_3d_2x2x2();
 
   // Test point close to (0.1, 0.1, 0.1) - should find element 0
-  specfem::point::global_coordinates<specfem::dimension::type::dim3>
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
       test_point = { 0.1, 0.1, 0.1 };
 
   auto [ix, iy, iz, ispec] =
@@ -507,9 +503,9 @@ TEST_F(LocatePoint3D, GetLocalCoordinatesUnitCube) {
 
   // Create control node coordinates view for the single element
   const int ngnod = 8;
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim3> *,
+                     Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Unit cube control nodes [0,1] x [0,1] x [0,1]
@@ -524,9 +520,8 @@ TEST_F(LocatePoint3D, GetLocalCoordinatesUnitCube) {
 
   // Test point at center of unit cube (0.5, 0.5, 0.5)
   // Should map to local coordinates (0, 0, 0)
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> target = {
-    0.5, 0.5, 0.5
-  };
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      target = { 0.5, 0.5, 0.5 };
 
   type_real xi_initial = 0.1;
   type_real eta_initial = 0.1;
@@ -579,9 +574,8 @@ TEST_F(LocatePoint3D, Core3x3x3UnitCube) {
 
   // Test point at center of unit cube (0.5, 0.5, 0.5)
   // Should map to local coordinates (0, 0, 0)
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> target = {
-    0.5, 0.5, 0.5
-  };
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      target = { 0.5, 0.5, 0.5 };
 
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
@@ -618,9 +612,8 @@ TEST_F(LocatePoint3D, Core27NodeElement) {
 
   // Test point at center of unit cube (0.5, 0.5, 0.5)
   // Should map to local coordinates (0, 0, 0)
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> target = {
-    0.5, 0.5, 0.5
-  };
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      target = { 0.5, 0.5, 0.5 };
 
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,
@@ -644,9 +637,8 @@ TEST_F(LocatePoint3D, Core3x3x3With27Node) {
 
   // Test point at center of unit cube (0.5, 0.5, 0.5)
   // Should map to local coordinates (0, 0, 0)
-  specfem::point::global_coordinates<specfem::dimension::type::dim3> target = {
-    0.5, 0.5, 0.5
-  };
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
+      target = { 0.5, 0.5, 0.5 };
 
   auto result = specfem::algorithms::locate_point_impl::locate_point_core(
       target, geom.global_coords, geom.index_mapping, geom.control_nodes,

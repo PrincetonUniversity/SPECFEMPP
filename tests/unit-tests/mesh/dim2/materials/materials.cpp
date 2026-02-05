@@ -12,21 +12,21 @@ const static std::unordered_map<std::string, MaterialVectorType>
     material_ground_truth = {
       { "Simple mesh with flat topography (P_SV wave)",
         MaterialVectorType({ specfem::medium_container::material<
-            specfem::dimension::type::dim2,
+            specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::elastic_psv,
             specfem::element::property_tag::isotropic,
             specfem::element::attenuation_tag::none>(2700.0, 1732.051, 3000.0,
                                                      0.0) }) },
       { "Simple mesh with flat topography (SH wave)",
         MaterialVectorType({ specfem::medium_container::material<
-            specfem::dimension::type::dim2,
+            specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::elastic_sh,
             specfem::element::property_tag::isotropic,
             specfem::element::attenuation_tag::none>(2700.0, 1732.051, 3000.0,
                                                      0.0) }) },
       { "Simple mesh with curved topography",
         MaterialVectorType({ specfem::medium_container::material<
-            specfem::dimension::type::dim2,
+            specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::elastic_psv,
             specfem::element::property_tag::isotropic,
             specfem::element::attenuation_tag::none>(2700.0, 1732.051, 3000.0,
@@ -34,13 +34,13 @@ const static std::unordered_map<std::string, MaterialVectorType>
       { "Simple mesh with flat ocean bottom",
         MaterialVectorType(
             { specfem::medium_container::material<
-                  specfem::dimension::type::dim2,
+                  specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::elastic_psv,
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::none>(2500.0, 1963.0,
                                                            3400.0, 0.0),
               specfem::medium_container::material<
-                  specfem::dimension::type::dim2,
+                  specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::none>(1020.0, 1500, 0.0)
@@ -65,13 +65,13 @@ const static std::unordered_map<std::string, MaterialVectorType>
       { "Simple mesh with curved ocean bottom",
         MaterialVectorType(
             { specfem::medium_container::material<
-                  specfem::dimension::type::dim2,
+                  specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::elastic_psv,
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::none>(2500.0, 1963.0,
                                                            3400.0, 0.0),
               specfem::medium_container::material<
-                  specfem::dimension::type::dim2,
+                  specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::none>(1020.0, 1500, 0.0)
@@ -80,12 +80,12 @@ const static std::unordered_map<std::string, MaterialVectorType>
       { "Gmesh Example",
         MaterialVectorType(
             { specfem::medium_container::material<
-                  specfem::dimension::type::dim2,
+                  specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::none>(2000.0, 1680.0, 0.0),
               specfem::medium_container::material<
-                  specfem::dimension::type::dim2,
+                  specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::none>(1000.0, 1477.0,
@@ -93,7 +93,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
 
       { "Homogeneous Elastic Anisotropic Material (P_SV wave)",
         MaterialVectorType({ specfem::medium_container::material<
-            specfem::dimension::type::dim2,
+            specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::elastic_psv,
             specfem::element::property_tag::anisotropic,
             specfem::element::attenuation_tag::none>(
@@ -101,7 +101,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
             8100001799.8227, 8099996400.35, 8099996400.35, 0.0) }) },
       { "Homogeneous Elastic Anisotropic Material (SH wave)",
         MaterialVectorType({ specfem::medium_container::material<
-            specfem::dimension::type::dim2,
+            specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::elastic_sh,
             specfem::element::property_tag::anisotropic,
             specfem::element::attenuation_tag::none>(
@@ -109,7 +109,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
             8100001799.8227, 8099996400.35, 8099996400.35, 0.0) }) },
       { "Poroelastic mesh - Homogeneous isotropic material",
         MaterialVectorType({ specfem::medium_container::material<
-            specfem::dimension::type::dim2,
+            specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::poroelastic,
             specfem::element::property_tag::isotropic,
             specfem::element::attenuation_tag::none>(
@@ -126,7 +126,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
       { "Electro-magnetic mesh example from Morency 2020",
         MaterialVectorType(
             { specfem::medium_container::material<
-                  specfem::dimension::type::dim2,
+                  specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::electromagnetic_te,
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::none>(
@@ -134,7 +134,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
                   2.0 * std::pow(10, -3), 2.0 * std::pow(10, -3), 90.0, 90.0,
                   90.0, 90.0),
               specfem::medium_container::material<
-                  specfem::dimension::type::dim2,
+                  specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::electromagnetic_te,
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::none>(
@@ -143,7 +143,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
                   90.0, 90.0) }) },
       { "Elastic Isotropic Cosserat Medium - Homogeneous",
         MaterialVectorType({ specfem::medium_container::material<
-            specfem::dimension::type::dim2,
+            specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::elastic_psv_t,
             specfem::element::property_tag::isotropic_cosserat,
             specfem::element::attenuation_tag::none>(
@@ -151,7 +151,8 @@ const static std::unordered_map<std::string, MaterialVectorType>
     };
 
 void check_material(
-    const specfem::mesh::materials<specfem::dimension::type::dim2> &computed,
+    const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
+        &computed,
     const MaterialVectorType &expected) {
 
   if (computed.n_materials != expected.size()) {

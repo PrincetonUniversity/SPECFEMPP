@@ -82,7 +82,7 @@ specfem::runtime_configuration::wavefield::wavefield(
   return;
 }
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
 specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
     const {
@@ -128,7 +128,7 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
   return writer;
 }
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
 specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
     const {
@@ -170,12 +170,12 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
 }
 
 // Explicit template instantiations
-template std::shared_ptr<
-    specfem::periodic_tasks::periodic_task<specfem::dimension::type::dim2> >
+template std::shared_ptr<specfem::periodic_tasks::periodic_task<
+    specfem::element::dimension_tag::dim2> >
 specfem::runtime_configuration::wavefield::instantiate_wavefield_writer<
-    specfem::dimension::type::dim2>() const;
+    specfem::element::dimension_tag::dim2>() const;
 
-template std::shared_ptr<
-    specfem::periodic_tasks::periodic_task<specfem::dimension::type::dim2> >
+template std::shared_ptr<specfem::periodic_tasks::periodic_task<
+    specfem::element::dimension_tag::dim2> >
 specfem::runtime_configuration::wavefield::instantiate_wavefield_reader<
-    specfem::dimension::type::dim2>() const;
+    specfem::element::dimension_tag::dim2>() const;

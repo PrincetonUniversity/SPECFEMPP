@@ -1,6 +1,6 @@
 #include "specfem/io/mesh/impl/fortran/dim2/read_material_properties.hpp"
-#include "enumerations/dimension.hpp"
 #include "enumerations/interface.hpp"
+#include "specfem/element.hpp"
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
@@ -34,12 +34,12 @@ struct input_holder {
 };
 
 std::vector<specfem::mesh::materials<
-    specfem::dimension::type::dim2>::material_specification>
-read_materials(
-    std::ifstream &stream, const int numat,
-    const specfem::enums::elastic_wave elastic_wave,
-    const specfem::enums::electromagnetic_wave electromagnetic_wave,
-    specfem::mesh::materials<specfem::dimension::type::dim2> &materials) {
+    specfem::element::dimension_tag::dim2>::material_specification>
+read_materials(std::ifstream &stream, const int numat,
+               const specfem::enums::elastic_wave elastic_wave,
+               const specfem::enums::electromagnetic_wave electromagnetic_wave,
+               specfem::mesh::materials<specfem::element::dimension_tag::dim2>
+                   &materials) {
 
   // Define the elastic medium tag based on input elastic wave type
   const specfem::element::medium_tag elastic = [elastic_wave]() {
@@ -73,7 +73,7 @@ read_materials(
   std::ostringstream message;
 
   std::vector<specfem::mesh::materials<
-      specfem::dimension::type::dim2>::material_specification>
+      specfem::element::dimension_tag::dim2>::material_specification>
       index_mapping(numat);
 
   message << "Material systems:\n"
@@ -84,7 +84,7 @@ read_materials(
       "Number of material systems = " + std::to_string(numat) + "\n\n");
 
   using MaterialsType =
-      specfem::mesh::materials<specfem::dimension::type::dim2>;
+      specfem::mesh::materials<specfem::element::dimension_tag::dim2>;
 
   std::vector<typename MaterialsType::material_specification> mapping;
 
@@ -130,7 +130,7 @@ read_materials(
         if (std::abs(Qkappa - 9999.0) < 1e-6) {
           auto index = materials.add_material(
               specfem::medium_container::material<
-                  specfem::dimension::type::dim2, acoustic, isotropic,
+                  specfem::element::dimension_tag::dim2, acoustic, isotropic,
                   no_attenuation>(density, cp, compaction_grad));
           mapping.push_back({ specfem::element::medium_tag::acoustic,
                               specfem::element::property_tag::isotropic,
@@ -138,11 +138,11 @@ read_materials(
                               i });
 
         } else {
-          auto index =
-              materials.add_material(specfem::medium_container::material<
-                                     specfem::dimension::type::dim2, acoustic,
-                                     isotropic, constant_isotropic_attenuation>(
-                  density, cp, Qkappa, compaction_grad));
+          auto index = materials.add_material(
+              specfem::medium_container::material<
+                  specfem::element::dimension_tag::dim2, acoustic, isotropic,
+                  constant_isotropic_attenuation>(density, cp, Qkappa,
+                                                  compaction_grad));
           mapping.push_back(
               { specfem::element::medium_tag::acoustic,
                 specfem::element::property_tag::isotropic,
@@ -163,19 +163,21 @@ read_materials(
         if (std::abs(Qmu - 9999.0) < 1e-6 && std::abs(Qkappa - 9999.0) < 1e-6) {
 
           if (elastic_wave == specfem::enums::elastic_wave::psv) {
-            auto index = materials.add_material(
-                specfem::medium_container::material<
-                    specfem::dimension::type::dim2, elastic_psv, isotropic,
-                    no_attenuation>(density, cs, cp, compaction_grad));
+            auto index =
+                materials.add_material(specfem::medium_container::material<
+                                       specfem::element::dimension_tag::dim2,
+                                       elastic_psv, isotropic, no_attenuation>(
+                    density, cs, cp, compaction_grad));
             mapping.push_back({ specfem::element::medium_tag::elastic_psv,
                                 specfem::element::property_tag::isotropic,
                                 specfem::element::attenuation_tag::none, index,
                                 i });
           } else {
-            auto index = materials.add_material(
-                specfem::medium_container::material<
-                    specfem::dimension::type::dim2, elastic_sh, isotropic,
-                    no_attenuation>(density, cs, cp, compaction_grad));
+            auto index =
+                materials.add_material(specfem::medium_container::material<
+                                       specfem::element::dimension_tag::dim2,
+                                       elastic_sh, isotropic, no_attenuation>(
+                    density, cs, cp, compaction_grad));
 
             mapping.push_back({ specfem::element::medium_tag::elastic_sh,
                                 specfem::element::property_tag::isotropic,
@@ -187,9 +189,9 @@ read_materials(
           if (elastic_wave == specfem::enums::elastic_wave::psv) {
             auto index = materials.add_material(
                 specfem::medium_container::material<
-                    specfem::dimension::type::dim2, elastic_psv, isotropic,
-                    constant_isotropic_attenuation>(density, cs, cp, Qkappa,
-                                                    Qmu, compaction_grad));
+                    specfem::element::dimension_tag::dim2, elastic_psv,
+                    isotropic, constant_isotropic_attenuation>(
+                    density, cs, cp, Qkappa, Qmu, compaction_grad));
             mapping.push_back(
                 { specfem::element::medium_tag::elastic_psv,
                   specfem::element::property_tag::isotropic,
@@ -198,9 +200,9 @@ read_materials(
           } else {
             auto index = materials.add_material(
                 specfem::medium_container::material<
-                    specfem::dimension::type::dim2, elastic_sh, isotropic,
-                    constant_isotropic_attenuation>(density, cs, cp, Qkappa,
-                                                    Qmu, compaction_grad));
+                    specfem::element::dimension_tag::dim2, elastic_sh,
+                    isotropic, constant_isotropic_attenuation>(
+                    density, cs, cp, Qkappa, Qmu, compaction_grad));
             mapping.push_back(
                 { specfem::element::medium_tag::elastic_sh,
                   specfem::element::property_tag::isotropic,
@@ -230,7 +232,7 @@ read_materials(
         if (elastic_wave == specfem::enums::elastic_wave::psv) {
           auto index =
               materials.add_material(specfem::medium_container::material<
-                                     specfem::dimension::type::dim2,
+                                     specfem::element::dimension_tag::dim2,
                                      elastic_psv, anisotropic, no_attenuation>(
                   density, c11, c13, c15, c33, c35, c55, c12, c23, c25));
           mapping.push_back({ specfem::element::medium_tag::elastic_psv,
@@ -241,8 +243,8 @@ read_materials(
 
           auto index =
               materials.add_material(specfem::medium_container::material<
-                                     specfem::dimension::type::dim2, elastic_sh,
-                                     anisotropic, no_attenuation>(
+                                     specfem::element::dimension_tag::dim2,
+                                     elastic_sh, anisotropic, no_attenuation>(
                   density, c11, c13, c15, c33, c35, c55, c12, c23, c25));
           mapping.push_back({ specfem::element::medium_tag::elastic_sh,
                               specfem::element::property_tag::anisotropic,
@@ -254,10 +256,10 @@ read_materials(
         if (elastic_wave == specfem::enums::elastic_wave::psv) {
           auto index = materials.add_material(
               specfem::medium_container::material<
-                  specfem::dimension::type::dim2, elastic_psv, anisotropic,
-                  constant_isotropic_attenuation>(density, c11, c13, c15, c33,
-                                                  c35, c55, c12, c23, c25,
-                                                  Qkappa, Qmu));
+                  specfem::element::dimension_tag::dim2, elastic_psv,
+                  anisotropic, constant_isotropic_attenuation>(
+                  density, c11, c13, c15, c33, c35, c55, c12, c23, c25, Qkappa,
+                  Qmu));
           mapping.push_back(
               { specfem::element::medium_tag::elastic_psv,
                 specfem::element::property_tag::anisotropic,
@@ -266,10 +268,10 @@ read_materials(
         } else {
           auto index = materials.add_material(
               specfem::medium_container::material<
-                  specfem::dimension::type::dim2, elastic_sh, anisotropic,
-                  constant_isotropic_attenuation>(density, c11, c13, c15, c33,
-                                                  c35, c55, c12, c23, c25,
-                                                  Qkappa, Qmu));
+                  specfem::element::dimension_tag::dim2, elastic_sh,
+                  anisotropic, constant_isotropic_attenuation>(
+                  density, c11, c13, c15, c33, c35, c55, c12, c23, c25, Qkappa,
+                  Qmu));
           mapping.push_back(
               { specfem::element::medium_tag::elastic_sh,
                 specfem::element::property_tag::anisotropic,
@@ -293,10 +295,10 @@ read_materials(
       const type_real Qmu = static_cast<type_real>(read_values.val12);
 
       if (std::abs(Qmu - 9999.0) < 1e-6) {
-        auto index = materials.add_material(
-            specfem::medium_container::material<specfem::dimension::type::dim2,
-                                                poroelastic, isotropic,
-                                                no_attenuation>(
+        auto index =
+            materials.add_material(specfem::medium_container::material<
+                                   specfem::element::dimension_tag::dim2,
+                                   poroelastic, isotropic, no_attenuation>(
                 rhos, rhof, phi, c, kxx, kxz, kzz, Ks, Kf, Kfr, etaf, mufr));
         mapping.push_back({ specfem::element::medium_tag::poroelastic,
                             specfem::element::property_tag::isotropic,
@@ -304,11 +306,11 @@ read_materials(
                             i });
       } else {
         auto index = materials.add_material(
-            specfem::medium_container::material<specfem::dimension::type::dim2,
-                                                poroelastic, isotropic,
-                                                constant_isotropic_attenuation>(
-                rhos, rhof, phi, c, kxx, kxz, kzz, Ks, Kf, Kfr, etaf, mufr,
-                Qmu));
+            specfem::medium_container::material<
+                specfem::element::dimension_tag::dim2, poroelastic, isotropic,
+                constant_isotropic_attenuation>(rhos, rhof, phi, c, kxx, kxz,
+                                                kzz, Ks, Kf, Kfr, etaf, mufr,
+                                                Qmu));
         mapping.push_back(
             { specfem::element::medium_tag::poroelastic,
               specfem::element::property_tag::isotropic,
@@ -330,10 +332,10 @@ read_materials(
 
       if (electromagnetic_wave == specfem::enums::electromagnetic_wave::te) {
         auto index = materials.add_material(
-            specfem::medium_container::material<specfem::dimension::type::dim2,
-                                                electromagnetic_te, isotropic,
-                                                no_attenuation>(
-                mu0, e0, e11, e33, sig11, sig33, Qe11, Qe33, Qs11, Qs33));
+            specfem::medium_container::material<
+                specfem::element::dimension_tag::dim2, electromagnetic_te,
+                isotropic, no_attenuation>(mu0, e0, e11, e33, sig11, sig33,
+                                           Qe11, Qe33, Qs11, Qs33));
 
         mapping.push_back({ specfem::element::medium_tag::electromagnetic_te,
                             specfem::element::property_tag::isotropic,
@@ -354,7 +356,7 @@ read_materials(
 
         auto index = materials.add_material(
             specfem::medium_container::material<
-                specfem::dimension::type::dim2, elastic_psv_t,
+                specfem::element::dimension_tag::dim2, elastic_psv_t,
                 isotropic_cosserat, no_attenuation>(rho, kappa, mu, nu, j,
                                                     lambda_c, mu_c, nu_c));
         mapping.push_back({ specfem::element::medium_tag::elastic_psv_t,
@@ -395,9 +397,10 @@ read_materials(
 void read_material_indices(
     std::ifstream &stream, const int nspec, const int numat,
     const std::vector<specfem::mesh::materials<
-        specfem::dimension::type::dim2>::material_specification> &index_mapping,
+        specfem::element::dimension_tag::dim2>::material_specification>
+        &index_mapping,
     const specfem::kokkos::HostView1d<specfem::mesh::materials<
-        specfem::dimension::type::dim2>::material_specification>
+        specfem::element::dimension_tag::dim2>::material_specification>
         material_index_mapping,
     const specfem::kokkos::HostView2d<int> knods) {
 
@@ -442,7 +445,7 @@ void read_material_indices(
   return;
 }
 
-specfem::mesh::materials<specfem::dimension::type::dim2>
+specfem::mesh::materials<specfem::element::dimension_tag::dim2>
 specfem::io::mesh::impl::fortran::dim2::read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
     const specfem::enums::elastic_wave elastic_wave,
@@ -450,7 +453,8 @@ specfem::io::mesh::impl::fortran::dim2::read_material_properties(
     const specfem::kokkos::HostView2d<int> knods) {
 
   // Create materials instances
-  specfem::mesh::materials<specfem::dimension::type::dim2> materials(nspec);
+  specfem::mesh::materials<specfem::element::dimension_tag::dim2> materials(
+      nspec);
 
   // Read material properties
   auto index_mapping = read_materials(stream, numat, elastic_wave,

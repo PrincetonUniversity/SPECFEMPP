@@ -21,13 +21,13 @@
  * @brief Dimension tag for 2D
  */
 #define DIMENSION_TAG_DIM2                                                     \
-  (0, specfem::dimension::type::dim2, dim2, _ENUM_ID_DIMENSION_TAG)
+  (0, specfem::element::dimension_tag::dim2, dim2, _ENUM_ID_DIMENSION_TAG)
 
 /**
  * @brief Dimension tag for 3D
  */
 #define DIMENSION_TAG_DIM3                                                     \
-  (1, specfem::dimension::type::dim3, dim3, _ENUM_ID_DIMENSION_TAG)
+  (1, specfem::element::dimension_tag::dim3, dim3, _ENUM_ID_DIMENSION_TAG)
 /** @} */
 
 /**

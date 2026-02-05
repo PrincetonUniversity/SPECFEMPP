@@ -29,7 +29,7 @@ namespace specfem::compute {
  * @return int Number of elements updated
  */
 template <specfem::simulation::field_type WavefieldType,
-          specfem::dimension::type DimensionTag, int NGLL,
+          specfem::element::dimension_tag DimensionTag, int NGLL,
           specfem::element::medium_tag MediumTag>
 int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
                       const int istep) {
@@ -105,9 +105,10 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
 
 #define EXPLICIT_INSTANTIATION_UPDATE_WAVEFIELDS(FIELD, DIM, NGLL, MEDIUM)     \
   template int specfem::compute::update_wavefields<                            \
-      specfem::simulation::field_type::FIELD, specfem::dimension::type::DIM,   \
-      NGLL, specfem::element::medium_tag::MEDIUM>(                             \
-      specfem::assembly::assembly<specfem::dimension::type::DIM> &,            \
+      specfem::simulation::field_type::FIELD,                                  \
+      specfem::element::dimension_tag::DIM, NGLL,                              \
+      specfem::element::medium_tag::MEDIUM>(                                   \
+      specfem::assembly::assembly<specfem::element::dimension_tag::DIM> &,     \
       const int);
 
 #define INSTANTIATE_ALL_FIELDS(DIM, NGLL, MEDIUM)                              \

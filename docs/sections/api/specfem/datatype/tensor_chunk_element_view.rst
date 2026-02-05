@@ -13,13 +13,13 @@ Dimension-Specific Specializations
 2D Specialization
 ^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::datatype::TensorChunkElementViewType< T, specfem::dimension::type::dim2, NumberOfElements, NumberOfGLLPoints, Components, NumberOfDimensions, UseSIMD, MemorySpace, MemoryTraits >
+.. doxygenstruct:: specfem::datatype::TensorChunkElementViewType< T, specfem::element::dimension_tag::dim2, NumberOfElements, NumberOfGLLPoints, Components, NumberOfDimensions, UseSIMD, MemorySpace, MemoryTraits >
     :members:
     :private-members:
 
 3D Specialization
 ^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::datatype::TensorChunkElementViewType< T, specfem::dimension::type::dim3, NumberOfElements, NumberOfGLLPoints, Components, NumberOfDimensions, UseSIMD, MemorySpace, MemoryTraits >
+.. doxygenstruct:: specfem::datatype::TensorChunkElementViewType< T, specfem::element::dimension_tag::dim3, NumberOfElements, NumberOfGLLPoints, Components, NumberOfDimensions, UseSIMD, MemorySpace, MemoryTraits >
     :members:
     :private-members:

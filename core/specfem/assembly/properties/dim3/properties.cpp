@@ -4,10 +4,11 @@
 #include "specfem/assembly/impl/domain_properties.tpp"
 #include "specfem/assembly/mesh.hpp"
 
-specfem::assembly::properties<specfem::dimension::type::dim3>::properties(
-    const int nspec, const int ngllz, const int nglly, const int ngllx,
-    const specfem::mesh::materials<dimension_tag> &materials,
-    const specfem::assembly::element_types<dimension_tag> &element_types) {
+specfem::assembly::properties<specfem::element::dimension_tag::dim3>::
+    properties(
+        const int nspec, const int ngllz, const int nglly, const int ngllx,
+        const specfem::mesh::materials<dimension_tag> &materials,
+        const specfem::assembly::element_types<dimension_tag> &element_types) {
   this->nspec = nspec;
   this->ngllz = ngllz;
   this->nglly = nglly;

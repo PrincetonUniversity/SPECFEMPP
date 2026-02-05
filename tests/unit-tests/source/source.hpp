@@ -9,13 +9,13 @@
 #include <gtest/gtest.h>
 #include <type_traits>
 
-template <specfem::dimension::type DimensionTag, typename SourceType>
+template <specfem::element::dimension_tag DimensionTag, typename SourceType>
 struct source_parameters;
 
-template <specfem::dimension::type DimensionTag, typename SourceType>
+template <specfem::element::dimension_tag DimensionTag, typename SourceType>
 struct source_solution;
 
-template <specfem::dimension::type DimensionTag, typename SourceType>
+template <specfem::element::dimension_tag DimensionTag, typename SourceType>
 std::vector<std::tuple<source_parameters<DimensionTag, SourceType>,
                        source_solution<DimensionTag, SourceType> > >
 get_parameters_and_solutions();
@@ -48,19 +48,19 @@ public:
 
 // Factory function template declaration - needs to be specialized for each
 // source type
-template <specfem::dimension::type DimensionTag, typename SourceType>
+template <specfem::element::dimension_tag DimensionTag, typename SourceType>
 SourceType
 create_source(const source_parameters<DimensionTag, SourceType> &parameters);
 
 // Generic test function implementation
-template <specfem::dimension::type DimensionTag, typename SourceType>
+template <specfem::element::dimension_tag DimensionTag, typename SourceType>
 void test_source(const source_parameters<DimensionTag, SourceType> &parameters,
                  const source_solution<DimensionTag, SourceType> &solution) {
   // Add to trace for easier debugging
   std::cout << "Testing source: " << parameters.name << "\n"
             << "  Coordinates: \n"
             << "    x = " << type_real(parameters.x) << "\n";
-  if constexpr (DimensionTag == specfem::dimension::type::dim3) {
+  if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
     std::cout << "    y = " << type_real(parameters.y) << "\n";
   }
   std::cout << "    z = " << type_real(parameters.z) << "\n"
@@ -78,7 +78,7 @@ void test_source(const source_parameters<DimensionTag, SourceType> &parameters,
   const auto global_coords = source.get_global_coordinates();
   EXPECT_REAL_EQ(global_coords.x, parameters.x);
   EXPECT_REAL_EQ(global_coords.z, parameters.z);
-  if constexpr (DimensionTag == specfem::dimension::type::dim3) {
+  if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
     EXPECT_REAL_EQ(global_coords.y, parameters.y);
   }
 

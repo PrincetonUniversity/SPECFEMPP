@@ -1,7 +1,7 @@
 #include "specfem/assembly/assembly.hpp"
 
 void specfem::assembly::assembly<
-    specfem::dimension::type::dim3>::check_jacobian_matrix() const {
+    specfem::element::dimension_tag::dim3>::check_jacobian_matrix() const {
   const auto [found, small_jacobian] =
       this->jacobian_matrix.check_small_jacobian();
 

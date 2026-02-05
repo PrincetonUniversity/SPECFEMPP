@@ -5,7 +5,7 @@
 
 template <>
 void specfem::mesh::adjacency_graph<
-    specfem::dimension::type::dim2>::assert_symmetry() const {
+    specfem::element::dimension_tag::dim2>::assert_symmetry() const {
   const auto &g = this->graph();
 
   for (const auto &edge : boost::make_iterator_range(boost::edges(g))) {

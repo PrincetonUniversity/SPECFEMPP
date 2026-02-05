@@ -23,13 +23,14 @@
 #include <tuple>
 #include <vector>
 
-specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
+specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
+specfem::io::read_2d_mesh(
     const std::string &filename,
     const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave) {
 
   // Declaring empty mesh objects
-  specfem::mesh::mesh<specfem::dimension::type::dim2> mesh;
+  specfem::mesh::mesh<specfem::element::dimension_tag::dim2> mesh;
 
   // Open the database file
   std::ifstream stream;
@@ -211,7 +212,7 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
     throw std::runtime_error(message.str());
   }
 
-  mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
+  mesh.tags = specfem::mesh::tags<specfem::element::dimension_tag::dim2>(
       mesh.materials, mesh.boundaries);
 
   mesh.check_consistency();

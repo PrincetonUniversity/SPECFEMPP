@@ -36,7 +36,7 @@ namespace specfem::assembly {
  *
  * @code
  * // Typical usage in 3D assembly construction
- * specfem::assembly::properties<specfem::dimension::type::dim3> props(
+ * specfem::assembly::properties<specfem::element::dimension_tag::dim3> props(
  *     nspec, ngllz, nglly, ngllx, materials, element_types);
  *
  * // Access 3D material properties at quadrature points
@@ -44,8 +44,8 @@ namespace specfem::assembly {
  * @endcode
  */
 template <>
-struct properties<specfem::dimension::type::dim3>
-    : public impl::value_containers<specfem::dimension::type::dim3,
+struct properties<specfem::element::dimension_tag::dim3>
+    : public impl::value_containers<specfem::element::dimension_tag::dim3,
                                     impl::domain_properties> {
 
   /**

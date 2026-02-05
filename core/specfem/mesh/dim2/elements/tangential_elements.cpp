@@ -2,7 +2,8 @@
 #include "enumerations/interface.hpp"
 #include "specfem/io.hpp"
 
-specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>::
+specfem::mesh::elements::tangential_elements<
+    specfem::element::dimension_tag::dim2>::
     tangential_elements(const int nnodes_tangential_curve) {
   if (nnodes_tangential_curve > 0) {
     this->x = Kokkos::View<type_real *, Kokkos::HostSpace>(

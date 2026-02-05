@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem_setup.hpp"
 #include <exception>
 #include <iostream>
@@ -12,7 +12,7 @@ namespace medium_container {
 
 namespace impl {
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 struct AttenuationValues<
     DimensionTag, MediumTag,
@@ -68,11 +68,11 @@ public:
  * @tparam Enable The enable_if condition that must be satisfied
  *
  * @see specfem::element::is_elastic
- * @see specfem::dimension::type::dim2
+ * @see specfem::element::dimension_tag::dim2
  * @see specfem::medium_container::material
  *
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::attenuation_tag AttenuationTag>
 struct material<

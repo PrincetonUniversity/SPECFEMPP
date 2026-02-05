@@ -4,10 +4,10 @@
 namespace specfem::assembly::fields_impl {
 
 template <>
-void assign_assembly_index_mapping<specfem::dimension::type::dim2>(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types,
+void assign_assembly_index_mapping<specfem::element::dimension_tag::dim2>(
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim2> &element_types,
     Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
         assembly_index_mapping,
     int &nglob, const specfem::element::medium_tag MediumTag) {
@@ -18,7 +18,8 @@ void assign_assembly_index_mapping<specfem::dimension::type::dim2>(
 
   int count = 0;
 
-  constexpr int chunk_size = specfem::parallel_configuration::storage_chunk_size;
+  constexpr int chunk_size =
+      specfem::parallel_configuration::storage_chunk_size;
   for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
     for (int ix = 0; ix < ngllx; ix++) {
       for (int iz = 0; iz < ngllz; iz++) {
@@ -50,10 +51,10 @@ void assign_assembly_index_mapping<specfem::dimension::type::dim2>(
 }
 
 template <>
-void assign_assembly_index_mapping<specfem::dimension::type::dim3>(
-    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
-    const specfem::assembly::element_types<specfem::dimension::type::dim3>
-        &element_types,
+void assign_assembly_index_mapping<specfem::element::dimension_tag::dim3>(
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim3> &element_types,
     Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
         assembly_index_mapping,
     int &nglob, const specfem::element::medium_tag MediumTag) {
@@ -69,7 +70,7 @@ void assign_assembly_index_mapping<specfem::dimension::type::dim3>(
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int iz = 0; iz < ngllz; iz++) {
       for (int iy = 0; iy < nglly; iy++) {
-          for (int ix = 0; ix < ngllx; ix++) {
+        for (int ix = 0; ix < ngllx; ix++) {
           const auto medium = element_types.get_medium_tag(ispec);
           if (medium == MediumTag) {
             const int global_index = index_mapping(ispec, iz, iy, ix);

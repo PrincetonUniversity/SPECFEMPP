@@ -12,8 +12,8 @@
 namespace specfem::test_configuration {
 
 struct Connection {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   int ispec;
   int jspec;
   specfem::connections::type connection;
@@ -62,8 +62,8 @@ struct Connection {
 };
 
 struct ExpectedAdjacency3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   int nelements;                       ///< Total number of elements in the mesh
   std::vector<Connection> connections; ///< List of expected connections
 

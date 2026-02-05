@@ -7,11 +7,12 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/macros.hpp"
 
-specfem::assembly::conforming_interfaces<specfem::dimension::type::dim2>::
+specfem::assembly::conforming_interfaces<
+    specfem::element::dimension_tag::dim2>::
     conforming_interfaces(
         const int ngllz, const int ngllx,
-        const specfem::assembly::edge_types<specfem::dimension::type::dim2>
-            &edge_types,
+        const specfem::assembly::edge_types<
+            specfem::element::dimension_tag::dim2> &edge_types,
         const specfem::assembly::jacobian_matrix<dimension_tag>
             &jacobian_matrix,
         const specfem::assembly::mesh<dimension_tag> &mesh) {

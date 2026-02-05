@@ -3,7 +3,8 @@
 #include "specfem/logger.hpp"
 #include "specfem/macros.hpp"
 
-void specfem::mesh::materials<specfem::dimension::type::dim2>::print() const {
+void specfem::mesh::materials<specfem::element::dimension_tag::dim2>::print()
+    const {
   std::ostringstream message;
   message << "Total number of materials: " << this->n_materials << "\n";
   FOR_EACH_IN_PRODUCT(

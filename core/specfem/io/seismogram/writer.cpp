@@ -6,7 +6,8 @@
 #include <fstream>
 
 void specfem::io::seismogram_writer::write(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
   auto &receivers = assembly.receivers;
 
   receivers.sync_seismograms();
@@ -141,7 +142,8 @@ void specfem::io::seismogram_writer::write(
 }
 
 void specfem::io::seismogram_writer::write(
-    specfem::assembly::assembly<specfem::dimension::type::dim3> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly) {
 
   // Get reference to receivers and timestep
   auto &receivers = assembly.receivers;

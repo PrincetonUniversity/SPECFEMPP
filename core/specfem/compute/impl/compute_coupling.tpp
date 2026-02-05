@@ -16,7 +16,7 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType,
           specfem::interface::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
@@ -109,7 +109,7 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
   return;
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
           int NQuad_intersection,
           specfem::interface::interface_tag InterfaceTag,

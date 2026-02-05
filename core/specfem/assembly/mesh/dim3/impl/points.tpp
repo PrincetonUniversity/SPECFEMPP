@@ -29,7 +29,7 @@ void initialize_coordinates(
   Kokkos::fence();
 }
 
-specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
+specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::points(
     const int &nspec, const int &ngllz, const int &nglly, const int &ngllx,
     const specfem::mesh::adjacency_graph<dimension_tag>
         &adjacency_graph,

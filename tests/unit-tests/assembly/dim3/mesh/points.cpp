@@ -25,8 +25,8 @@ struct TotalQuadraturePoints {
 };
 
 struct ExpectedMapping {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   TotalQuadraturePoints total_quadrature_points;
   std::string database_file;
 

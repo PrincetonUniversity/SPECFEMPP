@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
@@ -15,7 +15,8 @@ namespace point {
  * @tparam DimensionTag Dimension of the element where the quadrature point is
  * located
  */
-template <specfem::dimension::type DimensionTag> struct global_coordinates;
+template <specfem::element::dimension_tag DimensionTag>
+struct global_coordinates;
 
 /**
  * @brief Euclidean distance between two global coordinates
@@ -26,7 +27,7 @@ template <specfem::dimension::type DimensionTag> struct global_coordinates;
  * @param p2 Coordinates of the second point
  * @return type_real Distance between the two points
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 KOKKOS_FUNCTION type_real
 distance(const specfem::point::global_coordinates<DimensionTag> &p1,
          const specfem::point::global_coordinates<DimensionTag> &p2);
@@ -38,7 +39,7 @@ distance(const specfem::point::global_coordinates<DimensionTag> &p1,
  *
  * Stores the physical coordinates (\f$x, z\f$) for a point in 2D space.
  */
-template <> struct global_coordinates<specfem::dimension::type::dim2> {
+template <> struct global_coordinates<specfem::element::dimension_tag::dim2> {
   type_real x; ///< Global coordinate \f$ x \f$
   type_real z; ///< Global coordinate \f$ z \f$
 
@@ -79,7 +80,7 @@ template <> struct global_coordinates<specfem::dimension::type::dim2> {
  *
  * Stores the physical coordinates (\f$x, y, z\f$) for a point in 3D space.
  */
-template <> struct global_coordinates<specfem::dimension::type::dim3> {
+template <> struct global_coordinates<specfem::element::dimension_tag::dim3> {
   type_real x; ///< Global coordinate \f$ x \f$
   type_real y; ///< Global coordinate \f$ y \f$
   type_real z; ///< Global coordinate \f$ z \f$
@@ -119,7 +120,7 @@ template <> struct global_coordinates<specfem::dimension::type::dim3> {
 } // namespace point
 } // namespace specfem
 
-template <specfem::dimension::type Dimension>
+template <specfem::element::dimension_tag Dimension>
 std::ostream &
 operator<<(std::ostream &s,
            const specfem::point::global_coordinates<Dimension> &point);
