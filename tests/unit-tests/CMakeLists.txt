@@ -339,7 +339,7 @@ add_executable(
 target_link_libraries(
   nonconforming_tests
   specfem::mesh
-  assembly
+  specfem::assembly
   specfem::quadrature
   specfem_environment
   yaml-cpp
@@ -440,7 +440,7 @@ target_link_libraries(
   nonconforming_assembly_tests
   specfem::io
   specfem::mesh
-  assembly
+  specfem::assembly
   specfem::quadrature
   specfem_environment
   yaml-cpp
@@ -470,6 +470,12 @@ add_executable(
   assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
   assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
 
+  # Edge types tests
+  assembly/edge_types/edge_types_tests.cpp
+
+  # Face types tests
+  assembly/face_types/face_types_tests.cpp
+
   # New dim3 tests
   assembly/dim3/mesh/shape_functions.cpp
   assembly/dim3/mesh/points.cpp
@@ -485,7 +491,7 @@ set_target_properties(assembly_tests PROPERTIES UNITY_BUILD OFF)
 target_link_libraries(
   assembly_tests
   specfem::mesh
-  assembly
+  specfem::assembly
   specfem::quadrature
   specfem_environment
   specfem::io
@@ -514,7 +520,7 @@ add_executable(
 target_link_libraries(
   assembly_receivers_tests
   specfem::mesh
-  assembly
+  specfem::assembly
   specfem::quadrature
   specfem_environment
   yaml-cpp
@@ -611,7 +617,7 @@ target_link_libraries(
   gtest_main
   Kokkos::kokkos
   specfem_environment
-  assembly
+  specfem::assembly
   specfem::utilities
   -lpthread -lm
 )
@@ -651,21 +657,36 @@ target_link_libraries(
   -lpthread -lm
 )
 
-# add_executable(
-#   chunked_edge_tests
-#   policies/chunked_edge.cpp
-# )
+add_executable(
+  chunked_edge_tests
+  policies/chunked_edge.cpp
+)
 
-# target_link_libraries(
-#   chunked_edge_tests
-#   kokkos_environment
-#   gtest_main
-#   Kokkos::kokkos
-#   specfem_environment
-#   enumerations
-#   ${BOOST_LIBS}
-#   -lpthread -lm
-# )
+target_link_libraries(
+  chunked_edge_tests
+  gtest_main
+  Kokkos::kokkos
+  specfem_environment
+  specfem::assembly
+  enumerations
+  ${BOOST_LIBS}
+  -lpthread -lm
+)
+
+add_executable(
+  chunked_face_tests
+  policies/chunked_face.cpp
+)
+
+target_link_libraries(
+  chunked_face_tests
+  gtest_main
+  Kokkos::kokkos
+  specfem_environment
+  enumerations
+  point
+  -lpthread -lm
+)
 
 add_executable(
   mass_matrix_tests
@@ -804,7 +825,7 @@ target_link_libraries(
   # material_class
   yaml-cpp
   specfem_environment
-  assembly
+  specfem::assembly
   specfem::runtime_configuration
   compare_arrays
   timescheme
@@ -830,7 +851,7 @@ target_link_libraries(
   # material_class
   yaml-cpp
   specfem_environment
-  assembly
+  specfem::assembly
   specfem::runtime_configuration
   compare_arrays
   timescheme
@@ -913,6 +934,8 @@ if(NOT MPI_PARALLEL)
     assembly_receivers_tests
     assembly_tests
     attenuation_tests
+    chunked_edge_tests
+    chunked_face_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests
     # compute_elastic_tests
@@ -940,7 +963,6 @@ if(NOT MPI_PARALLEL)
     nonconforming_tests
     point_tests
     policies_tests
-    # chunked_edge_tests
     receivers_tests
     simd_tests
     source_class_tests

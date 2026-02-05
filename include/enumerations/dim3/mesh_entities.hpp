@@ -132,7 +132,40 @@ template <typename T> bool contains(const T &list, const dim3::type &value) {
 std::vector<int>
 nodes_on_orientation(const specfem::mesh_entity::dim3::type &entity);
 
-template <specfem::element::dimension_tag Dimension> struct edge;
+template <specfem::element::dimension_tag DimensionTag> struct face;
+
+/**
+ * @brief 3D face entity for hexahedral elements.
+ */
+template <> struct face<specfem::element::dimension_tag::dim3> {
+  specfem::mesh_entity::dim3::type face_type; ///< Face type
+  int ispec;                                  ///< Element index
+  int face_index;                             ///< Global face index
+  bool reverse_orientation;                   ///< Orientation flag
+  constexpr static auto dimension_tag =
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
+
+  /**
+   * @brief Construct face with parameters.
+   * @param ispec Element index
+   * @param face_type Face type
+   * @param face_index Global face index (default: -1)
+   * @param reverse_orientation Orientation flag (default: false)
+   */
+  KOKKOS_INLINE_FUNCTION
+  face(const int ispec, const specfem::mesh_entity::dim3::type face_type,
+       const int face_index = -1, const bool reverse_orientation = false)
+      : face_type(face_type), ispec(ispec), face_index(face_index),
+        reverse_orientation(reverse_orientation) {}
+
+  /**
+   * @brief Default constructor.
+   */
+  KOKKOS_INLINE_FUNCTION
+  face() = default;
+};
+
+template <specfem::element::dimension_tag DimensionTag> struct edge;
 
 /**
  * @brief 3D edge entity for hexahedral elements.
@@ -141,6 +174,8 @@ template <> struct edge<specfem::element::dimension_tag::dim3> {
   specfem::mesh_entity::dim3::type edge_type; ///< Edge type
   int ispec;                                  ///< Element index
   bool reverse_orientation;                   ///< Orientation flag
+  constexpr static auto dimension_tag =
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
 
   /**
    * @brief Construct edge with parameters.
@@ -237,6 +272,9 @@ struct element<specfem::element::dimension_tag::dim3>
     : element_grid<specfem::element::dimension_tag::dim3> {
 
 public:
+  int ngll2d; ///< Points per 2D face
+  int ngll;   ///< Points per direction
+
   /**
    * @brief Default constructor.
    */
@@ -281,38 +319,196 @@ public:
   std::tuple<int, int, int>
   map_coordinates(const specfem::mesh_entity::dim3::type &corner) const;
 
-private:
-  int ngll2d; ///< Points per 2D face
-  int ngll;   ///< Points per direction
-
   /**
    * @brief Get face coordinates by 2D indices.
    * @param face Face entity type
    * @param ipoint First face coordinate index
    * @param jpoint Second face coordinate index
-   * @return Tuple of (iz, iy, ix) coordinates
+   * @param[out] iz Z-coordinate in element
+   * @param[out] iy Y-coordinate in element
+   * @param[out] ix X-coordinate in element
    */
-  std::tuple<int, int, int>
-  get_face_coordinates(const specfem::mesh_entity::dim3::type &face,
-                       const int ipoint, const int jpoint) const;
+  KOKKOS_INLINE_FUNCTION
+  void get_face_coordinates(const specfem::mesh_entity::dim3::type face,
+                            const int ipoint, const int jpoint, int &iz,
+                            int &iy, int &ix) const {
+    switch (face) {
+    case specfem::mesh_entity::dim3::type::bottom:
+      iz = 0;
+      iy = ipoint;
+      ix = jpoint;
+      break;
+    case specfem::mesh_entity::dim3::type::top:
+      iz = ngllz - 1;
+      iy = ipoint;
+      ix = jpoint;
+      break;
+    case specfem::mesh_entity::dim3::type::front:
+      iz = ipoint;
+      iy = 0;
+      ix = jpoint;
+      break;
+    case specfem::mesh_entity::dim3::type::back:
+      iz = ipoint;
+      iy = nglly - 1;
+      ix = jpoint;
+      break;
+    case specfem::mesh_entity::dim3::type::left:
+      iz = ipoint;
+      iy = jpoint;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim3::type::right:
+      iz = ipoint;
+      iy = jpoint;
+      ix = ngllx - 1;
+      break;
+    default:
+      iz = -1;
+      iy = -1;
+      ix = -1;
+      break;
+    }
+  }
 
   /**
    * @brief Get edge coordinates by 1D index.
    * @param edge Edge entity type
    * @param point Point index along the edge
-   * @return Tuple of (iz, iy, ix) coordinates
+   * @param[out] iz Z-coordinate in element
+   * @param[out] iy Y-coordinate in element
+   * @param[out] ix X-coordinate in element
    */
-  std::tuple<int, int, int>
-  get_edge_coordinates(const specfem::mesh_entity::dim3::type &edge,
-                       const int point) const;
+  KOKKOS_INLINE_FUNCTION
+  void get_edge_coordinates(const specfem::mesh_entity::dim3::type edge,
+                            const int point, int &iz, int &iy, int &ix) const {
+    switch (edge) {
+    case specfem::mesh_entity::dim3::type::front_bottom:
+      iz = 0;
+      iy = 0;
+      ix = point;
+      break;
+    case specfem::mesh_entity::dim3::type::back_bottom:
+      iz = 0;
+      iy = nglly - 1;
+      ix = point;
+      break;
+    case specfem::mesh_entity::dim3::type::front_top:
+      iz = ngllz - 1;
+      iy = 0;
+      ix = point;
+      break;
+    case specfem::mesh_entity::dim3::type::back_top:
+      iz = ngllz - 1;
+      iy = nglly - 1;
+      ix = point;
+      break;
+    case specfem::mesh_entity::dim3::type::bottom_left:
+      iz = 0;
+      iy = point;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim3::type::bottom_right:
+      iz = 0;
+      iy = point;
+      ix = ngllx - 1;
+      break;
+    case specfem::mesh_entity::dim3::type::top_left:
+      iz = ngllz - 1;
+      iy = point;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim3::type::top_right:
+      iz = ngllz - 1;
+      iy = point;
+      ix = ngllx - 1;
+      break;
+    case specfem::mesh_entity::dim3::type::front_left:
+      iz = point;
+      iy = 0;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim3::type::front_right:
+      iz = point;
+      iy = 0;
+      ix = ngllx - 1;
+      break;
+    case specfem::mesh_entity::dim3::type::back_left:
+      iz = point;
+      iy = nglly - 1;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim3::type::back_right:
+      iz = point;
+      iy = nglly - 1;
+      ix = ngllx - 1;
+      break;
+    default:
+      iz = -1;
+      iy = -1;
+      ix = -1;
+      break;
+    }
+  }
 
   /**
    * @brief Get corner coordinates.
    * @param corner Corner entity type
-   * @return Tuple of (iz, iy, ix) coordinates for the corner
+   * @param[out] iz Z-coordinate in element
+   * @param[out] iy Y-coordinate in element
+   * @param[out] ix X-coordinate in element
    */
-  std::tuple<int, int, int>
-  get_corner_coordinates(const specfem::mesh_entity::dim3::type &corner) const;
+  KOKKOS_INLINE_FUNCTION
+  void get_corner_coordinates(const specfem::mesh_entity::dim3::type corner,
+                              int &iz, int &iy, int &ix) const {
+    switch (corner) {
+    case specfem::mesh_entity::dim3::type::bottom_front_left:
+      iz = 0;
+      iy = 0;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim3::type::bottom_front_right:
+      iz = 0;
+      iy = 0;
+      ix = ngllx - 1;
+      break;
+    case specfem::mesh_entity::dim3::type::bottom_back_left:
+      iz = 0;
+      iy = nglly - 1;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim3::type::bottom_back_right:
+      iz = 0;
+      iy = nglly - 1;
+      ix = ngllx - 1;
+      break;
+    case specfem::mesh_entity::dim3::type::top_front_left:
+      iz = ngllz - 1;
+      iy = 0;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim3::type::top_front_right:
+      iz = ngllz - 1;
+      iy = 0;
+      ix = ngllx - 1;
+      break;
+    case specfem::mesh_entity::dim3::type::top_back_left:
+      iz = ngllz - 1;
+      iy = nglly - 1;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim3::type::top_back_right:
+      iz = ngllz - 1;
+      iy = nglly - 1;
+      ix = ngllx - 1;
+      break;
+    default:
+      iz = -1;
+      iy = -1;
+      ix = -1;
+      break;
+    }
+  }
 };
 
 /**

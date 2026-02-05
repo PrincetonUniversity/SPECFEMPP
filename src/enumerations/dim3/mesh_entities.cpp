@@ -198,90 +198,6 @@ specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::element(
     const int ngllz, const int nglly, const int ngllx)
     : element_grid(ngllz, nglly, ngllx), ngll2d(ngllz * ngllx), ngll(ngllz) {}
 
-std::tuple<int, int, int>
-specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::
-    get_face_coordinates(const specfem::mesh_entity::dim3::type &face,
-                         const int ipoint, const int jpoint) const {
-  // xmin = left, xmax = right
-  // zmin = bottom, zmax = top
-  // ymin = front, ymax = back
-  switch (face) {
-  case specfem::mesh_entity::dim3::type::bottom:
-    return std::make_tuple(0, ipoint, jpoint);
-  case specfem::mesh_entity::dim3::type::top:
-    return std::make_tuple(ngllz - 1, ipoint, jpoint);
-  case specfem::mesh_entity::dim3::type::front:
-    return std::make_tuple(ipoint, 0, jpoint);
-  case specfem::mesh_entity::dim3::type::back:
-    return std::make_tuple(ipoint, nglly - 1, jpoint);
-  case specfem::mesh_entity::dim3::type::left:
-    return std::make_tuple(ipoint, jpoint, 0);
-  case specfem::mesh_entity::dim3::type::right:
-    return std::make_tuple(ipoint, jpoint, ngllx - 1);
-  default:
-    throw std::runtime_error("Invalid face type");
-  }
-}
-
-std::tuple<int, int, int>
-specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::
-    get_edge_coordinates(const specfem::mesh_entity::dim3::type &edge,
-                         const int point) const {
-  switch (edge) {
-  case specfem::mesh_entity::dim3::type::front_bottom:
-    return std::make_tuple(0, 0, point);
-  case specfem::mesh_entity::dim3::type::back_bottom:
-    return std::make_tuple(0, nglly - 1, point);
-  case specfem::mesh_entity::dim3::type::front_top:
-    return std::make_tuple(ngllz - 1, 0, point);
-  case specfem::mesh_entity::dim3::type::back_top:
-    return std::make_tuple(ngllz - 1, nglly - 1, point);
-  case specfem::mesh_entity::dim3::type::bottom_left:
-    return std::make_tuple(0, point, 0);
-  case specfem::mesh_entity::dim3::type::bottom_right:
-    return std::make_tuple(0, point, ngllx - 1);
-  case specfem::mesh_entity::dim3::type::top_left:
-    return std::make_tuple(ngllz - 1, point, 0);
-  case specfem::mesh_entity::dim3::type::top_right:
-    return std::make_tuple(ngllz - 1, point, ngllx - 1);
-  case specfem::mesh_entity::dim3::type::front_left:
-    return std::make_tuple(point, 0, 0);
-  case specfem::mesh_entity::dim3::type::front_right:
-    return std::make_tuple(point, 0, ngllx - 1);
-  case specfem::mesh_entity::dim3::type::back_left:
-    return std::make_tuple(point, nglly - 1, 0);
-  case specfem::mesh_entity::dim3::type::back_right:
-    return std::make_tuple(point, nglly - 1, ngllx - 1);
-  default:
-    throw std::runtime_error("Invalid edge type");
-  }
-}
-
-std::tuple<int, int, int> specfem::mesh_entity::
-    element<specfem::element::dimension_tag::dim3>::get_corner_coordinates(
-        const specfem::mesh_entity::dim3::type &corner) const {
-  switch (corner) {
-  case specfem::mesh_entity::dim3::type::bottom_front_left:
-    return std::make_tuple(0, 0, 0);
-  case specfem::mesh_entity::dim3::type::bottom_front_right:
-    return std::make_tuple(0, 0, ngllx - 1);
-  case specfem::mesh_entity::dim3::type::bottom_back_left:
-    return std::make_tuple(0, nglly - 1, 0);
-  case specfem::mesh_entity::dim3::type::bottom_back_right:
-    return std::make_tuple(0, nglly - 1, ngllx - 1);
-  case specfem::mesh_entity::dim3::type::top_front_left:
-    return std::make_tuple(ngllz - 1, 0, 0);
-  case specfem::mesh_entity::dim3::type::top_front_right:
-    return std::make_tuple(ngllz - 1, 0, ngllx - 1);
-  case specfem::mesh_entity::dim3::type::top_back_left:
-    return std::make_tuple(ngllz - 1, nglly - 1, 0);
-  case specfem::mesh_entity::dim3::type::top_back_right:
-    return std::make_tuple(ngllz - 1, nglly - 1, ngllx - 1);
-  default:
-    throw std::runtime_error("Invalid corner type");
-  }
-}
-
 int specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::
     number_of_points_on_orientation(
         const specfem::mesh_entity::dim3::type &entity) const {
@@ -313,14 +229,20 @@ specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::
     throw std::runtime_error("Point index out of bounds");
   }
 
-  if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::edges, entity))
-    return get_edge_coordinates(entity, point);
+  int iz, iy, ix;
+
+  if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::edges,
+                                     entity)) {
+    get_edge_coordinates(entity, point, iz, iy, ix);
+    return std::make_tuple(iz, iy, ix);
+  }
 
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::faces,
                                      entity)) {
     const int ipoint = point % ngll;
     const int jpoint = point / ngll;
-    return get_face_coordinates(entity, ipoint, jpoint);
+    get_face_coordinates(entity, ipoint, jpoint, iz, iy, ix);
+    return std::make_tuple(iz, iy, ix);
   }
 
   throw std::runtime_error("Unknown entity type");
@@ -334,7 +256,9 @@ specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>::
     throw std::runtime_error("The argument is not a corner");
   }
 
-  return get_corner_coordinates(corner);
+  int iz, iy, ix;
+  get_corner_coordinates(corner, iz, iy, ix);
+  return std::make_tuple(iz, iy, ix);
 }
 
 /**

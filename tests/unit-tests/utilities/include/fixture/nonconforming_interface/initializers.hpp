@@ -1,9 +1,9 @@
 #pragma once
 
-#include "specfem/data_access/accessor.hpp"
+
 
 // all non-specific declarations for NCIs
-#include "specfem/data_access/accessor.hpp"
+
 namespace specfem::test_fixture {
 
 /**

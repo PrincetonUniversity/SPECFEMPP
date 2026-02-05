@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "specfem/data_access/accessor.hpp"
+
 #include "specfem/datatype.hpp"
 
 namespace specfem::data_access {
