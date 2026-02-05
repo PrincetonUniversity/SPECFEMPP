@@ -54,10 +54,10 @@ public:
   plot_wavefield(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
           &assembly,
-      const specfem::display::format &output_format,
+      const specfem::enums::display_format &output_format,
       const specfem::enums::wavefield &wavefield_type,
       const specfem::simulation::field_type &simulation_wavefield_type,
-      const specfem::display::component &component, const type_real &dt,
+      const specfem::enums::display_component &component, const type_real &dt,
       const int &time_interval, const boost::filesystem::path &output_folder,
       const specfem::enums::elastic_wave elastic_wave,
       const specfem::enums::electromagnetic_wave electromagnetic_wave);
@@ -92,9 +92,10 @@ public:
   finalize(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
                &assembly) override;
 
-  const specfem::display::format output_format;   ///< Output format of the plot
-  const specfem::display::component component;    ///< Component to plot
-  const specfem::enums::wavefield wavefield_type; ///< Type of the wavefield
+  const specfem::enums::display_format output_format; ///< Output format of the
+                                                      ///< plot
+  const specfem::enums::display_component component;  ///< Component to plot
+  const specfem::enums::wavefield wavefield_type;     ///< Type of the wavefield
   const specfem::simulation::field_type
       simulation_wavefield_type; ///< Type of wavefield
                                  ///< to plot
@@ -160,12 +161,12 @@ private:
   // Get wavefield type from display type
   specfem::enums::wavefield get_wavefield_type();
 
-  template <specfem::display::format format>
+  template <specfem::enums::display_format format>
   void initialize(vtkSmartPointer<vtkFloatArray> &scalars);
 
   void initialize_display(vtkSmartPointer<vtkFloatArray> &scalars);
 
-  template <specfem::display::format format>
+  template <specfem::enums::display_format format>
   void run(vtkSmartPointer<vtkFloatArray> &scalars, const int istep);
 
   // Friend function for rendering
@@ -177,7 +178,7 @@ private:
           &wavefield_data,
       const specfem::enums::wavefield &wavefield_type,
       const specfem::enums::elastic_wave &elastic_wave,
-      const specfem::display::component &component, const int ispec,
+      const specfem::enums::display_component &component, const int ispec,
       const int iz, const int ix);
 
 #endif // NO_VTK

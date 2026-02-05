@@ -1,14 +1,15 @@
 #include "specfem/enums.hpp"
 
-std::string specfem::display::to_string(const specfem::display::format &fmt) {
+std::string
+specfem::enums::to_string(const specfem::enums::display_format &fmt) {
   switch (fmt) {
-  case specfem::display::format::PNG:
+  case specfem::enums::display_format::PNG:
     return "PNG";
-  case specfem::display::format::JPG:
+  case specfem::enums::display_format::JPG:
     return "JPG";
-  case specfem::display::format::on_screen:
+  case specfem::enums::display_format::on_screen:
     return "on_screen";
-  case specfem::display::format::vtkhdf:
+  case specfem::enums::display_format::vtkhdf:
     return "vtkhdf";
   default:
     return "unknown";
@@ -16,15 +17,15 @@ std::string specfem::display::to_string(const specfem::display::format &fmt) {
 }
 
 std::string
-specfem::display::to_string(const specfem::display::component &comp) {
+specfem::enums::to_string(const specfem::enums::display_component &comp) {
   switch (comp) {
-  case specfem::display::component::x:
+  case specfem::enums::display_component::x:
     return "x";
-  case specfem::display::component::y:
+  case specfem::enums::display_component::y:
     return "y";
-  case specfem::display::component::z:
+  case specfem::enums::display_component::z:
     return "z";
-  case specfem::display::component::magnitude:
+  case specfem::enums::display_component::magnitude:
     return "magnitude";
   default:
     return "unknown";

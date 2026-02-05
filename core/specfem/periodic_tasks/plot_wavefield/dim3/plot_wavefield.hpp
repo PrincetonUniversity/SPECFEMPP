@@ -47,10 +47,10 @@ public:
   plot_wavefield(
       const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
           &assembly,
-      const specfem::display::format &output_format,
+      const specfem::enums::display_format &output_format,
       const specfem::enums::wavefield &wavefield_type,
       const specfem::simulation::field_type &simulation_wavefield_type,
-      const specfem::display::component &component, const type_real &dt,
+      const specfem::enums::display_component &component, const type_real &dt,
       const int &time_interval, const boost::filesystem::path &output_folder);
 
   /**
@@ -79,14 +79,15 @@ public:
    */
   void finalize(specfem::assembly::assembly<dimension_tag> &assembly) override;
 
-  const specfem::display::format output_format;   ///< Output format of the plot
-  const specfem::enums::wavefield wavefield_type; ///< Type of the wavefield
+  const specfem::enums::display_format output_format; ///< Output format of the
+                                                      ///< plot
+  const specfem::enums::wavefield wavefield_type;     ///< Type of the wavefield
   const specfem::simulation::field_type
-      simulation_wavefield_type;               ///< Type of wavefield
-                                               ///< to plot
-  const specfem::display::component component; ///< Component of the wavefield
-                                               ///< to plot
-  const boost::filesystem::path output_folder; ///< Path to output folder
+      simulation_wavefield_type;                     ///< Type of wavefield
+                                                     ///< to plot
+  const specfem::enums::display_component component; ///< Component of the
+                                                     ///< wavefield to plot
+  const boost::filesystem::path output_folder;       ///< Path to output folder
   specfem::assembly::assembly<dimension_tag> assembly; ///< Assembly object
 
   // Grid parameter members
@@ -119,12 +120,12 @@ private:
   // Get wavefield type from display type
   specfem::enums::wavefield get_wavefield_type();
 
-  template <specfem::display::format format>
+  template <specfem::enums::display_format format>
   void initialize(vtkSmartPointer<vtkFloatArray> &scalars);
 
   void initialize_display(vtkSmartPointer<vtkFloatArray> &scalars);
 
-  template <specfem::display::format format>
+  template <specfem::enums::display_format format>
   void run(vtkSmartPointer<vtkFloatArray> &scalars, const int istep);
 
   void run_render(vtkSmartPointer<vtkFloatArray> &scalars);
@@ -134,7 +135,7 @@ private:
       const Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>
           &wavefield_data,
       const specfem::enums::wavefield &wavefield_type,
-      const specfem::display::component &component, const int ispec,
+      const specfem::enums::display_component &component, const int ispec,
       const int iz, const int iy, const int ix);
 
 #endif // NO_VTK

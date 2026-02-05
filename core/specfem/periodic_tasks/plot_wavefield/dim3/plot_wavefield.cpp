@@ -36,10 +36,10 @@
 specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim3>::
     plot_wavefield(
         const specfem::assembly::assembly<dimension_tag> &assembly,
-        const specfem::display::format &output_format,
+        const specfem::enums::display_format &output_format,
         const specfem::enums::wavefield &wavefield_type,
         const specfem::simulation::field_type &simulation_wavefield_type,
-        const specfem::display::component &component, const type_real &dt,
+        const specfem::enums::display_component &component, const type_real &dt,
         const int &time_interval, const boost::filesystem::path &output_folder)
     : assembly(assembly), simulation_wavefield_type(simulation_wavefield_type),
       wavefield_type(wavefield_type), component(component),
@@ -95,10 +95,10 @@ void specfem::periodic_tasks::
 specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim3>::
     plot_wavefield(
         const specfem::assembly::assembly<dimension_tag> &assembly,
-        const specfem::display::format &output_format,
+        const specfem::enums::display_format &output_format,
         const specfem::enums::wavefield &wavefield_type,
         const specfem::simulation::field_type &simulation_wavefield_type,
-        const specfem::display::component &component, const type_real &dt,
+        const specfem::enums::display_component &component, const type_real &dt,
         const int &time_interval, const boost::filesystem::path &output_folder)
     : assembly(assembly), simulation_wavefield_type(simulation_wavefield_type),
       wavefield_type(wavefield_type), component(component),
@@ -108,7 +108,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim3>::
       nglly(assembly.mesh.element_grid.nglly),
       ngllz(assembly.mesh.element_grid.ngllz) {
   // Only VTK HDF5 output is supported for 3D
-  if (output_format != specfem::display::format::vtkhdf) {
+  if (output_format != specfem::enums::display_format::vtkhdf) {
     throw std::runtime_error(
         "Only VTK HDF5 output format is supported for 3D wavefield plotting");
   }
@@ -135,7 +135,7 @@ float specfem::periodic_tasks::plot_wavefield<
         const Kokkos::View<type_real *****, Kokkos::LayoutLeft,
                            Kokkos::HostSpace> &wavefield_data,
         const specfem::enums::wavefield &wavefield_type,
-        const specfem::display::component &component, const int ispec,
+        const specfem::enums::display_component &component, const int ispec,
         const int iz, const int iy, const int ix) {
 
   if (wavefield_type == specfem::enums::wavefield::pressure ||
@@ -146,13 +146,13 @@ float specfem::periodic_tasks::plot_wavefield<
   }
 
   // Computing the component or magnitude for vector fields
-  if (component == specfem::display::component::x) {
+  if (component == specfem::enums::display_component::x) {
     return wavefield_data(ispec, iz, iy, ix, 0);
-  } else if (component == specfem::display::component::y) {
+  } else if (component == specfem::enums::display_component::y) {
     return wavefield_data(ispec, iz, iy, ix, 1);
-  } else if (component == specfem::display::component::z) {
+  } else if (component == specfem::enums::display_component::z) {
     return wavefield_data(ispec, iz, iy, ix, 2);
-  } else if (component == specfem::display::component::magnitude) {
+  } else if (component == specfem::enums::display_component::magnitude) {
     // Compute magnitude from 3-component vector
     type_real magnitude = 0.0;
     for (int icomp = 0; icomp < 3; ++icomp) {
@@ -162,7 +162,7 @@ float specfem::periodic_tasks::plot_wavefield<
     return static_cast<float>(std::sqrt(magnitude));
   } else {
     throw std::runtime_error("Invalid component,'" +
-                             specfem::display::to_string(component) +
+                             specfem::enums::to_string(component) +
                              "', for wavefield plotting in 3D.");
   }
 }
@@ -268,7 +268,7 @@ specfem::periodic_tasks::plot_wavefield<specfem::element::dimension_tag::dim3>::
 template <>
 void specfem::periodic_tasks::
     plot_wavefield<specfem::element::dimension_tag::dim3>::initialize<
-        specfem::display::format::vtkhdf>(
+        specfem::enums::display_format::vtkhdf>(
         vtkSmartPointer<vtkFloatArray> &scalars) {
 
 #ifndef NO_HDF5
@@ -689,7 +689,7 @@ void specfem::periodic_tasks::
 template <>
 void specfem::periodic_tasks::
     plot_wavefield<specfem::element::dimension_tag::dim3>::initialize<
-        specfem::display::format::on_screen>(
+        specfem::enums::display_format::on_screen>(
         vtkSmartPointer<vtkFloatArray> &scalars) {
   throw std::runtime_error(
       "On-screen display not supported for 3D. Use VTK HDF5 output.");
@@ -698,7 +698,7 @@ void specfem::periodic_tasks::
 template <>
 void specfem::periodic_tasks::
     plot_wavefield<specfem::element::dimension_tag::dim3>::initialize<
-        specfem::display::format::PNG>(
+        specfem::enums::display_format::PNG>(
         vtkSmartPointer<vtkFloatArray> &scalars) {
   throw std::runtime_error(
       "PNG output not supported for 3D. Use VTK HDF5 output.");
@@ -707,7 +707,7 @@ void specfem::periodic_tasks::
 template <>
 void specfem::periodic_tasks::
     plot_wavefield<specfem::element::dimension_tag::dim3>::initialize<
-        specfem::display::format::JPG>(
+        specfem::enums::display_format::JPG>(
         vtkSmartPointer<vtkFloatArray> &scalars) {
   throw std::runtime_error(
       "JPG output not supported for 3D. Use VTK HDF5 output.");
@@ -725,17 +725,17 @@ void specfem::periodic_tasks::
   unstructured_grid->GetPointData()->SetScalars(scalars);
 
   switch (output_format) {
-  case specfem::display::format::vtkhdf:
-    this->initialize<specfem::display::format::vtkhdf>(scalars);
+  case specfem::enums::display_format::vtkhdf:
+    this->initialize<specfem::enums::display_format::vtkhdf>(scalars);
     break;
-  case specfem::display::format::on_screen:
-    this->initialize<specfem::display::format::on_screen>(scalars);
+  case specfem::enums::display_format::on_screen:
+    this->initialize<specfem::enums::display_format::on_screen>(scalars);
     break;
-  case specfem::display::format::PNG:
-    this->initialize<specfem::display::format::PNG>(scalars);
+  case specfem::enums::display_format::PNG:
+    this->initialize<specfem::enums::display_format::PNG>(scalars);
     break;
-  case specfem::display::format::JPG:
-    this->initialize<specfem::display::format::JPG>(scalars);
+  case specfem::enums::display_format::JPG:
+    this->initialize<specfem::enums::display_format::JPG>(scalars);
     break;
   default:
     throw std::runtime_error("Unsupported display format for 3D");
@@ -755,7 +755,7 @@ void specfem::periodic_tasks::
 template <>
 void specfem::periodic_tasks::
     plot_wavefield<specfem::element::dimension_tag::dim3>::run<
-        specfem::display::format::on_screen>(
+        specfem::enums::display_format::on_screen>(
         vtkSmartPointer<vtkFloatArray> &scalars, const int istep) {
   throw std::runtime_error(
       "On-screen display not supported for 3D. Use VTK HDF5 output.");
@@ -764,8 +764,8 @@ void specfem::periodic_tasks::
 template <>
 void specfem::periodic_tasks::
     plot_wavefield<specfem::element::dimension_tag::dim3>::run<
-        specfem::display::format::PNG>(vtkSmartPointer<vtkFloatArray> &scalars,
-                                       const int istep) {
+        specfem::enums::display_format::PNG>(
+        vtkSmartPointer<vtkFloatArray> &scalars, const int istep) {
   throw std::runtime_error(
       "PNG output not supported for 3D. Use VTK HDF5 output.");
 }
@@ -773,8 +773,8 @@ void specfem::periodic_tasks::
 template <>
 void specfem::periodic_tasks::
     plot_wavefield<specfem::element::dimension_tag::dim3>::run<
-        specfem::display::format::JPG>(vtkSmartPointer<vtkFloatArray> &scalars,
-                                       const int istep) {
+        specfem::enums::display_format::JPG>(
+        vtkSmartPointer<vtkFloatArray> &scalars, const int istep) {
   throw std::runtime_error(
       "JPG output not supported for 3D. Use VTK HDF5 output.");
 }
@@ -782,7 +782,7 @@ void specfem::periodic_tasks::
 template <>
 void specfem::periodic_tasks::
     plot_wavefield<specfem::element::dimension_tag::dim3>::run<
-        specfem::display::format::vtkhdf>(
+        specfem::enums::display_format::vtkhdf>(
         vtkSmartPointer<vtkFloatArray> &scalars, const int istep) {
 
 #ifndef NO_HDF5
@@ -1014,19 +1014,19 @@ void specfem::periodic_tasks::
 
   switch (output_format) {
   case (display::format::vtkhdf):
-    this->run<specfem::display::format::vtkhdf>(scalars, istep);
+    this->run<specfem::enums::display_format::vtkhdf>(scalars, istep);
     break;
 
   case (display::format::on_screen):
-    this->run<specfem::display::format::on_screen>(scalars, istep);
+    this->run<specfem::enums::display_format::on_screen>(scalars, istep);
     break;
 
   case (display::format::PNG):
-    this->run<specfem::display::format::PNG>(scalars, istep);
+    this->run<specfem::enums::display_format::PNG>(scalars, istep);
     break;
 
   case (display::format::JPG):
-    this->run<specfem::display::format::JPG>(scalars, istep);
+    this->run<specfem::enums::display_format::JPG>(scalars, istep);
     break;
 
   default:

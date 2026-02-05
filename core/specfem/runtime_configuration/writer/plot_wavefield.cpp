@@ -83,13 +83,13 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   const auto output_format = [&]() {
     if (specfem::utilities::is_png_string(this->output_format)) {
-      return specfem::display::format::PNG;
+      return specfem::enums::display_format::PNG;
     } else if (specfem::utilities::is_jpg_string(this->output_format)) {
-      return specfem::display::format::JPG;
+      return specfem::enums::display_format::JPG;
     } else if (specfem::utilities::is_onscreen_string(this->output_format)) {
-      return specfem::display::format::on_screen;
+      return specfem::enums::display_format::on_screen;
     } else if (specfem::utilities::is_vtkhdf_string(this->output_format)) {
-      return specfem::display::format::vtkhdf;
+      return specfem::enums::display_format::vtkhdf;
     } else {
       throw std::runtime_error("Unknown plotter format");
     }
@@ -97,13 +97,13 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   const auto component = [&]() {
     if (specfem::utilities::is_x_string(this->component)) {
-      return specfem::display::component::x;
+      return specfem::enums::display_component::x;
     } else if (specfem::utilities::is_y_string(this->component)) {
-      return specfem::display::component::y;
+      return specfem::enums::display_component::y;
     } else if (specfem::utilities::is_z_string(this->component)) {
-      return specfem::display::component::z;
+      return specfem::enums::display_component::z;
     } else if (specfem::utilities::is_magnitude_string(this->component)) {
-      return specfem::display::component::magnitude;
+      return specfem::enums::display_component::magnitude;
     } else {
       throw std::runtime_error("Unknown plotter component");
     }
@@ -111,7 +111,7 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   // Throw error if component is y and elastic wave type is SH
   if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
-    if (component == specfem::display::component::y &&
+    if (component == specfem::enums::display_component::y &&
         (elastic_wave == specfem::enums::elastic_wave::psv)) {
       std::ostringstream message;
       message
@@ -121,8 +121,8 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     }
 
     // Throw error if component is z or x and elastic wave type is SH
-    if ((component == specfem::display::component::x ||
-         component == specfem::display::component::z) &&
+    if ((component == specfem::enums::display_component::x ||
+         component == specfem::enums::display_component::z) &&
         (elastic_wave == specfem::enums::elastic_wave::sh)) {
       std::ostringstream message;
       message << "Error: X and Z component plotting is not supported for SH "

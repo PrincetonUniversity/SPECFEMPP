@@ -2,7 +2,7 @@
 #include <string>
 
 namespace specfem {
-namespace display {
+namespace enums {
 
 /**
  * @brief Output formats for wavefield visualization and data export.
@@ -10,17 +10,17 @@ namespace display {
  * Controls how simulation results are rendered and saved. Used by
  * wavefield plotting functions to determine output method.
  */
-enum class format {
+enum class display_format {
   PNG,       ///< PNG image output (2D only)
   JPG,       ///< JPEG image output (2D only)
   on_screen, ///< Interactive display (2D only)
   vtkhdf     ///< VTK HDF5 format (2D and 3D)
 };
 
-enum class component { x, y, z, magnitude };
+enum class display_component { x, y, z, magnitude };
 
-std::string to_string(const format &fmt);
-std::string to_string(const component &comp);
+std::string to_string(const display_format &fmt);
+std::string to_string(const display_component &comp);
 
-} // namespace display
+} // namespace enums
 } // namespace specfem
