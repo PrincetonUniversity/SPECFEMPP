@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 

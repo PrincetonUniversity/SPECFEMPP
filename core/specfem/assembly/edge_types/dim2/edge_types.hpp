@@ -187,8 +187,8 @@ struct EdgeView {
  *
  * // Get elastic-acoustic coupling edges on device
  * auto [self_edges, coupled_edges] = edges.get_edges_on_device(
- *     specfem::connections::type::weakly_conforming,
- *     specfem::interface::interface_tag::elastic_acoustic,
+ *     specfem::element_connections::type::weakly_conforming,
+ *     specfem::element_coupling::interface_tag::elastic_acoustic,
  *     specfem::element::boundary_tag::none);
  * @endcode
  */
