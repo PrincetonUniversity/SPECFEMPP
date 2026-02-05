@@ -42,5 +42,6 @@ struct is_accessor<
 
 #include "accessor/chunk_edge.hpp"
 #include "accessor/chunk_element.hpp"
+#include "accessor/chunk_face.hpp"
 #include "accessor/element.hpp"
 #include "accessor/point_accessor.hpp"
