@@ -2,7 +2,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "mesh_to_compute_mapping.hpp"
-#include "specfem/enums/medium_tags.hpp"
+#include "specfem/element/tag_arrays.hpp"
 #include <vector>
 
 specfem::assembly::mesh_impl::mesh_to_compute_mapping<
