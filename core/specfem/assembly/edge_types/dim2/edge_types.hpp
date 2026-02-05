@@ -23,8 +23,8 @@ namespace specfem::assembly {
  *
  * // Get elastic-acoustic coupling edges on device
  * auto [self_edges, coupled_edges] = edges.get_edges_on_device(
- *     specfem::connections::type::weakly_conforming,
- *     specfem::interface::interface_tag::elastic_acoustic,
+ *     specfem::element_connections::type::weakly_conforming,
+ *     specfem::element_coupling::interface_tag::elastic_acoustic,
  *     specfem::element::boundary_tag::none);
  * @endcode
  */
@@ -233,8 +233,8 @@ public:
    */
   std::tuple<typename EdgeViewType::HostMirror,
              typename EdgeViewType::HostMirror>
-  get_edges_on_host(const specfem::connections::type connection,
-                    const specfem::interface::interface_tag edge,
+  get_edges_on_host(const specfem::element_connections::type connection,
+                    const specfem::element_coupling::interface_tag edge,
                     const specfem::element::boundary_tag boundary) const;
 
   /**
@@ -246,8 +246,8 @@ public:
    * @return Tuple of (self_edges, coupled_edges) for device processing
    */
   std::tuple<EdgeViewType, EdgeViewType>
-  get_edges_on_device(const specfem::connections::type connection,
-                      const specfem::interface::interface_tag edge,
+  get_edges_on_device(const specfem::element_connections::type connection,
+                      const specfem::element_coupling::interface_tag edge,
                       const specfem::element::boundary_tag boundary) const;
 
   /**

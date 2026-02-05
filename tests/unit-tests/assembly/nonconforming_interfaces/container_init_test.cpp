@@ -168,20 +168,20 @@ void test_nonconforming_container_transfers(
 
   const auto &nc_interface_acoustic_elastic =
       assembly.nonconforming_interfaces.get_interface_container<
-          specfem::interface::interface_tag::acoustic_elastic,
+          specfem::element_coupling::interface_tag::acoustic_elastic,
           specfem::element::boundary_tag::none,
-          specfem::connections::type::nonconforming>();
+          specfem::element_connections::type::nonconforming>();
 
   const auto &nc_interface_elastic_acoustic =
       assembly.nonconforming_interfaces.get_interface_container<
-          specfem::interface::interface_tag::elastic_acoustic,
+          specfem::element_coupling::interface_tag::elastic_acoustic,
           specfem::element::boundary_tag::none,
-          specfem::connections::type::nonconforming>();
+          specfem::element_connections::type::nonconforming>();
 
   const auto [acoustic_edges, elastic_edges] =
       assembly.edge_types.get_edges_on_host(
-          specfem::connections::type::nonconforming,
-          specfem::interface::interface_tag::acoustic_elastic,
+          specfem::element_connections::type::nonconforming,
+          specfem::element_coupling::interface_tag::acoustic_elastic,
           specfem::element::boundary_tag::none);
 
   const int nedges = acoustic_edges.n_edges;

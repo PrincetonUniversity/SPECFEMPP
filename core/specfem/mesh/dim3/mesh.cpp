@@ -17,9 +17,10 @@ void specfem::mesh::mesh<
           materials.get_material_type(target);
       if ((self_medium != neighbor_medium) &&
           (edge_props.connection ==
-           specfem::connections::type::strongly_conforming)) {
+           specfem::element_connections::type::strongly_conforming)) {
         // Change strongly conforming to weakly conforming if media differ
-        edge_props.connection = specfem::connections::type::weakly_conforming;
+        edge_props.connection =
+            specfem::element_connections::type::weakly_conforming;
       }
     }
   }

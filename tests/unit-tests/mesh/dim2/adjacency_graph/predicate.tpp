@@ -27,7 +27,7 @@ std::string connects::str() const {
   }
   str << " <-";
   if (check_connection_type) {
-    str << specfem::connections::to_string(connection_type);
+    str << specfem::element_connections::to_string(connection_type);
   }
   str << "-> " << jspec;
   if (check_jspec_mesh_entity) {
@@ -55,7 +55,7 @@ void connects::expect_in(
       std::ostringstream msg;
       msg << "Failed expected adjacency " << str() << ":\n";
       msg << "  Found connection type "
-          << specfem::connections::to_string(edge.connection) << " for edge "
+          << specfem::element_connections::to_string(edge.connection) << " for edge "
           << ispec_to_jspec_string() << "\n";
       FAIL() << msg.str();
     }
@@ -82,7 +82,7 @@ void connects::expect_in(
       std::ostringstream msg;
       msg << "Failed expected adjacency " << str() << ":\n";
       msg << "  Found connection type "
-          << specfem::connections::to_string(edge.connection) << " for edge "
+          << specfem::element_connections::to_string(edge.connection) << " for edge "
           << jspec_to_ispec_string() << "\n";
       FAIL() << msg.str();
     }

@@ -390,7 +390,7 @@ TEST_P(CoupledElements3D, FaceConnections) {
   // Create connection mapping between the two elements
   specfem::mesh_entity::element mapping(5, 5, 5);
 
-  specfem::connections::connection_mapping<
+  specfem::element_connections::connection_mapping<
       specfem::element::dimension_tag::dim3>
       connection(5, 5, 5, element1.control_nodes, element2.control_nodes);
 
@@ -424,7 +424,7 @@ TEST_P(CoupledElements3D, EdgeConnections) {
   // Create connection mapping between the two elements
   specfem::mesh_entity::element mapping(5, 5, 5);
 
-  specfem::connections::connection_mapping<
+  specfem::element_connections::connection_mapping<
       specfem::element::dimension_tag::dim3>
       connection(5, 5, 5, element1.control_nodes, element2.control_nodes);
 
@@ -465,7 +465,7 @@ TEST_P(CoupledElements3D, NodeConnections) {
   // Create connection mapping between the two elements
   specfem::mesh_entity::element mapping(5, 5, 5);
 
-  specfem::connections::connection_mapping<
+  specfem::element_connections::connection_mapping<
       specfem::element::dimension_tag::dim3>
       connection(5, 5, 5, element1.control_nodes, element2.control_nodes);
 

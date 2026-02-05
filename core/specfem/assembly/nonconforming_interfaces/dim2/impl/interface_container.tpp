@@ -10,11 +10,11 @@
 #include "specfem/jacobian.hpp"
 #include "specfem/macros.hpp"
 
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
 specfem::assembly::nonconforming_interfaces_impl::interface_container<
     specfem::element::dimension_tag::dim2, InterfaceTag, BoundaryTag,
-    specfem::connections::type::nonconforming>::
+    specfem::element_connections::type::nonconforming>::
     interface_container(
         const int ngllz, const int ngllx,
         const specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>
@@ -50,7 +50,7 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
   const auto element = specfem::mesh_entity::element(ngllz, ngllx);
 
   const auto [self_edges, coupled_edges] = edge_types.get_edges_on_host(
-      specfem::connections::type::nonconforming, InterfaceTag, BoundaryTag);
+      specfem::element_connections::type::nonconforming, InterfaceTag, BoundaryTag);
 
   const auto nedges = self_edges.n_edges;
 

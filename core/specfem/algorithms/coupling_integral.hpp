@@ -58,7 +58,7 @@ coupling_integral(const specfem::assembly::assembly<dimension_tag> &assembly,
                   const IntersectionFactor &intersection_factor,
                   const CallableType &callback) {
 
-  constexpr auto self_medium_tag = specfem::interface::attributes<
+  constexpr auto self_medium_tag = specfem::element_coupling::attributes<
       dimension_tag, IntersectionFactor::interface_tag>::self_medium();
 
   using PointIndexType =

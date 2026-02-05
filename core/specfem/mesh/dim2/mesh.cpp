@@ -86,7 +86,7 @@ void check_adjacency_graph(
   // Filter out strongly conforming connections
   auto filter = [&g](const auto &edge) {
     return g[edge].connection ==
-           specfem::connections::type::strongly_conforming;
+           specfem::element_connections::type::strongly_conforming;
   };
 
   // Create a filtered graph view
@@ -240,9 +240,10 @@ void specfem::mesh::mesh<specfem::element::dimension_tag::dim2>::
           materials.get_material_type(target);
       if ((self_medium != neighbor_medium) &&
           (edge_props.connection ==
-           specfem::connections::type::strongly_conforming)) {
+           specfem::element_connections::type::strongly_conforming)) {
         // Change strongly conforming to weakly conforming if media differ
-        edge_props.connection = specfem::connections::type::weakly_conforming;
+        edge_props.connection =
+            specfem::element_connections::type::weakly_conforming;
         if (coupled_interfaces.count(std::make_pair(v, target))) {
           n_matched++;
         }

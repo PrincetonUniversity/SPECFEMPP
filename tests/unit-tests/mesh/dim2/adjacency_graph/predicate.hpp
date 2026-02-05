@@ -19,7 +19,7 @@ public:
   int jspec;
   specfem::mesh_entity::dim2::type ispec_mesh_entity;
   specfem::mesh_entity::dim2::type jspec_mesh_entity;
-  specfem::connections::type connection_type;
+  specfem::element_connections::type connection_type;
   bool check_ispec_mesh_entity;
   bool check_jspec_mesh_entity;
   bool check_connection_type;
@@ -111,7 +111,7 @@ public:
    * @param connection_type - type to ensure
    * @return connects& - *this to be used in a builder pattern
    */
-  connects &with(const specfem::connections::type &connection_type) {
+  connects &with(const specfem::element_connections::type &connection_type) {
     this->connection_type = connection_type;
     check_connection_type = true;
     return *this;

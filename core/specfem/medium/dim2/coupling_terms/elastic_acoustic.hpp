@@ -15,11 +15,11 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
     const std::integral_constant<
         specfem::element::dimension_tag,
         specfem::element::dimension_tag::dim2> /*dimension_dispatch*/,
-    const std::integral_constant<
-        specfem::connections::type,
-        specfem::connections::type::weakly_conforming> /*connection_dispatch*/,
-    const std::integral_constant<specfem::interface::interface_tag,
-                                 specfem::interface::interface_tag::
+    const std::integral_constant<specfem::element_connections::type,
+                                 specfem::element_connections::type::
+                                     weakly_conforming> /*connection_dispatch*/,
+    const std::integral_constant<specfem::element_coupling::interface_tag,
+                                 specfem::element_coupling::interface_tag::
                                      elastic_acoustic> /*interface_dispatch*/,
     const CoupledInterfaceType &interface_data,
     const CoupledFieldType &coupled_field, SelfFieldType &self_field) {
@@ -42,11 +42,11 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
     const std::integral_constant<
         specfem::element::dimension_tag,
         specfem::element::dimension_tag::dim2> /*dimension_dispatch*/,
-    const std::integral_constant<
-        specfem::connections::type,
-        specfem::connections::type::nonconforming> /*connection_dispatch*/,
-    const std::integral_constant<specfem::interface::interface_tag,
-                                 specfem::interface::interface_tag::
+    const std::integral_constant<specfem::element_connections::type,
+                                 specfem::element_connections::type::
+                                     nonconforming> /*connection_dispatch*/,
+    const std::integral_constant<specfem::element_coupling::interface_tag,
+                                 specfem::element_coupling::interface_tag::
                                      elastic_acoustic> /*interface_dispatch*/,
     const IndexType &chunk_edge_index,
     const TransferFunctionType &transfer_function,

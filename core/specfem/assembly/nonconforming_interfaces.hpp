@@ -9,9 +9,9 @@ namespace specfem::assembly {
 namespace nonconforming_interfaces_impl {
 
 template <specfem::element::dimension_tag DimensionTag,
-          specfem::interface::interface_tag InterfaceTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::connections::type ConnectionTag>
+          specfem::element_connections::type ConnectionTag>
 struct interface_container;
 
 } // namespace nonconforming_interfaces_impl

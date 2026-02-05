@@ -33,7 +33,7 @@ template <specfem::element::dimension_tag DimensionTag> struct adjacency_graph;
  * meshes
  *
  * @see specfem::mesh::adjacency (CSR-based adjacency for solver)
- * @see specfem::connections::type
+ * @see specfem::element_connections::type
  * @see specfem::mesh_entity::dim3::type
  *
  * @code
@@ -44,7 +44,7 @@ template <specfem::element::dimension_tag DimensionTag> struct adjacency_graph;
  * // Add element connections with properties
  * auto& graph = adj_graph.graph();
  * boost::add_edge(elem1_id, elem2_id,
- *     EdgeProperties(specfem::connections::type::strongly_conforming,
+ *     EdgeProperties(specfem::element_connections::type::strongly_conforming,
  *                   specfem::mesh_entity::dim3::type::right), graph);
  *
  * // Query adjacency for spectral element computations
@@ -72,7 +72,7 @@ public:
    * @code
    * // Example: Creating edge properties for a conforming face interface
    * EdgeProperties face_props(
-   *     specfem::connections::type::strongly_conforming,
+   *     specfem::element_connections::type::strongly_conforming,
    *     specfem::mesh_entity::dim3::type::right
    * );
    *
@@ -89,9 +89,9 @@ public:
      * - **weakly_conforming**: Nodes match but allows discontinuous coupling
      * - **nonconforming**: No matching nodes, geometric adjacency only
      *
-     * @see specfem::connections::type
+     * @see specfem::element_connections::type
      */
-    specfem::connections::type connection;
+    specfem::element_connections::type connection;
 
     /**
      * @brief Geometric orientation of the shared interface
@@ -127,12 +127,12 @@ public:
      * @code
      * // Create properties for a strongly conforming face interface
      * EdgeProperties props(
-     *     specfem::connections::type::strongly_conforming,
+     *     specfem::element_connections::type::strongly_conforming,
      *     specfem::mesh_entity::dim3::type::right
      * );
      * @endcode
      */
-    EdgeProperties(const specfem::connections::type conn,
+    EdgeProperties(const specfem::element_connections::type conn,
                    const specfem::mesh_entity::dim3::type orient)
         : connection(conn), orientation(orient) {}
   };
@@ -210,7 +210,7 @@ public:
    *
    * // Add edge with properties
    * boost::add_edge(0, 1, EdgeProperties(
-   *     specfem::connections::type::strongly_conforming,
+   *     specfem::element_connections::type::strongly_conforming,
    *     specfem::mesh_entity::dim3::type::right), graph);
    *
    * // Query neighbors

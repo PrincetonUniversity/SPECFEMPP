@@ -61,7 +61,7 @@ struct IntersectionFunctionInitializer2D {};
  * IntersectionDataInitializer2D
  * @tparam PackedTypes list of accessors to derive the AccessorPack.
  */
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, typename Initializer,
           specfem::data_access::DataClassType... PackedTypes>
 struct IntersectionDataPack2D;
@@ -81,7 +81,7 @@ struct IntersectionDataInitializer2D {};
  * @brief Baseline view for a nonconforming data accessor
  * (core/specfem/chunk_edge/nonconforming_interface.hpp)
  */
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, typename Initializer,
           specfem::data_access::DataClassType DataClassType>
 struct NonconformingAccessorPatch2D;

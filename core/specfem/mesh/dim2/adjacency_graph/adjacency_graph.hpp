@@ -29,7 +29,7 @@ public:
    */
   struct EdgeProperties {
     /** @brief Type of connection between adjacent elements */
-    specfem::connections::type connection;
+    specfem::element_connections::type connection;
 
     /** @brief Orientation of the shared mesh entity (left, right, ...,
      * bottom_left, bottom_right, etc.) */
@@ -48,7 +48,7 @@ public:
      * @param conn Type of connection between elements
      * @param orient Orientation of the shared mesh entity
      */
-    EdgeProperties(const specfem::connections::type conn,
+    EdgeProperties(const specfem::element_connections::type conn,
                    const specfem::mesh_entity::dim2::type orient)
         : connection(conn), orientation(orient) {}
   };

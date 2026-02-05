@@ -29,8 +29,8 @@ using Asymm4to5_VectorizedPower = std::tuple<
 
 TEST(NonconformingAcousticElastic, Asymm4to5_VectorizedPower) {
   specfem::compute_coupling_test::nonconforming::run_case<
-      specfem::interface::interface_tag::acoustic_elastic,
-      specfem::interface::flux_scheme_tag::natural,
+      specfem::element_coupling::interface_tag::acoustic_elastic,
+      specfem::element_coupling::flux_scheme_tag::natural,
       Asymm4to5_VectorizedPower>();
 }
 

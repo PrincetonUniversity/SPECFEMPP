@@ -41,14 +41,15 @@ using Asymm4to5_HigherOrder = std::tuple<
 
 TEST(NonconformingElasticAcoustic, GLL2_Constant) {
   specfem::compute_coupling_test::nonconforming::run_case<
-      specfem::interface::interface_tag::elastic_acoustic,
-      specfem::interface::flux_scheme_tag::natural, GLL2_Constant>();
+      specfem::element_coupling::interface_tag::elastic_acoustic,
+      specfem::element_coupling::flux_scheme_tag::natural, GLL2_Constant>();
 }
 
 TEST(NonconformingElasticAcoustic, Asymm4to5_HigherOrder) {
   specfem::compute_coupling_test::nonconforming::run_case<
-      specfem::interface::interface_tag::elastic_acoustic,
-      specfem::interface::flux_scheme_tag::natural, Asymm4to5_HigherOrder>();
+      specfem::element_coupling::interface_tag::elastic_acoustic,
+      specfem::element_coupling::flux_scheme_tag::natural,
+      Asymm4to5_HigherOrder>();
 }
 
 } // namespace

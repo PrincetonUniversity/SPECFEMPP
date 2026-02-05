@@ -18,25 +18,25 @@
 
 template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType,
-          specfem::interface::interface_tag InterfaceTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::interface::flux_scheme_tag FluxSchemeTag>
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
 void specfem::compute::impl::compute_coupling_weakly_conforming(
     const specfem::assembly::assembly<DimensionTag> &assembly) {
 
   constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto connection_tag =
-      specfem::connections::type::weakly_conforming;
+      specfem::element_connections::type::weakly_conforming;
   constexpr static auto interface_tag = InterfaceTag;
   constexpr static auto boundary_tag = BoundaryTag;
   constexpr static auto wavefield = WavefieldType;
   constexpr static auto flux_scheme_tag = FluxSchemeTag;
 
-  static_assert(flux_scheme_tag == specfem::interface::flux_scheme_tag::natural,
+  static_assert(flux_scheme_tag == specfem::element_coupling::flux_scheme_tag::natural,
                 "Currently, we are enforcing only one flux scheme: natural");
 
   constexpr static auto self_medium =
-      specfem::interface::attributes<dimension_tag,
+      specfem::element_coupling::attributes<dimension_tag,
                                      interface_tag>::self_medium();
 
   const auto &conforming_interfaces = assembly.conforming_interfaces;
@@ -62,9 +62,9 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
       specfem::parallel_configuration::default_chunk_edge_config<
           DimensionTag, Kokkos::DefaultExecutionSpace>;
 
-  using CoupledFieldType = typename specfem::interface::attributes<
+  using CoupledFieldType = typename specfem::element_coupling::attributes<
       dimension_tag, interface_tag>::template coupled_field_t<connection_tag>;
-  using SelfFieldType = typename specfem::interface::attributes<
+  using SelfFieldType = typename specfem::element_coupling::attributes<
       dimension_tag, interface_tag>::template self_field_t<connection_tag>;
 
   using PointBoundaryType =
@@ -112,9 +112,9 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
 template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
           int NQuad_intersection,
-          specfem::interface::interface_tag InterfaceTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::interface::flux_scheme_tag FluxSchemeTag>
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
 void specfem::compute::impl::compute_coupling_nonconforming(
     const specfem::assembly::assembly<DimensionTag> &assembly) {
 
@@ -122,13 +122,13 @@ void specfem::compute::impl::compute_coupling_nonconforming(
 
   constexpr static auto dimension_tag = DimensionTag;
   constexpr static auto connection_tag =
-      specfem::connections::type::nonconforming;
+      specfem::element_connections::type::nonconforming;
   constexpr static auto interface_tag = InterfaceTag;
   constexpr static auto boundary_tag = BoundaryTag;
   constexpr static auto wavefield = WavefieldType;
   constexpr static auto flux_scheme_tag = FluxSchemeTag;
 
-  static_assert(flux_scheme_tag == specfem::interface::flux_scheme_tag::natural,
+  static_assert(flux_scheme_tag == specfem::element_coupling::flux_scheme_tag::natural,
                 "Currently, we are enforcing only one flux scheme: natural");
 
   const auto &nonconforming_interfaces = assembly.nonconforming_interfaces;
@@ -150,13 +150,13 @@ void specfem::compute::impl::compute_coupling_nonconforming(
   // As written, field types cannot readily be defined in attributes. Define
   // them here.
   constexpr specfem::element::medium_tag self_medium =
-      specfem::interface::attributes<dimension_tag,
+      specfem::element_coupling::attributes<dimension_tag,
                                      interface_tag>::self_medium();
   constexpr specfem::element::medium_tag coupled_medium =
-      specfem::interface::attributes<dimension_tag,
+      specfem::element_coupling::attributes<dimension_tag,
                                      interface_tag>::coupled_medium();
   using CoupledFieldType = std::conditional_t<
-      InterfaceTag == specfem::interface::interface_tag::acoustic_elastic,
+      InterfaceTag == specfem::element_coupling::interface_tag::acoustic_elastic,
       specfem::chunk_edge::displacement<parallel_config::chunk_size, NGLL,
                                         dimension_tag, coupled_medium,
                                         using_simd>,

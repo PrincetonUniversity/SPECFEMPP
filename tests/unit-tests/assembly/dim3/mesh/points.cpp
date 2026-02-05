@@ -88,7 +88,7 @@ struct ExpectedMapping {
     // Filter out strongly conforming connections
     auto filter = [&graph](const auto &edge) {
       return graph[edge].connection ==
-             specfem::connections::type::strongly_conforming;
+             specfem::element_connections::type::strongly_conforming;
     };
 
     // Create a filtered graph view
@@ -107,12 +107,13 @@ struct ExpectedMapping {
         const auto other_edge = boost::edge(neighbor, e, graph).first;
         const auto orientation2 = fg[other_edge].orientation;
 
-        const auto connections = specfem::connections::connection_mapping(
-            points.ngllz, points.nglly, points.ngllx,
-            Kokkos::subview(expected_mesh.control_nodes.control_node_index, e,
-                            Kokkos::ALL),
-            Kokkos::subview(expected_mesh.control_nodes.control_node_index,
-                            neighbor, Kokkos::ALL));
+        const auto connections =
+            specfem::element_connections::connection_mapping(
+                points.ngllz, points.nglly, points.ngllx,
+                Kokkos::subview(expected_mesh.control_nodes.control_node_index,
+                                e, Kokkos::ALL),
+                Kokkos::subview(expected_mesh.control_nodes.control_node_index,
+                                neighbor, Kokkos::ALL));
 
         if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::corners,
                                            orientation1)) {

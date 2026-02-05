@@ -15,7 +15,7 @@ struct displacement;
 
 } // namespace specfem::point
 
-namespace specfem::interface {
+namespace specfem::element_coupling {
 
 /**
  * @brief Interface coupling direction types.
@@ -52,7 +52,7 @@ enum class flux_scheme_tag {
  * @endcode
  */
 template <specfem::element::dimension_tag DimensionTag,
-          specfem::interface::interface_tag InterfaceTag>
+          specfem::element_coupling::interface_tag InterfaceTag>
 class attributes;
 
 /**
@@ -63,7 +63,7 @@ class attributes;
  */
 template <>
 class attributes<specfem::element::dimension_tag::dim2,
-                 specfem::interface::interface_tag::elastic_acoustic> {
+                 specfem::element_coupling::interface_tag::elastic_acoustic> {
 public:
   /**
    * @brief Self medium (receives coupling).
@@ -85,20 +85,21 @@ public:
    * @brief Self field type for connection types.
    * @tparam ConnectionTag Connection type (weakly_conforming, etc.)
    */
-  template <specfem::connections::type ConnectionTag> struct self_field;
+  template <specfem::element_connections::type ConnectionTag> struct self_field;
 
   /**
    * @brief Coupled field type for connection types.
    * @tparam ConnectionTag Connection type (weakly_conforming, etc.)
    */
-  template <specfem::connections::type ConnectionTag> struct coupled_field;
+  template <specfem::element_connections::type ConnectionTag>
+  struct coupled_field;
 
   /// Type alias for self field
-  template <specfem::connections::type ConnectionTag>
+  template <specfem::element_connections::type ConnectionTag>
   using self_field_t = typename self_field<ConnectionTag>::type;
 
   /// Type alias for coupled field
-  template <specfem::connections::type ConnectionTag>
+  template <specfem::element_connections::type ConnectionTag>
   using coupled_field_t = typename coupled_field<ConnectionTag>::type;
 };
 
@@ -107,8 +108,8 @@ public:
  */
 template <>
 struct attributes<specfem::element::dimension_tag::dim2,
-                  specfem::interface::interface_tag::elastic_acoustic>::
-    self_field<specfem::connections::type::weakly_conforming> {
+                  specfem::element_coupling::interface_tag::elastic_acoustic>::
+    self_field<specfem::element_connections::type::weakly_conforming> {
   using type =
       specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::elastic_psv,
@@ -120,8 +121,8 @@ struct attributes<specfem::element::dimension_tag::dim2,
  */
 template <>
 struct attributes<specfem::element::dimension_tag::dim2,
-                  specfem::interface::interface_tag::elastic_acoustic>::
-    coupled_field<specfem::connections::type::weakly_conforming> {
+                  specfem::element_coupling::interface_tag::elastic_acoustic>::
+    coupled_field<specfem::element_connections::type::weakly_conforming> {
   using type =
       specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::acoustic,
@@ -136,7 +137,7 @@ struct attributes<specfem::element::dimension_tag::dim2,
  */
 template <>
 class attributes<specfem::element::dimension_tag::dim2,
-                 specfem::interface::interface_tag::acoustic_elastic> {
+                 specfem::element_coupling::interface_tag::acoustic_elastic> {
 public:
   /**
    * @brief Self medium (receives coupling).
@@ -158,20 +159,21 @@ public:
    * @brief Self field type for connection types.
    * @tparam ConnectionTag Connection type (weakly_conforming, etc.)
    */
-  template <specfem::connections::type ConnectionTag> struct self_field;
+  template <specfem::element_connections::type ConnectionTag> struct self_field;
 
   /**
    * @brief Coupled field type for connection types.
    * @tparam ConnectionTag Connection type (weakly_conforming, etc.)
    */
-  template <specfem::connections::type ConnectionTag> struct coupled_field;
+  template <specfem::element_connections::type ConnectionTag>
+  struct coupled_field;
 
   /// Type alias for self field
-  template <specfem::connections::type ConnectionTag>
+  template <specfem::element_connections::type ConnectionTag>
   using self_field_t = typename self_field<ConnectionTag>::type;
 
   /// Type alias for coupled field
-  template <specfem::connections::type ConnectionTag>
+  template <specfem::element_connections::type ConnectionTag>
   using coupled_field_t = typename coupled_field<ConnectionTag>::type;
 };
 
@@ -180,8 +182,8 @@ public:
  */
 template <>
 struct attributes<specfem::element::dimension_tag::dim2,
-                  specfem::interface::interface_tag::acoustic_elastic>::
-    self_field<specfem::connections::type::weakly_conforming> {
+                  specfem::element_coupling::interface_tag::acoustic_elastic>::
+    self_field<specfem::element_connections::type::weakly_conforming> {
   using type =
       specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::acoustic,
@@ -193,8 +195,8 @@ struct attributes<specfem::element::dimension_tag::dim2,
  */
 template <>
 struct attributes<specfem::element::dimension_tag::dim2,
-                  specfem::interface::interface_tag::acoustic_elastic>::
-    coupled_field<specfem::connections::type::weakly_conforming> {
+                  specfem::element_coupling::interface_tag::acoustic_elastic>::
+    coupled_field<specfem::element_connections::type::weakly_conforming> {
   using type =
       specfem::point::displacement<specfem::element::dimension_tag::dim2,
                                    specfem::element::medium_tag::elastic_psv,
@@ -218,8 +220,8 @@ std::string to_string(const flux_scheme_tag &flux_scheme_tag);
 
 std::ostream &
 operator<<(std::ostream &stream,
-           const specfem::interface::interface_tag &interface_tag);
+           const specfem::element_coupling::interface_tag &interface_tag);
 std::ostream &
 operator<<(std::ostream &stream,
-           const specfem::interface::flux_scheme_tag &flux_scheme_tag);
-} // namespace specfem::interface
+           const specfem::element_coupling::flux_scheme_tag &flux_scheme_tag);
+} // namespace specfem::element_coupling

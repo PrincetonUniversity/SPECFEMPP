@@ -13,7 +13,7 @@
  * - Coordinate2D transformation accuracy for different element orientations
  * - Verification that shared boundaries have matching physical coordinates2D
  *
- * @see specfem::connections::connection_mapping<dim2>
+ * @see specfem::element_connections::connection_mapping<dim2>
  */
 
 #include "specfem/element.hpp"
@@ -431,7 +431,7 @@ TEST_P(CoupledElements2D, EdgeConnections) {
   specfem::mesh_entity::element<specfem::element::dimension_tag::dim2> mapping(
       5, 5);
 
-  specfem::connections::connection_mapping<
+  specfem::element_connections::connection_mapping<
       specfem::element::dimension_tag::dim2>
       connection(5, 5, element1.control_nodes, element2.control_nodes);
 
@@ -475,7 +475,7 @@ TEST_P(CoupledElements2D, CornerConnections) {
   specfem::mesh_entity::element<specfem::element::dimension_tag::dim2> mapping(
       5, 5);
 
-  specfem::connections::connection_mapping<
+  specfem::element_connections::connection_mapping<
       specfem::element::dimension_tag::dim2>
       connection(5, 5, element1.control_nodes, element2.control_nodes);
 

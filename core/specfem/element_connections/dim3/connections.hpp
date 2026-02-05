@@ -13,7 +13,7 @@
 #include <tuple>
 #include <unordered_map>
 
-namespace specfem::connections {
+namespace specfem::element_connections {
 
 /**
  * @brief 3D coordinate mapping between adjacent hexahedral elements.
@@ -89,4 +89,4 @@ private:
   ElementIndexView element2; ///< Control node indices for second element
 };
 
-} // namespace specfem::connections
+} // namespace specfem::element_connections
