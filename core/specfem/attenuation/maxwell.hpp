@@ -22,6 +22,7 @@ namespace attenuation {
  * \f$B\f$ represents the imaginary part (loss modulus ratio).
  * The quality factor \f$Q = A / B = 1 / \tan\delta\f$.
  *
+ * 
  * @tparam NF Number of frequencies
  */
 template <int NF>

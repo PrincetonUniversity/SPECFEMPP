@@ -3,26 +3,6 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-/**
- * @namespace specfem::optimization
- * @brief Derivative-free optimization algorithms
- *
- * Provides optimization methods for unconstrained minimization problems.
- * All algorithms operate on Kokkos::View arrays for device compatibility.
- *
- * @par Usage pattern:
- * 1. Select an algorithm tag (e.g., NelderMeadSimplex)
- * 2. Configure options (initial point, tolerances)
- * 3. Call optimize() with objective function
- *
- * Example:
- * @code
- * auto objective = [](auto x) { return x(0)*x(0) + x(1)*x(1); };
- * NelderMeadOptions<2> opts;
- * opts.x0 = initial_guess;
- * auto result = optimize(NelderMeadSimplex{}, objective, opts);
- * @endcode
- */
 namespace specfem {
 
 /**
@@ -68,7 +48,23 @@ template <int N> struct OptimizationResult {
 // ============================================================================
 
 /**
- * @brief Generic optimization interface
+ * @brief Generic optimization interface for derivative-free optimization
+ * algorithms
+ *
+ * Provides optimization methods for unconstrained minimization problems. All
+ * algorithms operate on Kokkos::View arrays for device compatibility.
+ *
+ * @par Usage pattern:
+ * 1. Select an algorithm tag (e.g., NelderMeadSimplex)
+ * 2. Configure options (initial point, tolerances)
+ * 3. Call optimize() with objective function
+ *
+ * Example:
+ * @code
+ * auto objective = [](auto x) { return x(0)*x(0) + x(1)*x(1); };
+ * NelderMeadOptions<2> opts; opts.x0 = initial_guess; auto result =
+ * optimize(NelderMeadSimplex{}, objective, opts);
+ * @endcode
  *
  * @tparam AlgorithmTag Algorithm selector (e.g., NelderMeadSimplex)
  * @tparam N Dimension of optimization problem
@@ -88,6 +84,22 @@ OptimizationResult<N> optimize(AlgorithmTag tag, Func &&objective,
 
 /**
  * @brief Generic optimization interface with user-provided gradient
+ *
+ * Provides optimization methods for unconstrained minimization problems. All
+ * algorithms operate on Kokkos::View arrays for device compatibility.
+ *
+ * @par Usage pattern:
+ * 1. Select an algorithm tag (e.g., SteepestDescent)
+ * 2. Configure options (initial point, tolerances)
+ * 3. Call optimize() with objective function and gradient function
+ *
+ * Example:
+ * @code
+ * auto objective = [](auto x) { return x(0)*x(0) + x(1)*x(1); };
+ * SteepestDescentOptions<2> opts; opts.x0 = initial_guess; auto result =
+ * optimize(SteepestDescent{}, objective, gradient, opts);
+ * @endcode
+ *
  *
  * @tparam AlgorithmTag Algorithm selector (e.g., SteepestDescent)
  * @tparam N Dimension of optimization problem
