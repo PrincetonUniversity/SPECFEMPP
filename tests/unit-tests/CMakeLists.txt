@@ -481,6 +481,7 @@ target_link_libraries(
   yaml-cpp
   specfem::utilities
   enumerations
+  specfem::element
   shape_functions
   specfem::quadrature
   ${BOOST_LIBS}

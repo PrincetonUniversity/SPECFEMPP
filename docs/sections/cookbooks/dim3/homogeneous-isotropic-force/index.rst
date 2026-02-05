@@ -1,12 +1,12 @@
 .. _homogeneous_halfspace_3d_example:
 
 Wave propagation through 3D homogeneous media
-==============================================
+=============================================
 
 In this example we simulate wave propagation through a 3-dimensional homogeneous halfspace using a force source.
 
 Setting up your workspace
---------------------------
+-------------------------
 
 Let's start by creating a workspace from where we can run this example.
 
@@ -64,7 +64,7 @@ the installation process.
 We first define the meshing parameters in a Mesh Parameter file.
 
 Mesh Parameter File
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. literalinclude:: DATA/meshfem3D_files/Mesh_Par_file
     :caption: Mesh_Par_file
@@ -134,7 +134,7 @@ At this point, it is worthwhile to note a few key parameters within the
       :lineno-match:
 
 Interfaces file
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 The interfaces file defines the topography and layer structure of the mesh.
 
@@ -185,7 +185,7 @@ You should see files including:
 - ``proc000000_skewness.vtk`` - mesh quality visualization file
 
 Defining receivers (stations)
-------------------------------
+-----------------------------
 
 In 3D simulations, we need to explicitly define the receiver locations using a
 STATIONS file.

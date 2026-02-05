@@ -42,10 +42,11 @@ namespace specfem::assembly {
 template <typename SourceArrayViewType>
 void compute_source_array(
     const std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > &source,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
-        &jacobian_matrix,
+        specfem::sources::source<specfem::element::dimension_tag::dim2> >
+        &source,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const specfem::assembly::jacobian_matrix<
+        specfem::element::dimension_tag::dim2> &jacobian_matrix,
     SourceArrayViewType &source_array);
 
 /**
@@ -81,10 +82,11 @@ void compute_source_array(
 template <typename SourceArrayViewType>
 void compute_source_array(
     const std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim3> > &source,
-    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>
-        &jacobian_matrix,
+        specfem::sources::source<specfem::element::dimension_tag::dim3> >
+        &source,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const specfem::assembly::jacobian_matrix<
+        specfem::element::dimension_tag::dim3> &jacobian_matrix,
     SourceArrayViewType &source_array);
 
 } // namespace specfem::assembly

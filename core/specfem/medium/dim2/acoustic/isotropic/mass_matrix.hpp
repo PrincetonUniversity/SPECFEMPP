@@ -1,7 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 
@@ -30,7 +29,7 @@ namespace medium_physics {
  * @param properties Acoustic material properties (\f$ \rho^{-1}, \kappa \f$)
  * @return Mass inverse component [\f$ \kappa^{-1} \f$] for pressure wavefield
  */
-template <specfem::dimension::type DimensionTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
     DimensionTag, specfem::element::medium_tag::acoustic, UseSIMD>
 impl_mass_matrix_component(

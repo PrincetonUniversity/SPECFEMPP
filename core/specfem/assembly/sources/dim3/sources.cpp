@@ -14,16 +14,18 @@
 #include <vector>
 
 template class specfem::assembly::sources_impl::source_medium<
-    specfem::dimension::type::dim3, specfem::element::medium_tag::elastic>;
+    specfem::element::dimension_tag::dim3,
+    specfem::element::medium_tag::elastic>;
 
-specfem::assembly::sources<specfem::dimension::type::dim3>::sources(
+specfem::assembly::sources<specfem::element::dimension_tag::dim3>::sources(
     std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim3> > > &sources,
-    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>
-        &jacobian_matrix,
-    const specfem::assembly::element_types<specfem::dimension::type::dim3>
-        &element_types,
+        specfem::sources::source<specfem::element::dimension_tag::dim3> > >
+        &sources,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &mesh,
+    const specfem::assembly::jacobian_matrix<
+        specfem::element::dimension_tag::dim3> &jacobian_matrix,
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim3> &element_types,
     const type_real t0, const type_real dt, const int nsteps)
     : timestep(0), nspec(mesh.nspec),
       element_indices("specfem::sources::elements", sources.size()),
@@ -230,11 +232,11 @@ specfem::assembly::sources<specfem::dimension::type::dim3>::sources(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::sources<specfem::dimension::type::dim3>::get_sources_on_host(
-    const specfem::element::medium_tag medium,
-    const specfem::element::property_tag property,
-    const specfem::element::boundary_tag boundary,
-    const specfem::simulation::field_type wavefield) const {
+specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
+    get_sources_on_host(const specfem::element::medium_tag medium,
+                        const specfem::element::property_tag property,
+                        const specfem::element::boundary_tag boundary,
+                        const specfem::simulation::field_type wavefield) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
@@ -271,7 +273,7 @@ specfem::assembly::sources<specfem::dimension::type::dim3>::get_sources_on_host(
 // and the source indices for the wavefield type.
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::sources<specfem::dimension::type::dim3>::
+specfem::assembly::sources<specfem::element::dimension_tag::dim3>::
     get_sources_on_device(
         const specfem::element::medium_tag medium,
         const specfem::element::property_tag property,

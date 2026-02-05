@@ -10,8 +10,8 @@
 
 template <>
 struct source_parameters<
-    specfem::dimension::type::dim3,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim3> > {
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> > {
   source_parameters()
       : x(0.0), y(0.0), z(0.0), Mxx(0.0), Myy(0.0), Mzz(0.0), Mxy(0.0),
         Mxz(0.0), Myz(0.0) {};
@@ -40,8 +40,8 @@ struct source_parameters<
 
 template <>
 struct source_solution<
-    specfem::dimension::type::dim3,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim3> > {
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> > {
 public:
   source_solution(type_real x, type_real y, type_real z, type_real Mxx,
                   type_real Myy, type_real Mzz, type_real Mxy, type_real Mxz,
@@ -77,11 +77,11 @@ public:
 // solutions
 // Defining short hands for the source parameters and solution types
 using MomentTensorSource3DSolution = source_solution<
-    specfem::dimension::type::dim3,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim3> >;
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> >;
 using MomentTensorSource3DParameters = source_parameters<
-    specfem::dimension::type::dim3,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim3> >;
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> >;
 
 using MomentTensorSource3DParametersAndSolution =
     std::tuple<MomentTensorSource3DParameters, MomentTensorSource3DSolution>;
@@ -90,8 +90,8 @@ using MomentTensorSource3DParametersAndSolution =
 template <>
 std::vector<MomentTensorSource3DParametersAndSolution>
 get_parameters_and_solutions<
-    specfem::dimension::type::dim3,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim3> >() {
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> >() {
   return std::vector<MomentTensorSource3DParametersAndSolution>{
     // Test 3D elastic moment tensor source (simple diagonal)
     std::make_tuple(
@@ -118,14 +118,15 @@ get_parameters_and_solutions<
 
 // Factory function specialization for 3D Moment Tensor Source
 template <>
-specfem::sources::moment_tensor<specfem::dimension::type::dim3>
-create_source<specfem::dimension::type::dim3,
-              specfem::sources::moment_tensor<specfem::dimension::type::dim3> >(
+specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>
+create_source<
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> >(
     const source_parameters<
-        specfem::dimension::type::dim3,
-        specfem::sources::moment_tensor<specfem::dimension::type::dim3> >
+        specfem::element::dimension_tag::dim3,
+        specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> >
         &parameters) {
-  return specfem::sources::moment_tensor<specfem::dimension::type::dim3>(
+  return specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3>(
       parameters.x, parameters.y, parameters.z, parameters.Mxx, parameters.Myy,
       parameters.Mzz, parameters.Mxy, parameters.Mxz, parameters.Myz,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,

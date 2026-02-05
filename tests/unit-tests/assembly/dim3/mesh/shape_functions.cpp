@@ -10,8 +10,8 @@
 namespace specfem::assembly_test {
 
 struct ShapeFunction3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   int ngllz;              ///< Number of GLL points in z-direction
   int nglly;              ///< Number of GLL points in y-direction
   int ngllx;              ///< Number of GLL points in x-direction

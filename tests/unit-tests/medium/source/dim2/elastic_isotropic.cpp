@@ -8,7 +8,7 @@
 namespace {
 
 TEST(Source, ElasticIsotropicPSV2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::elastic_psv;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
@@ -51,7 +51,7 @@ TEST(Source, ElasticIsotropicPSV2D) {
 }
 
 TEST(Source, ElasticIsotropicSH2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::elastic_sh;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
@@ -90,7 +90,7 @@ TEST(Source, ElasticIsotropicSH2D) {
 }
 
 TEST(Source, ElasticIsotropicPSV2D_ZeroSource) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::elastic_psv;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;

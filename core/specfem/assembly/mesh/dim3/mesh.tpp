@@ -6,7 +6,7 @@
 #include "specfem/mesh.hpp"
 #include "specfem/assembly/mesh/impl/quadrature.hpp"
 
-specfem::assembly::mesh<specfem::dimension::type::dim3>::mesh(
+specfem::assembly::mesh<specfem::element::dimension_tag::dim3>::mesh(
     const int nspec, const int ngnod, const int ngllz, const int nglly,
     const int ngllx,
     const specfem::mesh::adjacency_graph<dimension_tag>

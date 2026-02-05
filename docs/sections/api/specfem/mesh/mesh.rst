@@ -10,10 +10,10 @@
 Dimension-Specific Specializations
 ----------------------------------
 
-.. doxygenstruct:: specfem::mesh::mesh< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::mesh::mesh< specfem::element::dimension_tag::dim2 >
     :members:
     :private-members:
 
-.. doxygenstruct:: specfem::mesh::mesh< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::mesh::mesh< specfem::element::dimension_tag::dim3 >
     :members:
     :private-members:

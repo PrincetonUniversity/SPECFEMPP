@@ -37,7 +37,7 @@ namespace sources {
  * );
  *
  * auto tensor_src =
- * specfem::sources::moment_tensor<specfem::dimension::type::dim2>( 12.5, 8.0,
+ * specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>( 12.5, 8.0,
  * // coordinates (x, z) 1.5,        // Mxx - normal stress in x direction 2.1,
  * // Mzz - normal stress in z direction 0.7,        // Mxz - shear stress
  * component std::move(stf), specfem::simulation::field_type::forward
@@ -63,7 +63,7 @@ namespace sources {
  *
  * @note This class inherits from @ref specfem::sources::source
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 class tensor_source : public source<DimensionTag> {
 
 public:
@@ -80,9 +80,9 @@ public:
    * @param z z-coordinate of source
    * @param source_time_function pointer to source time function
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   tensor_source(
       type_real x, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
@@ -95,9 +95,9 @@ public:
    * @param z z-coordinate of source
    * @param source_time_function pointer to source time function
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   tensor_source(
       type_real x, type_real y, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)

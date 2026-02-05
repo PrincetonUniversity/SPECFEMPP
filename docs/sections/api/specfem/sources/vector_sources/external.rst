@@ -1,5 +1,5 @@
 ``specfem::sources::external``
--------------------------------
+------------------------------
 
 .. doxygenclass:: specfem::sources::external
     :members:

@@ -2,8 +2,8 @@
 
 #include "absorbing_boundary.hpp"
 #include "acoustic_free_surface.hpp"
-#include "enumerations/dimension.hpp"
 #include "forcing_boundaries.hpp"
+#include "specfem/element.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
 namespace specfem {
@@ -13,10 +13,10 @@ namespace mesh {
  *
  * @tparam DimensionTag Dimension type for the mesh
  */
-template <> struct boundaries<specfem::dimension::type::dim2> {
+template <> struct boundaries<specfem::element::dimension_tag::dim2> {
 
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension type
+      specfem::element::dimension_tag::dim2; ///< Dimension type
 
   specfem::mesh::absorbing_boundary<dimension_tag>
       absorbing_boundary; ///< Absorbing boundary

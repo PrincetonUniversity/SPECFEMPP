@@ -1,6 +1,6 @@
 #include "enumerations/connections.hpp"
-#include "enumerations/dimension.hpp"
 #include "enumerations/mesh_entities.hpp"
+#include "specfem/element.hpp"
 #include "specfem_setup.hpp"
 #include <array>
 #include <stdexcept>
@@ -177,11 +177,11 @@ extern int edge_transform(const std::array<int, 2> &from_nodes,
                           const std::array<int, 2> &to_nodes, const int index,
                           const int ngll);
 
-std::tuple<int, int, int>
-specfem::connections::connection_mapping<specfem::dimension::type::dim3>::
-    map_coordinates(const specfem::mesh_entity::dim3::type &from,
-                    const specfem::mesh_entity::dim3::type &to, const int iz,
-                    const int iy, const int ix) const {
+std::tuple<int, int, int> specfem::connections::
+    connection_mapping<specfem::element::dimension_tag::dim3>::map_coordinates(
+        const specfem::mesh_entity::dim3::type &from,
+        const specfem::mesh_entity::dim3::type &to, const int iz, const int iy,
+        const int ix) const {
 
   // Face to face mapping
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim3::faces, from) &&
@@ -324,10 +324,10 @@ specfem::connections::connection_mapping<specfem::dimension::type::dim3>::
   return std::make_tuple(0, 0, 0);
 }
 
-std::tuple<int, int, int>
-specfem::connections::connection_mapping<specfem::dimension::type::dim3>::
-    map_coordinates(const specfem::mesh_entity::dim3::type &from,
-                    const specfem::mesh_entity::dim3::type &to) const {
+std::tuple<int, int, int> specfem::connections::
+    connection_mapping<specfem::element::dimension_tag::dim3>::map_coordinates(
+        const specfem::mesh_entity::dim3::type &from,
+        const specfem::mesh_entity::dim3::type &to) const {
 
   if (!(specfem::mesh_entity::contains(specfem::mesh_entity::dim3::corners,
                                        from) &&

@@ -34,8 +34,8 @@ namespace specfem::assembly {
  * - specfem::mesh::materials: Material assignment per element
  */
 template <>
-struct properties<specfem::dimension::type::dim2>
-    : public impl::value_containers<specfem::dimension::type::dim2,
+struct properties<specfem::element::dimension_tag::dim2>
+    : public impl::value_containers<specfem::element::dimension_tag::dim2,
                                     impl::domain_properties> {
 
   /**
@@ -62,7 +62,7 @@ struct properties<specfem::dimension::type::dim2>
    * models)
    *
    * @code
-   * specfem::assembly::properties<specfem::dimension::type::dim2> props(
+   * specfem::assembly::properties<specfem::element::dimension_tag::dim2> props(
    *     1000, 5, 5, element_types, mesh, materials, false);
    * @endcode
    */
@@ -122,10 +122,11 @@ struct properties<specfem::dimension::type::dim2>
  * @endcode
  */
 template <typename IndexViewType, typename PointPropertiesType>
-void max(const IndexViewType &ispecs,
-         const specfem::assembly::properties<specfem::dimension::type::dim2>
-             &properties,
-         PointPropertiesType &point_properties) {
+void max(
+    const IndexViewType &ispecs,
+    const specfem::assembly::properties<specfem::element::dimension_tag::dim2>
+        &properties,
+    PointPropertiesType &point_properties) {
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
@@ -135,7 +136,7 @@ void max(const IndexViewType &ispecs,
                    Kokkos::DefaultExecutionSpace>::value;
 
   static_assert(PointPropertiesType::dimension_tag ==
-                    specfem::dimension::type::dim2,
+                    specfem::element::dimension_tag::dim2,
                 "Only 2D properties are supported");
 
   IndexViewType local_ispecs("local_ispecs", ispecs.extent(0));

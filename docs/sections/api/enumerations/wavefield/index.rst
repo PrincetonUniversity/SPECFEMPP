@@ -2,7 +2,7 @@
 .. _specfem_api_enumerations_wavefield:
 
 ``specfem::simulation::field_type``
-=======================================
+===================================
 
 .. doxygenenum:: specfem::simulation::field_type
 
@@ -26,14 +26,14 @@
 Wavefield Specializations
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenclass:: specfem::wavefield::wavefield< specfem::dimension::type::dim2, specfem::wavefield::type::displacement >
+.. doxygenclass:: specfem::wavefield::wavefield< specfem::element::dimension_tag::dim2, specfem::wavefield::type::displacement >
    :members:
 
-.. doxygenclass:: specfem::wavefield::wavefield< specfem::dimension::type::dim2, specfem::wavefield::type::velocity >
+.. doxygenclass:: specfem::wavefield::wavefield< specfem::element::dimension_tag::dim2, specfem::wavefield::type::velocity >
    :members:
 
-.. doxygenclass:: specfem::wavefield::wavefield< specfem::dimension::type::dim2, specfem::wavefield::type::acceleration >
+.. doxygenclass:: specfem::wavefield::wavefield< specfem::element::dimension_tag::dim2, specfem::wavefield::type::acceleration >
    :members:
 
-.. doxygenclass:: specfem::wavefield::wavefield< specfem::dimension::type::dim2, specfem::wavefield::type::pressure >
+.. doxygenclass:: specfem::wavefield::wavefield< specfem::element::dimension_tag::dim2, specfem::wavefield::type::pressure >
    :members:

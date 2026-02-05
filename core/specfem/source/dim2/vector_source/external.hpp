@@ -27,10 +27,9 @@ namespace sources {
  * );
  *
  * // Create a 2D external source at boundary location (0.0, 5.0)
- * auto ext_source = specfem::sources::external<specfem::dimension::type::dim2>(
- *     0.0,  // x-coordinate (at boundary)
- *     5.0,  // z-coordinate
- *     std::move(stf),
+ * auto ext_source =
+ * specfem::sources::external<specfem::element::dimension_tag::dim2>( 0.0,  //
+ * x-coordinate (at boundary) 5.0,  // z-coordinate std::move(stf),
  *     specfem::simulation::field_type::forward
  * );
  *
@@ -43,8 +42,8 @@ namespace sources {
  *
  */
 template <>
-class external<specfem::dimension::type::dim2>
-    : public vector_source<specfem::dimension::type::dim2> {
+class external<specfem::element::dimension_tag::dim2>
+    : public vector_source<specfem::element::dimension_tag::dim2> {
 
 public:
   external() {};

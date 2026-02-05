@@ -37,8 +37,8 @@ namespace periodic_tasks {
  * @brief Writer to plot the wavefield
  */
 template <>
-class plot_wavefield<specfem::dimension::type::dim2>
-    : public plotter<specfem::dimension::type::dim2> {
+class plot_wavefield<specfem::element::dimension_tag::dim2>
+    : public plotter<specfem::element::dimension_tag::dim2> {
 public:
   /**
    * @brief Construct a new plotter object
@@ -53,7 +53,7 @@ public:
    * @param output_folder Path to output folder where plots will be stored
    */
   plot_wavefield(
-      const specfem::assembly::assembly<specfem::dimension::type::dim2>
+      const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
           &assembly,
       const specfem::display::format &output_format,
       const specfem::wavefield::type &wavefield_type,
@@ -67,9 +67,9 @@ public:
    * @brief Updates the wavefield within open window
    *
    */
-  void
-  run(specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-      const int istep) override;
+  void run(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+               &assembly,
+           const int istep) override;
 
   /**
    * @brief Wavefield plotter
@@ -78,8 +78,9 @@ public:
    *
    * @param assembly SPECFFEM++ assembly object
    */
-  void initialize(specfem::assembly::assembly<specfem::dimension::type::dim2>
-                      &assembly) override;
+  void
+  initialize(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+                 &assembly) override;
 
   /**
    * @brief Finalize the plotter
@@ -88,8 +89,9 @@ public:
    *
    * @param assembly SPECFFEM++ assembly object
    */
-  void finalize(specfem::assembly::assembly<specfem::dimension::type::dim2>
-                    &assembly) override;
+  void
+  finalize(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+               &assembly) override;
 
   const specfem::display::format output_format;  ///< Output format of the plot
   const specfem::display::component component;   ///< Component to plot
@@ -102,7 +104,7 @@ public:
   const boost::filesystem::path output_folder; ///< Path to output folder
   const specfem::enums::elastic_wave elastic_wave;
   const specfem::enums::electromagnetic_wave electromagnetic_wave;
-  specfem::assembly::assembly<specfem::dimension::type::dim2>
+  specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
       assembly; ///< Assembly object
 
   // Grid parameter members
@@ -142,7 +144,8 @@ private:
   void create_biquad_grid();
   void create_lagrange_quad_grid();
   vtkSmartPointer<vtkFloatArray> compute_wavefield_scalars(
-      specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly);
+      specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+          &assembly);
   vtkSmartPointer<vtkDataSetMapper> map_materials_with_color();
 
   /**

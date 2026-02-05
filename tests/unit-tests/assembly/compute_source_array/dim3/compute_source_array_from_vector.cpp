@@ -36,7 +36,7 @@ void test_vector_source_3d(const std::string &source_name, SourceType &source,
                      std::to_string(iy) + ", iz=" + std::to_string(iz) + ")");
 
         // Set source location to this GLL point
-        specfem::point::local_coordinates<specfem::dimension::type::dim3>
+        specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
             local_coords(0, xi_eta_gamma_points(ix), xi_eta_gamma_points(iy),
                          xi_eta_gamma_points(iz));
         source.set_local_coordinates(local_coords);
@@ -97,7 +97,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
 
   // (1,0,0) - force in x direction only
   {
-    specfem::sources::force<specfem::dimension::type::dim3> force_x(
+    specfem::sources::force<specfem::element::dimension_tag::dim3> force_x(
         0.0, 0.0, 0.0, // x, y, z
         1.0, 0.0, 0.0, // fx, fy, fz
         std::make_unique<specfem::source_time_functions::Ricker>(
@@ -109,7 +109,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
 
   // (0,1,0) - force in y direction only
   {
-    specfem::sources::force<specfem::dimension::type::dim3> force_y(
+    specfem::sources::force<specfem::element::dimension_tag::dim3> force_y(
         0.0, 0.0, 0.0, // x, y, z
         0.0, 1.0, 0.0, // fx, fy, fz
         std::make_unique<specfem::source_time_functions::Ricker>(
@@ -121,7 +121,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
 
   // (0,0,1) - force in z direction only
   {
-    specfem::sources::force<specfem::dimension::type::dim3> force_z(
+    specfem::sources::force<specfem::element::dimension_tag::dim3> force_z(
         0.0, 0.0, 0.0, // x, y, z
         0.0, 0.0, 1.0, // fx, fy, fz
         std::make_unique<specfem::source_time_functions::Ricker>(
@@ -133,7 +133,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
 
   // (1,1,1) - force in all directions
   {
-    specfem::sources::force<specfem::dimension::type::dim3> force_all(
+    specfem::sources::force<specfem::element::dimension_tag::dim3> force_all(
         0.0, 0.0, 0.0, // x, y, z
         1.0, 1.0, 1.0, // fx, fy, fz
         std::make_unique<specfem::source_time_functions::Ricker>(
@@ -145,7 +145,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
 
   // (0,0,0) - zero force (amplitude=0)
   {
-    specfem::sources::force<specfem::dimension::type::dim3> force_zero(
+    specfem::sources::force<specfem::element::dimension_tag::dim3> force_zero(
         0.0, 0.0, 0.0, // x, y, z
         0.0, 0.0, 0.0, // fx, fy, fz
         std::make_unique<specfem::source_time_functions::Ricker>(
@@ -158,7 +158,8 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
 
   // Test Adjoint sources (3 components)
   // {
-  //   specfem::sources::adjoint_source<specfem::dimension::type::dim3> adjoint(
+  //   specfem::sources::adjoint_source<specfem::element::dimension_tag::dim3>
+  //   adjoint(
   //       0.0, 0.0, 0.0, // x, y, z
   //       std::make_unique<specfem::source_time_functions::Ricker>(10,
   //       0.01, 1.0, 0.0,
@@ -170,7 +171,8 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector_3d) {
 
   // Test External source (3 components)
   // {
-  //   specfem::sources::external<specfem::dimension::type::dim3> external(
+  //   specfem::sources::external<specfem::element::dimension_tag::dim3>
+  //   external(
   //       0.0, 0.0, 0.0, // x, y, z
   //       std::make_unique<specfem::source_time_functions::Ricker>(10,
   //       0.01, 1.0, 0.0,

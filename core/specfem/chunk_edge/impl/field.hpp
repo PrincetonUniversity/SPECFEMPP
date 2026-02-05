@@ -40,7 +40,7 @@ namespace specfem::chunk_edge::impl {
  * @tparam UseSIMD Whether to enable SIMD vectorization for performance
  * @tparam ValueType The underlying data storage type for field values
  */
-template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
+template <int ChunkSize, int NGLL, specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD,
           typename ValueType>
 class field_without_accessor {
@@ -124,7 +124,7 @@ public:
  * @see field_without_accessor for the resulting type
  *
  */
-template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
+template <int ChunkSize, int NGLL, specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD,
           typename ValueType>
 class remove_accessor_attribute {
@@ -154,16 +154,16 @@ public:
  *
  * @see remove_accessor_attribute for type trait to strip accessor attributes.
  */
-template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
+template <int ChunkSize, int NGLL, specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::data_access::DataClassType DataClass, bool UseSIMD>
 class field : public specfem::data_access::Accessor<
-                  specfem::data_access::AccessorType::chunk_edge, DataClass,
+                  specfem::datatype::AccessorType::chunk_edge, DataClass,
                   DimensionTag, UseSIMD> {
 private:
   /// @brief Type alias for the base accessor class
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::chunk_edge, DataClass, DimensionTag,
+      specfem::datatype::AccessorType::chunk_edge, DataClass, DimensionTag,
       UseSIMD>;
 
 public:

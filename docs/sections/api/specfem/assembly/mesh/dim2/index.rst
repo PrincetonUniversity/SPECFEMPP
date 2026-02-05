@@ -4,7 +4,7 @@
 2D ``specfem::assembly::mesh``
 ==============================
 
-.. doxygenstruct:: specfem::assembly::mesh< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::assembly::mesh< specfem::element::dimension_tag::dim2 >
     :members:
 
 

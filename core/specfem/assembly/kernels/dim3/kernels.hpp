@@ -23,7 +23,7 @@ namespace specfem::assembly {
  *
  * @code
  * // Initialize kernels container for 3D mesh
- * specfem::assembly::kernels<specfem::dimension::type::dim3> kernels(
+ * specfem::assembly::kernels<specfem::element::dimension_tag::dim3> kernels(
  *     nspec, ngllz, nglly, ngllx, element_types);
  *
  * // Access elastic kernels for a specific point
@@ -44,8 +44,8 @@ namespace specfem::assembly {
  * @see specfem::point::kernels Point-wise kernel accessors
  */
 template <>
-struct kernels<specfem::dimension::type::dim3>
-    : public impl::value_containers<specfem::dimension::type::dim3,
+struct kernels<specfem::element::dimension_tag::dim3>
+    : public impl::value_containers<specfem::element::dimension_tag::dim3,
                                     impl::domain_kernels> {
 public:
   /**

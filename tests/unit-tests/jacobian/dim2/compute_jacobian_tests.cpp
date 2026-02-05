@@ -21,13 +21,13 @@ protected:
   }
 
   // Helper to create unit square element [0,1] x [0,1]
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
   create_unit_square_4node() {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim2> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 4);
     coorg(0) = { 0.0, 0.0 }; // Bottom-left
     coorg(1) = { 1.0, 0.0 }; // Bottom-right
@@ -37,13 +37,13 @@ protected:
   }
 
   // Helper to create scaled square element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
   create_scaled_square_4node(type_real scale) {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim2> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 4);
     coorg(0) = { 0.0, 0.0 };
     coorg(1) = { scale, 0.0 };
@@ -53,13 +53,13 @@ protected:
   }
 
   // Helper to create translated square element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
   create_translated_unit_square_4node(type_real dx, type_real dz) {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim2> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 4);
     coorg(0) = { dx, dz };
     coorg(1) = { static_cast<type_real>(1.0) + dx, dz };
@@ -70,13 +70,13 @@ protected:
   }
 
   // Helper to create 9-node unit square element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
   create_unit_square_9node() {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim2> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 9);
     coorg(0) = { 0.0, 0.0 }; // Corner 0: (0,0)
     coorg(1) = { 1.0, 0.0 }; // Corner 1: (1,0)
@@ -179,9 +179,9 @@ TEST_F(ComputeJacobianDim2Test, TranslatedSquareMapping) {
 TEST_F(ComputeJacobianDim2Test, ShearMapping) {
   // Test with a sheared quadrilateral
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Sheared quadrilateral (unit square sheared in x-direction)
@@ -219,9 +219,9 @@ TEST_F(ComputeJacobianDim2Test, JacobianConsistencyAcrossElement) {
   // Test that jacobian is constant across a bilinear element (for 4-node
   // elements)
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Simple parallelogram
@@ -273,9 +273,9 @@ TEST_F(ComputeJacobianDim2Test, JacobianConsistencyAcrossElement) {
 TEST_F(ComputeJacobianDim2Test, RectangleMapping) {
   // Test with a rectangle (different scaling in each direction)
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Rectangle: width = 4, height = 2
@@ -312,9 +312,9 @@ TEST_F(ComputeJacobianDim2Test, RectangleMapping) {
 TEST_F(ComputeJacobianDim2Test, PositiveJacobianCheck) {
   // Test that jacobian is positive for properly oriented elements
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Various properly oriented quadrilaterals
@@ -341,9 +341,9 @@ TEST_F(ComputeJacobianDim2Test, PositiveJacobianCheck) {
 TEST_F(ComputeJacobianDim2Test, NegativeJacobianCheck) {
   // Test that jacobian is negative for improperly oriented elements
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Clockwise oriented square (improper orientation)
@@ -360,9 +360,9 @@ TEST_F(ComputeJacobianDim2Test, NegativeJacobianCheck) {
 TEST_F(ComputeJacobianDim2Test, OverloadedFunction) {
   // Test the overloaded function that takes explicit derivatives
   const int ngnod = 4;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Unit square
@@ -437,9 +437,9 @@ TEST_F(ComputeJacobianDim2Test, NineNodeUnitSquareMapping) {
 TEST_F(ComputeJacobianDim2Test, NineNodeScaledSquareMapping) {
   // Test with a 9-node scaled square element
   const int ngnod = 9;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // 9-node square with side length 2

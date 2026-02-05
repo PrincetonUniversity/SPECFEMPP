@@ -1,8 +1,8 @@
 #pragma once
 
 #include "domain_view.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
 
 #include "specfem/assembly.hpp"
@@ -13,8 +13,8 @@
 template <typename OutputLibrary, typename ContainerType>
 void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const specfem::assembly::element_types<specfem::element::dimension_tag::dim2>
         &element_types,
     ContainerType &container) {
   using DomainView =

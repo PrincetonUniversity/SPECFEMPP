@@ -6,7 +6,7 @@
  */
 #pragma once
 
-#include "dimension.hpp"
+#include "specfem/element.hpp"
 #include <string>
 
 namespace specfem::connections {
@@ -42,7 +42,8 @@ const std::string to_string(const specfem::connections::type &conn);
  *     mesh_entity::left, mesh_entity::right, iz, ix);
  * @endcode
  */
-template <specfem::dimension::type DimensionTag> class connection_mapping;
+template <specfem::element::dimension_tag DimensionTag>
+class connection_mapping;
 
 } // namespace specfem::connections
 
@@ -58,12 +59,12 @@ namespace specfem::connections {
 connection_mapping(const int, const int,
                    Kokkos::View<int *, Kokkos::LayoutStride, Kokkos::HostSpace>,
                    Kokkos::View<int *, Kokkos::LayoutStride, Kokkos::HostSpace>)
-    -> connection_mapping<specfem::dimension::type::dim2>;
+    -> connection_mapping<specfem::element::dimension_tag::dim2>;
 
 connection_mapping(const int, const int, const int,
                    Kokkos::View<int *, Kokkos::LayoutStride, Kokkos::HostSpace>,
                    Kokkos::View<int *, Kokkos::LayoutStride, Kokkos::HostSpace>)
-    -> connection_mapping<specfem::dimension::type::dim3>;
+    -> connection_mapping<specfem::element::dimension_tag::dim3>;
 ///@}
 
 } // namespace specfem::connections

@@ -10,8 +10,8 @@
 
 template <>
 struct source_parameters<
-    specfem::dimension::type::dim3,
-    specfem::sources::force<specfem::dimension::type::dim3> > {
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::force<specfem::element::dimension_tag::dim3> > {
   source_parameters() : x(0.0), y(0.0), z(0.0), fx(0.0), fy(0.0), fz(0.0) {};
   source_parameters(std::string name, type_real x, type_real y, type_real z,
                     type_real fx, type_real fy, type_real fz,
@@ -33,8 +33,8 @@ struct source_parameters<
 
 template <>
 struct source_solution<
-    specfem::dimension::type::dim3,
-    specfem::sources::force<specfem::dimension::type::dim3> > {
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::force<specfem::element::dimension_tag::dim3> > {
 public:
   source_solution(type_real x, type_real y, type_real z,
                   std::vector<type_real> force_vector)
@@ -57,20 +57,20 @@ public:
 
 // Vector of pairs of force parameters and corresponding vector force solutions
 // Defining short hands for the source parameters and solution types
-using ForceSource3DSolution =
-    source_solution<specfem::dimension::type::dim3,
-                    specfem::sources::force<specfem::dimension::type::dim3> >;
-using ForceSource3DParameters =
-    source_parameters<specfem::dimension::type::dim3,
-                      specfem::sources::force<specfem::dimension::type::dim3> >;
+using ForceSource3DSolution = source_solution<
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::force<specfem::element::dimension_tag::dim3> >;
+using ForceSource3DParameters = source_parameters<
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::force<specfem::element::dimension_tag::dim3> >;
 
 using ForceSource3DParametersAndSolution =
     std::tuple<ForceSource3DParameters, ForceSource3DSolution>;
 // Vector of pairs of force parameters and corresponding vector force solutions
 template <>
 std::vector<ForceSource3DParametersAndSolution> get_parameters_and_solutions<
-    specfem::dimension::type::dim3,
-    specfem::sources::force<specfem::dimension::type::dim3> >() {
+    specfem::element::dimension_tag::dim3,
+    specfem::sources::force<specfem::element::dimension_tag::dim3> >() {
   return std::vector<ForceSource3DParametersAndSolution>{
     // Test 3D elastic source with force in x-direction
     std::make_tuple(
@@ -112,13 +112,14 @@ std::vector<ForceSource3DParametersAndSolution> get_parameters_and_solutions<
 
 // Factory function specialization for 3D Force Source
 template <>
-specfem::sources::force<specfem::dimension::type::dim3>
-create_source<specfem::dimension::type::dim3,
-              specfem::sources::force<specfem::dimension::type::dim3> >(
+specfem::sources::force<specfem::element::dimension_tag::dim3>
+create_source<specfem::element::dimension_tag::dim3,
+              specfem::sources::force<specfem::element::dimension_tag::dim3> >(
     const source_parameters<
-        specfem::dimension::type::dim3,
-        specfem::sources::force<specfem::dimension::type::dim3> > &parameters) {
-  return specfem::sources::force<specfem::dimension::type::dim3>(
+        specfem::element::dimension_tag::dim3,
+        specfem::sources::force<specfem::element::dimension_tag::dim3> >
+        &parameters) {
+  return specfem::sources::force<specfem::element::dimension_tag::dim3>(
       parameters.x, parameters.y, parameters.z, parameters.fx, parameters.fy,
       parameters.fz,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,

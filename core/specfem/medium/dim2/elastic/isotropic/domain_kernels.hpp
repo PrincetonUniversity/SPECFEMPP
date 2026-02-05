@@ -32,7 +32,7 @@ namespace specfem::medium_container::kernels {
  *
  * @see DATA_CONTAINER macro for details on generated members and methods.
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 struct data_container<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic,

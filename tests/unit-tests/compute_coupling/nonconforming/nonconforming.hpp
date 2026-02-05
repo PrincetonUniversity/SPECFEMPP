@@ -3,10 +3,9 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "Kokkos_Core_fwd.hpp"
 #include "enumerations/coupled_interface.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
 #include "specfem/chunk_edge.hpp"
 #include "specfem/data_access/accessor.hpp"
+#include "specfem/element.hpp"
 #include "specfem/medium_physics.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 
@@ -16,10 +15,11 @@
 #include <type_traits>
 
 // We need to simulate a chunk_edge iteration:
-template <specfem::dimension::type DimensionTag> class ChunkEdgeIndexSimulator {
+template <specfem::element::dimension_tag DimensionTag>
+class ChunkEdgeIndexSimulator {
 public:
   static constexpr auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge;
+      specfem::datatype::AccessorType::chunk_edge;
   using KokkosIndexType = Kokkos::TeamPolicy<>::member_type;
 
   KOKKOS_INLINE_FUNCTION
@@ -38,8 +38,8 @@ private:
   KokkosIndexType kokkos_index; ///< Kokkos team member for this chunk
 };
 
-template <specfem::dimension::type dimension_tag, typename EdgeFunction2D,
-          typename Accessor>
+template <specfem::element::dimension_tag dimension_tag,
+          typename EdgeFunction2D, typename Accessor>
 struct EdgeFunctionWithEmbeddedAccessor
     : specfem::datatype::VectorChunkEdgeViewType<
           type_real, dimension_tag, 1, EdgeFunction2D::nquad_edge,
@@ -47,7 +47,7 @@ struct EdgeFunctionWithEmbeddedAccessor
           typename EdgeFunction2D::memory_space, Kokkos::MemoryTraits<> >,
       Accessor {
   static constexpr auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge;
+      specfem::datatype::AccessorType::chunk_edge;
   static constexpr bool using_simd = false;
 
   template <typename Init>
@@ -61,9 +61,9 @@ struct EdgeFunctionWithEmbeddedAccessor
 
 template <specfem::interface::interface_tag interface_tag>
 static constexpr int ncomp_self_from_interface_tag =
-    specfem::element::attributes<specfem::dimension::type::dim2,
+    specfem::element::attributes<specfem::element::dimension_tag::dim2,
                                  specfem::interface::attributes<
-                                     specfem::dimension::type::dim2,
+                                     specfem::element::dimension_tag::dim2,
                                      interface_tag>::self_medium()>::components;
 
 template <specfem::interface::interface_tag interface_tag,
@@ -78,7 +78,7 @@ execute_impl_compute_coupling(const TransferFunction2D &transfer_function,
                               const IntersectionNormal2D &intersection_normal,
                               const EdgeFunction2D &edge_function) {
   constexpr int num_edges = EdgeFunction2D::num_edges;
-  constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
   constexpr auto boundary_tag = specfem::element::boundary_tag::none;
 
   constexpr specfem::element::medium_tag self_medium =
@@ -133,7 +133,8 @@ execute_impl_compute_coupling(const TransferFunction2D &transfer_function,
                                                      view_slice, Kokkos::ALL(),
                                                      Kokkos::ALL()));
         specfem::medium_physics::impl::compute_coupling(
-            std::integral_constant<specfem::dimension::type, dimension_tag>(),
+            std::integral_constant<specfem::element::dimension_tag,
+                                   dimension_tag>(),
             std::integral_constant<specfem::connections::type,
                                    specfem::connections::type::nonconforming>(),
             std::integral_constant<specfem::interface::interface_tag,
@@ -201,9 +202,9 @@ struct EdgeFunctionAccessor<
                          specfem::interface::interface_tag::elastic_acoustic,
                      void> >
     : specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::acceleration,
-          specfem::dimension::type::dim2, false> {};
+          specfem::element::dimension_tag::dim2, false> {};
 
 template <specfem::interface::interface_tag InterfaceTag>
 struct EdgeFunctionAccessor<
@@ -212,9 +213,9 @@ struct EdgeFunctionAccessor<
                          specfem::interface::interface_tag::acoustic_elastic,
                      void> >
     : specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge,
+          specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::displacement,
-          specfem::dimension::type::dim2, false> {};
+          specfem::element::dimension_tag::dim2, false> {};
 
 namespace specfem::compute_coupling_test::nonconforming {
 

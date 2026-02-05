@@ -6,7 +6,7 @@
 #include <iostream>
 #include <memory>
 
-template <int NGLL, specfem::dimension::type DimensionTag>
+template <int NGLL, specfem::element::dimension_tag DimensionTag>
 std::shared_ptr<specfem::solver::solver>
 specfem::runtime_configuration::solver::solver::instantiate(
     const type_real dt, const specfem::assembly::assembly<DimensionTag> &assembly,
@@ -21,7 +21,7 @@ specfem::runtime_configuration::solver::solver::instantiate(
         time_scheme, tasks, assembly);
   } else if (specfem::utilities::is_combined_string(this->simulation_type)) {
 
-    if (DimensionTag == specfem::dimension::type::dim3) {
+    if (DimensionTag == specfem::element::dimension_tag::dim3) {
       throw std::runtime_error(
           "Combined simulation not implemented for 3D problems");
     }

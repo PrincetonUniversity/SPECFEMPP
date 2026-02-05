@@ -1,17 +1,17 @@
 #pragma once
 
 #include "domain_accessor.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
 #include "specfem/medium_container.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
 class mesh_to_compute_mapping;
-template <specfem::dimension::type Dimension> struct mesh;
+template <specfem::element::dimension_tag Dimension> struct mesh;
 } // namespace specfem::assembly
 
 namespace specfem::mesh {
-template <specfem::dimension::type Dimension> struct materials;
+template <specfem::element::dimension_tag Dimension> struct materials;
 }
 
 namespace specfem::assembly::impl {
@@ -39,7 +39,7 @@ namespace specfem::assembly::impl {
  * @tparam MediumTag Physical medium type
  * @tparam PropertyTag Material property type
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 struct domain_properties;
@@ -56,16 +56,18 @@ struct domain_properties;
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct domain_properties<specfem::dimension::type::dim2, MediumTag, PropertyTag>
+struct domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
+                         PropertyTag>
     : public specfem::medium_container::properties::data_container<
-          specfem::dimension::type::dim2, MediumTag, PropertyTag>,
-      public DomainAccessor<specfem::dimension::type::dim2,
-                            domain_properties<specfem::dimension::type::dim2,
-                                              MediumTag, PropertyTag> > {
+          specfem::element::dimension_tag::dim2, MediumTag, PropertyTag>,
+      public DomainAccessor<
+          specfem::element::dimension_tag::dim2,
+          domain_properties<specfem::element::dimension_tag::dim2, MediumTag,
+                            PropertyTag> > {
 
   /// Base data container type for property storage
   using base_type = specfem::medium_container::properties::data_container<
-      specfem::dimension::type::dim2, MediumTag, PropertyTag>;
+      specfem::element::dimension_tag::dim2, MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =
@@ -124,16 +126,18 @@ struct domain_properties<specfem::dimension::type::dim2, MediumTag, PropertyTag>
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-struct domain_properties<specfem::dimension::type::dim3, MediumTag, PropertyTag>
+struct domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
+                         PropertyTag>
     : public specfem::medium_container::properties::data_container<
-          specfem::dimension::type::dim3, MediumTag, PropertyTag>,
-      public DomainAccessor<specfem::dimension::type::dim3,
-                            domain_properties<specfem::dimension::type::dim3,
-                                              MediumTag, PropertyTag> > {
+          specfem::element::dimension_tag::dim3, MediumTag, PropertyTag>,
+      public DomainAccessor<
+          specfem::element::dimension_tag::dim3,
+          domain_properties<specfem::element::dimension_tag::dim3, MediumTag,
+                            PropertyTag> > {
 
   /// Base data container type for property storage
   using base_type = specfem::medium_container::properties::data_container<
-      specfem::dimension::type::dim3, MediumTag, PropertyTag>;
+      specfem::element::dimension_tag::dim3, MediumTag, PropertyTag>;
   using base_type::base_type;
 
   constexpr static auto dimension_tag =

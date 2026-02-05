@@ -24,8 +24,8 @@
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenclass:: specfem::connections::connection_mapping< specfem::dimension::type::dim2 >
+.. doxygenclass:: specfem::connections::connection_mapping< specfem::element::dimension_tag::dim2 >
     :members:
 
-.. doxygenclass:: specfem::connections::connection_mapping< specfem::dimension::type::dim3 >
+.. doxygenclass:: specfem::connections::connection_mapping< specfem::element::dimension_tag::dim3 >
     :members:

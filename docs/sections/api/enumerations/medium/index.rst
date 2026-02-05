@@ -16,7 +16,7 @@
 .. doxygenenum:: specfem::element::boundary_tag
 
 ``specfem::element::to_string``
-================================
+===============================
 
 .. doxygenfunction:: specfem::element::to_string(const medium_tag &medium)
 
@@ -36,30 +36,30 @@
    :members:
 
 Attribute Specializations
---------------------------
+-------------------------
 
-.. doxygenclass:: specfem::element::attributes< specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv >
+.. doxygenclass:: specfem::element::attributes< specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv >
     :members:
 
-.. doxygenclass:: specfem::element::attributes< specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sh >
+.. doxygenclass:: specfem::element::attributes< specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_sh >
     :members:
 
-.. doxygenclass:: specfem::element::attributes< specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic >
+.. doxygenclass:: specfem::element::attributes< specfem::element::dimension_tag::dim2, specfem::element::medium_tag::acoustic >
     :members:
 
-.. doxygenclass:: specfem::element::attributes< specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic >
+.. doxygenclass:: specfem::element::attributes< specfem::element::dimension_tag::dim2, specfem::element::medium_tag::poroelastic >
     :members:
 
-.. doxygenclass:: specfem::element::attributes< specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv_t >
+.. doxygenclass:: specfem::element::attributes< specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv_t >
     :members:
 
-.. doxygenclass:: specfem::element::attributes< specfem::dimension::type::dim2, specfem::element::medium_tag::electromagnetic_te >
+.. doxygenclass:: specfem::element::attributes< specfem::element::dimension_tag::dim2, specfem::element::medium_tag::electromagnetic_te >
     :members:
 
-.. doxygenclass:: specfem::element::attributes< specfem::dimension::type::dim3, specfem::element::medium_tag::elastic >
+.. doxygenclass:: specfem::element::attributes< specfem::element::dimension_tag::dim3, specfem::element::medium_tag::elastic >
     :members:
 
-.. doxygenclass:: specfem::element::attributes< specfem::dimension::type::dim3, specfem::element::medium_tag::acoustic >
+.. doxygenclass:: specfem::element::attributes< specfem::element::dimension_tag::dim3, specfem::element::medium_tag::acoustic >
     :members:
 
 ``specfem::element::from_string``

@@ -22,21 +22,21 @@ TEST(ALGORITHMS, locate_point) {
   // Assemble
   specfem::assembly::mesh assembly(mesh.tags, mesh.control_nodes, quadratures);
 
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::LayoutRight, Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::LayoutRight, Kokkos::HostSpace>
       coordinates_ref("coordinates_ref", 5);
-  Kokkos::View<
-      specfem::point::local_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::LayoutRight, Kokkos::HostSpace>
+  Kokkos::View<specfem::point::local_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::LayoutRight, Kokkos::HostSpace>
       lcoord_ref("lcoord_ref", 5);
-  Kokkos::View<
-      specfem::point::local_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::LayoutRight, Kokkos::HostSpace>
+  Kokkos::View<specfem::point::local_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::LayoutRight, Kokkos::HostSpace>
       lcoord("lcoord", 5);
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::LayoutRight, Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::LayoutRight, Kokkos::HostSpace>
       gcoord("gcoord", 5);
 
   coordinates_ref(0) = { 606.313, 957.341 };

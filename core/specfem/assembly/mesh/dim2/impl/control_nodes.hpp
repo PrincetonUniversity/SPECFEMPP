@@ -13,12 +13,12 @@ namespace specfem::assembly::mesh_impl {
  * The control nodes define the geometry of each spectral element and are used
  * for coordinate transformations and shape function evaluations.
  *
- * @tparam specfem::dimension::type::dim2 Template parameter specializing for
- * 2D.
+ * @tparam specfem::element::dimension_tag::dim2 Template parameter specializing
+ * for 2D.
  *
  * @see specfem::mesh::control_nodes
  */
-template <> struct control_nodes<specfem::dimension::type::dim2> {
+template <> struct control_nodes<specfem::element::dimension_tag::dim2> {
 public:
   /**
    * @brief Number of spectral elements in the mesh.
@@ -84,8 +84,8 @@ public:
    */
   control_nodes(
       const specfem::assembly::mesh_impl::mesh_to_compute_mapping<
-          specfem::dimension::type::dim2> &mapping,
-      const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+          specfem::element::dimension_tag::dim2> &mapping,
+      const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim2>
           &control_nodes);
 
   /**

@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <string>
 
-specfem::mesh::mesh<specfem::dimension::type::dim3>
+specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
 specfem::io::read_3d_mesh(const std::string &database_file) {
   // Read mesh parameters
   std::ifstream param_stream(database_file, std::ios::in | std::ios::binary);
@@ -29,7 +29,7 @@ specfem::io::read_3d_mesh(const std::string &database_file) {
         "Mesh of earth chunk is not supported in SPECFEM++ yet.");
   }
 
-  specfem::mesh::mesh<specfem::dimension::type::dim3> mesh;
+  specfem::mesh::mesh<specfem::element::dimension_tag::dim3> mesh;
 
   mesh.control_nodes =
       specfem::io::mesh::impl::fortran::dim3::read_control_nodes(param_stream);
@@ -46,7 +46,7 @@ specfem::io::read_3d_mesh(const std::string &database_file) {
   mesh.boundaries = specfem::io::mesh::impl::fortran::dim3::read_boundaries(
       param_stream, nspec, mesh.control_nodes);
 
-  mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim3>(
+  mesh.tags = specfem::mesh::tags<specfem::element::dimension_tag::dim3>(
       nspec, mesh.materials);
 
   // CPML boundaries are not supported yet

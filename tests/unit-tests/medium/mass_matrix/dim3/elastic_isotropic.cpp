@@ -4,7 +4,7 @@
 #include <sstream>
 
 TEST(MassMatrix, ElasticIsotropicTrivialSolution3D) {
-  static constexpr auto dimension = specfem::dimension::type::dim3;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
@@ -24,7 +24,7 @@ TEST(MassMatrix, ElasticIsotropicTrivialSolution3D) {
 }
 
 TEST(MassMatrix, ElasticIsotropic3D) {
-  static constexpr auto dimension = specfem::dimension::type::dim3;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 

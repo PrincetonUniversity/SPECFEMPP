@@ -104,7 +104,7 @@ KOKKOS_INLINE_FUNCTION auto compute_frechet_derivatives(
       "Medium tag inconsistency between properties, fields, and derivatives");
 
   using dimension_dispatch =
-      std::integral_constant<specfem::dimension::type, dimension>;
+      std::integral_constant<specfem::element::dimension_tag, dimension>;
 
   using medium_dispatch =
       std::integral_constant<specfem::element::medium_tag, medium_tag>;

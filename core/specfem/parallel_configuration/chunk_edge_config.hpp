@@ -1,7 +1,7 @@
 #pragma once
 
 #include "constants.hpp"
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::parallel_configuration {
@@ -21,7 +21,7 @@ namespace specfem::parallel_configuration {
  * @see specfem::execution
  * @see specfem::parallel_configuration::default_chunk_edge_config
  */
-template <specfem::dimension::type DimensionTag, int ChunkSize,
+template <specfem::element::dimension_tag DimensionTag, int ChunkSize,
           typename ExecutionSpace>
 struct edge_chunk_config {
   constexpr static auto dimension = DimensionTag; ///< Dimension type
@@ -47,33 +47,33 @@ struct edge_chunk_config {
  *
  * @see specfem::execution
  */
-template <specfem::dimension::type DimensionTag, typename ExecutionSpace>
+template <specfem::element::dimension_tag DimensionTag, typename ExecutionSpace>
 struct default_chunk_edge_config;
 
 #if defined(KOKKOS_ENABLE_CUDA)
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct default_chunk_edge_config<DimensionTag, Kokkos::Cuda>
     : edge_chunk_config<DimensionTag, 32, Kokkos::Cuda> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_HIP)
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct default_chunk_edge_config<DimensionTag, Kokkos::HIP>
     : edge_chunk_config<DimensionTag, 64, Kokkos::HIP> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_OPENMP)
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct default_chunk_edge_config<DimensionTag, Kokkos::OpenMP>
     : edge_chunk_config<DimensionTag, 1, Kokkos::OpenMP> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_SERIAL)
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct default_chunk_edge_config<DimensionTag, Kokkos::Serial>
     : edge_chunk_config<DimensionTag, 1, Kokkos::Serial> {};
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct default_chunk_edge_config<DimensionTag, Kokkos::HostSpace>
     : default_chunk_edge_config<DimensionTag, Kokkos::Serial> {};
 #endif

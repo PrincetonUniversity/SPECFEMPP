@@ -13,6 +13,6 @@ Dimension-Specific Specializations
 2D Specialization
 ^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::datatype::ScalarChunkEdgeViewType< T, specfem::dimension::type::dim2, NumberOfEdges, NumberOfGLLPoints, UseSIMD, MemorySpace, MemoryTraits >
+.. doxygenstruct:: specfem::datatype::ScalarChunkEdgeViewType< T, specfem::element::dimension_tag::dim2, NumberOfEdges, NumberOfGLLPoints, UseSIMD, MemorySpace, MemoryTraits >
     :members:
     :private-members:

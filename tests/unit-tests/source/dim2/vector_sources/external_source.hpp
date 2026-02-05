@@ -10,8 +10,8 @@
 
 template <>
 struct source_parameters<
-    specfem::dimension::type::dim2,
-    specfem::sources::external<specfem::dimension::type::dim2> > {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::external<specfem::element::dimension_tag::dim2> > {
   source_parameters() : x(0.0), z(0.0) {};
   source_parameters(std::string name, type_real x, type_real z,
                     specfem::simulation::field_type wavefield_type,
@@ -28,8 +28,8 @@ struct source_parameters<
 
 template <>
 struct source_solution<
-    specfem::dimension::type::dim2,
-    specfem::sources::external<specfem::dimension::type::dim2> > {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::external<specfem::element::dimension_tag::dim2> > {
 public:
   source_solution(type_real x, type_real z, std::vector<type_real> force_vector)
       : x(x), z(z) {
@@ -49,11 +49,11 @@ public:
 
 // Defining short hands for the source parameters and solution types
 using ExternalSource2DSolution = source_solution<
-    specfem::dimension::type::dim2,
-    specfem::sources::external<specfem::dimension::type::dim2> >;
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::external<specfem::element::dimension_tag::dim2> >;
 using ExternalSource2DParameters = source_parameters<
-    specfem::dimension::type::dim2,
-    specfem::sources::external<specfem::dimension::type::dim2> >;
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::external<specfem::element::dimension_tag::dim2> >;
 
 using ExternalSource2DParametersAndSolution =
     std::tuple<ExternalSource2DParameters, ExternalSource2DSolution>;
@@ -61,8 +61,8 @@ using ExternalSource2DParametersAndSolution =
 // solutions
 template <>
 std::vector<ExternalSource2DParametersAndSolution> get_parameters_and_solutions<
-    specfem::dimension::type::dim2,
-    specfem::sources::external<specfem::dimension::type::dim2> >() {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::external<specfem::element::dimension_tag::dim2> >() {
   return std::vector<ExternalSource2DParametersAndSolution>{
     // Test acoustic external source
     std::make_tuple(
@@ -109,14 +109,14 @@ std::vector<ExternalSource2DParametersAndSolution> get_parameters_and_solutions<
 
 // Factory function specialization for 2D External Source
 template <>
-specfem::sources::external<specfem::dimension::type::dim2>
-create_source<specfem::dimension::type::dim2,
-              specfem::sources::external<specfem::dimension::type::dim2> >(
+specfem::sources::external<specfem::element::dimension_tag::dim2> create_source<
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::external<specfem::element::dimension_tag::dim2> >(
     const source_parameters<
-        specfem::dimension::type::dim2,
-        specfem::sources::external<specfem::dimension::type::dim2> >
+        specfem::element::dimension_tag::dim2,
+        specfem::sources::external<specfem::element::dimension_tag::dim2> >
         &parameters) {
-  return specfem::sources::external<specfem::dimension::type::dim2>(
+  return specfem::sources::external<specfem::element::dimension_tag::dim2>(
       parameters.x, parameters.z,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
                                                                0.0, 1.0, false),

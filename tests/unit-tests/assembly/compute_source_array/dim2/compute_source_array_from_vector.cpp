@@ -35,7 +35,7 @@ void test_vector_source(const std::string &source_name, SourceType &source,
                    ", iz=" + std::to_string(iz) + ")");
 
       // Set source location to this GLL point
-      specfem::point::local_coordinates<specfem::dimension::type::dim2>
+      specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
           local_coords(0, xi_gamma_points(ix), xi_gamma_points(iz));
       source.set_local_coordinates(local_coords);
 
@@ -87,7 +87,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (1,0) - force in x direction only (angle=0)
   {
-    specfem::sources::force<specfem::dimension::type::dim2> force_x(
+    specfem::sources::force<specfem::element::dimension_tag::dim2> force_x(
         0.0, 0.0, 0.0, // x, z, angle (angle=0 means force in x direction)
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
@@ -98,7 +98,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (0,1) - force in z direction only (angle=90)
   {
-    specfem::sources::force<specfem::dimension::type::dim2> force_z(
+    specfem::sources::force<specfem::element::dimension_tag::dim2> force_z(
         0.0, 0.0, 90.0, // angle=90 means force in z direction
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
@@ -109,7 +109,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (1,1) - force in both directions (angle=45)
   {
-    specfem::sources::force<specfem::dimension::type::dim2> force_both(
+    specfem::sources::force<specfem::element::dimension_tag::dim2> force_both(
         0.0, 0.0, 45.0, // angle=45 means equal force in both directions
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),
@@ -120,7 +120,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (0,0) - zero force (amplitude=0)
   {
-    specfem::sources::force<specfem::dimension::type::dim2> force_zero(
+    specfem::sources::force<specfem::element::dimension_tag::dim2> force_zero(
         0.0, 0.0, 0.0, // angle doesn't matter
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 0.0, 0.0, 1.0, false), // amplitude = 0
@@ -131,11 +131,11 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // Test Adjoint sources (2 components)
   {
-    specfem::sources::adjoint_source<specfem::dimension::type::dim2> adjoint(
-        0.0, 0.0, // x, z
-        std::make_unique<specfem::source_time_functions::Ricker>(
-            10, 0.01, 1.0, 0.0, 1.0, false),
-        "STA1", "NET1");
+    specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2>
+        adjoint(0.0, 0.0, // x, z
+                std::make_unique<specfem::source_time_functions::Ricker>(
+                    10, 0.01, 1.0, 0.0, 1.0, false),
+                "STA1", "NET1");
     adjoint.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_vector_source("Adjoint Source", adjoint, ngll);
   }
@@ -144,33 +144,33 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (1,0,0) - force in x direction only
   {
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2> cosserat_x(
-        0.0, 0.0, // x, z
-        1.0, 0.0, // f=1 (elastic force), fc=0 (no rotational force)
-        0.0,      // angle=0 means force in x direction
-        std::make_unique<specfem::source_time_functions::Ricker>(
-            10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::simulation::field_type::forward);
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>
+        cosserat_x(0.0, 0.0, // x, z
+                   1.0, 0.0, // f=1 (elastic force), fc=0 (no rotational force)
+                   0.0,      // angle=0 means force in x direction
+                   std::make_unique<specfem::source_time_functions::Ricker>(
+                       10, 0.01, 1.0, 0.0, 1.0, false),
+                   specfem::simulation::field_type::forward);
     cosserat_x.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
     test_vector_source("Cosserat X-direction (1,0,0)", cosserat_x, ngll);
   }
 
   // (0,1,0) - force in z direction only
   {
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2> cosserat_z(
-        0.0, 0.0, // x, z
-        1.0, 0.0, // f=1 (elastic force), fc=0 (no rotational force)
-        90.0,     // angle=90 means force in z direction
-        std::make_unique<specfem::source_time_functions::Ricker>(
-            10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::simulation::field_type::forward);
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>
+        cosserat_z(0.0, 0.0, // x, z
+                   1.0, 0.0, // f=1 (elastic force), fc=0 (no rotational force)
+                   90.0,     // angle=90 means force in z direction
+                   std::make_unique<specfem::source_time_functions::Ricker>(
+                       10, 0.01, 1.0, 0.0, 1.0, false),
+                   specfem::simulation::field_type::forward);
     cosserat_z.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
     test_vector_source("Cosserat Z-direction (0,1,0)", cosserat_z, ngll);
   }
 
   // (0,0,1) - rotational force only
   {
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2>
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>
         cosserat_rot(0.0, 0.0, // x, z
                      0.0,
                      1.0, // f=0 (no elastic force), fc=1 (rotational force)
@@ -184,7 +184,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // (1,1,1) - force in all directions
   {
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2>
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>
         cosserat_all(0.0, 0.0, // x, z
                      1.0, 1.0, // f=1 (elastic force), fc=1 (rotational force)
                      45.0,     // angle=45 means equal force in both directions
@@ -197,7 +197,7 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_vector) {
 
   // Test External source (2 components)
   {
-    specfem::sources::external<specfem::dimension::type::dim2> external(
+    specfem::sources::external<specfem::element::dimension_tag::dim2> external(
         0.0, 0.0, // x, z
         std::make_unique<specfem::source_time_functions::Ricker>(
             10, 0.01, 1.0, 0.0, 1.0, false),

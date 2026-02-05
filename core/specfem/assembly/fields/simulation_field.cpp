@@ -5,7 +5,7 @@
 #include <boost/preprocessor.hpp>
 
 #define DIMENSION_TAGS                                                         \
-  (specfem::dimension::type::dim2)(specfem::dimension::type::dim3)
+  (specfem::element::dimension_tag::dim2)(specfem::element::dimension_tag::dim3)
 
 #define WAVEFIELD_TYPES                                                        \
   (specfem::simulation::field_type::forward)(                                  \

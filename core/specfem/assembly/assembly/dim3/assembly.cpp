@@ -3,7 +3,7 @@
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 
-specfem::assembly::assembly<specfem::dimension::type::dim3>::assembly(
+specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
     std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
@@ -74,7 +74,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::assembly(
 }
 
 std::string
-specfem::assembly::assembly<specfem::dimension::type::dim3>::print() const {
+specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
+    const {
   std::ostringstream message;
   message << "Assembly information:\n"
           << "------------------------------\n"

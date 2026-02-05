@@ -19,8 +19,8 @@ if (SPECFEM_ENABLE_NPZ)
         include(FetchContent)
 
         # Set the specific version you want
-        set(SPECFEM_ZLIB_VERSION "1.3" CACHE STRING "ZLIB version to use for source install")
-        set(ZLIB_SOURCE_URL "https://github.com/madler/zlib/releases/download/v${SPECFEM_ZLIB_VERSION}/zlib-${SPECFEM_ZLIB_VERSION}.tar.gz")
+        set(SPECFEM_ZLIB_VERSION "1.3.1" CACHE STRING "ZLIB version to use for source install")
+        set(ZLIB_SOURCE_URL "https://github.com/madler/zlib/archive/refs/tags/v${SPECFEM_ZLIB_VERSION}.tar.gz")
 
         if (CMAKE_VERSION VERSION_LESS "3.28.0")
             FetchContent_Declare(

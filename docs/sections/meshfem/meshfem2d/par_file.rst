@@ -261,7 +261,7 @@ A poroelastic medium can be described by the following parameters:
 
 
 Electromagnetic material system
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An electromagnetic medium can be described by the following parameters:
 
@@ -289,7 +289,7 @@ An electromagnetic medium can be described by the following parameters:
 
 
 Tomography material system
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A material defined by external tomography file:
 
@@ -649,7 +649,7 @@ Type
 
 
 Receiver Parameters
-====================
+===================
 
 **Define meta parameters**
 

@@ -3,7 +3,7 @@
 #include "assign_assembly_index_mapping.hpp"
 #include "field_impl.hpp"
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
     const int nglob)
@@ -14,7 +14,7 @@ specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
       mass_inverse_base_type(nglob, "specfem::assembly::fields::mass_inverse") {
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
     const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -37,7 +37,7 @@ specfem::assembly::fields_impl::field_impl<DimensionTag, MediumTag>::field_impl(
   return;
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 void specfem::assembly::fields_impl::field_impl<DimensionTag,
                                                 MediumTag>::copy_to_host() {
@@ -46,7 +46,7 @@ void specfem::assembly::fields_impl::field_impl<DimensionTag,
   acceleration_base_type::copy_to_host();
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 void specfem::assembly::fields_impl::field_impl<DimensionTag,
                                                 MediumTag>::copy_to_device() {

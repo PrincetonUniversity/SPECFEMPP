@@ -1,7 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
-
+#include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh/mesh_base.hpp"
@@ -16,9 +15,9 @@ namespace mesh {
  *
  */
 
-template <> struct materials<specfem::dimension::type::dim2> {
+template <> struct materials<specfem::element::dimension_tag::dim2> {
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension type
+      specfem::element::dimension_tag::dim2; ///< Dimension type
 
   struct material_specification {
     specfem::element::medium_tag type;             ///< Type of element

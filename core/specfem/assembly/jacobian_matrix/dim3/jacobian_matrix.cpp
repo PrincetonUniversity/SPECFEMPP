@@ -3,10 +3,10 @@
 #include "specfem/mesh.hpp"
 
 specfem::assembly::jacobian_matrix<
-    specfem::dimension::type::dim3>::jacobian_matrix(const int nspec,
-                                                     const int ngllx,
-                                                     const int nglly,
-                                                     const int ngllz)
+    specfem::element::dimension_tag::dim3>::jacobian_matrix(const int nspec,
+                                                            const int ngllx,
+                                                            const int nglly,
+                                                            const int ngllz)
     : nspec(nspec), ngllx(ngllx), nglly(nglly), ngllz(ngllz),
       xix("specfem::assembly::jacobian_matrix::xix", nspec, ngllz, nglly,
           ngllx),
@@ -42,12 +42,12 @@ specfem::assembly::jacobian_matrix<
 template <typename ShapeFunctionView, typename CoordinateView>
 void initialize_jacobian_matrix(
     const int nspec, const int ngllz, const int nglly, const int ngllx,
-    specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>
+    specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>
         &jacobian_matrix,
     const ShapeFunctionView &shape_derivatives,
     const CoordinateView &coordinates) {
 
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   Kokkos::parallel_for(
       "specfem::assembly::jacobian_matrix::initialize_from_mesh",
@@ -69,7 +69,7 @@ void initialize_jacobian_matrix(
 }
 
 void specfem::assembly::jacobian_matrix<
-    specfem::dimension::type::dim3>::sync_views() {
+    specfem::element::dimension_tag::dim3>::sync_views() {
   Kokkos::deep_copy(xix, h_xix);
   Kokkos::deep_copy(xiy, h_xiy);
   Kokkos::deep_copy(xiz, h_xiz);
@@ -84,7 +84,7 @@ void specfem::assembly::jacobian_matrix<
 
 std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
 specfem::assembly::jacobian_matrix<
-    specfem::dimension::type::dim3>::check_small_jacobian() const {
+    specfem::element::dimension_tag::dim3>::check_small_jacobian() const {
   Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> small_jacobian(
       "specfem::assembly::jacobian_matrix::negative", nspec);
 
@@ -129,7 +129,7 @@ specfem::assembly::jacobian_matrix<
   return std::make_tuple(found, small_jacobian);
 }
 
-specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3>::
+specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3>::
     jacobian_matrix(const specfem::assembly::mesh<dimension_tag> &assembly_mesh)
     : nspec(assembly_mesh.nspec), ngllx(assembly_mesh.element_grid.ngllx),
       nglly(assembly_mesh.element_grid.nglly),

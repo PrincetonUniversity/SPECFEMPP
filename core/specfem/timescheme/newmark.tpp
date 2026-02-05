@@ -6,7 +6,7 @@
 #include "specfem/assembly.hpp"
 
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::simulation::field_type WavefieldType>
 int specfem::time_scheme::newmark_impl::corrector_phase_impl(
@@ -60,7 +60,7 @@ int specfem::time_scheme::newmark_impl::corrector_phase_impl(
   return nglob * ncomponents;
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::simulation::field_type WavefieldType>
 int specfem::time_scheme::newmark_impl::predictor_phase_impl(
