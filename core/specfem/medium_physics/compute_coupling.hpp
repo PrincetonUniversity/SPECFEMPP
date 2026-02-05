@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/connections.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/data_access/accessor/chunk_edge.hpp"
 #include "specfem/data_access/check_compatibility.hpp"

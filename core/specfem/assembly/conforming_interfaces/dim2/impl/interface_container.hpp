@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"

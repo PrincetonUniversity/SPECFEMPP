@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
 namespace specfem {

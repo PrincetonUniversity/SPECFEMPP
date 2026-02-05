@@ -1,5 +1,5 @@
 #include "specfem/assembly/assembly.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 

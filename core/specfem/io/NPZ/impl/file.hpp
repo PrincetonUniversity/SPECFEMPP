@@ -4,7 +4,7 @@
 #include <zlib.h>
 #endif
 
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "group.hpp"
 #include "specfem/io/NPY/impl/npy_header.hpp"
 #include <fstream>

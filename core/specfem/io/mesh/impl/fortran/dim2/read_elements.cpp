@@ -1,5 +1,5 @@
 #include "specfem/io/mesh/impl/fortran/dim2/read_elements.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/mesh.hpp"
 

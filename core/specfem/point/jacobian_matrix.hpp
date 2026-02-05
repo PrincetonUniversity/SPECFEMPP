@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem/setup.hpp"

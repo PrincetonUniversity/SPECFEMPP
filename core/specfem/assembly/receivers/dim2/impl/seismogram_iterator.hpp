@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include <array>
 #include <string>
 #include <tuple>

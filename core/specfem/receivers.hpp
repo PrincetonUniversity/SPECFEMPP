@@ -1,5 +1,5 @@
 #pragma once
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 
 /**
  * @namespace specfem::receivers

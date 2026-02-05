@@ -1,6 +1,6 @@
 // Internal Includes
 #include "specfem/mesh.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"

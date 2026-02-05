@@ -1,7 +1,7 @@
 #pragma once
 
 #include "accessor_type.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "point_view.hpp"
 #include <Kokkos_Core.hpp>
 

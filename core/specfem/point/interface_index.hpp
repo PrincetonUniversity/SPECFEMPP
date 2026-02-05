@@ -2,7 +2,7 @@
 #pragma once
 
 #include "edge_index.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 
 namespace specfem::point {
 

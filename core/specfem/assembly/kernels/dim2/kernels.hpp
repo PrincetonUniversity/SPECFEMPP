@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/impl/domain_kernels.hpp"
 #include "specfem/assembly/impl/value_containers.hpp"

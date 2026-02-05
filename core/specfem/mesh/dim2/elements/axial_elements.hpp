@@ -1,7 +1,7 @@
 #ifndef _AXIAL_ELEMENTS_HPP
 #define _AXIAL_ELEMENTS_HPP
 
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 
 namespace specfem {

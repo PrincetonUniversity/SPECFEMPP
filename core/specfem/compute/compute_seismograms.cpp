@@ -1,5 +1,5 @@
 #include "compute_seismograms.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "impl/compute_seismograms.hpp"
 #include "impl/compute_seismograms.tpp"
 

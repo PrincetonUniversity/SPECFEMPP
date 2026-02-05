@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "impl/compute_seismograms.hpp"
 #include "specfem/assembly.hpp"
 

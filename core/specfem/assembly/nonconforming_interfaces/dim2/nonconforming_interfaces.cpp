@@ -1,6 +1,6 @@
 
 #include "specfem/assembly/nonconforming_interfaces.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "impl/interface_container.tpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/mesh.hpp"

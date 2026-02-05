@@ -3,7 +3,7 @@
 #include "adjacency_graph/adjacency_graph.hpp"
 #include "boundaries/boundaries.hpp"
 #include "control_nodes/control_nodes.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "materials/materials.hpp"
 #include "tags/tags.hpp"
 

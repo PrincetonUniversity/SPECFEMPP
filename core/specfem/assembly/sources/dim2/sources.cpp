@@ -2,7 +2,7 @@
 #include "../impl/dim2/source_medium.tpp"
 #include "../impl/locate_sources.hpp"
 #include "../impl/source_medium.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/mesh.hpp"

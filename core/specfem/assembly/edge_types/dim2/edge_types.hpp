@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"

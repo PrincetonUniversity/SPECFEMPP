@@ -1,4 +1,4 @@
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"

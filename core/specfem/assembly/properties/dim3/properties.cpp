@@ -1,5 +1,5 @@
 #include "specfem/assembly/properties.hpp"
-#include "enumerations/interface_tags.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem/assembly/impl/domain_properties.hpp"
 #include "specfem/assembly/impl/domain_properties.tpp"
 #include "specfem/assembly/mesh.hpp"
