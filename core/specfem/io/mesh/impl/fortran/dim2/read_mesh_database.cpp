@@ -1,5 +1,5 @@
 #include "specfem/io/mesh/impl/fortran/dim2/read_mesh_database.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem_setup.hpp"
@@ -158,15 +158,17 @@ specfem::io::mesh::impl::fortran::dim2::read_mesh_database_header(
   return std::make_tuple(nspec, npgeo, nproc);
 }
 
-specfem::kokkos::HostView2d<type_real>
+Kokkos::View<type_real **, Kokkos::LayoutRight,
+             Kokkos::DefaultHostExecutionSpace>
 specfem::io::mesh::impl::fortran::dim2::read_coorg_elements(
     std::ifstream &stream, const int npgeo) {
 
   int ipoin = 0;
 
   double coorgi, coorgj;
-  specfem::kokkos::HostView2d<type_real> coorg("specfem::mesh::coorg", ndim,
-                                               npgeo);
+  Kokkos::View<type_real **, Kokkos::LayoutRight,
+               Kokkos::DefaultHostExecutionSpace>
+      coorg("specfem::mesh::coorg", ndim, npgeo);
 
   for (int i = 0; i < npgeo; i++) {
     specfem::io::fortran_read_line(stream, &ipoin, &coorgi, &coorgj);

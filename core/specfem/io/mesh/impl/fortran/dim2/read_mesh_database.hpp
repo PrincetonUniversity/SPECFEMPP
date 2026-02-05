@@ -1,7 +1,5 @@
 #pragma once
 
-#include "kokkos_abstractions.h"
-
 #include "specfem_setup.hpp"
 #include <fstream>
 #include <iostream>
@@ -33,7 +31,8 @@ std::tuple<int, int, int> read_mesh_database_header(std::ifstream &stream);
  * @param npgeo Total number of control nodes in simulation box
  * @return std::tuple<int, int, int>  nspec, npgeo, nproc values read from
  */
-specfem::kokkos::HostView2d<type_real>
+Kokkos::View<type_real **, Kokkos::LayoutRight,
+             Kokkos::DefaultHostExecutionSpace>
 read_coorg_elements(std::ifstream &stream, const int npgeo);
 
 /**

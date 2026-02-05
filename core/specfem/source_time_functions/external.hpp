@@ -1,6 +1,6 @@
 #pragma once
 #include "enumerations/specfem_enums.hpp"
-#include "kokkos_abstractions.h"
+
 #include "source_time_function.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>

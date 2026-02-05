@@ -1,6 +1,5 @@
 #pragma once
 
-#include "kokkos_abstractions.h"
 #include "specfem/assembly.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/execution.hpp"

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "kokkos_abstractions.h"
 #include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/medium_container.hpp"

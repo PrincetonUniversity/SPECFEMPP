@@ -1,6 +1,6 @@
 #include "enumerations/interface.hpp"
 #include "globals.h"
-#include "kokkos_abstractions.h"
+
 #include "specfem/macros.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"

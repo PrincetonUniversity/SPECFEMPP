@@ -1,9 +1,9 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "specfem/assembly/fields.hpp"
+
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/fields/impl/field_impl.tpp"
 #include "specfem/assembly/mesh.hpp"
 #include <Kokkos_Core.hpp>
@@ -38,16 +38,18 @@ specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::assembly::element_types<dimension_tag> &element_types) {
 
-  nglob = specfem::assembly::simulation_fields_impl::compute_nglob3D(mesh.h_index_mapping);
+  nglob = specfem::assembly::simulation_fields_impl::compute_nglob3D(
+      mesh.h_index_mapping);
   this->index_mapping = mesh.index_mapping;
   this->h_index_mapping = mesh.h_index_mapping;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE(assembly_index_mapping, h_assembly_index_mapping, field) {
-        _assembly_index_mapping_ = Kokkos::View<int *, Kokkos::LayoutLeft,
-                                                Kokkos::DefaultExecutionSpace::memory_space>(
-            "specfem::assembly::simulation_field::index_mapping", nglob);
+        _assembly_index_mapping_ =
+            Kokkos::View<int *, Kokkos::LayoutLeft,
+                         Kokkos::DefaultExecutionSpace::memory_space>(
+                "specfem::assembly::simulation_field::index_mapping", nglob);
         _h_assembly_index_mapping_ =
             Kokkos::create_mirror_view(_assembly_index_mapping_);
 
@@ -73,20 +75,27 @@ int specfem::assembly::simulation_field<
     return total_degrees_of_freedom;
   }
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)), CAPTURE(
-                                                                      field) {
-    total_degrees_of_freedom +=
-        this->get_nglob<_medium_tag_>() *
-        specfem::element::attributes<_dimension_tag_, _medium_tag_>::components;
-  })
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)), CAPTURE(field) {
+        total_degrees_of_freedom +=
+            this->get_nglob<_medium_tag_>() *
+            specfem::element::attributes<_dimension_tag_,
+                                         _medium_tag_>::components;
+      })
 
   return total_degrees_of_freedom;
 }
 
 template <specfem::simulation::field_type WavefieldType>
-template <specfem::sync::kind sync>
 void specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
-                                         WavefieldType>::sync_fields() {
+                                         WavefieldType>::copy_to_host() {
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                      CAPTURE(field) { _field_.template sync_fields<sync>(); })
+                      CAPTURE(field) { _field_.copy_to_host(); })
+}
+
+template <specfem::simulation::field_type WavefieldType>
+void specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
+                                         WavefieldType>::copy_to_device() {
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+                      CAPTURE(field) { _field_.copy_to_device(); })
 }

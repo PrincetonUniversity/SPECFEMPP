@@ -6,8 +6,10 @@
 #include <iostream>
 #include <stdexcept>
 
-using DeviceView1d = specfem::kokkos::DeviceView1d<type_real>;
-using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
+using DeviceView1d = Kokkos::View<type_real *, Kokkos::LayoutLeft,
+                                  Kokkos::DefaultExecutionSpace::memory_space>;
+using HostMirror1d =
+    Kokkos::View<type_real *, Kokkos::LayoutLeft, Kokkos::HostSpace>;
 
 TEST(GLL_tests, PNLEG) {
   const auto &pnleg = specfem::quadrature::gll::gll_library::pnleg;

@@ -3,7 +3,7 @@
 #include "constants.hpp"
 #include "enumerations/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/quadrature.hpp"
 #include "specfem_setup.hpp"
 #include <cmath>

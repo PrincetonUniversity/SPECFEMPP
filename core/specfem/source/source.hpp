@@ -2,7 +2,7 @@
 
 #include "constants.hpp"
 #include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"

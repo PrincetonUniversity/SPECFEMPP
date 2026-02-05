@@ -1,7 +1,7 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "../../mesh_utilities/mapping.hpp"
 #include "../../test_macros.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/algorithms.hpp"
 #include "specfem/algorithms/locate_point/locate_point_impl.hpp"
 #include "specfem/point.hpp"

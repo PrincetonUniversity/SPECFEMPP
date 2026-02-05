@@ -1,7 +1,7 @@
 // Internal Includes
 #include "specfem/mesh.hpp"
 #include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/io/mesh/impl/fortran/dim2/read_adjacency_graph.hpp"
@@ -70,7 +70,8 @@ specfem::io::read_2d_mesh(
 
   mesh.control_nodes.ngnod = mesh.parameters.ngnod;
   mesh.control_nodes.nspec = mesh.nspec;
-  mesh.control_nodes.knods = specfem::kokkos::HostView2d<int>(
+  mesh.control_nodes.knods = Kokkos::View<int **, Kokkos::LayoutRight,
+                                          Kokkos::DefaultHostExecutionSpace>(
       "specfem::mesh::knods", mesh.parameters.ngnod, mesh.nspec);
 
   int nspec_all = specfem::MPI::reduce(mesh.parameters.nspec, specfem::sum);

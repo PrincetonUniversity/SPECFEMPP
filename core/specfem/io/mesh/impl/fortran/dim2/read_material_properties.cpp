@@ -538,10 +538,14 @@ void read_material_indices(
     const std::vector<specfem::mesh::materials<
         specfem::element::dimension_tag::dim2>::material_specification>
         &index_mapping,
-    const specfem::kokkos::HostView1d<specfem::mesh::materials<
-        specfem::element::dimension_tag::dim2>::material_specification>
+    const Kokkos::View<
+        specfem::mesh::materials<
+            specfem::element::dimension_tag::dim2>::material_specification *,
+        Kokkos::LayoutRight, Kokkos::DefaultHostExecutionSpace>
         material_index_mapping,
-    const specfem::kokkos::HostView2d<int> knods) {
+    const Kokkos::View<int **, Kokkos::LayoutRight,
+                       Kokkos::DefaultHostExecutionSpace>
+        knods) {
 
   const int ngnod = knods.extent(0);
 
@@ -589,7 +593,9 @@ specfem::io::mesh::impl::fortran::dim2::read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
     const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
-    const specfem::kokkos::HostView2d<int> knods) {
+    const Kokkos::View<int **, Kokkos::LayoutRight,
+                       Kokkos::DefaultHostExecutionSpace>
+        knods) {
 
   // Create materials instances
   specfem::mesh::materials<specfem::element::dimension_tag::dim2> materials(

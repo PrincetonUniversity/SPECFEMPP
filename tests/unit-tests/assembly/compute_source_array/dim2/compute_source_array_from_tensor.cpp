@@ -1,6 +1,6 @@
 #include "specfem/assembly/compute_source_array/dim2/impl/compute_source_array_from_tensor.hpp"
 #include "../../test_fixture/test_fixture.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
@@ -40,8 +40,8 @@ void test_tensor_source(const std::string &source_name, SourceType &source,
   using PointJacobianMatrix =
       specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
                                       false, false>;
-  specfem::kokkos::HostView2d<PointJacobianMatrix> element_jacobian(
-      "element_jacobian", ngll, ngll);
+  Kokkos::View<PointJacobianMatrix **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      element_jacobian("element_jacobian", ngll, ngll);
 
   // Set all jacobian derivatives to 1.0 for simplified testing
   // This means: dx/dxi = dx/dgamma = dz/dxi = dz/dgamma = 1.0
@@ -147,8 +147,8 @@ void test_tensor_source_off_gll(const std::string &source_name,
   using PointJacobianMatrix =
       specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
                                       false, false>;
-  specfem::kokkos::HostView2d<PointJacobianMatrix> element_jacobian(
-      "element_jacobian", ngll, ngll);
+  Kokkos::View<PointJacobianMatrix **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      element_jacobian("element_jacobian", ngll, ngll);
 
   // Set all jacobian derivatives to 1.0 for simplified testing
   for (int iz = 0; iz < ngll; ++iz) {

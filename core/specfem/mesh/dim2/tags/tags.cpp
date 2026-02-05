@@ -1,5 +1,4 @@
 #include "tags.hpp"
-#include "kokkos_abstractions.h"
 #include "specfem/element.hpp"
 
 specfem::mesh::tags<specfem::element::dimension_tag::dim2>::tags(
