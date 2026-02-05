@@ -1,5 +1,5 @@
 #include "enumerations/connections.hpp"
-#include "enumerations/dimension.hpp"
+#include "specfem/element/dimension.hpp"
 #include "enumerations/mesh_entities.hpp"
 #include "specfem/setup.hpp"
 #include <array>
@@ -178,7 +178,7 @@ extern int edge_transform(const std::array<int, 2> &from_nodes,
                           const int ngll);
 
 std::tuple<int, int, int>
-specfem::connections::connection_mapping<specfem::dimension::type::dim3>::
+specfem::connections::connection_mapping<specfem::element::dimension_tag::dim3>::
     map_coordinates(const specfem::mesh_entity::dim3::type &from,
                     const specfem::mesh_entity::dim3::type &to, const int iz,
                     const int iy, const int ix) const {
@@ -325,7 +325,7 @@ specfem::connections::connection_mapping<specfem::dimension::type::dim3>::
 }
 
 std::tuple<int, int, int>
-specfem::connections::connection_mapping<specfem::dimension::type::dim3>::
+specfem::connections::connection_mapping<specfem::element::dimension_tag::dim3>::
     map_coordinates(const specfem::mesh_entity::dim3::type &from,
                     const specfem::mesh_entity::dim3::type &to) const {
 

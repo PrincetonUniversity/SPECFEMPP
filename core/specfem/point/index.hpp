@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
+#include "specfem/element/dimension.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/setup.hpp"
 
