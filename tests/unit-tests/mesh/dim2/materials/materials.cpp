@@ -49,13 +49,13 @@ const static std::unordered_map<std::string, MaterialVectorType>
       { "Simple mesh with flat ocean bottom w attenuation",
         MaterialVectorType(
             { specfem::medium_container::material<
-                  specfem::dimension::type::dim2,
+                  specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::elastic_psv,
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::constant_isotropic>(
                   2500.0, 1963.0, 3400.0, 100.0, 150.0, 0.0),
               specfem::medium_container::material<
-                  specfem::dimension::type::dim2,
+                  specfem::element::dimension_tag::dim2,
                   specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic,
                   specfem::element::attenuation_tag::constant_isotropic>(
@@ -117,7 +117,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
             9.6e9, 0.0, 5.1e9) }) },
       { "Poroelastic mesh - Homogeneous isotropic material w attenuation",
         MaterialVectorType({ specfem::medium_container::material<
-            specfem::dimension::type::dim2,
+            specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::poroelastic,
             specfem::element::property_tag::isotropic,
             specfem::element::attenuation_tag::constant_isotropic>(
