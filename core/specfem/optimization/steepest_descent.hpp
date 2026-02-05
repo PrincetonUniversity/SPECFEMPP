@@ -61,6 +61,7 @@ template <int N> struct SteepestDescentOptions {
   type_real grad_epsilon = std::sqrt(
       std::numeric_limits<type_real>::epsilon()); ///< Finite difference step
                                                   ///< size
+
 };
 
 // ============================================================================
