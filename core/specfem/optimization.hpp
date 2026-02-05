@@ -15,8 +15,6 @@ namespace specfem {
  * MyAlgorithm) and provide specializations of optimize() for that tag. This
  * design allows for a clean separation of algorithms and a consistent user
  * interface.
- *
- *
  */
 namespace optimization {
 
