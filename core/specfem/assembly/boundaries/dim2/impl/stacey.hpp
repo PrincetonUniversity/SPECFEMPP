@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"

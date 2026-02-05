@@ -1,5 +1,5 @@
 #include "elements.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/io.hpp"
 
 specfem::mesh::elements::tangential_elements<

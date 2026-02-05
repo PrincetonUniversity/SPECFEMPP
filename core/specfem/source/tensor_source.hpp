@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/source.hpp"
 #include "yaml-cpp/yaml.h"

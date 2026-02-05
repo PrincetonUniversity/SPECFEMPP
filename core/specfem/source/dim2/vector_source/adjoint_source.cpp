@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/source.hpp"
 

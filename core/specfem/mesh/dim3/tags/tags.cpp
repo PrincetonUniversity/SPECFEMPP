@@ -6,7 +6,7 @@
  * Materials containers. Sets boundary tags to `none` since other boundary
  * conditions are not yet implemented.
  */
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/mesh.hpp"
 
 /**

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "impl/acoustic_free_surface.hpp"
 #include "impl/stacey.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"

@@ -1,5 +1,5 @@
 #include "update_wavefields.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "impl/compute_coupling.hpp"
 #include "impl/compute_coupling.tpp"
 #include "impl/compute_source_interaction.hpp"

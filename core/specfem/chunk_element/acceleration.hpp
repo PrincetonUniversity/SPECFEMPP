@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "impl/field.hpp"
 #include "specfem/data_access.hpp"
 

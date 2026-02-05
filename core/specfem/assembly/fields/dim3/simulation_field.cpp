@@ -1,5 +1,5 @@
 #include "simulation_field.tpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/assembly/fields.hpp"
 
 // Explicitly instantiate the template class

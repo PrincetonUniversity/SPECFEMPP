@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/boundary.hpp"
-#include "enumerations/medium.hpp"
+#include "enumerations/medium_tags.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 

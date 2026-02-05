@@ -1,7 +1,7 @@
 #pragma once
 #include "../impl/dim2/source_medium.tpp"
 #include "../impl/source_medium.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"

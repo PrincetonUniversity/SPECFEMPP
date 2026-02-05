@@ -1,5 +1,5 @@
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "impl/interface_container.tpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
 #include "specfem/assembly/edge_types.hpp"

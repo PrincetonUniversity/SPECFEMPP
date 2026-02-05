@@ -1,5 +1,5 @@
 #include "initialize_mass_matrix.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "impl/compute_mass_matrix.hpp"
 #include "impl/compute_mass_matrix.tpp"
 #include "impl/invert_mass_matrix.hpp"

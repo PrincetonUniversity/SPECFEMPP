@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "impl/compute_mass_matrix.hpp"
 #include "impl/invert_mass_matrix.hpp"
 #include "specfem/assembly.hpp"

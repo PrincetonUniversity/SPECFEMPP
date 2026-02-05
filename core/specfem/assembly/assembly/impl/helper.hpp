@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/assembly/impl/helper.hpp"
 #include "specfem/chunk_element.hpp"

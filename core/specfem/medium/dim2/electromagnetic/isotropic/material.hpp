@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "enumerations/medium.hpp"
+#include "enumerations/medium_tags.hpp"
 #include "specfem/setup.hpp"
 #include <exception>
 #include <iostream>
@@ -23,7 +23,7 @@ namespace medium_container {
  * properties
  *
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 class material<
     DimensionTag, MediumTag, specfem::element::property_tag::isotropic,

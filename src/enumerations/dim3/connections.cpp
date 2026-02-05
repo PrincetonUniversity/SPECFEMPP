@@ -1,5 +1,5 @@
 #include "enumerations/connections.hpp"
-#include "specfem/element/dimension.hpp"
+#include "specfem/element.hpp"
 #include "enumerations/mesh_entities.hpp"
 #include "specfem/setup.hpp"
 #include <array>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/medium_container.hpp"
 #include <Kokkos_Core.hpp>

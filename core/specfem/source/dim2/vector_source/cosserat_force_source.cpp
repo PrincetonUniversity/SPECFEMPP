@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "specfem/utilities.hpp"

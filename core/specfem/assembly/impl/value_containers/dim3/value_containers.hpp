@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::impl {

@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/assembly/assembly.hpp"
 
 #ifdef NO_VTK

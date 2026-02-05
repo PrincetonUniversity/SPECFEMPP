@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
+#include "enumerations/medium_tags.hpp"
 #include "specfem/setup.hpp"
 #include <exception>
 #include <iostream>
@@ -12,7 +12,7 @@ namespace medium_container {
 
 namespace impl {
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 struct AttenuationValues<
     DimensionTag, specfem::element::medium_tag::acoustic,
     specfem::element::attenuation_tag::constant_isotropic> {
@@ -46,7 +46,7 @@ public:
  * @brief Template specialization for acoustic isotropic material properties
  *
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::attenuation_tag AttenuationTag>
 class material<DimensionTag, specfem::element::medium_tag::acoustic,
                specfem::element::property_tag::isotropic, AttenuationTag>

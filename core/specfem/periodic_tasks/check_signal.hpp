@@ -1,5 +1,5 @@
 #pragma once
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "periodic_task.hpp"
 #include <Kokkos_Core.hpp>
 #include <csignal>

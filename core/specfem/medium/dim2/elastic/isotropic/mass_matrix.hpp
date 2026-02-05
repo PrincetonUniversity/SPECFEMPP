@@ -1,7 +1,7 @@
 #pragma once
 
-#include "specfem/element/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "specfem/element.hpp"
+#include "enumerations/medium_tags.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"
 
@@ -31,10 +31,10 @@ namespace medium_physics {
  */
 template <bool UseSIMD, specfem::element::property_tag PropertyTag>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv,
+    specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv,
     UseSIMD>
 impl_mass_matrix_component(
-    const specfem::point::properties<specfem::dimension::type::dim2,
+    const specfem::point::properties<specfem::element::dimension_tag::dim2,
                                      specfem::element::medium_tag::elastic_psv,
                                      PropertyTag, UseSIMD> &properties);
 
@@ -56,10 +56,10 @@ impl_mass_matrix_component(
  */
 template <bool UseSIMD, specfem::element::property_tag PropertyTag>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sh,
+    specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_sh,
     UseSIMD>
 impl_mass_matrix_component(
-    const specfem::point::properties<specfem::dimension::type::dim2,
+    const specfem::point::properties<specfem::element::dimension_tag::dim2,
                                      specfem::element::medium_tag::elastic_sh,
                                      PropertyTag, UseSIMD> &properties);
 

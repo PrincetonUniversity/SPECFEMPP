@@ -1,7 +1,7 @@
 #pragma once
 
 #include "accessor_type.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "impl/chunk_edge_subview.hpp"
 #include "simd.hpp"
 #include <Kokkos_Core.hpp>

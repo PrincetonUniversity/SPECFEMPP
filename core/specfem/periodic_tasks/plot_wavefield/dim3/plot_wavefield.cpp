@@ -1,6 +1,6 @@
 #include "plot_wavefield.hpp"
 #include "enumerations/display.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/periodic_tasks/plotter.hpp"

@@ -1,7 +1,7 @@
 #ifndef _TANGENTIAL_ELEMENTS_HPP
 #define _TANGENTIAL_ELEMENTS_HPP
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "kokkos_abstractions.h"
 
 namespace specfem {

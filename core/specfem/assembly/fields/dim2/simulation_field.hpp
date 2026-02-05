@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/assembly/fields/impl/field_impl.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>

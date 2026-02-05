@@ -1,6 +1,6 @@
 
 #include "specfem/io/mesh/impl/fortran/dim2/read_adjacency_graph.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/io/fortranio/interface.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <fstream>

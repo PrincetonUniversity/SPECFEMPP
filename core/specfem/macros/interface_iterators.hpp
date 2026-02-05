@@ -6,7 +6,7 @@
  */
 
 #include "enum_tags.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "macros_impl/array.hpp"
 #include "macros_impl/utils.hpp"
 #include <boost/preprocessor.hpp>

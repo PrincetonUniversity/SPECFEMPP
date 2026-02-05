@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/constants.hpp"
-#include "specfem/element/dimension.hpp"
+#include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::parallel_configuration {

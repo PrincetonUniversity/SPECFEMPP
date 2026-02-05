@@ -1,7 +1,7 @@
 #pragma once
 
 #include "domain_view.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"

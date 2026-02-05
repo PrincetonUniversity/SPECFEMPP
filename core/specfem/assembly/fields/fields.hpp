@@ -3,7 +3,7 @@
 #include "data_access.hpp"
 #include "dim2/simulation_field.hpp"
 #include "dim3/simulation_field.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 

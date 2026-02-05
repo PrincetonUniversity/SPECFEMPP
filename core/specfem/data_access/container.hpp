@@ -3,7 +3,7 @@
 #include "accessor.hpp"
 #include "data_class.hpp"
 #include "domain_view.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::data_access {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "data_class.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "specfem/datatype.hpp"
 #include <type_traits>
 

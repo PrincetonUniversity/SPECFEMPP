@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/element/dimension.hpp"
+#include "specfem/element.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
@@ -14,7 +14,7 @@ namespace point {
  * @tparam DimensionTag Dimension of the element where the quadrature point is
  * located
  */
-template <specfem::dimension::type DimensionTag> struct local_coordinates;
+template <specfem::element::dimension_tag DimensionTag> struct local_coordinates;
 
 //-------------------------- 2D Specializations ------------------------------//
 
@@ -24,7 +24,7 @@ template <specfem::dimension::type DimensionTag> struct local_coordinates;
  * Stores the element index and local coordinates (\f$\xi, \gamma\f$)
  * for a point within a 2D spectral element.
  */
-template <> struct local_coordinates<specfem::dimension::type::dim2> {
+template <> struct local_coordinates<specfem::element::dimension_tag::dim2> {
   int ispec;       ///< Index of the spectral element
   type_real xi;    ///< Local coordinate \f$ \xi \f$
   type_real gamma; ///< Local coordinate \f$ \gamma \f$
@@ -72,7 +72,7 @@ template <> struct local_coordinates<specfem::dimension::type::dim2> {
  * Stores the element index and local coordinates (\f$\xi, \eta, \gamma\f$)
  * for a point within a 3D spectral element.
  */
-template <> struct local_coordinates<specfem::dimension::type::dim3> {
+template <> struct local_coordinates<specfem::element::dimension_tag::dim3> {
   int ispec;       ///< Index of the spectral element
   type_real xi;    ///< Local coordinate \f$ \xi \f$
   type_real eta;   ///< Local coordinate \f$ \eta \f$

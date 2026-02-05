@@ -1,7 +1,7 @@
 #ifndef _MESH_CONTROL_NODES_HPP
 #define _MESH_CONTROL_NODES_HPP
 
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/setup.hpp"
 

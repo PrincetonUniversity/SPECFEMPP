@@ -1,7 +1,7 @@
 #pragma once
 
 #include "element_types.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "mesh.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/mesh.hpp"

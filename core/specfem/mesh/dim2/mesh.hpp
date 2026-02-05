@@ -5,7 +5,7 @@
 #include "control_nodes/control_nodes.hpp"
 #include "elements/axial_elements.hpp"
 #include "elements/tangential_elements.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "materials/materials.hpp"
 #include "materials/materials.tpp"
 #include "parameters/parameters.hpp"

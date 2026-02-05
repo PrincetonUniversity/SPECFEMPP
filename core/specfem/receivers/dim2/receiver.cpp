@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "enumerations/interface_tags.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/receivers.hpp"
 #include "specfem/utilities.hpp"
