@@ -1,5 +1,4 @@
 #include "info.hpp"
-#include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/info/impl/bounds.hpp"
 #include "specfem/assembly/info/impl/compute.hpp"
 #include "specfem/assembly/info/impl/scatter_minmax.hpp"
@@ -64,13 +63,11 @@ struct InfoScatters {
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-void process_medium_elements(const specfem::assembly::assembly<DimensionTag> &assembly,
-                             InfoScatters<DimensionTag> &scatters) {
-
-  // Get reference to element types, and mesh
-  const auto &element_types = assembly.element_types;
-  const auto &mesh = assembly.mesh;
-  const auto &properties = assembly.properties;
+void process_medium_elements(
+    const specfem::assembly::mesh<DimensionTag> &mesh,
+    const specfem::assembly::properties<DimensionTag> &properties,
+    const specfem::assembly::element_types<DimensionTag> &element_types,
+    InfoScatters<DimensionTag> &scatters) {
 
   constexpr specfem::dimension::type dimension_tag = DimensionTag;
   constexpr specfem::element::medium_tag medium_tag = MediumTag;
@@ -205,10 +202,12 @@ void finalize_element_minmax(const specfem::assembly::mesh<DimensionTag> &mesh,
 
 template <specfem::dimension::type DimensionTag>
 specfem::assembly::Info<DimensionTag>::Info(
-    specfem::assembly::assembly<dimension_tag> &assembly) {
+    const specfem::assembly::mesh<dimension_tag> &mesh,
+    const specfem::assembly::properties<dimension_tag> &properties,
+    const specfem::assembly::element_types<dimension_tag> &element_types) {
 
   // Create all scatter reducers in a single struct
-  info::impl::InfoScatters<dimension_tag> scatters(assembly.mesh.nspec);
+  info::impl::InfoScatters<dimension_tag> scatters(mesh.nspec);
 
   // Process each medium/property combination
   if constexpr (specfem::dimension::type::dim2 == dimension_tag) {
@@ -220,7 +219,7 @@ specfem::assembly::Info<DimensionTag>::Info(
         {
           info::impl::process_medium_elements<_dimension_tag_, _medium_tag_,
                                               _property_tag_>(
-              assembly, scatters);
+              mesh, properties, element_types, scatters);
         };);
   } else {
     FOR_EACH_IN_PRODUCT(
@@ -230,12 +229,12 @@ specfem::assembly::Info<DimensionTag>::Info(
         {
           info::impl::process_medium_elements<_dimension_tag_, _medium_tag_,
                                               _property_tag_>(
-              assembly, scatters);
+              mesh, properties, element_types, scatters);
         };);
   };
 
   // Compute derived quantities (minimum period, dt) from per-element data
-  info::impl::finalize_element_minmax(assembly.mesh, scatters);
+  info::impl::finalize_element_minmax(mesh, scatters);
 
   // Copy results to member variables
   this->vp = scatters.vp.get_bounds();

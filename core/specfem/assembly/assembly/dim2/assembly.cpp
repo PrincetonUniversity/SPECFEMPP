@@ -67,7 +67,7 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
                                      this->edge_types, this->mesh };
   this->fields = { this->mesh, this->element_types, simulation };
 
-  this->info = { *this };
+  this->info = { this->mesh, this->properties, this->element_types };
 
   if (allocate_boundary_values)
     this->boundary_values = { max_timesteps, this->mesh, this->element_types,

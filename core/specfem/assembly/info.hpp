@@ -4,12 +4,12 @@
 #include "specfem_setup.hpp"
 #include "specfem/assembly/info/impl/bounds.hpp"
 #include "specfem/assembly/info/impl/bounding_box.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/properties.hpp"
+#include "specfem/assembly/element_types.hpp"
 
 
 namespace specfem::assembly {
-
-  
-template <specfem::dimension::type DimensionTag> struct assembly;
 
 /*
 ! estimation of minimum period resolved
@@ -37,7 +37,9 @@ struct Info {
 
   Info() = default;
 
-  Info(specfem::assembly::assembly<dimension_tag> &assembly);
+  Info(const specfem::assembly::mesh<dimension_tag> &mesh,
+       const specfem::assembly::properties<dimension_tag> &properties,
+       const specfem::assembly::element_types<dimension_tag> &element_types);
 
   // Computed mesh properties
   info::impl::BoundingBox<dimension_tag> domain_bounds;

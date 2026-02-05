@@ -71,7 +71,7 @@ specfem::assembly::assembly<specfem::dimension::type::dim3>::assembly(
   this->check_jacobian_matrix();
 
 
-  this->info = {*this};
+  this->info = { this->mesh, this->properties, this->element_types };
 
   return;
 }
