@@ -3,8 +3,8 @@
 #include "enumerations/connections.hpp"
 #include "enumerations/interface.hpp"
 #include "enumerations/mesh_entities.hpp"
-#include "io/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
@@ -25,8 +25,8 @@ struct TotalQuadraturePoints {
 };
 
 struct ExpectedMapping {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   TotalQuadraturePoints total_quadrature_points;
   std::string database_file;
 

@@ -4,6 +4,6 @@ With Stored Jacobian
 ~~~~~~~~~~~~~~~~~~~~
 
 
-.. doxygenstruct:: specfem::point::jacobian_matrix< specfem::dimension::type::dim2, true, UseSIMD >
+.. doxygenstruct:: specfem::point::jacobian_matrix< specfem::element::dimension_tag::dim2, true, UseSIMD >
     :members:
     :private-members:

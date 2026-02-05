@@ -1,21 +1,10 @@
 #pragma once
 
-#include "dimension.hpp"
+#include "specfem/element.hpp"
 #include <string>
 
 namespace specfem {
 namespace wavefield {
-/**
- * @brief Simulation field types for wave propagation algorithms.
- *
- * Used in time-stepping schemes and inversion methods.
- */
-enum class simulation_field {
-  forward,  ///< Forward time propagation
-  adjoint,  ///< Adjoint field (backward from receivers)
-  backward, ///< Backward field (for gradient computation)
-  buffer    ///< Temporary buffer field
-};
 
 /**
  * @brief Wavefield component types for different physical quantities.
@@ -46,7 +35,7 @@ enum class type {
  * static_assert(disp_2d::num_components() == 2); // u_x, u_z
  * @endcode
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::wavefield::type Component>
 class wavefield;
 
@@ -59,11 +48,11 @@ class wavefield;
  * @brief 2D displacement wavefield (u_x, u_z).
  */
 template <>
-class wavefield<specfem::dimension::type::dim2,
+class wavefield<specfem::element::dimension_tag::dim2,
                 specfem::wavefield::type::displacement> {
 public:
   static constexpr auto dimension() {
-    return specfem::dimension::type::dim2;
+    return specfem::element::dimension_tag::dim2;
   } ///< 2D dimension
   static constexpr auto component() {
     return specfem::wavefield::type::displacement;
@@ -75,11 +64,11 @@ public:
  * @brief 2D velocity wavefield (v_x, v_z).
  */
 template <>
-class wavefield<specfem::dimension::type::dim2,
+class wavefield<specfem::element::dimension_tag::dim2,
                 specfem::wavefield::type::velocity> {
 public:
   static constexpr auto dimension() {
-    return specfem::dimension::type::dim2;
+    return specfem::element::dimension_tag::dim2;
   } ///< 2D dimension
   static constexpr auto component() {
     return specfem::wavefield::type::velocity;
@@ -91,11 +80,11 @@ public:
  * @brief 2D acceleration wavefield (a_x, a_z).
  */
 template <>
-class wavefield<specfem::dimension::type::dim2,
+class wavefield<specfem::element::dimension_tag::dim2,
                 specfem::wavefield::type::acceleration> {
 public:
   static constexpr auto dimension() {
-    return specfem::dimension::type::dim2;
+    return specfem::element::dimension_tag::dim2;
   } ///< 2D dimension
   static constexpr auto component() {
     return specfem::wavefield::type::acceleration;
@@ -107,11 +96,11 @@ public:
  * @brief 2D pressure wavefield (scalar acoustic field).
  */
 template <>
-class wavefield<specfem::dimension::type::dim2,
+class wavefield<specfem::element::dimension_tag::dim2,
                 specfem::wavefield::type::pressure> {
 public:
   static constexpr auto dimension() {
-    return specfem::dimension::type::dim2;
+    return specfem::element::dimension_tag::dim2;
   } ///< 2D dimension
   static constexpr auto component() {
     return specfem::wavefield::type::pressure;

@@ -2,11 +2,11 @@
 
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "medium/material.hpp"
-#include "medium/properties_container.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/impl/domain_properties.hpp"
 #include "specfem/assembly/impl/value_containers.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/properties.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -29,14 +29,14 @@ namespace specfem::assembly {
  * anisotropic, Cosserat).
  *
  * Related classes:
- * - specfem::medium::properties_container: Base storage container
+ * - specfem::assembly::impl::domain_properties: Base storage container
  * - specfem::assembly::mesh: Mesh geometry and connectivity
  * - specfem::mesh::materials: Material assignment per element
  */
 template <>
-struct properties<specfem::dimension::type::dim2>
-    : public impl::value_containers<specfem::dimension::type::dim2,
-                                    specfem::medium::properties_container> {
+struct properties<specfem::element::dimension_tag::dim2>
+    : public impl::value_containers<specfem::element::dimension_tag::dim2,
+                                    impl::domain_properties> {
 
   /**
    * @brief Default constructor.
@@ -62,7 +62,7 @@ struct properties<specfem::dimension::type::dim2>
    * models)
    *
    * @code
-   * specfem::assembly::properties<specfem::dimension::type::dim2> props(
+   * specfem::assembly::properties<specfem::element::dimension_tag::dim2> props(
    *     1000, 5, 5, element_types, mesh, materials, false);
    * @endcode
    */
@@ -81,7 +81,8 @@ struct properties<specfem::dimension::type::dim2>
    */
   void copy_to_host() {
     impl::value_containers<
-        dimension_tag, specfem::medium::properties_container>::copy_to_host();
+        dimension_tag,
+        specfem::assembly::impl::domain_properties>::copy_to_host();
   }
 
   /**
@@ -92,7 +93,8 @@ struct properties<specfem::dimension::type::dim2>
    */
   void copy_to_device() {
     impl::value_containers<
-        dimension_tag, specfem::medium::properties_container>::copy_to_device();
+        dimension_tag,
+        specfem::assembly::impl::domain_properties>::copy_to_device();
   }
 };
 
@@ -120,10 +122,11 @@ struct properties<specfem::dimension::type::dim2>
  * @endcode
  */
 template <typename IndexViewType, typename PointPropertiesType>
-void max(const IndexViewType &ispecs,
-         const specfem::assembly::properties<specfem::dimension::type::dim2>
-             &properties,
-         PointPropertiesType &point_properties) {
+void max(
+    const IndexViewType &ispecs,
+    const specfem::assembly::properties<specfem::element::dimension_tag::dim2>
+        &properties,
+    PointPropertiesType &point_properties) {
 
   constexpr auto MediumTag = PointPropertiesType::medium_tag;
   constexpr auto PropertyTag = PointPropertiesType::property_tag;
@@ -133,7 +136,7 @@ void max(const IndexViewType &ispecs,
                    Kokkos::DefaultExecutionSpace>::value;
 
   static_assert(PointPropertiesType::dimension_tag ==
-                    specfem::dimension::type::dim2,
+                    specfem::element::dimension_tag::dim2,
                 "Only 2D properties are supported");
 
   IndexViewType local_ispecs("local_ispecs", ispecs.extent(0));

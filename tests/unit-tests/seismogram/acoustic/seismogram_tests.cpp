@@ -2,9 +2,8 @@
 // #include "../../utilities/include/compare_array.h"
 #include "constants.hpp"
 #include "domain/domain.hpp"
-#include "io/fortranio/interface.hpp"
-#include "io/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
@@ -116,8 +115,9 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
   specfem::domain::domain<
-      specfem::wavefield::simulation_field::forward,
-      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+      specfem::simulation::field_type::forward,
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::acoustic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       acoustic_domain_static(setup.get_dt(), assembly, qp5);
 

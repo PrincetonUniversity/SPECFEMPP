@@ -27,7 +27,7 @@ namespace specfem::point {
  * @code{.cpp}
  * // Example: Creating 2D acoustic velocity field accessor
  * using VelField = specfem::point::velocity<
- *     specfem::dimension::type::dim2,
+ *     specfem::element::dimension_tag::dim2,
  *     specfem::element::medium_tag::acoustic,
  *     false>;  // No SIMD
  *
@@ -66,7 +66,7 @@ namespace specfem::point {
  * @see specfem::point::acceleration for acceleration field accessor
  * @see specfem::point::mass_inverse for inverse mass matrix field accessor
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 class velocity
     : public impl::field<DimensionTag, MediumTag,

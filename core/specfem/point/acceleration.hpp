@@ -27,7 +27,7 @@ namespace specfem::point {
  * @code{.cpp}
  * // Example: Creating 2D elastic acceleration field accessor
  * using AccelField = specfem::point::acceleration<
- *     specfem::dimension::type::dim2,
+ *     specfem::element::dimension_tag::dim2,
  *     specfem::element::medium_tag::elastic,
  *     false>;  // No SIMD
  *
@@ -67,7 +67,7 @@ namespace specfem::point {
  * @see specfem::point::displacement for displacement field accessor
  * @see specfem::point::mass_inverse for inverse mass matrix field accessor
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 class acceleration
     : public impl::field<DimensionTag, MediumTag,

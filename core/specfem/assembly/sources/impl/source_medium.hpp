@@ -10,7 +10,7 @@
 // Forward declarations
 namespace specfem {
 namespace algorithms {
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 specfem::point::local_coordinates<DimensionTag> locate_point(
     const specfem::point::global_coordinates<DimensionTag> &coordinates,
     const specfem::assembly::mesh<DimensionTag> &mesh);
@@ -68,7 +68,7 @@ namespace specfem::assembly::sources_impl {
  * @note This class is an implementation detail and should be only used within
  * @ref specfem::assembly::sources.
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 struct source_medium {
 
@@ -95,7 +95,7 @@ public:
    * @brief Number of spatial dimensions (2 for 2D, 3 for 3D)
    */
   constexpr static auto ndim =
-      (DimensionTag == specfem::dimension::type::dim2) ? 2 : 3;
+      (DimensionTag == specfem::element::dimension_tag::dim2) ? 2 : 3;
 
   /**
    * @brief Rank of source array (4 for 2D: [sources][components][z][x],
@@ -183,9 +183,9 @@ public:
    * @param dt Time step size for discretization
    * @param nsteps Total number of time steps
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   source_medium(
       const std::vector<
           std::shared_ptr<specfem::sources::source<dimension_tag> > > &sources,
@@ -211,9 +211,9 @@ public:
    * @param dt Time step size for discretization
    * @param nsteps Total number of time steps
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   source_medium(
       const std::vector<
           std::shared_ptr<specfem::sources::source<dimension_tag> > > &sources,
@@ -306,9 +306,9 @@ public:
    *       higher-level @c load_on_device function.
    */
   template <typename IndexType, typename PointSourceType,
-            specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+            specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   KOKKOS_INLINE_FUNCTION void
   load_on_device(const int timestep, const IndexType &index,
                  PointSourceType &point_source) const;
@@ -329,9 +329,9 @@ public:
    *       higher-level @c load_on_device function.
    */
   template <typename IndexType, typename PointSourceType,
-            specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+            specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   KOKKOS_INLINE_FUNCTION void
   load_on_device(const int timestep, const IndexType &index,
                  PointSourceType &point_source) const;
@@ -353,9 +353,9 @@ public:
    *       higher-level @c store_on_device function.
    */
   template <typename IndexType, typename PointSourceType,
-            specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+            specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   KOKKOS_INLINE_FUNCTION void
   store_on_device(const int timestep, const IndexType index,
                   const PointSourceType &point_source) const;
@@ -377,9 +377,9 @@ public:
    *       higher-level @c store_on_device function.
    */
   template <typename IndexType, typename PointSourceType,
-            specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+            specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   KOKKOS_INLINE_FUNCTION void
   store_on_device(const int timestep, const IndexType index,
                   const PointSourceType &point_source) const;
@@ -401,9 +401,9 @@ public:
    *       higher-level @c load_on_device function.
    */
   template <typename IndexType, typename PointSourceType,
-            specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+            specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   void load_on_host(const int timestep, const IndexType index,
                     PointSourceType &point_source) const;
 
@@ -424,9 +424,9 @@ public:
    *       higher-level @c load_on_device function.
    */
   template <typename IndexType, typename PointSourceType,
-            specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+            specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   void load_on_host(const int timestep, const IndexType index,
                     PointSourceType &point_source) const;
 
@@ -445,9 +445,9 @@ public:
    * @param point_source [in] Source data to be stored in host memory
    */
   template <typename IndexType, typename PointSourceType,
-            specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+            specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   void store_on_host(const int timestep, const IndexType index,
                      const PointSourceType &point_source) const;
 
@@ -466,9 +466,9 @@ public:
    * @param point_source [in] Source data to be stored in host memory
    */
   template <typename IndexType, typename PointSourceType,
-            specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+            specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   void store_on_host(const int timestep, const IndexType index,
                      const PointSourceType &point_source) const;
   ///@}
@@ -498,7 +498,7 @@ public:
  * @code
  * // Example: Extract elastic sources from mixed collection
  * auto [elastic_sources, indices] = sort_sources_per_medium<
- *     specfem::dimension::type::dim2,
+ *     specfem::element::dimension_tag::dim2,
  *     specfem::element::medium_tag::elastic_psv>(
  *         all_sources, element_types, mesh);
  * @endcode
@@ -506,7 +506,7 @@ public:
  * @note This function is an implementation detail and should be used only
  * within @ref specfem::assembly::sources construction
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 std::tuple<
     std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >,

@@ -1,6 +1,7 @@
 
+#include "../../../test_macros.hpp"
 #include "SPECFEM_Environment.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
@@ -42,7 +43,7 @@ TEST(AdjacencyGraphRegularMesh, CheckConnections) {
   const auto &adjacency_graph = mesh.adjacency_graph;
   const auto g = adjacency_graph.graph();
 
-  EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
+  LOCAL_EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
 
   // Interior nodes
   for (int ix = 1; ix < nx - 1; ++ix) {

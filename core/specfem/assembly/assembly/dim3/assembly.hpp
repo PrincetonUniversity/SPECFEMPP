@@ -1,7 +1,6 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "io/reader.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
 #include "specfem/assembly/compute_source_array.hpp"
@@ -17,6 +16,10 @@
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
 
+namespace specfem::io {
+class reader;
+}
+
 namespace specfem::assembly {
 
 /**
@@ -26,7 +29,7 @@ namespace specfem::assembly {
  * required for & computed during 3D SEM simulations
  *
  */
-template <> struct assembly<specfem::dimension::type::dim3> {
+template <> struct assembly<specfem::element::dimension_tag::dim3> {
 
   /**
    * @name Public Constants
@@ -34,7 +37,7 @@ template <> struct assembly<specfem::dimension::type::dim3> {
    */
   ///@{
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   ///@}
 
   /** @name Data Containers
@@ -160,7 +163,7 @@ template <> struct assembly<specfem::dimension::type::dim3> {
    */
   Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   generate_wavefield_on_entire_grid(
-      const specfem::wavefield::simulation_field wavefield,
+      const specfem::simulation::field_type wavefield,
       const specfem::wavefield::type component);
 
   /**

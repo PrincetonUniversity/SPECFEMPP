@@ -10,11 +10,11 @@
 Dimension-specific Specializations
 ----------------------------------
 
-.. doxygenstruct:: specfem::point::local_coordinates< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::point::local_coordinates< specfem::element::dimension_tag::dim2 >
    :members:
    :private-members:
 
-.. doxygenstruct:: specfem::point::local_coordinates< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::point::local_coordinates< specfem::element::dimension_tag::dim3 >
    :members:
    :private-members:
 
@@ -30,11 +30,11 @@ Dimension-specific Specializations
 Dimension-specific Specializations
 ----------------------------------
 
-.. doxygenstruct:: specfem::point::global_coordinates< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::point::global_coordinates< specfem::element::dimension_tag::dim2 >
    :members:
    :private-members:
 
-.. doxygenstruct:: specfem::point::global_coordinates< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::point::global_coordinates< specfem::element::dimension_tag::dim3 >
    :members:
    :private-members:
 

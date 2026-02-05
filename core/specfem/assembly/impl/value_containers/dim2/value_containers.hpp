@@ -6,9 +6,11 @@
 
 namespace specfem::assembly::impl {
 
-template <template <specfem::dimension::type, specfem::element::medium_tag,
-                    specfem::element::property_tag> class containers_type>
-struct value_containers<specfem::dimension::type::dim2, containers_type> {
+template <
+    template <specfem::element::dimension_tag, specfem::element::medium_tag,
+              specfem::element::property_tag> class containers_type>
+struct value_containers<specfem::element::dimension_tag::dim2,
+                        containers_type> {
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
 
@@ -16,7 +18,7 @@ struct value_containers<specfem::dimension::type::dim2, containers_type> {
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
 
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
 
   IndexViewType property_index_mapping; ///< View to store property index
                                         ///< mapping
@@ -39,8 +41,8 @@ struct value_containers<specfem::dimension::type::dim2, containers_type> {
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
-                                    ISOTROPIC_COSSERAT)),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+                       ATTENUATION_TAG(NONE)),
                       DECLARE(((containers_type, (_DIMENSION_TAG_, _MEDIUM_TAG_,
                                                   _PROPERTY_TAG_)),
                                value)))
@@ -70,7 +72,8 @@ struct value_containers<specfem::dimension::type::dim2, containers_type> {
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE)),
         CAPTURE(value) {
           if constexpr (_medium_tag_ == MediumTag &&
                         _property_tag_ == PropertyTag) {
@@ -95,7 +98,8 @@ struct value_containers<specfem::dimension::type::dim2, containers_type> {
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE)),
         CAPTURE(value) { _value_.copy_to_host(); })
   }
 
@@ -105,7 +109,8 @@ struct value_containers<specfem::dimension::type::dim2, containers_type> {
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE)),
         CAPTURE(value) { _value_.copy_to_device(); })
   }
 };

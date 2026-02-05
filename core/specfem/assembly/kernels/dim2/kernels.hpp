@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "medium/kernels_container.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/impl/domain_kernels.hpp"
 #include "specfem/assembly/impl/value_containers.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -23,7 +23,7 @@ namespace specfem::assembly {
  *
  * @code
  * // Initialize kernels container for 2D mesh
- * specfem::assembly::kernels<specfem::dimension::type::dim2> kernels(
+ * specfem::assembly::kernels<specfem::element::dimension_tag::dim2> kernels(
  *     nspec, ngllz, ngllx, element_types);
  *
  * // Access elastic kernels for a specific point
@@ -39,13 +39,14 @@ namespace specfem::assembly {
  * @endcode
  *
  * @see specfem::assembly::kernels Base template class
- * @see specfem::medium::kernels_container Individual medium kernel containers
+ * @see specfem::assembly::impl::domain_kernels Individual medium kernel
+ * containers
  * @see specfem::point::kernels Point-wise kernel accessors
  */
 template <>
-struct kernels<specfem::dimension::type::dim2>
-    : public impl::value_containers<specfem::dimension::type::dim2,
-                                    specfem::medium::kernels_container> {
+struct kernels<specfem::element::dimension_tag::dim2>
+    : public impl::value_containers<specfem::element::dimension_tag::dim2,
+                                    impl::domain_kernels> {
 public:
   /**
    * @brief Default constructor
@@ -78,8 +79,8 @@ public:
    *
    */
   void copy_to_host() {
-    impl::value_containers<dimension_tag,
-                           specfem::medium::kernels_container>::copy_to_host();
+    impl::value_containers<
+        dimension_tag, specfem::assembly::impl::domain_kernels>::copy_to_host();
   }
 
   /**
@@ -88,7 +89,8 @@ public:
    */
   void copy_to_device() {
     impl::value_containers<
-        dimension_tag, specfem::medium::kernels_container>::copy_to_device();
+        dimension_tag,
+        specfem::assembly::impl::domain_kernels>::copy_to_device();
   }
 };
 

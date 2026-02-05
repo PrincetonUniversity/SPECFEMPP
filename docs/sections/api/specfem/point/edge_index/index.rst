@@ -10,9 +10,9 @@
 Dimension-specific Specializations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::point::edge_index< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::point::edge_index< specfem::element::dimension_tag::dim2 >
     :members:
 
 
-.. doxygenstruct:: specfem::point::edge_index< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::point::edge_index< specfem::element::dimension_tag::dim3 >
     :members:

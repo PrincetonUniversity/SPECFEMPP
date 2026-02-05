@@ -1,8 +1,8 @@
 
 .. _assembly_mesh:
 
-``specfem::assembly::mesh`` Template
-=====================================
+``specfem::assembly::mesh``
+===========================
 
 Base template for assembled mesh representations across dimensions.
 

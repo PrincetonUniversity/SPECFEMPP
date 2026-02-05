@@ -10,17 +10,18 @@ namespace mesh {
  *
  * @tparam DimensionTag Dimension type for the mesh
  */
-template <specfem::dimension::type DimensionTag> struct absorbing_boundary;
+template <specfem::element::dimension_tag DimensionTag>
+struct absorbing_boundary;
 
 /**
  * @brief Absorbing boundary information
  *
  */
-template <> struct absorbing_boundary<specfem::dimension::type::dim2> {
+template <> struct absorbing_boundary<specfem::element::dimension_tag::dim2> {
 
   constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension
-                                      ///< type
+      specfem::element::dimension_tag::dim2; ///< Dimension
+                                             ///< type
 
   int nelements; ///< Number of elements on the absorbing boundary
 

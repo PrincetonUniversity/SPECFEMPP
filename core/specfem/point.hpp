@@ -6,6 +6,7 @@
 #include "point/conforming_interface.hpp"
 #include "point/displacement.hpp"
 #include "point/edge_index.hpp"
+#include "point/face_index.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/global_coordinates.hpp"
 #include "point/index.hpp"

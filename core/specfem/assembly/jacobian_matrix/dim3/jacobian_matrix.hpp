@@ -32,21 +32,21 @@ namespace specfem::assembly {
  *
  * @code
  * // Example usage
- * specfem::assembly::jacobian_matrix<specfem::dimension::type::dim3> jacobian(...);
+ * specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim3> jacobian(...);
  *
  * // Access in device kernel
- * specfem::point::index<specfem::dimension::type::dim3> idx(ispec, iz, iy, ix);
- * specfem::point::jacobian_matrix<specfem::dimension::type::dim3> point_jac;
+ * specfem::point::index<specfem::element::dimension_tag::dim3> idx(ispec, iz, iy, ix);
+ * specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3> point_jac;
  * specfem::assembly::load_on_device(idx, jacobian, point_jac);
  * @endcode
  */
 // clang-format on
 template <>
-struct jacobian_matrix<specfem::dimension::type::dim3>
+struct jacobian_matrix<specfem::element::dimension_tag::dim3>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::domain,
           specfem::data_access::DataClassType::jacobian_matrix,
-          specfem::dimension::type::dim3> {
+          specfem::element::dimension_tag::dim3> {
   /**
    * @name Type Definitions
    *
@@ -61,7 +61,7 @@ struct jacobian_matrix<specfem::dimension::type::dim3>
   using base_type = specfem::data_access::Container<
       specfem::data_access::ContainerType::domain,
       specfem::data_access::DataClassType::jacobian_matrix,
-      specfem::dimension::type::dim3>;
+      specfem::element::dimension_tag::dim3>;
 
   /**
    * @brief Kokkos view type for storing Jacobian matrix components

@@ -1,5 +1,5 @@
 #include "enumerations/interface.hpp"
-#include "medium/compute_stress.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -7,7 +7,7 @@
 namespace {
 
 TEST(Stress, ElasticIsotropic2D_PSV_Basic) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
@@ -31,7 +31,7 @@ TEST(Stress, ElasticIsotropic2D_PSV_Basic) {
   field_derivatives.du(1, 0) = 4.0;
 
   const PSVStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   PSVStressType expected_stress;
   expected_stress.T(0, 0) = (lambda + 2 * mu) * 1.0 + lambda * 2.0;
@@ -48,7 +48,7 @@ TEST(Stress, ElasticIsotropic2D_PSV_Basic) {
 }
 
 TEST(Stress, ElasticIsotropic2D_PSV_ZeroDerivatives) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
@@ -70,7 +70,7 @@ TEST(Stress, ElasticIsotropic2D_PSV_ZeroDerivatives) {
   field_derivatives.du(1, 0) = 0.0;
 
   const PSVStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   PSVStressType expected_stress;
   expected_stress.T(0, 0) = 0.0;
@@ -87,7 +87,7 @@ TEST(Stress, ElasticIsotropic2D_PSV_ZeroDerivatives) {
 }
 
 TEST(Stress, ElasticIsotropic2D_SH_Basic) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;
@@ -107,7 +107,7 @@ TEST(Stress, ElasticIsotropic2D_SH_Basic) {
   field_derivatives.du(0, 1) = 2.0;
 
   const SHStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   SHStressType expected_stress;
   expected_stress.T(0, 0) = mu * 1.0;
@@ -122,7 +122,7 @@ TEST(Stress, ElasticIsotropic2D_SH_Basic) {
 }
 
 TEST(Stress, ElasticIsotropic2D_SH_ZeroDerivatives) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
   static constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;
@@ -142,7 +142,7 @@ TEST(Stress, ElasticIsotropic2D_SH_ZeroDerivatives) {
   field_derivatives.du(0, 1) = 0.0;
 
   const SHStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   SHStressType expected_stress;
   expected_stress.T(0, 0) = 0.0;

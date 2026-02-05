@@ -8,7 +8,7 @@ add_library(specfem::source_time_functions ALIAS source_time_functions)
 
 target_link_libraries(
         source_time_functions
-        read_seismogram
+        specfem::io
         Kokkos::kokkos
         specfem::point
         specfem::utilities

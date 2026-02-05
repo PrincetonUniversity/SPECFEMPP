@@ -8,13 +8,13 @@
 
 TEST(impl__compute_intersection, KnotCorrectness) {
   const int ngnod = 4;
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       coorg1("coorg1", ngnod);
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       coorg2("coorg2", ngnod);
   // element 1 lies on [0,1] x [0,1]
   coorg1(0) = { 0, 0 };
@@ -44,17 +44,22 @@ TEST(impl__compute_intersection, KnotCorrectness) {
     coorg2(3).z = coord_hi;
 
     if (coord_lo > 1 || coord_hi < 0) {
-      EXPECT_THROW(specfem::assembly::nonconforming_interfaces_impl::
-                       compute_intersection(
-                           coorg1, coorg2,
-                           specfem::mesh_entity::dim2::type::right,
-                           specfem::mesh_entity::dim2::type::left, mortar_quad),
-                   std::runtime_error)
-          << "Global coordinate intervals:\n"
-          << "   side 1: [0, 1]\n"
-          << "   side 2: [" << coord_lo << ", " << coord_hi << "]\n"
-          << "There should be no intersection, causing `compute_intersection` "
-             "to throw an error, but none was thrown.";
+      bool captured = false;
+      try {
+        specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
+            coorg1, coorg2, specfem::mesh_entity::dim2::type::right,
+            specfem::mesh_entity::dim2::type::left, mortar_quad);
+      } catch (const std::runtime_error &) {
+        captured = true;
+      }
+      if (!captured) {
+        ADD_FAILURE() << "Global coordinate intervals:\n"
+                      << "   side 1: [0, 1]\n"
+                      << "   side 2: [" << coord_lo << ", " << coord_hi << "]\n"
+                      << "There should be no intersection, causing "
+                         "`compute_intersection` "
+                         "to throw an error, but none was thrown.";
+      }
       continue;
     }
 

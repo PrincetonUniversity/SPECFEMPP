@@ -40,11 +40,11 @@ namespace specfem::sources {
  * );
  *
  * // Create any source (example with 2D force source)
- * auto source = specfem::sources::force<specfem::dimension::type::dim2>(
+ * auto source = specfem::sources::force<specfem::element::dimension_tag::dim2>(
  *     5.0, 10.0,  // coordinates (x, z)
  *     0.0,        // angle
  *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Common operations available for all sources:
@@ -64,7 +64,7 @@ namespace specfem::sources {
  * auto supported_media = source.get_supported_media();
  * @endcode
  */
-template <specfem::dimension::type DimensionTag> class source {
+template <specfem::element::dimension_tag DimensionTag> class source {
 
 public:
   static constexpr auto dimension_tag = DimensionTag;
@@ -85,9 +85,9 @@ public:
    * @param z z-coordinate of source
    * @param source_time_function pointer to source time function
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   source(
       type_real x, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
@@ -101,9 +101,9 @@ public:
    * @param nsteps number of time steps
    * @param dt time step size
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   source(YAML::Node &Node, const int nsteps, const type_real dt);
 
   /** @} */
@@ -119,9 +119,9 @@ public:
    * @param nsteps number of time steps
    * @param dt time step size
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   source(YAML::Node &Node, const int nsteps, const type_real dt);
 
   /**
@@ -132,9 +132,9 @@ public:
    * @param z z-coordinate of source
    * @param source_time_function pointer to source time function
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   source(
       type_real x, type_real y, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
@@ -177,7 +177,7 @@ public:
         t0, dt, nsteps, source_time_function);
   }
 
-  virtual specfem::wavefield::simulation_field get_wavefield_type() const = 0;
+  virtual specfem::simulation::field_type get_wavefield_type() const = 0;
 
   virtual bool operator==(const source &other) const {
     // Base implementation might just check type identity

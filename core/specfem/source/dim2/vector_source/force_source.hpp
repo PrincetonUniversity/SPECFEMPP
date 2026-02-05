@@ -32,12 +32,10 @@ namespace sources {
  * );
  *
  * // Create a 2D force source at (2.5, 3.0) with 45-degree angle
- * auto force_source = specfem::sources::force<specfem::dimension::type::dim2>(
- *     2.5,  // x-coordinate
- *     3.0,  // z-coordinate
- *     45.0, // angle in degrees
- *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ * auto force_source =
+ * specfem::sources::force<specfem::element::dimension_tag::dim2>( 2.5,  //
+ * x-coordinate 3.0,  // z-coordinate 45.0, // angle in degrees std::move(stf),
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium type
@@ -49,8 +47,8 @@ namespace sources {
  *
  */
 template <>
-class force<specfem::dimension::type::dim2>
-    : public vector_source<specfem::dimension::type::dim2> {
+class force<specfem::element::dimension_tag::dim2>
+    : public vector_source<specfem::element::dimension_tag::dim2> {
 
 public:
   /**
@@ -66,7 +64,7 @@ public:
    * frequecy of Dirac source.
    */
   force(YAML::Node &Node, const int nsteps, const type_real dt,
-        const specfem::wavefield::simulation_field wavefield_type)
+        const specfem::simulation::field_type wavefield_type)
       : angle([](YAML::Node &Node) -> type_real {
           if (Node["angle"]) {
             return Node["angle"].as<type_real>();
@@ -88,7 +86,7 @@ public:
   force(
       type_real x, type_real z, type_real angle,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
-      const specfem::wavefield::simulation_field wavefield_type)
+      const specfem::simulation::field_type wavefield_type)
       : angle(angle), wavefield_type(wavefield_type),
         vector_source(x, z, std::move(source_time_function)) {};
 
@@ -105,7 +103,7 @@ public:
    */
   type_real get_angle() const { return angle; }
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
+  specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
 
@@ -113,10 +111,12 @@ public:
    * @brief Get the forcing function
    *
    */
-  bool operator==(const specfem::sources::source<specfem::dimension::type::dim2>
-                      &other) const override;
-  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
-                      &other) const override;
+  bool operator==(
+      const specfem::sources::source<specfem::element::dimension_tag::dim2>
+          &other) const override;
+  bool operator!=(
+      const specfem::sources::source<specfem::element::dimension_tag::dim2>
+          &other) const override;
 
   /**
    * @brief Get the force vector
@@ -157,10 +157,10 @@ public:
   static constexpr const char *name = "2-D force";
 
 private:
-  type_real angle; ///< Angle of force source
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
-                                                       ///< which the source
-                                                       ///< acts
+  type_real angle;                                ///< Angle of force source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
+                                                  ///< which the source
+                                                  ///< acts
   const static std::vector<specfem::element::medium_tag> supported_media;
 };
 } // namespace sources

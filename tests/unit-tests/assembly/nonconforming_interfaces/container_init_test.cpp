@@ -1,21 +1,21 @@
 #include "../../SPECFEM_Environment.hpp"
-#include "io/interface.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/assembly/nonconforming_interfaces/dim2/impl/compute_intersection.tpp"
+#include "specfem/io.hpp"
 #include "specfem/point.hpp"
 #include "specfem/point/global_coordinates.hpp"
 #include <gtest/gtest.h>
 #include <memory>
 
 template <typename TransferView, typename CoordView>
-specfem::point::global_coordinates<specfem::dimension::type::dim2>
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
 transfer_position_to_mortar(const TransferView &transfer_function,
                             const CoordView &coord_view, const int &ispec,
                             const specfem::mesh_entity::dim2::type &edge_type,
                             const int &iedge, const int &imortar) {
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> coords(0,
-                                                                            0);
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+      coords(0, 0);
   const int ngllz = coord_view.extent(2);
   const int ngllx = coord_view.extent(3);
   const auto element = specfem::mesh_entity::element(ngllz, ngllx);
@@ -30,13 +30,13 @@ transfer_position_to_mortar(const TransferView &transfer_function,
 }
 
 type_real estimate_intersection_length(
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &icoorg,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &icoorg,
     const int &ispec, const specfem::mesh_entity::dim2::type &iedge,
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &jcoorg,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &jcoorg,
     const int &jspec, const specfem::mesh_entity::dim2::type &jedge) {
   const int num_segments = 20;
   const int ngnod = icoorg.extent(0);
@@ -86,9 +86,9 @@ type_real estimate_intersection_length(
 }
 
 void estimate_verify_normal(
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &coorg,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &coorg,
     const int &ispec, const specfem::mesh_entity::dim2::type &iedge,
     const type_real &edgecoord, const type_real &normal_x,
     const type_real &normal_z) {
@@ -98,7 +98,8 @@ void estimate_verify_normal(
 
   // full local coords
   type_real xi, gamma;
-  specfem::point::jacobian_matrix<specfem::dimension::type::dim2, true, false>
+  specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2, true,
+                                  false>
       jacobian;
 
   /* coordinate of edge, references either xi or gamma. Other coord is
@@ -158,7 +159,7 @@ void estimate_verify_normal(
 }
 
 void test_nonconforming_container_transfers(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2>
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly) {
   const type_real length_verify_epsilon = 1e-2;
 
@@ -235,13 +236,13 @@ void test_nonconforming_container_transfers(
       << "elastic side of the the elastic-acoustic interface does not have the "
          "correct interface quadrature size.";
 
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       ac_coorg("ac_coorg", assembly.mesh.ngnod);
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       el_coorg("el_coorg", assembly.mesh.ngnod);
 
   for (int iedge = 0; iedge < nedges; iedge++) {
@@ -267,20 +268,24 @@ void test_nonconforming_container_transfers(
     for (int imortar = 0; imortar < nquad_mortar; imortar++) {
 
       // interpolated positions on acoustic-elastic interface
-      const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+      const specfem::point::global_coordinates<
+          specfem::element::dimension_tag::dim2>
           acel_self = transfer_position_to_mortar(
               nc_interface_acoustic_elastic.h_transfer_function,
               assembly.mesh.h_coord, ac_spec, ac_edgetype, iedge, imortar);
-      const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+      const specfem::point::global_coordinates<
+          specfem::element::dimension_tag::dim2>
           acel_other = transfer_position_to_mortar(
               nc_interface_acoustic_elastic.h_transfer_function_other,
               assembly.mesh.h_coord, el_spec, el_edgetype, iedge, imortar);
       // interpolated positions on elastic-acoustic interface
-      const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+      const specfem::point::global_coordinates<
+          specfem::element::dimension_tag::dim2>
           elac_self = transfer_position_to_mortar(
               nc_interface_elastic_acoustic.h_transfer_function,
               assembly.mesh.h_coord, el_spec, el_edgetype, iedge, imortar);
-      const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+      const specfem::point::global_coordinates<
+          specfem::element::dimension_tag::dim2>
           elac_other = transfer_position_to_mortar(
               nc_interface_elastic_acoustic.h_transfer_function_other,
               assembly.mesh.h_coord, ac_spec, ac_edgetype, iedge, imortar);
@@ -353,12 +358,12 @@ TEST(NonconformingInterfaces, ContainerInitialization) {
   }();
 
   std::vector<std::shared_ptr<
-      specfem::sources::source<specfem::dimension::type::dim2> > >
+      specfem::sources::source<specfem::element::dimension_tag::dim2> > >
       sources;
   std::vector<std::shared_ptr<
-      specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+      specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
       receivers;
-  specfem::assembly::assembly<specfem::dimension::type::dim2> assembly(
+  specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadrature, sources, receivers, {}, 1.0, 0.0, 1, 1, 1,
       specfem::simulation::type::forward, false, nullptr);
 

@@ -9,27 +9,26 @@ int tshift = 0;            // for the single sources we are reading!
 type_real user_t0 = -10.0; // user defined t0
 
 // Internal t0 is being fixed using the halfduration of the source
-specfem::wavefield::simulation_field wavefield_type =
-    specfem::wavefield::simulation_field::forward;
+specfem::simulation::field_type wavefield_type =
+    specfem::simulation::field_type::forward;
 
 // 2D source test solutions
 const SourceVector2DType single_moment_tensor_2d = { std::make_shared<
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> >(
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >(
     2000.0, 3000.0, 1.0, 1.0, 0.0,
     std::make_unique<specfem::source_time_functions::Ricker>(
         nsteps, dt, 1.0, 30.0, 1.0e10, false),
     wavefield_type) };
 
-const SourceVector2DType single_force_2d = {
-  std::make_shared<specfem::sources::force<specfem::dimension::type::dim2> >(
-      2500.0, 2500.0, 0.0,
-      std::make_unique<specfem::source_time_functions::Ricker>(
-          nsteps, dt, 10.0, 5.0, 1.0e10, false),
-      wavefield_type)
-};
+const SourceVector2DType single_force_2d = { std::make_shared<
+    specfem::sources::force<specfem::element::dimension_tag::dim2> >(
+    2500.0, 2500.0, 0.0,
+    std::make_unique<specfem::source_time_functions::Ricker>(
+        nsteps, dt, 10.0, 5.0, 1.0e10, false),
+    wavefield_type) };
 
 const SourceVector2DType single_cosserat_force_2d = { std::make_shared<
-    specfem::sources::cosserat_force<specfem::dimension::type::dim2> >(
+    specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2> >(
     2500.0, 2500.0, 0.0, 1.0, 0.0,
     std::make_unique<specfem::source_time_functions::Ricker>(nsteps, dt, 10.0,
                                                              0.0, 1e10, false),
@@ -37,12 +36,13 @@ const SourceVector2DType single_cosserat_force_2d = { std::make_shared<
 
 const SourceVector2DType multiple_sources_2d = {
   std::make_shared<
-      specfem::sources::moment_tensor<specfem::dimension::type::dim2> >(
+      specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >(
       2000.0, 3000.0, 1.0, 1.0, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(
           nsteps, dt, 1.0, 30.0, 1.0e10, false),
       wavefield_type),
-  std::make_shared<specfem::sources::force<specfem::dimension::type::dim2> >(
+  std::make_shared<
+      specfem::sources::force<specfem::element::dimension_tag::dim2> >(
       2500.0, 2500.0, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(
           nsteps, dt, 10.0, 5.0, 1.0e10, false),
@@ -50,29 +50,29 @@ const SourceVector2DType multiple_sources_2d = {
 };
 
 // 3D source test solutions
-const SourceVector3DType single_force_3d = {
-  std::make_shared<specfem::sources::force<specfem::dimension::type::dim3> >(
-      2500.0, 2500.0, 2500.0, 0.0, 0.0, 0.0,
-      std::make_unique<specfem::source_time_functions::Ricker>(
-          nsteps, dt, 10.0, 5.0, 1.0e10, false),
-      wavefield_type)
-};
+const SourceVector3DType single_force_3d = { std::make_shared<
+    specfem::sources::force<specfem::element::dimension_tag::dim3> >(
+    2500.0, 2500.0, 2500.0, 0.0, 0.0, 0.0,
+    std::make_unique<specfem::source_time_functions::Ricker>(
+        nsteps, dt, 10.0, 5.0, 1.0e10, false),
+    wavefield_type) };
 
 const SourceVector3DType single_moment_tensor_3d = { std::make_shared<
-    specfem::sources::moment_tensor<specfem::dimension::type::dim3> >(
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> >(
     2000.0, 3000.0, 2000.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
     std::make_unique<specfem::source_time_functions::Ricker>(
         nsteps, dt, 1.0, 30.0, 1.0e10, false),
     wavefield_type) };
 
 const SourceVector3DType multiple_sources_3d = {
-  std::make_shared<specfem::sources::force<specfem::dimension::type::dim3> >(
+  std::make_shared<
+      specfem::sources::force<specfem::element::dimension_tag::dim3> >(
       2500.0, 2500.0, 2500.0, 0.0, 0.0, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(
           nsteps, dt, 10.0, 5.0, 1.0e10, false),
       wavefield_type),
   std::make_shared<
-      specfem::sources::moment_tensor<specfem::dimension::type::dim3> >(
+      specfem::sources::moment_tensor<specfem::element::dimension_tag::dim3> >(
       2000.0, 3000.0, 2000.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
       std::make_unique<specfem::source_time_functions::Ricker>(
           nsteps, dt, 1.0, 30.0, 1.0e10, false),

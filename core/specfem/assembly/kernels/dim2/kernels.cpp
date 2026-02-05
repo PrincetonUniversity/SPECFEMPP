@@ -1,9 +1,9 @@
 #include "specfem/assembly/kernels.hpp"
 
-specfem::assembly::kernels<specfem::dimension::type::dim2>::kernels(
+specfem::assembly::kernels<specfem::element::dimension_tag::dim2>::kernels(
     const int nspec, const int ngllz, const int ngllx,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types) {
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim2> &element_types) {
 
   this->nspec = nspec;
   this->ngllz = ngllz;
@@ -24,11 +24,13 @@ specfem::assembly::kernels<specfem::dimension::type::dim2>::kernels(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       CAPTURE(value) {
-        _value_ = specfem::medium::kernels_container<
+        _value_ = specfem::assembly::impl::domain_kernels<
             _dimension_tag_, _medium_tag_, _property_tag_>(
-            element_types.get_elements_on_host(_medium_tag_, _property_tag_),
+            element_types.get_elements_on_host(_medium_tag_, _property_tag_,
+                                               _attenuation_tag_),
             ngllz, ngllx, h_property_index_mapping);
       })
 

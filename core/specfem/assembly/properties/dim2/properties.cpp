@@ -1,16 +1,19 @@
 #include "specfem/assembly/properties.hpp"
 #include "enumerations/interface.hpp"
-#include "medium/properties_container.hpp"
-#include "medium/properties_container.tpp"
+#include "specfem/assembly/impl/domain_properties.hpp"
+#include "specfem/assembly/impl/domain_properties.tpp"
 #include "specfem/assembly/mesh.hpp"
 
-specfem::assembly::properties<specfem::dimension::type::dim2>::properties(
-    const int nspec, const int ngllz, const int ngllx,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
-    const bool has_gll_model) {
+specfem::assembly::properties<specfem::element::dimension_tag::dim2>::
+    properties(
+        const int nspec, const int ngllz, const int ngllx,
+        const specfem::assembly::element_types<
+            specfem::element::dimension_tag::dim2> &element_types,
+        const specfem::assembly::mesh<specfem::element::dimension_tag::dim2>
+            &mesh,
+        const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
+            &materials,
+        const bool has_gll_model) {
 
   this->nspec = nspec;
   this->ngllz = ngllz;
@@ -30,11 +33,13 @@ specfem::assembly::properties<specfem::dimension::type::dim2>::properties(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       CAPTURE(value) {
-        _value_ = specfem::medium::properties_container<
+        _value_ = specfem::assembly::impl::domain_properties<
             _dimension_tag_, _medium_tag_, _property_tag_>(
-            element_types.get_elements_on_host(_medium_tag_, _property_tag_),
+            element_types.get_elements_on_host(_medium_tag_, _property_tag_,
+                                               _attenuation_tag_),
             mesh, ngllz, ngllx, materials, has_gll_model,
             h_property_index_mapping);
       })

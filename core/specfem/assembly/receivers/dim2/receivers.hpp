@@ -26,14 +26,15 @@ namespace specfem::assembly {
  * interface for receiver management and seismogram recording.
  */
 template <>
-struct receivers<specfem::dimension::type::dim2>
+struct receivers<specfem::element::dimension_tag::dim2>
     : public receivers_impl::StationIterator,
       public receivers_impl::SeismogramIterator<
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2> {
 
 public:
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag for this assembly
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim2; ///< Dimension tag for this
+                                             ///< assembly
 
 private:
   using IndexViewType =
@@ -95,8 +96,10 @@ public:
    */
   std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
              Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-  get_indices_on_device(const specfem::element::medium_tag medium,
-                        const specfem::element::property_tag property) const;
+  get_indices_on_device(
+      const specfem::element::medium_tag medium,
+      const specfem::element::property_tag property,
+      const specfem::element::attenuation_tag attenuation) const;
 
   /**
    * @brief Get the spectral element indices in which the receivers are located
@@ -111,8 +114,10 @@ public:
    */
   std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
              Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-  get_indices_on_host(const specfem::element::medium_tag medium,
-                      const specfem::element::property_tag property) const;
+  get_indices_on_host(
+      const specfem::element::medium_tag medium,
+      const specfem::element::property_tag property,
+      const specfem::element::attenuation_tag attenuation) const;
 
   /**
    * @brief Get the seismogram types
@@ -150,8 +155,8 @@ private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
-                                    ISOTROPIC_COSSERAT)),
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+                       ATTENUATION_TAG(NONE)),
                       DECLARE((IndexViewType, receiver_indices),
                               (IndexViewType::HostMirror, h_receiver_indices),
                               (IndexViewType, elements),
@@ -196,10 +201,10 @@ private:
  * receivers in the iterator
  */
 template <typename ChunkIndexType, typename ViewType>
-KOKKOS_FUNCTION void
-load_on_device(const ChunkIndexType &chunk_index,
-               const receivers<specfem::dimension::type::dim2> &receivers,
-               ViewType &lagrange_interpolant) {
+KOKKOS_FUNCTION void load_on_device(
+    const ChunkIndexType &chunk_index,
+    const receivers<specfem::element::dimension_tag::dim2> &receivers,
+    ViewType &lagrange_interpolant) {
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
@@ -244,10 +249,10 @@ load_on_device(const ChunkIndexType &chunk_index,
  * @param receivers Receivers object containing the receiver information
  */
 template <typename ChunkIndexType, typename SeismogramViewType>
-KOKKOS_FUNCTION void
-store_on_device(const ChunkIndexType &chunk_index,
-                const SeismogramViewType &seismogram_components,
-                const receivers<specfem::dimension::type::dim2> &receivers) {
+KOKKOS_FUNCTION void store_on_device(
+    const ChunkIndexType &chunk_index,
+    const SeismogramViewType &seismogram_components,
+    const receivers<specfem::element::dimension_tag::dim2> &receivers) {
 
   const int isig_step = receivers.get_seismogram_step();
   const int iseis = receivers.get_seis_type();

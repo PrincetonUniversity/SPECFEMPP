@@ -20,8 +20,8 @@ namespace specfem::assembly {
  * @tparam SimulationWavefieldType Type of simulation field (forward, adjoint,
  * backward, buffer)
  */
-template <specfem::wavefield::simulation_field SimulationWavefieldType>
-struct simulation_field<specfem::dimension::type::dim3,
+template <specfem::simulation::field_type SimulationWavefieldType>
+struct simulation_field<specfem::element::dimension_tag::dim3,
                         SimulationWavefieldType> {
 
 private:
@@ -46,7 +46,7 @@ private:
 
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   constexpr static auto simulation_wavefield =
       SimulationWavefieldType; ///< Simulation wavefield type
 
@@ -69,8 +69,8 @@ public:
    * @param element_types 3D element classification determining field allocation
    *
    * @code
-   * specfem::assembly::simulation_field<specfem::dimension::type::dim3,
-   *     specfem::wavefield::simulation_field::forward> field(mesh,
+   * specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
+   *     specfem::simulation::field_type::forward> field(mesh,
    * element_types);
    * @endcode
    */
@@ -105,7 +105,7 @@ public:
    * @tparam DestinationWavefieldType Source wavefield type to copy from
    * @param rhs Source 3D simulation field to copy data from
    */
-  template <specfem::wavefield::simulation_field DestinationWavefieldType>
+  template <specfem::simulation::field_type DestinationWavefieldType>
   void operator=(
       const simulation_field<dimension_tag, DestinationWavefieldType> &rhs) {
     this->nglob = rhs.nglob;
@@ -114,7 +114,7 @@ public:
     this->nglly = rhs.nglly;
     this->ngllx = rhs.ngllx;
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
         CAPTURE(field, (rhs_field, rhs.field), assembly_index_mapping,
                 (rhs_assembly_index_mapping, rhs.assembly_index_mapping),
                 h_assembly_index_mapping,
@@ -141,7 +141,7 @@ public:
    */
   template <specfem::element::medium_tag MediumTag>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                         CAPTURE(field) {
                           if constexpr (MediumTag == _medium_tag_) {
                             return _field_.nglob;
@@ -164,7 +164,7 @@ public:
    *
    * @code
    * const auto& elastic_field =
-   * field.get_field<specfem::element::medium_tag::elastic>(); 
+   * field.get_field<specfem::element::medium_tag::elastic>();
    * const auto& displacement = elastic_field.displacement;
    * @endcode
    */
@@ -173,7 +173,7 @@ public:
       constexpr specfem::assembly::fields_impl::field_impl<dimension_tag,
                                                            MediumTag> const &
       get_field() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                         CAPTURE(field) {
                           if constexpr (MediumTag == _medium_tag_) {
                             return _field_;
@@ -195,7 +195,7 @@ public:
   get_iglob(const int &ispec, const int &iz, const int &iy, const int &ix,
             const specfem::element::medium_tag MediumTag) const {
     if constexpr (on_device) {
-      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                           CAPTURE(assembly_index_mapping) {
                             if (MediumTag == _medium_tag_) {
                               return _assembly_index_mapping_(
@@ -204,7 +204,7 @@ public:
                           })
 
     } else {
-      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                           CAPTURE(h_assembly_index_mapping) {
                             if (MediumTag == _medium_tag_) {
                               return _h_assembly_index_mapping_(
@@ -219,12 +219,13 @@ public:
     return -1;
   }
 
-  template <bool on_device, typename IndexType,
-            typename std::enable_if_t<
-                specfem::data_access::is_index_type<IndexType>::value &&
-                    IndexType::using_simd == false &&
-                    IndexType::dimension_tag == specfem::dimension::type::dim3,
-                int> = 0>
+  template <
+      bool on_device, typename IndexType,
+      typename std::enable_if_t<
+          specfem::data_access::is_index_type<IndexType>::value &&
+              IndexType::using_simd == false &&
+              IndexType::dimension_tag == specfem::element::dimension_tag::dim3,
+          int> = 0>
   KOKKOS_INLINE_FUNCTION constexpr int
   get_iglob(const IndexType &index,
             const specfem::element::medium_tag MediumTag) const {
@@ -232,12 +233,13 @@ public:
                                 MediumTag);
   }
 
-  template <bool on_device, typename IndexType,
-            typename std::enable_if_t<
-                specfem::data_access::is_index_type<IndexType>::value &&
-                    IndexType::using_simd == true &&
-                    IndexType::dimension_tag == specfem::dimension::type::dim3,
-                int> = 0>
+  template <
+      bool on_device, typename IndexType,
+      typename std::enable_if_t<
+          specfem::data_access::is_index_type<IndexType>::value &&
+              IndexType::using_simd == true &&
+              IndexType::dimension_tag == specfem::element::dimension_tag::dim3,
+          int> = 0>
   KOKKOS_INLINE_FUNCTION constexpr int
   get_iglob(const IndexType &index, const int &lane,
             const specfem::element::medium_tag MediumTag) const {
@@ -255,7 +257,7 @@ public:
   IndexViewType::HostMirror h_index_mapping; ///< Host mirror of 3D index
                                              ///< mapping for CPU operations
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
                       DECLARE(((specfem::assembly::fields_impl::field_impl,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                field),
@@ -304,16 +306,16 @@ private:
  */
 template <typename SimulationWavefieldType1, typename SimulationWavefieldType2,
           typename std::enable_if_t<((SimulationWavefieldType1::dimension_tag ==
-                                      specfem::dimension::type::dim3) &&
+                                      specfem::element::dimension_tag::dim3) &&
                                      (SimulationWavefieldType2::dimension_tag ==
-                                      specfem::dimension::type::dim3)),
+                                      specfem::element::dimension_tag::dim3)),
                                     int> = 0>
 inline void deep_copy(SimulationWavefieldType1 &dst,
                       const SimulationWavefieldType2 &src) {
   dst.nglob = src.nglob;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
       CAPTURE((src_assembly_index_mapping, src.assembly_index_mapping),
               (dst_assembly_index_mapping, dst.assembly_index_mapping),
               (src_h_assembly_index_mapping, src.h_assembly_index_mapping),

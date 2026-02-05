@@ -39,7 +39,7 @@ namespace fields_impl {
  * mass_matrix)
  *
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::data_access::DataClassType DataClass>
 class base_field {
@@ -147,7 +147,7 @@ protected:
  * @tparam DimensionTag Spatial dimension (2D or 3D)
  * @tparam MediumTag Physical medium type (elastic, acoustic, poroelastic)
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 class field_impl
     : public base_field<DimensionTag, MediumTag,
@@ -392,7 +392,7 @@ public:
  * initialized
  * @post dst contains identical field data as src in both device and host memory
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 void deep_copy(const fields_impl::field_impl<DimensionTag, MediumTag> &dst,
                const fields_impl::field_impl<DimensionTag, MediumTag> &src) {

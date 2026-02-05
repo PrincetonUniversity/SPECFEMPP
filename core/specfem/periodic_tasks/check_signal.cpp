@@ -31,7 +31,7 @@ void catch_signals() {
   signal(SIGINT, signal_handler);
 }
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 void specfem::periodic_tasks::check_signal<DimensionTag>::run(
     specfem::assembly::assembly<DimensionTag> &assembly, const int istep) {
   // Catch signals
@@ -50,6 +50,6 @@ void specfem::periodic_tasks::check_signal<DimensionTag>::run(
 
 // Explicit template instantiations
 template class specfem::periodic_tasks::check_signal<
-    specfem::dimension::type::dim2>;
+    specfem::element::dimension_tag::dim2>;
 template class specfem::periodic_tasks::check_signal<
-    specfem::dimension::type::dim3>;
+    specfem::element::dimension_tag::dim3>;

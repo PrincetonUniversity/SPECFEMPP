@@ -28,11 +28,11 @@ namespace periodic_tasks {
  * @brief Writer to plot the wavefield for 3D simulations
  */
 template <>
-class plot_wavefield<specfem::dimension::type::dim3>
-    : public plotter<specfem::dimension::type::dim3> {
+class plot_wavefield<specfem::element::dimension_tag::dim3>
+    : public plotter<specfem::element::dimension_tag::dim3> {
 public:
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Construct a new plotter object
@@ -46,11 +46,11 @@ public:
    * @param output_folder Path to output folder where plots will be stored
    */
   plot_wavefield(
-      const specfem::assembly::assembly<specfem::dimension::type::dim3>
+      const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
           &assembly,
       const specfem::display::format &output_format,
       const specfem::wavefield::type &wavefield_type,
-      const specfem::wavefield::simulation_field &simulation_wavefield_type,
+      const specfem::simulation::field_type &simulation_wavefield_type,
       const specfem::display::component &component, const type_real &dt,
       const int &time_interval, const boost::filesystem::path &output_folder);
 
@@ -82,7 +82,7 @@ public:
 
   const specfem::display::format output_format;  ///< Output format of the plot
   const specfem::wavefield::type wavefield_type; ///< Type of the wavefield
-  const specfem::wavefield::simulation_field
+  const specfem::simulation::field_type
       simulation_wavefield_type;               ///< Type of wavefield
                                                ///< to plot
   const specfem::display::component component; ///< Component of the wavefield

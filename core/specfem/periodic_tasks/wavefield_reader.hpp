@@ -1,8 +1,7 @@
 #pragma once
 #include "enumerations/interface.hpp"
-#include "io/operators.hpp"
-#include "io/wavefield/reader.hpp"
 #include "periodic_task.hpp"
+#include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -13,7 +12,7 @@ namespace periodic_tasks {
  *
  * @tparam IOLibrary Template for the I/O library to use for reading
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           template <typename OpType> class IOLibrary>
 class wavefield_reader : public periodic_task<DimensionTag> {
 private:

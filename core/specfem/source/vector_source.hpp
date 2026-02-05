@@ -33,11 +33,10 @@ namespace sources {
  *     15.0, 0.01, 1.0, 0.0, 1.0, false
  * );
  *
- * auto vector_src = specfem::sources::force<specfem::dimension::type::dim2>(
- *     3.5, 7.2,   // coordinates (x, z)
- *     30.0,       // angle in degrees
- *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ * auto vector_src =
+ * specfem::sources::force<specfem::element::dimension_tag::dim2>( 3.5, 7.2, //
+ * coordinates (x, z) 30.0,       // angle in degrees std::move(stf),
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium where the source is located
@@ -57,7 +56,7 @@ namespace sources {
  *
  * @note This class inherits from @ref specfem::sources::source
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 class vector_source : public source<DimensionTag> {
 
 public:
@@ -75,9 +74,9 @@ public:
    * @param source_time_function pointer to source time function
    * @param wavefield_type type of wavefield
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim2>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim2>::type * = nullptr>
   vector_source(
       type_real x, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)
@@ -91,9 +90,9 @@ public:
    * @param source_time_function pointer to source time function
    * @param wavefield_type type of wavefield
    */
-  template <specfem::dimension::type U = DimensionTag,
-            typename std::enable_if<U == specfem::dimension::type::dim3>::type
-                * = nullptr>
+  template <specfem::element::dimension_tag U = DimensionTag,
+            typename std::enable_if<
+                U == specfem::element::dimension_tag::dim3>::type * = nullptr>
   vector_source(
       type_real x, type_real y, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function)

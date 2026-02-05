@@ -30,7 +30,7 @@
 
 #ifndef NO_VTK
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 std::tuple<vtkSmartPointer<vtkDataSetMapper>,
            vtkSmartPointer<vtkPolyDataMapper> >
 map_small_jacobian(const specfem::assembly::mesh<DimensionTag> &mesh,
@@ -42,7 +42,7 @@ template <>
 std::tuple<vtkSmartPointer<vtkDataSetMapper>,
            vtkSmartPointer<vtkPolyDataMapper> >
 map_small_jacobian(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>
         &small_jacobian) {
 
@@ -110,7 +110,7 @@ map_small_jacobian(
   return std::make_tuple(mapper, outlineMapper);
 }
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 void plot_small_jacobian(
     const specfem::assembly::mesh<DimensionTag> &mesh,
     const Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>
@@ -119,7 +119,7 @@ void plot_small_jacobian(
 
 template <>
 void plot_small_jacobian(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace>
         &small_jacobian,
     boost::filesystem::path output_folder) {
@@ -170,7 +170,7 @@ void plot_small_jacobian(
 #endif // NO_VTK
 
 void specfem::assembly::assembly<
-    specfem::dimension::type::dim2>::check_jacobian_matrix() const {
+    specfem::element::dimension_tag::dim2>::check_jacobian_matrix() const {
   const auto [found, small_jacobian] =
       this->jacobian_matrix.check_small_jacobian();
 

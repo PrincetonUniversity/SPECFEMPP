@@ -2,7 +2,7 @@
 
 #include "SPECFEM_Environment.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/source.hpp"
 #include "specfem/utilities.hpp"
@@ -124,11 +124,11 @@ protected:
   class Iterator {
   public:
     Iterator(test_configuration::Test *p_Test,
-             specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh)
+             specfem::mesh::mesh<specfem::element::dimension_tag::dim2> *p_mesh)
         : p_Test(p_Test), p_mesh(p_mesh) {}
 
     std::tuple<test_configuration::Test,
-               specfem::mesh::mesh<specfem::dimension::type::dim2> >
+               specfem::mesh::mesh<specfem::element::dimension_tag::dim2> >
     operator*() {
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[RUNNING]\033[0m Test " << p_Test->number << ": "
@@ -150,7 +150,7 @@ protected:
 
   private:
     test_configuration::Test *p_Test;
-    specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh;
+    specfem::mesh::mesh<specfem::element::dimension_tag::dim2> *p_mesh;
   };
 
   MESH();
@@ -162,5 +162,6 @@ protected:
   }
 
   std::vector<test_configuration::Test> Tests;
-  std::vector<specfem::mesh::mesh<specfem::dimension::type::dim2> > meshes;
+  std::vector<specfem::mesh::mesh<specfem::element::dimension_tag::dim2> >
+      meshes;
 };

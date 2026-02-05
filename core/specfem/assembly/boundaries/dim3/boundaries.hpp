@@ -15,7 +15,7 @@ namespace specfem::assembly {
  * element mesh
  *
  */
-template <> struct boundaries<specfem::dimension::type::dim3> {
+template <> struct boundaries<specfem::element::dimension_tag::dim3> {
 
 private:
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
@@ -27,7 +27,7 @@ private:
 
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   BoundaryViewType boundary_tags; ///< Boundary tags for every element in the
                                   ///< mesh
   BoundaryViewType::HostMirror h_boundary_tags; ///< Host mirror of boundary
@@ -91,7 +91,7 @@ template <typename IndexType, typename PointBoundaryType,
                                   int>::type = 0>
 KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
     const IndexType &index,
-    const specfem::assembly::boundaries<specfem::dimension::type::dim3>
+    const specfem::assembly::boundaries<specfem::element::dimension_tag::dim3>
         &boundaries,
     PointBoundaryType &boundary) {
 
@@ -125,11 +125,11 @@ template <typename IndexType, typename PointBoundaryType,
           typename std::enable_if<PointBoundaryType::simd::using_simd ==
                                       IndexType::using_simd,
                                   int>::type = 0>
-inline void
-load_on_host(const IndexType &index,
-             const specfem::assembly::boundaries<specfem::dimension::type::dim3>
-                 &boundaries,
-             PointBoundaryType &boundary) {
+inline void load_on_host(
+    const IndexType &index,
+    const specfem::assembly::boundaries<specfem::element::dimension_tag::dim3>
+        &boundaries,
+    PointBoundaryType &boundary) {
 
   constexpr auto tag = PointBoundaryType::boundary_tag;
 

@@ -17,9 +17,9 @@ namespace specfem::assembly::mesh_impl {
  * @see specfem::assembly::mesh_impl::control_nodes,
  * specfem::assembly::mesh_impl::shape_functions
  */
-template <> struct points<specfem::dimension::type::dim3> {
+template <> struct points<specfem::element::dimension_tag::dim3> {
 public:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Index mapping view type.

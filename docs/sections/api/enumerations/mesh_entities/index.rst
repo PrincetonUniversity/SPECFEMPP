@@ -9,7 +9,7 @@
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::mesh_entity::edge< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::mesh_entity::edge< specfem::element::dimension_tag::dim2 >
     :members:
 
 ``specfem::mesh_entity::element``
@@ -21,10 +21,10 @@ Dimension-Specific Implementations
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::mesh_entity::element< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::mesh_entity::element< specfem::element::dimension_tag::dim2 >
     :members:
 
-.. doxygenstruct:: specfem::mesh_entity::element< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::mesh_entity::element< specfem::element::dimension_tag::dim3 >
     :members:
 
 ``specfem::mesh_entity::element_grid``
@@ -36,10 +36,10 @@ Dimension-Specific Implementations
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::mesh_entity::element_grid< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::mesh_entity::element_grid< specfem::element::dimension_tag::dim2 >
     :members:
 
-.. doxygenstruct:: specfem::mesh_entity::element_grid< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::mesh_entity::element_grid< specfem::element::dimension_tag::dim3 >
     :members:
 
 ``specfem::mesh_entity::dim2::type``
@@ -53,12 +53,12 @@ Dimension-Specific Implementations
 .. doxygenenum:: specfem::mesh_entity::dim3::type
 
 ``specfem::mesh_entity::dim2::to_string``
-==========================================
+=========================================
 
 .. doxygenfunction:: specfem::mesh_entity::dim2::to_string(const specfem::mesh_entity::dim2::type& type)
 
 ``specfem::mesh_entity::dim3::to_string``
-==========================================
+=========================================
 
 .. doxygenfunction:: specfem::mesh_entity::dim3::to_string(const specfem::mesh_entity::dim3::type& type)
 

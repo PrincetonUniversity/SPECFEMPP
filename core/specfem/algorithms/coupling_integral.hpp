@@ -1,13 +1,13 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "specfem/assembly/nonconforming_interfaces.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
-template <specfem::dimension::type DimensionTag> struct assembly;
+template <specfem::element::dimension_tag DimensionTag> struct assembly;
 }
 
 /**
@@ -48,7 +48,7 @@ namespace specfem::algorithms {
  * @param callback - callback function to capture integral values
  * @ingroup AlgorithmsIntegration
  */
-template <specfem::dimension::type dimension_tag, typename IndexType,
+template <specfem::element::dimension_tag dimension_tag, typename IndexType,
           typename IntersectionFieldViewType, typename IntersectionFactor,
           typename CallableType>
 KOKKOS_FUNCTION void

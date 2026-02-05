@@ -18,10 +18,9 @@ target_link_libraries(specfem_program
         source_class
         specfem::runtime_configuration
         specfem::receivers
-        writer
+        specfem::io
         periodic_tasks
-        reader
-        specfem::kokkos_kernels
+        specfem::compute
         specfem::solver
         # Add MPI dependency when available
         $<TARGET_NAME_IF_EXISTS:MPI::MPI_CXX>

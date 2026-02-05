@@ -1,5 +1,5 @@
 #include "enumerations/interface.hpp"
-#include "medium/compute_stress.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -7,7 +7,7 @@
 namespace {
 
 TEST(Stress, AcousticIsotropic2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::acoustic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
@@ -26,7 +26,7 @@ TEST(Stress, AcousticIsotropic2D) {
   field_derivatives.du(0, 1) = 4.0;
 
   const PointStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   PointStressType expected_stress;
   expected_stress.T(0, 0) = rho_inverse * field_derivatives.du(0, 0);
@@ -41,7 +41,7 @@ TEST(Stress, AcousticIsotropic2D) {
 }
 
 TEST(Stress, AcousticIsotropic2D_ZeroDerivatives) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::acoustic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
@@ -60,7 +60,7 @@ TEST(Stress, AcousticIsotropic2D_ZeroDerivatives) {
   field_derivatives.du(0, 1) = 0.0;
 
   const PointStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   PointStressType expected_stress;
   expected_stress.T(0, 0) = 0.0;

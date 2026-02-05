@@ -1,9 +1,8 @@
 #include "../../../SPECFEM_Environment.hpp"
 #include "../../../utilities/include/interface.hpp"
 #include "constants.hpp"
-#include "io/interface.hpp"
-#include "io/seismogram/reader.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/quadrature.hpp"
@@ -160,7 +159,7 @@ TEST_P(Newmark, 2D) {
 
   const int max_sig_step = setup.get_max_seismogram_step();
 
-  specfem::assembly::assembly<specfem::dimension::type::dim2> assembly(
+  specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadratures, sources, receivers, seismogram_types, t0,
       setup.get_dt(), nsteps, max_sig_step, nstep_between_samples,
       setup.get_simulation_type(), false, nullptr);

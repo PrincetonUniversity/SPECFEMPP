@@ -9,9 +9,9 @@
  */
 
 using ReceiverVector2DType = std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::dimension::type::dim2> > >;
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >;
 using ReceiverVector3DType = std::vector<std::shared_ptr<
-    specfem::receivers::receiver<specfem::dimension::type::dim3> > >;
+    specfem::receivers::receiver<specfem::element::dimension_tag::dim3> > >;
 
 // 2D receiver test solutions
 extern const ReceiverVector2DType empty_receivers_2d;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/dimension.hpp"
+#include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <list>
@@ -86,7 +86,7 @@ nodes_on_orientation(const specfem::mesh_entity::dim2::type &entity);
 /**
  * @brief 2D edge entity for quadrilateral elements.
  */
-template <> struct edge<specfem::dimension::type::dim2> {
+template <> struct edge<specfem::element::dimension_tag::dim2> {
   specfem::mesh_entity::dim2::type edge_type; ///< Edge type
   int ispec;                                  ///< Element index
   int iedge;                                  ///< Local edge index
@@ -106,13 +106,13 @@ template <> struct edge<specfem::dimension::type::dim2> {
   edge() = default;
 };
 
-template <specfem::dimension::type Dimension> struct element;
-template <specfem::dimension::type Dimension> struct element_grid;
+template <specfem::element::dimension_tag Dimension> struct element;
+template <specfem::element::dimension_tag Dimension> struct element_grid;
 
 /**
  * @brief 2D element grid with GLL point configuration.
  */
-template <> struct element_grid<specfem::dimension::type::dim2> {
+template <> struct element_grid<specfem::element::dimension_tag::dim2> {
 
 public:
   int ngllz;  ///< Number of GLL points in z-direction
@@ -170,10 +170,10 @@ public:
  * @brief 2D element with coordinate mapping capabilities.
  */
 template <>
-struct element<specfem::dimension::type::dim2>
-    : public element_grid<specfem::dimension::type::dim2> {
+struct element<specfem::element::dimension_tag::dim2>
+    : public element_grid<specfem::element::dimension_tag::dim2> {
 private:
-  using base = element_grid<specfem::dimension::type::dim2>;
+  using base = element_grid<specfem::element::dimension_tag::dim2>;
 
 public:
   /**
@@ -219,12 +219,72 @@ public:
   std::tuple<int, int>
   map_coordinates(const specfem::mesh_entity::dim2::type &corner) const;
 
-private:
-  std::unordered_map<specfem::mesh_entity::dim2::type,
-                     std::function<std::tuple<int, int>(int)> >
-      edge_coordinates; ///< Maps edge types to coordinate functions
-  std::unordered_map<specfem::mesh_entity::dim2::type, std::tuple<int, int> >
-      corner_coordinates; ///< Maps corner types to coordinates
+  /**
+   * @brief Get edge coordinates by 1D index.
+   * @param edge Edge entity type
+   * @param point Point index along the edge
+   * @param[out] iz Z-coordinate in element
+   * @param[out] ix X-coordinate in element
+   */
+  KOKKOS_INLINE_FUNCTION
+  void get_edge_coordinates(const specfem::mesh_entity::dim2::type edge,
+                            const int point, int &iz, int &ix) const {
+    switch (edge) {
+    case specfem::mesh_entity::dim2::type::bottom:
+      iz = 0;
+      ix = point;
+      break;
+    case specfem::mesh_entity::dim2::type::top:
+      iz = ngllz - 1;
+      ix = point;
+      break;
+    case specfem::mesh_entity::dim2::type::left:
+      iz = point;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim2::type::right:
+      iz = point;
+      ix = ngllx - 1;
+      break;
+    default:
+      iz = -1;
+      ix = -1;
+      break;
+    }
+  }
+
+  /**
+   * @brief Get corner coordinates.
+   * @param corner Corner entity type
+   * @param[out] iz Z-coordinate in element
+   * @param[out] ix X-coordinate in element
+   */
+  KOKKOS_INLINE_FUNCTION
+  void get_corner_coordinates(const specfem::mesh_entity::dim2::type corner,
+                              int &iz, int &ix) const {
+    switch (corner) {
+    case specfem::mesh_entity::dim2::type::bottom_left:
+      iz = 0;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim2::type::bottom_right:
+      iz = 0;
+      ix = ngllx - 1;
+      break;
+    case specfem::mesh_entity::dim2::type::top_left:
+      iz = ngllz - 1;
+      ix = 0;
+      break;
+    case specfem::mesh_entity::dim2::type::top_right:
+      iz = ngllz - 1;
+      ix = ngllx - 1;
+      break;
+    default:
+      iz = -1;
+      ix = -1;
+      break;
+    }
+  }
 };
 
 } // namespace specfem::mesh_entity

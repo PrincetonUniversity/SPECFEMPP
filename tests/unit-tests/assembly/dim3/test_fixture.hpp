@@ -2,16 +2,16 @@
 
 #include "SPECFEM_Environment.hpp"
 #include "enumerations/interface.hpp"
-#include "io/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include <gtest/gtest.h>
 #include <string>
 
 namespace specfem::test_configuration {
 struct Assembly3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   specfem::assembly::assembly<dimension> assembly;
 
   Assembly3D() = default;
@@ -43,8 +43,8 @@ struct Assembly3D {
 // Setup a fixture for parameterized tests
 class Assembly3DTest : public ::testing::TestWithParam<std::string> {
 protected:
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   specfem::test_configuration::Assembly3D assembly;
 
   Assembly3DTest() = default;

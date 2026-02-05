@@ -33,15 +33,11 @@ namespace sources {
  * );
  *
  * // Create a 3D force source at (1.0, 2.0, 3.0) with force components
- * auto force_source = specfem::sources::force<specfem::dimension::type::dim3>(
- *     1.0,  // x-coordinate
- *     2.0,  // y-coordinate
- *     3.0,  // z-coordinate
- *     0.7,  // fx - force in x direction
- *     0.0,  // fy - force in y direction
- *     0.7,  // fz - force in z direction
- *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ * auto force_source =
+ * specfem::sources::force<specfem::element::dimension_tag::dim3>( 1.0,  //
+ * x-coordinate 2.0,  // y-coordinate 3.0,  // z-coordinate 0.7,  // fx - force
+ * in x direction 0.0,  // fy - force in y direction 0.7,  // fz - force in z
+ * direction std::move(stf), specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium type
@@ -53,8 +49,8 @@ namespace sources {
  *
  */
 template <>
-class force<specfem::dimension::type::dim3>
-    : public vector_source<specfem::dimension::type::dim3> {
+class force<specfem::element::dimension_tag::dim3>
+    : public vector_source<specfem::element::dimension_tag::dim3> {
 
 public:
   /**
@@ -70,7 +66,7 @@ public:
    * frequecy of Dirac source.
    */
   force(YAML::Node &Node, const int nsteps, const type_real dt,
-        const specfem::wavefield::simulation_field wavefield_type)
+        const specfem::simulation::field_type wavefield_type)
       : vector_source(Node, nsteps, dt), fx(Node["fx"].as<type_real>()),
         fy(Node["fy"].as<type_real>()), fz(Node["fz"].as<type_real>()),
         wavefield_type(wavefield_type) {};
@@ -88,7 +84,7 @@ public:
       type_real x, type_real y, type_real z, type_real fx, type_real fy,
       type_real fz,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
-      const specfem::wavefield::simulation_field wavefield_type)
+      const specfem::simulation::field_type wavefield_type)
       : wavefield_type(wavefield_type),
         vector_source(x, y, z, std::move(source_time_function)), fx(fx), fy(fy),
         fz(fz) {};
@@ -99,7 +95,7 @@ public:
    */
   std::string print() const override;
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
+  specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
 
@@ -107,10 +103,12 @@ public:
    * @brief Get the forcing function
    *
    */
-  bool operator==(const specfem::sources::source<specfem::dimension::type::dim3>
-                      &other) const override;
-  bool operator!=(const specfem::sources::source<specfem::dimension::type::dim3>
-                      &other) const override;
+  bool operator==(
+      const specfem::sources::source<specfem::element::dimension_tag::dim3>
+          &other) const override;
+  bool operator!=(
+      const specfem::sources::source<specfem::element::dimension_tag::dim3>
+          &other) const override;
 
   /**
    * @brief Get the force vector
@@ -152,12 +150,12 @@ public:
   static constexpr const char *name = "3-D force";
 
 private:
-  type_real fx;                                        ///< Force in x-direction
-  type_real fy;                                        ///< Force in y-direction
-  type_real fz;                                        ///< Force in z-direction
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
-                                                       ///< which the source
-                                                       ///< acts
+  type_real fx;                                   ///< Force in x-direction
+  type_real fy;                                   ///< Force in y-direction
+  type_real fz;                                   ///< Force in z-direction
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield on
+                                                  ///< which the source
+                                                  ///< acts
   const static std::vector<specfem::element::medium_tag> supported_media;
 };
 } // namespace sources

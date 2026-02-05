@@ -1,20 +1,20 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 void check_store(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
 
   specfem::assembly::sources<DimensionTag> &sources = assembly.sources;
   const int ngllz = assembly.mesh.element_grid.ngllz;
@@ -82,13 +82,14 @@ void check_store(
   Kokkos::fence();
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 void check_load(
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
 
   specfem::assembly::sources<DimensionTag> &sources = assembly.sources;
   const int ngllz = assembly.mesh.element_grid.ngllz;
@@ -191,12 +192,14 @@ void check_load(
   }
 }
 
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag>
 void check_assembly_source_construction(
     std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+        specfem::sources::source<specfem::element::dimension_tag::dim2> > >
+        &sources,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
 
   const int ngllz = assembly.mesh.element_grid.ngllz;
   const int ngllx = assembly.mesh.element_grid.ngllx;
@@ -206,7 +209,7 @@ void check_assembly_source_construction(
 
   using PointSourceType =
       specfem::point::source<DimensionTag, MediumTag,
-                             specfem::wavefield::simulation_field::forward>;
+                             specfem::simulation::field_type::forward>;
 
   const int nsources = sources.size();
   for (int isource = 0; isource < nsources; isource++) {
@@ -285,8 +288,10 @@ void check_assembly_source_construction(
 
 void test_assembly_source_construction(
     std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly) {
+        specfem::sources::source<specfem::element::dimension_tag::dim2> > >
+        &sources,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly) {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
@@ -296,8 +301,9 @@ void test_assembly_source_construction(
       })
 }
 
-void test_sources(specfem::assembly::assembly<specfem::dimension::type::dim2>
-                      &assembly){ FOR_EACH_IN_PRODUCT(
+void test_sources(
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly){ FOR_EACH_IN_PRODUCT(
     (DIMENSION_TAG(DIM2),
      MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T),
      PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
@@ -305,17 +311,17 @@ void test_sources(specfem::assembly::assembly<specfem::dimension::type::dim2>
                   COMPOSITE_STACEY_DIRICHLET)),
     {
       check_store<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
-                  specfem::wavefield::simulation_field::forward>(assembly);
+                  specfem::simulation::field_type::forward>(assembly);
       check_load<_dimension_tag_, _medium_tag_, _property_tag_, _boundary_tag_,
-                 specfem::wavefield::simulation_field::forward>(assembly);
+                 specfem::simulation::field_type::forward>(assembly);
     }) }
 
 TEST_F(Assembly2D, sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     auto sources = std::get<2>(parameters);
-    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
-        std::get<5>(parameters);
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        assembly = std::get<5>(parameters);
 
     try {
       test_assembly_source_construction(sources, assembly);

@@ -4,57 +4,57 @@
 
 // Explicitly instantiate the template class
 template class specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::forward>;
+    specfem::element::dimension_tag::dim2,
+    specfem::simulation::field_type::forward>;
 
 template class specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::adjoint>;
+    specfem::element::dimension_tag::dim2,
+    specfem::simulation::field_type::adjoint>;
 
 template class specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::backward>;
+    specfem::element::dimension_tag::dim2,
+    specfem::simulation::field_type::backward>;
 
 template class specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::buffer>;
+    specfem::element::dimension_tag::dim2,
+    specfem::simulation::field_type::buffer>;
 
-template void specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::forward>::
+template void
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
+                                    specfem::simulation::field_type::forward>::
     sync_fields<specfem::sync::kind::HostToDevice>();
 
-template void specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::forward>::
+template void
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
+                                    specfem::simulation::field_type::forward>::
     sync_fields<specfem::sync::kind::DeviceToHost>();
 
-template void specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::adjoint>::
+template void
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
+                                    specfem::simulation::field_type::adjoint>::
     sync_fields<specfem::sync::kind::HostToDevice>();
 
-template void specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::adjoint>::
+template void
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
+                                    specfem::simulation::field_type::adjoint>::
     sync_fields<specfem::sync::kind::DeviceToHost>();
 
-template void specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::backward>::
+template void
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
+                                    specfem::simulation::field_type::backward>::
     sync_fields<specfem::sync::kind::HostToDevice>();
 
-template void specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::backward>::
+template void
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
+                                    specfem::simulation::field_type::backward>::
     sync_fields<specfem::sync::kind::DeviceToHost>();
 
-template void specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::buffer>::
+template void
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
+                                    specfem::simulation::field_type::buffer>::
     sync_fields<specfem::sync::kind::HostToDevice>();
 
-template void specfem::assembly::simulation_field<
-    specfem::dimension::type::dim2,
-    specfem::wavefield::simulation_field::buffer>::
+template void
+specfem::assembly::simulation_field<specfem::element::dimension_tag::dim2,
+                                    specfem::simulation::field_type::buffer>::
     sync_fields<specfem::sync::kind::DeviceToHost>();

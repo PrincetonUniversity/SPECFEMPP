@@ -9,9 +9,9 @@
  */
 
 using SourceVector2DType = std::vector<std::shared_ptr<
-    specfem::sources::source<specfem::dimension::type::dim2> > >;
+    specfem::sources::source<specfem::element::dimension_tag::dim2> > >;
 using SourceVector3DType = std::vector<std::shared_ptr<
-    specfem::sources::source<specfem::dimension::type::dim3> > >;
+    specfem::sources::source<specfem::element::dimension_tag::dim3> > >;
 
 // 2D source test solutions
 extern const SourceVector2DType single_moment_tensor_2d;

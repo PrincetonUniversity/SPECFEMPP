@@ -1,11 +1,11 @@
 #include "test_fixture.hpp"
 #include "SPECFEM_Environment.hpp"
-#include "io/interface.hpp"
+#include "specfem/io.hpp"
 #include "test_fixture.tpp"
 // ------------------------------------------------------------------------
 // Reading test config
 
-template <specfem::dimension::type DimensionType>
+template <specfem::element::dimension_tag DimensionType>
 void parse_test_config(
     const YAML::Node &yaml,
     std::vector<test_configuration::Test<DimensionType> > &tests,
@@ -20,10 +20,10 @@ void parse_test_config(
 }
 
 // Template specialization for dim2
-template <> Assembly<specfem::dimension::type::dim2>::Assembly() {
+template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
 
   std::string config_filename = "assembly/test_config.yaml";
-  parse_test_config<specfem::dimension::type::dim2>(
+  parse_test_config<specfem::element::dimension_tag::dim2>(
       YAML::LoadFile(config_filename), Tests, "2D");
 
   const auto quadrature = []() {
@@ -59,17 +59,17 @@ template <> Assembly<specfem::dimension::type::dim2>::Assembly() {
     };
 
     this->assemblies.push_back(
-        specfem::assembly::assembly<specfem::dimension::type::dim2>(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim2>(
             mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1,
             1, 1, specfem::simulation::type::forward, false, nullptr));
   }
 }
 
 // Template specialization for dim3
-template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
+template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
 
   std::string config_filename = "assembly/test_config.yaml";
-  parse_test_config<specfem::dimension::type::dim3>(
+  parse_test_config<specfem::element::dimension_tag::dim3>(
       YAML::LoadFile(config_filename), Tests, "3D");
 
   const auto quadrature = []() {
@@ -111,7 +111,7 @@ template <> Assembly<specfem::dimension::type::dim3>::Assembly() {
     };
 
     this->assemblies.push_back(
-        specfem::assembly::assembly<specfem::dimension::type::dim3>(
+        specfem::assembly::assembly<specfem::element::dimension_tag::dim3>(
             mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1,
             1, 1, specfem::simulation::type::forward, false, nullptr));
 

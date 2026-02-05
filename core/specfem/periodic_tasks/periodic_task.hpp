@@ -3,7 +3,7 @@
 #include "enumerations/interface.hpp"
 
 namespace specfem::assembly {
-template <specfem::dimension::type DimensionTag> struct assembly;
+template <specfem::element::dimension_tag DimensionTag> struct assembly;
 } // namespace specfem::assembly
 
 namespace specfem {
@@ -12,7 +12,7 @@ namespace periodic_tasks {
  * @brief Base class for tasks executed periodically during simulation
  *
  */
-template <specfem::dimension::type DimensionTag> class periodic_task {
+template <specfem::element::dimension_tag DimensionTag> class periodic_task {
 public:
   /**
    * @brief Construct a new periodic task object

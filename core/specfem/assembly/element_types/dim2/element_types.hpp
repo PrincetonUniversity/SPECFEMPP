@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/medium.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
@@ -31,8 +31,8 @@ namespace specfem::assembly {
  *
  * @code
  * // Construct 2D element types from mesh data
- * specfem::assembly::element_types<specfem::dimension::type::dim2> etypes(
- *     nspec, ngllz, ngllx, mesh, tags);
+ * specfem::assembly::element_types<specfem::element::dimension_tag::dim2>
+ * etypes( nspec, ngllz, ngllx, mesh, tags);
  *
  * // Query elastic P-SV elements for solver
  * auto psv_elements = etypes.get_elements_on_device(
@@ -44,7 +44,7 @@ namespace specfem::assembly {
  *     specfem::element::property_tag::isotropic);
  * @endcode
  */
-template <> struct element_types<specfem::dimension::type::dim2> {
+template <> struct element_types<specfem::element::dimension_tag::dim2> {
 protected:
   /**
    * @brief Kokkos view type for storing medium tags in host memory.
@@ -77,6 +77,17 @@ protected:
                                         Kokkos::DefaultHostExecutionSpace>;
 
   /**
+   * @brief Kokkos view type for storing attenuation tags in host memory.
+   *
+   * Stores the attenuation type (none, constant_isotropic, etc.) for each
+   * spectral element. Host storage enables efficient attenuation property setup
+   * and validation.
+   */
+  using AttenuationTagViewType =
+      Kokkos::View<specfem::element::attenuation_tag *,
+                   Kokkos::DefaultHostExecutionSpace>;
+
+  /**
    * @brief Kokkos view type for storing element indices in device memory.
    *
    * Stores integer indices of spectral elements for device-side computations.
@@ -91,11 +102,12 @@ public:
   int ngllx; ///< number of quadrature points in x dimension
 
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
 
-  MediumTagViewType medium_tags;     ///< View to store medium tags
-  PropertyTagViewType property_tags; ///< View to store property tags
-  BoundaryViewType boundary_tags;    ///< View to store boundary tags
+  MediumTagViewType medium_tags;           ///< View to store medium tags
+  PropertyTagViewType property_tags;       ///< View to store property tags
+  BoundaryViewType boundary_tags;          ///< View to store boundary tags
+  AttenuationTagViewType attenuation_tags; ///< View to store attenuation tags
 
   /**
    * @brief Default constructor.
@@ -120,8 +132,8 @@ public:
    * boundary tags
    *
    * @code
-   * specfem::assembly::element_types<specfem::dimension::type::dim2> etypes(
-   *     1000, 5, 5, assembly_mesh, mesh_tags);
+   * specfem::assembly::element_types<specfem::element::dimension_tag::dim2>
+   * etypes( 1000, 5, 5, assembly_mesh, mesh_tags);
    * @endcode
    */
   element_types(const int nspec, const int ngllz, const int ngllx,
@@ -164,9 +176,10 @@ public:
    * @param property Property type (isotropic, anisotropic, isotropic_cosserat)
    * @return Kokkos view containing element indices for host access
    */
-  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-  get_elements_on_host(const specfem::element::medium_tag tag,
-                       const specfem::element::property_tag property) const;
+  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> get_elements_on_host(
+      const specfem::element::medium_tag tag,
+      const specfem::element::property_tag property,
+      const specfem::element::attenuation_tag attenuation) const;
 
   /**
    * @brief Get count of elements with specified medium and property types.
@@ -177,8 +190,9 @@ public:
    */
   int get_number_of_elements(
       const specfem::element::medium_tag tag,
-      const specfem::element::property_tag property) const {
-    return get_elements_on_host(tag, property).extent(0);
+      const specfem::element::property_tag property,
+      const specfem::element::attenuation_tag attenuation) const {
+    return get_elements_on_host(tag, property, attenuation).extent(0);
   }
 
   /**
@@ -189,9 +203,10 @@ public:
    * @param property Property type (isotropic, anisotropic, isotropic_cosserat)
    * @return Kokkos view containing element indices for device access
    */
-  Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-  get_elements_on_device(const specfem::element::medium_tag tag,
-                         const specfem::element::property_tag property) const;
+  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> get_elements_on_device(
+      const specfem::element::medium_tag tag,
+      const specfem::element::property_tag property,
+      const specfem::element::attenuation_tag attenuation) const;
 
   /**
    * @brief Get elements with specified medium, property, and boundary types in
@@ -270,6 +285,10 @@ public:
     return boundary_tags(ispec);
   }
 
+  specfem::element::attenuation_tag get_attenuation_tag(const int ispec) const {
+    return attenuation_tags(ispec);
+  }
+
 private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
@@ -280,10 +299,15 @@ private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                   POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC,
-                                    ISOTROPIC_COSSERAT)),
-                      DECLARE((IndexViewType, elements),
-                              (IndexViewType::HostMirror, h_elements)))
+                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+                       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+                      DECLARE((IndexViewType, material_elements),
+                              (IndexViewType::HostMirror,
+                               h_material_elements))) /// This is a temporary
+                                                      /// fix since none
+                                                      /// attenuation tag
+                                                      /// conflicts with none
+                                                      /// boundary tag
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
                        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
