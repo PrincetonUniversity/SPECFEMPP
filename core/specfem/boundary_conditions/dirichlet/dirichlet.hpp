@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/boundary.hpp"
+#include "specfem/element.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_SIMD.hpp>
