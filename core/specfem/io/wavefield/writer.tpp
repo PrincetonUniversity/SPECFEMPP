@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io/wavefield/writer.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/utilities.hpp"

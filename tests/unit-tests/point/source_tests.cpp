@@ -1,6 +1,5 @@
-#include "enumerations/interface.hpp"
-#include "enumerations/wavefield.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point/properties.hpp"
 #include "specfem/point/source.hpp"
 #include "specfem_setup.hpp"

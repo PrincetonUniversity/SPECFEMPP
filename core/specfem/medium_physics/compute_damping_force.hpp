@@ -104,7 +104,7 @@ KOKKOS_INLINE_FUNCTION void impl_compute_damping_force(
                 "\n\nDamping force is not implemented for this dimension, "
                 "medium, and property.\n"
                 "    --> Either deactivate damping force in "
-                " enumerations/medium.hpp or \n"
+                " specfem/enums.hpp or \n"
                 "        implement the damping force in "
                 "medium/<dim>/<medium>/<property>/damping.hpp\n");
   //  If the implementation is not available, we do nothing

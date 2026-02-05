@@ -1,7 +1,5 @@
 #include "plot_wavefield.hpp"
-#include "enumerations/display.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "enumerations/wavefield.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/periodic_tasks.hpp"
 
 #include "specfem/utilities.hpp"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/element.hpp"
 #include "specfem/element_coupling.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"

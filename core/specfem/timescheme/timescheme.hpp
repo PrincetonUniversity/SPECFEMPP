@@ -1,5 +1,5 @@
 #pragma once
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/timescheme/impl/time_iterators.hpp"
 
 namespace specfem::time_scheme {

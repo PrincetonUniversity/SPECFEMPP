@@ -1,6 +1,6 @@
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/assembly/impl/helper.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <stdexcept>

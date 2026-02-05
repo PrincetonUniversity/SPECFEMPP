@@ -1,4 +1,4 @@
-#include "enumerations/display.hpp"
+#include "specfem/enums.hpp"
 
 std::string specfem::display::to_string(const specfem::display::format &fmt) {
   switch (fmt) {

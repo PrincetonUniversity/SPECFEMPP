@@ -1,4 +1,4 @@
-#include "enumerations/wavefield.hpp"
+#include "specfem/enums.hpp"
 
 const std::string specfem::wavefield::to_string(
     const specfem::wavefield::type &wavefield_component) {

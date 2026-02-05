@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem_setup.hpp"
 #include "test_fixture.hpp"

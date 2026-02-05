@@ -7,11 +7,11 @@
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
-#include "enumerations/interface.hpp"
 #include "specfem/algorithms/transfer.hpp"
 #include "specfem/chunk_edge.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/utilities.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 

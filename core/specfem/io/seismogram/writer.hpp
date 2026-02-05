@@ -1,9 +1,9 @@
 #pragma once
 
 #include "constants.hpp"
-#include "enumerations/interface.hpp"
 #include "impl/channel_generator.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io/writer.hpp"
 #include "specfem_setup.hpp"
 #include <vector>

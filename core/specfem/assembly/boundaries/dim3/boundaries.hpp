@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"

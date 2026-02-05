@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/element_types.hpp"

@@ -1,5 +1,5 @@
 #include "../SPECFEM_Environment.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include <Kokkos_Core.hpp>

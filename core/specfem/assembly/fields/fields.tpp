@@ -2,7 +2,7 @@
 
 #include "dim2/simulation_field.tpp"
 #include "dim3/simulation_field.tpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "fields.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"

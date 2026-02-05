@@ -1,8 +1,8 @@
 #pragma once
 
 #include "constants.hpp"
-#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"

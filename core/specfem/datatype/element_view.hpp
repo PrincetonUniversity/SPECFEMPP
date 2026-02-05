@@ -1,8 +1,8 @@
 #pragma once
 
 #include "accessor_type.hpp"
-#include "enumerations/interface.hpp"
 #include "point_view.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

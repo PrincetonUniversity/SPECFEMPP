@@ -1,5 +1,4 @@
-#include "enumerations/interface.hpp"
-#include "enumerations/wavefield.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>

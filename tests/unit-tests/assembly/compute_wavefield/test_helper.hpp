@@ -14,7 +14,7 @@
 //      Since, the computed strain for a uniform wavefield is zero.
 
 #pragma once
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 
 template <specfem::wavefield::type component,

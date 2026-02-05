@@ -1,6 +1,6 @@
 #include "external.hpp"
-#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/utilities.hpp"
 #include <fstream>

@@ -1,8 +1,8 @@
 #ifndef _TANGENTIAL_ELEMENTS_HPP
 #define _TANGENTIAL_ELEMENTS_HPP
 
-#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/enums.hpp"
 
 namespace specfem {
 namespace mesh {

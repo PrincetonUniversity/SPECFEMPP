@@ -1,6 +1,6 @@
 #pragma once
-#include "enumerations/interface.hpp"
 #include "periodic_task.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include <Kokkos_Core.hpp>

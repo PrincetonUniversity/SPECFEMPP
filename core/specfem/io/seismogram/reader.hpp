@@ -1,7 +1,7 @@
 #ifndef SPECFEM_READER_SEISMOGRAM_HPP
 #define SPECFEM_READER_SEISMOGRAM_HPP
 
-#include "enumerations/specfem_enums.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io/reader.hpp"
 
 namespace specfem {

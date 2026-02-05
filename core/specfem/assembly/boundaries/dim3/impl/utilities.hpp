@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include <array>
 #include <tuple>

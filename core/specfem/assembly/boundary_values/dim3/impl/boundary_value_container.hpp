@@ -1,10 +1,10 @@
 #pragma once
 
 #include "boundary_medium_container.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 
 namespace specfem::assembly::boundary_values_impl {

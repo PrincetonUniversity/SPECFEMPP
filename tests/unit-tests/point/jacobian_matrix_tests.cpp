@@ -1,7 +1,7 @@
 // core/specfem/point/test_jacobian_matrix.hpp
 
-#include "enumerations/interface.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point/jacobian_matrix.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"

@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point/jacobian_matrix.hpp"
 #include "specfem/point/stress.hpp"
 #include "specfem/utilities.hpp"

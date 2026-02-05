@@ -117,7 +117,7 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
                 "\n\nCosserat Couple Stress is not implemented for "
                 "this dimension, medium, and property.\n"
                 "    --> Either deactivate has_cosserate_couple force in "
-                " enumerations/medium.hpp or \n"
+                " specfem/enums.hpp or \n"
                 "        implement the damping force in "
                 "medium/<dim>/<medium>/<property>/damping.hpp\n");
 }

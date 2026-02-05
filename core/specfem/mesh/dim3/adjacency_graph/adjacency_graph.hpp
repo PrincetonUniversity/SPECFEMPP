@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/element_coupling.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh_entity.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <memory>

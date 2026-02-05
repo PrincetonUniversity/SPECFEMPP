@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 #include "yaml-cpp/yaml.h"
 

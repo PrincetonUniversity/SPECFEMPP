@@ -1,6 +1,6 @@
-#include "enumerations/interface.hpp"
 #include "globals.h"
 #include "specfem/algorithms.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 
 std::vector<specfem::element::medium_tag> specfem::sources::adjoint_source<

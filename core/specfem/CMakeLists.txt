@@ -4,6 +4,7 @@ add_subdirectory(assembly)
 add_subdirectory(attenuation)
 add_subdirectory(element)
 add_subdirectory(element_connections)
+add_subdirectory(enums)
 add_subdirectory(jacobian)
 add_subdirectory(compute)
 add_subdirectory(io)
@@ -34,14 +35,18 @@ add_library(specfem::core ALIAS specfem_core_interface)
 target_link_libraries(specfem_core_interface
     INTERFACE
         specfem::algorithms
+        specfem::attenuation
         specfem::assembly
         specfem::jacobian
         specfem::compute
         specfem::element
+        specfem::element_connections
+        specfem::enums
         specfem::io
         specfem::logger
         specfem::macros
         specfem::mesh
+        specfem::mesh_entity
         specfem::mpi
         specfem::periodic_tasks
         specfem::point

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/element_connections.hpp"
 #include "specfem/element_coupling.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::assembly {
 

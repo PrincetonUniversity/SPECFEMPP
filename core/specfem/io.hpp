@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"

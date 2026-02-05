@@ -1,5 +1,5 @@
 #include "elements.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 
 specfem::mesh::elements::axial_elements<

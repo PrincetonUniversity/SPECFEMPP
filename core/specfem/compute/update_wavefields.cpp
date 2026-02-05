@@ -1,5 +1,4 @@
 #include "update_wavefields.hpp"
-#include "enumerations/interface.hpp"
 #include "impl/compute_coupling.hpp"
 #include "impl/compute_coupling.tpp"
 #include "impl/compute_source_interaction.hpp"
@@ -9,6 +8,7 @@
 #include "impl/divide_mass_matrix.hpp"
 #include "impl/divide_mass_matrix.tpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 
 namespace specfem::compute {

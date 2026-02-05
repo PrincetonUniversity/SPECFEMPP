@@ -1,5 +1,5 @@
 #include "specfem/io/seismogram/impl/channel_generator.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <iostream>
 #include <string>
 #include <vector>

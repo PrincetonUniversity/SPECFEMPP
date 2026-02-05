@@ -5,8 +5,8 @@
  * @brief Utility macros for tag manipulation and sequence processing
  */
 
-#include "enumerations/interface.hpp"
 #include "expand_seq.hpp"
+#include "specfem/enums.hpp"
 #include <boost/preprocessor.hpp>
 #include <boost/vmd/vmd.hpp>
 

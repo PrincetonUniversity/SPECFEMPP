@@ -3,9 +3,9 @@
 #include "data_access.hpp"
 #include "dim2/simulation_field.hpp"
 #include "dim3/simulation_field.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::assembly {
 

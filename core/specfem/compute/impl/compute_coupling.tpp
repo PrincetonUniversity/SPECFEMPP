@@ -2,7 +2,7 @@
 
 #include "compute_coupling.hpp"
 #include "specfem/element_connections.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"

@@ -1,8 +1,8 @@
 #pragma once
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
-#include "enumerations/medium_tags.hpp"
 #include "mesh_to_compute_mapping.hpp"
+#include "specfem/enums/medium_tags.hpp"
 #include <vector>
 
 specfem::assembly::mesh_impl::mesh_to_compute_mapping<

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/assembly/impl/helper.hpp"
 #include "specfem/chunk_element.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"

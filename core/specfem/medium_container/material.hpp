@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/specfem_enums.hpp"
 #include "impl/attenuation_values.hpp"
+#include "specfem/enums.hpp"
 #include "specfem_setup.hpp"
 #include <ostream>
 #include <tuple>

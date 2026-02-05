@@ -1,7 +1,7 @@
 #include "compute_seismograms.hpp"
-#include "enumerations/interface.hpp"
 #include "impl/compute_seismograms.hpp"
 #include "impl/compute_seismograms.tpp"
+#include "specfem/enums.hpp"
 
 // Explicit template instantiation
 // 2D, NGLL=5,8, forward and backward wavefields

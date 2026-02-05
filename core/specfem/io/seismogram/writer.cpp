@@ -1,7 +1,6 @@
 #include "specfem/io/seismogram/writer.hpp"
-#include "enumerations/interface.hpp"
-#include "enumerations/specfem_enums.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/utilities.hpp"
 #include <fstream>
 

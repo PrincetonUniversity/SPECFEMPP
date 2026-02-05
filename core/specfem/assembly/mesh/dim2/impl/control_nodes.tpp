@@ -1,7 +1,7 @@
 #pragma once
 
 #include "control_nodes.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "mesh_to_compute_mapping.hpp"
 #include <Kokkos_Core.hpp>

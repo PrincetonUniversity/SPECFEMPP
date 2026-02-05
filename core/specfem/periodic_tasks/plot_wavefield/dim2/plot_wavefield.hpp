@@ -1,8 +1,7 @@
 #pragma once
 
-#include "enumerations/display.hpp"
-#include "enumerations/wavefield.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/periodic_tasks/plot_wavefield.hpp"
 #include "specfem/periodic_tasks/plotter.hpp"
 #include <boost/filesystem.hpp>

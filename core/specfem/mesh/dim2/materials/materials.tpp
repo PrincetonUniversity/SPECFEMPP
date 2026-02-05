@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/specfem_enums.hpp"
+#include "specfem/enums.hpp"
 #include "materials.hpp"
 #include "specfem/medium_container.hpp"
 #include <variant>

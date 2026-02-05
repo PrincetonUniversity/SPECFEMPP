@@ -194,7 +194,7 @@ add_executable(
 
 target_link_libraries(
   enumerations_tests
-  enumerations
+  specfem::enums
   specfem::quadrature
   shape_functions
   gtest_main
@@ -492,7 +492,7 @@ target_link_libraries(
 
   yaml-cpp
   specfem::utilities
-  enumerations
+  specfem::enums
   specfem::element
   shape_functions
   specfem::quadrature
@@ -540,9 +540,8 @@ target_link_libraries(
   io_tests
   specfem::io
   gtest_main
-
   yaml-cpp
-  enumerations
+  specfem::enums
   ${BOOST_LIBS}
 )
 
@@ -627,7 +626,7 @@ add_executable(
 target_link_libraries(
   transfer_tests
   specfem::algorithms
-  enumerations
+  specfem::enums
   gtest_main
   Kokkos::kokkos
   specfem_environment

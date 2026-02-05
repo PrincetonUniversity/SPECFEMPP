@@ -1,9 +1,9 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/data_access/check_compatibility.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 

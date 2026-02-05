@@ -2,7 +2,7 @@
 
 #include "file.hpp"
 #include "dataset.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include "kokkos_abstractions.h"
 

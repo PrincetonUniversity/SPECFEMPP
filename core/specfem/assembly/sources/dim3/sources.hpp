@@ -1,11 +1,11 @@
 #pragma once
 #include "../impl/dim3/source_medium.tpp"
 #include "../impl/source_medium.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 
 #include <Kokkos_Core.hpp>

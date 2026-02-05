@@ -6,7 +6,7 @@
 #include <tuple>
 #include <vector>
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "stacey.hpp"
 #include "utilities.hpp"
 #include <Kokkos_Core.hpp>

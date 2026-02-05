@@ -1,5 +1,5 @@
 #include "../../SPECFEM_Environment.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/receivers.hpp"
 #include "test_receiver_solutions.hpp"

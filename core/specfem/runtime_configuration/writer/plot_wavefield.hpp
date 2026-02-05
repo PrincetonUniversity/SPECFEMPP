@@ -1,8 +1,7 @@
 #pragma once
 
-#include "enumerations/display.hpp"
-#include "enumerations/specfem_enums.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/periodic_tasks.hpp"
 
 #include "yaml-cpp/yaml.h"

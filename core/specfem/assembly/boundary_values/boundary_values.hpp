@@ -2,9 +2,9 @@
 
 #include "dim2/impl/boundary_value_container.hpp"
 #include "dim3/impl/boundary_value_container.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/properties.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 
 namespace specfem::assembly {

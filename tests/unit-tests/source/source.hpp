@@ -1,6 +1,6 @@
 #pragma once
-#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "specfem_setup.hpp"

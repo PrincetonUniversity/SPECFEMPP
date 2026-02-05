@@ -5,11 +5,11 @@
 #include "control_nodes/control_nodes.hpp"
 #include "elements/axial_elements.hpp"
 #include "elements/tangential_elements.hpp"
-#include "enumerations/interface.hpp"
 #include "materials/materials.hpp"
 #include "materials/materials.tpp"
 #include "parameters/parameters.hpp"
 #include "specfem/element.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
 #include "specfem_setup.hpp"

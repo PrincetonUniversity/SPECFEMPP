@@ -1,9 +1,8 @@
 #pragma once
 
-#include "enumerations/display.hpp"
-#include "enumerations/wavefield.hpp"
 #include "plotter.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include <boost/filesystem.hpp>
 
 namespace specfem::periodic_tasks {

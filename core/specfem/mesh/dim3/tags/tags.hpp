@@ -16,7 +16,7 @@
  */
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh/dim3/materials/materials.hpp"
 #include <Kokkos_Core.hpp>
 

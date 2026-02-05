@@ -3,7 +3,7 @@
 // combinations and assign 1.0 to all the quadrature points in the element
 
 #pragma once
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 
 template <specfem::wavefield::type component,

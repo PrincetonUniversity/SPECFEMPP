@@ -1,7 +1,7 @@
 #pragma once
 
 #include "boundary_medium_container.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"

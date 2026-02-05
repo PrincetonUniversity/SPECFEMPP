@@ -1,8 +1,8 @@
 #pragma once
 
 #include "control_nodes.hpp"
-#include "enumerations/interface.hpp"
 #include "shape_functions.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 

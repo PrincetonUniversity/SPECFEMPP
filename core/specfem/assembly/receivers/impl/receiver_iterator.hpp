@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <vector>
 
 namespace specfem::assembly::receivers_impl {

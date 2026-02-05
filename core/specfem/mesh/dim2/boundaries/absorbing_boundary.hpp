@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 #include "specfem/mesh_entity.hpp"
 

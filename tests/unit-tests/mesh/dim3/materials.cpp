@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh.hpp"

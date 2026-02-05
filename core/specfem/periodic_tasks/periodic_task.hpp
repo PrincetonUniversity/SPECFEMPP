@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::assembly {
 template <specfem::element::dimension_tag DimensionTag> struct assembly;
