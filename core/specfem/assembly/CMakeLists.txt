@@ -1,4 +1,4 @@
-file(GLOB_RECURSE COMPUTE_SOURCE_FILES "./*.cpp" "./**/*.cpp")
+file(GLOB_RECURSE COMPUTE_SOURCE_FILES "*.cpp")
 
 add_library(assembly ${COMPUTE_SOURCE_FILES})
 add_library(specfem::assembly ALIAS assembly)

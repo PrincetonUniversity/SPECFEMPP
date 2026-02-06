@@ -1,8 +1,9 @@
 #pragma once
 
 #include "control_nodes.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/element.hpp"
 #include "shape_functions.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -19,6 +20,8 @@ namespace specfem::assembly::mesh_impl {
  */
 template <> struct points<specfem::element::dimension_tag::dim3> {
 public:
+  constexpr static auto data_class =
+      specfem::data_access::DataClassType::global_coordinates; ///< Data class
   constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
@@ -38,7 +41,8 @@ public:
                                      Kokkos::DefaultExecutionSpace>;
 
 private:
-  constexpr static int ndim = 3;
+  constexpr static int ndim = specfem::element::dimension<
+      specfem::element::dimension_tag::dim3>::dim; ///< Number of dimensions
 
 public:
   IndexMappingViewType index_mapping;               ///< Device index mapping

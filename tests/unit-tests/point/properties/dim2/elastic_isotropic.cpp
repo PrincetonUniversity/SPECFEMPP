@@ -27,6 +27,10 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
   simd_type lambda_val;
   simd_type rho_vp_val;
   simd_type rho_vs_val;
+  simd_type vp_val;
+  simd_type vs_val;
+  simd_type vmax_val;
+  simd_type vmin_val;
 
   if constexpr (using_simd) {
     T rho_arr[simd_size];
@@ -38,6 +42,8 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
     T lambdaplus2mu_arr[simd_size];
     T rho_vp_arr[simd_size];
     T rho_vs_arr[simd_size];
+    T vmax_arr[simd_size];
+    T vmin_arr[simd_size];
 
     // Setup test data for SIMD
     for (int i = 0; i < simd_size; ++i) {
@@ -73,6 +79,10 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
                       static_cast<type_real>(vp_arr[i]);
       rho_vs_arr[i] = static_cast<type_real>(rho_arr[i]) *
                       static_cast<type_real>(vs_arr[i]);
+      vmax_arr[i] = std::max(static_cast<type_real>(vp_arr[i]),
+                             static_cast<type_real>(vs_arr[i]));
+      vmin_arr[i] = std::min(static_cast<type_real>(vp_arr[i]),
+                             static_cast<type_real>(vs_arr[i]));
     }
 
     // Copy to SIMD types
@@ -84,6 +94,10 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
                                 Kokkos::Experimental::simd_flag_default);
     rho_vp_val.copy_from(rho_vp_arr, Kokkos::Experimental::simd_flag_default);
     rho_vs_val.copy_from(rho_vs_arr, Kokkos::Experimental::simd_flag_default);
+    vp_val.copy_from(vp_arr, Kokkos::Experimental::simd_flag_default);
+    vs_val.copy_from(vs_arr, Kokkos::Experimental::simd_flag_default);
+    vmax_val.copy_from(vmax_arr, Kokkos::Experimental::simd_flag_default);
+    vmin_val.copy_from(vmin_arr, Kokkos::Experimental::simd_flag_default);
   } else {
     // Granite-like material for scalar test
     constexpr type_real rho_val = 2700.0;           // kg/m³
@@ -105,6 +119,10 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
     lambda_val = lambda_scalar;
     rho_vp_val = rho_val * vp;
     rho_vs_val = rho_val * vs;
+    vp_val = vp;
+    vs_val = vs;
+    vmax_val = std::max(vp, vs);
+    vmin_val = std::min(vp, vs);
   }
 
   // Create the properties object
@@ -128,6 +146,16 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropic2D) {
       << ExpectedGot(rho_vp_val, props.rho_vp());
   EXPECT_TRUE(specfem::utilities::is_close(props.rho_vs(), rho_vs_val))
       << ExpectedGot(rho_vs_val, props.rho_vs());
+
+  // New property checks
+  EXPECT_TRUE(specfem::utilities::is_close(props.vp(), vp_val))
+      << ExpectedGot(vp_val, props.vp());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vs(), vs_val))
+      << ExpectedGot(vs_val, props.vs());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmax(), vmax_val))
+      << ExpectedGot(vmax_val, props.vmax());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmin(), vmin_val))
+      << ExpectedGot(vmin_val, props.vmin());
 
   // See note in original code about lambda precision
   std::cout << "lambdaplus2mu: " << std::endl;

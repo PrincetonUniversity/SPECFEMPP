@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/element.hpp"
+#include "specfem/data_access.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
@@ -71,6 +72,16 @@ template <> struct global_coordinates<specfem::element::dimension_tag::dim2> {
     static_assert(ViewType::static_extent(0) == 2,
                   "ViewType must have extent 2 for 2D coordinates");
   }
+
+  /**
+   * @brief Get coordinates as a Kokkos::Array
+   *
+   * @return Kokkos::Array<type_real, 2> containing [x, z] coordinates
+   */
+  KOKKOS_INLINE_FUNCTION
+  Kokkos::Array<type_real, 2> coordinates() const {
+    return Kokkos::Array<type_real, 2>{x, z};
+  }
 };
 
 //-------------------------- 3D Specializations ------------------------------//
@@ -81,6 +92,10 @@ template <> struct global_coordinates<specfem::element::dimension_tag::dim2> {
  * Stores the physical coordinates (\f$x, y, z\f$) for a point in 3D space.
  */
 template <> struct global_coordinates<specfem::element::dimension_tag::dim3> {
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
+  constexpr static auto data_class =
+      specfem::data_access::DataClassType::global_coordinates;
+
   type_real x; ///< Global coordinate \f$ x \f$
   type_real y; ///< Global coordinate \f$ y \f$
   type_real z; ///< Global coordinate \f$ z \f$
@@ -114,6 +129,16 @@ template <> struct global_coordinates<specfem::element::dimension_tag::dim3> {
     static_assert(ViewType::rank() == 1, "ViewType must be rank 1");
     static_assert(ViewType::static_extent(0) == 3,
                   "ViewType must have extent 3 for 3D coordinates");
+  }
+
+  /**
+   * @brief Get coordinates as a Kokkos::Array
+   *
+   * @return Kokkos::Array<type_real, 3> containing [x, y, z] coordinates
+   */
+  KOKKOS_INLINE_FUNCTION
+  Kokkos::Array<type_real, 3> coordinates() const {
+    return Kokkos::Array<type_real, 3>{x, y, z};
   }
 };
 

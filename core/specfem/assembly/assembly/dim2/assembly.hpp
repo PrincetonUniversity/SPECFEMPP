@@ -7,6 +7,7 @@
 #include "specfem/assembly/conforming_interfaces.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/info.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/kernels.hpp"
@@ -155,6 +156,12 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
                        ///< the
                        ///< boundaries
 
+  /**
+   * @brief Info
+   * 
+   */
+  specfem::assembly::Info<dimension_tag> info;
+
   ///@}
 
   /**
@@ -242,6 +249,7 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
    *
    */
   void check_jacobian_matrix() const;
+
 };
 
 } // namespace specfem::assembly
