@@ -24,6 +24,7 @@
     medium_physics/index
     mesh/index
     mpi/index
+    optimization/index
     parallel_configuration/index
     periodic_tasks/index
     point/index

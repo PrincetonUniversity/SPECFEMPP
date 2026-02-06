@@ -116,12 +116,27 @@ add_executable(
   attenuation_tests
   attenuation/runner.cpp
   attenuation/compute_tau_sigma_tests.cpp
+  attenuation/maxwell_tests.cpp
+  attenuation/compute_tau_eps_tests.cpp
 )
 
 target_link_libraries(
   attenuation_tests
   gtest_main
   specfem::attenuation
+  Kokkos::kokkos
+)
+
+add_executable(
+  optimization_tests
+  optimization/runner.cpp
+  optimization/neldermead_tests.cpp
+  optimization/steepestdescent_tests.cpp
+)
+
+target_link_libraries(
+  optimization_tests
+  gtest_main
   Kokkos::kokkos
 )
 
@@ -920,6 +935,7 @@ if(NOT MPI_PARALLEL)
     attenuation_tests
     chunked_edge_tests
     chunked_face_tests
+    compute_coupling_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests
     # compute_elastic_tests
@@ -941,12 +957,12 @@ if(NOT MPI_PARALLEL)
     gradient_tests
     transfer_tests
     mass_matrix_tests
-    compute_coupling_tests
     mesh_dim2_tests
     mesh_dim3_tests
     nonconforming_tests
     point_tests
     policies_tests
+    optimization_tests
     receivers_tests
     simd_tests
     source_class_tests
