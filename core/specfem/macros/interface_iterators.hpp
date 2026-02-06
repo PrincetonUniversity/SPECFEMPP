@@ -6,9 +6,9 @@
  */
 
 #include "enum_tags.hpp"
-#include "enumerations/interface.hpp"
 #include "macros_impl/array.hpp"
 #include "macros_impl/utils.hpp"
+#include "specfem/enums.hpp"
 #include <boost/preprocessor.hpp>
 
 /**
@@ -26,21 +26,21 @@
  * @brief Strongly conforming connection tag
  */
 #define CONNECTION_TAG_STRONGLY_CONFORMING                                     \
-  (0, specfem::connections::type::strongly_conforming, strongly_conforming,    \
-   _ENUM_ID_CONNECTION_TAG)
+  (0, specfem::element_connections::type::strongly_conforming,                 \
+   strongly_conforming, _ENUM_ID_CONNECTION_TAG)
 
 /**
  * @brief Weakly conforming connection tag
  */
 #define CONNECTION_TAG_WEAKLY_CONFORMING                                       \
-  (1, specfem::connections::type::weakly_conforming, weakly_conforming,        \
-   _ENUM_ID_CONNECTION_TAG)
+  (1, specfem::element_connections::type::weakly_conforming,                   \
+   weakly_conforming, _ENUM_ID_CONNECTION_TAG)
 
 /**
  * @brief Non-conforming connection tag
  */
 #define CONNECTION_TAG_NONCONFORMING                                           \
-  (2, specfem::connections::type::nonconforming, nonconforming,                \
+  (2, specfem::element_connections::type::nonconforming, nonconforming,        \
    _ENUM_ID_CONNECTION_TAG)
 /** @} */
 
@@ -53,15 +53,15 @@
  * @brief Elastic-Acoustic interface tag
  */
 #define INTERFACE_TAG_ELASTIC_ACOUSTIC                                         \
-  (0, specfem::interface::interface_tag::elastic_acoustic, elastic_acoustic,   \
-   _ENUM_ID_INTERFACE_TAG)
+  (0, specfem::element_coupling::interface_tag::elastic_acoustic,              \
+   elastic_acoustic, _ENUM_ID_INTERFACE_TAG)
 
 /**
  * @brief Acoustic-Elastic interface tag
  */
 #define INTERFACE_TAG_ACOUSTIC_ELASTIC                                         \
-  (1, specfem::interface::interface_tag::acoustic_elastic, acoustic_elastic,   \
-   _ENUM_ID_INTERFACE_TAG)
+  (1, specfem::element_coupling::interface_tag::acoustic_elastic,              \
+   acoustic_elastic, _ENUM_ID_INTERFACE_TAG)
 /** @} */
 
 /**
@@ -73,14 +73,14 @@
  * @brief Natural flux scheme tag
  */
 #define FLUX_SCHEME_TAG_NATURAL                                                \
-  (0, specfem::interface::flux_scheme_tag::natural, natural,                   \
+  (0, specfem::element_coupling::flux_scheme_tag::natural, natural,            \
    _ENUM_ID_FLUX_SCHEME_TAG)
 
 /**
  * @brief Symmetric interior penalty flux scheme tag
  */
 #define FLUX_SCHEME_TAG_SYMMETRIC_INTERIOR_PENALTY                             \
-  (1, specfem::interface::flux_scheme_tag::symmetric_interior_penalty,         \
+  (1, specfem::element_coupling::flux_scheme_tag::symmetric_interior_penalty,  \
    symmetric_interior_penalty, _ENUM_ID_FLUX_SCHEME_TAG)
 /** @} */
 

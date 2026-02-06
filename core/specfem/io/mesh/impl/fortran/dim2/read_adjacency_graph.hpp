@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 
 namespace specfem::io::mesh::impl::fortran::dim2 {

@@ -2,10 +2,10 @@
 
 #include "../../SPECFEM_Environment.hpp"
 #include "Kokkos_Core_fwd.hpp"
-#include "enumerations/coupled_interface.hpp"
 #include "specfem/chunk_edge.hpp"
 
 #include "specfem/element.hpp"
+#include "specfem/element_coupling.hpp"
 #include "specfem/medium_physics.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 
@@ -59,14 +59,14 @@ struct EdgeFunctionWithEmbeddedAccessor
             init) {};
 };
 
-template <specfem::interface::interface_tag interface_tag>
+template <specfem::element_coupling::interface_tag interface_tag>
 static constexpr int ncomp_self_from_interface_tag =
     specfem::element::attributes<specfem::element::dimension_tag::dim2,
-                                 specfem::interface::attributes<
+                                 specfem::element_coupling::attributes<
                                      specfem::element::dimension_tag::dim2,
                                      interface_tag>::self_medium()>::components;
 
-template <specfem::interface::interface_tag interface_tag,
+template <specfem::element_coupling::interface_tag interface_tag,
           typename EmbeddedEdgeFunctionAccessor, typename TransferFunction2D,
           typename IntersectionNormal2D, typename EdgeFunction2D>
 typename Kokkos::View<
@@ -82,8 +82,8 @@ execute_impl_compute_coupling(const TransferFunction2D &transfer_function,
   constexpr auto boundary_tag = specfem::element::boundary_tag::none;
 
   constexpr specfem::element::medium_tag self_medium =
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::self_medium();
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::self_medium();
   constexpr int ncomp_self =
       specfem::element::attributes<dimension_tag, self_medium>::components;
 
@@ -135,9 +135,10 @@ execute_impl_compute_coupling(const TransferFunction2D &transfer_function,
         specfem::medium_physics::impl::compute_coupling(
             std::integral_constant<specfem::element::dimension_tag,
                                    dimension_tag>(),
-            std::integral_constant<specfem::connections::type,
-                                   specfem::connections::type::nonconforming>(),
-            std::integral_constant<specfem::interface::interface_tag,
+            std::integral_constant<
+                specfem::element_connections::type,
+                specfem::element_connections::type::nonconforming>(),
+            std::integral_constant<specfem::element_coupling::interface_tag,
                                    interface_tag>(),
             ChunkEdgeIndexSimulator<dimension_tag>(num_edges, team_member), TF,
             IN, EF, CCF);
@@ -150,7 +151,7 @@ execute_impl_compute_coupling(const TransferFunction2D &transfer_function,
   return h_computed_coupling_function;
 }
 
-template <specfem::interface::interface_tag interface_tag,
+template <specfem::element_coupling::interface_tag interface_tag,
           typename TransferFunction2D, typename IntersectionNormal2D,
           typename EdgeFunction2D, typename ExpectedSolutionInitf>
 Kokkos::View<
@@ -165,9 +166,9 @@ Kokkos::View<
                                                    &edge_function);
 
 template <
-    specfem::interface::interface_tag interface_tag, typename ExpectedSolution,
-    typename TransferFunction2D, typename IntersectionNormal2D,
-    typename EdgeFunction2D,
+    specfem::element_coupling::interface_tag interface_tag,
+    typename ExpectedSolution, typename TransferFunction2D,
+    typename IntersectionNormal2D, typename EdgeFunction2D,
     std::enable_if_t<ExpectedSolution::is_from_analytical_function, int> = 0>
 Kokkos::View<type_real *[TransferFunction2D::nquad_intersection]
                             [ncomp_self_from_interface_tag<interface_tag>],
@@ -192,25 +193,26 @@ expected_solution(const TransferFunction2D &transfer_function,
   return expected_view;
 }
 
-template <specfem::interface::interface_tag InterfaceTag, typename = void>
+template <specfem::element_coupling::interface_tag InterfaceTag,
+          typename = void>
 struct EdgeFunctionAccessor {};
 
-template <specfem::interface::interface_tag InterfaceTag>
+template <specfem::element_coupling::interface_tag InterfaceTag>
 struct EdgeFunctionAccessor<
     InterfaceTag,
-    std::enable_if_t<InterfaceTag ==
-                         specfem::interface::interface_tag::elastic_acoustic,
+    std::enable_if_t<InterfaceTag == specfem::element_coupling::interface_tag::
+                                         elastic_acoustic,
                      void> >
     : specfem::data_access::Accessor<
           specfem::datatype::AccessorType::chunk_edge,
           specfem::data_access::DataClassType::acceleration,
           specfem::element::dimension_tag::dim2, false> {};
 
-template <specfem::interface::interface_tag InterfaceTag>
+template <specfem::element_coupling::interface_tag InterfaceTag>
 struct EdgeFunctionAccessor<
     InterfaceTag,
-    std::enable_if_t<InterfaceTag ==
-                         specfem::interface::interface_tag::acoustic_elastic,
+    std::enable_if_t<InterfaceTag == specfem::element_coupling::interface_tag::
+                                         acoustic_elastic,
                      void> >
     : specfem::data_access::Accessor<
           specfem::datatype::AccessorType::chunk_edge,
@@ -219,10 +221,12 @@ struct EdgeFunctionAccessor<
 
 namespace specfem::compute_coupling_test::nonconforming {
 
-template <specfem::interface::interface_tag InterfaceTag,
-          specfem::interface::flux_scheme_tag FluxSchemeTag, typename TestTypes>
+template <specfem::element_coupling::interface_tag InterfaceTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag,
+          typename TestTypes>
 void run_case() {
-  static_assert(FluxSchemeTag == specfem::interface::flux_scheme_tag::natural,
+  static_assert(FluxSchemeTag ==
+                    specfem::element_coupling::flux_scheme_tag::natural,
                 "Only the 'natural' flux scheme is supported here for now");
 
   using TransferFunctionInit = std::tuple_element_t<0, TestTypes>;

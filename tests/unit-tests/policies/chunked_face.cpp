@@ -1,6 +1,6 @@
 #include "../SPECFEM_Environment.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/face_types.hpp"
+#include "specfem/element.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
@@ -266,7 +266,9 @@ INSTANTIATE_TEST_SUITE_P(
 class FaceCoordinateMappingTest : public ::testing::Test {
 protected:
   static constexpr int ngll = 5;
-  specfem::mesh_entity::element<specfem::element::dimension_tag::dim3> elem{ ngll };
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim3> elem{
+    ngll
+  };
 };
 
 TEST_F(FaceCoordinateMappingTest, BottomFace) {

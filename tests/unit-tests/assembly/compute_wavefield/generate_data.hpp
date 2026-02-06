@@ -3,10 +3,10 @@
 // combinations and assign 1.0 to all the quadrature points in the element
 
 #pragma once
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 
-template <specfem::wavefield::type component,
+template <specfem::enums::wavefield component,
           specfem::simulation::field_type type,
           specfem::element::medium_tag medium,
           specfem::element::property_tag property>
@@ -64,7 +64,7 @@ void generate_data(
   field.copy_to_device();
 }
 
-template <specfem::wavefield::type component,
+template <specfem::enums::wavefield component,
           specfem::simulation::field_type type>
 std::vector<int>
 generate_data(specfem::assembly::assembly<specfem::element::dimension_tag::dim2>

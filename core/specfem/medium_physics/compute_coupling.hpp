@@ -1,10 +1,10 @@
 #pragma once
 
-#include "enumerations/connections.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/data_access/accessor/chunk_edge.hpp"
 #include "specfem/data_access/check_compatibility.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/medium/dim2/coupling_terms/acoustic_elastic.hpp"
 #include "specfem/medium/dim2/coupling_terms/elastic_acoustic.hpp"
 #include <Kokkos_Core.hpp>
@@ -32,11 +32,12 @@ namespace specfem::medium_physics {
  * self_field);
  * @endcode
  */
-template <typename CoupledInterfaceType, typename CoupledFieldType,
-          typename SelfFieldType,
-          std::enable_if_t<CoupledInterfaceType::connection_tag ==
-                               specfem::connections::type::weakly_conforming,
-                           int> = 0>
+template <
+    typename CoupledInterfaceType, typename CoupledFieldType,
+    typename SelfFieldType,
+    std::enable_if_t<CoupledInterfaceType::connection_tag ==
+                         specfem::element_connections::type::weakly_conforming,
+                     int> = 0>
 KOKKOS_INLINE_FUNCTION void
 compute_coupling(const CoupledInterfaceType &interface_data,
                  const CoupledFieldType &coupled_field,
@@ -58,25 +59,27 @@ compute_coupling(const CoupledInterfaceType &interface_data,
 
   constexpr auto self_medium_tag = SelfFieldType::medium_tag;
   static_assert(
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::self_medium() ==
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::self_medium() ==
           self_medium_tag,
       "Inconsistent self medium tag between interface and self field");
 
   constexpr auto coupled_medium_tag = CoupledFieldType::medium_tag;
 
   static_assert(
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::coupled_medium() ==
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::coupled_medium() ==
           coupled_medium_tag,
       "Inconsistent coupled medium tag between interface and coupled field");
 
   using dimension_dispatch =
       std::integral_constant<specfem::element::dimension_tag, dimension_tag>;
   using connection_dispatch =
-      std::integral_constant<specfem::connections::type, connection_tag>;
+      std::integral_constant<specfem::element_connections::type,
+                             connection_tag>;
   using interface_dispatch =
-      std::integral_constant<specfem::interface::interface_tag, interface_tag>;
+      std::integral_constant<specfem::element_coupling::interface_tag,
+                             interface_tag>;
 
   impl::compute_coupling(dimension_dispatch(), connection_dispatch(),
                          interface_dispatch(), interface_data, coupled_field,
@@ -125,11 +128,12 @@ KOKKOS_INLINE_FUNCTION void compute_coupling_expand(
  * self_field);
  * @endcode
  */
-template <typename IndexType, typename InterfaceDataType,
-          typename CoupledFieldType, typename SelfFieldType,
-          std::enable_if_t<InterfaceDataType::connection_tag ==
-                               specfem::connections::type::nonconforming,
-                           int> = 0>
+template <
+    typename IndexType, typename InterfaceDataType, typename CoupledFieldType,
+    typename SelfFieldType,
+    std::enable_if_t<InterfaceDataType::connection_tag ==
+                         specfem::element_connections::type::nonconforming,
+                     int> = 0>
 KOKKOS_INLINE_FUNCTION void compute_coupling(
     const IndexType &index, const InterfaceDataType &interface_data,
     const CoupledFieldType &coupled_field, SelfFieldType &self_field) {
@@ -151,17 +155,19 @@ KOKKOS_INLINE_FUNCTION void compute_coupling(
   constexpr auto coupled_medium_tag = CoupledFieldType::medium_tag;
 
   static_assert(
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::coupled_medium() ==
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::coupled_medium() ==
           coupled_medium_tag,
       "Inconsistent coupled medium tag between interface and coupled field");
 
   using dimension_dispatch =
       std::integral_constant<specfem::element::dimension_tag, dimension_tag>;
   using connection_dispatch =
-      std::integral_constant<specfem::connections::type, connection_tag>;
+      std::integral_constant<specfem::element_connections::type,
+                             connection_tag>;
   using interface_dispatch =
-      std::integral_constant<specfem::interface::interface_tag, interface_tag>;
+      std::integral_constant<specfem::element_coupling::interface_tag,
+                             interface_tag>;
 
   impl::compute_coupling_expand(
       dimension_dispatch(), connection_dispatch(), interface_dispatch(),

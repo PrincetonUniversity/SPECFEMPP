@@ -1,24 +1,24 @@
-
-#include "enumerations/connections.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <functional>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <unordered_map>
 
-const std::string
-specfem::connections::to_string(const specfem::connections::type &conn) {
+const std::string specfem::element_connections::to_string(
+    const specfem::element_connections::type &conn) {
   switch (conn) {
-  case specfem::connections::type::strongly_conforming:
+  case specfem::element_connections::type::strongly_conforming:
     return "strongly_conforming";
-  case specfem::connections::type::weakly_conforming:
+  case specfem::element_connections::type::weakly_conforming:
     return "weakly_conforming";
-  case specfem::connections::type::nonconforming:
+  case specfem::element_connections::type::nonconforming:
     return "nonconforming";
   default:
     throw std::runtime_error(
-        std::string("specfem::connections::to_string does not handle ") +
+        std::string(
+            "specfem::element_connections::to_string does not handle ") +
         std::to_string(static_cast<int>(conn)));
     return "!ERR";
   }
@@ -47,7 +47,7 @@ int edge_transform(const std::array<int, 2> &from_nodes,
   }
 }
 
-std::tuple<int, int> specfem::connections::
+std::tuple<int, int> specfem::element_connections::
     connection_mapping<specfem::element::dimension_tag::dim2>::map_coordinates(
         const specfem::mesh_entity::dim2::type &from,
         const specfem::mesh_entity::dim2::type &to, const int iz,
@@ -88,7 +88,7 @@ std::tuple<int, int> specfem::connections::
   }(i_prime);
 }
 
-std::tuple<int, int> specfem::connections::
+std::tuple<int, int> specfem::element_connections::
     connection_mapping<specfem::element::dimension_tag::dim2>::map_coordinates(
         const specfem::mesh_entity::dim2::type &from,
         const specfem::mesh_entity::dim2::type &to) const {

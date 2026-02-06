@@ -18,8 +18,8 @@ protected:
     nsteps_between_samples = 1;
 
     // Create test seismogram types
-    seismogram_types = { specfem::wavefield::type::displacement,
-                         specfem::wavefield::type::velocity };
+    seismogram_types = { specfem::enums::wavefield::displacement,
+                         specfem::enums::wavefield::velocity };
   }
 
   int nspec;
@@ -29,7 +29,7 @@ protected:
   type_real dt;
   type_real t0;
   int nsteps_between_samples;
-  std::vector<specfem::wavefield::type> seismogram_types;
+  std::vector<specfem::enums::wavefield> seismogram_types;
 };
 
 TEST_F(AssemblyReceivers2DTest, DefaultConstructor) {
@@ -119,8 +119,8 @@ TEST_F(AssemblyReceivers2DTest, GetSeismogramMethod) {
 
   std::string station_name = "TEST_STATION";
   std::string network_name = "TEST_NETWORK";
-  specfem::wavefield::type wavefield_type =
-      specfem::wavefield::type::displacement;
+  specfem::enums::wavefield wavefield_type =
+      specfem::enums::wavefield::displacement;
 
   // This will likely throw since maps aren't populated in default construction
   try {

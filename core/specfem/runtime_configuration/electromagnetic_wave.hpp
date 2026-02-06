@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/specfem_enums.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/utilities.hpp"
 #include <string>
 #include <yaml-cpp/yaml.h>

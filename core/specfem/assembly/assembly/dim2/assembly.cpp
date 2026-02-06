@@ -1,8 +1,8 @@
 #include "specfem/assembly/assembly.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/assembly/info.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
-#include "specfem/assembly/info.hpp"
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
@@ -12,7 +12,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const std::vector<std::shared_ptr<
         specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
         &receivers,
-    const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
+    const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
     const int nsteps_between_samples,
     const specfem::simulation::type simulation,

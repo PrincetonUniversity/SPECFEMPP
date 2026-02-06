@@ -1,4 +1,4 @@
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <list>
 #include <stdexcept>
 
@@ -120,8 +120,9 @@ int specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::
 }
 
 std::tuple<int, int>
-specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::map_coordinates(
-    const specfem::mesh_entity::dim2::type &entity, const int point) const {
+specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>::
+    map_coordinates(const specfem::mesh_entity::dim2::type &entity,
+                    const int point) const {
   if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::edges,
                                      entity)) {
     int iz, ix;

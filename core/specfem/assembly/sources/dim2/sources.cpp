@@ -2,10 +2,10 @@
 #include "../impl/dim2/source_medium.tpp"
 #include "../impl/locate_sources.hpp"
 #include "../impl/source_medium.hpp"
-#include "enumerations/interface.hpp"
 
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"

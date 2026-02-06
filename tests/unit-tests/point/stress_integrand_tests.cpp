@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point/stress_integrand.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"

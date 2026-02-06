@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_IO_ASCII_HPP
-#define _SPECFEM_IO_ASCII_HPP
+#pragma once
 
 #include "impl/dataset.hpp"
 #include "impl/dataset.tpp"
@@ -33,5 +32,3 @@ public:
 
 } // namespace io
 } // namespace specfem
-
-#endif /* _SPECFEM_IO_ASCII_HPP */

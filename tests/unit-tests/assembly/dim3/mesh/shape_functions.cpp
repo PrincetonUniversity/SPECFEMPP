@@ -1,6 +1,6 @@
 #include "../test_fixture.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
 #include "specfem/utilities.hpp"

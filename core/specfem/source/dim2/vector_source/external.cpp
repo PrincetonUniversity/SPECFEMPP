@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"

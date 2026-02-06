@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SPECFEM_Environment.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/source.hpp"

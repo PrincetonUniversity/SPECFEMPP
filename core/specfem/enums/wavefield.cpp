@@ -1,30 +1,30 @@
-#include "enumerations/wavefield.hpp"
+#include "specfem/enums.hpp"
 
-const std::string specfem::wavefield::to_string(
-    const specfem::wavefield::type &wavefield_component) {
+const std::string specfem::enums::to_string(
+    const specfem::enums::wavefield &wavefield_component) {
 
   std::string component_string;
 
   switch (wavefield_component) {
-  case specfem::wavefield::type::displacement:
+  case specfem::enums::wavefield::displacement:
     component_string = "displacement";
     break;
-  case specfem::wavefield::type::velocity:
+  case specfem::enums::wavefield::velocity:
     component_string = "velocity";
     break;
-  case specfem::wavefield::type::acceleration:
+  case specfem::enums::wavefield::acceleration:
     component_string = "elastic_psv_t";
     break;
-  case specfem::wavefield::type::pressure:
+  case specfem::enums::wavefield::pressure:
     component_string = "pressure";
     break;
-  case specfem::wavefield::type::rotation:
+  case specfem::enums::wavefield::rotation:
     component_string = "rotation";
     break;
-  case specfem::wavefield::type::intrinsic_rotation:
+  case specfem::enums::wavefield::intrinsic_rotation:
     component_string = "intrinsic rotation";
     break;
-  case specfem::wavefield::type::curl:
+  case specfem::enums::wavefield::curl:
     component_string = "curl";
     break;
   default:

@@ -3,7 +3,7 @@
 #include "boundaries.hpp"
 #include "impl/acoustic_free_surface.hpp"
 #include "impl/stacey.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 

@@ -1,5 +1,5 @@
 #include "test_source_solutions.hpp"
-#include "enumerations/wavefield.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/source_time_functions.hpp"
 
 // Local constants since these would be set by the simulation.

@@ -1,7 +1,6 @@
-#ifndef _TANGENTIAL_ELEMENTS_HPP
-#define _TANGENTIAL_ELEMENTS_HPP
+#pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {
@@ -29,5 +28,3 @@ template <> struct tangential_elements<specfem::element::dimension_tag::dim2> {
 } // namespace elements
 } // namespace mesh
 } // namespace specfem
-
-#endif

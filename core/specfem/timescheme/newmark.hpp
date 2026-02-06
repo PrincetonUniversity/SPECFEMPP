@@ -1,8 +1,7 @@
 #pragma once
 
-#include "enumerations/simulation.hpp"
-#include "enumerations/wavefield.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/timescheme/timescheme.hpp"
 #include "specfem_setup.hpp"
 
@@ -208,10 +207,10 @@ public:
   /**
    * @brief Get the timescheme type
    *
-   * @return specfem::enums::time_scheme::type Timescheme type
+   * @return specfem::time_scheme::type Timescheme type
    */
-  specfem::enums::time_scheme::type timescheme() const override {
-    return specfem::enums::time_scheme::type::newmark;
+  specfem::time_scheme::type timescheme() const override {
+    return specfem::time_scheme::type::newmark;
   }
 
   /**
@@ -358,10 +357,10 @@ public:
   /**
    * @brief Get the timescheme type
    *
-   * @return specfem::enums::time_scheme::type Timescheme type
+   * @return specfem::time_scheme::type Timescheme type
    */
-  specfem::enums::time_scheme::type timescheme() const override {
-    return specfem::enums::time_scheme::type::newmark;
+  specfem::time_scheme::type timescheme() const override {
+    return specfem::time_scheme::type::newmark;
   }
 
   /**

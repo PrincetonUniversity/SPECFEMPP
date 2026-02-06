@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/simulation.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "yaml-cpp/yaml.h"
 

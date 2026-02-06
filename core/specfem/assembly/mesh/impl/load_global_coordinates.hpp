@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -130,9 +130,11 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(const IndexType &index,
  *
  * @code
  * // Example usage in GPU kernel
- * specfem::point::index<specfem::element::dimension_tag::dim2> idx(ispec, iz, ix);
+ * specfem::point::index<specfem::element::dimension_tag::dim2> idx(ispec, iz,
+ * ix);
  * specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
- * point_coord; specfem::assembly::load_on_device(idx, mesh.points, point_coord);
+ * point_coord; specfem::assembly::load_on_device(idx, mesh.points,
+ * point_coord);
  *
  * // Access loaded values
  * type_real x_val = point_coord.x;
@@ -185,7 +187,8 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
  *
  * @code
  * // Example usage in host code
- * specfem::point::index<specfem::element::dimension_tag::dim3> idx(ispec, iz, iy, ix);
+ * specfem::point::index<specfem::element::dimension_tag::dim3> idx(ispec, iz,
+ * iy, ix);
  * specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
  * point_coord; specfem::assembly::load_on_host(idx, mesh.points, point_coord);
  *

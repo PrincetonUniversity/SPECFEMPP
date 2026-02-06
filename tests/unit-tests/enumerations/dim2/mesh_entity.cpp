@@ -17,7 +17,7 @@
  * @see specfem::mesh_entity::dim2
  */
 
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/element.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"

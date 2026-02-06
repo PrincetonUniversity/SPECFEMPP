@@ -9,7 +9,7 @@
 #include "specfem/element.hpp"
 #include <string>
 
-namespace specfem::connections {
+namespace specfem::element_connections {
 
 /**
  * @brief Connection conformity types between mesh elements.
@@ -25,7 +25,7 @@ enum class type : int {
  * @param conn Connection type
  * @return String representation
  */
-const std::string to_string(const specfem::connections::type &conn);
+const std::string to_string(const specfem::element_connections::type &conn);
 
 /**
  * @brief Coordinate mapping between adjacent spectral elements.
@@ -45,12 +45,12 @@ const std::string to_string(const specfem::connections::type &conn);
 template <specfem::element::dimension_tag DimensionTag>
 class connection_mapping;
 
-} // namespace specfem::connections
+} // namespace specfem::element_connections
 
-#include "dim2/connections.hpp"
-#include "dim3/connections.hpp"
+#include "element_connections/dim2/connections.hpp"
+#include "element_connections/dim3/connections.hpp"
 
-namespace specfem::connections {
+namespace specfem::element_connections {
 
 /**
  * @brief Template argument deduction guides for automatic dimension detection.
@@ -67,4 +67,4 @@ connection_mapping(const int, const int, const int,
     -> connection_mapping<specfem::element::dimension_tag::dim3>;
 ///@}
 
-} // namespace specfem::connections
+} // namespace specfem::element_connections

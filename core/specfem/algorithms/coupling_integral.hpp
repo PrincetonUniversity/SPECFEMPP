@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -58,7 +58,7 @@ coupling_integral(const specfem::assembly::assembly<dimension_tag> &assembly,
                   const IntersectionFactor &intersection_factor,
                   const CallableType &callback) {
 
-  constexpr auto self_medium_tag = specfem::interface::attributes<
+  constexpr auto self_medium_tag = specfem::element_coupling::attributes<
       dimension_tag, IntersectionFactor::interface_tag>::self_medium();
 
   using PointIndexType =

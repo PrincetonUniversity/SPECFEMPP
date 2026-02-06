@@ -1,6 +1,6 @@
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/assembly/impl/helper.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
@@ -11,7 +11,7 @@ namespace {
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void get_wavefield_on_entire_grid(
-    const specfem::wavefield::type component,
+    const specfem::enums::wavefield component,
     const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
         &assembly,
     Kokkos::View<type_real ****, Kokkos::LayoutLeft,
@@ -43,23 +43,23 @@ Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
 specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::
     generate_wavefield_on_entire_grid(
         const specfem::simulation::field_type wavefield,
-        const specfem::wavefield::type component) {
+        const specfem::enums::wavefield component) {
 
   // Check which type of wavefield component is requested
   const int ncomponents = [&]() -> int {
-    if (component == specfem::wavefield::type::displacement) {
+    if (component == specfem::enums::wavefield::displacement) {
       return 2;
-    } else if (component == specfem::wavefield::type::velocity) {
+    } else if (component == specfem::enums::wavefield::velocity) {
       return 2;
-    } else if (component == specfem::wavefield::type::acceleration) {
+    } else if (component == specfem::enums::wavefield::acceleration) {
       return 2;
-    } else if (component == specfem::wavefield::type::pressure) {
+    } else if (component == specfem::enums::wavefield::pressure) {
       return 1;
-    } else if (component == specfem::wavefield::type::rotation) {
+    } else if (component == specfem::enums::wavefield::rotation) {
       return 2;
-    } else if (component == specfem::wavefield::type::intrinsic_rotation) {
+    } else if (component == specfem::enums::wavefield::intrinsic_rotation) {
       return 2;
-    } else if (component == specfem::wavefield::type::curl) {
+    } else if (component == specfem::enums::wavefield::curl) {
       return 2;
     } else {
       throw std::runtime_error("Wavefield component not supported");

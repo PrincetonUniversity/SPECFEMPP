@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "index.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem {
 namespace point {

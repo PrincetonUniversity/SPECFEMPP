@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/connections.hpp"
+#include "specfem/element_connections.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/point.hpp"
@@ -110,7 +110,7 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
   // Filter out strongly conforming connections
   auto filter = [&graph](const auto &edge) {
     return graph[edge].connection ==
-           specfem::connections::type::strongly_conforming;
+           specfem::element_connections::type::strongly_conforming;
   };
 
   // Create a filtered graph view
@@ -146,7 +146,7 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
               // Return edge
               const auto other_edge = boost::edge(jspec, ispec, fg).first;
               const auto mapped_iedge = fg[other_edge].orientation;
-              const auto connection_mapping = specfem::connections::connection_mapping(
+              const auto connection_mapping = specfem::element_connections::connection_mapping(
                   ngllz, ngllx, Kokkos::subview(this->h_control_node_mapping, ispec, Kokkos::ALL()),
                   Kokkos::subview(this->h_control_node_mapping, jspec, Kokkos::ALL()));
 
@@ -217,7 +217,7 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
             const auto other_edge = boost::edge(jspec, ispec, fg).first;
             const auto mapped_iedge = fg[other_edge].orientation;
 
-            const auto connection_mapping = specfem::connections::connection_mapping(
+            const auto connection_mapping = specfem::element_connections::connection_mapping(
                 ngllz, ngllx, Kokkos::subview(this->h_control_node_mapping, ispec, Kokkos::ALL()),
                 Kokkos::subview(this->h_control_node_mapping, jspec, Kokkos::ALL()));
 

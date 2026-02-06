@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point/boundary.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"

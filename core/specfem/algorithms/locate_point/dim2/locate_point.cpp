@@ -1,9 +1,9 @@
 #include "specfem/algorithms/locate_point.hpp"
-#include "enumerations/mesh_entities.hpp"
 #include "specfem/algorithms/locate_point/locate_point_impl.hpp"
 #include "specfem/algorithms/locate_point/locate_point_impl.tpp"
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

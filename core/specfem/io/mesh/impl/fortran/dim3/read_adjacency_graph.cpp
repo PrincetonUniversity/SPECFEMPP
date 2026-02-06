@@ -29,7 +29,7 @@ specfem::io::mesh::impl::fortran::dim3::read_adjacency_graph(
     elem2 -= 1;
 
     EdgeProperties edge_props(
-        static_cast<specfem::connections::type>(connection_type_int),
+        static_cast<specfem::element_connections::type>(connection_type_int),
         static_cast<specfem::mesh_entity::dim3::type>(orientation_int));
     boost::add_edge(elem1, elem2, edge_props, g);
   }

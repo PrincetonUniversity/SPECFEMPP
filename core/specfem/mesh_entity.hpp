@@ -23,8 +23,8 @@ template <specfem::element::dimension_tag DimensionTag> struct element;
 
 } // namespace specfem::mesh_entity
 
-#include "dim2/mesh_entities.hpp"
-#include "dim3/mesh_entities.hpp"
+#include "mesh_entity/dim2/mesh_entity.hpp"
+#include "mesh_entity/dim3/mesh_entity.hpp"
 
 namespace specfem::mesh_entity {
 

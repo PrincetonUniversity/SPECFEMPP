@@ -103,7 +103,7 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_stress(
                 "\n\nCosserat Stress Contribution is not implemented for "
                 "this dimension, medium, and property.\n"
                 "    --> Either deactivate damping force in "
-                " enumerations/medium.hpp or \n"
+                " specfem/enums.hpp or \n"
                 "        implement the cosserat stress computation in "
                 "medium/<dim>/<medium>/<property>/cosserat_stress.hpp\n");
   //  If the implementation is not available, we do nothing

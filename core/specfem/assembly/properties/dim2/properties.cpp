@@ -1,8 +1,8 @@
 #include "specfem/assembly/properties.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/impl/domain_properties.hpp"
 #include "specfem/assembly/impl/domain_properties.tpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/enums.hpp"
 
 specfem::assembly::properties<specfem::element::dimension_tag::dim2>::
     properties(

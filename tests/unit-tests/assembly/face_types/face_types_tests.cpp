@@ -1,5 +1,5 @@
-#include "enumerations/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
@@ -10,8 +10,7 @@ namespace {
 // (CUDA does not allow extended __host__ __device__ lambdas inside
 // functions with private/protected access, such as TEST_F's TestBody)
 
-template <typename FaceViewType>
-struct InitializeFacesFunctor {
+template <typename FaceViewType> struct InitializeFacesFunctor {
   FaceViewType view;
   specfem::mesh_entity::dim3::type face_type;
   int num_points;
@@ -76,8 +75,7 @@ struct TestRangeAccessFaceFunctor {
   }
 };
 
-template <typename StorageType>
-struct InitCoords2DFunctor {
+template <typename StorageType> struct InitCoords2DFunctor {
   StorageType iz_storage;
   StorageType iy_storage;
   StorageType ix_storage;
@@ -88,8 +86,8 @@ struct InitCoords2DFunctor {
   InitCoords2DFunctor(StorageType iz_, StorageType iy_, StorageType ix_,
                       specfem::mesh_entity::dim3::type face_type_,
                       int num_points_)
-      : iz_storage(iz_), iy_storage(iy_), ix_storage(ix_), face_type(face_type_),
-        num_points(num_points_), elem(num_points_) {}
+      : iz_storage(iz_), iy_storage(iy_), ix_storage(ix_),
+        face_type(face_type_), num_points(num_points_), elem(num_points_) {}
 
   KOKKOS_INLINE_FUNCTION
   void operator()(const int i, const int j) const {
@@ -123,12 +121,9 @@ struct TestFaceOperatorFunctor {
     using FaceIndex =
         specfem::point::face_index<specfem::element::dimension_tag::dim3>;
 
-    auto iz_strided =
-        Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
-    auto iy_strided =
-        Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
-    auto ix_strided =
-        Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
+    auto iz_strided = Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
+    auto iy_strided = Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
+    auto ix_strided = Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
 
     Face face(num_points, 42, 3, face_type, iz_strided, iy_strided, ix_strided);
     FaceIndex idx = face(2, 3);
@@ -166,12 +161,9 @@ struct TestFaceTypeFunctor {
     using FaceIndex =
         specfem::point::face_index<specfem::element::dimension_tag::dim3>;
 
-    auto iz_strided =
-        Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
-    auto iy_strided =
-        Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
-    auto ix_strided =
-        Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
+    auto iz_strided = Kokkos::subview(iz_storage, Kokkos::ALL(), Kokkos::ALL());
+    auto iy_strided = Kokkos::subview(iy_storage, Kokkos::ALL(), Kokkos::ALL());
+    auto ix_strided = Kokkos::subview(ix_storage, Kokkos::ALL(), Kokkos::ALL());
 
     Face face(num_points, 0, 0, face_type, iz_strided, iy_strided, ix_strided);
     FaceIndex idx = face(2, 3);
@@ -280,23 +272,20 @@ TEST_F(AssemblyFaceViewTest, RangeAccess) {
 class AssemblyFaceTest : public ::testing::Test {
 protected:
   using Face = specfem::assembly::Face<Kokkos::DefaultExecutionSpace>;
-  using IndexView = Kokkos::View<int **, Kokkos::LayoutStride,
-                                 Kokkos::DefaultExecutionSpace>;
+  using IndexView =
+      Kokkos::View<int **, Kokkos::LayoutStride, Kokkos::DefaultExecutionSpace>;
 
   static constexpr int num_points = 5;
 };
 
 TEST_F(AssemblyFaceTest, OperatorPointAccess) {
   // Create index views
-  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> iz_storage("iz",
-                                                                  num_points,
-                                                                  num_points);
-  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> iy_storage("iy",
-                                                                  num_points,
-                                                                  num_points);
-  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> ix_storage("ix",
-                                                                  num_points,
-                                                                  num_points);
+  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> iz_storage(
+      "iz", num_points, num_points);
+  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> iy_storage(
+      "iy", num_points, num_points);
+  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> ix_storage(
+      "ix", num_points, num_points);
 
   constexpr auto left = specfem::mesh_entity::dim3::type::left;
   using StorageType = decltype(iz_storage);
@@ -311,7 +300,8 @@ TEST_F(AssemblyFaceTest, OperatorPointAccess) {
   Kokkos::fence();
 
   // Test Face operator()
-  using FaceIndex = specfem::point::face_index<specfem::element::dimension_tag::dim3>;
+  using FaceIndex =
+      specfem::point::face_index<specfem::element::dimension_tag::dim3>;
   Kokkos::View<int[8], Kokkos::DefaultExecutionSpace> results("results");
 
   Kokkos::parallel_for(
@@ -335,17 +325,15 @@ TEST_F(AssemblyFaceTest, OperatorPointAccess) {
 
 TEST_F(AssemblyFaceTest, AllFaceTypes) {
   // Test all six 3D face types
-  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> iz_storage("iz",
-                                                                  num_points,
-                                                                  num_points);
-  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> iy_storage("iy",
-                                                                  num_points,
-                                                                  num_points);
-  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> ix_storage("ix",
-                                                                  num_points,
-                                                                  num_points);
+  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> iz_storage(
+      "iz", num_points, num_points);
+  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> iy_storage(
+      "iy", num_points, num_points);
+  Kokkos::View<int **, Kokkos::DefaultExecutionSpace> ix_storage(
+      "ix", num_points, num_points);
 
-  using FaceIndex = specfem::point::face_index<specfem::element::dimension_tag::dim3>;
+  using FaceIndex =
+      specfem::point::face_index<specfem::element::dimension_tag::dim3>;
   using StorageType = decltype(iz_storage);
 
   // Test bottom face (z = 0)
@@ -360,11 +348,10 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
-    Kokkos::parallel_for(
-        "test_bottom", 1,
-        TestFaceTypeFunctor<StorageType, decltype(results)>(
-            iz_storage, iy_storage, ix_storage, results, face_type,
-            num_points));
+    Kokkos::parallel_for("test_bottom", 1,
+                         TestFaceTypeFunctor<StorageType, decltype(results)>(
+                             iz_storage, iy_storage, ix_storage, results,
+                             face_type, num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -386,11 +373,10 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
-    Kokkos::parallel_for(
-        "test_top", 1,
-        TestFaceTypeFunctor<StorageType, decltype(results)>(
-            iz_storage, iy_storage, ix_storage, results, face_type,
-            num_points));
+    Kokkos::parallel_for("test_top", 1,
+                         TestFaceTypeFunctor<StorageType, decltype(results)>(
+                             iz_storage, iy_storage, ix_storage, results,
+                             face_type, num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -412,11 +398,10 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
-    Kokkos::parallel_for(
-        "test_left", 1,
-        TestFaceTypeFunctor<StorageType, decltype(results)>(
-            iz_storage, iy_storage, ix_storage, results, face_type,
-            num_points));
+    Kokkos::parallel_for("test_left", 1,
+                         TestFaceTypeFunctor<StorageType, decltype(results)>(
+                             iz_storage, iy_storage, ix_storage, results,
+                             face_type, num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -438,11 +423,10 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
-    Kokkos::parallel_for(
-        "test_right", 1,
-        TestFaceTypeFunctor<StorageType, decltype(results)>(
-            iz_storage, iy_storage, ix_storage, results, face_type,
-            num_points));
+    Kokkos::parallel_for("test_right", 1,
+                         TestFaceTypeFunctor<StorageType, decltype(results)>(
+                             iz_storage, iy_storage, ix_storage, results,
+                             face_type, num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -464,11 +448,10 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
-    Kokkos::parallel_for(
-        "test_front", 1,
-        TestFaceTypeFunctor<StorageType, decltype(results)>(
-            iz_storage, iy_storage, ix_storage, results, face_type,
-            num_points));
+    Kokkos::parallel_for("test_front", 1,
+                         TestFaceTypeFunctor<StorageType, decltype(results)>(
+                             iz_storage, iy_storage, ix_storage, results,
+                             face_type, num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);
@@ -490,11 +473,10 @@ TEST_F(AssemblyFaceTest, AllFaceTypes) {
     Kokkos::fence();
 
     Kokkos::View<int[3], Kokkos::DefaultExecutionSpace> results("results");
-    Kokkos::parallel_for(
-        "test_back", 1,
-        TestFaceTypeFunctor<StorageType, decltype(results)>(
-            iz_storage, iy_storage, ix_storage, results, face_type,
-            num_points));
+    Kokkos::parallel_for("test_back", 1,
+                         TestFaceTypeFunctor<StorageType, decltype(results)>(
+                             iz_storage, iy_storage, ix_storage, results,
+                             face_type, num_points));
     Kokkos::fence();
 
     auto host_results = Kokkos::create_mirror_view(results);

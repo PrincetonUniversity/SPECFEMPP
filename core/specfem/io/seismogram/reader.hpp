@@ -1,7 +1,6 @@
-#ifndef SPECFEM_READER_SEISMOGRAM_HPP
-#define SPECFEM_READER_SEISMOGRAM_HPP
+#pragma once
 
-#include "enumerations/specfem_enums.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io/reader.hpp"
 
 namespace specfem {
@@ -23,14 +22,14 @@ class seismogram_reader {
 public:
   seismogram_reader() {};
   seismogram_reader(const char *filename,
-                    const specfem::enums::seismogram::format type,
+                    const specfem::enums::seismogram_format type,
                     Kokkos::View<type_real **, Kokkos::LayoutRight,
                                  Kokkos::DefaultHostExecutionSpace>
                         source_time_function)
       : filename(filename), type(type),
         source_time_function(source_time_function) {}
   seismogram_reader(const std::string &filename,
-                    const specfem::enums::seismogram::format type,
+                    const specfem::enums::seismogram_format type,
                     Kokkos::View<type_real **, Kokkos::LayoutRight,
                                  Kokkos::DefaultHostExecutionSpace>
                         source_time_function)
@@ -41,12 +40,10 @@ public:
 private:
   std::string filename;
   type_real dt;
-  specfem::enums::seismogram::format type;
+  specfem::enums::seismogram_format type;
   Kokkos::View<type_real **, Kokkos::LayoutRight,
                Kokkos::DefaultHostExecutionSpace>
       source_time_function;
 };
 } // namespace io
 } // namespace specfem
-
-#endif /* SPECFEM_READER_SEISMOGRAM_HPP */

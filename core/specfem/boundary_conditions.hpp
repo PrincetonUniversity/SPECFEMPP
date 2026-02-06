@@ -6,8 +6,8 @@
 #include "boundary_conditions/none/none.hpp"
 #include "boundary_conditions/stacey/stacey.hpp"
 #include "boundary_conditions/stacey/stacey.tpp"
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 

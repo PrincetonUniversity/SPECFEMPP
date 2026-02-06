@@ -31,7 +31,7 @@ TEST_P(AcousticElasticCouplingTest, CouplingCalculation) {
   // Create interface data
   specfem::point::conforming_interface<
       specfem::element::dimension_tag::dim2,
-      specfem::interface::interface_tag::acoustic_elastic,
+      specfem::element_coupling::interface_tag::acoustic_elastic,
       specfem::element::boundary_tag::none>
       interface_data(params.edge_factor,
                      { params.normal[0], params.normal[1] });

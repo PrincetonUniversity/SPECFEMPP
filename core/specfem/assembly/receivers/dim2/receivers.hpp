@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../impl/receiver_iterator.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/receivers.hpp"
 
 namespace specfem::assembly {
@@ -78,7 +78,7 @@ public:
       const std::vector<
           std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
           &receivers,
-      const std::vector<specfem::wavefield::type> &stypes,
+      const std::vector<specfem::enums::wavefield> &stypes,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::mesh::tags<dimension_tag> &tags,
       const specfem::assembly::element_types<dimension_tag> &element_types);
@@ -122,9 +122,9 @@ public:
   /**
    * @brief Get the seismogram types
    *
-   * @return std::vector<specfem::wavefield::type> Vector of seismogram types
+   * @return std::vector<specfem::enums::wavefield> Vector of seismogram types
    */
-  std::vector<specfem::wavefield::type> get_seismogram_types() const {
+  std::vector<specfem::enums::wavefield> get_seismogram_types() const {
     return seismogram_types_;
   }
 

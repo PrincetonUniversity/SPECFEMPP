@@ -1,9 +1,9 @@
 
 #include "../../../test_macros.hpp"
 #include "SPECFEM_Environment.hpp"
-#include "enumerations/mesh_entities.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
 #include <gtest/gtest.h>
@@ -42,13 +42,13 @@ const static std::unordered_map<
             specfem::testing::predicate::connects(
                 0, specfem::mesh_entity::dim2::type::top, 1,
                 specfem::mesh_entity::dim2::type::bottom)
-                .with(specfem::connections::type::nonconforming),
+                .with(specfem::element_connections::type::nonconforming),
             specfem::testing::predicate::connects(
                 0, specfem::mesh_entity::dim2::type::top, 2,
                 specfem::mesh_entity::dim2::type::bottom)
-                .with(specfem::connections::type::nonconforming),
+                .with(specfem::element_connections::type::nonconforming),
             specfem::testing::predicate::connects(1, 2).with(
-                specfem::connections::type::strongly_conforming),
+                specfem::element_connections::type::strongly_conforming),
             specfem::testing::predicate::number_of_out_edges(0, 2),
             specfem::testing::predicate::number_of_out_edges(1, 2),
             specfem::testing::predicate::number_of_out_edges(2, 2),

@@ -1,4 +1,5 @@
 #include "adjacency_graph.hpp"
+#include "specfem/element_connections.hpp"
 #include <boost/range/iterator_range.hpp>
 #include <sstream>
 #include <stdexcept>
@@ -27,9 +28,10 @@ void specfem::mesh::adjacency_graph<
       std::ostringstream message;
       message << "Adjacency graph is not symmetric: edge from " << source
               << " to " << target << " has connection type "
-              << specfem::connections::to_string(edge_props.connection)
+              << specfem::element_connections::to_string(edge_props.connection)
               << ", but reverse edge has connection type "
-              << specfem::connections::to_string(target_edge_props.connection);
+              << specfem::element_connections::to_string(
+                     target_edge_props.connection);
       throw std::runtime_error(message.str());
     }
   }

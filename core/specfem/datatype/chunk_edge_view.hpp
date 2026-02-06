@@ -1,9 +1,9 @@
 #pragma once
 
 #include "accessor_type.hpp"
-#include "enumerations/interface.hpp"
 #include "impl/chunk_edge_subview.hpp"
 #include "simd.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 // Forward declarations

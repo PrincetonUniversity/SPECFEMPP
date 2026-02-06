@@ -11,7 +11,7 @@ target_link_libraries(
         PUBLIC
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
         specfem::element
-        enumerations
+        specfem::enums
         PRIVATE
         specfem::io
         assembly

@@ -1,11 +1,12 @@
 
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element_coupling.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::assembly::conforming_interfaces_impl {
 
@@ -19,11 +20,11 @@ namespace specfem::assembly::conforming_interfaces_impl {
  * @tparam InterfaceTag Type of interface (ELASTIC_ACOUSTIC or ACOUSTIC_ELASTIC)
  * @tparam BoundaryTag Boundary condition type (NONE, STACEY, etc.)
  */
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
-struct interface_container<specfem::element::dimension_tag::dim2, InterfaceTag,
-                           BoundaryTag,
-                           specfem::connections::type::weakly_conforming>
+struct interface_container<
+    specfem::element::dimension_tag::dim2, InterfaceTag, BoundaryTag,
+    specfem::element_connections::type::weakly_conforming>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::edge,
           specfem::data_access::DataClassType::conforming_interface,
@@ -37,12 +38,12 @@ public:
   constexpr static auto boundary_tag = BoundaryTag;
   /** @brief Medium type on the self side of the interface */
   constexpr static auto self_medium =
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::self_medium();
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::self_medium();
   /** @brief Medium type on the coupled side of the interface */
   constexpr static auto coupled_medium =
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::coupled_medium();
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::coupled_medium();
 
 private:
   /** @brief Base container type alias */

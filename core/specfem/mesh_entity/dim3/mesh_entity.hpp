@@ -272,7 +272,6 @@ struct element<specfem::element::dimension_tag::dim3>
     : element_grid<specfem::element::dimension_tag::dim3> {
 
 public:
-
   int ngll2d; ///< Points per 2D face
   int ngll;   ///< Points per direction
 
@@ -319,7 +318,7 @@ public:
    */
   std::tuple<int, int, int>
   map_coordinates(const specfem::mesh_entity::dim3::type &corner) const;
-  
+
   /**
    * @brief Get face coordinates by 2D indices.
    * @param face Face entity type
@@ -371,7 +370,6 @@ public:
       break;
     }
   }
-
 
   /**
    * @brief Get edge coordinates by 1D index.

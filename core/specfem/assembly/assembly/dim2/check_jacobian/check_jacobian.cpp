@@ -1,5 +1,5 @@
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/enums.hpp"
 
 #ifdef NO_VTK
 

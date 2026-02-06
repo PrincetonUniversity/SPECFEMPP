@@ -1,12 +1,12 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "impl/interface_container.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -51,9 +51,9 @@ public:
   static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
 
 private:
-  template <specfem::interface::interface_tag InterfaceTag,
+  template <specfem::element_coupling::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
-            specfem::connections::type ConnectionTag>
+            specfem::element_connections::type ConnectionTag>
   using InterfaceContainerType =
       specfem::assembly::conforming_interfaces_impl::interface_container<
           dimension_tag, InterfaceTag, BoundaryTag, ConnectionTag>;
@@ -119,13 +119,13 @@ public:
    * @example
    * ```cpp
    * const auto& container = interfaces.get_interface_container<
-   *     specfem::interface::interface_tag::elastic_acoustic,
+   *     specfem::element_coupling::interface_tag::elastic_acoustic,
    *     specfem::element::boundary_tag::stacey>();
    * ```
    */
-  template <specfem::interface::interface_tag InterfaceTag,
+  template <specfem::element_coupling::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
-            specfem::connections::type ConnectionTag>
+            specfem::element_connections::type ConnectionTag>
   KOKKOS_INLINE_FUNCTION const
       InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag> &
       get_interface_container() const {

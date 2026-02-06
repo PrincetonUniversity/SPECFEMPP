@@ -1,7 +1,9 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/element_coupling.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
@@ -90,14 +92,16 @@ struct FaceView {
   using QPView =
       Kokkos::View<int ***, Layout, ExecutionSpace>; ///< View type for
                                                      ///< quadrature point
-                                                     ///< arrays (3D: face x i x j)
+                                                     ///< arrays (3D: face x i x
+                                                     ///< j)
   using FaceTypeView = ///< View type for 3D face classifications
       Kokkos::View<specfem::mesh_entity::dim3::type *, ExecutionSpace>;
 
-  using HostMirror = std::conditional_t<
-      std::is_same<typename ExecutionSpace::memory_space,
-                   Kokkos::HostSpace>::value,
-      FaceView, FaceView<Kokkos::DefaultHostExecutionSpace, Layout>>;
+  using HostMirror =
+      std::conditional_t<std::is_same<typename ExecutionSpace::memory_space,
+                                      Kokkos::HostSpace>::value,
+                         FaceView,
+                         FaceView<Kokkos::DefaultHostExecutionSpace, Layout> >;
 
   /**
    * @brief Default constructor creating empty face view.
@@ -145,8 +149,8 @@ struct FaceView {
            const FaceTypeView &face_types, const QPView &iz, const QPView &iy,
            const QPView &ix)
       : n_faces(n_faces), n_points(n_points), element_index(element_index),
-        face_index(face_index), face_types(face_types), iz(iz), iy(iy),
-        ix(ix) {}
+        face_index(face_index), face_types(face_types), iz(iz), iy(iy), ix(ix) {
+  }
 
   /**
    * @brief Access individual face by index.
@@ -200,8 +204,8 @@ struct FaceView {
  *
  * // Get elastic-acoustic coupling faces on device
  * auto [self_faces, coupled_faces] = faces.get_faces_on_device(
- *     specfem::connections::type::weakly_conforming,
- *     specfem::interface::interface_tag::elastic_acoustic,
+ *     specfem::element_connections::type::weakly_conforming,
+ *     specfem::element_coupling::interface_tag::elastic_acoustic,
  *     specfem::element::boundary_tag::none);
  * @endcode
  */
@@ -247,8 +251,8 @@ public:
    */
   std::tuple<typename FaceViewType::HostMirror,
              typename FaceViewType::HostMirror>
-  get_faces_on_host(const specfem::connections::type connection,
-                    const specfem::interface::interface_tag face,
+  get_faces_on_host(const specfem::element_connections::type connection,
+                    const specfem::element_coupling::interface_tag face,
                     const specfem::element::boundary_tag boundary) const;
 
   /**
@@ -260,8 +264,8 @@ public:
    * @return Tuple of (self_faces, coupled_faces) for device processing
    */
   std::tuple<FaceViewType, FaceViewType>
-  get_faces_on_device(const specfem::connections::type connection,
-                      const specfem::interface::interface_tag face,
+  get_faces_on_device(const specfem::element_connections::type connection,
+                      const specfem::element_coupling::interface_tag face,
                       const specfem::element::boundary_tag boundary) const;
 
   /**

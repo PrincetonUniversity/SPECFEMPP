@@ -5,7 +5,7 @@
 
 void specfem::io::seismogram_reader::read() {
 
-  if (type != specfem::enums::seismogram::format::ascii) {
+  if (type != specfem::enums::seismogram_format::ascii) {
     throw std::runtime_error("Only ASCII format is supported");
   }
 

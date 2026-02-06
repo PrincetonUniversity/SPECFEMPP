@@ -1,5 +1,4 @@
 #include "update_wavefields.hpp"
-#include "enumerations/interface.hpp"
 #include "impl/compute_coupling.hpp"
 #include "impl/compute_coupling.tpp"
 #include "impl/compute_source_interaction.hpp"
@@ -9,6 +8,7 @@
 #include "impl/divide_mass_matrix.hpp"
 #include "impl/divide_mass_matrix.tpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 
 namespace specfem::compute {
@@ -43,9 +43,8 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
                     COMPOSITE_STACEY_DIRICHLET),
        FLUX_SCHEME_TAG(NATURAL)),
       {
-        constexpr auto self_medium =
-            specfem::interface::attributes<_dimension_tag_,
-                                           _interface_tag_>::self_medium();
+        constexpr auto self_medium = specfem::element_coupling::attributes<
+            _dimension_tag_, _interface_tag_>::self_medium();
         if constexpr (DimensionTag == _dimension_tag_ &&
                       self_medium == MediumTag) {
           impl::compute_coupling<_dimension_tag_, _connection_tag_,

@@ -206,8 +206,8 @@ TEST_F(SeismogramIterator2DTest, GetSeismogramMethod) {
 
   std::string station_name = "TEST_STATION";
   std::string network_name = "TEST_NETWORK";
-  specfem::wavefield::type wavefield_type =
-      specfem::wavefield::type::displacement;
+  specfem::enums::wavefield wavefield_type =
+      specfem::enums::wavefield::displacement;
 
   // Note: This will likely throw since maps aren't populated, but we test the
   // method exists

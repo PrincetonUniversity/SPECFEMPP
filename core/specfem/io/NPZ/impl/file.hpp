@@ -4,8 +4,8 @@
 #include <zlib.h>
 #endif
 
-#include "enumerations/interface.hpp"
 #include "group.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io/NPY/impl/npy_header.hpp"
 #include <fstream>
 #include <stdexcept>

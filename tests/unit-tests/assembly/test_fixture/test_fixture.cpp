@@ -54,8 +54,8 @@ template <> Assembly<specfem::element::dimension_tag::dim2>::Assembly() {
 
     this->Stations.push_back(receivers);
 
-    std::vector<specfem::wavefield::type> seismogram_types = {
-      specfem::wavefield::type::displacement
+    std::vector<specfem::enums::wavefield> seismogram_types = {
+      specfem::enums::wavefield::displacement
     };
 
     this->assemblies.push_back(
@@ -106,8 +106,8 @@ template <> Assembly<specfem::element::dimension_tag::dim3>::Assembly() {
 
     std::cout << "Number of receivers: " << receivers.size() << std::endl;
 
-    std::vector<specfem::wavefield::type> seismogram_types = {
-      specfem::wavefield::type::displacement
+    std::vector<specfem::enums::wavefield> seismogram_types = {
+      specfem::enums::wavefield::displacement
     };
 
     this->assemblies.push_back(

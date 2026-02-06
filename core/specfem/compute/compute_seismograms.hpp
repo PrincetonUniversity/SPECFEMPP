@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "impl/compute_seismograms.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::compute {
 /**

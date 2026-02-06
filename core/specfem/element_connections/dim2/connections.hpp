@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <functional>
 #include <stdexcept>
 #include <tuple>
 #include <unordered_map>
 
-namespace specfem::connections {
+namespace specfem::element_connections {
 
 /**
  * @brief 2D coordinate mapping between adjacent spectral elements.
@@ -70,4 +70,4 @@ private:
   ElementIndexView element2; ///< Control node indices for second element
 };
 
-} // namespace specfem::connections
+} // namespace specfem::element_connections

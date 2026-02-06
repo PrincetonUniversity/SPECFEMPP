@@ -14,10 +14,10 @@
 //      Since, the computed strain for a uniform wavefield is zero.
 
 #pragma once
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 
-template <specfem::wavefield::type component,
+template <specfem::enums::wavefield component,
           specfem::element::medium_tag medium,
           specfem::element::property_tag property>
 class test_helper {
@@ -33,8 +33,8 @@ public:
   void test() {
 
     constexpr static int num_components =
-        specfem::wavefield::wavefield<specfem::element::dimension_tag::dim2,
-                                      component>::num_components();
+        specfem::element::attributes<specfem::element::dimension_tag::dim2,
+                                     medium>::components;
 
     const int ngllz = assembly.mesh.element_grid.ngllz;
     const int ngllx = assembly.mesh.element_grid.ngllx;
@@ -71,7 +71,7 @@ private:
 
 template <specfem::element::medium_tag medium,
           specfem::element::property_tag property>
-class test_helper<specfem::wavefield::type::pressure, medium, property> {
+class test_helper<specfem::enums::wavefield::pressure, medium, property> {
 public:
   test_helper(const int ispec,
               const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
@@ -82,9 +82,9 @@ public:
 
   void test() {
 
-    constexpr static int num_components = specfem::wavefield::wavefield<
+    constexpr static int num_components = specfem::element::attributes<
         specfem::element::dimension_tag::dim2,
-        specfem::wavefield::type::pressure>::num_components();
+        specfem::element::medium_tag::acoustic>::components;
 
     const int ngllz = assembly.mesh.element_grid.ngllz;
     const int ngllx = assembly.mesh.element_grid.ngllx;
@@ -136,7 +136,7 @@ private:
   specfem::assembly::assembly<specfem::element::dimension_tag::dim2> &assembly;
 };
 
-template <specfem::wavefield::type component>
+template <specfem::enums::wavefield component>
 class test_helper<component, specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic> {
 
@@ -150,9 +150,9 @@ public:
 
   void test() {
 
-    constexpr static int num_components =
-        specfem::wavefield::wavefield<specfem::element::dimension_tag::dim2,
-                                      component>::num_components();
+    constexpr static int num_components = specfem::element::attributes<
+        specfem::element::dimension_tag::dim2,
+        specfem::element::medium_tag::acoustic>::components;
 
     const int ngllz = assembly.mesh.element_grid.ngllz;
     const int ngllx = assembly.mesh.element_grid.ngllx;
@@ -203,7 +203,7 @@ private:
 };
 
 template <>
-class test_helper<specfem::wavefield::type::pressure,
+class test_helper<specfem::enums::wavefield::pressure,
                   specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic> {
 
@@ -217,9 +217,9 @@ public:
 
   void test() {
 
-    constexpr static int num_components = specfem::wavefield::wavefield<
+    constexpr static int num_components = specfem::element::attributes<
         specfem::element::dimension_tag::dim2,
-        specfem::wavefield::type::pressure>::num_components();
+        specfem::element::medium_tag::acoustic>::components;
 
     const int ngllz = assembly.mesh.element_grid.ngllz;
     const int ngllx = assembly.mesh.element_grid.ngllx;

@@ -1,8 +1,8 @@
 #pragma once
-#include "enumerations/connections.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/element_connections.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mesh/dim2/adjacency_graph/adjacency_graph.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <string>
 #include <type_traits>
 
@@ -19,7 +19,7 @@ public:
   int jspec;
   specfem::mesh_entity::dim2::type ispec_mesh_entity;
   specfem::mesh_entity::dim2::type jspec_mesh_entity;
-  specfem::connections::type connection_type;
+  specfem::element_connections::type connection_type;
   bool check_ispec_mesh_entity;
   bool check_jspec_mesh_entity;
   bool check_connection_type;
@@ -111,7 +111,7 @@ public:
    * @param connection_type - type to ensure
    * @return connects& - *this to be used in a builder pattern
    */
-  connects &with(const specfem::connections::type &connection_type) {
+  connects &with(const specfem::element_connections::type &connection_type) {
     this->connection_type = connection_type;
     check_connection_type = true;
     return *this;

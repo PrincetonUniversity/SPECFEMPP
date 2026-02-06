@@ -4,7 +4,7 @@
 #include "specfem/io/impl/medium_writer.hpp"
 #include "writer.hpp"
 #include "specfem/assembly.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem {
 namespace io {

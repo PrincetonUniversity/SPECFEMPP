@@ -1,9 +1,9 @@
 #pragma once
 
 #include "control_nodes.hpp"
-#include "specfem/element.hpp"
 #include "shape_functions.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io/reader.hpp"
 
 namespace specfem {

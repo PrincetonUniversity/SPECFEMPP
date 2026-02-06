@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "boundary_values.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/mesh.hpp"

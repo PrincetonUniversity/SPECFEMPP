@@ -1,7 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element_coupling.hpp"
+#include "specfem/enums.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -16,7 +17,7 @@ namespace specfem::point {
  * @tparam BoundaryTag Boundary condition type
  */
 template <specfem::element::dimension_tag DimensionTag,
-          specfem::interface::interface_tag InterfaceTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
 struct conforming_interface;
 
@@ -30,7 +31,7 @@ struct conforming_interface;
  * @tparam InterfaceTag Type of interface (elastic-acoustic or acoustic-elastic)
  * @tparam BoundaryTag Boundary condition applied to the interface
  */
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
 struct conforming_interface<specfem::element::dimension_tag::dim2, InterfaceTag,
                             BoundaryTag>
@@ -57,7 +58,7 @@ public:
    * @brief Connection type between elements.
    */
   static constexpr auto connection_tag =
-      specfem::connections::type::weakly_conforming;
+      specfem::element_connections::type::weakly_conforming;
 
   /**
    * @brief Interface type (elastic-acoustic or acoustic-elastic).

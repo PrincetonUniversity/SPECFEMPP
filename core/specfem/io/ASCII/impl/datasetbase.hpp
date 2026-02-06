@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_IO_ASCII_IMPL_DATASETBASE_HPP
-#define _SPECFEM_IO_ASCII_IMPL_DATASETBASE_HPP
+#pragma once
 
 #include "native_type.hpp"
 #include "native_type.tpp"
@@ -180,5 +179,3 @@ private:
 } // namespace impl
 } // namespace io
 } // namespace specfem
-
-#endif /* _SPECFEM_IO_ASCII_IMPL_DATASETBASE_HPP */

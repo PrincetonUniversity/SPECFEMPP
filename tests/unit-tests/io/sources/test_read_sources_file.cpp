@@ -1,6 +1,5 @@
 #include "../../SPECFEM_Environment.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "enumerations/wavefield.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"

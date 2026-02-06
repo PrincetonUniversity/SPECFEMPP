@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-
+#include "specfem/enums.hpp"
+#include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/fields/impl/field_impl.tpp"

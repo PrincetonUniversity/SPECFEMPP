@@ -1,6 +1,6 @@
-#include "enumerations/interface.hpp"
 #include "globals.h"
 
+#include "specfem/enums.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 

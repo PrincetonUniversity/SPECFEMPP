@@ -3,7 +3,7 @@
 #include "specfem/assembly/info/impl/compute.hpp"
 #include "specfem/assembly/info/impl/scatter_minmax.hpp"
 #include "specfem/assembly/info/impl/distances.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include "specfem/assembly/info/impl/bounding_box.hpp"

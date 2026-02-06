@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dataset.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "file.hpp"
 
 #include <Kokkos_Core.hpp>

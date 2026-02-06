@@ -231,24 +231,6 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # Add module subdirectories
 add_subdirectory(core)
 
-add_library(
-        enumerations
-        src/enumerations/display.cpp
-        src/enumerations/wavefield.cpp
-        src/enumerations/dim2/connections.cpp
-        src/enumerations/dim3/connections.cpp
-        src/enumerations/dim3/mesh_entities.cpp
-        src/enumerations/dim2/mesh_entities.cpp
-        src/enumerations/dim2/connections.cpp
-        src/enumerations/coupled_interface.cpp
-)
-
-target_link_libraries(
-        enumerations
-        ${BOOST_LIBS}
-        Kokkos::kokkos
-)
-
 # specfem2d executable for backward compatibility
 add_executable(specfem2d src/specfem2d.cpp)
 target_link_libraries(specfem2d

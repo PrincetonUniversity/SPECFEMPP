@@ -1,8 +1,8 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "enumerations/wavefield.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/element.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>

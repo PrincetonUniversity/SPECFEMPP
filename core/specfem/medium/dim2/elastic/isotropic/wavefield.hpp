@@ -27,7 +27,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const DisplacementFieldType &displacement,
     const VelocityFieldType &velocity,
     const AccelerationFieldType &acceleration,
-    const specfem::wavefield::type wavefield_type,
+    const specfem::enums::wavefield wavefield_type,
     WavefieldViewType wavefield) {
 
   using FieldDerivativesType = specfem::point::field_derivatives<
@@ -43,13 +43,13 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   const auto &properties = assembly.properties;
 
   const auto &active_field = [&]() {
-    if (wavefield_type == specfem::wavefield::type::displacement) {
+    if (wavefield_type == specfem::enums::wavefield::displacement) {
       return displacement.get_data();
-    } else if (wavefield_type == specfem::wavefield::type::velocity) {
+    } else if (wavefield_type == specfem::enums::wavefield::velocity) {
       return velocity.get_data();
-    } else if (wavefield_type == specfem::wavefield::type::acceleration) {
+    } else if (wavefield_type == specfem::enums::wavefield::acceleration) {
       return acceleration.get_data();
-    } else if (wavefield_type == specfem::wavefield::type::pressure) {
+    } else if (wavefield_type == specfem::enums::wavefield::pressure) {
       return displacement.get_data();
     } else {
       KOKKOS_ABORT_WITH_LOCATION("Unsupported wavefield component for 2D "
@@ -57,7 +57,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     }
   }();
 
-  if (wavefield_type == specfem::wavefield::type::pressure) {
+  if (wavefield_type == specfem::enums::wavefield::pressure) {
 
     specfem::algorithms::gradient(
         chunk_index, assembly.jacobian_matrix, lagrange_derivative,
@@ -127,7 +127,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const DisplacementFieldType &displacement,
     const VelocityFieldType &velocity,
     const AccelerationFieldType &acceleration,
-    const specfem::wavefield::type wavefield_type,
+    const specfem::enums::wavefield wavefield_type,
     WavefieldViewType wavefield) {
 
   using FieldDerivativesType = specfem::point::field_derivatives<
@@ -135,11 +135,11 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
       specfem::element::medium_tag::elastic_sh, false>;
 
   const auto &active_field = [&]() {
-    if (wavefield_type == specfem::wavefield::type::displacement) {
+    if (wavefield_type == specfem::enums::wavefield::displacement) {
       return displacement.get_data();
-    } else if (wavefield_type == specfem::wavefield::type::velocity) {
+    } else if (wavefield_type == specfem::enums::wavefield::velocity) {
       return velocity.get_data();
-    } else if (wavefield_type == specfem::wavefield::type::acceleration) {
+    } else if (wavefield_type == specfem::enums::wavefield::acceleration) {
       return acceleration.get_data();
     } else {
       KOKKOS_ABORT_WITH_LOCATION(

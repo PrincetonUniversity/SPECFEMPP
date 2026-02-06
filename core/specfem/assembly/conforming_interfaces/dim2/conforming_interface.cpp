@@ -1,10 +1,10 @@
 
-#include "enumerations/interface.hpp"
 #include "impl/interface_container.tpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 
 specfem::assembly::conforming_interfaces<

@@ -1,14 +1,13 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
 #include "specfem/assembly/compute_source_array.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/element_types.hpp"
-#include "specfem/assembly/info.hpp"
 #include "specfem/assembly/fields.hpp"
+#include "specfem/assembly/info.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/kernels.hpp"
 #include "specfem/assembly/mesh.hpp"
@@ -16,6 +15,7 @@
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
@@ -158,7 +158,7 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
 
   /**
    * @brief Info
-   * 
+   *
    */
   specfem::assembly::Info<dimension_tag> info;
 
@@ -191,7 +191,7 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
       const std::vector<
           std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
           &receivers,
-      const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
+      const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
       const type_real dt, const int max_timesteps, const int max_sig_step,
       const int nsteps_between_samples,
       const specfem::simulation::type simulation,
@@ -211,7 +211,7 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
   Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   generate_wavefield_on_entire_grid(
       const specfem::simulation::field_type wavefield,
-      const specfem::wavefield::type component);
+      const specfem::enums::wavefield component);
 
   /**
    * @brief Get the total number of spectral elements in the mesh
@@ -249,7 +249,6 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
    *
    */
   void check_jacobian_matrix() const;
-
 };
 
 } // namespace specfem::assembly

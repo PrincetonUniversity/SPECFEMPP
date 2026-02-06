@@ -1,12 +1,11 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/impl/domain_properties.hpp"
 #include "specfem/assembly/impl/value_containers.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

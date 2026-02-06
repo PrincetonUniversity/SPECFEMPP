@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_IO_ASCII_IMPL_DATASET_HPP
-#define _SPECFEM_IO_ASCII_IMPL_DATASET_HPP
+#pragma once
 
 #include "datasetbase.hpp"
 #include "native_type.hpp"
@@ -74,5 +73,3 @@ private:
 } // namespace impl
 } // namespace io
 } // namespace specfem
-
-#endif /* _SPECFEM_IO_ASCII_IMPL_DATASET_HPP */

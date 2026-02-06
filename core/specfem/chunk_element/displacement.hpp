@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "impl/field.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::chunk_element {
 

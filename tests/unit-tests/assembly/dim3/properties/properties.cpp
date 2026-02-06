@@ -18,8 +18,8 @@
  * @see specfem::point::properties for individual point property access
  */
 #include "../test_fixture.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"

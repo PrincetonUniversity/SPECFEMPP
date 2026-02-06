@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::mesh {

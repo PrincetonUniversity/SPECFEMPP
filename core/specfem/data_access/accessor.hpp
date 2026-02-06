@@ -1,8 +1,8 @@
 #pragma once
 
 #include "data_class.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include <type_traits>
 
 namespace specfem::data_access {

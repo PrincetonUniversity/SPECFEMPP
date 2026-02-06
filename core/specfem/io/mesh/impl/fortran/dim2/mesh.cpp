@@ -1,7 +1,7 @@
 // Internal Includes
 #include "specfem/mesh.hpp"
-#include "enumerations/interface.hpp"
 
+#include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
 #include "specfem/io/mesh/impl/fortran/dim2/read_adjacency_graph.hpp"

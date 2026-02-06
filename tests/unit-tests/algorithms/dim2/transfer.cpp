@@ -7,11 +7,11 @@
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 
-#include "enumerations/interface.hpp"
 #include "specfem/algorithms/transfer.hpp"
 #include "specfem/chunk_edge.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/utilities.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 
@@ -61,7 +61,7 @@ private:
 constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
 /** Interface type (dummy for testing) */
 constexpr static auto interface_tag =
-    specfem::interface::interface_tag::acoustic_elastic;
+    specfem::element_coupling::interface_tag::acoustic_elastic;
 /** Boundary type (dummy for testing) */
 constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
 

@@ -1,7 +1,7 @@
 #include "dim2/simulation_field.tpp"
 #include "dim3/simulation_field.tpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/fields.hpp"
+#include "specfem/enums.hpp"
 #include <boost/preprocessor.hpp>
 
 #define DIMENSION_TAGS                                                         \

@@ -52,7 +52,7 @@ compute_wavefield(const ChunkIndexType &chunk_index,
                   const DisplacementFieldType &displacement,
                   const VelocityFieldType &velocity,
                   const AccelerationFieldType &acceleration,
-                  const specfem::wavefield::type &wavefield_component,
+                  const specfem::enums::wavefield &wavefield_component,
                   WavefieldViewType wavefield_on_entire_grid) {
 
   static_assert((WavefieldViewType::rank() == 4 &&

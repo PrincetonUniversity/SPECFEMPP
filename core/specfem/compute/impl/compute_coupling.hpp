@@ -1,24 +1,25 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include <type_traits>
 
 namespace specfem::compute::impl {
 
 template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType,
-          specfem::interface::interface_tag InterfaceTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::interface::flux_scheme_tag FluxSchemeTag>
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
 void compute_coupling_weakly_conforming(
     const specfem::assembly::assembly<DimensionTag> &assembly);
 
 template <specfem::element::dimension_tag DimensionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
-          int NQuad_interface, specfem::interface::interface_tag InterfaceTag,
+          int NQuad_interface,
+          specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::interface::flux_scheme_tag FluxSchemeTag>
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
 void compute_coupling_nonconforming(
     const specfem::assembly::assembly<DimensionTag> &assembly);
 
@@ -40,20 +41,21 @@ void compute_coupling_nonconforming(
  * @param assembly SPECFEM++ assembly object.
  */
 template <specfem::element::dimension_tag DimensionTag,
-          specfem::connections::type ConnectionTag,
+          specfem::element_connections::type ConnectionTag,
           specfem::simulation::field_type WavefieldType, int NGLL,
           int NQuad_intersection,
-          specfem::interface::interface_tag InterfaceTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::interface::flux_scheme_tag FluxSchemeTag>
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
 void compute_coupling(
     const specfem::assembly::assembly<DimensionTag> &assembly) {
   // Create dispatch tag for connection type
   using connection_dispatch =
-      std::integral_constant<specfem::connections::type, ConnectionTag>;
+      std::integral_constant<specfem::element_connections::type, ConnectionTag>;
 
   // Forward to implementation with dispatch tag
-  if constexpr (ConnectionTag == specfem::connections::type::nonconforming) {
+  if constexpr (ConnectionTag ==
+                specfem::element_connections::type::nonconforming) {
     compute_coupling_nonconforming<DimensionTag, WavefieldType, NGLL,
                                    NQuad_intersection, InterfaceTag,
                                    BoundaryTag, FluxSchemeTag>(assembly);

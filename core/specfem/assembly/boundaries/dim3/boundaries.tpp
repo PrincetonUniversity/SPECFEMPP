@@ -1,7 +1,7 @@
 #pragma once
 
 #include "boundaries.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 

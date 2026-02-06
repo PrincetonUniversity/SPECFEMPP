@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/wavefield.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/element.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem {
 namespace compute {

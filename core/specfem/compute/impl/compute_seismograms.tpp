@@ -7,7 +7,7 @@
 #include "specfem/quadrature.hpp"
 #include "specfem/element.hpp"
 #include "specfem/element.hpp"
-#include "enumerations/wavefield.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"

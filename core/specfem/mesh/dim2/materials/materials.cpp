@@ -1,5 +1,5 @@
 #include "materials.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/macros.hpp"
 

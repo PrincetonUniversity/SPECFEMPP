@@ -1,8 +1,8 @@
 #pragma once
 
 #include "element_types.hpp"
-#include "enumerations/interface.hpp"
 #include "mesh.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
