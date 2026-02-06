@@ -47,6 +47,17 @@ Tests:
       sources : "data/dim2/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
       stations : "data/dim2/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
 
+  - name : "Simple mesh with flat ocean bottom w attenuation"
+    description: >
+      Testing mesh reader on a simple mesh with flat ocean bottom. Fluid-solid interface is at the ocean bottom.
+    config:
+      nproc : 1
+      elastic_wave: "P_SV"
+    databases:
+      mesh : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/database.bin"
+      sources : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/sources.yaml"
+      stations : "data/dim2/fluid_solid_mesh_flat_ocean_bottom_attenuation/STATIONS"
+
 # Curved ocean bottom
   - name : "Simple mesh with curved ocean bottom"
     description: >
@@ -107,6 +118,18 @@ Tests:
       sources: "data/dim2/homogeneous_poroelastic_isotropic/sources.yaml"
       stations: "data/dim2/homogeneous_poroelastic_isotropic/DATA/STATIONS"
 
+  # Poroelastic mesh w attenuation
+  - name: "Poroelastic mesh - Homogeneous isotropic material w attenuation"
+    description: >
+      Testing the reading of an poroelastic mesh.
+    config:
+      nproc: 1
+      elastic_wave: "P_SV"
+    databases:
+      mesh: "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/database.bin"
+      sources: "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/sources.yaml"
+      stations: "data/dim2/homogeneous_poroelastic_isotropic_w_attenuation/DATA/STATIONS"
+
   # Elastic Spin mesh
   - name: "Elastic Isotropic Cosserat Medium - Homogeneous"
     description: >
@@ -119,14 +142,14 @@ Tests:
       sources: "data/dim2/cosserat_isotropic_homogeneous/sources.yaml"
       stations: "data/dim2/cosserat_isotropic_homogeneous/DATA/STATIONS"
 
-# # Electromagnetic mesh P_SV wave
-#   - name: "Electro-magnetic mesh example from Morency 2020"
-#     description: >
-#       Testing the reading of an electromagnetic mesh.
-#     config:
-#       nproc: 1
-#       elastic_wave: "P_SV"
-#     databases:
-#       mesh: "data/dim2/electromagnetic_mesh_morency2020/database.bin"
-#       sources: "data/dim2/electromagnetic_mesh_morency2020/sources.yaml"
-#       stations: "data/dim2/electromagnetic_mesh_morency2020/DATA/STATIONS"
+# Electromagnetic mesh P_SV wave
+  - name: "Electro-magnetic mesh example from Morency 2020"
+    description: >
+      Testing the reading of an electromagnetic mesh.
+    config:
+      nproc: 1
+      elastic_wave: "P_SV"
+    databases:
+      mesh: "data/dim2/electromagnetic_mesh_morency2020/database.bin"
+      sources: "data/dim2/electromagnetic_mesh_morency2020/sources.yaml"
+      stations: "data/dim2/electromagnetic_mesh_morency2020/DATA/STATIONS"

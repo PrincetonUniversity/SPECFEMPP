@@ -195,7 +195,7 @@ specfem::io::read_2d_mesh(
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T,
                   ELECTROMAGNETIC_TE),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE)),
+       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
       {
         total_materials_read += mesh.materials
                                     .get_container<_medium_tag_, _property_tag_,

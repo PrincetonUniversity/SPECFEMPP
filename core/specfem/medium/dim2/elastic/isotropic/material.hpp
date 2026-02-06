@@ -22,6 +22,8 @@ public:
   type_real Qkappa; ///< Attenuation factor for bulk modulus
   type_real Qmu;    ///< Attenuation factor for shear modulus
 
+  AttenuationValues() = default;
+
   AttenuationValues(const type_real &Qkappa, const type_real &Qmu)
       : Qkappa(Qkappa), Qmu(Qmu) {
     if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
