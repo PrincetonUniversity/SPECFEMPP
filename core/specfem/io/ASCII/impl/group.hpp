@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_IO_ASCII_IMPL_GROUP_HPP
-#define _SPECFEM_IO_ASCII_IMPL_GROUP_HPP
+#pragma once
 
 #include <boost/filesystem.hpp>
 #include <iostream>
@@ -176,5 +175,3 @@ private:
 } // namespace impl
 } // namespace io
 } // namespace specfem
-
-#endif /* _SPECFEM_IO_ASCII_IMPL_GROUP_HPP */

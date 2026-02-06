@@ -1,5 +1,4 @@
-#ifndef SPECFEM_READER_SEISMOGRAM_HPP
-#define SPECFEM_READER_SEISMOGRAM_HPP
+#pragma once
 
 #include "specfem/enums.hpp"
 #include "specfem/io/reader.hpp"
@@ -48,5 +47,3 @@ private:
 };
 } // namespace io
 } // namespace specfem
-
-#endif /* SPECFEM_READER_SEISMOGRAM_HPP */

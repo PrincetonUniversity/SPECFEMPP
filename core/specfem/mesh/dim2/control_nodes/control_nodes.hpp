@@ -1,5 +1,4 @@
-#ifndef _MESH_CONTROL_NODES_HPP
-#define _MESH_CONTROL_NODES_HPP
+#pragma once
 
 #include "specfem/enums.hpp"
 #include "specfem_setup.hpp"
@@ -53,5 +52,3 @@ template <> struct control_nodes<specfem::element::dimension_tag::dim2> {
 
 } // namespace mesh
 } // namespace specfem
-
-#endif

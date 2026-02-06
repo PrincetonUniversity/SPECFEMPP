@@ -1,5 +1,4 @@
-#ifndef _FORTRAN_IO_INTERFACE_HPP
-#define _FORTRAN_IO_INTERFACE_HPP
+#pragma once
 
 #include "fortran_io.hpp"
 #include "fortran_io.tpp"
@@ -32,5 +31,3 @@ template <typename... Args>
 void fortran_read_line(std::ifstream &stream, Args... values);
 } // namespace io
 } // namespace specfem
-
-#endif

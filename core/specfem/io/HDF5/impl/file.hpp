@@ -1,5 +1,4 @@
-#ifndef SPECFEM_IO_HDF5_IMPL_FILE_HPP
-#define SPECFEM_IO_HDF5_IMPL_FILE_HPP
+#pragma once
 
 #ifndef NO_HDF5
 #include "H5Cpp.h"
@@ -191,5 +190,3 @@ private:
 } // namespace impl
 } // namespace io
 } // namespace specfem
-
-#endif

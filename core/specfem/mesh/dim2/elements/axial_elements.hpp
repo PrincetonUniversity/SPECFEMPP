@@ -1,5 +1,4 @@
-#ifndef _AXIAL_ELEMENTS_HPP
-#define _AXIAL_ELEMENTS_HPP
+#pragma once
 
 #include "specfem/enums.hpp"
 
@@ -28,5 +27,3 @@ template <> struct axial_elements<specfem::element::dimension_tag::dim2> {
 } // namespace elements
 } // namespace mesh
 } // namespace specfem
-
-#endif

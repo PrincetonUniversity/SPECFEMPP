@@ -1,5 +1,4 @@
-#ifndef _FORTRAN_IO_HPP
-#define _FORTRAN_IO_HPP
+#pragma once
 
 #include "specfem_setup.hpp"
 #include <fstream>
@@ -47,5 +46,3 @@ void fortran_read_value(double *value, std::ifstream &stream,
 void fortran_read_value(int *value, std::ifstream &stream, int &buffer_length);
 } // namespace io
 } // namespace specfem
-
-#endif
