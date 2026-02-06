@@ -1,6 +1,6 @@
 
 #include "../include/interface.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/io.hpp"
 #include <Kokkos_Core.hpp>
 #include <exception>

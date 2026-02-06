@@ -1,7 +1,6 @@
 #ifndef _MESH_CONTROL_NODES_HPP
 #define _MESH_CONTROL_NODES_HPP
 
-#include "kokkos_abstractions.h"
 #include "specfem/enums.hpp"
 #include "specfem_setup.hpp"
 

@@ -198,14 +198,10 @@
        ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC,    \
        ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,                           \
-       PROPERTY_TAG_ISOTROPIC_COSSERAT, ATTENUATION_TAG_CONSTANT_ISOTROPIC))(  \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
        ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC,     \
-       ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
-       PROPERTY_TAG_ISOTROPIC, ATTENUATION_TAG_CONSTANT_ISOTROPIC))
+       ATTENUATION_TAG_CONSTANT_ISOTROPIC))
 
 #define MATERIAL_SYSTEMS_DIM3                                                  \
   ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC,            \
@@ -319,8 +315,8 @@
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 #define FOR_EACH_IN_PRODUCT(seq, ...)                                          \
-  BOOST_PP_SEQ_FOR_EACH(                                                       \
-      _FOR_ONE_TAG_SEQ, (seq)BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),            \
-      BOOST_PP_CAT(_SEQ_FOR_TAGS_, BOOST_PP_TUPLE_SIZE(seq)))
+  BOOST_PP_SEQ_FOR_EACH(_FOR_ONE_TAG_SEQ,                                      \
+                        (seq)BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),            \
+                        _GET_VALID_SEQS(BOOST_PP_TUPLE_SIZE(seq)))
 
 #include "interface_iterators.hpp"

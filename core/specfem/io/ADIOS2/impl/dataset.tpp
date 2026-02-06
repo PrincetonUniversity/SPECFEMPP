@@ -4,12 +4,12 @@
 #include <adios2.h>
 #endif
 
-#include "specfem/io/operators.hpp"
 #include "dataset.hpp"
 #include "datasetbase.hpp"
-#include "kokkos_abstractions.h"
+
 #include "native_type.hpp"
 #include "native_type.tpp"
+#include "specfem/io/operators.hpp"
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -29,7 +29,9 @@ specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::Dataset(
 
   // Define variable for writing
   using native_type = specfem::io::impl::ADIOS2::native_type<value_type>;
-  variable = this->io_ptr->template DefineVariable<decltype(native_type::type())>(name, shape, start, count);
+  variable =
+      this->io_ptr->template DefineVariable<decltype(native_type::type())>(
+          name, shape, start, count);
 }
 
 // Constructor implementation for read operations
@@ -45,7 +47,9 @@ specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::Dataset(
 
   // Inquire variable for reading
   using native_type = specfem::io::impl::ADIOS2::native_type<value_type>;
-  variable = this->io_ptr->template InquireVariable<decltype(native_type::type())>(name);
+  variable =
+      this->io_ptr->template InquireVariable<decltype(native_type::type())>(
+          name);
   if (!variable) {
     throw std::runtime_error("Variable not found: " + name);
   }
@@ -74,9 +78,10 @@ specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::write() {
 
   if constexpr (std::is_same_v<value_type, storage_type>) {
     // Direct write - no conversion needed
-    if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
+    if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
       DatasetBase<specfem::io::write>::write(data.data(), variable);
-    } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
+    } else if (std::is_same_v<MemSpace,
+                              Kokkos::DefaultExecutionSpace::memory_space>) {
       auto host_data = Kokkos::create_mirror_view(data);
       Kokkos::deep_copy(host_data, data);
       DatasetBase<specfem::io::write>::write(host_data.data(), variable);
@@ -86,13 +91,14 @@ specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::write() {
   } else {
     // Convert then write
     native_t converter;
-    if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
+    if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
       std::vector<storage_type> converted_data(data.size());
       for (size_t i = 0; i < data.size(); ++i) {
         converted_data[i] = converter(data.data()[i]);
       }
       DatasetBase<specfem::io::write>::write(converted_data.data(), variable);
-    } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
+    } else if (std::is_same_v<MemSpace,
+                              Kokkos::DefaultExecutionSpace::memory_space>) {
       auto host_data = Kokkos::create_mirror_view(data);
       Kokkos::deep_copy(host_data, data);
       std::vector<storage_type> converted_data(host_data.size());
@@ -117,9 +123,10 @@ specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::read() {
 
   if constexpr (std::is_same_v<value_type, storage_type>) {
     // Direct read - no conversion needed
-    if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
+    if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
       DatasetBase<specfem::io::read>::read(data.data(), variable);
-    } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
+    } else if (std::is_same_v<MemSpace,
+                              Kokkos::DefaultExecutionSpace::memory_space>) {
       auto host_data = Kokkos::create_mirror_view(data);
       DatasetBase<specfem::io::read>::read(host_data.data(), variable);
       Kokkos::deep_copy(data, host_data);
@@ -128,18 +135,21 @@ specfem::io::impl::ADIOS2::Dataset<ViewType, OpType>::read() {
     }
   } else {
     // Read native type, then convert back
-    if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
+    if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
       std::vector<storage_type> converted_data(data.size());
       DatasetBase<specfem::io::read>::read(converted_data.data(), variable);
       for (size_t i = 0; i < data.size(); ++i) {
-        data.data()[i] = (converted_data[i] != 0);  // Convert back from storage type
+        data.data()[i] =
+            (converted_data[i] != 0); // Convert back from storage type
       }
-    } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
+    } else if (std::is_same_v<MemSpace,
+                              Kokkos::DefaultExecutionSpace::memory_space>) {
       auto host_data = Kokkos::create_mirror_view(data);
       std::vector<storage_type> converted_data(host_data.size());
       DatasetBase<specfem::io::read>::read(converted_data.data(), variable);
       for (size_t i = 0; i < host_data.size(); ++i) {
-        host_data.data()[i] = (converted_data[i] != 0);  // Convert back from storage type
+        host_data.data()[i] =
+            (converted_data[i] != 0); // Convert back from storage type
       }
       Kokkos::deep_copy(data, host_data);
     } else {

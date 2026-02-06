@@ -1,5 +1,5 @@
 #include "globals.h"
-#include "kokkos_abstractions.h"
+
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/source.hpp"

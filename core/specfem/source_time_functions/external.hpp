@@ -1,5 +1,5 @@
 #pragma once
-#include "kokkos_abstractions.h"
+
 #include "source_time_function.hpp"
 #include "specfem/enums.hpp"
 #include "yaml-cpp/yaml.h"

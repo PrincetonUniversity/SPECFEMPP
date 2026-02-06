@@ -120,7 +120,7 @@ template <> struct materials<specfem::element::dimension_tag::dim3> {
             specfem::element::attenuation_tag attenuation>
   struct material {
     /** @brief Number of materials stored in this container */
-    int n_materials;
+    int n_materials = 0;
 
     /** @brief Storage for material objects of this type/property combination */
     std::vector<
@@ -147,7 +147,7 @@ template <> struct materials<specfem::element::dimension_tag::dim3> {
   /** @{ */
 
   /** @brief Total number of materials across all type containers */
-  int n_materials;
+  int n_materials = 0;
 
   int nspec; ///< Total number of spectral elements in the mesh
 
@@ -191,7 +191,8 @@ private:
    */
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC), ATTENUATION_TAG(NONE)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
       DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
                 (_MEDIUM_TAG_, _PROPERTY_TAG_, _ATTENUATION_TAG_)),
                material)))
@@ -265,7 +266,8 @@ public:
 
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC), ATTENUATION_TAG(NONE)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
         CAPTURE(material) {
           if constexpr (MediumTag == _medium_tag_ &&
                         PropertyTag == _property_tag_ &&
@@ -324,7 +326,7 @@ public:
 
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
                          PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
-                         ATTENUATION_TAG(NONE)),
+                         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                         CAPTURE(material) {
                           if constexpr (_medium_tag_ == MediumTag &&
                                         _property_tag_ == PropertyTag &&

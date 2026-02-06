@@ -50,6 +50,24 @@ namespace constants::empirical {
    * @see https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained
    */
   const type_real SOURCE_DECAY_MIMIC_TRIANGLE = 1.62800;
+
+
+  /**
+   * @brief Suggested COURANT number for time stepping
+   *
+   * empirical choice for distorted elements to estimate time step and period
+   * resolved: Courant number for time step estimate
+   */
+  const type_real COURANT_NUMBER_SUGGESTED = 0.5;
+
+  /**
+   * @brief Suggested number of points per minimum wavelength
+   *
+   * empirical choice for distorted elements to estimate time step and period
+   * resolved: number of GLL points per minimum wavelength
+   */
+  const type_real NPTS_PER_WAVELENGTH = 5;
+
 }
 
 }

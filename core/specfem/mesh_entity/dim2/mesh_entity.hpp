@@ -117,6 +117,7 @@ template <> struct element_grid<specfem::element::dimension_tag::dim2> {
 public:
   int ngllz;  ///< Number of GLL points in z-direction
   int ngllx;  ///< Number of GLL points in x-direction
+  int ngll;   ///< Number of GLL points (ngllz == ngllx)
   int orderz; ///< Polynomial order in z
   int orderx; ///< Polynomial order in x
   int size;   ///< Total number of GLL points
@@ -131,8 +132,8 @@ public:
    * @param ngll Number of GLL points in both directions
    */
   element_grid(const int ngll)
-      : ngllz(ngll), ngllx(ngll), orderz(ngll - 1), orderx(ngll - 1),
-        size(ngll * ngll) {}
+      : ngllz(ngll), ngllx(ngll), ngll(ngll), orderz(ngll - 1),
+        orderx(ngll - 1), size(ngll * ngll) {}
 
   /**
    * @brief Construct with different GLL points per direction.
@@ -141,8 +142,8 @@ public:
    * @throws std::invalid_argument if ngllz != ngllx
    */
   element_grid(const int ngllz, const int ngllx)
-      : ngllz(ngllz), ngllx(ngllx), orderz(ngllz - 1), orderx(ngllx - 1),
-        size(ngllz * ngllx) {
+      : ngllz(ngllz), ngllx(ngllx), ngll(ngllz), orderz(ngllz - 1),
+        orderx(ngllx - 1), size(ngllz * ngllx) {
     if (ngllz != ngllx) {
       throw std::invalid_argument(
           "Different number of GLL points for Z and X are not supported.");

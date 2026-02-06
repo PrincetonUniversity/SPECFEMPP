@@ -1,6 +1,6 @@
 // Internal Includes
 #include "specfem/mesh.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/io/fortranio/interface.hpp"
@@ -70,7 +70,8 @@ specfem::io::read_2d_mesh(
 
   mesh.control_nodes.ngnod = mesh.parameters.ngnod;
   mesh.control_nodes.nspec = mesh.nspec;
-  mesh.control_nodes.knods = specfem::kokkos::HostView2d<int>(
+  mesh.control_nodes.knods = Kokkos::View<int **, Kokkos::LayoutRight,
+                                          Kokkos::DefaultHostExecutionSpace>(
       "specfem::mesh::knods", mesh.parameters.ngnod, mesh.nspec);
 
   int nspec_all = specfem::MPI::reduce(mesh.parameters.nspec, specfem::sum);
@@ -194,7 +195,7 @@ specfem::io::read_2d_mesh(
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC, ELASTIC_PSV_T,
                   ELECTROMAGNETIC_TE),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE)),
+       ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
       {
         total_materials_read += mesh.materials
                                     .get_container<_medium_tag_, _property_tag_,

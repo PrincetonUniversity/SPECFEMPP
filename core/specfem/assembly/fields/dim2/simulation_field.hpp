@@ -81,7 +81,7 @@ public:
    * Synchronizes all field components and index mappings from device-accessible
    * memory to host memory for post-processing, I/O, or debugging operations.
    */
-  void copy_to_host() { sync_fields<specfem::sync::kind::DeviceToHost>(); }
+  void copy_to_host();
 
   /**
    * @brief Copy 2D simulation field data from host to device memory.
@@ -89,7 +89,7 @@ public:
    * Synchronizes all field components and index mappings from host memory
    * to device-accessible memory for GPU-accelerated computations.
    */
-  void copy_to_device() { sync_fields<specfem::sync::kind::HostToDevice>(); }
+  void copy_to_device();
 
   /**
    * @brief Assignment operator for copying from different wavefield types.
@@ -277,13 +277,6 @@ public:
   int get_total_degrees_of_freedom();
 
 private:
-  /**
-   * @brief Synchronize field data between host and device memory.
-   *
-   * @tparam sync Synchronization direction (HostToDevice or DeviceToHost)
-   */
-  template <specfem::sync::kind sync> void sync_fields();
-
   int total_degrees_of_freedom = 0; ///< Cached total degrees of freedom count
 };
 

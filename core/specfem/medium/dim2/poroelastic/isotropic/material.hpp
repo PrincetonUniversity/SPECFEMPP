@@ -27,6 +27,8 @@ public:
     }
   };
 
+  AttenuationValues() = default;
+
   bool operator==(const AttenuationValues &other) const {
     return (std::abs(this->Qmu - other.Qmu) < 1e-6);
   }

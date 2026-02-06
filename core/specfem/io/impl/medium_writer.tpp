@@ -4,7 +4,7 @@
 #include "specfem/element.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/assembly.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/macros.hpp"
@@ -38,12 +38,12 @@ void specfem::io::impl::write_container(
        ATTENUATION_TAG(NONE)),
       {
         const std::string name =
-            std::string("/") +
-            specfem::element::to_string(_medium_tag_, _property_tag_,
-                                       _attenuation_tag_);
+            std::string("/") + specfem::element::to_string(_medium_tag_,
+                                                           _property_tag_,
+                                                           _attenuation_tag_);
         typename OutputLibrary::Group group = file.createGroup(name);
-        const auto element_indices =
-            element_types.get_elements_on_host(_medium_tag_, _property_tag_, _attenuation_tag_);
+        const auto element_indices = element_types.get_elements_on_host(
+            _medium_tag_, _property_tag_, _attenuation_tag_);
         const int n_elements = element_indices.size();
         n_written += n_elements;
         DomainView x("xcoordinates", n_elements, ngllz, ngllx);
@@ -61,7 +61,6 @@ void specfem::io::impl::write_container(
         group.createDataset("Z", z).write();
         auto data_container =
             container.template get_container<_medium_tag_, _property_tag_>();
-
 
         data_container.for_each_host_view(
             [&](const auto view, const std::string name) mutable {

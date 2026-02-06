@@ -1,7 +1,6 @@
 #ifndef LAGRANGE_H
 #define LAGRANGE_H
 
-#include "../include/kokkos_abstractions.h"
 #include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 

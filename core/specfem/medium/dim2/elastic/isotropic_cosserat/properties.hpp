@@ -74,6 +74,22 @@ public:
   KOKKOS_INLINE_FUNCTION const value_type rho_vs() const {
     return Kokkos::sqrt(rho() * mu()); ///< @f$ \rho v_s @f$
   }
+
+  KOKKOS_INLINE_FUNCTION const value_type vp() const {
+    return Kokkos::sqrt(lambdaplus2mu() / rho()); ///< @f$ v_P @f$
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vs() const {
+    return Kokkos::sqrt(mu() / rho()); ///< @f$ v_S @f$
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vmax() const {
+    return Kokkos::max(vp(), vs()); ///< @f$ v_{max} = \max(v_P, v_S) @f$
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vmin() const {
+    return Kokkos::min(vp(), vs()); ///< @f$ v_{min} = \min(v_P, v_S) @f$
+  }
 };
 ///@} end of group specfem_point_properties_dim2_elastic_isotropic_cosserat
 

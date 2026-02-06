@@ -52,7 +52,16 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                 "materials.");
           }
 
-          if ((std::abs(Qmu - 9999.0) < 1e-6) || (std::abs(Qmu) < 1e-6)) {
+          if (!((std::abs(Qmu - 9999.0) < 1e-6) || (std::abs(Qmu) < 1e-6))) {
+            std::ostringstream error_message;
+            error_message
+                << "Qmu should be set to 9999 or 0 for acoustic materials. "
+                << "Found Qmu = " << Qmu << " for material index " << imat
+                << "." << "[" << __FILE__ << ":" << __LINE__ << "]\n";
+            throw std::runtime_error(error_message.str());
+          }
+
+          if ((std::abs(Qkappa - 9999.0) < 1e-6) || (std::abs(Qkappa) < 1e-6)) {
 
             specfem::medium_container::material<
                 specfem::element::dimension_tag::dim3,
@@ -66,8 +75,18 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                                 specfem::element::attenuation_tag::none, index,
                                 imat });
           } else {
-            throw std::runtime_error(
-                "Attenuation not yet supported for acoustic materials in 3D");
+            specfem::medium_container::material<
+                specfem::element::dimension_tag::dim3,
+                specfem::element::medium_tag::acoustic,
+                specfem::element::property_tag::isotropic,
+                specfem::element::attenuation_tag::constant_isotropic>
+                material(rho, vp, Qkappa, static_cast<type_real>(0.0));
+            const int index = materials.add_material(material);
+            mapping.push_back(
+                { specfem::element::medium_tag::acoustic,
+                  specfem::element::property_tag::isotropic,
+                  specfem::element::attenuation_tag::constant_isotropic, index,
+                  imat });
           }
         } else if (vs > 0.0) {
           // Isotropic elastic material
@@ -92,8 +111,18 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                                 specfem::element::attenuation_tag::none, index,
                                 imat });
           } else {
-            throw std::runtime_error(
-                "Attenuation not yet supported for elastic materials in 3D");
+            specfem::medium_container::material<
+                specfem::element::dimension_tag::dim3,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic,
+                specfem::element::attenuation_tag::constant_isotropic>
+                material(rho, vs, vp, Qmu, Qkappa, static_cast<type_real>(0.0));
+            const int index = materials.add_material(material);
+            mapping.push_back(
+                { specfem::element::medium_tag::elastic,
+                  specfem::element::property_tag::isotropic,
+                  specfem::element::attenuation_tag::constant_isotropic, index,
+                  imat });
           }
 
         } else {

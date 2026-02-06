@@ -4,12 +4,12 @@
 #include "H5Cpp.h"
 #endif
 
-#include "specfem/io/operators.hpp"
 #include "dataset.hpp"
 #include "datasetbase.hpp"
-#include "kokkos_abstractions.h"
+
 #include "native_type.hpp"
 #include "native_type.tpp"
+#include "specfem/io/operators.hpp"
 #include <string>
 #include <type_traits>
 
@@ -46,9 +46,10 @@ specfem::io::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
 
 template <typename ViewType, typename OpType>
 void specfem::io::impl::HDF5::Dataset<ViewType, OpType>::write() {
-  if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
+  if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
     DatasetBase<OpType>::write(data.data());
-  } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
+  } else if (std::is_same_v<MemSpace,
+                            Kokkos::DefaultExecutionSpace::memory_space>) {
     auto host_data = Kokkos::create_mirror_view(data);
     Kokkos::deep_copy(host_data, data);
     DatasetBase<OpType>::write(host_data.data());
@@ -60,9 +61,10 @@ void specfem::io::impl::HDF5::Dataset<ViewType, OpType>::write() {
 
 template <typename ViewType, typename OpType>
 void specfem::io::impl::HDF5::Dataset<ViewType, OpType>::read() {
-  if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
+  if (std::is_same_v<MemSpace, Kokkos::HostSpace>) {
     DatasetBase<OpType>::read(data.data());
-  } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
+  } else if (std::is_same_v<MemSpace,
+                            Kokkos::DefaultExecutionSpace::memory_space>) {
     auto host_data = Kokkos::create_mirror_view(data);
     DatasetBase<OpType>::read(host_data.data());
     Kokkos::deep_copy(data, host_data);

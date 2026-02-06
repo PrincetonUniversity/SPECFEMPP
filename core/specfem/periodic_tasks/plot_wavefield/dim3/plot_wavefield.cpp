@@ -1013,19 +1013,19 @@ void specfem::periodic_tasks::
   unstructured_grid->GetPointData()->SetScalars(scalars);
 
   switch (output_format) {
-  case (display::format::vtkhdf):
+  case (specfem::enums::display_format::vtkhdf):
     this->run<specfem::enums::display_format::vtkhdf>(scalars, istep);
     break;
 
-  case (display::format::on_screen):
+  case (specfem::enums::display_format::on_screen):
     this->run<specfem::enums::display_format::on_screen>(scalars, istep);
     break;
 
-  case (display::format::PNG):
+  case (specfem::enums::display_format::PNG):
     this->run<specfem::enums::display_format::PNG>(scalars, istep);
     break;
 
-  case (display::format::JPG):
+  case (specfem::enums::display_format::JPG):
     this->run<specfem::enums::display_format::JPG>(scalars, istep);
     break;
 

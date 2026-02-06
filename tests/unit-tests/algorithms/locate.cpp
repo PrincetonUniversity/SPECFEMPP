@@ -1,5 +1,5 @@
 #include "../SPECFEM_Environment.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/io.hpp"
@@ -22,17 +22,21 @@ TEST(ALGORITHMS, locate_point) {
   // Assemble
   specfem::assembly::mesh assembly(mesh.tags, mesh.control_nodes, quadratures);
 
-  specfem::kokkos::HostView1d<specfem::point::global_coordinates<
-      specfem::element::dimension_tag::dim2> >
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::LayoutRight, Kokkos::HostSpace>
       coordinates_ref("coordinates_ref", 5);
-  specfem::kokkos::HostView1d<
-      specfem::point::local_coordinates<specfem::element::dimension_tag::dim2> >
+  Kokkos::View<specfem::point::local_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::LayoutRight, Kokkos::HostSpace>
       lcoord_ref("lcoord_ref", 5);
-  specfem::kokkos::HostView1d<
-      specfem::point::local_coordinates<specfem::element::dimension_tag::dim2> >
+  Kokkos::View<specfem::point::local_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::LayoutRight, Kokkos::HostSpace>
       lcoord("lcoord", 5);
-  specfem::kokkos::HostView1d<specfem::point::global_coordinates<
-      specfem::element::dimension_tag::dim2> >
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> *,
+               Kokkos::LayoutRight, Kokkos::HostSpace>
       gcoord("gcoord", 5);
 
   coordinates_ref(0) = { 606.313, 957.341 };
@@ -69,13 +73,11 @@ TEST(ALGORITHMS, locate_point) {
 
   const int ngnod = assembly.control_nodes.ngnod;
 
-  int scratch_size =
-      specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
-
   Kokkos::parallel_for(
-      specfem::kokkos::HostTeam(5, Kokkos::AUTO, Kokkos::AUTO)
-          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      [=](const specfem::kokkos::HostTeam::member_type &team_member) {
+      Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>(5, Kokkos::AUTO,
+                                                            Kokkos::AUTO),
+      [=](const Kokkos::TeamPolicy<
+          Kokkos::DefaultHostExecutionSpace>::member_type &team_member) {
         const int i = team_member.league_rank();
 
         gcoord(i) = specfem::algorithms::locate_point(team_member,

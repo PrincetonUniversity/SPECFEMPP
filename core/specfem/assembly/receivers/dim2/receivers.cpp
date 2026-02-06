@@ -1,6 +1,6 @@
 #include "specfem/receivers.hpp"
 #include "globals.h"
-#include "kokkos_abstractions.h"
+
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/quadrature.hpp"

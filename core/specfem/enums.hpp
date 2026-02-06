@@ -4,7 +4,6 @@
 #include "enums/wavefield.hpp"
 #include "specfem/simulation.hpp"
 
-#include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

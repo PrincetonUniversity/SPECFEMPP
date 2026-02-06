@@ -30,18 +30,6 @@ target_link_libraries(
   specfem_program
 )
 
-
-add_library(
-  compare_arrays
-  utilities/src/compare_array.cpp
-)
-
-target_link_libraries(
-  compare_arrays
-  Kokkos::kokkos
-  specfem::io
-)
-
 add_library(
   mesh_utilities_mapping
   mesh_utilities/mapping.cpp
@@ -469,11 +457,9 @@ add_executable(
   assembly/compute_source_array/dim2/compute_source_array_from_tensor.cpp
   assembly/compute_source_array/dim3/compute_source_array_from_vector.cpp
   assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
-
-  # Edge types tests
+  assembly/info/compute_tests.cpp
+  assembly/info/scatter_minmax_tests.cpp
   assembly/edge_types/edge_types_tests.cpp
-
-  # Face types tests
   assembly/face_types/face_types_tests.cpp
 
   # New dim3 tests
@@ -826,7 +812,6 @@ target_link_libraries(
   specfem_environment
   specfem::assembly
   specfem::runtime_configuration
-  compare_arrays
   timescheme
   point
   specfem::algorithms
@@ -852,7 +837,6 @@ target_link_libraries(
   specfem_environment
   specfem::assembly
   specfem::runtime_configuration
-  compare_arrays
   timescheme
   point
   specfem::algorithms

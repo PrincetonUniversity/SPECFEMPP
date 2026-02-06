@@ -1,5 +1,5 @@
 #include "specfem/mesh.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/enums.hpp"
 #include "specfem/medium_container.hpp"
 

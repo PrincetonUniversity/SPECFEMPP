@@ -1,5 +1,4 @@
 #include "../../../SPECFEM_Environment.hpp"
-#include "../../../utilities/include/interface.hpp"
 #include "constants.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/io.hpp"

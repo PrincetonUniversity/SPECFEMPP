@@ -1,7 +1,7 @@
 #pragma once
 
 #include "constants.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"

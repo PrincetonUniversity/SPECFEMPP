@@ -1,4 +1,4 @@
-#include "kokkos_abstractions.h"
+
 #include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
@@ -38,8 +38,9 @@ public:
                   type_real Mxz,
                   std::vector<std::vector<type_real> > source_tensor)
       : x(x), z(z), Mxx(Mxx), Mzz(Mzz), Mxz(Mxz) {
-    this->source_tensor = specfem::kokkos::HostView2d<type_real>(
-        "source_tensor", source_tensor.size(), source_tensor[0].size());
+    this->source_tensor =
+        Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>(
+            "source_tensor", source_tensor.size(), source_tensor[0].size());
     for (size_t i = 0; i < source_tensor.size(); ++i) {
       for (size_t j = 0; j < source_tensor[i].size(); ++j) {
         this->source_tensor(i, j) = source_tensor[i][j];
@@ -52,8 +53,8 @@ public:
   type_real Mxx; ///< Mxx component of moment tensor
   type_real Mzz; ///< Mzz component of moment tensor
   type_real Mxz; ///< Mxz component of moment tensor
-  specfem::kokkos::HostView2d<type_real> source_tensor; ///< Source tensor in
-                                                        ///< Kokkos format
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      source_tensor; ///< Expected source tensor values
 };
 
 // Defining short hands for the source parameters and solution types

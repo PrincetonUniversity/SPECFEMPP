@@ -1,4 +1,5 @@
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/assembly/info.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
@@ -66,6 +67,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                                      this->edge_types, this->mesh };
   this->fields = { this->mesh, this->element_types, simulation };
 
+  this->info = { this->mesh, this->properties, this->element_types };
+
   if (allocate_boundary_values)
     this->boundary_values = { max_timesteps, this->mesh, this->element_types,
                               this->boundaries };
@@ -102,7 +105,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::print()
           << "Total number of geometric points : "
           << this->mesh.element_grid.ngllz << "\n"
           << "Total number of distinct quadrature points : " << this->mesh.nglob
-          << "\n";
+          << "\n"
+          << this->info.string() << "\n";
 
   int total_elements = 0;
 

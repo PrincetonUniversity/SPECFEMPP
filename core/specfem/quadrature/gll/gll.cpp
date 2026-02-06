@@ -1,6 +1,6 @@
 #include "specfem/quadrature/gll.hpp"
 #include "gll_library.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <iostream>

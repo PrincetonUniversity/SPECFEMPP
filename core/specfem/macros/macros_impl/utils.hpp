@@ -34,15 +34,20 @@
 
 #define _TRANSFORM_INSTANTIATE(s, data, elem) (elem, )
 
+#define _OP_AND(s, state, elem) BOOST_PP_AND(state, elem)
+
 #define _OP_OR(s, state, elem) BOOST_PP_OR(state, elem)
 
-#define _SEQ_FOR_TAGS_2 MEDIUM_TAGS
+#define _ALL_SEQS                                                              \
+  (MEDIUM_TAGS)(ELEMENT_TYPES)(MATERIAL_SYSTEMS)(EDGES)(EDGES_AND_FLUX_SCHEME)
 
-#define _SEQ_FOR_TAGS_3
+#define _IS_VALID_SEQ(r, size, seq)                                            \
+  BOOST_PP_IF(                                                                 \
+      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(BOOST_PP_SEQ_ELEM(0, seq)), size),    \
+      seq, _EMPTY_MACRO())
 
-#define _SEQ_FOR_TAGS_4 ELEMENT_TYPES EDGES MATERIAL_SYSTEMS
-
-#define _SEQ_FOR_TAGS_5 EDGES_AND_FLUX_SCHEME
+#define _GET_VALID_SEQS(size)                                                  \
+  BOOST_PP_SEQ_FOR_EACH(_IS_VALID_SEQ, size, _ALL_SEQS)
 
 /**
  * @brief Declare a variable or instantiante a template based on the type
@@ -209,93 +214,28 @@
       BOOST_PP_EQUAL(_GET_ENUM_ID(enum1), _GET_ENUM_ID(enum2)),                \
       BOOST_PP_IF(BOOST_PP_EQUAL(_GET_ID(enum1), _GET_ID(enum2)), 1, 0), 0)
 
-/**
- * @brief Compare each item in the sequence for a sequence pair of length 2, 3
- * and 4.
- */
-#define _TYPE_MATCH_2(elem, seq)                                               \
-  BOOST_PP_IF(                                                                 \
-      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(seq), 2),                             \
-      BOOST_PP_IF(_TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(0, elem),                    \
-                              BOOST_PP_TUPLE_ELEM(0, seq)),                    \
-                  BOOST_PP_IF(_TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(1, elem),        \
-                                          BOOST_PP_TUPLE_ELEM(1, seq)),        \
-                              1, 0),                                           \
-                  0),                                                          \
-      0)
+#define _TYPE_MATCH(elem, seq)                                                 \
+  BOOST_PP_SEQ_FOLD_LEFT(                                                      \
+      _OP_AND, 1,                                                              \
+      BOOST_PP_SEQ_FOR_EACH_I(_TAG_IN_SEQ, elem, BOOST_PP_TUPLE_TO_SEQ(seq)))
 
-#define _TYPE_MATCH_3(elem, seq)                                               \
-  BOOST_PP_IF(                                                                 \
-      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(seq), 3),                             \
-      BOOST_PP_IF(                                                             \
-          _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(0, elem),                            \
-                      BOOST_PP_TUPLE_ELEM(0, seq)),                            \
-          BOOST_PP_IF(_TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(1, elem),                \
-                                  BOOST_PP_TUPLE_ELEM(1, seq)),                \
-                      BOOST_PP_IF(_TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(2, elem),    \
-                                              BOOST_PP_TUPLE_ELEM(2, seq)),    \
-                                  1, 0),                                       \
-                      0),                                                      \
-          0),                                                                  \
-      0)
-
-#define _TYPE_MATCH_4(elem, seq)                                               \
-  BOOST_PP_IF(                                                                 \
-      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(seq), 4),                             \
-      BOOST_PP_IF(                                                             \
-          _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(0, elem),                            \
-                      BOOST_PP_TUPLE_ELEM(0, seq)),                            \
-          BOOST_PP_IF(                                                         \
-              _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(1, elem),                        \
-                          BOOST_PP_TUPLE_ELEM(1, seq)),                        \
-              BOOST_PP_IF(                                                     \
-                  _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(2, elem),                    \
-                              BOOST_PP_TUPLE_ELEM(2, seq)),                    \
-                  BOOST_PP_IF(_TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(3, elem),        \
-                                          BOOST_PP_TUPLE_ELEM(3, seq)),        \
-                              1, 0),                                           \
-                  0),                                                          \
-              0),                                                              \
-          0),                                                                  \
-      0)
-
-#define _TYPE_MATCH_5(elem, seq)                                               \
-  BOOST_PP_IF(                                                                 \
-      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(seq), 5),                             \
-      BOOST_PP_IF(                                                             \
-          _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(0, elem),                            \
-                      BOOST_PP_TUPLE_ELEM(0, seq)),                            \
-          BOOST_PP_IF(                                                         \
-              _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(1, elem),                        \
-                          BOOST_PP_TUPLE_ELEM(1, seq)),                        \
-              BOOST_PP_IF(                                                     \
-                  _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(2, elem),                    \
-                              BOOST_PP_TUPLE_ELEM(2, seq)),                    \
-                  BOOST_PP_IF(                                                 \
-                      _TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(3, elem),                \
-                                  BOOST_PP_TUPLE_ELEM(3, seq)),                \
-                      BOOST_PP_IF(_TAG_IN_SEQ(BOOST_PP_TUPLE_ELEM(4, elem),    \
-                                              BOOST_PP_TUPLE_ELEM(4, seq)),    \
-                                  1, 0),                                       \
-                      0),                                                      \
-                  0),                                                          \
-              0),                                                              \
-          0),                                                                  \
-      0)
 /**
  * @brief Check if a given tag sequence is in the list of available tag
  * sequences.
  */
 #define _TAG_EQ(s, tag1, tag2) _CHECK_ENUM(tag1, tag2)
-#define _TAG_IN_SEQ(elem, seq)                                                 \
-  BOOST_PP_SEQ_FOLD_LEFT(_OP_OR, 0, BOOST_PP_SEQ_TRANSFORM(_TAG_EQ, elem, seq))
+
+#define _TAG_IN_SEQ(r, elem, i, seq)                                           \
+  (BOOST_PP_SEQ_FOLD_LEFT(                                                     \
+      _OP_OR, 0,                                                               \
+      BOOST_PP_SEQ_TRANSFORM(_TAG_EQ, BOOST_PP_TUPLE_ELEM(i, elem), seq)))
 
 /**
- * Check if a given tag sequence is in the list of available tag sequences,
- * write declaration and code block for the sequence if it is in the list.
+ * Check if a given tag sequence is in the list of available tag
+ * sequences, write declaration and code block for the sequence if it is
+ * in the list.
  */
 #define _FOR_ONE_TAG_SEQ(s, code, elem)                                        \
-  BOOST_PP_IF(BOOST_PP_CAT(_TYPE_MATCH_, BOOST_PP_TUPLE_SIZE(elem))(           \
-                  elem, BOOST_PP_SEQ_HEAD(code)),                              \
-              _CHECK_DECLARE, _EMPTY_MACRO)                                    \
+  BOOST_PP_IF(_TYPE_MATCH(elem, BOOST_PP_SEQ_HEAD(code)), _CHECK_DECLARE,      \
+              _EMPTY_MACRO)                                                    \
   (elem, BOOST_PP_SEQ_TAIL(code))
