@@ -1,5 +1,5 @@
 #include "compute_source_array_from_tensor.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"

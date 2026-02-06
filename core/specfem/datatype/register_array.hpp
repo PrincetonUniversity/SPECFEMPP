@@ -13,6 +13,7 @@
 
 namespace specfem {
 namespace datatype {
+
 namespace impl {
 
 /**
@@ -41,6 +42,8 @@ KOKKOS_INLINE_FUNCTION constexpr bool check_bounds(const IndexType &...i) {
   std::size_t index = 0;
   return ((i >= 0 && i < Extents::static_extent(index++)) && ...);
 }
+
+} // namespace impl
 
 /**
  * @brief Stack-allocated multi-dimensional array with compile-time layout
@@ -132,7 +135,7 @@ public:
   operator()(const IndexType &...i) {
 #ifndef NDEBUG
     // check if the indices are within bounds
-    if (!check_bounds<Extents>(i...)) {
+    if (!impl::check_bounds<Extents>(i...)) {
       // Abort the program with an error message
       Kokkos::abort("Index out of bounds");
     }
@@ -151,7 +154,7 @@ public:
   operator()(const IndexType &...i) const {
 #ifndef NDEBUG
     // check if the indices are within bounds
-    if (!check_bounds<Extents>(i...)) {
+    if (!impl::check_bounds<Extents>(i...)) {
       // Abort the program with an error message
       Kokkos::abort("Index out of bounds");
     }
@@ -251,6 +254,5 @@ private:
   }
 };
 
-} // namespace impl
 } // namespace datatype
 } // namespace specfem

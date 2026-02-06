@@ -48,7 +48,7 @@ test_config parse_test_config(std::string test_configuration_file) {
 // read field from fortran binary file
 void read_field(
     const std::string filename,
-    specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft> field,
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> &field,
     const int n1, const int n2) {
 
   assert(field.extent(0) == n1);

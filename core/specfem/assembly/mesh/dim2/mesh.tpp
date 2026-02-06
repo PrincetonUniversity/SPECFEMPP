@@ -2,12 +2,13 @@
 
 #include "enumerations/interface.hpp"
 #include "specfem/macros.hpp"
-#include "kokkos_abstractions.h"
+
+#include "impl/utilities.hpp"
 #include "mesh.hpp"
-#include "specfem/parallel_configuration.hpp"
-#include "specfem/quadrature.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
+#include "specfem/parallel_configuration.hpp"
+#include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
 #include "impl/utilities.hpp"
 #include "specfem/setup.hpp"
@@ -156,7 +157,8 @@ specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::mesh(
       quadratures.gll.get_N(), control_nodes_in.ngnod);
 
   adjacency_graph =
-      specfem::assembly::mesh_impl::build_assembly_adjacency_graph(nspec, mapping, mesh_adjacency_graph);
+      specfem::assembly::mesh_impl::build_assembly_adjacency_graph(
+          nspec, mapping, mesh_adjacency_graph);
 
   this->assemble();
 }

@@ -1,6 +1,6 @@
 #include "../../source.hpp"
 #include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "specfem/setup.hpp"
@@ -35,8 +35,9 @@ public:
   source_solution(type_real x, type_real y, type_real angle,
                   std::vector<type_real> force_vector)
       : x(x), y(y), angle(angle) {
-    this->force_vector = specfem::kokkos::HostView1d<type_real>(
-        "force_vector", force_vector.size());
+    this->force_vector =
+        Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>(
+            "force_vector", force_vector.size());
     for (size_t i = 0; i < force_vector.size(); ++i) {
       this->force_vector(i) = force_vector[i];
     }
@@ -45,8 +46,8 @@ public:
   type_real x;     ///< x-component of the force vector
   type_real y;     ///< y-component of the force vector
   type_real angle; ///< angle of the force vector in degrees
-  specfem::kokkos::HostView1d<type_real> force_vector; ///< Force vector in
-                                                       ///< Kokkos format
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+      force_vector; ///< Force vector in Kokkos format
 };
 
 // Defining short hands for the source parameters and solution types

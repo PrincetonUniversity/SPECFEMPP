@@ -1,11 +1,10 @@
 
 #include "specfem/source.hpp"
-#include "kokkos_abstractions.h"
 
 #include "specfem/setup.hpp"
 #include <yaml-cpp/yaml.h>
 #include <cmath>
-
+#include <yaml-cpp/yaml.h>
 
 template <specfem::element::dimension_tag DimensionTag>
 template <specfem::element::dimension_tag U, typename std::enable_if<U == specfem::element::dimension_tag::dim2>::type*>

@@ -1,6 +1,5 @@
 #include "specfem/program.hpp"
 #include "context.hpp"
-#include "kokkos_abstractions.h"
 #include "specfem/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io.hpp"

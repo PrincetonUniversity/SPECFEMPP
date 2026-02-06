@@ -1,5 +1,5 @@
 #include "specfem/assembly/jacobian_matrix.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include "specfem/setup.hpp"

@@ -1,5 +1,5 @@
 #include "specfem/assembly/mesh/dim2/impl/utilities.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/utilities.hpp"
 #include "test_macros.hpp"
@@ -23,13 +23,14 @@ protected:
   }
 
   // Helper to create 4D coordinate array
-  specfem::kokkos::HostView4d<double>
+  Kokkos::View<double ****, Kokkos::LayoutRight, Kokkos::HostSpace>
   create_coordinates(const std::vector<std::vector<std::pair<double, double> > >
                          &element_coords) {
     int nspec = element_coords.size();
     int ngll = std::sqrt(element_coords[0].size());
 
-    specfem::kokkos::HostView4d<double> coords("coords", nspec, ngll, ngll, 2);
+    Kokkos::View<double ****, Kokkos::LayoutRight, Kokkos::HostSpace> coords(
+        "coords", nspec, ngll, ngll, 2);
 
     for (int ispec = 0; ispec < nspec; ispec++) {
       int idx = 0;

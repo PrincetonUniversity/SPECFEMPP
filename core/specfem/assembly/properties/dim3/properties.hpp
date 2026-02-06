@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/impl/domain_properties.hpp"
 #include "specfem/assembly/impl/value_containers.hpp"

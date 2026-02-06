@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../quadrature.hpp"
-#include "kokkos_abstractions.h"
+
 #include "lagrange_poly.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>

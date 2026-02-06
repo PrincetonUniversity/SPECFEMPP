@@ -3,7 +3,7 @@
 #include "impl/control_nodes.hpp"
 #include "impl/points.hpp"
 #include "impl/shape_functions.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/assembly/mesh/impl/quadrature.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
