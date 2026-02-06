@@ -1,64 +1,69 @@
 #pragma once
 
-#include "specfem/element.hpp"
-#include "specfem_setup.hpp"
-#include "specfem/assembly/info/impl/bounds.hpp"
+#include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/info/impl/bounding_box.hpp"
+#include "specfem/assembly/info/impl/bounds.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
-#include "specfem/assembly/element_types.hpp"
-
+#include "specfem/element.hpp"
+#include "specfem_setup.hpp"
 
 namespace specfem::assembly {
 
-/*
-! estimation of minimum period resolved
-! based on average GLL distance within element and minimum velocity
-!
-! rule of thumb (Komatitsch et al. 2005):
-! "average number of points per minimum wavelength in an element should be around 5."
-
-! average distance between GLL points within this element
-avg_distance = elemsize_max / ( NGLLX - 1)  ! since NGLLX = NGLLY = NGLLZ
-
-! largest possible minimum period such that number of points per minimum wavelength
-! npts = ( min(vpmin,vsmin)  * pmax ) / avg_distance  is about ~ NPTS_PER_WAVELENGTH
-!
-! note: obviously, this estimation depends on the choice of points per wavelength
-!          which is empirical at the moment.
-!          also, keep in mind that the minimum period is just an estimation and
-!          there is no such sharp cut-off period for valid synthetics.
-!          seismograms become just more and more inaccurate for periods shorter than this estimate.
-*/
-
-template <specfem::element::dimension_tag DimensionTag>
-struct Info {
+/**
+ * @brief Computes and stores mesh statistics and numerical stability
+ * parameters.
+ *
+ * Analyzes the assembled mesh to extract spatial bounds, material property
+ * ranges, and element geometry statistics. Estimates the minimum resolvable
+ * period and suggests a time step based on the CFL condition.
+ *
+ * The minimum period estimation follows Komatitsch et al. (2005):
+ * "average number of points per minimum wavelength in an element should be
+ * around 5."
+ *
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+ *
+ * @note The minimum period is an empirical estimate, not a sharp cutoff.
+ *       Synthetics become progressively less accurate for shorter periods.
+ */
+template <specfem::element::dimension_tag DimensionTag> struct Info {
   constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
 
   Info() = default;
 
+  /**
+   * @brief Construct mesh info by analyzing mesh geometry and material
+   * properties.
+   *
+   * @param mesh Assembled mesh containing element geometry and GLL points
+   * @param properties Material properties at all mesh points
+   * @param element_types Element classification by medium and property type
+   */
   Info(const specfem::assembly::mesh<dimension_tag> &mesh,
        const specfem::assembly::properties<dimension_tag> &properties,
        const specfem::assembly::element_types<dimension_tag> &element_types);
 
-  // Computed mesh properties
-  info::impl::BoundingBox<dimension_tag> domain_bounds;
-  info::impl::Bounds element_size;
-  info::impl::Bounds gll_distance;
-  info::impl::Bounds vp;
-  info::impl::Bounds vs;
-  info::impl::Bounds v;
-  info::impl::Bounds rho;
-  info::impl::Bounds vp_vs_ratio;
+  info::impl::BoundingBox<dimension_tag> domain_bounds; ///< Spatial extent of
+                                                        ///< the mesh domain
+  info::impl::Bounds element_size; ///< Element corner-to-corner distances
+  info::impl::Bounds gll_distance; ///< Distances between adjacent GLL points
+  info::impl::Bounds vp;           ///< P-wave velocity range
+  info::impl::Bounds vs;           ///< S-wave velocity range
+  info::impl::Bounds v;            ///< Combined wave velocity range
+  info::impl::Bounds rho;          ///< Density range
+  info::impl::Bounds vp_vs_ratio;  ///< Vp/Vs ratio range
 
-  // Suggested time step based on CFL condition
-  type_real suggested_time_step;
-  type_real largest_minimum_period;
+  type_real suggested_time_step;    ///< Time step satisfying CFL condition
+  type_real largest_minimum_period; ///< Maximum of minimum resolvable periods
+                                    ///< across elements
 
-
+  /**
+   * @brief Generate formatted string representation of mesh statistics.
+   * @return Multi-line string with labeled mesh properties
+   */
   std::string string() const;
 };
-
 
 } // namespace specfem::assembly
 
