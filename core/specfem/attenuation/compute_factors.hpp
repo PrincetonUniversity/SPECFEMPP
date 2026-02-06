@@ -8,21 +8,15 @@ namespace specfem {
 namespace attenuation {
 
 /**
- * @brief Result containing attenuation property values
+ * @brief Attenuation property values for modulus calculations
  *
- * Holds the coefficients \f$\beta\f$ and the sum
- * \f$\sum_i \tau_{\epsilon_i}/\tau_{\sigma_i}\f$ used for calculation between
- * relaxed and unrelaxed moduli.
- *
- * After computation:
- * - \f$\beta_i = \tau_{\epsilon_i}/\tau_{\sigma_i} - 1\f$ (modulus defect per
- *   mechanism)
- * - \f$\text{one\_minus\_sum\_beta} = \sum_i
- *   \tau_{\epsilon_i}/\tau_{\sigma_i}\f$
+ * Stores coefficients for computing relaxed and unrelaxed moduli:
+ * - @f$ \beta^{\text{defect}}_i = \tau_{\epsilon_i}/\tau_{\sigma_i} - 1 @f$
+ * (modulus defect per mechanism)
+ * - @f$ \text{OneMinusSumBeta} = \sum_i
+ *   \tau_{\epsilon_i}/\tau_{\sigma_i} @f$
  *
  * @tparam N_SLS Number of standard linear solids
- *
- * @see Komatitsch & Tromp 1999, eq. (7)
  */
 template <int N_SLS> struct AttenuationPropertyValues {
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace> beta;
@@ -32,27 +26,16 @@ template <int N_SLS> struct AttenuationPropertyValues {
 /**
  * @brief Compute attenuation property values from relaxation times
  *
- * Computes coefficients useful for calculation between relaxed and unrelaxed
- * moduli. For each standard linear solid mechanism \f$i\f$:
- * \f[
- *   \beta_i = \frac{\tau_{\epsilon_i}}{\tau_{\sigma_i}} - 1
- * \f]
- *
- * and the sum:
- * \f[
- *   \text{one\_minus\_sum\_beta} = \sum_{i=1}^{N\_SLS}
- *   \frac{\tau_{\epsilon_i}}{\tau_{\sigma_i}}
- * \f]
+ * Computes @f$ \beta^{\text{defect}}_i = \tau_{\epsilon_i}/\tau_{\sigma_i} - 1
+ * @f$ and
+ * @f$ \text{OneMinusSumBeta} = 1 - \sum_i \beta_i = \sum_{i=1}^{N\_SLS}
+ * \tau_{\epsilon_i}/\tau_{\sigma_i} @f$ for each standard linear solid.
  *
  * @tparam N_SLS Number of standard linear solids
- *
- * @param tau_s Stress relaxation times \f$\tau_\sigma\f$
- * @param tau_eps Strain relaxation times \f$\tau_\epsilon\f$
- *
- * @return AttenuationPropertyValues containing \f$\beta\f$ and
- *         \f$\text{one\_minus\_sum\_beta}\f$
- *
- * @see Komatitsch & Tromp 1999, eq. (7)
+ * @param tau_s Stress relaxation times @f$ \tau_\sigma @f$
+ * @param tau_eps Strain relaxation times @f$ \tau_\epsilon @f$
+ * @return AttenuationPropertyValues containing @f$ \beta @f$ and
+ *         @f$ \text{one\_minus\_sum\_beta} @f$
  */
 template <int N_SLS>
 AttenuationPropertyValues<N_SLS> get_attenuation_property_values(
@@ -64,44 +47,25 @@ AttenuationPropertyValues<N_SLS> get_attenuation_property_values(
 /**
  * @brief Compute physical dispersion scaling factor for attenuation
  *
- * Computes the scaling factor to correct for physical dispersion due to
- * anelasticity. The factor accounts for velocity dispersion so that the
- * unrelaxed modulus can be computed from the reference modulus.
- *
- * The total scaling factor is:
- * \f[
- *   \text{scale\_factor} = \text{factor\_scale\_mu} \times
- *   \text{factor\_scale\_mu0}
- * \f]
- *
+ * Computes @f$ \Psi @f$ to scale @f$ \mu_0 @f$ to the unrelaxed modulus:
+ * @f[
+ *   \Psi = \Psi_\mu \times \Psi_{\mu_0}
+ * @f]
  * where:
- * \f[
- *   \text{factor\_scale\_mu0} = 1 + \frac{2 \ln(f_c / f_0)}{\pi Q}
- * \f]
- *
- * corrects for the logarithmic frequency dependence of velocity (Liu et al.
- * 1976, Aki & Richards 1980, eq. 5.81), and
- * \f$\text{factor\_scale\_mu}\f$ is the ratio of unrelaxed to
- * frequency-weighted relaxed modulus from the SLS mechanisms.
+ * - @f$ \Psi_{\mu_0} = 1 + \frac{2}{\pi Q} \ln(f_c / f_0) @f$ corrects for
+ *   logarithmic frequency dependence (Aki & Richards 1980, eq. 5.81)
+ * - @f$ \Psi_\mu = \frac{\sum(1 + \beta_i/N_{\text{SLS}})}{\sum[1 + \beta_i/(1
+ *   + 1/(\omega\tau_{\sigma_i})^2)/N_{\text{SLS}}]} @f$ accounts for SLS
+ *   frequency dispersion
  *
  * @tparam N_SLS Number of standard linear solids
- *
- * @param f_c_source Central frequency of the source (Hz)
- * @param tau_eps Strain relaxation times \f$\tau_\epsilon\f$
- * @param tau_sigma Stress relaxation times \f$\tau_\sigma\f$
- * @param Q_val Target quality factor \f$Q\f$
- * @param attenuation_f0_reference Reference frequency \f$f_0\f$ (Hz) for
- *        attenuation model
- *
- * @return Physical dispersion scaling factor (expected to be between 0.5 and
- *         1.5)
- *
- * @throws std::runtime_error if the computed scale factor is outside [0.5, 1.5]
- *
- * @see Liu, H. P., Anderson, D. L. and Kanamori, H., Velocity dispersion due
- *      to anelasticity, Geophys. J. R. Astron. Soc., 47, 41-58, 1976
- * @see Aki, K. and Richards, P. G., Quantitative Seismology, 2nd ed.,
- *      eq. (5.81), 1980
+ * @param f_c_source Central frequency of the source @f$ f_c @f$ (Hz)
+ * @param tau_eps Strain relaxation times @f$ \tau_\epsilon @f$
+ * @param tau_sigma Stress relaxation times @f$ \tau_\sigma @f$
+ * @param Q_val Target quality factor @f$ Q @f$
+ * @param attenuation_f0_reference Reference frequency @f$ f_0 @f$ (Hz)
+ * @return Scale factor @f$ \Psi @f$ (expected range [0.5, 1.5])
+ * @throws std::runtime_error if @f$ \Psi @f$ is outside [0.5, 1.5]
  */
 template <int N_SLS>
 type_real get_attenuation_scale_factor(
