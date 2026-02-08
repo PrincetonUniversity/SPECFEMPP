@@ -48,7 +48,7 @@ inline void load_on_host(const IndexType &index, const ContainerType &container,
   //     "Incompatible types in load_on_host");
 
   using accessor_dispatch =
-      std::integral_constant<specfem::data_access::AccessorType,
+      std::integral_constant<specfem::datatype::AccessorType,
                              IndexType::accessor_type>;
 
   container
@@ -95,7 +95,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
   //     "Incompatible types in load_on_device");
 
   using accessor_dispatch =
-      std::integral_constant<specfem::data_access::AccessorType,
+      std::integral_constant<specfem::datatype::AccessorType,
                              IndexType::accessor_type>;
   container
       .template get_interface_container<AccessorType::interface_tag,

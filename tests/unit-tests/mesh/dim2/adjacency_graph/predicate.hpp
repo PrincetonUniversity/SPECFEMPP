@@ -1,8 +1,8 @@
 #pragma once
-#include "enumerations/connections.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/element_connections.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mesh/dim2/adjacency_graph/adjacency_graph.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <string>
 #include <type_traits>
 
@@ -19,7 +19,7 @@ public:
   int jspec;
   specfem::mesh_entity::dim2::type ispec_mesh_entity;
   specfem::mesh_entity::dim2::type jspec_mesh_entity;
-  specfem::connections::type connection_type;
+  specfem::element_connections::type connection_type;
   bool check_ispec_mesh_entity;
   bool check_jspec_mesh_entity;
   bool check_connection_type;
@@ -111,7 +111,7 @@ public:
    * @param connection_type - type to ensure
    * @return connects& - *this to be used in a builder pattern
    */
-  connects &with(const specfem::connections::type &connection_type) {
+  connects &with(const specfem::element_connections::type &connection_type) {
     this->connection_type = connection_type;
     check_connection_type = true;
     return *this;
@@ -125,7 +125,7 @@ public:
    * @tparam dimension - dimension of the adjacency graph
    * @param adjacency_graph - graph to verify has the connection
    */
-  template <specfem::dimension::type dimension>
+  template <specfem::element::dimension_tag dimension>
   void expect_in(
       const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const;
 
@@ -163,7 +163,7 @@ public:
    * @tparam dimension - dimension of the adjacency graph
    * @param adjacency_graph - graph to verify has the connections
    */
-  template <specfem::dimension::type dimension>
+  template <specfem::element::dimension_tag dimension>
   void expect_in(
       const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const;
 };
@@ -178,7 +178,7 @@ using variant = std::variant<connects, number_of_out_edges>;
  * @param predicate - test to apply to adjacency_graph
  * @param adjacency_graph - graph to check
  */
-template <specfem::dimension::type dimension>
+template <specfem::element::dimension_tag dimension>
 void verify(const variant &predicate,
             const specfem::mesh::adjacency_graph<dimension> &adjacency_graph);
 

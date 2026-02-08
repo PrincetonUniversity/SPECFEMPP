@@ -10,11 +10,10 @@ target_link_libraries(
         periodic_tasks
         PUBLIC
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
-        enumerations
+        specfem::element
+        specfem::enums
         PRIVATE
-        reader
-        writer
-        io
+        specfem::io
         assembly
         specfem::program
 )

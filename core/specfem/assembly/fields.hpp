@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::assembly {
 
@@ -11,8 +11,8 @@ namespace specfem::assembly {
  * field (forward, adjoint, backward, or buffer) in spectral element
  * computations.
  */
-template <specfem::dimension::type DimensionTag,
-          specfem::wavefield::simulation_field SimulationWavefieldType>
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::simulation::field_type SimulationWavefieldType>
 struct simulation_field;
 
 } // namespace specfem::assembly

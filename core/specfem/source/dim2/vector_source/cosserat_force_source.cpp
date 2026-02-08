@@ -1,5 +1,5 @@
-#include "enumerations/interface.hpp"
 #include "globals.h"
+#include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "specfem/utilities.hpp"
@@ -7,13 +7,13 @@
 #include <cmath>
 
 std::vector<specfem::element::medium_tag> specfem::sources::cosserat_force<
-    specfem::dimension::type::dim2>::get_supported_media() const {
+    specfem::element::dimension_tag::dim2>::get_supported_media() const {
   return { specfem::element::medium_tag::elastic_psv_t };
 }
 
 Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
 specfem::sources::cosserat_force<
-    specfem::dimension::type::dim2>::get_force_vector() const {
+    specfem::element::dimension_tag::dim2>::get_force_vector() const {
 
   // Get the medium tag that the source is located in
   specfem::element::medium_tag medium_tag = this->get_medium_tag();
@@ -43,7 +43,7 @@ specfem::sources::cosserat_force<
 }
 
 std::string
-specfem::sources::cosserat_force<specfem::dimension::type::dim2>::print()
+specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>::print()
     const {
 
   const auto gcoord = this->get_global_coordinates();
@@ -62,14 +62,14 @@ specfem::sources::cosserat_force<specfem::dimension::type::dim2>::print()
   return message.str();
 }
 
-bool specfem::sources::cosserat_force<specfem::dimension::type::dim2>::
-operator==(const specfem::sources::source<specfem::dimension::type::dim2>
+bool specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>::
+operator==(const specfem::sources::source<specfem::element::dimension_tag::dim2>
                &other) const {
 
   // Try casting the other source to a cosserat_force source
-  const auto *other_source = dynamic_cast<
-      const specfem::sources::cosserat_force<specfem::dimension::type::dim2> *>(
-      &other);
+  const auto *other_source =
+      dynamic_cast<const specfem::sources::cosserat_force<
+          specfem::element::dimension_tag::dim2> *>(&other);
 
   // Check if cast was successful
   if (other_source == nullptr) {
@@ -93,8 +93,8 @@ operator==(const specfem::sources::source<specfem::dimension::type::dim2>
   return internal && (*(this->source_time_function) ==
                       *(other_source->source_time_function));
 }
-bool specfem::sources::cosserat_force<specfem::dimension::type::dim2>::
-operator!=(const specfem::sources::source<specfem::dimension::type::dim2>
+bool specfem::sources::cosserat_force<specfem::element::dimension_tag::dim2>::
+operator!=(const specfem::sources::source<specfem::element::dimension_tag::dim2>
                &other) const {
   return !(*this == other);
 }

@@ -169,9 +169,11 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
   }
 
   // Create the properties object
-  using PointPropertiesType = specfem::point::properties<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic,
-      specfem::element::property_tag::isotropic, using_simd>;
+  using PointPropertiesType =
+      specfem::point::properties<specfem::element::dimension_tag::dim2,
+                                 specfem::element::medium_tag::poroelastic,
+                                 specfem::element::property_tag::isotropic,
+                                 using_simd>;
   PointPropertiesType props(phi, rho_s, rho_f, tortuosity, mu_G, H_Biot, C_Biot,
                             M_Biot, permxx, permxz, permzz, eta_f);
 
@@ -232,6 +234,19 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
       << ExpectedGot(props.vpII(), props.vpI());
   EXPECT_TRUE(specfem::utilities::is_close(props.vs(), vs_expected))
       << ExpectedGot(vs_expected, props.vs());
+
+  // New property checks (vp = vpI, rho = rho_bar, vmax = max(vpI, vs))
+  EXPECT_TRUE(specfem::utilities::is_close(props.vp(), props.vpI()))
+      << ExpectedGot(props.vpI(), props.vp());
+  EXPECT_TRUE(specfem::utilities::is_close(props.rho(), rho_bar_val))
+      << ExpectedGot(rho_bar_val, props.rho());
+  simd_type vmax_expected = Kokkos::max(props.vpI(), props.vs());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmax(), vmax_expected))
+      << ExpectedGot(vmax_expected, props.vmax());
+  simd_type vmin_expected =
+      Kokkos::min(Kokkos::min(props.vpI(), props.vpII()), props.vs());
+  EXPECT_TRUE(specfem::utilities::is_close(props.vmin(), vmin_expected))
+      << ExpectedGot(vmin_expected, props.vmin());
 
   // Additional constructors and assignment tests
   PointPropertiesType props2;

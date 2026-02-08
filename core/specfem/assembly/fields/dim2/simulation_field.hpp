@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/fields/impl/field_impl.hpp"
+#include "specfem/enums.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -24,8 +24,8 @@ namespace specfem::assembly {
  * @tparam SimulationWavefieldType Type of simulation field (forward, adjoint,
  * backward, buffer)
  */
-template <specfem::wavefield::simulation_field SimulationWavefieldType>
-struct simulation_field<specfem::dimension::type::dim2,
+template <specfem::simulation::field_type SimulationWavefieldType>
+struct simulation_field<specfem::element::dimension_tag::dim2,
                         SimulationWavefieldType> {
 
 private:
@@ -49,7 +49,7 @@ private:
 
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
   constexpr static auto simulation_wavefield =
       SimulationWavefieldType; ///< Simulation wavefield type
 
@@ -81,7 +81,7 @@ public:
    * Synchronizes all field components and index mappings from device-accessible
    * memory to host memory for post-processing, I/O, or debugging operations.
    */
-  void copy_to_host() { sync_fields<specfem::sync::kind::DeviceToHost>(); }
+  void copy_to_host();
 
   /**
    * @brief Copy 2D simulation field data from host to device memory.
@@ -89,7 +89,7 @@ public:
    * Synchronizes all field components and index mappings from host memory
    * to device-accessible memory for GPU-accelerated computations.
    */
-  void copy_to_device() { sync_fields<specfem::sync::kind::HostToDevice>(); }
+  void copy_to_device();
 
   /**
    * @brief Assignment operator for copying from different wavefield types.
@@ -101,7 +101,7 @@ public:
    * @tparam DestinationWavefieldType Source wavefield type to copy from
    * @param rhs Source simulation field to copy data from
    */
-  template <specfem::wavefield::simulation_field DestinationWavefieldType>
+  template <specfem::simulation::field_type DestinationWavefieldType>
   void operator=(
       const simulation_field<dimension_tag, DestinationWavefieldType> &rhs) {
     this->nglob = rhs.nglob;
@@ -160,8 +160,9 @@ public:
    * medium
    *
    * @code
-   * auto elastic_field = field.get_field<specfem::element::medium_tag::elastic_psv>();
-   * auto displacement = elastic_field.displacement;
+   * auto elastic_field =
+   * field.get_field<specfem::element::medium_tag::elastic_psv>(); auto
+   * displacement = elastic_field.displacement;
    * // Now you can use displacement for further computations
    * @endcode
    */
@@ -220,24 +221,26 @@ public:
     return -1;
   }
 
-  template <bool on_device, typename IndexType,
-            typename std::enable_if_t<
-                specfem::data_access::is_index_type<IndexType>::value &&
-                    IndexType::using_simd == false &&
-                    IndexType::dimension_tag == specfem::dimension::type::dim2,
-                int> = 0>
+  template <
+      bool on_device, typename IndexType,
+      typename std::enable_if_t<
+          specfem::data_access::is_index_type<IndexType>::value &&
+              IndexType::using_simd == false &&
+              IndexType::dimension_tag == specfem::element::dimension_tag::dim2,
+          int> = 0>
   KOKKOS_INLINE_FUNCTION constexpr int
   get_iglob(const IndexType &index,
             const specfem::element::medium_tag MediumTag) const {
     return get_iglob<on_device>(index.ispec, index.iz, index.ix, MediumTag);
   }
 
-  template <bool on_device, typename IndexType,
-            typename std::enable_if_t<
-                specfem::data_access::is_index_type<IndexType>::value &&
-                    IndexType::using_simd == true &&
-                    IndexType::dimension_tag == specfem::dimension::type::dim2,
-                int> = 0>
+  template <
+      bool on_device, typename IndexType,
+      typename std::enable_if_t<
+          specfem::data_access::is_index_type<IndexType>::value &&
+              IndexType::using_simd == true &&
+              IndexType::dimension_tag == specfem::element::dimension_tag::dim2,
+          int> = 0>
   KOKKOS_INLINE_FUNCTION constexpr int
   get_iglob(const IndexType &index, const int &lane,
             const specfem::element::medium_tag MediumTag) const {
@@ -274,13 +277,6 @@ public:
   int get_total_degrees_of_freedom();
 
 private:
-  /**
-   * @brief Synchronize field data between host and device memory.
-   *
-   * @tparam sync Synchronization direction (HostToDevice or DeviceToHost)
-   */
-  template <specfem::sync::kind sync> void sync_fields();
-
   int total_degrees_of_freedom = 0; ///< Cached total degrees of freedom count
 };
 
@@ -304,9 +300,9 @@ private:
  */
 template <typename SimulationWavefieldType1, typename SimulationWavefieldType2,
           typename std::enable_if_t<((SimulationWavefieldType1::dimension_tag ==
-                                      specfem::dimension::type::dim2) &&
+                                      specfem::element::dimension_tag::dim2) &&
                                      (SimulationWavefieldType2::dimension_tag ==
-                                      specfem::dimension::type::dim2)),
+                                      specfem::element::dimension_tag::dim2)),
                                     int> = 0>
 inline void deep_copy(SimulationWavefieldType1 &dst,
                       const SimulationWavefieldType2 &src) {

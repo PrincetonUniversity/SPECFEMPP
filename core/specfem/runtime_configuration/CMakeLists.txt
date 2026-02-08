@@ -10,9 +10,8 @@ target_link_libraries(
         specfem::receivers
         yaml-cpp
         specfem::periodic_tasks
-        writer
-        reader
-        specfem::kokkos_kernels
+        specfem::io
+        specfem::compute
         specfem::solver
         ${BOOST_LIBS}
 )

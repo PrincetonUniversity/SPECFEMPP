@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem_setup.hpp"
 #include "test_fixture.hpp"
@@ -46,6 +46,9 @@ struct ElementTags {
                                            ///< etc.)
   specfem::element::property_tag property_tag; ///< Property type (isotropic,
                                                ///< anisotropic)
+  specfem::element::attenuation_tag attenuation_tag; ///< Attenuation type
+                                                     ///< (none, constant
+                                                     ///< isotropic, etc.)
   specfem::element::boundary_tag boundary_tag; ///< Boundary condition (none,
                                                ///< stacey, etc.)
 
@@ -59,9 +62,11 @@ struct ElementTags {
    */
   ElementTags(int element_id, specfem::element::medium_tag medium_tag,
               specfem::element::property_tag property_tag,
+              specfem::element::attenuation_tag attenuation_tag,
               specfem::element::boundary_tag boundary_tag)
       : element_id(element_id), medium_tag(medium_tag),
-        property_tag(property_tag), boundary_tag(boundary_tag) {}
+        property_tag(property_tag), attenuation_tag(attenuation_tag),
+        boundary_tag(boundary_tag) {}
 };
 
 /**
@@ -76,8 +81,8 @@ struct ElementTags {
  * and boundary condition assignment.
  */
 struct ExpectedTags3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   int nspec;                             ///< Total number of spectral elements
   std::vector<ElementTags> element_tags; ///< List of expected element tags
 
@@ -117,20 +122,23 @@ struct ExpectedTags3D {
       }
 
       // Extract computed tags from mesh structure
-      const auto [medium_tag, property_tag, boundary_tag] =
+      const auto [medium_tag, property_tag, attenuation_tag, boundary_tag] =
           tags.tags_container(expected.element_id);
 
       // Compare all tag components with detailed error reporting
       if (medium_tag != expected.medium_tag ||
           property_tag != expected.property_tag ||
+          attenuation_tag != expected.attenuation_tag ||
           boundary_tag != expected.boundary_tag) {
         FAIL() << "Tag mismatch for element " << expected.element_id << ". "
                << "Expected: ("
                << specfem::element::to_string(expected.medium_tag) << ", "
                << specfem::element::to_string(expected.property_tag) << ", "
+               << specfem::element::to_string(expected.attenuation_tag) << ", "
                << specfem::element::to_string(expected.boundary_tag) << "), "
                << "Got: (" << specfem::element::to_string(medium_tag) << ", "
                << specfem::element::to_string(property_tag) << ", "
+               << specfem::element::to_string(attenuation_tag) << ", "
                << specfem::element::to_string(boundary_tag) << ")" << std::endl;
       }
     }
@@ -172,12 +180,15 @@ std::unordered_map<std::string, ExpectedTags3D> expected_tags_map = {
   { "EightNodeElastic",
     ExpectedTags3D(8, { ElementTags(0, specfem::element::medium_tag::elastic,
                                     specfem::element::property_tag::isotropic,
+                                    specfem::element::attenuation_tag::none,
                                     specfem::element::boundary_tag::none),
                         ElementTags(1, specfem::element::medium_tag::elastic,
                                     specfem::element::property_tag::isotropic,
+                                    specfem::element::attenuation_tag::none,
                                     specfem::element::boundary_tag::none),
                         ElementTags(5, specfem::element::medium_tag::elastic,
                                     specfem::element::property_tag::isotropic,
+                                    specfem::element::attenuation_tag::none,
                                     specfem::element::boundary_tag::none) }) }
   // Add more test cases as needed
 };

@@ -6,7 +6,7 @@
  * Materials containers. Sets boundary tags to `none` since other boundary
  * conditions are not yet implemented.
  */
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 
 /**
@@ -19,7 +19,7 @@
  * @param nspec Number of spectral elements
  * @param materials Materials container with material data
  */
-specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
+specfem::mesh::tags<specfem::element::dimension_tag::dim3>::tags(
     const int nspec, specfem::mesh::materials<dimension_tag> &materials) {
 
   this->nspec = nspec;
@@ -32,14 +32,14 @@ specfem::mesh::tags<specfem::dimension::type::dim3>::tags(
       "specfem::mesh::tags::copy_tags",
       Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(0, nspec),
       [=, *this](const int ispec) {
-        const auto [material_tag, property_tag] =
+        const auto [material_tag, property_tag, attenuation_tag] =
             materials.get_material_type(ispec);
 
         // Set to none since other boundary conditions are not yet implemented
         const auto boundary_tag = specfem::element::boundary_tag::none;
 
         this->tags_container(ispec) = { material_tag, property_tag,
-                                        boundary_tag };
+                                        attenuation_tag, boundary_tag };
       });
 
   return;

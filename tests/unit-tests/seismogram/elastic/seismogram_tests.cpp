@@ -2,9 +2,8 @@
 // #include "../../utilities/include/compare_array.h"
 #include "constants.hpp"
 #include "domain/domain.hpp"
-#include "io/fortranio/interface.hpp"
-#include "io/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"
@@ -49,7 +48,7 @@ test_config parse_test_config(std::string test_configuration_file) {
 // read field from fortran binary file
 void read_field(
     const std::string filename,
-    specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft> field,
+    Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> &field,
     const int n1, const int n2) {
 
   assert(field.extent(0) == n1);
@@ -116,8 +115,9 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
   specfem::domain::domain<
-      specfem::wavefield::simulation_field::forward,
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv,
+      specfem::simulation::field_type::forward,
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::elastic_psv,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(setup.get_dt(), assembly, qp5);
 

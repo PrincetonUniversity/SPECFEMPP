@@ -1,10 +1,10 @@
 
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 
 namespace specfem::assembly::nonconforming_interfaces_impl {
@@ -21,37 +21,37 @@ namespace specfem::assembly::nonconforming_interfaces_impl {
  * @tparam InterfaceTag Type of interface (ELASTIC_ACOUSTIC or ACOUSTIC_ELASTIC)
  * @tparam BoundaryTag Boundary condition type (NONE, STACEY, etc.)
  */
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag>
-struct interface_container<specfem::dimension::type::dim2, InterfaceTag,
+struct interface_container<specfem::element::dimension_tag::dim2, InterfaceTag,
                            BoundaryTag,
-                           specfem::connections::type::nonconforming>
+                           specfem::element_connections::type::nonconforming>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::edge,
           specfem::data_access::DataClassType::nonconforming_interface,
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2> {
 public:
   /** @brief Dimension tag for 2D specialization */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
   /** @brief Interface type (elastic-acoustic or acoustic-elastic) */
   constexpr static auto interface_tag = InterfaceTag;
   /** @brief Boundary condition type */
   constexpr static auto boundary_tag = BoundaryTag;
   /** @brief Medium type on the self side of the interface */
   constexpr static auto self_medium =
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::self_medium();
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::self_medium();
   /** @brief Medium type on the coupled side of the interface */
   constexpr static auto coupled_medium =
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::coupled_medium();
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::coupled_medium();
 
 public:
   /** @brief Base container type alias */
   using base_type = specfem::data_access::Container<
       specfem::data_access::ContainerType::edge,
       specfem::data_access::DataClassType::nonconforming_interface,
-      specfem::dimension::type::dim2>;
+      specfem::element::dimension_tag::dim2>;
   /** @brief View type for edge scaling factors */
   using EdgeFactorView = typename base_type::scalar_type<
       type_real, Kokkos::DefaultExecutionSpace::memory_space>;
@@ -91,7 +91,7 @@ public:
    */
   interface_container(
       const int ngllz, const int ngllx,
-      const specfem::assembly::edge_types<specfem::dimension::type::dim2>
+      const specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>
           &edge_types,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 
@@ -148,8 +148,8 @@ private:
   template <bool on_device, typename IndexType, typename... PointTypes>
   KOKKOS_FORCEINLINE_FUNCTION void impl_load_after_expansion(
       const std::integral_constant<
-          specfem::data_access::AccessorType,
-          specfem::data_access::AccessorType::point> /* AccessorType */,
+          specfem::datatype::AccessorType,
+          specfem::datatype::AccessorType::point> /* AccessorType */,
       const IndexType &index, PointTypes &...points) const {
 
     static_assert((specfem::data_access::is_point<PointTypes>::value && ...),
@@ -182,8 +182,8 @@ private:
   template <bool on_device, typename IndexType, typename... EdgeTypes>
   KOKKOS_FORCEINLINE_FUNCTION void impl_load_after_expansion(
       const std::integral_constant<
-          specfem::data_access::AccessorType,
-          specfem::data_access::AccessorType::chunk_edge> /* AccessorType */,
+          specfem::datatype::AccessorType,
+          specfem::datatype::AccessorType::chunk_edge> /* AccessorType */,
       const IndexType &index, EdgeTypes &...edges) const {
 
     static_assert(

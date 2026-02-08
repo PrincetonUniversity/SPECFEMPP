@@ -17,7 +17,9 @@
     coupled_interfaces/coupled_interfaces
     element_types/element_types
     edge_types/edge_types
+    face_types/face_types
     fields/fields
+    info/info
     jacobian_matrix/jacobian_matrix
     kernels/kernels
     mesh/index

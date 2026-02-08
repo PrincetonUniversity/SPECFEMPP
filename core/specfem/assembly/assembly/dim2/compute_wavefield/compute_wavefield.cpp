@@ -1,6 +1,6 @@
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/assembly/impl/helper.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
@@ -11,8 +11,9 @@ namespace {
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void get_wavefield_on_entire_grid(
-    const specfem::wavefield::type component,
-    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    const specfem::enums::wavefield component,
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                  Kokkos::DefaultExecutionSpace>
         wavefield_on_entire_grid) {
@@ -20,13 +21,13 @@ void get_wavefield_on_entire_grid(
   const auto &element_grid = assembly.mesh.element_grid;
 
   if (element_grid == 5) {
-    specfem::assembly::assembly_impl::helper<specfem::dimension::type::dim2,
-                                             MediumTag, PropertyTag, 5>
+    specfem::assembly::assembly_impl::helper<
+        specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, 5>
         helper(assembly, wavefield_on_entire_grid);
     helper(component);
   } else if (element_grid == 8) {
-    specfem::assembly::assembly_impl::helper<specfem::dimension::type::dim2,
-                                             MediumTag, PropertyTag, 8>
+    specfem::assembly::assembly_impl::helper<
+        specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, 8>
         helper(assembly, wavefield_on_entire_grid);
     helper(component);
   } else {
@@ -39,26 +40,26 @@ void get_wavefield_on_entire_grid(
 } // namespace
 
 Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
-specfem::assembly::assembly<specfem::dimension::type::dim2>::
+specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::
     generate_wavefield_on_entire_grid(
-        const specfem::wavefield::simulation_field wavefield,
-        const specfem::wavefield::type component) {
+        const specfem::simulation::field_type wavefield,
+        const specfem::enums::wavefield component) {
 
   // Check which type of wavefield component is requested
   const int ncomponents = [&]() -> int {
-    if (component == specfem::wavefield::type::displacement) {
+    if (component == specfem::enums::wavefield::displacement) {
       return 2;
-    } else if (component == specfem::wavefield::type::velocity) {
+    } else if (component == specfem::enums::wavefield::velocity) {
       return 2;
-    } else if (component == specfem::wavefield::type::acceleration) {
+    } else if (component == specfem::enums::wavefield::acceleration) {
       return 2;
-    } else if (component == specfem::wavefield::type::pressure) {
+    } else if (component == specfem::enums::wavefield::pressure) {
       return 1;
-    } else if (component == specfem::wavefield::type::rotation) {
+    } else if (component == specfem::enums::wavefield::rotation) {
       return 2;
-    } else if (component == specfem::wavefield::type::intrinsic_rotation) {
+    } else if (component == specfem::enums::wavefield::intrinsic_rotation) {
       return 2;
-    } else if (component == specfem::wavefield::type::curl) {
+    } else if (component == specfem::enums::wavefield::curl) {
       return 2;
     } else {
       throw std::runtime_error("Wavefield component not supported");
@@ -66,11 +67,11 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::
   }();
 
   // Copy the required wavefield into the buffer
-  if (wavefield == specfem::wavefield::simulation_field::forward) {
+  if (wavefield == specfem::simulation::field_type::forward) {
     specfem::assembly::deep_copy(this->fields.buffer, this->fields.forward);
-  } else if (wavefield == specfem::wavefield::simulation_field::adjoint) {
+  } else if (wavefield == specfem::simulation::field_type::adjoint) {
     specfem::assembly::deep_copy(this->fields.buffer, this->fields.adjoint);
-  } else if (wavefield == specfem::wavefield::simulation_field::backward) {
+  } else if (wavefield == specfem::simulation::field_type::backward) {
     specfem::assembly::deep_copy(this->fields.buffer, this->fields.backward);
   } else {
     throw std::runtime_error("Wavefield type not supported");
@@ -91,9 +92,11 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       {
-        if constexpr (_dimension_tag_ == specfem::dimension::type::dim2) {
+        if constexpr (_dimension_tag_ ==
+                      specfem::element::dimension_tag::dim2) {
           get_wavefield_on_entire_grid<_medium_tag_, _property_tag_>(
               component, *this, wavefield_on_entire_grid);
         }

@@ -1,5 +1,5 @@
-#include "enumerations/interface.hpp"
-#include "medium/compute_stress.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -7,7 +7,7 @@
 namespace {
 
 TEST(Stress, ElasticIsotropicCosserat2D_Basic) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic_cosserat;
   static constexpr auto CosseratTag =
@@ -62,7 +62,7 @@ TEST(Stress, ElasticIsotropicCosserat2D_Basic) {
   expected_stress.T(2, 1) = sigma_c_zy;
 
   const CosseratStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   std::ostringstream message;
   message << "Cosserat stress tensor is not equal to expected value: \n"
@@ -73,7 +73,7 @@ TEST(Stress, ElasticIsotropicCosserat2D_Basic) {
 }
 
 TEST(Stress, ElasticIsotropicCosserat2D_ZeroDerivatives) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic_cosserat;
   static constexpr auto CosseratTag =
@@ -104,7 +104,7 @@ TEST(Stress, ElasticIsotropicCosserat2D_ZeroDerivatives) {
   }
 
   const CosseratStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   CosseratStressType expected_stress;
   for (int i = 0; i < 3; ++i) {
@@ -122,7 +122,7 @@ TEST(Stress, ElasticIsotropicCosserat2D_ZeroDerivatives) {
 }
 
 TEST(Stress, ElasticIsotropicCosserat2D_SymmetricWhenNuZero) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic_cosserat;
   static constexpr auto CosseratTag =
@@ -175,7 +175,7 @@ TEST(Stress, ElasticIsotropicCosserat2D_SymmetricWhenNuZero) {
   expected_stress.T(2, 1) = sigma_c_zy;
 
   const CosseratStressType stress =
-      specfem::medium::compute_stress(properties, field_derivatives);
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   std::ostringstream message;
   message << "Cosserat stress tensor should be symmetric when nu = 0: \n"

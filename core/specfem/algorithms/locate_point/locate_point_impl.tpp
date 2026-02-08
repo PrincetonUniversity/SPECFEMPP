@@ -6,33 +6,13 @@
 #include <tuple>
 #include <vector>
 
-namespace {
-template <typename GraphType>
-std::vector<int> get_best_candidates_from_graph(const int ispec_guess,
-                                                const GraphType &graph) {
-
-  std::vector<int> ispec_candidates;
-  ispec_candidates.push_back(ispec_guess);
-
-  for (auto edge :
-       boost::make_iterator_range(boost::out_edges(ispec_guess, graph))) {
-    const int ispec = boost::target(edge, graph);
-    if (std::find(ispec_candidates.begin(), ispec_candidates.end(), ispec) ==
-        ispec_candidates.end()) {
-      ispec_candidates.push_back(ispec);
-    }
-  }
-  return ispec_candidates;
-}
-} // namespace
-
 namespace specfem::algorithms::locate_point_impl {
 
 template <typename GraphType>
-specfem::point::local_coordinates<specfem::dimension::type::dim2>
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim2>
 locate_point_core(
     const GraphType &graph,
-    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+    const specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
         &coordinates,
     const Kokkos::View<
         type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
@@ -40,6 +20,22 @@ locate_point_core(
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coord,
     const int ngnod) {
+
+  auto get_best_candidates_from_graph = [](const int ispec_guess,
+                                          const GraphType &graph) {
+    std::vector<int> ispec_candidates;
+    ispec_candidates.push_back(ispec_guess);
+
+    for (auto edge :
+         boost::make_iterator_range(boost::out_edges(ispec_guess, graph))) {
+      const int ispec = boost::target(edge, graph);
+      if (std::find(ispec_candidates.begin(), ispec_candidates.end(), ispec) ==
+          ispec_candidates.end()) {
+        ispec_candidates.push_back(ispec);
+      }
+    }
+    return ispec_candidates;
+  };
 
   int ix_guess, iz_guess, ispec_guess;
 

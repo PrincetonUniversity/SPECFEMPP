@@ -1,9 +1,9 @@
 #include "elements.hpp"
-#include "enumerations/interface.hpp"
-#include "io/fortranio/interface.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
 
 specfem::mesh::elements::axial_elements<
-    specfem::dimension::type::dim2>::axial_elements(const int nspec) {
+    specfem::element::dimension_tag::dim2>::axial_elements(const int nspec) {
   this->is_on_the_axis = Kokkos::View<bool *, Kokkos::HostSpace>(
       "specfem::mesh::axial_element::is_on_the_axis", nspec);
 

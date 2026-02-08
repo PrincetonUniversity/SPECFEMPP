@@ -1,5 +1,5 @@
 #pragma once
-#include "kokkos_abstractions.h"
+
 #include "specfem_setup.hpp"
 
 /**

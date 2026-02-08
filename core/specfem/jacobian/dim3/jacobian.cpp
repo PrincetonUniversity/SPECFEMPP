@@ -1,10 +1,10 @@
 #include "specfem/jacobian.hpp"
 #include "specfem/shape_function.hpp"
 
-specfem::point::global_coordinates<specfem::dimension::type::dim3>
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
 specfem::jacobian::compute_locations(
     const Kokkos::View<
-        point::global_coordinates<specfem::dimension::type::dim3> *,
+        point::global_coordinates<specfem::element::dimension_tag::dim3> *,
         Kokkos::HostSpace> &coorg,
     const int ngnod, const type_real xi, const type_real eta,
     const type_real gamma) {
@@ -24,10 +24,11 @@ specfem::jacobian::compute_locations(
   return { xcor, ycor, zcor };
 }
 
-specfem::point::jacobian_matrix<specfem::dimension::type::dim3, true, false>
+specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3, true,
+                                false>
 specfem::jacobian::compute_jacobian(
     const Kokkos::View<
-        point::global_coordinates<specfem::dimension::type::dim3> *,
+        point::global_coordinates<specfem::element::dimension_tag::dim3> *,
         Kokkos::HostSpace> &coorg,
     const int ngnod, const type_real xi, const type_real eta,
     const type_real gamma) {

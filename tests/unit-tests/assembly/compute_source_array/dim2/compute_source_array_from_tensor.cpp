@@ -1,6 +1,6 @@
 #include "specfem/assembly/compute_source_array/dim2/impl/compute_source_array_from_tensor.hpp"
 #include "../../test_fixture/test_fixture.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
@@ -23,7 +23,8 @@ void test_tensor_source(const std::string &source_name, SourceType &source,
   specfem::quadrature::quadratures quadratures(gll_quad);
 
   // Create mesh_impl quadrature from quadratures object
-  specfem::assembly::mesh_impl::quadrature<specfem::dimension::type::dim2>
+  specfem::assembly::mesh_impl::quadrature<
+      specfem::element::dimension_tag::dim2>
       quadrature(quadratures);
   auto xi_gamma_points = quadrature.h_xi;
 
@@ -37,10 +38,10 @@ void test_tensor_source(const std::string &source_name, SourceType &source,
 
   // Create simplified jacobian matrix with all derivatives set to 1.0
   using PointJacobianMatrix =
-      specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
-                                      false>;
-  specfem::kokkos::HostView2d<PointJacobianMatrix> element_jacobian(
-      "element_jacobian", ngll, ngll);
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                      false, false>;
+  Kokkos::View<PointJacobianMatrix **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      element_jacobian("element_jacobian", ngll, ngll);
 
   // Set all jacobian derivatives to 1.0 for simplified testing
   // This means: dx/dxi = dx/dgamma = dz/dxi = dz/dgamma = 1.0
@@ -57,9 +58,9 @@ void test_tensor_source(const std::string &source_name, SourceType &source,
                    ", iz=" + std::to_string(iz) + ")");
 
       // Set source location to this GLL point
-      const auto local_coords =
-          specfem::point::local_coordinates<specfem::dimension::type::dim2>(
-              0, xi_gamma_points(ix), xi_gamma_points(iz));
+      const auto local_coords = specfem::point::local_coordinates<
+          specfem::element::dimension_tag::dim2>(0, xi_gamma_points(ix),
+                                                 xi_gamma_points(iz));
       source.set_local_coordinates(local_coords);
 
       // Initialize source array to zero
@@ -129,7 +130,8 @@ void test_tensor_source_off_gll(const std::string &source_name,
   specfem::quadrature::quadratures quadratures(gll_quad);
 
   // Create mesh_impl quadrature from quadratures object
-  specfem::assembly::mesh_impl::quadrature<specfem::dimension::type::dim2>
+  specfem::assembly::mesh_impl::quadrature<
+      specfem::element::dimension_tag::dim2>
       quadrature(quadratures);
   auto xi_gamma_points = quadrature.h_xi;
 
@@ -143,10 +145,10 @@ void test_tensor_source_off_gll(const std::string &source_name,
 
   // Create simplified jacobian matrix with all derivatives set to 1.0
   using PointJacobianMatrix =
-      specfem::point::jacobian_matrix<specfem::dimension::type::dim2, false,
-                                      false>;
-  specfem::kokkos::HostView2d<PointJacobianMatrix> element_jacobian(
-      "element_jacobian", ngll, ngll);
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                      false, false>;
+  Kokkos::View<PointJacobianMatrix **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      element_jacobian("element_jacobian", ngll, ngll);
 
   // Set all jacobian derivatives to 1.0 for simplified testing
   for (int iz = 0; iz < ngll; ++iz) {
@@ -165,9 +167,8 @@ void test_tensor_source_off_gll(const std::string &source_name,
                    ", gamma=" + std::to_string(gamma_source) + ")");
 
       // Set source location to this off-GLL point
-      const auto local_coords =
-          specfem::point::local_coordinates<specfem::dimension::type::dim2>(
-              0, xi_source, gamma_source);
+      const auto local_coords = specfem::point::local_coordinates<
+          specfem::element::dimension_tag::dim2>(0, xi_source, gamma_source);
       source.set_local_coordinates(local_coords);
 
       // Initialize source array to zero
@@ -234,12 +235,12 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (1,0,0) - Mxx only
   {
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> moment_xx(
-        0.0, 0.0,      // x, z
-        1.0, 0.0, 0.0, // Mxx=1, Mzz=0, Mxz=0
-        std::make_unique<specfem::source_time_functions::Ricker>(
-            10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>
+        moment_xx(0.0, 0.0,      // x, z
+                  1.0, 0.0, 0.0, // Mxx=1, Mzz=0, Mxz=0
+                  std::make_unique<specfem::source_time_functions::Ricker>(
+                      10, 0.01, 1.0, 0.0, 1.0, false),
+                  specfem::simulation::field_type::forward);
     moment_xx.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_tensor_source("Moment Tensor Mxx (1,0,0)", moment_xx, ngll);
     test_tensor_source_off_gll("Moment Tensor Mxx (1,0,0)", moment_xx, ngll);
@@ -247,12 +248,12 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (0,1,0) - Mzz only
   {
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> moment_zz(
-        0.0, 0.0,      // x, z
-        0.0, 1.0, 0.0, // Mxx=0, Mzz=1, Mxz=0
-        std::make_unique<specfem::source_time_functions::Ricker>(
-            10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>
+        moment_zz(0.0, 0.0,      // x, z
+                  0.0, 1.0, 0.0, // Mxx=0, Mzz=1, Mxz=0
+                  std::make_unique<specfem::source_time_functions::Ricker>(
+                      10, 0.01, 1.0, 0.0, 1.0, false),
+                  specfem::simulation::field_type::forward);
     moment_zz.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_tensor_source("Moment Tensor Mzz (0,1,0)", moment_zz, ngll);
     test_tensor_source_off_gll("Moment Tensor Mzz (0,1,0)", moment_zz, ngll);
@@ -260,12 +261,12 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (0,0,1) - Mxz only
   {
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> moment_xz(
-        0.0, 0.0,      // x, z
-        0.0, 0.0, 1.0, // Mxx=0, Mzz=0, Mxz=1
-        std::make_unique<specfem::source_time_functions::Ricker>(
-            10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>
+        moment_xz(0.0, 0.0,      // x, z
+                  0.0, 0.0, 1.0, // Mxx=0, Mzz=0, Mxz=1
+                  std::make_unique<specfem::source_time_functions::Ricker>(
+                      10, 0.01, 1.0, 0.0, 1.0, false),
+                  specfem::simulation::field_type::forward);
     moment_xz.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_tensor_source("Moment Tensor Mxz (0,0,1)", moment_xz, ngll);
     test_tensor_source_off_gll("Moment Tensor Mxz (0,0,1)", moment_xz, ngll);
@@ -273,12 +274,12 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (1,1,0) - Mxx and Mzz
   {
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2>
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>
         moment_xx_zz(0.0, 0.0,      // x, z
                      1.0, 1.0, 0.0, // Mxx=1, Mzz=1, Mxz=0
                      std::make_unique<specfem::source_time_functions::Ricker>(
                          10, 0.01, 1.0, 0.0, 1.0, false),
-                     specfem::wavefield::simulation_field::forward);
+                     specfem::simulation::field_type::forward);
     moment_xx_zz.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_tensor_source("Moment Tensor Mxx+Mzz (1,1,0)", moment_xx_zz, ngll);
     test_tensor_source_off_gll("Moment Tensor Mxx+Mzz (1,1,0)", moment_xx_zz,
@@ -287,12 +288,12 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (1,1,1) - All components
   {
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> moment_all(
-        0.0, 0.0,      // x, z
-        1.0, 1.0, 1.0, // Mxx=1, Mzz=1, Mxz=1
-        std::make_unique<specfem::source_time_functions::Ricker>(
-            10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>
+        moment_all(0.0, 0.0,      // x, z
+                   1.0, 1.0, 1.0, // Mxx=1, Mzz=1, Mxz=1
+                   std::make_unique<specfem::source_time_functions::Ricker>(
+                       10, 0.01, 1.0, 0.0, 1.0, false),
+                   specfem::simulation::field_type::forward);
     moment_all.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_tensor_source("Moment Tensor All (1,1,1)", moment_all, ngll);
     test_tensor_source_off_gll("Moment Tensor All (1,1,1)", moment_all, ngll);
@@ -300,12 +301,12 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // (0,0,0) - Zero tensor
   {
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> moment_zero(
-        0.0, 0.0,      // x, z
-        0.0, 0.0, 0.0, // Mxx=0, Mzz=0, Mxz=0
-        std::make_unique<specfem::source_time_functions::Ricker>(
-            10, 0.01, 1.0, 0.0, 1.0, false),
-        specfem::wavefield::simulation_field::forward);
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>
+        moment_zero(0.0, 0.0,      // x, z
+                    0.0, 0.0, 0.0, // Mxx=0, Mzz=0, Mxz=0
+                    std::make_unique<specfem::source_time_functions::Ricker>(
+                        10, 0.01, 1.0, 0.0, 1.0, false),
+                    specfem::simulation::field_type::forward);
     moment_zero.set_medium_tag(specfem::element::medium_tag::elastic_psv);
     test_tensor_source("Moment Tensor Zero (0,0,0)", moment_zero, ngll);
     test_tensor_source_off_gll("Moment Tensor Zero (0,0,0)", moment_zero, ngll);
@@ -313,12 +314,12 @@ TEST(ASSEMBLY_NO_LOAD, compute_source_array_from_tensor) {
 
   // Test with elastic_psv_t medium (3 components)
   {
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2>
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>
         moment_psv_t(0.0, 0.0,      // x, z
                      1.0, 2.0, 0.5, // Mxx=1, Mzz=2, Mxz=0.5
                      std::make_unique<specfem::source_time_functions::Ricker>(
                          10, 0.01, 1.0, 0.0, 1.0, false),
-                     specfem::wavefield::simulation_field::forward);
+                     specfem::simulation::field_type::forward);
     moment_psv_t.set_medium_tag(specfem::element::medium_tag::elastic_psv_t);
     test_tensor_source("Moment Tensor PSV-T (1,2,0.5)", moment_psv_t, ngll);
     test_tensor_source_off_gll("Moment Tensor PSV-T (1,2,0.5)", moment_psv_t,

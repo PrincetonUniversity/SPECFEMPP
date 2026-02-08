@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem_setup.hpp"
 #include "test_fixture.hpp"
@@ -12,14 +12,15 @@
 namespace specfem::test_configuration {
 
 struct Connection {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   int ispec;
   int jspec;
-  specfem::connections::type connection;
+  specfem::element_connections::type connection;
   specfem::mesh_entity::dim3::type orientation;
 
-  Connection(int ispec, int jspec, specfem::connections::type connection,
+  Connection(int ispec, int jspec,
+             specfem::element_connections::type connection,
              specfem::mesh_entity::dim3::type orientation)
       : ispec(ispec), jspec(jspec), connection(connection),
         orientation(orientation) {}
@@ -45,7 +46,7 @@ struct Connection {
       msg << "Failed expected adjacency between elements " << ispec << " and "
           << jspec << ":\n";
       msg << "  Found connection type "
-          << specfem::connections::to_string(edge.connection)
+          << specfem::element_connections::to_string(edge.connection)
           << " for edge between " << ispec << " and " << jspec << "\n";
       FAIL() << msg.str();
     }
@@ -62,8 +63,8 @@ struct Connection {
 };
 
 struct ExpectedAdjacency3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   int nelements;                       ///< Total number of elements in the mesh
   std::vector<Connection> connections; ///< List of expected connections
 
@@ -98,18 +99,24 @@ static const std::unordered_map<std::string, ExpectedAdjacency3D>
         "EightNodeElastic",
         ExpectedAdjacency3D(
             8,
-            { Connection(0, 1, specfem::connections::type::strongly_conforming,
-                         specfem::mesh_entity::dim3::type::right),
-              Connection(1, 0, specfem::connections::type::strongly_conforming,
-                         specfem::mesh_entity::dim3::type::left),
-              Connection(0, 2, specfem::connections::type::strongly_conforming,
-                         specfem::mesh_entity::dim3::type::back),
-              Connection(2, 0, specfem::connections::type::strongly_conforming,
-                         specfem::mesh_entity::dim3::type::front),
-              Connection(0, 4, specfem::connections::type::strongly_conforming,
-                         specfem::mesh_entity::dim3::type::top),
-              Connection(4, 0, specfem::connections::type::strongly_conforming,
-                         specfem::mesh_entity::dim3::type::bottom) })
+            { Connection(
+                  0, 1, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::right),
+              Connection(
+                  1, 0, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::left),
+              Connection(
+                  0, 2, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::back),
+              Connection(
+                  2, 0, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::front),
+              Connection(
+                  0, 4, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::top),
+              Connection(
+                  4, 0, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::bottom) })
         // Add more test cases as needed
     } };
 

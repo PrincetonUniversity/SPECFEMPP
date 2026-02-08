@@ -39,8 +39,9 @@ namespace specfem::assembly {
  *
  * @code
  * // Example usage in GPU kernel after Jacobian computation
- * specfem::point::index<specfem::dimension::type::dim2> idx(ispec, iz, ix);
- * specfem::point::jacobian_matrix<specfem::dimension::type::dim2> computed_jac;
+ * specfem::point::index<specfem::element::dimension_tag::dim2> idx(ispec, iz,
+ * ix); specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2>
+ * computed_jac;
  *
  * // Compute Jacobian values (simplified)
  * computed_jac.xix = compute_xix(mesh_coords);

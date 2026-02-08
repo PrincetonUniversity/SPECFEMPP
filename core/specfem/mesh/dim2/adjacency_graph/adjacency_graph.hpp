@@ -1,6 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/element_coupling.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <memory>
 
@@ -15,7 +17,7 @@ namespace specfem::mesh {
  *
  * @tparam Dimension The spatial dimension of the mesh (dim2 or dim3)
  */
-template <specfem::dimension::type Dimension> struct adjacency_graph {
+template <specfem::element::dimension_tag Dimension> struct adjacency_graph {
 
 public:
   /**
@@ -27,7 +29,7 @@ public:
    */
   struct EdgeProperties {
     /** @brief Type of connection between adjacent elements */
-    specfem::connections::type connection;
+    specfem::element_connections::type connection;
 
     /** @brief Orientation of the shared mesh entity (left, right, ...,
      * bottom_left, bottom_right, etc.) */
@@ -46,7 +48,7 @@ public:
      * @param conn Type of connection between elements
      * @param orient Orientation of the shared mesh entity
      */
-    EdgeProperties(const specfem::connections::type conn,
+    EdgeProperties(const specfem::element_connections::type conn,
                    const specfem::mesh_entity::dim2::type orient)
         : connection(conn), orientation(orient) {}
   };

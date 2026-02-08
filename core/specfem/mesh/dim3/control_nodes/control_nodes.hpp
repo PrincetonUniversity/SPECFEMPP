@@ -1,11 +1,11 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::mesh {
 
-template <specfem::dimension::type DimensionTag> struct control_nodes;
+template <specfem::element::dimension_tag DimensionTag> struct control_nodes;
 
 /**
  * @brief Container for control nodes used in 3D mesh generation with meshfem3D.
@@ -18,7 +18,7 @@ template <specfem::dimension::type DimensionTag> struct control_nodes;
  * @code
  * // Example: Reading control nodes from meshfem3D file
  * using control_nodes3D =
- * specfem::mesh::control_nodes<specfem::dimension::type::dim3>;
+ * specfem::mesh::control_nodes<specfem::element::dimension_tag::dim3>;
  *
  * // Read from binary file using IO routine
  * // The following code is only used internally by the IO module
@@ -34,7 +34,7 @@ template <specfem::dimension::type DimensionTag> struct control_nodes;
  * @see specfem::io::mesh::impl::fortran::dim3::meshfem3d::read_control_nodes
  * @see specfem::mesh::control_nodes (for general 2D control nodes)
  */
-template <> struct control_nodes<specfem::dimension::type::dim3> {
+template <> struct control_nodes<specfem::element::dimension_tag::dim3> {
 public:
   /**
    * @brief Dimension tag identifying the spatial context.
@@ -42,7 +42,7 @@ public:
    * Static constant providing access to the template parameter for
    * compile-time dimension queries and type traits.
    */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
 private:
   /** @brief Compile-time dimension value extracted from template parameter */
@@ -100,7 +100,8 @@ public:
    * // Typical usage in IO routine:
    * int nnodes;
    * specfem::io::read_fortran_line(stream, &nnodes);  // Read node count from
-   * file control_nodes<specfem::dimension::type::dim3> control_nodes(nnodes);
+   * file control_nodes<specfem::element::dimension_tag::dim3>
+   * control_nodes(nnodes);
    *
    * // Then populate coordinates from file
    * for (int inode = 0; inode < nnodes; ++inode) {

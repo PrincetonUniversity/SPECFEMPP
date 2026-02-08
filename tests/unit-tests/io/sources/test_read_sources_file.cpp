@@ -1,7 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "enumerations/wavefield.hpp"
-#include "io/interface.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "specfem_setup.hpp"
@@ -21,7 +20,7 @@ extern type_real user_t0;
  *
  * @tparam DimensionTag
  */
-template <specfem::dimension::type DimensionTag> struct SourceTestParam {
+template <specfem::element::dimension_tag DimensionTag> struct SourceTestParam {
   std::string testname;
   std::string sourcefilename;
   std::vector<std::shared_ptr<specfem::sources::source<DimensionTag> > >
@@ -36,14 +35,15 @@ template <specfem::dimension::type DimensionTag> struct SourceTestParam {
  * @param params
  * @return std::ostream&
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 std::ostream &operator<<(std::ostream &os,
                          const SourceTestParam<DimensionTag> &params) {
   os << params.testname;
   return os;
 }
 
-using SourceTestParam2D = SourceTestParam<specfem::dimension::type::dim2>;
+using SourceTestParam2D =
+    SourceTestParam<specfem::element::dimension_tag::dim2>;
 
 class Read2DSourcesTest : public ::testing::TestWithParam<SourceTestParam2D> {};
 
@@ -90,7 +90,8 @@ INSTANTIATE_TEST_SUITE_P(
                            "io/sources/data/dim2/multiple_sources.yaml",
                            multiple_sources_2d }));
 
-using SourceTestParam3D = SourceTestParam<specfem::dimension::type::dim3>;
+using SourceTestParam3D =
+    SourceTestParam<specfem::element::dimension_tag::dim3>;
 
 class Read3DSourcesTest : public ::testing::TestWithParam<SourceTestParam3D> {};
 

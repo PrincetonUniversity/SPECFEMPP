@@ -1,7 +1,4 @@
-#ifndef _MPI_INTERFACES_HPP
-#define _MPI_INTERFACES_HPP
-
-#include "kokkos_abstractions.h"
+#pragma once
 
 namespace specfem {
 namespace mesh {
@@ -21,5 +18,3 @@ struct interface {
 } // namespace interfaces
 } // namespace mesh
 } // namespace specfem
-
-#endif

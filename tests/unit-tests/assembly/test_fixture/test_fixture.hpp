@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../../SPECFEM_Environment.hpp"
-#include "enumerations/interface.hpp"
-#include "io/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/receivers.hpp"
@@ -16,13 +16,13 @@
 
 template <bool using_simd>
 KOKKOS_FUNCTION
-    specfem::point::index<specfem::dimension::type::dim2, using_simd>
+    specfem::point::index<specfem::element::dimension_tag::dim2, using_simd>
     get_index(const int ielement, const int num_elements, const int iz,
               const int ix);
 
 template <bool using_simd>
 KOKKOS_FUNCTION
-    specfem::point::index<specfem::dimension::type::dim3, using_simd>
+    specfem::point::index<specfem::element::dimension_tag::dim3, using_simd>
     get_index(const int ielement, const int num_elements, const int iz,
               const int iy, const int ix);
 
@@ -31,7 +31,7 @@ KOKKOS_FUNCTION
 namespace test_configuration {
 
 // Base database struct
-template <specfem::dimension::type DimensionType> struct database {
+template <specfem::element::dimension_tag DimensionType> struct database {
 public:
   database() : sources(""), stations("") {};
   virtual ~database() = default;
@@ -41,7 +41,7 @@ public:
 };
 
 // 2D database specialization
-template <> struct database<specfem::dimension::type::dim2> {
+template <> struct database<specfem::element::dimension_tag::dim2> {
 public:
   database() : mesh(""), sources(""), stations("") {};
   database(const YAML::Node &Node) {
@@ -60,7 +60,7 @@ public:
 };
 
 // 3D database specialization
-template <> struct database<specfem::dimension::type::dim3> {
+template <> struct database<specfem::element::dimension_tag::dim3> {
 public:
   database()
       : mesh_database(""), mesh_parameters(""), sources(""), stations("") {};
@@ -115,7 +115,7 @@ public:
 };
 
 // Base config struct
-template <specfem::dimension::type DimensionType> struct config {
+template <specfem::element::dimension_tag DimensionType> struct config {
 public:
   config() : nproc(1) {};
   virtual ~config() = default;
@@ -127,7 +127,7 @@ protected:
 };
 
 // 2D config specialization
-template <> struct config<specfem::dimension::type::dim2> {
+template <> struct config<specfem::element::dimension_tag::dim2> {
 public:
   config() : nproc(1), elastic_wave("P_SV"), electromagnetic_wave("TE") {};
   config(const YAML::Node &Node) {
@@ -172,7 +172,7 @@ private:
 };
 
 // 3D config specialization
-template <> struct config<specfem::dimension::type::dim3> {
+template <> struct config<specfem::element::dimension_tag::dim3> {
 public:
   config() : nproc(1) {};
   config(const YAML::Node &Node) { nproc = Node["nproc"].as<int>(); }
@@ -183,7 +183,7 @@ private:
   int nproc;
 };
 
-template <specfem::dimension::type DimensionType> struct Test {
+template <specfem::element::dimension_tag DimensionType> struct Test {
 public:
   Test(const YAML::Node &Node) {
     name = Node["name"].as<std::string>();
@@ -232,7 +232,7 @@ public:
 };
 
 // 2D Test specialization with elastic wave methods
-template <> struct Test<specfem::dimension::type::dim2> {
+template <> struct Test<specfem::element::dimension_tag::dim2> {
 public:
   Test(const YAML::Node &Node) {
     name = Node["name"].as<std::string>();
@@ -243,15 +243,17 @@ public:
     YAML::Node solutions_node = Node["solutions"];
 
     try {
-      database = test_configuration::database<specfem::dimension::type::dim2>(
-          databases);
+      database =
+          test_configuration::database<specfem::element::dimension_tag::dim2>(
+              databases);
     } catch (std::runtime_error &e) {
       throw std::runtime_error("Error in test configuration: " + name + "\n" +
                                e.what());
     }
     try {
-      config = test_configuration::config<specfem::dimension::type::dim2>(
-          configuration);
+      config =
+          test_configuration::config<specfem::element::dimension_tag::dim2>(
+              configuration);
     } catch (std::runtime_error &e) {
       throw std::runtime_error("Error in test configuration: " + name + "\n" +
                                e.what());
@@ -285,15 +287,15 @@ public:
   std::string name;
   std::string description;
   std::string suffix;
-  test_configuration::database<specfem::dimension::type::dim2> database;
-  test_configuration::config<specfem::dimension::type::dim2> config;
+  test_configuration::database<specfem::element::dimension_tag::dim2> database;
+  test_configuration::config<specfem::element::dimension_tag::dim2> config;
   test_configuration::solutions solutions;
 };
 } // namespace test_configuration
 
 // ------------------------------------------------------------------------
 
-template <specfem::dimension::type DimensionType>
+template <specfem::element::dimension_tag DimensionType>
 class Assembly : public ::testing::Test {
 
 protected:
@@ -380,5 +382,5 @@ protected:
 };
 
 // Template specializations
-using Assembly2D = Assembly<specfem::dimension::type::dim2>;
-using Assembly3D = Assembly<specfem::dimension::type::dim3>;
+using Assembly2D = Assembly<specfem::element::dimension_tag::dim2>;
+using Assembly3D = Assembly<specfem::element::dimension_tag::dim3>;

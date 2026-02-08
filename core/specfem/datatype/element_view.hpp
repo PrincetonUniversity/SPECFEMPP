@@ -1,7 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "accessor_type.hpp"
 #include "point_view.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -17,16 +18,17 @@ namespace datatype {
  * @tparam MemorySpace Memory space of the view
  * @tparam MemoryTraits Memory traits of the view
  */
-template <
-    typename T, specfem::dimension::type DimensionTag, int NumberOfGLLPoints,
-    typename MemorySpace = Kokkos::DefaultExecutionSpace::scratch_memory_space,
-    typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+template <typename T, specfem::element::dimension_tag DimensionTag,
+          int NumberOfGLLPoints,
+          typename MemorySpace =
+              Kokkos::DefaultExecutionSpace::scratch_memory_space,
+          typename MemoryTraits = Kokkos::MemoryTraits<Kokkos::Unmanaged> >
 struct ScalarElementViewType;
 
 /* 2D specialization */
 template <typename T, int NumberOfGLLPoints, typename MemorySpace,
           typename MemoryTraits>
-struct ScalarElementViewType<T, specfem::dimension::type::dim2,
+struct ScalarElementViewType<T, specfem::element::dimension_tag::dim2,
                              NumberOfGLLPoints, MemorySpace, MemoryTraits>
     : public Kokkos::View<T[NumberOfGLLPoints][NumberOfGLLPoints],
                           Kokkos::LayoutRight, MemorySpace, MemoryTraits> {
@@ -42,7 +44,7 @@ struct ScalarElementViewType<T, specfem::dimension::type::dim2,
   using value_type = T;                        ///< Value type used to store
                                                ///< the elements of the array
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension tag
+      specfem::element::dimension_tag::dim2; ///< Dimension tag
   ///@}
 
   /**
@@ -51,9 +53,9 @@ struct ScalarElementViewType<T, specfem::dimension::type::dim2,
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
-                                                         ///< identifying the
-                                                         ///< class
+      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
 
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
                                                  ///< each element
@@ -104,7 +106,7 @@ struct ScalarElementViewType<T, specfem::dimension::type::dim2,
 /* 3D specialization */
 template <typename T, int NumberOfGLLPoints, typename MemorySpace,
           typename MemoryTraits>
-struct ScalarElementViewType<T, specfem::dimension::type::dim3,
+struct ScalarElementViewType<T, specfem::element::dimension_tag::dim3,
                              NumberOfGLLPoints, MemorySpace, MemoryTraits>
     : public Kokkos::View<
           T[NumberOfGLLPoints][NumberOfGLLPoints][NumberOfGLLPoints],
@@ -126,7 +128,7 @@ struct ScalarElementViewType<T, specfem::dimension::type::dim3,
   using value_type = T;           ///< Value type used to store
                                   ///< the elements of the array
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   ///@}
 
   /**
@@ -135,9 +137,9 @@ struct ScalarElementViewType<T, specfem::dimension::type::dim3,
    */
   ///@{
   constexpr static auto accessor_type =
-      specfem::data_access::AccessorType::chunk_element; ///< Accessor type for
-                                                         ///< identifying the
-                                                         ///< class
+      specfem::datatype::AccessorType::chunk_element; ///< Accessor type for
+                                                      ///< identifying the
+                                                      ///< class
 
   constexpr static int ngll = NumberOfGLLPoints; ///< Number of GLL points in
                                                  ///< each element

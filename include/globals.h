@@ -1,5 +1,4 @@
-#ifndef GLOBALS_H
-#define GLOBALS_H
+#pragma once
 
 #include "constants.hpp"
 
@@ -8,5 +7,3 @@ namespace globals {
 const specfem::wave::type simulation_wave = specfem::wave::p_sv;
 } // namespace globals
 } // namespace specfem
-
-#endif

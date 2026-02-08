@@ -10,20 +10,20 @@
 2D Specialization
 ^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim2, false >
+.. doxygenstruct:: specfem::point::index< specfem::element::dimension_tag::dim2, false >
    :members:
 
-.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim2, true >
+.. doxygenstruct:: specfem::point::index< specfem::element::dimension_tag::dim2, true >
    :members:
 
 
 3D Specialization
 ^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim3, false >
+.. doxygenstruct:: specfem::point::index< specfem::element::dimension_tag::dim3, false >
    :members:
 
-.. doxygenstruct:: specfem::point::index< specfem::dimension::type::dim3, true >
+.. doxygenstruct:: specfem::point::index< specfem::element::dimension_tag::dim3, true >
    :members:
 
 

@@ -1,6 +1,6 @@
 #include "../SPECFEM_Environment.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include <Kokkos_Core.hpp>
@@ -130,7 +130,7 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
 
   constexpr bool using_simd = ParallelConfig::simd::using_simd;
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const specfem::mesh_entity::element_grid<dimension> element_grid(ngllz,
                                                                    ngllx);
@@ -212,7 +212,7 @@ execute_chunk_element_policy_3d(const int nspec, const int ngllz,
 
   constexpr bool using_simd = ParallelConfig::simd::using_simd;
 
-  constexpr auto dimension = specfem::dimension::type::dim3;
+  constexpr auto dimension = specfem::element::dimension_tag::dim3;
 
   const specfem::mesh_entity::element element_grid(ngllz, nglly, ngllx);
 
@@ -359,12 +359,12 @@ TEST_P(ChunkElementPolicyTest, VisitAllPoints) {
   const int ngllx = params.ngllx;
 
   using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
-      specfem::dimension::type::dim2, specfem::datatype::simd<type_real, false>,
-      Kokkos::DefaultExecutionSpace>;
+      specfem::element::dimension_tag::dim2,
+      specfem::datatype::simd<type_real, false>, Kokkos::DefaultExecutionSpace>;
 
   using SimdParallelConfig =
       specfem::parallel_configuration::default_chunk_config<
-          specfem::dimension::type::dim2,
+          specfem::element::dimension_tag::dim2,
           specfem::datatype::simd<type_real, true>,
           Kokkos::DefaultExecutionSpace>;
 
@@ -399,12 +399,12 @@ TEST_P(ChunkElementPolicy3DTest, VisitAllPoints) {
   const int ngllx = params.ngllx;
 
   using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
-      specfem::dimension::type::dim3, specfem::datatype::simd<type_real, false>,
-      Kokkos::DefaultExecutionSpace>;
+      specfem::element::dimension_tag::dim3,
+      specfem::datatype::simd<type_real, false>, Kokkos::DefaultExecutionSpace>;
 
   using SimdParallelConfig =
       specfem::parallel_configuration::default_chunk_config<
-          specfem::dimension::type::dim3,
+          specfem::element::dimension_tag::dim3,
           specfem::datatype::simd<type_real, true>,
           Kokkos::DefaultExecutionSpace>;
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -11,11 +11,11 @@ namespace specfem::assembly::boundary_values_impl {
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::boundary_tag BoundaryTag>
-class boundary_medium_container<specfem::dimension::type::dim3, MediumTag,
-                                BoundaryTag> {
+class boundary_medium_container<specfem::element::dimension_tag::dim3,
+                                MediumTag, BoundaryTag> {
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   constexpr static auto medium_tag = MediumTag;
   constexpr static auto boundary_tag = BoundaryTag;
 

@@ -1,9 +1,7 @@
 #include "../../../SPECFEM_Environment.hpp"
-#include "../../../utilities/include/interface.hpp"
 #include "constants.hpp"
-#include "io/interface.hpp"
-#include "io/seismogram/reader.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/io.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/quadrature.hpp"
@@ -160,7 +158,7 @@ TEST_P(Newmark, 2D) {
 
   const int max_sig_step = setup.get_max_seismogram_step();
 
-  specfem::assembly::assembly<specfem::dimension::type::dim2> assembly(
+  specfem::assembly::assembly<specfem::element::dimension_tag::dim2> assembly(
       mesh, quadratures, sources, receivers, seismogram_types, t0,
       setup.get_dt(), nsteps, max_sig_step, nstep_between_samples,
       setup.get_simulation_type(), false, nullptr);
@@ -205,7 +203,7 @@ TEST_P(Newmark, 2D) {
       std::vector<std::string> filenames;
 
       switch (seismogram_type) {
-      case specfem::wavefield::type::displacement:
+      case specfem::enums::wavefield::displacement:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
           filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXY.semd");
@@ -216,7 +214,7 @@ TEST_P(Newmark, 2D) {
                               station_name + ".S2.BXZ.semd");
         }
         break;
-      case specfem::wavefield::type::velocity:
+      case specfem::enums::wavefield::velocity:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
           filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXY.semv");
@@ -227,7 +225,7 @@ TEST_P(Newmark, 2D) {
                               station_name + ".S2.BXZ.semv");
         }
         break;
-      case specfem::wavefield::type::acceleration:
+      case specfem::enums::wavefield::acceleration:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
           filenames.push_back(Test.traces + "/" + network_name + "." +
                               station_name + ".S2.BXY.sema");
@@ -238,7 +236,7 @@ TEST_P(Newmark, 2D) {
                               station_name + ".S2.BXZ.sema");
         }
         break;
-      case specfem::wavefield::type::pressure:
+      case specfem::enums::wavefield::pressure:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
           FAIL() << "--------------------------------------------------\n"
                  << "\033[0;31m[FAILED]\033[0m Test failed\n"
@@ -254,7 +252,7 @@ TEST_P(Newmark, 2D) {
                               station_name + ".S2.PRE.semp");
         }
         break;
-      case specfem::wavefield::type::rotation:
+      case specfem::enums::wavefield::rotation:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
           FAIL() << "--------------------------------------------------\n"
                  << "\033[0;31m[FAILED]\033[0m Test failed\n"
@@ -270,7 +268,7 @@ TEST_P(Newmark, 2D) {
                               station_name + ".S2.BXY.semr");
         }
         break;
-      case specfem::wavefield::type::intrinsic_rotation:
+      case specfem::enums::wavefield::intrinsic_rotation:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
           FAIL() << "--------------------------------------------------\n"
                  << "\033[0;31m[FAILED]\033[0m Test failed\n"
@@ -286,7 +284,7 @@ TEST_P(Newmark, 2D) {
                               station_name + ".S2.BXY.semir");
         }
         break;
-      case specfem::wavefield::type::curl:
+      case specfem::enums::wavefield::curl:
         if (elastic_wave == specfem::enums::elastic_wave::sh) {
           FAIL() << "--------------------------------------------------\n"
                  << "\033[0;31m[FAILED]\033[0m Test failed\n"
@@ -324,7 +322,7 @@ TEST_P(Newmark, 2D) {
         const auto trace =
             Kokkos::subview(traces, icomp, Kokkos::ALL, Kokkos::ALL);
         specfem::io::seismogram_reader reader(
-            filenames[icomp], specfem::enums::seismogram::format::ascii, trace);
+            filenames[icomp], specfem::enums::seismogram_format::ascii, trace);
         reader.read();
       }
 

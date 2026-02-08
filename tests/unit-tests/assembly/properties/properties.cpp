@@ -1,17 +1,15 @@
 #include "../test_fixture/test_fixture.hpp"
-#include "enumerations/dimension.hpp"
-#include "io/ASCII/ASCII.hpp"
-#include "io/property/reader.hpp"
-#include "io/property/writer.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/element.hpp"
 #include "specfem/execution.hpp"
+#include "specfem/io.hpp"
 #include "specfem/macros.hpp"
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
 
 template <bool using_simd, typename ExecutionSpace>
 using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
-    specfem::dimension::type::dim2,
+    specfem::element::dimension_tag::dim2,
     specfem::datatype::simd<type_real, using_simd>, ExecutionSpace>;
 
 template <specfem::element::medium_tag MediumTag,
@@ -22,16 +20,17 @@ std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                  void>
 set_property_value(
     const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     const type_real offset) {
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &properties = assembly.properties;
 
   using PointPropertiesType =
-      specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                 PropertyTag, using_simd>;
+      specfem::point::properties<specfem::element::dimension_tag::dim2,
+                                 MediumTag, PropertyTag, using_simd>;
   using PointType = typename PointPropertiesType::value_type;
 
   specfem::execution::ChunkedDomainIterator policy(
@@ -57,14 +56,15 @@ std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                  void>
 check_property_value(
     const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     const type_real offset) {
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
   const auto &properties = assembly.properties;
   using PointType =
-      specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                 PropertyTag, using_simd>;
+      specfem::point::properties<specfem::element::dimension_tag::dim2,
+                                 MediumTag, PropertyTag, using_simd>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<using_simd, Kokkos::DefaultHostExecutionSpace>(), elements,
@@ -119,18 +119,19 @@ std::enable_if_t<std::is_same_v<typename ViewType::execution_space,
                  void>
 check_property_value(
     const ViewType elements,
-    specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     const type_real offset) {
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const int nspec = assembly.mesh.nspec;
   const int ngll = assembly.mesh.element_grid.ngllx;
   const auto &properties = assembly.properties;
 
   using PointType =
-      specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                 PropertyTag, using_simd>;
+      specfem::point::properties<specfem::element::dimension_tag::dim2,
+                                 MediumTag, PropertyTag, using_simd>;
 
   Kokkos::View<PointType ***, Kokkos::DefaultExecutionSpace> point_view(
       "point_view", nspec, ngll, ngll);
@@ -194,10 +195,11 @@ check_property_value(
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void check_compute_to_mesh(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
-    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
+    const specfem::mesh::mesh<specfem::element::dimension_tag::dim2> &mesh) {
 
-  constexpr auto dimension = specfem::dimension::type::dim2;
+  constexpr auto dimension = specfem::element::dimension_tag::dim2;
 
   const auto &properties = assembly.properties;
   const auto &element_types = assembly.element_types;
@@ -205,11 +207,12 @@ void check_compute_to_mesh(
   const auto &materials = mesh.materials;
 
   // Get all elements of the given type
-  const auto elements =
-      element_types.get_elements_on_host(MediumTag, PropertyTag);
+  const auto elements = element_types.get_elements_on_host(
+      MediumTag, PropertyTag, specfem::element::attenuation_tag::none);
 
-  using PointType = specfem::point::properties<specfem::dimension::type::dim2,
-                                               MediumTag, PropertyTag, false>;
+  using PointType =
+      specfem::point::properties<specfem::element::dimension_tag::dim2,
+                                 MediumTag, PropertyTag, false>;
 
   specfem::execution::ChunkedDomainIterator policy(
       ParallelConfig<false, Kokkos::DefaultHostExecutionSpace>(), elements,

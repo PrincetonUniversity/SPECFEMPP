@@ -1,18 +1,19 @@
 #include "specfem/assembly/edge_types.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 #include <boost/graph/filtered_graph.hpp>
 
-using EdgeViewType =
-    specfem::assembly::edge_types<specfem::dimension::type::dim2>::EdgeViewType;
+using EdgeViewType = specfem::assembly::edge_types<
+    specfem::element::dimension_tag::dim2>::EdgeViewType;
 
-specfem::assembly::edge_types<specfem::dimension::type::dim2>::edge_types(
-    const int ngllx, const int ngllz,
-    const specfem::assembly::mesh<dimension_tag> &mesh,
-    const specfem::assembly::element_types<dimension_tag> &element_types) {
+specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
+    edge_types(
+        const int ngllx, const int ngllz,
+        const specfem::assembly::mesh<dimension_tag> &mesh,
+        const specfem::assembly::element_types<dimension_tag> &element_types) {
 
   if (ngllz <= 0 || ngllx <= 0) {
     KOKKOS_ABORT_WITH_LOCATION("Invalid GLL grid size");
@@ -36,12 +37,10 @@ specfem::assembly::edge_types<specfem::dimension::type::dim2>::edge_types(
       CAPTURE(h_self_edges, h_coupled_edges, self_edges, coupled_edges) {
         int count = 0;
         int edge_index = 0;
-        constexpr auto self_medium =
-            specfem::interface::attributes<_dimension_tag_,
-                                           _interface_tag_>::self_medium();
-        constexpr auto coupled_medium =
-            specfem::interface::attributes<_dimension_tag_,
-                                           _interface_tag_>::coupled_medium();
+        constexpr auto self_medium = specfem::element_coupling::attributes<
+            _dimension_tag_, _interface_tag_>::self_medium();
+        constexpr auto coupled_medium = specfem::element_coupling::attributes<
+            _dimension_tag_, _interface_tag_>::coupled_medium();
 
         std::vector<specfem::mesh_entity::edge<dimension_tag> > self_collect;
         std::vector<specfem::mesh_entity::edge<dimension_tag> > coupled_collect;
@@ -75,7 +74,7 @@ specfem::assembly::edge_types<specfem::dimension::type::dim2>::edge_types(
             const specfem::mesh_entity::dim2::type coupled_orientation =
                 nc_graph[edge_inv].orientation;
             if (_connection_tag_ ==
-                    specfem::connections::type::weakly_conforming &&
+                    specfem::element_connections::type::weakly_conforming &&
                 (specfem::mesh_entity::contains(
                      specfem::mesh_entity::dim2::corners, self_orientation) ||
                  specfem::mesh_entity::contains(
@@ -130,9 +129,9 @@ specfem::assembly::edge_types<specfem::dimension::type::dim2>::edge_types(
 }
 
 std::tuple<EdgeViewType::HostMirror, EdgeViewType::HostMirror>
-specfem::assembly::edge_types<specfem::dimension::type::dim2>::
-    get_edges_on_host(const specfem::connections::type connection,
-                      const specfem::interface::interface_tag edge,
+specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
+    get_edges_on_host(const specfem::element_connections::type connection,
+                      const specfem::element_coupling::interface_tag edge,
                       const specfem::element::boundary_tag boundary) const {
 
   FOR_EACH_IN_PRODUCT(
@@ -152,9 +151,9 @@ specfem::assembly::edge_types<specfem::dimension::type::dim2>::
 }
 
 std::tuple<EdgeViewType, EdgeViewType>
-specfem::assembly::edge_types<specfem::dimension::type::dim2>::
-    get_edges_on_device(const specfem::connections::type connection,
-                        const specfem::interface::interface_tag edge,
+specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
+    get_edges_on_device(const specfem::element_connections::type connection,
+                        const specfem::element_coupling::interface_tag edge,
                         const specfem::element::boundary_tag boundary) const {
 
   FOR_EACH_IN_PRODUCT(

@@ -1,10 +1,10 @@
 #include "boundaries.hpp"
-#include "io/fortranio/interface.hpp"
+#include "specfem/io.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::mesh::forcing_boundary<specfem::dimension::type::dim2>::
+specfem::mesh::forcing_boundary<specfem::element::dimension_tag::dim2>::
     forcing_boundary(const int nelement_acforcing) {
 
   if (nelement_acforcing > 0) {

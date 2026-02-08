@@ -149,7 +149,11 @@ private:
     std::string cli_log_file;
     bool cli_per_rank = false;
     bool cli_auto_flush = false;
+#ifndef NDEBUG
+    LogLevel cli_log_level = LogLevel::DEBUG;
+#else
     LogLevel cli_log_level = LogLevel::INFO;
+#endif
   };
 
   static program::Context *context_ptr_; ///< Non-owning pointer to Context

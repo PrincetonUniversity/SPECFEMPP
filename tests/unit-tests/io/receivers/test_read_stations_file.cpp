@@ -1,6 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "io/interface.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
 #include "specfem/receivers.hpp"
 #include "test_receiver_solutions.hpp"
 #include <Kokkos_Core.hpp>
@@ -12,7 +12,8 @@
  *
  * @tparam DimensionTag
  */
-template <specfem::dimension::type DimensionTag> struct ReceiverTestParam {
+template <specfem::element::dimension_tag DimensionTag>
+struct ReceiverTestParam {
   std::string testname;
   std::string stationsfilename;
   std::vector<std::shared_ptr<specfem::receivers::receiver<DimensionTag> > >
@@ -28,15 +29,17 @@ template <specfem::dimension::type DimensionTag> struct ReceiverTestParam {
  * @param params
  * @return std::ostream&
  */
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 std::ostream &operator<<(std::ostream &os,
                          const ReceiverTestParam<DimensionTag> &params) {
   os << params.testname;
   return os;
 }
 
-using ReceiverTestParam2D = ReceiverTestParam<specfem::dimension::type::dim2>;
-using ReceiverTestParam3D = ReceiverTestParam<specfem::dimension::type::dim3>;
+using ReceiverTestParam2D =
+    ReceiverTestParam<specfem::element::dimension_tag::dim2>;
+using ReceiverTestParam3D =
+    ReceiverTestParam<specfem::element::dimension_tag::dim3>;
 
 class Read2DReceiversTest
     : public ::testing::TestWithParam<ReceiverTestParam2D> {};

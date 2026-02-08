@@ -1,10 +1,9 @@
 
 #include "../test_fixture/test_fixture.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
-#include "enumerations/wavefield.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/element.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
@@ -17,8 +16,8 @@ TEST_F(Assembly2D, locate_sources) {
     const auto Test = std::get<0>(parameters);
     const auto source_solution = Test.solutions.source;
     auto sources = std::get<2>(parameters);
-    specfem::assembly::assembly<specfem::dimension::type::dim2> assembly =
-        std::get<5>(parameters);
+    specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        assembly = std::get<5>(parameters);
 
     // Use SCOPED_TRACE to make each iteration identifiable in test output
     SCOPED_TRACE(Test.name);

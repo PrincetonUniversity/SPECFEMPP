@@ -1,6 +1,6 @@
 #include "../test_fixture.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
 #include "specfem/utilities.hpp"
@@ -10,8 +10,8 @@
 namespace specfem::assembly_test {
 
 struct ShapeFunction3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
   int ngllz;              ///< Number of GLL points in z-direction
   int nglly;              ///< Number of GLL points in y-direction
   int ngllx;              ///< Number of GLL points in x-direction

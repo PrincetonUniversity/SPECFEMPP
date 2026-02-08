@@ -1,5 +1,5 @@
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+
+#include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "specfem_setup.hpp"
@@ -9,12 +9,12 @@
 
 template <>
 struct source_parameters<
-    specfem::dimension::type::dim2,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> > {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> > {
   source_parameters() : x(0.0), z(0.0), Mxx(0.0), Mzz(0.0), Mxz(0.0) {};
   source_parameters(std::string name, type_real x, type_real z, type_real Mxx,
                     type_real Mzz, type_real Mxz,
-                    specfem::wavefield::simulation_field wavefield_type,
+                    specfem::simulation::field_type wavefield_type,
                     specfem::element::medium_tag medium_tag)
       : name(name), x(x), z(z), Mxx(Mxx), Mzz(Mzz), Mxz(Mxz),
         wavefield_type(wavefield_type), medium_tag(medium_tag) {};
@@ -25,21 +25,22 @@ struct source_parameters<
   type_real Mxx;    ///< Mxx component of moment tensor
   type_real Mzz;    ///< Mzz component of moment tensor
   type_real Mxz;    ///< Mxz component of moment tensor
-  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield
-  specfem::element::medium_tag medium_tag; ///< Medium tag of the source
+  specfem::simulation::field_type wavefield_type; ///< Type of wavefield
+  specfem::element::medium_tag medium_tag;        ///< Medium tag of the source
 };
 
 template <>
 struct source_solution<
-    specfem::dimension::type::dim2,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> > {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> > {
 public:
   source_solution(type_real x, type_real z, type_real Mxx, type_real Mzz,
                   type_real Mxz,
                   std::vector<std::vector<type_real> > source_tensor)
       : x(x), z(z), Mxx(Mxx), Mzz(Mzz), Mxz(Mxz) {
-    this->source_tensor = specfem::kokkos::HostView2d<type_real>(
-        "source_tensor", source_tensor.size(), source_tensor[0].size());
+    this->source_tensor =
+        Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>(
+            "source_tensor", source_tensor.size(), source_tensor[0].size());
     for (size_t i = 0; i < source_tensor.size(); ++i) {
       for (size_t j = 0; j < source_tensor[i].size(); ++j) {
         this->source_tensor(i, j) = source_tensor[i][j];
@@ -52,17 +53,17 @@ public:
   type_real Mxx; ///< Mxx component of moment tensor
   type_real Mzz; ///< Mzz component of moment tensor
   type_real Mxz; ///< Mxz component of moment tensor
-  specfem::kokkos::HostView2d<type_real> source_tensor; ///< Source tensor in
-                                                        ///< Kokkos format
+  Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+      source_tensor; ///< Expected source tensor values
 };
 
 // Defining short hands for the source parameters and solution types
 using MomentTensorSource2DSolution = source_solution<
-    specfem::dimension::type::dim2,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> >;
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >;
 using MomentTensorSource2DParameters = source_parameters<
-    specfem::dimension::type::dim2,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> >;
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >;
 
 using MomentTensorSource2DParametersAndSolution =
     std::tuple<MomentTensorSource2DParameters, MomentTensorSource2DSolution>;
@@ -71,15 +72,15 @@ using MomentTensorSource2DParametersAndSolution =
 template <>
 std::vector<MomentTensorSource2DParametersAndSolution>
 get_parameters_and_solutions<
-    specfem::dimension::type::dim2,
-    specfem::sources::moment_tensor<specfem::dimension::type::dim2> >() {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >() {
   return std::vector<MomentTensorSource2DParametersAndSolution>{
     // Test elastic P-SV moment tensor source
 
     std::make_tuple(
         MomentTensorSource2DParameters(
             "elastic_psv", 0.0, 0.0, 1.0, 2.0, 0.5,
-            specfem::wavefield::simulation_field::forward,
+            specfem::simulation::field_type::forward,
             specfem::element::medium_tag::elastic_psv),
         MomentTensorSource2DSolution(0.0, 0.0, 1.0, 2.0, 0.5,
                                      std::vector<std::vector<type_real> >{
@@ -88,7 +89,7 @@ get_parameters_and_solutions<
     std::make_tuple(
         MomentTensorSource2DParameters(
             "poroelastic", 1.0, 1.0, 2.0, 3.0, 1.5,
-            specfem::wavefield::simulation_field::forward,
+            specfem::simulation::field_type::forward,
             specfem::element::medium_tag::poroelastic),
         MomentTensorSource2DSolution(
             1.0, 1.0, 2.0, 3.0, 1.5,
@@ -97,7 +98,7 @@ get_parameters_and_solutions<
     // Test elastic P-SV-T moment tensor source (third component zero)
     std::make_tuple(MomentTensorSource2DParameters(
                         "elastic_psv_t", 2.0, 2.0, 0.8, 1.2, 0.3,
-                        specfem::wavefield::simulation_field::forward,
+                        specfem::simulation::field_type::forward,
                         specfem::element::medium_tag::elastic_psv_t),
                     MomentTensorSource2DSolution(
                         2.0, 2.0, 0.8, 1.2, 0.3,
@@ -107,7 +108,7 @@ get_parameters_and_solutions<
     std::make_tuple(
         MomentTensorSource2DParameters(
             "electromagnetic_te", 3.0, 3.0, 1.5, 2.5, 0.8,
-            specfem::wavefield::simulation_field::forward,
+            specfem::simulation::field_type::forward,
             specfem::element::medium_tag::electromagnetic_te),
         MomentTensorSource2DSolution(
             3.0, 3.0, 1.5, 2.5, 0.8,
@@ -117,14 +118,15 @@ get_parameters_and_solutions<
 
 // Factory function specialization for 2D Moment Tensor Source
 template <>
-specfem::sources::moment_tensor<specfem::dimension::type::dim2>
-create_source<specfem::dimension::type::dim2,
-              specfem::sources::moment_tensor<specfem::dimension::type::dim2> >(
+specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>
+create_source<
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >(
     const source_parameters<
-        specfem::dimension::type::dim2,
-        specfem::sources::moment_tensor<specfem::dimension::type::dim2> >
+        specfem::element::dimension_tag::dim2,
+        specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2> >
         &parameters) {
-  return specfem::sources::moment_tensor<specfem::dimension::type::dim2>(
+  return specfem::sources::moment_tensor<specfem::element::dimension_tag::dim2>(
       parameters.x, parameters.z, parameters.Mxx, parameters.Mzz,
       parameters.Mxz,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,

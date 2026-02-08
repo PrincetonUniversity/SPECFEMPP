@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point/jacobian_matrix.hpp"
 #include "specfem/point/stress.hpp"
 #include "specfem/utilities.hpp"
@@ -44,15 +44,15 @@ TYPED_TEST(PointStressTest, Stress2DAcoustic) {
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Define the stress type for 2D acoustic medium
-  using stress_type = point::stress<dimension::type::dim2,
+  using stress_type = point::stress<specfem::element::dimension_tag::dim2,
                                     element::medium_tag::acoustic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::acoustic>::dimension;
   constexpr int expected_components =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::acoustic>::components;
 
   EXPECT_EQ(stress_type::dimension, expected_dimension);
@@ -86,15 +86,15 @@ TYPED_TEST(PointStressTest, Stress2DElastic) {
 
   // Define the stress type for 2D elastic medium
   using stress_type =
-      point::stress<dimension::type::dim2, element::medium_tag::elastic_psv,
-                    using_simd>;
+      point::stress<specfem::element::dimension_tag::dim2,
+                    element::medium_tag::elastic_psv, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::elastic_psv>::dimension;
   constexpr int expected_components =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::elastic_psv>::components;
 
   EXPECT_EQ(stress_type::dimension, expected_dimension);
@@ -142,15 +142,15 @@ TYPED_TEST(PointStressTest, Stress2DPoroelastic) {
 
   // Define the stress type for 2D poroelastic medium
   using stress_type =
-      point::stress<dimension::type::dim2, element::medium_tag::poroelastic,
-                    using_simd>;
+      point::stress<specfem::element::dimension_tag::dim2,
+                    element::medium_tag::poroelastic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::poroelastic>::dimension;
   constexpr int expected_components =
-      element::attributes<dimension::type::dim2,
+      element::attributes<specfem::element::dimension_tag::dim2,
                           element::medium_tag::poroelastic>::components;
 
   EXPECT_EQ(stress_type::dimension, expected_dimension);
@@ -196,15 +196,15 @@ TYPED_TEST(PointStressTest, Stress3DAcoustic) {
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Define the stress type for 3D acoustic medium
-  using stress_type = point::stress<dimension::type::dim3,
+  using stress_type = point::stress<specfem::element::dimension_tag::dim3,
                                     element::medium_tag::acoustic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
-      element::attributes<dimension::type::dim3,
+      element::attributes<specfem::element::dimension_tag::dim3,
                           element::medium_tag::acoustic>::dimension;
   constexpr int expected_components =
-      element::attributes<dimension::type::dim3,
+      element::attributes<specfem::element::dimension_tag::dim3,
                           element::medium_tag::acoustic>::components;
 
   EXPECT_EQ(stress_type::dimension, expected_dimension);
@@ -240,15 +240,15 @@ TYPED_TEST(PointStressTest, Stress3DElastic) {
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Define the stress type for 3D elastic medium
-  using stress_type = point::stress<dimension::type::dim3,
+  using stress_type = point::stress<specfem::element::dimension_tag::dim3,
                                     element::medium_tag::elastic, using_simd>;
 
   // Verify static properties
   constexpr int expected_dimension =
-      element::attributes<dimension::type::dim3,
+      element::attributes<specfem::element::dimension_tag::dim3,
                           element::medium_tag::elastic>::dimension;
   constexpr int expected_components =
-      element::attributes<dimension::type::dim3,
+      element::attributes<specfem::element::dimension_tag::dim3,
                           element::medium_tag::elastic>::components;
 
   EXPECT_EQ(stress_type::dimension, expected_dimension);
@@ -293,7 +293,7 @@ TYPED_TEST(PointStressTest, DefaultConstructor) {
       specfem::datatype::simd<type_real, using_simd>::size();
 
   // Define the stress type for 2D acoustic medium
-  using stress_type = point::stress<dimension::type::dim2,
+  using stress_type = point::stress<specfem::element::dimension_tag::dim2,
                                     element::medium_tag::acoustic, using_simd>;
 
   // Create a zero value for comparison
@@ -317,8 +317,8 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2D) {
 
   // Define the stress type for 2D elastic medium
   using stress_type =
-      point::stress<dimension::type::dim2, element::medium_tag::elastic_psv,
-                    using_simd>;
+      point::stress<specfem::element::dimension_tag::dim2,
+                    element::medium_tag::elastic_psv, using_simd>;
 
   // Create test values
   typename specfem::datatype::simd<type_real, using_simd>::datatype val11;
@@ -336,8 +336,8 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2D) {
   typename stress_type::value_type T(val11, val21, val12, val22);
 
   // Create Jacobian matrix
-  using pd_type =
-      point::jacobian_matrix<dimension::type::dim2, true, using_simd>;
+  using pd_type = point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                         true, using_simd>;
   pd_type pd;
   pd.xix = 0.5;      // dx/dxi
   pd.xiz = 0.6;      // dz/dxi
@@ -373,15 +373,15 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2DAcoustic) {
   constexpr bool using_simd = false;
 
   // Define the stress type for 2D acoustic medium
-  using stress_type = point::stress<dimension::type::dim2,
+  using stress_type = point::stress<specfem::element::dimension_tag::dim2,
                                     element::medium_tag::acoustic, using_simd>;
 
   // Create a stress tensor with transposed indexing
   typename stress_type::value_type T(5.0, 6.0); // T(0,0)=5.0, T(0,1)=6.0
 
   // Create Jacobian matrix
-  using pd_type =
-      point::jacobian_matrix<dimension::type::dim2, true, using_simd>;
+  using pd_type = point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                         true, using_simd>;
   pd_type pd;
   pd.xix = 0.5;      // dx/dxi
   pd.xiz = 0.6;      // dz/dxi
@@ -410,15 +410,15 @@ TEST_F(PointStressTestSerial, StressOperatorMultiply2DAcoustic) {
 TYPED_TEST(PointStressTest, AccessorBaseType) {
   constexpr bool using_simd = TypeParam::value;
 
-  using stress_type = point::stress<dimension::type::dim2,
+  using stress_type = point::stress<specfem::element::dimension_tag::dim2,
                                     element::medium_tag::acoustic, using_simd>;
 
   // Check if stress_type is derived from the correct base class
   bool is_accessor =
       std::is_base_of<specfem::data_access::Accessor<
-                          specfem::data_access::AccessorType::point,
+                          specfem::datatype::AccessorType::point,
                           specfem::data_access::DataClassType::stress,
-                          dimension::type::dim2, using_simd>,
+                          specfem::element::dimension_tag::dim2, using_simd>,
                       stress_type>::value;
 
   EXPECT_TRUE(is_accessor);
@@ -428,7 +428,7 @@ TYPED_TEST(PointStressTest, AccessorBaseType) {
 TYPED_TEST(PointStressTest, SIMDTypePropagation) {
   constexpr bool using_simd = TypeParam::value;
 
-  using stress_type = point::stress<dimension::type::dim2,
+  using stress_type = point::stress<specfem::element::dimension_tag::dim2,
                                     element::medium_tag::acoustic, using_simd>;
 
   using expected_simd_type = specfem::datatype::simd<type_real, using_simd>;
@@ -452,16 +452,16 @@ TYPED_TEST(PointStressTest, TensorShape) {
   constexpr bool using_simd = TypeParam::value;
 
   // Test various element types and dimensions
-  using acoustic_2d = point::stress<dimension::type::dim2,
+  using acoustic_2d = point::stress<specfem::element::dimension_tag::dim2,
                                     element::medium_tag::acoustic, using_simd>;
   using elastic_2d =
-      point::stress<dimension::type::dim2, element::medium_tag::elastic_psv,
-                    using_simd>;
-  using acoustic_3d = point::stress<dimension::type::dim3,
+      point::stress<specfem::element::dimension_tag::dim2,
+                    element::medium_tag::elastic_psv, using_simd>;
+  using acoustic_3d = point::stress<specfem::element::dimension_tag::dim3,
                                     element::medium_tag::acoustic, using_simd>;
-  using elastic_3d = point::stress<dimension::type::dim3,
+  using elastic_3d = point::stress<specfem::element::dimension_tag::dim3,
                                    element::medium_tag::elastic, using_simd>;
-  using poro_2d = point::stress<dimension::type::dim2,
+  using poro_2d = point::stress<specfem::element::dimension_tag::dim2,
                                 element::medium_tag::poroelastic, using_simd>;
 
   // Verify tensor shapes

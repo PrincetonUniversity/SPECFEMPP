@@ -3,9 +3,9 @@
 using specfem::utilities::is_close;
 
 void populate_element_gcoord_array(
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-        Kokkos::HostSpace> &coorg,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim2> *,
+                       Kokkos::HostSpace> &coorg,
     const Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
         &control_node_coord,
     const int &ispec) {
@@ -20,9 +20,9 @@ void populate_element_gcoord_array(
 TEST_F(LocatePoint2D, LocateEdgeOnCoreUnitSquare) {
   auto geom = create_single_unit_square_2x2();
 
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       coorg("coorg", geom.ngnod);
   populate_element_gcoord_array(coorg, geom.control_nodes, 0);
 
@@ -31,7 +31,7 @@ TEST_F(LocatePoint2D, LocateEdgeOnCoreUnitSquare) {
   for (auto [side, target] :
        std::vector<std::pair<specfem::mesh_entity::dim2::type,
                              specfem::point::global_coordinates<
-                                 specfem::dimension::type::dim2> > >{
+                                 specfem::element::dimension_tag::dim2> > >{
            { specfem::mesh_entity::dim2::type::bottom, { 0.5, 0.0 } }, // Bottom
                                                                        // edge
                                                                        // center
@@ -55,9 +55,8 @@ TEST_F(LocatePoint2D, LocateEdgeOnCoreUnitSquare) {
   }
 
   // Test corner point (0, 0) should map to {left: -1, bottom: -1}
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> target = {
-    0.0, 0.0
-  };
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+      target = { 0.0, 0.0 };
   auto result =
       specfem::algorithms::locate_point_impl::get_local_edge_coordinate(
           target, coorg, specfem::mesh_entity::dim2::type::bottom, 0);
@@ -89,16 +88,15 @@ TEST_F(LocatePoint2D, LocateEdgeOnCoreUnitSquare) {
 // Test error case: point outside mesh
 TEST_F(LocatePoint2D, LocateEdgeOnCoreOutsideMesh) {
   auto geom = create_single_unit_square_2x2();
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       coorg("coorg", geom.ngnod);
   populate_element_gcoord_array(coorg, geom.control_nodes, 0);
 
   // Point away from edge (but distance minimized inside) should throw exception
-  specfem::point::global_coordinates<specfem::dimension::type::dim2> target = {
-    0.5, 0.5
-  };
+  specfem::point::global_coordinates<specfem::element::dimension_tag::dim2>
+      target = { 0.5, 0.5 };
 
   for (auto side : std::vector<specfem::mesh_entity::dim2::type>{
            specfem::mesh_entity::dim2::type::bottom,
@@ -107,10 +105,17 @@ TEST_F(LocatePoint2D, LocateEdgeOnCoreOutsideMesh) {
            specfem::mesh_entity::dim2::type::left }) {
     // target is center of element. Distance minimized on each edge at center,
     // so exception should be thrown
-    EXPECT_THROW(
+    {
+      bool captured = false;
+      try {
         specfem::algorithms::locate_point_impl::get_local_edge_coordinate(
-            target, coorg, side, 0),
-        std::runtime_error);
+            target, coorg, side, 0);
+      } catch (const std::runtime_error &) {
+        captured = true;
+      }
+      if (!captured)
+        ADD_FAILURE() << "Expected std::runtime_error";
+    }
   }
 
   // Test corner point (1.5, -0.5) should map to (2, -2), out-of-bounds

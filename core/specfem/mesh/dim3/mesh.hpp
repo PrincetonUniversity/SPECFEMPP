@@ -3,13 +3,13 @@
 #include "adjacency_graph/adjacency_graph.hpp"
 #include "boundaries/boundaries.hpp"
 #include "control_nodes/control_nodes.hpp"
-#include "enumerations/interface.hpp"
 #include "materials/materials.hpp"
+#include "specfem/enums.hpp"
 #include "tags/tags.hpp"
 
 namespace specfem::mesh {
 
-template <specfem::dimension::type DimensionTag> struct mesh;
+template <specfem::element::dimension_tag DimensionTag> struct mesh;
 
 /**
  * @brief 3D mesh data container for MESHFEM3D-generated spectral element meshes
@@ -22,8 +22,8 @@ template <specfem::dimension::type DimensionTag> struct mesh;
  * database files containing pre-computed mesh information, which are then read
  * by the main solver for efficient spectral element computations.
  *
- * @tparam specfem::dimension::type::dim3 Template specialization for 3D spatial
- * dimension
+ * @tparam specfem::element::dimension_tag::dim3 Template specialization for 3D
+ * spatial dimension
  *
  * @see specfem::io::meshfem3d::read_3d_mesh
  * @see specfem::mesh::control_nodes
@@ -47,10 +47,10 @@ template <specfem::dimension::type DimensionTag> struct mesh;
  * // (mesh data is typically passed to solver initialization)
  * @endcode
  */
-template <> struct mesh<specfem::dimension::type::dim3> {
+template <> struct mesh<specfem::element::dimension_tag::dim3> {
 
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
 
   /**
    * @brief Number of spectral elements in the mesh
@@ -134,7 +134,7 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    *
    * @code
    * // Internal usage in IO routines
-   * specfem::mesh::mesh<specfem::dimension::type::dim3> mesh;
+   * specfem::mesh::mesh<specfem::element::dimension_tag::dim3> mesh;
    * mesh.control_nodes = read_control_nodes(stream);
    * mesh.materials = read_materials(stream);
    * mesh.absorbing_boundaries = read_absorbing_boundaries(stream);

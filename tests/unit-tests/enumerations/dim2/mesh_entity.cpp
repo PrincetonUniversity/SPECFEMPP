@@ -17,8 +17,8 @@
  * @see specfem::mesh_entity::dim2
  */
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
+#include "specfem/element.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
 #include "specfem/utilities.hpp"
@@ -240,7 +240,7 @@ struct Coordinate2D {
 struct Element4Node {
 
   /** @brief Dimension tag for 2D spectral elements */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
 
   /** @brief Number of control nodes in quadrilateral element */
   constexpr static int ncontrol_nodes = 4;
@@ -377,7 +377,7 @@ struct Element4Node {
  */
 TEST(MeshEntity2D, ConnectionsPerNode) {
 
-  specfem::mesh_entity::element<specfem::dimension::type::dim2> element(
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim2> element(
       5, 5); // ngllz, ngllx
 
   for (const auto edge : specfem::mesh_entity::dim2::edges) {
@@ -496,7 +496,7 @@ protected:
   specfem::mesh_entity_test::Element4Node element;
 
   /** @brief 2D mesh entity connection mapping */
-  specfem::mesh_entity::element<specfem::dimension::type::dim2> mapping;
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim2> mapping;
 };
 
 /** @brief Alias for wildcard coordinate type */

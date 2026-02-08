@@ -16,13 +16,13 @@
  */
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh/dim3/materials/materials.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::mesh {
 
-template <specfem::dimension::type DimensionTag> struct tags;
+template <specfem::element::dimension_tag DimensionTag> struct tags;
 
 /**
  * @brief Element tagging system for 3D MESHFEM3D spectral elements
@@ -35,22 +35,22 @@ template <specfem::dimension::type DimensionTag> struct tags;
  * conditions are not yet implemented in the MESHFEM3D workflow.
  *
  * @code
- * specfem::mesh::materials<specfem::dimension::type::dim3>
+ * specfem::mesh::materials<specfem::element::dimension_tag::dim3>
  * materials;
  * // ... populate materials ...
  *
- * specfem::mesh::tags<specfem::dimension::type::dim3> tags(
+ * specfem::mesh::tags<specfem::element::dimension_tag::dim3> tags(
  *     nspec, materials);
  * @endcode
  *
  * @see specfem::mesh::materials::get_material_type
  * @see specfem::mesh::impl::tags_container
  */
-template <> struct tags<specfem::dimension::type::dim3> {
+template <> struct tags<specfem::element::dimension_tag::dim3> {
   /**
    * @brief Dimension tag for compile-time type identification
    */
-  static constexpr auto dimension_tag = specfem::dimension::type::dim3;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /** @name Constructors */
   /** @{ */

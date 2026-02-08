@@ -1,7 +1,7 @@
 // core/specfem/point/test_jacobian_matrix.hpp
 
-#include "enumerations/interface.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point/jacobian_matrix.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
@@ -46,8 +46,8 @@ TYPED_TEST_SUITE(PointJacobianMatrixTest, TestTypes);
 TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_DefaultConstructor) {
   constexpr bool using_simd = TypeParam::value;
 
-  using pd_type =
-      point::jacobian_matrix<dimension::type::dim2, false, using_simd>;
+  using pd_type = point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                         false, using_simd>;
   pd_type pd;
   typename pd_type::value_type zero_val{ 0.0 };
   pd.init();
@@ -84,8 +84,9 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_ValueConstructor) {
     4.4
   };
 
-  point::jacobian_matrix<dimension::type::dim2, false, using_simd> pd(
-      xix_val, gammax_val, xiz_val, gammaz_val);
+  point::jacobian_matrix<specfem::element::dimension_tag::dim2, false,
+                         using_simd>
+      pd(xix_val, gammax_val, xiz_val, gammaz_val);
 
   // Check values using is_close
   EXPECT_TRUE(specfem::utilities::is_close(pd.xix, xix_val))
@@ -110,8 +111,9 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_ConstantConstructor) {
     7.7
   };
 
-  point::jacobian_matrix<dimension::type::dim2, false, using_simd> pd(
-      const_val);
+  point::jacobian_matrix<specfem::element::dimension_tag::dim2, false,
+                         using_simd>
+      pd(const_val);
 
   // Check values using is_close
   EXPECT_TRUE(specfem::utilities::is_close(pd.xix, const_val))
@@ -145,8 +147,8 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_Init) {
     4.0
   };
 
-  using pd_type =
-      point::jacobian_matrix<dimension::type::dim2, false, using_simd>;
+  using pd_type = point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                         false, using_simd>;
   pd_type pd(xix_val, gammax_val, xiz_val, gammaz_val);
   typename pd_type::value_type zero_val{ 0.0 };
   pd.init();
@@ -192,7 +194,8 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_Arithmetic) {
   typename specfem::datatype::simd<type_real, using_simd>::datatype
       b_gammaz_val{ 40.0 };
 
-  using PD = point::jacobian_matrix<dimension::type::dim2, false, using_simd>;
+  using PD = point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                    false, using_simd>;
   PD a(a_xix_val, a_gammax_val, a_xiz_val, a_gammaz_val);
   PD b(b_xix_val, b_gammax_val, b_xiz_val, b_gammaz_val);
 
@@ -287,7 +290,8 @@ TYPED_TEST(PointJacobianMatrixTest,
     7.7
   };
 
-  using PD = point::jacobian_matrix<dimension::type::dim2, true, using_simd>;
+  using PD = point::jacobian_matrix<specfem::element::dimension_tag::dim2, true,
+                                    using_simd>;
 
   // Default constructor and init
   PD pd1;
@@ -360,7 +364,8 @@ TYPED_TEST(PointJacobianMatrixTest, JacobianMatrix2D_WithJacobian_Init) {
     5.0
   };
 
-  using PD = point::jacobian_matrix<dimension::type::dim2, true, using_simd>;
+  using PD = point::jacobian_matrix<specfem::element::dimension_tag::dim2, true,
+                                    using_simd>;
   PD pd(one_val, two_val, three_val, four_val, five_val);
   pd.init();
 
@@ -425,7 +430,8 @@ TYPED_TEST(PointJacobianMatrixTest,
     8.8
   };
 
-  using PD = point::jacobian_matrix<dimension::type::dim3, true, using_simd>;
+  using PD = point::jacobian_matrix<specfem::element::dimension_tag::dim3, true,
+                                    using_simd>;
 
   // Default constructor and init
   PD pd1;
@@ -533,7 +539,8 @@ TYPED_TEST(PointJacobianMatrixTest, VerifySIMDTypes) {
   constexpr bool using_simd = TypeParam::value;
 
   // Verify 2D types
-  using PD2D = point::jacobian_matrix<dimension::type::dim2, false, using_simd>;
+  using PD2D = point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                      false, using_simd>;
   using simd_type2D = typename PD2D::simd;
   bool is_expected_simd2D =
       std::is_same<simd_type2D,
@@ -541,7 +548,8 @@ TYPED_TEST(PointJacobianMatrixTest, VerifySIMDTypes) {
   EXPECT_TRUE(is_expected_simd2D);
 
   // Verify 3D types
-  using PD3D = point::jacobian_matrix<dimension::type::dim3, false, using_simd>;
+  using PD3D = point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                      false, using_simd>;
   using simd_type3D = typename PD3D::simd;
   bool is_expected_simd3D =
       std::is_same<simd_type3D,
@@ -549,8 +557,8 @@ TYPED_TEST(PointJacobianMatrixTest, VerifySIMDTypes) {
   EXPECT_TRUE(is_expected_simd3D);
 
   // Verify 2D with Jacobian
-  using PD2DJac =
-      point::jacobian_matrix<dimension::type::dim2, true, using_simd>;
+  using PD2DJac = point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                         true, using_simd>;
   using simd_type2DJac = typename PD2DJac::simd;
   bool is_expected_simd2DJac =
       std::is_same<simd_type2DJac,
@@ -558,8 +566,8 @@ TYPED_TEST(PointJacobianMatrixTest, VerifySIMDTypes) {
   EXPECT_TRUE(is_expected_simd2DJac);
 
   // Verify 3D with Jacobian
-  using PD3DJac =
-      point::jacobian_matrix<dimension::type::dim3, true, using_simd>;
+  using PD3DJac = point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                         true, using_simd>;
   using simd_type3DJac = typename PD3DJac::simd;
   bool is_expected_simd3DJac =
       std::is_same<simd_type3DJac,

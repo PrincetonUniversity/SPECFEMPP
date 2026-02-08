@@ -29,7 +29,7 @@ void initialize_coordinates(
   Kokkos::fence();
 }
 
-specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
+specfem::assembly::mesh_impl::points<specfem::element::dimension_tag::dim3>::points(
     const int &nspec, const int &ngllz, const int &nglly, const int &ngllx,
     const specfem::mesh::adjacency_graph<dimension_tag>
         &adjacency_graph,
@@ -86,7 +86,7 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
   // Filter out strongly conforming connections
   auto filter = [&graph](const auto &edge) {
     return graph[edge].connection ==
-           specfem::connections::type::strongly_conforming;
+           specfem::element_connections::type::strongly_conforming;
   };
 
   // Create a filtered graph view
@@ -123,7 +123,7 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
               const auto other_face = boost::edge(jspec, ispec, graph).first;
               const auto jface = fg[other_face].orientation;
 
-              const auto connections = specfem::connections::connection_mapping(
+              const auto connections = specfem::element_connections::connection_mapping(
                   ngllz, nglly, ngllx,
                   Kokkos::subview(control_nodes.h_control_node_index, ispec,
                                   Kokkos::ALL),
@@ -175,7 +175,7 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
               const int jspec = boost::target(edge, fg);
               const auto other_face = boost::edge(jspec, ispec, graph).first;
               const auto jorientation = fg[other_face].orientation;
-              const auto connections = specfem::connections::connection_mapping(
+              const auto connections = specfem::element_connections::connection_mapping(
                   ngllz, nglly, ngllx,
                   Kokkos::subview(control_nodes.h_control_node_index, ispec,
                                   Kokkos::ALL),
@@ -228,7 +228,7 @@ specfem::assembly::mesh_impl::points<specfem::dimension::type::dim3>::points(
             const int jspec = boost::target(corner, fg);
             const auto other_face = boost::edge(jspec, ispec, graph).first;
             const auto jorientation = fg[other_face].orientation;
-            const auto connections = specfem::connections::connection_mapping(
+            const auto connections = specfem::element_connections::connection_mapping(
                 ngllz, nglly, ngllx,
                 Kokkos::subview(control_nodes.h_control_node_index, ispec,
                                 Kokkos::ALL),

@@ -1,6 +1,6 @@
 #include "specfem/receivers.hpp"
 #include "globals.h"
-#include "kokkos_abstractions.h"
+
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/quadrature.hpp"
@@ -8,17 +8,17 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
+specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
     const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
     const type_real dt, const type_real t0, const int nsteps_between_samples,
     const std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+        specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
         &receivers,
-    const std::vector<specfem::wavefield::type> &stypes,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types)
+    const std::vector<specfem::enums::wavefield> &stypes,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const specfem::mesh::tags<specfem::element::dimension_tag::dim2> &tags,
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim2> &element_types)
     : nspec(nspec),
       lagrange_interpolant("specfem::assembly::receivers::lagrange_interpolant",
                            receivers.size(), mesh.element_grid.ngllz,
@@ -30,26 +30,26 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
       specfem::assembly::receivers_impl::StationIterator(receivers.size(),
                                                          stypes),
       specfem::assembly::receivers_impl::SeismogramIterator<
-          specfem::dimension::type::dim2>(receivers.size(), stypes.size(),
-                                          max_sig_step, dt, t0,
-                                          nsteps_between_samples) {
+          specfem::element::dimension_tag::dim2>(
+          receivers.size(), stypes.size(), max_sig_step, dt, t0,
+          nsteps_between_samples) {
 
   // Validate and populate seismogram type mapping
   for (int isies = 0; isies < stypes.size(); ++isies) {
     auto seis_type = stypes[isies];
 
-    if (seis_type != specfem::wavefield::type::displacement &&
-        seis_type != specfem::wavefield::type::velocity &&
-        seis_type != specfem::wavefield::type::acceleration &&
-        seis_type != specfem::wavefield::type::pressure &&
-        seis_type != specfem::wavefield::type::rotation &&
-        seis_type != specfem::wavefield::type::intrinsic_rotation &&
-        seis_type != specfem::wavefield::type::curl) {
+    if (seis_type != specfem::enums::wavefield::displacement &&
+        seis_type != specfem::enums::wavefield::velocity &&
+        seis_type != specfem::enums::wavefield::acceleration &&
+        seis_type != specfem::enums::wavefield::pressure &&
+        seis_type != specfem::enums::wavefield::rotation &&
+        seis_type != specfem::enums::wavefield::intrinsic_rotation &&
+        seis_type != specfem::enums::wavefield::curl) {
       std::ostringstream message;
       message << "Error reading specfem receiver configuration.(" << __FILE__
               << ":" << __LINE__ << ")\n";
       message << "Unknown seismogram type: "
-              << specfem::wavefield::to_string(seis_type) << "\n";
+              << specfem::enums::to_string(seis_type) << "\n";
       message
           << "Valid seismogram types are: displacement, velocity, "
           << "acceleration, pressure, rotation, intrinsic_rotation, curl.\n";
@@ -68,10 +68,9 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
     station_names_.push_back(station_name);
     network_names_.push_back(network_name);
     station_network_map[station_name][network_name] = ireceiver;
-    const auto gcoord =
-        specfem::point::global_coordinates<specfem::dimension::type::dim2>{
-          receiver->get_x(), receiver->get_z()
-        };
+    const auto gcoord = specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim2>{ receiver->get_x(),
+                                                receiver->get_z() };
     const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
 
     h_elements(ireceiver) = lcoord.ispec;
@@ -107,7 +106,8 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       CAPTURE(elements, h_elements, receiver_indices, h_receiver_indices) {
         int count = 0;
         int index = 0;
@@ -115,7 +115,8 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
         for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
           int ispec = h_elements(ireceiver);
           if (element_types.get_medium_tag(ispec) == _medium_tag_ &&
-              element_types.get_property_tag(ispec) == _property_tag_) {
+              element_types.get_property_tag(ispec) == _property_tag_ &&
+              element_types.get_attenuation_tag(ispec) == _attenuation_tag_) {
             count++;
           }
         }
@@ -130,7 +131,8 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
         for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
           int ispec = h_elements(ireceiver);
           if (element_types.get_medium_tag(ispec) == _medium_tag_ &&
-              element_types.get_property_tag(ispec) == _property_tag_) {
+              element_types.get_property_tag(ispec) == _property_tag_ &&
+              element_types.get_attenuation_tag(ispec) == _attenuation_tag_) {
             _h_elements_(index) = ispec;
             _h_receiver_indices_(index) = ireceiver;
             index++;
@@ -149,18 +151,21 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::receivers(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::receivers<specfem::dimension::type::dim2>::
+specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::
     get_indices_on_host(
         const specfem::element::medium_tag medium_tag,
-        const specfem::element::property_tag property_tag) const {
+        const specfem::element::property_tag property_tag,
+        const specfem::element::attenuation_tag attenuation_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       CAPTURE(h_elements, h_receiver_indices) {
-        if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
+        if (medium_tag == _medium_tag_ && property_tag == _property_tag_ &&
+            attenuation_tag == _attenuation_tag_) {
           return std::make_tuple(_h_elements_, _h_receiver_indices_);
         }
       })
@@ -174,18 +179,21 @@ specfem::assembly::receivers<specfem::dimension::type::dim2>::
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::receivers<specfem::dimension::type::dim2>::
+specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::
     get_indices_on_device(
         const specfem::element::medium_tag medium_tag,
-        const specfem::element::property_tag property_tag) const {
+        const specfem::element::property_tag property_tag,
+        const specfem::element::attenuation_tag attenuation_tag) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       ATTENUATION_TAG(NONE)),
       CAPTURE(elements, receiver_indices) {
-        if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
+        if (medium_tag == _medium_tag_ && property_tag == _property_tag_ &&
+            attenuation_tag == _attenuation_tag_) {
           return std::make_tuple(_elements_, _receiver_indices_);
         }
       })

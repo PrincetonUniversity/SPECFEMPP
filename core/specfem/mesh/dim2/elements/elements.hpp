@@ -1,7 +1,4 @@
-#ifndef _ELEMENTS_HPP
-#define _ELEMENTS_HPP
+#pragma once
 
 #include "axial_elements.hpp"
 #include "tangential_elements.hpp"
-
-#endif

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "enumerations/display.hpp"
-#include "enumerations/wavefield.hpp"
 #include "plotter.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include <boost/filesystem.hpp>
 
 namespace specfem::periodic_tasks {
@@ -22,7 +21,7 @@ namespace specfem::periodic_tasks {
  *
  * @see specfem::periodic_tasks::plotter
  */
-template <specfem::dimension::type DimensionTag> class plot_wavefield;
+template <specfem::element::dimension_tag DimensionTag> class plot_wavefield;
 
 } // namespace specfem::periodic_tasks
 

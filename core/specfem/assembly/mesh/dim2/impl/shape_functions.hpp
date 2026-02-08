@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::mesh_impl {
@@ -9,14 +9,14 @@ namespace specfem::assembly::mesh_impl {
  * mesh
  *
  */
-template <> struct shape_functions<specfem::dimension::type::dim2> {
+template <> struct shape_functions<specfem::element::dimension_tag::dim2> {
 
 public:
   /**
    * @brief Compile-time dimension tag for template specialization.
    */
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension
+      specfem::element::dimension_tag::dim2; ///< Dimension
 
   int ngllz; ///< Number of quadrature points in z dimension
 

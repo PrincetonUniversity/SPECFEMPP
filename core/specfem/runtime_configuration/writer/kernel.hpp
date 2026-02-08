@@ -1,8 +1,7 @@
 #pragma once
 
-#include "enumerations/simulation.hpp"
-#include "io/reader.hpp"
-#include "io/writer.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {

@@ -1,7 +1,7 @@
 #include "external.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "io/seismogram/reader.hpp"
-#include "kokkos_abstractions.h"
+
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
 #include "specfem/utilities.hpp"
 #include <fstream>
 #include <tuple>
@@ -15,7 +15,7 @@ specfem::source_time_functions::external::external(const YAML::Node &external,
   if (specfem::utilities::is_ascii_string(
           external["format"].as<std::string>()) ||
       !external["format"]) {
-    this->format_ = specfem::enums::seismogram::format::ascii;
+    this->format_ = specfem::enums::seismogram_format::ascii;
   } else {
     throw std::runtime_error("Only ASCII format is supported");
   }
@@ -136,7 +136,7 @@ void specfem::source_time_functions::external::compute_source_time_function(
     Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace> data(
         "external", nsteps, 2);
     specfem::io::seismogram_reader reader(
-        filename[icomp], specfem::enums::seismogram::format::ascii, data);
+        filename[icomp], specfem::enums::seismogram_format::ascii, data);
     reader.read();
     for (int i = 0; i < nsteps; i++) {
       source_time_function(i, icomp) = data(i, 1);

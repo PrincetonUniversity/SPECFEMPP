@@ -1,7 +1,7 @@
 
 #include "compute_intersection_in_assembly.hpp"
 #include "compute_intersection.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "specfem_setup.hpp"
 #include <sstream>
 #include <stdexcept>
@@ -9,14 +9,14 @@
 template <typename EdgeType>
 inline std::tuple<
     Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
         Kokkos::HostSpace>,
     Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+        specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
         Kokkos::HostSpace>,
     specfem::mesh_entity::dim2::type, specfem::mesh_entity::dim2::type>
 expand_edge_index(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const EdgeType &edge,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature) {
 
@@ -37,11 +37,11 @@ expand_edge_index(
   const int ngnod = mesh.ngnod;
 
   const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
       Kokkos::HostSpace>
       coorg1("coorg1", ngnod);
   const Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim2> *,
+      specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
       Kokkos::HostSpace>
       coorg2("coorg2", ngnod);
 
@@ -55,7 +55,7 @@ expand_edge_index(
 template <typename EdgeType>
 std::vector<std::pair<type_real, type_real> >
 specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const EdgeType &edge, const Kokkos::View<type_real *> &mortar_quadrature) {
   const auto edgeinfo = expand_edge_index(mesh, edge);
   return specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
@@ -65,7 +65,7 @@ specfem::assembly::nonconforming_interfaces_impl::compute_intersection(
 
 template <typename EdgeType>
 void set_transfer_functions(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const EdgeType &edge,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &element_quadrature,
@@ -81,7 +81,7 @@ void set_transfer_functions(
 
 template <typename EdgeType>
 void set_transfer_functions(
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
     const EdgeType &edge,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &mortar_quadrature,
     const Kokkos::View<type_real *, Kokkos::HostSpace> &element_quadrature,

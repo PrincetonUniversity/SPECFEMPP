@@ -1,10 +1,10 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "impl/interface_container.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -12,18 +12,18 @@
 namespace specfem::assembly {
 
 template <>
-class nonconforming_interfaces<specfem::dimension::type::dim2>
+class nonconforming_interfaces<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::edge,
           specfem::data_access::DataClassType::nonconforming_interface,
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2> {
 public:
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
 
-protected:
-  template <specfem::interface::interface_tag InterfaceTag,
+private:
+  template <specfem::element_coupling::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
-            specfem::connections::type ConnectionTag>
+            specfem::element_connections::type ConnectionTag>
   using InterfaceContainerType =
       specfem::assembly::nonconforming_interfaces_impl::interface_container<
           dimension_tag, InterfaceTag, BoundaryTag, ConnectionTag>;
@@ -45,9 +45,9 @@ public:
 
   nonconforming_interfaces() = default;
 
-  template <specfem::interface::interface_tag InterfaceTag,
+  template <specfem::element_coupling::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
-            specfem::connections::type ConnectionTag>
+            specfem::element_connections::type ConnectionTag>
   KOKKOS_INLINE_FUNCTION const
       InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag> &
       get_interface_container() const {

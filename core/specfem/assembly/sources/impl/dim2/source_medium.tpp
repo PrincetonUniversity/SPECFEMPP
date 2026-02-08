@@ -1,6 +1,5 @@
 #pragma once
 
-#include "specfem/algorithms.hpp"
 #include "specfem/point.hpp"
 #include "../source_medium.hpp"
 #include "specfem/assembly/compute_source_array.hpp"
@@ -22,13 +21,13 @@ void print_view_info(const ViewType& view, const std::string& name) {
 // 2D Constructor
 /*
 // TODO(Lucas : CPP20 update)
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
+template <specfem::element::dimension_tag DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename... Args>
-requires (DimensionTag == specfem::dimension::type::dim2)
+requires (DimensionTag == specfem::element::dimension_tag::dim2)
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_medium(Args&&... args)
 */
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
-template <specfem::dimension::type U, typename std::enable_if<U == specfem::dimension::type::dim2>::type*>
+template <specfem::element::dimension_tag DimensionTag, specfem::element::medium_tag MediumTag>
+template <specfem::element::dimension_tag U, typename std::enable_if<U == specfem::element::dimension_tag::dim2>::type*>
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_medium(
     const std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > > &sources,
     const specfem::assembly::mesh<dimension_tag> &mesh,
@@ -74,17 +73,17 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::source_
 // 2D load_on_device
 /*
 // TODO(Lucas : CPP20 update)
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
+template <specfem::element::dimension_tag DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
-requires (DimensionTag == specfem::dimension::type::dim2)
+requires (DimensionTag == specfem::element::dimension_tag::dim2)
 KOKKOS_INLINE_FUNCTION void
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::load_on_device(
     const int timestep, const IndexType &index, PointSourceType &point_source) const
 */
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
+template <specfem::element::dimension_tag DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType,
-          specfem::dimension::type U,
-          typename std::enable_if<U == specfem::dimension::type::dim2>::type*>
+          specfem::element::dimension_tag U,
+          typename std::enable_if<U == specfem::element::dimension_tag::dim2>::type*>
 KOKKOS_INLINE_FUNCTION void
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::load_on_device(
     const int timestep, const IndexType &index, PointSourceType &point_source) const {
@@ -98,17 +97,17 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::load_on
 // 2D store_on_device
 /*
 // TODO(Lucas : CPP20 update)
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
+template <specfem::element::dimension_tag DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
-requires (DimensionTag == specfem::dimension::type::dim2)
+requires (DimensionTag == specfem::element::dimension_tag::dim2)
 KOKKOS_INLINE_FUNCTION void
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::store_on_device(
     const int timestep, const IndexType index, const PointSourceType &point_source) const
 */
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
+template <specfem::element::dimension_tag DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType,
-          specfem::dimension::type U,
-          typename std::enable_if<U == specfem::dimension::type::dim2>::type*>
+          specfem::element::dimension_tag U,
+          typename std::enable_if<U == specfem::element::dimension_tag::dim2>::type*>
 KOKKOS_INLINE_FUNCTION void
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::store_on_device(
     const int timestep, const IndexType index, const PointSourceType &point_source) const {
@@ -122,17 +121,17 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::store_o
 // 2D load_on_host
 /*
 // TODO(Lucas : CPP20 update)
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
+template <specfem::element::dimension_tag DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
-requires (DimensionTag == specfem::dimension::type::dim2)
+requires (DimensionTag == specfem::element::dimension_tag::dim2)
 void
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::load_on_host(
     const int timestep, const IndexType index, PointSourceType &point_source) const
 */
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
+template <specfem::element::dimension_tag DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType,
-          specfem::dimension::type U,
-          typename std::enable_if<U == specfem::dimension::type::dim2>::type*>
+          specfem::element::dimension_tag U,
+          typename std::enable_if<U == specfem::element::dimension_tag::dim2>::type*>
 void
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::load_on_host(
     const int timestep, const IndexType index, PointSourceType &point_source) const {
@@ -146,17 +145,17 @@ specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::load_on
 // 2D store_on_host
 /*
 // TODO(Lucas : CPP20 update)
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
+template <specfem::element::dimension_tag DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType>
-requires (DimensionTag == specfem::dimension::type::dim2)
+requires (DimensionTag == specfem::element::dimension_tag::dim2)
 void
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::store_on_host(
     const int timestep, const IndexType index, const PointSourceType &point_source) const
 */
-template <specfem::dimension::type DimensionTag, specfem::element::medium_tag MediumTag>
+template <specfem::element::dimension_tag DimensionTag, specfem::element::medium_tag MediumTag>
 template <typename IndexType, typename PointSourceType,
-          specfem::dimension::type U,
-          typename std::enable_if<U == specfem::dimension::type::dim2>::type*>
+          specfem::element::dimension_tag U,
+          typename std::enable_if<U == specfem::element::dimension_tag::dim2>::type*>
 void
 specfem::assembly::sources_impl::source_medium<DimensionTag, MediumTag>::store_on_host(
     const int timestep, const IndexType index, const PointSourceType &point_source) const {

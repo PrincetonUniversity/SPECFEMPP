@@ -1,6 +1,6 @@
 
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+
+#include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "specfem_setup.hpp"
@@ -10,8 +10,8 @@
 
 template <>
 struct source_parameters<
-    specfem::dimension::type::dim2,
-    specfem::sources::adjoint_source<specfem::dimension::type::dim2> > {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2> > {
   source_parameters() : x(0.0), z(0.0) {};
   source_parameters(std::string name, type_real x, type_real z,
                     specfem::element::medium_tag medium_tag)
@@ -25,13 +25,14 @@ struct source_parameters<
 
 template <>
 struct source_solution<
-    specfem::dimension::type::dim2,
-    specfem::sources::adjoint_source<specfem::dimension::type::dim2> > {
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2> > {
 public:
   source_solution(type_real x, type_real z, std::vector<type_real> force_vector)
       : x(x), z(z) {
-    this->force_vector = specfem::kokkos::HostView1d<type_real>(
-        "force_vector", force_vector.size());
+    this->force_vector =
+        Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>(
+            "force_vector", force_vector.size());
     for (size_t i = 0; i < force_vector.size(); ++i) {
       this->force_vector(i) = force_vector[i];
     }
@@ -39,26 +40,27 @@ public:
 
   type_real x; ///< x-coordinate of the source
   type_real z; ///< z-coordinate of the source
-  specfem::kokkos::HostView1d<type_real> force_vector; ///< Force vector in
-                                                       ///< Kokkos format
+  Kokkos::View<type_real *, Kokkos::LayoutRight, Kokkos::HostSpace>
+      force_vector; ///< Force vector in Kokkos format
 };
 
 // Defining short hands for the source parameters and solution types
 using AdjointSource2DSolution = source_solution<
-    specfem::dimension::type::dim2,
-    specfem::sources::adjoint_source<specfem::dimension::type::dim2> >;
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2> >;
 using AdjointSource2DParameters = source_parameters<
-    specfem::dimension::type::dim2,
-    specfem::sources::adjoint_source<specfem::dimension::type::dim2> >;
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2> >;
 
 using AdjointSource2DParametersAndSolution =
     std::tuple<AdjointSource2DParameters, AdjointSource2DSolution>;
 // Vector of pairs of adjoint parameters and corresponding vector force
 // solutions
 template <>
-std::vector<AdjointSource2DParametersAndSolution> get_parameters_and_solutions<
-    specfem::dimension::type::dim2,
-    specfem::sources::adjoint_source<specfem::dimension::type::dim2> >() {
+std::vector<AdjointSource2DParametersAndSolution>
+get_parameters_and_solutions<specfem::element::dimension_tag::dim2,
+                             specfem::sources::adjoint_source<
+                                 specfem::element::dimension_tag::dim2> >() {
   return std::vector<AdjointSource2DParametersAndSolution>{
     // Test acoustic adjoint source
     std::make_tuple(
@@ -98,14 +100,16 @@ std::vector<AdjointSource2DParametersAndSolution> get_parameters_and_solutions<
 
 // Factory function specialization for 2D Adjoint Source
 template <>
-specfem::sources::adjoint_source<specfem::dimension::type::dim2> create_source<
-    specfem::dimension::type::dim2,
-    specfem::sources::adjoint_source<specfem::dimension::type::dim2> >(
-    const source_parameters<
-        specfem::dimension::type::dim2,
-        specfem::sources::adjoint_source<specfem::dimension::type::dim2> >
+specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2>
+create_source<
+    specfem::element::dimension_tag::dim2,
+    specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2> >(
+    const source_parameters<specfem::element::dimension_tag::dim2,
+                            specfem::sources::adjoint_source<
+                                specfem::element::dimension_tag::dim2> >
         &parameters) {
-  return specfem::sources::adjoint_source<specfem::dimension::type::dim2>(
+  return specfem::sources::adjoint_source<
+      specfem::element::dimension_tag::dim2>(
       parameters.x, parameters.z,
       std::make_unique<specfem::source_time_functions::Ricker>(10, 0.01, 1.0,
                                                                0.0, 1.0, false),

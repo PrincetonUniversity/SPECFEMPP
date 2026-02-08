@@ -2,10 +2,10 @@
 #include "../impl/dim2/source_medium.tpp"
 #include "../impl/locate_sources.hpp"
 #include "../impl/source_medium.hpp"
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/source.hpp"
 #include "specfem_setup.hpp"
@@ -14,26 +14,30 @@
 #include <vector>
 
 template class specfem::assembly::sources_impl::source_medium<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
+    specfem::element::dimension_tag::dim2,
+    specfem::element::medium_tag::acoustic>;
 
 template class specfem::assembly::sources_impl::source_medium<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv>;
+    specfem::element::dimension_tag::dim2,
+    specfem::element::medium_tag::elastic_psv>;
 
 template class specfem::assembly::sources_impl::source_medium<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic>;
+    specfem::element::dimension_tag::dim2,
+    specfem::element::medium_tag::poroelastic>;
 
 template class specfem::assembly::sources_impl::source_medium<
-    specfem::dimension::type::dim2,
+    specfem::element::dimension_tag::dim2,
     specfem::element::medium_tag::elastic_psv_t>;
 
-specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
+specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
     std::vector<std::shared_ptr<
-        specfem::sources::source<specfem::dimension::type::dim2> > > &sources,
-    const specfem::assembly::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::assembly::jacobian_matrix<specfem::dimension::type::dim2>
-        &jacobian_matrix,
-    const specfem::assembly::element_types<specfem::dimension::type::dim2>
-        &element_types,
+        specfem::sources::source<specfem::element::dimension_tag::dim2> > >
+        &sources,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const specfem::assembly::jacobian_matrix<
+        specfem::element::dimension_tag::dim2> &jacobian_matrix,
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim2> &element_types,
     const type_real t0, const type_real dt, const int nsteps)
     : timestep(0), nspec(mesh.nspec),
       element_indices("specfem::sources::elements", sources.size()),
@@ -133,13 +137,13 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
               (h_boundary_types(isource) == _boundary_tag_)) {
             /* Count the number of sources for each wavefield type */
             if (h_wavefield_types(isource) ==
-                specfem::wavefield::simulation_field::forward) {
+                specfem::simulation::field_type::forward) {
               count_forward++;
             } else if (h_wavefield_types(isource) ==
-                       specfem::wavefield::simulation_field::backward) {
+                       specfem::simulation::field_type::backward) {
               count_backward++;
             } else if (h_wavefield_types(isource) ==
-                       specfem::wavefield::simulation_field::adjoint) {
+                       specfem::simulation::field_type::adjoint) {
               count_adjoint++;
             }
           }
@@ -196,7 +200,7 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
               (h_property_types(isource) == _property_tag_) &&
               (h_boundary_types(isource) == _boundary_tag_)) {
             if (h_wavefield_types(isource) ==
-                specfem::wavefield::simulation_field::forward) {
+                specfem::simulation::field_type::forward) {
               /* Assign global ispec to local forward element index array */
               /* h_element_indices_forward_<dim>_<medium>_<property> = ispec*/
               _h_element_indices_forward_(index_forward) = ispec;
@@ -206,7 +210,7 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
               /* Increase forward counter index*/
               index_forward++;
             } else if (h_wavefield_types(isource) ==
-                       specfem::wavefield::simulation_field::backward) {
+                       specfem::simulation::field_type::backward) {
               /* Assign global ispec to local backward element index array */
               /* h_element_indices_backward_<dim>_<medium>_<property> = ispec */
               _h_element_indices_backward_(index_backward) = ispec;
@@ -216,7 +220,7 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
               _h_source_indices_backward_(index_backward) = isource;
               index_backward++;
             } else if (h_wavefield_types(isource) ==
-                       specfem::wavefield::simulation_field::adjoint) {
+                       specfem::simulation::field_type::adjoint) {
               /* Assign global ispec to local adjoint element index array */
               /* h_element_indices_adjoint_<dim>_<medium>_<property> = ispec */
               _h_element_indices_adjoint_(index_adjoint) = ispec;
@@ -246,11 +250,11 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::sources(
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
-specfem::assembly::sources<specfem::dimension::type::dim2>::get_sources_on_host(
-    const specfem::element::medium_tag medium,
-    const specfem::element::property_tag property,
-    const specfem::element::boundary_tag boundary,
-    const specfem::wavefield::simulation_field wavefield) const {
+specfem::assembly::sources<specfem::element::dimension_tag::dim2>::
+    get_sources_on_host(const specfem::element::medium_tag medium,
+                        const specfem::element::property_tag property,
+                        const specfem::element::boundary_tag boundary,
+                        const specfem::simulation::field_type wavefield) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
@@ -261,19 +265,17 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::get_sources_on_host(
       CAPTURE(h_element_indices_forward, h_element_indices_backward,
               h_element_indices_adjoint, h_source_indices_forward,
               h_source_indices_backward, h_source_indices_adjoint) {
-        if ((wavefield == specfem::wavefield::simulation_field::forward) &&
+        if ((wavefield == specfem::simulation::field_type::forward) &&
             (medium == _medium_tag_) && (property == _property_tag_) &&
             (boundary == _boundary_tag_)) {
           return std::make_tuple(_h_element_indices_forward_,
                                  _h_source_indices_forward_);
-        } else if ((wavefield ==
-                    specfem::wavefield::simulation_field::backward) &&
+        } else if ((wavefield == specfem::simulation::field_type::backward) &&
                    (medium == _medium_tag_) && (property == _property_tag_) &&
                    (boundary == _boundary_tag_)) {
           return std::make_tuple(_h_element_indices_backward_,
                                  _h_source_indices_backward_);
-        } else if ((wavefield ==
-                    specfem::wavefield::simulation_field::adjoint) &&
+        } else if ((wavefield == specfem::simulation::field_type::adjoint) &&
                    (medium == _medium_tag_) && (property == _property_tag_) &&
                    (boundary == _boundary_tag_)) {
           return std::make_tuple(_h_element_indices_adjoint_,
@@ -293,12 +295,12 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::get_sources_on_host(
 // and the source indices for the wavefield type.
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
            Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::assembly::sources<specfem::dimension::type::dim2>::
+specfem::assembly::sources<specfem::element::dimension_tag::dim2>::
     get_sources_on_device(
         const specfem::element::medium_tag medium,
         const specfem::element::property_tag property,
         const specfem::element::boundary_tag boundary,
-        const specfem::wavefield::simulation_field wavefield) const {
+        const specfem::simulation::field_type wavefield) const {
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
@@ -309,19 +311,17 @@ specfem::assembly::sources<specfem::dimension::type::dim2>::
       CAPTURE(element_indices_forward, element_indices_backward,
               element_indices_adjoint, source_indices_forward,
               source_indices_backward, source_indices_adjoint) {
-        if ((wavefield == specfem::wavefield::simulation_field::forward) &&
+        if ((wavefield == specfem::simulation::field_type::forward) &&
             (medium == _medium_tag_) && (property == _property_tag_) &&
             (boundary == _boundary_tag_)) {
           return std::make_tuple(_element_indices_forward_,
                                  _source_indices_forward_);
-        } else if ((wavefield ==
-                    specfem::wavefield::simulation_field::backward) &&
+        } else if ((wavefield == specfem::simulation::field_type::backward) &&
                    (medium == _medium_tag_) && (property == _property_tag_) &&
                    (boundary == _boundary_tag_)) {
           return std::make_tuple(_element_indices_backward_,
                                  _source_indices_backward_);
-        } else if ((wavefield ==
-                    specfem::wavefield::simulation_field::adjoint) &&
+        } else if ((wavefield == specfem::simulation::field_type::adjoint) &&
                    (medium == _medium_tag_) && (property == _property_tag_) &&
                    (boundary == _boundary_tag_)) {
           return std::make_tuple(_element_indices_adjoint_,

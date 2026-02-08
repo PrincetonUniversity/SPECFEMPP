@@ -5,10 +5,10 @@
 #include <type_traits>
 #include <vector>
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
 
@@ -38,7 +38,8 @@ namespace specfem::assembly::boundaries_impl {
  * free surface treatment.
  *
  */
-template <> struct acoustic_free_surface<specfem::dimension::type::dim2> {
+template <>
+struct acoustic_free_surface<specfem::element::dimension_tag::dim2> {
 private:
   /**
    * @name Private Constants
@@ -58,7 +59,7 @@ public:
   /**
    * @brief Dimension tag indicating this is a 2D implementation
    */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
   ///@}
 
   /**

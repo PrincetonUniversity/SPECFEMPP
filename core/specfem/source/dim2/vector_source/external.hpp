@@ -1,7 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+#include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -27,11 +26,10 @@ namespace sources {
  * );
  *
  * // Create a 2D external source at boundary location (0.0, 5.0)
- * auto ext_source = specfem::sources::external<specfem::dimension::type::dim2>(
- *     0.0,  // x-coordinate (at boundary)
- *     5.0,  // z-coordinate
- *     std::move(stf),
- *     specfem::wavefield::simulation_field::forward
+ * auto ext_source =
+ * specfem::sources::external<specfem::element::dimension_tag::dim2>( 0.0,  //
+ * x-coordinate (at boundary) 5.0,  // z-coordinate std::move(stf),
+ *     specfem::simulation::field_type::forward
  * );
  *
  * // Set the medium type where the external source is located
@@ -43,8 +41,8 @@ namespace sources {
  *
  */
 template <>
-class external<specfem::dimension::type::dim2>
-    : public vector_source<specfem::dimension::type::dim2> {
+class external<specfem::element::dimension_tag::dim2>
+    : public vector_source<specfem::element::dimension_tag::dim2> {
 
 public:
   external() {};
@@ -52,15 +50,15 @@ public:
   external(
       type_real x, type_real z,
       std::unique_ptr<specfem::source_time_functions::stf> source_time_function,
-      const specfem::wavefield::simulation_field wavefield_type)
+      const specfem::simulation::field_type wavefield_type)
       : vector_source(x, z, std::move(source_time_function)),
         wavefield_type(wavefield_type) {};
 
   external(YAML::Node &Node, const int nsteps, const type_real dt,
-           const specfem::wavefield::simulation_field wavefield_type)
+           const specfem::simulation::field_type wavefield_type)
       : wavefield_type(wavefield_type), vector_source(Node, nsteps, dt) {};
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
+  specfem::simulation::field_type get_wavefield_type() const override {
     return wavefield_type;
   }
 
@@ -104,7 +102,7 @@ public:
   static constexpr const char *name = "2-D external source";
 
 private:
-  specfem::wavefield::simulation_field wavefield_type;
+  specfem::simulation::field_type wavefield_type;
   const static std::vector<specfem::element::medium_tag> supported_media;
 };
 } // namespace sources

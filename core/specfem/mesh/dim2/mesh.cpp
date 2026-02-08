@@ -1,7 +1,7 @@
 #include "specfem/mesh.hpp"
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "medium/material.hpp"
+
+#include "specfem/enums.hpp"
+#include "specfem/medium_container.hpp"
 
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -53,8 +53,9 @@ bool check_nodes_on_domain_edge(const std::list<int> &nodes_on_domain_edge,
 }
 
 void check_adjacency_graph(
-    const specfem::mesh::adjacency_graph<specfem::dimension::type::dim2> &graph,
-    const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+    const specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2>
+        &graph,
+    const specfem::mesh::control_nodes<specfem::element::dimension_tag::dim2>
         &control_nodes) {
   // Get xmin and xmax from the control nodes
   type_real xmin = std::numeric_limits<type_real>::max();
@@ -85,7 +86,7 @@ void check_adjacency_graph(
   // Filter out strongly conforming connections
   auto filter = [&g](const auto &edge) {
     return g[edge].connection ==
-           specfem::connections::type::strongly_conforming;
+           specfem::element_connections::type::strongly_conforming;
   };
 
   // Create a filtered graph view
@@ -171,7 +172,8 @@ void check_adjacency_graph(
   }
 }
 
-std::string specfem::mesh::mesh<specfem::dimension::type::dim2>::print() const {
+std::string
+specfem::mesh::mesh<specfem::element::dimension_tag::dim2>::print() const {
 
   int n_elastic;
   int n_acoustic;
@@ -205,8 +207,8 @@ std::string specfem::mesh::mesh<specfem::dimension::type::dim2>::print() const {
   return message.str();
 }
 
-void specfem::mesh::mesh<specfem::dimension::type::dim2>::check_consistency()
-    const {
+void specfem::mesh::mesh<
+    specfem::element::dimension_tag::dim2>::check_consistency() const {
   if (this->npgeo <= 0) {
     throw std::runtime_error(
         "Number of geometric points must be greater than 0.");
@@ -220,7 +222,7 @@ void specfem::mesh::mesh<specfem::dimension::type::dim2>::check_consistency()
   check_adjacency_graph(this->adjacency_graph, this->control_nodes);
 }
 
-void specfem::mesh::mesh<specfem::dimension::type::dim2>::
+void specfem::mesh::mesh<specfem::element::dimension_tag::dim2>::
     setup_coupled_interfaces(
         const std::set<std::pair<int, int> > &coupled_interfaces) {
   auto &graph = this->adjacency_graph.graph();
@@ -238,9 +240,10 @@ void specfem::mesh::mesh<specfem::dimension::type::dim2>::
           materials.get_material_type(target);
       if ((self_medium != neighbor_medium) &&
           (edge_props.connection ==
-           specfem::connections::type::strongly_conforming)) {
+           specfem::element_connections::type::strongly_conforming)) {
         // Change strongly conforming to weakly conforming if media differ
-        edge_props.connection = specfem::connections::type::weakly_conforming;
+        edge_props.connection =
+            specfem::element_connections::type::weakly_conforming;
         if (coupled_interfaces.count(std::make_pair(v, target))) {
           n_matched++;
         }

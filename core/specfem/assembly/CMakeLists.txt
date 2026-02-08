@@ -1,4 +1,4 @@
-file(GLOB_RECURSE COMPUTE_SOURCE_FILES "./*.cpp" "./**/*.cpp")
+file(GLOB_RECURSE COMPUTE_SOURCE_FILES "*.cpp")
 
 add_library(assembly ${COMPUTE_SOURCE_FILES})
 add_library(specfem::assembly ALIAS assembly)
@@ -10,7 +10,7 @@ target_link_libraries(
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
         PRIVATE
         specfem::algorithms
-        enumerations
+        specfem::element
         specfem::quadrature
         specfem::mesh
         source_class
@@ -19,7 +19,7 @@ target_link_libraries(
         specfem::receivers
         shape_functions
         Kokkos::kokkos
-        enumerations
+        specfem::enums
         ${BOOST_LIBS}
         $<$<BOOL:${SPECFEM_ENABLE_VTK}>:${VTK_LIBRARIES}>
 )

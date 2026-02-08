@@ -1,12 +1,14 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/element_coupling.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <memory>
 
 namespace specfem::mesh {
 
-template <specfem::dimension::type DimensionTag> struct adjacency_graph;
+template <specfem::element::dimension_tag DimensionTag> struct adjacency_graph;
 
 /**
  * @brief 3D adjacency graph for MESHFEM3D spectral element connectivity
@@ -27,21 +29,22 @@ template <specfem::dimension::type DimensionTag> struct adjacency_graph;
  * - Discontinuous Galerkin coupling
  * - Boundary condition enforcement
  *
- * @tparam specfem::dimension::type::dim3 Template specialization for 3D meshes
+ * @tparam specfem::element::dimension_tag::dim3 Template specialization for 3D
+ * meshes
  *
  * @see specfem::mesh::adjacency (CSR-based adjacency for solver)
- * @see specfem::connections::type
+ * @see specfem::element_connections::type
  * @see specfem::mesh_entity::dim3::type
  *
  * @code
  * // Example: Building adjacency graph from MESHFEM3D data
- * specfem::mesh::adjacency_graph<specfem::dimension::type::dim3>
+ * specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
  *     adj_graph(nspec);
  *
  * // Add element connections with properties
  * auto& graph = adj_graph.graph();
  * boost::add_edge(elem1_id, elem2_id,
- *     EdgeProperties(specfem::connections::type::strongly_conforming,
+ *     EdgeProperties(specfem::element_connections::type::strongly_conforming,
  *                   specfem::mesh_entity::dim3::type::right), graph);
  *
  * // Query adjacency for spectral element computations
@@ -56,7 +59,7 @@ template <specfem::dimension::type DimensionTag> struct adjacency_graph;
  *       Runtime computations typically use the more efficient CSR format
  *       in specfem::mesh::adjacency.
  */
-template <> struct adjacency_graph<specfem::dimension::type::dim3> {
+template <> struct adjacency_graph<specfem::element::dimension_tag::dim3> {
 public:
   /**
    * @brief Edge properties for element interface characterization
@@ -69,7 +72,7 @@ public:
    * @code
    * // Example: Creating edge properties for a conforming face interface
    * EdgeProperties face_props(
-   *     specfem::connections::type::strongly_conforming,
+   *     specfem::element_connections::type::strongly_conforming,
    *     specfem::mesh_entity::dim3::type::right
    * );
    *
@@ -86,9 +89,9 @@ public:
      * - **weakly_conforming**: Nodes match but allows discontinuous coupling
      * - **nonconforming**: No matching nodes, geometric adjacency only
      *
-     * @see specfem::connections::type
+     * @see specfem::element_connections::type
      */
-    specfem::connections::type connection;
+    specfem::element_connections::type connection;
 
     /**
      * @brief Geometric orientation of the shared interface
@@ -124,12 +127,12 @@ public:
      * @code
      * // Create properties for a strongly conforming face interface
      * EdgeProperties props(
-     *     specfem::connections::type::strongly_conforming,
+     *     specfem::element_connections::type::strongly_conforming,
      *     specfem::mesh_entity::dim3::type::right
      * );
      * @endcode
      */
-    EdgeProperties(const specfem::connections::type conn,
+    EdgeProperties(const specfem::element_connections::type conn,
                    const specfem::mesh_entity::dim3::type orient)
         : connection(conn), orientation(orient) {}
   };
@@ -167,7 +170,7 @@ public:
    * Elements and connections must be added explicitly after construction.
    *
    * @code
-   * specfem::mesh::adjacency_graph<specfem::dimension::type::dim3>
+   * specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
    *     empty_graph;
    * // Graph must be populated with add_vertex/add_edge operations
    * @endcode
@@ -185,7 +188,7 @@ public:
    *
    * @code
    * // Create graph for mesh with 1000 spectral elements
-   * specfem::mesh::adjacency_graph<specfem::dimension::type::dim3>
+   * specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim3>
    *     graph(1000);
    * // Vertices 0-999 are pre-allocated and ready for edge addition
    * @endcode
@@ -207,7 +210,7 @@ public:
    *
    * // Add edge with properties
    * boost::add_edge(0, 1, EdgeProperties(
-   *     specfem::connections::type::strongly_conforming,
+   *     specfem::element_connections::type::strongly_conforming,
    *     specfem::mesh_entity::dim3::type::right), graph);
    *
    * // Query neighbors

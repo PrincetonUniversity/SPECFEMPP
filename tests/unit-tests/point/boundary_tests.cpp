@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/point/boundary.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
@@ -44,8 +44,9 @@ TYPED_TEST(PointBoundaryTest, NoneBoundary2D) {
   constexpr bool using_simd = TypeParam::value;
 
   // Define the boundary type with none boundary tag in 2D
-  using boundary_type = point::boundary<element::boundary_tag::none,
-                                        dimension::type::dim2, using_simd>;
+  using boundary_type =
+      point::boundary<element::boundary_tag::none,
+                      specfem::element::dimension_tag::dim2, using_simd>;
 
   // Verify static properties
   EXPECT_EQ(boundary_type::boundary_tag, element::boundary_tag::none);
@@ -85,7 +86,7 @@ TYPED_TEST(PointBoundaryTest, AcousticFreeSurfaceBoundary2D) {
   // Define the boundary type with acoustic free surface boundary tag in 2D
   using boundary_type =
       point::boundary<element::boundary_tag::acoustic_free_surface,
-                      dimension::type::dim2, using_simd>;
+                      specfem::element::dimension_tag::dim2, using_simd>;
 
   // Verify static properties
   EXPECT_EQ(boundary_type::boundary_tag,
@@ -109,8 +110,9 @@ TYPED_TEST(PointBoundaryTest, StaceyBoundary2D) {
   constexpr bool using_simd = TypeParam::value;
 
   // Define the boundary type with stacey boundary tag in 2D
-  using boundary_type = point::boundary<element::boundary_tag::stacey,
-                                        dimension::type::dim2, using_simd>;
+  using boundary_type =
+      point::boundary<element::boundary_tag::stacey,
+                      specfem::element::dimension_tag::dim2, using_simd>;
 
   // Verify static properties
   EXPECT_EQ(boundary_type::boundary_tag, element::boundary_tag::stacey);
@@ -148,7 +150,7 @@ TYPED_TEST(PointBoundaryTest, CompositeStaceyDirichletBoundary2D) {
   // Define the boundary type with composite stacey dirichlet boundary tag in 2D
   using boundary_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
-                      dimension::type::dim2, using_simd>;
+                      specfem::element::dimension_tag::dim2, using_simd>;
 
   // Verify static properties
   EXPECT_EQ(boundary_type::boundary_tag,
@@ -185,7 +187,7 @@ TEST_F(PointBoundaryTestSerial, CompositeBoundaryCreation) {
   // Start with acoustic free surface
   using boundary_type =
       point::boundary<element::boundary_tag::acoustic_free_surface,
-                      dimension::type::dim2, false>;
+                      specfem::element::dimension_tag::dim2, false>;
 
   // Create a boundary object
   boundary_type boundary;
@@ -207,10 +209,10 @@ TEST_F(PointBoundaryTestSerial, ConversionCompositeToAcousticFreeSurface) {
   // Define the boundary types
   using composite_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
-                      dimension::type::dim2, false>;
+                      specfem::element::dimension_tag::dim2, false>;
   using acoustic_fs_type =
       point::boundary<element::boundary_tag::acoustic_free_surface,
-                      dimension::type::dim2, false>;
+                      specfem::element::dimension_tag::dim2, false>;
 
   // Create a composite boundary object and set values
   composite_type composite;
@@ -232,9 +234,10 @@ TEST_F(PointBoundaryTestSerial, ConversionCompositeToStacey) {
   // Define the boundary types
   using composite_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
-                      dimension::type::dim2, false>;
-  using stacey_type = point::boundary<element::boundary_tag::stacey,
-                                      dimension::type::dim2, false>;
+                      specfem::element::dimension_tag::dim2, false>;
+  using stacey_type =
+      point::boundary<element::boundary_tag::stacey,
+                      specfem::element::dimension_tag::dim2, false>;
 
   // Create a composite boundary object and set values
   composite_type composite;
@@ -262,27 +265,29 @@ TEST_F(PointBoundaryTestSerial, ConversionCompositeToStacey) {
 // Test default constructors and default tag initialization
 TEST_F(PointBoundaryTestSerial, DefaultConstructorsAndTagInitialization) {
   // Test default constructor for none boundary
-  using none_type = point::boundary<element::boundary_tag::none,
-                                    dimension::type::dim2, false>;
+  using none_type =
+      point::boundary<element::boundary_tag::none,
+                      specfem::element::dimension_tag::dim2, false>;
   none_type none_boundary;
 
   // Test default constructor for acoustic_free_surface boundary
   using acoustic_fs_type =
       point::boundary<element::boundary_tag::acoustic_free_surface,
-                      dimension::type::dim2, false>;
+                      specfem::element::dimension_tag::dim2, false>;
   acoustic_fs_type acoustic_fs_boundary;
   acoustic_fs_boundary.tag += element::boundary_tag::acoustic_free_surface;
 
   // Test default constructor for stacey boundary
-  using stacey_type = point::boundary<element::boundary_tag::stacey,
-                                      dimension::type::dim2, false>;
+  using stacey_type =
+      point::boundary<element::boundary_tag::stacey,
+                      specfem::element::dimension_tag::dim2, false>;
   stacey_type stacey_boundary;
   stacey_boundary.tag += element::boundary_tag::stacey;
 
   // Test default constructor for composite_stacey_dirichlet boundary
   using composite_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
-                      dimension::type::dim2, false>;
+                      specfem::element::dimension_tag::dim2, false>;
   composite_type composite_boundary;
   composite_boundary.tag += element::boundary_tag::composite_stacey_dirichlet;
 
@@ -310,18 +315,20 @@ TYPED_TEST(PointBoundaryTest, InheritanceRelationships) {
   constexpr bool using_simd = TypeParam::value;
 
   // Test inheritance for acoustic_free_surface boundary from none boundary
-  using none_type = point::boundary<element::boundary_tag::none,
-                                    dimension::type::dim2, using_simd>;
+  using none_type =
+      point::boundary<element::boundary_tag::none,
+                      specfem::element::dimension_tag::dim2, using_simd>;
   using acoustic_fs_type =
       point::boundary<element::boundary_tag::acoustic_free_surface,
-                      dimension::type::dim2, using_simd>;
+                      specfem::element::dimension_tag::dim2, using_simd>;
   bool acoustic_inherits_none =
       std::is_base_of<none_type, acoustic_fs_type>::value;
   EXPECT_TRUE(acoustic_inherits_none);
 
   // Test inheritance for stacey boundary from acoustic_free_surface boundary
-  using stacey_type = point::boundary<element::boundary_tag::stacey,
-                                      dimension::type::dim2, using_simd>;
+  using stacey_type =
+      point::boundary<element::boundary_tag::stacey,
+                      specfem::element::dimension_tag::dim2, using_simd>;
   bool stacey_inherits_acoustic =
       std::is_base_of<acoustic_fs_type, stacey_type>::value;
   EXPECT_TRUE(stacey_inherits_acoustic);
@@ -330,7 +337,7 @@ TYPED_TEST(PointBoundaryTest, InheritanceRelationships) {
   // boundary
   using composite_type =
       point::boundary<element::boundary_tag::composite_stacey_dirichlet,
-                      dimension::type::dim2, using_simd>;
+                      specfem::element::dimension_tag::dim2, using_simd>;
   bool composite_inherits_stacey =
       std::is_base_of<stacey_type, composite_type>::value;
   EXPECT_TRUE(composite_inherits_stacey);
@@ -344,8 +351,9 @@ TYPED_TEST(PointBoundaryTest, InheritanceRelationships) {
 // Test boundary tag container's operators with boundary tags
 TEST_F(PointBoundaryTestSerial, BoundaryTagContainerOperators) {
   // Create boundary object
-  using boundary_type = point::boundary<element::boundary_tag::none,
-                                        dimension::type::dim2, false>;
+  using boundary_type =
+      point::boundary<element::boundary_tag::none,
+                      specfem::element::dimension_tag::dim2, false>;
   boundary_type boundary;
 
   // Initially none
@@ -395,7 +403,8 @@ TEST_F(PointBoundaryTestSerial, BoundaryTagContainerOperators) {
 
 //   // Define the boundary types
 //   using boundary3d_type =
-//       point::boundary<element::boundary_tag::stacey, dimension::type::dim3,
+//       point::boundary<element::boundary_tag::stacey,
+//       specfem::element::dimension_tag::dim3,
 //                       false>;
 
 //   // Create boundary object

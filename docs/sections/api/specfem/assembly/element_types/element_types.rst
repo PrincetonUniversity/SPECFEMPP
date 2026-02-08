@@ -9,8 +9,8 @@
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::assembly::element_types< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::assembly::element_types< specfem::element::dimension_tag::dim2 >
     :members:
 
-.. doxygenstruct:: specfem::assembly::element_types< specfem::dimension::type::dim3 >
+.. doxygenstruct:: specfem::assembly::element_types< specfem::element::dimension_tag::dim3 >
     :members:

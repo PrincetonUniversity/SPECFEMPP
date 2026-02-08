@@ -1,17 +1,18 @@
-#include "assembly.hpp"
-#include "enumerations/interface.hpp"
-#include "io/reader.hpp"
+#include "specfem/assembly/assembly.hpp"
+#include "specfem/assembly/info.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 
-specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
+specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::quadrature::quadratures &quadratures,
     std::vector<std::shared_ptr<specfem::sources::source<dimension_tag> > >
         &sources,
     const std::vector<std::shared_ptr<
-        specfem::receivers::receiver<specfem::dimension::type::dim2> > >
+        specfem::receivers::receiver<specfem::element::dimension_tag::dim2> > >
         &receivers,
-    const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
+    const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
     const type_real dt, const int max_timesteps, const int max_sig_step,
     const int nsteps_between_samples,
     const specfem::simulation::type simulation,
@@ -66,6 +67,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
                                      this->edge_types, this->mesh };
   this->fields = { this->mesh, this->element_types, simulation };
 
+  this->info = { this->mesh, this->properties, this->element_types };
+
   if (allocate_boundary_values)
     this->boundary_values = { max_timesteps, this->mesh, this->element_types,
                               this->boundaries };
@@ -93,7 +96,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::assembly(
 }
 
 std::string
-specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
+specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::print()
+    const {
   std::ostringstream message;
   message << "Assembly information:\n"
           << "------------------------------\n"
@@ -101,7 +105,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
           << "Total number of geometric points : "
           << this->mesh.element_grid.ngllz << "\n"
           << "Total number of distinct quadrature points : " << this->mesh.nglob
-          << "\n";
+          << "\n"
+          << this->info.string() << "\n";
 
   int total_elements = 0;
 
@@ -109,14 +114,12 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
   bool is_psv = false;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2),
-       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
-                  ELASTIC_PSV_T),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
+                                       POROELASTIC, ELASTIC_PSV_T)),
       {
         // Getting the number of elements per medium
-        int n_elements = this->element_types.get_number_of_elements(
-            _medium_tag_, _property_tag_);
+        int n_elements =
+            this->element_types.get_number_of_elements(_medium_tag_);
 
         // Printing the number of elements if more than 0
         if (n_elements > 0) {
@@ -124,8 +127,8 @@ specfem::assembly::assembly<specfem::dimension::type::dim2>::print() const {
           total_elements += n_elements;
 
           message << "   Total number of elements of type "
-                  << specfem::element::to_string(_medium_tag_, _property_tag_)
-                  << " : " << n_elements << "\n";
+                  << specfem::element::to_string(_medium_tag_) << " : "
+                  << n_elements << "\n";
           if (_medium_tag_ == specfem::element::medium_tag::elastic_sh) {
             is_sh = true;
           } else if (_medium_tag_ ==

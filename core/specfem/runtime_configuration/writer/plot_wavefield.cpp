@@ -1,7 +1,5 @@
 #include "plot_wavefield.hpp"
-#include "enumerations/display.hpp"
-#include "enumerations/specfem_enums.hpp"
-#include "enumerations/wavefield.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/periodic_tasks.hpp"
 
 #include "specfem/utilities.hpp"
@@ -77,7 +75,7 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
   return;
 }
 
-template <specfem::dimension::type DimensionTag>
+template <specfem::element::dimension_tag DimensionTag>
 std::shared_ptr<specfem::periodic_tasks::periodic_task<DimensionTag> >
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     const specfem::assembly::assembly<DimensionTag> &assembly,
@@ -85,13 +83,13 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   const auto output_format = [&]() {
     if (specfem::utilities::is_png_string(this->output_format)) {
-      return specfem::display::format::PNG;
+      return specfem::enums::display_format::PNG;
     } else if (specfem::utilities::is_jpg_string(this->output_format)) {
-      return specfem::display::format::JPG;
+      return specfem::enums::display_format::JPG;
     } else if (specfem::utilities::is_onscreen_string(this->output_format)) {
-      return specfem::display::format::on_screen;
+      return specfem::enums::display_format::on_screen;
     } else if (specfem::utilities::is_vtkhdf_string(this->output_format)) {
-      return specfem::display::format::vtkhdf;
+      return specfem::enums::display_format::vtkhdf;
     } else {
       throw std::runtime_error("Unknown plotter format");
     }
@@ -99,21 +97,21 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   const auto component = [&]() {
     if (specfem::utilities::is_x_string(this->component)) {
-      return specfem::display::component::x;
+      return specfem::enums::display_component::x;
     } else if (specfem::utilities::is_y_string(this->component)) {
-      return specfem::display::component::y;
+      return specfem::enums::display_component::y;
     } else if (specfem::utilities::is_z_string(this->component)) {
-      return specfem::display::component::z;
+      return specfem::enums::display_component::z;
     } else if (specfem::utilities::is_magnitude_string(this->component)) {
-      return specfem::display::component::magnitude;
+      return specfem::enums::display_component::magnitude;
     } else {
       throw std::runtime_error("Unknown plotter component");
     }
   }();
 
   // Throw error if component is y and elastic wave type is SH
-  if constexpr (DimensionTag == specfem::dimension::type::dim2) {
-    if (component == specfem::display::component::y &&
+  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
+    if (component == specfem::enums::display_component::y &&
         (elastic_wave == specfem::enums::elastic_wave::psv)) {
       std::ostringstream message;
       message
@@ -123,8 +121,8 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     }
 
     // Throw error if component is z or x and elastic wave type is SH
-    if ((component == specfem::display::component::x ||
-         component == specfem::display::component::z) &&
+    if ((component == specfem::enums::display_component::x ||
+         component == specfem::enums::display_component::z) &&
         (elastic_wave == specfem::enums::elastic_wave::sh)) {
       std::ostringstream message;
       message << "Error: X and Z component plotting is not supported for SH "
@@ -135,20 +133,20 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   const auto field_type = [&]() {
     if (specfem::utilities::is_displacement_string(this->field_type)) {
-      return specfem::wavefield::type::displacement;
+      return specfem::enums::wavefield::displacement;
     } else if (specfem::utilities::is_velocity_string(this->field_type)) {
-      return specfem::wavefield::type::velocity;
+      return specfem::enums::wavefield::velocity;
     } else if (specfem::utilities::is_acceleration_string(this->field_type)) {
-      return specfem::wavefield::type::acceleration;
+      return specfem::enums::wavefield::acceleration;
     } else if (specfem::utilities::is_pressure_string(this->field_type)) {
-      return specfem::wavefield::type::pressure;
+      return specfem::enums::wavefield::pressure;
     } else if (specfem::utilities::is_rotation_string(this->field_type)) {
-      return specfem::wavefield::type::rotation;
+      return specfem::enums::wavefield::rotation;
     } else if (specfem::utilities::is_intrinsic_rotation_string(
                    this->field_type)) {
-      return specfem::wavefield::type::intrinsic_rotation;
+      return specfem::enums::wavefield::intrinsic_rotation;
     } else if (specfem::utilities::is_curl_string(this->field_type)) {
-      return specfem::wavefield::type::curl;
+      return specfem::enums::wavefield::curl;
     } else {
       throw std::runtime_error(
           "Unknown wavefield component in the display section");
@@ -158,25 +156,25 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
   const auto simulation_wavefield_type = [&]() {
     if (specfem::utilities::is_forward_string(
             this->simulation_wavefield_type)) {
-      return specfem::wavefield::simulation_field::forward;
+      return specfem::simulation::field_type::forward;
     } else if (specfem::utilities::is_adjoint_string(
                    this->simulation_wavefield_type)) {
-      return specfem::wavefield::simulation_field::adjoint;
+      return specfem::simulation::field_type::adjoint;
     } else if (specfem::utilities::is_backward_string(
                    this->simulation_wavefield_type)) {
-      return specfem::wavefield::simulation_field::backward;
+      return specfem::simulation::field_type::backward;
     } else {
       throw std::runtime_error("Unknown wavefield type in the display section");
     }
   }();
 
-  if constexpr (DimensionTag == specfem::dimension::type::dim2) {
+  if constexpr (DimensionTag == specfem::element::dimension_tag::dim2) {
     return std::make_shared<
         specfem::periodic_tasks::plot_wavefield<DimensionTag> >(
         assembly, output_format, field_type, simulation_wavefield_type,
         component, dt, time_interval, this->output_folder, this->elastic_wave,
         this->electromagnetic_wave);
-  } else if constexpr (DimensionTag == specfem::dimension::type::dim3) {
+  } else if constexpr (DimensionTag == specfem::element::dimension_tag::dim3) {
     return std::make_shared<
         specfem::periodic_tasks::plot_wavefield<DimensionTag> >(
         assembly, output_format, field_type, simulation_wavefield_type,
@@ -187,16 +185,18 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 }
 
 // Explicit template instantiations
-template std::shared_ptr<
-    specfem::periodic_tasks::periodic_task<specfem::dimension::type::dim2> >
+template std::shared_ptr<specfem::periodic_tasks::periodic_task<
+    specfem::element::dimension_tag::dim2> >
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter<
-    specfem::dimension::type::dim2>(
-    const specfem::assembly::assembly<specfem::dimension::type::dim2> &assembly,
+    specfem::element::dimension_tag::dim2>(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim2>
+        &assembly,
     const type_real &dt) const;
 
-template std::shared_ptr<
-    specfem::periodic_tasks::periodic_task<specfem::dimension::type::dim3> >
+template std::shared_ptr<specfem::periodic_tasks::periodic_task<
+    specfem::element::dimension_tag::dim3> >
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter<
-    specfem::dimension::type::dim3>(
-    const specfem::assembly::assembly<specfem::dimension::type::dim3> &assembly,
+    specfem::element::dimension_tag::dim3>(
+    const specfem::assembly::assembly<specfem::element::dimension_tag::dim3>
+        &assembly,
     const type_real &dt) const;

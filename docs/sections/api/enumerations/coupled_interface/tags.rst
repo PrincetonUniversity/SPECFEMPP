@@ -1,11 +1,11 @@
 .. _specfem_interface_interface_tags:
 
-``specfem::interface::edges``
+``specfem::element_coupling::edges``
 =============================
 
-.. doxygenfunction:: specfem::interface::edges
+.. doxygenfunction:: specfem::element_coupling::edges
 
 2D specialization
 ^^^^^^^^^^^^^^^^^
 
-.. doxygenfunction:: specfem::interface::edges< specfem::dimension::type::dim2 >()
+.. doxygenfunction:: specfem::element_coupling::edges< specfem::element::dimension_tag::dim2 >()

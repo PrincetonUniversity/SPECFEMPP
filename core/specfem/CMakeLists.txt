@@ -1,11 +1,17 @@
 # Add existing subdirectories
 add_subdirectory(algorithms)
 add_subdirectory(assembly)
+add_subdirectory(attenuation)
+add_subdirectory(element)
+add_subdirectory(element_connections)
+add_subdirectory(enums)
 add_subdirectory(jacobian)
-add_subdirectory(kokkos_kernels)
+add_subdirectory(compute)
+add_subdirectory(io)
 add_subdirectory(logger)
 add_subdirectory(macros)
 add_subdirectory(mesh)
+add_subdirectory(mesh_entity)
 add_subdirectory(mpi)
 add_subdirectory(periodic_tasks)
 add_subdirectory(point)
@@ -29,12 +35,18 @@ add_library(specfem::core ALIAS specfem_core_interface)
 target_link_libraries(specfem_core_interface
     INTERFACE
         specfem::algorithms
+        specfem::attenuation
         specfem::assembly
         specfem::jacobian
-        specfem::kokkos_kernels
+        specfem::compute
+        specfem::element
+        specfem::element_connections
+        specfem::enums
+        specfem::io
         specfem::logger
         specfem::macros
         specfem::mesh
+        specfem::mesh_entity
         specfem::mpi
         specfem::periodic_tasks
         specfem::point

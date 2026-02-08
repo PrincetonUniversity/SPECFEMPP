@@ -13,7 +13,7 @@
     :members:
 
 ``specfem::parallel_configuration::edge_config``
--------------------------------------------------
+------------------------------------------------
 
 .. doxygenstruct:: specfem::parallel_configuration::edge_config
     :members:
@@ -31,7 +31,7 @@
     :members:
 
 Architecture-specific default configurations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenstruct:: specfem::parallel_configuration::default_chunk_config
 

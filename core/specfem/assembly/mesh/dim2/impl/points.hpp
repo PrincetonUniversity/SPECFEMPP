@@ -1,6 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/data_access.hpp"
+#include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::mesh_impl {
@@ -14,14 +15,19 @@ namespace specfem::assembly::mesh_impl {
  * It uses Kokkos views for efficient memory management and device/host data
  * transfers.
  *
- * @tparam specfem::dimension::type::dim2 Template specialization for 2D case
+ * @tparam specfem::element::dimension_tag::dim2 Template specialization for 2D
+ * case
  */
-template <> struct points<specfem::dimension::type::dim2> {
+template <> struct points<specfem::element::dimension_tag::dim2> {
 public:
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension
-  constexpr static int ndim = 2;      ///< Number of dimensions
-  int nspec;                          ///< Number of spectral elements
+      specfem::element::dimension_tag::dim2; ///< Dimension
+  constexpr static auto data_class =
+      specfem::data_access::DataClassType::global_coordinates; ///< Data class
+  constexpr static int ndim = specfem::element::dimension<
+      specfem::element::dimension_tag::dim2>::dim; ///< Number of dimensions
+
+  int nspec; ///< Number of spectral elements
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
   int nglob; ///< Number of global quadrature points

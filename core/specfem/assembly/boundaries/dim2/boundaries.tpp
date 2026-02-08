@@ -3,11 +3,11 @@
 #include "boundaries.hpp"
 #include "impl/acoustic_free_surface.hpp"
 #include "impl/stacey.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::assembly::boundaries<specfem::dimension::type::dim2>::boundaries(
+specfem::assembly::boundaries<specfem::element::dimension_tag::dim2>::boundaries(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::mesh::mesh<dimension_tag> &mesh,
     const specfem::assembly::mesh<dimension_tag> &mesh_assembly,

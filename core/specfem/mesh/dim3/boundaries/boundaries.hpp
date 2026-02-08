@@ -11,12 +11,12 @@
 
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::mesh {
 
-template <specfem::dimension::type DimensionTag> struct Boundaries;
+template <specfem::element::dimension_tag DimensionTag> struct Boundaries;
 
 /**
  * @brief Domain boundary manager for 3D spectral element meshes
@@ -62,7 +62,7 @@ template <specfem::dimension::type DimensionTag> struct Boundaries;
  * }
  * @endcode
  */
-template <> struct boundaries<specfem::dimension::type::dim3> {
+template <> struct boundaries<specfem::element::dimension_tag::dim3> {
 private:
   /** @brief Enumeration of face directions for 3D boundaries */
   enum class face_direction : int {
@@ -92,7 +92,7 @@ private:
 
 public:
   /** @brief Dimension tag for template specialization (always dim3) */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Default constructor
@@ -121,7 +121,7 @@ public:
    *
    * @code
    * // Create boundaries container for 120 faces in a mesh with 1000 elements
-   * specfem::mesh::boundaries<specfem::dimension::type::dim3>
+   * specfem::mesh::boundaries<specfem::element::dimension_tag::dim3>
    *     boundaries(120, 1000);
    *
    * // Views are now allocated and ready for data from MESHFEM3D
@@ -193,7 +193,7 @@ public:
    * @code
    * // Example: Get all faces on the X_MIN boundary
    * auto [indices, faces] = boundaries.filter(
-   *     specfem::mesh::boundaries<specfem::dimension::type::dim3>::face_direction::X_MIN);
+   *     specfem::mesh::boundaries<specfem::element::dimension_tag::dim3>::face_direction::X_MIN);
    *
    * // Process each face on the X_MIN boundary
    * for (size_t i = 0; i < indices.extent(0); ++i) {

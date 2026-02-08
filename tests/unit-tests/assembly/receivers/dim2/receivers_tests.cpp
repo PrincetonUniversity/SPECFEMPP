@@ -18,8 +18,8 @@ protected:
     nsteps_between_samples = 1;
 
     // Create test seismogram types
-    seismogram_types = { specfem::wavefield::type::displacement,
-                         specfem::wavefield::type::velocity };
+    seismogram_types = { specfem::enums::wavefield::displacement,
+                         specfem::enums::wavefield::velocity };
   }
 
   int nspec;
@@ -29,24 +29,25 @@ protected:
   type_real dt;
   type_real t0;
   int nsteps_between_samples;
-  std::vector<specfem::wavefield::type> seismogram_types;
+  std::vector<specfem::enums::wavefield> seismogram_types;
 };
 
 TEST_F(AssemblyReceivers2DTest, DefaultConstructor) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   // Test that default constructor doesn't crash
   SUCCEED();
 }
 
 TEST_F(AssemblyReceivers2DTest, DimensionTag) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
-  EXPECT_EQ(receiver_assembly.dimension_tag, specfem::dimension::type::dim2);
+  EXPECT_EQ(receiver_assembly.dimension_tag,
+            specfem::element::dimension_tag::dim2);
 }
 
 TEST_F(AssemblyReceivers2DTest, GetSeismogramTypes) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   // For a default-constructed receiver assembly, we can't test much
   // since it requires mesh and other dependencies for full construction
@@ -58,7 +59,7 @@ TEST_F(AssemblyReceivers2DTest, GetSeismogramTypes) {
 }
 
 TEST_F(AssemblyReceivers2DTest, StationsMethod) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   // Test that stations method exists and returns a StationIterator reference
   const auto &station_iterator = receiver_assembly.stations();
@@ -68,7 +69,7 @@ TEST_F(AssemblyReceivers2DTest, StationsMethod) {
 }
 
 TEST_F(AssemblyReceivers2DTest, InheritanceFromStationIterator) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   // Test that it inherits from StationIterator
   // Should be able to access StationIterator methods directly
@@ -83,7 +84,7 @@ TEST_F(AssemblyReceivers2DTest, InheritanceFromStationIterator) {
 }
 
 TEST_F(AssemblyReceivers2DTest, InheritanceFromSeismogramIterator) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   // Test that it inherits from SeismogramIterator<dim2>
   // Should be able to access SeismogramIterator methods directly
@@ -95,7 +96,7 @@ TEST_F(AssemblyReceivers2DTest, InheritanceFromSeismogramIterator) {
 }
 
 TEST_F(AssemblyReceivers2DTest, SyncSeismograms) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   // Test that sync_seismograms method exists and doesn't crash
   receiver_assembly.sync_seismograms();
@@ -103,7 +104,7 @@ TEST_F(AssemblyReceivers2DTest, SyncSeismograms) {
 }
 
 TEST_F(AssemblyReceivers2DTest, SeismogramIteratorFunctionality) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   // Test basic seismogram iterator functionality
   receiver_assembly.set_seismogram_step(0);
@@ -114,12 +115,12 @@ TEST_F(AssemblyReceivers2DTest, SeismogramIteratorFunctionality) {
 }
 
 TEST_F(AssemblyReceivers2DTest, GetSeismogramMethod) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   std::string station_name = "TEST_STATION";
   std::string network_name = "TEST_NETWORK";
-  specfem::wavefield::type wavefield_type =
-      specfem::wavefield::type::displacement;
+  specfem::enums::wavefield wavefield_type =
+      specfem::enums::wavefield::displacement;
 
   // This will likely throw since maps aren't populated in default construction
   try {
@@ -139,7 +140,7 @@ TEST_F(AssemblyReceivers2DTest, GetSeismogramMethod) {
 // dependencies.
 
 TEST_F(AssemblyReceivers2DTest, MultipleSeismogramSteps) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   // Test setting different seismogram steps
   for (int step = 0; step < 10; ++step) {
@@ -149,7 +150,7 @@ TEST_F(AssemblyReceivers2DTest, MultipleSeismogramSteps) {
 }
 
 TEST_F(AssemblyReceivers2DTest, MultipleSeismogramTypes) {
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   // Test setting different seismogram types
   for (int type = 0; type < 3; ++type) {
@@ -160,14 +161,14 @@ TEST_F(AssemblyReceivers2DTest, MultipleSeismogramTypes) {
 
 TEST_F(AssemblyReceivers2DTest, ConstStaticMember) {
   // Test that dimension_tag is accessible as static member
-  EXPECT_EQ(receivers<specfem::dimension::type::dim2>::dimension_tag,
-            specfem::dimension::type::dim2);
+  EXPECT_EQ(receivers<specfem::element::dimension_tag::dim2>::dimension_tag,
+            specfem::element::dimension_tag::dim2);
 }
 
 TEST_F(AssemblyReceivers2DTest, TypeAliases) {
   // Test that the class can be instantiated (verifies type aliases work
   // correctly)
-  receivers<specfem::dimension::type::dim2> receiver_assembly;
+  receivers<specfem::element::dimension_tag::dim2> receiver_assembly;
 
   // If type aliases are incorrect, this wouldn't compile
   SUCCEED();

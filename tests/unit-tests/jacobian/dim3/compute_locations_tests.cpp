@@ -1,5 +1,5 @@
 #include "SPECFEM_Environment.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include "specfem/utilities.hpp"
@@ -21,13 +21,13 @@ protected:
   }
 
   // Helper to create unit cube element [0,1] x [0,1] x [0,1]
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
   create_unit_cube_8node() {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 8);
     coorg(0) = { 0.0, 0.0, 0.0 }; // Corner 0: (0,0,0)
     coorg(1) = { 1.0, 0.0, 0.0 }; // Corner 1: (1,0,0)
@@ -41,15 +41,15 @@ protected:
   }
 
   // Helper to create scaled and translated cube element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
   create_scaled_translated_cube_8node(type_real xmin, type_real xmax,
                                       type_real ymin, type_real ymax,
                                       type_real zmin, type_real zmax) {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 8);
     coorg(0) = { xmin, ymin, zmin }; // Corner 0: (xmin,ymin,zmin)
     coorg(1) = { xmax, ymin, zmin }; // Corner 1: (xmax,ymin,zmin)
@@ -63,14 +63,14 @@ protected:
   }
 
   // Helper to create arbitrary hexahedral element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
   create_hexahedron_8node(
       const std::array<std::array<type_real, 3>, 8> &corners) {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 8);
     for (int i = 0; i < 8; ++i) {
       coorg(i) = { corners[i][0], corners[i][1], corners[i][2] };
@@ -79,13 +79,13 @@ protected:
   }
 
   // Helper to create 27-node unit cube element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
   create_unit_cube_27node() {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 27);
 
     // Corner nodes (0-7)
@@ -285,9 +285,9 @@ TEST_F(ComputeLocationsDim3Test, HexahedralElement) {
 TEST_F(ComputeLocationsDim3Test, TrilinearMapping) {
   // Test that the mapping is indeed trilinear for 8-node elements
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Unit cube
@@ -352,9 +352,9 @@ TEST_F(ComputeLocationsDim3Test, TrilinearMapping) {
 TEST_F(ComputeLocationsDim3Test, FaceCenters) {
   // Test that face centers map correctly for 8-node elements
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   coorg(0) = { 0.0, 0.0, 0.0 };
@@ -442,9 +442,9 @@ TEST_F(ComputeLocationsDim3Test, FaceCenters) {
 TEST_F(ComputeLocationsDim3Test, EdgeMidpoints) {
   // Test that edge midpoints map correctly for 8-node elements
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   coorg(0) = { 0.0, 0.0, 0.0 };
@@ -485,9 +485,9 @@ TEST_F(ComputeLocationsDim3Test, EdgeMidpoints) {
 TEST_F(ComputeLocationsDim3Test, TwentySevenNodeElement) {
   // Test with a 27-node hexahedral element
   const int ngnod = 27;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // 27-node unit cube control nodes (corners + mid-edge + face-center + center)

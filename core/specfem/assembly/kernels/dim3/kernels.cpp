@@ -1,9 +1,9 @@
 #include "specfem/assembly/kernels.hpp"
 
-specfem::assembly::kernels<specfem::dimension::type::dim3>::kernels(
+specfem::assembly::kernels<specfem::element::dimension_tag::dim3>::kernels(
     const int nspec, const int ngllz, const int nglly, const int ngllx,
-    const specfem::assembly::element_types<specfem::dimension::type::dim3>
-        &element_types) {
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim3> &element_types) {
 
   this->nspec = nspec;
   this->ngllz = ngllz;
@@ -22,11 +22,13 @@ specfem::assembly::kernels<specfem::dimension::type::dim3>::kernels(
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
       CAPTURE(value) {
-        _value_ = specfem::medium::kernels_container<
+        _value_ = specfem::assembly::impl::domain_kernels<
             _dimension_tag_, _medium_tag_, _property_tag_>(
-            element_types.get_elements_on_host(_medium_tag_, _property_tag_),
+            element_types.get_elements_on_host(_medium_tag_, _property_tag_,
+                                               _attenuation_tag_),
             nglly, ngllz, ngllx, h_property_index_mapping);
       })
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/connections.hpp"
-#include "enumerations/dimension.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/element.hpp"
+#include "specfem/mesh_entity.hpp"
 #include "predicate.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -27,7 +27,7 @@ std::string connects::str() const {
   }
   str << " <-";
   if (check_connection_type) {
-    str << specfem::connections::to_string(connection_type);
+    str << specfem::element_connections::to_string(connection_type);
   }
   str << "-> " << jspec;
   if (check_jspec_mesh_entity) {
@@ -37,7 +37,7 @@ std::string connects::str() const {
   return str.str();
 }
 
-template <specfem::dimension::type dimension>
+template <specfem::element::dimension_tag dimension>
 void connects::expect_in(
     const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const {
   const auto &g = adjacency_graph.graph();
@@ -55,7 +55,7 @@ void connects::expect_in(
       std::ostringstream msg;
       msg << "Failed expected adjacency " << str() << ":\n";
       msg << "  Found connection type "
-          << specfem::connections::to_string(edge.connection) << " for edge "
+          << specfem::element_connections::to_string(edge.connection) << " for edge "
           << ispec_to_jspec_string() << "\n";
       FAIL() << msg.str();
     }
@@ -82,7 +82,7 @@ void connects::expect_in(
       std::ostringstream msg;
       msg << "Failed expected adjacency " << str() << ":\n";
       msg << "  Found connection type "
-          << specfem::connections::to_string(edge.connection) << " for edge "
+          << specfem::element_connections::to_string(edge.connection) << " for edge "
           << jspec_to_ispec_string() << "\n";
       FAIL() << msg.str();
     }
@@ -96,7 +96,7 @@ void connects::expect_in(
     }
   }
 }
-template <specfem::dimension::type dimension>
+template <specfem::element::dimension_tag dimension>
 void number_of_out_edges::expect_in(
     const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const {
 
@@ -118,7 +118,7 @@ void number_of_out_edges::expect_in(
   }
 }
 
-template <specfem::dimension::type dimension>
+template <specfem::element::dimension_tag dimension>
 void verify(const variant &predicate,
             const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) {
   std::visit(

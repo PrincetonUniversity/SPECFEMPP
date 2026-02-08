@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <vector>
 
 namespace specfem::assembly::receivers_impl {
@@ -8,12 +8,12 @@ namespace specfem::assembly::receivers_impl {
 // Simple seismogram type iterator - just wraps a vector of seismogram types
 class SeismogramTypeIterator {
 public:
-  using iterator = std::vector<specfem::wavefield::type>::const_iterator;
+  using iterator = std::vector<specfem::enums::wavefield>::const_iterator;
 
   SeismogramTypeIterator() = default;
 
   explicit SeismogramTypeIterator(
-      const std::vector<specfem::wavefield::type> &types)
+      const std::vector<specfem::enums::wavefield> &types)
       : seismogram_types_(types) {}
 
   iterator begin() const { return seismogram_types_.begin(); }
@@ -22,7 +22,7 @@ public:
   size_t size() const { return seismogram_types_.size(); }
 
 private:
-  std::vector<specfem::wavefield::type> seismogram_types_;
+  std::vector<specfem::enums::wavefield> seismogram_types_;
 };
 
 // StationInfo that contains station data and can provide seismogram types
@@ -31,7 +31,7 @@ struct StationInfo {
   std::string station_name;
 
   StationInfo(std::string network, std::string station,
-              const std::vector<specfem::wavefield::type> &types)
+              const std::vector<specfem::enums::wavefield> &types)
       : network_name(std::move(network)), station_name(std::move(station)),
         seismo_types_(types) {}
 
@@ -41,7 +41,7 @@ struct StationInfo {
   }
 
 private:
-  std::vector<specfem::wavefield::type> seismo_types_;
+  std::vector<specfem::enums::wavefield> seismo_types_;
 };
 
 // Station iterator that outputs StationInfo objects
@@ -80,7 +80,7 @@ public:
   StationIterator() = default;
 
   StationIterator(size_t nreceivers,
-                  const std::vector<specfem::wavefield::type> &seismo_types)
+                  const std::vector<specfem::enums::wavefield> &seismo_types)
       : seismogram_types_(seismo_types) {
     station_names_.reserve(nreceivers);
     network_names_.reserve(nreceivers);
@@ -94,11 +94,12 @@ public:
 protected:
   std::vector<std::string> station_names_;
   std::vector<std::string> network_names_;
-  std::vector<specfem::wavefield::type> seismogram_types_;
+  std::vector<specfem::enums::wavefield> seismogram_types_;
 };
 
 // Primary template declaration for SeismogramIterator
-template <specfem::dimension::type DimensionTag> class SeismogramIterator;
+template <specfem::element::dimension_tag DimensionTag>
+class SeismogramIterator;
 
 } // namespace specfem::assembly::receivers_impl
 

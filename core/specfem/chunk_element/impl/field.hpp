@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -43,17 +43,17 @@ namespace specfem::chunk_element::impl {
  *
  */
 // clang-format on
-template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
+template <int ChunkSize, int NGLL, specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::data_access::DataClassType DataClass, bool UseSIMD>
 class field : public specfem::data_access::Accessor<
-                  specfem::data_access::AccessorType::chunk_element, DataClass,
+                  specfem::datatype::AccessorType::chunk_element, DataClass,
                   DimensionTag, UseSIMD> {
 private:
   /// @brief Type alias for the base accessor class
   using base_type = specfem::data_access::Accessor<
-      specfem::data_access::AccessorType::chunk_element, DataClass,
-      DimensionTag, UseSIMD>;
+      specfem::datatype::AccessorType::chunk_element, DataClass, DimensionTag,
+      UseSIMD>;
 
 public:
   /// @brief Number of field components based on dimension and medium type

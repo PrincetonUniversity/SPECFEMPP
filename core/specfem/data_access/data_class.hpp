@@ -32,6 +32,7 @@ namespace specfem::data_access {
 enum DataClassType {
   index,                     ///< Element and point indices
   edge_index,                ///< Edge connectivity indices
+  face_index,                ///< Face connectivity indices (3D)
   assembly_index,            ///< Global assembly indices
   mapped_index,              ///< Mapped/transformed indices
   properties,                ///< Material properties (density, moduli)
@@ -53,6 +54,7 @@ enum DataClassType {
   intersection_factor,       ///< Interface intersection factors
   intersection_normal,       ///< Interface normal vectors
   nonconforming_interface,   ///< Non-conforming mesh interfaces
-  conforming_interface       ///< Conforming mesh interfaces
+  conforming_interface,      ///< Conforming mesh interfaces
+  global_coordinates         ///< Global coordinate data
 };
 } // namespace specfem::data_access

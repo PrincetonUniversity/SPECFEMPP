@@ -9,5 +9,5 @@
 Dimension-Specific Implementations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenstruct:: specfem::assembly::boundaries_impl::stacey< specfem::dimension::type::dim2 >
+.. doxygenstruct:: specfem::assembly::boundaries_impl::stacey< specfem::element::dimension_tag::dim2 >
     :members:

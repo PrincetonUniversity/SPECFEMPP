@@ -1,5 +1,5 @@
 #include "SPECFEM_Environment.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 #include "specfem/utilities.hpp"
@@ -21,13 +21,13 @@ protected:
   }
 
   // Helper to create unit cube element [0,1] x [0,1] x [0,1]
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
   create_unit_cube_8node() {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 8);
     coorg(0) = { 0.0, 0.0, 0.0 }; // Corner 0: (0,0,0)
     coorg(1) = { 1.0, 0.0, 0.0 }; // Corner 1: (1,0,0)
@@ -41,13 +41,13 @@ protected:
   }
 
   // Helper to create scaled cube element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
   create_scaled_cube_8node(type_real scale) {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 8);
     coorg(0) = { 0.0, 0.0, 0.0 };
     coorg(1) = { scale, 0.0, 0.0 };
@@ -61,13 +61,13 @@ protected:
   }
 
   // Helper to create translated cube element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
   create_translated_unit_cube_8node(type_real dx, type_real dy, type_real dz) {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 8);
     coorg(0) = { dx, dy, dz };
     coorg(1) = { static_cast<type_real>(1.0) + dx, dy, dz };
@@ -86,13 +86,13 @@ protected:
   }
 
   // Helper to create 27-node unit cube element
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
   create_unit_cube_27node() {
-    Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace>
+    Kokkos::View<specfem::point::global_coordinates<
+                     specfem::element::dimension_tag::dim3> *,
+                 Kokkos::HostSpace>
         coorg("coorg", 27);
 
     // Corner nodes (0-7)
@@ -181,9 +181,9 @@ TEST_F(ComputeJacobianDim3Test, UnitCubeIdentityMapping) {
 TEST_F(ComputeJacobianDim3Test, ScaledCubeMapping) {
   // Test with a scaled cube (side length 2)
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Cube with side length 2
@@ -237,9 +237,9 @@ TEST_F(ComputeJacobianDim3Test, ScaledCubeMapping) {
 TEST_F(ComputeJacobianDim3Test, TranslatedCubeMapping) {
   // Test with a translated cube (translation shouldn't affect jacobian)
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Unit cube translated by (5, 3, 7)
@@ -292,9 +292,9 @@ TEST_F(ComputeJacobianDim3Test, TranslatedCubeMapping) {
 TEST_F(ComputeJacobianDim3Test, RectangularPrismMapping) {
   // Test with a rectangular prism (different scaling in each direction)
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Rectangular prism: width = 4, height = 2, depth = 3
@@ -351,9 +351,9 @@ TEST_F(ComputeJacobianDim3Test, RectangularPrismMapping) {
 TEST_F(ComputeJacobianDim3Test, ShearMapping) {
   // Test with a sheared hexahedral element
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Sheared hexahedron (unit cube sheared in x-direction based on z)
@@ -412,9 +412,9 @@ TEST_F(ComputeJacobianDim3Test, JacobianConsistencyAcrossElement) {
   // Test that jacobian is constant across a trilinear element (for 8-node
   // elements)
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Axis-aligned rectangular prism (trilinear mapping has constant jacobian)
@@ -464,9 +464,9 @@ TEST_F(ComputeJacobianDim3Test, JacobianConsistencyAcrossElement) {
 TEST_F(ComputeJacobianDim3Test, PositiveJacobianCheck) {
   // Test that jacobian is positive for properly oriented elements
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Various properly oriented hexahedra
@@ -505,9 +505,9 @@ TEST_F(ComputeJacobianDim3Test, PositiveJacobianCheck) {
 TEST_F(ComputeJacobianDim3Test, NegativeJacobianCheck) {
   // Test that jacobian is negative for improperly oriented elements
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Improperly oriented cube (swapping nodes to reverse orientation)
@@ -528,9 +528,9 @@ TEST_F(ComputeJacobianDim3Test, NegativeJacobianCheck) {
 TEST_F(ComputeJacobianDim3Test, JacobianDeterminantFormula) {
   // Test that the jacobian determinant calculation is correct
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Simple rectangular prism where we can verify the determinant manually
@@ -565,9 +565,9 @@ TEST_F(ComputeJacobianDim3Test, JacobianDeterminantFormula) {
 TEST_F(ComputeJacobianDim3Test, SmallElementStability) {
   // Test numerical stability for very small elements
   const int ngnod = 8;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // Very small cube (side length 1e-6)
@@ -604,9 +604,9 @@ TEST_F(ComputeJacobianDim3Test, SmallElementStability) {
 TEST_F(ComputeJacobianDim3Test, TwentySevenNodeUnitCubeMapping) {
   // Test with a 27-node unit cube element
   const int ngnod = 27;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // 27-node unit cube control nodes (corners + mid-edge + face-center + center)
@@ -687,9 +687,9 @@ TEST_F(ComputeJacobianDim3Test, TwentySevenNodeUnitCubeMapping) {
 TEST_F(ComputeJacobianDim3Test, TwentySevenNodeScaledCubeMapping) {
   // Test with a 27-node scaled cube element
   const int ngnod = 27;
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-      Kokkos::HostSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim3> *,
+               Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
   // 27-node cube with side length 2

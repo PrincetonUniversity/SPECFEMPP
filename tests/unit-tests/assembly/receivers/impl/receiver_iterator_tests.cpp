@@ -13,9 +13,9 @@ TEST(SeismogramTypeIteratorTests, DefaultConstructor) {
 }
 
 TEST(SeismogramTypeIteratorTests, ConstructorWithTypes) {
-  std::vector<specfem::wavefield::type> types = {
-    specfem::wavefield::type::displacement, specfem::wavefield::type::velocity,
-    specfem::wavefield::type::acceleration
+  std::vector<specfem::enums::wavefield> types = {
+    specfem::enums::wavefield::displacement,
+    specfem::enums::wavefield::velocity, specfem::enums::wavefield::acceleration
   };
 
   SeismogramTypeIterator iterator(types);
@@ -24,22 +24,22 @@ TEST(SeismogramTypeIteratorTests, ConstructorWithTypes) {
 }
 
 TEST(SeismogramTypeIteratorTests, IteratorTraversal) {
-  std::vector<specfem::wavefield::type> types = {
-    specfem::wavefield::type::displacement, specfem::wavefield::type::velocity
+  std::vector<specfem::enums::wavefield> types = {
+    specfem::enums::wavefield::displacement, specfem::enums::wavefield::velocity
   };
 
   SeismogramTypeIterator iterator(types);
   auto it = iterator.begin();
 
-  EXPECT_EQ(*it, specfem::wavefield::type::displacement);
+  EXPECT_EQ(*it, specfem::enums::wavefield::displacement);
   ++it;
-  EXPECT_EQ(*it, specfem::wavefield::type::velocity);
+  EXPECT_EQ(*it, specfem::enums::wavefield::velocity);
   ++it;
   EXPECT_EQ(it, iterator.end());
 }
 
 TEST(SeismogramTypeIteratorTests, EmptyIterator) {
-  std::vector<specfem::wavefield::type> empty_types;
+  std::vector<specfem::enums::wavefield> empty_types;
   SeismogramTypeIterator iterator(empty_types);
 
   EXPECT_EQ(iterator.size(), 0);
@@ -48,8 +48,8 @@ TEST(SeismogramTypeIteratorTests, EmptyIterator) {
 
 // Test StationInfo
 TEST(StationInfoTests, Constructor) {
-  std::vector<specfem::wavefield::type> types = {
-    specfem::wavefield::type::displacement
+  std::vector<specfem::enums::wavefield> types = {
+    specfem::enums::wavefield::displacement
   };
 
   StationInfo station("NET", "STA01", types);
@@ -58,8 +58,8 @@ TEST(StationInfoTests, Constructor) {
 }
 
 TEST(StationInfoTests, GetSeismogramTypes) {
-  std::vector<specfem::wavefield::type> types = {
-    specfem::wavefield::type::displacement, specfem::wavefield::type::velocity
+  std::vector<specfem::enums::wavefield> types = {
+    specfem::enums::wavefield::displacement, specfem::enums::wavefield::velocity
   };
 
   StationInfo station("NET", "STA01", types);
@@ -69,7 +69,7 @@ TEST(StationInfoTests, GetSeismogramTypes) {
 }
 
 TEST(StationInfoTests, EmptyTypes) {
-  std::vector<specfem::wavefield::type> empty_types;
+  std::vector<specfem::enums::wavefield> empty_types;
   StationInfo station("NET", "STA01", empty_types);
 
   auto seismo_iterator = station.get_seismogram_types();
@@ -84,8 +84,8 @@ TEST(StationIteratorTests, DefaultConstructor) {
 }
 
 TEST(StationIteratorTests, ParameterizedConstructor) {
-  std::vector<specfem::wavefield::type> types = {
-    specfem::wavefield::type::displacement
+  std::vector<specfem::enums::wavefield> types = {
+    specfem::enums::wavefield::displacement
   };
 
   StationIterator iterator(2, types);
@@ -93,8 +93,8 @@ TEST(StationIteratorTests, ParameterizedConstructor) {
 }
 
 TEST(StationIteratorTests, AddStations) {
-  std::vector<specfem::wavefield::type> types = {
-    specfem::wavefield::type::displacement
+  std::vector<specfem::enums::wavefield> types = {
+    specfem::enums::wavefield::displacement
   };
 
   StationIterator iterator(2, types);
@@ -103,7 +103,7 @@ TEST(StationIteratorTests, AddStations) {
   class TestStationIterator : public StationIterator {
   public:
     TestStationIterator(size_t nreceivers,
-                        const std::vector<specfem::wavefield::type> &types)
+                        const std::vector<specfem::enums::wavefield> &types)
         : StationIterator(nreceivers, types) {}
 
     void add_station(const std::string &network, const std::string &station) {
@@ -121,14 +121,14 @@ TEST(StationIteratorTests, AddStations) {
 }
 
 TEST(StationIteratorTests, IteratorDereference) {
-  std::vector<specfem::wavefield::type> types = {
-    specfem::wavefield::type::displacement, specfem::wavefield::type::velocity
+  std::vector<specfem::enums::wavefield> types = {
+    specfem::enums::wavefield::displacement, specfem::enums::wavefield::velocity
   };
 
   class TestStationIterator : public StationIterator {
   public:
     TestStationIterator(size_t nreceivers,
-                        const std::vector<specfem::wavefield::type> &types)
+                        const std::vector<specfem::enums::wavefield> &types)
         : StationIterator(nreceivers, types) {}
 
     void add_station(const std::string &network, const std::string &station) {
@@ -151,14 +151,14 @@ TEST(StationIteratorTests, IteratorDereference) {
 }
 
 TEST(StationIteratorTests, IteratorIncrement) {
-  std::vector<specfem::wavefield::type> types = {
-    specfem::wavefield::type::displacement
+  std::vector<specfem::enums::wavefield> types = {
+    specfem::enums::wavefield::displacement
   };
 
   class TestStationIterator : public StationIterator {
   public:
     TestStationIterator(size_t nreceivers,
-                        const std::vector<specfem::wavefield::type> &types)
+                        const std::vector<specfem::enums::wavefield> &types)
         : StationIterator(nreceivers, types) {}
 
     void add_station(const std::string &network, const std::string &station) {

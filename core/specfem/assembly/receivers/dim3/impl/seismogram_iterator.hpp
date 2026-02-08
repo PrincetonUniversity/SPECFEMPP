@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include <array>
 #include <string>
 #include <tuple>
@@ -12,7 +12,7 @@ namespace specfem::assembly::receivers_impl {
 //
 // DIM3 SPECIALIZATION
 //
-template <> class SeismogramIterator<specfem::dimension::type::dim3> {
+template <> class SeismogramIterator<specfem::element::dimension_tag::dim3> {
 private:
   static constexpr int ncomponents = 3;
 
@@ -115,7 +115,7 @@ public:
 
   SeismogramIterator &get_seismogram(const std::string &station_name,
                                      const std::string &network_name,
-                                     const specfem::wavefield::type type) {
+                                     const specfem::enums::wavefield type) {
     this->irec = station_network_map[station_name][network_name];
     this->iseis = seismogram_type_map[type];
     return *this;
@@ -174,7 +174,7 @@ protected:
 
   std::unordered_map<std::string, std::unordered_map<std::string, int> >
       station_network_map;
-  std::unordered_map<specfem::wavefield::type, int> seismogram_type_map;
+  std::unordered_map<specfem::enums::wavefield, int> seismogram_type_map;
 };
 
 } // namespace specfem::assembly::receivers_impl

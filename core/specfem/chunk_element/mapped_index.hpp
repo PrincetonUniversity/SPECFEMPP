@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 
 namespace specfem {
@@ -19,12 +19,12 @@ namespace chunk_element {
  * @tparam ViewType Kokkos view type for index storage
  * @tparam TeamMemberType Kokkos team execution context
  */
-template <specfem::dimension::type DimensionTag, typename SIMD,
+template <specfem::element::dimension_tag DimensionTag, typename SIMD,
           typename ViewType, typename TeamMemberType>
 class MappedIndex : public specfem::execution::MappedChunkElementIndex<
                         DimensionTag, SIMD, ViewType, TeamMemberType>,
                     public specfem::data_access::Accessor<
-                        specfem::data_access::AccessorType::chunk_element,
+                        specfem::datatype::AccessorType::chunk_element,
                         specfem::data_access::DataClassType::mapped_index,
                         DimensionTag, SIMD::using_simd> {
 private:

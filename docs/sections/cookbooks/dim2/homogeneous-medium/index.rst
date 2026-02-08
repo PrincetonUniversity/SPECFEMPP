@@ -6,7 +6,7 @@ Wave propagation through homogeneous media
 In this example (see :repo-file:`benchmarks/src/dim2/homogeneous-medium-flat-topography`) we simulate wave propagation through a 2-dimensional homogeneous medium.
 
 Setting up your workspace
---------------------------
+-------------------------
 
 Let's start by creating a workspace from where we can run this example.
 
@@ -62,7 +62,7 @@ installation process.
 We first define the meshing parameters in a Parameter file.
 
 Parameter File
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. literalinclude:: Par_file
     :caption: Par_file
@@ -96,7 +96,7 @@ At this point, it is worthwhile to note few key parameters within the
 .. _homogeneous-medium-flat-topography-topography-file:
 
 Topography file
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 .. literalinclude:: topography_file.dat
     :caption: topography_file.dat
@@ -207,7 +207,7 @@ At this point lets focus on a few sections in this file:
 
 
 Running the solver
--------------------
+------------------
 
 Finally, to run the SPECFEM++ solver
 

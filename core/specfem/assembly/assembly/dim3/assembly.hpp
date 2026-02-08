@@ -1,21 +1,25 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "io/reader.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
 #include "specfem/assembly/compute_source_array.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
 #include "specfem/assembly/fields.hpp"
+#include "specfem/assembly/info.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/kernels.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/source.hpp"
+
+namespace specfem::io {
+class reader;
+}
 
 namespace specfem::assembly {
 
@@ -26,7 +30,7 @@ namespace specfem::assembly {
  * required for & computed during 3D SEM simulations
  *
  */
-template <> struct assembly<specfem::dimension::type::dim3> {
+template <> struct assembly<specfem::element::dimension_tag::dim3> {
 
   /**
    * @name Public Constants
@@ -34,7 +38,7 @@ template <> struct assembly<specfem::dimension::type::dim3> {
    */
   ///@{
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim3; ///< Dimension tag
+      specfem::element::dimension_tag::dim3; ///< Dimension tag
   ///@}
 
   /** @name Data Containers
@@ -110,6 +114,9 @@ template <> struct assembly<specfem::dimension::type::dim3> {
                        ///< the
                        ///< boundaries
 
+  specfem::assembly::Info<dimension_tag> info; ///< Information about the mesh
+                                               ///< and simulation
+
   ///@}
 
   /**
@@ -139,7 +146,7 @@ template <> struct assembly<specfem::dimension::type::dim3> {
       const std::vector<
           std::shared_ptr<specfem::receivers::receiver<dimension_tag> > >
           &receivers,
-      const std::vector<specfem::wavefield::type> &stypes, const type_real t0,
+      const std::vector<specfem::enums::wavefield> &stypes, const type_real t0,
       const type_real dt, const int max_timesteps, const int max_sig_step,
       const int nsteps_between_samples,
       const specfem::simulation::type simulation,
@@ -160,8 +167,8 @@ template <> struct assembly<specfem::dimension::type::dim3> {
    */
   Kokkos::View<type_real *****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   generate_wavefield_on_entire_grid(
-      const specfem::wavefield::simulation_field wavefield,
-      const specfem::wavefield::type component);
+      const specfem::simulation::field_type wavefield,
+      const specfem::enums::wavefield component);
 
   /**
    * @brief Get the total number of spectral elements in the mesh

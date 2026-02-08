@@ -5,10 +5,14 @@ add_library(specfem::mesh ALIAS specfem_mesh)
 
 target_link_libraries(
         specfem_mesh
-        enumerations
         Kokkos::kokkos
         specfem::macros
+        specfem::mesh_entity
+        specfem::enums
+        specfem::element
+        specfem::element_connections
         # material_class
         yaml-cpp
+        specfem::io
         ${BOOST_LIBS}
 )

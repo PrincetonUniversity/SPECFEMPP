@@ -1,8 +1,8 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "impl/field.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::chunk_edge {
 
@@ -31,7 +31,7 @@ namespace specfem::chunk_edge {
  * @see specfem::chunk_edge::velocity for velocity field accessor
  * @see specfem::chunk_edge::acceleration for acceleration field accessor
  */
-template <int ChunkSize, int NGLL, specfem::dimension::type DimensionTag,
+template <int ChunkSize, int NGLL, specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 class displacement
     : public impl::field<ChunkSize, NGLL, DimensionTag, MediumTag,

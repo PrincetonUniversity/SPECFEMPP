@@ -1,7 +1,7 @@
 #pragma once
 
 #include "boundary_medium_container.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/mesh.hpp"
@@ -9,7 +9,7 @@
 template <specfem::element::medium_tag MediumTag,
           specfem::element::boundary_tag BoundaryTag>
 specfem::assembly::boundary_values_impl::boundary_medium_container<
-    specfem::dimension::type::dim2, MediumTag, BoundaryTag>::
+    specfem::element::dimension_tag::dim2, MediumTag, BoundaryTag>::
     boundary_medium_container(
         const int nstep, const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::assembly::element_types<dimension_tag> &element_types,

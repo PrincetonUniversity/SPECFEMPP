@@ -1,7 +1,7 @@
 #include "specfem/mesh.hpp"
 
 void specfem::mesh::mesh<
-    specfem::dimension::type::dim3>::setup_coupled_interfaces() {
+    specfem::element::dimension_tag::dim3>::setup_coupled_interfaces() {
   auto &graph = this->adjacency_graph.graph();
   auto &materials = this->materials;
 
@@ -11,14 +11,16 @@ void specfem::mesh::mesh<
       const auto target = boost::target(e, graph);
       auto &edge_props = graph[e];
 
-      const auto [self_medium, self_property] = materials.get_material_type(v);
-      const auto [neighbor_medium, neighbor_property] =
+      const auto [self_medium, self_property, self_attenuation] =
+          materials.get_material_type(v);
+      const auto [neighbor_medium, neighbor_property, neighbor_attenuation] =
           materials.get_material_type(target);
       if ((self_medium != neighbor_medium) &&
           (edge_props.connection ==
-           specfem::connections::type::strongly_conforming)) {
+           specfem::element_connections::type::strongly_conforming)) {
         // Change strongly conforming to weakly conforming if media differ
-        edge_props.connection = specfem::connections::type::weakly_conforming;
+        edge_props.connection =
+            specfem::element_connections::type::weakly_conforming;
       }
     }
   }

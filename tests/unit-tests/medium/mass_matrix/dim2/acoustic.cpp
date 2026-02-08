@@ -1,10 +1,10 @@
-#include "medium/compute_mass_matrix.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
 
 TEST(MassMatrix, AcousticIsotropic2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::acoustic;
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
@@ -21,7 +21,7 @@ TEST(MassMatrix, AcousticIsotropic2D) {
   const PointPropertiesType properties(0.0, kappa);
 
   const PointMassMatrixType mass_matrix =
-      specfem::medium::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component(properties);
 
   const PointMassMatrixType expected_mass_matrix(static_cast<type_real>(1.0) /
                                                  kappa);

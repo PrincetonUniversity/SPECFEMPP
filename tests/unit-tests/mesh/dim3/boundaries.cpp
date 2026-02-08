@@ -2,15 +2,15 @@
 #include <unordered_map>
 #include <vector>
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem_setup.hpp"
 #include "test_fixture.hpp"
 
 namespace specfem::test_configuration {
 
-using face_direction =
-    specfem::mesh::boundaries<specfem::dimension::type::dim3>::FaceDirection;
+using face_direction = specfem::mesh::boundaries<
+    specfem::element::dimension_tag::dim3>::FaceDirection;
 
 /**
  * @brief Represents the total number of faces and elements in the mesh.
@@ -45,11 +45,11 @@ struct Boundaries3D {
 };
 
 struct ExpectedBoundaries3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3; ///< Dimension of the faces
-  TotalFaces total_faces;             ///< Total faces and elements in the mesh
-  std::vector<Boundaries3D> faces;    ///< List of expected absorbing boundary
-                                      ///< faces
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3; ///< Dimension of the faces
+  TotalFaces total_faces;          ///< Total faces and elements in the mesh
+  std::vector<Boundaries3D> faces; ///< List of expected absorbing boundary
+                                   ///< faces
 
   ExpectedBoundaries3D(TotalFaces total_faces,
                        const std::initializer_list<Boundaries3D> faces)

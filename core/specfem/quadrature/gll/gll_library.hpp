@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gll_utils.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem_setup.hpp"
 #include <array>
 

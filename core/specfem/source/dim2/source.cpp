@@ -1,12 +1,11 @@
 #include "specfem/source.hpp"
-#include "kokkos_abstractions.h"
 
 #include "specfem_setup.hpp"
 #include <cmath>
 
 template <>
-void specfem::sources::source<specfem::dimension::type::dim2>::set_medium_tag(
-    specfem::element::medium_tag medium_tag) {
+void specfem::sources::source<specfem::element::dimension_tag::dim2>::
+    set_medium_tag(specfem::element::medium_tag medium_tag) {
 
   auto supported_media_list = this->get_supported_media();
   for (auto &supported_medium : supported_media_list) {
@@ -40,5 +39,7 @@ void specfem::sources::source<specfem::dimension::type::dim2>::set_medium_tag(
   throw std::runtime_error(message.str());
 }
 
-template specfem::sources::source<specfem::dimension::type::dim2>::source(
-    YAML::Node &Node, const int nsteps, const type_real dt);
+template specfem::sources::source<
+    specfem::element::dimension_tag::dim2>::source(YAML::Node &Node,
+                                                   const int nsteps,
+                                                   const type_real dt);

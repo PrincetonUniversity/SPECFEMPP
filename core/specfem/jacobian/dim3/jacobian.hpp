@@ -1,6 +1,5 @@
 #pragma once
 
-#include "kokkos_abstractions.h"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
 
@@ -15,14 +14,15 @@ namespace specfem::jacobian {
  * @param xi \f$\xi\f$ value of the point.
  * @param eta \f$\eta\f$ value of the point.
  * @param gamma \f$\gamma\f$ value of the point.
- * @return specfem::point::global_coordinates<specfem::dimension::type::dim3>
- *         The computed \f$(x, y, z)\f$ coordinates.
+ * @return
+ * specfem::point::global_coordinates<specfem::element::dimension_tag::dim3> The
+ * computed \f$(x, y, z)\f$ coordinates.
  */
-specfem::point::global_coordinates<specfem::dimension::type::dim3>
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
 compute_locations(
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace> &coorg,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim3> *,
+                       Kokkos::HostSpace> &coorg,
     const int ngnod, const type_real xi, const type_real eta,
     const type_real gamma);
 
@@ -83,15 +83,17 @@ compute_locations(
  * @param xi \f$\xi\f$ coordinate of the point.
  * @param eta \f$\eta\f$ coordinate of the point.
  * @param gamma \f$\gamma\f$ coordinate of the point.
- * @return specfem::point::jacobian_matrix<specfem::dimension::type::dim3, true,
+ * @return
+ * specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3, true,
  * false> Structure containing inverse partial derivatives and the Jacobian
  * determinant.
  */
-specfem::point::jacobian_matrix<specfem::dimension::type::dim3, true, false>
+specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3, true,
+                                false>
 compute_jacobian(
-    const Kokkos::View<
-        specfem::point::global_coordinates<specfem::dimension::type::dim3> *,
-        Kokkos::HostSpace> &coorg,
+    const Kokkos::View<specfem::point::global_coordinates<
+                           specfem::element::dimension_tag::dim3> *,
+                       Kokkos::HostSpace> &coorg,
     const int ngnod, const type_real xi, const type_real eta,
     const type_real gamma);
 
@@ -105,12 +107,14 @@ compute_jacobian(
  * @tparam ShapeDerivativesView Type of the shape function derivatives view.
  * @param coordinates View of nodal coordinates.
  * @param shape_derivatives View of shape function derivatives.
- * @return specfem::point::jacobian_matrix<specfem::dimension::type::dim3, true,
+ * @return
+ * specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3, true,
  * false> Computed Jacobian matrix and determinant.
  */
 template <typename CoordinateView, typename ShapeDerivativesView>
 KOKKOS_FUNCTION
-    specfem::point::jacobian_matrix<specfem::dimension::type::dim3, true, false>
+    specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3, true,
+                                    false>
     compute_jacobian(const CoordinateView coordinates,
                      const ShapeDerivativesView shape_derivatives) {
   const int ngnod = coordinates.extent(0);

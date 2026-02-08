@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -22,10 +22,11 @@ namespace specfem::assembly::mesh_impl {
  * @endcode
  *
  */
-template <> struct mesh_to_compute_mapping<specfem::dimension::type::dim2> {
+template <>
+struct mesh_to_compute_mapping<specfem::element::dimension_tag::dim2> {
   constexpr static auto dimension_tag =
-      specfem::dimension::type::dim2; ///< Dimension
-  int nspec;                          ///< Number of spectral elements
+      specfem::element::dimension_tag::dim2; ///< Dimension
+  int nspec;                                 ///< Number of spectral elements
 
   using ViewType = Kokkos::View<int *, Kokkos::LayoutLeft,
                                 Kokkos::DefaultHostExecutionSpace>;

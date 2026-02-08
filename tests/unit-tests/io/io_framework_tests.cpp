@@ -1,15 +1,11 @@
 #include "../SPECFEM_Environment.hpp"
+#include "../test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <boost/filesystem.hpp>
 #include <gtest/gtest.h>
 
 // Include all I/O framework headers
-#include "io/ADIOS2/ADIOS2.hpp"
-#include "io/ASCII/ASCII.hpp"
-#include "io/HDF5/HDF5.hpp"
-#include "io/NPY/NPY.hpp"
-#include "io/NPZ/NPZ.hpp"
-#include "io/operators.hpp"
+#include "specfem/io.hpp"
 
 // Test utilities
 #include <type_traits>
@@ -200,7 +196,7 @@ TYPED_TEST(IOFrameworkTest, BasicFileOperations) {
   if constexpr (std::is_same_v<typename IOType::IO_OpType,
                                specfem::io::write>) {
     typename IOType::File file(this->getTestFile());
-    EXPECT_NO_THROW(file.flush());
+    LOCAL_EXPECT_NO_THROW(file.flush());
 
     // Verify file/directory was created
     std::string expected_name = this->getTestFile();
@@ -230,7 +226,7 @@ TYPED_TEST(IOFrameworkTest, GroupOperations) {
     auto group1 = file.createGroup("group1");
     auto group2 = file.createGroup("group2");
     auto nested_group = group1.createGroup("nested");
-    EXPECT_NO_THROW(file.flush());
+    LOCAL_EXPECT_NO_THROW(file.flush());
   } else {
     // For read operations, first create the file with groups
     {
@@ -296,11 +292,11 @@ TYPED_TEST(IOFrameworkTest, DatasetOperations) {
             "float_data", float_view);
 
     // Write data
-    EXPECT_NO_THROW(int_dataset.write());
-    EXPECT_NO_THROW(double_dataset.write());
-    EXPECT_NO_THROW(float_dataset.write());
+    LOCAL_EXPECT_NO_THROW(int_dataset.write());
+    LOCAL_EXPECT_NO_THROW(double_dataset.write());
+    LOCAL_EXPECT_NO_THROW(float_dataset.write());
 
-    EXPECT_NO_THROW(file.flush());
+    LOCAL_EXPECT_NO_THROW(file.flush());
   } else {
     // For read operations, first create the file with data
     {
@@ -344,9 +340,9 @@ TYPED_TEST(IOFrameworkTest, DatasetOperations) {
         file.template openDataset<Kokkos::View<float *, Kokkos::HostSpace> >(
             "float_data", read_float_view);
 
-    EXPECT_NO_THROW(int_dataset.read());
-    EXPECT_NO_THROW(double_dataset.read());
-    EXPECT_NO_THROW(float_dataset.read());
+    LOCAL_EXPECT_NO_THROW(int_dataset.read());
+    LOCAL_EXPECT_NO_THROW(double_dataset.read());
+    LOCAL_EXPECT_NO_THROW(float_dataset.read());
 
     // Verify data
     std::vector<int> read_int_data(data_size);
@@ -383,8 +379,8 @@ TYPED_TEST(IOFrameworkTest, BoolDataOperations) {
     auto bool_dataset =
         file.template createDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
             "bool_data", bool_view);
-    EXPECT_NO_THROW(bool_dataset.write());
-    EXPECT_NO_THROW(file.flush());
+    LOCAL_EXPECT_NO_THROW(bool_dataset.write());
+    LOCAL_EXPECT_NO_THROW(file.flush());
   } else {
     // Create file with bool data
     {
@@ -405,7 +401,7 @@ TYPED_TEST(IOFrameworkTest, BoolDataOperations) {
     auto bool_dataset =
         file.template openDataset<Kokkos::View<bool *, Kokkos::HostSpace> >(
             "bool_data", read_bool_view);
-    EXPECT_NO_THROW(bool_dataset.read());
+    LOCAL_EXPECT_NO_THROW(bool_dataset.read());
 
     // Verify data
     std::vector<bool> read_bool_data(data_size);
@@ -487,13 +483,13 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
 
     std::cout << "Created datasets." << std::endl;
 
-    EXPECT_NO_THROW(mesh_ids_dataset.write());
-    EXPECT_NO_THROW(coordinates_dataset.write());
-    EXPECT_NO_THROW(active_dataset.write());
+    LOCAL_EXPECT_NO_THROW(mesh_ids_dataset.write());
+    LOCAL_EXPECT_NO_THROW(coordinates_dataset.write());
+    LOCAL_EXPECT_NO_THROW(active_dataset.write());
 
     std::cout << "WRITE: Wrote datasets." << std::endl;
 
-    EXPECT_NO_THROW(file.flush());
+    LOCAL_EXPECT_NO_THROW(file.flush());
 
     std::cout << "WRITE: Flushed file." << std::endl;
 
@@ -614,7 +610,7 @@ TYPED_TEST(IOFrameworkTest, ComplexWorkflow) {
     };
 
     // Ensure no exceptions are thrown during read
-    EXPECT_NO_THROW(should_not_throw());
+    LOCAL_EXPECT_NO_THROW(should_not_throw());
   }
 
   std::cout << "==============================================================="

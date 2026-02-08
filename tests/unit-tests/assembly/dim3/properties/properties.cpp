@@ -18,8 +18,8 @@
  * @see specfem::point::properties for individual point property access
  */
 #include "../test_fixture.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/point.hpp"
 #include "specfem_setup.hpp"
@@ -69,8 +69,8 @@ struct GLLGrid {
  * property values for comparison against computed results.
  */
 struct Properties3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
 
   specfem::element::medium_tag medium_tag; ///< Medium type (elastic, acoustic,
                                            ///< etc.)
@@ -119,8 +119,8 @@ struct Properties3D {
  * correctness in the 3D assembly system.
  */
 struct ExpectedProperties3D {
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension =
+      specfem::element::dimension_tag::dim3;
 
   int nspec;                                 ///< Number of spectral elements
   GLLGrid gll_grid;                          ///< GLL quadrature grid dimensions
@@ -269,7 +269,7 @@ std::unordered_map<std::string, ExpectedProperties3D>
                     0, 0, 0, 0, specfem::element::medium_tag::elastic,
                     specfem::element::property_tag::isotropic,
                     specfem::point::properties<
-                        specfem::dimension::type::dim3,
+                        specfem::element::dimension_tag::dim3,
                         specfem::element::medium_tag::elastic,
                         specfem::element::property_tag::isotropic, false>(
                         11.132e9, 5.175e9, 2300)) // κ, μ, ρ

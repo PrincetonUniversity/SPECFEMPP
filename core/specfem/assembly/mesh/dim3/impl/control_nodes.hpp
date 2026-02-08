@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -14,12 +14,12 @@ namespace specfem::assembly::mesh_impl {
  *
  * @see specfem::mesh::control_nodes
  */
-template <> struct control_nodes<specfem::dimension::type::dim3> {
+template <> struct control_nodes<specfem::element::dimension_tag::dim3> {
 private:
   constexpr static int ndim = 3;
 
 public:
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /**
    * @brief Kokkos view type for 3D coordinate storage.

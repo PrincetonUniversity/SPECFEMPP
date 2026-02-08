@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::assembly {
 
@@ -14,7 +14,7 @@ namespace specfem::assembly {
  * storing data on device and host.
  *
  */
-template <specfem::dimension::type DimensionTag> struct jacobian_matrix;
+template <specfem::element::dimension_tag DimensionTag> struct jacobian_matrix;
 
 } // namespace specfem::assembly
 

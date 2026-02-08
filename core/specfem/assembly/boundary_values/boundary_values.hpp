@@ -2,14 +2,14 @@
 
 #include "dim2/impl/boundary_value_container.hpp"
 #include "dim3/impl/boundary_value_container.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/properties.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 
 namespace specfem::assembly {
 
-template <specfem::dimension::type DimensionTag> class boundary_values {
+template <specfem::element::dimension_tag DimensionTag> class boundary_values {
 public:
   constexpr static auto dimension_tag = DimensionTag; ///< Dimension tag
   boundary_values() = default;

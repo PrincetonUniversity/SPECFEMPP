@@ -1,4 +1,4 @@
-#include "medium/compute_coupling.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
@@ -30,24 +30,25 @@ TEST_P(ElasticAcousticCouplingTest, CouplingCalculation) {
 
   // Create interface data
   specfem::point::conforming_interface<
-      specfem::dimension::type::dim2,
-      specfem::interface::interface_tag::elastic_acoustic,
+      specfem::element::dimension_tag::dim2,
+      specfem::element_coupling::interface_tag::elastic_acoustic,
       specfem::element::boundary_tag::none>
       interface_data(params.edge_factor,
                      { params.normal[0], params.normal[1] });
 
   // Create coupled field (acceleration from elastic medium)
-  specfem::point::acceleration<specfem::dimension::type::dim2,
+  specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                specfem::element::medium_tag::acoustic, false>
       coupled_field;
   coupled_field(0) = params.acceleration;
 
-  specfem::point::acceleration<specfem::dimension::type::dim2,
+  specfem::point::acceleration<specfem::element::dimension_tag::dim2,
                                specfem::element::medium_tag::elastic_psv, false>
       self_field;
 
   // Perform coupling computation
-  specfem::medium::compute_coupling(interface_data, coupled_field, self_field);
+  specfem::medium_physics::compute_coupling(interface_data, coupled_field,
+                                            self_field);
 
   // Verify results
   EXPECT_NEAR(self_field(0), params.expected_result[0], params.tolerance);

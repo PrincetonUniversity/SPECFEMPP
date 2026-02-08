@@ -1,15 +1,15 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::assembly {
 
 namespace conforming_interfaces_impl {
 
-template <specfem::dimension::type DimensionTag,
-          specfem::interface::interface_tag InterfaceTag,
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::connections::type ConnectionTag>
+          specfem::element_connections::type ConnectionTag>
 struct interface_container;
 
 } // namespace conforming_interfaces_impl
@@ -18,7 +18,8 @@ struct interface_container;
  * @brief Information on coupled interfaces between two mediums
  * @tparam DimensionTag Dimension of spectral elements
  */
-template <specfem::dimension::type DimensionTag> struct conforming_interfaces;
+template <specfem::element::dimension_tag DimensionTag>
+struct conforming_interfaces;
 
 } // namespace specfem::assembly
 

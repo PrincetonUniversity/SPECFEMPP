@@ -14,5 +14,5 @@ Enumerations
     coupled_interface/tags
     simulation/index
     connections/index
-    mesh_entities/index
+    mesh_entity/index
     wavefield/index

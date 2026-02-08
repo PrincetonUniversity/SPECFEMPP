@@ -1,4 +1,5 @@
 #include "../test_fixture/test_fixture.hpp"
+#include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
 #include <cmath>
@@ -8,7 +9,7 @@
 
 using MaterialVectorType = std::vector<std::any>; /// NOLINT
 
-constexpr static auto dimension = specfem::dimension::type::dim2;
+constexpr static auto dimension = specfem::element::dimension_tag::dim2;
 
 const static std::unordered_map<std::string, MaterialVectorType>
     properties_ground_truth = {
@@ -146,7 +147,8 @@ const static std::unordered_map<std::string, MaterialVectorType>
     };
 
 void check_property(
-    const specfem::mesh::materials<specfem::dimension::type::dim2> &computed,
+    const specfem::mesh::materials<specfem::element::dimension_tag::dim2>
+        &computed,
     const MaterialVectorType &expected) {
 
   if (computed.n_materials != expected.size()) {
@@ -166,6 +168,7 @@ void check_property(
 
     const auto medium_tag = material_specification.type;
     const auto property_tag = material_specification.property;
+    const auto attenuation_tag = material_specification.attenuation;
     const int index = material_specification.index;
     const int imaterial = material_specification.database_index;
 
@@ -173,13 +176,18 @@ void check_property(
         (DIMENSION_TAG(DIM2),
          MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                     ELASTIC_PSV_T, ELECTROMAGNETIC_TE),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT)),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE)),
         {
           if ((medium_tag == _medium_tag_) &&
-              (property_tag == _property_tag_)) {
+              (property_tag == _property_tag_) &&
+              (attenuation_tag == _attenuation_tag_)) {
             const auto icomputed =
-                computed.get_material<_medium_tag_, _property_tag_>(ispec)
+                computed
+                    .get_material<_medium_tag_, _property_tag_,
+                                  _attenuation_tag_>(ispec)
                     .get_properties();
+
             const auto iexpected = std::any_cast<specfem::point::properties<
                 dimension, _medium_tag_, _property_tag_, false> >(
                 expected[imaterial]);
@@ -221,6 +229,17 @@ TEST_F(MESH, derived_properties) {
     try {
 
       const auto computed = mesh.materials;
+
+      // Check if Test.name is in properties_ground_truth
+      if (properties_ground_truth.find(Test.name) ==
+          properties_ground_truth.end()) {
+        std::ostringstream message;
+        message << "No ground truth available for properties of test '"
+                << Test.name << "' [" << __FILE__ << ":" << __LINE__ << "]\n";
+        specfem::Logger::info(message.str());
+        continue;
+      }
+
       const auto expected = properties_ground_truth.at(Test.name);
 
       check_property(computed, expected);

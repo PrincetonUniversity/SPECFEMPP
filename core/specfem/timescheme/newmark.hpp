@@ -1,8 +1,7 @@
 #pragma once
 
-#include "enumerations/simulation.hpp"
-#include "enumerations/wavefield.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/timescheme/timescheme.hpp"
 #include "specfem_setup.hpp"
 
@@ -31,9 +30,9 @@ namespace newmark_impl {
  * @param deltatover2 Half of the timestep (dt/2, or -dt/2 for backward)
  * @return Number of degrees of freedom updated
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 int corrector_phase_impl(
     const specfem::assembly::simulation_field<DimensionTag, WavefieldType>
         &field,
@@ -63,9 +62,9 @@ int corrector_phase_impl(
  * @param deltasquareover2 Half of squared timestep (dt²/2)
  * @return Number of degrees of freedom updated
  */
-template <specfem::dimension::type DimensionTag,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
-          specfem::wavefield::simulation_field WavefieldType>
+          specfem::simulation::field_type WavefieldType>
 int predictor_phase_impl(
     const specfem::assembly::simulation_field<DimensionTag, WavefieldType>
         &field,
@@ -208,10 +207,10 @@ public:
   /**
    * @brief Get the timescheme type
    *
-   * @return specfem::enums::time_scheme::type Timescheme type
+   * @return specfem::time_scheme::type Timescheme type
    */
-  specfem::enums::time_scheme::type timescheme() const override {
-    return specfem::enums::time_scheme::type::newmark;
+  specfem::time_scheme::type timescheme() const override {
+    return specfem::time_scheme::type::newmark;
   }
 
   /**
@@ -358,10 +357,10 @@ public:
   /**
    * @brief Get the timescheme type
    *
-   * @return specfem::enums::time_scheme::type Timescheme type
+   * @return specfem::time_scheme::type Timescheme type
    */
-  specfem::enums::time_scheme::type timescheme() const override {
-    return specfem::enums::time_scheme::type::newmark;
+  specfem::time_scheme::type timescheme() const override {
+    return specfem::time_scheme::type::newmark;
   }
 
   /**

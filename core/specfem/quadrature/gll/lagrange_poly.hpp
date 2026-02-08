@@ -1,7 +1,5 @@
-#ifndef LAGRANGE_H
-#define LAGRANGE_H
+#pragma once
 
-#include "../include/kokkos_abstractions.h"
 #include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -112,5 +110,3 @@ void compute_jacobi_derivatives_GLJ(
 } // namespace gll
 } // namespace quadrature
 } // namespace specfem
-
-#endif

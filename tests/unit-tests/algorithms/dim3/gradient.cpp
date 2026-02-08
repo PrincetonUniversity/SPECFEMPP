@@ -33,10 +33,10 @@
 #include <vector>
 
 #include "SPECFEM_Environment.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem/algorithms/gradient.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/quadrature.hpp"
@@ -183,8 +183,8 @@ init_jacobian(const JacobianInitializer3D::TWO_ELEMENT &) {
  * @tparam Initializer Tag describing which init_jacobian overload to invoke
  */
 template <typename Initializer> struct JacobianMatrix3D {
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim3;
 
 private:
   std::vector<std::array<
@@ -472,8 +472,8 @@ auto init_function(const FunctionInitializer3D::TWO_ELEMENT &) {
  * @tparam Initializer Tag selecting which init_function overload to invoke
  */
 template <typename Initializer> struct Function3D {
-  constexpr static specfem::dimension::type dimension_tag =
-      specfem::dimension::type::dim3;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      specfem::element::dimension_tag::dim3;
   constexpr static int components = 1; ///< Scalar field (single component)
 
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
@@ -689,7 +689,7 @@ execute(const Jacobian &jacobian_matrix, const Quadrature3D &quadrature,
       Kokkos::DefaultExecutionSpace(), h_element_indices);
 
   using ParallelConfig = specfem::parallel_configuration::chunk_config<
-      specfem::dimension::type::dim3, 1, 1, 1, 1, simd,
+      specfem::element::dimension_tag::dim3, 1, 1, 1, 1, simd,
       Kokkos::DefaultExecutionSpace>;
 
   const specfem::mesh_entity::element_grid element_grid(ngll, ngll, ngll);
@@ -702,7 +702,7 @@ execute(const Jacobian &jacobian_matrix, const Quadrature3D &quadrature,
   const auto quadrature_view = quadrature.quadrature();
 
   using Function3DView = specfem::datatype::VectorChunkElementViewType<
-      type_real, specfem::dimension::type::dim3, 1, ngll, 1, false,
+      type_real, specfem::element::dimension_tag::dim3, 1, ngll, 1, false,
       Kokkos::DefaultExecutionSpace::memory_space, Kokkos::MemoryTraits<> >;
 
   Kokkos::View<type_real *****, Kokkos::DefaultExecutionSpace> gradient_view(

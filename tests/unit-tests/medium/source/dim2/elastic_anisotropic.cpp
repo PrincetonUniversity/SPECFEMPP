@@ -1,6 +1,5 @@
-#include "enumerations/interface.hpp"
-#include "enumerations/wavefield.hpp"
-#include "medium/compute_source.hpp"
+#include "specfem/enums.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/point.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
@@ -8,7 +7,7 @@
 namespace {
 
 TEST(Source, ElasticAnisotropicPSV2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::elastic_psv;
   static constexpr auto property_tag =
       specfem::element::property_tag::anisotropic;
@@ -17,7 +16,7 @@ TEST(Source, ElasticAnisotropicPSV2D) {
       specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
-                             specfem::wavefield::simulation_field::forward>;
+                             specfem::simulation::field_type::forward>;
   using PointAccelerationType =
       specfem::point::acceleration<dimension, medium_tag, false>;
 
@@ -35,7 +34,8 @@ TEST(Source, ElasticAnisotropicPSV2D) {
   point_source.lagrange_interpolant(1) = 3.5;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) =
@@ -52,7 +52,7 @@ TEST(Source, ElasticAnisotropicPSV2D) {
 }
 
 TEST(Source, ElasticAnisotropicSH2D) {
-  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto medium_tag = specfem::element::medium_tag::elastic_sh;
   static constexpr auto property_tag =
       specfem::element::property_tag::anisotropic;
@@ -61,7 +61,7 @@ TEST(Source, ElasticAnisotropicSH2D) {
       specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
-                             specfem::wavefield::simulation_field::forward>;
+                             specfem::simulation::field_type::forward>;
   using PointAccelerationType =
       specfem::point::acceleration<dimension, medium_tag, false>;
 
@@ -77,7 +77,8 @@ TEST(Source, ElasticAnisotropicSH2D) {
   point_source.lagrange_interpolant(0) = 1.2;
 
   const PointAccelerationType acceleration =
-      specfem::medium::compute_source_contribution(point_source, properties);
+      specfem::medium_physics::compute_source_contribution(point_source,
+                                                           properties);
 
   PointAccelerationType expected_acceleration;
   expected_acceleration(0) =

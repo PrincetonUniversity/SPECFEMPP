@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::assembly {
 
@@ -15,7 +15,7 @@ namespace specfem::assembly {
  * host.
  *
  */
-template <specfem::dimension::type DimensionTag> struct properties;
+template <specfem::element::dimension_tag DimensionTag> struct properties;
 
 } // namespace specfem::assembly
 

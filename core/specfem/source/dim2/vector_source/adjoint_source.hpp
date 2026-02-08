@@ -1,7 +1,6 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
-#include "kokkos_abstractions.h"
+#include "specfem/enums.hpp"
 #include "specfem/source.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -28,11 +27,10 @@ namespace sources {
  *
  * // Create a 2D adjoint source at receiver location (12.5, 8.3)
  * auto adj_source =
- * specfem::sources::adjoint_source<specfem::dimension::type::dim2>( 12.5,  //
- * x-coordinate (receiver location) 8.3,   // z-coordinate (receiver location)
- *     std::move(stf),
- *     "STA01",    // station name
- *     "NETWORK"   // network name
+ * specfem::sources::adjoint_source<specfem::element::dimension_tag::dim2>( 12.5,
+ * // x-coordinate (receiver location) 8.3,   // z-coordinate (receiver
+ * location) std::move(stf), "STA01",    // station name "NETWORK"   // network
+ * name
  * );
  *
  * // Set the medium type where the adjoint source is located
@@ -43,13 +41,13 @@ namespace sources {
  *
  * // Adjoint sources always return adjoint wavefield type
  * assert(adj_source.get_wavefield_type() ==
- *        specfem::wavefield::simulation_field::adjoint);
+ *        specfem::simulation::field_type::adjoint);
  * @endcode
  *
  */
 template <>
-class adjoint_source<specfem::dimension::type::dim2>
-    : public vector_source<specfem::dimension::type::dim2> {
+class adjoint_source<specfem::element::dimension_tag::dim2>
+    : public vector_source<specfem::element::dimension_tag::dim2> {
 
 public:
   adjoint_source() {};
@@ -66,8 +64,8 @@ public:
         network_name(Node["network_name"].as<std::string>()),
         vector_source(Node, nsteps, dt) {};
 
-  specfem::wavefield::simulation_field get_wavefield_type() const override {
-    return specfem::wavefield::simulation_field::adjoint;
+  specfem::simulation::field_type get_wavefield_type() const override {
+    return specfem::simulation::field_type::adjoint;
   }
 
   std::string print() const override;

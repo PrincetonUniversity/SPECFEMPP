@@ -19,8 +19,8 @@
  * @see specfem::mesh_entity::dim3
  */
 
-#include "enumerations/dimension.hpp"
-#include "enumerations/mesh_entities.hpp"
+#include "specfem/mesh_entity.hpp"
+#include "specfem/element.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
 #include "specfem/utilities.hpp"
@@ -273,7 +273,7 @@ struct Coordinate3D {
 struct Element8Node {
 
   /** @brief Dimension tag for 3D spectral elements */
-  constexpr static auto dimension_tag = specfem::dimension::type::dim3;
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim3;
 
   /** @brief Number of control nodes in hexahedral element */
   constexpr static int ncontrol_nodes = 8;
@@ -552,7 +552,7 @@ protected:
   specfem::mesh_entity_test::Element8Node element;
 
   /** @brief 3D mesh entity connection mapping */
-  specfem::mesh_entity::element<specfem::dimension::type::dim3> mapping;
+  specfem::mesh_entity::element<specfem::element::dimension_tag::dim3> mapping;
 };
 
 /** @brief Alias for wildcard coordinate type */

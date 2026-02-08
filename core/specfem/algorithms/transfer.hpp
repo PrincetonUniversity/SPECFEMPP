@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -25,12 +25,12 @@ namespace specfem::algorithms {
  into
  * @ingroup AlgorithmsTransfer
  */
-template <
-    typename IndexType, typename TransferFunctionType,
-    typename EdgeFunctionType, typename IntersectionReturnCallback,
-    typename std::enable_if_t<TransferFunctionType::connection_tag ==
-                                  specfem::connections::type::nonconforming,
-                              int> = 0>
+template <typename IndexType, typename TransferFunctionType,
+          typename EdgeFunctionType, typename IntersectionReturnCallback,
+          typename std::enable_if_t<
+              TransferFunctionType::connection_tag ==
+                  specfem::element_connections::type::nonconforming,
+              int> = 0>
 KOKKOS_INLINE_FUNCTION void
 transfer(const IndexType &chunk_edge_index,
          const TransferFunctionType &transfer_function,

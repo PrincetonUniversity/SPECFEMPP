@@ -2,7 +2,7 @@
 #pragma once
 
 #include "edge_index.hpp"
-#include "enumerations/interface.hpp"
+#include "specfem/enums.hpp"
 
 namespace specfem::point {
 
@@ -15,7 +15,7 @@ namespace specfem::point {
  *
  * @tparam DimensionTag Spatial dimension (dim2 or dim3)
  */
-template <specfem::dimension::type DimensionTag> class interface_index {
+template <specfem::element::dimension_tag DimensionTag> class interface_index {
 public:
   /**
    * @brief Edge index on the self side of the interface.

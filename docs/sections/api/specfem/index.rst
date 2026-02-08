@@ -9,18 +9,22 @@
 
     algorithms/index
     assembly/index
+    attenuation/index
     boundary_conditions/index
     chunk_edge/index
     chunk_element/index
+    compute/index
     datatype/index
     data_access/index
     execution/index
     io/index
     jacobian/index
-    kokkos_kernels/index
     macros/index
+    medium_containers/index
+    medium_physics/index
     mesh/index
     mpi/index
+    optimization/index
     parallel_configuration/index
     periodic_tasks/index
     point/index

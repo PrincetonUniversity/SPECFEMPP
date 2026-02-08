@@ -1,5 +1,5 @@
 #include "compute_source_array_from_vector.hpp"
-#include "kokkos_abstractions.h"
+
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
@@ -12,7 +12,7 @@
 #include <Kokkos_Core.hpp>
 
 void specfem::assembly::compute_source_array_impl::from_vector(
-    const specfem::sources::vector_source<specfem::dimension::type::dim3>
+    const specfem::sources::vector_source<specfem::element::dimension_tag::dim3>
         &vector_source,
     Kokkos::View<type_real ****, Kokkos::LayoutRight, Kokkos::HostSpace>
         source_array) {

@@ -1,39 +1,17 @@
 
 .. _specfem_api_enumerations_wavefield:
 
-``specfem::wavefield::simulation_field``
-=======================================
+``specfem::simulation::field_type``
+===================================
 
-.. doxygenenum:: specfem::wavefield::simulation_field
+.. doxygenenum:: specfem::simulation::field_type
 
-``specfem::wavefield::type``
+``specfem::enums::wavefield``
 ============================
 
-.. doxygenenum:: specfem::wavefield::type
+.. doxygenenum:: specfem::enums::wavefield
 
-``specfem::wavefield::wavefield``
+``specfem::enums::to_string``
 =================================
 
-.. doxygenclass:: specfem::wavefield::wavefield
-   :members:
-
-``specfem::wavefield::to_string``
-=================================
-
-.. doxygenfunction:: specfem::wavefield::to_string(const specfem::wavefield::type &wavefield_component)
-
-
-Wavefield Specializations
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. doxygenclass:: specfem::wavefield::wavefield< specfem::dimension::type::dim2, specfem::wavefield::type::displacement >
-   :members:
-
-.. doxygenclass:: specfem::wavefield::wavefield< specfem::dimension::type::dim2, specfem::wavefield::type::velocity >
-   :members:
-
-.. doxygenclass:: specfem::wavefield::wavefield< specfem::dimension::type::dim2, specfem::wavefield::type::acceleration >
-   :members:
-
-.. doxygenclass:: specfem::wavefield::wavefield< specfem::dimension::type::dim2, specfem::wavefield::type::pressure >
-   :members:
+.. doxygenfunction:: specfem::enums::to_string(const specfem::enums::wavefield &wavefield_component)

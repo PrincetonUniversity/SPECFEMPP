@@ -4,11 +4,12 @@
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 
-specfem::point::local_coordinates<specfem::dimension::type::dim3>
+specfem::point::local_coordinates<specfem::element::dimension_tag::dim3>
 specfem::algorithms::locate_point(
-    const specfem::point::global_coordinates<specfem::dimension::type::dim3>
-        &coordinates,
-    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh) {
+    const specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinates,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &mesh) {
 
   // Extract mesh data and delegate to core implementation
   return locate_point_impl::locate_point_core(
@@ -16,11 +17,12 @@ specfem::algorithms::locate_point(
       mesh.h_control_node_coordinates, mesh.ngnod, mesh.element_grid.ngllx);
 }
 
-specfem::point::global_coordinates<specfem::dimension::type::dim3>
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
 specfem::algorithms::locate_point(
-    const specfem::point::local_coordinates<specfem::dimension::type::dim3>
-        &coordinate,
-    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh) {
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinate,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &mesh) {
 
   const int ispec = coordinate.ispec;
   const type_real xi = coordinate.xi;
@@ -30,7 +32,7 @@ specfem::algorithms::locate_point(
   const int ngnod = mesh.ngnod;
 
   const Kokkos::View<
-      point::global_coordinates<specfem::dimension::type::dim3> *,
+      point::global_coordinates<specfem::element::dimension_tag::dim3> *,
       Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
@@ -44,13 +46,14 @@ specfem::algorithms::locate_point(
 }
 
 // Except for the tests this function is not used in the codebase.
-specfem::point::global_coordinates<specfem::dimension::type::dim3>
+specfem::point::global_coordinates<specfem::element::dimension_tag::dim3>
 specfem::algorithms::locate_point(
     const Kokkos::TeamPolicy<Kokkos::DefaultHostExecutionSpace>::member_type
         &team_member,
-    const specfem::point::local_coordinates<specfem::dimension::type::dim3>
-        &coordinate,
-    const specfem::assembly::mesh<specfem::dimension::type::dim3> &mesh) {
+    const specfem::point::local_coordinates<
+        specfem::element::dimension_tag::dim3> &coordinate,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3>
+        &mesh) {
 
   const int ispec = coordinate.ispec;
   const type_real xi = coordinate.xi;
@@ -60,7 +63,7 @@ specfem::algorithms::locate_point(
   const int ngnod = mesh.ngnod;
 
   const Kokkos::View<
-      point::global_coordinates<specfem::dimension::type::dim3> *,
+      point::global_coordinates<specfem::element::dimension_tag::dim3> *,
       Kokkos::HostSpace>
       coorg("coorg", ngnod);
 
