@@ -649,7 +649,7 @@ add_executable(
 target_link_libraries(
   coupling_integral_tests
   specfem::algorithms
-  enumerations
+  specfem::element_connections
   specfem::mesh
   assembly
   gtest_main

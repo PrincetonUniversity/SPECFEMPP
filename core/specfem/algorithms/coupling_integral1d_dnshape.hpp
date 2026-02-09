@@ -1,7 +1,7 @@
 #pragma once
 
-#include "enumerations/interface.hpp"
 #include "specfem/assembly.hpp"
+#include "specfem/element_coupling.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -52,9 +52,10 @@ namespace specfem::algorithms {
  * @param callback - callback function to capture integral values
  * @ingroup AlgorithmsIntegration
  */
-template <specfem::dimension::type dimension_tag, typename QuadratureType,
-          typename IndexType, typename IntersectionFieldViewType,
-          typename IntersectionFactor, typename IntersectionJacobianType,
+template <specfem::element::dimension_tag dimension_tag,
+          typename QuadratureType, typename IndexType,
+          typename IntersectionFieldViewType, typename IntersectionFactor,
+          typename IntersectionJacobianType,
           typename TransferFunctionDerivativeType, typename CallableType>
 KOKKOS_FUNCTION void coupling_integral_dnshape(
     const specfem::assembly::nonconforming_interfaces<dimension_tag>
@@ -70,7 +71,7 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
     ,
     const CallableType &callback) {
 
-  constexpr auto self_medium_tag = specfem::interface::attributes<
+  constexpr auto self_medium_tag = specfem::element_coupling::attributes<
       dimension_tag, IntersectionFactor::interface_tag>::self_medium();
 
   using PointIndexType =
@@ -102,8 +103,8 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
         const int ngll_n = ipoint_n_is_ix ? ngllx : ngllz;
         for (int ipoint_n = 0; ipoint_n < ngll_n; ++ipoint_n) {
           // iterate backwards from the edge (this gets called for each gllxz)
-          specfem::point::index<specfem::dimension::type::dim2> interior_index(
-              self_index.ispec, self_index.iz, self_index.ix);
+          specfem::point::index<specfem::element::dimension_tag::dim2>
+              interior_index(self_index.ispec, self_index.iz, self_index.ix);
 
           // sample derivative of interior_index shape function, in normal
           // (covector) direction, at edge coordinate.

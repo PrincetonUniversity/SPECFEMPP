@@ -1,9 +1,8 @@
 #pragma once
 
-#include "enumerations/coupled_interface.hpp"
-#include "enumerations/medium.hpp"
 #include "specfem/data_access/accessor.hpp"
 #include "specfem/data_access/data_class.hpp"
+#include "specfem/element_coupling.hpp"
 namespace specfem::test_fixture::impl {
 
 /**
@@ -15,19 +14,19 @@ namespace specfem::test_fixture::impl {
  * @tparam DataClassType
  * @tparam Axes The size of the view along each axis.
  */
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
           specfem::data_access::DataClassType DataClassType, int... Axes>
 struct NonconformingAccessorPatch2D
     : specfem::data_access::Accessor<
-          specfem::data_access::AccessorType::chunk_edge, DataClassType,
-          specfem::dimension::type::dim2, false /* UseSIMD */> {
+          specfem::datatype::AccessorType::chunk_edge, DataClassType,
+          specfem::element::dimension_tag::dim2, false /* UseSIMD */> {
 public:
-  static constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
   static constexpr auto interface_tag = InterfaceTag;
   static constexpr auto boundary_tag = BoundaryTag;
   static constexpr auto connection_tag =
-      specfem::connections::type::nonconforming;
+      specfem::element_connections::type::nonconforming;
   /// View type for storing intersection scaling factors
 private:
   // ======================================================================================
@@ -90,7 +89,7 @@ public:
   }
 };
 
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadElement, int NQuadIntersection>
 struct NonconformingTransferFunctionSelfPatch
@@ -107,7 +106,7 @@ struct NonconformingTransferFunctionSelfPatch
   static constexpr int n_quad_element = NQuadElement;
   static constexpr int n_quad_intersection = NQuadIntersection;
 };
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadElement, int NQuadIntersection>
 struct NonconformingTransferFunctionCoupledPatch
@@ -124,7 +123,7 @@ struct NonconformingTransferFunctionCoupledPatch
   static constexpr int n_quad_element = NQuadElement;
   static constexpr int n_quad_intersection = NQuadIntersection;
 };
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadIntersection>
 struct NonconformingIntersectionNormalPatch
@@ -139,7 +138,7 @@ struct NonconformingIntersectionNormalPatch
   static constexpr int chunk_size = NumberElements;
   static constexpr int n_quad_intersection = NQuadIntersection;
 };
-template <specfem::interface::interface_tag InterfaceTag,
+template <specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag, int NumberElements,
           int NQuadIntersection>
 struct NonconformingIntersectionFactorPatch

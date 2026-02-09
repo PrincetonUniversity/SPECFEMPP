@@ -1,7 +1,7 @@
 #include "specfem/algorithms/coupling_integral1d_dnshape.hpp"
 
-#include "enumerations/dim2/mesh_entities.hpp"
 #include "specfem/chunk_edge.hpp"
+#include "specfem/enums.hpp"
 
 #include "utilities/include/fixture/impl/accessors.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
@@ -21,7 +21,7 @@ public:
       specfem::execution::TeamThreadRangePolicy<KokkosIndexType, int>;
   using execution_space = typename base_type::execution_space;
   using index_type =
-      specfem::execution::EdgePointIndex<specfem::dimension::type::dim2,
+      specfem::execution::EdgePointIndex<specfem::element::dimension_tag::dim2,
                                          typename base_type::policy_index_type,
                                          execution_space>;
 
@@ -55,7 +55,7 @@ public:
     const int ix = is_leftright ? inorm : ipoint;
 
     return index_type(
-        specfem::point::edge_index<specfem::dimension::type::dim2>(
+        specfem::point::edge_index<specfem::element::dimension_tag::dim2>(
             global_offset + iedge /*ispec*/, global_offset + iedge /*iedge*/,
             ipoint, iz, ix, edge_type),
         iedge, i);
@@ -74,7 +74,7 @@ private:
 template <typename EdgeTypesView> class ChunkEdgeIndex {
 public:
   static constexpr auto accessor_type =
-      specfem::data_access::AccessorType::chunk_edge;
+      specfem::datatype::AccessorType::chunk_edge;
   using KokkosIndexType = Kokkos::TeamPolicy<>::member_type;
   using iterator_type = ChunkEdgeIterator<EdgeTypesView>;
 
@@ -126,7 +126,7 @@ public:
  */
 class nonconforming_interfaces_patch
     : public specfem::assembly::nonconforming_interfaces<
-          specfem::dimension::type::dim2> {
+          specfem::element::dimension_tag::dim2> {
   int ngllz;
   int ngllx;
   int nquad_intersection;
@@ -136,9 +136,9 @@ public:
                                  const int &nquad_intersection)
       : ngllz(ngllz), ngllx(ngllx), nquad_intersection(nquad_intersection) {};
 
-  template <specfem::interface::interface_tag InterfaceTag,
+  template <specfem::element_coupling::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
-            specfem::connections::type ConnectionTag>
+            specfem::element_connections::type ConnectionTag>
   void reinit_container(const int &num_edges) {
 
     FOR_EACH_IN_PRODUCT(
@@ -161,9 +161,9 @@ public:
 
 // temporary test for purposes of uncombined coupling_integral
 void execute_simple_dshape_test() {
-  constexpr auto dimension_tag = specfem::dimension::type::dim2;
+  constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
   constexpr auto interface_tag =
-      specfem::interface::interface_tag::acoustic_elastic;
+      specfem::element_coupling::interface_tag::acoustic_elastic;
   constexpr auto boundary_tag = specfem::element::boundary_tag::none;
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
@@ -258,21 +258,21 @@ void execute_simple_dshape_test() {
   constexpr int chunk_size = 1;
 
   constexpr auto medium_self =
-      specfem::interface::attributes<dimension_tag,
-                                     interface_tag>::self_medium();
+      specfem::element_coupling::attributes<dimension_tag,
+                                            interface_tag>::self_medium();
   constexpr auto ncomp_self =
       specfem::element::attributes<dimension_tag, medium_self>::components;
 
   nonconforming_interfaces_patch nonconforming_interfaces(ngllz, ngllx,
                                                           nquad_intersection);
   nonconforming_interfaces.template reinit_container<
-      interface_tag, boundary_tag, specfem::connections::type::nonconforming>(
-      num_edges);
+      interface_tag, boundary_tag,
+      specfem::element_connections::type::nonconforming>(num_edges);
 
   const auto &interface_container =
       nonconforming_interfaces.template get_interface_container<
           interface_tag, boundary_tag,
-          specfem::connections::type::nonconforming>();
+          specfem::element_connections::type::nonconforming>();
 
   // =================================================================
   // populate this nonconforming interface container and
