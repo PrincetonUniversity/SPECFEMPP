@@ -1,4 +1,5 @@
 #include "specfem/algorithms/coupling_integral1d_dnshape.hpp"
+#include "specfem/algorithms/shape_function_normal_derivative.hpp"
 
 #include "specfem/chunk_edge.hpp"
 #include "specfem/enums.hpp"
@@ -401,6 +402,12 @@ void execute_simple_dshape_test() {
 
   // Kokkos::deep_copy(expected_solutions, h_expected_solutions);
   // =================================================================
+
+  specfem::assembly::edge_types<dimension_tag> assembly_edge_types;
+  specfem::assembly::mesh<dimension_tag> mesh;
+  specfem::algorithms::shape_function_self_normal_derivatives<interface_tag,
+                                                              boundary_tag>(
+      assembly_edge_types, mesh, nonconforming_interfaces);
 
   Kokkos::parallel_for(
       "SimpleDShapeTest", Kokkos::TeamPolicy<>(num_edges, 1, 1),
