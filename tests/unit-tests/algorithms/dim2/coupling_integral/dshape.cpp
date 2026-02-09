@@ -315,6 +315,34 @@ void execute_simple_dshape_test() {
   }
   Kokkos::deep_copy(edge_types, h_edge_types);
 
+  specfem::assembly::EdgeView<Kokkos::DefaultExecutionSpace> edgelist(
+      "dshape::edgelist", num_edges, nquad_element);
+  {
+    specfem::assembly::EdgeView<Kokkos::DefaultExecutionSpace> h_edgelist(
+        "dshape::h_edgelist", num_edges, nquad_element);
+    const auto element = specfem::mesh_entity::element(ngllz, ngllx);
+    for (int iedge = 0; iedge < num_edges; iedge++) {
+      h_edgelist.element_index(iedge) = iedge;
+      h_edgelist.edge_index(iedge) = iedge;
+      h_edgelist.edge_types(iedge) = h_edge_types(iedge);
+
+      for (int ipoint = 0; ipoint < nquad_element; ipoint++) {
+        const auto [iz, ix] =
+            element.map_coordinates(h_edge_types(iedge), ipoint);
+        h_edgelist.iz(iedge, ipoint) = iz;
+        h_edgelist.ix(iedge, ipoint) = ix;
+      }
+    }
+
+    // specfem::assembly::edge_types<dimension_tag>::deep_copy(edgelist,
+    // h_edgelist);
+    Kokkos::deep_copy(edgelist.element_index, h_edgelist.element_index);
+    Kokkos::deep_copy(edgelist.edge_index, h_edgelist.edge_index);
+    Kokkos::deep_copy(edgelist.edge_types, h_edgelist.edge_types);
+    Kokkos::deep_copy(edgelist.iz, h_edgelist.iz);
+    Kokkos::deep_copy(edgelist.ix, h_edgelist.ix);
+  }
+
   // chunk subviews (FunctionType comes from copied test template -- skip the
   // rest and assume num_edges == 1)
   using FunctionType = specfem::datatype::VectorChunkEdgeViewType<
@@ -403,11 +431,19 @@ void execute_simple_dshape_test() {
   // Kokkos::deep_copy(expected_solutions, h_expected_solutions);
   // =================================================================
 
-  specfem::assembly::edge_types<dimension_tag> assembly_edge_types;
-  specfem::assembly::mesh<dimension_tag> mesh;
-  specfem::algorithms::shape_function_self_normal_derivatives<interface_tag,
-                                                              boundary_tag>(
-      assembly_edge_types, mesh, nonconforming_interfaces);
+  constexpr int nquad_element_ = 3;
+  constexpr int nquad_intersection_ = 7;
+  if (nquad_element != nquad_element_) {
+    throw std::runtime_error("dshape: Wrong kernel for nquad_element!");
+  }
+  if (nquad_intersection != nquad_intersection_) {
+    throw std::runtime_error("dshape: Wrong kernel for nquad_intersection!");
+  }
+  const auto shape_function_normal_derivatives =
+      specfem::algorithms::shape_function_self_normal_derivatives<
+          interface_tag, boundary_tag, nquad_element_, nquad_intersection_>(
+          edgelist, nonconforming_interfaces, ngllz, ngllx,
+          lagrange_derivative.xi, intersection_contra_normal);
 
   Kokkos::parallel_for(
       "SimpleDShapeTest", Kokkos::TeamPolicy<>(num_edges, 1, 1),
@@ -418,18 +454,35 @@ void execute_simple_dshape_test() {
                             Kokkos::make_pair(chunk_index * chunk_size,
                                               (chunk_index + 1) * chunk_size),
                             Kokkos::ALL(), Kokkos::ALL()));
+        const auto SFND =
+            Kokkos::subview(shape_function_normal_derivatives,
+                            Kokkos::make_pair(chunk_index * chunk_size,
+                                              (chunk_index + 1) * chunk_size),
+                            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
         specfem::algorithms::coupling_integral_dnshape(
-            nonconforming_interfaces, ngllz, ngllx, lagrange_derivative,
+            ngllz, ngllx,
             ChunkEdgeIndex(Kokkos::subview(edge_types,
                                            Kokkos::make_pair(
                                                chunk_index * chunk_size,
                                                (chunk_index + 1) * chunk_size)),
                            num_edges, ngllz, ngllx, team_member),
-            F, intersection_factor, intersection_contra_normal,
-            transfer_function_self_derivative,
+            F, intersection_factor, SFND,
             [&](const auto &index, const auto &point) {
               computed_integrals(index.ispec, index.iz, index.ix) = point(0);
             });
+        // specfem::algorithms::coupling_integral_dnshape(
+        //     nonconforming_interfaces, ngllz, ngllx, lagrange_derivative,
+        //     ChunkEdgeIndex(Kokkos::subview(edge_types,
+        //                                    Kokkos::make_pair(
+        //                                        chunk_index * chunk_size,
+        //                                        (chunk_index + 1) *
+        //                                        chunk_size)),
+        //                    num_edges, ngllz, ngllx, team_member),
+        //     F, intersection_factor, intersection_contra_normal,
+        //     transfer_function_self_derivative,
+        //     [&](const auto &index, const auto &point) {
+        //       computed_integrals(index.ispec, index.iz, index.ix) = point(0);
+        //     });
       });
 
   const auto h_computed_integrals = Kokkos::create_mirror_view_and_copy(

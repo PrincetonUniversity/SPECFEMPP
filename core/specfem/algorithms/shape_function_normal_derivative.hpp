@@ -3,6 +3,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/chunk_edge/nonconforming_interface.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/element_coupling.hpp"
 #include "specfem/execution.hpp"
@@ -26,26 +27,31 @@ namespace specfem::algorithms {
  * @param nonconforming_interfaces - assembly.nonconforming_interfaces struct
  */
 template <specfem::element_coupling::interface_tag interface_tag,
-          specfem::element::boundary_tag boundary_tag,
-          specfem::element::dimension_tag dimension_tag>
+          specfem::element::boundary_tag boundary_tag, int nquad_element_,
+          int nquad_intersection_, typename SelfEdgeListView,
+          typename HPrimeView, typename TransformedIntersectionNormalView>
 Kokkos::View<type_real ****, Kokkos::DefaultExecutionSpace>
 shape_function_self_normal_derivatives(
-    const specfem::assembly::edge_types<dimension_tag> &edge_types,
-    const specfem::assembly::mesh<dimension_tag> &mesh,
-    const specfem::assembly::nonconforming_interfaces<dimension_tag>
-        &nonconforming_interfaces) {
+    const SelfEdgeListView &self_edges,
+    const specfem::assembly::nonconforming_interfaces<
+        specfem::element::dimension_tag::dim2> &nonconforming_interfaces,
+    const int &ngllz, const int &ngllx, const HPrimeView &hprime,
+    const TransformedIntersectionNormalView
+        &intersection_normal_contravariant_edgelocal) {
+  const auto dimension_tag = specfem::element::dimension_tag::dim2;
   using ReturnViewType =
       Kokkos::View<type_real ****, Kokkos::DefaultExecutionSpace>;
 
-  const auto [self_edges, coupled_edges] = edge_types.get_edges_on_device(
-      specfem::element_connections::type::nonconforming, interface_tag,
-      boundary_tag);
-  const auto &element_grid = mesh.element_grid;
-
   // TODO: get nquad_intersection from somewhere else
-  const int ngllz = element_grid.ngllz;
-  const int ngllx = element_grid.ngllx;
-  const int nquad_intersection = std::max(ngllz, ngllx);
+  const int nquad_intersection = nquad_intersection_;
+  if (nquad_intersection != nquad_intersection_) {
+    throw std::runtime_error(
+        std::string("shape_function_self_normal_derivatives() kernel run with "
+                    "nquad_intersection = ") +
+        std::to_string(nquad_intersection_) +
+        ", but assembly got nquad_intersection == " +
+        std::to_string(nquad_intersection));
+  }
   ReturnViewType normal_derivs("shape_function_self_normal_derivatives",
                                self_edges.n_edges, ngllz, ngllx,
                                nquad_intersection);
@@ -62,15 +68,23 @@ shape_function_self_normal_derivatives(
           dimension_tag, Kokkos::DefaultExecutionSpace>;
   specfem::execution::ChunkedEdgeIterator chunk(parallel_config(), self_edges);
 
-  return normal_derivs; // remove when done
+  using TransferFunctionSelf = specfem::chunk_edge::transfer_function_self<
+      dimension_tag, interface_tag, boundary_tag, parallel_config::chunk_size,
+      nquad_intersection_, nquad_element_>;
 
   specfem::execution::for_each_level(
-      "specfem::compute::compute_stiffness_interaction", chunk,
+      "specfem::compute::shape_function_normal_derivative",
+      chunk.set_scratch_size(
+          0, Kokkos::PerTeam(TransferFunctionSelf::shmem_size())),
       KOKKOS_LAMBDA(
           const typename decltype(chunk)::index_type &chunk_iterator_index) {
         const auto &chunk_index = chunk_iterator_index.get_index();
         const auto &team = chunk_index.get_policy_index();
         const int &num_edges = chunk_index.nedges();
+
+        TransferFunctionSelf transfer_function_self(team);
+        specfem::assembly::load_on_device(chunk_index, nonconforming_interfaces,
+                                          transfer_function_self);
 
         specfem::execution::for_each_level(
             specfem::execution::TeamThreadMDRangeIterator(team, num_edges,
@@ -90,33 +104,51 @@ shape_function_self_normal_derivatives(
                   edge_index.edge_type ==
                       specfem::mesh_entity::dim2::type::right;
               const int ipoint_s = ipoint_n_is_ix ? iz : ix;
-              const int ipoint_n = ipoint_n_is_ix ? ix : iz;
+              int ipoint_n = ipoint_n_is_ix ? ix : iz;
+              const int ngll_n = ipoint_n_is_ix ? ngllx : ngllz;
+              const int ngll_s = ipoint_n_is_ix ? ngllz : ngllx;
 
-              // TODO find access to lagrange_derivative and uncomment
-              const type_real dlagrange_dn = 0;
-              //       = -(ipoint_n_is_ix ? lagrange_derivative.xi(0, ipoint_n)
-              //                        : lagrange_derivative.gamma(0,
-              //                        ipoint_n));
+              if (edge_index.edge_type ==
+                      specfem::mesh_entity::dim2::type::right ||
+                  edge_index.edge_type ==
+                      specfem::mesh_entity::dim2::type::top) {
+                // we want 0 to be on the edge
+                ipoint_n = ngll_n - 1 - ipoint_n;
+              }
+
+              const type_real dlagrange_dn = -hprime(0, ipoint_n);
 
               for (int iquad = 0; iquad < nquad_intersection; iquad++) {
 
                 // dshape_dn, local-normal derivative (derivative of
-                // normal-direction L, which is normally kronecker delta
-                // indicating on edge)
+                // normal-direction L, which used to be kronecker delta
+                // indicating on edge. Now has dlagrange_dn != 0 for all
+                // ipoint_n)
 
                 // first, in the local-normal component
-                type_real dshape_dn = 0;
-                // = intersection_normal_contravariant_edgelocal(iedge, iquad,
-                // 0) * (dlagrange_dn * transfer_function_self(iquad));
+                type_real dshape_dn =
+                    intersection_normal_contravariant_edgelocal(
+                        edge_index.iedge, iquad, 0) *
+                    (dlagrange_dn *
+                     transfer_function_self(iedge, ipoint_s, iquad));
                 // dshape_dn, local-tangential derivative (differentiate
                 // transfer_function_self instead of normal-direction L)
                 if (ipoint_n == 0) {
                   // the local-tangential is constant zero if we are not on the
                   // edge.
-                  //   dshape_dn +=
-                  //       intersection_normal_contravariant_edgelocal(iedge,
-                  //       iquad, 1) * transfer_function_self_derivative(iedge,
-                  //       ipoint_s, iquad);
+
+                  // recover L'  (at point ipoint_s) on intersection quadrature
+                  // points: use transfer function.
+                  type_real transfer_function_derivative = 0;
+                  for (int ipoint_s2 = 0; ipoint_s2 < ngll_s; ipoint_s2++) {
+                    transfer_function_derivative +=
+                        hprime(ipoint_s2, ipoint_s) *
+                        transfer_function_self(iedge, ipoint_s2, iquad);
+                  }
+
+                  dshape_dn += intersection_normal_contravariant_edgelocal(
+                                   edge_index.iedge, iquad, 1) *
+                               transfer_function_derivative;
                 }
 
                 normal_derivs(edge_index.iedge, iz, ix, iquad) = dshape_dn;
