@@ -33,7 +33,7 @@ namespace specfem::medium_physics {
  * @tparam PointSourceType Point-wise source parameters
  * @tparam PointPropertiesType Point-wise material properties
  * @param point_source Source parameters (STF, interpolant)
- * @param point_properties Material properties (κ)
+ * @param point_properties Material properties (\f$ \kappa \f$)
  * @return Acceleration contribution for acoustic potential
  */
 template <typename PointSourceType, typename PointPropertiesType>
@@ -59,9 +59,9 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
   PointAccelerationType result;
 
   /* note: for acoustic medium, the source is a pressure source and gets divided
-   *       by Kappa of the fluid. The sign is negative because pressure p = -
-   *       Chi_dot_dot therefore we need to add minus the source to Chi_dot_dot
-   *       to get plus the source in pressure
+   *       by kappa of the fluid. The sign is negative because pressure p = -χ̈
+   *       (second time derivative of acoustic potential) therefore we need to
+   *       add minus the source to χ̈ to get plus the source in pressure
    */
   result(0) = -point_source.stf(0) * point_source.lagrange_interpolant(0) /
               point_properties.kappa();
