@@ -8,15 +8,6 @@ namespace specfem {
 
 constexpr type_real pi = 3.14159265358979323846;
 
-namespace build_configuration {
-namespace chunk {
-constexpr static int chunk_size = 32;
-constexpr static int num_chunks = 1;
-constexpr static int num_threads = 160;
-constexpr static int vector_lanes = 1;
-}
-}
-
 namespace constants {
   /**
    * @brief Source decay rate to mimic a triangle source time function
