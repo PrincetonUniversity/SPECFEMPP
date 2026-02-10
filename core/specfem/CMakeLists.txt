@@ -1,3 +1,7 @@
+# Configure setup header file
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.hpp.in
+               ${CMAKE_BINARY_DIR}/core/specfem/setup.hpp)
+
 # Add existing subdirectories
 add_subdirectory(algorithms)
 add_subdirectory(assembly)
@@ -65,4 +69,5 @@ target_link_libraries(specfem_core_interface
 target_include_directories(specfem_core_interface
     INTERFACE
         ${CMAKE_SOURCE_DIR}/core
+        ${CMAKE_BINARY_DIR}/core/specfem
 )

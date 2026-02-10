@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/element.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
 

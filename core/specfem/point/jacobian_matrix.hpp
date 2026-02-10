@@ -4,7 +4,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

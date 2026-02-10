@@ -3,7 +3,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/receivers.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 std::string
 specfem::receivers::receiver<specfem::element::dimension_tag::dim2>::print()

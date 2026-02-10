@@ -1,7 +1,7 @@
 #pragma once
 
-#include "constants.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly::info::impl {
@@ -33,7 +33,7 @@ type_real compute_average_gll_spacing(type_real element_size,
 KOKKOS_INLINE_FUNCTION
 type_real compute_minimum_period(type_real avg_gll_spacing,
                                  type_real min_velocity) {
-  return (specfem::constants::empirical::NPTS_PER_WAVELENGTH * avg_gll_spacing) /
+  return (specfem::constants::NPTS_PER_WAVELENGTH * avg_gll_spacing) /
          min_velocity;
 }
 
@@ -51,7 +51,7 @@ type_real compute_minimum_period(type_real avg_gll_spacing,
 KOKKOS_INLINE_FUNCTION
 type_real compute_suggested_timestep(type_real min_gll_distance,
                                      type_real max_velocity) {
-  return specfem::constants::empirical::COURANT_NUMBER_SUGGESTED *
+  return specfem::constants::COURANT_NUMBER_SUGGESTED *
          (min_gll_distance / max_velocity);
 }
 

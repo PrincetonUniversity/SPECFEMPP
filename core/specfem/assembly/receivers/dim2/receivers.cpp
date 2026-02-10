@@ -4,7 +4,7 @@
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/quadrature.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 

@@ -5,7 +5,7 @@
  */
 #pragma once
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_SIMD.hpp>
 
 namespace specfem {

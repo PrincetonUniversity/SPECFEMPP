@@ -31,14 +31,12 @@ bool _initialize(py::list py_argv) {
   }
 }
 
-bool _execute(const std::string &parameter_string,
-              const std::string &default_string) {
+bool _execute(const std::string &parameter_string) {
   if (global_context == nullptr) {
     return false;
   }
 
   const YAML::Node parameter_dict = YAML::Load(parameter_string);
-  const YAML::Node default_dict = YAML::Load(default_string);
 
   // Setup periodic tasks (signal checking)
   const auto dimension_tag = specfem::element::dimension_tag::dim2;
@@ -60,7 +58,7 @@ bool _execute(const std::string &parameter_string,
     // For now, default to 2D execution for backward compatibility
     // Later we can add a dimension parameter to the Python interface
     // Run 2D Cartesian program
-    program_2d(parameter_dict, default_dict, tasks);
+    specfem::program::program_2d(parameter_dict, tasks);
 
     success = true;
   }
@@ -101,8 +99,6 @@ PYBIND11_MODULE(_core, m) {
   m.def("_finalize", &_finalize, R"pbdoc(
         Finalize SPECFEM++.
     )pbdoc");
-
-  m.attr("_default_file_path") = __default_file__;
 
 #ifdef VERSION_INFO
   m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

@@ -2,7 +2,7 @@
 
 #include "gll_utils.hpp"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <array>
 
 namespace specfem {

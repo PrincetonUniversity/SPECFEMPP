@@ -1,6 +1,6 @@
 #include "gll_utils.hpp"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Sort.hpp>
 #include <algorithm>

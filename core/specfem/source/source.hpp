@@ -1,6 +1,6 @@
 #pragma once
 
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
@@ -8,7 +8,7 @@
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 

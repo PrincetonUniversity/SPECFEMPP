@@ -2,7 +2,7 @@
 
 #include "specfem/enums.hpp"
 #include "specfem/medium_container.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem {
 namespace point {

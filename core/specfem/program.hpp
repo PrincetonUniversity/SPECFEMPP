@@ -29,15 +29,26 @@ namespace specfem::program {
  * wavefield/kernel outputs.
  *
  * @param dimension Simulation dimension: "2d" or "3d"
- * @param parameter_dict User-provided YAML configuration overriding defaults
- * @param default_dict YAML default values for all simulation parameters
+ * @param parameter_dict User-provided YAML configuration
  * @return true on successful completion, false on failure
  *
  * @throws std::runtime_error if dimension is invalid or simulation encounters
  * fatal error
  */
-bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
-             const YAML::Node &default_dict);
+bool execute(const std::string &dimension, const YAML::Node &parameter_dict);
+
+// Internal dimension-specific program implementations
+void program_2d(
+    const YAML::Node &parameter_dict,
+    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
+        specfem::element::dimension_tag::dim2> > >
+        tasks);
+
+void program_3d(
+    const YAML::Node &parameter_dict,
+    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
+        specfem::element::dimension_tag::dim3> > >
+        tasks);
 
 } // namespace specfem::program
 

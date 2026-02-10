@@ -6,7 +6,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_macros.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
