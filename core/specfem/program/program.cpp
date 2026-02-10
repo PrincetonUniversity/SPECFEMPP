@@ -19,6 +19,8 @@
 
 namespace specfem::program {
 
+namespace detail {
+
 template <specfem::element::dimension_tag DimensionTag>
 std::string
 print_header(const specfem::runtime_configuration::setup &setup,
@@ -421,6 +423,8 @@ void program_3d(
   return;
 }
 
+} // namespace detail
+
 bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
   try {
     // Use simulation model enumeration for validation
@@ -439,7 +443,7 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
       tasks.push_back(signal_task);
 
       // Run 2D Cartesian program
-      program_2d(parameter_dict, tasks);
+      detail::program_2d(parameter_dict, tasks);
 
       return true;
     }
@@ -454,7 +458,7 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
       tasks.push_back(signal_task);
 
       // Run 3D Cartesian program
-      program_3d(parameter_dict, tasks);
+      detail::program_3d(parameter_dict, tasks);
 
       return true;
     }

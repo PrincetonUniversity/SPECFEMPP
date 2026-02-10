@@ -58,7 +58,7 @@ bool _execute(const std::string &parameter_string) {
     // For now, default to 2D execution for backward compatibility
     // Later we can add a dimension parameter to the Python interface
     // Run 2D Cartesian program
-    specfem::program::program_2d(parameter_dict, tasks);
+    specfem::program::detail::program_2d(parameter_dict, tasks);
 
     success = true;
   }

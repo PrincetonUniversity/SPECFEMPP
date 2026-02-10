@@ -4,9 +4,10 @@
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
-const type_real pi = 2 * Kokkos::acos(0.0);
-
 namespace specfem {
+
+constexpr type_real pi = 3.14159265358979323846;
+
 namespace build_configuration {
 namespace chunk {
 constexpr static int chunk_size = 32;

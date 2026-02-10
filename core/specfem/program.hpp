@@ -37,6 +37,7 @@ namespace specfem::program {
  */
 bool execute(const std::string &dimension, const YAML::Node &parameter_dict);
 
+namespace detail {
 // Internal dimension-specific program implementations
 void program_2d(
     const YAML::Node &parameter_dict,
@@ -49,6 +50,7 @@ void program_3d(
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim3> > >
         tasks);
+} // namespace detail
 
 } // namespace specfem::program
 
