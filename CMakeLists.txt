@@ -185,12 +185,14 @@ endif(SPECFEM_ENABLE_DOUBLE_PRECISION)
 include_directories(core)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
+include_directories(${CMAKE_BINARY_DIR}/core)
 
 
 message(STATUS "INCLUDE DIRECTORIES:")
 message(STATUS "    core: ${CMAKE_CURRENT_SOURCE_DIR}/core")
 message(STATUS "    include: ${CMAKE_SOURCE_DIR}/include")
 message(STATUS "    binary: ${CMAKE_BINARY_DIR}/include")
+message(STATUS "    binary core: ${CMAKE_BINARY_DIR}/core")
 
 
 # Set loglevel to STATUS if build type is debug

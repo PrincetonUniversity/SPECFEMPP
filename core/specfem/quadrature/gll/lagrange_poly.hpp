@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../include/specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

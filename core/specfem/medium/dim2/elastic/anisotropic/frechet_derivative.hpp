@@ -1,6 +1,5 @@
 #pragma once
 
-#include "globals.h"
 #include "specfem/algorithms.hpp"
 #include "specfem/element.hpp"
 #include "specfem/point.hpp"

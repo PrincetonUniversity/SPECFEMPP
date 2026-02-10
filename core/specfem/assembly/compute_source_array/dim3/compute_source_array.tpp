@@ -8,7 +8,7 @@
 
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/source.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 template <typename SourceArrayViewType>

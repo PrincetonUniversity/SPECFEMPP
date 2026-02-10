@@ -1,5 +1,4 @@
 #include "specfem/receivers.hpp"
-#include "globals.h"
 
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly.hpp"

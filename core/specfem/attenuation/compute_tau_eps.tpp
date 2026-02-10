@@ -3,7 +3,7 @@
 #include "maxwell.hpp"
 #include "constants.hpp"
 #include "specfem/optimization.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 

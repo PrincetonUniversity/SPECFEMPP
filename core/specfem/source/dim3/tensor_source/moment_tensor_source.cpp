@@ -1,4 +1,3 @@
-#include "globals.h"
 
 #include "specfem/enums.hpp"
 #include "specfem/source.hpp"
