@@ -3,6 +3,12 @@
 #include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
 
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <stdexcept>
+#include <utility>
+
 bool specfem::program::qplots(const type_real Q, const type_real minfreq,
                               const type_real maxfreq,
                               const type_real min_plot_freq,
