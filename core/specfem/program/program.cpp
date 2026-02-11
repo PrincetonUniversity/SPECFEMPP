@@ -1,6 +1,7 @@
 #include "dim2/program.hpp"
 #include "dim3/program.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/utilities.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem::program {

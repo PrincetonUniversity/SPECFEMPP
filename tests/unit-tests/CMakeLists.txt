@@ -113,6 +113,19 @@ target_link_libraries(
 )
 
 add_executable(
+  logspace_tests
+  utilities/logspace_tests.cpp
+)
+
+target_link_libraries(
+  logspace_tests
+  specfem::utilities
+  specfem_environment
+  gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
   attenuation_tests
   attenuation/runner.cpp
   attenuation/compute_tau_sigma_tests.cpp
@@ -950,6 +963,7 @@ if(NOT MPI_PARALLEL)
     io_framework_tests
     io_tests
     is_close_tests
+    logspace_tests
     jacobian_tests
     lagrange_tests
     locate_point_fixture_2d

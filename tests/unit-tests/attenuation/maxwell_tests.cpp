@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 
 using specfem::attenuation::maxwell;
-using specfem::attenuation::MaxwellModuli;
+using specfem::attenuation::MaxwellFactors;
 
 // Test that A and B have correct sizes
 TEST(Attenuation_Maxwell, ReturnsCorrectSize) {
@@ -27,8 +27,8 @@ TEST(Attenuation_Maxwell, ReturnsCorrectSize) {
 
   auto result = maxwell<NF, N_SLS>(f, tau_s, tau_eps);
 
-  EXPECT_EQ(result.A.extent(0), NF);
-  EXPECT_EQ(result.B.extent(0), NF);
+  EXPECT_EQ(result.real.extent(0), NF);
+  EXPECT_EQ(result.imag.extent(0), NF);
 }
 
 // Test that A values are positive (real modulus > 0)
@@ -58,7 +58,7 @@ TEST(Attenuation_Maxwell, AValuesPositive) {
   auto result = maxwell<NF, N_SLS>(f, tau_s, tau_eps);
 
   for (int i = 0; i < NF; ++i) {
-    EXPECT_GT(result.A(i), 0.0) << "A(" << i << ") should be positive";
+    EXPECT_GT(result.real(i), 0.0) << "real(" << i << ") should be positive";
   }
 }
 
@@ -87,7 +87,7 @@ TEST(Attenuation_Maxwell, BValuesPositiveWhenTauEpsGreater) {
   auto result = maxwell<NF, N_SLS>(f, tau_s, tau_eps);
 
   for (int i = 0; i < NF; ++i) {
-    EXPECT_GT(result.B(i), 0.0) << "B(" << i << ") should be positive";
+    EXPECT_GT(result.imag(i), 0.0) << "imag(" << i << ") should be positive";
   }
 }
 
@@ -119,8 +119,8 @@ TEST(Attenuation_Maxwell, TanDeltaRelationship) {
 
   // Check that tan_delta = B/A is well-defined
   for (int i = 0; i < NF; ++i) {
-    type_real tan_delta = result.B(i) / result.A(i);
-    type_real Q_computed = result.A(i) / result.B(i);
+    type_real tan_delta = result.imag(i) / result.real(i);
+    type_real Q_computed = result.real(i) / result.imag(i);
 
     EXPECT_GT(tan_delta, 0.0) << "tan_delta should be positive";
     EXPECT_GT(Q_computed, 0.0) << "Q should be positive";
@@ -160,10 +160,10 @@ TEST(Attenuation_Maxwell, SingleSLS) {
     type_real expected_A = (1.0 + w2 * tau_eps(0) * tau_s(0)) / denom;
     type_real expected_B = w * (tau_eps(0) - tau_s(0)) / denom;
 
-    EXPECT_NEAR(result.A(i), expected_A, 1e-10)
-        << "A(" << i << ") should match analytical formula";
-    EXPECT_NEAR(result.B(i), expected_B, 1e-10)
-        << "B(" << i << ") should match analytical formula";
+    EXPECT_NEAR(result.real(i), expected_A, 1e-10)
+        << "real(" << i << ") should match analytical formula";
+    EXPECT_NEAR(result.imag(i), expected_B, 1e-10)
+        << "imag(" << i << ") should match analytical formula";
   }
 }
 
@@ -196,9 +196,11 @@ TEST(Attenuation_Maxwell, LowFrequencyLimit) {
   // A = (1/L) * Σ[(1 + w²*τε*τs)/(1 + w²*τs²)] → 1 as w → 0
   // B = (1/L) * Σ[w*(τε - τs)/denom] → 0 as w → 0
   for (int i = 0; i < NF; ++i) {
-    EXPECT_NEAR(result.A(i), 1.0, 1e-6) << "A should approach 1 at low freq";
+    EXPECT_NEAR(result.real(i), 1.0, 1e-6)
+        << "real should approach 1 at low freq";
     // B approaches 0 linearly with w, use tolerance of 1e-4
-    EXPECT_NEAR(result.B(i), 0.0, 1e-4) << "B should approach 0 at low freq";
+    EXPECT_NEAR(result.imag(i), 0.0, 1e-4)
+        << "imag should approach 0 at low freq";
   }
 }
 
@@ -229,10 +231,10 @@ TEST(Attenuation_Maxwell, HighFrequencyLimit) {
   type_real expected_A_limit = tau_eps(0) / tau_s(0);
 
   for (int i = 0; i < NF; ++i) {
-    EXPECT_NEAR(result.A(i), expected_A_limit, 1e-3)
-        << "A should approach tau_eps/tau_s at high freq";
-    EXPECT_NEAR(result.B(i), 0.0, 1e-3)
-        << "B should approach 0 at high freq";
+    EXPECT_NEAR(result.real(i), expected_A_limit, 1e-3)
+        << "real should approach tau_eps/tau_s at high freq";
+    EXPECT_NEAR(result.imag(i), 0.0, 1e-3)
+        << "imag should approach 0 at high freq";
   }
 }
 
@@ -266,9 +268,9 @@ TEST(Attenuation_Maxwell, NoAttenuation) {
   // B = (1/L) * Σ[w * 0 / denom] = 0
   // Use looser tolerance for A due to floating point precision
   for (int i = 0; i < NF; ++i) {
-    EXPECT_NEAR(result.A(i), 1.0, 1e-6)
-        << "A should be 1 with no attenuation";
-    EXPECT_NEAR(result.B(i), 0.0, 1e-10)
-        << "B should be 0 with no attenuation";
+    EXPECT_NEAR(result.real(i), 1.0, 1e-6)
+        << "real should be 1 with no attenuation";
+    EXPECT_NEAR(result.imag(i), 0.0, 1e-10)
+        << "imag should be 0 with no attenuation";
   }
 }

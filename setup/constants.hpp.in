@@ -68,6 +68,22 @@ namespace constants::empirical {
    */
   const type_real NPTS_PER_WAVELENGTH = 5;
 
+
+  /**
+   * @brief Number of frequencies used for evaluating attenuation objective
+   *
+   * Matching SPECFEM3D Fortran implementation which uses 100 frequencies.
+   */
+  constexpr int NF_ATTENUATION = 100;
+
+  /**
+   * @brief Number of standard linear solids for attenuation implementation
+   *
+   */
+  constexpr int N_SLS = 3;
+
+
+
 }
 
 }
