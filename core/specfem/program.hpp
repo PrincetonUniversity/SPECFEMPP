@@ -2,9 +2,11 @@
 
 #include "specfem/enums.hpp"
 #include "specfem/periodic_tasks.hpp"
+#include "specfem/runtime_configuration.hpp"
 #include <chrono>
 #include <ctime>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -18,6 +20,21 @@
  * context management (Kokkos/MPI initialization), and program abort utilities.
  */
 namespace specfem::program {
+
+/**
+ * @brief Print simulation header with dimension, title, and start time
+ */
+template <specfem::element::dimension_tag DimensionTag>
+std::string
+print_header(const specfem::runtime_configuration::setup &setup,
+             const std::chrono::time_point<std::chrono::system_clock> now);
+
+/**
+ * @brief Print simulation end message with timing information
+ */
+std::string
+print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
+                  std::chrono::duration<double> solver_time);
 
 /**
  * @brief Execute complete SPECFEM simulation with runtime dimension selection
@@ -43,3 +60,4 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
 
 #include "program/abort.hpp"
 #include "program/context.hpp"
+#include "specfem/program.tpp"
