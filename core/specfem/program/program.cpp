@@ -13,7 +13,6 @@
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
-#include <boost/program_options.hpp>
 
 #include <sstream>
 
