@@ -1,7 +1,6 @@
 #pragma once
 
 #include "specfem/logger/logger.hpp"
-#include <boost/program_options.hpp>
 #include <optional>
 #include <string>
 
@@ -12,8 +11,8 @@ namespace logger {
  * @class LoggerOptions
  * @brief Command-line options for Logger configuration
  *
- * This class parses command-line arguments using boost::program_options
- * to allow runtime override of Logger settings.
+ * This class holds parsed command-line options for runtime override
+ * of Logger settings.
  *
  * Supported options:
  * - --log-file=<filename>        : Set output log file
@@ -24,13 +23,18 @@ namespace logger {
 class LoggerOptions {
 public:
   /**
-   * @brief Create logger options from an existing variables_map
+   * @brief Create logger options from plain C++ values
    *
-   * @param vm Variables map containing parsed command-line options
+   * @param log_file Optional log file path
+   * @param per_rank Optional per-rank flag
+   * @param auto_flush Optional auto-flush flag
+   * @param log_level_str Optional log level string
    * @return LoggerOptions instance with extracted values
    */
-  static LoggerOptions
-  from_variables_map(const boost::program_options::variables_map &vm);
+  static LoggerOptions from_values(std::optional<std::string> log_file,
+                                   std::optional<bool> per_rank,
+                                   std::optional<bool> auto_flush,
+                                   std::optional<std::string> log_level_str);
 
   // Optional values - only set if provided on command line
   std::optional<std::string> log_file; ///< Log file path
