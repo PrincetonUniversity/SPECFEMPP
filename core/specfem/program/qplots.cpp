@@ -7,7 +7,7 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
                               const type_real maxfreq,
                               const type_real min_plot_freq,
                               const type_real max_plot_freq,
-                              std::string output_dir) {
+                              const std::string &output_dir) {
 
   if (Q <= 0) {
     specfem::Logger::error("Q must be positive for qplots");
