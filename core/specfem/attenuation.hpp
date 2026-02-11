@@ -4,6 +4,8 @@
 #include "attenuation/maxwell.hpp"
 #include "attenuation/compute_tau_eps.hpp"
 #include "attenuation/compute_tau_eps.tpp"
+#include "attenuation/compute_factors.hpp"
+#include "attenuation/compute_factors.tpp"
 
 
 /**
