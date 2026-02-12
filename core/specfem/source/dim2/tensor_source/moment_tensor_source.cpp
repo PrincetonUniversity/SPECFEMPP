@@ -1,10 +1,10 @@
-#include "globals.h"
+
 
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
-#include "specfem_setup.hpp"
 // #include "utilities.cpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>

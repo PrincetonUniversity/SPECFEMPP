@@ -181,23 +181,10 @@ else(SPECFEM_ENABLE_DOUBLE_PRECISION)
     set(TYPE_REAL "float")
 endif(SPECFEM_ENABLE_DOUBLE_PRECISION)
 
-# Configure the setup headers
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
-               ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in
-               ${CMAKE_BINARY_DIR}/include/constants.hpp)
-
-# Add the configure files to the clean target
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
-    ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp
-    ${CMAKE_BINARY_DIR}/include/constants.hpp
-)
-
 # Add the include directories so that the generated files can be found
-include_directories(core)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
-
 
 message(STATUS "INCLUDE DIRECTORIES:")
 message(STATUS "    core: ${CMAKE_CURRENT_SOURCE_DIR}/core")

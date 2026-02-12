@@ -1,4 +1,4 @@
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/program.hpp"
 #include "specfem/program/context.hpp"
@@ -29,9 +29,7 @@ boost::program_options::options_description define_specfem_args() {
   // Add basic options
   desc.add_options()("help,h", "Print this help message")(
       "parameters_file,p", po::value<std::string>()->required(),
-      "Location to parameters file")(
-      "default_file", po::value<std::string>()->default_value(__default_file__),
-      "Location of default parameters file.");
+      "Location to parameters file");
 
   // Add logger options
   desc.add_options()(
@@ -120,11 +118,9 @@ int main(int argc, char **argv) {
     // Extract parameters (dimension is already extracted as positional
     // argument)
     const std::string parameters_file = vm["parameters_file"].as<std::string>();
-    const std::string default_file = vm["default_file"].as<std::string>();
 
     // Load configuration files
     const YAML::Node parameter_dict = YAML::LoadFile(parameters_file);
-    const YAML::Node default_dict = YAML::LoadFile(default_file);
 
     // Extract and apply Logger options from parsed arguments
     auto logger_options =
@@ -139,8 +135,7 @@ int main(int argc, char **argv) {
     }
 
     // Execute program with the specified dimension
-    const auto success =
-        specfem::program::execute(dimension, parameter_dict, default_dict);
+    const auto success = specfem::program::execute(dimension, parameter_dict);
 
     // Check execution result
     if (!success) {

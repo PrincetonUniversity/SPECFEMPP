@@ -7,7 +7,7 @@ using namespace specfem::assembly::info::impl;
 
 class InfoComputeTests : public ::testing::Test {
 protected:
-  // Constants from specfem::constants::empirical
+  // Constants from specfem::constants
   static constexpr type_real NPTS_PER_WAVELENGTH = 5.0;
   static constexpr type_real COURANT_NUMBER = 0.5;
 };
@@ -85,8 +85,10 @@ TEST_F(InfoComputeTests, ComputeSuggestedTimestepHighVelocity) {
   type_real max_velocity_low = 3000.0;
   type_real max_velocity_high = 6000.0;
 
-  type_real result_low = compute_suggested_timestep(min_gll_distance, max_velocity_low);
-  type_real result_high = compute_suggested_timestep(min_gll_distance, max_velocity_high);
+  type_real result_low =
+      compute_suggested_timestep(min_gll_distance, max_velocity_low);
+  type_real result_high =
+      compute_suggested_timestep(min_gll_distance, max_velocity_high);
 
   EXPECT_GT(result_low, result_high);
 }
@@ -97,8 +99,10 @@ TEST_F(InfoComputeTests, ComputeSuggestedTimestepSmallDistance) {
   type_real min_gll_distance_small = 2.0;
   type_real max_velocity = 5000.0;
 
-  type_real result_large = compute_suggested_timestep(min_gll_distance_large, max_velocity);
-  type_real result_small = compute_suggested_timestep(min_gll_distance_small, max_velocity);
+  type_real result_large =
+      compute_suggested_timestep(min_gll_distance_large, max_velocity);
+  type_real result_small =
+      compute_suggested_timestep(min_gll_distance_small, max_velocity);
 
   EXPECT_GT(result_large, result_small);
 }
@@ -112,7 +116,8 @@ TEST_F(InfoComputeTests, RealisticSeismicParameters) {
   type_real min_velocity = 3500.0; // vs
   type_real max_velocity = 6000.0; // vp
 
-  type_real avg_spacing = compute_average_gll_spacing(element_size, ngll_minus_one);
+  type_real avg_spacing =
+      compute_average_gll_spacing(element_size, ngll_minus_one);
   EXPECT_TRUE(specfem::utilities::is_close(avg_spacing, type_real(250.0)))
       << expected_got(250.0, avg_spacing);
 

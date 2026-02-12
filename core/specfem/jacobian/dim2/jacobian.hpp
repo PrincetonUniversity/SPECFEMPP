@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem::jacobian {
 

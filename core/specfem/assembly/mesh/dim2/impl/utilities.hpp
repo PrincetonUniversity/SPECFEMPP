@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <limits>
 #include <vector>
 

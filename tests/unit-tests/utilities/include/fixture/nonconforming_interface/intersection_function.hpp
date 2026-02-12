@@ -2,7 +2,7 @@
 
 #include "../impl/descriptions.hpp"
 #include "initializers.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 #include <type_traits>
 

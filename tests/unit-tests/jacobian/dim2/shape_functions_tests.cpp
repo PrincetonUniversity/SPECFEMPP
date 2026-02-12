@@ -1,5 +1,5 @@
+#include "specfem/setup.hpp"
 #include "specfem/shape_function.hpp"
-#include "specfem_setup.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
 #include <stdexcept>

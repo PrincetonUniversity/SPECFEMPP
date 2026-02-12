@@ -36,8 +36,7 @@ namespace specfem::program {
  * @throws std::runtime_error if dimension is invalid or simulation encounters
  * fatal error
  */
-bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
-             const YAML::Node &default_dict);
+bool execute(const std::string &dimension, const YAML::Node &parameter_dict);
 
 } // namespace specfem::program
 

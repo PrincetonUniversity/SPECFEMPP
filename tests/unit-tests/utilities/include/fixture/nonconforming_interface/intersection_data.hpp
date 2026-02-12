@@ -4,7 +4,7 @@
 
 #include "specfem/element.hpp"
 #include "specfem/element_coupling.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 #include <type_traits>
 static constexpr specfem::element::dimension_tag dimension_tag_ =

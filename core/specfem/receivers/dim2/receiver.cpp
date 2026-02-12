@@ -1,9 +1,7 @@
-#include "globals.h"
-
 #include "specfem/enums.hpp"
 #include "specfem/receivers.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
 
 std::string
 specfem::receivers::receiver<specfem::element::dimension_tag::dim2>::print()

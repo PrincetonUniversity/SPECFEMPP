@@ -1,9 +1,9 @@
 #include "gaussianhdur.hpp"
-#include "constants.hpp"
 #include "impl/time_functions.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -32,8 +32,7 @@ specfem::source_time_functions::GaussianHdur::GaussianHdur(
 
   // The half duration is then based on the empirical relation to of a
   // triangular source time function
-  this->hdur_ =
-      this->hdur_ / specfem::constants::empirical::SOURCE_DECAY_MIMIC_TRIANGLE;
+  this->hdur_ = this->hdur_ / specfem::constants::SOURCE_DECAY_MIMIC_TRIANGLE;
 }
 
 specfem::source_time_functions::GaussianHdur::GaussianHdur(

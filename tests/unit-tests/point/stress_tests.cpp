@@ -1,8 +1,8 @@
 #include "specfem/enums.hpp"
 #include "specfem/point/jacobian_matrix.hpp"
 #include "specfem/point/stress.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
 #include "test_helper.hpp"
 #include "test_macros.hpp"
 #include <Kokkos_Core.hpp>

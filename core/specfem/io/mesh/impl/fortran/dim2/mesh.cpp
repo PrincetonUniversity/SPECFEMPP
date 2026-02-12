@@ -12,7 +12,7 @@
 #include "specfem/io/mesh/impl/fortran/dim2/read_parameters.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/medium_container.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 // External/Standard Libraries
 #include <Kokkos_Core.hpp>

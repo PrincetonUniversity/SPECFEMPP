@@ -102,8 +102,6 @@ PYBIND11_MODULE(_core, m) {
         Finalize SPECFEM++.
     )pbdoc");
 
-  m.attr("_default_file_path") = __default_file__;
-
 #ifdef VERSION_INFO
   m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 #else
