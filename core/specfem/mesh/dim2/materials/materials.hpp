@@ -61,7 +61,8 @@ template <> struct materials<specfem::element::dimension_tag::dim2> {
 
     material(const int n_materials,
              const std::vector<specfem::medium_container::material<
-                 dimension_tag, type, property, attenuation> > &l_material);
+                 dimension_tag, type, property, attenuation> > &l_materials)
+        : n_materials(n_materials), element_materials(l_materials) {}
   };
 
   int n_materials = 0; ///< Total number of different materials
