@@ -23,7 +23,6 @@ add_subdirectory(shape_function)
 add_subdirectory(solver)
 add_subdirectory(source)
 add_subdirectory(source_time_functions)
-add_subdirectory(tags)
 add_subdirectory(timescheme)
 add_subdirectory(utilities)
 
