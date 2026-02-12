@@ -10,8 +10,8 @@ target_link_libraries(
         specfem_solver
         Kokkos::kokkos
         specfem::timescheme
-        specfem::compute
         specfem::periodic_tasks
         specfem::logger
         specfem::io
+        specfem::assembly
 )
