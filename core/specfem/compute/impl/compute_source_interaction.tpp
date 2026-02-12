@@ -10,6 +10,7 @@
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
+#include "compute_source_interaction.hpp"
 #include <Kokkos_Core.hpp>
 
 template <int NGLL, typename Tags>
