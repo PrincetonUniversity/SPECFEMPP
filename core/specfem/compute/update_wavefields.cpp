@@ -48,9 +48,12 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
             _dimension_tag_, _interface_tag_>::self_medium();
         if constexpr (DimensionTag == _dimension_tag_ &&
                       self_medium == MediumTag) {
-          impl::compute_coupling<_dimension_tag_, _connection_tag_,
-                                 WavefieldType, NGLL, NGLL, _interface_tag_,
-                                 _boundary_tag_, _flux_scheme_tag_>(assembly);
+          impl::compute_coupling<
+              NGLL, NGLL,
+              specfem::tags::Tags<_dimension_tag_, _connection_tag_,
+                                  WavefieldType, _interface_tag_,
+                                  _boundary_tag_, _flux_scheme_tag_> >(
+              assembly);
           // second ngll is the number of quadrature points on the mortar.
         }
       })
@@ -65,9 +68,11 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
       {
         if constexpr (DimensionTag == _dimension_tag_ &&
                       MediumTag == _medium_tag_) {
-          impl::compute_source_interaction<DimensionTag, WavefieldType, NGLL,
-                                           _medium_tag_, _property_tag_,
-                                           _boundary_tag_>(assembly, istep);
+          impl::compute_source_interaction<
+              NGLL,
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
+                                  _property_tag_, _boundary_tag_> >(assembly,
+                                                                    istep);
         }
       })
 
@@ -96,7 +101,8 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
       {
         if constexpr (DimensionTag == _dimension_tag_ &&
                       MediumTag == _medium_tag_) {
-          impl::divide_mass_matrix<DimensionTag, WavefieldType, _medium_tag_>(
+          impl::divide_mass_matrix<
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_> >(
               assembly);
         }
       })

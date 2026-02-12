@@ -19,11 +19,9 @@ namespace impl {
  * @tparam MediumTag Medium tag (e.g., elastic, acoustic)
  *
  */
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType,
-          specfem::element::medium_tag MediumTag>
+template <typename Tags>
 void invert_mass_matrix(
-    const specfem::assembly::assembly<DimensionTag> &assembly);
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly);
 } // namespace impl
 
 } // namespace compute

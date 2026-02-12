@@ -12,23 +12,19 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType, int NGLL,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::boundary_tag BoundaryTag>
+template <int NGLL, typename Tags>
 void specfem::compute::impl::compute_source_interaction(
-    specfem::assembly::assembly<DimensionTag> &assembly, const int &timestep) {
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly, const int &timestep) {
 
-  constexpr auto medium_tag = MediumTag;
-  constexpr auto property_tag = PropertyTag;
-  constexpr auto boundary_tag = BoundaryTag;
-  constexpr auto dimension = DimensionTag;
-  constexpr auto wavefield = WavefieldType;
+  constexpr auto medium_tag = Tags::medium_tag;
+  constexpr auto property_tag = Tags::property_tag;
+  constexpr auto boundary_tag = Tags::boundary_tag;
+  constexpr auto dimension_tag = Tags::dimension_tag;
+  constexpr auto wavefield = Tags::wavefield_tag;
 
   const auto [element_indices, source_indices] =
-      assembly.sources.get_sources_on_device(MediumTag, PropertyTag,
-                                             BoundaryTag, WavefieldType);
+      assembly.sources.get_sources_on_device(medium_tag, property_tag,
+                                             boundary_tag, wavefield);
 
   // Get the element grid (ngllx, ngllz)
   const auto &element_grid = assembly.mesh.element_grid;
@@ -54,12 +50,12 @@ void specfem::compute::impl::compute_source_interaction(
   sources.update_timestep(timestep);
 
   using PointSourceType =
-      specfem::point::source<dimension, medium_tag, wavefield>;
+      specfem::point::source<dimension_tag, medium_tag, wavefield>;
   using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+      specfem::point::properties<dimension_tag, medium_tag, property_tag, false>;
   using PointBoundaryType =
-      specfem::point::boundary<boundary_tag, dimension, false>;
-  using PointIndexType = specfem::point::mapped_index<dimension, false>;
+      specfem::point::boundary<boundary_tag, dimension_tag, false>;
+  using PointIndexType = specfem::point::mapped_index<dimension_tag, false>;
 
   using simd = specfem::datatype::simd<type_real, false>;
 
@@ -72,7 +68,7 @@ void specfem::compute::impl::compute_source_interaction(
 #endif
 
   using ParallelConfig =
-      specfem::parallel_configuration::chunk_config<dimension, 1, 1, nthreads,
+      specfem::parallel_configuration::chunk_config<dimension_tag, 1, 1, nthreads,
                                              lane_size, simd,
                                              Kokkos::DefaultExecutionSpace>;
 

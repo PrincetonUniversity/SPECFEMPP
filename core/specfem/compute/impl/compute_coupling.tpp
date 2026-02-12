@@ -16,21 +16,17 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType,
-          specfem::element_coupling::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag,
-          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
+template <int NGLL, int NQuad_intersection, typename Tags>
 void specfem::compute::impl::compute_coupling_weakly_conforming(
-    const specfem::assembly::assembly<DimensionTag> &assembly) {
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
 
-  constexpr static auto dimension_tag = DimensionTag;
+  constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static auto connection_tag =
       specfem::element_connections::type::weakly_conforming;
-  constexpr static auto interface_tag = InterfaceTag;
-  constexpr static auto boundary_tag = BoundaryTag;
-  constexpr static auto wavefield = WavefieldType;
-  constexpr static auto flux_scheme_tag = FluxSchemeTag;
+  constexpr static auto interface_tag = Tags::interface_tag;
+  constexpr static auto boundary_tag = Tags::boundary_tag;
+  constexpr static auto wavefield = Tags::wavefield_tag;
+  constexpr static auto flux_scheme_tag = Tags::flux_scheme_tag;
 
   static_assert(flux_scheme_tag == specfem::element_coupling::flux_scheme_tag::natural,
                 "Currently, we are enforcing only one flux scheme: natural");
@@ -60,7 +56,7 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
 
   using parallel_config =
       specfem::parallel_configuration::default_chunk_edge_config<
-          DimensionTag, Kokkos::DefaultExecutionSpace>;
+          dimension_tag, Kokkos::DefaultExecutionSpace>;
 
   using CoupledFieldType = typename specfem::element_coupling::attributes<
       dimension_tag, interface_tag>::template coupled_field_t<connection_tag>;
@@ -96,7 +92,7 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
         PointBoundaryType point_boundary;
         specfem::assembly::load_on_device(index.self_index, boundaries,
                                           point_boundary);
-        if constexpr (BoundaryTag ==
+        if constexpr (boundary_tag ==
                       specfem::element::boundary_tag::acoustic_free_surface) {
           specfem::boundary_conditions::apply_boundary_conditions(
               point_boundary, self_field);
@@ -109,24 +105,19 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
   return;
 }
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType, int NGLL,
-          int NQuad_intersection,
-          specfem::element_coupling::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag,
-          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
+template <int NGLL, int NQuad_intersection, typename Tags>
 void specfem::compute::impl::compute_coupling_nonconforming(
-    const specfem::assembly::assembly<DimensionTag> &assembly) {
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
 
   constexpr bool using_simd = false;
 
-  constexpr static auto dimension_tag = DimensionTag;
+  constexpr static auto dimension_tag = Tags::dimension_tag;
   constexpr static auto connection_tag =
       specfem::element_connections::type::nonconforming;
-  constexpr static auto interface_tag = InterfaceTag;
-  constexpr static auto boundary_tag = BoundaryTag;
-  constexpr static auto wavefield = WavefieldType;
-  constexpr static auto flux_scheme_tag = FluxSchemeTag;
+  constexpr static auto interface_tag = Tags::interface_tag;
+  constexpr static auto boundary_tag = Tags::boundary_tag;
+  constexpr static auto wavefield = Tags::wavefield_tag;
+  constexpr static auto flux_scheme_tag = Tags::flux_scheme_tag;
 
   static_assert(flux_scheme_tag == specfem::element_coupling::flux_scheme_tag::natural,
                 "Currently, we are enforcing only one flux scheme: natural");
@@ -145,7 +136,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
 
   using parallel_config =
       specfem::parallel_configuration::default_chunk_edge_config<
-          DimensionTag, Kokkos::DefaultExecutionSpace>;
+          dimension_tag, Kokkos::DefaultExecutionSpace>;
 
   // As written, field types cannot readily be defined in attributes. Define
   // them here.
@@ -156,7 +147,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
       specfem::element_coupling::attributes<dimension_tag,
                                      interface_tag>::coupled_medium();
   using CoupledFieldType = std::conditional_t<
-      InterfaceTag == specfem::element_coupling::interface_tag::acoustic_elastic,
+      interface_tag == specfem::element_coupling::interface_tag::acoustic_elastic,
       specfem::chunk_edge::displacement<parallel_config::chunk_size, NGLL,
                                         dimension_tag, coupled_medium,
                                         using_simd>,
@@ -173,7 +164,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
 
   using InterfaceFieldViewType = specfem::datatype::VectorChunkEdgeViewType<
       type_real, dimension_tag, parallel_config::chunk_size, NQuad_intersection,
-      specfem::element::attributes<DimensionTag, self_medium>::components,
+      specfem::element::attributes<dimension_tag, self_medium>::components,
       using_simd, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
@@ -226,7 +217,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
                   point_boundary;
               specfem::assembly::load_on_device(self_index, assembly.boundaries,
                                                 point_boundary);
-              if constexpr (BoundaryTag == specfem::element::boundary_tag::
+              if constexpr (boundary_tag == specfem::element::boundary_tag::
                                                acoustic_free_surface) {
                 specfem::boundary_conditions::apply_boundary_conditions(
                     point_boundary, self_field);

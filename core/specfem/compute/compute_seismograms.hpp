@@ -3,6 +3,8 @@
 #include "impl/compute_seismograms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/macros.hpp"
+#include "specfem/tags.hpp"
 
 namespace specfem::compute {
 /**
@@ -30,9 +32,10 @@ void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
        ATTENUATION_TAG(NONE)),
       {
         if constexpr (DimensionTag == _dimension_tag_) {
-          impl::compute_seismograms<WavefieldType, DimensionTag, NGLL,
-                                    _medium_tag_, _property_tag_>(assembly,
-                                                                  isig_step);
+          impl::compute_seismograms<
+              NGLL, specfem::tags::Tags<DimensionTag, WavefieldType,
+                                        _medium_tag_, _property_tag_> >(
+              assembly, isig_step);
         }
       })
 }

@@ -22,11 +22,9 @@ namespace impl {
  * @tparam BoundaryTag Boundary tag (e.g., none, stacey)
  *
  */
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType,
-          specfem::element::medium_tag MediumTag>
+template <typename Tags>
 void divide_mass_matrix(
-    const specfem::assembly::assembly<DimensionTag> &assembly);
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly);
 } // namespace impl
 
 } // namespace compute

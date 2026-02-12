@@ -13,27 +13,23 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType, int NGLL,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::boundary_tag BoundaryTag>
+template <int NGLL, typename Tags>
 void specfem::compute::impl::compute_mass_matrix(
     const type_real &dt,
-    const specfem::assembly::assembly<DimensionTag> &assembly) {
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
 
-  constexpr auto dimension_tag = DimensionTag;
-  constexpr auto wavefield = WavefieldType;
-  constexpr auto medium_tag = MediumTag;
-  constexpr auto property_tag = PropertyTag;
-  constexpr auto boundary_tag = BoundaryTag;
+  constexpr auto dimension_tag = Tags::dimension_tag;
+  constexpr auto wavefield = Tags::wavefield_tag;
+  constexpr auto medium_tag = Tags::medium_tag;
+  constexpr auto property_tag = Tags::property_tag;
+  constexpr auto boundary_tag = Tags::boundary_tag;
 
   // Get the number of components for the element
   constexpr int components =
       specfem::element::attributes<dimension_tag, medium_tag>::components;
 
   const auto elements = assembly.element_types.get_elements_on_device(
-      MediumTag, PropertyTag, BoundaryTag);
+      medium_tag, property_tag, boundary_tag);
 
   // Get number of elements matching the tag combinations
   const int nelements = elements.extent(0);
@@ -57,7 +53,7 @@ void specfem::compute::impl::compute_mass_matrix(
   constexpr bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd = (DimensionTag == specfem::element::dimension_tag::dim2) ? true : false;
+  constexpr bool using_simd = (dimension_tag == specfem::element::dimension_tag::dim2) ? true : false;
 #endif
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
