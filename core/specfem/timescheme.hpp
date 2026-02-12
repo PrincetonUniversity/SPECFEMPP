@@ -21,4 +21,3 @@ namespace specfem::time_scheme {}
 
 // Specific time schemes: Newmark
 #include "specfem/timescheme/newmark.hpp"
-#include "specfem/timescheme/newmark.tpp"
