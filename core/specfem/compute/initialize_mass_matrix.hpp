@@ -19,10 +19,13 @@ namespace specfem::compute {
  * @param assembly The assembly object containing the mesh
  * @param dt Time step for the simulation
  */
-template <specfem::simulation::field_type WavefieldType,
-          specfem::element::dimension_tag DimensionTag, int NGLL>
-void initialize_mass_matrix(specfem::assembly::assembly<DimensionTag> &assembly,
-                            const type_real &dt) {
+template <int NGLL, typename Tags>
+void initialize_mass_matrix(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const type_real &dt) {
+  constexpr auto DimensionTag = Tags::dimension_tag;
+  constexpr auto WavefieldType = Tags::wavefield_tag;
+
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3),
        MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
