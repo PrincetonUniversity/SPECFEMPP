@@ -10,6 +10,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/tags.hpp"
 
 namespace specfem::compute {
 /**
@@ -81,8 +82,10 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
         if constexpr (DimensionTag == _dimension_tag_ &&
                       MediumTag == _medium_tag_) {
           elements_updated += impl::compute_stiffness_interaction<
-              DimensionTag, WavefieldType, NGLL, _medium_tag_, _property_tag_,
-              _boundary_tag_>(assembly, istep);
+              NGLL,
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
+                                  _property_tag_, _boundary_tag_> >(assembly,
+                                                                    istep);
         }
       })
 
