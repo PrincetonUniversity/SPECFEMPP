@@ -10,6 +10,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/tags.hpp"
 
 namespace specfem::compute {
 /**
@@ -47,9 +48,12 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
             _dimension_tag_, _interface_tag_>::self_medium();
         if constexpr (DimensionTag == _dimension_tag_ &&
                       self_medium == MediumTag) {
-          impl::compute_coupling<_dimension_tag_, _connection_tag_,
-                                 WavefieldType, NGLL, NGLL, _interface_tag_,
-                                 _boundary_tag_, _flux_scheme_tag_>(assembly);
+          impl::compute_coupling<
+              NGLL, NGLL,
+              specfem::tags::Tags<_dimension_tag_, _connection_tag_,
+                                  WavefieldType, _interface_tag_,
+                                  _boundary_tag_, _flux_scheme_tag_> >(
+              assembly);
           // second ngll is the number of quadrature points on the mortar.
         }
       })
@@ -64,9 +68,11 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
       {
         if constexpr (DimensionTag == _dimension_tag_ &&
                       MediumTag == _medium_tag_) {
-          impl::compute_source_interaction<DimensionTag, WavefieldType, NGLL,
-                                           _medium_tag_, _property_tag_,
-                                           _boundary_tag_>(assembly, istep);
+          impl::compute_source_interaction<
+              NGLL,
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
+                                  _property_tag_, _boundary_tag_> >(assembly,
+                                                                    istep);
         }
       })
 
@@ -81,8 +87,10 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
         if constexpr (DimensionTag == _dimension_tag_ &&
                       MediumTag == _medium_tag_) {
           elements_updated += impl::compute_stiffness_interaction<
-              DimensionTag, WavefieldType, NGLL, _medium_tag_, _property_tag_,
-              _boundary_tag_>(assembly, istep);
+              NGLL,
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
+                                  _property_tag_, _boundary_tag_> >(assembly,
+                                                                    istep);
         }
       })
 
@@ -93,7 +101,8 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
       {
         if constexpr (DimensionTag == _dimension_tag_ &&
                       MediumTag == _medium_tag_) {
-          impl::divide_mass_matrix<DimensionTag, WavefieldType, _medium_tag_>(
+          impl::divide_mass_matrix<
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_> >(
               assembly);
         }
       })
@@ -101,42 +110,3 @@ int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
   return elements_updated;
 }
 } // namespace specfem::compute
-
-#define EXPLICIT_INSTANTIATION_UPDATE_WAVEFIELDS(FIELD, DIM, NGLL, MEDIUM)     \
-  template int specfem::compute::update_wavefields<                            \
-      specfem::simulation::field_type::FIELD,                                  \
-      specfem::element::dimension_tag::DIM, NGLL,                              \
-      specfem::element::medium_tag::MEDIUM>(                                   \
-      specfem::assembly::assembly<specfem::element::dimension_tag::DIM> &,     \
-      const int);
-
-#define INSTANTIATE_ALL_FIELDS(DIM, NGLL, MEDIUM)                              \
-  EXPLICIT_INSTANTIATION_UPDATE_WAVEFIELDS(forward, DIM, NGLL, MEDIUM)         \
-  EXPLICIT_INSTANTIATION_UPDATE_WAVEFIELDS(backward, DIM, NGLL, MEDIUM)        \
-  EXPLICIT_INSTANTIATION_UPDATE_WAVEFIELDS(adjoint, DIM, NGLL, MEDIUM)
-
-// DIM2
-INSTANTIATE_ALL_FIELDS(dim2, 5, elastic)
-INSTANTIATE_ALL_FIELDS(dim2, 5, elastic_psv)
-INSTANTIATE_ALL_FIELDS(dim2, 5, elastic_sh)
-INSTANTIATE_ALL_FIELDS(dim2, 5, acoustic)
-INSTANTIATE_ALL_FIELDS(dim2, 5, poroelastic)
-INSTANTIATE_ALL_FIELDS(dim2, 5, elastic_psv_t)
-
-INSTANTIATE_ALL_FIELDS(dim2, 8, elastic)
-INSTANTIATE_ALL_FIELDS(dim2, 8, elastic_psv)
-INSTANTIATE_ALL_FIELDS(dim2, 8, elastic_sh)
-INSTANTIATE_ALL_FIELDS(dim2, 8, acoustic)
-INSTANTIATE_ALL_FIELDS(dim2, 8, poroelastic)
-INSTANTIATE_ALL_FIELDS(dim2, 8, elastic_psv_t)
-
-// DIM3
-INSTANTIATE_ALL_FIELDS(dim3, 5, elastic)
-INSTANTIATE_ALL_FIELDS(dim3, 5, elastic_psv)
-INSTANTIATE_ALL_FIELDS(dim3, 5, elastic_sh)
-INSTANTIATE_ALL_FIELDS(dim3, 5, acoustic)
-INSTANTIATE_ALL_FIELDS(dim3, 5, poroelastic)
-INSTANTIATE_ALL_FIELDS(dim3, 5, elastic_psv_t)
-
-#undef INSTANTIATE_ALL_FIELDS
-#undef EXPLICIT_INSTANTIATION_UPDATE_WAVEFIELDS

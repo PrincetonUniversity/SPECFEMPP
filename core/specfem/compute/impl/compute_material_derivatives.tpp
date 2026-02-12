@@ -10,12 +10,15 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::element::dimension_tag DimensionTag, int NGLL,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+template <int NGLL, typename Tags>
 void specfem::compute::impl::compute_material_derivatives(
-    const specfem::assembly::assembly<DimensionTag> &assembly,
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const type_real &dt) {
+
+  constexpr auto dimension_tag = Tags::dimension_tag;
+  constexpr auto medium_tag = Tags::medium_tag;
+  constexpr auto property_tag = Tags::property_tag;
+
   auto &properties = assembly.properties;
   auto &kernels = assembly.kernels;
   auto &adjoint_field = assembly.fields.adjoint;
@@ -24,7 +27,7 @@ void specfem::compute::impl::compute_material_derivatives(
   auto &jacobian_matrix = assembly.jacobian_matrix;
 
   const auto elements =
-      assembly.element_types.get_elements_on_device(MediumTag, PropertyTag, specfem::element::attenuation_tag::none);
+      assembly.element_types.get_elements_on_device(medium_tag, property_tag, specfem::element::attenuation_tag::none);
 
   const int nelements = elements.extent(0);
 
@@ -45,36 +48,36 @@ void specfem::compute::impl::compute_material_derivatives(
   constexpr bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd = (DimensionTag == specfem::element::dimension_tag::dim2) ? true : false;
+  constexpr bool using_simd = (dimension_tag == specfem::element::dimension_tag::dim2) ? true : false;
 #endif
 
 
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
-      DimensionTag, simd, Kokkos::DefaultExecutionSpace>;
+      dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
 
   using ChunkElementFieldType =
       specfem::chunk_element::displacement<specfem::parallel_configuration::chunk_size,
-                                           NGLL, DimensionTag, MediumTag,
+                                           NGLL, dimension_tag, medium_tag,
                                            using_simd>;
 
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
-      NGLL, DimensionTag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
+      NGLL, dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
   using PointDisplacementType =
-      specfem::point::displacement<DimensionTag, MediumTag, using_simd>;
+      specfem::point::displacement<dimension_tag, medium_tag, using_simd>;
   using PointVelocityType =
-      specfem::point::velocity<DimensionTag, MediumTag, using_simd>;
+      specfem::point::velocity<dimension_tag, medium_tag, using_simd>;
   using PointAccelerationType =
-      specfem::point::acceleration<DimensionTag, MediumTag, using_simd>;
+      specfem::point::acceleration<dimension_tag, medium_tag, using_simd>;
 
   using PointFieldDerivativesType =
-      specfem::point::field_derivatives<DimensionTag, MediumTag, using_simd>;
+      specfem::point::field_derivatives<dimension_tag, medium_tag, using_simd>;
 
   using PointPropertiesType =
-      specfem::point::properties<DimensionTag, MediumTag, PropertyTag,
+      specfem::point::properties<dimension_tag, medium_tag, property_tag,
                                  using_simd>;
 
   int scratch_size = 2 * ChunkElementFieldType::shmem_size() +

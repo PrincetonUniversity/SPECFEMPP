@@ -20,7 +20,6 @@ target_link_libraries(specfem_program
         specfem::receivers
         specfem::io
         periodic_tasks
-        specfem::compute
         specfem::solver
         # Add MPI dependency when available
         $<TARGET_NAME_IF_EXISTS:MPI::MPI_CXX>
