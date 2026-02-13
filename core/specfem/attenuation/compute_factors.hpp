@@ -78,3 +78,5 @@ type_real get_attenuation_scale_factor(
 
 } // namespace attenuation
 } // namespace specfem
+
+#include "compute_factors.tpp"

@@ -122,3 +122,5 @@ compute_tau_eps(
 
 } // namespace attenuation
 } // namespace specfem
+
+#include "compute_tau_eps.tpp"

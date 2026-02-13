@@ -13,6 +13,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/chunk_element.hpp"
 #include "specfem/point.hpp"
+#include "compute_stiffness_interaction.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 

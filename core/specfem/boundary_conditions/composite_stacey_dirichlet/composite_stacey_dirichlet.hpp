@@ -73,3 +73,5 @@ KOKKOS_FUNCTION void impl_compute_mass_matrix_terms(
 
 } // namespace boundary_conditions
 } // namespace specfem
+
+#include "composite_stacey_dirichlet.tpp"

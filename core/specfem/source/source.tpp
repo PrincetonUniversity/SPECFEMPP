@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/source.hpp"
+#include "source.hpp"
 
 #include "specfem/setup.hpp"
 #include <yaml-cpp/yaml.h>
