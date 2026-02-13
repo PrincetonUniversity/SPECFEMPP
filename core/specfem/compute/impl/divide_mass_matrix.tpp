@@ -4,6 +4,7 @@
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
+#include "divide_mass_matrix.hpp"
 #include <Kokkos_Core.hpp>
 
 template <typename Tags>

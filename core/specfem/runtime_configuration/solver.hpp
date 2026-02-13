@@ -72,3 +72,5 @@ private:
 };
 } // namespace runtime_configuration
 } // namespace specfem
+
+#include "solver.tpp"

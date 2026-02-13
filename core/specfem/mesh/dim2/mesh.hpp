@@ -6,7 +6,6 @@
 #include "elements/axial_elements.hpp"
 #include "elements/tangential_elements.hpp"
 #include "materials/materials.hpp"
-#include "materials/materials.tpp"
 #include "parameters/parameters.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
