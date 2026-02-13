@@ -1,3 +1,16 @@
+# Precompiled header library (third-party & stdlib headers)
+add_library(specfem_pch STATIC pch_stub.cpp)
+add_library(specfem::pch ALIAS specfem_pch)
+target_precompile_headers(specfem_pch
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/pch.hpp
+)
+target_link_libraries(specfem_pch
+    PUBLIC
+        Kokkos::kokkos
+        ${BOOST_LIBS}
+)
+
 # Add existing subdirectories
 add_subdirectory(algorithms)
 add_subdirectory(assembly)

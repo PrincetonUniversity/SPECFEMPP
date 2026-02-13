@@ -6,6 +6,8 @@ add_library(
 )
 add_library(specfem::solver ALIAS specfem_solver)
 
+target_precompile_headers(specfem_solver REUSE_FROM specfem_pch)
+
 target_link_libraries(
         specfem_solver
         Kokkos::kokkos

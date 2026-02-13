@@ -352,6 +352,7 @@ target_link_libraries(
   -lpthread -lm
   gtest_main
 )
+target_precompile_headers(nonconforming_tests REUSE_FROM specfem_pch)
 
 # add_executable(
 #   compute_jacobian_matrix_tests
@@ -454,6 +455,7 @@ target_link_libraries(
   -lpthread -lm
   gtest_main
 )
+target_precompile_headers(nonconforming_assembly_tests REUSE_FROM specfem_pch)
 
 
 add_executable(
@@ -489,6 +491,7 @@ add_executable(
 #Set unity build off
 target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
 set_target_properties(assembly_tests PROPERTIES UNITY_BUILD OFF)
+target_precompile_headers(assembly_tests REUSE_FROM specfem_pch)
 
 target_link_libraries(
   assembly_tests
@@ -533,6 +536,7 @@ target_link_libraries(
   gtest_main
   -lpthread -lm
 )
+target_precompile_headers(assembly_receivers_tests REUSE_FROM specfem_pch)
 
 add_executable(
   io_tests
@@ -625,6 +629,7 @@ target_link_libraries(
 
 # Turn unity build off for gradient_tests
 set_target_properties(gradient_tests PROPERTIES UNITY_BUILD OFF)
+target_precompile_headers(gradient_tests REUSE_FROM specfem_pch)
 
 add_executable(
   transfer_tests
@@ -673,6 +678,7 @@ target_link_libraries(
   ${BOOST_LIBS}
   -lpthread -lm
 )
+target_precompile_headers(chunked_edge_tests REUSE_FROM specfem_pch)
 
 add_executable(
   chunked_face_tests
@@ -839,6 +845,7 @@ target_link_libraries(
   ${BOOST_LIBS}
   -lpthread -lm
 )
+target_precompile_headers(displacement_newmark_2d_tests REUSE_FROM specfem_pch)
 
 
 add_executable(
@@ -863,6 +870,7 @@ target_link_libraries(
   ${BOOST_LIBS}
   -lpthread -lm
 )
+target_precompile_headers(displacement_newmark_3d_tests REUSE_FROM specfem_pch)
 
 # add_executable(
 #   seismogram_elastic_tests

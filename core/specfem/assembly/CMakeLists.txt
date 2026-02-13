@@ -3,6 +3,8 @@ file(GLOB_RECURSE COMPUTE_SOURCE_FILES "*.cpp")
 add_library(assembly ${COMPUTE_SOURCE_FILES})
 add_library(specfem::assembly ALIAS assembly)
 
+target_precompile_headers(assembly REUSE_FROM specfem_pch)
+
 target_link_libraries(
         assembly
         PUBLIC
