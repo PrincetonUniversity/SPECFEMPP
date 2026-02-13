@@ -15,18 +15,14 @@
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::simulation::field_type WavefieldType,
-            specfem::element::dimension_tag DimensionTag,
-          int NGLL,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+template <int NGLL, typename Tags>
 void specfem::compute::impl::compute_seismograms(
-    specfem::assembly::assembly<DimensionTag> &assembly, const int &isig_step) {
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly, const int &isig_step) {
 
-  constexpr auto dimension_tag = DimensionTag;
-  constexpr auto medium_tag = MediumTag;
-  constexpr auto property_tag = PropertyTag;
-  constexpr auto wavefield_simulation_field = WavefieldType;
+  constexpr auto dimension_tag = Tags::dimension_tag;
+  constexpr auto medium_tag = Tags::medium_tag;
+  constexpr auto property_tag = Tags::property_tag;
+  constexpr auto wavefield_simulation_field = Tags::wavefield_tag;
   constexpr int ngll = NGLL;
 
   const auto [elements, receiver_indices] =

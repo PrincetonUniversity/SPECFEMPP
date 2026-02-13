@@ -1,0 +1,6 @@
+#include "initialize_mass_matrix.hpp"
+#include "impl/compute_mass_matrix.hpp"
+#include "impl/compute_mass_matrix.tpp"
+#include "impl/invert_mass_matrix.hpp"
+#include "impl/invert_mass_matrix.tpp"
+#include "specfem/enums.hpp"

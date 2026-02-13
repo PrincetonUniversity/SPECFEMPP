@@ -834,7 +834,6 @@ target_link_libraries(
   timescheme
   point
   specfem::algorithms
-  specfem::compute
   specfem::solver
   specfem::periodic_tasks
   ${BOOST_LIBS}
@@ -859,7 +858,6 @@ target_link_libraries(
   timescheme
   point
   specfem::algorithms
-  specfem::compute
   specfem::solver
   specfem::periodic_tasks
   ${BOOST_LIBS}

@@ -3,6 +3,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/tags.hpp"
 
 namespace specfem {
 namespace compute {
@@ -30,13 +31,9 @@ namespace impl {
  *
  * @return Number of processed elements matching template parameters
  */
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType, int NGLL,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::boundary_tag BoundaryTag>
+template <int NGLL, typename Tags>
 int compute_stiffness_interaction(
-    const specfem::assembly::assembly<DimensionTag> &assembly,
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int &istep);
 } // namespace impl
 } // namespace compute

@@ -2,7 +2,7 @@
 
 #include "specfem/solver/time_marching.hpp"
 #include "specfem/timescheme/newmark.hpp"
-#include "specfem/compute.hpp"
+#include "specfem/compute.tpp"
 #include "specfem/logger.hpp"
 #include <Kokkos_Core.hpp>
 

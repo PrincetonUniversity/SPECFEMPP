@@ -4,6 +4,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/tags.hpp"
 
 namespace specfem {
 namespace compute {
@@ -26,8 +27,10 @@ void compute_derivatives(
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC), ATTENUATION_TAG(NONE)),
       {
         if constexpr (DimensionTag == _dimension_tag_) {
-          impl::compute_material_derivatives<DimensionTag, NGLL, _medium_tag_,
-                                             _property_tag_>(assembly, dt);
+          impl::compute_material_derivatives<
+              NGLL,
+              specfem::tags::Tags<DimensionTag, _medium_tag_, _property_tag_> >(
+              assembly, dt);
         }
       })
 }

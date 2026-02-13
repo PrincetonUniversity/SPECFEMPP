@@ -24,12 +24,10 @@ namespace impl {
  * @param assembly SPECFEM++ assembly object.
  * @param isig_step Time step for which the seismograms are computed
  */
-template <specfem::simulation::field_type WavefieldType,
-          specfem::element::dimension_tag DimensionTag, int NGLL,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
-                         const int &isig_step);
+template <int NGLL, typename Tags>
+void compute_seismograms(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int &isig_step);
 
 } // namespace impl
 } // namespace compute

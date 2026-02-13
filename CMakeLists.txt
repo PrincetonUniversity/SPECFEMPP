@@ -144,6 +144,9 @@ include("${CMAKE_SOURCE_DIR}/cmake/yaml.cmake")
 # Find or install boost library function
 include("${CMAKE_SOURCE_DIR}/cmake/boost.cmake")
 
+# Install CLI11 header-only library
+include("${CMAKE_SOURCE_DIR}/cmake/cli11.cmake")
+
 # Find HDF5
 include("${CMAKE_SOURCE_DIR}/cmake/hdf5.cmake")
 
