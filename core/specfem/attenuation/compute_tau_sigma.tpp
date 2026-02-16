@@ -1,7 +1,7 @@
 #pragma once
 #include "compute_tau_sigma.hpp"
-#include "constants.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -29,7 +29,7 @@ compute_tau_sigma(const type_real min_period, const type_real max_period) {
       (exp2 - exp1) / (static_cast<type_real>(N_SLS) - 1);
 
   for (int i = 0; i < N_SLS; ++i) {
-    tau_s(i) = 1.0 / (pi * 2.0 * std::pow(10.0, exp1 + i * dexpval));
+    tau_s(i) = 1.0 / (specfem::constants::pi * 2.0 * std::pow(10.0, exp1 + i * dexpval));
   }
 
   return tau_s;

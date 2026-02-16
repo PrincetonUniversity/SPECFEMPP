@@ -6,7 +6,7 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/properties.hpp"
 #include "specfem/element.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem::assembly {
 

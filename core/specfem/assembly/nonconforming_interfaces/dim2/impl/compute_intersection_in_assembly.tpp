@@ -2,7 +2,7 @@
 #include "compute_intersection_in_assembly.hpp"
 #include "compute_intersection.hpp"
 #include "specfem/mesh_entity.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <sstream>
 #include <stdexcept>
 

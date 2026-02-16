@@ -1,7 +1,7 @@
 #pragma once
 
-#include "constants.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -17,6 +17,9 @@ namespace attenuation {
  * \f$f_1 = 1/T_{\text{max}}\f$ and \f$f_2 = 1/T_{\text{min}}\f$ be the minimum
  * and maximum frequencies, where \f$T_{\text{min}}\f$ and \f$T_{\text{max}}\f$
  * are the input minimum and maximum periods. and
+ * \f$f_1 = 1/T_{\text{max}}\f$ and \f$f_2 = 1/T_{\text{min}}\f$ be the minimum
+ * and maximum frequencies, where \f$T_{\text{min}}\f$ and \f$T_{\text{max}}\f$
+ * are the input minimum and maximum periods. and
  * \f[\Delta = \frac{\log_{10} f_2 - \log_{10} f_1}{N\_SLS - 1}.\f]
  * For index \f$i\in[0, N\_SLS-1]\f$ the relaxation time is
  * \f[\tau_{\sigma,i} = \frac{1}{2\pi\,10^{\log_{10} f_1 + i\Delta}}.\f]
@@ -25,6 +28,7 @@ namespace attenuation {
  * @param min_period Minimum period (s)
  * @param max_period Maximum period (s)
  * @return Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+ *
  * Kokkos::HostSpace>
  *
  * @code

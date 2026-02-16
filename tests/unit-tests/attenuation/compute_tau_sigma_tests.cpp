@@ -54,7 +54,7 @@ TEST(Attenuation_ComputeTauSigma, EquallySpacedInLog10Frequency) {
   // Then check that log10(f) values are equally spaced
   std::array<type_real, N_SLS> log_freq;
   for (int i = 0; i < N_SLS; ++i) {
-    type_real freq = 1.0 / (2.0 * pi * tau_s(i));
+    type_real freq = 1.0 / (2.0 * specfem::constants::pi * tau_s(i));
     log_freq[i] = std::log10(freq);
   }
 
@@ -80,8 +80,8 @@ TEST(Attenuation_ComputeTauSigma, BoundaryFrequenciesMatch) {
   type_real f_max = 1.0 / min_period; // 100 Hz
 
   // Convert tau_s to frequency: f = 1 / (2 * pi * tau_s)
-  type_real freq_first = 1.0 / (2.0 * pi * tau_s(0));
-  type_real freq_last = 1.0 / (2.0 * pi * tau_s(N_SLS - 1));
+  type_real freq_first = 1.0 / (2.0 * specfem::constants::pi * tau_s(0));
+  type_real freq_last = 1.0 / (2.0 * specfem::constants::pi * tau_s(N_SLS - 1));
 
   // First tau_s corresponds to f_min, last to f_max
   EXPECT_NEAR(freq_first, f_min, f_min * 1e-10)
@@ -124,8 +124,8 @@ TEST(Attenuation_ComputeTauSigma, TwoSLS) {
   // First should correspond to f_min, second to f_max
   type_real f_min = 1.0 / max_period;
   type_real f_max = 1.0 / min_period;
-  type_real freq_first = 1.0 / (2.0 * pi * tau_s(0));
-  type_real freq_last = 1.0 / (2.0 * pi * tau_s(1));
+  type_real freq_first = 1.0 / (2.0 * specfem::constants::pi * tau_s(0));
+  type_real freq_last = 1.0 / (2.0 * specfem::constants::pi * tau_s(1));
 
   EXPECT_NEAR(freq_first, f_min, f_min * 1e-10);
   EXPECT_NEAR(freq_last, f_max, f_max * 1e-10);

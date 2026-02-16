@@ -2,7 +2,7 @@
 
 #include "specfem/datatype.hpp"
 #include "specfem/execution.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 /**

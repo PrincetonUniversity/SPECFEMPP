@@ -1,6 +1,6 @@
 #pragma once
 
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -52,27 +52,35 @@ struct default_chunk_face_config;
 
 #if defined(KOKKOS_ENABLE_CUDA)
 template <>
-struct default_chunk_face_config<specfem::element::dimension_tag::dim3, Kokkos::Cuda>
-    : face_chunk_config<specfem::element::dimension_tag::dim3, 4, Kokkos::Cuda> {};
+struct default_chunk_face_config<specfem::element::dimension_tag::dim3,
+                                 Kokkos::Cuda>
+    : face_chunk_config<specfem::element::dimension_tag::dim3, 4,
+                        Kokkos::Cuda> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_HIP)
 
 template <>
-struct default_chunk_face_config<specfem::element::dimension_tag::dim3, Kokkos::HIP>
-    : face_chunk_config<specfem::element::dimension_tag::dim3, 8, Kokkos::HIP> {};
+struct default_chunk_face_config<specfem::element::dimension_tag::dim3,
+                                 Kokkos::HIP>
+    : face_chunk_config<specfem::element::dimension_tag::dim3, 8, Kokkos::HIP> {
+};
 #endif
 
 #if defined(KOKKOS_ENABLE_OPENMP)
 template <>
-struct default_chunk_face_config<specfem::element::dimension_tag::dim3, Kokkos::OpenMP>
-    : face_chunk_config<specfem::element::dimension_tag::dim3, 1, Kokkos::OpenMP> {};
+struct default_chunk_face_config<specfem::element::dimension_tag::dim3,
+                                 Kokkos::OpenMP>
+    : face_chunk_config<specfem::element::dimension_tag::dim3, 1,
+                        Kokkos::OpenMP> {};
 #endif
 
 #if defined(KOKKOS_ENABLE_SERIAL)
 template <>
-struct default_chunk_face_config<specfem::element::dimension_tag::dim3, Kokkos::Serial>
-    : face_chunk_config<specfem::element::dimension_tag::dim3, 1, Kokkos::Serial> {};
+struct default_chunk_face_config<specfem::element::dimension_tag::dim3,
+                                 Kokkos::Serial>
+    : face_chunk_config<specfem::element::dimension_tag::dim3, 1,
+                        Kokkos::Serial> {};
 
 template <>
 struct default_chunk_face_config<specfem::element::dimension_tag::dim3,

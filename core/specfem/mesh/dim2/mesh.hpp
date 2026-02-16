@@ -11,7 +11,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "tags/tags.hpp"
 #include <Kokkos_Core.hpp>
 

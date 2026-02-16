@@ -1,7 +1,7 @@
 #include "../SPECFEM_Environment.hpp"
 #include "math.h"
+#include "specfem/setup.hpp"
 #include "specfem/source_time_functions.hpp"
-#include "specfem_setup.hpp"
 #include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>

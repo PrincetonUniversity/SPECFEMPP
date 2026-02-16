@@ -153,7 +153,7 @@ TEST(Attenuation_Maxwell, SingleSLS) {
   // A = (1 + w^2 * tau_eps * tau_s) / denom
   // B = w * (tau_eps - tau_s) / denom
   for (int i = 0; i < NF; ++i) {
-    type_real w = 2.0 * pi * f(i);
+    type_real w = 2.0 * specfem::constants::pi * f(i);
     type_real w2 = w * w;
     type_real denom = 1.0 + w2 * tau_s(0) * tau_s(0);
 
@@ -231,8 +231,7 @@ TEST(Attenuation_Maxwell, HighFrequencyLimit) {
   for (int i = 0; i < NF; ++i) {
     EXPECT_NEAR(result.A(i), expected_A_limit, 1e-3)
         << "A should approach tau_eps/tau_s at high freq";
-    EXPECT_NEAR(result.B(i), 0.0, 1e-3)
-        << "B should approach 0 at high freq";
+    EXPECT_NEAR(result.B(i), 0.0, 1e-3) << "B should approach 0 at high freq";
   }
 }
 
@@ -266,9 +265,7 @@ TEST(Attenuation_Maxwell, NoAttenuation) {
   // B = (1/L) * Σ[w * 0 / denom] = 0
   // Use looser tolerance for A due to floating point precision
   for (int i = 0; i < NF; ++i) {
-    EXPECT_NEAR(result.A(i), 1.0, 1e-6)
-        << "A should be 1 with no attenuation";
-    EXPECT_NEAR(result.B(i), 0.0, 1e-10)
-        << "B should be 0 with no attenuation";
+    EXPECT_NEAR(result.A(i), 1.0, 1e-6) << "A should be 1 with no attenuation";
+    EXPECT_NEAR(result.B(i), 0.0, 1e-10) << "B should be 0 with no attenuation";
   }
 }

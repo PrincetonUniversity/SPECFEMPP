@@ -1,7 +1,7 @@
 #pragma once
 #include "compute_factors.hpp"
-#include "constants.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 #include <sstream>
@@ -52,7 +52,7 @@ type_real get_attenuation_scale_factor(
   // See Liu et al. 1976; Aki & Richards 1980, eq. (5.81)
   const type_real factor_scale_mu0 =
       1.0 +
-      2.0 * std::log(f_c_source / attenuation_f0_reference) / (pi * Q_val);
+      2.0 * std::log(f_c_source / attenuation_f0_reference) / (specfem::constants::pi * Q_val);
 
   // Quantity by which to scale mu to get mu_unrelaxed
   type_real sum_unrelaxed = 1.0;
@@ -62,7 +62,7 @@ type_real get_attenuation_scale_factor(
     const type_real defect = tau_eps(i) / tau_sigma(i) - 1.0;
     sum_unrelaxed += defect / N_SLS;
 
-    const type_real omega_tau = 2.0 * pi * f_c_source * tau_sigma(i);
+    const type_real omega_tau = 2.0 * specfem::constants::pi * f_c_source * tau_sigma(i);
     sum_weighted +=
         defect / (1.0 + 1.0 / (omega_tau * omega_tau)) / N_SLS;
   }

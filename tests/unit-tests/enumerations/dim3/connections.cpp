@@ -3,9 +3,9 @@
 #include "specfem/element_connections.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/quadrature.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/shape_function.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 #include <array>

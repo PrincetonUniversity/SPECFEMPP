@@ -187,6 +187,25 @@
         "SPECFEM_BUILD_BENCHMARKS": "ON",
         "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/release-mpi"
       }
+    },
+    {
+      "name": "profile-release",
+      "displayName": "Default Release -- SIMD enabled for Profiling",
+      "binaryDir": "build/profile-release",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/bin/profile-release",
+        "CMAKE_CXX_FLAGS": "-ftime-trace",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "SPECFEM_INSTALL": "ON",
+        "SPECFEM_BUILD_TESTS": "ON",
+        "SPECFEM_ENABLE_SIMD": "ON",
+        "SPECFEM_BUILD_BENCHMARKS": "ON",
+        "SPECFEM_BENCHMARKS_BUILD_DIR": "${sourceDir}/benchmarks/build/profile-release"
+      }
     }
   ],
   "buildPresets": [
@@ -256,6 +275,13 @@
     {
       "name": "release-mpi",
       "configurePreset": "release-mpi",
+      "targets": [
+        "all"
+      ]
+    },
+    {
+      "name": "profile-release",
+      "configurePreset": "profile-release",
       "targets": [
         "all"
       ]
