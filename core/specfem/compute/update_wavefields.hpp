@@ -20,9 +20,8 @@ namespace specfem::compute {
  * @param istep Time step for which the wavefield is updated
  * @return int Number of elements updated
  */
-template <specfem::simulation::field_type WavefieldType,
-          specfem::element::dimension_tag DimensionTag, int NGLL,
-          specfem::element::medium_tag MediumTag>
-int update_wavefields(specfem::assembly::assembly<DimensionTag> &assembly,
-                      const int istep);
+template <int NGLL, typename Tags>
+int update_wavefields(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int istep);
 } // namespace specfem::compute

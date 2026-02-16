@@ -17,10 +17,11 @@ namespace compute {
  * @param assembly Assembly object.
  * @param dt Time interval.
  */
-template <specfem::element::dimension_tag DimensionTag, int NGLL>
+template <int NGLL, typename Tags>
 void compute_derivatives(
-    const specfem::assembly::assembly<DimensionTag> &assembly,
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const type_real &dt) {
+  constexpr auto DimensionTag = Tags::dimension_tag;
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2),
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC),

@@ -19,10 +19,12 @@ namespace specfem::compute {
  * @param assembly The assembly object containing the mesh and other
  * @param isig_step Time step for which the seismograms are computed
  */
-template <specfem::simulation::field_type WavefieldType,
-          specfem::element::dimension_tag DimensionTag, int NGLL>
-void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
-                         const int &isig_step) {
+template <int NGLL, typename Tags>
+void compute_seismograms(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int &isig_step) {
+  constexpr auto DimensionTag = Tags::dimension_tag;
+  constexpr auto WavefieldType = Tags::wavefield_tag;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3),
