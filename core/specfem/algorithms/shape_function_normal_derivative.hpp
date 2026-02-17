@@ -56,13 +56,6 @@ shape_function_self_normal_derivatives(
                                self_edges.n_edges, ngllz, ngllx,
                                nquad_intersection);
 
-  //   using ParallelConfig =
-  //   specfem::parallel_configuration::default_chunk_config<
-  //       dimension_tag, specfem::datatype::simd<type_real, false
-  //       /*using_simd*/>, Kokkos::DefaultExecutionSpace>;
-  //   specfem::execution::ChunkedDomainIterator chunk(
-  //       ParallelConfig(), self_edges.element_index, element_grid);
-
   using parallel_config =
       specfem::parallel_configuration::default_chunk_edge_config<
           dimension_tag, Kokkos::DefaultExecutionSpace>;
@@ -98,21 +91,34 @@ shape_function_self_normal_derivatives(
               const auto edge_index =
                   chunk_index.get_iterator()(iedge).get_index();
 
+              /*
+               * We convert local coordinates / indices ix, iz
+               * into an edge-local coordinate system:
+               *
+               * ================================== ipoint_s = ix for top
+               *                  |                 and bottom, iz for left
+               *                  |                 and right
+               *                  |
+               *             ipoint_n = ngll-1
+               *
+               * ipoint_n = 0 represents the edge.
+               */
+
               const bool ipoint_n_is_ix =
                   edge_index.edge_type ==
                       specfem::mesh_entity::dim2::type::left ||
                   edge_index.edge_type ==
                       specfem::mesh_entity::dim2::type::right;
-              const int ipoint_s = ipoint_n_is_ix ? iz : ix;
-              int ipoint_n = ipoint_n_is_ix ? ix : iz;
               const int ngll_n = ipoint_n_is_ix ? ngllx : ngllz;
               const int ngll_s = ipoint_n_is_ix ? ngllz : ngllx;
 
+              const int ipoint_s = ipoint_n_is_ix ? iz : ix;
+              int ipoint_n = ipoint_n_is_ix ? ix : iz;
               if (edge_index.edge_type ==
                       specfem::mesh_entity::dim2::type::right ||
                   edge_index.edge_type ==
                       specfem::mesh_entity::dim2::type::top) {
-                // we want 0 to be on the edge
+                // flip ipoint_n coord so edge is 0
                 ipoint_n = ngll_n - 1 - ipoint_n;
               }
 

@@ -11,112 +11,6 @@
 #include "utilities/include/fixture/nonconforming_interface/quadrature.hpp"
 #include <gtest/gtest.h>
 
-template <typename EdgeTypesView>
-class ChunkEdgeIterator : public specfem::execution::TeamThreadRangePolicy<
-                              Kokkos::TeamPolicy<>::member_type, int> {
-private:
-  using KokkosIndexType = Kokkos::TeamPolicy<>::member_type;
-
-public:
-  using base_type =
-      specfem::execution::TeamThreadRangePolicy<KokkosIndexType, int>;
-  using execution_space = typename base_type::execution_space;
-  using index_type =
-      specfem::execution::EdgePointIndex<specfem::element::dimension_tag::dim2,
-                                         typename base_type::policy_index_type,
-                                         execution_space>;
-
-  KOKKOS_INLINE_FUNCTION
-  ChunkEdgeIterator(const EdgeTypesView &edge_types, const int &nedges,
-                    const int &ngllz, const int &ngllx,
-                    const KokkosIndexType &team_member)
-      : edge_types(edge_types), nedges(nedges), ngllz(ngllz), ngllx(ngllz),
-        num_points(std::max(ngllx, ngllz)),
-        base_type(team_member, nedges * std::max(ngllx, ngllz)),
-        global_offset(0) {}
-
-  KOKKOS_INLINE_FUNCTION
-  const index_type
-  operator()(const typename base_type::policy_index_type &i) const {
-    const int iedge = i % nedges;
-    const int ipoint = i / nedges;
-
-    const specfem::mesh_entity::dim2::type edge_type = edge_types(iedge);
-    const bool is_leftright =
-        (edge_type == specfem::mesh_entity::dim2::type::left ||
-         edge_type == specfem::mesh_entity::dim2::type::right);
-    const int num_points_norm = is_leftright ? ngllx : ngllz;
-
-    const int inorm = (edge_type == specfem::mesh_entity::dim2::type::bottom ||
-                       edge_type == specfem::mesh_entity::dim2::type::left)
-                          ? 0
-                          : num_points_norm - 1;
-
-    const int iz = is_leftright ? ipoint : inorm;
-    const int ix = is_leftright ? inorm : ipoint;
-
-    return index_type(
-        specfem::point::edge_index<specfem::element::dimension_tag::dim2>(
-            global_offset + iedge /*ispec*/, global_offset + iedge /*iedge*/,
-            ipoint, iz, ix, edge_type),
-        iedge, i);
-  }
-
-  const int nedges;
-
-private:
-  EdgeTypesView edge_types;
-  const int global_offset;
-  const int ngllz;
-  const int ngllx;
-  const int num_points;
-};
-
-template <typename EdgeTypesView> class ChunkEdgeIndex {
-public:
-  static constexpr auto accessor_type =
-      specfem::datatype::AccessorType::chunk_edge;
-  using KokkosIndexType = Kokkos::TeamPolicy<>::member_type;
-  using iterator_type = ChunkEdgeIterator<EdgeTypesView>;
-
-  /**
-   * @brief Get Kokkos team member index.
-   * @return Reference to Kokkos team member
-   */
-  KOKKOS_INLINE_FUNCTION
-  constexpr const KokkosIndexType &get_policy_index() const {
-    return this->kokkos_index;
-  }
-
-  /**
-   * @brief Construct chunk edge index.
-   * @param nedges Number of edges in chunk
-   * @param kokkos_index Kokkos team member
-   */
-  KOKKOS_INLINE_FUNCTION
-  ChunkEdgeIndex(const EdgeTypesView &edge_types, const int &nedges,
-                 const int &ngllz, const int &ngllx,
-                 const KokkosIndexType &kokkos_index)
-      : kokkos_index(kokkos_index), _nedges(nedges),
-        iterator(edge_types, nedges, ngllz, ngllx, kokkos_index) {}
-
-  /**
-   * @brief Get number of edges.
-   * @return Edge count
-   */
-  KOKKOS_INLINE_FUNCTION int nedges() const { return _nedges; }
-
-private:
-  int _nedges;                  ///< Number of edges in the chunk
-  KokkosIndexType kokkos_index; /**< Kokkos team member for this chunk */
-  iterator_type iterator;
-
-public:
-  KOKKOS_INLINE_FUNCTION const iterator_type &get_iterator() const {
-    return iterator;
-  }
-};
-
 /**
  * @brief Patches assembly::nonconforming_interfaces to not require mesh and
  * edge types.
@@ -318,21 +212,15 @@ void execute_simple_dshape_test() {
   specfem::assembly::EdgeView<Kokkos::DefaultExecutionSpace> edgelist(
       "dshape::edgelist", num_edges, nquad_element);
   {
-    specfem::assembly::EdgeView<Kokkos::DefaultExecutionSpace> h_edgelist(
-        "dshape::h_edgelist", num_edges, nquad_element);
+
+    std::vector<specfem::mesh_entity::edge<dimension_tag> > edge_collect;
     const auto element = specfem::mesh_entity::element(ngllz, ngllx);
     for (int iedge = 0; iedge < num_edges; iedge++) {
-      h_edgelist.element_index(iedge) = iedge;
-      h_edgelist.edge_index(iedge) = iedge;
-      h_edgelist.edge_types(iedge) = h_edge_types(iedge);
-
-      for (int ipoint = 0; ipoint < nquad_element; ipoint++) {
-        const auto [iz, ix] =
-            element.map_coordinates(h_edge_types(iedge), ipoint);
-        h_edgelist.iz(iedge, ipoint) = iz;
-        h_edgelist.ix(iedge, ipoint) = ix;
-      }
+      edge_collect.push_back({ iedge, iedge, side, false });
     }
+
+    const auto h_edgelist = specfem::assembly::edge_view_from_collected_edges(
+        "dshape::edgelist_host_mirror", edge_collect, element);
 
     // specfem::assembly::edge_types<dimension_tag>::deep_copy(edgelist,
     // h_edgelist);
@@ -445,10 +333,23 @@ void execute_simple_dshape_test() {
           edgelist, nonconforming_interfaces, ngllz, ngllx,
           lagrange_derivative.xi, intersection_contra_normal);
 
-  Kokkos::parallel_for(
-      "SimpleDShapeTest", Kokkos::TeamPolicy<>(num_edges, 1, 1),
-      KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type &team_member) {
-        const int chunk_index = team_member.league_rank();
+  using default_parallel_config =
+      specfem::parallel_configuration::default_chunk_edge_config<
+          dimension_tag, Kokkos::DefaultExecutionSpace>;
+  // override parallel config to have test chunk size.
+  using parallel_config = specfem::parallel_configuration::edge_chunk_config<
+      dimension_tag, chunk_size, default_parallel_config::execution_space>;
+  specfem::execution::ChunkedEdgeIterator chunk(parallel_config(), edgelist);
+
+  specfem::execution::for_each_level(
+      "specfem::compute::shape_function_normal_derivative", chunk,
+      KOKKOS_LAMBDA(
+          const typename decltype(chunk)::index_type &chunk_iterator_index) {
+        const auto &iter_chunk_index = chunk_iterator_index.get_index();
+        const auto &team = iter_chunk_index.get_policy_index();
+        const int &num_edges = iter_chunk_index.nedges();
+
+        const int chunk_index = team.league_rank();
         const FunctionType F(
             Kokkos::subview(function_view,
                             Kokkos::make_pair(chunk_index * chunk_size,
@@ -460,29 +361,10 @@ void execute_simple_dshape_test() {
                                               (chunk_index + 1) * chunk_size),
                             Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
         specfem::algorithms::coupling_integral_dnshape(
-            ngllz, ngllx,
-            ChunkEdgeIndex(Kokkos::subview(edge_types,
-                                           Kokkos::make_pair(
-                                               chunk_index * chunk_size,
-                                               (chunk_index + 1) * chunk_size)),
-                           num_edges, ngllz, ngllx, team_member),
-            F, intersection_factor, SFND,
+            ngllz, ngllx, iter_chunk_index, F, intersection_factor, SFND,
             [&](const auto &index, const auto &point) {
               computed_integrals(index.ispec, index.iz, index.ix) = point(0);
             });
-        // specfem::algorithms::coupling_integral_dnshape(
-        //     nonconforming_interfaces, ngllz, ngllx, lagrange_derivative,
-        //     ChunkEdgeIndex(Kokkos::subview(edge_types,
-        //                                    Kokkos::make_pair(
-        //                                        chunk_index * chunk_size,
-        //                                        (chunk_index + 1) *
-        //                                        chunk_size)),
-        //                    num_edges, ngllz, ngllx, team_member),
-        //     F, intersection_factor, intersection_contra_normal,
-        //     transfer_function_self_derivative,
-        //     [&](const auto &index, const auto &point) {
-        //       computed_integrals(index.ispec, index.iz, index.ix) = point(0);
-        //     });
       });
 
   const auto h_computed_integrals = Kokkos::create_mirror_view_and_copy(
