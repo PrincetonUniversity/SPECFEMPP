@@ -1,5 +1,5 @@
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>

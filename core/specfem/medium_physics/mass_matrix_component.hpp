@@ -9,7 +9,7 @@
 #include "specfem/medium/dim2/poroelastic/isotropic/mass_matrix.tpp"
 #include "specfem/medium/dim3/elastic/isotropic/mass_matrix.tpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

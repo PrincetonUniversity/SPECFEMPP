@@ -8,7 +8,7 @@ add_executable(specfem specfem.cpp)
 target_link_libraries(specfem
     PRIVATE
         specfem::core
-        Boost::program_options
+        CLI11::CLI11
         yaml-cpp::yaml-cpp
 )
 

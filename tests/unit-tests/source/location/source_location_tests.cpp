@@ -3,8 +3,8 @@
 #include "specfem/io.hpp"
 #include "specfem/medium_container.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/source.hpp"
-#include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <stdexcept>
 #include <string>

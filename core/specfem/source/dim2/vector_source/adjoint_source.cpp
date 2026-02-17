@@ -1,4 +1,4 @@
-#include "globals.h"
+
 #include "specfem/algorithms.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/source.hpp"

@@ -1,134 +1,86 @@
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/program.hpp"
 #include "specfem/program/context.hpp"
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 #include <iostream>
+#include <optional>
 #include <string>
 
-/**
- * @brief Define command line options for SPECFEM++ executable
- * @return Boost program options description
- *
- * @code{.sh}
- * specfem --help
- * @endcode
- */
-boost::program_options::options_description define_specfem_args() {
-  namespace po = boost::program_options;
+// Options shared by simulation subcommands (2d, 3d)
+struct SimulationOptions {
+  std::string parameters_file;
+  std::string log_file;
+  bool log_per_rank = false;
+  bool log_auto_flush = false;
+  std::string log_level;
+};
 
-  po::options_description desc{
-    "======================================\n"
-    "--------------- SPECFEM++ ------------\n"
-    "======================================\n"
-    "\n"
-    "Usage: specfem <dimension> [options]\n"
-    "  where <dimension> is either '2d' or '3d'\n"
-  };
+// Flags tracking which logger options were explicitly set on the CLI
+struct LoggerFlags {
+  bool log_file_set = false;
+  bool per_rank_set = false;
+  bool auto_flush_set = false;
+  bool log_level_set = false;
+};
 
-  // Add basic options
-  desc.add_options()("help,h", "Print this help message")(
-      "parameters_file,p", po::value<std::string>()->required(),
-      "Location to parameters file")(
-      "default_file", po::value<std::string>()->default_value(__default_file__),
-      "Location of default parameters file.");
+void add_logger_options(CLI::App *cmd, SimulationOptions &opts,
+                        LoggerFlags &flags) {
+  cmd->add_option("--log-file", opts.log_file,
+                  "Set output log file (base name, '.log' extension added "
+                  "automatically)")
+      ->each([&](const std::string &) { flags.log_file_set = true; });
 
-  // Add logger options
-  desc.add_options()(
-      "log-file", po::value<std::string>(),
-      "Set output log file (base name, '.log' extension added automatically)")(
-      "log-per-rank", po::value<bool>(),
-      "Enable per-rank log files and stdout for all ranks (true/false)")(
-      "log-auto-flush", po::value<bool>(),
-      "Enable auto-flush after each log message (true/false)")(
-      "log-level", po::value<std::string>(),
-      "Set minimum log level (TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)");
+  cmd->add_option("--log-per-rank", opts.log_per_rank,
+                  "Enable per-rank log files and stdout for all ranks "
+                  "(true/false)")
+      ->each([&](const std::string &) { flags.per_rank_set = true; });
 
-  return desc;
+  cmd->add_option("--log-auto-flush", opts.log_auto_flush,
+                  "Enable auto-flush after each log message (true/false)")
+      ->each([&](const std::string &) { flags.auto_flush_set = true; });
+
+  cmd->add_option("--log-level", opts.log_level,
+                  "Set minimum log level (TRACE, DEBUG, INFO, WARNING, ERROR, "
+                  "CRITICAL)")
+      ->each([&](const std::string &) { flags.log_level_set = true; });
 }
 
-/**
- * @brief Parse and validate command line arguments
- * @param argc Argument count
- * @param argv Argument vector
- * @param vm Variables map to store parsed arguments
- * @param dimension Output parameter for dimension (2d/3d)
- * @return 1 if successful, 0 if help requested, -1 if error
- */
-int parse_args(int argc, char **argv, boost::program_options::variables_map &vm,
-               std::string &dimension) {
-
-  const auto desc = define_specfem_args();
-
-  try {
-    // Check for minimum arguments (program name + dimension)
-    if (argc < 2) {
-      std::cout << desc << std::endl;
-      return 0;
-    }
-
-    // Check for help first
-    if (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help") {
-      std::cout << desc << std::endl;
-      return 0;
-    }
-
-    // Extract dimension as positional argument
-    dimension = std::string(argv[1]);
-
-    // Validate dimension argument
-    if (dimension != "2d" && dimension != "3d" && dimension != "dim2" &&
-        dimension != "dim3") {
-      std::cerr << "Error: Invalid dimension '" << dimension
-                << "'. Use '2d' or '3d'." << std::endl;
-      std::cout << desc << std::endl;
-      return -1;
-    }
-
-    // Parse remaining arguments (skip program name and dimension)
-    boost::program_options::store(
-        boost::program_options::parse_command_line(argc - 1, argv + 1, desc),
-        vm);
-
-    boost::program_options::notify(vm);
-
-    return 1;
-  } catch (const boost::program_options::error &e) {
-    std::cerr << "Error parsing arguments: " << e.what() << std::endl;
-    std::cout << desc << std::endl;
-    return -1;
-  }
+void add_simulation_options(CLI::App *cmd, SimulationOptions &opts,
+                            LoggerFlags &flags) {
+  cmd->add_option("-p,--parameters-file", opts.parameters_file,
+                  "Location to parameters file")
+      ->required();
+  add_logger_options(cmd, opts, flags);
 }
 
-int main(int argc, char **argv) {
-  // Parse command line arguments
-  boost::program_options::variables_map vm;
-  std::string dimension;
-  int parse_result = parse_args(argc, argv, vm, dimension);
-
-  if (parse_result <= 0) {
-    return (parse_result == 0) ? 0 : 1; // 0 for help, 1 for error
-  }
-
-  // Use Context for automatic RAII-based initialization and cleanup
+int run_simulation(const std::string &dimension, int argc, char **argv,
+                   const SimulationOptions &opts, const LoggerFlags &flags) {
   int result = 0;
 
   try {
-    // Initialize context with RAII
     specfem::program::Context context(argc, argv);
 
-    // Extract parameters (dimension is already extracted as positional
-    // argument)
-    const std::string parameters_file = vm["parameters_file"].as<std::string>();
-    const std::string default_file = vm["default_file"].as<std::string>();
+    const YAML::Node parameter_dict = YAML::LoadFile(opts.parameters_file);
 
-    // Load configuration files
-    const YAML::Node parameter_dict = YAML::LoadFile(parameters_file);
-    const YAML::Node default_dict = YAML::LoadFile(default_file);
+    // Build LoggerOptions from CLI values
+    std::optional<std::string> log_file_opt;
+    std::optional<bool> per_rank_opt;
+    std::optional<bool> auto_flush_opt;
+    std::optional<std::string> log_level_opt;
 
-    // Extract and apply Logger options from parsed arguments
-    auto logger_options =
-        specfem::logger::LoggerOptions::from_variables_map(vm);
+    if (flags.log_file_set)
+      log_file_opt = opts.log_file;
+    if (flags.per_rank_set)
+      per_rank_opt = opts.log_per_rank;
+    if (flags.auto_flush_set)
+      auto_flush_opt = opts.log_auto_flush;
+    if (flags.log_level_set)
+      log_level_opt = opts.log_level;
+
+    auto logger_options = specfem::logger::LoggerOptions::from_values(
+        std::move(log_file_opt), per_rank_opt, auto_flush_opt,
+        std::move(log_level_opt));
     specfem::Logger::apply_options(logger_options);
 
     // Set log file if specified in parameters and not already set by CLI
@@ -138,17 +90,12 @@ int main(int argc, char **argv) {
       specfem::Logger::set_log_file(log_file);
     }
 
-    // Execute program with the specified dimension
-    const auto success =
-        specfem::program::execute(dimension, parameter_dict, default_dict);
+    const auto success = specfem::program::execute(dimension, parameter_dict);
 
-    // Check execution result
     if (!success) {
       std::cerr << "Execution failed" << std::endl;
       result = 1;
     }
-
-    // Context automatically finalized when guard goes out of scope
 
   } catch (const std::exception &e) {
     std::cerr << "Error during execution: " << e.what() << std::endl;
@@ -156,4 +103,48 @@ int main(int argc, char **argv) {
   }
 
   return result;
+}
+
+int main(int argc, char **argv) {
+
+  CLI::App app{ "======================================\n"
+                "--------------- SPECFEM++ ------------\n"
+                "======================================" };
+  app.require_subcommand(1);
+
+  // -- 2d subcommand --
+  SimulationOptions opts_2d;
+  LoggerFlags flags_2d;
+  auto *cmd_2d = app.add_subcommand("2d", "Run 2D simulation");
+  add_simulation_options(cmd_2d, opts_2d, flags_2d);
+
+  // -- 3d subcommand --
+  SimulationOptions opts_3d;
+  LoggerFlags flags_3d;
+  auto *cmd_3d = app.add_subcommand("3d", "Run 3D simulation");
+  add_simulation_options(cmd_3d, opts_3d, flags_3d);
+
+  // -- Qplots subcommand (placeholder) --
+  std::string qplots_input;
+  auto *cmd_qplots =
+      app.add_subcommand("Qplots", "Generate Q attenuation plots");
+  cmd_qplots->add_option("input", qplots_input, "Input file for Q plots");
+
+  CLI11_PARSE(app, argc, argv);
+
+  // Dispatch
+  if (cmd_2d->parsed()) {
+    return run_simulation("2d", argc, argv, opts_2d, flags_2d);
+  }
+
+  if (cmd_3d->parsed()) {
+    return run_simulation("3d", argc, argv, opts_3d, flags_3d);
+  }
+
+  if (cmd_qplots->parsed()) {
+    std::cout << "Qplots subcommand not yet implemented." << std::endl;
+    return 0;
+  }
+
+  return 1;
 }

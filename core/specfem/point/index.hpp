@@ -2,7 +2,7 @@
 
 #include "specfem/data_access.hpp"
 #include "specfem/element.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem {
 namespace point {
@@ -72,7 +72,7 @@ struct index<specfem::element::dimension_tag::dim2, false>
    * @return Reference to this index.
    */
   KOKKOS_FUNCTION
-  index& operator=(const index &other) {
+  index &operator=(const index &other) {
     if (this != &other) {
       ispec = other.ispec;
       iz = other.iz;
@@ -143,7 +143,7 @@ struct index<specfem::element::dimension_tag::dim2, true>
    * @return Reference to this index.
    */
   KOKKOS_FUNCTION
-  index& operator=(const index &other) {
+  index &operator=(const index &other) {
     if (this != &other) {
       ispec = other.ispec;
       number_elements = other.number_elements;
@@ -230,7 +230,7 @@ struct index<specfem::element::dimension_tag::dim3, false>
    * @return Reference to this index.
    */
   KOKKOS_FUNCTION
-  index& operator=(const index &other) {
+  index &operator=(const index &other) {
     if (this != &other) {
       ispec = other.ispec;
       iz = other.iz;
@@ -312,7 +312,7 @@ struct index<specfem::element::dimension_tag::dim3, true>
    * @return Reference to this index.
    */
   KOKKOS_FUNCTION
-  index& operator=(const index &other) {
+  index &operator=(const index &other) {
     if (this != &other) {
       ispec = other.ispec;
       number_elements = other.number_elements;

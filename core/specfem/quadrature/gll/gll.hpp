@@ -3,7 +3,7 @@
 #include "../quadrature.hpp"
 
 #include "lagrange_poly.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

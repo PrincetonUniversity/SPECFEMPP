@@ -3,7 +3,7 @@
 #include "specfem/data_access.hpp"
 #include "specfem/element_coupling.hpp"
 #include "specfem/enums.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::point {

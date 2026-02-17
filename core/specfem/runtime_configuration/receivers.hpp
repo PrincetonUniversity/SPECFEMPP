@@ -1,6 +1,6 @@
 #pragma once
 
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/enums.hpp"
 #include "yaml-cpp/yaml.h"
 #include <string>

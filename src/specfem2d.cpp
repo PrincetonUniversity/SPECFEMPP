@@ -1,4 +1,4 @@
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/program.hpp"
 #include <boost/program_options.hpp>
@@ -14,10 +14,7 @@ boost::program_options::options_description define_args() {
 
   desc.add_options()("help,h", "Print this help message")(
       "parameters_file,p", po::value<std::string>(),
-      "Location to parameters file")(
-      "default_file,d",
-      po::value<std::string>()->default_value(__default_file__),
-      "Location of default parameters file.");
+      "Location to parameters file");
 
   return desc;
 }
@@ -60,15 +57,12 @@ int main(int argc, char **argv) {
 
     // Extract parameters
     const std::string parameters_file = vm["parameters_file"].as<std::string>();
-    const std::string default_file = vm["default_file"].as<std::string>();
 
     // Load configuration files
     const YAML::Node parameter_dict = YAML::LoadFile(parameters_file);
-    const YAML::Node default_dict = YAML::LoadFile(default_file);
 
     // Execute program for 2D
-    const auto success =
-        specfem::program::execute("2d", parameter_dict, default_dict);
+    const auto success = specfem::program::execute("2d", parameter_dict);
 
     // Check execution result
     if (!success) {

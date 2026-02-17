@@ -4,6 +4,7 @@
 #include "impl/invert_mass_matrix.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/tags.hpp"
 
 namespace specfem::compute {
 /**
@@ -18,34 +19,41 @@ namespace specfem::compute {
  * @param assembly The assembly object containing the mesh
  * @param dt Time step for the simulation
  */
-template <specfem::simulation::field_type WavefieldType,
-          specfem::element::dimension_tag DimensionTag, int NGLL>
-void initialize_mass_matrix(specfem::assembly::assembly<DimensionTag> &assembly,
-                            const type_real &dt) {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2, DIM3),
-                       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET)),
-                      {
-                        if constexpr (DimensionTag == _dimension_tag_) {
-                          specfem::compute::impl::compute_mass_matrix<
-                              DimensionTag, WavefieldType, NGLL, _medium_tag_,
-                              _property_tag_, _boundary_tag_>(dt, assembly);
-                        }
-                      })
+template <int NGLL, typename Tags>
+void initialize_mass_matrix(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const type_real &dt) {
+  constexpr auto DimensionTag = Tags::dimension_tag;
+  constexpr auto WavefieldType = Tags::wavefield_tag;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2, DIM3),
-                       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T)),
-                      {
-                        if constexpr (DimensionTag == _dimension_tag_) {
-                          specfem::compute::impl::invert_mass_matrix<
-                              DimensionTag, WavefieldType, _medium_tag_>(
-                              assembly);
-                        }
-                      })
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2, DIM3),
+       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET)),
+      {
+        if constexpr (DimensionTag == _dimension_tag_) {
+          specfem::compute::impl::compute_mass_matrix<
+              NGLL,
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
+                                  _property_tag_, _boundary_tag_> >(dt,
+                                                                    assembly);
+        }
+      })
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2, DIM3),
+       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T)),
+      {
+        if constexpr (DimensionTag == _dimension_tag_) {
+          specfem::compute::impl::invert_mass_matrix<
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_> >(
+              assembly);
+        }
+      })
 
   return;
 }

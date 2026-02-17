@@ -4,17 +4,16 @@
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/point.hpp"
+#include "divide_mass_matrix.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType,
-          specfem::element::medium_tag MediumTag>
+template <typename Tags>
 void specfem::compute::impl::divide_mass_matrix(
-    const specfem::assembly::assembly<DimensionTag> &assembly) {
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
 
-  constexpr auto medium_tag = MediumTag;
-  constexpr auto wavefield = WavefieldType;
-  constexpr auto dimension = DimensionTag;
+  constexpr auto medium_tag = Tags::medium_tag;
+  constexpr auto wavefield = Tags::wavefield_tag;
+  constexpr auto dimension_tag = Tags::dimension_tag;
   const auto field = assembly.fields.template get_simulation_field<wavefield>();
 
   const int nglob = field.template get_nglob<medium_tag>();
@@ -23,13 +22,13 @@ void specfem::compute::impl::divide_mass_matrix(
   constexpr bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd = (DimensionTag == specfem::element::dimension_tag::dim2) ? true : false;
+  constexpr bool using_simd = (dimension_tag == specfem::element::dimension_tag::dim2) ? true : false;
 #endif
 
   using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, using_simd>;
+      specfem::point::acceleration<dimension_tag, medium_tag, using_simd>;
   using PointMassInverseType =
-      specfem::point::mass_inverse<dimension, medium_tag, using_simd>;
+      specfem::point::mass_inverse<dimension_tag, medium_tag, using_simd>;
 
   using parallel_config = specfem::parallel_configuration::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,

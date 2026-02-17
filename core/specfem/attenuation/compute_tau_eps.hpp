@@ -1,10 +1,10 @@
 #pragma once
 
 #include "compute_tau_sigma.hpp"
-#include "constants.hpp"
 #include "maxwell.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/optimization.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -122,3 +122,5 @@ compute_tau_eps(
 
 } // namespace attenuation
 } // namespace specfem
+
+#include "compute_tau_eps.tpp"

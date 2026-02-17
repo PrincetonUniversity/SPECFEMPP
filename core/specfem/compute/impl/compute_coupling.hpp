@@ -6,22 +6,13 @@
 
 namespace specfem::compute::impl {
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType,
-          specfem::element_coupling::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag,
-          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
+template <int NGLL, int NQuad_intersection, typename Tags>
 void compute_coupling_weakly_conforming(
-    const specfem::assembly::assembly<DimensionTag> &assembly);
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly);
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType, int NGLL,
-          int NQuad_interface,
-          specfem::element_coupling::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag,
-          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
+template <int NGLL, int NQuad_intersection, typename Tags>
 void compute_coupling_nonconforming(
-    const specfem::assembly::assembly<DimensionTag> &assembly);
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly);
 
 /**
  * @brief Compute coupling between different media.
@@ -40,28 +31,15 @@ void compute_coupling_nonconforming(
  *
  * @param assembly SPECFEM++ assembly object.
  */
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element_connections::type ConnectionTag,
-          specfem::simulation::field_type WavefieldType, int NGLL,
-          int NQuad_intersection,
-          specfem::element_coupling::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag,
-          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
+template <int NGLL, int NQuad_intersection, typename Tags>
 void compute_coupling(
-    const specfem::assembly::assembly<DimensionTag> &assembly) {
-  // Create dispatch tag for connection type
-  using connection_dispatch =
-      std::integral_constant<specfem::element_connections::type, ConnectionTag>;
-
-  // Forward to implementation with dispatch tag
-  if constexpr (ConnectionTag ==
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
+  constexpr auto connection_tag = Tags::connection_tag;
+  if constexpr (connection_tag ==
                 specfem::element_connections::type::nonconforming) {
-    compute_coupling_nonconforming<DimensionTag, WavefieldType, NGLL,
-                                   NQuad_intersection, InterfaceTag,
-                                   BoundaryTag, FluxSchemeTag>(assembly);
+    compute_coupling_nonconforming<NGLL, NQuad_intersection, Tags>(assembly);
   } else {
-    compute_coupling_weakly_conforming<
-        DimensionTag, WavefieldType, InterfaceTag, BoundaryTag, FluxSchemeTag>(
+    compute_coupling_weakly_conforming<NGLL, NQuad_intersection, Tags>(
         assembly);
   }
 }

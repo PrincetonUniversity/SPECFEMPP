@@ -1,8 +1,7 @@
 #include "logger_options.hpp"
 #include <algorithm>
-#include <boost/program_options.hpp>
 #include <cctype>
-#include <sstream>
+#include <stdexcept>
 
 namespace specfem {
 namespace logger {
@@ -30,26 +29,17 @@ LogLevel LoggerOptions::string_to_log_level(const std::string &level_str) {
       ". Valid values: TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL");
 }
 
-LoggerOptions LoggerOptions::from_variables_map(
-    const boost::program_options::variables_map &vm) {
+LoggerOptions LoggerOptions::from_values(
+    std::optional<std::string> log_file, std::optional<bool> per_rank,
+    std::optional<bool> auto_flush, std::optional<std::string> log_level_str) {
   LoggerOptions options;
 
-  // Extract optional values from variables_map
-  if (vm.count("log-file")) {
-    options.log_file = vm["log-file"].as<std::string>();
-  }
+  options.log_file = std::move(log_file);
+  options.per_rank = per_rank;
+  options.auto_flush = auto_flush;
 
-  if (vm.count("log-per-rank")) {
-    options.per_rank = vm["log-per-rank"].as<bool>();
-  }
-
-  if (vm.count("log-auto-flush")) {
-    options.auto_flush = vm["log-auto-flush"].as<bool>();
-  }
-
-  if (vm.count("log-level")) {
-    std::string level_str = vm["log-level"].as<std::string>();
-    options.log_level = string_to_log_level(level_str);
+  if (log_level_str.has_value()) {
+    options.log_level = string_to_log_level(log_level_str.value());
   }
 
   return options;

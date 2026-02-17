@@ -1,5 +1,5 @@
 #pragma once
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <string>
 
 // Workaround for GTest EXPECT_NO_THROW duplicate label error with GCC 14

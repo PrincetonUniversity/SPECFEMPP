@@ -25,13 +25,10 @@ namespace impl {
  * @param assembly SPECFEM++ assembly object.
  * @param timestep Time step for which the source interaction is computed
  */
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType, int NGLL,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::boundary_tag BoundaryTag>
+template <int NGLL, typename Tags>
 void compute_source_interaction(
-    specfem::assembly::assembly<DimensionTag> &assembly, const int &timestep);
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int &timestep);
 } // namespace impl
 } // namespace compute
 } // namespace specfem

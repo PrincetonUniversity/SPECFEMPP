@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/io.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
 #include <tuple>

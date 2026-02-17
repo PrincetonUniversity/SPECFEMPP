@@ -6,7 +6,7 @@
 #include "specfem/jacobian/dim2/jacobian.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/point/global_coordinates.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <sstream>
 #include <stdexcept>
 

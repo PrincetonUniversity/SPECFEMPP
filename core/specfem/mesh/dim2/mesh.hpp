@@ -6,13 +6,12 @@
 #include "elements/axial_elements.hpp"
 #include "elements/tangential_elements.hpp"
 #include "materials/materials.hpp"
-#include "materials/materials.tpp"
 #include "parameters/parameters.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh/mesh_base.hpp"
 
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "tags/tags.hpp"
 #include <Kokkos_Core.hpp>
 

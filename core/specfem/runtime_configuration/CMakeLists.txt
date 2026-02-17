@@ -11,7 +11,6 @@ target_link_libraries(
         yaml-cpp
         specfem::periodic_tasks
         specfem::io
-        specfem::compute
         specfem::solver
         ${BOOST_LIBS}
 )

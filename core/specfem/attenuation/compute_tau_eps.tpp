@@ -1,9 +1,9 @@
 #pragma once
 #include "compute_tau_eps.hpp"
 #include "maxwell.hpp"
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/optimization.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 

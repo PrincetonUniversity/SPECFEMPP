@@ -1,8 +1,8 @@
 #pragma once
 
-#include "specfem/element.hpp"
 #include "specfem/data_access.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/element.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
 
@@ -80,7 +80,7 @@ template <> struct global_coordinates<specfem::element::dimension_tag::dim2> {
    */
   KOKKOS_INLINE_FUNCTION
   Kokkos::Array<type_real, 2> coordinates() const {
-    return Kokkos::Array<type_real, 2>{x, z};
+    return Kokkos::Array<type_real, 2>{ x, z };
   }
 };
 
@@ -138,7 +138,7 @@ template <> struct global_coordinates<specfem::element::dimension_tag::dim3> {
    */
   KOKKOS_INLINE_FUNCTION
   Kokkos::Array<type_real, 3> coordinates() const {
-    return Kokkos::Array<type_real, 3>{x, y, z};
+    return Kokkos::Array<type_real, 3>{ x, y, z };
   }
 };
 

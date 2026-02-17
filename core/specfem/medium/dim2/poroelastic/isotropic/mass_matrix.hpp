@@ -2,7 +2,7 @@
 
 #include "specfem/element.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem {
 namespace medium_physics {
