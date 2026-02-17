@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../impl/descriptions.hpp"
 #include "initializers.hpp"
 #include "specfem_setup.hpp"
