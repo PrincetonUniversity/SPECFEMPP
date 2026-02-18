@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/element.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 /**
@@ -73,3 +73,5 @@ KOKKOS_FUNCTION void impl_compute_mass_matrix_terms(
 
 } // namespace boundary_conditions
 } // namespace specfem
+
+#include "composite_stacey_dirichlet.tpp"

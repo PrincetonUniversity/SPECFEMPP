@@ -1,7 +1,7 @@
 #include "dgaussian.hpp"
 #include "impl/time_functions.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 

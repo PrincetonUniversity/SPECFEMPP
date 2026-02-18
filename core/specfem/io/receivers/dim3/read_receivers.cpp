@@ -1,8 +1,8 @@
 // Internal Includes
 #include "specfem/io.hpp"
 #include "specfem/receivers.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 
 // External Includes

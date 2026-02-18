@@ -1,10 +1,10 @@
 #pragma once
 
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 
 #include "specfem/enums.hpp"
 #include "specfem/quadrature.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <cmath>
 
 namespace specfem::receivers {

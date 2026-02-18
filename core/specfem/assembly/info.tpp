@@ -5,7 +5,7 @@
 #include "specfem/assembly/info/impl/distances.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/assembly/info/impl/bounding_box.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"

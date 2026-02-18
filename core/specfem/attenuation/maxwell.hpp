@@ -1,7 +1,7 @@
 #pragma once
 
-#include "constants.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -107,7 +107,7 @@ maxwell(Kokkos::View<type_real[NF], Kokkos::LayoutRight, Kokkos::HostSpace> f,
 
   for (int i = 0; i < NF; ++i) {
     // Angular frequency: w = 2 * pi * f
-    const type_real w = 2.0 * pi * f(i);
+    const type_real w = 2.0 * specfem::constants::pi * f(i);
     const type_real w2 = w * w;
 
     type_real A_sum = 0.0;

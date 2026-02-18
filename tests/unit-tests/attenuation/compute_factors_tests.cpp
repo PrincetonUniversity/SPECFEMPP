@@ -22,8 +22,8 @@ using specfem::utilities::is_close;
 TEST(Attenuation_PropertyValues, SimpleIntegerRatios) {
   constexpr int N_SLS = 3;
 
-  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-      tau_s("tau_s");
+  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace> tau_s(
+      "tau_s");
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
       tau_eps("tau_eps");
 
@@ -43,8 +43,7 @@ TEST(Attenuation_PropertyValues, SimpleIntegerRatios) {
       << expected_got(static_cast<type_real>(0.5), result.beta(1));
   EXPECT_TRUE(is_close(result.beta(2), static_cast<type_real>(1.0)))
       << expected_got(static_cast<type_real>(1.0), result.beta(2));
-  EXPECT_TRUE(is_close(result.one_minus_sum_beta,
-                        static_cast<type_real>(5.5)))
+  EXPECT_TRUE(is_close(result.one_minus_sum_beta, static_cast<type_real>(5.5)))
       << expected_got(static_cast<type_real>(5.5), result.one_minus_sum_beta);
 }
 
@@ -56,8 +55,8 @@ TEST(Attenuation_PropertyValues, SimpleIntegerRatios) {
 TEST(Attenuation_PropertyValues, UniformRatio) {
   constexpr int N_SLS = 3;
 
-  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-      tau_s("tau_s");
+  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace> tau_s(
+      "tau_s");
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
       tau_eps("tau_eps");
 
@@ -76,8 +75,7 @@ TEST(Attenuation_PropertyValues, UniformRatio) {
       << expected_got(static_cast<type_real>(1.0), result.beta(1));
   EXPECT_TRUE(is_close(result.beta(2), static_cast<type_real>(1.0)))
       << expected_got(static_cast<type_real>(1.0), result.beta(2));
-  EXPECT_TRUE(is_close(result.one_minus_sum_beta,
-                        static_cast<type_real>(6.0)))
+  EXPECT_TRUE(is_close(result.one_minus_sum_beta, static_cast<type_real>(6.0)))
       << expected_got(static_cast<type_real>(6.0), result.one_minus_sum_beta);
 }
 
@@ -88,8 +86,8 @@ TEST(Attenuation_PropertyValues, UniformRatio) {
 TEST(Attenuation_PropertyValues, NoAttenuation) {
   constexpr int N_SLS = 3;
 
-  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-      tau_s("tau_s");
+  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace> tau_s(
+      "tau_s");
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
       tau_eps("tau_eps");
 
@@ -107,8 +105,7 @@ TEST(Attenuation_PropertyValues, NoAttenuation) {
         << "beta(" << i << ") should be 0 with no attenuation: "
         << expected_got(static_cast<type_real>(0.0), result.beta(i));
   }
-  EXPECT_TRUE(is_close(result.one_minus_sum_beta,
-                        static_cast<type_real>(3.0)))
+  EXPECT_TRUE(is_close(result.one_minus_sum_beta, static_cast<type_real>(3.0)))
       << expected_got(static_cast<type_real>(3.0), result.one_minus_sum_beta);
 }
 
@@ -120,8 +117,8 @@ TEST(Attenuation_PropertyValues, NoAttenuation) {
 TEST(Attenuation_PropertyValues, TwoSLS) {
   constexpr int N_SLS = 2;
 
-  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-      tau_s("tau_s");
+  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace> tau_s(
+      "tau_s");
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
       tau_eps("tau_eps");
 
@@ -137,8 +134,7 @@ TEST(Attenuation_PropertyValues, TwoSLS) {
       << expected_got(static_cast<type_real>(2.0), result.beta(0));
   EXPECT_TRUE(is_close(result.beta(1), static_cast<type_real>(1.0)))
       << expected_got(static_cast<type_real>(1.0), result.beta(1));
-  EXPECT_TRUE(is_close(result.one_minus_sum_beta,
-                        static_cast<type_real>(5.0)))
+  EXPECT_TRUE(is_close(result.one_minus_sum_beta, static_cast<type_real>(5.0)))
       << expected_got(static_cast<type_real>(5.0), result.one_minus_sum_beta);
 }
 
@@ -150,8 +146,8 @@ TEST(Attenuation_PropertyValues, TwoSLS) {
 TEST(Attenuation_PropertyValues, FiveSLS) {
   constexpr int N_SLS = 5;
 
-  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-      tau_s("tau_s");
+  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace> tau_s(
+      "tau_s");
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
       tau_eps("tau_eps");
 
@@ -167,8 +163,7 @@ TEST(Attenuation_PropertyValues, FiveSLS) {
     EXPECT_TRUE(is_close(result.beta(i), static_cast<type_real>(0.5)))
         << expected_got(static_cast<type_real>(0.5), result.beta(i));
   }
-  EXPECT_TRUE(is_close(result.one_minus_sum_beta,
-                        static_cast<type_real>(7.5)))
+  EXPECT_TRUE(is_close(result.one_minus_sum_beta, static_cast<type_real>(7.5)))
       << expected_got(static_cast<type_real>(7.5), result.one_minus_sum_beta);
 }
 
@@ -207,8 +202,8 @@ TEST(Attenuation_ScaleFactor, NoAttenuationSameFreq) {
   tau_eps(1) = 2.0;
   tau_eps(2) = 5.0;
 
-  type_real scale_factor = get_attenuation_scale_factor<N_SLS>(
-      1.0, tau_eps, tau_sigma, 100.0, 1.0);
+  type_real scale_factor =
+      get_attenuation_scale_factor<N_SLS>(1.0, tau_eps, tau_sigma, 100.0, 1.0);
 
   EXPECT_TRUE(is_close(scale_factor, static_cast<type_real>(1.0)))
       << expected_got(static_cast<type_real>(1.0), scale_factor);
@@ -235,10 +230,10 @@ TEST(Attenuation_ScaleFactor, PureLogCorrection) {
   tau_eps(2) = 5.0;
 
   const type_real e = std::exp(1.0);
-  const type_real expected = 1.0 + 1.0 / (100.0 * pi);
+  const type_real expected = 1.0 + 1.0 / (100.0 * specfem::constants::pi);
 
-  type_real scale_factor = get_attenuation_scale_factor<N_SLS>(
-      e, tau_eps, tau_sigma, 200.0, 1.0);
+  type_real scale_factor =
+      get_attenuation_scale_factor<N_SLS>(e, tau_eps, tau_sigma, 200.0, 1.0);
 
   EXPECT_TRUE(is_close(scale_factor, expected))
       << expected_got(expected, scale_factor);
@@ -264,16 +259,16 @@ TEST(Attenuation_ScaleFactor, UniformDefectOmegaTauOne) {
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
       tau_sigma("tau_sigma");
 
-  const type_real tau_s_val = 1.0 / (2.0 * pi);
-  const type_real tau_e_val = 4.0 / (3.0 * 2.0 * pi);
+  const type_real tau_s_val = 1.0 / (2.0 * specfem::constants::pi);
+  const type_real tau_e_val = 4.0 / (3.0 * 2.0 * specfem::constants::pi);
 
   for (int j = 0; j < N_SLS; ++j) {
     tau_sigma(j) = tau_s_val;
     tau_eps(j) = tau_e_val;
   }
 
-  type_real scale_factor = get_attenuation_scale_factor<N_SLS>(
-      1.0, tau_eps, tau_sigma, 100.0, 1.0);
+  type_real scale_factor =
+      get_attenuation_scale_factor<N_SLS>(1.0, tau_eps, tau_sigma, 100.0, 1.0);
 
   const type_real expected = static_cast<type_real>(8.0 / 7.0);
   EXPECT_TRUE(is_close(scale_factor, expected))
@@ -293,8 +288,8 @@ TEST(Attenuation_ScaleFactor, CombinedLogAndDefect) {
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
       tau_sigma("tau_sigma");
 
-  const type_real tau_s_val = 1.0 / (2.0 * pi);
-  const type_real tau_e_val = 4.0 / (3.0 * 2.0 * pi);
+  const type_real tau_s_val = 1.0 / (2.0 * specfem::constants::pi);
+  const type_real tau_e_val = 4.0 / (3.0 * 2.0 * specfem::constants::pi);
 
   for (int j = 0; j < N_SLS; ++j) {
     tau_sigma(j) = tau_s_val;
@@ -311,11 +306,12 @@ TEST(Attenuation_ScaleFactor, CombinedLogAndDefect) {
   const type_real e2 = e * e;
   const type_real expected_sum_weighted = 1.0 + (1.0 / 3.0) * e2 / (e2 + 1.0);
   const type_real expected_factor_mu = (4.0 / 3.0) / expected_sum_weighted;
-  const type_real expected_factor_mu0 = 1.0 + 1.0 / (100.0 * pi);
+  const type_real expected_factor_mu0 =
+      1.0 + 1.0 / (100.0 * specfem::constants::pi);
   const type_real expected = expected_factor_mu * expected_factor_mu0;
 
-  type_real scale_factor = get_attenuation_scale_factor<N_SLS>(
-      e, tau_eps, tau_sigma, 200.0, 1.0);
+  type_real scale_factor =
+      get_attenuation_scale_factor<N_SLS>(e, tau_eps, tau_sigma, 200.0, 1.0);
 
   EXPECT_TRUE(is_close(scale_factor, expected))
       << expected_got(expected, scale_factor);
@@ -330,10 +326,9 @@ TEST(Attenuation_ScaleFactor, CombinedLogAndDefect) {
 //   omega_tau_0 = 1*1 = 1,  omega_tau_1 = 1*2 = 2
 //   sum_unrelaxed = 1 + (0.5 + 0.25)/2 = 1 + 0.375 = 1.375
 //   w0 = 1/(1 + 1/1)  = 0.5,   w1 = 1/(1 + 1/4) = 4/5
-//   sum_weighted = 1 + (0.5*0.5 + 0.25*0.8)/2 = 1 + (0.25 + 0.2)/2 = 1 + 0.225 = 1.225
-//   factor_scale_mu = 1.375 / 1.225 = 55/49
-//   factor_scale_mu0 = 1 (f_c = f_0)
-//   scale_factor = 55/49
+//   sum_weighted = 1 + (0.5*0.5 + 0.25*0.8)/2 = 1 + (0.25 + 0.2)/2 = 1 + 0.225
+//   = 1.225 factor_scale_mu = 1.375 / 1.225 = 55/49 factor_scale_mu0 = 1 (f_c =
+//   f_0) scale_factor = 55/49
 TEST(Attenuation_ScaleFactor, TwoSLSDistinctTau) {
   constexpr int N_SLS = 2;
 
@@ -347,10 +342,10 @@ TEST(Attenuation_ScaleFactor, TwoSLSDistinctTau) {
   tau_eps(0) = 1.5;
   tau_eps(1) = 2.5;
 
-  const type_real f_c = 1.0 / (2.0 * pi);
+  const type_real f_c = 1.0 / (2.0 * specfem::constants::pi);
 
-  type_real scale_factor = get_attenuation_scale_factor<N_SLS>(
-      f_c, tau_eps, tau_sigma, 100.0, f_c);
+  type_real scale_factor =
+      get_attenuation_scale_factor<N_SLS>(f_c, tau_eps, tau_sigma, 100.0, f_c);
 
   const type_real expected = static_cast<type_real>(55.0 / 49.0);
   EXPECT_TRUE(is_close(scale_factor, expected))

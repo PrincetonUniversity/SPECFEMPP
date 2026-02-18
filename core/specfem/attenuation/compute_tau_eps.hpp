@@ -1,10 +1,10 @@
 #pragma once
 
 #include "compute_tau_sigma.hpp"
-#include "constants.hpp"
 #include "maxwell.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/optimization.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -31,7 +31,7 @@ namespace attenuation {
 template <int N_SLS> struct AttenuationObjective {
   type_real Q;  ///< Target quality factor \f$Q\f$
   type_real iQ; ///< \f$1/Q\f$ (target \f$\tan\delta\f$)
-  Kokkos::View<type_real[specfem::constants::empirical::NF_ATTENUATION],
+  Kokkos::View<type_real[specfem::constants::NF_ATTENUATION],
                Kokkos::LayoutRight,
                Kokkos::HostSpace>
       f; ///< Evaluation frequencies \f$f\f$ (Hz)
@@ -49,16 +49,15 @@ template <int N_SLS> struct AttenuationObjective {
           tau_eps) const {
 
     // Compute Maxwell moduli for all frequencies
-    auto maxwell_factors =
-        maxwell<specfem::constants::empirical::NF_ATTENUATION, N_SLS>(
-            f, tau_sigma, tau_eps);
+    auto maxwell_factors = maxwell<specfem::constants::NF_ATTENUATION, N_SLS>(
+        f, tau_sigma, tau_eps);
 
     // Compute sum of absolute relative errors (L1 norm, normalized by 1/Q)
     // Matches Fortran: xi = sqrt( (tan_delta - 1/Q)^2 / (1/Q)^2 )
     //                     = |tan_delta - 1/Q| * Q
     type_real misfit = 0.0;
     const type_real iQ2 = iQ * iQ;
-    for (int i = 0; i < specfem::constants::empirical::NF_ATTENUATION; ++i) {
+    for (int i = 0; i < specfem::constants::NF_ATTENUATION; ++i) {
       // tan_delta = B / A ≈ 1/Q
       type_real tan_delta = maxwell_factors.imag(i) / maxwell_factors.real(i);
       type_real diff = tan_delta - iQ;
@@ -122,3 +121,5 @@ compute_tau_eps(
 
 } // namespace attenuation
 } // namespace specfem
+
+#include "compute_tau_eps.tpp"

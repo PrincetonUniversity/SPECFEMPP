@@ -153,7 +153,7 @@ TEST(Attenuation_Maxwell, SingleSLS) {
   // A = (1 + w^2 * tau_eps * tau_s) / denom
   // B = w * (tau_eps - tau_s) / denom
   for (int i = 0; i < NF; ++i) {
-    type_real w = 2.0 * pi * f(i);
+    type_real w = 2.0 * specfem::constants::pi * f(i);
     type_real w2 = w * w;
     type_real denom = 1.0 + w2 * tau_s(0) * tau_s(0);
 

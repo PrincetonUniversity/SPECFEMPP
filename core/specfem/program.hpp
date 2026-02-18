@@ -53,8 +53,7 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
  * @throws std::runtime_error if dimension is invalid or simulation encounters
  * fatal error
  */
-bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
-             const YAML::Node &default_dict);
+bool execute(const std::string &dimension, const YAML::Node &parameter_dict);
 
 /**
  * @brief Generate Q plot data for given Q and frequency range

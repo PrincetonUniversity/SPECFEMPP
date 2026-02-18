@@ -1,12 +1,12 @@
-#include "constants.hpp"
 #include "specfem/attenuation.hpp"
+#include "specfem/constants.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
 
 using specfem::attenuation::compute_tau_eps;
 using specfem::attenuation::compute_tau_sigma;
 using specfem::attenuation::maxwell;
-using specfem::constants::empirical::NF_ATTENUATION;
+using specfem::constants::NF_ATTENUATION;
 
 // Helper function to compute achieved Q from tau_eps and tau_sigma
 template <int N_SLS>

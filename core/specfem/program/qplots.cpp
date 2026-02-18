@@ -1,7 +1,7 @@
 #include "specfem/attenuation.hpp"
 #include "specfem/program.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -49,22 +49,23 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
   }
 
   // Get tau_sigma
-  const auto tau_sigma = specfem::attenuation::compute_tau_sigma<
-      specfem::constants::empirical::N_SLS>(1.0 / maxfreq, 1.0 / minfreq);
+  const auto tau_sigma =
+      specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(
+          1.0 / maxfreq, 1.0 / minfreq);
 
   // Compute tau_eps for the given Q
-  const auto tau_eps = specfem::attenuation::compute_tau_eps<
-      specfem::constants::empirical::N_SLS>(Q, tau_sigma, 1.0 / maxfreq,
-                                            1.0 / minfreq);
+  const auto tau_eps =
+      specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
+          Q, tau_sigma, 1.0 / maxfreq, 1.0 / minfreq);
 
   // Print tau_sigma and tau_eps for debugging
   specfem::Logger::info("Computed tau_sigma:");
-  for (int j = 0; j < specfem::constants::empirical::N_SLS; ++j) {
+  for (int j = 0; j < specfem::constants::N_SLS; ++j) {
     specfem::Logger::info("tau_sigma[" + std::to_string(j) +
                           "] = " + std::to_string(tau_sigma(j)));
   }
   specfem::Logger::info("Computed tau_eps:");
-  for (int j = 0; j < specfem::constants::empirical::N_SLS; ++j) {
+  for (int j = 0; j < specfem::constants::N_SLS; ++j) {
     specfem::Logger::info("tau_eps[" + std::to_string(j) +
                           "] = " + std::to_string(tau_eps(j)));
   }
@@ -76,7 +77,7 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
 
   // Get the Q inverse from the Maxwell real and imaginary factors.
   const auto moduli =
-      specfem::attenuation::maxwell<NF, specfem::constants::empirical::N_SLS>(
+      specfem::attenuation::maxwell<NF, specfem::constants::N_SLS>(
           frequencies, tau_sigma, tau_eps);
 
   // Struct holding Q_inverse
@@ -89,14 +90,14 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
   }
 
   // Individual Q^-1 and real modulus for each SLS
-  Kokkos::View<type_real[NF][specfem::constants::empirical::N_SLS],
-               Kokkos::LayoutRight, Kokkos::HostSpace>
+  Kokkos::View<type_real[NF][specfem::constants::N_SLS], Kokkos::LayoutRight,
+               Kokkos::HostSpace>
       individual_Q_inverse("individual_Q_inverse", NF);
-  Kokkos::View<type_real[NF][specfem::constants::empirical::N_SLS],
-               Kokkos::LayoutRight, Kokkos::HostSpace>
+  Kokkos::View<type_real[NF][specfem::constants::N_SLS], Kokkos::LayoutRight,
+               Kokkos::HostSpace>
       individual_real("individual_real", NF);
 
-  for (int j = 0; j < specfem::constants::empirical::N_SLS; ++j) {
+  for (int j = 0; j < specfem::constants::N_SLS; ++j) {
     std::pair<int, int> subview_range(j, j + 1);
     auto maxwell_factors_j = specfem::attenuation::maxwell<NF, 1>(
         frequencies, Kokkos::subview(tau_sigma, subview_range),
@@ -117,10 +118,10 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
 
   // Write header
   qplot_file << "# Frequency(Hz), Q^-1, M1";
-  for (int j = 0; j < specfem::constants::empirical::N_SLS; ++j) {
+  for (int j = 0; j < specfem::constants::N_SLS; ++j) {
     qplot_file << ", Q^-1 - SLS " << j;
   }
-  for (int j = 0; j < specfem::constants::empirical::N_SLS; ++j) {
+  for (int j = 0; j < specfem::constants::N_SLS; ++j) {
     qplot_file << ", M1 - SLS " << j;
   }
   qplot_file << "\n";
@@ -130,10 +131,10 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
     qplot_file << std::scientific << frequencies(i) << "," << std::scientific
                << Q_inverse(i) << "," << std::scientific << moduli.real(i);
 
-    for (int j = 0; j < specfem::constants::empirical::N_SLS; ++j) {
+    for (int j = 0; j < specfem::constants::N_SLS; ++j) {
       qplot_file << "," << std::scientific << individual_Q_inverse(i, j);
     }
-    for (int j = 0; j < specfem::constants::empirical::N_SLS; ++j) {
+    for (int j = 0; j < specfem::constants::N_SLS; ++j) {
       qplot_file << "," << std::scientific << individual_real(i, j);
     }
     qplot_file << "\n";

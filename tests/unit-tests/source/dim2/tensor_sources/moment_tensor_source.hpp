@@ -1,8 +1,8 @@
 
 #include "specfem/enums.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/source.hpp"
 #include "specfem/source_time_functions.hpp"
-#include "specfem_setup.hpp"
 #include "test_macros.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>

@@ -22,7 +22,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/point.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <any>
 #include <gtest/gtest.h>
 #include <initializer_list>

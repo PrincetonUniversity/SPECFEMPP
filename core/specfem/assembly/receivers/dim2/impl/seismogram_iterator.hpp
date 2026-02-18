@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/enums.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <array>
 #include <string>
 #include <tuple>

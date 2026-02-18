@@ -1,4 +1,4 @@
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/program.hpp"
 #include "specfem/program/context.hpp"
@@ -10,7 +10,6 @@
 // Options shared by simulation subcommands (2d, 3d)
 struct SimulationOptions {
   std::string parameters_file;
-  std::string default_file = __default_file__;
   std::string log_file;
   bool log_per_rank = false;
   bool log_auto_flush = false;
@@ -52,8 +51,6 @@ void add_simulation_options(CLI::App *cmd, SimulationOptions &opts,
   cmd->add_option("-p,--parameters-file", opts.parameters_file,
                   "Location to parameters file")
       ->required();
-  cmd->add_option("--default-file", opts.default_file,
-                  "Location of default parameters file");
   add_logger_options(cmd, opts, flags);
 }
 
@@ -65,7 +62,6 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
     specfem::program::Context context(argc, argv);
 
     const YAML::Node parameter_dict = YAML::LoadFile(opts.parameters_file);
-    const YAML::Node default_dict = YAML::LoadFile(opts.default_file);
 
     // Build LoggerOptions from CLI values
     std::optional<std::string> log_file_opt;
@@ -94,8 +90,7 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
       specfem::Logger::set_log_file(log_file);
     }
 
-    const auto success =
-        specfem::program::execute(dimension, parameter_dict, default_dict);
+    const auto success = specfem::program::execute(dimension, parameter_dict);
 
     if (!success) {
       std::cerr << "Execution failed" << std::endl;

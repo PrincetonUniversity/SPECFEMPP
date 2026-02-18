@@ -40,7 +40,6 @@ enum class source_type {
 
 }
 
-#include "source/source.hpp"
 #include "source/source.tpp"
 #include "source/tensor_source.hpp"
 #include "source/vector_source.hpp"

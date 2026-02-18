@@ -1,8 +1,18 @@
 #include "dim2/program.hpp"
 #include "dim3/program.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/receivers.hpp"
+#include "specfem/runtime_configuration.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/solver.hpp"
+#include "specfem/source.hpp"
+#include "specfem/timescheme.hpp"
 #include "specfem/utilities.hpp"
-#include "specfem_setup.hpp"
+#include "yaml-cpp/yaml.h"
+
+#include <Kokkos_Core.hpp>
+#include <sstream>
 
 namespace specfem::program {
 
@@ -29,8 +39,7 @@ print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
   return message.str();
 }
 
-bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
-             const YAML::Node &default_dict) {
+bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
   try {
     // Use simulation model enumeration for validation
     specfem::simulation::model simulation_model =
@@ -48,7 +57,7 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
       tasks.push_back(signal_task);
 
       // Run 2D Cartesian program
-      program_2d(parameter_dict, default_dict, tasks);
+      program_2d(parameter_dict, tasks);
 
       return true;
     }
@@ -63,7 +72,7 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict,
       tasks.push_back(signal_task);
 
       // Run 3D Cartesian program
-      program_3d(parameter_dict, default_dict, tasks);
+      program_3d(parameter_dict, tasks);
 
       return true;
     }

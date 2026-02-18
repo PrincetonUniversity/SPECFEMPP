@@ -12,7 +12,7 @@
 namespace specfem::program {
 
 void program_2d(
-    const YAML::Node &parameter_dict, const YAML::Node &default_dict,
+    const YAML::Node &parameter_dict,
     std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
         specfem::element::dimension_tag::dim2> > >
         tasks) {
@@ -21,7 +21,7 @@ void program_2d(
   //                    Read parameter file
   // --------------------------------------------------------------
   auto start_time = std::chrono::system_clock::now();
-  specfem::runtime_configuration::setup setup(parameter_dict, default_dict);
+  specfem::runtime_configuration::setup setup(parameter_dict);
   const auto database_filename = setup.get_databases();
 
   specfem::Logger::info(

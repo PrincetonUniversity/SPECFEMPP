@@ -1,10 +1,10 @@
 #pragma once
 #include "compute_tau_eps.hpp"
 #include "maxwell.hpp"
-#include "constants.hpp"
+#include "specfem/constants.hpp"
 #include "specfem/optimization.hpp"
-#include "specfem_setup.hpp"
 #include "specfem/utilities/logspace.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -25,7 +25,7 @@ compute_tau_eps(
 
   // Set up evaluation frequencies equally spaced in log10
   // These span the same range as tau_sigma but with NF_ATTENUATION points
-  const auto f = specfem::utilities::logspace<specfem::constants::empirical::NF_ATTENUATION>(1/max_period, 1/min_period);
+  const auto f = specfem::utilities::logspace<specfem::constants::NF_ATTENUATION>(1/max_period, 1/min_period);
 
   // Create the objective function
   AttenuationObjective<N_SLS> objective;

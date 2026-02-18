@@ -1,7 +1,7 @@
 #pragma once
 
-#include "constants.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/constants.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -78,3 +78,5 @@ type_real get_attenuation_scale_factor(
 
 } // namespace attenuation
 } // namespace specfem
+
+#include "compute_factors.tpp"

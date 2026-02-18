@@ -10,4 +10,3 @@ namespace specfem::solver {}
 
 #include "specfem/solver/solver.hpp"
 #include "specfem/solver/time_marching.hpp"
-#include "specfem/solver/time_marching.tpp"

@@ -13,27 +13,24 @@
 #include "specfem/assembly.hpp"
 #include "specfem/chunk_element.hpp"
 #include "specfem/point.hpp"
+#include "compute_stiffness_interaction.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::simulation::field_type WavefieldType, int NGLL,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::boundary_tag BoundaryTag>
+template <int NGLL, typename Tags>
 int specfem::compute::impl::compute_stiffness_interaction(
-    const specfem::assembly::assembly<DimensionTag> &assembly,
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int &istep) {
 
-  constexpr auto medium_tag = MediumTag;
-  constexpr auto property_tag = PropertyTag;
-  constexpr auto boundary_tag = BoundaryTag;
-  constexpr auto wavefield = WavefieldType;
-  constexpr auto dimension_tag = DimensionTag;
+  constexpr auto medium_tag = Tags::medium_tag;
+  constexpr auto property_tag = Tags::property_tag;
+  constexpr auto boundary_tag = Tags::boundary_tag;
+  constexpr auto wavefield = Tags::wavefield_tag;
+  constexpr auto dimension_tag = Tags::dimension_tag;
   constexpr int ngll = NGLL;
 
   const auto elements = assembly.element_types.get_elements_on_device(
-      MediumTag, PropertyTag, BoundaryTag);
+      medium_tag, property_tag, boundary_tag);
 
   // Get the number of elements that match the specified tags
   const int nelements = elements.extent(0);
@@ -67,41 +64,41 @@ int specfem::compute::impl::compute_stiffness_interaction(
   constexpr bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd = (DimensionTag == specfem::element::dimension_tag::dim2) ? true : false;
+  constexpr bool using_simd = (Tags::dimension_tag == specfem::element::dimension_tag::dim2) ? true : false;
 #endif
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
 
   using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
-                  dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
+                  Tags::dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
 
   using ChunkElementFieldType = specfem::chunk_element::displacement<
-      ParallelConfig::chunk_size, ngll, dimension_tag, medium_tag, using_simd>;
+      ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag, using_simd>;
   using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
-      ParallelConfig::chunk_size, ngll, dimension_tag, medium_tag,
+      ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag,
       Kokkos::DefaultExecutionSpace::scratch_memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
       using_simd>;
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
-      ngll, dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
+      ngll, Tags::dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
   using PointBoundaryType =
-      specfem::point::boundary<boundary_tag, dimension_tag, using_simd>;
+      specfem::point::boundary<Tags::boundary_tag, Tags::dimension_tag, using_simd>;
   using PointDisplacementType =
-      specfem::point::displacement<dimension_tag, medium_tag, using_simd>;
+      specfem::point::displacement<Tags::dimension_tag, Tags::medium_tag, using_simd>;
   using PointVelocityType =
-      specfem::point::velocity<dimension_tag, medium_tag, using_simd>;
+      specfem::point::velocity<Tags::dimension_tag, Tags::medium_tag, using_simd>;
   using PointAccelerationType =
-      specfem::point::acceleration<dimension_tag, medium_tag, using_simd>;
+      specfem::point::acceleration<Tags::dimension_tag, Tags::medium_tag, using_simd>;
   using PointJacobianMatrixType =
-      specfem::point::jacobian_matrix<dimension_tag, true, using_simd>;
+      specfem::point::jacobian_matrix<Tags::dimension_tag, true, using_simd>;
   using PointPropertyType =
-      specfem::point::properties<dimension_tag, medium_tag, property_tag,
+      specfem::point::properties<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag,
                                  using_simd>;
   using PointFieldDerivativesType =
-      specfem::point::field_derivatives<dimension_tag, medium_tag, using_simd>;
+      specfem::point::field_derivatives<Tags::dimension_tag, Tags::medium_tag, using_simd>;
 
-  using PointWeightsType = specfem::point::weights<dimension_tag>;
+  using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
 
   int scratch_size = ChunkElementFieldType::shmem_size() +
                      ChunkStressIntegrandType::shmem_size() +
@@ -113,8 +110,8 @@ int specfem::compute::impl::compute_stiffness_interaction(
 
   Kokkos::Profiling::pushRegion("Compute Stiffness Interaction");
 
-  if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey &&
-                WavefieldType ==
+  if constexpr (Tags::boundary_tag == specfem::element::boundary_tag::stacey &&
+                Tags::wavefield_tag ==
                     specfem::simulation::field_type::backward) {
 
     specfem::execution::for_all(

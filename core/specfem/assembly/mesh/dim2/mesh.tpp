@@ -10,7 +10,7 @@
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/shape_function.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 #include <vector>

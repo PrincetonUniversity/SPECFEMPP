@@ -3,6 +3,8 @@
 #include "impl/compute_seismograms.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/macros.hpp"
+#include "specfem/tags.hpp"
 
 namespace specfem::compute {
 /**
@@ -17,10 +19,12 @@ namespace specfem::compute {
  * @param assembly The assembly object containing the mesh and other
  * @param isig_step Time step for which the seismograms are computed
  */
-template <specfem::simulation::field_type WavefieldType,
-          specfem::element::dimension_tag DimensionTag, int NGLL>
-void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
-                         const int &isig_step) {
+template <int NGLL, typename Tags>
+void compute_seismograms(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int &isig_step) {
+  constexpr auto DimensionTag = Tags::dimension_tag;
+  constexpr auto WavefieldType = Tags::wavefield_tag;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2, DIM3),
@@ -30,9 +34,10 @@ void compute_seismograms(specfem::assembly::assembly<DimensionTag> &assembly,
        ATTENUATION_TAG(NONE)),
       {
         if constexpr (DimensionTag == _dimension_tag_) {
-          impl::compute_seismograms<WavefieldType, DimensionTag, NGLL,
-                                    _medium_tag_, _property_tag_>(assembly,
-                                                                  isig_step);
+          impl::compute_seismograms<
+              NGLL, specfem::tags::Tags<DimensionTag, WavefieldType,
+                                        _medium_tag_, _property_tag_> >(
+              assembly, isig_step);
         }
       })
 }

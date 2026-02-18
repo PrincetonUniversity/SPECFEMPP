@@ -9,7 +9,7 @@
 #include "specfem/mesh.hpp"
 #include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"
-#include "specfem_setup.hpp"
+#include "specfem/setup.hpp"
 #include <vector>
 
 namespace specfem::assembly {
@@ -81,7 +81,6 @@ public:
    * control nodes and shape functions.
    */
   void assemble();
-
 
   void compute_mesh_properties();
 };
