@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
   // -- Qplots subcommand (placeholder) --
   Qoptions qplots_opts;
   auto *cmd_qplots =
-      app.add_subcommand("Qplots", "Generate Q attenuation plots");
+      app.add_subcommand("qplots", "Generate Q attenuation plots");
   add_qplot_options(cmd_qplots, qplots_opts);
 
   CLI11_PARSE(app, argc, argv);
