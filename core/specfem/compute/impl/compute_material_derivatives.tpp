@@ -79,8 +79,7 @@ void specfem::compute::impl::compute_material_derivatives(
       specfem::point::field_derivatives<dimension_tag, medium_tag, using_simd>;
 
   using PointPropertiesType =
-      specfem::point::properties<dimension_tag, medium_tag, property_tag,
-                                 using_simd>;
+      specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>>;
 
   int scratch_size = 2 * ChunkElementFieldType::shmem_size() +
                      ElementQuadratureType::shmem_size();

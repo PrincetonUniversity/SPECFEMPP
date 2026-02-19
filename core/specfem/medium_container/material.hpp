@@ -7,10 +7,7 @@
 #include <tuple>
 
 namespace specfem::point {
-template <specfem::element::dimension_tag Dimension,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, bool UseSIMD>
-struct properties;
+template <typename Tags> struct properties;
 } // namespace specfem::point
 
 namespace specfem::medium_container {

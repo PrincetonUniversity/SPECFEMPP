@@ -12,8 +12,8 @@ TEST(Stress, ElasticAnisotropic2D_PSV_Basic) {
       specfem::element::property_tag::anisotropic;
   static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
 
-  using PSVPropertiesType =
-      specfem::point::properties<dimension, PSVTag, property_tag, false>;
+  using PSVPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, PSVTag, property_tag, false> >;
   using PSVFieldDerivativesType =
       specfem::point::field_derivatives<dimension, PSVTag, false>;
   using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
@@ -57,8 +57,8 @@ TEST(Stress, ElasticAnisotropic2D_PSV_ZeroDerivatives) {
       specfem::element::property_tag::anisotropic;
   static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
 
-  using PSVPropertiesType =
-      specfem::point::properties<dimension, PSVTag, property_tag, false>;
+  using PSVPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, PSVTag, property_tag, false> >;
   using PSVFieldDerivativesType =
       specfem::point::field_derivatives<dimension, PSVTag, false>;
   using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
@@ -100,8 +100,8 @@ TEST(Stress, ElasticAnisotropic2D_PSV_IsotropicCoefficients) {
       specfem::element::property_tag::anisotropic;
   static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
 
-  using PSVPropertiesType =
-      specfem::point::properties<dimension, PSVTag, property_tag, false>;
+  using PSVPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, PSVTag, property_tag, false> >;
   using PSVFieldDerivativesType =
       specfem::point::field_derivatives<dimension, PSVTag, false>;
   using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
@@ -154,8 +154,8 @@ TEST(Stress, ElasticAnisotropic2D_SH_Basic) {
       specfem::element::property_tag::anisotropic;
   static constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;
 
-  using SHPropertiesType =
-      specfem::point::properties<dimension, SHTag, property_tag, false>;
+  using SHPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, SHTag, property_tag, false> >;
   using SHFieldDerivativesType =
       specfem::point::field_derivatives<dimension, SHTag, false>;
   using SHStressType = specfem::point::stress<dimension, SHTag, false>;
@@ -191,8 +191,8 @@ TEST(Stress, ElasticAnisotropic2D_SH_ZeroDerivatives) {
       specfem::element::property_tag::anisotropic;
   static constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;
 
-  using SHPropertiesType =
-      specfem::point::properties<dimension, SHTag, property_tag, false>;
+  using SHPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, SHTag, property_tag, false> >;
   using SHFieldDerivativesType =
       specfem::point::field_derivatives<dimension, SHTag, false>;
   using SHStressType = specfem::point::stress<dimension, SHTag, false>;
@@ -230,8 +230,8 @@ TEST(Stress, ElasticAnisotropic2D_SH_IsotropicCoefficients) {
       specfem::element::property_tag::anisotropic;
   static constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;
 
-  using SHPropertiesType =
-      specfem::point::properties<dimension, SHTag, property_tag, false>;
+  using SHPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, SHTag, property_tag, false> >;
   using SHFieldDerivativesType =
       specfem::point::field_derivatives<dimension, SHTag, false>;
   using SHStressType = specfem::point::stress<dimension, SHTag, false>;

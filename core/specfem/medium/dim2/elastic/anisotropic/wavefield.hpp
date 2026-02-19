@@ -33,11 +33,10 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
       specfem::element::dimension_tag::dim2,
       specfem::element::medium_tag::elastic_psv, false>;
 
-  using PointPropertyType =
-      specfem::point::properties<specfem::element::dimension_tag::dim2,
-                                 specfem::element::medium_tag::elastic_psv,
-                                 specfem::element::property_tag::anisotropic,
-                                 false>;
+  using PointPropertyType = specfem::point::properties<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::elastic_psv,
+                          specfem::element::property_tag::anisotropic, false> >;
 
   const auto &properties = assembly.properties;
 

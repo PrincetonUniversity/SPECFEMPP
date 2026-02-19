@@ -1,0 +1,134 @@
+core/specfem/mesh/dim3/materials/materials.hpp:  const specfem::point::properties<specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false>>
+core/specfem/assembly/info.tpp:        specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
+core/specfem/assembly/assembly/impl/helper.hpp:        specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>;
+core/specfem/assembly/properties/dim2/properties.hpp: * specfem::point::properties<dim2, elastic, isotropic> max_props;
+core/specfem/assembly/properties/load_on_host.hpp: * specfem::point::properties<...> props;
+core/specfem/assembly/properties/load_on_device.hpp: * specfem::point::properties<...> props;
+core/specfem/assembly/properties/store_on_host.hpp: * specfem::point::properties<...> props;
+core/specfem/point/properties.hpp: * specfem::point::properties<specfem::tags::Tags<
+core/specfem/medium/dim3/acoustic/isotropic/wavefield.hpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim3, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, false>>;
+core/specfem/medium/dim3/acoustic/isotropic/stress.hpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim3, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, UseSIMD>> &properties,
+core/specfem/medium/dim3/elastic/isotropic/mass_matrix.hpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim3, specfem::element::medium_tag::elastic, PropertyTag, UseSIMD>> &properties);
+core/specfem/medium/dim3/elastic/isotropic/wavefield.hpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim3, specfem::element::medium_tag::elastic, specfem::element::property_tag::isotropic, false>>;
+core/specfem/medium/dim3/elastic/isotropic/mass_matrix.tpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim3, specfem::element::medium_tag::elastic, PropertyTag, UseSIMD>> &properties) {
+core/specfem/medium/dim3/elastic/isotropic/stress.hpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim3, specfem::element::medium_tag::elastic, specfem::element::property_tag::isotropic, UseSIMD>> &properties,
+core/specfem/medium/dim2/acoustic/isotropic/material.hpp:  inline specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
+core/specfem/medium/dim2/acoustic/isotropic/mass_matrix.hpp:    const specfem::point::properties<specfem::tags::Tags<DimensionTag, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, UseSIMD>> &properties);
+core/specfem/medium/dim2/acoustic/isotropic/wavefield.hpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, false>>;
+core/specfem/medium/dim2/acoustic/isotropic/mass_matrix.tpp:    const specfem::point::properties<specfem::tags::Tags<DimensionTag, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, UseSIMD>> &properties) {
+core/specfem/medium/dim2/acoustic/isotropic/stress.hpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, UseSIMD>> &properties,
+core/specfem/medium/dim2/elastic/anisotropic/material.hpp:  inline specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
+core/specfem/medium/dim2/elastic/anisotropic/mass_matrix.hpp://     const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, //                                      specfem::element::medium_tag::elastic_psv, //                                      PropertyTag, UseSIMD>> &properties,
+core/specfem/medium/dim2/elastic/anisotropic/wavefield.hpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::anisotropic, false>>;
+core/specfem/medium/dim2/elastic/anisotropic/mass_matrix.tpp://     const specfem::point::properties<specfem::tags::Tags<//         specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic, //         PropertyTag, UseSIMD>> &properties,
+core/specfem/medium/dim2/elastic/anisotropic/stress.hpp:        const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::anisotropic, UseSIMD>> &properties,
+core/specfem/medium/dim2/elastic/anisotropic/stress.hpp:        const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_sh, specfem::element::property_tag::anisotropic, UseSIMD>> &properties,
+core/specfem/medium/dim2/elastic/isotropic/material.hpp:  inline specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
+core/specfem/medium/dim2/elastic/isotropic/mass_matrix.hpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv, PropertyTag, UseSIMD>> &properties);
+core/specfem/medium/dim2/elastic/isotropic/mass_matrix.hpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_sh, PropertyTag, UseSIMD>> &properties);
+core/specfem/medium/dim2/elastic/isotropic/wavefield.hpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::isotropic, false>>;
+core/specfem/medium/dim2/elastic/isotropic/mass_matrix.tpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv, PropertyTag, UseSIMD>> &properties) {
+core/specfem/medium/dim2/elastic/isotropic/mass_matrix.tpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_sh, PropertyTag, UseSIMD>> &properties) {
+core/specfem/medium/dim2/elastic/isotropic/stress.hpp:        const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::isotropic, UseSIMD>> &properties,
+core/specfem/medium/dim2/elastic/isotropic/stress.hpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_sh, specfem::element::property_tag::isotropic, UseSIMD>> &properties,
+core/specfem/medium/dim2/elastic/isotropic_cosserat/material.hpp:  inline specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
+core/specfem/medium/dim2/elastic/isotropic_cosserat/mass_matrix.hpp:impl_mass_matrix_component(const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv_t, specfem::element::property_tag::isotropic_cosserat, UseSIMD>> &properties);
+core/specfem/medium/dim2/elastic/isotropic_cosserat/wavefield.hpp:  using PointPropertyType = specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv_t, specfem::element::property_tag::isotropic_cosserat, false>>;
+core/specfem/medium/dim2/elastic/isotropic_cosserat/mass_matrix.tpp:        const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv_t, specfem::element::property_tag::isotropic_cosserat, UseSIMD>>
+core/specfem/medium/dim2/elastic/isotropic_cosserat/stress.hpp:    impl_compute_stress(const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv_t, specfem::element::property_tag::isotropic_cosserat, UseSIMD>> &properties,
+core/specfem/medium/dim2/electromagnetic/isotropic/material.hpp:  inline specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
+core/specfem/medium/dim2/poroelastic/isotropic/material.hpp:  inline specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
+core/specfem/medium/dim2/poroelastic/isotropic/mass_matrix.hpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic, UseSIMD>> &properties);
+core/specfem/medium/dim2/poroelastic/isotropic/wavefield.hpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic, false>>;
+core/specfem/medium/dim2/poroelastic/isotropic/mass_matrix.tpp:    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic, UseSIMD>> &properties) {
+core/specfem/medium/dim2/poroelastic/isotropic/stress.hpp:        const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic, UseSIMD>> &properties,
+core/specfem/compute/impl/compute_source_interaction.tpp:      specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>;
+core/specfem/compute/impl/compute_stiffness_interaction.tpp:      specfem::point::properties<specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag, using_simd>>;
+core/specfem/compute/impl/compute_mass_matrix.tpp:      specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>>;
+core/specfem/compute/impl/compute_material_derivatives.tpp:      specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>>;
+core/specfem/medium_physics/compute_source_contribution.hpp: * using Properties = specfem::point::properties<specfem::tags::Tags<dim2, elastic, isotropic, false>>;
+core/specfem/medium_physics/compute_stress.hpp: * using Properties = specfem::point::properties<specfem::tags::Tags<dim2, elastic, isotropic, false>>;
+core/specfem/medium_physics/mass_matrix_component.hpp: * using Properties = specfem::point::properties<specfem::tags::Tags<dim2, elastic, isotropic, false>>;
+core/specfem/medium_physics/mass_matrix_component.hpp:    const specfem::point::properties<specfem::tags::Tags<DimensionTag, MediumTag, PropertyTag, UseSIMD>> &properties) {
+tests/unit-tests/mesh/dim2/materials/properties.cpp:        MaterialVectorType({ specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:        MaterialVectorType({ specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_sh, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:        MaterialVectorType({ specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:            { specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:              specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:            { specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:              specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:            { specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:              specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:        MaterialVectorType({ specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::anisotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:        MaterialVectorType({ specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_sh, specfem::element::property_tag::anisotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:        MaterialVectorType({ specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:            specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::electromagnetic_te, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:            specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::electromagnetic_te, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:            specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv_t, specfem::element::property_tag::isotropic_cosserat, false>>(
+tests/unit-tests/mesh/dim2/materials/properties.cpp:            const auto iexpected = std::any_cast<specfem::point::properties<specfem::tags::Tags<dimension, _medium_tag_, _property_tag_, false>> >(
+tests/unit-tests/assembly/dim3/properties/properties.cpp:                specfem::point::properties<specfem::tags::Tags<_dimension_tag_, _medium_tag_, _property_tag_, false>>
+tests/unit-tests/assembly/dim3/properties/properties.cpp:                  std::any_cast<specfem::point::properties<specfem::tags::Tags<_dimension_tag_, _medium_tag_, _property_tag_, false>> >(
+tests/unit-tests/assembly/dim3/properties/properties.cpp:                    specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim3, specfem::element::medium_tag::elastic, specfem::element::property_tag::isotropic, false>>(
+tests/unit-tests/assembly/properties/properties.cpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, using_simd>>;
+tests/unit-tests/assembly/properties/properties.cpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, using_simd>>;
+tests/unit-tests/assembly/properties/properties.cpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, using_simd>>;
+tests/unit-tests/assembly/properties/properties.cpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag, PropertyTag, false>>;
+tests/unit-tests/assembly/compute_wavefield/test_helper.hpp:        specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv, specfem::element::property_tag::isotropic, false>>;
+tests/unit-tests/assembly/compute_wavefield/test_helper.hpp:        specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, false>>;
+tests/unit-tests/assembly/compute_wavefield/test_helper.hpp:        specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, false>>;
+tests/unit-tests/point/properties/dim3/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim3, specfem::element::medium_tag::elastic, specfem::element::property_tag::isotropic, using_simd>>;
+tests/unit-tests/point/properties/dim2/acoustic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic, using_simd>>;
+tests/unit-tests/point/properties/dim2/electromagnetic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::electromagnetic, specfem::element::property_tag::isotropic, using_simd>>;
+tests/unit-tests/point/properties/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic, specfem::element::property_tag::anisotropic, using_simd>>;
+tests/unit-tests/point/properties/dim2/poroelastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic, using_simd>>;
+tests/unit-tests/point/properties/dim2/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic, specfem::element::property_tag::isotropic, using_simd>>;
+tests/unit-tests/medium/source/dim3/acoustic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim3/acoustic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim3/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim3/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/acoustic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/acoustic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/poroelastic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/poroelastic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/elastic_isotropic_cosserat.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/elastic_isotropic_cosserat.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/source/dim2/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim3/acoustic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim3/elastic_isotropic.cpp:  using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim3/elastic_isotropic.cpp:  using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/acoustic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/poroelastic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/poroelastic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/elastic_anisotropic.cpp:  using PointSHPropertiesType = specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_sh, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/elastic_anisotropic.cpp:  using PointSHPropertiesType = specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_sh, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/elastic_isotropic.cpp:  using PointSHPropertiesType = specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_sh, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv, property_tag, false>>;
+tests/unit-tests/medium/mass_matrix/dim2/elastic_isotropic.cpp:  using PointSHPropertiesType = specfem::point::properties<specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_sh, property_tag, false>>;
+tests/unit-tests/medium/stress/dim3/acoustic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim3/acoustic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim3/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, elasticTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim3/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, elasticTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/acoustic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/acoustic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, medium_tag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_isotropic_cosserat.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, CosseratTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_isotropic_cosserat.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, CosseratTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_isotropic_cosserat.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, CosseratTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, PSVTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, PSVTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, PSVTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, SHTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, SHTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_anisotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, SHTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/poroelastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, PoroTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/poroelastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, PoroTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, PSVTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, PSVTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, SHTag, property_tag, false>>;
+tests/unit-tests/medium/stress/dim2/elastic_isotropic.cpp:      specfem::point::properties<specfem::tags::Tags<dimension, SHTag, property_tag, false>>;

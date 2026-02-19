@@ -61,15 +61,16 @@ template <bool UseSIMD>
 KOKKOS_INLINE_FUNCTION
     specfem::point::stress<specfem::element::dimension_tag::dim2,
                            specfem::element::medium_tag::elastic_psv_t, UseSIMD>
-    impl_compute_stress(const specfem::point::properties<
-                            specfem::element::dimension_tag::dim2,
-                            specfem::element::medium_tag::elastic_psv_t,
-                            specfem::element::property_tag::isotropic_cosserat,
-                            UseSIMD> &properties,
-                        const specfem::point::field_derivatives<
-                            specfem::element::dimension_tag::dim2,
-                            specfem::element::medium_tag::elastic_psv_t,
-                            UseSIMD> &field_derivatives) {
+    impl_compute_stress(
+        const specfem::point::properties<specfem::tags::Tags<
+            specfem::element::dimension_tag::dim2,
+            specfem::element::medium_tag::elastic_psv_t,
+            specfem::element::property_tag::isotropic_cosserat, UseSIMD> >
+            &properties,
+        const specfem::point::field_derivatives<
+            specfem::element::dimension_tag::dim2,
+            specfem::element::medium_tag::elastic_psv_t, UseSIMD>
+            &field_derivatives) {
 
   using datatype =
       typename specfem::datatype::simd<type_real, UseSIMD>::datatype;

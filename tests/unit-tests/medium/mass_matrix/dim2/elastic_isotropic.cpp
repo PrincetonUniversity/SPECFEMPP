@@ -8,10 +8,9 @@ TEST(MassMatrix, ElasticPSVIsotropicTrivialSolution2D) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPSVPropertiesType =
-      specfem::point::properties<dimension,
-                                 specfem::element::medium_tag::elastic_psv,
-                                 property_tag, false>;
+  using PointPSVPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv,
+                          property_tag, false> >;
   using PointPSVMassMatrixType =
       specfem::point::mass_inverse<specfem::tags::Tags<
           dimension, specfem::element::medium_tag::elastic_psv, false> >;
@@ -32,7 +31,8 @@ TEST(MassMatrix, ElasticSHIsotropicTrivialSolution2D) {
       specfem::element::property_tag::isotropic;
 
   using PointSHPropertiesType = specfem::point::properties<
-      dimension, specfem::element::medium_tag::elastic_sh, property_tag, false>;
+      specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_sh,
+                          property_tag, false> >;
   using PointSHMassMatrixType =
       specfem::point::mass_inverse<specfem::tags::Tags<
           dimension, specfem::element::medium_tag::elastic_sh, false> >;
@@ -52,10 +52,9 @@ TEST(MassMatrix, ElasticPSVIsotropic2D) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPSVPropertiesType =
-      specfem::point::properties<dimension,
-                                 specfem::element::medium_tag::elastic_psv,
-                                 property_tag, false>;
+  using PointPSVPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_psv,
+                          property_tag, false> >;
   using PointPSVMassMatrixType =
       specfem::point::mass_inverse<specfem::tags::Tags<
           dimension, specfem::element::medium_tag::elastic_psv, false> >;
@@ -78,7 +77,8 @@ TEST(MassMatrix, ElasticSHIsotropic2D) {
       specfem::element::property_tag::isotropic;
 
   using PointSHPropertiesType = specfem::point::properties<
-      dimension, specfem::element::medium_tag::elastic_sh, property_tag, false>;
+      specfem::tags::Tags<dimension, specfem::element::medium_tag::elastic_sh,
+                          property_tag, false> >;
   using PointSHMassMatrixType =
       specfem::point::mass_inverse<specfem::tags::Tags<
           dimension, specfem::element::medium_tag::elastic_sh, false> >;

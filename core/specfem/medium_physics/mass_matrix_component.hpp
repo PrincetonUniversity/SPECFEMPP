@@ -30,7 +30,7 @@ namespace medium_physics {
  *
  * @code{.cpp}
  * // Example usage for 2D elastic isotropic medium
- * using Properties = specfem::point::properties<dim2, elastic, isotropic, false>;
+ * using Properties = specfem::point::properties<specfem::tags::Tags<dim2, elastic, isotropic, false>>;
  * Properties props = ...; // Initialize material properties
  * auto mass_inv = specfem::medium_physics::mass_matrix_component(props);
  * @endcode
@@ -42,8 +42,9 @@ template <specfem::element::dimension_tag DimensionTag,
 KOKKOS_INLINE_FUNCTION specfem::point::mass_inverse<
     specfem::tags::Tags<DimensionTag, MediumTag, UseSIMD> >
 mass_matrix_component(
-    const specfem::point::properties<DimensionTag, MediumTag, PropertyTag,
-                                     UseSIMD> &properties) {
+    const specfem::point::properties<
+        specfem::tags::Tags<DimensionTag, MediumTag, PropertyTag, UseSIMD> >
+        &properties) {
   return impl_mass_matrix_component(properties);
 }
 

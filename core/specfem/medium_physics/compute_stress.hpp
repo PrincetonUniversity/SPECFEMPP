@@ -29,7 +29,7 @@ namespace medium_physics {
  *
  * @code{.cpp}
  * // Example usage for 2D elastic isotropic medium
- * using Properties = specfem::point::properties<dim2, elastic, isotropic, false>;
+ * using Properties = specfem::point::properties<specfem::tags::Tags<dim2, elastic, isotropic, false>>;
  * using FieldDerivatives = specfem::point::field_derivatives<dim2, elastic, false>;
  * Properties props = ...; // Initialize material properties
  * FieldDerivatives derivs = ...; // Initialize field derivatives

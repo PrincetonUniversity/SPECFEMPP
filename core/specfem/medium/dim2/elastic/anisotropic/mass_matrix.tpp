@@ -10,9 +10,7 @@
 //                                       specfem::element::medium_tag::elastic,
 //                                       false, false, false, true, UseSIMD>
 // specfem::medium_physics::impl_mass_matrix_component(
-//     const specfem::point::properties<
-//         specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic,
-//         PropertyTag, UseSIMD> &properties,
+//     const specfem::point::properties<specfem::tags::Tags<//         specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic, //         PropertyTag, UseSIMD>> &properties,
 //     const specfem::point::jacobian_matrix<
 //         specfem::element::dimension_tag::dim2, true, UseSIMD> &jacobian_matrix) {
 

@@ -31,17 +31,18 @@ namespace medium_physics {
  * @return 1x2 stress tensor [\f$\sigma_{xx}\f$, \f$\sigma_{zz}\f$]
  */
 template <bool UseSIMD>
-KOKKOS_INLINE_FUNCTION specfem::point::stress<
-    specfem::element::dimension_tag::dim2,
-    specfem::element::medium_tag::acoustic, UseSIMD>
-impl_compute_stress(
-    const specfem::point::properties<specfem::element::dimension_tag::dim2,
-                                     specfem::element::medium_tag::acoustic,
-                                     specfem::element::property_tag::isotropic,
-                                     UseSIMD> &properties,
-    const specfem::point::field_derivatives<
-        specfem::element::dimension_tag::dim2,
-        specfem::element::medium_tag::acoustic, UseSIMD> &field_derivatives) {
+KOKKOS_INLINE_FUNCTION
+    specfem::point::stress<specfem::element::dimension_tag::dim2,
+                           specfem::element::medium_tag::acoustic, UseSIMD>
+    impl_compute_stress(
+        const specfem::point::properties<specfem::tags::Tags<
+            specfem::element::dimension_tag::dim2,
+            specfem::element::medium_tag::acoustic,
+            specfem::element::property_tag::isotropic, UseSIMD> > &properties,
+        const specfem::point::field_derivatives<
+            specfem::element::dimension_tag::dim2,
+            specfem::element::medium_tag::acoustic, UseSIMD>
+            &field_derivatives) {
 
   const auto &du = field_derivatives.du;
 

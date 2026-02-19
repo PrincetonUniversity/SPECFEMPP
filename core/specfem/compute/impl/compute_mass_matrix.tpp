@@ -66,8 +66,7 @@ void specfem::compute::impl::compute_mass_matrix(
       specfem::point::mass_inverse<PointTags>;
 
   using PointPropertyType =
-      specfem::point::properties<dimension_tag, medium_tag, property_tag,
-                                 using_simd>;
+      specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>>;
 
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension_tag, true, using_simd>;

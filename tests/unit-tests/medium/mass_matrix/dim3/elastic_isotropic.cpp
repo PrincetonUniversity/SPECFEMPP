@@ -8,8 +8,8 @@ TEST(MassMatrix, ElasticIsotropicTrivialSolution3D) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType = specfem::point::properties<
-      dimension, specfem::element::medium_tag::elastic, property_tag, false>;
+  using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
+      dimension, specfem::element::medium_tag::elastic, property_tag, false> >;
   using PointMassMatrixType = specfem::point::mass_inverse<specfem::tags::Tags<
       dimension, specfem::element::medium_tag::elastic, false> >;
 
@@ -28,8 +28,8 @@ TEST(MassMatrix, ElasticIsotropic3D) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType = specfem::point::properties<
-      dimension, specfem::element::medium_tag::elastic, property_tag, false>;
+  using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
+      dimension, specfem::element::medium_tag::elastic, property_tag, false> >;
   using PointMassMatrixType = specfem::point::mass_inverse<specfem::tags::Tags<
       dimension, specfem::element::medium_tag::elastic, false> >;
 

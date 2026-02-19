@@ -12,8 +12,8 @@ TEST(MassMatrix, PoroelasticIsotropic2DZeroPorosity) {
 
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension, true, false>;
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
   using PointMassMatrixType = specfem::point::mass_inverse<
       specfem::tags::Tags<dimension, medium_tag, false> >;
 
@@ -50,8 +50,8 @@ TEST(MassMatrix, PoroelasticIsotropic2D) {
 
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension, true, false>;
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
   using PointMassMatrixType = specfem::point::mass_inverse<
       specfem::tags::Tags<dimension, medium_tag, false> >;
 

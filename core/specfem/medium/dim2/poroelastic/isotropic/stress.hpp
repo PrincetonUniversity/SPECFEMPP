@@ -59,10 +59,10 @@ KOKKOS_INLINE_FUNCTION
     specfem::point::stress<specfem::element::dimension_tag::dim2,
                            specfem::element::medium_tag::poroelastic, UseSIMD>
     impl_compute_stress(
-        const specfem::point::properties<
+        const specfem::point::properties<specfem::tags::Tags<
             specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::poroelastic,
-            specfem::element::property_tag::isotropic, UseSIMD> &properties,
+            specfem::element::property_tag::isotropic, UseSIMD> > &properties,
         const specfem::point::field_derivatives<
             specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::poroelastic, UseSIMD>

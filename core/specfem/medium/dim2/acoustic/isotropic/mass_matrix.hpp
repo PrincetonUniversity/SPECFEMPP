@@ -33,9 +33,9 @@ template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::mass_inverse<specfem::tags::Tags<
     DimensionTag, specfem::element::medium_tag::acoustic, UseSIMD> >
 impl_mass_matrix_component(
-    const specfem::point::properties<
+    const specfem::point::properties<specfem::tags::Tags<
         DimensionTag, specfem::element::medium_tag::acoustic,
-        specfem::element::property_tag::isotropic, UseSIMD> &properties);
+        specfem::element::property_tag::isotropic, UseSIMD> > &properties);
 
 } // namespace medium_physics
 } // namespace specfem

@@ -32,8 +32,9 @@ KOKKOS_FUNCTION specfem::point::mass_inverse<
     specfem::tags::Tags<specfem::element::dimension_tag::dim3,
                         specfem::element::medium_tag::elastic, UseSIMD> >
 impl_mass_matrix_component(
-    const specfem::point::properties<specfem::element::dimension_tag::dim3,
-                                     specfem::element::medium_tag::elastic,
-                                     PropertyTag, UseSIMD> &properties);
+    const specfem::point::properties<specfem::tags::Tags<
+        specfem::element::dimension_tag::dim3,
+        specfem::element::medium_tag::elastic, PropertyTag, UseSIMD> >
+        &properties);
 } // namespace medium_physics
 } // namespace specfem

@@ -12,8 +12,8 @@ TEST(Stress, AcousticIsotropic2D) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<dimension, medium_tag, false>;
   using PointStressType = specfem::point::stress<dimension, medium_tag, false>;
@@ -46,8 +46,8 @@ TEST(Stress, AcousticIsotropic2D_ZeroDerivatives) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType =
-      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+  using PointPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<dimension, medium_tag, false>;
   using PointStressType = specfem::point::stress<dimension, medium_tag, false>;

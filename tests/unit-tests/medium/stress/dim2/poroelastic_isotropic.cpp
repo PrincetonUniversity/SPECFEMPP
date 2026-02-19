@@ -12,8 +12,8 @@ TEST(Stress, PoroelasticIsotropic2D_Basic) {
       specfem::element::property_tag::isotropic;
   static constexpr auto PoroTag = specfem::element::medium_tag::poroelastic;
 
-  using PoroPropertiesType =
-      specfem::point::properties<dimension, PoroTag, property_tag, false>;
+  using PoroPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, PoroTag, property_tag, false> >;
   using PoroFieldDerivativesType =
       specfem::point::field_derivatives<dimension, PoroTag, false>;
   using PoroStressType = specfem::point::stress<dimension, PoroTag, false>;
@@ -83,8 +83,8 @@ TEST(Stress, PoroelasticIsotropic2D_ZeroDerivatives) {
       specfem::element::property_tag::isotropic;
   static constexpr auto PoroTag = specfem::element::medium_tag::poroelastic;
 
-  using PoroPropertiesType =
-      specfem::point::properties<dimension, PoroTag, property_tag, false>;
+  using PoroPropertiesType = specfem::point::properties<
+      specfem::tags::Tags<dimension, PoroTag, property_tag, false> >;
   using PoroFieldDerivativesType =
       specfem::point::field_derivatives<dimension, PoroTag, false>;
   using PoroStressType = specfem::point::stress<dimension, PoroTag, false>;

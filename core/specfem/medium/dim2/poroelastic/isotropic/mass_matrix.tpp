@@ -6,10 +6,7 @@ template <bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
     specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::poroelastic, UseSIMD>>
 specfem::medium_physics::impl_mass_matrix_component(
-    const specfem::point::properties<specfem::element::dimension_tag::dim2,
-                                     specfem::element::medium_tag::poroelastic,
-                                     specfem::element::property_tag::isotropic,
-                                     UseSIMD> &properties) {
+    const specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::poroelastic, specfem::element::property_tag::isotropic, UseSIMD>> &properties) {
 
   const auto solid_component =
       (properties.rho_bar() -
