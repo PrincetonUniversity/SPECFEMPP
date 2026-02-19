@@ -105,6 +105,55 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
   return result;
 }
 
+struct Qoptions {
+  type_real Q;
+  type_real minfreq;
+  type_real maxfreq;
+  type_real min_plot_freq;
+  type_real max_plot_freq;
+  std::string output_dir;
+};
+
+void add_qplot_options(CLI::App *cmd, Qoptions &opts) {
+  cmd->add_option("Q", opts.Q, "Quality factor Q")->required();
+  cmd->add_option("minfreq", opts.minfreq, "Minimum frequency")->required();
+  cmd->add_option("maxfreq", opts.maxfreq, "Maximum frequency")->required();
+  cmd->add_option("min_plot_freq", opts.min_plot_freq, "Minimum plot frequency")
+      ->capture_default_str()
+      ->default_val(1e-5);
+  cmd->add_option("max_plot_freq", opts.max_plot_freq, "Maximum plot frequency")
+      ->capture_default_str()
+      ->default_val(1e2);
+  cmd->add_option("--output-dir", opts.output_dir,
+                  "Directory to save Q plot data")
+      ->capture_default_str()
+      ->default_val("qplots");
+}
+
+int run_qplots(int argc, char **argv, const Qoptions &opts) {
+
+  int result = 0;
+
+  try {
+    specfem::program::Context context(argc, argv);
+
+    const auto success = specfem::program::qplots(
+        opts.Q, opts.minfreq, opts.maxfreq, opts.min_plot_freq,
+        opts.max_plot_freq, opts.output_dir);
+
+    if (!success) {
+      std::cerr << "Q plot generation failed" << std::endl;
+      result = 1;
+    }
+
+  } catch (const std::exception &e) {
+    std::cerr << "Error during Q plot generation: " << e.what() << std::endl;
+    result = 1;
+  }
+
+  return result;
+}
+
 int main(int argc, char **argv) {
 
   CLI::App app{ "======================================\n"
@@ -125,10 +174,10 @@ int main(int argc, char **argv) {
   add_simulation_options(cmd_3d, opts_3d, flags_3d);
 
   // -- Qplots subcommand (placeholder) --
-  std::string qplots_input;
+  Qoptions qplots_opts;
   auto *cmd_qplots =
-      app.add_subcommand("Qplots", "Generate Q attenuation plots");
-  cmd_qplots->add_option("input", qplots_input, "Input file for Q plots");
+      app.add_subcommand("qplots", "Generate Q attenuation plots");
+  add_qplot_options(cmd_qplots, qplots_opts);
 
   CLI11_PARSE(app, argc, argv);
 
@@ -142,8 +191,7 @@ int main(int argc, char **argv) {
   }
 
   if (cmd_qplots->parsed()) {
-    std::cout << "Qplots subcommand not yet implemented." << std::endl;
-    return 0;
+    return run_qplots(argc, argv, qplots_opts);
   }
 
   return 1;

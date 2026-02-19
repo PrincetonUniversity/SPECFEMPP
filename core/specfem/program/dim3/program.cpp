@@ -1,0 +1,170 @@
+#include "program.hpp"
+#include "specfem/assembly.hpp"
+#include "specfem/element.hpp"
+#include "specfem/io.hpp"
+#include "specfem/logger.hpp"
+#include "specfem/mesh.hpp"
+#include "specfem/receivers.hpp"
+#include "specfem/solver.hpp"
+#include "specfem/source.hpp"
+#include "specfem/timescheme.hpp"
+
+namespace specfem::program {
+
+void program_3d(
+    const YAML::Node &parameter_dict,
+    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task<
+        specfem::element::dimension_tag::dim3> > >
+        tasks) {
+
+  // --------------------------------------------------------------
+  //                    Read parameter file
+  // --------------------------------------------------------------
+  auto start_time = std::chrono::system_clock::now();
+  specfem::runtime_configuration::setup setup(parameter_dict);
+  const auto database_filename = setup.get_databases();
+
+  specfem::Logger::info(
+      print_header<specfem::element::dimension_tag::dim3>(setup, start_time));
+
+  // Get simulation parameters
+  const specfem::simulation::type simulation_type = setup.get_simulation_type();
+  const type_real dt = setup.get_dt();
+  const int nsteps = setup.get_nsteps();
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Read mesh and materials
+  // --------------------------------------------------------------
+  specfem::Logger::info("Reading the mesh...");
+  specfem::Logger::info("===================");
+  auto mesh_start_time = std::chrono::system_clock::now();
+  const auto mesh = specfem::io::read_3d_mesh(database_filename);
+  auto mesh_read_time = std::chrono::system_clock::now() - mesh_start_time;
+  specfem::Logger::info("Time to read mesh: " +
+                        std::to_string(mesh_read_time.count()) + " seconds");
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Instantiate Quadrature
+  // --------------------------------------------------------------
+  const auto quadrature = setup.instantiate_quadrature();
+  specfem::Logger::info("Quadrature:");
+  specfem::Logger::info("-------------------------------");
+  specfem::Logger::info(quadrature.to_string());
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Get Sources
+  // --------------------------------------------------------------
+  auto [sources, t0] =
+      specfem::io::read_3d_sources(setup.get_sources(), nsteps, setup.get_t0(),
+                                   setup.get_dt(), simulation_type);
+  setup.update_t0(t0); // Update t0 in case it was changed
+
+  specfem::Logger::info("Source Information:");
+  specfem::Logger::info("---------------------");
+  specfem::Logger::info(
+      "Number of sources : " + std::to_string(sources.size()) + "\n");
+
+  for (auto &source : sources) {
+    specfem::Logger::info(source->print());
+  }
+
+  // --------------------------------------------------------------
+  //                   Get receivers
+  // --------------------------------------------------------------
+  // create single receiver receivers vector for now
+  auto receivers = specfem::io::read_3d_receivers(setup.get_stations());
+
+  specfem::Logger::info("Receiver Information:");
+  specfem::Logger::info("---------------------");
+  specfem::Logger::info(
+      "Number of receivers : " + std::to_string(receivers.size()) + "\n");
+
+  for (auto &receiver : receivers) {
+    specfem::Logger::info(receiver->print());
+  }
+
+  // --------------------------------------------------------------
+  //                   Generate Assembly
+  // --------------------------------------------------------------
+  specfem::Logger::info("Generating Assembly:");
+  specfem::Logger::info("-------------------------------");
+  const int max_seismogram_time_step = setup.get_max_seismogram_step();
+  const int nstep_between_samples = setup.get_nstep_between_samples();
+  specfem::assembly::assembly<specfem::element::dimension_tag::dim3> assembly(
+      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
+      setup.get_t0(), dt, nsteps, max_seismogram_time_step,
+      nstep_between_samples, setup.get_simulation_type(),
+      setup.allocate_boundary_values(), setup.instantiate_property_reader());
+
+  specfem::Logger::info(assembly.print());
+
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Instantiate Timescheme
+  // --------------------------------------------------------------
+  const auto time_scheme = setup.instantiate_timescheme(assembly.fields);
+  specfem::Logger::info(time_scheme->to_string());
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Instantiate plotter
+  // --------------------------------------------------------------
+  specfem::Logger::info("(If set) Instantiate wavefield plotter");
+  specfem::Logger::info("-------------------------------");
+  const auto wavefield_plotter =
+      setup.instantiate_wavefield_plotter(assembly, dt);
+  if (wavefield_plotter) {
+    tasks.push_back(wavefield_plotter);
+  }
+
+  // --------------------------------------------------------------
+  //                   Instantiate Solver
+  // --------------------------------------------------------------
+  specfem::Logger::info("Instantiate solver");
+  specfem::Logger::info("-------------------------------");
+  std::shared_ptr<specfem::solver::solver> solver =
+      setup.instantiate_solver<5>(dt, assembly, time_scheme, tasks);
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Execute Solver
+  // --------------------------------------------------------------
+  // Time the solver
+  specfem::Logger::info("Executing time loop:");
+  specfem::Logger::info("-------------------------------");
+
+  const auto solver_start_time = std::chrono::system_clock::now();
+  solver->run();
+  const auto solver_end_time = std::chrono::system_clock::now();
+
+  std::chrono::duration<double> solver_time =
+      solver_end_time - solver_start_time;
+
+  specfem::Logger::info("Solver time: " + std::to_string(solver_time.count()) +
+                        " seconds.");
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Write Seismograms
+  // --------------------------------------------------------------
+  const auto seismogram_writer = setup.instantiate_seismogram_writer();
+  if (seismogram_writer) {
+    specfem::Logger::info("Writing seismogram files.");
+    seismogram_writer->write(assembly);
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Print End Message
+  // --------------------------------------------------------------
+  specfem::Logger::info(print_end_message(start_time, solver_time));
+  // --------------------------------------------------------------
+
+  return;
+}
+
+} // namespace specfem::program

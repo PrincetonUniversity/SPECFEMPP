@@ -12,22 +12,16 @@ namespace specfem {
 namespace attenuation {
 
 /**
- * @brief Number of frequencies used for evaluating attenuation objective
- *
- * Matching SPECFEM3D Fortran implementation which uses 100 frequencies.
- */
-constexpr int NF_ATTENUATION = 100;
-
-/**
  * @brief Objective function for \f$\tau_\epsilon\f$ optimization
  *
  * This callable struct computes the misfit between the achieved \f$Q\f$ (from
  * the Maxwell solid model) and the target \f$Q\f$ value. It is designed to be
  * used with the Nelder-Mead optimizer.
  *
- * The objective is computed as the sum of squared differences:
+ * The objective is computed as the sum of absolute relative errors:
  * \f[
- *   \sum_i \left( \tan\delta(f_i) - \frac{1}{Q_\text{target}} \right)^2
+ *   \sum_i \frac{| \tan\delta(f_i) - \frac{1}{Q_\text{target}}
+ * |}{\frac{1}{Q_\text{target}}}
  * \f]
  *
  * where \f$\tan\delta = B/A\f$ from the Maxwell solid moduli.
@@ -37,7 +31,8 @@ constexpr int NF_ATTENUATION = 100;
 template <int N_SLS> struct AttenuationObjective {
   type_real Q;  ///< Target quality factor \f$Q\f$
   type_real iQ; ///< \f$1/Q\f$ (target \f$\tan\delta\f$)
-  Kokkos::View<type_real[NF_ATTENUATION], Kokkos::LayoutRight,
+  Kokkos::View<type_real[specfem::constants::NF_ATTENUATION],
+               Kokkos::LayoutRight,
                Kokkos::HostSpace>
       f; ///< Evaluation frequencies \f$f\f$ (Hz)
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
@@ -54,15 +49,19 @@ template <int N_SLS> struct AttenuationObjective {
           tau_eps) const {
 
     // Compute Maxwell moduli for all frequencies
-    auto moduli = maxwell<NF_ATTENUATION, N_SLS>(f, tau_sigma, tau_eps);
+    auto maxwell_factors = maxwell<specfem::constants::NF_ATTENUATION, N_SLS>(
+        f, tau_sigma, tau_eps);
 
-    // Compute sum of squared misfit
+    // Compute sum of absolute relative errors (L1 norm, normalized by 1/Q)
+    // Matches Fortran: xi = sqrt( (tan_delta - 1/Q)^2 / (1/Q)^2 )
+    //                     = |tan_delta - 1/Q| * Q
     type_real misfit = 0.0;
-    for (int i = 0; i < NF_ATTENUATION; ++i) {
+    const type_real iQ2 = iQ * iQ;
+    for (int i = 0; i < specfem::constants::NF_ATTENUATION; ++i) {
       // tan_delta = B / A ≈ 1/Q
-      type_real tan_delta = moduli.B(i) / moduli.A(i);
+      type_real tan_delta = maxwell_factors.imag(i) / maxwell_factors.real(i);
       type_real diff = tan_delta - iQ;
-      misfit += diff * diff;
+      misfit += std::sqrt(diff * diff / iQ2);
     }
 
     return misfit;

@@ -49,4 +49,16 @@ const type_real COURANT_NUMBER_SUGGESTED = 0.5;
  */
 const type_real NPTS_PER_WAVELENGTH = 5;
 
+/**
+ * @brief Number of frequencies used for evaluating attenuation objective
+ *
+ */
+constexpr int NF_ATTENUATION = 100;
+
+/**
+ * @brief Number of standard linear solids for attenuation implementation
+ *
+ */
+constexpr int N_SLS = 3;
+
 } // namespace specfem::constants
