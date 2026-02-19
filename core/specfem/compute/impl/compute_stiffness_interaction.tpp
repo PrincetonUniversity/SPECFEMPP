@@ -82,14 +82,16 @@ int specfem::compute::impl::compute_stiffness_interaction(
       ngll, Tags::dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
+  using PointTags = specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+
   using PointBoundaryType =
       specfem::point::boundary<Tags::boundary_tag, Tags::dimension_tag, using_simd>;
   using PointDisplacementType =
-      specfem::point::displacement<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::displacement<PointTags>;
   using PointVelocityType =
-      specfem::point::velocity<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::velocity<PointTags>;
   using PointAccelerationType =
-      specfem::point::acceleration<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::acceleration<PointTags>;
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<Tags::dimension_tag, true, using_simd>;
   using PointPropertyType =

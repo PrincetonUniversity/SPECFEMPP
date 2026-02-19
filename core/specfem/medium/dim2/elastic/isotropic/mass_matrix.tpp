@@ -2,10 +2,10 @@
 
 #include "mass_matrix.hpp"
 
-template <bool UseSIMD, specfem::element::property_tag PropertyTag>
+template <specfem::element::property_tag PropertyTag, bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv,
-    UseSIMD>
+    specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_psv,
+    UseSIMD>>
 specfem::medium_physics::impl_mass_matrix_component(
     const specfem::point::properties<specfem::element::dimension_tag::dim2,
                                      specfem::element::medium_tag::elastic_psv,
@@ -14,10 +14,10 @@ specfem::medium_physics::impl_mass_matrix_component(
   return { properties.rho(), properties.rho() };
 }
 
-template <bool UseSIMD, specfem::element::property_tag PropertyTag>
+template <specfem::element::property_tag PropertyTag, bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_sh,
-    UseSIMD>
+    specfem::tags::Tags<specfem::element::dimension_tag::dim2, specfem::element::medium_tag::elastic_sh,
+    UseSIMD>>
 specfem::medium_physics::impl_mass_matrix_component(
     const specfem::point::properties<specfem::element::dimension_tag::dim2,
                                      specfem::element::medium_tag::elastic_sh,

@@ -2,6 +2,7 @@
 
 #include "specfem/data_access.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -67,26 +68,26 @@ namespace specfem::point::impl {
  * specfem::assembly::load_on_device(point_index, field_container, v_field);
  * @endcode
  */
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag,
-          specfem::data_access::DataClassType DataClass, bool UseSIMD>
+template <typename Tags, specfem::data_access::DataClassType DataClass>
 class field : public specfem::data_access::Accessor<
                   specfem::datatype::AccessorType::point, DataClass,
-                  DimensionTag, UseSIMD> {
+                  Tags::dimension_tag, Tags::using_simd> {
 private:
   /**
    * @brief Type alias for the base accessor class.
    */
   using base_type =
       specfem::data_access::Accessor<specfem::datatype::AccessorType::point,
-                                     DataClass, DimensionTag, UseSIMD>;
+                                     DataClass, Tags::dimension_tag,
+                                     Tags::using_simd>;
 
 public:
   /**
    * @brief Number of field components based on dimension and medium type.
    */
   constexpr static int components =
-      specfem::element::attributes<DimensionTag, MediumTag>::components;
+      specfem::element::attributes<Tags::dimension_tag,
+                                   Tags::medium_tag>::components;
 
   /**
    * @brief SIMD type for vectorized operations.
@@ -102,7 +103,7 @@ public:
   /**
    * @brief Medium tag identifying the physical medium type.
    */
-  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto medium_tag = Tags::medium_tag;
 
 private:
   /**

@@ -63,9 +63,9 @@ coupling_integral(const specfem::assembly::assembly<dimension_tag> &assembly,
 
   using PointIndexType =
       typename IndexType::iterator_type::index_type::index_type;
-  using PointFieldType =
-      specfem::point::acceleration<dimension_tag, self_medium_tag,
-                                   IntersectionFieldViewType::using_simd>;
+  using PointFieldType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension_tag, self_medium_tag,
+                          IntersectionFieldViewType::simd::using_simd> >;
   using SelfTransferFunctionType = specfem::point::transfer_function_self<
       IntersectionFactor::n_quad_intersection, dimension_tag,
       IntersectionFactor::interface_tag, IntersectionFactor::boundary_tag>;

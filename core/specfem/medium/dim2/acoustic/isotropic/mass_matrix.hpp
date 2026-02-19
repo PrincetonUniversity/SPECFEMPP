@@ -30,8 +30,8 @@ namespace medium_physics {
  * @return Mass inverse component [\f$ \kappa^{-1} \f$] for pressure wavefield
  */
 template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::mass_inverse<
-    DimensionTag, specfem::element::medium_tag::acoustic, UseSIMD>
+KOKKOS_FUNCTION specfem::point::mass_inverse<specfem::tags::Tags<
+    DimensionTag, specfem::element::medium_tag::acoustic, UseSIMD> >
 impl_mass_matrix_component(
     const specfem::point::properties<
         DimensionTag, specfem::element::medium_tag::acoustic,

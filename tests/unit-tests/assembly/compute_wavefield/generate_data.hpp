@@ -5,6 +5,7 @@
 #pragma once
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
+#include "specfem/tags.hpp"
 
 template <specfem::enums::wavefield component,
           specfem::simulation::field_type type,
@@ -28,14 +29,13 @@ void generate_data(
                                    medium>::components;
 
   using PointDisplacementType =
-      specfem::point::displacement<specfem::element::dimension_tag::dim2,
-                                   medium, false>;
-  using PointVelocityType =
-      specfem::point::velocity<specfem::element::dimension_tag::dim2, medium,
-                               false>;
+      specfem::point::displacement<specfem::tags::Tags<
+          specfem::element::dimension_tag::dim2, medium, false> >;
+  using PointVelocityType = specfem::point::velocity<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2, medium, false> >;
   using PointAccelerationType =
-      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
-                                   medium, false>;
+      specfem::point::acceleration<specfem::tags::Tags<
+          specfem::element::dimension_tag::dim2, medium, false> >;
 
   using IndexType =
       specfem::point::index<specfem::element::dimension_tag::dim2, false>;

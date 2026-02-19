@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/element_connections.hpp"
 #include "specfem/element_coupling.hpp"
@@ -91,6 +92,13 @@ struct TagMember<specfem::simulation::field_type, WavefieldTag> {
 };
 
 /**
+ * @brief SIMD tag specialization for point field types (enabled, disabled).
+ */
+template <bool UseSIMD> struct TagMember<bool, UseSIMD> {
+  static constexpr bool using_simd = UseSIMD;
+};
+
+/**
  * @brief Variadic template for combining multiple compile-time tags.
  *
  * Inherits from multiple TagMember specializations to aggregate different
@@ -110,5 +118,24 @@ struct TagMember<specfem::simulation::field_type, WavefieldTag> {
  */
 template <auto... TagMembers>
 struct Tags : TagMember<decltype(TagMembers), TagMembers>... {};
+
+// template <typename ParentTags>
+// using MediumTags = Tags<ParentTags::dimension_tag, ParentTags::medium_tag>;
+
+// template <typename ParentTags>
+// using PointMediumTags = Tags<ParentTags::dimension_tag,
+// ParentTags::medium_tag, ParentTags::using_simd>;
+
+// template <typename ParentTags>
+// using PropertyTags = Tags<ParentTags::dimension_tag, ParentTags::medium_tag,
+// ParentTags::property_tag>;
+
+// template <typename ParentTags>
+// using PointPropertyTags = Tags<ParentTags::dimension_tag,
+// ParentTags::medium_tag, ParentTags::property_tag, ParentTags::using_simd>;
+
+// template <typename ParentTags>
+// using BoundaryTags = Tags<ParentTags::dimension_tag, ParentTags::medium_tag,
+// ParentTags::boundary_tag>;
 
 } // namespace specfem::tags

@@ -17,8 +17,8 @@ TEST(Source, ElasticIsotropicPSV2D) {
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real rho = 2000.0;
   const type_real mu = 30e9;
@@ -60,8 +60,8 @@ TEST(Source, ElasticIsotropicSH2D) {
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real rho = 2000.0;
   const type_real mu = 30e9;
@@ -99,8 +99,8 @@ TEST(Source, ElasticIsotropicPSV2D_ZeroSource) {
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real rho = 2000.0;
   const type_real mu = 30e9;

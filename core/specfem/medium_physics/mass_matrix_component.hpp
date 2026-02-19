@@ -39,11 +39,11 @@ namespace medium_physics {
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
-KOKKOS_INLINE_FUNCTION
-    specfem::point::mass_inverse<DimensionTag, MediumTag, UseSIMD>
-    mass_matrix_component(
-        const specfem::point::properties<DimensionTag, MediumTag, PropertyTag,
-                                         UseSIMD> &properties) {
+KOKKOS_INLINE_FUNCTION specfem::point::mass_inverse<
+    specfem::tags::Tags<DimensionTag, MediumTag, UseSIMD> >
+mass_matrix_component(
+    const specfem::point::properties<DimensionTag, MediumTag, PropertyTag,
+                                     UseSIMD> &properties) {
   return impl_mass_matrix_component(properties);
 }
 

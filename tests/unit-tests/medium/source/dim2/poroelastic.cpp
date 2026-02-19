@@ -17,8 +17,8 @@ TEST(Source, PoroelasticIsotropic2D) {
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real phi = 0.3;
   const type_real rho_s = 2500.0;
@@ -77,8 +77,8 @@ TEST(Source, PoroelasticIsotropic2D_ZeroSource) {
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real phi = 0.3;
   const type_real rho_s = 2500.0;

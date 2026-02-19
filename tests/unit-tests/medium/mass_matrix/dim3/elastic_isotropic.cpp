@@ -10,8 +10,8 @@ TEST(MassMatrix, ElasticIsotropicTrivialSolution3D) {
 
   using PointPropertiesType = specfem::point::properties<
       dimension, specfem::element::medium_tag::elastic, property_tag, false>;
-  using PointMassMatrixType = specfem::point::mass_inverse<
-      dimension, specfem::element::medium_tag::elastic, false>;
+  using PointMassMatrixType = specfem::point::mass_inverse<specfem::tags::Tags<
+      dimension, specfem::element::medium_tag::elastic, false> >;
 
   const PointPropertiesType properties(0.0, 0.0, 0.0);
 
@@ -30,8 +30,8 @@ TEST(MassMatrix, ElasticIsotropic3D) {
 
   using PointPropertiesType = specfem::point::properties<
       dimension, specfem::element::medium_tag::elastic, property_tag, false>;
-  using PointMassMatrixType = specfem::point::mass_inverse<
-      dimension, specfem::element::medium_tag::elastic, false>;
+  using PointMassMatrixType = specfem::point::mass_inverse<specfem::tags::Tags<
+      dimension, specfem::element::medium_tag::elastic, false> >;
 
   const type_real rho = 10.0;
 

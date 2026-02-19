@@ -17,8 +17,8 @@ TEST(Source, ElasticAnisotropicPSV2D) {
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real c11 = 50e9, c13 = 30e9, c15 = 0.0;
   const type_real c33 = 45e9, c35 = 0.0, c55 = 25e9;
@@ -62,8 +62,8 @@ TEST(Source, ElasticAnisotropicSH2D) {
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real c11 = 30e9, c13 = 0.0, c15 = 0.0;
   const type_real c33 = 30e9, c35 = 0.0, c55 = 25e9;

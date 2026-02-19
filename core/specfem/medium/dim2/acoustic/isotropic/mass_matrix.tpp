@@ -4,7 +4,7 @@
 
 template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
-    DimensionTag, specfem::element::medium_tag::acoustic, UseSIMD>
+    specfem::tags::Tags<DimensionTag, specfem::element::medium_tag::acoustic, UseSIMD>>
 specfem::medium_physics::impl_mass_matrix_component(
     const specfem::point::properties<
         DimensionTag, specfem::element::medium_tag::acoustic,
