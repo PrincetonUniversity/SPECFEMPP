@@ -1,9 +1,8 @@
 #pragma once
 
-#include "specfem/datatype.hpp"
-#include "specfem/element.hpp"
-#include "specfem/element_connections.hpp"
-#include "specfem/element_coupling.hpp"
+#include "specfem/element/tags.hpp"
+#include "specfem/element_connections/tags.hpp"
+#include "specfem/element_coupling/tags.hpp"
 #include "specfem/simulation.hpp"
 
 namespace specfem::tags {
@@ -118,24 +117,5 @@ template <bool UseSIMD> struct TagMember<bool, UseSIMD> {
  */
 template <auto... TagMembers>
 struct Tags : TagMember<decltype(TagMembers), TagMembers>... {};
-
-// template <typename ParentTags>
-// using MediumTags = Tags<ParentTags::dimension_tag, ParentTags::medium_tag>;
-
-// template <typename ParentTags>
-// using PointMediumTags = Tags<ParentTags::dimension_tag,
-// ParentTags::medium_tag, ParentTags::using_simd>;
-
-// template <typename ParentTags>
-// using PropertyTags = Tags<ParentTags::dimension_tag, ParentTags::medium_tag,
-// ParentTags::property_tag>;
-
-// template <typename ParentTags>
-// using PointPropertyTags = Tags<ParentTags::dimension_tag,
-// ParentTags::medium_tag, ParentTags::property_tag, ParentTags::using_simd>;
-
-// template <typename ParentTags>
-// using BoundaryTags = Tags<ParentTags::dimension_tag, ParentTags::medium_tag,
-// ParentTags::boundary_tag>;
 
 } // namespace specfem::tags

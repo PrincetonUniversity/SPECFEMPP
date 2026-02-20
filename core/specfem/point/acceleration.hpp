@@ -5,6 +5,7 @@
 
 namespace specfem::point {
 
+namespace impl {
 /**
  * @brief Point acceleration field accessor for spectral element computations.
  *
@@ -94,5 +95,11 @@ public:
    */
   using base_type::base_type;
 };
+
+} // namespace impl
+
+template <typename Tags>
+using acceleration = impl::acceleration<specfem::tags::Tags<
+    Tags::dimension_tag, Tags::medium_tag, Tags::using_simd> >;
 
 } // namespace specfem::point

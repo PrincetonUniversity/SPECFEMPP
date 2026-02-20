@@ -69,6 +69,7 @@ namespace specfem::point {
  * @see specfem::point::velocity for velocity field accessor
  * @see specfem::point::acceleration for acceleration field accessor
  */
+namespace impl {
 template <typename Tags>
 class mass_inverse
     : public impl::field<Tags,
@@ -96,5 +97,10 @@ public:
    */
   using base_type::base_type;
 };
+} // namespace impl
+
+template <typename Tags>
+using mass_inverse = impl::mass_inverse<specfem::tags::Tags<
+    Tags::dimension_tag, Tags::medium_tag, Tags::using_simd> >;
 
 } // namespace specfem::point
