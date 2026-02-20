@@ -52,9 +52,9 @@ KOKKOS_INLINE_FUNCTION
             specfem::element::dimension_tag::dim3,
             specfem::element::medium_tag::elastic,
             specfem::element::property_tag::isotropic, UseSIMD> > &properties,
-        const specfem::point::field_derivatives<
+        const specfem::point::field_derivatives<specfem::tags::Tags<
             specfem::element::dimension_tag::dim3,
-            specfem::element::medium_tag::elastic, UseSIMD>
+            specfem::element::medium_tag::elastic, UseSIMD> >
             &field_derivatives) {
 
   using datatype =

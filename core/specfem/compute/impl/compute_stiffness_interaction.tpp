@@ -96,8 +96,8 @@ int specfem::compute::impl::compute_stiffness_interaction(
       specfem::point::jacobian_matrix<Tags::dimension_tag, true, using_simd>;
   using PointPropertyType =
       specfem::point::properties<specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag, using_simd>>;
-  using PointFieldDerivativesType =
-      specfem::point::field_derivatives<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+  using PointFieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag, using_simd>>;
 
   using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
 

@@ -31,8 +31,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     WavefieldViewType wavefield) {
 
   using FieldDerivativesType = specfem::point::field_derivatives<
-      specfem::element::dimension_tag::dim2,
-      specfem::element::medium_tag::elastic_psv, false>;
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::elastic_psv, false> >;
 
   using PointPropertyType = specfem::point::properties<
       specfem::tags::Tags<specfem::element::dimension_tag::dim2,
@@ -130,8 +130,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     WavefieldViewType wavefield) {
 
   using FieldDerivativesType = specfem::point::field_derivatives<
-      specfem::element::dimension_tag::dim2,
-      specfem::element::medium_tag::elastic_sh, false>;
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::elastic_sh, false> >;
 
   const auto &active_field = [&]() {
     if (wavefield_type == specfem::enums::wavefield::displacement) {

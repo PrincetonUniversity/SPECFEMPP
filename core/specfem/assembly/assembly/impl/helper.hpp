@@ -134,8 +134,8 @@ public:
     using PointPropertyType = specfem::point::properties<
         specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >;
 
-    using PointFieldDerivativesType =
-        specfem::point::field_derivatives<dimension_tag, medium_tag, false>;
+    using PointFieldDerivativesType = specfem::point::field_derivatives<
+        specfem::tags::Tags<dimension_tag, medium_tag, false> >;
 
     int scratch_size =
         ChunkDisplacementType::shmem_size() + ChunkVelocityType::shmem_size() +

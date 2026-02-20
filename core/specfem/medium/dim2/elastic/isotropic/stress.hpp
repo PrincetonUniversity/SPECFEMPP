@@ -44,9 +44,9 @@ KOKKOS_INLINE_FUNCTION
             specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::elastic_psv,
             specfem::element::property_tag::isotropic, UseSIMD> > &properties,
-        const specfem::point::field_derivatives<
+        const specfem::point::field_derivatives<specfem::tags::Tags<
             specfem::element::dimension_tag::dim2,
-            specfem::element::medium_tag::elastic_psv, UseSIMD>
+            specfem::element::medium_tag::elastic_psv, UseSIMD> >
             &field_derivatives) {
 
   using datatype =
@@ -104,9 +104,9 @@ KOKKOS_INLINE_FUNCTION
             specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::elastic_sh,
             specfem::element::property_tag::isotropic, UseSIMD> > &properties,
-        const specfem::point::field_derivatives<
+        const specfem::point::field_derivatives<specfem::tags::Tags<
             specfem::element::dimension_tag::dim2,
-            specfem::element::medium_tag::elastic_sh, UseSIMD>
+            specfem::element::medium_tag::elastic_sh, UseSIMD> >
             &field_derivatives) {
 
   using datatype =

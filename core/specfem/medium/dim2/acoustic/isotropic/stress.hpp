@@ -39,9 +39,9 @@ KOKKOS_INLINE_FUNCTION
             specfem::element::dimension_tag::dim2,
             specfem::element::medium_tag::acoustic,
             specfem::element::property_tag::isotropic, UseSIMD> > &properties,
-        const specfem::point::field_derivatives<
+        const specfem::point::field_derivatives<specfem::tags::Tags<
             specfem::element::dimension_tag::dim2,
-            specfem::element::medium_tag::acoustic, UseSIMD>
+            specfem::element::medium_tag::acoustic, UseSIMD> >
             &field_derivatives) {
 
   const auto &du = field_derivatives.du;

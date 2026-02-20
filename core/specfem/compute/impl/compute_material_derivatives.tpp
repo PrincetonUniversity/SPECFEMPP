@@ -76,7 +76,7 @@ void specfem::compute::impl::compute_material_derivatives(
       specfem::point::acceleration<PointTags>;
 
   using PointFieldDerivativesType =
-      specfem::point::field_derivatives<dimension_tag, medium_tag, using_simd>;
+      specfem::point::field_derivatives<PointTags>;
 
   using PointPropertiesType =
       specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>>;

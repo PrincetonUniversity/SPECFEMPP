@@ -14,8 +14,8 @@ TEST(Stress, ElasticAnisotropic2D_PSV_Basic) {
 
   using PSVPropertiesType = specfem::point::properties<
       specfem::tags::Tags<dimension, PSVTag, property_tag, false> >;
-  using PSVFieldDerivativesType =
-      specfem::point::field_derivatives<dimension, PSVTag, false>;
+  using PSVFieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, PSVTag, false> >;
   using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
   // c11, c13, c15, c33, c35, c55, rho
   const type_real c11 = 10.0, c13 = 2.0, c15 = 1.0;
@@ -59,8 +59,8 @@ TEST(Stress, ElasticAnisotropic2D_PSV_ZeroDerivatives) {
 
   using PSVPropertiesType = specfem::point::properties<
       specfem::tags::Tags<dimension, PSVTag, property_tag, false> >;
-  using PSVFieldDerivativesType =
-      specfem::point::field_derivatives<dimension, PSVTag, false>;
+  using PSVFieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, PSVTag, false> >;
   using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
   const type_real c11 = 10.0, c13 = 2.0, c15 = 1.0;
   const type_real c33 = 20.0, c35 = 3.0, c55 = 5.0;
@@ -102,8 +102,8 @@ TEST(Stress, ElasticAnisotropic2D_PSV_IsotropicCoefficients) {
 
   using PSVPropertiesType = specfem::point::properties<
       specfem::tags::Tags<dimension, PSVTag, property_tag, false> >;
-  using PSVFieldDerivativesType =
-      specfem::point::field_derivatives<dimension, PSVTag, false>;
+  using PSVFieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, PSVTag, false> >;
   using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
   // Isotropic properties
   const type_real kappa = 7.0;
@@ -156,8 +156,8 @@ TEST(Stress, ElasticAnisotropic2D_SH_Basic) {
 
   using SHPropertiesType = specfem::point::properties<
       specfem::tags::Tags<dimension, SHTag, property_tag, false> >;
-  using SHFieldDerivativesType =
-      specfem::point::field_derivatives<dimension, SHTag, false>;
+  using SHFieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, SHTag, false> >;
   using SHStressType = specfem::point::stress<dimension, SHTag, false>;
   const type_real c11 = 10.0, c13 = 2.0, c15 = 1.0;
   const type_real c33 = 20.0, c35 = 3.0, c55 = 5.0;
@@ -193,8 +193,8 @@ TEST(Stress, ElasticAnisotropic2D_SH_ZeroDerivatives) {
 
   using SHPropertiesType = specfem::point::properties<
       specfem::tags::Tags<dimension, SHTag, property_tag, false> >;
-  using SHFieldDerivativesType =
-      specfem::point::field_derivatives<dimension, SHTag, false>;
+  using SHFieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, SHTag, false> >;
   using SHStressType = specfem::point::stress<dimension, SHTag, false>;
   const type_real c11 = 10.0, c13 = 2.0, c15 = 1.0;
   const type_real c33 = 20.0, c35 = 3.0, c55 = 5.0;
@@ -232,8 +232,8 @@ TEST(Stress, ElasticAnisotropic2D_SH_IsotropicCoefficients) {
 
   using SHPropertiesType = specfem::point::properties<
       specfem::tags::Tags<dimension, SHTag, property_tag, false> >;
-  using SHFieldDerivativesType =
-      specfem::point::field_derivatives<dimension, SHTag, false>;
+  using SHFieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, SHTag, false> >;
   using SHStressType = specfem::point::stress<dimension, SHTag, false>;
   // Isotropic properties
   const type_real kappa = 7.0;
