@@ -4,6 +4,7 @@
 #include "specfem/chunk_edge.hpp"
 #include "specfem/enums.hpp"
 
+#include "utilities/include/builder/edgeview.hpp"
 #include "utilities/include/builder/nonconforming_interfaces.hpp"
 #include "utilities/include/fixture/impl/accessors.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
@@ -116,7 +117,7 @@ void execute_simple_dshape_test() {
   constexpr auto ncomp_self =
       specfem::element::attributes<dimension_tag, medium_self>::components;
 
-  specfem::test_builder::nonconforming_interfaces_patch<dimension_tag>
+  specfem::test_builder::NonconformingInterfacesPatch<dimension_tag>
       nonconforming_interfaces(ngllz, ngllx, nquad_intersection);
   nonconforming_interfaces.template reinit_container<
       interface_tag, boundary_tag,
@@ -157,37 +158,12 @@ void execute_simple_dshape_test() {
   }
   // =================================================================
 
-  using EdgeTypesView = Kokkos::View<specfem::mesh_entity::dim2::type *,
-                                     memory_space, Kokkos::MemoryTraits<> >;
-  EdgeTypesView edge_types("dshape::edge_types", num_edges);
-  EdgeTypesView::HostMirror h_edge_types =
-      Kokkos::create_mirror_view(edge_types);
+  auto edge_list_builder = specfem::test_builder::EdgeView(ngllz, ngllx)
+                               .set_label("dshape::edgelist");
   for (int iedge = 0; iedge < num_edges; iedge++) {
-    h_edge_types(iedge) = side;
+    edge_list_builder.add_edge({ iedge, iedge, side, false });
   }
-  Kokkos::deep_copy(edge_types, h_edge_types);
-
-  specfem::assembly::EdgeView<Kokkos::DefaultExecutionSpace> edgelist(
-      "dshape::edgelist", num_edges, nquad_element);
-  {
-
-    std::vector<specfem::mesh_entity::edge<dimension_tag> > edge_collect;
-    const auto element = specfem::mesh_entity::element(ngllz, ngllx);
-    for (int iedge = 0; iedge < num_edges; iedge++) {
-      edge_collect.push_back({ iedge, iedge, side, false });
-    }
-
-    const auto h_edgelist = specfem::assembly::edge_view_from_collected_edges(
-        "dshape::edgelist_host_mirror", edge_collect, element);
-
-    // specfem::assembly::edge_types<dimension_tag>::deep_copy(edgelist,
-    // h_edgelist);
-    Kokkos::deep_copy(edgelist.element_index, h_edgelist.element_index);
-    Kokkos::deep_copy(edgelist.edge_index, h_edgelist.edge_index);
-    Kokkos::deep_copy(edgelist.edge_types, h_edgelist.edge_types);
-    Kokkos::deep_copy(edgelist.iz, h_edgelist.iz);
-    Kokkos::deep_copy(edgelist.ix, h_edgelist.ix);
-  }
+  const auto edgelist = edge_list_builder.build_on_device();
 
   // chunk subviews (FunctionType comes from copied test template -- skip the
   // rest and assume num_edges == 1)

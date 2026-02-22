@@ -6,7 +6,7 @@
 namespace specfem::test_builder {
 
 template <specfem::element::dimension_tag DimensionTag>
-class nonconforming_interfaces_patch;
+class NonconformingInterfacesPatch;
 
 /**
  * @brief Patches assembly::nonconforming_interfaces to not require mesh and
@@ -17,7 +17,7 @@ class nonconforming_interfaces_patch;
  * const access still allows modification of values inside the views.
  */
 template <>
-class nonconforming_interfaces_patch<specfem::element::dimension_tag::dim2>
+class NonconformingInterfacesPatch<specfem::element::dimension_tag::dim2>
     : public specfem::assembly::nonconforming_interfaces<
           specfem::element::dimension_tag::dim2> {
   int ngllz;
@@ -25,8 +25,8 @@ class nonconforming_interfaces_patch<specfem::element::dimension_tag::dim2>
   int nquad_intersection;
 
 public:
-  nonconforming_interfaces_patch(const int &ngllz, const int &ngllx,
-                                 const int &nquad_intersection)
+  NonconformingInterfacesPatch(const int &ngllz, const int &ngllx,
+                               const int &nquad_intersection)
       : ngllz(ngllz), ngllx(ngllx), nquad_intersection(nquad_intersection) {};
 
   template <specfem::element_coupling::interface_tag InterfaceTag,
