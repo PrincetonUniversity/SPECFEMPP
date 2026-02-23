@@ -54,9 +54,12 @@ int specfem::compute::impl::compute_stiffness_interaction(
   const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &properties = assembly.properties;
   const auto &boundaries = assembly.boundaries;
+  const auto &attenuation = assembly.attenuation;
 
   // Get the simulation field and boundary values
   const auto field = assembly.fields.template get_simulation_field<wavefield>();
+  const auto field_dot =
+    assembly.fields.template get_simulation_field_dot<wavefield>();
   const auto boundary_values =
       assembly.boundary_values.template get_container<boundary_tag>();
 
@@ -73,6 +76,8 @@ int specfem::compute::impl::compute_stiffness_interaction(
                   Tags::dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
 
   using ChunkElementFieldType = specfem::chunk_element::displacement<
+      ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag, using_simd>;
+  using ChunkElementFieldDotType = specfem::chunk_element::velocity<
       ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag, using_simd>;
   using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
       ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag,
@@ -101,6 +106,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
   using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
 
   int scratch_size = ChunkElementFieldType::shmem_size() +
+                     ChunkElementFieldDotType::shmem_size() +
                      ChunkStressIntegrandType::shmem_size() +
                      ElementQuadratureType::shmem_size();
 
@@ -135,17 +141,21 @@ int specfem::compute::impl::compute_stiffness_interaction(
           const auto &chunk_index = chunk_iterator_index.get_index();
           const auto team = chunk_index.get_policy_index();
           ChunkElementFieldType element_field(team.team_scratch(0));
+          ChunkElementFieldDotType element_field_dot(team.team_scratch(1));
           ElementQuadratureType lagrange_derivative(team);
           ChunkStressIntegrandType stress_integrand(team);
           specfem::assembly::load_on_device(team, mesh, lagrange_derivative);
           specfem::assembly::load_on_device(chunk_index, field, element_field);
+          specfem::assembly::load_on_device(chunk_index, field_dot, element_field_dot);
 
           team.team_barrier();
 
           specfem::algorithms::gradient(
               chunk_index, jacobian_matrix, lagrange_derivative, element_field,
+              element_field_dot,
               [&](const auto &iterator_index,
-                  const typename PointFieldDerivativesType::value_type &du) {
+                  const typename PointFieldDerivativesType::value_type &du,
+                  const typename PointFieldDerivativesType::value_type &dv) {
                 const auto &index = iterator_index.get_index();
                 const auto &local_index = iterator_index.get_local_index();
                 PointJacobianMatrixType point_jacobian_matrix;
@@ -162,14 +172,58 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 specfem::assembly::load_on_device(index, field,
                                                   point_displacement);
 
+                // Compute stress from the field derivatives.
                 auto point_stress = specfem::medium_physics::compute_stress(
                     point_property, field_derivatives);
 
+                // ---- {
+                // Point memory variable for attenuation computation
+                PointMemoryType point_memory_variable;
+                specfem::assembly::load_on_device(index, attenuation,
+                                                  point_memory_variable);
+
+                // Add the memory relaxation USES OLD Memory variable
+                specfem::medium_physics::compute_stress_relaxation(
+                    point_memory_variable, point_stress);
+                // ---- }
+
+                // For Cosserat media, compute the couple stress and add it to the point stress
                 specfem::medium_physics::compute_cosserat_stress(
                     point_property, point_displacement, point_stress);
 
+                // Compute stress integrand by multiplying the stress with the
+                // jacobian matrix and store in the scratch space
                 stress_integrand.F(local_index) =
                     point_stress * point_jacobian_matrix;
+
+                // --- {
+
+                // Get attenuation factors for memory variable update
+                PointAttenuationFactorType point_attenuation_factors;
+                specfem::assembly::load_on_device(index, attenuation,
+                                                    point_attenuation_factors);
+
+                // Get the RK integration factors for memory variable update
+                PointIntegrationFactorType point_integration_factors;
+                specfem::assembly::load_on_device(index, attenuation,
+                                                    point_integration_factors);
+
+                // Compute the time derivative of the field derivatives using the velocity field
+                PointFieldStrain point_strain(field_derivatives);
+                PointFieldStrain point_future_strain(field_derivatives + dt * field_dot_derivatives);
+
+                // Update the memory variable using the current
+                specfem::medium_physics::update_memory_variable(
+                    point_memory_variable,
+                    point_attenuation_factors, point_integration_factors,
+                    point_strain, point_future_strain);
+
+                // Store the future strain in the point properties for in assembly array
+                specfem::assembly::store_on_device(index, future_strain, point_future_strain);
+
+                // Store the updated memory variable in the point properties for in assembly array
+                specfem::assembly::store_on_device(index, attenuation, point_memory_variable);
+                // --- }
               });
 
           team.team_barrier();

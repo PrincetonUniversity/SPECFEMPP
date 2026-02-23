@@ -54,7 +54,6 @@ specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
 read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
              const specfem::enums::electromagnetic_wave electromagnetic_wave);
-
 /**
  * @brief Construct a 3D mesh object from MESHFEM3D Fortran binary database file
  *
