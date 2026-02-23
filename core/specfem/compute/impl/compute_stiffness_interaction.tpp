@@ -208,8 +208,12 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 specfem::assembly::load_on_device(index, attenuation,
                                                     point_integration_factors);
 
-                // Compute the time derivative of the field derivatives using the velocity field
-                PointFieldStrain point_strain(field_derivatives);
+                // Load previous strain for memory variable update
+                PointFieldStrain point_strain;
+                specfem::assembly::load_on_device(index, attenuation, point_strain);
+
+                // Compute the time derivative of the field derivatives using the velocity field derivatives
+                PointFieldDerivativesType field_dot_derivatives(dv);
                 PointFieldStrain point_future_strain(field_derivatives + dt * field_dot_derivatives);
 
                 // Update the memory variable using the current
@@ -219,7 +223,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
                     point_strain, point_future_strain);
 
                 // Store the future strain in the point properties for in assembly array
-                specfem::assembly::store_on_device(index, future_strain, point_future_strain);
+                specfem::assembly::store_on_device(index, strain, point_future_strain);
 
                 // Store the updated memory variable in the point properties for in assembly array
                 specfem::assembly::store_on_device(index, attenuation, point_memory_variable);
