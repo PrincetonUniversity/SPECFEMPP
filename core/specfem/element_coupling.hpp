@@ -80,7 +80,7 @@ template <>
 struct attributes<specfem::element::dimension_tag::dim2,
                   specfem::element_coupling::interface_tag::elastic_acoustic>::
     self_field<specfem::element_connections::type::weakly_conforming> {
-  using type = specfem::point::impl::acceleration<
+  using type = specfem::point::acceleration<
       specfem::tags::Tags<specfem::element::dimension_tag::dim2,
                           specfem::element::medium_tag::elastic_psv,
                           false> >; ///< vector acceleration
@@ -93,7 +93,7 @@ template <>
 struct attributes<specfem::element::dimension_tag::dim2,
                   specfem::element_coupling::interface_tag::elastic_acoustic>::
     coupled_field<specfem::element_connections::type::weakly_conforming> {
-  using type = specfem::point::impl::acceleration<
+  using type = specfem::point::acceleration<
       specfem::tags::Tags<specfem::element::dimension_tag::dim2,
                           specfem::element::medium_tag::acoustic,
                           false> >; ///< scalar acceleration

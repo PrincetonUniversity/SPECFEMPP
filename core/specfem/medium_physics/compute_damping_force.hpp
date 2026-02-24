@@ -39,8 +39,8 @@ compute_damping_force(const T factor,
 
   if constexpr (specfem::element::attributes<
                     Tags::dimension_tag, Tags::medium_tag>::has_damping_force) {
-    impl_compute_damping_force<T>(factor, point_properties, velocity,
-                                  acceleration);
+    impl_compute_damping_force<T, Tags>(factor, point_properties, velocity,
+                                        acceleration);
   }
 }
 

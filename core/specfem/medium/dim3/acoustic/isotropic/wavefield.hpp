@@ -33,13 +33,13 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const specfem::enums::wavefield wavefield_type,
     WavefieldViewType wavefield) {
 
-  using FieldDerivativesType = specfem::point::field_derivatives<
-      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                          specfem::element::medium_tag::acoustic, false> >;
-  using PointPropertyType = specfem::point::properties<
+  using Tags =
       specfem::tags::Tags<specfem::element::dimension_tag::dim3,
                           specfem::element::medium_tag::acoustic,
-                          specfem::element::property_tag::isotropic, false> >;
+                          specfem::element::property_tag::isotropic, false>;
+
+  using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
+  using PointPropertyType = specfem::point::properties<Tags>;
 
   const auto &properties = assembly.properties;
   const auto &active_field = [&]() {
@@ -85,7 +85,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         FieldDerivativesType point_field_derivatives(du);
 
         const auto point_stress =
-            impl_compute_stress(point_property, point_field_derivatives);
+            impl_compute_stress<Tags>(point_property, point_field_derivatives);
 
         wavefield(ielement, index.iz, index.iy, index.ix, 0) =
             point_stress.T(0, 0);

@@ -9,19 +9,19 @@ TEST(MassMatrix, AcousticIsotropic3D) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
+  using Tags = specfem::tags::Tags<dimension, medium_tag, property_tag, false>;
+
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<dimension, true, false>;
-  using PointPropertiesType = specfem::point::properties<
-      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
-  using PointMassMatrixType = specfem::point::mass_inverse<
-      specfem::tags::Tags<dimension, medium_tag, false> >;
+  using PointPropertiesType = specfem::point::properties<Tags>;
+  using PointMassMatrixType = specfem::point::mass_inverse<Tags>;
 
   const type_real kappa = 10.0;
 
   const PointPropertiesType properties(kappa);
 
   const PointMassMatrixType mass_matrix =
-      specfem::medium_physics::mass_matrix_component(properties);
+      specfem::medium_physics::mass_matrix_component<Tags>(properties);
 
   const PointMassMatrixType expected_mass_matrix(static_cast<type_real>(1.0) /
                                                  kappa);

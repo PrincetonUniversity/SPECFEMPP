@@ -82,7 +82,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
       ngll, Tags::dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
-  using PointTags = specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+  using PointTags = specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag, using_simd>;
 
   using PointBoundaryType =
       specfem::point::boundary<Tags::boundary_tag, Tags::dimension_tag, using_simd>;
@@ -95,9 +95,8 @@ int specfem::compute::impl::compute_stiffness_interaction(
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<Tags::dimension_tag, true, using_simd>;
   using PointPropertyType =
-      specfem::point::properties<specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag, using_simd>>;
-  using PointFieldDerivativesType = specfem::point::field_derivatives<
-      specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag, using_simd>>;
+      specfem::point::properties<PointTags>;
+  using PointFieldDerivativesType = specfem::point::field_derivatives<PointTags>;
 
   using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
 
@@ -163,7 +162,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 specfem::assembly::load_on_device(index, field,
                                                   point_displacement);
 
-                auto point_stress = specfem::medium_physics::compute_stress(
+                auto point_stress = specfem::medium_physics::compute_stress<PointTags>(
                     point_property, field_derivatives);
 
                 specfem::medium_physics::compute_cosserat_stress(
@@ -211,7 +210,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 const auto factor =
                     point_weights.product() * point_jacobian_matrix.jacobian;
 
-                specfem::medium_physics::compute_damping_force(factor, point_property,
+                specfem::medium_physics::compute_damping_force<decltype(factor), PointTags>(factor, point_property,
                                                        velocity, acceleration);
 
                 // Compute the couple stress from the stress integrand

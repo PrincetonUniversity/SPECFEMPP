@@ -67,15 +67,19 @@ namespace specfem::point {
  * @see specfem::point::mass_inverse for inverse mass matrix field accessor
  */
 namespace impl {
-template <typename Tags>
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element::medium_tag MediumTag, bool UseSIMD>
 class velocity
-    : public impl::field<Tags, specfem::data_access::DataClassType::velocity> {
+    : public impl::field<DimensionTag, MediumTag,
+                         specfem::data_access::DataClassType::velocity,
+                         UseSIMD> {
 private:
   /**
    * @brief Type alias for the base field implementation.
    */
   using base_type =
-      impl::field<Tags, specfem::data_access::DataClassType::velocity>;
+      impl::field<DimensionTag, MediumTag,
+                  specfem::data_access::DataClassType::velocity, UseSIMD>;
 
 public:
   /**
@@ -97,7 +101,6 @@ public:
 
 template <typename Tags>
 using velocity =
-    impl::velocity<specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag,
-                                       Tags::using_simd> >;
+    impl::velocity<Tags::dimension_tag, Tags::medium_tag, Tags::using_simd>;
 
 } // namespace specfem::point

@@ -43,22 +43,19 @@ namespace medium_physics {
  * u_i}{\partial x_j}\f$)
  * @return 3x3 symmetric stress tensor
  */
-template <bool UseSIMD>
-KOKKOS_INLINE_FUNCTION
-    specfem::point::stress<specfem::element::dimension_tag::dim3,
-                           specfem::element::medium_tag::elastic, UseSIMD>
-    impl_compute_stress(
-        const specfem::point::properties<specfem::tags::Tags<
-            specfem::element::dimension_tag::dim3,
-            specfem::element::medium_tag::elastic,
-            specfem::element::property_tag::isotropic, UseSIMD> > &properties,
-        const specfem::point::field_derivatives<specfem::tags::Tags<
-            specfem::element::dimension_tag::dim3,
-            specfem::element::medium_tag::elastic, UseSIMD> >
-            &field_derivatives) {
+template <
+    typename Tags,
+    std::enable_if_t<
+        Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+            Tags::medium_tag == specfem::element::medium_tag::elastic &&
+            Tags::property_tag == specfem::element::property_tag::isotropic,
+        int> = 0>
+KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> impl_compute_stress(
+    const specfem::point::properties<Tags> &properties,
+    const specfem::point::field_derivatives<Tags> &field_derivatives) {
 
   using datatype =
-      typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
+      typename specfem::datatype::simd<type_real, Tags::using_simd>::datatype;
   const auto &du = field_derivatives.du;
 
   datatype sigma_xx, sigma_yy, sigma_zz, sigma_xy, sigma_xz, sigma_yz;
@@ -85,7 +82,7 @@ KOKKOS_INLINE_FUNCTION
   // sigma_yz
   sigma_yz = properties.mu() * (du(1, 2) + du(2, 1));
 
-  specfem::datatype::TensorPointViewType<type_real, 3, 3, UseSIMD> T;
+  specfem::datatype::TensorPointViewType<type_real, 3, 3, Tags::using_simd> T;
 
   T(0, 0) = sigma_xx;
   T(1, 1) = sigma_yy;

@@ -6,8 +6,8 @@
 #include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace point {
+namespace specfem::point {
+namespace impl {
 
 /**
  * @brief Store field derivatives for a quadrature point
@@ -17,20 +17,21 @@ namespace point {
  *
  * @tparam Tags The tags for the element where the quadrature point is located
  */
-template <typename Tags>
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct field_derivatives
     : public specfem::data_access::Accessor<
           specfem::datatype::AccessorType::point,
-          specfem::data_access::DataClassType::field_derivatives,
-          Tags::dimension_tag, Tags::using_simd> {
+          specfem::data_access::DataClassType::field_derivatives, DimensionTag,
+          UseSIMD> {
 
 private:
   using base_type = specfem::data_access::Accessor<
       specfem::datatype::AccessorType::point,
-      specfem::data_access::DataClassType::field_derivatives,
-      Tags::dimension_tag, Tags::using_simd>; ///< Base type of the
-                                              ///< point field
-                                              ///< derivatives
+      specfem::data_access::DataClassType::field_derivatives, DimensionTag,
+      UseSIMD>; ///< Base type of the
+                ///< point field
+                ///< derivatives
 public:
   /**
    * @name Compile time constants
@@ -38,13 +39,10 @@ public:
    */
   ///@{
   static constexpr int components =
-      specfem::element::attributes<Tags::dimension_tag,
-                                   Tags::medium_tag>::components;
-  constexpr static auto medium_tag =
-      Tags::medium_tag; ///< Medium tag for the element
+      specfem::element::attributes<DimensionTag, MediumTag>::components;
+  constexpr static auto medium_tag = MediumTag; ///< Medium tag for the element
   constexpr static int num_dimensions =
-      specfem::element::attributes<Tags::dimension_tag,
-                                   Tags::medium_tag>::dimension;
+      specfem::element::attributes<DimensionTag, MediumTag>::dimension;
   ///@}
 
   /**
@@ -80,5 +78,10 @@ public:
   ///@}
 };
 
-} // namespace point
-} // namespace specfem
+} // namespace impl
+
+template <typename Tags>
+using field_derivatives =
+    impl::field_derivatives<Tags::dimension_tag, Tags::medium_tag,
+                            Tags::using_simd>;
+} // namespace specfem::point

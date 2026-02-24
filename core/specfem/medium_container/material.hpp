@@ -2,13 +2,10 @@
 
 #include "impl/attenuation_values.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/point/properties.hpp"
 #include "specfem/setup.hpp"
 #include <ostream>
 #include <tuple>
-
-namespace specfem::point {
-template <typename Tags> struct properties;
-} // namespace specfem::point
 
 namespace specfem::medium_container {
 
