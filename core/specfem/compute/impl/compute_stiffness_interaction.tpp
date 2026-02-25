@@ -145,12 +145,10 @@ int specfem::compute::impl::compute_stiffness_interaction(
           specfem::algorithms::gradient(
               chunk_index, jacobian_matrix, lagrange_derivative, element_field,
               [&](const auto &iterator_index,
-                  const typename PointFieldDerivativesType::value_type &du) {
+                  const typename PointFieldDerivativesType::value_type &du,
+                  const PointJacobianMatrixType &point_jacobian_matrix) {
                 const auto &index = iterator_index.get_index();
                 const auto &local_index = iterator_index.get_local_index();
-                PointJacobianMatrixType point_jacobian_matrix;
-                specfem::assembly::load_on_device(index, jacobian_matrix,
-                                                  point_jacobian_matrix);
 
                 PointPropertyType point_property;
                 specfem::assembly::load_on_device(index, properties,

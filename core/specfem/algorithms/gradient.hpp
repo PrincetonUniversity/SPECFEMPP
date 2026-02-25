@@ -203,14 +203,26 @@ gradient(const ChunkIndexType &chunk_index,
 
   using datatype = typename VectorFieldType::simd::datatype;
 
-  static_assert(
+  using JacobianWithJacobianType =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                      true, using_simd>;
+
+  // If the callback accepts a third argument (the point jacobian matrix with
+  // jacobian scalar), load with store_jacobian=true and forward it — avoids a
+  // redundant load_on_device call inside the callback.
+  constexpr bool pass_jacobian =
       std::is_invocable_v<CallbackFunctor,
                           typename ChunkIndexType::iterator_type::index_type,
-                          TensorPointViewType>,
-      "CallbackFunctor must be invocable with the following signature: "
-      "void(const int, const specfem::point::index, const "
-      "specfem::kokkos::array_type<type_real, components>, const "
-      "specfem::kokkos::array_type<type_real, components>)");
+                          TensorPointViewType, JacobianWithJacobianType>;
+
+  static_assert(
+      pass_jacobian || std::is_invocable_v<
+                           CallbackFunctor,
+                           typename ChunkIndexType::iterator_type::index_type,
+                           TensorPointViewType>,
+      "CallbackFunctor must be invocable with signature: "
+      "void(iterator_index, TensorPointViewType) or "
+      "void(iterator_index, TensorPointViewType, point_jacobian_matrix)");
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
@@ -220,17 +232,26 @@ gradient(const ChunkIndexType &chunk_index,
         const auto local_index = iterator_index.get_local_index();
         datatype df_dxi[components] = { 0.0 };
         datatype df_dgamma[components] = { 0.0 };
-        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
-                                        false, using_simd>
-            point_jacobian_matrix;
 
-        specfem::assembly::load_on_device(index, jacobian_matrix,
-                                          point_jacobian_matrix);
-
-        const auto df =
-            impl::element_gradient(f, local_index, point_jacobian_matrix,
-                                   quadrature, df_dxi, df_dgamma);
-        callback(iterator_index, df);
+        if constexpr (pass_jacobian) {
+          JacobianWithJacobianType point_jacobian_matrix;
+          specfem::assembly::load_on_device(index, jacobian_matrix,
+                                            point_jacobian_matrix);
+          const auto df =
+              impl::element_gradient(f, local_index, point_jacobian_matrix,
+                                     quadrature, df_dxi, df_dgamma);
+          callback(iterator_index, df, point_jacobian_matrix);
+        } else {
+          specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                          false, using_simd>
+              point_jacobian_matrix;
+          specfem::assembly::load_on_device(index, jacobian_matrix,
+                                            point_jacobian_matrix);
+          const auto df =
+              impl::element_gradient(f, local_index, point_jacobian_matrix,
+                                     quadrature, df_dxi, df_dgamma);
+          callback(iterator_index, df);
+        }
       });
 
   return;
@@ -362,15 +383,23 @@ gradient(const ChunkIndexType &chunk_index,
 
   using datatype = typename VectorFieldType::simd::datatype;
 
-  static_assert(
+  using JacobianWithJacobianType =
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                      true, using_simd>;
+
+  constexpr bool pass_jacobian =
       std::is_invocable_v<CallbackFunctor,
                           typename ChunkIndexType::iterator_type::index_type,
-                          TensorPointViewType>,
-      "CallbackFunctor must be invocable with the following signature: "
-      "void(const int, const specfem::point::index, const "
-      "specfem::kokkos::array_type<type_real, components>, const "
-      "specfem::kokkos::array_type<type_real, components>, const "
-      "specfem::kokkos::array_type<type_real, components>)");
+                          TensorPointViewType, JacobianWithJacobianType>;
+
+  static_assert(
+      pass_jacobian || std::is_invocable_v<
+                           CallbackFunctor,
+                           typename ChunkIndexType::iterator_type::index_type,
+                           TensorPointViewType>,
+      "CallbackFunctor must be invocable with signature: "
+      "void(iterator_index, TensorPointViewType) or "
+      "void(iterator_index, TensorPointViewType, point_jacobian_matrix)");
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
@@ -381,17 +410,26 @@ gradient(const ChunkIndexType &chunk_index,
         datatype df_dxi[components] = { 0.0 };
         datatype df_deta[components] = { 0.0 };
         datatype df_dgamma[components] = { 0.0 };
-        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
-                                        false, using_simd>
-            point_jacobian_matrix;
 
-        specfem::assembly::load_on_device(index, jacobian_matrix,
-                                          point_jacobian_matrix);
-
-        const auto df =
-            impl::element_gradient(f, local_index, point_jacobian_matrix,
-                                   quadrature, df_dxi, df_deta, df_dgamma);
-        callback(iterator_index, df);
+        if constexpr (pass_jacobian) {
+          JacobianWithJacobianType point_jacobian_matrix;
+          specfem::assembly::load_on_device(index, jacobian_matrix,
+                                            point_jacobian_matrix);
+          const auto df =
+              impl::element_gradient(f, local_index, point_jacobian_matrix,
+                                     quadrature, df_dxi, df_deta, df_dgamma);
+          callback(iterator_index, df, point_jacobian_matrix);
+        } else {
+          specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
+                                          false, using_simd>
+              point_jacobian_matrix;
+          specfem::assembly::load_on_device(index, jacobian_matrix,
+                                            point_jacobian_matrix);
+          const auto df =
+              impl::element_gradient(f, local_index, point_jacobian_matrix,
+                                     quadrature, df_dxi, df_deta, df_dgamma);
+          callback(iterator_index, df);
+        }
       });
 
   return;
