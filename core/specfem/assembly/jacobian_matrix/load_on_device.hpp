@@ -66,7 +66,7 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
                                                PointType>;
   static_assert(compatibility::value, "Incompatible types");
 
-  impl_load<trtimue>(index, container, point);
+  impl_load<true>(index, container, point);
 }
 
 } // namespace specfem::assembly
