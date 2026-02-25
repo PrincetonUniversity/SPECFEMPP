@@ -11,9 +11,10 @@
 #define _ACCESS_ELEMENT_ON_HOST(elem, index)                                   \
   BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem))[index]
 
-#define _CALL_FUNCTOR_ON_DEVICE_CONST(r, data, elem)                           \
-  BOOST_PP_TUPLE_ELEM(0, data)                                                 \
-  (BOOST_PP_SEQ_ELEM(0, elem)[BOOST_PP_TUPLE_ELEM(1, data)],                   \
+#define _CALL_FUNCTOR_ON_DEVICE_CONST(r, _d, elem)                             \
+  BOOST_PP_TUPLE_ELEM(0, _d)                                                   \
+  (BOOST_PP_SEQ_ELEM(0, elem).get_base_view().data()[BOOST_PP_TUPLE_ELEM(1,    \
+                                                                         _d)], \
    static_cast<std::size_t>(BOOST_PP_SEQ_ELEM(1, elem)));
 
 #define _CALL_FUNCTOR_ON_DEVICE(r, data, elem)                                 \

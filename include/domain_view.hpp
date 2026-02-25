@@ -219,7 +219,7 @@ public:
   }
 
   KOKKOS_INLINE_FUNCTION
-  base_type get_base_view() const {
+  const base_type &get_base_view() const {
     return static_cast<const base_type &>(*this);
   }
 
