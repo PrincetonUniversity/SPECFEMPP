@@ -56,13 +56,11 @@ element_divergence(const TensorFieldType &f,
 
   /// We omit the divergence here since we multiplied it when computing F.
   for (int l = 0; l < ngll; ++l) {
+    const datatype wxi = lagrange_derivative.xi(l, ix) * weights(l);
+    const datatype wgamma = lagrange_derivative.gamma(l, iz) * weights(l);
     for (int icomp = 0; icomp < components; ++icomp) {
-      temp1l[icomp] += f(ielement, iz, l, icomp, 0) *
-                       lagrange_derivative.xi(l, ix) * weights(l);
-    }
-    for (int icomp = 0; icomp < components; ++icomp) {
-      temp2l[icomp] += f(ielement, l, ix, icomp, 1) *
-                       lagrange_derivative.gamma(l, iz) * weights(l);
+      temp1l[icomp] += f(ielement, iz, l, icomp, 0) * wxi;
+      temp2l[icomp] += f(ielement, l, ix, icomp, 1) * wgamma;
     }
   }
   VectorPointViewType result;
@@ -113,17 +111,17 @@ element_divergence(const TensorFieldType &f,
 
   /// We omit the divergence here since we multiplied it when computing F.
   for (int l = 0; l < ngll; ++l) {
+    const datatype wxi = lagrange_derivative.xi(l, ix) * weights(l);
+    const datatype weta = lagrange_derivative.eta(l, iy) * weights(l);
+    const datatype wgamma = lagrange_derivative.gamma(l, iz) * weights(l);
     for (int icomp = 0; icomp < components; ++icomp) {
-      temp1l[icomp] += f(ielement, iz, iy, l, icomp, 0) *
-                       lagrange_derivative.xi(l, ix) * weights(l);
+      temp1l[icomp] += f(ielement, iz, iy, l, icomp, 0) * wxi;
     }
     for (int icomp = 0; icomp < components; ++icomp) {
-      temp2l[icomp] += f(ielement, iz, l, ix, icomp, 1) *
-                       lagrange_derivative.eta(l, iy) * weights(l);
+      temp2l[icomp] += f(ielement, iz, l, ix, icomp, 1) * weta;
     }
     for (int icomp = 0; icomp < components; ++icomp) {
-      temp3l[icomp] += f(ielement, l, iy, ix, icomp, 2) *
-                       lagrange_derivative.gamma(l, iz) * weights(l);
+      temp3l[icomp] += f(ielement, l, iy, ix, icomp, 2) * wgamma;
     }
   }
   VectorPointViewType result;
