@@ -98,6 +98,26 @@ public:
   /** @brief Default constructor */
   interface_container() = default;
 
+  interface_container(const int &ngllz, const int &ngllx,
+                      const int &nquad_intersection, const int &num_edges)
+      : intersection_factor(
+            "specfem::assembly::nonconforming_interfaces::intersection_factor",
+            num_edges, nquad_intersection),
+        h_intersection_factor(Kokkos::create_mirror_view(intersection_factor)),
+        intersection_normal(
+            "specfem::assembly::nonconforming_interfaces::intersection_normal",
+            num_edges, nquad_intersection, 2),
+        h_intersection_normal(Kokkos::create_mirror_view(intersection_normal)),
+        transfer_function(
+            "specfem::assembly::nonconforming_interfaces::transfer_function",
+            num_edges, nquad_intersection, ngllx),
+        h_transfer_function(Kokkos::create_mirror_view(transfer_function)),
+        transfer_function_other("specfem::assembly::nonconforming_interfaces::"
+                                "transfer_function_other",
+                                num_edges, nquad_intersection, ngllx),
+        h_transfer_function_other(
+            Kokkos::create_mirror_view(transfer_function_other)) {};
+
 private:
   template <bool on_device>
   KOKKOS_FORCEINLINE_FUNCTION auto

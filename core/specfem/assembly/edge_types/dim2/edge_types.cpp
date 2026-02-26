@@ -98,28 +98,13 @@ specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
             "specfem::assembly::interface_types::self_edges", count, ngll);
         _coupled_edges_ = EdgeViewType(
             "specfem::assembly::interface_types::coupled_edges", count, ngll);
-        _h_self_edges_ = edge_types::create_mirror_view(_self_edges_);
-        _h_coupled_edges_ = edge_types::create_mirror_view(_coupled_edges_);
 
-        for (int iedge = 0; iedge < count; iedge++) {
-          _h_self_edges_.element_index(iedge) = self_collect[iedge].ispec;
-          _h_self_edges_.edge_index(iedge) = self_collect[iedge].iedge;
-          _h_self_edges_.edge_types(iedge) = self_collect[iedge].edge_type;
-          _h_coupled_edges_.element_index(iedge) = coupled_collect[iedge].ispec;
-          _h_coupled_edges_.edge_index(iedge) = coupled_collect[iedge].iedge;
-          _h_coupled_edges_.edge_types(iedge) =
-              coupled_collect[iedge].edge_type;
-          for (int ipoint = 0; ipoint < ngll; ipoint++) {
-            const auto [iz1, ix1] =
-                element.map_coordinates(self_collect[iedge].edge_type, ipoint);
-            _h_self_edges_.iz(iedge, ipoint) = iz1;
-            _h_self_edges_.ix(iedge, ipoint) = ix1;
-            const auto [iz2, ix2] = element.map_coordinates(
-                coupled_collect[iedge].edge_type, ipoint);
-            _h_coupled_edges_.iz(iedge, ipoint) = iz2;
-            _h_coupled_edges_.ix(iedge, ipoint) = ix2;
-          }
-        }
+        _h_self_edges_ = edge_view_from_collected_edges(
+            "specfem::assembly::interface_types::self_edges_host_mirror",
+            self_collect, element);
+        _h_coupled_edges_ = edge_view_from_collected_edges(
+            "specfem::assembly::interface_types::coupled_edges_host_mirror",
+            coupled_collect, element);
 
         edge_types::deep_copy(_self_edges_, _h_self_edges_);
         edge_types::deep_copy(_coupled_edges_, _h_coupled_edges_);
@@ -170,4 +155,32 @@ specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
 
   throw std::runtime_error(
       "Connection type, interface type or boundary type not found");
+}
+
+specfem::assembly::edge_types<
+    specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
+specfem::assembly::edge_view_from_collected_edges(
+    const std::string &label,
+    const std::vector<
+        specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2> >
+        &self_collect,
+    const specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>
+        &element) {
+  const int &ngll = element.ngllx;
+  const int &count = self_collect.size();
+
+  specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
+      EdgeViewType::HostMirror self_edges(label, count, ngll);
+  for (int iedge = 0; iedge < count; iedge++) {
+    self_edges.element_index(iedge) = self_collect[iedge].ispec;
+    self_edges.edge_index(iedge) = self_collect[iedge].iedge;
+    self_edges.edge_types(iedge) = self_collect[iedge].edge_type;
+    for (int ipoint = 0; ipoint < ngll; ipoint++) {
+      const auto [iz1, ix1] =
+          element.map_coordinates(self_collect[iedge].edge_type, ipoint);
+      self_edges.iz(iedge, ipoint) = iz1;
+      self_edges.ix(iedge, ipoint) = ix1;
+    }
+  }
+  return self_edges;
 }
