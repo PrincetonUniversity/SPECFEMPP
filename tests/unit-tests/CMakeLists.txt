@@ -254,6 +254,8 @@ add_executable(
   point/coordinates_tests.cpp
   point/boundary_tests.cpp
   point/jacobian_matrix_tests.cpp
+  point/attenuation_factors_tests.cpp
+  point/memory_variable_tests.cpp
   point/source_tests.cpp
   point/stress_integrand_tests.cpp
   point/stress_tests.cpp
