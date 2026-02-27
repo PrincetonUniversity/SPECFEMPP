@@ -34,7 +34,6 @@ public:
   using value_type =
       typename base_type::template vector_type<type_real,
                                                specfem::constants::N_SLS>;
-  constexpr static bool store_jacobian = false;
   ///@}
 
   value_type Rxx;    ///< Memory variable for Rxx component, Rzz compute from
@@ -146,7 +145,6 @@ public:
   using value_type =
       typename base_type::template vector_type<type_real,
                                                specfem::constants::N_SLS>;
-  constexpr static bool store_jacobian = false;
   ///@}
 
   value_type Rxx;    ///< Memory variable for Rxx component
