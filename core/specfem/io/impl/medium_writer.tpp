@@ -1,6 +1,6 @@
 #pragma once
 
-#include "domain_view.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
@@ -18,7 +18,7 @@ void specfem::io::impl::write_container(
         &element_types,
     ContainerType &container) {
   using DomainView =
-      specfem::kokkos::DomainView2d<type_real, 3, Kokkos::HostSpace>;
+      specfem::datatype::DomainView2d<type_real, 3, Kokkos::HostSpace>;
 
   container.copy_to_host();
 

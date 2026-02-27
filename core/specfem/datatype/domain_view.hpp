@@ -7,7 +7,7 @@
 #include <tuple>
 
 namespace specfem {
-namespace kokkos {
+namespace datatype {
 
 namespace impl {
 template <int ElementChunkSize, typename Extents>
@@ -249,9 +249,9 @@ using DomainView =
          MemorySpace>;
 
 template <typename ViewType>
-specfem::kokkos::View<typename ViewType::value_type,
-                      typename ViewType::extents_type,
-                      typename ViewType::layout_type, Kokkos::HostSpace>
+specfem::datatype::View<typename ViewType::value_type,
+                        typename ViewType::extents_type,
+                        typename ViewType::layout_type, Kokkos::HostSpace>
 create_mirror_view(const ViewType view) {
   if constexpr (std::is_same_v<typename ViewType::memory_space,
                                Kokkos::HostSpace>) {
@@ -259,7 +259,7 @@ create_mirror_view(const ViewType view) {
   } else if constexpr (std::is_same_v<
                            typename ViewType::memory_space,
                            Kokkos::DefaultExecutionSpace::memory_space>) {
-    return specfem::kokkos::View<
+    return specfem::datatype::View<
         typename ViewType::value_type, typename ViewType::extents_type,
         typename ViewType::layout_type, Kokkos::HostSpace>("mirror",
                                                            view.get_mapping());
@@ -272,5 +272,5 @@ template <typename SrcViewType, typename DstViewType>
 void deep_copy(const DstViewType dst, const SrcViewType src) {
   Kokkos::deep_copy(dst.get_base_view(), src.get_base_view());
 }
-} // namespace kokkos
+} // namespace datatype
 } // namespace specfem

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "specfem/constants.hpp"
-#include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
+#include <Kokkos_SIMD.hpp>
 
 namespace specfem {
 
@@ -33,11 +33,11 @@ constexpr int chunk_size = impl::cuda_chunk_size;
 constexpr int storage_chunk_size = impl::hip_chunk_size;
 constexpr int chunk_size = impl::hip_chunk_size;
 #elif defined(KOKKOS_ENABLE_OPENMP)
-constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
+constexpr int simd_size = Kokkos::Experimental::simd<type_real>::size();
 constexpr int storage_chunk_size = impl::openmp_chunk_size * simd_size;
 constexpr int chunk_size = impl::openmp_chunk_size;
 #else
-constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
+constexpr int simd_size = Kokkos::Experimental::simd<type_real>::size();
 constexpr int storage_chunk_size = impl::serial_chunk_size * simd_size;
 constexpr int chunk_size = impl::serial_chunk_size;
 #endif

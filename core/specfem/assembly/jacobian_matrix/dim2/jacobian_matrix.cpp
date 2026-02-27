@@ -17,11 +17,11 @@ specfem::assembly::jacobian_matrix<
       gammaz("specfem::assembly::jacobian_matrix::gammaz", nspec, ngllz, ngllx),
       jacobian("specfem::assembly::jacobian_matrix::jacobian", nspec, ngllz,
                ngllx),
-      h_xix(specfem::kokkos::create_mirror_view(xix)),
-      h_xiz(specfem::kokkos::create_mirror_view(xiz)),
-      h_gammax(specfem::kokkos::create_mirror_view(gammax)),
-      h_gammaz(specfem::kokkos::create_mirror_view(gammaz)),
-      h_jacobian(specfem::kokkos::create_mirror_view(jacobian)) {
+      h_xix(specfem::datatype::create_mirror_view(xix)),
+      h_xiz(specfem::datatype::create_mirror_view(xiz)),
+      h_gammax(specfem::datatype::create_mirror_view(gammax)),
+      h_gammaz(specfem::datatype::create_mirror_view(gammaz)),
+      h_jacobian(specfem::datatype::create_mirror_view(jacobian)) {
   return;
 };
 
@@ -37,11 +37,11 @@ specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim2>::
       gammaz("specfem::assembly::jacobian_matrix::gammaz", nspec, ngllz, ngllx),
       jacobian("specfem::assembly::jacobian_matrix::jacobian", nspec, ngllz,
                ngllx),
-      h_xix(specfem::kokkos::create_mirror_view(xix)),
-      h_xiz(specfem::kokkos::create_mirror_view(xiz)),
-      h_gammax(specfem::kokkos::create_mirror_view(gammax)),
-      h_gammaz(specfem::kokkos::create_mirror_view(gammaz)),
-      h_jacobian(specfem::kokkos::create_mirror_view(jacobian)) {
+      h_xix(specfem::datatype::create_mirror_view(xix)),
+      h_xiz(specfem::datatype::create_mirror_view(xiz)),
+      h_gammax(specfem::datatype::create_mirror_view(gammax)),
+      h_gammaz(specfem::datatype::create_mirror_view(gammaz)),
+      h_jacobian(specfem::datatype::create_mirror_view(jacobian)) {
 
   const int ngnod = mesh.ngnod;
 
@@ -85,22 +85,22 @@ specfem::assembly::jacobian_matrix<specfem::element::dimension_tag::dim2>::
     }
   };
 
-  specfem::kokkos::deep_copy(xix, h_xix);
-  specfem::kokkos::deep_copy(xiz, h_xiz);
-  specfem::kokkos::deep_copy(gammax, h_gammax);
-  specfem::kokkos::deep_copy(gammaz, h_gammaz);
-  specfem::kokkos::deep_copy(jacobian, h_jacobian);
+  specfem::datatype::deep_copy(xix, h_xix);
+  specfem::datatype::deep_copy(xiz, h_xiz);
+  specfem::datatype::deep_copy(gammax, h_gammax);
+  specfem::datatype::deep_copy(gammaz, h_gammaz);
+  specfem::datatype::deep_copy(jacobian, h_jacobian);
 
   return;
 }
 
 void specfem::assembly::jacobian_matrix<
     specfem::element::dimension_tag::dim2>::sync_views() {
-  specfem::kokkos::deep_copy(xix, h_xix);
-  specfem::kokkos::deep_copy(xiz, h_xiz);
-  specfem::kokkos::deep_copy(gammax, h_gammax);
-  specfem::kokkos::deep_copy(gammaz, h_gammaz);
-  specfem::kokkos::deep_copy(jacobian, h_jacobian);
+  specfem::datatype::deep_copy(xix, h_xix);
+  specfem::datatype::deep_copy(xiz, h_xiz);
+  specfem::datatype::deep_copy(gammax, h_gammax);
+  specfem::datatype::deep_copy(gammaz, h_gammaz);
+  specfem::datatype::deep_copy(jacobian, h_jacobian);
 }
 
 std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
