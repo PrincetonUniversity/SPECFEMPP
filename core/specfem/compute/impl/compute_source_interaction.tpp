@@ -46,7 +46,7 @@ void specfem::compute::impl::compute_source_interaction(
 
   // Some aliases
   const auto &properties = assembly.properties;
-  const auto field = assembly.fields.template get_simulation_field<wavefield>();
+  const auto &field = assembly.fields.template get_simulation_field<wavefield>();
 
   sources.update_timestep(timestep);
 
