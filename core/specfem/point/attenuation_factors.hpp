@@ -4,11 +4,60 @@
 
 namespace specfem::point {
 
+/**
+ * @brief Template class for storing attenuation factors in viscoelastic
+ * simulations.
+ *
+ * The attenuation_factors class contains the coefficients required for
+ * implementing constant Q attenuation in elastic wave propagation simulations.
+ * It stores common factors for bulk modulus (kappa) and shear modulus (mu)
+ * along with Runge-Kutta integration factors for time stepping.
+ *
+ * This class is used in conjunction with memory_variable to implement
+ * viscoelastic attenuation through a series of standard linear solids (SLS).
+ * The attenuation factors control the relaxation mechanisms that provide
+ * frequency-dependent seismic wave attenuation.
+ *
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+ * @tparam MediumTag Medium type (currently supports elastic)
+ * @tparam AttenuationTag Attenuation model (constant_isotropic)
+ * @tparam UseSIMD Enable SIMD vectorization optimizations
+ *
+ * @code
+ * // Example usage for 2D elastic medium:
+ * using af_type = specfem::point::attenuation_factors<
+ *     specfem::element::dimension_tag::dim2,
+ *     specfem::element::medium_tag::elastic,
+ *     specfem::element::attenuation_tag::constant_isotropic,
+ *     false>;
+ *
+ * af_type::common_factor_type kappa_factors(1.0, 0.8);
+ * af_type::common_factor_type mu_factors(1.2, 0.9);
+ * af_type factors(kappa_factors, mu_factors, 0.5, 0.3, 0.1);
+ * @endcode
+ */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::attenuation_tag AttenuationTag, bool UseSIMD>
 struct attenuation_factors;
 
+/**
+ * @brief Specialized attenuation_factors for elastic medium with constant
+ * isotropic attenuation.
+ *
+ * This specialization provides attenuation factors for both 2D and 3D elastic
+ * media with constant isotropic Q attenuation. The class stores common factors
+ * for kappa and mu moduli, which are used to compute relaxation functions in
+ * standard linear solid models, as well as Runge-Kutta integration
+ * coefficients.
+ *
+ * The attenuation implementation follows the approach described in geophysical
+ * literature for seismic wave attenuation modeling, where quality factor Q
+ * remains approximately constant over a frequency band of interest.
+ *
+ * @tparam DimensionTag Spatial dimension (supports both dim2 and dim3)
+ * @tparam UseSIMD Enable SIMD vectorization for performance optimization
+ */
 template <specfem::element::dimension_tag DimensionTag, bool UseSIMD>
 struct attenuation_factors<
     DimensionTag, specfem::element::medium_tag::elastic,
@@ -64,15 +113,35 @@ public:
 
   /**
    * @name Data Members
+   * @brief Attenuation factors for constant Q calculations
    */
   ///@{
-  /** @brief kappa common factor for constant Q attenuation calculations */
+  /**
+   * @brief Common factor array for bulk modulus (kappa) attenuation
+   *
+   * Vector of length N_SLS containing the common factors \f$A_{\kappa,s}\f$
+   * for each standard linear solid used in bulk modulus attenuation.
+   * These factors determine the relaxation strength of each SLS mechanism.
+   */
   common_factor_type kappa_common_factor;
+
+  /**
+   * @brief Common factor array for shear modulus (mu) attenuation
+   *
+   * Vector of length N_SLS containing the common factors \f$A_{\mu,s}\f$
+   * for each standard linear solid used in shear modulus attenuation.
+   * These control the shear wave attenuation characteristics.
+   */
   common_factor_type mu_common_factor;
 
-  /** @brief Runge Kutta integration factor for constant Q attenuation */
+  /** @brief Runge-Kutta integration factor \f$\alpha_{RK}\f$ for memory
+   * variable update */
   type_real alpha_rk;
+  /** @brief Runge-Kutta integration factor \f$\beta_{RK}\f$ for memory variable
+   * update */
   type_real beta_rk;
+  /** @brief Runge-Kutta integration factor \f$\gamma_{RK}\f$ for memory
+   * variable update */
   type_real gamma_rk;
 
   ///@}
@@ -119,8 +188,17 @@ public:
   ///@}
 
   /**
+   * @name Comparison Operators
+   */
+  ///@{
+  /**
    * @brief Equality comparison operator.
    *
+   * Compares two attenuation_factors objects for exact equality across all
+   * components including both common factor arrays and all Runge-Kutta factors.
+   *
+   * @param other Attenuation factors object to compare with
+   * @return true if all components are equal, false otherwise
    */
   KOKKOS_INLINE_FUNCTION
   bool operator==(const attenuation_factors &other) const {
@@ -128,7 +206,7 @@ public:
            mu_common_factor == other.mu_common_factor &&
            alpha_rk == other.alpha_rk && beta_rk == other.beta_rk &&
            gamma_rk == other.gamma_rk;
-  };
+  }
   ///@}
 
   /**
