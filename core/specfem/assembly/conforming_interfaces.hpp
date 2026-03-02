@@ -24,3 +24,4 @@ struct conforming_interfaces;
 } // namespace specfem::assembly
 
 #include "conforming_interfaces/dim2/conforming_interface.hpp"
+#include "conforming_interfaces/dim3/conforming_interface.hpp"

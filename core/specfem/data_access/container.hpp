@@ -14,6 +14,7 @@ namespace specfem::data_access {
 enum class ContainerType {
   boundary, ///< Boundary element storage
   edge,     ///< Edge-based storage
+  face,     ///< Face-based storage
   domain    ///< Domain element storage
 };
 
@@ -58,6 +59,17 @@ struct ContainerValueType<specfem::data_access::ContainerType::edge,
   template <typename T, typename MemorySpace>
   using tensor_type = Kokkos::View<T ****, Kokkos::LayoutLeft, MemorySpace>;
 };
+
+template <>
+struct ContainerValueType<specfem::data_access::ContainerType::face,
+                          specfem::element::dimension_tag::dim3> {
+  template <typename T, typename MemorySpace>
+  using scalar_type = Kokkos::View<T **, Kokkos::LayoutLeft, MemorySpace>;
+  template <typename T, typename MemorySpace>
+  using vector_type = Kokkos::View<T ***, Kokkos::LayoutLeft, MemorySpace>;
+  template <typename T, typename MemorySpace>
+  using tensor_type = Kokkos::View<T ****, Kokkos::LayoutLeft, MemorySpace>;
+};
 } // namespace impl
 
 /**
@@ -80,7 +92,7 @@ struct ContainerValueType<specfem::data_access::ContainerType::edge,
  * scalar_view density("density", nspec, ngllz, ngllx);
  * @endcode
  *
- * @tparam ContainerType Storage layout (domain/edge/boundary)
+ * @tparam ContainerType Storage layout (domain/edge/face/boundary)
  * @tparam DataClass Type of data being stored (properties/fields/indices)
  * @tparam DimensionTag Spatial dimension (2D/3D)
  *
