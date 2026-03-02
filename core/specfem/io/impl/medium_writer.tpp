@@ -2,7 +2,6 @@
 
 #include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
-#include "specfem/element.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
 
 #include "specfem/assembly.hpp"
