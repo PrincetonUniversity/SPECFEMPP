@@ -130,7 +130,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
   if (self_edges.n_edges == 0 && coupled_edges.n_edges == 0)
     return;
 
-  const auto field = assembly.fields.template get_simulation_field<wavefield>();
+  const auto &field = assembly.fields.template get_simulation_field<wavefield>();
 
   const auto num_points = assembly.mesh.element_grid.ngllx;
 

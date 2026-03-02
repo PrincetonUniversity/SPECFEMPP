@@ -81,7 +81,7 @@ void specfem::compute::impl::compute_mass_matrix(
   const auto &jacobian_matrix = assembly.jacobian_matrix;
   const auto &properties = assembly.properties;
   const auto &boundaries = assembly.boundaries;
-  const auto field = assembly.fields.template get_simulation_field<wavefield>();
+  const auto &field = assembly.fields.template get_simulation_field<wavefield>();
 
   specfem::execution::ChunkedDomainIterator chunk(parallel_config(), elements,
                                                   element_grid);

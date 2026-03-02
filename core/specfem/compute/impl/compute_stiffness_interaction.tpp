@@ -56,7 +56,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
   const auto &boundaries = assembly.boundaries;
 
   // Get the simulation field and boundary values
-  const auto field = assembly.fields.template get_simulation_field<wavefield>();
+  const auto &field = assembly.fields.template get_simulation_field<wavefield>();
   const auto boundary_values =
       assembly.boundary_values.template get_container<boundary_tag>();
 

@@ -13,7 +13,7 @@ void specfem::compute::impl::invert_mass_matrix(
   constexpr auto medium_tag = Tags::medium_tag;
   constexpr auto wavefield = Tags::wavefield_tag;
   constexpr auto dimension_tag = Tags::dimension_tag;
-  const auto field = assembly.fields.template get_simulation_field<wavefield>();
+  const auto &field = assembly.fields.template get_simulation_field<wavefield>();
 
   const int nglob = field.template get_nglob<medium_tag>();
 
