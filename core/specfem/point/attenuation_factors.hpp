@@ -35,6 +35,9 @@ namespace specfem::point {
  * af_type::common_factor_type mu_factors(1.2, 0.9);
  * af_type factors(kappa_factors, mu_factors, 0.5, 0.3, 0.1);
  * @endcode
+ *
+ * @see specfem::point::memory_variable for the corresponding memory variable
+ * class to be integrated.
  */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,

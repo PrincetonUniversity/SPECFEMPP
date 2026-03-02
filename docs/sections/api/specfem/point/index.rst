@@ -12,6 +12,7 @@
     :maxdepth: 1
 
     assembly_index/index
+    attenuation_factors/index
     boundary/index
     conforming_interface/index
     coordinates/index
@@ -22,6 +23,7 @@
     interface_index/index
     jacobian_matrix/index
     kernels/index
+    memory_variable/index
     nonconforming_interface/index
     properties/index
     source/index

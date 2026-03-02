@@ -34,6 +34,8 @@ namespace specfem::point {
  * memory_vars.Rxx = mv_2d::value_type(1.5);
  * memory_vars.Rxz = mv_2d::value_type(0.8);
  * @endcode
+ *
+ * @see specfem::point::attenuation_factors for attenuation factor definitions
  */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
