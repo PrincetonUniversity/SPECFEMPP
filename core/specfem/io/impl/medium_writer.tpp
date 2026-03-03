@@ -9,6 +9,8 @@
 #include "specfem/logger.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
+#include <stdexcept>
+#include <sstream>
 
 template <typename OutputLibrary, typename ContainerType>
 void specfem::io::impl::write_container(

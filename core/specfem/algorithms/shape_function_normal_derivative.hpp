@@ -9,6 +9,8 @@
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
+#include <sstream>
+#include <stdexcept>
 
 namespace specfem::algorithms {
 

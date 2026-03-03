@@ -1,6 +1,5 @@
 #pragma once
 
-#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/periodic_tasks.hpp"
 
