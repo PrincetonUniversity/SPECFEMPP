@@ -122,4 +122,10 @@ compute_tau_eps(
 } // namespace attenuation
 } // namespace specfem
 
-#include "compute_tau_eps.tpp"
+extern template Kokkos::View<type_real[specfem::constants::N_SLS],
+                             Kokkos::LayoutRight, Kokkos::HostSpace>
+    specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
+        type_real,
+        Kokkos::View<type_real[specfem::constants::N_SLS], Kokkos::LayoutRight,
+                     Kokkos::HostSpace>,
+        type_real, type_real);
