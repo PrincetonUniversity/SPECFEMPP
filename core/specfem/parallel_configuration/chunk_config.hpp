@@ -33,11 +33,21 @@ constexpr int chunk_size = impl::cuda_chunk_size;
 constexpr int storage_chunk_size = impl::hip_chunk_size;
 constexpr int chunk_size = impl::hip_chunk_size;
 #elif defined(KOKKOS_ENABLE_OPENMP)
+#if defined(SPECFEM_ENABLE_SIMD)
 constexpr int simd_size = Kokkos::Experimental::simd<type_real>::size();
+#else constexpr int simd_size =
+Kokkos::Experimental::template basic_simd<
+    type_real, Kokkos::Experimental::simd_abi::scalar>::size();
+#endif
 constexpr int storage_chunk_size = impl::openmp_chunk_size * simd_size;
 constexpr int chunk_size = impl::openmp_chunk_size;
 #else
+#if defined(SPECFEM_ENABLE_SIMD)
 constexpr int simd_size = Kokkos::Experimental::simd<type_real>::size();
+#else constexpr int simd_size =
+Kokkos::Experimental::template basic_simd<
+    type_real, Kokkos::Experimental::simd_abi::scalar>::size();
+#endif
 constexpr int storage_chunk_size = impl::serial_chunk_size * simd_size;
 constexpr int chunk_size = impl::serial_chunk_size;
 #endif
