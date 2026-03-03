@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/periodic_tasks.hpp"
 #include "specfem/solver.hpp"
 #include "specfem/timescheme/newmark.hpp"

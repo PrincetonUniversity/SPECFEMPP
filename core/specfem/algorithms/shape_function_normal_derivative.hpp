@@ -1,8 +1,8 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/nonconforming_interfaces.hpp"
 #include "specfem/chunk_edge/nonconforming_interface.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/element_coupling.hpp"

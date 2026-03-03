@@ -1,6 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "specfem/algorithms.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/nonconforming_interfaces/dim2/impl/compute_intersection.tpp"
 #include "specfem/io.hpp"
 #include "specfem/point.hpp"

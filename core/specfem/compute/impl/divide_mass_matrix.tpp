@@ -2,7 +2,7 @@
 
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/point.hpp"
 #include "divide_mass_matrix.hpp"
 #include <Kokkos_Core.hpp>

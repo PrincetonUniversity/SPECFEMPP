@@ -1,7 +1,7 @@
 #pragma once
 
 #include "impl/compute_material_derivatives.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/setup.hpp"

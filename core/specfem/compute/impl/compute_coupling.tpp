@@ -5,7 +5,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/algorithms.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/chunk_edge.hpp"
 #include "specfem/execution.hpp"

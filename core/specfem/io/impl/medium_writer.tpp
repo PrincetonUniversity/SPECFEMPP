@@ -4,8 +4,8 @@
 #include "specfem/element.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
-
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/element_types.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>

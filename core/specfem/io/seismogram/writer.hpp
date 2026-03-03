@@ -1,7 +1,7 @@
 #pragma once
 
 #include "impl/channel_generator.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io/writer.hpp"
