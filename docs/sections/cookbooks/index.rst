@@ -3,7 +3,7 @@
 Cookbooks
 =========
 
-Cookbooks are a collection of examples that demonstrate how to use the package to solve various problems. Each of the cookbook is present with the :repo-file:`examples` directory in the repository.
+Cookbooks are a collection of examples that demonstrate how to use the package to solve various problems.
 
 .. note::
 
