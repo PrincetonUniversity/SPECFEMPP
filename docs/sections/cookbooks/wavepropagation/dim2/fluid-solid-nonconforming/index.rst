@@ -1,6 +1,5 @@
-################################################################
- Wave propagation through a nonconforming fluid-solid interface
-################################################################
+Fluid-solid non-conforming interface with bathymetry
+####################################################
 
 This example extends the :doc:`fluid-solid-bathymetry
 </sections/cookbooks/dim2/fluid-solid-bathymetry/index>` example,
@@ -15,9 +14,8 @@ meshes, we have provided a ``gmshlayerbuilder`` script to take a
 topography file (normally read in by ``Par_file``) and generate a mesh
 for ``xmeshfem2D`` to generate a database for.
 
-**************************
- Setting up the workspace
-**************************
+Setting up the workspace
+************************
 
 Let's start by creating a workspace from where we can run this example.
 
@@ -62,9 +60,9 @@ output artifacts.
    touch topography_file.dat
    touch Par_file
 
-********************
- Meshing the domain
-********************
+
+Meshing the domain
+******************
 
 We first start by generating an external mesh from our topography file.
 This is the same as the ``fluid-solid-bathymetry`` example.
@@ -173,9 +171,9 @@ The sources are set as in the :doc:`fluid-solid-bathymetry
    :caption: line_source.yaml
    :language: yaml
 
-************************
- Running the simulation
-************************
+
+Running the simulation
+**********************
 
 To run the solver, we need a configuration file. We use a
 ``specfem_config.yaml`` file similar to the ``fluid-solid-bathymetry``
@@ -192,9 +190,9 @@ following command:
 
    specfem2d -p specfem_config.yaml
 
-*************************
- Visualizing the results
-*************************
+
+Visualizing the results
+***********************
 
 The simulation generates seismograms at the stations defined in the
 ``specfem_config.yaml`` file and wavefield snapshots for visualization.
@@ -210,9 +208,9 @@ The output image should look like this:
    :width: 100%
    :alt: Seismograms from the simulation
 
-********************************************
- [Optional] Creating animated visualization
-********************************************
+
+[Optional] Creating animated visualization
+******************************************
 
 To create an animated gif of the wavefield evolution, you can use
 ImageMagick (if available):
@@ -231,9 +229,9 @@ refracting at the seafloor interface.
    :width: 100%
    :alt: Animated wavefield evolution
 
-***********************************************
- Appendix: Comparison to conforming simulation
-***********************************************
+
+Appendix: Comparison to conforming simulation
+*********************************************
 
 We can return to a conforming scheme by disabling the external mesher
 

@@ -1,5 +1,5 @@
-Wave propagation through fluid-solid interface with bathymetry
-==============================================================
+Fluid-solid interface with bathymetry
+=====================================
 
 This example (see :repo-file:`benchmarks/src/dim2/fluid-solid-bathymetry`)
 simulates wave propagation in a tele-seismic plane wave scenario within a

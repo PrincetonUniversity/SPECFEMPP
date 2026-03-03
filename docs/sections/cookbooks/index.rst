@@ -11,7 +11,6 @@ Cookbooks are a collection of examples that demonstrate how to use the package t
 
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
 
-    dim2/index.rst
-    dim3/index.rst
+    wavepropagation/index.rst

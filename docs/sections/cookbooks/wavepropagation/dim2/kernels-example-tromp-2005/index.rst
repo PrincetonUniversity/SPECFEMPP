@@ -1,6 +1,6 @@
 .. _Tromp_Tape_Liu_2005:
 
-Adjoint Simulations and Banana Donut Kernels
+Adjoint simulations and banana-donut kernels
 ============================================
 
 This example (see :repo-file:`benchmarks/src/dim2/Tromp_2005`)

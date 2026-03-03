@@ -1,5 +1,5 @@
-Wave propagation through fluid-solid interface
-==============================================
+Fluid-solid interface
+=====================
 
 This example (see :repo-file:`benchmarks/src/dim2/fluid-solid-interface`)
 simulates the fluid-solid example with flat ocean bottom from `Komatitsch et.

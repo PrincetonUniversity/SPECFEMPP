@@ -1,7 +1,7 @@
 .. _homogeneous_halfspace_3d_example:
 
-Wave propagation through 3D homogeneous media
-=============================================
+Homogeneous elastic media
+=========================
 
 In this example we simulate wave propagation through a 3-dimensional homogeneous halfspace using a force source.
 
