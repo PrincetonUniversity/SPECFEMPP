@@ -4,6 +4,15 @@
 #include <unordered_map>
 
 namespace specfem {
+
+/**
+ * @brief Simulation configuration and type management for SPECFEM computations.
+ *
+ * Provides simulation types (forward, combined), field types for time-stepping,
+ * computational models, and type traits. Includes string conversion utilities
+ * for parameter parsing and configuration.
+ *
+ */
 namespace simulation {
 
 /**

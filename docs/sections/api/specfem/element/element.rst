@@ -1,4 +1,24 @@
-.. _specfem_api_enumerations_medium:
+.. _specfem_api_element:
+
+``specfem::element::dimension_tag``
+===================================
+
+.. doxygenenum:: specfem::element::dimension_tag
+
+``specfem::element::dimension``
+===============================
+
+.. doxygenclass:: specfem::element::dimension
+   :members:
+
+Dimension-Specific Implementations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxygenclass:: specfem::element::dimension< specfem::element::dimension_tag::dim2 >
+    :members:
+
+.. doxygenclass:: specfem::element::dimension< specfem::element::dimension_tag::dim3 >
+    :members:
 
 ``specfem::element::medium_tag``
 ================================
@@ -24,9 +44,17 @@
 
 .. doxygenfunction:: specfem::element::to_string(const boundary_tag &boundary)
 
-.. doxygenfunction:: specfem::element::to_string(const medium_tag &medium, const property_tag &property_tag)
+.. doxygenfunction:: specfem::element::to_string(const attenuation_tag &attenuation)
 
 .. doxygenfunction:: specfem::element::to_string(const medium_tag &medium, const property_tag &property_tag, const boundary_tag &boundary_tag)
+
+.. doxygenfunction:: specfem::element::to_string(const medium_tag &medium, const property_tag &property_tag, const attenuation_tag &attenuation_tag)
+
+
+``specfem::element::from_string``
+=================================
+
+.. doxygenfunction:: specfem::element::from_string
 
 
 ``specfem::element::attributes``
@@ -61,11 +89,6 @@ Attribute Specializations
 
 .. doxygenclass:: specfem::element::attributes< specfem::element::dimension_tag::dim3, specfem::element::medium_tag::acoustic >
     :members:
-
-``specfem::element::from_string``
-=================================
-
-.. doxygenfunction:: specfem::element::from_string
 
 ``specfem::element::is_elastic``
 ================================

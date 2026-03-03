@@ -1,5 +1,4 @@
-
-.. _specfem_api_simulation_type:
+.. _specfem_api_simulation:
 
 ``specfem::simulation::type``
 =============================
@@ -20,3 +19,8 @@ Simulation Specializations
 
 .. doxygenclass:: specfem::simulation::simulation< specfem::simulation::type::combined >
     :members:
+
+``specfem::simulation::field_type``
+===================================
+
+.. doxygenenum:: specfem::simulation::field_type

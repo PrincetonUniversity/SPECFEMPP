@@ -1,4 +1,4 @@
-.. _specfem_api_enumerations_mesh_entity:
+.. _specfem_api_mesh_entity:
 
 ``specfem::mesh_entity::edge``
 ==============================

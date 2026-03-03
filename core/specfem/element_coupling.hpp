@@ -3,6 +3,17 @@
 #include "specfem/element.hpp"
 #include "specfem/element_connections.hpp"
 
+/**
+ * @brief Element coupling configuration for multi-physics interfaces.
+ *
+ * Provides compile-time interface configuration for coupling different
+ * physics media (elastic-acoustic, acoustic-elastic). Defines coupling
+ * directions, flux schemes, and field type resolution through template
+ * specializations.
+ *
+ */
+namespace specfem::element_coupling {}
+
 namespace specfem::point {
 
 template <specfem::element::dimension_tag DimensionTag,
