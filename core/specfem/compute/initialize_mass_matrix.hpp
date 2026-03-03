@@ -4,6 +4,7 @@
 #include "impl/invert_mass_matrix.hpp"
 #include "specfem/assembly.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/tags.hpp"
 
 namespace specfem::compute {

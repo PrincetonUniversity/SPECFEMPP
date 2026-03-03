@@ -3,7 +3,7 @@
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/timescheme/newmark.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/fields.hpp"
 
 
 template <specfem::element::dimension_tag DimensionTag,
