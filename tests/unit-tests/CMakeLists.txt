@@ -658,6 +658,7 @@ target_link_libraries(
 add_executable(
   coupling_integral_tests
   algorithms/dim2/coupling_integral/dshape.cpp
+  algorithms/dim2/coupling_integral/timesshape.cpp
 )
 
 target_link_libraries(

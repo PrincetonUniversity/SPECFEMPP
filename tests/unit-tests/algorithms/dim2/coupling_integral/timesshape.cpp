@@ -1,7 +1,7 @@
-#include "specfem/algorithms/coupling_integral1d_dnshape.hpp"
-#include "specfem/algorithms/shape_function_normal_derivative.hpp"
+#include "specfem/algorithms/coupling_integral.hpp"
 
 #include "specfem/chunk_edge.hpp"
+#include "specfem/element/tags.hpp"
 #include "specfem/enums.hpp"
 
 #include "utilities/include/builder/edgeview.hpp"
@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 
 // temporary test for purposes of uncombined coupling_integral
-void execute_simple_dshape_test() {
+void execute_simple_timesshape_test() {
   constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
   constexpr auto interface_tag =
       specfem::element_coupling::interface_tag::acoustic_elastic;
@@ -32,7 +32,7 @@ void execute_simple_dshape_test() {
   const type_real intersection_min = -1;
   const type_real intersection_max = 1;
   const auto side = specfem::mesh_entity::dim2::type::top;
-  // we are integrating d(shape_function)/dn * F, where
+  // we are integrating shape_function * F, where
   // :: F(x) = x
   // :: n = [1, x] in the contravariant local edge basis (see
   //      coupling_integral1d_dnshape.hpp), or [x, 1] in typical local
@@ -91,18 +91,6 @@ void execute_simple_dshape_test() {
           IntersectionContraNormalInitializer())
           .get_view();
 
-  // no data access help for transfer_function_self derivative, but the type
-  // only needs to support deriv(iedge, iedge, iquad).
-  using TransferFunctionDerivativeType =
-      specfem::datatype::VectorChunkEdgeViewType<
-          type_real, dimension_tag, num_edges, QuadX::nquad,
-          QuadIntersection::nquad, false, memory_space,
-          Kokkos::MemoryTraits<> >;
-
-  TransferFunctionDerivativeType transfer_function_self_derivative(
-      "dshape::transfer_function_self_derivative"); // init later with
-                                                    // interface_container
-
   // ==========================================================
 
   constexpr int nquad_intersection = QuadIntersection::nquad;
@@ -132,8 +120,6 @@ void execute_simple_dshape_test() {
   // populate this nonconforming interface container and
   // transfer_function_self_derivative
   {
-    TransferFunctionDerivativeType::HostMirror h_tfsd =
-        Kokkos::create_mirror_view(transfer_function_self_derivative);
     for (int iedge = 0; iedge < num_edges; iedge++) {
       for (int iquad_edge = 0; iquad_edge < ngllx; iquad_edge++) {
         for (int iquad_intersection = 0;
@@ -146,13 +132,9 @@ void execute_simple_dshape_test() {
                                                   iquad_edge) = specfem::
               test_fixture::QuadratureRule<QuadX>::evaluate_lagrange_polynomial(
                   iquad_edge, intersection_point_in_edge_coords);
-          h_tfsd(iedge, iquad_edge, iquad_intersection) = specfem::
-              test_fixture::QuadratureRule<QuadX>::evaluate_lagrange_derivative(
-                  iquad_edge, intersection_point_in_edge_coords);
         }
       }
     }
-    Kokkos::deep_copy(transfer_function_self_derivative, h_tfsd);
     Kokkos::deep_copy(interface_container.transfer_function,
                       interface_container.h_transfer_function);
   }
@@ -201,50 +183,19 @@ void execute_simple_dshape_test() {
   for (int iz = 0; iz < ngllz; iz++) {
     for (int ix = 0; ix < ngllx; ix++) {
       // use the intersection quadrature rule
-      // solution: int(x * (x * L_xi'(x) * L_gamma(z) + L_xi(x) * L_gamma'(z)))
+      // solution: int(x * L)
       double integral = 0;
       for (int iquad = 0; iquad < nquad_intersection; iquad++) {
         const double x = QuadIntersection::quadrature_points[iquad];
         const double z = 1; // since we are at the top
-        const double dshapedxi =
-            specfem::test_fixture::QuadratureRule<
-                QuadX>::evaluate_lagrange_derivative(ix, x) *
-            specfem::test_fixture::QuadratureRule<
-                QuadZ>::evaluate_lagrange_polynomial(iz, z);
-        const double dshapedga =
-            specfem::test_fixture::QuadratureRule<
-                QuadX>::evaluate_lagrange_polynomial(ix, x) *
-            specfem::test_fixture::QuadratureRule<
-                QuadZ>::evaluate_lagrange_derivative(iz, z);
+        const double shape = specfem::test_fixture::QuadratureRule<
+                                 QuadX>::evaluate_lagrange_polynomial(ix, x) *
+                             specfem::test_fixture::QuadratureRule<
+                                 QuadZ>::evaluate_lagrange_polynomial(iz, z);
         const double intersection_function =
             IntersectionFunctionInitializer::AnalyticalFunctionType::evaluate(
                 x)[0];
-        const auto n_contraedge = IntersectionContraNormalFunction::evaluate(x);
-        double nxi;
-        double nga;
-        switch (side) {
-        case specfem::mesh_entity::dim2::type::bottom:
-          nga = -n_contraedge[0];
-          nxi = n_contraedge[1];
-          break;
-        case specfem::mesh_entity::dim2::type::top:
-          nga = n_contraedge[0];
-          nxi = n_contraedge[1];
-          break;
-        case specfem::mesh_entity::dim2::type::left:
-          nxi = -n_contraedge[0];
-          nga = n_contraedge[1];
-          break;
-        case specfem::mesh_entity::dim2::type::right:
-          nxi = n_contraedge[0];
-          nga = n_contraedge[1];
-          break;
-        default:
-          FAIL() << "Poorly posed test. \"side\" is not an edge!.";
-        }
-        integral +=
-            quadrature_weights[iquad] *
-            (intersection_function * (nxi * dshapedxi + nga * dshapedga));
+        integral += quadrature_weights[iquad] * (intersection_function * shape);
       }
       h_expected_solutions(0, iz, ix) = (type_real)integral;
     }
@@ -261,11 +212,6 @@ void execute_simple_dshape_test() {
   if (nquad_intersection != nquad_intersection_) {
     throw std::runtime_error("dshape: Wrong kernel for nquad_intersection!");
   }
-  const auto shape_function_normal_derivatives =
-      specfem::algorithms::shape_function_self_normal_derivatives<
-          interface_tag, boundary_tag, nquad_element_, nquad_intersection_>(
-          edgelist, nonconforming_interfaces, ngllz, ngllx,
-          lagrange_derivative.xi, intersection_contra_normal);
 
   using default_parallel_config =
       specfem::parallel_configuration::default_chunk_edge_config<
@@ -289,13 +235,8 @@ void execute_simple_dshape_test() {
                             Kokkos::make_pair(chunk_index * chunk_size,
                                               (chunk_index + 1) * chunk_size),
                             Kokkos::ALL(), Kokkos::ALL()));
-        const auto SFND =
-            Kokkos::subview(shape_function_normal_derivatives,
-                            Kokkos::make_pair(chunk_index * chunk_size,
-                                              (chunk_index + 1) * chunk_size),
-                            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
-        specfem::algorithms::coupling_integral_dnshape(
-            ngllz, ngllx, iter_chunk_index, F, intersection_factor, SFND,
+        specfem::algorithms::coupling_integral(
+            nonconforming_interfaces, iter_chunk_index, F, intersection_factor,
             [&](const auto &index, const auto &point) {
               computed_integrals(index.ispec, index.iz, index.ix) = point(0);
             });
@@ -324,10 +265,6 @@ void execute_simple_dshape_test() {
   }
 }
 
-TEST(CouplingIntegral, SimpleDShapeTest) { execute_simple_dshape_test(); }
-
-int main(int argc, char *argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new SPECFEMEnvironment);
-  return RUN_ALL_TESTS();
+TEST(CouplingIntegral, SimpleTimesShapeTest) {
+  execute_simple_timesshape_test();
 }
