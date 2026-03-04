@@ -11,107 +11,42 @@ specfem::runtime_configuration::flux_schemes::flux_schemes(
     throw std::runtime_error("flux-scheme YAML node must be a sequence.");
   }
 
-  for (const YAML::Node entry : this->flux_schemes_node) {
+  // multi-rules in commit 4a27c96cde7e8548556da6caf628eda034fd35b3
 
+  if (const YAML::Node &flux_scheme_type_node = flux_schemes_node["type"]) {
     specfem::element_coupling::flux_scheme_tag flux_scheme_tag;
-
-    // for now, we will only assume this is a singleton with "interface"
-    // identifier and not "material<1/2>". This code should work if generalized,
-    // but has not been verified.
-    if (const YAML::Node &flux_scheme_type_node = entry["type"]) {
-      try {
-        const auto flux_scheme_type = flux_scheme_type_node.as<std::string>();
-
-        // TODO flux_scheme_tag from_string() function?
-        if (flux_scheme_type == std::string("natural")) {
-          flux_scheme_tag = specfem::element_coupling::flux_scheme_tag::natural;
-        } else {
-          throw std::runtime_error(std::string("Unrecognized flux scheme: \"") +
-                                   flux_scheme_type + "\"");
-        }
-
-        // two cases: interface specification or material specification -- only
-        // one can be set for a given rule
-        const YAML::Node &interface_identifier_node = entry["interface"];
-        const YAML::Node &material1_identifier_node = entry["material1"];
-        const YAML::Node &material2_identifier_node = entry["material2"];
-        bool is_interface_defined = interface_identifier_node.IsDefined();
-        bool is_material_defined = material1_identifier_node.IsDefined() ||
-                                   material2_identifier_node.IsDefined();
-
-        if (is_interface_defined) {
-          if (is_material_defined) {
-            throw std::runtime_error(
-                "Flux-scheme entry has both \"interface\"-specification and "
-                "\"material1/2\"-specification. Only one is permitted.");
-          }
-          try {
-            const auto interface_identifier =
-                interface_identifier_node.as<std::string>();
-
-            // TODO interface_tag from_string() function?
-            specfem::element_coupling::interface_tag interface_tag;
-            if (interface_identifier == std::string("acoustic_elastic") ||
-                interface_identifier == std::string("elastic_acoustic")) {
-              interface_tag =
-                  specfem::element_coupling::interface_tag::acoustic_elastic;
-            } else {
-              throw std::runtime_error(
-                  std::string("Unrecognized interface tag: \"") +
-                  interface_identifier + "\"");
-            }
-
-            // append entry
-            this->per_interface_configs[interface_tag] =
-                std::make_pair(flux_scheme_tag, entry);
-
-          } catch (YAML::InvalidNode &e) {
-            throw std::runtime_error("Flux-scheme entry has \"type\" node, "
-                                     "but it is not a string!");
-          }
-          continue;
-        }
-
-        if (is_material_defined) {
-          if ((!material1_identifier_node.IsDefined()) ||
-              (!material2_identifier_node.IsDefined())) {
-            throw std::runtime_error(
-                "When a flux-scheme entry uses a "
-                "\"material1/2\"-specification, both \"material1\" and "
-                "\"material2\" must be specified!");
-          }
-          try {
-            int material1 = material1_identifier_node.as<int>();
-            int material2 = material2_identifier_node.as<int>();
-
-            // use lowest number first:
-            if (material1 > material2) {
-              std::swap(material1, material2);
-            }
-
-            // append entry
-            this->per_material_configs[std::make_pair(material1, material2)] =
-                std::make_pair(flux_scheme_tag, entry);
-
-          } catch (YAML::InvalidNode &e) {
-            throw std::runtime_error("Flux-scheme entry has \"type\" node, "
-                                     "but it is not a string!");
-          }
-          continue;
-        }
-
-        // no specification made
-        throw std::runtime_error(
-            "Flux-scheme needs either \"interface\"-specification or "
-            "\"material1/2\"-specification.");
-      } catch (YAML::InvalidNode &e) {
-        throw std::runtime_error(
-            "Flux-scheme entry has \"type\" node, but it is not a string!");
-      }
-    } else {
+    std::string flux_scheme_str;
+    try {
+      flux_scheme_str = flux_scheme_type_node.as<std::string>();
+    } catch (YAML::InvalidNode &e) {
       throw std::runtime_error(
-          "Flux-scheme entry must have a \"type\" string specified.");
+          "Flux-scheme entry has \"type\" node, but it is not a string!");
     }
+
+    // === parse flux scheme string to tag and verify necessary parameters ===
+
+    // TODO flux_scheme_tag from_string() function?
+    if (flux_scheme_str == std::string("natural")) {
+      flux_scheme_tag = specfem::element_coupling::flux_scheme_tag::natural;
+    } else if (flux_scheme_str == std::string("symmetric_interior_penalty")) {
+      flux_scheme_tag = specfem::element_coupling::flux_scheme_tag::
+          symmetric_interior_penalty;
+      throw std::runtime_error(
+          "symmetric_interior_penalty not yet supported. Do not set this "
+          "scheme in your specfem configuration.");
+    } else {
+      throw std::runtime_error(std::string("Unrecognized flux scheme: \"") +
+                               flux_scheme_str + "\"");
+    }
+
+    // === set config ===
+    per_interface_configs
+        [specfem::element_coupling::interface_tag::acoustic_elastic] =
+            std::make_pair(flux_scheme_tag, flux_schemes_node);
+
+  } else {
+    throw std::runtime_error(
+        "Flux-scheme entry must have a \"type\" string specified.");
   }
 }
 
