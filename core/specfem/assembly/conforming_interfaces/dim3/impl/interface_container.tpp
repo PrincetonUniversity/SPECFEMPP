@@ -4,7 +4,7 @@
 #include "specfem/element.hpp"
 #include "specfem/element_coupling.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
-#include "specfem/assembly/face_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
@@ -19,8 +19,8 @@ specfem::assembly::conforming_interfaces_impl::interface_container<
     specfem::element_connections::type::weakly_conforming>::
     interface_container(
         const int ngllz, const int nglly, const int ngllx,
-        const specfem::assembly::face_types<specfem::element::dimension_tag::dim3>
-            &face_types,
+        const specfem::assembly::element_intersections<specfem::element::dimension_tag::dim3>
+            &element_intersections,
         const specfem::assembly::jacobian_matrix<dimension_tag>
             &jacobian_matrix,
         const specfem::assembly::mesh<dimension_tag> &mesh) {
@@ -29,7 +29,7 @@ specfem::assembly::conforming_interfaces_impl::interface_container<
     KOKKOS_ABORT_WITH_LOCATION("Invalid GLL grid size");
   }
 
-  const auto [self_faces, coupled_faces] = face_types.get_faces_on_host(
+  const auto [self_faces, coupled_faces] = element_intersections.get_faces_on_host(
       specfem::element_connections::type::weakly_conforming, InterfaceTag,
       BoundaryTag);
 

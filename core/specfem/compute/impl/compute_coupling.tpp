@@ -37,7 +37,7 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
 
   const auto &conforming_interfaces = assembly.conforming_interfaces;
   const auto [self_edges, coupled_edges] =
-      assembly.edge_types.get_edges_on_device(connection_tag, interface_tag,
+      assembly.element_intersections.get_edges_on_device(connection_tag, interface_tag,
                                               boundary_tag);
 
   if (self_edges.n_edges != coupled_edges.n_edges) {
@@ -124,7 +124,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
 
   const auto &nonconforming_interfaces = assembly.nonconforming_interfaces;
   const auto [self_edges, coupled_edges] =
-      assembly.edge_types.get_edges_on_device(connection_tag, interface_tag,
+      assembly.element_intersections.get_edges_on_device(connection_tag, interface_tag,
                                               boundary_tag);
 
   if (self_edges.n_edges == 0 && coupled_edges.n_edges == 0)

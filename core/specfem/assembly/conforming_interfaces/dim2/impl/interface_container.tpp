@@ -4,7 +4,7 @@
 #include "specfem/element.hpp"
 #include "specfem/element_coupling.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
@@ -17,8 +17,8 @@ specfem::assembly::conforming_interfaces_impl::interface_container<
     specfem::element_connections::type::weakly_conforming>::
     interface_container(
         const int ngllz, const int ngllx,
-        const specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>
-            &edge_types,
+        const specfem::assembly::element_intersections<specfem::element::dimension_tag::dim2>
+            &element_intersections,
         const specfem::assembly::jacobian_matrix<dimension_tag>
             &jacobian_matrix,
         const specfem::assembly::mesh<dimension_tag> &mesh) {
@@ -32,7 +32,7 @@ specfem::assembly::conforming_interfaces_impl::interface_container<
         "The number of GLL points in z and x must be the same.");
   }
 
-  const auto [self_edges, coupled_edges] = edge_types.get_edges_on_host(
+  const auto [self_edges, coupled_edges] = element_intersections.get_edges_on_host(
       specfem::element_connections::type::weakly_conforming, InterfaceTag, BoundaryTag);
 
   const int nedges = self_edges.n_edges;

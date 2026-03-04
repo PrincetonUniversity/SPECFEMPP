@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
@@ -91,8 +91,8 @@ public:
    */
   interface_container(
       const int ngllz, const int ngllx,
-      const specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>
-          &edge_types,
+      const specfem::assembly::element_intersections<
+          specfem::element::dimension_tag::dim2> &element_intersections,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 
   /** @brief Default constructor */

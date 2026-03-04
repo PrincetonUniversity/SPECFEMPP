@@ -2,7 +2,7 @@
 
 #include "specfem/enums.hpp"
 #include "specfem/assembly/nonconforming_interfaces.hpp"
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "compute_intersection.hpp"
 #include "compute_intersection.tpp"
@@ -17,8 +17,8 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
     specfem::element_connections::type::nonconforming>::
     interface_container(
         const int ngllz, const int ngllx,
-        const specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>
-            &edge_types,
+        const specfem::assembly::element_intersections<specfem::element::dimension_tag::dim2>
+            &element_intersections,
         const specfem::assembly::mesh<dimension_tag> &mesh) {
 
   // TODO: make this a parameter for now, use same gll quadrature
@@ -49,7 +49,7 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
 
   const auto element = specfem::mesh_entity::element(ngllz, ngllx);
 
-  const auto [self_edges, coupled_edges] = edge_types.get_edges_on_host(
+  const auto [self_edges, coupled_edges] = element_intersections.get_edges_on_host(
       specfem::element_connections::type::nonconforming, InterfaceTag, BoundaryTag);
 
   const auto nedges = self_edges.n_edges;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
@@ -20,9 +21,7 @@ namespace specfem::assembly {
 template <typename ExecutionSpace> struct Edge {
   int n_points; ///< Number of quadrature points on this edge
   using IndexView = Kokkos::View<int *, Kokkos::LayoutStride,
-                                 ExecutionSpace>; ///< View
-                                                  ///< type for
-                                                  ///< quadrature
+                                 ExecutionSpace>; ///< View type for quadrature
                                                   ///< indices
   int element_index; ///< Index of the spectral element containing this edge
   int edge_index;    ///< Local edge index within the element
@@ -181,9 +180,9 @@ struct EdgeView {
  * media types in 2D wave propagation problems.
  *
  * @code
- * // Construct 2D edge types from mesh data
- * specfem::assembly::edge_types<specfem::element::dimension_tag::dim2> edges(
- *     ngllx, ngllz, mesh, element_types);
+ * // Construct 2D element intersections from mesh data
+ * specfem::assembly::element_intersections<specfem::element::dimension_tag::dim2>
+ * edges( ngllx, ngllz, mesh, element_types);
  *
  * // Get elastic-acoustic coupling edges on device
  * auto [self_edges, coupled_edges] = edges.get_edges_on_device(
@@ -192,7 +191,8 @@ struct EdgeView {
  *     specfem::element::boundary_tag::none);
  * @endcode
  */
-template <> struct edge_types<specfem::element::dimension_tag::dim2> {
+template <>
+struct element_intersections<specfem::element::dimension_tag::dim2> {
 
 public:
   constexpr static auto dimension_tag =
@@ -252,14 +252,15 @@ public:
                       const specfem::element::boundary_tag boundary) const;
 
   /**
-   * @brief Construct 2D edge types from mesh and element information.
+   * @brief Construct 2D element intersections from mesh and element
+   * information.
    *
    * @param ngllx Number of quadrature points in x-direction
    * @param ngllz Number of quadrature points in z-direction
    * @param mesh 2D assembly mesh with connectivity information
    * @param element_types Element classification for coupling detection
    */
-  edge_types(
+  element_intersections(
       const int ngllx, const int ngllz,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::element_types<dimension_tag> &element_types);
@@ -267,7 +268,7 @@ public:
   /**
    * @brief Default constructor.
    */
-  edge_types() = default;
+  element_intersections() = default;
 
 private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
@@ -281,7 +282,19 @@ private:
                               (EdgeViewType::HostMirror, h_coupled_edges)))
 };
 
-specfem::assembly::edge_types<
+/**
+ * @brief Build a host-side EdgeView from a collection of 2D edge entities.
+ *
+ * Constructs and fills a host-memory EdgeView by mapping each collected
+ * edge's quadrature point indices using the provided element coordinate
+ * mapping.
+ *
+ * @param label Base label for Kokkos view names
+ * @param collected_edges Vector of 2D edge entities to convert
+ * @param element 2D element providing coordinate mapping
+ * @return Populated host-mirror EdgeView
+ */
+specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
 edge_view_from_collected_edges(
     const std::string &label,

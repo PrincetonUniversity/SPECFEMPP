@@ -179,7 +179,7 @@ void test_nonconforming_container_transfers(
           specfem::element_connections::type::nonconforming>();
 
   const auto [acoustic_edges, elastic_edges] =
-      assembly.edge_types.get_edges_on_host(
+      assembly.element_intersections.get_edges_on_host(
           specfem::element_connections::type::nonconforming,
           specfem::element_coupling::interface_tag::acoustic_elastic,
           specfem::element::boundary_tag::none);

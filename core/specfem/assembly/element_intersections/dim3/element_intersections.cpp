@@ -1,4 +1,4 @@
-#include "specfem/assembly/face_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
@@ -6,11 +6,12 @@
 #include <Kokkos_Core.hpp>
 #include <boost/graph/filtered_graph.hpp>
 
-using FaceViewType = specfem::assembly::face_types<
+using FaceViewType = specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim3>::FaceViewType;
 
-specfem::assembly::face_types<specfem::element::dimension_tag::dim3>::
-    face_types(
+specfem::assembly::element_intersections<
+    specfem::element::dimension_tag::dim3>::
+    element_intersections(
         const int ngllx, const int nglly, const int ngllz,
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::assembly::element_types<dimension_tag> &element_types) {
@@ -90,27 +91,31 @@ specfem::assembly::face_types<specfem::element::dimension_tag::dim3>::
           }
         }
 
-        _self_faces_ = FaceViewType("specfem::assembly::face_types::self_faces",
-                                    count, ngll);
+        _self_faces_ =
+            FaceViewType("specfem::assembly::element_intersections::self_faces",
+                         count, ngll);
         _coupled_faces_ = FaceViewType(
-            "specfem::assembly::face_types::coupled_faces", count, ngll);
+            "specfem::assembly::element_intersections::coupled_faces", count,
+            ngll);
 
         _h_self_faces_ = face_view_from_collected_faces(
-            "specfem::assembly::face_types::self_faces_host_mirror",
+            "specfem::assembly::element_intersections::self_faces_host_mirror",
             self_collect, element);
         _h_coupled_faces_ = face_view_from_collected_faces(
-            "specfem::assembly::face_types::coupled_faces_host_mirror",
+            "specfem::assembly::element_intersections::"
+            "coupled_faces_host_mirror",
             coupled_collect, element);
 
-        face_types::deep_copy(_self_faces_, _h_self_faces_);
-        face_types::deep_copy(_coupled_faces_, _h_coupled_faces_);
+        element_intersections::deep_copy(_self_faces_, _h_self_faces_);
+        element_intersections::deep_copy(_coupled_faces_, _h_coupled_faces_);
       })
 
   return;
 }
 
 std::tuple<FaceViewType::HostMirror, FaceViewType::HostMirror>
-specfem::assembly::face_types<specfem::element::dimension_tag::dim3>::
+specfem::assembly::element_intersections<
+    specfem::element::dimension_tag::dim3>::
     get_faces_on_host(const specfem::element_connections::type connection,
                       const specfem::element_coupling::interface_tag face,
                       const specfem::element::boundary_tag boundary) const {
@@ -131,8 +136,8 @@ specfem::assembly::face_types<specfem::element::dimension_tag::dim3>::
       "Connection type, interface type or boundary type not found");
 }
 
-std::tuple<FaceViewType, FaceViewType>
-specfem::assembly::face_types<specfem::element::dimension_tag::dim3>::
+std::tuple<FaceViewType, FaceViewType> specfem::assembly::element_intersections<
+    specfem::element::dimension_tag::dim3>::
     get_faces_on_device(const specfem::element_connections::type connection,
                         const specfem::element_coupling::interface_tag face,
                         const specfem::element::boundary_tag boundary) const {
@@ -153,7 +158,7 @@ specfem::assembly::face_types<specfem::element::dimension_tag::dim3>::
       "Connection type, interface type or boundary type not found");
 }
 
-specfem::assembly::face_types<
+specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
 specfem::assembly::face_view_from_collected_faces(
     const std::string &label,
@@ -165,8 +170,9 @@ specfem::assembly::face_view_from_collected_faces(
   const int ngll = element.ngll;
   const int count = collected_faces.size();
 
-  specfem::assembly::face_types<specfem::element::dimension_tag::dim3>::
-      FaceViewType::HostMirror face_view(label, count, ngll);
+  specfem::assembly::element_intersections<
+      specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
+      face_view(label, count, ngll);
 
   for (int iface = 0; iface < count; iface++) {
     face_view.element_index(iface) = collected_faces[iface].ispec;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/element.hpp"
 #include "specfem/element_connections.hpp"
@@ -198,9 +199,9 @@ struct FaceView {
  * media types in 3D wave propagation problems.
  *
  * @code
- * // Construct 3D face types from mesh data
- * specfem::assembly::face_types<specfem::element::dimension_tag::dim3> faces(
- *     ngllx, nglly, ngllz, mesh, element_types);
+ * // Construct 3D element intersections from mesh data
+ * specfem::assembly::element_intersections<specfem::element::dimension_tag::dim3>
+ * faces( ngllx, nglly, ngllz, mesh, element_types);
  *
  * // Get elastic-acoustic coupling faces on device
  * auto [self_faces, coupled_faces] = faces.get_faces_on_device(
@@ -209,7 +210,8 @@ struct FaceView {
  *     specfem::element::boundary_tag::none);
  * @endcode
  */
-template <> struct face_types<specfem::element::dimension_tag::dim3> {
+template <>
+struct element_intersections<specfem::element::dimension_tag::dim3> {
 
 public:
   constexpr static auto dimension_tag =
@@ -269,7 +271,8 @@ public:
                       const specfem::element::boundary_tag boundary) const;
 
   /**
-   * @brief Construct 3D face types from mesh and element information.
+   * @brief Construct 3D element intersections from mesh and element
+   * information.
    *
    * @param ngllx Number of quadrature points in x-direction
    * @param nglly Number of quadrature points in y-direction
@@ -277,7 +280,7 @@ public:
    * @param mesh 3D assembly mesh with connectivity information
    * @param element_types Element classification for coupling detection
    */
-  face_types(
+  element_intersections(
       const int ngllx, const int nglly, const int ngllz,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::element_types<dimension_tag> &element_types);
@@ -285,7 +288,7 @@ public:
   /**
    * @brief Default constructor.
    */
-  face_types() = default;
+  element_intersections() = default;
 
 private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3),
@@ -310,7 +313,7 @@ private:
  * @param element 3D element providing coordinate mapping
  * @return Populated host-mirror FaceView
  */
-specfem::assembly::face_types<
+specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
 face_view_from_collected_faces(
     const std::string &label,
