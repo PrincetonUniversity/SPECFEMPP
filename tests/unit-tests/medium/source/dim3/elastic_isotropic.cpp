@@ -17,8 +17,8 @@ TEST(Source, ElasticIsotropic3D) {
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real rho = 2700.0;
   const type_real mu = 40e9;
@@ -64,8 +64,8 @@ TEST(Source, ElasticIsotropic3D_ZeroSource) {
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType =
-      specfem::point::acceleration<dimension, medium_tag, false>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
 
   const type_real rho = 2700.0;
   const type_real mu = 40e9;

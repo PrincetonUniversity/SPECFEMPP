@@ -28,10 +28,10 @@ namespace medium_physics {
  * @param properties Material properties (density)
  * @return Mass inverse components [ρ, ρ] for [u_x, u_z]
  */
-template <bool UseSIMD, specfem::element::property_tag PropertyTag>
+template <specfem::element::property_tag PropertyTag, bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::element::dimension_tag::dim2,
-    specfem::element::medium_tag::elastic_psv, UseSIMD>
+    specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                        specfem::element::medium_tag::elastic_psv, UseSIMD> >
 impl_mass_matrix_component(
     const specfem::point::properties<specfem::element::dimension_tag::dim2,
                                      specfem::element::medium_tag::elastic_psv,
@@ -53,10 +53,10 @@ impl_mass_matrix_component(
  * @param properties Material properties (density)
  * @return Mass inverse component [ρ] for [u_y]
  */
-template <bool UseSIMD, specfem::element::property_tag PropertyTag>
+template <specfem::element::property_tag PropertyTag, bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::element::dimension_tag::dim2,
-    specfem::element::medium_tag::elastic_sh, UseSIMD>
+    specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                        specfem::element::medium_tag::elastic_sh, UseSIMD> >
 impl_mass_matrix_component(
     const specfem::point::properties<specfem::element::dimension_tag::dim2,
                                      specfem::element::medium_tag::elastic_sh,

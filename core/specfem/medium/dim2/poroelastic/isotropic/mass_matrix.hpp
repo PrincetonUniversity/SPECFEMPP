@@ -44,8 +44,8 @@ namespace medium_physics {
  */
 template <bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::element::dimension_tag::dim2,
-    specfem::element::medium_tag::poroelastic, UseSIMD>
+    specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                        specfem::element::medium_tag::poroelastic, UseSIMD> >
 impl_mass_matrix_component(
     const specfem::point::properties<specfem::element::dimension_tag::dim2,
                                      specfem::element::medium_tag::poroelastic,

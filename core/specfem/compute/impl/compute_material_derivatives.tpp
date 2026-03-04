@@ -66,12 +66,14 @@ void specfem::compute::impl::compute_material_derivatives(
       NGLL, dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
+  using PointTags = specfem::tags::Tags<dimension_tag, medium_tag, using_simd>;
+
   using PointDisplacementType =
-      specfem::point::displacement<dimension_tag, medium_tag, using_simd>;
+      specfem::point::displacement<PointTags>;
   using PointVelocityType =
-      specfem::point::velocity<dimension_tag, medium_tag, using_simd>;
+      specfem::point::velocity<PointTags>;
   using PointAccelerationType =
-      specfem::point::acceleration<dimension_tag, medium_tag, using_simd>;
+      specfem::point::acceleration<PointTags>;
 
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<dimension_tag, medium_tag, using_simd>;

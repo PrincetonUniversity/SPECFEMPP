@@ -4,9 +4,9 @@
 
 template <bool UseSIMD>
 KOKKOS_FUNCTION
-    specfem::point::mass_inverse<specfem::element::dimension_tag::dim2,
+    specfem::point::mass_inverse<specfem::tags::Tags<specfem::element::dimension_tag::dim2,
                                  specfem::element::medium_tag::elastic_psv_t,
-                                 UseSIMD>
+                                 UseSIMD>>
     specfem::medium_physics::impl_mass_matrix_component(
         const specfem::point::properties<
             specfem::element::dimension_tag::dim2,
