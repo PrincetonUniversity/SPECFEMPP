@@ -1,10 +1,9 @@
+.. _specfem_api_enums:
 
-.. _specfem_api_enumerations_wavefield:
+``specfem::enums::display_format``
+==================================
 
-``specfem::simulation::field_type``
-===================================
-
-.. doxygenenum:: specfem::simulation::field_type
+.. doxygenenum:: specfem::enums::display_format
 
 ``specfem::enums::wavefield``
 ============================
@@ -12,6 +11,6 @@
 .. doxygenenum:: specfem::enums::wavefield
 
 ``specfem::enums::to_string``
-=================================
+=============================
 
 .. doxygenfunction:: specfem::enums::to_string(const specfem::enums::wavefield &wavefield_component)

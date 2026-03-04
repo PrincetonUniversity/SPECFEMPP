@@ -1,4 +1,4 @@
-.. _specfem_api_enumerations_coupled_interface:
+.. _specfem_element_coupling:
 
 ``specfem::element_coupling::interface_tag``
 =====================================
