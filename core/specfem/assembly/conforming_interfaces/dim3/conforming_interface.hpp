@@ -2,7 +2,7 @@
 
 #include "impl/interface_container.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
-#include "specfem/assembly/face_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
@@ -77,28 +77,29 @@ public:
    * @param ngllz Number of Gauss-Lobatto-Legendre points in the z-direction
    * @param nglly Number of Gauss-Lobatto-Legendre points in the y-direction
    * @param ngllx Number of Gauss-Lobatto-Legendre points in the x-direction
-   * @param face_types Reference to the face types container that provides
-   *                   information about the types of faces in the mesh
-   *                   (e.g., boundary faces, internal faces).
+   * @param element_intersections Reference to the element intersections
+   * container that provides information about the intersections between
+   * elements in the mesh.
    * @param jacobian_matrix Reference to the Jacobian matrix container that
    *                        provides geometric transformation information
    *                        between reference and physical coordinates.
    * @param mesh Reference to the 3D mesh container that provides element
    *             connectivity, material properties, and geometric information.
    *
-   * @pre face_types must be properly initialized for the given mesh
+   * @pre element_intersections must be properly initialized for the given mesh
    * @pre jacobian_matrix must be computed for all elements in the mesh
    * @pre mesh must contain valid element-to-node connectivity
    *
    * @post All interface containers are initialized and ready for use
    * @post Memory is allocated for all supported interface combinations
-   * @see specfem::assembly::face_types
+   * @see specfem::assembly::element_intersections
    * @see specfem::assembly::jacobian_matrix
    * @see specfem::assembly::mesh
    */
   conforming_interfaces(
       const int ngllz, const int nglly, const int ngllx,
-      const specfem::assembly::face_types<dimension_tag> &face_types,
+      const specfem::assembly::element_intersections<dimension_tag>
+          &element_intersections,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 

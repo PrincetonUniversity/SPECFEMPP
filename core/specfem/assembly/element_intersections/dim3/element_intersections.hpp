@@ -84,7 +84,7 @@ template <typename ExecutionSpace> struct Face {
 template <typename ExecutionSpace,
           typename Layout = typename ExecutionSpace::array_layout>
 struct FaceView {
-  int n_faces;  ///< Number of faces in this view
+  int N;        ///< Number of faces in this view
   int n_points; ///< Number of quadrature points per face dimension
   using IndexView =
       Kokkos::View<int *, Layout, ExecutionSpace>; ///< View type for integer
@@ -106,35 +106,34 @@ struct FaceView {
   /**
    * @brief Default constructor creating empty face view.
    */
-  FaceView() : n_faces(0), n_points(0) {}
+  FaceView() : N(0), n_points(0) {}
 
   /**
    * @brief Construct face view with allocated storage.
    *
    * @param label Base label for Kokkos view names
-   * @param n_faces Number of faces to allocate
+   * @param N Number of faces to allocate
    * @param n_points Number of quadrature points per face dimension
    */
-  FaceView(const std::string &label, const int n_faces, const int n_points)
-      : n_faces(n_faces), n_points(n_points),
-        element_index(label + "_element_index", n_faces),
-        face_index(label + "_face_index", n_faces),
-        face_types(label + "_face_types", n_faces),
-        iz(label + "_iz", n_faces, n_points, n_points),
-        iy(label + "_iy", n_faces, n_points, n_points),
-        ix(label + "_ix", n_faces, n_points, n_points) {}
+  FaceView(const std::string &label, const int N, const int n_points)
+      : N(N), n_points(n_points), element_index(label + "_element_index", N),
+        face_index(label + "_face_index", N),
+        face_types(label + "_face_types", N),
+        iz(label + "_iz", N, n_points, n_points),
+        iy(label + "_iy", N, n_points, n_points),
+        ix(label + "_ix", N, n_points, n_points) {}
 
   IndexView element_index; ///< Element indices for each face
   IndexView face_index;    ///< Local face indices within elements
   FaceTypeView face_types; ///< 3D face type classifications
-  QPView iz;               ///< Z-direction quadrature indices for all faces
-  QPView iy;               ///< Y-direction quadrature indices for all faces
-  QPView ix;               ///< X-direction quadrature indices for all faces
+  QPView iz; ///< Z-direction quadrature indices for all intesections
+  QPView iy; ///< Y-direction quadrature indices for all intesections
+  QPView ix; ///< X-direction quadrature indices for all intesections
 
   /**
    * @brief Device-side constructor from existing views.
    *
-   * @param n_faces Number of faces
+   * @param N Number of intesections to allocate
    * @param n_points Number of quadrature points per face dimension
    * @param element_index Element indices view
    * @param face_index Face indices view
@@ -144,11 +143,10 @@ struct FaceView {
    * @param ix X-direction quadrature indices
    */
   KOKKOS_INLINE_FUNCTION
-  FaceView(const int n_faces, const int n_points,
-           const IndexView &element_index, const IndexView &face_index,
-           const FaceTypeView &face_types, const QPView &iz, const QPView &iy,
-           const QPView &ix)
-      : n_faces(n_faces), n_points(n_points), element_index(element_index),
+  FaceView(const int N, const int n_points, const IndexView &element_index,
+           const IndexView &face_index, const FaceTypeView &face_types,
+           const QPView &iz, const QPView &iy, const QPView &ix)
+      : N(N), n_points(n_points), element_index(element_index),
         face_index(face_index), face_types(face_types), iz(iz), iy(iy), ix(ix) {
   }
 
@@ -199,8 +197,8 @@ struct FaceView {
  *
  * @code
  * // Construct 3D face types from mesh data
- * specfem::assembly::face_types<specfem::element::dimension_tag::dim3> faces(
- *     ngllx, nglly, ngllz, mesh, element_types);
+ * specfem::assembly::element_intersections<specfem::element::dimension_tag::dim3>
+ * faces( ngllx, nglly, ngllz, mesh, element_types);
  *
  * // Get elastic-acoustic coupling faces on device
  * auto [self_faces, coupled_faces] = faces.get_faces_on_device(
@@ -209,7 +207,8 @@ struct FaceView {
  *     specfem::element::boundary_tag::none);
  * @endcode
  */
-template <> struct face_types<specfem::element::dimension_tag::dim3> {
+template <>
+struct element_intersections<specfem::element::dimension_tag::dim3> {
 
 public:
   constexpr static auto dimension_tag =
@@ -226,7 +225,7 @@ private:
     const auto label = view.element_index.label();
     // remove element_index suffix
     const auto base_label = label.substr(0, label.size() - 14);
-    return FaceViewType::HostMirror(base_label + "_host_mirror", view.n_faces,
+    return FaceViewType::HostMirror(base_label + "_host_mirror", view.N,
                                     view.n_points);
   }
 
@@ -251,9 +250,10 @@ public:
    */
   std::tuple<typename FaceViewType::HostMirror,
              typename FaceViewType::HostMirror>
-  get_faces_on_host(const specfem::element_connections::type connection,
-                    const specfem::element_coupling::interface_tag face,
-                    const specfem::element::boundary_tag boundary) const;
+  get_intersections_on_host(
+      const specfem::element_connections::type connection,
+      const specfem::element_coupling::interface_tag face,
+      const specfem::element::boundary_tag boundary) const;
 
   /**
    * @brief Get face pairs for coupling computations in device memory.
@@ -263,10 +263,10 @@ public:
    * @param boundary Boundary condition type
    * @return Tuple of (self_faces, coupled_faces) for device processing
    */
-  std::tuple<FaceViewType, FaceViewType>
-  get_faces_on_device(const specfem::element_connections::type connection,
-                      const specfem::element_coupling::interface_tag face,
-                      const specfem::element::boundary_tag boundary) const;
+  std::tuple<FaceViewType, FaceViewType> get_intersections_on_device(
+      const specfem::element_connections::type connection,
+      const specfem::element_coupling::interface_tag face,
+      const specfem::element::boundary_tag boundary) const;
 
   /**
    * @brief Construct 3D face types from mesh and element information.
@@ -277,7 +277,7 @@ public:
    * @param mesh 3D assembly mesh with connectivity information
    * @param element_types Element classification for coupling detection
    */
-  face_types(
+  element_intersections(
       const int ngllx, const int nglly, const int ngllz,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::element_types<dimension_tag> &element_types);
@@ -285,7 +285,7 @@ public:
   /**
    * @brief Default constructor.
    */
-  face_types() = default;
+  element_intersections() = default;
 
 private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3),
@@ -310,7 +310,7 @@ private:
  * @param element 3D element providing coordinate mapping
  * @return Populated host-mirror FaceView
  */
-specfem::assembly::face_types<
+specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
 face_view_from_collected_faces(
     const std::string &label,

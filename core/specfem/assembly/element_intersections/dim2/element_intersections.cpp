@@ -1,4 +1,4 @@
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
@@ -6,11 +6,12 @@
 #include <Kokkos_Core.hpp>
 #include <boost/graph/filtered_graph.hpp>
 
-using EdgeViewType = specfem::assembly::edge_types<
+using EdgeViewType = specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim2>::EdgeViewType;
 
-specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
-    edge_types(
+specfem::assembly::element_intersections<
+    specfem::element::dimension_tag::dim2>::
+    element_intersections(
         const int ngllx, const int ngllz,
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::assembly::element_types<dimension_tag> &element_types) {
@@ -106,18 +107,20 @@ specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
             "specfem::assembly::interface_types::coupled_edges_host_mirror",
             coupled_collect, element);
 
-        edge_types::deep_copy(_self_edges_, _h_self_edges_);
-        edge_types::deep_copy(_coupled_edges_, _h_coupled_edges_);
+        element_intersections::deep_copy(_self_edges_, _h_self_edges_);
+        element_intersections::deep_copy(_coupled_edges_, _h_coupled_edges_);
       })
 
   return;
 }
 
 std::tuple<EdgeViewType::HostMirror, EdgeViewType::HostMirror>
-specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
-    get_edges_on_host(const specfem::element_connections::type connection,
-                      const specfem::element_coupling::interface_tag edge,
-                      const specfem::element::boundary_tag boundary) const {
+specfem::assembly::element_intersections<
+    specfem::element::dimension_tag::dim2>::
+    get_intersections_on_host(
+        const specfem::element_connections::type connection,
+        const specfem::element_coupling::interface_tag edge,
+        const specfem::element::boundary_tag boundary) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
@@ -135,11 +138,12 @@ specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
       "Connection type, interface type or boundary type not found");
 }
 
-std::tuple<EdgeViewType, EdgeViewType>
-specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
-    get_edges_on_device(const specfem::element_connections::type connection,
-                        const specfem::element_coupling::interface_tag edge,
-                        const specfem::element::boundary_tag boundary) const {
+std::tuple<EdgeViewType, EdgeViewType> specfem::assembly::element_intersections<
+    specfem::element::dimension_tag::dim2>::
+    get_intersections_on_device(
+        const specfem::element_connections::type connection,
+        const specfem::element_coupling::interface_tag edge,
+        const specfem::element::boundary_tag boundary) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
@@ -157,7 +161,7 @@ specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
       "Connection type, interface type or boundary type not found");
 }
 
-specfem::assembly::edge_types<
+specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
 specfem::assembly::edge_view_from_collected_edges(
     const std::string &label,
@@ -169,8 +173,9 @@ specfem::assembly::edge_view_from_collected_edges(
   const int &ngll = element.ngllx;
   const int &count = self_collect.size();
 
-  specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>::
-      EdgeViewType::HostMirror self_edges(label, count, ngll);
+  specfem::assembly::element_intersections<
+      specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
+      self_edges(label, count, ngll);
   for (int iedge = 0; iedge < count; iedge++) {
     self_edges.element_index(iedge) = self_collect[iedge].ispec;
     self_edges.edge_index(iedge) = self_collect[iedge].iedge;

@@ -1,12 +1,12 @@
 #pragma once
 
-#include "specfem/enums.hpp"
-#include "specfem/assembly/nonconforming_interfaces.hpp"
-#include "specfem/assembly/edge_types.hpp"
-#include "specfem/assembly/mesh.hpp"
 #include "compute_intersection.hpp"
 #include "compute_intersection.tpp"
+#include "specfem/assembly/element_intersections.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/nonconforming_interfaces.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/macros.hpp"
 
@@ -17,8 +17,8 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
     specfem::element_connections::type::nonconforming>::
     interface_container(
         const int ngllz, const int ngllx,
-        const specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>
-            &edge_types,
+        const specfem::assembly::element_intersections<
+            specfem::element::dimension_tag::dim2> &element_intersections,
         const specfem::assembly::mesh<dimension_tag> &mesh) {
 
   // TODO: make this a parameter for now, use same gll quadrature
@@ -49,29 +49,31 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
 
   const auto element = specfem::mesh_entity::element(ngllz, ngllx);
 
-  const auto [self_edges, coupled_edges] = edge_types.get_edges_on_host(
-      specfem::element_connections::type::nonconforming, InterfaceTag, BoundaryTag);
+  const auto [self_edges, coupled_edges] =
+      element_intersections.get_intersections_on_host(
+          specfem::element_connections::type::nonconforming, InterfaceTag,
+          BoundaryTag);
 
-  const auto nedges = self_edges.n_edges;
+  const auto N = self_edges.N;
 
   this->intersection_factor = EdgeFactorView(
-      "specfem::assembly::nonconforming_interfaces::intersection_factor",
-      nedges, nquad_intersection);
+      "specfem::assembly::nonconforming_interfaces::intersection_factor", N,
+      nquad_intersection);
 
   this->intersection_normal = EdgeNormalView(
-      "specfem::assembly::nonconforming_interfaces::intersection_normal",
-      nedges, nquad_intersection, 2);
+      "specfem::assembly::nonconforming_interfaces::intersection_normal", N,
+      nquad_intersection, 2);
   this->h_intersection_normal = Kokkos::create_mirror_view(intersection_normal);
 
   // consider linking conjugate containers so that we don't need to do
   // set_transfer_functions twice.
   this->transfer_function = TransferFunctionView(
-      "specfem::assembly::nonconforming_interfaces::transfer_function", nedges,
+      "specfem::assembly::nonconforming_interfaces::transfer_function", N,
       nquad_intersection, ngllx);
 
   this->transfer_function_other = TransferFunctionView(
-      "specfem::assembly::nonconforming_interfaces::transfer_function_other",
-      nedges, nquad_intersection, ngllx);
+      "specfem::assembly::nonconforming_interfaces::transfer_function_other", N,
+      nquad_intersection, ngllx);
 
   this->h_intersection_factor = Kokkos::create_mirror_view(intersection_factor);
   this->h_transfer_function = Kokkos::create_mirror_view(transfer_function);
@@ -81,16 +83,16 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
   const auto weights = mesh.h_weights;
 
   // used when computing transfer functions
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       icoorg("icoorg", mesh.ngnod);
-  const Kokkos::View<
-      specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> *,
-      Kokkos::HostSpace>
+  const Kokkos::View<specfem::point::global_coordinates<
+                         specfem::element::dimension_tag::dim2> *,
+                     Kokkos::HostSpace>
       jcoorg("jcoorg", mesh.ngnod);
 
-  for (int i = 0; i < nedges; ++i) {
+  for (int i = 0; i < N; ++i) {
     const int ispec = self_edges(i).element_index;
     const auto iedge_type = self_edges(i).edge_type;
     const int jspec = coupled_edges(i).element_index;

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "specfem/assembly/face_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
@@ -76,14 +76,14 @@ public:
    * @param ngllz Number of GLL points in z-direction
    * @param nglly Number of GLL points in y-direction
    * @param ngllx Number of GLL points in x-direction
-   * @param face_types Face type information from mesh
+   * @param element_intersections Element intersection information from mesh
    * @param jacobian_matrix Jacobian transformation data
    * @param mesh Mesh connectivity and geometry
    */
   interface_container(
       const int ngllz, const int nglly, const int ngllx,
-      const specfem::assembly::face_types<specfem::element::dimension_tag::dim3>
-          &face_types,
+      const specfem::assembly::element_intersections<
+          specfem::element::dimension_tag::dim3> &element_intersections,
       const specfem::assembly::jacobian_matrix<dimension_tag> &jacobian_matrix,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 
