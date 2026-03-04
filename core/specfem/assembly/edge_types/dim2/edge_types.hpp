@@ -281,4 +281,14 @@ private:
                               (EdgeViewType::HostMirror, h_coupled_edges)))
 };
 
+specfem::assembly::edge_types<
+    specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
+edge_view_from_collected_edges(
+    const std::string &label,
+    const std::vector<
+        specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2> >
+        &collected_edges,
+    const specfem::mesh_entity::element<specfem::element::dimension_tag::dim2>
+        &element);
+
 } // namespace specfem::assembly
