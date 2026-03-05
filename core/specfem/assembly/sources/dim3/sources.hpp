@@ -1,6 +1,6 @@
 #pragma once
 #include "../impl/dim3/source_medium_data_access.tpp"
-#include "../impl/source_medium.hpp"
+
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
