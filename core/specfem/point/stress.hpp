@@ -4,6 +4,7 @@
 #include "specfem/data_access.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -25,17 +26,16 @@ namespace point {
  * vectorization support and efficient memory access patterns for
  * high-performance computing.
  *
- * @tparam DimensionTag Spatial dimension (dim2 or dim3)
- * @tparam MediumTag Physical medium type (acoustic, elastic_psv, elastic,
- * poroelastic)
- * @tparam UseSIMD Enable SIMD vectorization for performance optimization
+ * @tparam Tags A specfem::tags::Tags type containing dimension_tag (dim2 or
+ * dim3), medium_tag (acoustic, elastic_psv, elastic, poroelastic), and
+ * using_simd (enable SIMD vectorization)
  *
  * @code
  * // Example: Create stress tensor for 2D elastic medium
  * using stress_type =
- * specfem::point::stress<specfem::element::dimension_tag::dim2,
- *                                           specfem::element::medium_tag::elastic_psv,
- *                                           false>;
+ * specfem::point::stress<specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+ *                                            specfem::element::medium_tag::elastic_psv,
+ *                                            false>>;
  *
  * // Initialize stress components (2x2 tensor for 2D elastic)
  * typename stress_type::value_type T(1.1, 2.1,  // first column  (component 0,
@@ -49,17 +49,17 @@ namespace point {
  * @see specfem::point::jacobian_matrix
  * @see specfem::data_access::Accessor
  */
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct stress
-    : public specfem::data_access::Accessor<
-          specfem::datatype::AccessorType::point,
-          specfem::data_access::DataClassType::stress, DimensionTag, UseSIMD> {
+template <typename Tags>
+struct stress : public specfem::data_access::Accessor<
+                    specfem::datatype::AccessorType::point,
+                    specfem::data_access::DataClassType::stress,
+                    Tags::dimension_tag, Tags::using_simd> {
 private:
   /** @brief Base accessor type for data access framework integration */
   using base_type = specfem::data_access::Accessor<
       specfem::datatype::AccessorType::point,
-      specfem::data_access::DataClassType::stress, DimensionTag, UseSIMD>;
+      specfem::data_access::DataClassType::stress, Tags::dimension_tag,
+      Tags::using_simd>;
 
 public:
   /**
@@ -69,20 +69,23 @@ public:
   ///@{
   /** @brief Spatial dimension (2 or 3) */
   constexpr static int dimension =
-      specfem::element::attributes<DimensionTag, MediumTag>::dimension;
+      specfem::element::attributes<Tags::dimension_tag,
+                                   Tags::medium_tag>::dimension;
 
   /** @brief Number of stress components based on medium type */
   constexpr static int components =
-      specfem::element::attributes<DimensionTag, MediumTag>::components;
+      specfem::element::attributes<Tags::dimension_tag,
+                                   Tags::medium_tag>::components;
 
   /** @brief Template parameter for spatial dimension */
-  constexpr static specfem::element::dimension_tag dimension_tag = DimensionTag;
+  constexpr static specfem::element::dimension_tag dimension_tag =
+      Tags::dimension_tag;
 
   /** @brief Template parameter for medium type */
-  constexpr static specfem::element::medium_tag medium_tag = MediumTag;
+  constexpr static specfem::element::medium_tag medium_tag = Tags::medium_tag;
 
   /** @brief Template parameter for SIMD usage */
-  constexpr static bool using_simd = UseSIMD;
+  constexpr static bool using_simd = Tags::using_simd;
   ///@}
 
   /**
@@ -166,8 +169,8 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   value_type operator*(const specfem::point::jacobian_matrix<
-                       specfem::element::dimension_tag::dim2, true, UseSIMD>
-                           &jacobian_matrix) const {
+                       specfem::element::dimension_tag::dim2, true,
+                       Tags::using_simd> &jacobian_matrix) const {
     value_type F;
 
     for (int icomponent = 0; icomponent < components; ++icomponent) {
@@ -216,8 +219,8 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   value_type operator*(const specfem::point::jacobian_matrix<
-                       specfem::element::dimension_tag::dim3, true, UseSIMD>
-                           &jacobian_matrix) const {
+                       specfem::element::dimension_tag::dim3, true,
+                       Tags::using_simd> &jacobian_matrix) const {
     value_type F;
 
     for (int icomponent = 0; icomponent < components; ++icomponent) {

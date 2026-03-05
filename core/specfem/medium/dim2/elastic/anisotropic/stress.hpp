@@ -40,18 +40,18 @@ namespace medium_physics {
  * \sigma_{xz}, \sigma_{zz}\f$]
  */
 template <bool UseSIMD>
-KOKKOS_INLINE_FUNCTION
-    specfem::point::stress<specfem::element::dimension_tag::dim2,
-                           specfem::element::medium_tag::elastic_psv, UseSIMD>
-    impl_compute_stress(
-        const specfem::point::properties<specfem::tags::Tags<
-            specfem::element::dimension_tag::dim2,
-            specfem::element::medium_tag::elastic_psv,
-            specfem::element::property_tag::anisotropic, UseSIMD> > &properties,
-        const specfem::point::field_derivatives<
-            specfem::element::dimension_tag::dim2,
-            specfem::element::medium_tag::elastic_psv, UseSIMD>
-            &field_derivatives) {
+KOKKOS_INLINE_FUNCTION specfem::point::stress<
+    specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                        specfem::element::medium_tag::elastic_psv, UseSIMD> >
+impl_compute_stress(
+    const specfem::point::properties<specfem::tags::Tags<
+        specfem::element::dimension_tag::dim2,
+        specfem::element::medium_tag::elastic_psv,
+        specfem::element::property_tag::anisotropic, UseSIMD> > &properties,
+    const specfem::point::field_derivatives<
+        specfem::element::dimension_tag::dim2,
+        specfem::element::medium_tag::elastic_psv, UseSIMD>
+        &field_derivatives) {
 
   using datatype =
       typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
@@ -103,18 +103,17 @@ KOKKOS_INLINE_FUNCTION
  * @return 1x2 shear stress tensor [\f$\sigma_{xy}\f$, \f$\sigma_{zy}\f$]
  */
 template <bool UseSIMD>
-KOKKOS_INLINE_FUNCTION
-    specfem::point::stress<specfem::element::dimension_tag::dim2,
-                           specfem::element::medium_tag::elastic_sh, UseSIMD>
-    impl_compute_stress(
-        const specfem::point::properties<specfem::tags::Tags<
-            specfem::element::dimension_tag::dim2,
-            specfem::element::medium_tag::elastic_sh,
-            specfem::element::property_tag::anisotropic, UseSIMD> > &properties,
-        const specfem::point::field_derivatives<
-            specfem::element::dimension_tag::dim2,
-            specfem::element::medium_tag::elastic_sh, UseSIMD>
-            &field_derivatives) {
+KOKKOS_INLINE_FUNCTION specfem::point::stress<
+    specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                        specfem::element::medium_tag::elastic_sh, UseSIMD> >
+impl_compute_stress(
+    const specfem::point::properties<specfem::tags::Tags<
+        specfem::element::dimension_tag::dim2,
+        specfem::element::medium_tag::elastic_sh,
+        specfem::element::property_tag::anisotropic, UseSIMD> > &properties,
+    const specfem::point::field_derivatives<
+        specfem::element::dimension_tag::dim2,
+        specfem::element::medium_tag::elastic_sh, UseSIMD> &field_derivatives) {
 
   using datatype =
       typename specfem::datatype::simd<type_real, UseSIMD>::datatype;

@@ -16,7 +16,8 @@ TEST(Stress, ElasticIsotropic3D_Basic) {
       specfem::tags::Tags<dimension, elasticTag, property_tag, false> >;
   using FieldDerivativesType =
       specfem::point::field_derivatives<dimension, elasticTag, false>;
-  using StressType = specfem::point::stress<dimension, elasticTag, false>;
+  using StressType = specfem::point::stress<
+      specfem::tags::Tags<dimension, elasticTag, false> >;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation
@@ -72,7 +73,8 @@ TEST(Stress, ElasticIsotropic3D_ZeroDerivatives) {
       specfem::tags::Tags<dimension, elasticTag, property_tag, false> >;
   using FieldDerivativesType =
       specfem::point::field_derivatives<dimension, elasticTag, false>;
-  using StressType = specfem::point::stress<dimension, elasticTag, false>;
+  using StressType = specfem::point::stress<
+      specfem::tags::Tags<dimension, elasticTag, false> >;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation

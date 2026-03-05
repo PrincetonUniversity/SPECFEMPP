@@ -16,7 +16,8 @@ TEST(Stress, ElasticIsotropic2D_PSV_Basic) {
       specfem::tags::Tags<dimension, PSVTag, property_tag, false> >;
   using PSVFieldDerivativesType =
       specfem::point::field_derivatives<dimension, PSVTag, false>;
-  using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
+  using PSVStressType =
+      specfem::point::stress<specfem::tags::Tags<dimension, PSVTag, false> >;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation
@@ -57,7 +58,8 @@ TEST(Stress, ElasticIsotropic2D_PSV_ZeroDerivatives) {
       specfem::tags::Tags<dimension, PSVTag, property_tag, false> >;
   using PSVFieldDerivativesType =
       specfem::point::field_derivatives<dimension, PSVTag, false>;
-  using PSVStressType = specfem::point::stress<dimension, PSVTag, false>;
+  using PSVStressType =
+      specfem::point::stress<specfem::tags::Tags<dimension, PSVTag, false> >;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation
@@ -96,7 +98,8 @@ TEST(Stress, ElasticIsotropic2D_SH_Basic) {
       specfem::tags::Tags<dimension, SHTag, property_tag, false> >;
   using SHFieldDerivativesType =
       specfem::point::field_derivatives<dimension, SHTag, false>;
-  using SHStressType = specfem::point::stress<dimension, SHTag, false>;
+  using SHStressType =
+      specfem::point::stress<specfem::tags::Tags<dimension, SHTag, false> >;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation
@@ -131,7 +134,8 @@ TEST(Stress, ElasticIsotropic2D_SH_ZeroDerivatives) {
       specfem::tags::Tags<dimension, SHTag, property_tag, false> >;
   using SHFieldDerivativesType =
       specfem::point::field_derivatives<dimension, SHTag, false>;
-  using SHStressType = specfem::point::stress<dimension, SHTag, false>;
+  using SHStressType =
+      specfem::point::stress<specfem::tags::Tags<dimension, SHTag, false> >;
   const type_real kappa = 2.0;
   const type_real mu = 3.0;
   const type_real rho = 4.0; // Density is not used in stress computation

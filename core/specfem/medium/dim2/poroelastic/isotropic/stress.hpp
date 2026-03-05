@@ -55,18 +55,18 @@ namespace medium_physics {
  * @return 4x2 coupled stress tensor (solid + fluid)
  */
 template <bool UseSIMD>
-KOKKOS_INLINE_FUNCTION
-    specfem::point::stress<specfem::element::dimension_tag::dim2,
-                           specfem::element::medium_tag::poroelastic, UseSIMD>
-    impl_compute_stress(
-        const specfem::point::properties<specfem::tags::Tags<
-            specfem::element::dimension_tag::dim2,
-            specfem::element::medium_tag::poroelastic,
-            specfem::element::property_tag::isotropic, UseSIMD> > &properties,
-        const specfem::point::field_derivatives<
-            specfem::element::dimension_tag::dim2,
-            specfem::element::medium_tag::poroelastic, UseSIMD>
-            &field_derivatives) {
+KOKKOS_INLINE_FUNCTION specfem::point::stress<
+    specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                        specfem::element::medium_tag::poroelastic, UseSIMD> >
+impl_compute_stress(
+    const specfem::point::properties<specfem::tags::Tags<
+        specfem::element::dimension_tag::dim2,
+        specfem::element::medium_tag::poroelastic,
+        specfem::element::property_tag::isotropic, UseSIMD> > &properties,
+    const specfem::point::field_derivatives<
+        specfem::element::dimension_tag::dim2,
+        specfem::element::medium_tag::poroelastic, UseSIMD>
+        &field_derivatives) {
 
   using datatype =
       typename specfem::datatype::simd<type_real, UseSIMD>::datatype;

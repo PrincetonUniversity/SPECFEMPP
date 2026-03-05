@@ -39,7 +39,8 @@ specfem::mesh::tags<specfem::element::dimension_tag::dim3>::tags(
         const auto boundary_tag = specfem::element::boundary_tag::none;
 
         this->tags_container(ispec) = { material_tag, property_tag,
-                                        attenuation_tag, boundary_tag };
+                                        attenuation_tag, boundary_tag,
+                                        mpi_tag };
       });
 
   return;

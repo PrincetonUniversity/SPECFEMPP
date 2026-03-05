@@ -16,7 +16,8 @@ TEST(Stress, AcousticIsotropic2D) {
       specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<dimension, medium_tag, false>;
-  using PointStressType = specfem::point::stress<dimension, medium_tag, false>;
+  using PointStressType = specfem::point::stress<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
   const type_real rho_inverse = 2.0;
   const type_real kappa = 10.0;
   const PointPropertiesType properties(rho_inverse, kappa);
@@ -50,7 +51,8 @@ TEST(Stress, AcousticIsotropic2D_ZeroDerivatives) {
       specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<dimension, medium_tag, false>;
-  using PointStressType = specfem::point::stress<dimension, medium_tag, false>;
+  using PointStressType = specfem::point::stress<
+      specfem::tags::Tags<dimension, medium_tag, false> >;
   const type_real rho_inverse = 2.0;
   const type_real kappa = 10.0;
   const PointPropertiesType properties(rho_inverse, kappa);
