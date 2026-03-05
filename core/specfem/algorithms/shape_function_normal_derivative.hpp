@@ -11,7 +11,7 @@
 #include <Kokkos_Core.hpp>
 #include <sstream>
 #include <stdexcept>
-
+#include <string>
 namespace specfem::algorithms {
 
 /**

@@ -11,7 +11,7 @@
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
 #include <sstream>
-
+#include <string>
 template <typename OutputLibrary, typename ContainerType>
 void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
