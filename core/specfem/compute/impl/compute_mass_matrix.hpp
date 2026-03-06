@@ -3,6 +3,7 @@
 #include "specfem/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem {
 namespace compute {
