@@ -1,6 +1,7 @@
 #include "../test_fixture/test_fixture.hpp"
 #include "specfem/algorithms.hpp"
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/assembly/compute_source_array.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
