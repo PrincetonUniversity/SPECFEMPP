@@ -2,6 +2,7 @@
 #include "specfem/point/jacobian_matrix.hpp"
 #include "specfem/point/stress.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 #include "specfem/utilities.hpp"
 #include "test_helper.hpp"
 #include "test_macros.hpp"
