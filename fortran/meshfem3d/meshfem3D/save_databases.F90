@@ -202,6 +202,15 @@
         matpropl(1:7) = material_properties(i,1:7)
         ! skipping mat_id, not needed
         matpropl(8:17) = material_properties(i,9:18)
+      case (IDOMAIN_ISOTROPIC_COSSERAT)
+        ! material properties format:
+        !#(1)rho #(2)kappa #(3)mu #(4)nu #(5)j #(6)lambda_c #(7)domain_id #(8)mat_id #(9)mu_c #(10)nu_c
+        !
+        ! output format for xgenerate_database:
+        !   rho,kappa,mu,nu,j,lambda_c,material_domain_id,mu_c,nu_c
+        matpropl(1:7) = material_properties(i,1:7)
+        ! skipping mat_id, not needed
+        matpropl(8:9) = material_properties(i,9:10)
       end select
       ! writes to database
       write(IIN_database) matpropl(:)
@@ -231,6 +240,8 @@
         if (trim(undef_mat_prop(3,1)) /= 'elastic')  stop 'Error in undef_mat_prop elastic domain'
       case (IDOMAIN_POROELASTIC)
         if (trim(undef_mat_prop(3,1)) /= 'poroelastic')  stop 'Error in undef_mat_prop poroelastic domain'
+      case (IDOMAIN_ISOTROPIC_COSSERAT)
+        if (trim(undef_mat_prop(3,1)) /= 'isotropic_cosserat')  stop 'Error in undef_mat_prop isotropic_cosserat domain'
       end select
       ! default name if none given
       if (trim(undef_mat_prop(4,1)) == "") undef_mat_prop(4,1) = 'tomography_model.xyz'
