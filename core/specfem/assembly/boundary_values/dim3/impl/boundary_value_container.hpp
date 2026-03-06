@@ -28,10 +28,10 @@ public:
   IndexViewType property_index_mapping;
   IndexViewType::HostMirror h_property_index_mapping;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                      DECLARE(((_boundary_medium_container,
-                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-                               container)))
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+      DECLARE(((_boundary_medium_container, (_DIMENSION_TAG_, _MEDIUM_TAG_)),
+               container)))
 
   boundary_value_container() = default;
 
@@ -42,14 +42,16 @@ public:
 
   void sync_to_host() {
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                        CAPTURE(container) { _container_.sync_to_host(); });
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+        CAPTURE(container) { _container_.sync_to_host(); });
   }
 
   void sync_to_device() {
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                        CAPTURE(container) { _container_.sync_to_device(); });
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+        CAPTURE(container) { _container_.sync_to_device(); });
   }
 };
 } // namespace specfem::assembly::boundary_values_impl

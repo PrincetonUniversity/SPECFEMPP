@@ -200,8 +200,8 @@ public:
    * conditions, and wavefield application, returning host-accessible views
    * for CPU-based processing in 3D domains.
    *
-   * @param medium Physical medium type (elastic) determining wave equation
-   *               formulation for 3D problems
+   * @param medium Physical medium type (elastic, elastic_spin) determining wave
+   * equation formulation for 3D problems
    * @param property Material property classification (isotropic) affecting
    *                 constitutive relationships in 3D
    * @param boundary Boundary condition type (none) influencing source
@@ -357,8 +357,8 @@ private:
   /**
    * @brief Device view storing medium types for each 3D spectral element
    *
-   * Classifies the physical medium (elastic) for elements in the 3D source
-   * domain, determining appropriate physics models.
+   * Classifies the physical medium (elastic, elastic_spin) for elements in the
+   * 3D source domain, determining appropriate physics models.
    */
   MediumTagViewType medium_types;
 
@@ -415,7 +415,8 @@ private:
    */
   PropertyTagViewType::HostMirror h_property_types;
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3),
+                       MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
                       DECLARE(((specfem::assembly::sources_impl::source_medium,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_)),
                                source)))
@@ -429,8 +430,8 @@ private:
   int timestep;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), BOUNDARY_TAG(NONE)),
       DECLARE((IndexViewType, element_indices_forward),
               (IndexViewType::HostMirror, h_element_indices_forward),
               (IndexViewType, element_indices_backward),
@@ -544,7 +545,7 @@ KOKKOS_INLINE_FUNCTION void load_on_device(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ ==
                       specfem::element::dimension_tag::dim3) {
@@ -626,7 +627,7 @@ void load_on_host(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ ==
                       specfem::element::dimension_tag::dim3) {
@@ -704,7 +705,7 @@ KOKKOS_INLINE_FUNCTION void store_on_device(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ ==
                       specfem::element::dimension_tag::dim3) {
@@ -782,7 +783,7 @@ void store_on_host(
 #endif
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
       CAPTURE((source, sources.source)) {
         if constexpr (_dimension_tag_ ==
                       specfem::element::dimension_tag::dim3) {
