@@ -80,6 +80,14 @@ struct index<specfem::element::dimension_tag::dim2, false>
     }
     return *this;
   }
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  unsigned int linearize() const {
+    // We assume here that iz and ix are all less than 18
+    return ((static_cast<unsigned int>(ispec) << 8) |
+            (static_cast<unsigned int>(iz) << 4) |
+            (static_cast<unsigned int>(ix)));
+  }
 };
 
 /**
@@ -184,6 +192,14 @@ struct index<specfem::element::dimension_tag::dim2, true>
     return typename simd_type::mask_type(
         [&](std::size_t lane) { return int(lane) < number_elements; });
   }
+
+  KOKKOS_INLINE_FUNCTION
+  unsigned int linearize() const {
+    // We assume here that iz and ix are all less than 18
+    return ((static_cast<unsigned int>(ispec) << 8) |
+            (static_cast<unsigned int>(iz) << 4) |
+            (static_cast<unsigned int>(ix)));
+  }
 };
 
 //-------------------------- 3D Specializations ------------------------------//
@@ -258,6 +274,15 @@ struct index<specfem::element::dimension_tag::dim3, false>
       ix = other.ix;
     }
     return *this;
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  unsigned long linearize() const {
+    // We assume here that iz, iy, ix are all less than 8
+    return ((static_cast<unsigned int>(ispec) << 16) |
+            (static_cast<unsigned int>(iz) << 8) |
+            (static_cast<unsigned int>(iy) << 4) |
+            (static_cast<unsigned int>(ix)));
   }
 };
 
@@ -373,6 +398,15 @@ struct index<specfem::element::dimension_tag::dim3, true>
     }
     return typename simd_type::mask_type(
         [&](std::size_t lane) { return int(lane) < number_elements; });
+  }
+
+  KOKKOS_FORCEINLINE_FUNCTION
+  unsigned int linearize() const {
+    // We assume here that iz, iy, ix are all less than 8
+    return ((static_cast<unsigned int>(ispec) << 16) |
+            (static_cast<unsigned int>(iz) << 8) |
+            (static_cast<unsigned int>(iy) << 4) |
+            (static_cast<unsigned int>(ix)));
   }
 };
 

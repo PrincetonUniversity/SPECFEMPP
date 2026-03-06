@@ -243,7 +243,7 @@ gradient(const ChunkIndexType &chunk_index,
           callback(iterator_index, df, point_jacobian_matrix);
         } else {
           specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
-                                          false, using_simd>
+                                          true, using_simd>
               point_jacobian_matrix;
           specfem::assembly::load_on_device(index, jacobian_matrix,
                                             point_jacobian_matrix);

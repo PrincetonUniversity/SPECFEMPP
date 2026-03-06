@@ -20,6 +20,12 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(const IndexType &index,
                                            const ContainerType &container,
                                            PointType &point) {
 
+  if (static_cast<const typename ContainerType::cache_type<IndexType, PointType>
+                      &>(container)
+          .get(index, point)) {
+    return;
+  }
+
   const int ispec = index.ispec;
   const int iz = index.iz;
   const int ix = index.ix;
@@ -62,6 +68,11 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(const IndexType &index,
           .copy_from(&container.h_jacobian[_index], tag_type());
     }
   }
+
+  // Cache the loaded point Jacobian matrix for future SIMD accesses
+  static_cast<const typename ContainerType::cache_type<IndexType, PointType> &>(
+      container)
+      .put(index, point);
 }
 
 template <

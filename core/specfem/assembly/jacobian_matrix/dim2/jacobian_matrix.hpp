@@ -4,6 +4,7 @@
 
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
 #include "specfem/quadrature.hpp"
@@ -51,7 +52,25 @@ struct jacobian_matrix<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::domain,
           specfem::data_access::DataClassType::jacobian_matrix,
-          specfem::element::dimension_tag::dim2> {
+          specfem::element::dimension_tag::dim2>,
+      public specfem::datatype::LRU_cache<
+          1, specfem::point::index<specfem::element::dimension_tag::dim2, true>,
+          specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                          false, true> >, /// Cache for SIMD
+                                                          /// without Jacobian
+                                                          /// determinant
+      public specfem::datatype::LRU_cache<
+          1, specfem::point::index<specfem::element::dimension_tag::dim2, true>,
+          specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                          true, true> > /// Cache for SIMD with
+                                                        /// Jacobian
+                                                        /// determinant
+{
+  // Bring all base class get/put into this scope so overload resolution
+  // can disambiguate by argument types across multiple LRU_cache bases.
+  template <typename IndexType, typename PointJacobianMatrixType>
+  using cache_type =
+      specfem::datatype::LRU_cache<1, IndexType, PointJacobianMatrixType>;
   /**
    * @name Type Definitions
    *
@@ -114,8 +133,9 @@ struct jacobian_matrix<specfem::element::dimension_tag::dim2>
   /**
    * @brief Default constructor
    *
-   * Creates an empty Jacobian matrix container. Use parameterized constructors
-   * to initialize with actual mesh data and compute transformation derivatives.
+   * Creates an empty Jacobian matrix container. Use parameterized
+   * constructors to initialize with actual mesh data and compute
+   * transformation derivatives.
    */
   jacobian_matrix() = default;
 
@@ -135,8 +155,8 @@ struct jacobian_matrix<specfem::element::dimension_tag::dim2>
   /**
    * @brief Construct Jacobian matrix from 2D mesh information
    *
-   * Computes and initializes all Jacobian matrix components from mesh geometry.
-   * This constructor:
+   * Computes and initializes all Jacobian matrix components from mesh
+   * geometry. This constructor:
    * - Computes coordinate transformation derivatives at all quadrature points
    * - Calculates Jacobian determinants for integration weights
    * - Sets up efficient device/host memory layouts
@@ -197,5 +217,15 @@ struct jacobian_matrix<specfem::element::dimension_tag::dim2>
    */
   std::tuple<bool, Kokkos::View<bool *, Kokkos::DefaultHostExecutionSpace> >
   check_small_jacobian() const;
+
+  /**
+   * @brief Clear all cached Jacobian matrix data
+   *
+   * Invalidates and clears all entries in the LRU caches for both SIMD and
+   * non-SIMD point Jacobian matrices, with and without storing the Jacobian
+   * determinant. This is typically called when mesh geometry changes or when
+   * cached data is no longer valid.
+   */
+  void clear_cache();
 };
 } // namespace specfem::assembly

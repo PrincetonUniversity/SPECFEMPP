@@ -13,6 +13,7 @@
  */
 namespace specfem::datatype {}
 
+#include "datatype/LRU_cache.hpp"
 #include "datatype/accessor_type.hpp"
 #include "datatype/chunk_edge_view.hpp"
 #include "datatype/chunk_element_view.hpp"

@@ -142,3 +142,17 @@ specfem::assembly::jacobian_matrix<
       found);
   return std::make_tuple(found, small_jacobian);
 }
+
+void specfem::assembly::jacobian_matrix<
+    specfem::element::dimension_tag::dim2>::clear_cache() {
+  static_cast<cache_type<
+      specfem::point::index<specfem::element::dimension_tag::dim2, true>,
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                      false, true> > &>(*this)
+      .clear();
+  static_cast<cache_type<
+      specfem::point::index<specfem::element::dimension_tag::dim2, true>,
+      specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
+                                      true, true> > &>(*this)
+      .clear();
+}

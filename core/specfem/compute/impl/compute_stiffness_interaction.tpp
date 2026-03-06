@@ -1,19 +1,18 @@
 #pragma once
 
+#include "compute_stiffness_interaction.hpp"
 #include "specfem/algorithms.hpp"
+#include "specfem/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
+#include "specfem/chunk_element.hpp"
 #include "specfem/datatype.hpp"
-#include "specfem/element.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
-#include "specfem/quadrature.hpp"
-#include "specfem/assembly.hpp"
-#include "specfem/chunk_element.hpp"
 #include "specfem/point.hpp"
-#include "compute_stiffness_interaction.hpp"
+#include "specfem/quadrature.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -64,46 +63,55 @@ int specfem::compute::impl::compute_stiffness_interaction(
   constexpr bool using_simd = false;
 #else
   // TODO(Rohit : DIM3_SIMD) Enable simd execution for dim3 solver
-  constexpr bool using_simd = (Tags::dimension_tag == specfem::element::dimension_tag::dim2) ? true : false;
+  constexpr bool using_simd =
+      (Tags::dimension_tag == specfem::element::dimension_tag::dim2) ? true
+                                                                     : false;
 #endif
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
 
   using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
-                  Tags::dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
+      Tags::dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
 
-  using ChunkElementFieldType = specfem::chunk_element::displacement<
-      ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag, using_simd>;
+  using ChunkElementFieldType =
+      specfem::chunk_element::displacement<ParallelConfig::chunk_size, ngll,
+                                           Tags::dimension_tag,
+                                           Tags::medium_tag, using_simd>;
   using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
       ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag,
-      Kokkos::DefaultExecutionSpace::scratch_memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-      using_simd>;
+      Kokkos::DefaultExecutionSpace::scratch_memory_space,
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, using_simd>;
   using ElementQuadratureType = specfem::quadrature::lagrange_derivative<
-      ngll, Tags::dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
+      ngll, Tags::dimension_tag,
+      Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
   using PointBoundaryType =
-      specfem::point::boundary<Tags::boundary_tag, Tags::dimension_tag, using_simd>;
+      specfem::point::boundary<Tags::boundary_tag, Tags::dimension_tag,
+                               using_simd>;
   using PointDisplacementType =
-      specfem::point::displacement<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::displacement<Tags::dimension_tag, Tags::medium_tag,
+                                   using_simd>;
   using PointVelocityType =
-      specfem::point::velocity<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::velocity<Tags::dimension_tag, Tags::medium_tag,
+                               using_simd>;
   using PointAccelerationType =
-      specfem::point::acceleration<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::acceleration<Tags::dimension_tag, Tags::medium_tag,
+                                   using_simd>;
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<Tags::dimension_tag, true, using_simd>;
   using PointPropertyType =
-      specfem::point::properties<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag,
-                                 using_simd>;
+      specfem::point::properties<Tags::dimension_tag, Tags::medium_tag,
+                                 Tags::property_tag, using_simd>;
   using PointFieldDerivativesType =
-      specfem::point::field_derivatives<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::field_derivatives<Tags::dimension_tag, Tags::medium_tag,
+                                        using_simd>;
 
   using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
 
   int scratch_size = ChunkElementFieldType::shmem_size() +
                      ChunkStressIntegrandType::shmem_size() +
                      ElementQuadratureType::shmem_size();
-
 
   specfem::execution::ChunkedDomainIterator chunk(ParallelConfig(), elements,
                                                   element_grid);
@@ -118,7 +126,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
         "specfem::compute::compute_stiffness_interaction", chunk,
         KOKKOS_LAMBDA(
             const typename decltype(chunk)::base_index_type &iterator_index) {
-            const auto index = iterator_index.get_index();
+          const auto index = iterator_index.get_index();
           PointAccelerationType acceleration;
           specfem::assembly::load_on_device(istep, index, boundary_values,
                                             acceleration);
@@ -130,8 +138,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
     specfem::execution::for_each_level(
         "specfem::compute::compute_stiffness_interaction",
         chunk.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-        KOKKOS_LAMBDA(
-            const typename decltype(chunk)::index_type &chunk_iterator_index) {
+        [&](const typename decltype(chunk)::index_type &chunk_iterator_index) {
           const auto &chunk_index = chunk_iterator_index.get_index();
           const auto team = chunk_index.get_policy_index();
           ChunkElementFieldType element_field(team.team_scratch(0));
@@ -145,15 +152,17 @@ int specfem::compute::impl::compute_stiffness_interaction(
           specfem::algorithms::gradient(
               chunk_index, jacobian_matrix, lagrange_derivative, element_field,
               [&](const auto &iterator_index,
-                  const typename PointFieldDerivativesType::value_type &du,
-                  const PointJacobianMatrixType &point_jacobian_matrix) {
+                  const typename PointFieldDerivativesType::value_type &du) {
                 const auto &index = iterator_index.get_index();
                 const auto &local_index = iterator_index.get_local_index();
+
+                PointJacobianMatrixType point_jacobian_matrix;
+                specfem::assembly::load_on_device(index, jacobian_matrix,
+                                                  point_jacobian_matrix);
 
                 PointPropertyType point_property;
                 specfem::assembly::load_on_device(index, properties,
                                                   point_property);
-
                 PointFieldDerivativesType field_derivatives(du);
 
                 PointDisplacementType point_displacement;
@@ -208,8 +217,8 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 const auto factor =
                     point_weights.product() * point_jacobian_matrix.jacobian;
 
-                specfem::medium_physics::compute_damping_force(factor, point_property,
-                                                       velocity, acceleration);
+                specfem::medium_physics::compute_damping_force(
+                    factor, point_property, velocity, acceleration);
 
                 // Compute the couple stress from the stress integrand
                 specfem::medium_physics::compute_cosserat_couple_stress(
@@ -223,8 +232,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 // Store forward boundary values for reconstruction during
                 // adjoint simulations. The function does nothing if the
                 // boundary tag is not stacey
-                if (wavefield ==
-                    specfem::simulation::field_type::forward) {
+                if (wavefield == specfem::simulation::field_type::forward) {
                   specfem::assembly::store_on_device(istep, index, acceleration,
                                                      boundary_values);
                 }
