@@ -134,11 +134,10 @@ TYPED_TEST(PointPropertiesTest, ElasticAnisotropic2D) {
   }
 
   // Create the properties object
-  using PointPropertiesType =
-      specfem::point::properties<specfem::element::dimension_tag::dim2,
-                                 specfem::element::medium_tag::elastic,
-                                 specfem::element::property_tag::anisotropic,
-                                 using_simd>;
+  using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
+      specfem::element::dimension_tag::dim2,
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::anisotropic, using_simd> >;
   PointPropertiesType props(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho);
 
   // Additional constructors and assignment tests

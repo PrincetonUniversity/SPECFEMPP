@@ -27,13 +27,14 @@ namespace medium_physics {
  * @param properties Material properties
  * @return Mass inverse components for \f$ [u_x, u_y, u_z] \f$
  */
-template <specfem::element::property_tag PropertyTag, bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                        specfem::element::medium_tag::elastic, UseSIMD> >
-impl_mass_matrix_component(
-    const specfem::point::properties<specfem::element::dimension_tag::dim3,
-                                     specfem::element::medium_tag::elastic,
-                                     PropertyTag, UseSIMD> &properties);
+template <typename Tags,
+          std::enable_if_t<
+              Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
+                  Tags::medium_tag == specfem::element::medium_tag::elastic,
+              int> = 0>
+KOKKOS_FUNCTION specfem::point::mass_inverse<Tags>
+impl_mass_matrix_component(const specfem::point::properties<Tags> &properties) {
+  return { properties.rho(), properties.rho(), properties.rho() };
+}
 } // namespace medium_physics
 } // namespace specfem

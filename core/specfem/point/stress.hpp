@@ -6,8 +6,8 @@
 #include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem {
-namespace point {
+namespace specfem::point {
+namespace impl {
 
 /**
  * @brief Represents a stress tensor at a quadrature point in spectral element
@@ -284,5 +284,9 @@ public:
   }
   ///@}
 };
-} // namespace point
-} // namespace specfem
+} // namespace impl
+
+template <typename Tags>
+using stress =
+    impl::stress<Tags::dimension_tag, Tags::medium_tag, Tags::using_simd>;
+} // namespace specfem::point

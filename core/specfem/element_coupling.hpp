@@ -1,45 +1,14 @@
 #pragma once
 
 #include "specfem/element.hpp"
-#include "specfem/element_connections.hpp"
+#include "specfem/element_connections/tags.hpp"
+#include "specfem/element_coupling/tags.hpp"
+#include "specfem/point/acceleration.hpp"
+#include "specfem/point/displacement.hpp"
 #include "specfem/setup.hpp"
-
-namespace specfem::tags {
-template <auto... TagMembers> struct Tags;
-}
-
-namespace specfem::point {
-
-template <typename Tags> struct acceleration;
-
-template <typename Tags> struct displacement;
-
-} // namespace specfem::point
+#include "specfem/tags.hpp"
 
 namespace specfem::element_coupling {
-
-/**
- * @brief Interface coupling direction types.
- *
- * Directional coupling: elastic_acoustic (elastic→acoustic),
- * acoustic_elastic (acoustic→elastic).
- */
-enum class interface_tag {
-  elastic_acoustic, ///< Elastic to acoustic interface - elastic field couples
-                    ///< to acoustic
-  acoustic_elastic  ///< Acoustic to elastic interface - acoustic field couples
-                    ///< to elastic
-};
-
-/**
- * @brief Flux scheme used for a coupling
- */
-enum class flux_scheme_tag {
-  natural, ///< Original SPECFEM acoustic-elastic interface (Komatitsch et al.
-           ///< 2000)
-  symmetric_interior_penalty ///< SIPG (Grote et al., Riviere et al., Antonietti
-                             ///< et al., etc.)
-};
 
 /**
  * @brief Compile-time interface field type determination.

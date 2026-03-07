@@ -28,14 +28,16 @@ namespace medium_physics {
  * @param properties Material properties (density)
  * @return Mass inverse components [ρ, ρ] for [u_x, u_z]
  */
-template <specfem::element::property_tag PropertyTag, bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::tags::Tags<specfem::element::dimension_tag::dim2,
-                        specfem::element::medium_tag::elastic_psv, UseSIMD> >
-impl_mass_matrix_component(
-    const specfem::point::properties<specfem::element::dimension_tag::dim2,
-                                     specfem::element::medium_tag::elastic_psv,
-                                     PropertyTag, UseSIMD> &properties);
+template <typename Tags,
+          std::enable_if_t<
+              Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+                  Tags::medium_tag == specfem::element::medium_tag::elastic_psv,
+              int> = 0>
+KOKKOS_FUNCTION specfem::point::mass_inverse<Tags>
+impl_mass_matrix_component(const specfem::point::properties<Tags> &properties) {
+
+  return { properties.rho(), properties.rho() };
+}
 
 /**
  * @ingroup specfem_medium_dim2_compute_mass_matrix_elastic
@@ -53,14 +55,16 @@ impl_mass_matrix_component(
  * @param properties Material properties (density)
  * @return Mass inverse component [ρ] for [u_y]
  */
-template <specfem::element::property_tag PropertyTag, bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::tags::Tags<specfem::element::dimension_tag::dim2,
-                        specfem::element::medium_tag::elastic_sh, UseSIMD> >
-impl_mass_matrix_component(
-    const specfem::point::properties<specfem::element::dimension_tag::dim2,
-                                     specfem::element::medium_tag::elastic_sh,
-                                     PropertyTag, UseSIMD> &properties);
+template <typename Tags,
+          std::enable_if_t<
+              Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+                  Tags::medium_tag == specfem::element::medium_tag::elastic_sh,
+              int> = 0>
+KOKKOS_FUNCTION specfem::point::mass_inverse<Tags>
+impl_mass_matrix_component(const specfem::point::properties<Tags> &properties) {
+
+  return { properties.rho() }; ///< Mass matrix for SH waves is isotropic
+}
 
 } // namespace medium_physics
 } // namespace specfem

@@ -1,11 +1,12 @@
 #pragma once
 
 #include "specfem/enums.hpp"
-#include "specfem/medium_container.hpp"
+#include "specfem/medium_container/point_properties.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 
-namespace specfem {
-namespace point {
+namespace specfem::point {
+namespace impl {
 
 /**
  * @brief Properties of a quadrature point.
@@ -43,8 +44,9 @@ namespace point {
  * double mu = 10.0;
  * double rho = 2500.0;
  *
- * specfem::point::properties<dim, medium_tag::elastic, property_tag::isotropic,
- * use_simd> props(kappa, mu, rho);
+ * specfem::point::properties<specfem::tags::Tags<
+ *     dim, medium_tag::elastic, property_tag::isotropic, use_simd>>
+ *     props(kappa, mu, rho);
  *
  * // Access properties
  * double k = props.kappa();
@@ -59,14 +61,14 @@ namespace point {
  * - specfem::medium_container::properties::point_container
  * - specfem::compute::mass_matrix
  */
-template <specfem::element::dimension_tag Dimension,
+template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 struct properties : specfem::medium_container::properties::point_container<
-                        Dimension, MediumTag, PropertyTag, UseSIMD> {
+                        DimensionTag, MediumTag, PropertyTag, UseSIMD> {
 
   using base_type = specfem::medium_container::properties::point_container<
-      Dimension, MediumTag, PropertyTag, UseSIMD>;
+      DimensionTag, MediumTag, PropertyTag, UseSIMD>;
 
   using value_type = typename base_type::value_type;
   using simd = typename base_type::simd;
@@ -74,5 +76,9 @@ struct properties : specfem::medium_container::properties::point_container<
   using base_type::base_type;
 };
 
-} // namespace point
-} // namespace specfem
+} // namespace impl
+
+template <typename Tags>
+using properties = impl::properties<Tags::dimension_tag, Tags::medium_tag,
+                                    Tags::property_tag, Tags::using_simd>;
+} // namespace specfem::point
