@@ -7,9 +7,6 @@
 specfem::runtime_configuration::flux_schemes::flux_schemes(
     const YAML::Node &Node)
     : flux_schemes_node(Node) {
-  if (!this->flux_schemes_node.IsSequence()) {
-    throw std::runtime_error("flux-scheme YAML node must be a sequence.");
-  }
 
   // multi-rules in commit 4a27c96cde7e8548556da6caf628eda034fd35b3
 
