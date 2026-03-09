@@ -1,5 +1,5 @@
 #include "../../SPECFEM_Environment.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/mesh.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/mpi.hpp"

@@ -1,4 +1,4 @@
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/edge_types.hpp"
 #include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>

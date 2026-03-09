@@ -5,7 +5,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/algorithms.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/chunk_edge.hpp"
 #include "specfem/execution.hpp"
@@ -211,7 +211,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
         team.team_barrier();
 
         specfem::algorithms::coupling_integral(
-            assembly, self_chunk_index, interface_field, integration_factor,
+            assembly.nonconforming_interfaces, self_chunk_index, interface_field, integration_factor,
             [&](const auto &self_index, auto &self_field) {
               specfem::point::boundary<boundary_tag, dimension_tag, false>
                   point_boundary;

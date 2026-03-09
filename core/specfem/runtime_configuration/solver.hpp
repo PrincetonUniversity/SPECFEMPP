@@ -1,9 +1,8 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
-#include "specfem/periodic_tasks.hpp"
-#include "specfem/solver.hpp"
-#include "specfem/timescheme/newmark.hpp"
+#include "specfem/periodic_tasks/periodic_task.hpp"
+#include "specfem/solver/solver.hpp"
+#include "specfem/timescheme/timescheme.hpp"
 #include "specfem/utilities.hpp"
 #include <memory>
 #include <string>
@@ -72,5 +71,3 @@ private:
 };
 } // namespace runtime_configuration
 } // namespace specfem
-
-#include "solver.tpp"

@@ -186,12 +186,10 @@ endif(SPECFEM_ENABLE_DOUBLE_PRECISION)
 
 # Add the include directories so that the generated files can be found
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core)
-include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
 message(STATUS "INCLUDE DIRECTORIES:")
 message(STATUS "    core: ${CMAKE_CURRENT_SOURCE_DIR}/core")
-message(STATUS "    include: ${CMAKE_SOURCE_DIR}/include")
 message(STATUS "    binary: ${CMAKE_BINARY_DIR}/include")
 
 

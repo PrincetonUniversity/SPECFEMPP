@@ -113,6 +113,19 @@ target_link_libraries(
 )
 
 add_executable(
+  logspace_tests
+  utilities/logspace_tests.cpp
+)
+
+target_link_libraries(
+  logspace_tests
+  specfem::utilities
+  specfem_environment
+  gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
   attenuation_tests
   attenuation/runner.cpp
   attenuation/compute_tau_sigma_tests.cpp
@@ -643,6 +656,28 @@ target_link_libraries(
 )
 
 add_executable(
+  coupling_integral_tests
+  algorithms/dim2/coupling_integral/dshape.cpp
+  algorithms/dim2/coupling_integral/timesshape.cpp
+)
+
+target_link_libraries(
+  coupling_integral_tests
+  specfem::algorithms
+  specfem::element_connections
+  specfem::mesh
+  assembly
+  gtest_main
+  Kokkos::kokkos
+  specfem_environment
+  specfem::utilities
+
+  specfem::quadrature
+  yaml-cpp
+  -lpthread -lm
+)
+
+add_executable(
   policies_tests
   policies/policies.cpp
 )
@@ -799,23 +834,6 @@ target_link_libraries(
   gtest_main
 )
 
-# # add_executable(
-# #   source_location_tests
-# #   source/source_location_tests.cpp
-# # )
-
-# # target_link_libraries(
-# #   source_location_tests
-# #   material_class
-# #   specfem_environment
-# #
-# #   yaml-cpp
-# #   mesh
-# #   quadrature
-# #   assembly
-# #   source_class
-# #   -lpthread -lm
-# # )
 
 add_executable(
   displacement_newmark_2d_tests
@@ -951,6 +969,7 @@ if(NOT MPI_PARALLEL)
     io_framework_tests
     io_tests
     is_close_tests
+    logspace_tests
     jacobian_tests
     lagrange_tests
     locate_point_fixture_2d

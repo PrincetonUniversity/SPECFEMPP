@@ -3,12 +3,14 @@
 #include "maxwell.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/optimization.hpp"
+#include "specfem/utilities/logspace.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
 namespace specfem {
 namespace attenuation {
+
 
 template <int N_SLS>
 Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
@@ -23,19 +25,7 @@ compute_tau_eps(
 
   // Set up evaluation frequencies equally spaced in log10
   // These span the same range as tau_sigma but with NF_ATTENUATION points
-  Kokkos::View<type_real[NF_ATTENUATION], Kokkos::LayoutRight, Kokkos::HostSpace>
-      f("frequencies");
-
-  const type_real f1 = 1.0 / max_period; // min frequency
-  const type_real f2 = 1.0 / min_period; // max frequency
-  const type_real log_f1 = std::log10(f1);
-  const type_real log_f2 = std::log10(f2);
-  const type_real d_log_f =
-      (log_f2 - log_f1) / (static_cast<type_real>(NF_ATTENUATION) - 1);
-
-  for (int i = 0; i < NF_ATTENUATION; ++i) {
-    f(i) = std::pow(10.0, log_f1 + i * d_log_f);
-  }
+  const auto f = specfem::utilities::logspace<specfem::constants::NF_ATTENUATION>(1/max_period, 1/min_period);
 
   // Create the objective function
   AttenuationObjective<N_SLS> objective;

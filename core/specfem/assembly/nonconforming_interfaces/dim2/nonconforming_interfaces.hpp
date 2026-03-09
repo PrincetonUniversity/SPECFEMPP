@@ -20,7 +20,7 @@ class nonconforming_interfaces<specfem::element::dimension_tag::dim2>
 public:
   static constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
 
-private:
+protected:
   template <specfem::element_coupling::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
             specfem::element_connections::type ConnectionTag>

@@ -1,0 +1,292 @@
+#-----------------------------------------------------------
+#
+# Simulation input parameters
+#
+#-----------------------------------------------------------
+
+# forward or adjoint simulation
+# 1 = forward, 2 = adjoint, 3 = both simultaneously
+SIMULATION_TYPE                 = 1
+# 0 = earthquake simulation,  1/2/3 = three steps in noise simulation
+NOISE_TOMOGRAPHY                = 0
+SAVE_FORWARD                    = .false.
+
+# solve a full FWI inverse problem from a single calling program with no I/Os, storing everything in memory,
+# or run a classical forward or adjoint problem only and save the seismograms and/or sensitivity kernels to disk (with costlier I/Os)
+INVERSE_FWI_FULL_PROBLEM        = .false.
+
+# UTM projection parameters
+# Use a negative zone number for the Southern hemisphere:
+# The Northern hemisphere corresponds to zones +1 to +60,
+# The Southern hemisphere corresponds to zones -1 to -60.
+UTM_PROJECTION_ZONE             = 11
+SUPPRESS_UTM_PROJECTION         = .true.
+
+# number of MPI processors
+NPROC                           = 1
+
+# time step parameters
+NSTEP                           = 1000
+DT                              = 0.04
+
+# set to true to use local-time stepping (LTS)
+LTS_MODE                        = .false.
+
+# Partitioning algorithm for decompose_mesh
+# choose partitioner: 1==SCOTCH (default), 2==METIS, 3==PATOH, 4==ROWS_PART
+PARTITIONING_TYPE               = 1
+
+#-----------------------------------------------------------
+#
+# LDDRK time scheme
+#
+#-----------------------------------------------------------
+USE_LDDRK                       = .false.
+INCREASE_CFL_FOR_LDDRK          = .false.
+RATIO_BY_WHICH_TO_INCREASE_IT   = 1.4
+
+#-----------------------------------------------------------
+#
+# Mesh
+#
+#-----------------------------------------------------------
+
+# Number of nodes for 2D and 3D shape functions for hexahedra.
+# We use either 8-node mesh elements (bricks) or 27-node elements.
+# If you use our internal mesher, the only option is 8-node bricks (27-node elements are not supported).
+NGNOD                           = 8
+
+# models:
+# available options are:
+#   default (model parameters described by mesh properties)
+# 1D models available are:
+#   1d_prem,1d_socal,1d_cascadia
+# 3D models available are:
+#   aniso,external,gll,salton_trough,tomo,SEP,coupled,...
+MODEL                           = default
+
+# path for external model files (if MODEL = coupled)
+COUPLED_MODEL_DIRECTORY         = ./DATA/coupled_model/
+
+# path for external tomographic models files
+TOMOGRAPHY_PATH                 = ./DATA/tomo_files/
+# if you are using a SEP model (oil-industry format)
+SEP_MODEL_DIRECTORY             = ./DATA/my_SEP_model/
+
+#-----------------------------------------------------------
+
+# parameters describing the model
+APPROXIMATE_OCEAN_LOAD          = .false.
+TOPOGRAPHY                      = .false.
+ATTENUATION                     = .false.
+ANISOTROPY                      = .false.
+GRAVITY                         = .false.
+
+# in case of attenuation, reference frequency in Hz at which the velocity values in the velocity model are given (unused otherwise)
+ATTENUATION_f0_REFERENCE        = 18.d0
+
+# attenuation period range over which we try to mimic a constant Q factor
+MIN_ATTENUATION_PERIOD          = 999999998.d0
+MAX_ATTENUATION_PERIOD          = 999999999.d0
+# ignore this range and ask the code to compute it automatically instead based on the estimated resolution of the mesh (use this unless you know what you are doing)
+COMPUTE_FREQ_BAND_AUTOMATIC     = .true.
+
+# Olsen's constant for Q_mu = constant * V_s attenuation rule
+USE_OLSEN_ATTENUATION           = .false.
+OLSEN_ATTENUATION_RATIO         = 0.05
+
+#-----------------------------------------------------------
+#
+# Absorbing boundary conditions
+#
+#-----------------------------------------------------------
+
+# C-PML boundary conditions for a regional simulation
+PML_CONDITIONS                  = .false.
+
+# C-PML top surface
+PML_INSTEAD_OF_FREE_SURFACE     = .false.
+
+# C-PML dominant frequency
+f0_FOR_PML                      = 0.05555
+
+# absorbing boundary conditions for a regional simulation
+STACEY_ABSORBING_CONDITIONS     = .false.
+
+# absorbing top surface (defined in mesh as 'free_surface_file')
+STACEY_INSTEAD_OF_FREE_SURFACE  = .false.
+
+BOTTOM_FREE_SURFACE             = .false.
+
+#-----------------------------------------------------------
+#
+# undoing attenuation and/or PMLs for sensitivity kernel calculations
+#
+#-----------------------------------------------------------
+
+UNDO_ATTENUATION_AND_OR_PML     = .false.
+NT_DUMP_ATTENUATION             = 200
+
+#-----------------------------------------------------------
+#
+# Visualization
+#
+#-----------------------------------------------------------
+
+CREATE_SHAKEMAP                 = .false.
+MOVIE_SURFACE                   = .false.
+MOVIE_TYPE                      = 1
+MOVIE_VOLUME                    = .false.
+SAVE_DISPLACEMENT               = .false.
+MOVIE_VOLUME_STRESS             = .false.
+USE_HIGHRES_FOR_MOVIES          = .false.
+NTSTEP_BETWEEN_FRAMES           = 200
+HDUR_MOVIE                      = 0.0
+
+# save AVS or OpenDX mesh files to check the mesh
+SAVE_MESH_FILES                 = .false.
+
+# path to store the local database file on each node
+LOCAL_PATH                      = ./OUTPUT_FILES/DATABASES_MPI
+
+# interval at which we output time step info and max of norm of displacement
+NTSTEP_BETWEEN_OUTPUT_INFO      = 500
+
+#-----------------------------------------------------------
+#
+# Sources
+#
+#-----------------------------------------------------------
+
+# sources and receivers Z coordinates given directly (i.e. as their true position) instead of as their depth
+USE_SOURCES_RECEIVERS_Z         = .false.
+
+# use a (tilted) FORCESOLUTION force point source
+USE_FORCE_POINT_SOURCE          = .true.
+
+SOURCE_FILENAME                    = ./DATA/CMTSOLUTION
+
+# set to true to use a Ricker source time function instead of the source time functions set by default
+USE_RICKER_TIME_FUNCTION        = .false.
+
+USE_EXTERNAL_SOURCE_FILE        = .false.
+
+# print source time function
+PRINT_SOURCE_TIME_FUNCTION      = .false.
+
+USE_SOURCE_ENCODING             = .false.
+
+#-----------------------------------------------------------
+#
+# Seismograms
+#
+#-----------------------------------------------------------
+
+# interval in time steps for writing of seismograms
+NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 10000
+
+# set to n to reduce the sampling rate of output seismograms by a factor of n
+NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 1
+
+# decide if we save displacement, velocity, acceleration and/or pressure in forward runs
+SAVE_SEISMOGRAMS_DISPLACEMENT   = .true.
+SAVE_SEISMOGRAMS_VELOCITY       = .false.
+SAVE_SEISMOGRAMS_ACCELERATION   = .false.
+SAVE_SEISMOGRAMS_PRESSURE       = .true.   # currently implemented in acoustic (i.e. fluid) elements only
+
+# option to save strain seismograms
+SAVE_SEISMOGRAMS_STRAIN         = .false.
+
+SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .true.
+
+# save seismograms in binary or ASCII format
+USE_BINARY_FOR_SEISMOGRAMS      = .false.
+
+# output seismograms in Seismic Unix format
+SU_FORMAT                       = .false.
+
+ASDF_FORMAT                     = .false.
+
+HDF5_FORMAT                     = .false.
+
+WRITE_SEISMOGRAMS_BY_MAIN       = .false.
+
+SAVE_ALL_SEISMOS_IN_ONE_FILE    = .false.
+
+USE_TRICK_FOR_BETTER_PRESSURE   = .false.
+
+#-----------------------------------------------------------
+#
+# Fault simulations
+#
+#-----------------------------------------------------------
+
+HAS_FINITE_FAULT_SOURCE         = .false.
+FAULT_PAR_FILE                  = dummy.txt
+FAULT_STATIONS                  = dummy.txt
+STRESS_FRICTION_FILE            = dummy.txt
+RSF_HETE_FILE                   = dummy.txt
+
+#-----------------------------------------------------------
+#
+# Energy calculation
+#
+#-----------------------------------------------------------
+
+OUTPUT_ENERGY                   = .false.
+NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10
+
+#-----------------------------------------------------------
+#
+# Adjoint kernel outputs
+#
+#-----------------------------------------------------------
+
+NTSTEP_BETWEEN_READ_ADJSRC      = 0
+READ_ADJSRC_ASDF                = .false.
+ANISOTROPIC_KL                  = .false.
+SAVE_TRANSVERSE_KL              = .false.
+ANISOTROPIC_VELOCITY_KL         = .false.
+APPROXIMATE_HESS_KL             = .false.
+SAVE_MOHO_MESH                  = .false.
+
+#-----------------------------------------------------------
+#
+# Coupling with an injection technique (DSM, AxiSEM, or FK)
+#
+#-----------------------------------------------------------
+COUPLE_WITH_INJECTION_TECHNIQUE = .false.
+INJECTION_TECHNIQUE_TYPE        = 3   # 1 = DSM, 2 = AxiSEM, 3 = FK
+MESH_A_CHUNK_OF_THE_EARTH       = .false.
+TRACTION_PATH                   = ./DATA/AxiSEM_tractions/3/
+FKMODEL_FILE                    = FKmodel
+RECIPROCITY_AND_KH_INTEGRAL     = .false.
+
+IS_WAVEFIELD_DISCONTINUITY      = .false.
+
+#-----------------------------------------------------------
+#
+# Run modes
+#
+#-----------------------------------------------------------
+
+NUMBER_OF_SIMULTANEOUS_RUNS     = 1
+BROADCAST_SAME_MESH_AND_MODEL   = .true.
+
+#-----------------------------------------------------------
+
+# set to true to use GPUs
+GPU_MODE                        = .false.
+
+# ADIOS Options for I/Os
+ADIOS_ENABLED                   = .false.
+ADIOS_FOR_DATABASES             = .false.
+ADIOS_FOR_MESH                  = .false.
+ADIOS_FOR_FORWARD_ARRAYS        = .false.
+ADIOS_FOR_KERNELS               = .false.
+ADIOS_FOR_UNDO_ATTENUATION      = .false.
+
+# HDF5 Database I/O
+HDF5_ENABLED                    = .false.
+HDF5_FOR_MOVIES                 = .false.
+HDF5_IO_NODES                   = 0   # HDF5 IO server with number of IO dedicated procs

@@ -10,6 +10,13 @@
 #include "specfem/element_connections/tags.hpp"
 #include <string>
 
+/**
+ * @brief Element connectivity and coordinate mapping utilities.
+ *
+ * Provides connection types and coordinate transformations between adjacent
+ * spectral elements in multi-physics computational domains. Handles conforming
+ * and non-conforming element interfaces through compile-time mapping classes.
+ */
 namespace specfem::element_connections {
 
 /**

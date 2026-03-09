@@ -299,4 +299,25 @@ private:
                               (FaceViewType::HostMirror, h_coupled_faces)))
 };
 
+/**
+ * @brief Build a host-side FaceView from a collection of 3D face entities.
+ *
+ * Constructs and fills a host-memory FaceView by mapping each collected face's
+ * quadrature point indices using the provided element coordinate mapping.
+ *
+ * @param label Base label for Kokkos view names
+ * @param collected_faces Vector of 3D face entities to convert
+ * @param element 3D element providing coordinate mapping
+ * @return Populated host-mirror FaceView
+ */
+specfem::assembly::face_types<
+    specfem::element::dimension_tag::dim3>::FaceViewType::HostMirror
+face_view_from_collected_faces(
+    const std::string &label,
+    const std::vector<
+        specfem::mesh_entity::face<specfem::element::dimension_tag::dim3> >
+        &collected_faces,
+    const specfem::mesh_entity::element<specfem::element::dimension_tag::dim3>
+        &element);
+
 } // namespace specfem::assembly

@@ -33,7 +33,7 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(const IndexType &index,
   const auto &mapping = container.xix.get_mapping();
   const std::size_t _index = mapping(ispec, iz, ix);
 
-  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+  const auto mask = index.template get_mask<simd>();
 
   if constexpr (on_device) {
     Kokkos::Experimental::where(mask, point.xix)
@@ -87,28 +87,12 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(const IndexType &index,
   const std::size_t _index = mapping(ispec, iz, ix);
 
   if constexpr (on_device) {
-    Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space,
-                 Kokkos::MemoryTraits<Kokkos::RandomAccess> >
-        xix = container.xix.get_base_view();
-    Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space,
-                 Kokkos::MemoryTraits<Kokkos::RandomAccess> >
-        gammax = container.gammax.get_base_view();
-    Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space,
-                 Kokkos::MemoryTraits<Kokkos::RandomAccess> >
-        xiz = container.xiz.get_base_view();
-    Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space,
-                 Kokkos::MemoryTraits<Kokkos::RandomAccess> >
-        gammaz = container.gammaz.get_base_view();
-    Kokkos::View<const type_real *, Kokkos::DefaultExecutionSpace::memory_space,
-                 Kokkos::MemoryTraits<Kokkos::RandomAccess> >
-        jacobian = container.jacobian.get_base_view();
-
-    point.xix = xix(_index);
-    point.gammax = gammax(_index);
-    point.xiz = xiz(_index);
-    point.gammaz = gammaz(_index);
+    point.xix = container.xix.get_base_view().data()[_index];
+    point.gammax = container.gammax.get_base_view().data()[_index];
+    point.xiz = container.xiz.get_base_view().data()[_index];
+    point.gammaz = container.gammaz.get_base_view().data()[_index];
     if constexpr (StoreJacobian) {
-      point.jacobian = jacobian(_index);
+      point.jacobian = container.jacobian.get_base_view().data()[_index];
     }
   } else {
     point.xix = container.h_xix[_index];

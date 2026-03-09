@@ -71,9 +71,10 @@ KOKKOS_FORCEINLINE_FUNCTION void store_after_simd_dispatch(
 
   check_accessor_compatibility<AccessorTypes...>();
 
-  using mask_type = typename std::tuple_element_t<
-      0, std::tuple<AccessorTypes...> >::simd::mask_type;
-  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+  using simd =
+      typename std::tuple_element_t<0, std::tuple<AccessorTypes...> >::simd;
+  using mask_type = typename simd::mask_type;
+  const auto mask = index.template get_mask<simd>();
 
   const int iglob = index.iglob;
 
