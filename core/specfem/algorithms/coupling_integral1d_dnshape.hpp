@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/element_coupling.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"

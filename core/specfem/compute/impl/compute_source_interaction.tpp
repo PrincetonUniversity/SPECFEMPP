@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/boundary_conditions.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/element.hpp"

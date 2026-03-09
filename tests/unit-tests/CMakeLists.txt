@@ -834,23 +834,6 @@ target_link_libraries(
   gtest_main
 )
 
-# # add_executable(
-# #   source_location_tests
-# #   source/source_location_tests.cpp
-# # )
-
-# # target_link_libraries(
-# #   source_location_tests
-# #   material_class
-# #   specfem_environment
-# #
-# #   yaml-cpp
-# #   mesh
-# #   quadrature
-# #   assembly
-# #   source_class
-# #   -lpthread -lm
-# # )
 
 add_executable(
   displacement_newmark_2d_tests

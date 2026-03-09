@@ -1,5 +1,5 @@
 #include "specfem/io/seismogram/writer.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/utilities.hpp"
 #include <fstream>

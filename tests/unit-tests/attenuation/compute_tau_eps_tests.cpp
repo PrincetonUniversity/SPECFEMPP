@@ -1,4 +1,6 @@
 #include "specfem/attenuation.hpp"
+#include "specfem/attenuation/compute_tau_eps.tpp"
+#include "specfem/attenuation/compute_tau_sigma.tpp"
 #include "specfem/constants.hpp"
 #include <cmath>
 #include <gtest/gtest.h>

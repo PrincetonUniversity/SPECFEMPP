@@ -3,7 +3,7 @@
 #include "impl/compute_source_interaction.tpp"
 #include "impl/compute_stiffness_interaction.tpp"
 #include "impl/divide_mass_matrix.tpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/tags.hpp"

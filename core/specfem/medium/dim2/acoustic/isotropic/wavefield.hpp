@@ -1,7 +1,7 @@
 #pragma once
 
 #include "specfem/algorithms.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/medium_physics.hpp"

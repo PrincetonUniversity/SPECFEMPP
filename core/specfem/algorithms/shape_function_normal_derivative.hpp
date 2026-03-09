@@ -1,15 +1,17 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
 #include "specfem/assembly/edge_types.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/nonconforming_interfaces.hpp"
 #include "specfem/chunk_edge/nonconforming_interface.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/element_coupling.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
-
+#include <sstream>
+#include <stdexcept>
+#include <string>
 namespace specfem::algorithms {
 
 /**

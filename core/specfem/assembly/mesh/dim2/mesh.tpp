@@ -5,7 +5,6 @@
 
 #include "impl/utilities.hpp"
 #include "mesh.hpp"
-#include "specfem/assembly.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/quadrature.hpp"

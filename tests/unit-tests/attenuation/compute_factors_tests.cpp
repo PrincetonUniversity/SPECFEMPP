@@ -1,4 +1,5 @@
 #include "specfem/attenuation.hpp"
+#include "specfem/attenuation/compute_factors.tpp"
 #include "specfem/utilities/is_close.hpp"
 #include "test_macros.hpp"
 #include <cmath>

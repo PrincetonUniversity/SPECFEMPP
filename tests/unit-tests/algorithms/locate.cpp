@@ -1,7 +1,7 @@
 #include "../SPECFEM_Environment.hpp"
 
 #include "specfem/algorithms.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/mesh.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>

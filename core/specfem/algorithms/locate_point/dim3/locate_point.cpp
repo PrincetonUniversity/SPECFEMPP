@@ -1,6 +1,6 @@
 #include "specfem/algorithms/locate_point.hpp"
 #include "specfem/algorithms/locate_point/locate_point_impl.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/mesh.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/point.hpp"
 

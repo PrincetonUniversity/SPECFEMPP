@@ -1,14 +1,10 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
-
-namespace specfem::assembly {
-template <specfem::element::dimension_tag DimensionTag> struct assembly;
-}
 
 /**
  * @file coupling_integral.hpp
