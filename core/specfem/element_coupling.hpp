@@ -1,7 +1,11 @@
 #pragma once
 
-#include "specfem/element.hpp"
-#include "specfem/element_connections.hpp"
+#include "specfem/element_connections/tags.hpp"
+#include "specfem/element_coupling/tags.hpp"
+#include "specfem/point/acceleration.hpp"
+#include "specfem/point/displacement.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 
 /**
  * @brief Element coupling configuration for multi-physics interfaces.
@@ -12,26 +16,6 @@
  * specializations.
  *
  */
-namespace specfem::element_coupling {}
-
-namespace specfem::point {
-
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct acceleration;
-
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct displacement;
-
-} // namespace specfem::point
-#include "specfem/element_connections/tags.hpp"
-#include "specfem/element_coupling/tags.hpp"
-#include "specfem/point/acceleration.hpp"
-#include "specfem/point/displacement.hpp"
-#include "specfem/setup.hpp"
-#include "specfem/tags.hpp"
-
 namespace specfem::element_coupling {
 
 /**
