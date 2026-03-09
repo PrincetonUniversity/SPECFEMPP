@@ -1,9 +1,9 @@
 #pragma once
 
 #include "specfem/constants.hpp"
-#include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include <Kokkos_Core.hpp>
+#include <Kokkos_SIMD.hpp>
 
 namespace specfem {
 
@@ -26,6 +26,13 @@ constexpr int openmp_chunk_size = 1;
 constexpr int serial_chunk_size = 1;
 } // namespace impl
 
+#if defined(SPECFEM_ENABLE_SIMD)
+constexpr int simd_size = Kokkos::Experimental::simd<type_real>::size();
+#else
+constexpr int simd_size = Kokkos::Experimental::template basic_simd<
+    type_real, Kokkos::Experimental::simd_abi::scalar>::size();
+#endif
+
 #if defined(KOKKOS_ENABLE_CUDA)
 constexpr int storage_chunk_size = impl::cuda_chunk_size;
 constexpr int chunk_size = impl::cuda_chunk_size;
@@ -33,11 +40,9 @@ constexpr int chunk_size = impl::cuda_chunk_size;
 constexpr int storage_chunk_size = impl::hip_chunk_size;
 constexpr int chunk_size = impl::hip_chunk_size;
 #elif defined(KOKKOS_ENABLE_OPENMP)
-constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
 constexpr int storage_chunk_size = impl::openmp_chunk_size * simd_size;
 constexpr int chunk_size = impl::openmp_chunk_size;
 #else
-constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
 constexpr int storage_chunk_size = impl::serial_chunk_size * simd_size;
 constexpr int chunk_size = impl::serial_chunk_size;
 #endif
