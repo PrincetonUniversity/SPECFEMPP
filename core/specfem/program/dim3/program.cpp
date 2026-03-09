@@ -1,5 +1,5 @@
 #include "program.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"

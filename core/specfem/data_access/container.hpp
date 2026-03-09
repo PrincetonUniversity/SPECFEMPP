@@ -2,7 +2,7 @@
 
 #include "accessor.hpp"
 #include "data_class.hpp"
-#include "domain_view.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -31,11 +31,11 @@ template <>
 struct ContainerValueType<specfem::data_access::ContainerType::domain,
                           specfem::element::dimension_tag::dim2> {
   template <typename T, typename MemorySpace>
-  using scalar_type = specfem::kokkos::DomainView2d<T, 3, MemorySpace>;
+  using scalar_type = specfem::datatype::DomainView2d<T, 3, MemorySpace>;
   template <typename T, typename MemorySpace>
-  using vector_type = specfem::kokkos::DomainView2d<T, 4, MemorySpace>;
+  using vector_type = specfem::datatype::DomainView2d<T, 4, MemorySpace>;
   template <typename T, typename MemorySpace>
-  using tensor_type = specfem::kokkos::DomainView2d<T, 5, MemorySpace>;
+  using tensor_type = specfem::datatype::DomainView2d<T, 5, MemorySpace>;
 };
 
 template <>

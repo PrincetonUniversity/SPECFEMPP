@@ -10,7 +10,7 @@
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/quadrature.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/chunk_element.hpp"
 #include "specfem/point.hpp"
 #include "compute_stiffness_interaction.hpp"

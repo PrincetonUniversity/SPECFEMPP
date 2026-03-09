@@ -1,7 +1,7 @@
 #pragma once
 
 #include "impl/compute_seismograms.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/tags.hpp"

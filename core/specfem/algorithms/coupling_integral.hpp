@@ -1,14 +1,10 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
-
-namespace specfem::assembly {
-template <specfem::element::dimension_tag DimensionTag> struct assembly;
-}
 
 /**
  * @file coupling_integral.hpp
@@ -51,12 +47,13 @@ namespace specfem::algorithms {
 template <specfem::element::dimension_tag dimension_tag, typename IndexType,
           typename IntersectionFieldViewType, typename IntersectionFactor,
           typename CallableType>
-KOKKOS_FUNCTION void
-coupling_integral(const specfem::assembly::assembly<dimension_tag> &assembly,
-                  const IndexType &chunk_index,
-                  const IntersectionFieldViewType &intersection_field,
-                  const IntersectionFactor &intersection_factor,
-                  const CallableType &callback) {
+KOKKOS_FUNCTION void coupling_integral(
+    const specfem::assembly::nonconforming_interfaces<dimension_tag>
+        &nonconforming_interfaces,
+    const IndexType &chunk_index,
+    const IntersectionFieldViewType &intersection_field,
+    const IntersectionFactor &intersection_factor,
+    const CallableType &callback) {
 
   constexpr auto self_medium_tag = specfem::element_coupling::attributes<
       dimension_tag, IntersectionFactor::interface_tag>::self_medium();
@@ -80,8 +77,7 @@ coupling_integral(const specfem::assembly::assembly<dimension_tag> &assembly,
         const auto self_index_local = index.get_local_index();
 
         SelfTransferFunctionType transfer_function_self;
-        specfem::assembly::load_on_device(self_index,
-                                          assembly.nonconforming_interfaces,
+        specfem::assembly::load_on_device(self_index, nonconforming_interfaces,
                                           transfer_function_self);
 
         PointFieldType result;

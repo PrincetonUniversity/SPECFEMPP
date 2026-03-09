@@ -1,6 +1,14 @@
 #pragma once
 #include "specfem/element.hpp"
 
+/**
+ * @brief Mesh entity definitions for spectral element connectivity.
+ *
+ * Provides dimension-specific entity types (edges, faces, corners) and
+ * connectivity utilities for quadrilateral (2D) and hexahedral (3D) spectral
+ * elements. Includes grid structures and coordinate mapping support.
+ *
+ */
 namespace specfem::mesh_entity {
 
 /**
