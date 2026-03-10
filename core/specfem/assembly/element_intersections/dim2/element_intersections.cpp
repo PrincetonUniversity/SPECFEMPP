@@ -2,7 +2,6 @@
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
-#include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 #include <boost/graph/filtered_graph.hpp>
 
@@ -14,7 +13,10 @@ specfem::assembly::element_intersections<
     element_intersections(
         const int ngllx, const int ngllz,
         const specfem::assembly::mesh<dimension_tag> &mesh,
-        const specfem::assembly::element_types<dimension_tag> &element_types) {
+        const specfem::assembly::element_types<dimension_tag> &element_types,
+        const specfem::element_coupling::flux_scheme_configuration
+            &flux_scheme_config,
+        const specfem::mesh::materials<dimension_tag> &materials) {
 
   if (ngllz <= 0 || ngllx <= 0) {
     KOKKOS_ABORT_WITH_LOCATION("Invalid GLL grid size");
@@ -25,6 +27,14 @@ specfem::assembly::element_intersections<
         "The number of GLL points in z and x must be the same.");
   }
 
+  const auto get_material_index = [&](const int &ispec) {
+    const int &mesh_ispec = mesh.compute_to_mesh(ispec);
+    if (materials.material_index_mapping.extent(0) <= mesh_ispec) {
+      return -1;
+    }
+    return materials.material_index_mapping(mesh_ispec).database_index;
+  };
+
   const auto element = specfem::mesh_entity::element(ngllz, ngllx);
 
   const int ngll = ngllx; // ngllx == ngllz in 2D
@@ -34,7 +44,8 @@ specfem::assembly::element_intersections<
       (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
        BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET)),
+                    COMPOSITE_STACEY_DIRICHLET),
+       FLUX_SCHEME_TAG(NATURAL, SYMMETRIC_INTERIOR_PENALTY)),
       CAPTURE(h_self_edges, h_coupled_edges, self_edges, coupled_edges) {
         int count = 0;
         int edge_index = 0;
@@ -62,8 +73,14 @@ specfem::assembly::element_intersections<
           const auto boundary_tag = element_types.get_boundary_tag(ispec1);
           const auto medium1 = element_types.get_medium_tag(ispec1);
           const auto medium2 = element_types.get_medium_tag(ispec2);
+
+          const auto flux_scheme_tag = flux_scheme_config.get_flux_scheme_tag(
+              _interface_tag_, get_material_index(ispec1),
+              get_material_index(ispec2));
+
           if (boundary_tag == _boundary_tag_ && medium1 == self_medium &&
-              medium2 == coupled_medium && medium1 != medium2) {
+              medium2 == coupled_medium && medium1 != medium2 &&
+              flux_scheme_tag == _flux_scheme_tag_) {
             const specfem::mesh_entity::dim2::type self_orientation =
                 nc_graph[edge].orientation;
             const auto [edge_inv, exists] =
@@ -120,16 +137,18 @@ specfem::assembly::element_intersections<
     get_intersections_on_host(
         const specfem::element_connections::type connection,
         const specfem::element_coupling::interface_tag edge,
-        const specfem::element::boundary_tag boundary) const {
+        const specfem::element::boundary_tag boundary,
+        const specfem::element_coupling::flux_scheme_tag flux_scheme) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
        BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET)),
+                    COMPOSITE_STACEY_DIRICHLET),
+       FLUX_SCHEME_TAG(NATURAL, SYMMETRIC_INTERIOR_PENALTY)),
       CAPTURE(h_self_edges, h_coupled_edges) {
         if (_connection_tag_ == connection && _interface_tag_ == edge &&
-            _boundary_tag_ == boundary) {
+            _boundary_tag_ == boundary && _flux_scheme_tag_ == flux_scheme) {
           return std::make_tuple(_h_self_edges_, _h_coupled_edges_);
         }
       })
@@ -143,16 +162,18 @@ std::tuple<EdgeViewType, EdgeViewType> specfem::assembly::element_intersections<
     get_intersections_on_device(
         const specfem::element_connections::type connection,
         const specfem::element_coupling::interface_tag edge,
-        const specfem::element::boundary_tag boundary) const {
+        const specfem::element::boundary_tag boundary,
+        const specfem::element_coupling::flux_scheme_tag flux_scheme) const {
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
        BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                    COMPOSITE_STACEY_DIRICHLET)),
+                    COMPOSITE_STACEY_DIRICHLET),
+       FLUX_SCHEME_TAG(NATURAL, SYMMETRIC_INTERIOR_PENALTY)),
       CAPTURE(self_edges, coupled_edges) {
         if (_connection_tag_ == connection && _interface_tag_ == edge &&
-            _boundary_tag_ == boundary) {
+            _boundary_tag_ == boundary && _flux_scheme_tag_ == flux_scheme) {
           return std::make_tuple(_self_edges_, _coupled_edges_);
         }
       })

@@ -39,7 +39,7 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
   const auto &conforming_interfaces = assembly.conforming_interfaces;
   const auto [self_intersections, coupled_intersections] =
       assembly.element_intersections.get_intersections_on_device(
-          connection_tag, interface_tag, boundary_tag);
+          connection_tag, interface_tag, boundary_tag, flux_scheme_tag);
 
   if (self_intersections.N != coupled_intersections.N) {
     KOKKOS_ABORT_WITH_LOCATION(
@@ -127,7 +127,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
   const auto &nonconforming_interfaces = assembly.nonconforming_interfaces;
   const auto [self_intersections, coupled_intersections] =
       assembly.element_intersections.get_intersections_on_device(
-          connection_tag, interface_tag, boundary_tag);
+          connection_tag, interface_tag, boundary_tag, flux_scheme_tag);
 
   if (self_intersections.N == 0 && coupled_intersections.N == 0)
     return;
