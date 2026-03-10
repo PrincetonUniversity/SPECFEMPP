@@ -26,6 +26,5 @@
     nonconforming_interface/index
     properties/index
     source/index
-    strain/index
     stress/index
     stress_integrands/index

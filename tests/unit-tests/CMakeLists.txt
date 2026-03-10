@@ -255,7 +255,6 @@ add_executable(
   point/boundary_tests.cpp
   point/jacobian_matrix_tests.cpp
   point/attenuation_tests.cpp
-  point/strain_tests.cpp
   point/source_tests.cpp
   point/stress_integrand_tests.cpp
   point/stress_tests.cpp
@@ -282,6 +281,7 @@ add_executable(
 target_link_libraries(
   point_tests
   point
+  specfem_environment
   gtest_main
   gmock_main
 )
@@ -765,6 +765,19 @@ target_link_libraries(
 )
 
 add_executable(
+  strain_tests
+  medium/strain/main.cpp
+  medium/strain/dim2/elastic_isotropic.cpp
+  medium/strain/dim3/elastic_isotropic.cpp
+)
+
+target_link_libraries(
+  strain_tests
+  point
+  gtest_main
+)
+
+add_executable(
   compute_coupling_tests
   compute_coupling/acoustic_elastic.cpp
   compute_coupling/elastic_acoustic.cpp
@@ -1006,6 +1019,7 @@ if(NOT MPI_PARALLEL)
     source_class_tests
     source_tests
     source_time_function_tests
+    strain_tests
     stress_tests
     test_mesh_utilities_mapping_2d
     test_mesh_utilities_mapping_3d

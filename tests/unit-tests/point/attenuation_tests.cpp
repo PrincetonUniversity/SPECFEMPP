@@ -1,6 +1,7 @@
 // Tests for specfem::point::attenuation (combined attenuation_factors +
 // memory_variable)
 
+#include "SPECFEM_Environment.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/element.hpp"
 #include "specfem/point/attenuation.hpp"
@@ -15,18 +16,7 @@
 using namespace specfem;
 
 template <bool UseSIMD>
-class PointAttenuationTestUntyped : public ::testing::Test {
-protected:
-  void SetUp() override {
-    if (!Kokkos::is_initialized())
-      Kokkos::initialize();
-  }
-
-  void TearDown() override {
-    if (Kokkos::is_initialized())
-      Kokkos::finalize();
-  }
-};
+class PointAttenuationTestUntyped : public ::testing::Test {};
 
 template <typename T>
 class PointAttenuationTest : public PointAttenuationTestUntyped<T::value> {};
