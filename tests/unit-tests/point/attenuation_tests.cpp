@@ -1,6 +1,7 @@
 // Tests for specfem::point::attenuation (combined attenuation_factors +
 // memory_variable)
 
+#include "SPECFEM_Environment.hpp"
 #include "specfem/constants.hpp"
 #include "specfem/element.hpp"
 #include "specfem/point/attenuation.hpp"
@@ -15,18 +16,7 @@
 using namespace specfem;
 
 template <bool UseSIMD>
-class PointAttenuationTestUntyped : public ::testing::Test {
-protected:
-  void SetUp() override {
-    if (!Kokkos::is_initialized())
-      Kokkos::initialize();
-  }
-
-  void TearDown() override {
-    if (Kokkos::is_initialized())
-      Kokkos::finalize();
-  }
-};
+class PointAttenuationTestUntyped : public ::testing::Test {};
 
 template <typename T>
 class PointAttenuationTest : public PointAttenuationTestUntyped<T::value> {};
@@ -548,4 +538,33 @@ TYPED_TEST(PointAttenuationTest, SIMDTypeVerification) {
       std::is_same_v<typename att3d::simd,
                      specfem::datatype::simd<type_real, using_simd> >;
   EXPECT_TRUE(simd_match_3d);
+}
+// ============================================================
+// None attenuation tag — construction
+// ============================================================
+
+TYPED_TEST(PointAttenuationTest, NoneAttenuation2D) {
+  constexpr bool using_simd = TypeParam::value;
+
+  using att_type =
+      point::attenuation<element::dimension_tag::dim2,
+                         element::medium_tag::elastic_psv,
+                         element::attenuation_tag::none, using_simd>;
+  att_type att;
+
+  EXPECT_EQ(att_type::attenuation_tag, element::attenuation_tag::none);
+  EXPECT_EQ(att_type::using_simd, using_simd);
+}
+
+TYPED_TEST(PointAttenuationTest, NoneAttenuation3D) {
+  constexpr bool using_simd = TypeParam::value;
+
+  using att_type =
+      point::attenuation<element::dimension_tag::dim3,
+                         element::medium_tag::elastic,
+                         element::attenuation_tag::none, using_simd>;
+  att_type att;
+
+  EXPECT_EQ(att_type::attenuation_tag, element::attenuation_tag::none);
+  EXPECT_EQ(att_type::using_simd, using_simd);
 }
