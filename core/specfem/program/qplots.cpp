@@ -51,12 +51,12 @@ bool specfem::program::qplots(const type_real Q, const type_real minfreq,
   // Get tau_sigma
   const auto tau_sigma =
       specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(
-          1.0 / maxfreq, 1.0 / minfreq);
+          minfreq, maxfreq);
 
   // Compute tau_eps for the given Q
   const auto tau_eps =
       specfem::attenuation::compute_tau_eps<specfem::constants::N_SLS>(
-          Q, tau_sigma, 1.0 / maxfreq, 1.0 / minfreq);
+          Q, tau_sigma, minfreq, maxfreq);
 
   // Print tau_sigma and tau_eps for debugging
   specfem::Logger::info("Computed tau_sigma:");

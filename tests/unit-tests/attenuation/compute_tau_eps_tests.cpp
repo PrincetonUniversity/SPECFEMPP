@@ -15,17 +15,15 @@ type_real compute_achieved_Q(
         tau_sigma,
     Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
         tau_eps,
-    type_real min_period, type_real max_period) {
+    type_real min_frequency, type_real max_frequency) {
 
   // Set up evaluation frequencies
   Kokkos::View<type_real[NF_ATTENUATION], Kokkos::LayoutRight,
                Kokkos::HostSpace>
       f("frequencies");
 
-  const type_real f1 = 1.0 / max_period;
-  const type_real f2 = 1.0 / min_period;
-  const type_real log_f1 = std::log10(f1);
-  const type_real log_f2 = std::log10(f2);
+  const type_real log_f1 = std::log10(min_frequency);
+  const type_real log_f2 = std::log10(max_frequency);
   const type_real d_log_f =
       (log_f2 - log_f1) / (static_cast<type_real>(NF_ATTENUATION) - 1);
 
@@ -62,9 +60,9 @@ type_real compute_achieved_Q(
  * @param tau_sigma Stress relaxation times
  * @param tau_eps Strain relaxation times
  * @param target_Q Target quality factor
- * @param min_period Minimum period (s)
- * @param max_period Maximum period (s)
- * @return LSQ error as a percentage (multiply by 100)
+ * @param min_frequency Minimum frequency (Hz)
+ * @param max_frequency Maximum frequency (Hz)
+ * @return LSQ error as a fraction (multiply by 100 for percent)
  */
 template <int N_SLS>
 type_real compute_lsq_error(
@@ -72,17 +70,15 @@ type_real compute_lsq_error(
         tau_sigma,
     Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
         tau_eps,
-    type_real target_Q, type_real min_period, type_real max_period) {
+    type_real target_Q, type_real min_frequency, type_real max_frequency) {
 
   // Set up evaluation frequencies
   Kokkos::View<type_real[NF_ATTENUATION], Kokkos::LayoutRight,
                Kokkos::HostSpace>
       f("frequencies");
 
-  const type_real f1 = 1.0 / max_period;
-  const type_real f2 = 1.0 / min_period;
-  const type_real log_f1 = std::log10(f1);
-  const type_real log_f2 = std::log10(f2);
+  const type_real log_f1 = std::log10(min_frequency);
+  const type_real log_f2 = std::log10(max_frequency);
   const type_real d_log_f =
       (log_f2 - log_f1) / (static_cast<type_real>(NF_ATTENUATION) - 1);
 
@@ -109,10 +105,11 @@ type_real compute_lsq_error(
 }
 
 /**
- * @brief Compute bandwidth in decades from period range
+ * @brief Compute bandwidth in decades from frequency range
  */
-inline type_real bandwidth_decades(type_real min_period, type_real max_period) {
-  return std::log10(max_period / min_period);
+inline type_real bandwidth_decades(type_real min_frequency,
+                                   type_real max_frequency) {
+  return std::log10(max_frequency / min_frequency);
 }
 
 // =============================================================================
@@ -135,16 +132,16 @@ TEST(Attenuation_ComputeTauEps, Savage2010_NSLS3_1p7Decades) {
   constexpr int N_SLS = 3;
   constexpr type_real target_Q = 80.0; // Q=80 as used in Savage 2010
 
-  // 1.7 decades: e.g., 0.1s to 5.01s (log10(5.01/0.1) ≈ 1.7)
-  const type_real min_period = 0.1;
-  const type_real max_period = min_period * std::pow(10.0, 1.7);
+  // 1.7 decades: max_frequency=10 Hz, min_frequency=10/10^1.7
+  const type_real max_frequency = 10.0;
+  const type_real min_frequency = max_frequency / std::pow(10.0, 1.7);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
   type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                 min_period, max_period);
+                                                 min_frequency, max_frequency);
   type_real lsq_error_percent = lsq_error * 100.0;
 
   // Savage 2010 predicts ~1% error for 1.7 decades with 3 SLS
@@ -157,7 +154,7 @@ TEST(Attenuation_ComputeTauEps, Savage2010_NSLS3_1p7Decades) {
 
   // Print for reference
   std::cout << "N_SLS=3, bandwidth="
-            << bandwidth_decades(min_period, max_period)
+            << bandwidth_decades(min_frequency, max_frequency)
             << " decades, LSQ error=" << lsq_error_percent << "%" << std::endl;
 }
 
@@ -166,23 +163,23 @@ TEST(Attenuation_ComputeTauEps, Savage2010_NSLS2_0p9Decades) {
   constexpr int N_SLS = 2;
   constexpr type_real target_Q = 80.0;
 
-  // 0.9 decades: e.g., 0.1s to 0.794s
-  const type_real min_period = 0.1;
-  const type_real max_period = min_period * std::pow(10.0, 0.9);
+  // 0.9 decades: max_frequency=10 Hz, min_frequency=10/10^0.9
+  const type_real max_frequency = 10.0;
+  const type_real min_frequency = max_frequency / std::pow(10.0, 0.9);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
   type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                 min_period, max_period);
+                                                 min_frequency, max_frequency);
   type_real lsq_error_percent = lsq_error * 100.0;
 
   EXPECT_LT(lsq_error_percent, 2.0)
       << "N_SLS=2 with 0.9 decades should achieve <2% LSQ error";
 
   std::cout << "N_SLS=2, bandwidth="
-            << bandwidth_decades(min_period, max_period)
+            << bandwidth_decades(min_frequency, max_frequency)
             << " decades, LSQ error=" << lsq_error_percent << "%" << std::endl;
 }
 
@@ -191,23 +188,23 @@ TEST(Attenuation_ComputeTauEps, Savage2010_NSLS4_2p5Decades) {
   constexpr int N_SLS = 4;
   constexpr type_real target_Q = 80.0;
 
-  // 2.5 decades: e.g., 0.1s to 31.6s
-  const type_real min_period = 0.1;
-  const type_real max_period = min_period * std::pow(10.0, 2.5);
+  // 2.5 decades: max_frequency=10 Hz, min_frequency=10/10^2.5
+  const type_real max_frequency = 10.0;
+  const type_real min_frequency = max_frequency / std::pow(10.0, 2.5);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
   type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                 min_period, max_period);
+                                                 min_frequency, max_frequency);
   type_real lsq_error_percent = lsq_error * 100.0;
 
   EXPECT_LT(lsq_error_percent, 2.0)
       << "N_SLS=4 with 2.5 decades should achieve <2% LSQ error";
 
   std::cout << "N_SLS=4, bandwidth="
-            << bandwidth_decades(min_period, max_period)
+            << bandwidth_decades(min_frequency, max_frequency)
             << " decades, LSQ error=" << lsq_error_percent << "%" << std::endl;
 }
 
@@ -216,23 +213,23 @@ TEST(Attenuation_ComputeTauEps, Savage2010_NSLS5_3p0Decades) {
   constexpr int N_SLS = 5;
   constexpr type_real target_Q = 80.0;
 
-  // 3.0 decades: e.g., 0.1s to 100s
-  const type_real min_period = 0.1;
-  const type_real max_period = min_period * std::pow(10.0, 3.0);
+  // 3.0 decades: max_frequency=10 Hz, min_frequency=10/10^3.0=0.01 Hz
+  const type_real max_frequency = 10.0;
+  const type_real min_frequency = max_frequency / std::pow(10.0, 3.0);
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
   type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                 min_period, max_period);
+                                                 min_frequency, max_frequency);
   type_real lsq_error_percent = lsq_error * 100.0;
 
   EXPECT_LT(lsq_error_percent, 2.0)
       << "N_SLS=5 with 3.0 decades should achieve <2% LSQ error";
 
   std::cout << "N_SLS=5, bandwidth="
-            << bandwidth_decades(min_period, max_period)
+            << bandwidth_decades(min_frequency, max_frequency)
             << " decades, LSQ error=" << lsq_error_percent << "%" << std::endl;
 }
 
@@ -240,23 +237,27 @@ TEST(Attenuation_ComputeTauEps, Savage2010_NSLS5_3p0Decades) {
 TEST(Attenuation_ComputeTauEps, Savage2010_ErrorIncreasesWithBandwidth) {
   constexpr int N_SLS = 3;
   constexpr type_real target_Q = 80.0;
-  constexpr type_real min_period = 0.1;
+  constexpr type_real max_frequency = 10.0;
 
   // Compute error at 1.7 decades (optimal for N_SLS=3)
-  type_real max_period_optimal = min_period * std::pow(10.0, 1.7);
-  auto tau_sigma_opt = compute_tau_sigma<N_SLS>(min_period, max_period_optimal);
-  auto tau_eps_opt = compute_tau_eps<N_SLS>(target_Q, tau_sigma_opt, min_period,
-                                            max_period_optimal);
-  type_real error_optimal = compute_lsq_error<N_SLS>(
-      tau_sigma_opt, tau_eps_opt, target_Q, min_period, max_period_optimal);
+  type_real min_frequency_optimal = max_frequency / std::pow(10.0, 1.7);
+  auto tau_sigma_opt =
+      compute_tau_sigma<N_SLS>(min_frequency_optimal, max_frequency);
+  auto tau_eps_opt = compute_tau_eps<N_SLS>(
+      target_Q, tau_sigma_opt, min_frequency_optimal, max_frequency);
+  type_real error_optimal =
+      compute_lsq_error<N_SLS>(tau_sigma_opt, tau_eps_opt, target_Q,
+                               min_frequency_optimal, max_frequency);
 
   // Compute error at 3.0 decades (too wide for N_SLS=3)
-  type_real max_period_wide = min_period * std::pow(10.0, 3.0);
-  auto tau_sigma_wide = compute_tau_sigma<N_SLS>(min_period, max_period_wide);
+  type_real min_frequency_wide = max_frequency / std::pow(10.0, 3.0);
+  auto tau_sigma_wide =
+      compute_tau_sigma<N_SLS>(min_frequency_wide, max_frequency);
   auto tau_eps_wide = compute_tau_eps<N_SLS>(target_Q, tau_sigma_wide,
-                                             min_period, max_period_wide);
-  type_real error_wide = compute_lsq_error<N_SLS>(
-      tau_sigma_wide, tau_eps_wide, target_Q, min_period, max_period_wide);
+                                             min_frequency_wide, max_frequency);
+  type_real error_wide =
+      compute_lsq_error<N_SLS>(tau_sigma_wide, tau_eps_wide, target_Q,
+                               min_frequency_wide, max_frequency);
 
   EXPECT_GT(error_wide, error_optimal)
       << "Error should increase when bandwidth exceeds optimal for given N_SLS";
@@ -270,25 +271,26 @@ TEST(Attenuation_ComputeTauEps, Savage2010_ErrorIncreasesWithBandwidth) {
 // Test that more SLS elements reduce error for same bandwidth
 TEST(Attenuation_ComputeTauEps, Savage2010_MoreSLSReducesError) {
   constexpr type_real target_Q = 80.0;
-  const type_real min_period = 0.1;
-  const type_real max_period = min_period * std::pow(10.0, 2.0); // 2 decades
+  // 2 decades
+  constexpr type_real max_frequency = 10.0;
+  constexpr type_real min_frequency = 0.1; // 2 decades
 
   // N_SLS = 2
   {
     constexpr int N_SLS = 2;
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
-    auto tau_eps =
-        compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
+                                          max_frequency);
     type_real error_2 = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                 min_period, max_period);
+                                                 min_frequency, max_frequency);
 
     // N_SLS = 4
     constexpr int N_SLS_4 = 4;
-    auto tau_sigma_4 = compute_tau_sigma<N_SLS_4>(min_period, max_period);
-    auto tau_eps_4 =
-        compute_tau_eps<N_SLS_4>(target_Q, tau_sigma_4, min_period, max_period);
+    auto tau_sigma_4 = compute_tau_sigma<N_SLS_4>(min_frequency, max_frequency);
+    auto tau_eps_4 = compute_tau_eps<N_SLS_4>(target_Q, tau_sigma_4,
+                                              min_frequency, max_frequency);
     type_real error_4 = compute_lsq_error<N_SLS_4>(
-        tau_sigma_4, tau_eps_4, target_Q, min_period, max_period);
+        tau_sigma_4, tau_eps_4, target_Q, min_frequency, max_frequency);
 
     EXPECT_LT(error_4, error_2)
         << "More SLS elements should reduce error for same bandwidth";
@@ -306,15 +308,15 @@ TEST(Attenuation_ComputeTauEps, Savage2010_MoreSLSReducesError) {
 TEST(Attenuation_ComputeTauEps, AchievesTargetQ_Medium) {
   constexpr int N_SLS = 3;
   constexpr type_real target_Q = 200.0;
-  constexpr type_real min_period = 0.01;
-  constexpr type_real max_period = 10.0;
+  constexpr type_real min_frequency = 0.1;
+  constexpr type_real max_frequency = 100.0;
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
-  type_real achieved_Q =
-      compute_achieved_Q<N_SLS>(tau_sigma, tau_eps, min_period, max_period);
+  type_real achieved_Q = compute_achieved_Q<N_SLS>(
+      tau_sigma, tau_eps, min_frequency, max_frequency);
 
   // Allow 5% tolerance on Q
   EXPECT_NEAR(achieved_Q, target_Q, target_Q * 0.05)
@@ -325,15 +327,15 @@ TEST(Attenuation_ComputeTauEps, AchievesTargetQ_Medium) {
 TEST(Attenuation_ComputeTauEps, AchievesTargetQ_Low) {
   constexpr int N_SLS = 3;
   constexpr type_real target_Q = 50.0;
-  constexpr type_real min_period = 0.01;
-  constexpr type_real max_period = 10.0;
+  constexpr type_real min_frequency = 0.1;
+  constexpr type_real max_frequency = 100.0;
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
-  type_real achieved_Q =
-      compute_achieved_Q<N_SLS>(tau_sigma, tau_eps, min_period, max_period);
+  type_real achieved_Q = compute_achieved_Q<N_SLS>(
+      tau_sigma, tau_eps, min_frequency, max_frequency);
 
   EXPECT_NEAR(achieved_Q, target_Q, target_Q * 0.05)
       << "Achieved Q should be close to target Q for low Q";
@@ -343,15 +345,15 @@ TEST(Attenuation_ComputeTauEps, AchievesTargetQ_Low) {
 TEST(Attenuation_ComputeTauEps, AchievesTargetQ_High) {
   constexpr int N_SLS = 3;
   constexpr type_real target_Q = 1000.0;
-  constexpr type_real min_period = 0.01;
-  constexpr type_real max_period = 10.0;
+  constexpr type_real min_frequency = 0.1;
+  constexpr type_real max_frequency = 100.0;
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
-  type_real achieved_Q =
-      compute_achieved_Q<N_SLS>(tau_sigma, tau_eps, min_period, max_period);
+  type_real achieved_Q = compute_achieved_Q<N_SLS>(
+      tau_sigma, tau_eps, min_frequency, max_frequency);
 
   EXPECT_NEAR(achieved_Q, target_Q, target_Q * 0.05)
       << "Achieved Q should be close to target Q for high Q";
@@ -361,12 +363,12 @@ TEST(Attenuation_ComputeTauEps, AchievesTargetQ_High) {
 TEST(Attenuation_ComputeTauEps, TauEpsGreaterThanTauS) {
   constexpr int N_SLS = 3;
   constexpr type_real target_Q = 200.0;
-  constexpr type_real min_period = 0.01;
-  constexpr type_real max_period = 10.0;
+  constexpr type_real min_frequency = 0.1;
+  constexpr type_real max_frequency = 100.0;
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
   for (int j = 0; j < N_SLS; ++j) {
     EXPECT_GT(tau_eps(j), tau_sigma(j))
@@ -378,12 +380,12 @@ TEST(Attenuation_ComputeTauEps, TauEpsGreaterThanTauS) {
 TEST(Attenuation_ComputeTauEps, ReturnsCorrectSize) {
   constexpr int N_SLS = 3;
   constexpr type_real target_Q = 200.0;
-  constexpr type_real min_period = 0.01;
-  constexpr type_real max_period = 10.0;
+  constexpr type_real min_frequency = 0.1;
+  constexpr type_real max_frequency = 100.0;
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
   EXPECT_EQ(tau_eps.extent(0), N_SLS);
 }
@@ -393,10 +395,11 @@ TEST(Attenuation_ComputeTauEps, ReturnsCorrectSize) {
 // error
 TEST(Attenuation_ComputeTauEps, DifferentNumberOfSLS) {
   constexpr type_real target_Q = 200.0;
-  constexpr type_real min_period = 0.01;
-  constexpr type_real max_period = 10.0; // 3 decades
+  // 3 decades: min_frequency=0.1, max_frequency=100.0
+  constexpr type_real min_frequency = 0.1;
+  constexpr type_real max_frequency = 100.0;
 
-  type_real bandwidth = bandwidth_decades(min_period, max_period);
+  type_real bandwidth = bandwidth_decades(min_frequency, max_frequency);
   std::cout << "Testing N_SLS comparison at " << bandwidth << " decades"
             << std::endl;
 
@@ -405,11 +408,11 @@ TEST(Attenuation_ComputeTauEps, DifferentNumberOfSLS) {
   // At 3 decades, expect much higher error
   {
     constexpr int N_SLS = 2;
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
-    auto tau_eps =
-        compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
-    type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                   min_period, max_period);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
+                                          max_frequency);
+    type_real lsq_error = compute_lsq_error<N_SLS>(
+        tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     // At 3 decades, N_SLS=2 should have significant error (>10% per Savage
     // curve)
     EXPECT_GT(lsq_error * 100.0, 5.0)
@@ -423,11 +426,11 @@ TEST(Attenuation_ComputeTauEps, DifferentNumberOfSLS) {
   // At 3 decades, expect slightly higher but still reasonable error
   {
     constexpr int N_SLS = 4;
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
-    auto tau_eps =
-        compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
-    type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                   min_period, max_period);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
+                                          max_frequency);
+    type_real lsq_error = compute_lsq_error<N_SLS>(
+        tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     EXPECT_LT(lsq_error * 100.0, 5.0)
         << "N_SLS=4 at 3 decades should achieve <5% LSQ error";
     std::cout << "  N_SLS=4: LSQ error=" << lsq_error * 100.0 << "%"
@@ -438,11 +441,11 @@ TEST(Attenuation_ComputeTauEps, DifferentNumberOfSLS) {
   // Savage 2010: N_SLS=5 achieves ~1% error at ~3.0 decades
   {
     constexpr int N_SLS = 5;
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
-    auto tau_eps =
-        compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
-    type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                   min_period, max_period);
+    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
+                                          max_frequency);
+    type_real lsq_error = compute_lsq_error<N_SLS>(
+        tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     EXPECT_LT(lsq_error * 100.0, 2.0)
         << "N_SLS=5 at 3 decades should achieve ~1% LSQ error (Savage 2010)";
     std::cout << "  N_SLS=5: LSQ error=" << lsq_error * 100.0 << "%"
@@ -450,23 +453,23 @@ TEST(Attenuation_ComputeTauEps, DifferentNumberOfSLS) {
   }
 }
 
-// Test with different period ranges using LSQ error metric
+// Test with different frequency ranges using LSQ error metric
 // Validates Savage 2010 bandwidth-error relationship for N_SLS=3
-TEST(Attenuation_ComputeTauEps, DifferentPeriodRanges) {
+TEST(Attenuation_ComputeTauEps, DifferentFrequencyRanges) {
   constexpr int N_SLS = 3;
   constexpr type_real target_Q = 200.0;
 
   std::cout << "Testing bandwidth vs LSQ error for N_SLS=3:" << std::endl;
 
-  // Narrow period range: 1 decade (well within optimal for N_SLS=3)
+  // Narrow frequency range: 1 decade (well within optimal for N_SLS=3)
   {
-    constexpr type_real min_period = 1.0;
-    constexpr type_real max_period = 10.0; // 1 decade
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
-    auto tau_eps =
-        compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
-    type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                   min_period, max_period);
+    constexpr type_real min_frequency = 0.1;
+    constexpr type_real max_frequency = 1.0; // 1 decade
+    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
+                                          max_frequency);
+    type_real lsq_error = compute_lsq_error<N_SLS>(
+        tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     // 1 decade is well below optimal 1.7 decades, should have very low error
     EXPECT_LT(lsq_error * 100.0, 1.1)
         << "1 decade bandwidth should achieve <1% LSQ error for N_SLS=3";
@@ -474,36 +477,36 @@ TEST(Attenuation_ComputeTauEps, DifferentPeriodRanges) {
               << std::endl;
   }
 
-  // Optimal period range: ~1.7 decades (Savage 2010 optimal for N_SLS=3)
+  // Optimal frequency range: ~1.7 decades (Savage 2010 optimal for N_SLS=3)
   {
-    constexpr type_real min_period = 0.1;
-    constexpr type_real max_period = 5.01; // ~1.7 decades
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
-    auto tau_eps =
-        compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
-    type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                   min_period, max_period);
+    constexpr type_real min_frequency = 1.0 / 5.01; // ~1.7 decades
+    constexpr type_real max_frequency = 10.0;
+    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
+                                          max_frequency);
+    type_real lsq_error = compute_lsq_error<N_SLS>(
+        tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     EXPECT_LT(lsq_error * 100.0, 2.0)
         << "1.7 decades should achieve ~1% LSQ error for N_SLS=3 (Savage 2010)";
-    std::cout << "  " << bandwidth_decades(min_period, max_period)
+    std::cout << "  " << bandwidth_decades(min_frequency, max_frequency)
               << " decades: LSQ error=" << lsq_error * 100.0 << "%"
               << std::endl;
   }
 
-  // Wide period range: 5 decades (far exceeds optimal for N_SLS=3)
+  // Wide frequency range: 5 decades (far exceeds optimal for N_SLS=3)
   // Savage 2010 predicts ~10% error at 3.5 decades, higher at 5 decades
   {
-    constexpr type_real min_period = 0.001;
-    constexpr type_real max_period = 100.0; // 5 decades
-    auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
-    auto tau_eps =
-        compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
-    type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                   min_period, max_period);
+    constexpr type_real min_frequency = 0.01;
+    constexpr type_real max_frequency = 1000.0; // 5 decades
+    auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
+    auto tau_eps = compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency,
+                                          max_frequency);
+    type_real lsq_error = compute_lsq_error<N_SLS>(
+        tau_sigma, tau_eps, target_Q, min_frequency, max_frequency);
     // 5 decades far exceeds optimal, expect significant error
     EXPECT_GT(lsq_error * 100.0, 5.0)
         << "5 decades bandwidth should have >5% LSQ error for N_SLS=3";
-    std::cout << "  " << bandwidth_decades(min_period, max_period)
+    std::cout << "  " << bandwidth_decades(min_frequency, max_frequency)
               << " decades: LSQ error=" << lsq_error * 100.0 << "%"
               << std::endl;
   }
@@ -514,22 +517,20 @@ TEST(Attenuation_ComputeTauEps, DifferentPeriodRanges) {
 TEST(Attenuation_ComputeTauEps, QReconstructionOverFrequencies) {
   constexpr int N_SLS = 3;
   constexpr type_real target_Q = 200.0;
-  constexpr type_real min_period = 0.01;
-  constexpr type_real max_period = 10.0; // 3 decades
+  constexpr type_real min_frequency = 0.1;
+  constexpr type_real max_frequency = 100.0; // 3 decades
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
   // Set up evaluation frequencies
   Kokkos::View<type_real[NF_ATTENUATION], Kokkos::LayoutRight,
                Kokkos::HostSpace>
       f("frequencies");
 
-  const type_real f1 = 1.0 / max_period;
-  const type_real f2 = 1.0 / min_period;
-  const type_real log_f1 = std::log10(f1);
-  const type_real log_f2 = std::log10(f2);
+  const type_real log_f1 = std::log10(min_frequency);
+  const type_real log_f2 = std::log10(max_frequency);
   const type_real d_log_f =
       (log_f2 - log_f1) / (static_cast<type_real>(NF_ATTENUATION) - 1);
 
@@ -554,10 +555,10 @@ TEST(Attenuation_ComputeTauEps, QReconstructionOverFrequencies) {
 
   // Compute LSQ error (Savage 2010 metric)
   type_real lsq_error = compute_lsq_error<N_SLS>(tau_sigma, tau_eps, target_Q,
-                                                 min_period, max_period);
+                                                 min_frequency, max_frequency);
 
   std::cout << "Q reconstruction at "
-            << bandwidth_decades(min_period, max_period)
+            << bandwidth_decades(min_frequency, max_frequency)
             << " decades:" << std::endl;
   std::cout << "  Max deviation: " << max_deviation * 100.0 << "%" << std::endl;
   std::cout << "  LSQ error (Savage 2010): " << lsq_error * 100.0 << "%"
@@ -575,12 +576,12 @@ TEST(Attenuation_ComputeTauEps, QReconstructionOverFrequencies) {
 TEST(Attenuation_ComputeTauEps, ValuesAreFiniteAndPositive) {
   constexpr int N_SLS = 3;
   constexpr type_real target_Q = 200.0;
-  constexpr type_real min_period = 0.01;
-  constexpr type_real max_period = 10.0;
+  constexpr type_real min_frequency = 0.1;
+  constexpr type_real max_frequency = 100.0;
 
-  auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
+  auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
   auto tau_eps =
-      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_period, max_period);
+      compute_tau_eps<N_SLS>(target_Q, tau_sigma, min_frequency, max_frequency);
 
   for (int j = 0; j < N_SLS; ++j) {
     EXPECT_TRUE(std::isfinite(tau_eps(j)))

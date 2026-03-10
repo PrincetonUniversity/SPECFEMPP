@@ -18,14 +18,13 @@ compute_tau_eps(
     type_real Q,
     Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
         tau_sigma,
-    type_real min_period, type_real max_period) {
+    type_real min_frequency, type_real max_frequency) {
 
   static_assert(N_SLS > 1,
                 "N_SLS must be greater than 1 for tau_eps computation");
 
   // Set up evaluation frequencies equally spaced in log10
-  // These span the same range as tau_sigma but with NF_ATTENUATION points
-  const auto f = specfem::utilities::logspace<specfem::constants::NF_ATTENUATION>(1/max_period, 1/min_period);
+  const auto f = specfem::utilities::logspace<specfem::constants::NF_ATTENUATION>(min_frequency, max_frequency);
 
   // Create the objective function
   AttenuationObjective<N_SLS> objective;
