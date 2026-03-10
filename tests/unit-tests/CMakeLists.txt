@@ -116,6 +116,7 @@ add_executable(
   logspace_tests
   utilities/logspace_tests.cpp
   utilities/logarithmic_center_tests.cpp
+  utilities/frequency_band_tests.cpp
 )
 
 target_link_libraries(
@@ -125,10 +126,10 @@ target_link_libraries(
   gtest_main
   Kokkos::kokkos
 )
-
 add_executable(
   attenuation_tests
   attenuation/runner.cpp
+  attenuation/compute_band_tests.cpp
   attenuation/compute_tau_sigma_tests.cpp
   attenuation/maxwell_tests.cpp
   attenuation/compute_tau_eps_tests.cpp
