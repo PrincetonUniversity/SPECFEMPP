@@ -17,7 +17,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
     const int nsteps_between_samples,
     const specfem::simulation::type simulation,
     const bool allocate_boundary_values,
-    const std::shared_ptr<specfem::io::reader> &property_reader) {
+    const std::shared_ptr<specfem::io::reader> &property_reader,
+    const specfem::element_coupling::flux_scheme_configuration
+        &flux_scheme_config) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures,
                  mesh.adjacency_graph };
   this->element_types = { this->mesh.nspec, this->mesh.element_grid.ngllz,
