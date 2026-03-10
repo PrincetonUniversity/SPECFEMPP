@@ -25,6 +25,14 @@ void write_container(
     const specfem::assembly::element_types<
         specfem::element::dimension_tag::dim2> &element_types,
     ContainerType &container);
+
+template <typename GroupType, typename ElementIndicesType,
+          typename DataContainerType>
+int write_medium_group(
+    GroupType &group,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const ElementIndicesType &element_indices,
+    const DataContainerType &data_container);
 } // namespace impl
 } // namespace io
 } // namespace specfem

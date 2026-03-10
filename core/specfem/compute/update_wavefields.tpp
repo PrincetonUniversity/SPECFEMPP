@@ -1,4 +1,3 @@
-#include "update_wavefields.hpp"
 #include "impl/compute_coupling.tpp"
 #include "impl/compute_source_interaction.tpp"
 #include "impl/compute_stiffness_interaction.tpp"
@@ -7,6 +6,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/tags.hpp"
+#include "update_wavefields.hpp"
 
 namespace specfem::compute {
 /**
@@ -26,8 +26,9 @@ namespace specfem::compute {
  * @return int Number of elements updated
  */
 template <int NGLL, typename Tags>
-int update_wavefields(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-                      const int istep) {
+int update_wavefields(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int istep) {
 
   constexpr auto WavefieldType = Tags::wavefield_tag;
   constexpr auto DimensionTag = Tags::dimension_tag;
@@ -36,7 +37,8 @@ int update_wavefields(specfem::assembly::assembly<Tags::dimension_tag> &assembly
   int elements_updated = 0;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
+      (DIMENSION_TAG(DIM2, DIM3),
+       CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
                     COMPOSITE_STACEY_DIRICHLET),

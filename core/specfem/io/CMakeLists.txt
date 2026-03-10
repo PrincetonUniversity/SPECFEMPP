@@ -26,3 +26,7 @@ target_compile_definitions(
         $<$<NOT:$<BOOL:${SPECFEM_ENABLE_HDF5}>>:-DNO_HDF5>
         $<$<NOT:$<BOOL:${SPECFEM_ENABLE_ADIOS2}>>:-DNO_ADIOS2>
 )
+
+set_target_properties(specfem_io PROPERTIES
+    UNITY_BUILD $<NOT:$<BOOL:${__APPLE__}>>
+)
