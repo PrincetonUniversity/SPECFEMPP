@@ -539,3 +539,32 @@ TYPED_TEST(PointAttenuationTest, SIMDTypeVerification) {
                      specfem::datatype::simd<type_real, using_simd> >;
   EXPECT_TRUE(simd_match_3d);
 }
+// ============================================================
+// None attenuation tag — construction
+// ============================================================
+
+TYPED_TEST(PointAttenuationTest, NoneAttenuation2D) {
+  constexpr bool using_simd = TypeParam::value;
+
+  using att_type =
+      point::attenuation<element::dimension_tag::dim2,
+                         element::medium_tag::elastic_psv,
+                         element::attenuation_tag::none, using_simd>;
+  att_type att;
+
+  EXPECT_EQ(att_type::attenuation_tag, element::attenuation_tag::none);
+  EXPECT_EQ(att_type::using_simd, using_simd);
+}
+
+TYPED_TEST(PointAttenuationTest, NoneAttenuation3D) {
+  constexpr bool using_simd = TypeParam::value;
+
+  using att_type =
+      point::attenuation<element::dimension_tag::dim3,
+                         element::medium_tag::elastic,
+                         element::attenuation_tag::none, using_simd>;
+  att_type att;
+
+  EXPECT_EQ(att_type::attenuation_tag, element::attenuation_tag::none);
+  EXPECT_EQ(att_type::using_simd, using_simd);
+}

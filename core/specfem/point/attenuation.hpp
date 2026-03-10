@@ -25,6 +25,57 @@ template <specfem::element::dimension_tag DimensionTag,
           specfem::element::attenuation_tag AttenuationTag, bool UseSIMD>
 struct attenuation;
 
+/**
+ * @brief Template specialization for no attenuation.
+ *
+ * Empty type — carries no data and requires no computation. Used when
+ * attenuation is disabled so that downstream code can be written generically
+ * against the attenuation interface without runtime cost.
+ *
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+ * @tparam MediumTag    Medium type
+ * @tparam UseSIMD      Enable SIMD vectorization
+ */
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element::medium_tag MediumTag, bool UseSIMD>
+struct attenuation<DimensionTag, MediumTag,
+                   specfem::element::attenuation_tag::none, UseSIMD>
+    : public specfem::data_access::Accessor<
+          specfem::datatype::AccessorType::point,
+          specfem::data_access::DataClassType::attenuation, DimensionTag,
+          UseSIMD> {
+private:
+  using base_type = specfem::data_access::Accessor<
+      specfem::datatype::AccessorType::point,
+      specfem::data_access::DataClassType::attenuation, DimensionTag, UseSIMD>;
+
+public:
+  // -----------------------------------------------------------------------
+  // Static properties
+  // -----------------------------------------------------------------------
+  constexpr static specfem::element::dimension_tag dimension_tag = DimensionTag;
+  constexpr static specfem::element::attenuation_tag attenuation_tag =
+      specfem::element::attenuation_tag::none;
+  constexpr static int N_SLS = specfem::constants::N_SLS;
+  constexpr static bool using_simd = UseSIMD;
+
+  // -----------------------------------------------------------------------
+  // Type aliases
+  // -----------------------------------------------------------------------
+  using simd = typename base_type::template simd<type_real>;
+  using value_type = typename base_type::template vector_type<type_real, N_SLS>;
+  using common_factor_type =
+      typename base_type::template vector_type<type_real, N_SLS>;
+
+  // -----------------------------------------------------------------------
+  // Constructors
+  // -----------------------------------------------------------------------
+
+  /** @brief Default constructor — no-op. */
+  KOKKOS_FUNCTION
+  attenuation() = default;
+};
+
 // ---------------------------------------------------------------------------
 // dim2 specialization
 // ---------------------------------------------------------------------------
