@@ -14,3 +14,4 @@ Cookbooks are a collection of examples that demonstrate how to use the package t
     :maxdepth: 3
 
     wavepropagation/index.rst
+    kernels/index.rst

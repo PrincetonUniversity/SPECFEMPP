@@ -10,7 +10,6 @@
     fluid-solid-bathymetry/index.rst
     fluid-solid-nonconforming/index.rst
     anisotropic-crystal/index.rst
-    kernels-example-tromp-2005/index.rst
     CUBIT/index.rst
     marmousi/index.rst
     translate_specfem2d_fortran_example/index.rst
