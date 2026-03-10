@@ -12,7 +12,7 @@
 /**
  * @brief Pop warning state (MSVC)
  */
-#define __SUPPRESS_WARNING_END __pragma("warning( pop )")
+#define _SUPPRESS_WARNING_END __pragma("warning( pop )")
 
 /**
  * @brief Disable warning 4172: returning address of local variable or temporary
@@ -64,10 +64,11 @@
 #define _SUPPRESS_WARNING_END _Pragma("clang diagnostic pop")
 
 /**
- * @brief Disable -Wreturn-stack-address (Clang)
+ * @brief Disable -Wreturn-stack-address and -Wreturn-local-addr (Clang)
  */
 #define _SUPPRESS_TEMPORARY_RETURN_CODE                                        \
-  _Pragma("clang diagnostic ignored \"-Wreturn-stack-address\"")
+  _Pragma("clang diagnostic ignored \"-Wreturn-stack-address\"")               \
+      _Pragma("clang diagnostic ignored \"-Wreturn-local-addr\"")
 
 /**
  * @brief Push warning state (Clang)
