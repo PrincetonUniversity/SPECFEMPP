@@ -64,7 +64,7 @@ public:
    */
   static void sync() {
     check_context();
-#ifdef MPI_PARALLEL
+#ifdef c
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
   }

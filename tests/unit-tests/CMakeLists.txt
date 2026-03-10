@@ -115,6 +115,7 @@ target_link_libraries(
 add_executable(
   logspace_tests
   utilities/logspace_tests.cpp
+  utilities/logarithmic_center_tests.cpp
 )
 
 target_link_libraries(
