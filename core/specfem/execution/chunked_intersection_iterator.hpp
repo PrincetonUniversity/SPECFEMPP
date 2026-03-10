@@ -54,6 +54,7 @@
 #pragma once
 
 #include "chunked_edge_iterator.hpp"
+#include "chunked_face_iterator.hpp"
 #include "policy.hpp"
 #include "specfem/point.hpp"
 #include "void_iterator.hpp"
@@ -159,12 +160,8 @@ public:
   KOKKOS_INLINE_FUNCTION
   constexpr const iterator_type get_iterator() const { return iterator_type{}; }
 
-public:
-  int ipoint; ///< Position along the interface
-
 private:
   index_type index;             ///< Index of the GLL point on the interface
-  index_type local_index;       ///< Index of the GLL point relative to chunk
   KokkosIndexType kokkos_index; ///< Kokkos index type
 };
 

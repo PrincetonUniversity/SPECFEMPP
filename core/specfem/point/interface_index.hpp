@@ -9,9 +9,11 @@ namespace specfem::point {
 /**
  * @brief Index pair for coupled interface points
  *
- * Contains edge indices for both sides of a coupled interface between
- * different physical media. Used to locate corresponding points on
- * interfaces between acoustic and elastic domains.
+ * This struct holds the indices of corresponding points on the self and coupled
+ * sides of an interface. It provides a unified way to access the local
+ * coordinates of the interface points for both sides, which is essential for
+ * computing fluxes, and applying coupling conditions in multi-domain
+ * simulations.
  *
  * @tparam DimensionTag Spatial dimension (dim2 or dim3)
  */
