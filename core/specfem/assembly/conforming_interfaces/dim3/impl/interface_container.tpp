@@ -1,13 +1,13 @@
 #pragma once
 
-#include "specfem/enums.hpp"
-#include "specfem/element.hpp"
-#include "specfem/element_coupling.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
-#include "specfem/assembly/face_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element_coupling.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
 #include "specfem/mesh_entity.hpp"
 #include "specfem/point.hpp"
@@ -19,8 +19,8 @@ specfem::assembly::conforming_interfaces_impl::interface_container<
     specfem::element_connections::type::weakly_conforming>::
     interface_container(
         const int ngllz, const int nglly, const int ngllx,
-        const specfem::assembly::face_types<specfem::element::dimension_tag::dim3>
-            &face_types,
+        const specfem::assembly::element_intersections<
+            specfem::element::dimension_tag::dim3> &element_intersections,
         const specfem::assembly::jacobian_matrix<dimension_tag>
             &jacobian_matrix,
         const specfem::assembly::mesh<dimension_tag> &mesh) {
@@ -29,24 +29,25 @@ specfem::assembly::conforming_interfaces_impl::interface_container<
     KOKKOS_ABORT_WITH_LOCATION("Invalid GLL grid size");
   }
 
-  const auto [self_faces, coupled_faces] = face_types.get_faces_on_host(
-      specfem::element_connections::type::weakly_conforming, InterfaceTag,
-      BoundaryTag);
+  const auto [self_faces, coupled_faces] =
+      element_intersections.get_intersections_on_host(
+          specfem::element_connections::type::weakly_conforming, InterfaceTag,
+          BoundaryTag);
 
-  const int nfaces = self_faces.n_faces;
+  const int N = self_faces.N;
   const int npoints = self_faces.n_points;
 
-  this->face_factor = FaceFactorView(
-      "specfem::assembly::coupled_interfaces::face_factor", nfaces, npoints,
-      npoints);
-  this->face_normal = FaceNormalView(
-      "specfem::assembly::coupled_interfaces::face_normal", nfaces, npoints,
-      npoints, 3);
+  this->face_factor =
+      FaceFactorView("specfem::assembly::coupled_interfaces::face_factor", N,
+                     npoints, npoints);
+  this->face_normal =
+      FaceNormalView("specfem::assembly::coupled_interfaces::face_normal", N,
+                     npoints, npoints, 3);
 
   this->h_face_factor = Kokkos::create_mirror_view(face_factor);
   this->h_face_normal = Kokkos::create_mirror_view(face_normal);
 
-  for (int i = 0; i < nfaces; ++i) {
+  for (int i = 0; i < N; ++i) {
     const auto face = self_faces(i);
     for (int ipoint_i = 0; ipoint_i < npoints; ++ipoint_i) {
       for (int ipoint_j = 0; ipoint_j < npoints; ++ipoint_j) {
@@ -60,8 +61,7 @@ specfem::assembly::conforming_interfaces_impl::interface_container<
         specfem::assembly::load_on_host(point_index, jacobian_matrix,
                                         point_jacobian_matrix);
 
-        const auto dn =
-            point_jacobian_matrix.compute_normal(face_pt.face_type);
+        const auto dn = point_jacobian_matrix.compute_normal(face_pt.face_type);
         this->h_face_normal(i, ipoint_i, ipoint_j, 0) = dn(0);
         this->h_face_normal(i, ipoint_i, ipoint_j, 1) = dn(1);
         this->h_face_normal(i, ipoint_i, ipoint_j, 2) = dn(2);

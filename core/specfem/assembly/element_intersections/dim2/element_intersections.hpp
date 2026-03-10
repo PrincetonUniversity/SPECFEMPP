@@ -75,8 +75,8 @@ template <typename ExecutionSpace> struct Edge {
 template <typename ExecutionSpace,
           typename Layout = typename ExecutionSpace::array_layout>
 struct EdgeView {
-  int n_edges;  ///< Number of edges in this view
-  int n_points; ///< Number of quadrature points per edge
+  int N;        ///< Number of intersections in this view
+  int n_points; ///< Number of quadrature points per intersection
   using IndexView =
       Kokkos::View<int *, Layout, ExecutionSpace>; ///< View type for integer
                                                    ///< indices
@@ -96,33 +96,31 @@ struct EdgeView {
   /**
    * @brief Default constructor creating empty edge view.
    */
-  EdgeView() : n_edges(0), n_points(0) {}
+  EdgeView() : N(0), n_points(0) {}
 
   /**
    * @brief Construct edge view with allocated storage.
    *
    * @param label Base label for Kokkos view names
-   * @param n_edges Number of edges to allocate
-   * @param n_points Number of quadrature points per edge
+   * @param N Number of intersections to allocate
+   * @param n_points Number of quadrature points per intersection
    */
-  EdgeView(const std::string &label, const int n_edges, const int n_points)
-      : n_edges(n_edges), n_points(n_points),
-        element_index(label + "_element_index", n_edges),
-        edge_index(label + "_edge_index", n_edges),
-        edge_types(label + "_edge_types", n_edges),
-        iz(label + "_iz", n_edges, n_points),
-        ix(label + "_ix", n_edges, n_points) {}
+  EdgeView(const std::string &label, const int N, const int n_points)
+      : N(N), n_points(n_points), element_index(label + "_element_index", N),
+        edge_index(label + "_edge_index", N),
+        edge_types(label + "_edge_types", N), iz(label + "_iz", N, n_points),
+        ix(label + "_ix", N, n_points) {}
 
-  IndexView element_index; ///< Element indices for each edge
+  IndexView element_index; ///< Element indices for each intersection
   IndexView edge_index;    ///< Local edge indices within elements
   EdgeTypeView edge_types; ///< 2D edge type classifications
-  QPView iz;               ///< Z-direction quadrature indices for all edges
-  QPView ix;               ///< X-direction quadrature indices for all edges
+  QPView iz; ///< Z-direction quadrature indices for all intersections
+  QPView ix; ///< X-direction quadrature indices for all edges
 
   /**
    * @brief Device-side constructor from existing views.
    *
-   * @param n_edges Number of edges
+   * @param N Number of edges
    * @param n_points Number of quadrature points per edge
    * @param element_index Element indices view
    * @param edge_index Edge indices view
@@ -131,10 +129,10 @@ struct EdgeView {
    * @param ix X-direction quadrature indices
    */
   KOKKOS_INLINE_FUNCTION
-  EdgeView(const int n_edges, const int n_points,
-           const IndexView &element_index, const IndexView &edge_index,
-           const EdgeTypeView &edge_types, const QPView &iz, const QPView &ix)
-      : n_edges(n_edges), n_points(n_points), element_index(element_index),
+  EdgeView(const int N, const int n_points, const IndexView &element_index,
+           const IndexView &edge_index, const EdgeTypeView &edge_types,
+           const QPView &iz, const QPView &ix)
+      : N(N), n_points(n_points), element_index(element_index),
         edge_index(edge_index), edge_types(edge_types), iz(iz), ix(ix) {}
 
   /**
@@ -182,8 +180,8 @@ struct EdgeView {
  *
  * @code
  * // Construct 2D edge types from mesh data
- * specfem::assembly::edge_types<specfem::element::dimension_tag::dim2> edges(
- *     ngllx, ngllz, mesh, element_types);
+ * specfem::assembly::element_intersections<specfem::element::dimension_tag::dim2>
+ * edges( ngllx, ngllz, mesh, element_types);
  *
  * // Get elastic-acoustic coupling edges on device
  * auto [self_edges, coupled_edges] = edges.get_edges_on_device(
@@ -192,7 +190,8 @@ struct EdgeView {
  *     specfem::element::boundary_tag::none);
  * @endcode
  */
-template <> struct edge_types<specfem::element::dimension_tag::dim2> {
+template <>
+struct element_intersections<specfem::element::dimension_tag::dim2> {
 
 public:
   constexpr static auto dimension_tag =
@@ -210,7 +209,7 @@ private:
     const auto label = view.element_index.label();
     // remove element_index suffix
     const auto base_label = label.substr(0, label.size() - 14);
-    return EdgeViewType::HostMirror(base_label + "_host_mirror", view.n_edges,
+    return EdgeViewType::HostMirror(base_label + "_host_mirror", view.N,
                                     view.n_points);
   }
 
@@ -234,9 +233,10 @@ public:
    */
   std::tuple<typename EdgeViewType::HostMirror,
              typename EdgeViewType::HostMirror>
-  get_edges_on_host(const specfem::element_connections::type connection,
-                    const specfem::element_coupling::interface_tag edge,
-                    const specfem::element::boundary_tag boundary) const;
+  get_intersections_on_host(
+      const specfem::element_connections::type connection,
+      const specfem::element_coupling::interface_tag edge,
+      const specfem::element::boundary_tag boundary) const;
 
   /**
    * @brief Get edge pairs for coupling computations in device memory.
@@ -246,10 +246,10 @@ public:
    * @param boundary Boundary condition type
    * @return Tuple of (self_edges, coupled_edges) for device processing
    */
-  std::tuple<EdgeViewType, EdgeViewType>
-  get_edges_on_device(const specfem::element_connections::type connection,
-                      const specfem::element_coupling::interface_tag edge,
-                      const specfem::element::boundary_tag boundary) const;
+  std::tuple<EdgeViewType, EdgeViewType> get_intersections_on_device(
+      const specfem::element_connections::type connection,
+      const specfem::element_coupling::interface_tag edge,
+      const specfem::element::boundary_tag boundary) const;
 
   /**
    * @brief Construct 2D edge types from mesh and element information.
@@ -259,7 +259,7 @@ public:
    * @param mesh 2D assembly mesh with connectivity information
    * @param element_types Element classification for coupling detection
    */
-  edge_types(
+  element_intersections(
       const int ngllx, const int ngllz,
       const specfem::assembly::mesh<dimension_tag> &mesh,
       const specfem::assembly::element_types<dimension_tag> &element_types);
@@ -267,7 +267,7 @@ public:
   /**
    * @brief Default constructor.
    */
-  edge_types() = default;
+  element_intersections() = default;
 
 private:
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
@@ -281,7 +281,7 @@ private:
                               (EdgeViewType::HostMirror, h_coupled_edges)))
 };
 
-specfem::assembly::edge_types<
+specfem::assembly::element_intersections<
     specfem::element::dimension_tag::dim2>::EdgeViewType::HostMirror
 edge_view_from_collected_edges(
     const std::string &label,

@@ -23,9 +23,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
   this->element_types = { this->mesh.nspec, this->mesh.element_grid.ngllz,
                           this->mesh.element_grid.ngllx, this->mesh,
                           mesh.tags };
-  this->edge_types = { this->mesh.element_grid.ngllx,
-                       this->mesh.element_grid.ngllz, this->mesh,
-                       this->element_types };
+  this->element_intersections = { this->mesh.element_grid.ngllx,
+                                  this->mesh.element_grid.ngllz, this->mesh,
+                                  this->element_types };
   this->jacobian_matrix = { this->mesh };
   this->properties = { this->mesh.nspec,
                        this->mesh.element_grid.ngllz,
@@ -60,11 +60,11 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                        this->jacobian_matrix };
   this->conforming_interfaces = { this->mesh.element_grid.ngllz,
                                   this->mesh.element_grid.ngllx,
-                                  this->edge_types, this->jacobian_matrix,
-                                  this->mesh };
+                                  this->element_intersections,
+                                  this->jacobian_matrix, this->mesh };
   this->nonconforming_interfaces = { this->mesh.element_grid.ngllz,
                                      this->mesh.element_grid.ngllx,
-                                     this->edge_types, this->mesh };
+                                     this->element_intersections, this->mesh };
   this->fields = { this->mesh, this->element_types, simulation };
 
   this->info = { this->mesh, this->properties, this->element_types };

@@ -3,7 +3,7 @@
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/info.hpp"
@@ -62,13 +62,14 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
   specfem::assembly::element_types<dimension_tag> element_types;
 
   /**
-   * @brief Edge types for every edge on coupled interface in the mesh.
+   * @brief Element intersections for every element in the mesh.
    *
-   * The edge type defines the flux scheme to used when computing coupling terms
-   * between two media (e.g., fluid-solid interface).
+   * The element intersections container stores information about the
+   * intersections between elements in the mesh (e.g., internal faces, boundary
+   * faces).
    *
    */
-  specfem::assembly::edge_types<dimension_tag> edge_types;
+  specfem::assembly::element_intersections<dimension_tag> element_intersections;
 
   /**
    * @brief Partial derivatives of the basis functions at every quadrature point

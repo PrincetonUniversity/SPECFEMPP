@@ -1,4 +1,4 @@
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -65,7 +65,7 @@ struct TestRangeAccessFunctor {
   KOKKOS_INLINE_FUNCTION
   void operator()(const int) const {
     EdgeViewType subview = view(Kokkos::make_pair(1, 3));
-    results(0) = subview.n_edges;
+    results(0) = subview.N;
     results(1) = subview.n_points;
     results(2) = subview.element_index(0);
     results(3) = subview.element_index(1);
@@ -174,14 +174,14 @@ protected:
 
 TEST_F(AssemblyEdgeViewTest, DefaultConstructor) {
   EdgeView view;
-  EXPECT_EQ(view.n_edges, 0);
+  EXPECT_EQ(view.N, 0);
   EXPECT_EQ(view.n_points, 0);
 }
 
 TEST_F(AssemblyEdgeViewTest, AllocatingConstructor) {
   EdgeView view("test_edges", num_edges, num_points);
 
-  EXPECT_EQ(view.n_edges, num_edges);
+  EXPECT_EQ(view.N, num_edges);
   EXPECT_EQ(view.n_points, num_points);
 
   // Check view dimensions
@@ -386,7 +386,7 @@ TEST_F(AssemblyEdgeViewHostMirrorTest, HostMirrorType) {
 
   HostMirror host_view("host_edges", num_edges, num_points);
 
-  EXPECT_EQ(host_view.n_edges, num_edges);
+  EXPECT_EQ(host_view.N, num_edges);
   EXPECT_EQ(host_view.n_points, num_points);
 
   // Initialize on host

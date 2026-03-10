@@ -240,7 +240,7 @@ public:
   ChunkedEdgeIntersectionIterator(const TeamMemberType &team_member,
                                   const ViewType &self_edges,
                                   const ViewType &coupled_edges)
-      : base_type(team_member, self_edges.n_edges * self_edges.n_points),
+      : base_type(team_member, self_edges.N * self_edges.n_points),
         self_iterator(team_member, self_edges),
         coupled_iterator(team_member, coupled_edges) {}
 
@@ -573,9 +573,9 @@ public:
   ChunkedIntersectionIterator(const ViewType self_edges,
                               const ViewType coupled_edges)
       : self_edges(self_edges), coupled_edges(coupled_edges),
-        base_type(((self_edges.n_edges / chunk_size) +
-                   ((self_edges.n_edges % chunk_size) != 0)),
-                  Kokkos::AUTO, Kokkos::AUTO) {}
+        base_type(
+            ((self_edges.N / chunk_size) + ((self_edges.N % chunk_size) != 0)),
+            Kokkos::AUTO, Kokkos::AUTO) {}
 
   /**
    * @brief Constructor with parallel configuration
@@ -604,8 +604,8 @@ public:
   const index_type operator()(const policy_index_type &team) const {
     const auto league_id = team.league_rank();
     const int start = league_id * chunk_size;
-    const int end = ((start + chunk_size) > self_edges.n_edges)
-                        ? self_edges.n_edges
+    const int end = ((start + chunk_size) > self_edges.N)
+                        ? self_edges.N
                         : (start + chunk_size);
     const auto my_self_edges = self_edges(Kokkos::make_pair(start, end));
     const auto my_coupled_edges = coupled_edges(Kokkos::make_pair(start, end));

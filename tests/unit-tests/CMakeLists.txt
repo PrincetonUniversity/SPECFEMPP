@@ -488,8 +488,8 @@ add_executable(
   assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
   assembly/info/compute_tests.cpp
   assembly/info/scatter_minmax_tests.cpp
-  assembly/edge_types/edge_types_tests.cpp
-  assembly/face_types/face_types_tests.cpp
+  assembly/element_intersections/edge_types_tests.cpp
+  assembly/element_intersections/face_types_tests.cpp
 
   # New dim3 tests
   assembly/dim3/mesh/shape_functions.cpp

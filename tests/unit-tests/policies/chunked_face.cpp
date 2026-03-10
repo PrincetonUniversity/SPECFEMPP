@@ -1,5 +1,5 @@
 #include "../SPECFEM_Environment.hpp"
-#include "specfem/assembly/face_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/element.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
@@ -354,31 +354,31 @@ TEST_F(FaceCoordinateMappingTest, RightFace) {
  */
 class FaceViewTest : public ::testing::Test {
 protected:
-  static constexpr int n_faces = 10;
+  static constexpr int N = 10;
   static constexpr int n_points = 5;
 };
 
 TEST_F(FaceViewTest, Construction) {
-  specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace> faces(
-      "test_faces", n_faces, n_points);
-  EXPECT_EQ(faces.n_faces, n_faces);
+  specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace> faces("test_faces",
+                                                                   N, n_points);
+  EXPECT_EQ(faces.N, N);
   EXPECT_EQ(faces.n_points, n_points);
 }
 
 TEST_F(FaceViewTest, SubviewExtraction) {
   using FaceViewType =
       specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
-  FaceViewType faces("test_faces", n_faces, n_points);
+  FaceViewType faces("test_faces", N, n_points);
 
   // Initialize some data
-  Kokkos::parallel_for(
-      "init", Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, n_faces),
-      InitFaceViewIndicesFunctor<FaceViewType>(faces));
+  Kokkos::parallel_for("init",
+                       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+                       InitFaceViewIndicesFunctor<FaceViewType>(faces));
   Kokkos::fence();
 
   // Get a subview
   auto subview = faces(Kokkos::make_pair(2, 5));
-  EXPECT_EQ(subview.n_faces, 3);
+  EXPECT_EQ(subview.N, 3);
   EXPECT_EQ(subview.n_points, n_points);
 
   // Verify subview data
@@ -393,12 +393,12 @@ TEST_F(FaceViewTest, SubviewExtraction) {
 TEST_F(FaceViewTest, FaceAccess) {
   using FaceViewType =
       specfem::assembly::FaceView<Kokkos::DefaultExecutionSpace>;
-  FaceViewType faces("test_faces", n_faces, n_points);
+  FaceViewType faces("test_faces", N, n_points);
 
   // Initialize
-  Kokkos::parallel_for(
-      "init", Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, n_faces),
-      InitFaceViewFullFunctor<FaceViewType>(faces, n_points));
+  Kokkos::parallel_for("init",
+                       Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+                       InitFaceViewFullFunctor<FaceViewType>(faces, n_points));
   Kokkos::fence();
 
   // Test accessing a face and its points on device
