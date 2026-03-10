@@ -2,7 +2,7 @@
 
 **Files:** `core/specfem/mesh/`
 
-The `mesh<DimensionTag>` struct stores everything read from the **external mesher database** (a Fortran binary file produced by MESHFEM2D/MESHFEM3D). It is a passive data container — no computation happens here.
+The `mesh<DimensionTag>` struct stores everything read from the **external mesher database** (a Fortran binary file produced by MESHFEM2D/MESHFEM3D). It is a passive data container — no computation happens here. The goal is to have an interface that is as close as possible to the original Fortran data structures, to have a clear representation of the mesh as it is written by the mesher. This helps us to isolate the Fortran binary reading logic in `io::read_2d_mesh` / `io::read_3d_mesh` and keep the rest of the codebase independent of the Fortran data layout.
 
 ## Sub-structs
 

@@ -16,6 +16,8 @@ The `setup` class parses a YAML parameter file and holds all configuration as ty
 
 ## YAML to C++ Mapping
 
+Each section of the YAML configuration corresponds to a C++ class or struct within the `runtime_configuration` namespace. The `setup` class is responsible for parsing the YAML and populating these classes, which are then used to instantiate the appropriate components of the simulation.
+
 | YAML section | C++ class |
 |---|---|
 | `header` | `runtime_configuration::header` |

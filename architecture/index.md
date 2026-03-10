@@ -98,4 +98,22 @@ SPECFEM++ is a complete C++ rewrite of the SPECFEM suite (SPECFEM2D, SPECFEM3D, 
 
 ---
 
-*For API reference documentation, see the [online Doxygen docs](https://specfem2d-kokkos.readthedocs.io/en/latest/). For usage examples, see the [`examples/`](../examples/) directory.*
+## Navigating the API Documentation
+
+The full API reference is published on [Read the Docs](https://specfem2d-kokkos.readthedocs.io/en/latest/sections/api/index.html) and is generated from Doxygen comments in the source code.
+
+### Key principle: every concept is a namespace
+
+SPECFEM++ organizes its codebase so that every major concept (mesh, solver, assembly, I/O, etc.) lives in its own C++ namespace under the top-level `specfem::` namespace. The RTD documentation mirrors this hierarchy exactly — each namespace becomes an RST section, and nested namespaces become nested sections.
+
+### How namespace → URL mapping works
+
+The RTD site is built from `.rst` files in `docs/sections/api/specfem/`. Each namespace gets its own directory with an `index.rst` that uses Breathe's `doxygennamespace` directive to pull in the Doxygen-generated description, and a `toctree` listing the sub-pages for classes, structs, and child namespaces within it.
+
+**Example: finding the `specfem::mesh::mesh` struct**
+
+1. **Start at the API root** — open the [API documentation index](https://specfem2d-kokkos.readthedocs.io/en/latest/sections/api/index.html). This page lists the top-level `specfem` namespace.
+
+2. **Navigate to the `specfem::mesh` namespace** — click into **specfem → mesh**.
+
+3. **Open the specific class/struct page** — click **mesh** to reach the `specfem::mesh::mesh` struct documentation
