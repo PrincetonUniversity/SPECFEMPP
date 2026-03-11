@@ -2,6 +2,7 @@
 
 #include "specfem/data_access.hpp"
 #include "specfem/datatype.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 

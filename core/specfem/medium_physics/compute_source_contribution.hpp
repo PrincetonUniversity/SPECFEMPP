@@ -31,7 +31,7 @@ namespace medium_physics {
  * @code{.cpp}
  * // Example usage for 2D elastic isotropic medium
  * using Source     = specfem::point::source<dim2, elastic, false>;
- * using Properties = specfem::point::properties<dim2, elastic, isotropic, false>;
+ * using Properties = specfem::point::properties<specfem::tags::Tags<dim2, elastic, isotropic, false>>;
  *
  * Source     src   = ...;  // Initialize source parameters
  * Properties props = ...;  // Initialize material properties
