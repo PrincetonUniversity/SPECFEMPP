@@ -133,7 +133,7 @@ target_link_libraries(meshfem2D_shared_mpi
   meshfem2D::shared_objects
   )
 
-if (WITH_MPI)
+if (SPECFEM_ENABLE_MPI)
   target_link_libraries(meshfem2D_shared_mpi PRIVATE MPI::MPI_Fortran)
 endif()
 
@@ -221,7 +221,7 @@ target_link_libraries(meshfem2D_mesh_mpi
   meshfem2D::mesh
 )
 
-if (WITH_MPI)
+if (SPECFEM_ENABLE_MPI)
   target_link_libraries(meshfem2D_mesh_mpi PRIVATE MPI::MPI_Fortran)
 endif()
 
@@ -242,7 +242,7 @@ target_link_libraries(
     meshfem2D::cc_objects
 )
 
-if (WITH_MPI)
+if (SPECFEM_ENABLE_MPI)
   target_link_libraries(xmeshfem2D PRIVATE MPI::MPI_Fortran)
 endif()
 
