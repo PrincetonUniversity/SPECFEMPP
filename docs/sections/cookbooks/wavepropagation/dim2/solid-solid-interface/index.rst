@@ -1,5 +1,5 @@
-Wave propagation through solid-solid interface
-==============================================
+Solid-solid interface
+=====================
 
 In this example (see :repo-file:`benchmarks/src/dim2/solid-solid-interface`) we are simulating a medium with two solids. This is a classic
 example from the computational seismology class at Princeton University, in which

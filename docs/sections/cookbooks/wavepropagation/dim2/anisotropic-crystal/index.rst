@@ -1,5 +1,5 @@
-Wave propagation through anisotropic zinc crystal
-=================================================
+Anisotropic zinc crystal
+========================
 
 In this cookbook (see :repo-file:`benchmarks/src/dim2/anisotropic-crystal`), we simulate wave propagation through a 2-dimensional anisotropic zinc crystal.
 

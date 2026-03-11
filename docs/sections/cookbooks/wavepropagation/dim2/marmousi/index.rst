@@ -1,7 +1,7 @@
 .. _marmousi_example:
 
-Wave propagation through the Marmousi2 model
-============================================
+Marmousi2 model
+===============
 
 In this example (see :repo-file:`benchmarks/src/dim2/marmousi`) we simulate wave propagation through the 2-dimensional Marmousi2 model,
 a complex synthetic velocity model commonly used for testing seismic wave propagation

@@ -1,13 +1,13 @@
 .. _docs_sections_cookbooks_dim2_CUBIT:
 
-Running SPECFEM++ using a CUBIT mesh
-====================================
+Using a CUBIT mesh in SPECFEM++
+===============================
 
 As with any finite element solver, SPECFEM++ solver requires a mesh generation step to discritize the domain. In particular, our spectral element solver requires an hexahedral mesh, and does not support tetrahedral meshes. Up until now, all previous examples use the internal mesher to mesh simple domains - particularly domains with layered sandwitch structures. However, for more complex domains, we need to use an external mesher. In this example, we will use CUBIT to generate a mesh for a simple 2D rectangular domain with an ellipsoidal cavity.
 
 .. note::
 
-    Please note that this is not inteded to be an in-depth tutorial on meshing using CUBIT. The goal of this cookbook is to demonstrate how to define the mesh so that SPECFEM++ solver is able to read it. For more information on meshing using CUBIT, please refer to the `CUBIT tutorials <https://cubit.sandia.gov/tutorials>`_.`
+    Please note that this is not inteded to be an in-depth tutorial on meshing using CUBIT. The goal of this cookbook is to demonstrate how to define the mesh so that SPECFEM++ solver is able to read it. For more information on meshing using CUBIT, please refer to the `CUBIT tutorials <https://cubit.sandia.gov/tutorials>`_.
 
 Creating the domain
 -------------------

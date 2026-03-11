@@ -1,7 +1,7 @@
 .. _homogeneous_example:
 
-Wave propagation through homogeneous media
-==========================================
+Homogeneous elastic media
+=========================
 
 In this example (see :repo-file:`benchmarks/src/dim2/homogeneous-medium-flat-topography`) we simulate wave propagation through a 2-dimensional homogeneous medium.
 
