@@ -42,13 +42,40 @@ subroutine save_databases()
    implicit none
 
    ! local parameters
-   integer :: ier
-   character(len=MAX_STRING_LEN) :: prname
+   integer :: ier, lastslash, ndigits
+   character(len=MAX_STRING_LEN) :: prname, dir_path, filename
+   character(len=32) :: proc_str, format_str
+
+   ! calculate number of digits needed for processor numbering
+   if (NPROC > 1) then
+      ndigits = int(log10(real(NPROC-1))) + 1
+   else
+      ndigits = 1
+   endif
 
    do iproc = 0, NPROC-1
 
       ! filename
-      prname = database_filename
+      if (NPROC > 1) then
+         ! create dynamic format string for zero-padding
+         write(format_str,'(a,i0,a,i0,a)') '(i', ndigits, '.', ndigits, ')'
+         write(proc_str,format_str) iproc
+
+         ! find last slash in database_filename to split directory and filename
+         lastslash = index(database_filename, '/', back=.true.)
+         if (lastslash > 0) then
+            ! split into directory and filename
+            dir_path = database_filename(1:lastslash)
+            filename = database_filename(lastslash+1:len_trim(database_filename))
+            ! construct path: dir_path/proc###_filename
+            prname = trim(dir_path) // "proc" // trim(proc_str) // "_" // trim(filename)
+         else
+            ! no directory path, just prepend proc###_
+            prname = "proc" // trim(proc_str) // "_" // trim(database_filename)
+         endif
+      else
+         prname = trim(database_filename)
+      endif
 
       ! user output
       if (myrank == 0) then

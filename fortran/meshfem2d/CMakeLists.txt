@@ -8,10 +8,18 @@ enable_language(C)
 
 # Options
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
-option(WITH_MPI "Build with MPI support" OFF)
 option(WITH_SCOTCH "Build with SCOTCH support" OFF)
 option(FORCE_VECTORIZATION "Force vectorization" OFF)
 option(SPECFEM_INSTALL "Install SPECFEM" ON)
+
+if (SPECFEM_ENABLE_MPI)
+    add_compile_definitions(WITH_MPI)
+    message(STATUS "-- Building with MPI support")
+    # Find MPI for Fortran
+    if (NOT TARGET MPI::MPI_Fortran)
+        find_package(MPI REQUIRED COMPONENTS Fortran)
+    endif()
+endif()
 
 if (SPECFEM_INSTALL)
     if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -125,6 +133,10 @@ target_link_libraries(meshfem2D_shared_mpi
   meshfem2D::shared_objects
   )
 
+if (WITH_MPI)
+  target_link_libraries(meshfem2D_shared_mpi PRIVATE MPI::MPI_Fortran)
+endif()
+
 
 # Shared Objects
 add_library(meshfem2D_shared_objects
@@ -209,6 +221,10 @@ target_link_libraries(meshfem2D_mesh_mpi
   meshfem2D::mesh
 )
 
+if (WITH_MPI)
+  target_link_libraries(meshfem2D_mesh_mpi PRIVATE MPI::MPI_Fortran)
+endif()
+
 # Executable
 add_executable(xmeshfem2D
     meshfem2D.F90
@@ -225,6 +241,10 @@ target_link_libraries(
     meshfem2D::mesh_utilities
     meshfem2D::cc_objects
 )
+
+if (WITH_MPI)
+  target_link_libraries(xmeshfem2D PRIVATE MPI::MPI_Fortran)
+endif()
 
 
 # Additional Executable

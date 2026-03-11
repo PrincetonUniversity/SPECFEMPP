@@ -945,7 +945,7 @@ target_link_libraries(
 
 
 # Link to gtest only if MPI is disabled
-if(NOT MPI_PARALLEL)
+if(NOT SPECFEM_ENABLE_MPI)
   include(GoogleTest)
   set(TEST_TARGETS
     abort_tests

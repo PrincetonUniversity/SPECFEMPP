@@ -1669,9 +1669,9 @@ end subroutine gather_all_singledp
 
   use my_mpi
 
-  use constants, only: MAX_STRING_LEN,OUTPUT_FILES, &
+  use constants, only: MAX_STRING_LEN, &
     IMAIN,ISTANDARD_OUTPUT,mygroup,I_should_read_the_database
-  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
+  use shared_parameters, only: OUTPUT_FILES,NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none
 
