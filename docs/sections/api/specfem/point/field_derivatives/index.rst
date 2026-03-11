@@ -4,5 +4,4 @@
 ``specfem::point::field_derivatives``
 =====================================
 
-.. doxygenstruct:: specfem::point::field_derivatives
-    :members:
+.. doxygentypedef:: specfem::point::field_derivatives

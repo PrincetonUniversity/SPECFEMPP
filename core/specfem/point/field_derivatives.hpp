@@ -9,14 +9,7 @@
 namespace specfem::point {
 namespace impl {
 
-/**
- * @brief Store field derivatives for a quadrature point
- *
- * The field derivatives are given by:
- * \f$ du_{i,k} = \partial_i u_k \f$
- *
- * @tparam Tags The tags for the element where the quadrature point is located
- */
+/// @private Implementation detail
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct field_derivatives
@@ -80,6 +73,14 @@ public:
 
 } // namespace impl
 
+/**
+ * @brief Store field derivatives for a quadrature point
+ *
+ * The field derivatives are given by:
+ * \f$ du_{i,k} = \partial_i u_k \f$
+ *
+ * @tparam Tags The tags for the element where the quadrature point is located
+ */
 template <typename Tags>
 using field_derivatives =
     impl::field_derivatives<Tags::dimension_tag, Tags::medium_tag,
