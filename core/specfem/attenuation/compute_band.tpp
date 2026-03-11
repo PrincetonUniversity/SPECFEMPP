@@ -20,8 +20,7 @@ compute_band(const specfem::datatype::Seconds min_resolved_period) {
   const type_real max_period = static_cast<specfem::datatype::Seconds>(
       min_resolved_period * std::pow(10.0, theta[N_SLS]));
   return specfem::utilities::FrequencyBand<specfem::datatype::Omega>{
-    static_cast<specfem::datatype::Omega>(min_resolved_period),
-    static_cast<specfem::datatype::Omega>(max_period)
+    min_resolved_period, max_period
   };
 }
 
