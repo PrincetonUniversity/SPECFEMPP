@@ -122,8 +122,8 @@ public:
   // -----------------------------------------------------------------------
   // Data members — attenuation factors
   // -----------------------------------------------------------------------
-  value_type kappa_common_factor;
-  value_type mu_common_factor;
+  value_type kappa_relaxation_rate;
+  value_type mu_relaxation_rate;
   /// Runge-Kutta coefficients; one entry per SLS mechanism (computed from
   /// tau_sigma and deltat; constant throughout a run).
   value_type alpha_rk;
@@ -150,8 +150,8 @@ public:
   /**
    * @brief Full value constructor.
    *
-   * @param kappa_common_factor Common factor for kappa attenuation
-   * @param mu_common_factor    Common factor for mu attenuation
+   * @param kappa_relaxation_rate Scaling factor for kappa attenuation
+   * @param mu_relaxation_rate    Scaling factor for mu attenuation
    * @param alpha_rk            Runge-Kutta alpha factors (per SLS)
    * @param beta_rk             Runge-Kutta beta factors (per SLS)
    * @param gamma_rk            Runge-Kutta gamma factors (per SLS)
@@ -160,13 +160,13 @@ public:
    * @param Rkappa              Memory variable R_kappa
    */
   KOKKOS_FUNCTION
-  attenuation(const value_type &kappa_common_factor,
-              const value_type &mu_common_factor, const value_type &alpha_rk,
+  attenuation(const value_type &kappa_relaxation_rate,
+              const value_type &mu_relaxation_rate, const value_type &alpha_rk,
               const value_type &beta_rk, const value_type &gamma_rk,
               const value_type &Rxx, const value_type &Rxz,
               const value_type &Rkappa)
-      : kappa_common_factor(kappa_common_factor),
-        mu_common_factor(mu_common_factor), alpha_rk(alpha_rk),
+      : kappa_relaxation_rate(kappa_relaxation_rate),
+        mu_relaxation_rate(mu_relaxation_rate), alpha_rk(alpha_rk),
         beta_rk(beta_rk), gamma_rk(gamma_rk), Rxx(Rxx), Rxz(Rxz),
         Rkappa(Rkappa) {}
 
@@ -185,8 +185,8 @@ public:
   /** @brief Component-wise addition on R fields; RK/common factors copied. */
   KOKKOS_FUNCTION attenuation operator+(const attenuation &rhs) const {
     attenuation result;
-    result.kappa_common_factor = this->kappa_common_factor;
-    result.mu_common_factor = this->mu_common_factor;
+    result.kappa_relaxation_rate = this->kappa_relaxation_rate;
+    result.mu_relaxation_rate = this->mu_relaxation_rate;
     result.alpha_rk = this->alpha_rk;
     result.beta_rk = this->beta_rk;
     result.gamma_rk = this->gamma_rk;
@@ -213,8 +213,8 @@ public:
   /** @brief Scalar multiplication on R fields; RK/common factors copied. */
   KOKKOS_FUNCTION attenuation operator*(const type_real &rhs) const {
     attenuation result;
-    result.kappa_common_factor = this->kappa_common_factor;
-    result.mu_common_factor = this->mu_common_factor;
+    result.kappa_relaxation_rate = this->kappa_relaxation_rate;
+    result.mu_relaxation_rate = this->mu_relaxation_rate;
     result.alpha_rk = this->alpha_rk;
     result.beta_rk = this->beta_rk;
     result.gamma_rk = this->gamma_rk;
@@ -231,9 +231,9 @@ public:
   KOKKOS_INLINE_FUNCTION
   bool operator==(const attenuation &other) const {
     constexpr int N = specfem::constants::N_SLS;
-    if (!(kappa_common_factor == other.kappa_common_factor))
+    if (!(kappa_relaxation_rate == other.kappa_relaxation_rate))
       return false;
-    if (!(mu_common_factor == other.mu_common_factor))
+    if (!(mu_relaxation_rate == other.mu_relaxation_rate))
       return false;
     for (int i = 0; i < N; ++i) {
       if (!specfem::utilities::is_close(alpha_rk(i), other.alpha_rk(i)))
@@ -257,10 +257,10 @@ public:
     std::ostringstream oss;
     oss << "Attenuation Factors:\n";
     for (int i = 0; i < N_SLS; ++i)
-      oss << "  kappa_common_factor(" << i << ") = " << kappa_common_factor(i)
-          << "\n";
+      oss << "  kappa_relaxation_rate(" << i
+          << ") = " << kappa_relaxation_rate(i) << "\n";
     for (int i = 0; i < N_SLS; ++i)
-      oss << "  mu_common_factor(" << i << ") = " << mu_common_factor(i)
+      oss << "  mu_relaxation_rate(" << i << ") = " << mu_relaxation_rate(i)
           << "\n";
     for (int i = 0; i < N_SLS; ++i)
       oss << "  alpha_rk(" << i << ") = " << alpha_rk(i) << "\n";
@@ -327,8 +327,8 @@ public:
   // -----------------------------------------------------------------------
   // Data members — attenuation factors
   // -----------------------------------------------------------------------
-  value_type kappa_common_factor;
-  value_type mu_common_factor;
+  value_type kappa_relaxation_rate;
+  value_type mu_relaxation_rate;
   /// Runge-Kutta coefficients; one entry per SLS mechanism (computed from
   /// tau_sigma and deltat; constant throughout a run).
   value_type alpha_rk;
@@ -358,8 +358,8 @@ public:
   /**
    * @brief Full value constructor.
    *
-   * @param kappa_common_factor Common factor for kappa attenuation
-   * @param mu_common_factor    Common factor for mu attenuation
+   * @param kappa_relaxation_rate Scaling factor for kappa attenuation
+   * @param mu_relaxation_rate    Scaling factor for mu attenuation
    * @param alpha_rk            Runge-Kutta alpha factors (per SLS)
    * @param beta_rk             Runge-Kutta beta factors (per SLS)
    * @param gamma_rk            Runge-Kutta gamma factors (per SLS)
@@ -371,14 +371,14 @@ public:
    * @param Rkappa              Memory variable R_kappa
    */
   KOKKOS_FUNCTION
-  attenuation(const value_type &kappa_common_factor,
-              const value_type &mu_common_factor, const value_type &alpha_rk,
+  attenuation(const value_type &kappa_relaxation_rate,
+              const value_type &mu_relaxation_rate, const value_type &alpha_rk,
               const value_type &beta_rk, const value_type &gamma_rk,
               const value_type &Rxx, const value_type &Ryy,
               const value_type &Rxy, const value_type &Rxz,
               const value_type &Ryz, const value_type &Rkappa)
-      : kappa_common_factor(kappa_common_factor),
-        mu_common_factor(mu_common_factor), alpha_rk(alpha_rk),
+      : kappa_relaxation_rate(kappa_relaxation_rate),
+        mu_relaxation_rate(mu_relaxation_rate), alpha_rk(alpha_rk),
         beta_rk(beta_rk), gamma_rk(gamma_rk), Rxx(Rxx), Ryy(Ryy), Rxy(Rxy),
         Rxz(Rxz), Ryz(Ryz), Rkappa(Rkappa) {}
 
@@ -400,8 +400,8 @@ public:
   /** @brief Component-wise addition on R fields; RK/common factors copied. */
   KOKKOS_FUNCTION attenuation operator+(const attenuation &rhs) const {
     attenuation result;
-    result.kappa_common_factor = this->kappa_common_factor;
-    result.mu_common_factor = this->mu_common_factor;
+    result.kappa_relaxation_rate = this->kappa_relaxation_rate;
+    result.mu_relaxation_rate = this->mu_relaxation_rate;
     result.alpha_rk = this->alpha_rk;
     result.beta_rk = this->beta_rk;
     result.gamma_rk = this->gamma_rk;
@@ -434,8 +434,8 @@ public:
   /** @brief Scalar multiplication on R fields; RK/common factors copied. */
   KOKKOS_FUNCTION attenuation operator*(const type_real &rhs) const {
     attenuation result;
-    result.kappa_common_factor = this->kappa_common_factor;
-    result.mu_common_factor = this->mu_common_factor;
+    result.kappa_relaxation_rate = this->kappa_relaxation_rate;
+    result.mu_relaxation_rate = this->mu_relaxation_rate;
     result.alpha_rk = this->alpha_rk;
     result.beta_rk = this->beta_rk;
     result.gamma_rk = this->gamma_rk;
@@ -455,9 +455,9 @@ public:
   KOKKOS_INLINE_FUNCTION
   bool operator==(const attenuation &other) const {
     constexpr int N = specfem::constants::N_SLS;
-    if (!(kappa_common_factor == other.kappa_common_factor))
+    if (!(kappa_relaxation_rate == other.kappa_relaxation_rate))
       return false;
-    if (!(mu_common_factor == other.mu_common_factor))
+    if (!(mu_relaxation_rate == other.mu_relaxation_rate))
       return false;
     for (int i = 0; i < N; ++i) {
       if (!specfem::utilities::is_close(alpha_rk(i), other.alpha_rk(i)))
@@ -487,10 +487,10 @@ public:
     std::ostringstream oss;
     oss << "Attenuation Factors:\n";
     for (int i = 0; i < N_SLS; ++i)
-      oss << "  kappa_common_factor(" << i << ") = " << kappa_common_factor(i)
-          << "\n";
+      oss << "  kappa_relaxation_rate(" << i
+          << ") = " << kappa_relaxation_rate(i) << "\n";
     for (int i = 0; i < N_SLS; ++i)
-      oss << "  mu_common_factor(" << i << ") = " << mu_common_factor(i)
+      oss << "  mu_relaxation_rate(" << i << ") = " << mu_relaxation_rate(i)
           << "\n";
     for (int i = 0; i < N_SLS; ++i)
       oss << "  alpha_rk(" << i << ") = " << alpha_rk(i) << "\n";

@@ -122,14 +122,14 @@ TYPED_TEST(PointAttenuationTest, ValueConstructor2D) {
                rxz_val, rk_val);
 
   for (int i = 0; i < N; ++i) {
+    EXPECT_TRUE(specfem::utilities::is_close(att.kappa_relaxation_rate(i),
+                                             kappa_val(i)))
+        << "kappa_relaxation_rate(" << i
+        << "): " << ExpectedGot(kappa_val(i), att.kappa_relaxation_rate(i));
     EXPECT_TRUE(
-        specfem::utilities::is_close(att.kappa_common_factor(i), kappa_val(i)))
-        << "kappa_common_factor(" << i
-        << "): " << ExpectedGot(kappa_val(i), att.kappa_common_factor(i));
-    EXPECT_TRUE(
-        specfem::utilities::is_close(att.mu_common_factor(i), mu_val(i)))
-        << "mu_common_factor(" << i
-        << "): " << ExpectedGot(mu_val(i), att.mu_common_factor(i));
+        specfem::utilities::is_close(att.mu_relaxation_rate(i), mu_val(i)))
+        << "mu_relaxation_rate(" << i
+        << "): " << ExpectedGot(mu_val(i), att.mu_relaxation_rate(i));
     EXPECT_TRUE(specfem::utilities::is_close(att.Rxx(i), rxx_val(i)))
         << "Rxx(" << i << "): " << ExpectedGot(rxx_val(i), att.Rxx(i));
     EXPECT_TRUE(specfem::utilities::is_close(att.Rxz(i), rxz_val(i)))
@@ -169,10 +169,10 @@ TYPED_TEST(PointAttenuationTest, ValueConstructor3D) {
                rxz, ryz, rk);
 
   for (int i = 0; i < N; ++i) {
+    EXPECT_TRUE(specfem::utilities::is_close(att.kappa_relaxation_rate(i),
+                                             kappa_val(i)));
     EXPECT_TRUE(
-        specfem::utilities::is_close(att.kappa_common_factor(i), kappa_val(i)));
-    EXPECT_TRUE(
-        specfem::utilities::is_close(att.mu_common_factor(i), mu_val(i)));
+        specfem::utilities::is_close(att.mu_relaxation_rate(i), mu_val(i)));
     EXPECT_TRUE(specfem::utilities::is_close(att.Rxx(i), rxx(i)));
     EXPECT_TRUE(specfem::utilities::is_close(att.Ryy(i), ryy(i)));
     EXPECT_TRUE(specfem::utilities::is_close(att.Rxy(i), rxy(i)));
@@ -522,8 +522,8 @@ TYPED_TEST(PointAttenuationTest, PrintMethod2D) {
 
     EXPECT_FALSE(s.empty());
     EXPECT_NE(s.find("Attenuation Factors"), std::string::npos);
-    EXPECT_NE(s.find("kappa_common_factor"), std::string::npos);
-    EXPECT_NE(s.find("mu_common_factor"), std::string::npos);
+    EXPECT_NE(s.find("kappa_relaxation_rate"), std::string::npos);
+    EXPECT_NE(s.find("mu_relaxation_rate"), std::string::npos);
     EXPECT_NE(s.find("alpha_rk"), std::string::npos);
     EXPECT_NE(s.find("beta_rk"), std::string::npos);
     EXPECT_NE(s.find("gamma_rk"), std::string::npos);

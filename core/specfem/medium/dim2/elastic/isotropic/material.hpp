@@ -184,6 +184,20 @@ public:
   }
 
   /**
+   * @brief Compute the material properties with scaling factors for
+   *        attenuation
+   *
+   * @return specfem::point::properties Material properties
+   */
+  inline specfem::point::properties<dimension_tag, medium_tag, property_tag,
+                                    false>
+  get_properties(const type_real &kappa_scaling,
+                 const type_real &mu_scaling) const {
+    return { this->kappa * kappa_scaling, this->mu * mu_scaling,
+             this->density };
+  }
+
+  /**
    * @brief Print the material properties
    *
    * @return std::string Formatted material properties
