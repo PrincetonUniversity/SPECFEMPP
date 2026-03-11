@@ -30,26 +30,27 @@ IntegrationFactors<N_SLS> compute_integration_factors(
   const type_real dt4 = dt3 * dt;
 
   for (int j = 0; j < N_SLS; ++j) {
-    // Negative sign follows Fortran convention in get_attenuation_model.f90
-    const type_real tauinv  = -1.0 / tau_sigma(j);
+
+    const type_real tauinv  = 1.0 / tau_sigma(j);
     const type_real tauinv2 = tauinv * tauinv;
     const type_real tauinv3 = tauinv2 * tauinv;
     const type_real tauinv4 = tauinv3 * tauinv;
 
-    // Savage et al. BSSA 2010, eq. (11)
+    // Taylor expansion of e^{-dt/tau_sigma} to 4th order
+    // (Savage et al. BSSA 2010, eq. 11)
     result.alpha(j) = 1.0
-                    + dt  * tauinv
+                    - dt  * tauinv
                     + dt2 * tauinv2 / 2.0
-                    + dt3 * tauinv3 / 6.0
+                    - dt3 * tauinv3 / 6.0
                     + dt4 * tauinv4 / 24.0;
 
     result.beta(j)  = dt  / 2.0
-                    + dt2 * tauinv  / 3.0
+                    - dt2 * tauinv  / 3.0
                     + dt3 * tauinv2 / 8.0
-                    + dt4 * tauinv3 / 24.0;
+                    - dt4 * tauinv3 / 24.0;
 
     result.gamma(j) = dt  / 2.0
-                    + dt2 * tauinv  / 6.0
+                    - dt2 * tauinv  / 6.0
                     + dt3 * tauinv2 / 24.0;
   }
 
