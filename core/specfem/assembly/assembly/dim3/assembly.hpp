@@ -107,11 +107,9 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
 
   specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
                                                            ///< conditions
-  // specfem::assembly::coupled_interfaces<dimension_tag>
-  // coupled_interfaces;                          ///< Coupled
-  //                                         ///< interfaces
-  //                                         ///< between 2
-  //                                         ///< media
+  specfem::assembly::conforming_interfaces<dimension_tag>
+      conforming_interfaces; ///< Conforming interfaces between different media
+                             ///< (e.g., fluid-solid interface)
 
   specfem::assembly::boundary_values<dimension_tag>
       boundary_values; ///< Field
