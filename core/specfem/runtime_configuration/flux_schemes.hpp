@@ -20,20 +20,31 @@ class flux_schemes {
 public:
   flux_schemes(const YAML::Node &Node);
 
+  std::shared_ptr<configuration> get_flux_scheme() const {
+    return flux_scheme_configuration;
+  }
+
 private:
-  bool config_provided;
-  YAML::Node flux_schemes_node; /// Node that contains flux scheme information
+  struct configuration {
+    specfem::element_coupling::flux_scheme_tag flux_scheme_tag;
+  };
 
-  std::map<specfem::element_coupling::interface_tag,
-           std::pair<specfem::element_coupling::flux_scheme_tag, YAML::Node> >
-      per_interface_configs;
+  template <specfem::element_coupling::flux_scheme_tag Tag>
+  struct configuration_details;
 
-  std::map<std::pair<int, int>,
-           std::pair<specfem::element_coupling::flux_scheme_tag, YAML::Node> >
-      per_material_configs;
+  template <>
+  struct configuration_details<
+      specfem::element_coupling::flux_scheme_tag::natural>
+      : public configuration {
 
-public:
-  specfem::element_coupling::flux_scheme_configuration generate_configuration();
+    configuration_details(const YAML::Node &Node)
+        : configuration{ specfem::element_coupling::flux_scheme_tag::natural } {
+      // no parameters for natural flux scheme
+    }
+  };
+
+  std::string flux_scheme;
+  std::shared_ptr<configuration> flux_scheme_configuration;
 };
 } // namespace runtime_configuration
 } // namespace specfem
