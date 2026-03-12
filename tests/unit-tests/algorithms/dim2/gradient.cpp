@@ -30,10 +30,12 @@
 #include "SPECFEM_Environment.hpp"
 #include "specfem/algorithms/gradient.hpp"
 #include "specfem/assembly/assembly.hpp"
+#include "specfem/chunk_element/field_pack.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
+#include "specfem/point/gradient_field_pack.hpp"
 #include "specfem/quadrature.hpp"
 
 namespace specfem::algorithms_test {
@@ -652,6 +654,78 @@ execute(const Jacobian &jacobian_matrix, const Quadrature2D &quadrature,
   return gradient_host;
 }
 
+/**
+ * @brief Execute gradient computation via the FieldPack overload for 2D.
+ *
+ * Wraps the scalar field in a FieldPack<holds_u<...>> and calls the
+ * FieldPack-based gradient overload. The callback receives a GradientPack
+ * whose .du member is the tensor gradient, verifying the new FieldPack API.
+ */
+template <typename Jacobian, typename Quadrature2D, typename Function2D>
+Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
+execute_fieldpack(const Jacobian &jacobian_matrix,
+                  const Quadrature2D &quadrature, const Function2D &function) {
+  using simd = specfem::datatype::simd<type_real, false>;
+  Kokkos::View<int *, Kokkos::HostSpace> h_element_indices(
+      "element_indices", function.n_elements());
+  for (int i = 0; i < function.n_elements(); ++i) {
+    h_element_indices(i) = i;
+  }
+
+  const auto element_indices = Kokkos::create_mirror_view_and_copy(
+      Kokkos::DefaultExecutionSpace(), h_element_indices);
+
+  using ParallelConfig = specfem::parallel_configuration::chunk_config<
+      specfem::element::dimension_tag::dim2, 1, 1, 1, 1, simd,
+      Kokkos::DefaultExecutionSpace>;
+
+  const specfem::mesh_entity::element_grid element_grid(ngll, ngll);
+
+  const specfem::execution::ChunkedDomainIterator chunk(
+      ParallelConfig(), element_indices, element_grid);
+
+  const auto jacobian = jacobian_matrix.jacobian();
+  const auto quadrature_view = quadrature.quadrature();
+  const auto function_view = function.view();
+
+  using Function2DView = specfem::datatype::VectorChunkElementViewType<
+      type_real, specfem::element::dimension_tag::dim2, 1, ngll, 1, false,
+      Kokkos::DefaultExecutionSpace::memory_space, Kokkos::MemoryTraits<> >;
+
+  using FieldPackType = specfem::chunk_element::FieldPack<
+      specfem::chunk_element::holds_u<Function2DView> >;
+
+  Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+               Kokkos::DefaultExecutionSpace>
+      gradient_view("gradient_view", function.n_elements(), ngll, ngll, 2);
+
+  specfem::execution::for_each_level(
+      chunk, KOKKOS_LAMBDA(const typename decltype(chunk)::index_type &index) {
+        const Function2DView f(Kokkos::subview(function_view, index.get_range(),
+                                               Kokkos::ALL(), Kokkos::ALL(),
+                                               Kokkos::ALL()));
+
+        const FieldPackType field_pack{
+          specfem::chunk_element::holds_u<Function2DView>{ f }
+        };
+
+        specfem::algorithms::gradient(
+            index, jacobian, quadrature_view, field_pack,
+            [&](const auto &iterator_index, const auto &grad_pack) {
+              const auto local_index = iterator_index.get_index();
+              const int ispec = local_index.ispec;
+              const int iz = local_index.iz;
+              const int ix = local_index.ix;
+              gradient_view(ispec, iz, ix, 0) = grad_pack.du(0, 0);
+              gradient_view(ispec, iz, ix, 1) = grad_pack.du(0, 1);
+            });
+      });
+
+  const auto gradient_host =
+      Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), gradient_view);
+  return gradient_host;
+}
+
 } // namespace specfem::algorithms_test
 
 using namespace specfem::algorithms_test;
@@ -820,6 +894,49 @@ TYPED_TEST(GradientTestFixture2D, TestGradientComputation) {
   }
 
   SUCCEED() << "Gradient computation validation passed for all test points.";
+}
+
+/**
+ * @brief Validate the FieldPack-based gradient overload against the same
+ * manufactured solutions used by TestGradientComputation.
+ *
+ * Wraps the scalar field in a FieldPack<holds_u<...>> and calls
+ * specfem::algorithms::gradient with that pack. The callback receives a
+ * GradientPack whose .du member is the tensor gradient — identical values to
+ * the raw-view overload. This test verifies the FieldPack dispatch path
+ * compiles and produces correct results.
+ */
+TYPED_TEST(GradientTestFixture2D, TestGradientFieldPackComputation) {
+  ASSERT_TRUE(this->function.n_elements() == this->jacobian_matrix.n_elements())
+      << "Mismatch in number of elements between function and jacobian matrix";
+
+  const auto expected_gradient = specfem::algorithms_test::gradient(
+      this->jacobian_matrix, this->quadrature, this->function);
+
+  const auto gradient = specfem::algorithms_test::execute_fieldpack(
+      this->jacobian_matrix, this->quadrature, this->function);
+
+  for (int ielement = 0; ielement < this->function.n_elements(); ++ielement) {
+    for (int iz = 0; iz < ngll; ++iz) {
+      for (int ix = 0; ix < ngll; ++ix) {
+        const auto e = expected_gradient[ielement][iz][ix];
+        const auto df =
+            Kokkos::subview(gradient, ielement, iz, ix, Kokkos::ALL());
+
+        if (!specfem::utilities::is_close(df(0), e[0][0]) ||
+            !specfem::utilities::is_close(df(1), e[0][1])) {
+          ADD_FAILURE() << "FieldPack gradient mismatch for element "
+                        << ielement << "\n    at GLL point (" << iz << ", "
+                        << ix << ")\n"
+                        << "    expected: (" << e[0][0] << ", " << e[0][1]
+                        << ")\n"
+                        << "    computed: (" << df(0) << ", " << df(1) << ")";
+        }
+      }
+    }
+  }
+
+  SUCCEED() << "FieldPack gradient computation validation passed.";
 }
 
 int main(int argc, char *argv[]) {

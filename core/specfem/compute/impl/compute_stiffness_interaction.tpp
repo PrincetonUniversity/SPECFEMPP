@@ -72,8 +72,24 @@ int specfem::compute::impl::compute_stiffness_interaction(
   using ParallelConfig = specfem::parallel_configuration::default_chunk_config<
                   Tags::dimension_tag, simd, Kokkos::DefaultExecutionSpace>;
 
-  using ChunkElementFieldType = specfem::chunk_element::displacement<
-      ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag, using_simd>;
+  // Whether this kernel needs the velocity field (for attenuation physics)
+  constexpr bool needs_velocity_gradient = false;
+
+  using ChunkDisplacementFieldType = specfem::chunk_element::displacement<
+      ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag,
+      using_simd>;
+  using ChunkVelocityFieldType = specfem::chunk_element::velocity<
+      ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag,
+      using_simd>;
+
+  using ChunkFieldPackType = std::conditional_t<
+      needs_velocity_gradient,
+      specfem::chunk_element::FieldPack<
+          specfem::chunk_element::holds_u<ChunkDisplacementFieldType>,
+          specfem::chunk_element::holds_v<ChunkVelocityFieldType>>,
+      specfem::chunk_element::FieldPack<
+          specfem::chunk_element::holds_u<ChunkDisplacementFieldType>>>;
+
   using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
       ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag,
       Kokkos::DefaultExecutionSpace::scratch_memory_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
@@ -98,9 +114,16 @@ int specfem::compute::impl::compute_stiffness_interaction(
       specfem::point::properties<PointTags>;
   using PointFieldDerivativesType = specfem::point::field_derivatives<PointTags>;
 
+  using TensorType = typename PointFieldDerivativesType::value_type;
+  using GradientFieldPackType = std::conditional_t<
+      needs_velocity_gradient,
+      specfem::point::GradientPack<specfem::point::holds_du<TensorType>,
+                                   specfem::point::holds_dv<TensorType>>,
+      specfem::point::GradientPack<specfem::point::holds_du<TensorType>>>;
+
   using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
 
-  int scratch_size = ChunkElementFieldType::shmem_size() +
+  int scratch_size = ChunkFieldPackType::shmem_size() +
                      ChunkStressIntegrandType::shmem_size() +
                      ElementQuadratureType::shmem_size();
 
@@ -134,18 +157,21 @@ int specfem::compute::impl::compute_stiffness_interaction(
             const typename decltype(chunk)::index_type &chunk_iterator_index) {
           const auto &chunk_index = chunk_iterator_index.get_index();
           const auto team = chunk_index.get_policy_index();
-          ChunkElementFieldType element_field(team.team_scratch(0));
+          ChunkFieldPackType field_pack(team.team_scratch(0));
           ElementQuadratureType lagrange_derivative(team);
           ChunkStressIntegrandType stress_integrand(team);
           specfem::assembly::load_on_device(team, mesh, lagrange_derivative);
-          specfem::assembly::load_on_device(chunk_index, field, element_field);
+          specfem::assembly::load_on_device(chunk_index, field, field_pack.u);
+          if constexpr (needs_velocity_gradient) {
+             specfem::assembly::load_on_device(chunk_index, field, field_pack.v);
+          }
 
           team.team_barrier();
 
           specfem::algorithms::gradient(
-              chunk_index, jacobian_matrix, lagrange_derivative, element_field,
+              chunk_index, jacobian_matrix, lagrange_derivative, field_pack,
               [&](const auto &iterator_index,
-                  const typename PointFieldDerivativesType::value_type &du) {
+                  const GradientFieldPackType &grad_pack) {
                 const auto &index = iterator_index.get_index();
                 const auto &local_index = iterator_index.get_local_index();
                 PointJacobianMatrixType point_jacobian_matrix;
@@ -156,7 +182,13 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 specfem::assembly::load_on_device(index, properties,
                                                   point_property);
 
-                PointFieldDerivativesType field_derivatives(du);
+                PointFieldDerivativesType field_derivatives(grad_pack.du);
+
+                if constexpr (needs_velocity_gradient) {
+                  // grad_pack.dv (∂v/∂x) is available for future attenuation
+                  // physics (SLS/Taylor-expanded strain). Currently unused.
+                  (void)grad_pack.dv;
+                }
 
                 PointDisplacementType point_displacement;
                 specfem::assembly::load_on_device(index, field,

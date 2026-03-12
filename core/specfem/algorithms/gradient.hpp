@@ -1,10 +1,12 @@
 #pragma once
 
 #include "specfem/assembly/jacobian_matrix.hpp"
+#include "specfem/chunk_element/field_pack.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
+#include <tuple>
 
 /**
  * @file gradient.hpp
@@ -482,6 +484,62 @@ gradient(const ChunkIndexType &chunk_index,
       });
 
   return;
+}
+
+/**
+ * @brief Compute the gradient of a FieldPack using the spectral element
+ * formulation. Dispatches to the single- or dual-field gradient overloads
+ * based on FieldPack::size (1 or 2). The callback receives a GradientPack
+ * whose gradient holders mirror the input field holders via their nested
+ * `gradient_holder<V>` alias.
+ *
+ * @ingroup AlgorithmsGradient
+ *
+ * @tparam ChunkIndexType Chunk index type
+ * @tparam Holders        Named holder types in the FieldPack
+ * @tparam DimTag         Dimension tag (dim2 or dim3), deduced from
+ *                        the jacobian_matrix argument
+ * @tparam QuadratureType Quadrature view type
+ * @tparam CallbackFunctor Callback functor receiving
+ *         (iterator_index, GradientPack<GH0[, GH1]>)
+ */
+template <typename ChunkIndexType, typename... Holders,
+          specfem::element::dimension_tag DimTag, typename QuadratureType,
+          typename CallbackFunctor>
+KOKKOS_FORCEINLINE_FUNCTION void
+gradient(const ChunkIndexType &chunk_index,
+         const specfem::assembly::jacobian_matrix<DimTag> &jacobian_matrix,
+         const QuadratureType &quadrature,
+         const specfem::chunk_element::FieldPack<Holders...> &field_pack,
+         const CallbackFunctor &callback) {
+
+  using PackType = specfem::chunk_element::FieldPack<Holders...>;
+
+  if constexpr (PackType::size == 1) {
+    using H0 = std::tuple_element_t<0, std::tuple<Holders...> >;
+    gradient(chunk_index, jacobian_matrix, quadrature,
+             static_cast<const H0 &>(field_pack).get(),
+             [&](const auto &iterator_index, const auto &g0) {
+               using GH0 = typename H0::template gradient_holder<
+                   std::decay_t<decltype(g0)> >;
+               callback(iterator_index,
+                        specfem::point::GradientPack<GH0>(GH0(g0)));
+             });
+  } else if constexpr (PackType::size == 2) {
+    using H0 = std::tuple_element_t<0, std::tuple<Holders...> >;
+    using H1 = std::tuple_element_t<1, std::tuple<Holders...> >;
+    gradient(chunk_index, jacobian_matrix, quadrature,
+             static_cast<const H0 &>(field_pack).get(),
+             static_cast<const H1 &>(field_pack).get(),
+             [&](const auto &iterator_index, const auto &g0, const auto &g1) {
+               using GH0 = typename H0::template gradient_holder<
+                   std::decay_t<decltype(g0)> >;
+               using GH1 = typename H1::template gradient_holder<
+                   std::decay_t<decltype(g1)> >;
+               callback(iterator_index, specfem::point::GradientPack<GH0, GH1>(
+                                            GH0(g0), GH1(g1)));
+             });
+  }
 }
 
 } // namespace algorithms
