@@ -21,8 +21,7 @@ namespace specfem::medium_physics {
  * \f$ \ddot{\chi} = -\frac{S(t) \cdot L(\mathbf{x})}{\kappa} \f$
  *
  * where:
- * - \f$ \chi \f$: acoustic potential (related to pressure: \f$ p = -\ddot{\chi}
- * \f$)
+ * - \f$ \chi \f$: acoustic potential (related to pressure: \f$ p = -\ddot{\chi} \f$)
  * - \f$ S(t) \f$: source time function
  * - \f$ L(\mathbf{x}) \f$: Lagrange interpolant for spatial localization
  * - \f$ \kappa \f$: bulk modulus of fluid
@@ -51,17 +50,17 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
     const PointPropertiesType &point_properties) {
   constexpr bool using_simd = PointPropertiesType::simd::using_simd;
 
-  using PointAccelerationType = specfem::point::acceleration<
-      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                          specfem::element::medium_tag::acoustic, using_simd> >;
+  using PointAccelerationType =
+      specfem::point::acceleration<specfem::element::dimension_tag::dim3,
+                                   specfem::element::medium_tag::acoustic,
+                                   using_simd>;
 
   PointAccelerationType result;
 
   /* note: for acoustic medium, the source is a pressure source and gets divided
-   *       by kappa of the fluid. The sign is negative because pressure p =
-   * -chi_tt (negative second time derivative of acoustic potential chi)
-   * therefore we need to add minus the source to chi_tt to get plus the source
-   * in pressure
+   *       by kappa of the fluid. The sign is negative because pressure p = -chi_tt
+   *       (negative second time derivative of acoustic potential chi) therefore
+   *       we need to add minus the source to chi_tt to get plus the source in pressure
    */
   result(0) = -point_source.stf(0) * point_source.lagrange_interpolant(0) /
               point_properties.kappa();

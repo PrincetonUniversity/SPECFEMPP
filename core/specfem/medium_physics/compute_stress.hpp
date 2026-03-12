@@ -29,21 +29,48 @@ namespace medium_physics {
  *
  * @code{.cpp}
  * // Example usage for 2D elastic isotropic medium
- * using Properties = specfem::point::properties<specfem::tags::Tags<dim2, elastic, isotropic, false>>;
- * using FieldDerivatives = specfem::point::field_derivatives<specfem::tags::Tags<dim2, elastic, isotropic, false>>;
+ * using Properties = specfem::point::properties<dim2, elastic, isotropic, false>;
+ * using FieldDerivatives = specfem::point::field_derivatives<dim2, elastic, false>;
  * Properties props = ...; // Initialize material properties
  * FieldDerivatives derivs = ...; // Initialize field derivatives
- * auto stress = specfem::medium_physics::compute_stress<Tags>(props, derivs);
+ * auto stress = specfem::medium_physics::compute_stress(props, derivs);
  * @endcode
  */
 // clang-format on
-template <typename Tags>
-KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> compute_stress(
-    const specfem::point::properties<Tags> &properties,
-    const specfem::point::field_derivatives<Tags> &field_derivatives) {
+template <typename PointPropertiesType, typename PointFieldDerivativesType>
+KOKKOS_INLINE_FUNCTION auto
+compute_stress(const PointPropertiesType &properties,
+               const PointFieldDerivativesType &field_derivatives)
+    -> decltype(specfem::medium_physics::impl_compute_stress(
+        properties, field_derivatives)) {
 
-  return specfem::medium_physics::impl_compute_stress<Tags>(properties,
-                                                            field_derivatives);
+  // Check whether the point is of properties type
+  static_assert(
+      specfem::data_access::is_point<PointPropertiesType>::value &&
+          specfem::data_access::is_properties<PointPropertiesType>::value,
+      "properties is not a point properties type");
+
+  static_assert(
+      specfem::data_access::is_point<PointFieldDerivativesType>::value &&
+          +specfem::data_access::is_field_derivatives<
+              PointFieldDerivativesType>::value,
+      "field_derivatives is not a point field derivatives type");
+
+  static_assert(PointPropertiesType::dimension_tag ==
+                    PointFieldDerivativesType::dimension_tag,
+                "properties and field_derivatives have different dimensions");
+
+  static_assert(PointPropertiesType::medium_tag ==
+                    PointFieldDerivativesType::medium_tag,
+                "properties and field_derivatives have different medium tags");
+
+  static_assert(
+      PointPropertiesType::simd::using_simd ==
+          PointFieldDerivativesType::simd::using_simd,
+      "properties and field_derivatives have different SIMD settings");
+
+  return specfem::medium_physics::impl_compute_stress(properties,
+                                                      field_derivatives);
 }
 
 } // namespace medium_physics

@@ -12,11 +12,11 @@ TEST(Stress, PoroelasticIsotropic2D_Basic) {
       specfem::element::property_tag::isotropic;
   static constexpr auto PoroTag = specfem::element::medium_tag::poroelastic;
 
-  using Tags = specfem::tags::Tags<dimension, PoroTag, property_tag, false>;
-
-  using PoroPropertiesType = specfem::point::properties<Tags>;
-  using PoroFieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using PoroStressType = specfem::point::stress<Tags>;
+  using PoroPropertiesType =
+      specfem::point::properties<dimension, PoroTag, property_tag, false>;
+  using PoroFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, PoroTag, false>;
+  using PoroStressType = specfem::point::stress<dimension, PoroTag, false>;
   // Set up properties (arbitrary but nonzero values)
   const type_real phi = 0.25;
   const type_real rho_s = 2.5;
@@ -66,8 +66,8 @@ TEST(Stress, PoroelasticIsotropic2D_Basic) {
   expected_stress.T(2, 1) = -rho_f / rho_bar * sigma_xz;
   expected_stress.T(3, 1) = sigmap - rho_f / rho_bar * sigma_zz;
 
-  const PoroStressType stress = specfem::medium_physics::compute_stress<Tags>(
-      properties, field_derivatives);
+  const PoroStressType stress =
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   std::ostringstream message;
   message << "Poroelastic stress tensor is not equal to expected value: \n"
@@ -83,10 +83,11 @@ TEST(Stress, PoroelasticIsotropic2D_ZeroDerivatives) {
       specfem::element::property_tag::isotropic;
   static constexpr auto PoroTag = specfem::element::medium_tag::poroelastic;
 
-  using Tags = specfem::tags::Tags<dimension, PoroTag, property_tag, false>;
-  using PoroPropertiesType = specfem::point::properties<Tags>;
-  using PoroFieldDerivativesType = specfem::point::field_derivatives<Tags>;
-  using PoroStressType = specfem::point::stress<Tags>;
+  using PoroPropertiesType =
+      specfem::point::properties<dimension, PoroTag, property_tag, false>;
+  using PoroFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, PoroTag, false>;
+  using PoroStressType = specfem::point::stress<dimension, PoroTag, false>;
   const type_real phi = 0.25;
   const type_real rho_s = 2.5;
   const type_real rho_f = 1.2;
@@ -110,8 +111,8 @@ TEST(Stress, PoroelasticIsotropic2D_ZeroDerivatives) {
     }
   }
 
-  const PoroStressType stress = specfem::medium_physics::compute_stress<Tags>(
-      properties, field_derivatives);
+  const PoroStressType stress =
+      specfem::medium_physics::compute_stress(properties, field_derivatives);
 
   PoroStressType expected_stress;
   for (int i = 0; i < 4; ++i) {

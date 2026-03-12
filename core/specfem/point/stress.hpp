@@ -6,10 +6,49 @@
 #include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::point {
-namespace impl {
+namespace specfem {
+namespace point {
 
-/// @private Implementation detail
+/**
+ * @brief Represents a stress tensor at a quadrature point in spectral element
+ * simulations.
+ *
+ * The stress class encapsulates stress tensor data and provides operations for
+ * stress transformations in finite element computations. The tensor dimensions
+ * and components are determined by the medium type and spatial dimension:
+ * - Acoustic medium: 1 component in 2D/3D (scalar pressure)
+ * - Elastic medium: 2 components in 2D, 3 components in 3D (velocity
+ * components)
+ * - Poroelastic medium: 4 components in 2D (solid and fluid phases)
+ *
+ * The class inherits from the data access framework providing SIMD
+ * vectorization support and efficient memory access patterns for
+ * high-performance computing.
+ *
+ * @tparam DimensionTag Spatial dimension (dim2 or dim3)
+ * @tparam MediumTag Physical medium type (acoustic, elastic_psv, elastic,
+ * poroelastic)
+ * @tparam UseSIMD Enable SIMD vectorization for performance optimization
+ *
+ * @code
+ * // Example: Create stress tensor for 2D elastic medium
+ * using stress_type =
+ * specfem::point::stress<specfem::element::dimension_tag::dim2,
+ *                                           specfem::element::medium_tag::elastic_psv,
+ *                                           false>;
+ *
+ * // Initialize stress components (2x2 tensor for 2D elastic)
+ * typename stress_type::value_type T(1.1, 2.1,  // first column  (component 0,
+ * 1) 1.2, 2.2); // second column (component 0, 1) stress_type stress_tensor(T);
+ *
+ * // Transform stress using jacobian matrix
+ * // auto jacobian = initialize_jacobian_matrix();
+ * auto transformed_stress = stress_tensor * jacobian;
+ * @endcode
+ *
+ * @see specfem::point::jacobian_matrix
+ * @see specfem::data_access::Accessor
+ */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct stress
@@ -245,46 +284,5 @@ public:
   }
   ///@}
 };
-} // namespace impl
-
-/**
- * @brief Represents a stress tensor at a quadrature point in spectral element
- * simulations.
- *
- * The stress class encapsulates stress tensor data and provides operations for
- * stress transformations in finite element computations. The tensor dimensions
- * and components are determined by the medium type and spatial dimension:
- * - Acoustic medium: 1 component in 2D/3D (scalar pressure)
- * - Elastic medium: 2 components in 2D, 3 components in 3D (velocity
- * components)
- * - Poroelastic medium: 4 components in 2D (solid and fluid phases)
- *
- * The class inherits from the data access framework providing SIMD
- * vectorization support and efficient memory access patterns for
- * high-performance computing.
- *
- * @tparam Tags The tags for the element where the quadrature point is located
- *
- * @code
- * // Example: Create stress tensor for 2D elastic medium
- * using stress_type = specfem::point::stress<
- *     specfem::tags::Tags<specfem::element::dimension_tag::dim2,
- *                         specfem::element::medium_tag::elastic_psv,
- *                         false>>;
- *
- * // Initialize stress components (2x2 tensor for 2D elastic)
- * typename stress_type::value_type T(1.1, 2.1,  // first column  (component 0,
- * 1) 1.2, 2.2); // second column (component 0, 1) stress_type stress_tensor(T);
- *
- * // Transform stress using jacobian matrix
- * // auto jacobian = initialize_jacobian_matrix();
- * auto transformed_stress = stress_tensor * jacobian;
- * @endcode
- *
- * @see specfem::point::jacobian_matrix
- * @see specfem::data_access::Accessor
- */
-template <typename Tags>
-using stress =
-    impl::stress<Tags::dimension_tag, Tags::medium_tag, Tags::using_simd>;
-} // namespace specfem::point
+} // namespace point
+} // namespace specfem

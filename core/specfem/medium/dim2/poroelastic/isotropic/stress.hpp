@@ -54,19 +54,22 @@ namespace medium_physics {
  * @param field_derivatives Solid and fluid displacement gradients
  * @return 4x2 coupled stress tensor (solid + fluid)
  */
-template <
-    typename Tags,
-    std::enable_if_t<
-        Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
-            Tags::medium_tag == specfem::element::medium_tag::poroelastic &&
-            Tags::property_tag == specfem::element::property_tag::isotropic,
-        int> = 0>
-KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> impl_compute_stress(
-    const specfem::point::properties<Tags> &properties,
-    const specfem::point::field_derivatives<Tags> &field_derivatives) {
+template <bool UseSIMD>
+KOKKOS_INLINE_FUNCTION
+    specfem::point::stress<specfem::element::dimension_tag::dim2,
+                           specfem::element::medium_tag::poroelastic, UseSIMD>
+    impl_compute_stress(
+        const specfem::point::properties<
+            specfem::element::dimension_tag::dim2,
+            specfem::element::medium_tag::poroelastic,
+            specfem::element::property_tag::isotropic, UseSIMD> &properties,
+        const specfem::point::field_derivatives<
+            specfem::element::dimension_tag::dim2,
+            specfem::element::medium_tag::poroelastic, UseSIMD>
+            &field_derivatives) {
 
   using datatype =
-      typename specfem::datatype::simd<type_real, Tags::using_simd>::datatype;
+      typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
   const auto &du = field_derivatives.du;
 
   datatype sigma_xx, sigma_zz, sigma_xz, sigmap;
@@ -94,7 +97,7 @@ KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> impl_compute_stress(
   sigmap = properties.C_Biot() * (du(0, 0) + du(1, 1)) +
            properties.M_Biot() * (du(2, 0) + du(3, 1));
 
-  specfem::datatype::TensorPointViewType<type_real, 4, 2, Tags::using_simd> T;
+  specfem::datatype::TensorPointViewType<type_real, 4, 2, UseSIMD> T;
 
   T(0, 0) = sigma_xx - properties.phi() / properties.tortuosity() * sigmap;
   T(1, 0) = sigma_xz;

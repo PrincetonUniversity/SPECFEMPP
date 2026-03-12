@@ -5,41 +5,6 @@
 
 namespace specfem::point {
 
-namespace impl {
-/// @private Implementation detail
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag, bool UseSIMD>
-class acceleration
-    : public impl::field<DimensionTag, MediumTag,
-                         specfem::data_access::DataClassType::acceleration,
-                         UseSIMD> {
-private:
-  /**
-   * @brief Type alias for the base field implementation.
-   */
-  using base_type =
-      impl::field<DimensionTag, MediumTag,
-                  specfem::data_access::DataClassType::acceleration, UseSIMD>;
-
-public:
-  /**
-   * @brief SIMD type for vectorized acceleration operations.
-   */
-  using simd = typename base_type::simd;
-
-  /**
-   * @brief Vector type for storing acceleration component values.
-   */
-  using value_type = typename base_type::value_type;
-
-  /**
-   * @brief Inherit all constructors from the base field implementation.
-   */
-  using base_type::base_type;
-};
-
-} // namespace impl
-
 /**
  * @brief Point acceleration field accessor for spectral element computations.
  *
@@ -52,15 +17,19 @@ public:
  * simulations where acceleration values need to be computed, stored, and
  * accessed at quadrature points during the assembly process.
  *
- * @tparam Tags The tags for the element where the quadrature point is located
+ * @tparam DimensionTag The spatial dimension (dim2 or dim3) of the acceleration
+ * field
+ * @tparam MediumTag The medium type (acoustic, elastic, poroelastic, etc.)
+ * @tparam UseSIMD Whether to enable SIMD vectorization for performance
+ * optimization
  *
  *
  * @code{.cpp}
  * // Example: Creating 2D elastic acceleration field accessor
  * using AccelField = specfem::point::acceleration<
- *     specfem::tags::Tags<specfem::element::dimension_tag::dim2,
- *                         specfem::element::medium_tag::elastic,
- *                         false>>;  // No SIMD
+ *     specfem::element::dimension_tag::dim2,
+ *     specfem::element::medium_tag::elastic,
+ *     false>;  // No SIMD
  *
  * // Initialize with zero acceleration
  * AccelField accel(0.0);
@@ -98,8 +67,35 @@ public:
  * @see specfem::point::displacement for displacement field accessor
  * @see specfem::point::mass_inverse for inverse mass matrix field accessor
  */
-template <typename Tags>
-using acceleration =
-    impl::acceleration<Tags::dimension_tag, Tags::medium_tag, Tags::using_simd>;
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element::medium_tag MediumTag, bool UseSIMD>
+class acceleration
+    : public impl::field<DimensionTag, MediumTag,
+                         specfem::data_access::DataClassType::acceleration,
+                         UseSIMD> {
+private:
+  /**
+   * @brief Type alias for the base field implementation.
+   */
+  using base_type =
+      impl::field<DimensionTag, MediumTag,
+                  specfem::data_access::DataClassType::acceleration, UseSIMD>;
+
+public:
+  /**
+   * @brief SIMD type for vectorized acceleration operations.
+   */
+  using simd = typename base_type::simd;
+
+  /**
+   * @brief Vector type for storing acceleration component values.
+   */
+  using value_type = typename base_type::value_type;
+
+  /**
+   * @brief Inherit all constructors from the base field implementation.
+   */
+  using base_type::base_type;
+};
 
 } // namespace specfem::point

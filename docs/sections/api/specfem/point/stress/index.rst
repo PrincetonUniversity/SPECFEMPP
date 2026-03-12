@@ -3,4 +3,6 @@
 ``specfem::point::stress``
 ==========================
 
-.. doxygentypedef:: specfem::point::stress
+.. doxygenstruct:: specfem::point::stress
+    :members:
+    :private-members:

@@ -65,8 +65,9 @@ KOKKOS_FUNCTION void coupling_integral_dnshape(
 
   using PointIndexType =
       typename IndexType::iterator_type::index_type::index_type;
-  using PointFieldType = specfem::point::acceleration<specfem::tags::Tags<
-      dimension_tag, self_medium_tag, IntersectionFieldViewType::using_simd> >;
+  using PointFieldType =
+      specfem::point::acceleration<dimension_tag, self_medium_tag,
+                                   IntersectionFieldViewType::using_simd>;
 
   constexpr int ncomp = PointFieldType::components;
   constexpr int nquad_intersection = IntersectionFactor::n_quad_intersection;

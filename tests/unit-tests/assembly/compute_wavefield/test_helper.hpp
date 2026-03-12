@@ -89,10 +89,11 @@ public:
     const int ngllz = assembly.mesh.element_grid.ngllz;
     const int ngllx = assembly.mesh.element_grid.ngllx;
 
-    using PointProperties = specfem::point::properties<
-        specfem::tags::Tags<specfem::element::dimension_tag::dim2,
-                            specfem::element::medium_tag::elastic_psv,
-                            specfem::element::property_tag::isotropic, false> >;
+    using PointProperties =
+        specfem::point::properties<specfem::element::dimension_tag::dim2,
+                                   specfem::element::medium_tag::elastic_psv,
+                                   specfem::element::property_tag::isotropic,
+                                   false>;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
@@ -156,10 +157,11 @@ public:
     const int ngllz = assembly.mesh.element_grid.ngllz;
     const int ngllx = assembly.mesh.element_grid.ngllx;
 
-    using PointProperties = specfem::point::properties<
-        specfem::tags::Tags<specfem::element::dimension_tag::dim2,
-                            specfem::element::medium_tag::acoustic,
-                            specfem::element::property_tag::isotropic, false> >;
+    using PointProperties =
+        specfem::point::properties<specfem::element::dimension_tag::dim2,
+                                   specfem::element::medium_tag::acoustic,
+                                   specfem::element::property_tag::isotropic,
+                                   false>;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
@@ -222,10 +224,11 @@ public:
     const int ngllz = assembly.mesh.element_grid.ngllz;
     const int ngllx = assembly.mesh.element_grid.ngllx;
 
-    using PointProperties = specfem::point::properties<
-        specfem::tags::Tags<specfem::element::dimension_tag::dim2,
-                            specfem::element::medium_tag::acoustic,
-                            specfem::element::property_tag::isotropic, false> >;
+    using PointProperties =
+        specfem::point::properties<specfem::element::dimension_tag::dim2,
+                                   specfem::element::medium_tag::acoustic,
+                                   specfem::element::property_tag::isotropic,
+                                   false>;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {

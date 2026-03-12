@@ -169,10 +169,11 @@ TYPED_TEST(PointPropertiesTest, PoroelasticIsotropic2D) {
   }
 
   // Create the properties object
-  using PointPropertiesType = specfem::point::properties<specfem::tags::Tags<
-      specfem::element::dimension_tag::dim2,
-      specfem::element::medium_tag::poroelastic,
-      specfem::element::property_tag::isotropic, using_simd> >;
+  using PointPropertiesType =
+      specfem::point::properties<specfem::element::dimension_tag::dim2,
+                                 specfem::element::medium_tag::poroelastic,
+                                 specfem::element::property_tag::isotropic,
+                                 using_simd>;
   PointPropertiesType props(phi, rho_s, rho_f, tortuosity, mu_G, H_Biot, C_Biot,
                             M_Biot, permxx, permxz, permzz, eta_f);
 

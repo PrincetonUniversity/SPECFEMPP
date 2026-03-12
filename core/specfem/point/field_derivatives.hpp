@@ -2,14 +2,24 @@
 
 #include "specfem/data_access.hpp"
 #include "specfem/datatype.hpp"
-#include "specfem/element/attributes.hpp"
 #include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace specfem::point {
-namespace impl {
+namespace specfem {
+namespace point {
 
-/// @private Implementation detail
+/**
+ * @brief Store field derivatives for a quadrature point
+ *
+ * The field derivatives are given by:
+ * \f$ du_{i,k} = \partial_i u_k \f$
+ *
+ * @tparam DimensionTag The dimension of the element where the quadrature point
+ * is located
+ * @tparam MediumTag The medium of the element where the quadrature point is
+ * located
+ * @tparam UseSIMD Use SIMD instructions
+ */
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct field_derivatives
@@ -71,18 +81,5 @@ public:
   ///@}
 };
 
-} // namespace impl
-
-/**
- * @brief Store field derivatives for a quadrature point
- *
- * The field derivatives are given by:
- * \f$ du_{i,k} = \partial_i u_k \f$
- *
- * @tparam Tags The tags for the element where the quadrature point is located
- */
-template <typename Tags>
-using field_derivatives =
-    impl::field_derivatives<Tags::dimension_tag, Tags::medium_tag,
-                            Tags::using_simd>;
-} // namespace specfem::point
+} // namespace point
+} // namespace specfem

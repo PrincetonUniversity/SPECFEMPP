@@ -14,10 +14,10 @@ namespace medium_physics {
 //                                       specfem::element::medium_tag::elastic_psv,
 //                                       false, false, false, true, UseSIMD>
 // impl_mass_matrix_component(
-//     const
-//     specfem::point::properties<specfem::tags::Tags<specfem::element::dimension_tag::dim2,
-//     // specfem::element::medium_tag::elastic_psv, // PropertyTag, UseSIMD>>
-//     &properties, const specfem::point::jacobian_matrix<
+//     const specfem::point::properties<specfem::element::dimension_tag::dim2,
+//                                      specfem::element::medium_tag::elastic_psv,
+//                                      PropertyTag, UseSIMD> &properties,
+//     const specfem::point::jacobian_matrix<
 //         specfem::element::dimension_tag::dim2, true, UseSIMD>
 //         &jacobian_matrix);
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "specfem/element/tags.hpp"
-#include "specfem/element_connections/tags.hpp"
-#include "specfem/element_coupling/tags.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/element_coupling.hpp"
 #include "specfem/simulation.hpp"
 
 namespace specfem::tags {
@@ -88,13 +88,6 @@ struct TagMember<specfem::element_connections::type, ConnectionTag> {
 template <specfem::simulation::field_type WavefieldTag>
 struct TagMember<specfem::simulation::field_type, WavefieldTag> {
   static constexpr specfem::simulation::field_type wavefield_tag = WavefieldTag;
-};
-
-/**
- * @brief SIMD tag specialization for point field types (enabled, disabled).
- */
-template <bool UseSIMD> struct TagMember<bool, UseSIMD> {
-  static constexpr bool using_simd = UseSIMD;
 };
 
 /**

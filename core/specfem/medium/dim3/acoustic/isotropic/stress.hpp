@@ -31,20 +31,22 @@ namespace specfem::medium_physics {
  * x_i}\f$)
  * @return 1x3 stress tensor with diagonal components
  */
-template <
-    typename Tags,
-    std::enable_if_t<
-        Tags::dimension_tag == specfem::element::dimension_tag::dim3 &&
-            Tags::medium_tag == specfem::element::medium_tag::acoustic &&
-            Tags::property_tag == specfem::element::property_tag::isotropic,
-        int> = 0>
-KOKKOS_INLINE_FUNCTION specfem::point::stress<Tags> impl_compute_stress(
-    const specfem::point::properties<Tags> &properties,
-    const specfem::point::field_derivatives<Tags> &field_derivatives) {
+template <bool UseSIMD>
+KOKKOS_INLINE_FUNCTION specfem::point::stress<
+    specfem::element::dimension_tag::dim3,
+    specfem::element::medium_tag::acoustic, UseSIMD>
+impl_compute_stress(
+    const specfem::point::properties<specfem::element::dimension_tag::dim3,
+                                     specfem::element::medium_tag::acoustic,
+                                     specfem::element::property_tag::isotropic,
+                                     UseSIMD> &properties,
+    const specfem::point::field_derivatives<
+        specfem::element::dimension_tag::dim3,
+        specfem::element::medium_tag::acoustic, UseSIMD> &field_derivatives) {
 
   const auto &du = field_derivatives.du;
 
-  specfem::datatype::TensorPointViewType<type_real, 1, 3, Tags::using_simd> T;
+  specfem::datatype::TensorPointViewType<type_real, 1, 3, UseSIMD> T;
   T(0, 0) = properties.rho_inverse() * du(0, 0);
   T(0, 1) = properties.rho_inverse() * du(0, 1);
   T(0, 2) = properties.rho_inverse() * du(0, 2);

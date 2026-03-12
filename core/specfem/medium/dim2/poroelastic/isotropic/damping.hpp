@@ -1,7 +1,6 @@
 #pragma once
 
 #include "specfem/element.hpp"
-#include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -41,17 +40,18 @@ namespace medium_physics {
  * @param velocity Velocity field [u_x, u_z, w_x, w_z]
  * @param acceleration[in,out] Acceleration field (modified by damping)
  */
-template <
-    typename T, typename Tags,
-    std::enable_if_t<
-        Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
-            Tags::medium_tag == specfem::element::medium_tag::poroelastic &&
-            Tags::property_tag == specfem::element::property_tag::isotropic,
-        int> = 0>
-KOKKOS_INLINE_FUNCTION void impl_compute_damping_force(
-    const T factor, const specfem::point::properties<Tags> &point_properties,
-    const specfem::point::velocity<Tags> &velocity,
-    specfem::point::acceleration<Tags> &acceleration) {
+template <typename T, typename PointPropertiesType, typename PointVelocityType,
+          typename PointAccelerationType>
+KOKKOS_FUNCTION void impl_compute_damping_force(
+    const std::true_type,
+    const std::integral_constant<specfem::element::dimension_tag,
+                                 specfem::element::dimension_tag::dim2>,
+    const std::integral_constant<specfem::element::medium_tag,
+                                 specfem::element::medium_tag::poroelastic>,
+    const std::integral_constant<specfem::element::property_tag,
+                                 specfem::element::property_tag::isotropic>,
+    const T factor, const PointPropertiesType &point_properties,
+    const PointVelocityType &velocity, PointAccelerationType &acceleration) {
 
   // viscous damping
   const auto viscx =

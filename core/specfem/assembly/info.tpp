@@ -91,7 +91,8 @@ void process_medium_elements(
         const auto point_index = iterator_index.get_index();
 
         // Create point property object
-        specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false>>
+        specfem::point::properties<dimension_tag, medium_tag, property_tag,
+                                   false>
             point_property;
         specfem::assembly::load_on_device(point_index, properties,
                                           point_property);

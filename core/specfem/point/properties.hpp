@@ -1,30 +1,11 @@
 #pragma once
 
 #include "specfem/enums.hpp"
-#include "specfem/medium_container/point_properties.hpp"
+#include "specfem/medium_container.hpp"
 #include "specfem/setup.hpp"
-#include "specfem/tags.hpp"
 
-namespace specfem::point {
-namespace impl {
-
-/// @private Implementation detail
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, bool UseSIMD>
-struct properties : specfem::medium_container::properties::point_container<
-                        DimensionTag, MediumTag, PropertyTag, UseSIMD> {
-
-  using base_type = specfem::medium_container::properties::point_container<
-      DimensionTag, MediumTag, PropertyTag, UseSIMD>;
-
-  using value_type = typename base_type::value_type;
-  using simd = typename base_type::simd;
-
-  using base_type::base_type;
-};
-
-} // namespace impl
+namespace specfem {
+namespace point {
 
 /**
  * @brief Properties of a quadrature point.
@@ -34,7 +15,11 @@ struct properties : specfem::medium_container::properties::point_container<
  * type, and property type to provide specialized storage and accessors for
  * different physical models (e.g., acoustic, elastic, poroelastic).
  *
- * @tparam Tags The tags for the element where the quadrature point is located
+ * @tparam Dimension The dimension of the medium (e.g., dim2, dim3)
+ * @tparam MediumTag The type of the medium (e.g., acoustic, elastic)
+ * @tparam PropertyTag The type of the properties (e.g., isotropic, anisotropic)
+ * @tparam UseSIMD Boolean indicating whether to use SIMD intrinsics for storage
+ * and operations
  *
  * @note Medium-specific specializations are available in the implementation
  * details. See @ref specfem::medium_container::properties::point_container.
@@ -58,9 +43,8 @@ struct properties : specfem::medium_container::properties::point_container<
  * double mu = 10.0;
  * double rho = 2500.0;
  *
- * specfem::point::properties<specfem::tags::Tags<
- *     dim, medium_tag::elastic, property_tag::isotropic, use_simd>>
- *     props(kappa, mu, rho);
+ * specfem::point::properties<dim, medium_tag::elastic, property_tag::isotropic,
+ * use_simd> props(kappa, mu, rho);
  *
  * // Access properties
  * double k = props.kappa();
@@ -75,7 +59,20 @@ struct properties : specfem::medium_container::properties::point_container<
  * - specfem::medium_container::properties::point_container
  * - specfem::compute::mass_matrix
  */
-template <typename Tags>
-using properties = impl::properties<Tags::dimension_tag, Tags::medium_tag,
-                                    Tags::property_tag, Tags::using_simd>;
-} // namespace specfem::point
+template <specfem::element::dimension_tag Dimension,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, bool UseSIMD>
+struct properties : specfem::medium_container::properties::point_container<
+                        Dimension, MediumTag, PropertyTag, UseSIMD> {
+
+  using base_type = specfem::medium_container::properties::point_container<
+      Dimension, MediumTag, PropertyTag, UseSIMD>;
+
+  using value_type = typename base_type::value_type;
+  using simd = typename base_type::simd;
+
+  using base_type::base_type;
+};
+
+} // namespace point
+} // namespace specfem

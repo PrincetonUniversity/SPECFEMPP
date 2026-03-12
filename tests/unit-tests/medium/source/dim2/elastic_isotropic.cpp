@@ -12,13 +12,13 @@ TEST(Source, ElasticIsotropicPSV2D) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType = specfem::point::properties<
-      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
+  using PointPropertiesType =
+      specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType = specfem::point::acceleration<
-      specfem::tags::Tags<dimension, medium_tag, false> >;
+  using PointAccelerationType =
+      specfem::point::acceleration<dimension, medium_tag, false>;
 
   const type_real rho = 2000.0;
   const type_real mu = 30e9;
@@ -55,13 +55,13 @@ TEST(Source, ElasticIsotropicSH2D) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType = specfem::point::properties<
-      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
+  using PointPropertiesType =
+      specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType = specfem::point::acceleration<
-      specfem::tags::Tags<dimension, medium_tag, false> >;
+  using PointAccelerationType =
+      specfem::point::acceleration<dimension, medium_tag, false>;
 
   const type_real rho = 2000.0;
   const type_real mu = 30e9;
@@ -94,13 +94,13 @@ TEST(Source, ElasticIsotropicPSV2D_ZeroSource) {
   static constexpr auto property_tag =
       specfem::element::property_tag::isotropic;
 
-  using PointPropertiesType = specfem::point::properties<
-      specfem::tags::Tags<dimension, medium_tag, property_tag, false> >;
+  using PointPropertiesType =
+      specfem::point::properties<dimension, medium_tag, property_tag, false>;
   using PointSourceType =
       specfem::point::source<dimension, medium_tag,
                              specfem::simulation::field_type::forward>;
-  using PointAccelerationType = specfem::point::acceleration<
-      specfem::tags::Tags<dimension, medium_tag, false> >;
+  using PointAccelerationType =
+      specfem::point::acceleration<dimension, medium_tag, false>;
 
   const type_real rho = 2000.0;
   const type_real mu = 30e9;

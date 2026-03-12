@@ -30,14 +30,16 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const specfem::enums::wavefield wavefield_type,
     WavefieldViewType wavefield) {
 
-  using FieldDerivativesType = specfem::point::field_derivatives<
-      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                          specfem::element::medium_tag::elastic, false> >;
+  using FieldDerivativesType =
+      specfem::point::field_derivatives<specfem::element::dimension_tag::dim3,
+                                        specfem::element::medium_tag::elastic,
+                                        false>;
 
-  using PointPropertyType = specfem::point::properties<
-      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
-                          specfem::element::medium_tag::elastic,
-                          specfem::element::property_tag::isotropic, false> >;
+  using PointPropertyType =
+      specfem::point::properties<specfem::element::dimension_tag::dim3,
+                                 specfem::element::medium_tag::elastic,
+                                 specfem::element::property_tag::isotropic,
+                                 false>;
 
   const auto &properties = assembly.properties;
 

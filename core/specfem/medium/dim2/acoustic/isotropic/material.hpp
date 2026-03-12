@@ -2,7 +2,6 @@
 
 #include "specfem/element.hpp"
 #include "specfem/setup.hpp"
-#include "specfem/tags.hpp"
 #include <exception>
 #include <iostream>
 #include <ostream>
@@ -149,8 +148,8 @@ public:
   template <specfem::element::attenuation_tag T = AttenuationTag,
             typename =
                 std::enable_if_t<T == specfem::element::attenuation_tag::none> >
-  inline specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
+  inline specfem::point::properties<dimension_tag, medium_tag, property_tag,
+                                    false>
   get_properties() const {
     return { static_cast<type_real>(1.0) / static_cast<type_real>(density),
              this->kappa };

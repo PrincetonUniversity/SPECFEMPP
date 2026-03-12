@@ -116,9 +116,7 @@ struct properties<specfem::element::dimension_tag::dim2>
  * @code
  * // Find maximum density across elements 0-99
  * Kokkos::View<int*> elements("elements", 100);
- * specfem::point::properties<specfem::tags::Tags<
- *     dim2, elastic, isotropic, false>>
- *     max_props;
+ * specfem::point::properties<dim2, elastic, isotropic> max_props;
  * max(elements, assembly_props, max_props);
  * @endcode
  */

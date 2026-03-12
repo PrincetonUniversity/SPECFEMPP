@@ -284,8 +284,7 @@ public:
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag,
             specfem::element::attenuation_tag AttenuationTag>
-  const specfem::point::properties<
-      specfem::tags::Tags<dimension_tag, MediumTag, PropertyTag, false> >
+  const specfem::point::properties<dimension_tag, MediumTag, PropertyTag, false>
   get_properties(const int index) const {
     const auto material =
         this->get_material<MediumTag, PropertyTag, AttenuationTag>(index);
