@@ -17,8 +17,9 @@ compute_band(const specfem::datatype::Seconds min_resolved_period) {
   // Index corresponds to N_SLS (THETA(N_SLS) in the original Fortran).
   constexpr double theta[6] = { 0.00, 0.00, 0.75, 1.75, 2.25, 2.85 };
 
-  const type_real max_period = static_cast<specfem::datatype::Seconds>(
-      min_resolved_period * std::pow(10.0, theta[N_SLS]));
+  const specfem::datatype::Seconds max_period =
+      static_cast<specfem::datatype::Seconds>(min_resolved_period *
+                                              std::pow(10.0, theta[N_SLS]));
   return specfem::utilities::FrequencyBand<specfem::datatype::Omega>{
     min_resolved_period, max_period
   };
