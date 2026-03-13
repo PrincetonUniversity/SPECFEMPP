@@ -153,7 +153,7 @@ public:
 
     // Unreachable code - satisfy compiler return requirements
 
-    SUPPRESS_TEMPORARY_REF(return {};)
+    SUPPRESS_UNREACHABLE(return {};)
   }
 };
 
