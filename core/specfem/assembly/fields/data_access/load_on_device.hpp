@@ -4,6 +4,7 @@
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/fields/impl/check_accessor_compatibility.hpp"
 #include "specfem/assembly/fields/impl/load_access_functions.hpp"
+#include "specfem/chunk_element/field_pack.hpp"
 #include "specfem/data_access.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
@@ -122,4 +123,22 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
   fields_impl::load_on_device(index, field, accessors...);
   return;
 }
+
+/// @brief FieldPack<F>: load displacement into .f
+template <typename ChunkIndexType, typename FieldType, typename F>
+KOKKOS_FORCEINLINE_FUNCTION void
+load_on_device(const ChunkIndexType &chunk_index, const FieldType &field,
+               specfem::chunk_element::FieldPack<F> &field_pack) {
+  load_on_device(chunk_index, field, field_pack.f);
+}
+
+/// @brief FieldPack<F, G>: load displacement into .f, velocity into .g
+template <typename ChunkIndexType, typename FieldType, typename F, typename G>
+KOKKOS_FORCEINLINE_FUNCTION void
+load_on_device(const ChunkIndexType &chunk_index, const FieldType &field,
+               specfem::chunk_element::FieldPack<F, G> &field_pack) {
+  load_on_device(chunk_index, field, field_pack.f);
+  load_on_device(chunk_index, field, field_pack.g);
+}
+
 } // namespace specfem::assembly

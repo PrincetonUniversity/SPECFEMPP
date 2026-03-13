@@ -158,10 +158,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
           ElementQuadratureType lagrange_derivative(team);
           ChunkStressIntegrandType stress_integrand(team);
           specfem::assembly::load_on_device(team, mesh, lagrange_derivative);
-          specfem::assembly::load_on_device(chunk_index, field, field_pack.f);
-          if constexpr (needs_velocity_gradient) {
-             specfem::assembly::load_on_device(chunk_index, field, field_pack.g);
-          }
+          specfem::assembly::load_on_device(chunk_index, field, field_pack);
 
           team.team_barrier();
 
@@ -179,13 +176,9 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 specfem::assembly::load_on_device(index, properties,
                                                   point_property);
 
-                PointFieldDerivativesType field_derivatives(grad_pack.df);
-
-                if constexpr (needs_velocity_gradient) {
-                  // grad_pack.dg (∂v/∂x) is available for future attenuation
-                  // physics (SLS/Taylor-expanded strain). Currently unused.
-                  (void)grad_pack.dg;
-                }
+                PointFieldDerivativesType field_derivatives(grad_pack.get_df());
+                // TODO(attenuation): grad_pack.get_dg() = ∂v/∂x for SLS memory variable update
+                grad_pack.get_dg();
 
                 PointDisplacementType point_displacement;
                 specfem::assembly::load_on_device(index, field,

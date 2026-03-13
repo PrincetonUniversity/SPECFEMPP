@@ -26,6 +26,9 @@ template <typename T> struct GradientPack<T> {
   KOKKOS_FUNCTION GradientPack(const GradientPack &) = default;
   KOKKOS_FUNCTION GradientPack &operator=(const GradientPack &) = default;
   KOKKOS_FUNCTION explicit GradientPack(const T &t) : df(t) {}
+
+  KOKKOS_FUNCTION const T &get_df() const { return df; }
+  KOKKOS_FUNCTION void get_dg() const {}
 };
 
 // ---------------------------------------------------------------------------
@@ -47,6 +50,9 @@ template <typename T1, typename T2> struct GradientPack<T1, T2> {
   KOKKOS_FUNCTION GradientPack(const GradientPack &) = default;
   KOKKOS_FUNCTION GradientPack &operator=(const GradientPack &) = default;
   KOKKOS_FUNCTION GradientPack(const T1 &t1, const T2 &t2) : df(t1), dg(t2) {}
+
+  KOKKOS_FUNCTION const T1 &get_df() const { return df; }
+  KOKKOS_FUNCTION const T2 &get_dg() const { return dg; }
 };
 
 // ---------------------------------------------------------------------------
@@ -72,6 +78,9 @@ struct GradientPack<T1, T2, T3> {
   KOKKOS_FUNCTION GradientPack &operator=(const GradientPack &) = default;
   KOKKOS_FUNCTION GradientPack(const T1 &t1, const T2 &t2, const T3 &t3)
       : df(t1), dg(t2), dh(t3) {}
+
+  KOKKOS_FUNCTION const T1 &get_df() const { return df; }
+  KOKKOS_FUNCTION const T2 &get_dg() const { return dg; }
 };
 
 } // namespace specfem::point
