@@ -42,8 +42,8 @@ subroutine save_databases()
    implicit none
 
    ! local parameters
-   integer :: ier, lastslash, ndigits
-   character(len=MAX_STRING_LEN) :: prname, dir_path, filename
+   integer :: ier, lastdot, lastslash, ndigits
+   character(len=MAX_STRING_LEN) :: prname, dir_path, stem, ext
    character(len=32) :: proc_str, format_str
 
    ! calculate number of digits needed for processor numbering
@@ -61,18 +61,29 @@ subroutine save_databases()
          write(format_str,'(a,i0,a,i0,a)') '(i', ndigits, '.', ndigits, ')'
          write(proc_str,format_str) iproc
 
-         ! find last slash in database_filename to split directory and filename
+         ! split database_filename into directory, stem, and extension
          lastslash = index(database_filename, '/', back=.true.)
          if (lastslash > 0) then
-            ! split into directory and filename
             dir_path = database_filename(1:lastslash)
-            filename = database_filename(lastslash+1:len_trim(database_filename))
-            ! construct path: dir_path/proc###_filename
-            prname = trim(dir_path) // "proc" // trim(proc_str) // "_" // trim(filename)
+            stem = database_filename(lastslash+1:len_trim(database_filename))
          else
-            ! no directory path, just prepend proc###_
-            prname = "proc" // trim(proc_str) // "_" // trim(database_filename)
+            dir_path = ''
+            stem = trim(database_filename)
          endif
+         lastdot = index(stem, '.', back=.true.)
+         if (lastdot > 0) then
+            ext = stem(lastdot:len_trim(stem))          ! includes '.'
+            stem = stem(1:lastdot-1)
+         else
+            ext = ''
+         endif
+
+         ! new scheme: dir/stem/proc_N.ext
+         ! rank 0 creates the subdirectory before all ranks write
+         if (iproc == 0) then
+            call execute_command_line('mkdir -p ' // trim(dir_path) // trim(stem), wait=.true.)
+         endif
+         prname = trim(dir_path) // trim(stem) // '/proc_' // trim(proc_str) // trim(ext)
       else
          prname = trim(database_filename)
       endif

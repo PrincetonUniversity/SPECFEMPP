@@ -116,11 +116,14 @@ public:
   /**
    * @brief Format filename with processor number using dynamic zero-padding
    *
-   * Inserts processor number into filename with zero-padding based on total
-   * number of processes. For example:
-   * - "foo/bar.bin" with size=4  -> "foo/proc0_bar.bin"
-   * - "foo/bar.bin" with size=100 -> "foo/proc00_bar.bin"
-   * - "bar.bin" with size=1000 -> "proc000_bar.bin"
+   * For multi-process runs, transforms "dir/stem.ext" into
+   * "dir/stem/proc_N.ext" where N is the zero-padded rank.
+   * For single-process runs, the filename is returned unchanged.
+   *
+   * Examples (size=6, rank=2):
+   * - "foo/bar.bin" -> "foo/bar/proc_2.bin"
+   * - "foo/bar.bin" (size=100, rank=2) -> "foo/bar/proc_02.bin"
+   * - "bar.bin"     -> "bar/proc_2.bin"
    *
    * @param filename Input filename (can include directory path)
    * @return std::string Formatted filename with processor number
@@ -141,19 +144,30 @@ public:
     std::ostringstream proc_str;
     proc_str << std::setfill('0') << std::setw(ndigits) << rank_;
 
-    // Find last slash to split directory and filename
+    // Split into directory and basename
     size_t lastslash = filename.find_last_of('/');
-
+    std::string dir_path, file_name;
     if (lastslash != std::string::npos) {
-      // Split into directory and filename
-      std::string dir_path = filename.substr(0, lastslash + 1);
-      std::string file_name = filename.substr(lastslash + 1);
-      // Construct: dir_path/proc###_filename
-      return dir_path + "proc" + proc_str.str() + "_" + file_name;
+      dir_path = filename.substr(0, lastslash + 1);
+      file_name = filename.substr(lastslash + 1);
     } else {
-      // No directory path, just prepend proc###_
-      return "proc" + proc_str.str() + "_" + filename;
+      dir_path = "";
+      file_name = filename;
     }
+
+    // Split basename into stem and extension
+    size_t lastdot = file_name.find_last_of('.');
+    std::string stem, ext;
+    if (lastdot != std::string::npos) {
+      stem = file_name.substr(0, lastdot);
+      ext = file_name.substr(lastdot); // includes the '.'
+    } else {
+      stem = file_name;
+      ext = "";
+    }
+
+    // New scheme: dir/stem/proc_N.ext
+    return dir_path + stem + "/proc_" + proc_str.str() + ext;
   }
 
   /**
