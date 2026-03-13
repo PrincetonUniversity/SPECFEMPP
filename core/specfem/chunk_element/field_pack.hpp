@@ -1,6 +1,5 @@
 #pragma once
 
-#include "specfem/point/gradient_field_pack.hpp"
 #include <Kokkos_Core.hpp>
 #include <cstddef>
 #include <type_traits>
@@ -9,9 +8,6 @@ namespace specfem::chunk_element {
 
 /**
  * @brief Named holder for a displacement chunk field (accessed as .u)
- *
- * Carries the nested `gradient_holder<V>` alias that maps this holder to
- * `specfem::point::holds_du<V>` for use in FieldPack gradient overloads.
  *
  * The constructor takes a Kokkos scratch memory space; the underlying field
  * allocates its storage from that space. When multiple holders are composed
@@ -23,13 +19,6 @@ namespace specfem::chunk_element {
  */
 template <typename F> struct holds_u {
   F u;
-
-  /// Maps this holder to its gradient counterpart holds_du<V>
-  template <typename V> using gradient_holder = specfem::point::holds_du<V>;
-
-  /// @brief Access the underlying field (used by gradient overloads)
-  KOKKOS_FUNCTION F &get() { return u; }
-  KOKKOS_FUNCTION const F &get() const { return u; }
 
   KOKKOS_FUNCTION holds_u() = default;
   KOKKOS_FUNCTION holds_u(const holds_u &) = default;
@@ -53,18 +42,10 @@ template <typename F> struct holds_u {
 /**
  * @brief Named holder for a velocity chunk field (accessed as .v)
  *
- * Carries the nested `gradient_holder<V>` alias that maps this holder to
- * `specfem::point::holds_dv<V>`.
- *
  * @tparam F Chunk element field type (e.g., chunk_element::velocity<...>)
  */
 template <typename F> struct holds_v {
   F v;
-
-  template <typename V> using gradient_holder = specfem::point::holds_dv<V>;
-
-  KOKKOS_FUNCTION F &get() { return v; }
-  KOKKOS_FUNCTION const F &get() const { return v; }
 
   KOKKOS_FUNCTION holds_v() = default;
   KOKKOS_FUNCTION holds_v(const holds_v &) = default;
@@ -83,18 +64,10 @@ template <typename F> struct holds_v {
 /**
  * @brief Named holder for an acceleration chunk field (accessed as .a)
  *
- * Carries the nested `gradient_holder<V>` alias that maps this holder to
- * `specfem::point::holds_da<V>`.
- *
  * @tparam F Chunk element field type (e.g., chunk_element::acceleration<...>)
  */
 template <typename F> struct holds_a {
   F a;
-
-  template <typename V> using gradient_holder = specfem::point::holds_da<V>;
-
-  KOKKOS_FUNCTION F &get() { return a; }
-  KOKKOS_FUNCTION const F &get() const { return a; }
 
   KOKKOS_FUNCTION holds_a() = default;
   KOKKOS_FUNCTION holds_a(const holds_a &) = default;

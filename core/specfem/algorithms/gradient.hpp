@@ -6,7 +6,6 @@
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
-#include <tuple>
 
 /**
  * @file gradient.hpp
@@ -163,56 +162,51 @@ KOKKOS_FORCEINLINE_FUNCTION auto element_gradient(
  */
 
 /**
- * @brief Compute the gradient of a scalar field f using the spectral element
+ * @brief Compute the gradient of a vector field f using the spectral element
  * formulation (eqn: 29 in Komatitsch and Tromp, 1999)
  *
  * @ingroup AlgorithmsGradient
  *
- * @tparam ChunkIndexType Chunk index type
+ * @tparam ChunkIndexType  Chunk index type
  * @tparam VectorFieldType Field view type (Chunk view)
- * @tparam QuadratureType Quadrature view type
+ * @tparam DimTag          Dimension tag (dim2 or dim3), deduced from
+ *                         the jacobian_matrix argument
+ * @tparam QuadratureType  Quadrature view type
  * @tparam CallbackFunctor Callback functor type
- * @param chunk_index Chunk index specifying the elements within this chunk
- * @param jacobian_matrix Jacobian matrix of basis functions
- * @param quadrature Integration quadrature
- * @param f Field to compute the gradient of
- * @param callback Callback functor. Callback signature must be:
- * @code void(const typename IteratorType::index_type, const
- * specfem::datatype::TensorPointViewType<type_real, 2,
- * VectorFieldType::components>)
- * @endcode
+ * @param chunk_index      Chunk index specifying the elements within this chunk
+ * @param jacobian_matrix  Jacobian matrix of basis functions
+ * @param quadrature       Integration quadrature
+ * @param f                Field to compute the gradient of
+ * @param callback         Callback functor receiving
+ *        (iterator_index, TensorPointViewType<components, dim>)
  */
 template <typename ChunkIndexType, typename VectorFieldType,
-          typename QuadratureType, typename CallbackFunctor,
+          specfem::element::dimension_tag DimTag, typename QuadratureType,
+          typename CallbackFunctor,
           std::enable_if_t<
-              specfem::data_access::is_chunk_element<VectorFieldType>::value &&
-                  VectorFieldType::dimension_tag ==
-                      specfem::element::dimension_tag::dim2,
+              specfem::data_access::is_chunk_element<VectorFieldType>::value,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 gradient(const ChunkIndexType &chunk_index,
-         const specfem::assembly::jacobian_matrix<
-             specfem::element::dimension_tag::dim2> &jacobian_matrix,
+         const specfem::assembly::jacobian_matrix<DimTag> &jacobian_matrix,
          const QuadratureType &quadrature, const VectorFieldType &f,
          const CallbackFunctor &callback) {
   constexpr int components = VectorFieldType::components;
-  constexpr int dimension = 2;
+  constexpr int dimension =
+      DimTag == specfem::element::dimension_tag::dim2 ? 2 : 3;
   constexpr bool using_simd = VectorFieldType::simd::using_simd;
 
   using TensorPointViewType =
       specfem::datatype::TensorPointViewType<type_real, components, dimension,
                                              using_simd>;
-
   using datatype = typename VectorFieldType::simd::datatype;
 
   static_assert(
       std::is_invocable_v<CallbackFunctor,
                           typename ChunkIndexType::iterator_type::index_type,
                           TensorPointViewType>,
-      "CallbackFunctor must be invocable with the following signature: "
-      "void(const int, const specfem::point::index, const "
-      "specfem::kokkos::array_type<type_real, components>, const "
-      "specfem::kokkos::array_type<type_real, components>)");
+      "CallbackFunctor must be invocable with (iterator_index, "
+      "TensorPointViewType)");
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
@@ -222,77 +216,71 @@ gradient(const ChunkIndexType &chunk_index,
         const auto local_index = iterator_index.get_local_index();
         datatype df_dxi[components] = { 0.0 };
         datatype df_dgamma[components] = { 0.0 };
-        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
-                                        false, using_simd>
+        specfem::point::jacobian_matrix<DimTag, false, using_simd>
             point_jacobian_matrix;
-
         specfem::assembly::load_on_device(index, jacobian_matrix,
                                           point_jacobian_matrix);
-
-        const auto df =
-            impl::element_gradient(f, local_index, point_jacobian_matrix,
-                                   quadrature, df_dxi, df_dgamma);
-        callback(iterator_index, df);
+        if constexpr (DimTag == specfem::element::dimension_tag::dim3) {
+          datatype df_deta[components] = { 0.0 };
+          callback(iterator_index, impl::element_gradient(
+                                       f, local_index, point_jacobian_matrix,
+                                       quadrature, df_dxi, df_deta, df_dgamma));
+        } else {
+          callback(iterator_index,
+                   impl::element_gradient(f, local_index, point_jacobian_matrix,
+                                          quadrature, df_dxi, df_dgamma));
+        }
       });
-
-  return;
 }
 
 /**
- * @brief Compute the gradient of a field f & g using the spectral element
- * formulation (eqn: 29 in Komatitsch and Tromp, 1999)
+ * @brief Compute the gradients of two vector fields f and g using the spectral
+ * element formulation (eqn: 29 in Komatitsch and Tromp, 1999)
  *
  * @ingroup AlgorithmsGradient
  *
- * @tparam ChunkIndexType Chunk index type
+ * @tparam ChunkIndexType  Chunk index type
  * @tparam VectorFieldType Field view type (Chunk view)
- * @tparam QuadratureType Quadrature view type
+ * @tparam DimTag          Dimension tag (dim2 or dim3), deduced from
+ *                         the jacobian_matrix argument
+ * @tparam QuadratureType  Quadrature view type
  * @tparam CallbackFunctor Callback functor type
- * @param chunk_index Chunk index specifying the elements within this chunk
- * @param jacobian_matrix Jacobian matrix of basis functions
- * @param quadrature Integration quadrature
- * @param f Field to compute the gradient of
- * @param g Field to compute the gradient of
- * @param callback Callback functor. Callback signature must be:
- * @code void(const typename IteratorType::index_type, const
- * specfem::datatype::TensorPointViewType<type_real, 2,
- * VectorFieldType::components>, const
- * specfem::datatype::TensorPointViewType<type_real, 2,
- * VectorFieldType::components>)
- * @endcode
+ * @param chunk_index      Chunk index specifying the elements within this chunk
+ * @param jacobian_matrix  Jacobian matrix of basis functions
+ * @param quadrature       Integration quadrature
+ * @param f                First field to compute the gradient of
+ * @param g                Second field to compute the gradient of
+ * @param callback         Callback functor receiving
+ *        (iterator_index, TensorPointViewType<components, dim>,
+ *         TensorPointViewType<components, dim>)
  */
 template <typename ChunkIndexType, typename VectorFieldType,
-          typename QuadratureType, typename CallbackFunctor,
+          specfem::element::dimension_tag DimTag, typename QuadratureType,
+          typename CallbackFunctor,
           std::enable_if_t<
-              specfem::data_access::is_chunk_element<VectorFieldType>::value &&
-                  VectorFieldType::dimension_tag ==
-                      specfem::element::dimension_tag::dim2,
+              specfem::data_access::is_chunk_element<VectorFieldType>::value,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
 gradient(const ChunkIndexType &chunk_index,
-         const specfem::assembly::jacobian_matrix<
-             specfem::element::dimension_tag::dim2> &jacobian_matrix,
+         const specfem::assembly::jacobian_matrix<DimTag> &jacobian_matrix,
          const QuadratureType &quadrature, const VectorFieldType &f,
          const VectorFieldType &g, const CallbackFunctor &callback) {
   constexpr int components = VectorFieldType::components;
+  constexpr int dimension =
+      DimTag == specfem::element::dimension_tag::dim2 ? 2 : 3;
   constexpr bool using_simd = VectorFieldType::simd::using_simd;
-  constexpr int dimension = 2;
 
   using TensorPointViewType =
       specfem::datatype::TensorPointViewType<type_real, components, dimension,
                                              using_simd>;
-
   using datatype = typename VectorFieldType::simd::datatype;
 
   static_assert(
       std::is_invocable_v<CallbackFunctor,
                           typename ChunkIndexType::iterator_type::index_type,
                           TensorPointViewType, TensorPointViewType>,
-      "CallbackFunctor must be invocable with the following signature: "
-      "void(const ChunkIndexType::iterator_type::index_type, "
-      "const specfem::datatype::TensorPointViewType<type_real, 2, components>, "
-      "const specfem::datatype::TensorPointViewType<type_real, 2, "
-      "components>)");
+      "CallbackFunctor must be invocable with (iterator_index, "
+      "TensorPointViewType, TensorPointViewType)");
 
   specfem::execution::for_each_level(
       chunk_index.get_iterator(),
@@ -301,245 +289,170 @@ gradient(const ChunkIndexType &chunk_index,
         const auto index = iterator_index.get_index();
         const auto local_index = iterator_index.get_local_index();
         datatype df_dxi[components] = { 0.0 };
-        datatype df_dgamma[components] = { 0.0 };
-        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim2,
-                                        false, using_simd>
-            point_jacobian_matrix;
-
-        specfem::assembly::load_on_device(index, jacobian_matrix,
-                                          point_jacobian_matrix);
-
-        const auto df =
-            impl::element_gradient(f, local_index, point_jacobian_matrix,
-                                   quadrature, df_dxi, df_dgamma);
-        const auto dg =
-            impl::element_gradient(g, local_index, point_jacobian_matrix,
-                                   quadrature, df_dxi, df_dgamma);
-        callback(iterator_index, df, dg);
-      });
-
-  return;
-}
-
-/**
- * @brief Compute the gradient of a scalar field f using the spectral element
- * formulation for 3D elements
- *
- * @ingroup AlgorithmsGradient
- *
- * @tparam ChunkIndexType Chunk index type
- * @tparam VectorFieldType Field view type (Chunk view)
- * @tparam QuadratureType Quadrature view type
- * @tparam CallbackFunctor Callback functor type
- * @param chunk_index Chunk index specifying the elements within this chunk
- * @param jacobian_matrix Jacobian matrix of basis functions
- * @param quadrature Integration quadrature
- * @param f Field to compute the gradient of
- * @param callback Callback functor. Callback signature must be:
- * @code void(const typename IteratorType::index_type, const
- * specfem::datatype::TensorPointViewType<type_real, 3,
- * VectorFieldType::components>)
- * @endcode
- */
-template <typename ChunkIndexType, typename VectorFieldType,
-          typename QuadratureType, typename CallbackFunctor,
-          std::enable_if_t<
-              specfem::data_access::is_chunk_element<VectorFieldType>::value &&
-                  VectorFieldType::dimension_tag ==
-                      specfem::element::dimension_tag::dim3,
-              int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
-gradient(const ChunkIndexType &chunk_index,
-         const specfem::assembly::jacobian_matrix<
-             specfem::element::dimension_tag::dim3> &jacobian_matrix,
-         const QuadratureType &quadrature, const VectorFieldType &f,
-         const CallbackFunctor &callback) {
-  constexpr int components = VectorFieldType::components;
-  constexpr int dimension = 3;
-  constexpr bool using_simd = VectorFieldType::simd::using_simd;
-
-  using TensorPointViewType =
-      specfem::datatype::TensorPointViewType<type_real, components, dimension,
-                                             using_simd>;
-
-  using datatype = typename VectorFieldType::simd::datatype;
-
-  static_assert(
-      std::is_invocable_v<CallbackFunctor,
-                          typename ChunkIndexType::iterator_type::index_type,
-                          TensorPointViewType>,
-      "CallbackFunctor must be invocable with the following signature: "
-      "void(const int, const specfem::point::index, const "
-      "specfem::kokkos::array_type<type_real, components>, const "
-      "specfem::kokkos::array_type<type_real, components>, const "
-      "specfem::kokkos::array_type<type_real, components>)");
-
-  specfem::execution::for_each_level(
-      chunk_index.get_iterator(),
-      [&](const typename ChunkIndexType::iterator_type::index_type
-              &iterator_index) {
-        const auto index = iterator_index.get_index();
-        const auto local_index = iterator_index.get_local_index();
-        datatype df_dxi[components] = { 0.0 };
-        datatype df_deta[components] = { 0.0 };
-        datatype df_dgamma[components] = { 0.0 };
-        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
-                                        false, using_simd>
-            point_jacobian_matrix;
-
-        specfem::assembly::load_on_device(index, jacobian_matrix,
-                                          point_jacobian_matrix);
-
-        const auto df =
-            impl::element_gradient(f, local_index, point_jacobian_matrix,
-                                   quadrature, df_dxi, df_deta, df_dgamma);
-        callback(iterator_index, df);
-      });
-
-  return;
-}
-
-/**
- * @brief Compute the gradient of a field f & g using the spectral element
- * formulation for 3D elements
- *
- * @ingroup AlgorithmsGradient
- *
- * @tparam ChunkIndexType Chunk index type
- * @tparam VectorFieldType Field view type (Chunk view)
- * @tparam QuadratureType Quadrature view type
- * @tparam CallbackFunctor Callback functor type
- * @param chunk_index Chunk index specifying the elements within this chunk
- * @param jacobian_matrix Jacobian matrix of basis functions
- * @param quadrature Integration quadrature
- * @param f Field to compute the gradient of
- * @param g Field to compute the gradient of
- * @param callback Callback functor. Callback signature must be:
- * @code void(const typename IteratorType::index_type, const
- * specfem::datatype::TensorPointViewType<type_real, 3,
- * VectorFieldType::components>, const
- * specfem::datatype::TensorPointViewType<type_real, 3,
- * VectorFieldType::components>)
- * @endcode
- */
-template <typename ChunkIndexType, typename VectorFieldType,
-          typename QuadratureType, typename CallbackFunctor,
-          std::enable_if_t<
-              specfem::data_access::is_chunk_element<VectorFieldType>::value &&
-                  VectorFieldType::dimension_tag ==
-                      specfem::element::dimension_tag::dim3,
-              int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
-gradient(const ChunkIndexType &chunk_index,
-         const specfem::assembly::jacobian_matrix<
-             specfem::element::dimension_tag::dim3> &jacobian_matrix,
-         const QuadratureType &quadrature, const VectorFieldType &f,
-         const VectorFieldType &g, const CallbackFunctor &callback) {
-  constexpr int components = VectorFieldType::components;
-  constexpr bool using_simd = VectorFieldType::simd::using_simd;
-  constexpr int dimension = 3;
-
-  using TensorPointViewType =
-      specfem::datatype::TensorPointViewType<type_real, components, dimension,
-                                             using_simd>;
-
-  using datatype = typename VectorFieldType::simd::datatype;
-
-  static_assert(
-      std::is_invocable_v<CallbackFunctor,
-                          typename ChunkIndexType::iterator_type::index_type,
-                          TensorPointViewType, TensorPointViewType>,
-      "CallbackFunctor must be invocable with the following signature: "
-      "void(const ChunkIndexType::iterator_type::index_type, "
-      "const specfem::datatype::TensorPointViewType<type_real, 3, components>, "
-      "const specfem::datatype::TensorPointViewType<type_real, 3, "
-      "components>)");
-
-  specfem::execution::for_each_level(
-      chunk_index.get_iterator(),
-      [&](const typename ChunkIndexType::iterator_type::index_type
-              &iterator_index) {
-        const auto local_index = iterator_index.get_local_index();
-        const auto index = iterator_index.get_index();
-        datatype df_dxi[components] = { 0.0 };
-        datatype df_deta[components] = { 0.0 };
         datatype df_dgamma[components] = { 0.0 };
         datatype dg_dxi[components] = { 0.0 };
-        datatype dg_deta[components] = { 0.0 };
         datatype dg_dgamma[components] = { 0.0 };
-        specfem::point::jacobian_matrix<specfem::element::dimension_tag::dim3,
-                                        false, using_simd>
+        specfem::point::jacobian_matrix<DimTag, false, using_simd>
             point_jacobian_matrix;
-
         specfem::assembly::load_on_device(index, jacobian_matrix,
                                           point_jacobian_matrix);
-
-        const auto df =
-            impl::element_gradient(f, local_index, point_jacobian_matrix,
-                                   quadrature, df_dxi, df_deta, df_dgamma);
-        const auto dg =
-            impl::element_gradient(g, local_index, point_jacobian_matrix,
-                                   quadrature, dg_dxi, dg_deta, dg_dgamma);
-        callback(iterator_index, df, dg);
+        if constexpr (DimTag == specfem::element::dimension_tag::dim3) {
+          datatype df_deta[components] = { 0.0 };
+          datatype dg_deta[components] = { 0.0 };
+          callback(
+              iterator_index,
+              impl::element_gradient(f, local_index, point_jacobian_matrix,
+                                     quadrature, df_dxi, df_deta, df_dgamma),
+              impl::element_gradient(g, local_index, point_jacobian_matrix,
+                                     quadrature, dg_dxi, dg_deta, dg_dgamma));
+        } else {
+          callback(iterator_index,
+                   impl::element_gradient(f, local_index, point_jacobian_matrix,
+                                          quadrature, df_dxi, df_dgamma),
+                   impl::element_gradient(g, local_index, point_jacobian_matrix,
+                                          quadrature, dg_dxi, dg_dgamma));
+        }
       });
-
-  return;
 }
 
 /**
- * @brief Compute the gradient of a FieldPack using the spectral element
- * formulation. Dispatches to the single- or dual-field gradient overloads
- * based on FieldPack::size (1 or 2). The callback receives a GradientPack
- * whose gradient holders mirror the input field holders via their nested
- * `gradient_holder<V>` alias.
+ * @brief Compute the gradient of a FieldPack<holds_u<F>> using the spectral
+ * element formulation. The callback receives a GradientPack<holds_du<TU>>.
  *
  * @ingroup AlgorithmsGradient
  *
- * @tparam ChunkIndexType Chunk index type
- * @tparam Holders        Named holder types in the FieldPack
- * @tparam DimTag         Dimension tag (dim2 or dim3), deduced from
- *                        the jacobian_matrix argument
- * @tparam QuadratureType Quadrature view type
+ * @tparam ChunkIndexType  Chunk index type
+ * @tparam DisplacementF   Chunk element field type held by holds_u
+ * @tparam DimTag          Dimension tag (dim2 or dim3), deduced from
+ *                         the jacobian_matrix argument
+ * @tparam QuadratureType  Quadrature view type
  * @tparam CallbackFunctor Callback functor receiving
- *         (iterator_index, GradientPack<GH0[, GH1]>)
+ *         (iterator_index, GradientPack<holds_du<TU>>)
  */
-template <typename ChunkIndexType, typename... Holders,
+template <typename ChunkIndexType, typename DisplacementF,
           specfem::element::dimension_tag DimTag, typename QuadratureType,
           typename CallbackFunctor>
 KOKKOS_FORCEINLINE_FUNCTION void
 gradient(const ChunkIndexType &chunk_index,
          const specfem::assembly::jacobian_matrix<DimTag> &jacobian_matrix,
          const QuadratureType &quadrature,
-         const specfem::chunk_element::FieldPack<Holders...> &field_pack,
+         const specfem::chunk_element::FieldPack<
+             specfem::chunk_element::holds_u<DisplacementF> > &field_pack,
          const CallbackFunctor &callback) {
+  constexpr int components = DisplacementF::components;
+  constexpr int dimension =
+      DimTag == specfem::element::dimension_tag::dim2 ? 2 : 3;
+  constexpr bool using_simd = DisplacementF::simd::using_simd;
 
-  using PackType = specfem::chunk_element::FieldPack<Holders...>;
+  using TU = specfem::datatype::TensorPointViewType<type_real, components,
+                                                    dimension, using_simd>;
+  using datatype = typename DisplacementF::simd::datatype;
 
-  if constexpr (PackType::size == 1) {
-    using H0 = std::tuple_element_t<0, std::tuple<Holders...> >;
-    gradient(chunk_index, jacobian_matrix, quadrature,
-             static_cast<const H0 &>(field_pack).get(),
-             [&](const auto &iterator_index, const auto &g0) {
-               using GH0 = typename H0::template gradient_holder<
-                   std::decay_t<decltype(g0)> >;
-               callback(iterator_index,
-                        specfem::point::GradientPack<GH0>(GH0(g0)));
-             });
-  } else if constexpr (PackType::size == 2) {
-    using H0 = std::tuple_element_t<0, std::tuple<Holders...> >;
-    using H1 = std::tuple_element_t<1, std::tuple<Holders...> >;
-    gradient(chunk_index, jacobian_matrix, quadrature,
-             static_cast<const H0 &>(field_pack).get(),
-             static_cast<const H1 &>(field_pack).get(),
-             [&](const auto &iterator_index, const auto &g0, const auto &g1) {
-               using GH0 = typename H0::template gradient_holder<
-                   std::decay_t<decltype(g0)> >;
-               using GH1 = typename H1::template gradient_holder<
-                   std::decay_t<decltype(g1)> >;
-               callback(iterator_index, specfem::point::GradientPack<GH0, GH1>(
-                                            GH0(g0), GH1(g1)));
-             });
-  }
+  specfem::execution::for_each_level(
+      chunk_index.get_iterator(),
+      [&](const typename ChunkIndexType::iterator_type::index_type
+              &iterator_index) {
+        const auto index = iterator_index.get_index();
+        const auto local_index = iterator_index.get_local_index();
+        datatype df_dxi[components] = { 0.0 };
+        datatype df_dgamma[components] = { 0.0 };
+        specfem::point::jacobian_matrix<DimTag, false, using_simd>
+            point_jacobian_matrix;
+        specfem::assembly::load_on_device(index, jacobian_matrix,
+                                          point_jacobian_matrix);
+        if constexpr (DimTag == specfem::element::dimension_tag::dim3) {
+          datatype df_deta[components] = { 0.0 };
+          callback(iterator_index,
+                   specfem::point::GradientPack<specfem::point::holds_du<TU> >{
+                       specfem::point::holds_du<TU>{ impl::element_gradient(
+                           field_pack.u, local_index, point_jacobian_matrix,
+                           quadrature, df_dxi, df_deta, df_dgamma) } });
+        } else {
+          callback(iterator_index,
+                   specfem::point::GradientPack<specfem::point::holds_du<TU> >{
+                       specfem::point::holds_du<TU>{ impl::element_gradient(
+                           field_pack.u, local_index, point_jacobian_matrix,
+                           quadrature, df_dxi, df_dgamma) } });
+        }
+      });
+}
+
+/**
+ * @brief Compute the gradient of a FieldPack<holds_u<F1>, holds_v<F2>> using
+ * the spectral element formulation. The callback receives a
+ * GradientPack<holds_du<TU>, holds_dv<TV>>.
+ *
+ * @ingroup AlgorithmsGradient
+ *
+ * @tparam ChunkIndexType  Chunk index type
+ * @tparam DisplacementF   Chunk element field type held by holds_u
+ * @tparam VelocityF       Chunk element field type held by holds_v
+ * @tparam DimTag          Dimension tag (dim2 or dim3), deduced from
+ *                         the jacobian_matrix argument
+ * @tparam QuadratureType  Quadrature view type
+ * @tparam CallbackFunctor Callback functor receiving
+ *         (iterator_index, GradientPack<holds_du<TU>, holds_dv<TV>>)
+ */
+template <typename ChunkIndexType, typename DisplacementF, typename VelocityF,
+          specfem::element::dimension_tag DimTag, typename QuadratureType,
+          typename CallbackFunctor>
+KOKKOS_FORCEINLINE_FUNCTION void
+gradient(const ChunkIndexType &chunk_index,
+         const specfem::assembly::jacobian_matrix<DimTag> &jacobian_matrix,
+         const QuadratureType &quadrature,
+         const specfem::chunk_element::FieldPack<
+             specfem::chunk_element::holds_u<DisplacementF>,
+             specfem::chunk_element::holds_v<VelocityF> > &field_pack,
+         const CallbackFunctor &callback) {
+  constexpr int components = DisplacementF::components;
+  constexpr int dimension =
+      DimTag == specfem::element::dimension_tag::dim2 ? 2 : 3;
+  constexpr bool using_simd = DisplacementF::simd::using_simd;
+
+  using TU = specfem::datatype::TensorPointViewType<type_real, components,
+                                                    dimension, using_simd>;
+  using TV = specfem::datatype::TensorPointViewType<
+      type_real, VelocityF::components, dimension, VelocityF::simd::using_simd>;
+  using datatype = typename DisplacementF::simd::datatype;
+
+  specfem::execution::for_each_level(
+      chunk_index.get_iterator(),
+      [&](const typename ChunkIndexType::iterator_type::index_type
+              &iterator_index) {
+        const auto index = iterator_index.get_index();
+        const auto local_index = iterator_index.get_local_index();
+        datatype df_dxi[components] = { 0.0 };
+        datatype df_dgamma[components] = { 0.0 };
+        datatype dg_dxi[VelocityF::components] = { 0.0 };
+        datatype dg_dgamma[VelocityF::components] = { 0.0 };
+        specfem::point::jacobian_matrix<DimTag, false, using_simd>
+            point_jacobian_matrix;
+        specfem::assembly::load_on_device(index, jacobian_matrix,
+                                          point_jacobian_matrix);
+        if constexpr (DimTag == specfem::element::dimension_tag::dim3) {
+          datatype df_deta[components] = { 0.0 };
+          datatype dg_deta[VelocityF::components] = { 0.0 };
+          callback(iterator_index,
+                   specfem::point::GradientPack<specfem::point::holds_du<TU>,
+                                                specfem::point::holds_dv<TV> >{
+                       specfem::point::holds_du<TU>{ impl::element_gradient(
+                           field_pack.u, local_index, point_jacobian_matrix,
+                           quadrature, df_dxi, df_deta, df_dgamma) },
+                       specfem::point::holds_dv<TV>{ impl::element_gradient(
+                           field_pack.v, local_index, point_jacobian_matrix,
+                           quadrature, dg_dxi, dg_deta, dg_dgamma) } });
+        } else {
+          callback(iterator_index,
+                   specfem::point::GradientPack<specfem::point::holds_du<TU>,
+                                                specfem::point::holds_dv<TV> >{
+                       specfem::point::holds_du<TU>{ impl::element_gradient(
+                           field_pack.u, local_index, point_jacobian_matrix,
+                           quadrature, df_dxi, df_dgamma) },
+                       specfem::point::holds_dv<TV>{ impl::element_gradient(
+                           field_pack.v, local_index, point_jacobian_matrix,
+                           quadrature, dg_dxi, dg_dgamma) } });
+        }
+      });
 }
 
 } // namespace algorithms
