@@ -25,8 +25,10 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
   for (int edge_index = 0; edge_index < total_adjacencies; edge_index++) {
     int current_element, neighbor_element;
     int connection_int, orientation_int;
+    int neighbor_partition;
     specfem::io::fortran_read_line(stream, &current_element, &neighbor_element,
-                                   &connection_int, &orientation_int);
+                                   &connection_int, &orientation_int,
+                                   &neighbor_partition);
 
     const auto connection_type =
         static_cast<specfem::element_connections::type>(connection_int);
@@ -37,7 +39,9 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
       const auto edge_orientation =
           static_cast<specfem::mesh_entity::dim2::type>(orientation_int);
       boost::add_edge(current_element - 1, neighbor_element - 1,
-                      EdgeProperties{ connection_type, edge_orientation }, g);
+                      EdgeProperties{ connection_type, edge_orientation,
+                                      neighbor_partition },
+                      g);
     } else {
       throw std::runtime_error("Unknown connection type in adjacency graph.");
     }

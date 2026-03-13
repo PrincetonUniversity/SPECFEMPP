@@ -35,6 +35,10 @@ public:
      * bottom_left, bottom_right, etc.) */
     specfem::mesh_entity::dim2::type orientation;
 
+    /** @brief Partition rank of the neighbor element (-1 for intra-partition
+     * edges, >= 0 for cross-partition edges) */
+    int neighbor_partition = -1;
+
     /**
      * @brief Default constructor
      *
@@ -47,10 +51,13 @@ public:
      *
      * @param conn Type of connection between elements
      * @param orient Orientation of the shared mesh entity
+     * @param neighbor_part Partition rank of neighbor (-1 for intra-partition)
      */
     EdgeProperties(const specfem::element_connections::type conn,
-                   const specfem::mesh_entity::dim2::type orient)
-        : connection(conn), orientation(orient) {}
+                   const specfem::mesh_entity::dim2::type orient,
+                   const int neighbor_part = -1)
+        : connection(conn), orientation(orient),
+          neighbor_partition(neighbor_part) {}
   };
 
 private:

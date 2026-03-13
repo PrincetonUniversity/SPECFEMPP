@@ -107,10 +107,11 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
     }
   }
 
-  // Filter out strongly conforming connections
+  // Filter out strongly conforming, intra-partition connections
   auto filter = [&graph](const auto &edge) {
     return graph[edge].connection ==
-           specfem::element_connections::type::strongly_conforming;
+               specfem::element_connections::type::strongly_conforming &&
+           graph[edge].neighbor_partition == -1;
   };
 
   // Create a filtered graph view

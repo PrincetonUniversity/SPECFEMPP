@@ -9,6 +9,10 @@ void specfem::mesh::adjacency_graph<
   const auto &g = this->graph();
 
   for (const auto &edge : boost::make_iterator_range(boost::edges(g))) {
+    // Skip cross-partition edges — the reverse edge lives in another partition
+    if (g[edge].neighbor_partition >= 0)
+      continue;
+
     const auto source = boost::source(edge, g);
     const auto target = boost::target(edge, g);
     if (!boost::edge(target, source, g).second) {
