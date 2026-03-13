@@ -84,11 +84,9 @@ int specfem::compute::impl::compute_stiffness_interaction(
 
   using ChunkFieldPackType = std::conditional_t<
       needs_velocity_gradient,
-      specfem::chunk_element::FieldPack<
-          specfem::chunk_element::holds_u<ChunkDisplacementFieldType>,
-          specfem::chunk_element::holds_v<ChunkVelocityFieldType>>,
-      specfem::chunk_element::FieldPack<
-          specfem::chunk_element::holds_u<ChunkDisplacementFieldType>>>;
+      specfem::chunk_element::FieldPack<ChunkDisplacementFieldType,
+                                        ChunkVelocityFieldType>,
+      specfem::chunk_element::FieldPack<ChunkDisplacementFieldType>>;
 
   using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
       ParallelConfig::chunk_size, ngll, Tags::dimension_tag, Tags::medium_tag,
@@ -117,9 +115,8 @@ int specfem::compute::impl::compute_stiffness_interaction(
   using TensorType = typename PointFieldDerivativesType::value_type;
   using GradientFieldPackType = std::conditional_t<
       needs_velocity_gradient,
-      specfem::point::GradientPack<specfem::point::holds_du<TensorType>,
-                                   specfem::point::holds_dv<TensorType>>,
-      specfem::point::GradientPack<specfem::point::holds_du<TensorType>>>;
+      specfem::point::GradientPack<TensorType, TensorType>,
+      specfem::point::GradientPack<TensorType>>;
 
   using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
 
@@ -161,9 +158,9 @@ int specfem::compute::impl::compute_stiffness_interaction(
           ElementQuadratureType lagrange_derivative(team);
           ChunkStressIntegrandType stress_integrand(team);
           specfem::assembly::load_on_device(team, mesh, lagrange_derivative);
-          specfem::assembly::load_on_device(chunk_index, field, field_pack.u);
+          specfem::assembly::load_on_device(chunk_index, field, field_pack.f);
           if constexpr (needs_velocity_gradient) {
-             specfem::assembly::load_on_device(chunk_index, field, field_pack.v);
+             specfem::assembly::load_on_device(chunk_index, field, field_pack.g);
           }
 
           team.team_barrier();
@@ -182,12 +179,12 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 specfem::assembly::load_on_device(index, properties,
                                                   point_property);
 
-                PointFieldDerivativesType field_derivatives(grad_pack.du);
+                PointFieldDerivativesType field_derivatives(grad_pack.df);
 
                 if constexpr (needs_velocity_gradient) {
-                  // grad_pack.dv (∂v/∂x) is available for future attenuation
+                  // grad_pack.dg (∂v/∂x) is available for future attenuation
                   // physics (SLS/Taylor-expanded strain). Currently unused.
-                  (void)grad_pack.dv;
+                  (void)grad_pack.dg;
                 }
 
                 PointDisplacementType point_displacement;

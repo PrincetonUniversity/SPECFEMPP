@@ -6,136 +6,109 @@
 
 namespace specfem::chunk_element {
 
+/// @brief Primary template — undefined; use 1-, 2-, or 3-field specializations.
+template <typename... Fs> struct FieldPack;
+
+// ---------------------------------------------------------------------------
+// 1-field specialization
+// ---------------------------------------------------------------------------
+
 /**
- * @brief Named holder for a displacement chunk field (accessed as .u)
- *
- * The constructor takes a Kokkos scratch memory space; the underlying field
- * allocates its storage from that space. When multiple holders are composed
- * via FieldPack, they are initialized in declaration order (C++ standard
- * guarantee), so each holder advances the shared scratch pointer sequentially
- * without overlap.
+ * @brief Single-field pack (accessed as .f).
  *
  * @tparam F Chunk element field type (e.g., chunk_element::displacement<...>)
  */
-template <typename F> struct holds_u {
-  F u;
-
-  KOKKOS_FUNCTION holds_u() = default;
-  KOKKOS_FUNCTION holds_u(const holds_u &) = default;
-  KOKKOS_FUNCTION holds_u &operator=(const holds_u &) = default;
-
-  /// @brief Construct directly from an existing field value (e.g., in tests)
-  KOKKOS_FUNCTION explicit holds_u(const F &f) : u(f) {}
-
-  /// @brief Construct from a Kokkos scratch memory space.
-  /// SFINAE guard prevents this overload from being selected when ScratchSpace
-  /// is F itself (which would cause ambiguity with the value constructor).
-  template <
-      typename ScratchSpace,
-      std::enable_if_t<!std::is_same_v<std::decay_t<ScratchSpace>, F>, int> = 0>
-  KOKKOS_FUNCTION holds_u(const ScratchSpace &scratch) : u(scratch) {}
-
-  /// @brief Shared memory size required for the field
-  static std::size_t shmem_size() { return F::shmem_size(); }
-};
-
-/**
- * @brief Named holder for a velocity chunk field (accessed as .v)
- *
- * @tparam F Chunk element field type (e.g., chunk_element::velocity<...>)
- */
-template <typename F> struct holds_v {
-  F v;
-
-  KOKKOS_FUNCTION holds_v() = default;
-  KOKKOS_FUNCTION holds_v(const holds_v &) = default;
-  KOKKOS_FUNCTION holds_v &operator=(const holds_v &) = default;
-
-  KOKKOS_FUNCTION explicit holds_v(const F &f) : v(f) {}
-
-  template <
-      typename ScratchSpace,
-      std::enable_if_t<!std::is_same_v<std::decay_t<ScratchSpace>, F>, int> = 0>
-  KOKKOS_FUNCTION holds_v(const ScratchSpace &scratch) : v(scratch) {}
-
-  static std::size_t shmem_size() { return F::shmem_size(); }
-};
-
-/**
- * @brief Named holder for an acceleration chunk field (accessed as .a)
- *
- * @tparam F Chunk element field type (e.g., chunk_element::acceleration<...>)
- */
-template <typename F> struct holds_a {
-  F a;
-
-  KOKKOS_FUNCTION holds_a() = default;
-  KOKKOS_FUNCTION holds_a(const holds_a &) = default;
-  KOKKOS_FUNCTION holds_a &operator=(const holds_a &) = default;
-
-  KOKKOS_FUNCTION explicit holds_a(const F &f) : a(f) {}
-
-  template <
-      typename ScratchSpace,
-      std::enable_if_t<!std::is_same_v<std::decay_t<ScratchSpace>, F>, int> = 0>
-  KOKKOS_FUNCTION holds_a(const ScratchSpace &scratch) : a(scratch) {}
-
-  static std::size_t shmem_size() { return F::shmem_size(); }
-};
-
-/**
- * @brief Variadic named-holder pack for chunk element fields.
- *
- * Bundles multiple named field holders (holds_u, holds_v, holds_a) via
- * multiple inheritance. Base classes are initialized in declaration/parameter
- * order (C++ standard guarantee), so scratch memory is allocated sequentially
- * without overlap even when multiple fields share the same
- * `team.team_scratch(0)`.
- *
- * Example:
- * @code
- * using Pack =
- *     FieldPack<holds_u<DisplacementType>, holds_v<VelocityType>>;
- * Pack pack(team.team_scratch(0));
- * pack.u  // displacement field
- * pack.v  // velocity field
- * @endcode
- *
- * Usage in compute_stiffness_interaction:
- * @code
- * // scratch_size uses FieldPack::shmem_size()
- * int scratch_size = ChunkFieldPackType::shmem_size() + ...;
- * ChunkFieldPackType field_pack(team.team_scratch(0));
- * specfem::assembly::load_on_device(chunk_index, field, field_pack.u);
- * if constexpr (needs_velocity) {
- *   specfem::assembly::load_on_device(chunk_index, field, field_pack.v);
- * }
- * @endcode
- *
- * @tparam Holders Variadic list of named holder types
- */
-template <typename... Holders> struct FieldPack : Holders... {
-  static constexpr std::size_t size = sizeof...(Holders);
+template <typename F> struct FieldPack<F> {
+  static constexpr std::size_t size = 1;
+  F f;
 
   KOKKOS_FUNCTION FieldPack() = default;
   KOKKOS_FUNCTION FieldPack(const FieldPack &) = default;
   KOKKOS_FUNCTION FieldPack &operator=(const FieldPack &) = default;
 
-  /// @brief Construct from existing holder instances (e.g., in tests)
-  KOKKOS_FUNCTION FieldPack(const Holders &...holders) : Holders(holders)... {}
+  /// @brief Construct directly from an existing field value (e.g., in tests).
+  KOKKOS_FUNCTION explicit FieldPack(const F &f_) : f(f_) {}
 
-  /// @brief Construct all holders from a Kokkos scratch memory space.
+  /// @brief Construct from a Kokkos scratch memory space.
   /// SFINAE guard prevents this overload from being selected when ScratchSpace
-  /// is one of the Holders types (which would ambiguate with value
-  /// constructor).
-  template <typename ScratchSpace,
-            std::enable_if_t<!std::disjunction_v<std::is_same<
-                                 std::decay_t<ScratchSpace>, Holders>...>,
-                             int> = 0>
-  KOKKOS_FUNCTION FieldPack(const ScratchSpace &scratch)
-      : Holders(scratch)... {}
+  /// is F itself (which would cause ambiguity with the value constructor).
+  template <typename S,
+            std::enable_if_t<!std::is_same_v<std::decay_t<S>, F>, int> = 0>
+  KOKKOS_FUNCTION FieldPack(const S &scratch) : f(scratch) {}
 
-  static std::size_t shmem_size() { return (Holders::shmem_size() + ...); }
+  /// @brief Shared memory size required for the field.
+  static std::size_t shmem_size() { return F::shmem_size(); }
+};
+
+// ---------------------------------------------------------------------------
+// 2-field specialization
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief Two-field pack (accessed as .f and .g).
+ *
+ * Member initialization order (f then g) follows declaration order —
+ * a C++ standard guarantee — so each field advances the shared Kokkos scratch
+ * pointer sequentially without overlap.
+ *
+ * @tparam F First chunk element field type
+ * @tparam G Second chunk element field type
+ */
+template <typename F, typename G> struct FieldPack<F, G> {
+  static constexpr std::size_t size = 2;
+  F f;
+  G g;
+
+  KOKKOS_FUNCTION FieldPack() = default;
+  KOKKOS_FUNCTION FieldPack(const FieldPack &) = default;
+  KOKKOS_FUNCTION FieldPack &operator=(const FieldPack &) = default;
+
+  KOKKOS_FUNCTION FieldPack(const F &f_, const G &g_) : f(f_), g(g_) {}
+
+  template <typename S,
+            std::enable_if_t<!std::is_same_v<std::decay_t<S>, F> &&
+                                 !std::is_same_v<std::decay_t<S>, G>,
+                             int> = 0>
+  KOKKOS_FUNCTION FieldPack(const S &scratch) : f(scratch), g(scratch) {}
+
+  static std::size_t shmem_size() { return F::shmem_size() + G::shmem_size(); }
+};
+
+// ---------------------------------------------------------------------------
+// 3-field specialization
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief Three-field pack (accessed as .f, .g, and .h).
+ *
+ * @tparam F First chunk element field type
+ * @tparam G Second chunk element field type
+ * @tparam H Third chunk element field type
+ */
+template <typename F, typename G, typename H> struct FieldPack<F, G, H> {
+  static constexpr std::size_t size = 3;
+  F f;
+  G g;
+  H h;
+
+  KOKKOS_FUNCTION FieldPack() = default;
+  KOKKOS_FUNCTION FieldPack(const FieldPack &) = default;
+  KOKKOS_FUNCTION FieldPack &operator=(const FieldPack &) = default;
+
+  KOKKOS_FUNCTION FieldPack(const F &f_, const G &g_, const H &h_)
+      : f(f_), g(g_), h(h_) {}
+
+  template <typename S,
+            std::enable_if_t<!std::is_same_v<std::decay_t<S>, F> &&
+                                 !std::is_same_v<std::decay_t<S>, G> &&
+                                 !std::is_same_v<std::decay_t<S>, H>,
+                             int> = 0>
+  KOKKOS_FUNCTION FieldPack(const S &scratch)
+      : f(scratch), g(scratch), h(scratch) {}
+
+  static std::size_t shmem_size() {
+    return F::shmem_size() + G::shmem_size() + H::shmem_size();
+  }
 };
 
 } // namespace specfem::chunk_element

@@ -321,18 +321,18 @@ gradient(const ChunkIndexType &chunk_index,
 }
 
 /**
- * @brief Compute the gradient of a FieldPack<holds_u<F>> using the spectral
- * element formulation. The callback receives a GradientPack<holds_du<TU>>.
+ * @brief Compute the gradient of a FieldPack<F> using the spectral element
+ * formulation. The callback receives a GradientPack<TF>.
  *
  * @ingroup AlgorithmsGradient
  *
  * @tparam ChunkIndexType  Chunk index type
- * @tparam VectorFieldType   Chunk element field type held by holds_u
+ * @tparam VectorFieldType   Chunk element field type held as .f
  * @tparam DimTag          Dimension tag (dim2 or dim3), deduced from
  *                         the jacobian_matrix argument
  * @tparam QuadratureType  Quadrature view type
  * @tparam CallbackFunctor Callback functor receiving
- *         (iterator_index, GradientPack<holds_du<TU>>)
+ *         (iterator_index, GradientPack<TF>)
  */
 template <typename ChunkIndexType, typename VectorFieldType,
           typename JacobianMatrixType, typename QuadratureType,
@@ -341,8 +341,7 @@ KOKKOS_FORCEINLINE_FUNCTION void
 gradient(const ChunkIndexType &chunk_index,
          const JacobianMatrixType &jacobian_matrix,
          const QuadratureType &quadrature,
-         const specfem::chunk_element::FieldPack<
-             specfem::chunk_element::holds_u<VectorFieldType> > &field_pack,
+         const specfem::chunk_element::FieldPack<VectorFieldType> &field_pack,
          const CallbackFunctor &callback) {
   constexpr specfem::element::dimension_tag dimension_tag =
       VectorFieldType::dimension_tag;
@@ -370,51 +369,44 @@ gradient(const ChunkIndexType &chunk_index,
         if constexpr (dimension_tag == specfem::element::dimension_tag::dim3) {
           datatypeF df_deta[components] = { 0.0 };
           callback(iterator_index,
-                   specfem::point::GradientPack<
-                       specfem::point::holds_du<TensorPointViewTypeF> >{
-                       specfem::point::holds_du<TensorPointViewTypeF>{
-                           impl::element_gradient(
-                               field_pack.u, local_index, point_jacobian_matrix,
-                               quadrature, df_dxi, df_deta, df_dgamma) } });
+                   specfem::point::GradientPack<TensorPointViewTypeF>{
+                       impl::element_gradient(field_pack.f, local_index,
+                                              point_jacobian_matrix, quadrature,
+                                              df_dxi, df_deta, df_dgamma) });
         } else {
           callback(iterator_index,
-                   specfem::point::GradientPack<
-                       specfem::point::holds_du<TensorPointViewTypeF> >{
-                       specfem::point::holds_du<TensorPointViewTypeF>{
-                           impl::element_gradient(
-                               field_pack.u, local_index, point_jacobian_matrix,
-                               quadrature, df_dxi, df_dgamma) } });
+                   specfem::point::GradientPack<TensorPointViewTypeF>{
+                       impl::element_gradient(field_pack.f, local_index,
+                                              point_jacobian_matrix, quadrature,
+                                              df_dxi, df_dgamma) });
         }
       });
 }
 
 /**
- * @brief Compute the gradient of a FieldPack<holds_u<F1>, holds_v<F2>> using
- * the spectral element formulation. The callback receives a
- * GradientPack<holds_du<TU>, holds_dv<TV>>.
+ * @brief Compute the gradients of a FieldPack<F, G> using the spectral element
+ * formulation. The callback receives a GradientPack<TF, TG>.
  *
  * @ingroup AlgorithmsGradient
  *
  * @tparam ChunkIndexType   Chunk index type
- * @tparam VectorFieldTypeF Chunk element field type held by holds_u
- * @tparam VectorFieldTypeG Chunk element field type held by holds_v
+ * @tparam VectorFieldTypeF Chunk element field type held as .f
+ * @tparam VectorFieldTypeG Chunk element field type held as .g
  * @tparam DimTag           Dimension tag (dim2 or dim3), deduced from
  *                          the jacobian_matrix argument
  * @tparam QuadratureType   Quadrature view type
  * @tparam CallbackFunctor  Callback functor receiving
- *         (iterator_index, GradientPack<holds_du<TU>, holds_dv<TV>>)
+ *         (iterator_index, GradientPack<TF, TG>)
  */
 template <typename ChunkIndexType, typename VectorFieldTypeF,
           typename VectorFieldTypeG, typename JacobianMatrixType,
           typename QuadratureType, typename CallbackFunctor>
-KOKKOS_FORCEINLINE_FUNCTION void
-gradient(const ChunkIndexType &chunk_index,
-         const JacobianMatrixType &jacobian_matrix,
-         const QuadratureType &quadrature,
-         const specfem::chunk_element::FieldPack<
-             specfem::chunk_element::holds_u<VectorFieldTypeF>,
-             specfem::chunk_element::holds_v<VectorFieldTypeG> > &field_pack,
-         const CallbackFunctor &callback) {
+KOKKOS_FORCEINLINE_FUNCTION void gradient(
+    const ChunkIndexType &chunk_index,
+    const JacobianMatrixType &jacobian_matrix, const QuadratureType &quadrature,
+    const specfem::chunk_element::FieldPack<VectorFieldTypeF, VectorFieldTypeG>
+        &field_pack,
+    const CallbackFunctor &callback) {
 
   static_assert(VectorFieldTypeF::dimension_tag ==
                 VectorFieldTypeG::dimension_tag);
@@ -454,30 +446,24 @@ gradient(const ChunkIndexType &chunk_index,
           datatypeF df_deta[componentsF] = { 0.0 };
           datatypeG dg_deta[componentsG] = { 0.0 };
           callback(iterator_index,
-                   specfem::point::GradientPack<
-                       specfem::point::holds_du<TensorPointViewTypeF>,
-                       specfem::point::holds_dv<TensorPointViewTypeG> >{
-                       specfem::point::holds_du<TensorPointViewTypeF>{
-                           impl::element_gradient(
-                               field_pack.u, local_index, point_jacobian_matrix,
-                               quadrature, df_dxi, df_deta, df_dgamma) },
-                       specfem::point::holds_dv<TensorPointViewTypeG>{
-                           impl::element_gradient(
-                               field_pack.v, local_index, point_jacobian_matrix,
-                               quadrature, dg_dxi, dg_deta, dg_dgamma) } });
+                   specfem::point::GradientPack<TensorPointViewTypeF,
+                                                TensorPointViewTypeG>{
+                       impl::element_gradient(field_pack.f, local_index,
+                                              point_jacobian_matrix, quadrature,
+                                              df_dxi, df_deta, df_dgamma),
+                       impl::element_gradient(field_pack.g, local_index,
+                                              point_jacobian_matrix, quadrature,
+                                              dg_dxi, dg_deta, dg_dgamma) });
         } else {
           callback(iterator_index,
-                   specfem::point::GradientPack<
-                       specfem::point::holds_du<TensorPointViewTypeF>,
-                       specfem::point::holds_dv<TensorPointViewTypeG> >{
-                       specfem::point::holds_du<TensorPointViewTypeF>{
-                           impl::element_gradient(
-                               field_pack.u, local_index, point_jacobian_matrix,
-                               quadrature, df_dxi, df_dgamma) },
-                       specfem::point::holds_dv<TensorPointViewTypeG>{
-                           impl::element_gradient(
-                               field_pack.v, local_index, point_jacobian_matrix,
-                               quadrature, dg_dxi, dg_dgamma) } });
+                   specfem::point::GradientPack<TensorPointViewTypeF,
+                                                TensorPointViewTypeG>{
+                       impl::element_gradient(field_pack.f, local_index,
+                                              point_jacobian_matrix, quadrature,
+                                              df_dxi, df_dgamma),
+                       impl::element_gradient(field_pack.g, local_index,
+                                              point_jacobian_matrix, quadrature,
+                                              dg_dxi, dg_dgamma) });
         }
       });
 }

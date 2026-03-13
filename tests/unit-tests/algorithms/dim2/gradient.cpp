@@ -692,8 +692,7 @@ execute_fieldpack(const Jacobian &jacobian_matrix,
       type_real, specfem::element::dimension_tag::dim2, 1, ngll, 1, false,
       Kokkos::DefaultExecutionSpace::memory_space, Kokkos::MemoryTraits<> >;
 
-  using FieldPackType = specfem::chunk_element::FieldPack<
-      specfem::chunk_element::holds_u<Function2DView> >;
+  using FieldPackType = specfem::chunk_element::FieldPack<Function2DView>;
 
   Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                Kokkos::DefaultExecutionSpace>
@@ -705,9 +704,7 @@ execute_fieldpack(const Jacobian &jacobian_matrix,
                                                Kokkos::ALL(), Kokkos::ALL(),
                                                Kokkos::ALL()));
 
-        const FieldPackType field_pack{
-          specfem::chunk_element::holds_u<Function2DView>{ f }
-        };
+        const FieldPackType field_pack{ f };
 
         specfem::algorithms::gradient(
             index, jacobian, quadrature_view, field_pack,
@@ -716,8 +713,8 @@ execute_fieldpack(const Jacobian &jacobian_matrix,
               const int ispec = local_index.ispec;
               const int iz = local_index.iz;
               const int ix = local_index.ix;
-              gradient_view(ispec, iz, ix, 0) = grad_pack.du(0, 0);
-              gradient_view(ispec, iz, ix, 1) = grad_pack.du(0, 1);
+              gradient_view(ispec, iz, ix, 0) = grad_pack.df(0, 0);
+              gradient_view(ispec, iz, ix, 1) = grad_pack.df(0, 1);
             });
       });
 
