@@ -1,12 +1,12 @@
-#include "database_configuration.hpp"
+#include "database.hpp"
 
 #include "yaml-cpp/yaml.h"
 #include <ostream>
 
-specfem::runtime_configuration::database_configuration::database_configuration(
+specfem::runtime_configuration::database::database(
     const YAML::Node &database_node) {
   try {
-    *this = specfem::runtime_configuration::database_configuration(
+    *this = specfem::runtime_configuration::database(
         database_node["mesh-database"].as<std::string>());
 
   } catch (YAML::ParserException &e) {

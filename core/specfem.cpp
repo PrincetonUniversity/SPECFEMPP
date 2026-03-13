@@ -1,10 +1,13 @@
 #include "specfem/constants.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/program.hpp"
 #include "specfem/program/context.hpp"
 #include <CLI/CLI.hpp>
+#include <fstream>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <string>
 
 // Options shared by simulation subcommands (2d, 3d)
@@ -61,7 +64,20 @@ int run_simulation(const std::string &dimension, int argc, char **argv,
   try {
     specfem::program::Context context(argc, argv);
 
-    const YAML::Node parameter_dict = YAML::LoadFile(opts.parameters_file);
+    // Read parameter file on rank 0 and broadcast to all ranks
+    std::string yaml_content;
+    if (specfem::MPI::main_proc()) {
+      std::ifstream ifs(opts.parameters_file);
+      if (!ifs) {
+        throw std::runtime_error("Cannot open parameters file: " +
+                                 opts.parameters_file);
+      }
+      std::ostringstream ss;
+      ss << ifs.rdbuf();
+      yaml_content = ss.str();
+    }
+    specfem::MPI::bcast(yaml_content);
+    const YAML::Node parameter_dict = YAML::Load(yaml_content);
 
     // Build LoggerOptions from CLI values
     std::optional<std::string> log_file_opt;

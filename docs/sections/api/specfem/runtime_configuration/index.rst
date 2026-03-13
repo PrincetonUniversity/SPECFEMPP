@@ -14,7 +14,7 @@
     solver
     receivers
     run_setup
-    database_configuration
+    database
     seismogram
     wavefield_writer
     display

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "database_configuration.hpp"
+#include "database.hpp"
 #include "elastic_wave.hpp"
 #include "electromagnetic_wave.hpp"
 #include "flux_schemes.hpp"
@@ -424,7 +424,7 @@ private:
       kernel; ///< Kernel output configuration
   std::unique_ptr<specfem::runtime_configuration::property>
       property; ///< Property I/O configuration
-  std::unique_ptr<specfem::runtime_configuration::database_configuration>
+  std::unique_ptr<specfem::runtime_configuration::database>
       databases; ///< Database file path configuration
   std::unique_ptr<specfem::runtime_configuration::solver>
       solver; ///< Solver algorithm configuration

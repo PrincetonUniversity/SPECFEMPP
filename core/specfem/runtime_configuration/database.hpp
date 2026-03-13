@@ -9,10 +9,10 @@ namespace specfem {
 namespace runtime_configuration {
 
 /**
- * @brief database_configuration defines the file location of databases
+ * @brief database defines the file location of databases
  *
  */
-class database_configuration {
+class database {
 
 public:
   /**
@@ -20,7 +20,7 @@ public:
    *
    * @param fortran_database location of fortran database
    */
-  database_configuration(std::string fortran_database)
+  database(std::string fortran_database)
       : fortran_database(fortran_database) {};
 
   /**
@@ -28,7 +28,7 @@ public:
    *
    * @param Node YAML node describing the run configuration
    */
-  database_configuration(const YAML::Node &Node);
+  database(const YAML::Node &Node);
 
   std::string get_databases() const {
     return specfem::MPI::format_proc_filename(this->fortran_database);

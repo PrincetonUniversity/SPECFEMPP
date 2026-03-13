@@ -107,8 +107,8 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
 
   // Get Database info
   try {
-    this->databases = std::make_unique<
-        specfem::runtime_configuration::database_configuration>(n_databases);
+    this->databases =
+        std::make_unique<specfem::runtime_configuration::database>(n_databases);
   } catch (YAML::InvalidNode &e) {
     std::ostringstream message;
 

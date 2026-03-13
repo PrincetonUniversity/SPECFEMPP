@@ -171,6 +171,23 @@ public:
   }
 
   /**
+   * @brief Broadcast a string from root to all processes
+   *
+   * @param value String to broadcast (written by root, read by others)
+   * @param root  Source rank (default 0)
+   * @throws Exits with error code 1 if called outside Context scope
+   */
+  static void bcast(std::string &value, int root = 0) {
+    check_context();
+#ifdef SPECFEM_ENABLE_MPI
+    int len = static_cast<int>(value.size());
+    MPI_Bcast(&len, 1, MPI_INT, root, MPI_COMM_WORLD);
+    value.resize(len);
+    MPI_Bcast(value.data(), len, MPI_CHAR, root, MPI_COMM_WORLD);
+#endif
+  }
+
+  /**
    * @brief MPI reduce operation
    *
    * @param lvalue Local value to reduce
