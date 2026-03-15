@@ -1,6 +1,7 @@
 #pragma once
 
 #include "specfem/mesh.hpp"
+#include <utility>
 
 namespace specfem::assembly::mesh_impl {
 
@@ -21,6 +22,11 @@ private:
   using base_type =
       specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2>;
 
+  using local_connections_return_type =
+      decltype(std::declval<base_type &>().local_connections());
+  using mpi_connections_return_type =
+      decltype(std::declval<base_type &>().mpi_connections());
+
 public:
   /**
    * @brief Inherit all constructors from base class.
@@ -40,10 +46,12 @@ public:
   const auto &graph() const { return base_type::local_connections(); }
 
   /// Deleted — assembly graph contains only local edges; use graph() instead.
-  auto &local_connections() const = delete;
+  local_connections_return_type local_connections() = delete;
+  local_connections_return_type local_connections() const = delete;
 
   /// Deleted — assembly graph has no cross-partition edges; not applicable.
-  auto &mpi_connections() const = delete;
+  mpi_connections_return_type mpi_connections() = delete;
+  mpi_connections_return_type mpi_connections() const = delete;
 };
 
 } // namespace specfem::assembly::mesh_impl

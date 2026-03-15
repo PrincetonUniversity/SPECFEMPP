@@ -878,7 +878,7 @@ subroutine save_databases_adjacency_graph()
    ! Format: (local_elem1, local_elem2, adjacency_type, adjacency_id, neighbor_partition)
    !   local_elem1: 1-based local index in current partition
    !   local_elem2: 1-based local index in neighbor_partition (or current partition if intra-partition)
-   !   neighbor_partition: -1 for intra-partition edges, partition rank for cross-partition edges
+   !   neighbor_partition: partition rank of neighbor; equals iproc for intra-partition edges
    index = 0
    do i = 0, nelmnts-1
       if (part(i) == iproc .and. num_adjacent(i) > 0) then
