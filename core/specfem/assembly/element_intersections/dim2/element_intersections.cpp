@@ -50,8 +50,7 @@ specfem::assembly::element_intersections<
 
         // Filter out corresponding intra-partition connections
         auto filter = [&graph](const auto &edge) {
-          return graph[edge].connection == _connection_tag_ &&
-                 graph[edge].neighbor_partition == -1;
+          return graph[edge].connection == _connection_tag_;
         };
 
         // Create a filtered graph view

@@ -26,6 +26,10 @@ public:
    * @brief Inherit all constructors from base class.
    */
   using base_type::base_type;
+
+  auto &local_connections() const = delete;
+
+  auto &mpi_connections() const { return base_type::graph(); }
 };
 
 } // namespace specfem::assembly::mesh_impl

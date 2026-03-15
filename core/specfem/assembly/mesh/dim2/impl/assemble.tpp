@@ -1,12 +1,13 @@
 #pragma once
 
+#include "specfem/assembly/mesh.hpp"
 #include "specfem/element_connections.hpp"
 #include "specfem/mesh.hpp"
-#include "specfem/assembly/mesh.hpp"
 #include "specfem/point.hpp"
 #include <boost/graph/filtered_graph.hpp>
 
-void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() {
+void specfem::assembly::mesh<
+    specfem::element::dimension_tag::dim2>::assemble() {
 
   const int nspec = this->nspec;
   const int ngllx = this->element_grid.ngllx;
@@ -27,9 +28,9 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
 
   // Get the coordinates for each quadrature point
   // ----
-  Kokkos::View<
-      specfem::point::global_coordinates<specfem::element::dimension_tag::dim2> ***,
-      Kokkos::DefaultHostExecutionSpace>
+  Kokkos::View<specfem::point::global_coordinates<
+                   specfem::element::dimension_tag::dim2> ***,
+               Kokkos::DefaultHostExecutionSpace>
       global_coordinates("specfem::assembly::mesh::h_coord", nspec, ngllz,
                          ngllx);
 
@@ -68,7 +69,8 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
 
   // ----
 
-  constexpr int chunk_size = specfem::parallel_configuration::storage_chunk_size;
+  constexpr int chunk_size =
+      specfem::parallel_configuration::storage_chunk_size;
 
   this->h_index_mapping = Kokkos::View<int ***, Kokkos::LayoutLeft,
                                        Kokkos::DefaultHostExecutionSpace>(
@@ -110,8 +112,7 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
   // Filter out strongly conforming, intra-partition connections
   auto filter = [&graph](const auto &edge) {
     return graph[edge].connection ==
-               specfem::element_connections::type::strongly_conforming &&
-           graph[edge].neighbor_partition == -1;
+           specfem::element_connections::type::strongly_conforming;
   };
 
   // Create a filtered graph view
@@ -123,8 +124,7 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
   // We only take interior edge points, corners will be treated later
   for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
     for (auto iedge : specfem::mesh_entity::dim2::edges) {
-      const auto npoints =
-          element.number_of_points_on_orientation(iedge);
+      const auto npoints = element.number_of_points_on_orientation(iedge);
       for (int ipoint = 1; ipoint < npoints - 1;
            ipoint++) { // we loop only over interior points of edge
         for (int ielement = 0; ielement < chunk_size; ielement++) {
@@ -134,8 +134,7 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
           // Check if this point has already been assigned
           // ----
           bool previously_assigned = false;
-          const auto [iz, ix] =
-              element.map_coordinates(iedge, ipoint);
+          const auto [iz, ix] = element.map_coordinates(iedge, ipoint);
 
           // get all connections for this element
           for (auto edge :
@@ -147,14 +146,19 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
               // Return edge
               const auto other_edge = boost::edge(jspec, ispec, fg).first;
               const auto mapped_iedge = fg[other_edge].orientation;
-              const auto connection_mapping = specfem::element_connections::connection_mapping(
-                  ngllz, ngllx, Kokkos::subview(this->h_control_node_mapping, ispec, Kokkos::ALL()),
-                  Kokkos::subview(this->h_control_node_mapping, jspec, Kokkos::ALL()));
+              const auto connection_mapping =
+                  specfem::element_connections::connection_mapping(
+                      ngllz, ngllx,
+                      Kokkos::subview(this->h_control_node_mapping, ispec,
+                                      Kokkos::ALL()),
+                      Kokkos::subview(this->h_control_node_mapping, jspec,
+                                      Kokkos::ALL()));
 
               // Get the correct coordinates for the edge point on the other
               // edge
               const auto [mapped_iz, mapped_ix] =
-                  connection_mapping.map_coordinates(iedge, mapped_iedge, iz, ix);
+                  connection_mapping.map_coordinates(iedge, mapped_iedge, iz,
+                                                     ix);
 
               if (this->h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
 
@@ -218,15 +222,20 @@ void specfem::assembly::mesh<specfem::element::dimension_tag::dim2>::assemble() 
             const auto other_edge = boost::edge(jspec, ispec, fg).first;
             const auto mapped_iedge = fg[other_edge].orientation;
 
-            const auto connection_mapping = specfem::element_connections::connection_mapping(
-                ngllz, ngllx, Kokkos::subview(this->h_control_node_mapping, ispec, Kokkos::ALL()),
-                Kokkos::subview(this->h_control_node_mapping, jspec, Kokkos::ALL()));
+            const auto connection_mapping =
+                specfem::element_connections::connection_mapping(
+                    ngllz, ngllx,
+                    Kokkos::subview(this->h_control_node_mapping, ispec,
+                                    Kokkos::ALL()),
+                    Kokkos::subview(this->h_control_node_mapping, jspec,
+                                    Kokkos::ALL()));
 
             // Check if the connection is an edge connection
-            if (specfem::mesh_entity::contains(specfem::mesh_entity::dim2::edges,
-                                               iedge)) {
+            if (specfem::mesh_entity::contains(
+                    specfem::mesh_entity::dim2::edges, iedge)) {
               const auto [mapped_iz, mapped_ix] =
-                  connection_mapping.map_coordinates(iedge, mapped_iedge, iz, ix);
+                  connection_mapping.map_coordinates(iedge, mapped_iedge, iz,
+                                                     ix);
 
               if (this->h_index_mapping(jspec, mapped_iz, mapped_ix) != -1) {
                 this->h_index_mapping(ispec, iz, ix) =

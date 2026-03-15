@@ -3,7 +3,9 @@
 #include "specfem/element_coupling.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh_entity.hpp"
+#include "specfem/mpi.hpp"
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/filtered_graph.hpp>
 #include <memory>
 
 namespace specfem::mesh {
@@ -35,8 +37,10 @@ public:
      * bottom_left, bottom_right, etc.) */
     specfem::mesh_entity::dim2::type orientation;
 
-    /** @brief Partition rank of the neighbor element (-1 for intra-partition
-     * edges, >= 0 for cross-partition edges) */
+    /** @brief Partition rank of the neighboring element (if local connection
+     * then @code local_partition = specfem::mpi::rank() @endcode, if
+     * cross-partition connection then @code neighbor_partition = partition rank
+     * of neighbor @endcode) */
     int neighbor_partition = -1;
 
     /**
@@ -116,12 +120,29 @@ public:
    */
   const Graph &graph() const { return *p_graph_; }
 
+  auto local_connections() const {
+    const auto my_id = specfem::MPI::get_rank();
+    auto filter = [&my_id, this](const auto &edge) {
+      return this->graph()[edge].neighbor_partition == my_id;
+    };
+    return boost::make_filtered_graph(this->graph(), filter);
+  }
+
+  auto mpi_connections() const {
+    const auto my_id = specfem::MPI::get_rank();
+    auto filter = [&my_id, this](const auto &edge) {
+      return this->graph()[edge].neighbor_partition != my_id;
+    };
+    return boost::make_filtered_graph(this->graph(), filter);
+  }
+
   /**
    * @brief Assert that the adjacency graph is symmetric
    *
    * Verifies that for every directed edge from vertex A to vertex B,
    * there exists a corresponding edge from vertex B to vertex A.
-   * This is required for proper mesh connectivity in spectral element methods.
+   * This is required for proper mesh connectivity in spectral element
+   * methods.
    *
    * @throws std::runtime_error if the graph is not symmetric
    */
