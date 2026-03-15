@@ -45,9 +45,9 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
         boost::add_edge(current_element - 1, neighbor_element - 1,
                         EdgeProperties{ connection_type, edge_orientation }, g);
       } else {
-        graph.mpi_connections().emplace_back(connection_type, edge_orientation,
-                                             neighbor_partition,
-                                             neighbor_element - 1);
+        graph.mpi_connections().emplace_back(
+            connection_type, edge_orientation, current_element - 1,
+            neighbor_partition, neighbor_element - 1);
       }
     } else {
       throw std::runtime_error("Unknown connection type in adjacency graph.");

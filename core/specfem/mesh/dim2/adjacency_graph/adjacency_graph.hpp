@@ -68,14 +68,16 @@ public:
     int neighbor_partition;      ///< MPI rank of the neighboring partition
     size_t neighbor_local_index; ///< Local index of the neighboring element in
                                  ///< its partition
+    size_t local_index; ///< Local index of the element in this partition
 
     MPIEdgeProperties() = default;
 
     MPIEdgeProperties(const specfem::element_connections::type conn,
                       const specfem::mesh_entity::dim2::type orient,
-                      const int neighbor_part, const size_t neighbor_index)
+                      const size_t local_idx, const int neighbor_part,
+                      const size_t neighbor_index)
         : EdgeProperties(conn, orient), neighbor_partition(neighbor_part),
-          neighbor_local_index(neighbor_index) {}
+          neighbor_local_index(neighbor_index), local_index(local_idx) {}
   };
 
 private:
