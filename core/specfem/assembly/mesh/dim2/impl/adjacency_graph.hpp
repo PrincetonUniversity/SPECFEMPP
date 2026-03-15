@@ -27,6 +27,10 @@ public:
    */
   using base_type::base_type;
 
+  auto &graph() { return base_type::local_connections(); }
+
+  const auto &graph() const { return base_type::local_connections(); }
+
   /// Deleted — assembly graph contains only local edges; use graph() instead.
   auto &local_connections() const = delete;
 

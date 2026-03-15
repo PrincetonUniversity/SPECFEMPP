@@ -3,7 +3,6 @@
 #include "specfem/element_coupling.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh_entity.hpp"
-#include "specfem/mpi.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/filtered_graph.hpp>
 #include <memory>
@@ -37,12 +36,6 @@ public:
      * bottom_left, bottom_right, etc.) */
     specfem::mesh_entity::dim2::type orientation;
 
-    /** @brief Partition rank of the neighboring element (if local connection
-     * then @code local_partition = specfem::mpi::rank() @endcode, if
-     * cross-partition connection then @code neighbor_partition = partition rank
-     * of neighbor @endcode) */
-    int neighbor_partition = -1;
-
     /**
      * @brief Default constructor
      *
@@ -58,10 +51,22 @@ public:
      * @param neighbor_part Partition rank of neighbor (-1 for intra-partition)
      */
     EdgeProperties(const specfem::element_connections::type conn,
-                   const specfem::mesh_entity::dim2::type orient,
-                   const int neighbor_part = -1)
-        : connection(conn), orientation(orient),
-          neighbor_partition(neighbor_part) {}
+                   const specfem::mesh_entity::dim2::type orient)
+        : connection(conn), orientation(orient) {}
+  };
+
+  struct MPIEdgeProperties : public EdgeProperties {
+    int neighbor_partition;      ///< MPI rank of the neighboring partition
+    size_t neighbor_local_index; ///< Local index of the neighboring element in
+                                 ///< its partition
+
+    MPIEdgeProperties() = default;
+
+    MPIEdgeProperties(const specfem::element_connections::type conn,
+                      const specfem::mesh_entity::dim2::type orient,
+                      const int neighbor_part, const size_t neighbor_index)
+        : EdgeProperties(conn, orient, neighbor_part),
+          neighbor_local_index(neighbor_index) {}
   };
 
 private:
@@ -81,6 +86,7 @@ private:
 
   /** @brief The underlying Boost graph storing adjacency relationships */
   std::shared_ptr<Graph> p_graph_;
+  std::vector<MPIEdgeProperties> mpi_edge_properties_;
 
 public:
   /**
@@ -108,7 +114,7 @@ public:
    *
    * @return Mutable reference to the Boost adjacency_list graph
    */
-  Graph &graph() { return *p_graph_; }
+  Graph &local_connections() { return *p_graph_; }
 
   /**
    * @brief Get const reference to the underlying graph
@@ -118,24 +124,7 @@ public:
    *
    * @return Const reference to the Boost adjacency_list graph
    */
-  const Graph &graph() const { return *p_graph_; }
-
-  /**
-   * @brief Get a filtered view containing only intra-partition edges
-   *
-   * Returns a Boost filtered_graph that includes only edges whose
-   * neighbor_partition equals the current MPI rank (i.e. both source
-   * and target elements belong to this partition).
-   *
-   * @return Filtered graph view over local (intra-partition) edges
-   */
-  auto local_connections() const {
-    const auto my_id = specfem::MPI::get_rank();
-    auto filter = [&my_id, this](const auto &edge) {
-      return this->graph()[edge].neighbor_partition == my_id;
-    };
-    return boost::make_filtered_graph(this->graph(), filter);
-  }
+  const Graph &local_connections() const { return *p_graph_; }
 
   /**
    * @brief Get a filtered view containing only cross-partition (MPI) edges
@@ -146,13 +135,9 @@ public:
    *
    * @return Filtered graph view over cross-partition edges
    */
-  auto mpi_connections() const {
-    const auto my_id = specfem::MPI::get_rank();
-    auto filter = [&my_id, this](const auto &edge) {
-      return this->graph()[edge].neighbor_partition != my_id;
-    };
-    return boost::make_filtered_graph(this->graph(), filter);
-  }
+  auto &mpi_connections() { return mpi_edge_properties_; }
+
+  const auto &mpi_connections() const { return mpi_edge_properties_; }
 
   /**
    * @brief Assert that the adjacency graph is symmetric

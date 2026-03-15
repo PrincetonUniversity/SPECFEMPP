@@ -885,7 +885,7 @@ subroutine save_databases_adjacency_graph()
          do j = 0, num_adjacent(i)-1
             neighbor = adjacent_elements(i,j)
             if (part(neighbor) == iproc) then
-               neighbor_partition = -1
+               neighbor_partition = iproc
             else
                neighbor_partition = part(neighbor)
             endif
