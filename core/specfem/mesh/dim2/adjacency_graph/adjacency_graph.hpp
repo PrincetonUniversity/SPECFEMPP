@@ -120,6 +120,15 @@ public:
    */
   const Graph &graph() const { return *p_graph_; }
 
+  /**
+   * @brief Get a filtered view containing only intra-partition edges
+   *
+   * Returns a Boost filtered_graph that includes only edges whose
+   * neighbor_partition equals the current MPI rank (i.e. both source
+   * and target elements belong to this partition).
+   *
+   * @return Filtered graph view over local (intra-partition) edges
+   */
   auto local_connections() const {
     const auto my_id = specfem::MPI::get_rank();
     auto filter = [&my_id, this](const auto &edge) {
@@ -128,6 +137,15 @@ public:
     return boost::make_filtered_graph(this->graph(), filter);
   }
 
+  /**
+   * @brief Get a filtered view containing only cross-partition (MPI) edges
+   *
+   * Returns a Boost filtered_graph that includes only edges whose
+   * neighbor_partition differs from the current MPI rank (i.e. the
+   * target element belongs to a remote partition).
+   *
+   * @return Filtered graph view over cross-partition edges
+   */
   auto mpi_connections() const {
     const auto my_id = specfem::MPI::get_rank();
     auto filter = [&my_id, this](const auto &edge) {
@@ -139,12 +157,12 @@ public:
   /**
    * @brief Assert that the adjacency graph is symmetric
    *
-   * Verifies that for every directed edge from vertex A to vertex B,
-   * there exists a corresponding edge from vertex B to vertex A.
-   * This is required for proper mesh connectivity in spectral element
-   * methods.
+   * Verifies that for every intra-partition directed edge from vertex A
+   * to vertex B, there exists a corresponding edge from vertex B to
+   * vertex A. Cross-partition edges are skipped because their reverse
+   * edge resides in the remote partition's graph.
    *
-   * @throws std::runtime_error if the graph is not symmetric
+   * @throws std::runtime_error if a local edge has no symmetric reverse
    */
   void assert_symmetry() const;
 };

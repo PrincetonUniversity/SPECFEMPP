@@ -109,7 +109,7 @@ void specfem::assembly::mesh<
     }
   }
 
-  // Filter out strongly conforming, intra-partition connections
+  // Filter edges to strongly conforming connections only
   auto filter = [&graph](const auto &edge) {
     return graph[edge].connection ==
            specfem::element_connections::type::strongly_conforming;

@@ -27,9 +27,11 @@ public:
    */
   using base_type::base_type;
 
+  /// Deleted — assembly graph contains only local edges; use graph() instead.
   auto &local_connections() const = delete;
 
-  auto &mpi_connections() const { return base_type::graph(); }
+  /// Deleted — assembly graph contains only local edges; use graph() instead.
+  auto &mpi_connections() const = delete;
 };
 
 } // namespace specfem::assembly::mesh_impl
