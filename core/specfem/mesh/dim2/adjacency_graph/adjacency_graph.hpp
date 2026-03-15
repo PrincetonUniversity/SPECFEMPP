@@ -48,13 +48,20 @@ public:
      *
      * @param conn Type of connection between elements
      * @param orient Orientation of the shared mesh entity
-     * @param neighbor_part Partition rank of neighbor (-1 for intra-partition)
      */
     EdgeProperties(const specfem::element_connections::type conn,
                    const specfem::mesh_entity::dim2::type orient)
         : connection(conn), orientation(orient) {}
   };
 
+  /**
+   * @brief Properties for cross-partition (MPI) adjacency edges
+   *
+   * Extends EdgeProperties with partition and remote-index information
+   * for edges that cross MPI partition boundaries. These edges are stored
+   * separately from the Boost graph (in a flat vector) because the
+   * neighbor element belongs to a different partition.
+   */
   struct MPIEdgeProperties : public EdgeProperties {
     int neighbor_partition;      ///< MPI rank of the neighboring partition
     size_t neighbor_local_index; ///< Local index of the neighboring element in
@@ -65,7 +72,7 @@ public:
     MPIEdgeProperties(const specfem::element_connections::type conn,
                       const specfem::mesh_entity::dim2::type orient,
                       const int neighbor_part, const size_t neighbor_index)
-        : EdgeProperties(conn, orient, neighbor_part),
+        : EdgeProperties(conn, orient), neighbor_partition(neighbor_part),
           neighbor_local_index(neighbor_index) {}
   };
 
@@ -86,6 +93,7 @@ private:
 
   /** @brief The underlying Boost graph storing adjacency relationships */
   std::shared_ptr<Graph> p_graph_;
+  /** @brief Cross-partition edges stored outside the Boost graph */
   std::vector<MPIEdgeProperties> mpi_edge_properties_;
 
 public:
@@ -107,36 +115,40 @@ public:
   adjacency_graph(const int nspec) : p_graph_(std::make_shared<Graph>(nspec)) {}
 
   /**
-   * @brief Get mutable reference to the underlying graph
+   * @brief Get mutable reference to the local (intra-partition) graph
    *
-   * Provides direct access to the Boost graph structure for modification
-   * operations such as adding edges or vertices.
+   * Provides direct access to the Boost graph containing only edges
+   * where both source and target elements belong to this partition.
    *
    * @return Mutable reference to the Boost adjacency_list graph
    */
   Graph &local_connections() { return *p_graph_; }
 
   /**
-   * @brief Get const reference to the underlying graph
+   * @brief Get const reference to the local (intra-partition) graph
    *
-   * Provides read-only access to the Boost graph structure for
-   * query operations such as traversing edges or checking connectivity.
+   * Provides read-only access to the Boost graph containing only edges
+   * where both source and target elements belong to this partition.
    *
    * @return Const reference to the Boost adjacency_list graph
    */
   const Graph &local_connections() const { return *p_graph_; }
 
   /**
-   * @brief Get a filtered view containing only cross-partition (MPI) edges
+   * @brief Get mutable reference to cross-partition (MPI) edge list
    *
-   * Returns a Boost filtered_graph that includes only edges whose
-   * neighbor_partition differs from the current MPI rank (i.e. the
-   * target element belongs to a remote partition).
+   * Returns the vector of MPIEdgeProperties describing edges that cross
+   * partition boundaries. These edges are not stored in the Boost graph.
    *
-   * @return Filtered graph view over cross-partition edges
+   * @return Mutable reference to the MPI edge properties vector
    */
   auto &mpi_connections() { return mpi_edge_properties_; }
 
+  /**
+   * @brief Get const reference to cross-partition (MPI) edge list
+   *
+   * @return Const reference to the MPI edge properties vector
+   */
   const auto &mpi_connections() const { return mpi_edge_properties_; }
 
   /**

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "specfem/element_connections.hpp"
-#include "specfem/element.hpp"
-#include "specfem/mesh_entity.hpp"
 #include "predicate.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/mesh_entity.hpp"
 #include <gtest/gtest.h>
 #include <sstream>
 #include <stdexcept>
@@ -23,7 +23,8 @@ std::string connects::str() const {
   std::stringstream str;
   str << "[" << ispec;
   if (check_ispec_mesh_entity) {
-    str << " (" << specfem::mesh_entity::dim2::to_string(ispec_mesh_entity) << ")";
+    str << " (" << specfem::mesh_entity::dim2::to_string(ispec_mesh_entity)
+        << ")";
   }
   str << " <-";
   if (check_connection_type) {
@@ -31,7 +32,8 @@ std::string connects::str() const {
   }
   str << "-> " << jspec;
   if (check_jspec_mesh_entity) {
-    str << " (" << specfem::mesh_entity::dim2::to_string(jspec_mesh_entity) << ")";
+    str << " (" << specfem::mesh_entity::dim2::to_string(jspec_mesh_entity)
+        << ")";
   }
   str << "]";
   return str.str();
@@ -55,16 +57,16 @@ void connects::expect_in(
       std::ostringstream msg;
       msg << "Failed expected adjacency " << str() << ":\n";
       msg << "  Found connection type "
-          << specfem::element_connections::to_string(edge.connection) << " for edge "
-          << ispec_to_jspec_string() << "\n";
+          << specfem::element_connections::to_string(edge.connection)
+          << " for edge " << ispec_to_jspec_string() << "\n";
       FAIL() << msg.str();
     }
     if (check_ispec_mesh_entity && (edge.orientation != ispec_mesh_entity)) {
       std::ostringstream msg;
       msg << "Failed expected adjacency " << str() << ":\n";
       msg << "  Found ispec orientation "
-          << specfem::mesh_entity::dim2::to_string(edge.orientation) << " for edge "
-          << ispec_to_jspec_string() << "\n";
+          << specfem::mesh_entity::dim2::to_string(edge.orientation)
+          << " for edge " << ispec_to_jspec_string() << "\n";
       FAIL() << msg.str();
     }
   }
@@ -82,16 +84,16 @@ void connects::expect_in(
       std::ostringstream msg;
       msg << "Failed expected adjacency " << str() << ":\n";
       msg << "  Found connection type "
-          << specfem::element_connections::to_string(edge.connection) << " for edge "
-          << jspec_to_ispec_string() << "\n";
+          << specfem::element_connections::to_string(edge.connection)
+          << " for edge " << jspec_to_ispec_string() << "\n";
       FAIL() << msg.str();
     }
     if (check_jspec_mesh_entity && (edge.orientation != jspec_mesh_entity)) {
       std::ostringstream msg;
       msg << "Failed expected adjacency " << str() << ":\n";
       msg << "  Found jspec orientation "
-          << specfem::mesh_entity::dim2::to_string(edge.orientation) << " for edge "
-          << jspec_to_ispec_string() << "\n";
+          << specfem::mesh_entity::dim2::to_string(edge.orientation)
+          << " for edge " << jspec_to_ispec_string() << "\n";
       FAIL() << msg.str();
     }
   }
@@ -100,7 +102,7 @@ template <specfem::element::dimension_tag dimension>
 void number_of_out_edges::expect_in(
     const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const {
 
-  const auto &g = adjacency_graph.graph();
+  const auto &g = adjacency_graph.local_connections();
 
   const auto out_edges = boost::out_edges(ispec, g);
   std::vector<int> computed_neighbors;
@@ -132,4 +134,4 @@ void verify(const variant &predicate,
       predicate);
 }
 
-} // namespace predicate
+} // namespace specfem::testing::predicate

@@ -18,7 +18,7 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph(
       nspec);
 
-  auto &g = graph.graph();
+  auto &g = graph.local_connections();
 
   int total_adjacencies;
   specfem::io::fortran_read_line(stream, &total_adjacencies);
@@ -43,9 +43,7 @@ specfem::io::mesh::impl::fortran::dim2::read_adjacency_graph(
           static_cast<specfem::mesh_entity::dim2::type>(orientation_int);
       if (neighbor_partition == my_id) {
         boost::add_edge(current_element - 1, neighbor_element - 1,
-                        EdgeProperties{ connection_type, edge_orientation,
-                                        neighbor_partition },
-                        g);
+                        EdgeProperties{ connection_type, edge_orientation }, g);
       } else {
         graph.mpi_connections().emplace_back(connection_type, edge_orientation,
                                              neighbor_partition,

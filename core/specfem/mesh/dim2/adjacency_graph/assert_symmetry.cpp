@@ -6,13 +6,9 @@
 template <>
 void specfem::mesh::adjacency_graph<
     specfem::element::dimension_tag::dim2>::assert_symmetry() const {
-  const auto &g = this->graph();
+  const auto &g = this->local_connections();
 
   for (const auto &edge : boost::make_iterator_range(boost::edges(g))) {
-    // Skip cross-partition edges — the reverse edge lives in another partition
-    if (g[edge].neighbor_partition >= 0)
-      continue;
-
     const auto source = boost::source(edge, g);
     const auto target = boost::target(edge, g);
     if (!boost::edge(target, source, g).second) {
