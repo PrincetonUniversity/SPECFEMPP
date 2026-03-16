@@ -127,6 +127,19 @@ target_link_libraries(
   Kokkos::kokkos
 )
 add_executable(
+  units_tests
+  units/quantity_tests.cpp
+  units/unit_cast_tests.cpp
+)
+
+target_link_libraries(
+  units_tests
+  specfem::utilities
+  gtest_main
+  Kokkos::kokkos
+)
+
+add_executable(
   attenuation_tests
   attenuation/runner.cpp
   attenuation/compute_band_tests.cpp
@@ -1025,6 +1038,7 @@ if(NOT MPI_PARALLEL)
     stress_tests
     test_mesh_utilities_mapping_2d
     test_mesh_utilities_mapping_3d
+    units_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
       gtest_discover_tests(${test_target}

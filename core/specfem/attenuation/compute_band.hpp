@@ -2,6 +2,7 @@
 
 #include "specfem/constants.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/units.hpp"
 #include "specfem/utilities/frequency_band.hpp"
 
 namespace specfem {
@@ -30,7 +31,8 @@ namespace attenuation {
  * @return FrequencyBand with @c min_period and @c max_period
  */
 template <int N_SLS>
-specfem::utilities::FrequencyBand compute_band(type_real min_resolved_period);
+specfem::utilities::FrequencyBand<specfem::units::Omega>
+compute_band(specfem::units::Seconds min_resolved_period);
 
 } // namespace attenuation
 } // namespace specfem
