@@ -42,7 +42,7 @@ std::string connects::str() const {
 template <specfem::element::dimension_tag dimension>
 void connects::expect_in(
     const specfem::mesh::adjacency_graph<dimension> &adjacency_graph) const {
-  const auto &g = adjacency_graph.graph();
+  const auto &g = adjacency_graph.local_connections();
   { // test ispec -> jspec edge
     const auto [edge_, exists] = boost::edge(ispec, jspec, g);
     const auto edge = g[edge_];
