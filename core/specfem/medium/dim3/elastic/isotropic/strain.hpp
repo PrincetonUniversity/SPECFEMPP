@@ -32,26 +32,26 @@ KOKKOS_INLINE_FUNCTION
       typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
   const auto &du = field_derivatives.du;
 
-  specfem::datatype::TensorPointViewType<type_real, 3, 3, UseSIMD> T;
+  specfem::datatype::TensorPointViewType<type_real, 3, 3, UseSIMD> epsilon;
 
   // Normal strains
-  T(0, 0) = du(0, 0); // ε_xx
-  T(1, 1) = du(1, 1); // ε_yy
-  T(2, 2) = du(2, 2); // ε_zz
+  epsilon(0, 0) = du(0, 0); // ε_xx
+  epsilon(1, 1) = du(1, 1); // ε_yy
+  epsilon(2, 2) = du(2, 2); // ε_zz
 
   // Symmetric shear strains
   const datatype eps_xy = static_cast<type_real>(0.5) * (du(0, 1) + du(1, 0));
   const datatype eps_xz = static_cast<type_real>(0.5) * (du(0, 2) + du(2, 0));
   const datatype eps_yz = static_cast<type_real>(0.5) * (du(1, 2) + du(2, 1));
 
-  T(0, 1) = eps_xy;
-  T(1, 0) = eps_xy;
-  T(0, 2) = eps_xz;
-  T(2, 0) = eps_xz;
-  T(1, 2) = eps_yz;
-  T(2, 1) = eps_yz;
+  epsilon(0, 1) = eps_xy;
+  epsilon(1, 0) = eps_xy;
+  epsilon(0, 2) = eps_xz;
+  epsilon(2, 0) = eps_xz;
+  epsilon(1, 2) = eps_yz;
+  epsilon(2, 1) = eps_yz;
 
-  return T;
+  return epsilon;
 }
 
 /**
@@ -77,18 +77,11 @@ KOKKOS_INLINE_FUNCTION
   const auto trace = epsilon(0, 0) + epsilon(1, 1) + epsilon(2, 2);
   const auto third_trace = static_cast<type_real>(1.0 / 3.0) * trace;
 
-  specfem::datatype::TensorPointViewType<type_real, 3, 3, UseSIMD> T;
-  T(0, 0) = epsilon(0, 0) - third_trace;
-  T(1, 1) = epsilon(1, 1) - third_trace;
-  T(2, 2) = epsilon(2, 2) - third_trace;
-  T(0, 1) = epsilon(0, 1);
-  T(1, 0) = epsilon(1, 0);
-  T(0, 2) = epsilon(0, 2);
-  T(2, 0) = epsilon(2, 0);
-  T(1, 2) = epsilon(1, 2);
-  T(2, 1) = epsilon(2, 1);
+  epsilon(0, 0) = epsilon(0, 0) - third_trace;
+  epsilon(1, 1) = epsilon(1, 1) - third_trace;
+  epsilon(2, 2) = epsilon(2, 2) - third_trace;
 
-  return T;
+  return epsilon;
 }
 
 /**
