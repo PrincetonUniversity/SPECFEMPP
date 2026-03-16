@@ -94,13 +94,10 @@ KOKKOS_INLINE_FUNCTION
   const auto trace = epsilon(0, 0) + epsilon(1, 1);
   const auto third_trace = static_cast<type_real>(1.0 / 3.0) * trace;
 
-  specfem::datatype::TensorPointViewType<type_real, 2, 2, UseSIMD> T;
-  T(0, 0) = epsilon(0, 0) - third_trace;
-  T(1, 1) = epsilon(1, 1) - third_trace;
-  T(0, 1) = epsilon(0, 1);
-  T(1, 0) = epsilon(1, 0);
+  epsilon(0, 0) = epsilon(0, 0) - third_trace;
+  epsilon(1, 1) = epsilon(1, 1) - third_trace;
 
-  return T;
+  return epsilon;
 }
 
 /**

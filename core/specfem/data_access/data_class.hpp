@@ -57,6 +57,5 @@ enum DataClassType {
   conforming_interface,      ///< Conforming mesh interfaces
   global_coordinates,        ///< Global coordinate data
   attenuation, ///< Combined attenuation factors + memory variables
-  strain       ///< Input strain components for attenuation bookkeeping
 };
 } // namespace specfem::data_access
