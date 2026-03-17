@@ -1,15 +1,17 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/nonconforming_interfaces.hpp"
 #include "specfem/chunk_edge/nonconforming_interface.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/element_coupling.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
-
+#include <sstream>
+#include <stdexcept>
+#include <string>
 namespace specfem::algorithms {
 
 /**
@@ -53,8 +55,7 @@ shape_function_self_normal_derivatives(
         std::to_string(nquad_intersection));
   }
   ReturnViewType normal_derivs("shape_function_self_normal_derivatives",
-                               self_edges.n_edges, ngllz, ngllx,
-                               nquad_intersection);
+                               self_edges.N, ngllz, ngllx, nquad_intersection);
 
   using parallel_config =
       specfem::parallel_configuration::default_chunk_edge_config<

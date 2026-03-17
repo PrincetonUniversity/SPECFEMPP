@@ -1,14 +1,14 @@
 /**
  * @file chunked_intersection_iterator.hpp
- * @brief Chunked intersection iterator for processing edge-edge intersections
+ * @brief Chunked intersection iterator for processing interface intersections
  *
- * This file provides iterators for processing intersections between mesh edges,
- * enabling efficient parallel computation of coupled boundary conditions and
- * interface operations in spectral element methods.
+ * This file provides iterators for processing intersections between mesh
+ * interfaces, enabling efficient parallel computation of coupled boundary
+ * conditions and interface operations in spectral element methods.
  *
  * @section Usage
  * @code{.cpp}
- * // Example: Process edge intersections with chunked iterator
+ * // Example: Process intersections with chunked iterator
  * #include "execution/chunked_intersection_iterator.hpp"
  * #include "execution/for_all.hpp"
  *
@@ -16,34 +16,30 @@
  * specfem::parallel_configuration::default_chunk_edge_config<
  *     specfem::element::dimension_tag::dim2, Kokkos::DefaultExecutionSpace>;
  *
- * // Create views for edge intersections
+ * // Create views for intersections
  * constexpr int num_intersections = 1000;
- * constexpr int num_points = 5;
  *
  * Kokkos::View<specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>*>
- * self_edges("self_edges", num_intersections);
+ * self_intersections("self_intersections", num_intersections);
  * Kokkos::View<specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>*>
- * coupled_edges("coupled_edges", num_intersections);
- * Kokkos::View<int*[num_points]> self_storage("self_storage",
- * num_intersections); Kokkos::View<int*[num_points]>
- * coupled_storage("coupled_storage", num_intersections);
+ * coupled_intersections("coupled_intersections", num_intersections);
  *
- * // Initialize intersection edges
+ * // Initialize intersection pairs
  * Kokkos::parallel_for("init_intersections", num_intersections,
- * KOKKOS_LAMBDA(int i) { self_edges(i) =
+ * KOKKOS_LAMBDA(int i) { self_intersections(i) =
  * specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(i,
- * specfem::mesh_entity::dim2::type::top); coupled_edges(i) =
+ * specfem::mesh_entity::dim2::type::top); coupled_intersections(i) =
  * specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(num_intersections-i-1,
  *                                                   specfem::mesh_entity::dim2::type::bottom);
  * });
  *
  * // Create chunked intersection iterator and process
  * specfem::execution::ChunkedIntersectionIterator iterator(
- *     ParallelConfig(), self_edges, coupled_edges, num_points);
+ *     ParallelConfig(), self_intersections, coupled_intersections);
  *
  * specfem::execution::for_all("process_intersections", iterator,
  *     KOKKOS_LAMBDA(const auto& index) {
- *         // Access coupled edge data
+ *         // Access coupled interface data
  *         auto self_idx = index.self_index;
  *         auto coupled_idx = index.coupled_index;
  *         int point = index.ipoint;
@@ -58,6 +54,7 @@
 #pragma once
 
 #include "chunked_edge_iterator.hpp"
+#include "chunked_face_iterator.hpp"
 #include "policy.hpp"
 #include "specfem/point.hpp"
 #include "void_iterator.hpp"
@@ -68,12 +65,12 @@
 namespace specfem::execution {
 
 /**
- * @brief Index type representing a point on an edge-edge intersection interface
+ * @brief Index type representing a point on an interface intersection
  *
  * This class encapsulates the coordinates and properties of a single point
- * located at the intersection of two mesh edges. It provides access to both the
- * self and coupled edge coordinates, enabling efficient processing of interface
- * conditions.
+ * located at the intersection of two mesh interfaces. It provides access to
+ * both the self and coupled interface coordinates, enabling efficient
+ * processing of interface conditions.
  *
  * @tparam DimensionTag Spatial dimension (2D or 3D)
  * @tparam KokkosIndexType Type of the underlying Kokkos policy index
@@ -87,9 +84,11 @@ namespace specfem::execution {
  * index) {
  *         // Access interface point data
  *         auto interface_idx = index.get_index();
- *         auto self_point = interface_idx.self_index;    // Self edge
- * coordinates auto coupled_point = interface_idx.coupled_index; // Coupled edge
- * coordinates int point_pos = index.ipoint;                  // Position along
+ *         auto self_point = interface_idx.self_index;    // Self
+ * interface coordinates
+ *         auto coupled_point = interface_idx.coupled_index; // Coupled
+ * interface coordinates
+ *         int point_pos = index.ipoint;                  // Position along
  * interface
  *
  *         // Process coupled boundary condition...
@@ -137,16 +136,19 @@ public:
   /**
    * @brief Constructor for InterfacePointIndex
    *
-   * @param self_index Local element coordinates of the self edge point
-   * @param coupled_index Local element coordinates of the coupled edge point
-   * @param ipoint Position of point along the interface (0 to num_points-1)
+   * @tparam MeshEntityType Type of mesh entity based on the dimension of the
+   * interface (e.g., edge_index or face_index)
+   *
+   * @param self_index Local element coordinates of the self interface point
+   * @param coupled_index Local element coordinates of the coupled interface
+   * point
    * @param kokkos_index Underlying Kokkos policy index
    */
+  template <typename MeshEntityType>
   KOKKOS_INLINE_FUNCTION
-  InterfacePointIndex(
-      const specfem::point::edge_index<DimensionTag> &self_index,
-      const specfem::point::edge_index<DimensionTag> &coupled_index,
-      const KokkosIndexType &kokkos_index)
+  InterfacePointIndex(const MeshEntityType &self_index,
+                      const MeshEntityType &coupled_index,
+                      const KokkosIndexType &kokkos_index)
       : index(self_index, coupled_index), kokkos_index(kokkos_index) {}
 
   /**
@@ -158,45 +160,63 @@ public:
   KOKKOS_INLINE_FUNCTION
   constexpr const iterator_type get_iterator() const { return iterator_type{}; }
 
-public:
-  int ipoint; ///< Position along interface edge (0 to num_points-1)
-
 private:
   index_type index;             ///< Index of the GLL point on the interface
-  index_type local_index;       ///< Index of the GLL point relative to chunk
   KokkosIndexType kokkos_index; ///< Kokkos index type
 };
+
+namespace impl {
+template <specfem::element::dimension_tag DimensionTag>
+struct InterfaceIteratorTypeSelector;
+
+template <>
+struct InterfaceIteratorTypeSelector<specfem::element::dimension_tag::dim2> {
+  template <typename ViewType, typename KokkosIndexType>
+  using type = specfem::execution::ChunkEdgeIterator<
+      specfem::element::dimension_tag::dim2, ViewType, KokkosIndexType>;
+};
+
+template <>
+struct InterfaceIteratorTypeSelector<specfem::element::dimension_tag::dim3> {
+  template <typename ViewType, typename KokkosIndexType>
+  using type = specfem::execution::ChunkFaceIterator<
+      specfem::element::dimension_tag::dim3, ViewType, KokkosIndexType>;
+};
+} // namespace impl
 
 /**
  * @brief Team-level iterator for processing intersection points within a chunk
  *
  * This iterator operates at the team level, processing intersection points
- * between two sets of edges (self and coupled). It combines two
- * ChunkEdgeIterators to provide synchronized access to corresponding points on
- * intersecting edges.
+ * between two sets of mesh entities (self and coupled). It combines two
+ * chunk iterators to provide synchronized access to corresponding points on
+ * intersecting interfaces.
  *
  * @tparam DimensionTag Spatial dimension (2D or 3D)
- * @tparam ViewType Kokkos view type containing mesh edges
+ * @tparam ViewType Kokkos view type containing mesh intersections
  * @tparam TeamMemberType Kokkos team member type
  *
  * @section IntersectionMapping
  * Each intersection point corresponds to:
- * - A point on the self edge (computed by self_iterator)
- * - A corresponding point on the coupled edge (computed by coupled_iterator)
- * - Both points share the same ipoint index along their respective edges
+ * - A point on the self interface (computed by self_iterator)
+ * - A corresponding point on the coupled interface (computed by
+ * coupled_iterator)
+ * - Both points share the same ipoint index along their respective interfaces
  *
  * @section Usage
  * @code{.cpp}
  * // Used internally by ChunkedIntersectionIterator
- * // Creates interface points from self and coupled edge iterators
+ * // Creates interface points from self and coupled interface iterators
  * @endcode
  */
 template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename TeamMemberType>
-class ChunkedEdgeIntersectionIterator
+class ChunkedInterfaceIntersectionIterator
     : public TeamThreadRangePolicy<TeamMemberType, int> {
 private:
   using base_type = TeamThreadRangePolicy<TeamMemberType, int>;
+  using iterator_type = typename impl::InterfaceIteratorTypeSelector<
+      DimensionTag>::template type<ViewType, TeamMemberType>;
 
 public:
   using base_policy_type =
@@ -214,7 +234,7 @@ public:
    * @brief Convert linear index to interface point index
    *
    * Maps a linear index to interface point coordinates by computing
-   * corresponding self and coupled edge points.
+   * corresponding self and coupled interface points.
    *
    * @param i Linear index within the thread range
    * @return index_type InterfacePointIndex for the specified linear index
@@ -232,76 +252,87 @@ public:
    * @brief Constructor for team-level intersection iterator
    *
    * @param team_member Kokkos team member for parallel execution
-   * @param self_edges View of self mesh edges
-   * @param coupled_edges View of coupled mesh edges
-   * @param num_points Number of GLL points per edge
+   * @param self_intersections View of self mesh intersections
+   * @param coupled_intersections View of coupled mesh intersections
    */
   KOKKOS_INLINE_FUNCTION
-  ChunkedEdgeIntersectionIterator(const TeamMemberType &team_member,
-                                  const ViewType &self_edges,
-                                  const ViewType &coupled_edges)
-      : base_type(team_member, self_edges.n_edges * self_edges.n_points),
-        self_iterator(team_member, self_edges),
-        coupled_iterator(team_member, coupled_edges) {}
+  ChunkedInterfaceIntersectionIterator(const TeamMemberType &team_member,
+                                       const ViewType &self_intersections,
+                                       const ViewType &coupled_intersections)
+      : base_type(team_member, self_intersections.get_total_points()),
+        self_iterator(team_member, self_intersections),
+        coupled_iterator(team_member, coupled_intersections) {}
 
   /**
-   * @brief Get the self edge iterator
+   * @brief Get the self interface iterator
    *
-   * @return const ChunkEdgeIterator& Reference to self edge iterator
+   * @return const iterator_type& Reference to self interface iterator
    */
   KOKKOS_INLINE_FUNCTION
-  const ChunkEdgeIterator<DimensionTag, ViewType, TeamMemberType> &
-  get_self_iterator() const {
-    return self_iterator;
-  }
+  const iterator_type &get_self_iterator() const { return self_iterator; }
 
   /**
-   * @brief Get the coupled edge iterator
+   * @brief Get the coupled interface iterator
    *
-   * @return const ChunkEdgeIterator& Reference to coupled edge iterator
+   * @return const iterator_type& Reference to coupled interface iterator
    */
   KOKKOS_INLINE_FUNCTION
-  const ChunkEdgeIterator<DimensionTag, ViewType, TeamMemberType> &
-  get_coupled_iterator() const {
-    return coupled_iterator;
-  }
+  const iterator_type &get_coupled_iterator() const { return coupled_iterator; }
 
 private:
-  ChunkEdgeIterator<DimensionTag, ViewType, TeamMemberType>
-      self_iterator; ///< Iterator for self edges
-  ChunkEdgeIterator<DimensionTag, ViewType, TeamMemberType>
-      coupled_iterator; ///< Iterator for coupled edges
+  iterator_type self_iterator;    ///< Iterator for self intersections
+  iterator_type coupled_iterator; ///< Iterator for coupled intersections
 };
 
+namespace impl {
+template <specfem::element::dimension_tag DimensionTag>
+struct ChunkInterfaceIndexTypeSelector;
+
+template <>
+struct ChunkInterfaceIndexTypeSelector<specfem::element::dimension_tag::dim2> {
+  template <typename ViewType, typename KokkosIndexType>
+  using type = ChunkEdgeIndex<specfem::element::dimension_tag::dim2, ViewType,
+                              KokkosIndexType>;
+};
+
+template <>
+struct ChunkInterfaceIndexTypeSelector<specfem::element::dimension_tag::dim3> {
+  template <typename ViewType, typename KokkosIndexType>
+  using type = ChunkFaceIndex<specfem::element::dimension_tag::dim3, ViewType,
+                              KokkosIndexType>;
+};
+} // namespace impl
+
 /**
- * @brief Chunk-level index for managing edge intersection processing within a
- * team
+ * @brief Chunk-level index for managing interface intersection processing
+ * within a team
  *
- * This class serves as an intermediate index type that manages a chunk of edge
+ * This class serves as an intermediate index type that manages a chunk of
  * intersections assigned to a Kokkos team. It provides access to both self and
- * coupled edge chunks, their respective iterators, and the team-level
+ * coupled interface chunks, their respective iterators, and the team-level
  * intersection iterator for processing interface points within the chunk.
  *
  * @tparam DimensionTag Spatial dimension (2D or 3D)
- * @tparam ViewType Kokkos view type containing the chunk of mesh edges
+ * @tparam ViewType Kokkos view type containing the chunk of mesh intersections
  * @tparam KokkosIndexType Type of the underlying Kokkos policy index (team
  * member)
  *
  * @section Architecture
- * ChunkEdgeIntersectionIndex acts as a bridge in the intersection iterator
- * hierarchy:
+ * ChunkInterfaceIntersectionIndex acts as a bridge in the intersection
+ * iterator hierarchy:
  * - High-level ChunkedIntersectionIterator (manages teams and intersection
  * chunks)
- * - Chunk-level ChunkEdgeIntersectionIndex (manages intersection chunk within a
- * team)
- * - Team-level ChunkedEdgeIntersectionIterator (processes intersection points
- * within chunk)
+ * - Chunk-level ChunkInterfaceIntersectionIndex (manages intersection chunk
+ * within a team)
+ * - Team-level ChunkedInterfaceIntersectionIterator (processes intersection
+ * points within chunk)
  * - Low-level InterfacePointIndex (represents individual interface points)
  *
  * @section DualEdgeManagement
- * Unlike ChunkEdgeIndex which manages a single edge set, this class manages:
- * - Self edges: Primary edge set (e.g., from domain A)
- * - Coupled edges: Secondary edge set (e.g., from domain B)
+ * Unlike ChunkEdgeIndex/ChunkFaceIndex which manages a single entity set,
+ * this class manages:
+ * - Self intersections: Primary intersection set (e.g., from domain A)
+ * - Coupled intersections: Secondary intersection set (e.g., from domain B)
  * - Synchronized processing: Ensures corresponding points are processed
  * together
  *
@@ -314,7 +345,7 @@ private:
  * // Example of accessing intersection chunk index in nested iteration:
  * specfem::execution::for_all("process_intersection_chunks", chunked_iterator,
  *     KOKKOS_LAMBDA(const auto& chunk_index) {
- *         // chunk_index is of type ChunkEdgeIntersectionIndex
+ *         // chunk_index is of type ChunkInterfaceIntersectionIndex;
  *         auto intersection_iterator = chunk_index.get_iterator();
  *         auto self_chunk = chunk_index.get_self_index();
  *         auto coupled_chunk = chunk_index.get_coupled_index();
@@ -335,13 +366,16 @@ private:
  */
 template <specfem::element::dimension_tag DimensionTag, typename ViewType,
           typename KokkosIndexType>
-class ChunkEdgeIntersectionIndex {
+class ChunkInterfaceIntersectionIndex {
 private:
-  using index_type = ChunkEdgeIntersectionIndex;
+  using index_type = ChunkInterfaceIntersectionIndex;
+  using interface_index_type = typename impl::ChunkInterfaceIndexTypeSelector<
+      DimensionTag>::template type<ViewType, KokkosIndexType>;
 
 public:
   using iterator_type =
-      ChunkedEdgeIntersectionIterator<DimensionTag, ViewType, KokkosIndexType>;
+      ChunkedInterfaceIntersectionIterator<DimensionTag, ViewType,
+                                           KokkosIndexType>;
 
   /**
    * @brief Get the Kokkos policy index (team member) for this intersection
@@ -358,7 +392,8 @@ public:
   /**
    * @brief Get a reference to this intersection chunk index
    *
-   * @return const index_type& Reference to this ChunkEdgeIntersectionIndex
+   * @return const index_type& Reference to this
+   * ChunkInterfaceIntersectionIndex
    */
   KOKKOS_INLINE_FUNCTION
   const index_type &get_index() const { return *this; }
@@ -368,58 +403,57 @@ public:
    * this chunk
    *
    * @return const iterator_type& Reference to the
-   * ChunkedEdgeIntersectionIterator that can be used to iterate over individual
-   * interface points within this chunk
+   * ChunkedInterfaceIntersectionIterator that can be used to iterate over
+   * individual interface points within this chunk
    */
   KOKKOS_INLINE_FUNCTION
   const iterator_type &get_iterator() const { return this->iterator; }
 
   /**
-   * @brief Constructor for ChunkEdgeIntersectionIndex
+   * @brief Constructor for ChunkInterfaceIntersectionIndex
    *
    * Creates a chunk-level intersection index managing both self and coupled
-   * edge sets. Also initializes individual chunk indices for self and coupled
-   * edges.
+   * intersection sets. Also initializes individual chunk indices for self and
+   * coupled intersections.
    *
-   * @param self_edges View of self mesh edges for this specific chunk
-   * @param coupled_edges View of coupled mesh edges for this specific chunk
-   * @param num_points Number of GLL points per edge
+   * @param self_intersections View of self mesh intersections for this specific
+   * chunk
+   * @param coupled_intersections View of coupled mesh intersections for this
+   * specific chunk
    * @param kokkos_index Kokkos team member responsible for this intersection
    * chunk
    */
   KOKKOS_INLINE_FUNCTION
-  ChunkEdgeIntersectionIndex(const ViewType &self_edges,
-                             const ViewType &coupled_edges,
-                             const KokkosIndexType &kokkos_index)
+  ChunkInterfaceIntersectionIndex(const ViewType &self_intersections,
+                                  const ViewType &coupled_intersections,
+                                  const KokkosIndexType &kokkos_index)
       : kokkos_index(kokkos_index),
-        iterator(kokkos_index, self_edges, coupled_edges),
-        self_index(self_edges, kokkos_index),
-        coupled_index(coupled_edges, kokkos_index) {}
+        iterator(kokkos_index, self_intersections, coupled_intersections),
+        self_index(self_intersections, kokkos_index),
+        coupled_index(coupled_intersections, kokkos_index) {}
   /**
-   * @brief Get the chunk index for self edges
+   * @brief Get the chunk index for self intersections
    *
-   * Provides access to the self edge chunk for independent processing
+   * Provides access to the self intersection chunk for independent processing
    * or when asymmetric operations are needed on the interface.
    *
-   * @return const ChunkEdgeIndex& Reference to the self edge chunk index
+   * @return const interface_index_type& Reference to the self interface chunk
+   * index
    */
   KOKKOS_INLINE_FUNCTION
-  const ChunkEdgeIndex<DimensionTag, ViewType, KokkosIndexType> &
-  get_self_index() const {
-    return self_index;
-  }
+  const interface_index_type &get_self_index() const { return self_index; }
 
   /**
-   * @brief Get the chunk index for coupled edges
+   * @brief Get the chunk index for coupled intersections
    *
-   * Provides access to the coupled edge chunk for independent processing
-   * or when asymmetric operations are needed on the interface.
+   * Provides access to the coupled intersection chunk for independent
+   * processing or when asymmetric operations are needed on the interface.
    *
-   * @return const ChunkEdgeIndex& Reference to the coupled edge chunk index
+   * @return const interface_index_type& Reference to the coupled interface
+   * chunk index
    */
   KOKKOS_INLINE_FUNCTION
-  const ChunkEdgeIndex<DimensionTag, ViewType, KokkosIndexType> &
-  get_coupled_index() const {
+  const interface_index_type &get_coupled_index() const {
     return coupled_index;
   }
 
@@ -428,25 +462,23 @@ private:
                                 ///< chunk
   iterator_type iterator; ///< Team-level intersection iterator for processing
                           ///< interface points
-  ChunkEdgeIndex<DimensionTag, ViewType, KokkosIndexType>
-      self_index; ///< Chunk index for self edges
-  ChunkEdgeIndex<DimensionTag, ViewType, KokkosIndexType>
-      coupled_index; ///< Chunk index for coupled edges
+  interface_index_type self_index;    ///< Chunk index for self intersections
+  interface_index_type coupled_index; ///< Chunk index for coupled intersections
 };
 
 /**
  * @brief High-level chunked intersection iterator for efficient parallel
- * processing of edge intersections
+ * processing of interface intersections
  *
  * This is the main iterator class for processing intersections between mesh
- * edges in chunks. It manages two sets of edges (self and coupled) and
- * processes their intersections in parallel using Kokkos teams. This approach
- * is essential for coupled boundary conditions, interface operations, and
- * multi-domain computations in spectral element methods.
+ * interfaces in chunks. It manages two sets of interfaces (self and coupled)
+ * and processes their intersections in parallel using Kokkos teams. This
+ * approach is essential for coupled boundary conditions, interface operations,
+ * and multi-domain computations in spectral element methods.
  *
  * @tparam ParallelConfig Configuration class defining execution parameters and
  * chunk size
- * @tparam ViewType Kokkos view type containing mesh edges
+ * @tparam ViewType Kokkos view type containing mesh intersections
  *
  * @section Applications
  * The chunked intersection iterator is commonly used for:
@@ -458,7 +490,7 @@ private:
  *
  * @section Performance
  * The chunked approach provides benefits for intersection processing:
- * - Improved memory locality for coupled edge data
+ * - Improved memory locality for coupled interface data
  * - Better load balancing across teams
  * - Reduced synchronization overhead
  * - Configurable chunk sizes for different architectures
@@ -473,40 +505,32 @@ private:
  * specfem::parallel_configuration::default_chunk_edge_config<
  *     specfem::element::dimension_tag::dim2, Kokkos::DefaultExecutionSpace>;
  *
- * // Create edge views for intersection
+ * // Create intersection views
  * constexpr int num_intersections = 5000;
- * constexpr int num_points = 5;
  *
  * Kokkos::View<specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>*>
- * self_edges("self_edges", num_intersections);
+ * self_intersections("self_intersections", num_intersections);
  * Kokkos::View<specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>*>
- * coupled_edges("coupled_edges", num_intersections);
+ * coupled_intersections("coupled_intersections", num_intersections);
  *
  * // Initialize intersection pairs
  * Kokkos::parallel_for("init_intersections", num_intersections,
  * KOKKOS_LAMBDA(int i) {
- *     // Self edges from domain A
- *     self_edges(i) =
+ *     // Self intersections from domain A
+ *     self_intersections(i) =
  * specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(i,
  * specfem::mesh_entity::dim2::type::top);
  *
- *     // Coupled edges from domain B (often with different orientation)
- *     coupled_edges(i) =
+ *     // Coupled intersections from domain B (often with different orientation)
+ *     coupled_intersections(i) =
  * specfem::mesh_entity::edge<specfem::element::dimension_tag::dim2>(
  * num_intersections
  * - i - 1, specfem::mesh_entity::dim2::type::bottom);
  * });
  *
- * // Create storage for coupled calculations
- * Kokkos::View<double*[num_points]> self_field("self_field",
- * num_intersections); Kokkos::View<double*[num_points]>
- * coupled_field("coupled_field", num_intersections);
- * Kokkos::View<double*[num_points]> interface_flux("interface_flux",
- * num_intersections);
- *
  * // Create and use chunked intersection iterator
  * specfem::execution::ChunkedIntersectionIterator iterator(
- *     ParallelConfig(), self_edges, coupled_edges, num_points);
+ *     ParallelConfig(), self_intersections, coupled_intersections);
  *
  * specfem::execution::for_all("compute_interface_coupling", iterator,
  *     KOKKOS_LAMBDA(const auto& index) {
@@ -548,8 +572,9 @@ public:
       policy_index_type; ///< Policy index type.
                          ///< Evaluates to
                          ///< @c Kokkos::TeamPolicy::member_type
-  using index_type = ChunkEdgeIntersectionIndex<ParallelConfig::dimension,
-                                                ViewType, policy_index_type>;
+  using index_type =
+      ChunkInterfaceIntersectionIndex<ParallelConfig::dimension, ViewType,
+                                      policy_index_type>;
 
   using execution_space =
       typename base_type::execution_space; ///< Execution space type.
@@ -564,17 +589,19 @@ public:
                                             ///< iterator.
 
   /**
-   * @brief Constructor with explicit edge views and point count
+   * @brief Constructor with explicit intersection views
    *
-   * @param self_edges View of self mesh edges (first side of intersection)
-   * @param coupled_edges View of coupled mesh edges (second side of
+   * @param self_intersections View of self mesh intersections (first side of
    * intersection)
+   * @param coupled_intersections View of coupled mesh intersections (second
+   * side of intersection)
    */
-  ChunkedIntersectionIterator(const ViewType self_edges,
-                              const ViewType coupled_edges)
-      : self_edges(self_edges), coupled_edges(coupled_edges),
-        base_type(((self_edges.n_edges / chunk_size) +
-                   ((self_edges.n_edges % chunk_size) != 0)),
+  ChunkedIntersectionIterator(const ViewType self_intersections,
+                              const ViewType coupled_intersections)
+      : self_intersections(self_intersections),
+        coupled_intersections(coupled_intersections),
+        base_type(((self_intersections.N / chunk_size) +
+                   ((self_intersections.N % chunk_size) != 0)),
                   Kokkos::AUTO, Kokkos::AUTO) {}
 
   /**
@@ -582,13 +609,16 @@ public:
    *
    * @param config Parallel configuration (unused but required for interface
    * compatibility)
-   * @param self_edges View of self mesh edges (first side of intersection)
-   * @param coupled_edges View of coupled mesh edges (second side of
+   * @param self_intersections View of self mesh intersections (first side of
    * intersection)
+   * @param coupled_intersections View of coupled mesh intersections (second
+   * side of intersection)
    */
-  ChunkedIntersectionIterator(const ParallelConfig, const ViewType self_edges,
-                              const ViewType coupled_edges)
-      : ChunkedIntersectionIterator(self_edges, coupled_edges) {}
+  ChunkedIntersectionIterator(const ParallelConfig,
+                              const ViewType self_intersections,
+                              const ViewType coupled_intersections)
+      : ChunkedIntersectionIterator(self_intersections, coupled_intersections) {
+  }
 
   /**
    * @brief Team operator for intersection chunk processing
@@ -604,12 +634,14 @@ public:
   const index_type operator()(const policy_index_type &team) const {
     const auto league_id = team.league_rank();
     const int start = league_id * chunk_size;
-    const int end = ((start + chunk_size) > self_edges.n_edges)
-                        ? self_edges.n_edges
+    const int end = ((start + chunk_size) > self_intersections.N)
+                        ? self_intersections.N
                         : (start + chunk_size);
-    const auto my_self_edges = self_edges(Kokkos::make_pair(start, end));
-    const auto my_coupled_edges = coupled_edges(Kokkos::make_pair(start, end));
-    return index_type(my_self_edges, my_coupled_edges, team);
+    const auto my_self_intersections =
+        self_intersections(Kokkos::make_pair(start, end));
+    const auto my_coupled_intersections =
+        coupled_intersections(Kokkos::make_pair(start, end));
+    return index_type(my_self_intersections, my_coupled_intersections, team);
   }
 
   /**
@@ -630,9 +662,9 @@ public:
   }
 
 private:
-  ViewType self_edges;    ///< View of self edges (first side of intersections)
-  ViewType coupled_edges; ///< View of coupled edges (second side of
-                          ///< intersections)
+  ViewType self_intersections;    ///< View of self intersections (first side)
+  ViewType coupled_intersections; ///< View of coupled intersections (second
+                                  ///< side of intersections)
 };
 
 } // namespace specfem::execution

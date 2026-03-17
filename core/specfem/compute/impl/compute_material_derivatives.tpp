@@ -5,7 +5,7 @@
 #include "specfem/execution.hpp"
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/chunk_element.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
@@ -66,19 +66,20 @@ void specfem::compute::impl::compute_material_derivatives(
       NGLL, dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
+  using PointTags = specfem::tags::Tags<dimension_tag, medium_tag, using_simd>;
+
   using PointDisplacementType =
-      specfem::point::displacement<dimension_tag, medium_tag, using_simd>;
+      specfem::point::displacement<PointTags>;
   using PointVelocityType =
-      specfem::point::velocity<dimension_tag, medium_tag, using_simd>;
+      specfem::point::velocity<PointTags>;
   using PointAccelerationType =
-      specfem::point::acceleration<dimension_tag, medium_tag, using_simd>;
+      specfem::point::acceleration<PointTags>;
 
   using PointFieldDerivativesType =
-      specfem::point::field_derivatives<dimension_tag, medium_tag, using_simd>;
+      specfem::point::field_derivatives<PointTags>;
 
   using PointPropertiesType =
-      specfem::point::properties<dimension_tag, medium_tag, property_tag,
-                                 using_simd>;
+      specfem::point::properties<specfem::tags::Tags<dimension_tag, medium_tag, property_tag, using_simd>>;
 
   int scratch_size = 2 * ChunkElementFieldType::shmem_size() +
                      ElementQuadratureType::shmem_size();

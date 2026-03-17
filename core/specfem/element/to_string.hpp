@@ -21,10 +21,11 @@ const std::string to_string(const medium_tag &medium,
                             const boundary_tag &boundary_tag);
 
 /**
- * @brief Convert medium and property tags to string.
+ * @brief Convert medium, property, and attenuation tags to string.
  *
  * @param medium Medium type
  * @param property_tag Property type
+ * @param attenuation_tag Attenuation type
  * @return Combined string representation
  */
 const std::string to_string(const medium_tag &medium,
@@ -55,6 +56,12 @@ const std::string to_string(const property_tag &property);
  */
 const std::string to_string(const boundary_tag &boundary);
 
+/**
+ * @brief Convert attenuation tag to string.
+ *
+ * @param attenuation Attenuation type
+ * @return String representation
+ */
 const std::string to_string(const attenuation_tag &attenuation);
 
 /**

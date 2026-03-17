@@ -44,4 +44,7 @@ compute_tau_sigma(const type_real min_period, const type_real max_period);
 } // namespace attenuation
 } // namespace specfem
 
-#include "compute_tau_sigma.tpp"
+extern template Kokkos::View<type_real[specfem::constants::N_SLS],
+                             Kokkos::LayoutRight, Kokkos::HostSpace>
+specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(
+    const type_real, const type_real);

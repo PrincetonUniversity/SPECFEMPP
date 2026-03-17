@@ -1,5 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
+#include "specfem/assembly/mesh.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"

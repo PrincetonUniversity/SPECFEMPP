@@ -33,7 +33,7 @@ namespace specfem::assembly {
  * @code
  * // Store modified elastic properties back to host memory
  * specfem::point::index<...> coord(ispec, iz, ix);
- * specfem::point::properties<...> props;
+ * specfem::point::properties<specfem::tags::Tags<...>> props;
  *
  * // Modify properties (e.g., after inversion or processing)
  * props.rho = updated_density;
