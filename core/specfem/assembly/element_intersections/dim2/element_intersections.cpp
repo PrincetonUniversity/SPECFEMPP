@@ -15,8 +15,7 @@ specfem::assembly::element_intersections<
         const specfem::assembly::mesh<dimension_tag> &mesh,
         const specfem::assembly::element_types<dimension_tag> &element_types,
         const specfem::element_coupling::flux_scheme_configuration
-            &flux_scheme_config,
-        const specfem::mesh::materials<dimension_tag> &materials) {
+            &flux_scheme_config) {
 
   if (ngllz <= 0 || ngllx <= 0) {
     KOKKOS_ABORT_WITH_LOCATION("Invalid GLL grid size");
@@ -26,14 +25,6 @@ specfem::assembly::element_intersections<
     KOKKOS_ABORT_WITH_LOCATION(
         "The number of GLL points in z and x must be the same.");
   }
-
-  const auto get_material_index = [&](const int &ispec) {
-    const int &mesh_ispec = mesh.compute_to_mesh(ispec);
-    if (materials.material_index_mapping.extent(0) <= mesh_ispec) {
-      return -1;
-    }
-    return materials.material_index_mapping(mesh_ispec).database_index;
-  };
 
   const auto element = specfem::mesh_entity::element(ngllz, ngllx);
 
@@ -74,9 +65,7 @@ specfem::assembly::element_intersections<
           const auto medium1 = element_types.get_medium_tag(ispec1);
           const auto medium2 = element_types.get_medium_tag(ispec2);
 
-          const auto flux_scheme_tag = flux_scheme_config.get_flux_scheme_tag(
-              _interface_tag_, get_material_index(ispec1),
-              get_material_index(ispec2));
+          const auto flux_scheme_tag = flux_scheme_config.get_flux_scheme_tag();
 
           if (boundary_tag == _boundary_tag_ && medium1 == self_medium &&
               medium2 == coupled_medium && medium1 != medium2 &&

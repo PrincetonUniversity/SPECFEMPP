@@ -4,7 +4,6 @@
 #include "specfem/element_coupling/flux_scheme_configuration.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
-#include "specfem/mesh/dim2/materials/materials.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -272,9 +271,7 @@ public:
       const specfem::assembly::element_types<dimension_tag> &element_types,
       const specfem::element_coupling::flux_scheme_configuration
           &flux_scheme_config =
-              specfem::element_coupling::flux_scheme_configuration(),
-      const specfem::mesh::materials<dimension_tag> &materials =
-          specfem::mesh::materials<dimension_tag>());
+              specfem::element_coupling::flux_scheme_configuration());
 
   /**
    * @brief Default constructor.
