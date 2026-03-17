@@ -3,6 +3,7 @@
 #include "specfem/medium_physics.hpp"
 #include "specfem/point/field_derivatives.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 #include <gtest/gtest.h>
 
 namespace {
@@ -11,8 +12,8 @@ TEST(Strain, ElasticPSV2D_Basic) {
   static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
 
-  using FieldDerivativesType =
-      specfem::point::field_derivatives<dimension, PSVTag, false>;
+  using FieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, PSVTag, false> >;
   using StrainType =
       specfem::datatype::TensorPointViewType<type_real, 2, 2, false>;
 
@@ -38,8 +39,8 @@ TEST(Strain, ElasticPSV2D_Zero) {
   static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
 
-  using FieldDerivativesType =
-      specfem::point::field_derivatives<dimension, PSVTag, false>;
+  using FieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, PSVTag, false> >;
   using StrainType =
       specfem::datatype::TensorPointViewType<type_real, 2, 2, false>;
 
@@ -65,8 +66,8 @@ TEST(Strain, ElasticSH2D_Basic) {
   static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto SHTag = specfem::element::medium_tag::elastic_sh;
 
-  using FieldDerivativesType =
-      specfem::point::field_derivatives<dimension, SHTag, false>;
+  using FieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, SHTag, false> >;
   using StrainType =
       specfem::datatype::TensorPointViewType<type_real, 1, 2, false>;
 
@@ -88,8 +89,8 @@ TEST(Strain, DeviatoricElasticPSV2D_Basic) {
   static constexpr auto dimension = specfem::element::dimension_tag::dim2;
   static constexpr auto PSVTag = specfem::element::medium_tag::elastic_psv;
 
-  using FieldDerivativesType =
-      specfem::point::field_derivatives<dimension, PSVTag, false>;
+  using FieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, PSVTag, false> >;
   using StrainType =
       specfem::datatype::TensorPointViewType<type_real, 2, 2, false>;
 

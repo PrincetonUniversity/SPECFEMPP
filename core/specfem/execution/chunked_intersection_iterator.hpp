@@ -130,7 +130,7 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   constexpr const index_type &get_local_index() const {
-    return this->local_index; ///< Returns the local point index
+    return this->index; ///< Returns the local point index
   }
 
   /**
