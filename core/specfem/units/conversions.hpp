@@ -4,8 +4,22 @@
 
 namespace specfem::units {
 
-// constexpr 2π — avoids depending on the non-constexpr specfem::constants::pi
-namespace detail {
+/**
+ * @brief Unit conversion utilities for Quantity types.
+ *
+ * Provides compile-time unit conversions, including:
+ * - Same-dimension scale conversions (e.g., meters to kilometers)
+ * - Cross-dimension spectral conversions (seconds ↔ hertz ↔ omega)
+ * These conversions are type-safe and resolved at compile time.
+ */
+
+/**
+ * @brief Compile-time constant for 2π.
+ *
+ * Used for conversions between frequency representations without depending
+ * on non-constexpr library constants.
+ */
+namespace impl {
 constexpr type_real two_pi = type_real(6.28318530717958647692);
 }
 
@@ -53,26 +67,26 @@ template <> struct unit_cast_impl<Seconds, Hertz, void> {
 // Seconds <-> Omega
 template <> struct unit_cast_impl<Omega, Seconds, void> {
   static constexpr Omega call(Seconds s) noexcept {
-    return Omega(detail::two_pi / s.raw());
+    return Omega(impl::two_pi / s.raw());
   }
 };
 
 template <> struct unit_cast_impl<Seconds, Omega, void> {
   static constexpr Seconds call(Omega w) noexcept {
-    return Seconds(detail::two_pi / w.raw());
+    return Seconds(impl::two_pi / w.raw());
   }
 };
 
 // Hertz <-> Omega
 template <> struct unit_cast_impl<Omega, Hertz, void> {
   static constexpr Omega call(Hertz f) noexcept {
-    return Omega(f.raw() * detail::two_pi);
+    return Omega(f.raw() * impl::two_pi);
   }
 };
 
 template <> struct unit_cast_impl<Hertz, Omega, void> {
   static constexpr Hertz call(Omega w) noexcept {
-    return Hertz(w.raw() / detail::two_pi);
+    return Hertz(w.raw() / impl::two_pi);
   }
 };
 
@@ -80,6 +94,26 @@ template <> struct unit_cast_impl<Hertz, Omega, void> {
 // Public API
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Convert a quantity from one unit to another.
+ *
+ * Performs compile-time checked unit conversion. Supports:
+ * - Identity conversions (no-op)
+ * - Same-dimension scale changes (m → km)
+ * - Cross-dimension spectral conversions (s → Hz → ω)
+ *
+ * Unsupported conversions produce a compile-time error.
+ *
+ * @tparam To Target quantity type
+ * @tparam From Source quantity type
+ * @param q Quantity to convert
+ * @return constexpr To Converted quantity
+ *
+ * @code
+ * auto km = unit_cast<Kilometers>(Meters(1500.0));  // 1.5 km
+ * auto freq = unit_cast<Hertz>(Seconds(0.5));       // 2.0 Hz
+ * @endcode
+ */
 template <typename To, typename From> constexpr To unit_cast(From q) {
   return unit_cast_impl<To, From>::call(q);
 }

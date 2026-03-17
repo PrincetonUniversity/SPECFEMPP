@@ -8,9 +8,9 @@
 using specfem::attenuation::compute_band;
 using specfem::units::Omega;
 using specfem::units::Seconds;
+using specfem::units::unit_cast;
 using specfem::utilities::Band;
 using specfem::utilities::is_close;
-using specfem::utilities::unit_cast;
 
 // ---------------------------------------------------------------------------
 // compute_band tests
