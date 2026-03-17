@@ -3,7 +3,7 @@
 #include "specfem/constants.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/units.hpp"
-#include "specfem/utilities/frequency_band.hpp"
+#include "specfem/utilities/band.hpp"
 
 namespace specfem {
 namespace attenuation {
@@ -28,10 +28,10 @@ namespace attenuation {
  *
  * @tparam N_SLS Number of standard linear solids (must be 2–5)
  * @param min_resolved_period Minimum period resolved by the mesh (s)
- * @return FrequencyBand with @c min_period and @c max_period
+ * @return Band with @c min and @c max
  */
 template <int N_SLS>
-specfem::utilities::FrequencyBand<specfem::units::Omega>
+specfem::utilities::Band<specfem::units::Omega>
 compute_band(specfem::units::Seconds min_resolved_period);
 
 } // namespace attenuation

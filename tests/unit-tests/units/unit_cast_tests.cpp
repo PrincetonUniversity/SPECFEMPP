@@ -1,5 +1,4 @@
 #include "specfem/units.hpp"
-#include "specfem/utilities/frequency_band.hpp"
 #include "specfem/utilities/is_close.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
@@ -10,10 +9,9 @@ using specfem::units::KilometersPerSecond;
 using specfem::units::Meters;
 using specfem::units::Omega;
 using specfem::units::Seconds;
+using specfem::units::unit_cast;
 using specfem::units::Velocity;
-using specfem::utilities::FrequencyBand;
 using specfem::utilities::is_close;
-using specfem::utilities::unit_cast;
 
 static constexpr type_real two_pi = type_real(6.28318530717958647692);
 

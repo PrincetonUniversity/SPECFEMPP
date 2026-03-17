@@ -1,6 +1,6 @@
 #include "specfem/attenuation.hpp"
 #include "specfem/units.hpp"
-#include "specfem/utilities/frequency_band.hpp"
+#include "specfem/utilities/band.hpp"
 #include "specfem/utilities/is_close.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
@@ -8,7 +8,7 @@
 using specfem::attenuation::compute_band;
 using specfem::units::Omega;
 using specfem::units::Seconds;
-using specfem::utilities::FrequencyBand;
+using specfem::utilities::Band;
 using specfem::utilities::is_close;
 using specfem::utilities::unit_cast;
 

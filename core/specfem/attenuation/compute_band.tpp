@@ -1,14 +1,14 @@
 #pragma once
 #include "compute_band.hpp"
 #include "specfem/setup.hpp"
-#include "specfem/utilities/frequency_band.hpp"
+#include "specfem/utilities/band.hpp"
 #include <cmath>
 
 namespace specfem {
 namespace attenuation {
 
 template <int N_SLS>
-specfem::utilities::FrequencyBand<specfem::units::Omega>
+specfem::utilities::Band<specfem::units::Omega>
 compute_band(const specfem::units::Seconds min_resolved_period) {
   static_assert(N_SLS >= 2 && N_SLS <= 5,
                 "N_SLS must be between 2 and 5 (inclusive)");
@@ -20,7 +20,7 @@ compute_band(const specfem::units::Seconds min_resolved_period) {
   const specfem::units::Seconds max_period =
       min_resolved_period * static_cast<type_real>(std::pow(10.0, theta[N_SLS]));
 
-  return specfem::utilities::FrequencyBand<specfem::units::Omega>{
+  return specfem::utilities::Band<specfem::units::Omega>{
       specfem::units::unit_cast<specfem::units::Omega>(min_resolved_period),
       specfem::units::unit_cast<specfem::units::Omega>(max_period)
   };

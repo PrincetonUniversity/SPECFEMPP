@@ -116,7 +116,7 @@ add_executable(
   logspace_tests
   utilities/logspace_tests.cpp
   utilities/logarithmic_center_tests.cpp
-  utilities/frequency_band_tests.cpp
+  utilities/band_tests.cpp
 )
 
 target_link_libraries(
