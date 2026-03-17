@@ -37,3 +37,5 @@
     sources/index
     shape_function/index
     timescheme/index
+    units/index
+    utilities/index
