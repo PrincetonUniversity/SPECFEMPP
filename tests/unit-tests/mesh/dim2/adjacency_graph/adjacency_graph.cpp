@@ -57,7 +57,7 @@ void add_unidirectional_edge(
 TEST(AdjacencyGraphTest, DefaultConstructor) {
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph;
 
-  EXPECT_EQ(boost::num_vertices(graph.graph()), 0);
+  EXPECT_EQ(boost::num_vertices(graph.local_connections()), 0);
 }
 
 /**
@@ -68,8 +68,8 @@ TEST(AdjacencyGraphTest, ConstructorWithElements) {
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph(
       nspec);
 
-  EXPECT_EQ(boost::num_vertices(graph.graph()), nspec);
-  EXPECT_EQ(boost::num_edges(graph.graph()), 0);
+  EXPECT_EQ(boost::num_vertices(graph.local_connections()), nspec);
+  EXPECT_EQ(boost::num_edges(graph.local_connections()), 0);
 }
 
 /**
@@ -79,8 +79,8 @@ TEST(AdjacencyGraphTest, ConstructorWithZeroElements) {
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph(
       0);
 
-  EXPECT_EQ(boost::num_vertices(graph.graph()), 0);
-  EXPECT_EQ(boost::num_edges(graph.graph()), 0);
+  EXPECT_EQ(boost::num_vertices(graph.local_connections()), 0);
+  EXPECT_EQ(boost::num_edges(graph.local_connections()), 0);
 }
 
 // ===== Graph Access Tests =====
@@ -399,7 +399,7 @@ TEST(AdjacencyGraphTest, LargeGraph) {
   specfem::mesh::adjacency_graph<specfem::element::dimension_tag::dim2> graph(
       large_size);
 
-  EXPECT_EQ(boost::num_vertices(graph.graph()), large_size);
+  EXPECT_EQ(boost::num_vertices(graph.local_connections()), large_size);
 
   // Add a few edges to test functionality with large graphs
   add_bidirectional_edge(
