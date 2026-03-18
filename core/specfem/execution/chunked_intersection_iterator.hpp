@@ -128,11 +128,6 @@ public:
                         ///< the interface
   }
 
-  KOKKOS_INLINE_FUNCTION
-  constexpr const index_type &get_local_index() const {
-    return this->local_index; ///< Returns the local point index
-  }
-
   /**
    * @brief Constructor for InterfacePointIndex
    *

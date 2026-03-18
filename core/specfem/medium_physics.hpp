@@ -22,6 +22,7 @@ namespace specfem::medium_physics {}
 #include "medium_physics/compute_damping_force.hpp"
 #include "medium_physics/compute_frechet_derivatives.hpp"
 #include "medium_physics/compute_source_contribution.hpp"
+#include "medium_physics/compute_strain.hpp"
 #include "medium_physics/compute_stress.hpp"
 #include "medium_physics/compute_wavefield.hpp"
 #include "medium_physics/mass_matrix_component.hpp"
