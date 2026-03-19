@@ -8,11 +8,12 @@ specfem::runtime_configuration::flux_schemes::flux_schemes(
     const YAML::Node &Node)
     : flux_schemes_node(Node) {
 
+  // multi-rules in commit 4a27c96cde7e8548556da6caf628eda034fd35b3
+
   try {
-    if (Node["type"].as<std::string>() == "natural") {
-      flux_scheme = "natural";
-      flux_scheme_configuration = std::make_shared<configuration_details<
-          specfem::element_coupling::flux_scheme_tag::natural> >(Node);
+    std::string flux_scheme_str = Node["type"].as<std::string>();
+    if (flux_scheme_str == "natural") {
+      flux_scheme_tag = specfem::element_coupling::flux_scheme_tag::natural;
     } else {
       throw std::runtime_error("Unsupported flux scheme type: " +
                                Node["type"].as<std::string>());
