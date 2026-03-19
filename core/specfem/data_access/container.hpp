@@ -2,7 +2,7 @@
 
 #include "accessor.hpp"
 #include "data_class.hpp"
-#include "domain_view.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -14,6 +14,7 @@ namespace specfem::data_access {
 enum class ContainerType {
   boundary, ///< Boundary element storage
   edge,     ///< Edge-based storage
+  face,     ///< Face-based storage
   domain    ///< Domain element storage
 };
 
@@ -30,11 +31,11 @@ template <>
 struct ContainerValueType<specfem::data_access::ContainerType::domain,
                           specfem::element::dimension_tag::dim2> {
   template <typename T, typename MemorySpace>
-  using scalar_type = specfem::kokkos::DomainView2d<T, 3, MemorySpace>;
+  using scalar_type = specfem::datatype::DomainView2d<T, 3, MemorySpace>;
   template <typename T, typename MemorySpace>
-  using vector_type = specfem::kokkos::DomainView2d<T, 4, MemorySpace>;
+  using vector_type = specfem::datatype::DomainView2d<T, 4, MemorySpace>;
   template <typename T, typename MemorySpace>
-  using tensor_type = specfem::kokkos::DomainView2d<T, 5, MemorySpace>;
+  using tensor_type = specfem::datatype::DomainView2d<T, 5, MemorySpace>;
 };
 
 template <>
@@ -51,6 +52,17 @@ struct ContainerValueType<specfem::data_access::ContainerType::domain,
 template <>
 struct ContainerValueType<specfem::data_access::ContainerType::edge,
                           specfem::element::dimension_tag::dim2> {
+  template <typename T, typename MemorySpace>
+  using scalar_type = Kokkos::View<T **, Kokkos::LayoutLeft, MemorySpace>;
+  template <typename T, typename MemorySpace>
+  using vector_type = Kokkos::View<T ***, Kokkos::LayoutLeft, MemorySpace>;
+  template <typename T, typename MemorySpace>
+  using tensor_type = Kokkos::View<T ****, Kokkos::LayoutLeft, MemorySpace>;
+};
+
+template <>
+struct ContainerValueType<specfem::data_access::ContainerType::face,
+                          specfem::element::dimension_tag::dim3> {
   template <typename T, typename MemorySpace>
   using scalar_type = Kokkos::View<T **, Kokkos::LayoutLeft, MemorySpace>;
   template <typename T, typename MemorySpace>
@@ -80,7 +92,7 @@ struct ContainerValueType<specfem::data_access::ContainerType::edge,
  * scalar_view density("density", nspec, ngllz, ngllx);
  * @endcode
  *
- * @tparam ContainerType Storage layout (domain/edge/boundary)
+ * @tparam ContainerType Storage layout (domain/edge/face/boundary)
  * @tparam DataClass Type of data being stored (properties/fields/indices)
  * @tparam DimensionTag Spatial dimension (2D/3D)
  *

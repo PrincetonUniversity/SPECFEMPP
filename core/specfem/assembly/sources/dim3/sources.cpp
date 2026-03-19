@@ -1,6 +1,7 @@
 #include "specfem/assembly/sources.hpp"
 #include "../impl/dim3/source_medium.tpp"
 #include "../impl/locate_sources.hpp"
+#include "../impl/locate_sources.tpp"
 #include "../impl/source_medium.hpp"
 
 #include "specfem/algorithms.hpp"
@@ -12,6 +13,14 @@
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <vector>
+
+template void specfem::assembly::sources_impl::locate_sources<
+    specfem::element::dimension_tag::dim3>(
+    const specfem::assembly::element_types<
+        specfem::element::dimension_tag::dim3> &,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &,
+    std::vector<std::shared_ptr<
+        specfem::sources::source<specfem::element::dimension_tag::dim3> > > &);
 
 template class specfem::assembly::sources_impl::source_medium<
     specfem::element::dimension_tag::dim3,

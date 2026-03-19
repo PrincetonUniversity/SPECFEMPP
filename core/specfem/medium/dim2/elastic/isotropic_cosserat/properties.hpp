@@ -27,21 +27,21 @@ namespace specfem::medium_container::properties {
  * - mu_c: Cosserat shear modulus @f$ \mu_c @f$
  * - nu_c: Cosserat Coupling parameter @f$ \nu_c @f$
  */
-template <specfem::element::medium_tag MediumTag, bool UseSIMD>
+template <specfem::element::dimension_tag DimensionTag,
+          specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct point_container<
-    specfem::element::dimension_tag::dim2, MediumTag,
-    specfem::element::property_tag::isotropic_cosserat, UseSIMD,
-    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
+    DimensionTag, MediumTag, specfem::element::property_tag::isotropic_cosserat,
+    UseSIMD, std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
     /// @cond
     : public PropertyAccessor<
-          specfem::element::dimension_tag::dim2, MediumTag,
+          DimensionTag, MediumTag,
           specfem::element::property_tag::isotropic_cosserat, UseSIMD>
 /// @endcond
 {
 
 private:
   using base_type =
-      PropertyAccessor<specfem::element::dimension_tag::dim2, MediumTag,
+      PropertyAccessor<DimensionTag, MediumTag,
                        specfem::element::property_tag::isotropic_cosserat,
                        UseSIMD>; ///< Base type of the
                                  ///< point properties

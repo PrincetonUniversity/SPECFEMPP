@@ -1,6 +1,6 @@
 #pragma once
 
-#include "domain_view.hpp"
+#include "specfem/datatype.hpp"
 
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"

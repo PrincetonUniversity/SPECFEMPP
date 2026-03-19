@@ -1,15 +1,15 @@
 #pragma once
 
 #include "compute_coupling.hpp"
-#include "specfem/element_connections.hpp"
-#include "specfem/enums.hpp"
-#include "specfem/medium_physics.hpp"
 #include "specfem/algorithms.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/chunk_edge.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/point.hpp"
 #include "specfem/point/interface_index.hpp"
@@ -28,24 +28,25 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
   constexpr static auto wavefield = Tags::wavefield_tag;
   constexpr static auto flux_scheme_tag = Tags::flux_scheme_tag;
 
-  static_assert(flux_scheme_tag == specfem::element_coupling::flux_scheme_tag::natural,
+  static_assert(flux_scheme_tag ==
+                    specfem::element_coupling::flux_scheme_tag::natural,
                 "Currently, we are enforcing only one flux scheme: natural");
 
   constexpr static auto self_medium =
       specfem::element_coupling::attributes<dimension_tag,
-                                     interface_tag>::self_medium();
+                                            interface_tag>::self_medium();
 
   const auto &conforming_interfaces = assembly.conforming_interfaces;
-  const auto [self_edges, coupled_edges] =
-      assembly.edge_types.get_edges_on_device(connection_tag, interface_tag,
-                                              boundary_tag);
+  const auto [self_intersections, coupled_intersections] =
+      assembly.element_intersections.get_intersections_on_device(
+          connection_tag, interface_tag, boundary_tag);
 
-  if (self_edges.n_edges != coupled_edges.n_edges) {
+  if (self_intersections.N != coupled_intersections.N) {
     KOKKOS_ABORT_WITH_LOCATION(
-        "Mismatch in number of self and coupled edges in compute_coupling.");
+        "Mismatch in number of self and coupled faces in compute_coupling.");
   }
 
-  if (self_edges.n_edges == 0 && coupled_edges.n_edges == 0)
+  if (self_intersections.N == 0 && coupled_intersections.N == 0)
     return;
 
   const auto &field =
@@ -67,7 +68,7 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
       specfem::point::boundary<boundary_tag, dimension_tag, false>;
 
   specfem::execution::ChunkedIntersectionIterator chunk(
-      parallel_config(), self_edges, coupled_edges);
+      parallel_config(), self_intersections, coupled_intersections);
 
   specfem::execution::for_all(
       "specfem::compute::impl::compute_coupling", chunk,
@@ -86,8 +87,8 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
                                           coupled_field);
         SelfFieldType self_field;
 
-        specfem::medium_physics::compute_coupling(point_interface_data, coupled_field,
-                                          self_field);
+        specfem::medium_physics::compute_coupling(point_interface_data,
+                                                  coupled_field, self_field);
 
         PointBoundaryType point_boundary;
         specfem::assembly::load_on_device(index.self_index, boundaries,
@@ -119,15 +120,16 @@ void specfem::compute::impl::compute_coupling_nonconforming(
   constexpr static auto wavefield = Tags::wavefield_tag;
   constexpr static auto flux_scheme_tag = Tags::flux_scheme_tag;
 
-  static_assert(flux_scheme_tag == specfem::element_coupling::flux_scheme_tag::natural,
+  static_assert(flux_scheme_tag ==
+                    specfem::element_coupling::flux_scheme_tag::natural,
                 "Currently, we are enforcing only one flux scheme: natural");
 
   const auto &nonconforming_interfaces = assembly.nonconforming_interfaces;
-  const auto [self_edges, coupled_edges] =
-      assembly.edge_types.get_edges_on_device(connection_tag, interface_tag,
-                                              boundary_tag);
+  const auto [self_intersections, coupled_intersections] =
+      assembly.element_intersections.get_intersections_on_device(
+          connection_tag, interface_tag, boundary_tag);
 
-  if (self_edges.n_edges == 0 && coupled_edges.n_edges == 0)
+  if (self_intersections.N == 0 && coupled_intersections.N == 0)
     return;
 
   const auto field = assembly.fields.template get_simulation_field<wavefield>();
@@ -142,12 +144,13 @@ void specfem::compute::impl::compute_coupling_nonconforming(
   // them here.
   constexpr specfem::element::medium_tag self_medium =
       specfem::element_coupling::attributes<dimension_tag,
-                                     interface_tag>::self_medium();
+                                            interface_tag>::self_medium();
   constexpr specfem::element::medium_tag coupled_medium =
       specfem::element_coupling::attributes<dimension_tag,
-                                     interface_tag>::coupled_medium();
+                                            interface_tag>::coupled_medium();
   using CoupledFieldType = std::conditional_t<
-      interface_tag == specfem::element_coupling::interface_tag::acoustic_elastic,
+      interface_tag ==
+          specfem::element_coupling::interface_tag::acoustic_elastic,
       specfem::chunk_edge::displacement<parallel_config::chunk_size, NGLL,
                                         dimension_tag, coupled_medium,
                                         using_simd>,
@@ -169,7 +172,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
   specfem::execution::ChunkedIntersectionIterator chunk(
-      parallel_config(), self_edges, coupled_edges);
+      parallel_config(), self_intersections, coupled_intersections);
 
   int scratch_size =
       CoupledFieldType::shmem_size() + CouplingTermsPack::shmem_size() +
@@ -200,8 +203,8 @@ void specfem::compute::impl::compute_coupling_nonconforming(
         InterfaceFieldViewType interface_field(team.team_scratch(0));
 
         team.team_barrier();
-        specfem::medium_physics::compute_coupling(self_chunk_index, interface_data,
-                                          coupled_field, interface_field);
+        specfem::medium_physics::compute_coupling(
+            self_chunk_index, interface_data, coupled_field, interface_field);
 
         IntegrationFactor integration_factor(team);
 
@@ -218,7 +221,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
               specfem::assembly::load_on_device(self_index, assembly.boundaries,
                                                 point_boundary);
               if constexpr (boundary_tag == specfem::element::boundary_tag::
-                                               acoustic_free_surface) {
+                                                acoustic_free_surface) {
                 specfem::boundary_conditions::apply_boundary_conditions(
                     point_boundary, self_field);
               }

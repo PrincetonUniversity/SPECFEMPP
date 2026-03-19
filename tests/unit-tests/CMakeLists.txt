@@ -254,6 +254,7 @@ add_executable(
   point/coordinates_tests.cpp
   point/boundary_tests.cpp
   point/jacobian_matrix_tests.cpp
+  point/attenuation_tests.cpp
   point/source_tests.cpp
   point/stress_integrand_tests.cpp
   point/stress_tests.cpp
@@ -270,16 +271,19 @@ add_executable(
   point/properties/dim2/elastic_isotropic.cpp
   point/properties/dim2/elastic_anisotropic.cpp
   point/properties/dim2/acoustic_isotropic.cpp
+  point/properties/dim2/elastic_isotropic_cosserat.cpp
   point/properties/dim2/electromagnetic_isotropic.cpp
   point/properties/dim2/poroelastic_isotropic.cpp
   # Dim 3
-  # point/properties/dim3/elastic_isotropic.cpp
+  point/properties/dim3/elastic_isotropic.cpp
+  point/properties/dim3/elastic_isotropic_cosserat.cpp
 
 )
 
 target_link_libraries(
   point_tests
   point
+  specfem_environment
   gtest_main
   gmock_main
 )
@@ -488,8 +492,8 @@ add_executable(
   assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
   assembly/info/compute_tests.cpp
   assembly/info/scatter_minmax_tests.cpp
-  assembly/edge_types/edge_types_tests.cpp
-  assembly/face_types/face_types_tests.cpp
+  assembly/element_intersections/edge_types_tests.cpp
+  assembly/element_intersections/face_types_tests.cpp
 
   # New dim3 tests
   assembly/dim3/mesh/shape_functions.cpp
@@ -725,6 +729,21 @@ target_link_libraries(
 )
 
 add_executable(
+  chunked_face_intersection_tests
+  policies/chunked_face_intersection.cpp
+)
+
+target_link_libraries(
+  chunked_face_intersection_tests
+  gtest_main
+  Kokkos::kokkos
+  specfem_environment
+  specfem::enums
+  point
+  -lpthread -lm
+)
+
+add_executable(
   mass_matrix_tests
   medium/mass_matrix/main.cpp
   # 2D mass matrix tests
@@ -759,6 +778,19 @@ add_executable(
 
 target_link_libraries(
   stress_tests
+  point
+  gtest_main
+)
+
+add_executable(
+  strain_tests
+  medium/strain/main.cpp
+  medium/strain/dim2/elastic_isotropic.cpp
+  medium/strain/dim3/elastic_isotropic.cpp
+)
+
+target_link_libraries(
+  strain_tests
   point
   gtest_main
 )
@@ -834,23 +866,6 @@ target_link_libraries(
   gtest_main
 )
 
-# # add_executable(
-# #   source_location_tests
-# #   source/source_location_tests.cpp
-# # )
-
-# # target_link_libraries(
-# #   source_location_tests
-# #   material_class
-# #   specfem_environment
-# #
-# #   yaml-cpp
-# #   mesh
-# #   quadrature
-# #   assembly
-# #   source_class
-# #   -lpthread -lm
-# # )
 
 add_executable(
   displacement_newmark_2d_tests
@@ -971,6 +986,7 @@ if(NOT MPI_PARALLEL)
     attenuation_tests
     chunked_edge_tests
     chunked_face_tests
+    chunked_face_intersection_tests
     compute_coupling_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests
@@ -1005,6 +1021,7 @@ if(NOT MPI_PARALLEL)
     source_class_tests
     source_tests
     source_time_function_tests
+    strain_tests
     stress_tests
     test_mesh_utilities_mapping_2d
     test_mesh_utilities_mapping_3d

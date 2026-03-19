@@ -1,5 +1,5 @@
 #include "../SPECFEM_Environment.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"

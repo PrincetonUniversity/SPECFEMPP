@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/fields.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/setup.hpp"
 #include "specfem/timescheme/timescheme.hpp"

@@ -1,14 +1,10 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
-
-namespace specfem::assembly {
-template <specfem::element::dimension_tag DimensionTag> struct assembly;
-}
 
 /**
  * @file coupling_integral.hpp
@@ -64,9 +60,9 @@ KOKKOS_FUNCTION void coupling_integral(
 
   using PointIndexType =
       typename IndexType::iterator_type::index_type::index_type;
-  using PointFieldType =
-      specfem::point::acceleration<dimension_tag, self_medium_tag,
-                                   IntersectionFieldViewType::using_simd>;
+  using PointFieldType = specfem::point::acceleration<
+      specfem::tags::Tags<dimension_tag, self_medium_tag,
+                          IntersectionFieldViewType::simd::using_simd> >;
   using SelfTransferFunctionType = specfem::point::transfer_function_self<
       IntersectionFactor::n_quad_intersection, dimension_tag,
       IntersectionFactor::interface_tag, IntersectionFactor::boundary_tag>;
