@@ -270,6 +270,7 @@ add_executable(
   point/properties/dim2/elastic_isotropic.cpp
   point/properties/dim2/elastic_anisotropic.cpp
   point/properties/dim2/acoustic_isotropic.cpp
+  point/properties/dim2/elastic_isotropic_cosserat.cpp
   point/properties/dim2/electromagnetic_isotropic.cpp
   point/properties/dim2/poroelastic_isotropic.cpp
   # Dim 3
