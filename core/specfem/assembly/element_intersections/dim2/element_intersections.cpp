@@ -30,6 +30,8 @@ specfem::assembly::element_intersections<
 
   const int ngll = ngllx; // ngllx == ngllz in 2D
 
+  const auto flux_scheme_tag = flux_scheme_config.get_flux_scheme_tag();
+
   // Count the number of interfaces for each combination of connection
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
@@ -64,8 +66,6 @@ specfem::assembly::element_intersections<
           const auto boundary_tag = element_types.get_boundary_tag(ispec1);
           const auto medium1 = element_types.get_medium_tag(ispec1);
           const auto medium2 = element_types.get_medium_tag(ispec2);
-
-          const auto flux_scheme_tag = flux_scheme_config.get_flux_scheme_tag();
 
           if (boundary_tag == _boundary_tag_ && medium1 == self_medium &&
               medium2 == coupled_medium && medium1 != medium2 &&
