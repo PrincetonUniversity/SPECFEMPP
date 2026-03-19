@@ -38,7 +38,7 @@ namespace specfem::assembly {
  * @code
  * // Load elastic isotropic properties at a quadrature point
  * specfem::point::index<...> coord(ispec, iz, ix);
- * specfem::point::properties<...> props;
+ * specfem::point::properties<specfem::tags::Tags<...>> props;
  *
  * load_on_device(coord, assembly.properties, props);
  * @endcode

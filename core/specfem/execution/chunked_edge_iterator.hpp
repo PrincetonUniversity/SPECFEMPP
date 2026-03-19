@@ -225,9 +225,8 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   ChunkEdgeIterator(const TeamMemberType &team_member, const ViewType &edges_)
-      : num_points(edges_.n_points), nedges(edges_.n_edges),
-        base_type(team_member, edges_.n_edges * edges_.n_points),
-        edges(edges_) {}
+      : num_points(edges_.n_points), nedges(edges_.N),
+        base_type(team_member, edges_.N * edges_.n_points), edges(edges_) {}
 
   const int nedges; ///< Total number of edges in this chunk
 private:
@@ -336,7 +335,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   Kokkos::pair<std::size_t, std::size_t> get_range() const {
     return Kokkos::make_pair(edges(0).edge_index,
-                             edges(edges.n_edges - 1).edge_index + 1);
+                             edges(edges.N - 1).edge_index + 1);
   }
 
 private:
@@ -454,9 +453,9 @@ public:
    * @param edges View of mesh edges to process
    */
   ChunkedEdgeIterator(const ViewType edges)
-      : edges(edges), base_type(((edges.n_edges / chunk_size) +
-                                 ((edges.n_edges % chunk_size) != 0)),
-                                Kokkos::AUTO, Kokkos::AUTO) {}
+      : edges(edges),
+        base_type(((edges.N / chunk_size) + ((edges.N % chunk_size) != 0)),
+                  Kokkos::AUTO, Kokkos::AUTO) {}
 
   /**
    * @brief Constructor with parallel configuration
@@ -481,8 +480,8 @@ public:
   const index_type operator()(const policy_index_type &team) const {
     const auto league_id = team.league_rank();
     const int start = league_id * chunk_size;
-    const int end = (start + chunk_size < edges.n_edges) ? start + chunk_size
-                                                         : edges.n_edges;
+    const int end =
+        (start + chunk_size < edges.N) ? start + chunk_size : edges.N;
     return index_type{ edges(Kokkos::make_pair(start, end)), team };
   }
 

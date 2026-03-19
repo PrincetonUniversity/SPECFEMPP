@@ -2,9 +2,8 @@
 
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
-#include "specfem/assembly/compute_source_array.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/element_types.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/info.hpp"
@@ -18,6 +17,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
+#include "specfem/runtime_configuration/flux_schemes.hpp"
 #include "specfem/source.hpp"
 
 namespace specfem::io {
@@ -63,13 +63,14 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
   specfem::assembly::element_types<dimension_tag> element_types;
 
   /**
-   * @brief Edge types for every edge on coupled interface in the mesh.
+   * @brief Element intersections for every element in the mesh.
    *
-   * The edge type defines the flux scheme to used when computing coupling terms
-   * between two media (e.g., fluid-solid interface).
+   * The element intersections container stores information about the
+   * intersections between elements in the mesh (e.g., internal faces, boundary
+   * faces).
    *
    */
-  specfem::assembly::edge_types<dimension_tag> edge_types;
+  specfem::assembly::element_intersections<dimension_tag> element_intersections;
 
   /**
    * @brief Partial derivatives of the basis functions at every quadrature point
@@ -182,6 +183,7 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
    * @param write_wavefield Whether to write wavefield
    * @param property_reader Reader for GLL model (skip material property
    * assignment if exists)
+   * @param flux_scheme_config Flux scheme rules for nonconforming interfaces
    */
   assembly(
       const specfem::mesh::mesh<dimension_tag> &mesh,
@@ -196,7 +198,10 @@ template <> struct assembly<specfem::element::dimension_tag::dim2> {
       const int nsteps_between_samples,
       const specfem::simulation::type simulation,
       const bool allocate_boundary_values,
-      const std::shared_ptr<specfem::io::reader> &property_reader);
+      const std::shared_ptr<specfem::io::reader> &property_reader,
+      const specfem::element_coupling::flux_scheme_configuration
+          &flux_scheme_config =
+              specfem::element_coupling::flux_scheme_configuration());
 
   /**
    * @brief Maps the component of wavefield on the entire spectral element grid

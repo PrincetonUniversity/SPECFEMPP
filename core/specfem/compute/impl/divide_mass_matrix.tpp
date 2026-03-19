@@ -2,7 +2,7 @@
 
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/point.hpp"
 #include "divide_mass_matrix.hpp"
 #include <Kokkos_Core.hpp>
@@ -25,13 +25,17 @@ void specfem::compute::impl::divide_mass_matrix(
   constexpr bool using_simd = (dimension_tag == specfem::element::dimension_tag::dim2) ? true : false;
 #endif
 
+  using simd = specfem::datatype::simd<type_real, using_simd>;
+
+  using PointTags = specfem::tags::Tags<dimension_tag, medium_tag, using_simd>;
+
   using PointAccelerationType =
-      specfem::point::acceleration<dimension_tag, medium_tag, using_simd>;
+      specfem::point::acceleration<PointTags>;
   using PointMassInverseType =
-      specfem::point::mass_inverse<dimension_tag, medium_tag, using_simd>;
+      specfem::point::mass_inverse<PointTags>;
 
   using parallel_config = specfem::parallel_configuration::default_range_config<
-      specfem::datatype::simd<type_real, using_simd>,
+      simd,
       Kokkos::DefaultExecutionSpace>;
 
   using IndexType = specfem::point::assembly_index<using_simd>;

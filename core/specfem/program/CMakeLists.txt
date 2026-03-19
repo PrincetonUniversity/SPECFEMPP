@@ -21,6 +21,7 @@ target_link_libraries(specfem_program
         specfem::io
         periodic_tasks
         specfem::solver
+        specfem::attenuation
         # Add MPI dependency when available
         $<TARGET_NAME_IF_EXISTS:MPI::MPI_CXX>
 )

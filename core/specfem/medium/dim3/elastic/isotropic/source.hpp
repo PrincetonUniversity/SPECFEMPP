@@ -41,10 +41,9 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
     const PointPropertiesType &point_properties) {
   constexpr bool using_simd = PointPropertiesType::simd::using_simd;
 
-  using PointAccelerationType =
-      specfem::point::acceleration<specfem::element::dimension_tag::dim3,
-                                   specfem::element::medium_tag::elastic,
-                                   using_simd>;
+  using PointAccelerationType = specfem::point::acceleration<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                          specfem::element::medium_tag::elastic, using_simd> >;
 
   PointAccelerationType result;
 

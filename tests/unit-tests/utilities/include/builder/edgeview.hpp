@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/element/tags.hpp"
 
 namespace specfem::test_builder {

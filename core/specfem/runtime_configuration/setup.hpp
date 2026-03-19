@@ -3,6 +3,7 @@
 #include "database_configuration.hpp"
 #include "elastic_wave.hpp"
 #include "electromagnetic_wave.hpp"
+#include "flux_schemes.hpp"
 #include "header.hpp"
 #include "quadrature.hpp"
 #include "receivers.hpp"
@@ -357,6 +358,15 @@ public:
                                                          time_scheme, tasks);
   }
 
+  specfem::element_coupling::flux_scheme_configuration
+  instantiate_flux_scheme_configuration() {
+    if (this->flux_schemes) {
+      return this->flux_schemes->generate_configuration();
+    } else {
+      return specfem::element_coupling::flux_scheme_configuration();
+    }
+  }
+
   /**
    * @brief Get total number of time steps.
    *
@@ -418,6 +428,8 @@ private:
       databases; ///< Database file path configuration
   std::unique_ptr<specfem::runtime_configuration::solver>
       solver; ///< Solver algorithm configuration
+  std::unique_ptr<specfem::runtime_configuration::flux_schemes>
+      flux_schemes; ///< flux-scheme configuration
 };
 } // namespace runtime_configuration
 } // namespace specfem
