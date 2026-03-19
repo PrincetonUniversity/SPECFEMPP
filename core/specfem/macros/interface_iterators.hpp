@@ -165,16 +165,7 @@
       (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
        INTERFACE_TAG_ELASTIC_ACOUSTIC, BOUNDARY_TAG_NONE))(                    \
       (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
-       INTERFACE_TAG_ELASTIC_ACOUSTIC, BOUNDARY_TAG_STACEY))(                  \
-      (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
-       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_NONE))(                    \
-      (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
-       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_STACEY))(                  \
-      (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
-       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE))(   \
-      (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
-       INTERFACE_TAG_ACOUSTIC_ELASTIC,                                         \
-       BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_NONE))
 
 /**
  * @brief List of edges with interfaces and flux scheme tag
@@ -218,22 +209,9 @@
        BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET, FLUX_SCHEME_TAG_NATURAL))(     \
       (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
        INTERFACE_TAG_ELASTIC_ACOUSTIC, BOUNDARY_TAG_NONE,                      \
-       FLUX_SCHEME_TAG_NATURAL))(                                              \
-      (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
-       INTERFACE_TAG_ELASTIC_ACOUSTIC, BOUNDARY_TAG_STACEY,                    \
-       FLUX_SCHEME_TAG_NATURAL))(                                              \
-      (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
-       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_NONE,                      \
-       FLUX_SCHEME_TAG_NATURAL))(                                              \
-      (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
-       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_STACEY,                    \
-       FLUX_SCHEME_TAG_NATURAL))(                                              \
-      (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
-       INTERFACE_TAG_ACOUSTIC_ELASTIC, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,     \
-       FLUX_SCHEME_TAG_NATURAL))(                                              \
-      (DIMENSION_TAG_DIM3, CONNECTION_TAG_WEAKLY_CONFORMING,                   \
-       INTERFACE_TAG_ACOUSTIC_ELASTIC,                                         \
-       BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET, FLUX_SCHEME_TAG_NATURAL))
-
+       FLUX_SCHEME_TAG_NATURAL))((DIMENSION_TAG_DIM3,                          \
+                                  CONNECTION_TAG_WEAKLY_CONFORMING,            \
+                                  INTERFACE_TAG_ACOUSTIC_ELASTIC,              \
+                                  BOUNDARY_TAG_NONE, FLUX_SCHEME_TAG_NATURAL))
 /// \endcond
 /** @} */

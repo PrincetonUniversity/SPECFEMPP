@@ -29,6 +29,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                  ngllz,
                  nglly,
                  ngllx,
+                 mesh.tags,
                  mesh.adjacency_graph,
                  mesh.control_nodes,
                  quadratures };
@@ -62,8 +63,10 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
                        mesh,
                        this->mesh,
                        this->jacobian_matrix };
-  // this->coupled_interfaces = { mesh, this->mesh, this->jacobian_matrix,
-  //                              this->element_types };
+  this->conforming_interfaces = {
+    ngllz,     nglly, ngllx, this->element_intersections, this->jacobian_matrix,
+    this->mesh
+  };
   this->fields = { this->mesh, this->element_types, simulation };
 
   // if (allocate_boundary_values)
