@@ -87,8 +87,7 @@ int update_wavefields(specfem::assembly::assembly<Tags::dimension_tag> &assembly
           elements_updated += impl::compute_stiffness_interaction<
               NGLL,
               specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
-                                  _property_tag_, _boundary_tag_> >(assembly,
-                                                                    istep);
+                                  _property_tag_, _boundary_tag_> >(assembly, istep);
         }
       })
 
