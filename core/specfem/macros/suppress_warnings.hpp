@@ -97,16 +97,25 @@
 #endif
 
 /**
- * @brief Suppress warnings about returning reference to temporary.
+ * @brief Mark unreachable code paths that exist only to satisfy compiler return
+ * requirements.
  *
- * This macro wraps a code block to suppress compiler warnings about returning
- * the address of a local variable or temporary. It handles compiler-specific
- * pragmas for MSVC, GCC, Clang, and Intel LLVM.
+ * Uses compiler intrinsics (__builtin_unreachable / __assume(false)) to inform
+ * the compiler that the code path is unreachable, eliminating warnings about
+ * returning references to temporaries. The pragma-based approach does not work
+ * reliably on GCC due to bug #53431 (_Pragma inside macros fails to suppress
+ * warnings during template instantiation).
  *
- * @param CODEBLOCK The code to be executed with the warning suppressed.
+ * @param CODEBLOCK Ignored; kept for backward compatibility with call sites.
  */
-#define SUPPRESS_TEMPORARY_REF(CODEBLOCK)                                      \
+#if defined(__GNUC__) || defined(__clang__) || defined(__INTEL_LLVM_COMPILER)
+#define SUPPRESS_UNREACHABLE(CODEBLOCK) __builtin_unreachable();
+#elif defined(_MSC_VER)
+#define SUPPRESS_UNREACHABLE(CODEBLOCK) __assume(false);
+#else
+#define SUPPRESS_UNREACHABLE(CODEBLOCK)                                        \
   _SUPPRESS_WARNING_START                                                      \
   _SUPPRESS_TEMPORARY_RETURN_CODE                                              \
   CODEBLOCK                                                                    \
   _SUPPRESS_WARNING_END
+#endif

@@ -12,6 +12,7 @@
     :maxdepth: 1
 
     assembly_index/index
+    attenuation/index
     boundary/index
     conforming_interface/index
     coordinates/index

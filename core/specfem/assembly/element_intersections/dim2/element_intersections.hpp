@@ -168,6 +168,14 @@ struct EdgeView {
              Kokkos::subview(iz, edge_range, Kokkos::ALL()),
              Kokkos::subview(ix, edge_range, Kokkos::ALL()) };
   }
+
+  /**
+   * @brief Get total number of quadrature points across all edges in this view.
+   *
+   * @return Total number of quadrature points
+   */
+  KOKKOS_FORCEINLINE_FUNCTION
+  int get_total_points() const { return N * n_points; }
 };
 
 /**
