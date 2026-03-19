@@ -252,7 +252,8 @@
 
   subroutine read_material_parameters(iunit,material_properties,material_properties_undef,imat,NMATERIALS,ier)
 
-  use constants, only: MAX_STRING_LEN,DONT_IGNORE_JUNK,IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC
+  use constants, only: MAX_STRING_LEN,DONT_IGNORE_JUNK,IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC, &
+    IDOMAIN_COSSERAT
   use constants_meshfem, only: NUMBER_OF_MATERIAL_PROPERTIES
   implicit none
 
@@ -405,8 +406,8 @@
     ! format: #material_id #rho #kappa #mu #nu #j #lambda_c #mu_c #nu_c #domain_id
     read(string_read,*,iostat=ier) mat_id,rho,kappa,mu,nu,j,lambda_c, &
                                    mu_c,nu_c,domain_id
-    if (domain_id /= IDOMAIN_ISOTROPIC_COSSERAT) &
-      stop 'Error material parameters for isotropic cosserat domains must have domain_id == 4'
+    if (domain_id /= IDOMAIN_COSSERAT) &
+      stop 'Error material parameters for cosserat domains must have domain_id == 4'
 
   case default
     print *,'Error: material parameter line format not recognized:'
@@ -442,8 +443,9 @@
 
   ! checks domain
   if (domain_id /= IDOMAIN_ACOUSTIC .and. domain_id /= IDOMAIN_ELASTIC .and. domain_id /= IDOMAIN_POROELASTIC &
-                                                              .and. domain_id /= IDOMAIN_ISOTROPIC_COSSERAT) then
-    print *,'Error: material has invalid domain_id, must be either 1 == acoustic,2 == elastic, 3 == poroelastic or 4 == isotropic cosserat'
+                                                              .and. domain_id /= IDOMAIN_COSSERAT) then
+    print *,'Error: material has invalid domain_id, must be either 1 == acoustic,2 == elastic, 3 == poroelastic &
+    or 4 == cosserat'
     print *,'  line : ',trim(string_read)
     stop 'Invalid domain_id in material parameters'
   endif
@@ -485,7 +487,7 @@
     material_properties(imat,16) = kappa_f
     material_properties(imat,17) = kappa_fr
     material_properties(imat,18) = mu_fr      ! anisotropy_flag - not implemented yet
-  case (IDOMAIN_ISOTROPIC_COSSERAT)
+  case (IDOMAIN_COSSERAT)
     ! isotropic cosserat
     ! input format: #material_id #rho #kappa #mu #nu #j #lambda_c #mu_c #nu_c #domain_id
     material_properties(imat,1) = rho
