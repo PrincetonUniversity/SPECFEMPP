@@ -38,6 +38,7 @@ subroutine save_databases()
    use constants, only: IMAIN,IOUT,MAX_STRING_LEN,SAVE_MESHFILES_VTK_FORMAT,myrank
    use part_unstruct_par, only: nspec,iproc
    use shared_parameters, only: NPROC, database_filename, OUTPUT_FILES
+   use stdlib_os, only: mkdir, is_dir
 
    implicit none
 
@@ -81,7 +82,9 @@ subroutine save_databases()
          ! new scheme: dir/stem/proc_N.ext
          ! rank 0 creates the subdirectory before all ranks write
          if (iproc == 0) then
-            call execute_command_line('mkdir -p ' // trim(dir_path) // trim(stem), wait=.true.)
+            if (.not. is_dir(trim(dir_path) // trim(stem))) then
+               call mkdir(trim(dir_path) // trim(stem))
+            endif
          endif
          prname = trim(dir_path) // trim(stem) // '/proc_' // trim(proc_str) // trim(ext)
       else

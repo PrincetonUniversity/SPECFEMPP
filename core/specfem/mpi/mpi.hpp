@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/filesystem.hpp>
 #include <cmath>
 #include <cstdlib>
 #include <iomanip>
@@ -144,30 +145,16 @@ public:
     std::ostringstream proc_str;
     proc_str << std::setfill('0') << std::setw(ndigits) << rank_;
 
-    // Split into directory and basename
-    size_t lastslash = filename.find_last_of('/');
-    std::string dir_path, file_name;
-    if (lastslash != std::string::npos) {
-      dir_path = filename.substr(0, lastslash + 1);
-      file_name = filename.substr(lastslash + 1);
-    } else {
-      dir_path = "";
-      file_name = filename;
-    }
-
-    // Split basename into stem and extension
-    size_t lastdot = file_name.find_last_of('.');
-    std::string stem, ext;
-    if (lastdot != std::string::npos) {
-      stem = file_name.substr(0, lastdot);
-      ext = file_name.substr(lastdot); // includes the '.'
-    } else {
-      stem = file_name;
-      ext = "";
-    }
+    // Use boost::filesystem for cross-platform path handling
+    boost::filesystem::path p(filename);
+    boost::filesystem::path stem = p.stem();
+    boost::filesystem::path ext = p.extension();
+    boost::filesystem::path parent = p.parent_path();
 
     // New scheme: dir/stem/proc_N.ext
-    return dir_path + stem + "/proc_" + proc_str.str() + ext;
+    boost::filesystem::path result =
+        parent / stem / ("proc_" + proc_str.str() + ext.string());
+    return result.string();
   }
 
   /**

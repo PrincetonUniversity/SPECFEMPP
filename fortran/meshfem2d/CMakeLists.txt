@@ -6,6 +6,23 @@ cmake_minimum_required(VERSION 3.10)
 enable_language(Fortran)
 enable_language(C)
 
+# Fetch fortran-lang/stdlib if not already provided by a parent build
+if(NOT TARGET fortran_stdlib)
+    include(FetchContent)
+    set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+    set(STDLIB_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+    set(STDLIB_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        fortran_stdlib
+        GIT_REPOSITORY https://github.com/fortran-lang/stdlib
+        GIT_TAG v0.7.0
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+        EXCLUDE_FROM_ALL TRUE
+    )
+    FetchContent_MakeAvailable(fortran_stdlib)
+endif()
+
 # Options
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(WITH_SCOTCH "Build with SCOTCH support" OFF)
@@ -201,7 +218,8 @@ add_library(meshfem2D::mesh ALIAS meshfem2D_mesh)
 target_link_libraries(meshfem2D_mesh
   PRIVATE
   meshfem2D::shared_module
-  meshfem2D::parameters)
+  meshfem2D::parameters
+  fortran_stdlib)
 
 # MeshFEM Preprocessor Objects
 add_library(meshfem2D_mesh_mpi
