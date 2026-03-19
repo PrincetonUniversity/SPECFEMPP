@@ -274,6 +274,7 @@ add_executable(
   point/properties/dim2/poroelastic_isotropic.cpp
   # Dim 3
   point/properties/dim3/elastic_isotropic.cpp
+  point/properties/dim3/elastic_isotropic_cosserat.cpp
 
 )
 
