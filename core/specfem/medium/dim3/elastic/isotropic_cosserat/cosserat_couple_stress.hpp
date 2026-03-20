@@ -31,15 +31,15 @@ namespace medium_physics {
  *
  * **Coordinate transformation:**
  * If
- * \f$ \mathbf{J} = \begin{bmatrix} \xi_x & \xi_y & \xi_z \\ \gamma_x & \gamma_y & \gamma_z \\ \zeta_x & \zeta_y & \zeta_z \end{bmatrix} \f$
+ * \f$ \mathbf{J} = \begin{bmatrix} \xi_x & \xi_y & \xi_z \\ \eta_x & \eta_y & \eta_z \\ \gamma_x & \gamma_y & \gamma_z \end{bmatrix} \f$
  * then
  * \f$ \mathbf{J}^{-1} = \frac{1}{\det(\mathbf{J})}
  * \begin{bmatrix}
- * (\gamma_y\zeta_z - \gamma_z\zeta_y) & -(\xi_y\zeta_z - \xi_z\zeta_y) & (\xi_y\gamma_z - \xi_z\gamma_y) \\
- * -(\gamma_x\zeta_z - \gamma_z\zeta_x) & (\xi_x\zeta_z - \xi_z\zeta_x) & -(\xi_x\gamma_z - \xi_z\gamma_x) \\
- * (\gamma_x\zeta_y - \gamma_y\zeta_x) & -(\xi_x\zeta_y - \xi_y\zeta_x) & (\xi_x\gamma_y - \xi_y\gamma_x)
+ * (\eta_y\gamma_z - \eta_z\gamma_y) & -(\xi_y\gamma_z - \xi_z\gamma_y) & (\xi_y\eta_z - \xi_z\eta_y) \\
+ * -(\eta_x\gamma_z - \eta_z\gamma_x) & (\xi_x\gamma_z - \xi_z\gamma_x) & -(\xi_x\eta_z - \xi_z\eta_x) \\
+ * (\eta_x\gamma_y - \eta_y\gamma_x) & -(\xi_x\gamma_y - \xi_y\gamma_x) & (\xi_x\eta_y - \xi_y\eta_x)
  * \end{bmatrix}
- *\f$
+ * \f$
  *
  * where:
  * - \f$ j \f$: rotational inertia
@@ -60,9 +60,9 @@ template <typename T, typename PointJacobianMatrixType,
 KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const std::true_type,
     const std::integral_constant<specfem::element::dimension_tag,
-                                 specfem::element::dimension_tag::dim2>,
+                                 specfem::element::dimension_tag::dim3>,
     const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::elastic_psv_t>,
+                                 specfem::element::medium_tag::elastic_spin>,
     const std::integral_constant<
         specfem::element::property_tag,
         specfem::element::property_tag::isotropic_cosserat>,
@@ -74,39 +74,68 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   // TODO: figure out what these are called in 3D
 
   const auto &xix = point_jacobian_matrix.xix;
+  const auto &xiy = point_jacobian_matrix.xiy;
   const auto &xiz = point_jacobian_matrix.xiz;
+  const auto &etax = point_jacobian_matrix.etax;
+  const auto &etay = point_jacobian_matrix.etay;
+  const auto &etaz = point_jacobian_matrix.etaz;
   const auto &gammax = point_jacobian_matrix.gammax;
+  const auto &gammay = point_jacobian_matrix.gammay;
   const auto &gammaz = point_jacobian_matrix.gammaz;
   const auto &jacobian = point_jacobian_matrix.jacobian;
 
-  //   // Compute inverse Jacobian elements (standard 2x2 matrix inversion)
-  //   const auto det = xix * gammaz - xiz * gammax;
-  //   const auto invD = static_cast<T>(1.0) / det;
+  // Compute inverse Jacobian elements (standard 2x2 matrix inversion)
+  const auto det = xix * (etay * gammaz - etaz * gammay) -
+                   xiy * (etax * gammaz - etaz * gammax) +
+                   xiz * (etax * gammay - etay * gammax);
+  const auto invD = static_cast<T>(1.0) / det;
 
-  //   // Standard 2x2 matrix inverse: inv([a b; c d]) = (1/det) * [d -b; -c a]
-  //   //   J = [xix     xiz    ]
-  //   //       [gammax  gammaz ]
-  //   // Then the inverse Jacobian matrix is:
-  //   //   J^-1 = [∂x/∂ξ ∂x/∂γ]  = (1/det) * [gammaz  -xiz ]
-  //   //          [∂z/∂ξ ∂z/∂γ]              [-gammax  xix ]
-  //   const auto xxi = gammaz * invD;  // ∂x/∂ξ
-  //   const auto xgamma = -xiz * invD; // ∂x/∂γ
-  //   const auto zxi = -gammax * invD; // ∂z/∂ξ
-  //   const auto zgamma = xix * invD;  // ∂z/∂γ
+  // Standard 2x2 matrix inverse:
+  //   J = [xix     xiy     xiz    ]
+  //       [etax    etay    etaz   ]
+  //       [gammax  gammay  gammaz ]
+  // Then the inverse Jacobian matrix is:
+  //   J^-1 = [∂x/∂ξ ∂x/∂η ∂x/∂γ]              [ (etay*gammaz-etaz*gammay)
+  //   -(xiy*gammaz-xiz*gammay)   (xiy*etaz-xiz*etay) ]
+  //          [∂y/∂ξ ∂y/∂η ∂y/∂γ]  = (1/det) * [ -(etax*gammaz-etaz*gammax)
+  //          (xix*gammaz-xiz*gammax)  -(xix*etaz-xiz*etax) ] [∂z/∂ξ ∂z/∂η
+  //          ∂z/∂γ]              [ (etax*gammay-etay*gammax)
+  //          -(xix*gammay-xiy*gammax)   (xix*etay-xiy*etax) ]
+  const auto xxi = (etay * gammaz - etaz * gammay) * invD;    // ∂x/∂ξ
+  const auto xeta = -(etax * gammaz - etaz * gammax) * invD;  // ∂x/∂η
+  const auto xgamma = (etax * gammay - etay * gammax) * invD; // ∂x/∂γ
+  const auto yxi = -(xiy * gammaz - xiz * gammay) * invD;     // ∂y/∂ξ
+  const auto yeta = (xix * gammaz - xiz * gammax) * invD;     // ∂y/∂η
+  const auto ygamma = -(xix * gammay - xiy * gammax) * invD;  // ∂y/∂γ
+  const auto zxi = (xiy * gammax - xiz * etay) * invD;        // ∂z/∂ξ
+  const auto zeta = -(xix * gammax - xiz * etax) * invD;      // ∂z/∂η
+  const auto zgamma = (xix * gammay - xiy * etax) * invD;     // ∂z/∂γ
 
   // Transform Stress integrand F to stress tensor T
-  //   note: here we have t_{ij} = F(i,k) jk
   // const auto t_00 = (F(0, 0) * xxi + F(0, 1) * xgamma); // σ_xx
-  const auto t_10 = F(1, 0) * xxi + F(1, 1) * xgamma; // σ_xz
-  const auto t_01 = F(0, 0) * zxi + F(0, 1) * zgamma; // σ_zx
-  // const auto t_11 = (F(1, 0) * zxi + F(1, 1) * zgamma); // σ_zz
+  const auto t_10 = F(1, 0) * xxi + F(1, 1) * xeta + F(1, 2) * xgamma; // σ_xy
+  const auto t_20 = F(2, 0) * xxi + F(2, 1) * xeta + F(2, 2) * xgamma; // σ_xz
+  const auto t_01 = F(0, 0) * yxi + F(0, 1) * yeta + F(0, 2) * ygamma; // σ_yx
+  // const auto t_11 = (F(1, 0) * yxi + F(1, 1) * yeta + F(1, 2) * ygamma); //
+  // σ_yy
+  const auto t_21 = F(2, 0) * yxi + F(2, 1) * yeta + F(2, 2) * ygamma; // σ_yz
+  const auto t_02 = F(0, 0) * zxi + F(0, 1) * zeta + F(0, 2) * zgamma; // σ_zx
+  const auto t_12 = F(1, 0) * zxi + F(1, 1) * zeta + F(1, 2) * zgamma; // σ_zy
+  // const auto t_22 = (F(2, 0) * zxi + F(2, 1) * zeta + F(2, 2) * zgamma); //
+  // σ_zz
 
   // Reassign stress components due to transpose in its original definition
-  const auto sigma_xz = t_10;
-  const auto sigma_zx = t_01;
+  const auto sigma_xy = t_10;
+  const auto sigma_yx = t_01;
+  const auto sigma_xz = t_20;
+  const auto sigma_zx = t_02;
+  const auto sigma_yz = t_21;
+  const auto sigma_zy = t_12;
 
   // Add to acceleration
-  acceleration(2) -= (sigma_xz - sigma_zx) * factor / jacobian;
+  acceleration(3) -= (sigma_zy - sigma_yz) * factor / jacobian;
+  acceleration(4) -= (sigma_xz - sigma_zx) * factor / jacobian;
+  acceleration(5) -= (sigma_yx - sigma_xy) * factor / jacobian;
 };
 
 } // namespace medium_physics
