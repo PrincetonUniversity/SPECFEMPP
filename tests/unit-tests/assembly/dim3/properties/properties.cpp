@@ -193,7 +193,9 @@ struct ExpectedProperties3D {
 
       // Type-safe property validation using template metaprogramming
       FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)), {
+          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+           PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT)),
+          {
             if (_medium_tag_ == expected.medium_tag &&
                 _property_tag_ == expected.property_tag) {
               const int ispec = expected.ispec;
