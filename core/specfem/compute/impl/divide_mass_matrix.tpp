@@ -5,10 +5,14 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/point.hpp"
 #include "divide_mass_matrix.hpp"
+#include "specfem/macros.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 
+namespace specfem::compute::impl {
+
 template <typename Tags>
-void specfem::compute::impl::divide_mass_matrix(
+void divide_mass_matrix_core(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
 
   constexpr auto medium_tag = Tags::medium_tag;
@@ -65,3 +69,26 @@ void specfem::compute::impl::divide_mass_matrix(
 
   return;
 }
+
+template <int NGLL, typename Tags>
+void divide_mass_matrix(
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
+
+  constexpr auto WavefieldType = Tags::wavefield_tag;
+  constexpr auto DimensionTag = Tags::dimension_tag;
+  constexpr auto MediumTag = Tags::medium_tag;
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2, DIM3),
+       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T)),
+      {
+        if constexpr (DimensionTag == _dimension_tag_ &&
+                      MediumTag == _medium_tag_) {
+          divide_mass_matrix_core<
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_> >(
+              assembly);
+        }
+      })
+}
+} // namespace specfem::compute::impl
