@@ -197,9 +197,6 @@ else()
   set(SUBDIR_LOG_LEVEL STATUS)
 endif()
 
-# Find or install fortran-lang/stdlib (used by Fortran components for cross-platform OS calls)
-include("${CMAKE_SOURCE_DIR}/cmake/fortran_stdlib.cmake")
-
 # ========== MESHFEM2D ==============
 message(STATUS "Configuring meshfem2D")
 set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})

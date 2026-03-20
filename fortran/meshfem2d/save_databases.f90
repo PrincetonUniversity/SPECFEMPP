@@ -38,12 +38,12 @@ subroutine save_databases()
    use constants, only: IMAIN,IOUT,MAX_STRING_LEN,SAVE_MESHFILES_VTK_FORMAT,myrank
    use part_unstruct_par, only: nspec,iproc
    use shared_parameters, only: NPROC, database_filename, OUTPUT_FILES
-   use stdlib_os, only: mkdir, is_dir
 
    implicit none
 
    ! local parameters
    integer :: ier, lastdot, lastslash, ndigits
+   logical :: dir_exists
    character(len=MAX_STRING_LEN) :: prname, dir_path, stem, ext
    character(len=32) :: proc_str, format_str
 
@@ -80,10 +80,12 @@ subroutine save_databases()
          endif
 
          ! new scheme: dir/stem/proc_N.ext
-         ! rank 0 creates the subdirectory before all ranks write
+         ! rank 0 checks the subdirectory exists (it must be pre-created)
          if (iproc == 0) then
-            if (.not. is_dir(trim(dir_path) // trim(stem))) then
-               call mkdir(trim(dir_path) // trim(stem))
+            inquire(file=trim(dir_path) // trim(stem) // '/.', exist=dir_exists)
+            if (.not. dir_exists) then
+               call stop_the_code('Error: output subdirectory ' // trim(dir_path) // trim(stem) // &
+                                   ' does not exist. Please create it before running meshfem2D.')
             endif
          endif
          prname = trim(dir_path) // trim(stem) // '/proc_' // trim(proc_str) // trim(ext)
