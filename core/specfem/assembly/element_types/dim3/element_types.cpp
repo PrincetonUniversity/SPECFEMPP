@@ -142,7 +142,7 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::assembly::
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
-       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), ATTENUATION_TAG(NONE)),
       CAPTURE(h_material_elements) {
         if (_medium_tag_ == medium_tag && _property_tag_ == property_tag &&
             _attenuation_tag_ == attenuation_tag) {
@@ -162,7 +162,7 @@ specfem::assembly::element_types<specfem::element::dimension_tag::dim3>::
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
-       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), ATTENUATION_TAG(NONE)),
       CAPTURE(material_elements) {
         if (_medium_tag_ == medium_tag && _property_tag_ == property_tag &&
             _attenuation_tag_ == attenuation_tag) {
