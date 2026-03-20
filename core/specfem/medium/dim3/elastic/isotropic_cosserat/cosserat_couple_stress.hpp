@@ -25,9 +25,9 @@ namespace medium_physics {
  * \f$ j\ddot{\phi} = \nabla\cdot \sigma_c + \epsilon : \sigma \f$
  * \nabla\cdot \sigma_c is already handled by existing wavefield logic,
  * so we just need the adjustments given by
- * \f$ j\ddot{\phi}_x = (\sigma_{zy} - \sigma_{yz}) \f$
- * \f$ j\ddot{\phi}_y = (\sigma_{xz} - \sigma_{zx}) \f$
- * \f$ j\ddot{\phi}_z = (\sigma_{yx} - \sigma_{xy}) \f$
+ * \f$ j\ddot{\phi}_x = -(\sigma_{zy} - \sigma_{yz}) \f$
+ * \f$ j\ddot{\phi}_y = -(\sigma_{xz} - \sigma_{zx}) \f$
+ * \f$ j\ddot{\phi}_z = -(\sigma_{yx} - \sigma_{xy}) \f$
  *
  * **Coordinate transformation:**
  * If
