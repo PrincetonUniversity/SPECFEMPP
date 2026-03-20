@@ -1,8 +1,8 @@
 #pragma once
 
-#include <boost/filesystem.hpp>
 #include <cmath>
 #include <cstdlib>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -145,14 +145,14 @@ public:
     std::ostringstream proc_str;
     proc_str << std::setfill('0') << std::setw(ndigits) << rank_;
 
-    // Use boost::filesystem for cross-platform path handling
-    boost::filesystem::path p(filename);
-    boost::filesystem::path stem = p.stem();
-    boost::filesystem::path ext = p.extension();
-    boost::filesystem::path parent = p.parent_path();
+    // Use std::filesystem for cross-platform path handling
+    std::filesystem::path p(filename);
+    auto stem = p.stem();
+    auto ext = p.extension();
+    auto parent = p.parent_path();
 
     // New scheme: dir/stem/proc_N.ext
-    boost::filesystem::path result =
+    std::filesystem::path result =
         parent / stem / ("proc_" + proc_str.str() + ext.string());
     return result.string();
   }
