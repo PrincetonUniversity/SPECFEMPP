@@ -90,8 +90,8 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::
       Kokkos::create_mirror_view(wavefield_on_entire_grid);
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
-       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), ATTENUATION_TAG(NONE)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
       {
         if constexpr (_dimension_tag_ ==
                       specfem::element::dimension_tag::dim3) {
