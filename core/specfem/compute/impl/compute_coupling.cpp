@@ -8,7 +8,9 @@ using specfem::element::dimension_tag;
 using specfem::element::medium_tag;
 using specfem::simulation::field_type;
 
-#define INST_COMPUTE_COUPLING(NGLL, DIM, WF, MED)                              \
-  INSTANTIATE_COMPUTE_FUNCTION(compute_coupling, NGLL, DIM, WF, MED)
-SPECFEM_COMPUTE_COMBINATIONS(INST_COMPUTE_COUPLING)
-#undef INST_COMPUTE_COUPLING
+#define SIGNATURE(NGLL, DIM, WF, MED)                                          \
+  template void specfem::compute::impl::compute_coupling<                      \
+      NGLL, specfem::tags::Tags<DIM, WF, MED> >(                               \
+      const specfem::assembly::assembly<DIM> &);
+SPECFEM_COMPUTE_COMBINATIONS(SIGNATURE)
+#undef SIGNATURE

@@ -1,38 +1,16 @@
 #pragma once
 // !! Do NOT include this from specfem/macros.hpp !!
 // Include only in explicit-instantiation .cpp files.
-
-// ── Signature helpers
-// ───────────────────────────────────────────────────────── Callers must have
-// the following using-declarations in scope:
+//
+// Each .cpp file defines its own SIGNATURE(NGLL, DIM, WF, MED) macro with
+// the full explicit-instantiation declaration, then invokes:
+//   SPECFEM_COMPUTE_COMBINATIONS(SIGNATURE)
+// and undefines SIGNATURE afterwards.
+//
+// Requires the following using-declarations in scope:
 //   using specfem::element::dimension_tag;
 //   using specfem::element::medium_tag;
 //   using specfem::simulation::field_type;
-
-// void(const assembly &)                  — compute_coupling,
-// divide_mass_matrix
-#define INSTANTIATE_COMPUTE_FUNCTION(FN, NGLL, DIM, WF, MED)                   \
-  template void                                                                \
-  specfem::compute::impl::FN<NGLL, specfem::tags::Tags<DIM, WF, MED> >(        \
-      const specfem::assembly::assembly<DIM> &);
-
-// void(assembly &, const int)             — compute_source_interaction
-#define INSTANTIATE_COMPUTE_FUNCTION_VOID_NONCONST_INT(FN, NGLL, DIM, WF, MED) \
-  template void                                                                \
-  specfem::compute::impl::FN<NGLL, specfem::tags::Tags<DIM, WF, MED> >(        \
-      specfem::assembly::assembly<DIM> &, const int);
-
-// int(const assembly &, const int)        — compute_stiffness_interaction
-#define INSTANTIATE_COMPUTE_FUNCTION_INT_CONST_INT(FN, NGLL, DIM, WF, MED)     \
-  template int                                                                 \
-  specfem::compute::impl::FN<NGLL, specfem::tags::Tags<DIM, WF, MED> >(        \
-      const specfem::assembly::assembly<DIM> &, const int);
-
-// int(assembly &, const int)              — update_wavefields
-#define INSTANTIATE_COMPUTE_FUNCTION_INT_NONCONST_INT(FN, NGLL, DIM, WF, MED)  \
-  template int specfem::compute::FN<NGLL, specfem::tags::Tags<DIM, WF, MED> >( \
-      specfem::assembly::assembly<DIM> &,                                      \
-      const int); // update_wavefields stays in compute::
 
 // ── Combination list (X-macro)
 // ──────────────────────────────────────────────── All (NGLL, DIM, WF, MED)

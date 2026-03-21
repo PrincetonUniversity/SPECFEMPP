@@ -8,7 +8,9 @@ using specfem::element::dimension_tag;
 using specfem::element::medium_tag;
 using specfem::simulation::field_type;
 
-#define INST_DIVIDE_MASS_MATRIX(NGLL, DIM, WF, MED)                            \
-  INSTANTIATE_COMPUTE_FUNCTION(divide_mass_matrix, NGLL, DIM, WF, MED)
-SPECFEM_COMPUTE_COMBINATIONS(INST_DIVIDE_MASS_MATRIX)
-#undef INST_DIVIDE_MASS_MATRIX
+#define SIGNATURE(NGLL, DIM, WF, MED)                                          \
+  template void specfem::compute::impl::divide_mass_matrix<                    \
+      NGLL, specfem::tags::Tags<DIM, WF, MED> >(                               \
+      const specfem::assembly::assembly<DIM> &);
+SPECFEM_COMPUTE_COMBINATIONS(SIGNATURE)
+#undef SIGNATURE

@@ -8,8 +8,9 @@ using specfem::element::dimension_tag;
 using specfem::element::medium_tag;
 using specfem::simulation::field_type;
 
-#define INST_UPDATE_WAVEFIELDS(NGLL, DIM, WF, MED)                             \
-  INSTANTIATE_COMPUTE_FUNCTION_INT_NONCONST_INT(update_wavefields, NGLL, DIM,  \
-                                                WF, MED)
-SPECFEM_COMPUTE_COMBINATIONS(INST_UPDATE_WAVEFIELDS)
-#undef INST_UPDATE_WAVEFIELDS
+#define SIGNATURE(NGLL, DIM, WF, MED)                                          \
+  template int specfem::compute::update_wavefields<                            \
+      NGLL, specfem::tags::Tags<DIM, WF, MED> >(                               \
+      specfem::assembly::assembly<DIM> &, const int);
+SPECFEM_COMPUTE_COMBINATIONS(SIGNATURE)
+#undef SIGNATURE

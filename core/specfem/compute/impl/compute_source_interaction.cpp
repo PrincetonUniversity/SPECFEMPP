@@ -8,8 +8,9 @@ using specfem::element::dimension_tag;
 using specfem::element::medium_tag;
 using specfem::simulation::field_type;
 
-#define INST_COMPUTE_SOURCE_INTERACTION(NGLL, DIM, WF, MED)                    \
-  INSTANTIATE_COMPUTE_FUNCTION_VOID_NONCONST_INT(compute_source_interaction,   \
-                                                 NGLL, DIM, WF, MED)
-SPECFEM_COMPUTE_COMBINATIONS(INST_COMPUTE_SOURCE_INTERACTION)
-#undef INST_COMPUTE_SOURCE_INTERACTION
+#define SIGNATURE(NGLL, DIM, WF, MED)                                          \
+  template void specfem::compute::impl::compute_source_interaction<            \
+      NGLL, specfem::tags::Tags<DIM, WF, MED> >(                               \
+      specfem::assembly::assembly<DIM> &, const int);
+SPECFEM_COMPUTE_COMBINATIONS(SIGNATURE)
+#undef SIGNATURE
