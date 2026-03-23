@@ -3,22 +3,36 @@
 #include <ratio>
 #include <type_traits>
 
+#include <Kokkos_Core.hpp>
+
 namespace specfem::units {
+
+/**
+ * @brief Compile-time physical dimension representation.
+ *
+ * Encodes dimensional exponents for mass, length, time, and angle.
+ * The angle dimension distinguishes frequency types (Hertz vs Omega).
+ *
+ * @tparam M Mass exponent
+ * @tparam L Length exponent
+ * @tparam T Time exponent
+ * @tparam A Angle exponent (0 for Hertz, 1 for rad/s)
+ */
 
 // Compile-time dimension: [mass, length, time, angle]
 // angle distinguishes e.g. Hertz (A=0) from Omega/rad·s⁻¹ (A=1)
 template <int M, int L, int T, int A = 0> struct Dim {
-  static constexpr int mass = M;
-  static constexpr int length = L;
-  static constexpr int time = T;
-  static constexpr int angle = A;
+  static constexpr int mass = M;   ///< Mass dimension exponent
+  static constexpr int length = L; ///< Length dimension exponent
+  static constexpr int time = T;   ///< Time dimension exponent
+  static constexpr int angle = A;  ///< Angle dimension exponent
 };
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-namespace detail {
+namespace impl {
 
 // Compile-time GCD — std::ratio_gcd is C++17 but absent in some libc++ builds
 template <intmax_t A, intmax_t B> struct ct_gcd {
@@ -41,21 +55,59 @@ using ratio_gcd =
                       (R2::num < 0 ? -R2::num : R2::num)>::value,
                (R1::den / ct_gcd<R1::den, R2::den>::value) * R2::den>;
 
-} // namespace detail
+} // namespace impl
 
-// Helper: compile-time std::ratio as a type_real value  (C++17 inline variable)
+/**
+ * @brief Compile-time conversion of std::ratio to a scalar value.
+ *
+ * @tparam R std::ratio type
+ * @return constexpr type_real Ratio as a floating-point value
+ */
 template <typename R>
-inline constexpr type_real ratio_value =
+KOKKOS_FORCEINLINE_FUNCTION constexpr type_real ratio_value =
     static_cast<type_real>(R::num) / static_cast<type_real>(R::den);
 
+/**
+ * @brief Type-safe physical quantity with compile-time dimensional analysis.
+ *
+ * Represents a physical quantity with dimensions D and scale factor Scale.
+ * Prevents unit mismatches at compile time through template parameters.
+ * Arithmetic operations preserve dimensional correctness.
+ *
+ * @tparam D Dimension type (Dim<M,L,T,A>)
+ * @tparam Scale Unit scale as std::ratio (default: 1/1 for SI base units)
+ *
+ * @code
+ * Meters distance(100.0);
+ * Seconds time(10.0);
+ * Velocity speed = distance / time;  // Returns Velocity(10.0)
+ * @endcode
+ */
 template <typename D, typename Scale = std::ratio<1, 1> > class Quantity {
   type_real value_;
 
 public:
+  /**
+   * @brief Construct a quantity from a raw value.
+   *
+   * @param v Value in the specified units (default: 0.0)
+   */
   constexpr explicit Quantity(type_real v = 0.0) noexcept : value_(v) {}
 
-  // Explicit raw access only — stripping units is intentional
+  /**
+   * @brief Extract the raw numeric value.
+   *
+   * Explicit method to emphasize stripping units is intentional.
+   *
+   * @return constexpr type_real Numeric value without units
+   */
   [[nodiscard]] constexpr type_real raw() const noexcept { return value_; }
+
+  /**
+   * @brief Explicit conversion to raw numeric value.
+   *
+   * @return constexpr type_real Numeric value without units
+   */
   explicit constexpr operator type_real() const noexcept { return value_; }
 
   // Arithmetic within the same dimension and scale
@@ -103,8 +155,8 @@ public:
 template <typename D, typename S1, typename S2,
           typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
 constexpr auto operator+(Quantity<D, S1> a, Quantity<D, S2> b)
-    -> Quantity<D, detail::ratio_gcd<S1, S2> > {
-  using Rgcd = detail::ratio_gcd<S1, S2>;
+    -> Quantity<D, impl::ratio_gcd<S1, S2> > {
+  using Rgcd = impl::ratio_gcd<S1, S2>;
   return Quantity<D, Rgcd>(a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > +
                            b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >);
 }
@@ -112,8 +164,8 @@ constexpr auto operator+(Quantity<D, S1> a, Quantity<D, S2> b)
 template <typename D, typename S1, typename S2,
           typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
 constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
-    -> Quantity<D, detail::ratio_gcd<S1, S2> > {
-  using Rgcd = detail::ratio_gcd<S1, S2>;
+    -> Quantity<D, impl::ratio_gcd<S1, S2> > {
+  using Rgcd = impl::ratio_gcd<S1, S2>;
   return Quantity<D, Rgcd>(a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > -
                            b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >);
 }
@@ -125,7 +177,7 @@ constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
 template <typename D, typename S1, typename S2,
           typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
 constexpr bool operator==(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  using Rgcd = detail::ratio_gcd<S1, S2>;
+  using Rgcd = impl::ratio_gcd<S1, S2>;
   return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > ==
          b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >;
 }
@@ -139,7 +191,7 @@ constexpr bool operator!=(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
 template <typename D, typename S1, typename S2,
           typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
 constexpr bool operator<(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
-  using Rgcd = detail::ratio_gcd<S1, S2>;
+  using Rgcd = impl::ratio_gcd<S1, S2>;
   return a.raw() * ratio_value<std::ratio_divide<S1, Rgcd> > <
          b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >;
 }

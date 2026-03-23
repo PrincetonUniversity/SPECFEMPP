@@ -81,6 +81,26 @@ template <> struct unit_cast_impl<Hertz, Omega, void> {
 // Public API
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Convert a quantity from one unit to another.
+ *
+ * Performs compile-time checked unit conversion. Supports:
+ * - Identity conversions (no-op)
+ * - Same-dimension scale changes (m → km)
+ * - Cross-dimension spectral conversions (s → Hz → ω)
+ *
+ * Unsupported conversions produce a compile-time error.
+ *
+ * @tparam To Target quantity type
+ * @tparam From Source quantity type
+ * @param q Quantity to convert
+ * @return constexpr To Converted quantity
+ *
+ * @code
+ * auto km = unit_cast<Kilometers>(Meters(1500.0));  // 1.5 km
+ * auto freq = unit_cast<Hertz>(Seconds(0.5));       // 2.0 Hz
+ * @endcode
+ */
 template <typename To, typename From> constexpr To unit_cast(From q) {
   return unit_cast_impl<To, From>::call(q);
 }
