@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine create_name_database(prname,iproc,LOCAL_PATH)
+  subroutine create_name_database(prname,iproc,LOCAL_PATH,sizeprocs)
 
 ! create the name of the database for the mesher and the solver
 
@@ -33,15 +33,28 @@
 
   implicit none
 
-  integer iproc
+  integer, intent(in) :: iproc, sizeprocs
 
   ! name of the database file
-  character(len=MAX_STRING_LEN) :: prname,procname,LOCAL_PATH
+  character(len=MAX_STRING_LEN) :: prname, LOCAL_PATH
 
-  ! create the name for the database of the current slide and region
-  write(procname,"('/proc',i6.6,'_')") iproc
+  ! local variables
+  integer :: ndigits
+  character(len=32) :: proc_str, format_str
 
-  ! create full name with path
-  prname = LOCAL_PATH(1:len_trim(LOCAL_PATH)) // procname
+  if (sizeprocs <= 1) then
+    ! single process: no proc prefix, just append trailing slash
+    prname = LOCAL_PATH(1:len_trim(LOCAL_PATH)) // '/'
+  else
+    ! calculate number of digits needed for processor numbering
+    ndigits = int(log10(real(sizeprocs-1))) + 1
+
+    ! create dynamic format string for zero-padding
+    write(format_str,'(a,i0,a,i0,a)') '(i', ndigits, '.', ndigits, ')'
+    write(proc_str, format_str) iproc
+
+    ! construct: LOCAL_PATH/proc###_
+    prname = LOCAL_PATH(1:len_trim(LOCAL_PATH)) // '/proc' // trim(proc_str) // '_'
+  endif
 
   end subroutine create_name_database

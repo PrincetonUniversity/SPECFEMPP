@@ -27,7 +27,7 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim2>::assembly(
                           mesh.tags };
   this->element_intersections = { this->mesh.element_grid.ngllx,
                                   this->mesh.element_grid.ngllz, this->mesh,
-                                  this->element_types };
+                                  this->element_types, flux_scheme_config };
   this->jacobian_matrix = { this->mesh };
   this->properties = { this->mesh.nspec,
                        this->mesh.element_grid.ngllz,

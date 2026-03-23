@@ -24,4 +24,5 @@ template <int NGLL, typename Tags>
 int update_wavefields(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int istep);
+
 } // namespace specfem::compute

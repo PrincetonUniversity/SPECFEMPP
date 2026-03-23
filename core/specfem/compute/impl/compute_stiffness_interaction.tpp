@@ -14,11 +14,15 @@
 #include "specfem/chunk_element.hpp"
 #include "specfem/point.hpp"
 #include "compute_stiffness_interaction.hpp"
+#include "specfem/macros.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
+namespace specfem::compute::impl {
+
 template <int NGLL, typename Tags>
-int specfem::compute::impl::compute_stiffness_interaction(
+int compute_stiffness_interaction_core(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int &istep) {
 
@@ -255,3 +259,36 @@ int specfem::compute::impl::compute_stiffness_interaction(
 
   return nelements;
 }
+
+template <int NGLL, typename Tags>
+int compute_stiffness_interaction(
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int istep) {
+
+  constexpr auto WavefieldType = Tags::wavefield_tag;
+  constexpr auto DimensionTag = Tags::dimension_tag;
+  constexpr auto MediumTag = Tags::medium_tag;
+
+  int elements_updated = 0;
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2, DIM3),
+       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET)),
+      {
+        if constexpr (DimensionTag == _dimension_tag_ &&
+                      MediumTag == _medium_tag_) {
+          elements_updated += compute_stiffness_interaction_core<
+              NGLL,
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
+                                  _property_tag_, _boundary_tag_> >(assembly,
+                                                                    istep);
+        }
+      })
+
+  return elements_updated;
+}
+} // namespace specfem::compute::impl

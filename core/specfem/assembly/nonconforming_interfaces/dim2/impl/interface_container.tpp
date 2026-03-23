@@ -49,10 +49,12 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
 
   const auto element = specfem::mesh_entity::element(ngllz, ngllx);
 
+  //TODO replace with struct template parameter later
+  specfem::element_coupling::flux_scheme_tag FluxSchemeTag = specfem::element_coupling::flux_scheme_tag::natural;
   const auto [self_edges, coupled_edges] =
       element_intersections.get_intersections_on_host(
           specfem::element_connections::type::nonconforming, InterfaceTag,
-          BoundaryTag);
+          BoundaryTag, FluxSchemeTag);
 
   const auto N = self_edges.N;
 
