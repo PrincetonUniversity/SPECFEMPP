@@ -107,8 +107,6 @@ int compute_stiffness_interaction_core(
 
   using GradientPackType =
       specfem::point::stiffness_gradient_pack<attenuation_tag, typename PointFieldDerivativesType::value_type>;
-  using FieldDerivativesPackType =
-      specfem::point::FieldDerivativesPack<GradientPackType>;
 
   using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
 
@@ -168,13 +166,12 @@ int compute_stiffness_interaction_core(
                 specfem::assembly::load_on_device(index, properties,
                                                   point_property);
 
-                const FieldDerivativesPackType fd_pack(grad_pack);
                 const auto field_derivatives =
-                    fd_pack.template get_du<PointTags>();
+                    grad_pack.template get_du<PointTags>();
 
                 // Only not null_field_derivatives if attenuation is enabled.
                 const auto field_derivatives_velocity =
-                    fd_pack.template get_dv<PointTags>();
+                    grad_pack.template get_dv<PointTags>();
 
                 PointDisplacementType point_displacement;
                 specfem::assembly::load_on_device(index, field,
