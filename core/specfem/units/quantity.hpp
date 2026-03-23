@@ -28,13 +28,17 @@ template <int M, int L, int T, int A = 0> struct Dim {
   static constexpr int angle = A;  ///< Angle dimension exponent
 };
 
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
+/**
+ * @brief Internal helpers for compile-time ratio arithmetic.
+ */
 namespace impl {
 
-// Compile-time GCD — std::ratio_gcd is C++17 but absent in some libc++ builds
+/**
+ * @brief Compile-time greatest common divisor.
+ *
+ * Provides GCD for std::ratio operations (not all C++ implementations include
+ * std::ratio_gcd).
+ */
 template <intmax_t A, intmax_t B> struct ct_gcd {
   static constexpr intmax_t value = ct_gcd<B, A % B>::value;
 };
@@ -48,7 +52,7 @@ template <> struct ct_gcd<0, 0> {
   static constexpr intmax_t value = 1;
 };
 
-// ratio_gcd<R1,R2>: ratio whose value is gcd(R1,R2) for unit-denominator ratios
+/// GCD of two std::ratio types
 template <typename R1, typename R2>
 using ratio_gcd =
     std::ratio<ct_gcd<(R1::num < 0 ? -R1::num : R1::num),
@@ -110,6 +114,9 @@ public:
    */
   explicit constexpr operator type_real() const noexcept { return value_; }
 
+  /// Unary negation
+  constexpr Quantity operator-() const noexcept { return Quantity(-value_); }
+
   // Arithmetic within the same dimension and scale
   constexpr Quantity operator+(Quantity o) const noexcept {
     return Quantity(value_ + o.value_);
@@ -122,9 +129,6 @@ public:
   }
   constexpr Quantity operator/(type_real s) const noexcept {
     return Quantity(value_ / s);
-  }
-  constexpr Quantity operator*(type_real s, Quantity q) noexcept {
-    return q * s;
   }
 
   // Comparisons (same scale)
@@ -148,9 +152,21 @@ public:
   }
 };
 
-// ---------------------------------------------------------------------------
-// Mixed-scale same-dim arithmetic (only when S1 != S2; result in GCD scale)
-// ---------------------------------------------------------------------------
+/// Scalar multiplication from left
+template <typename... Args>
+constexpr Quantity<Args...> operator*(type_real s,
+                                      Quantity<Args...> q) noexcept {
+  return q * s;
+}
+
+/**
+ * @name Mixed-scale arithmetic
+ * @brief Operations between quantities with different scales but same
+ * dimension.
+ *
+ * Results are in the GCD scale of both inputs (e.g., m + km → m).
+ * @{
+ */
 
 template <typename D, typename S1, typename S2,
           typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
@@ -170,9 +186,14 @@ constexpr auto operator-(Quantity<D, S1> a, Quantity<D, S2> b)
                            b.raw() * ratio_value<std::ratio_divide<S2, Rgcd> >);
 }
 
-// ---------------------------------------------------------------------------
-// Mixed-scale same-dim comparisons (only when S1 != S2)
-// ---------------------------------------------------------------------------
+/// @}
+
+/**
+ * @name Mixed-scale comparisons
+ * @brief Comparisons between quantities with different scales but same
+ * dimension.
+ * @{
+ */
 
 template <typename D, typename S1, typename S2,
           typename = std::enable_if_t<!std::is_same<S1, S2>::value> >
@@ -214,10 +235,16 @@ constexpr bool operator>=(Quantity<D, S1> a, Quantity<D, S2> b) noexcept {
   return !(a < b);
 }
 
-// ---------------------------------------------------------------------------
-// Cross-dimension multiply/divide: exponents add/subtract, scales
-// multiply/divide
-// ---------------------------------------------------------------------------
+/// @}
+
+/**
+ * @name Cross-dimensional arithmetic
+ * @brief Multiply/divide quantities of different dimensions.
+ *
+ * Dimensional exponents add/subtract; scales multiply/divide.
+ * Enables derived quantities (e.g., distance / time = velocity).
+ * @{
+ */
 
 template <int M1, int L1, int T1, int A1, int M2, int L2, int T2, int A2,
           typename S1, typename S2>
@@ -239,61 +266,73 @@ constexpr auto operator/(Quantity<Dim<M1, L1, T1, A1>, S1> a,
                   std::ratio_divide<S1, S2> >(a.raw() / b.raw());
 }
 
-// ---------------------------------------------------------------------------
-// Standard SI base unit names
-// ---------------------------------------------------------------------------
+/// @}
 
+/**
+ * @namespace specfem::units::SI
+ * @brief SI dimension definitions.
+ */
 namespace SI {
-using DimDimensionless = Dim<0, 0, 0>; // (e.g. ratios)
-using DimMass = Dim<1, 0, 0>;          // g
-using DimLength = Dim<0, 1, 0>;        // m
-using DimTime = Dim<0, 0, 1>;          // s
-using DimAngle = Dim<0, 0, 0, 1>;      // rad
-using DimVelocity = Dim<0, 1, -1>;     // m / s
+using DimDimensionless = Dim<0, 0, 0>; ///< Dimensionless ratios
+using DimMass = Dim<1, 0, 0>;          ///< Mass (kg)
+using DimLength = Dim<0, 1, 0>;        ///< Length (m)
+using DimTime = Dim<0, 0, 1>;          ///< Time (s)
+using DimAngle = Dim<0, 0, 0, 1>;      ///< Angle (rad)
+using DimVelocity = Dim<0, 1, -1>;     ///< Velocity (m/s)
 
-using DimFrequency =
-    Dim<0, 0, -1>; // s⁻¹ (cycles or radians, distinguished by angle component)
-using DimAngularFrequency = Dim<0, 0, -1, 1>; // rad / s
-using DimDensity = Dim<1, -3, 0>;             // g / m³
-using DimPressure = Dim<1, -1, -2>;           // Pa
+using DimFrequency = Dim<0, 0, -1>;           ///< Frequency (s⁻¹)
+using DimAngularFrequency = Dim<0, 0, -1, 1>; ///< Angular frequency (rad/s)
+using DimDensity = Dim<1, -3, 0>;             ///< Density (kg/m³)
+using DimPressure = Dim<1, -1, -2>;           ///< Pressure (Pa)
 
 } // namespace SI
 
-// ---------------------------------------------------------------------------
-// Named quantity aliases — Scale defaults to ratio<1,1> (SI base units)
-// ---------------------------------------------------------------------------
+/**
+ * @name Quantity type aliases
+ * @brief Convenient names for common physical quantities.
+ *
+ * Scale defaults to std::ratio<1,1> for SI base units.
+ * @{
+ */
 
-// Dimensionless (e.g. ratios)
-using Dimensionless = Quantity<SI::DimDimensionless>;
+// Dimensionless
+using Dimensionless = Quantity<SI::DimDimensionless>; ///< Unit-less ratios
 
 // Mass
-using Grams = Quantity<SI::DimMass>;
-using Kilograms = Quantity<SI::DimMass, std::ratio<1000, 1> >;
+using Grams = Quantity<SI::DimMass>; ///< Mass in grams
+using Kilograms =
+    Quantity<SI::DimMass, std::ratio<1000, 1> >; ///< Mass in kilograms
 
 // Time
-using Seconds = Quantity<SI::DimTime>;
+using Seconds = Quantity<SI::DimTime>; ///< Time in seconds
 
 // Length
-using Meters = Quantity<SI::DimLength>;
-using Kilometers = Quantity<SI::DimLength, std::ratio<1000, 1> >;
+using Meters = Quantity<SI::DimLength>; ///< Length in meters
+using Kilometers =
+    Quantity<SI::DimLength, std::ratio<1000, 1> >; ///< Length in kilometers
 
 // Angle
-using Radians = Quantity<SI::DimAngle>;
+using Radians = Quantity<SI::DimAngle>; ///< Angle in radians
 
 // Density
-using GramPerCubicMeter = Quantity<SI::DimDensity>;
-using KilogramPerCubicMeter = Quantity<SI::DimDensity, std::ratio<1000, 1> >;
+using GramPerCubicMeter = Quantity<SI::DimDensity>; ///< Density (g/m³)
+using KilogramPerCubicMeter =
+    Quantity<SI::DimDensity, std::ratio<1000, 1> >; ///< Density (kg/m³)
 
 // Velocity
-using MetersPerSecond = Quantity<SI::DimVelocity>;
-using KilometersPerSecond = Quantity<SI::DimVelocity, std::ratio<1000, 1> >;
+using MetersPerSecond = Quantity<SI::DimVelocity>; ///< Velocity (m/s)
+using KilometersPerSecond =
+    Quantity<SI::DimVelocity, std::ratio<1000, 1> >; ///< Velocity (km/s)
 
-// Frequency (angular, cycles etc.)
-using Hertz = Quantity<SI::DimFrequency>;
-using Omega = Quantity<SI::DimAngularFrequency>;
+// Frequency
+using Hertz = Quantity<SI::DimFrequency>; ///< Frequency in Hertz (cycles/s)
+using Omega = Quantity<SI::DimAngularFrequency>; ///< Angular frequency (rad/s)
 
 // Pressure
-using Pascal = Quantity<SI::DimPressure>;
-using Megapascal = Quantity<SI::DimPressure, std::ratio<1000000, 1> >;
+using Pascal = Quantity<SI::DimPressure>; ///< Pressure (Pa)
+using Megapascal =
+    Quantity<SI::DimPressure, std::ratio<1000000, 1> >; ///< Pressure (MPa)
+
+/// @}
 
 } // namespace specfem::units

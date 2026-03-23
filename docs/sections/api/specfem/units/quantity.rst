@@ -20,44 +20,41 @@
 
 .. doxygenvariable:: specfem::units::ratio_value
 
-Named Dimensions
-----------------
+``specfem::units::SI`` Dimensions
+----------------------------------
 
-.. doxygentypedef:: specfem::units::DimLength
-
-.. doxygentypedef:: specfem::units::DimSeconds
-
-.. doxygentypedef:: specfem::units::DimHertz
-
-.. doxygentypedef:: specfem::units::DimOmega
-
-.. doxygentypedef:: specfem::units::DimRadians
-
-.. doxygentypedef:: specfem::units::DimVelocity
-
-.. doxygentypedef:: specfem::units::DimDensity
-
-.. doxygentypedef:: specfem::units::DimModulus
+.. doxygennamespace:: specfem::units::SI
+    :members:
 
 Named Quantities
 ----------------
 
+.. doxygentypedef:: specfem::units::Dimensionless
+
+.. doxygentypedef:: specfem::units::Grams
+
+.. doxygentypedef:: specfem::units::Kilograms
+
 .. doxygentypedef:: specfem::units::Seconds
-
-.. doxygentypedef:: specfem::units::Hertz
-
-.. doxygentypedef:: specfem::units::Omega
-
-.. doxygentypedef:: specfem::units::Radians
-
-.. doxygentypedef:: specfem::units::Velocity
-
-.. doxygentypedef:: specfem::units::Density
-
-.. doxygentypedef:: specfem::units::Modulus
 
 .. doxygentypedef:: specfem::units::Meters
 
 .. doxygentypedef:: specfem::units::Kilometers
 
+.. doxygentypedef:: specfem::units::Radians
+
+.. doxygentypedef:: specfem::units::GramPerCubicMeter
+
+.. doxygentypedef:: specfem::units::KilogramPerCubicMeter
+
+.. doxygentypedef:: specfem::units::MetersPerSecond
+
 .. doxygentypedef:: specfem::units::KilometersPerSecond
+
+.. doxygentypedef:: specfem::units::Hertz
+
+.. doxygentypedef:: specfem::units::Omega
+
+.. doxygentypedef:: specfem::units::Pascal
+
+.. doxygentypedef:: specfem::units::Megapascal

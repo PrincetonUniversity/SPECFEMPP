@@ -5,8 +5,9 @@
 
 .. doxygenstruct:: specfem::utilities::Band
     :members:
+    :no-link:
 
-``specfem::units::unit_cast`` for Band
----------------------------------------
+``specfem::utilities::unit_cast`` for Band
+-------------------------------------------
 
-.. doxygenfunction:: specfem::units::unit_cast(const utilities::Band<From> &b)
+.. doxygenfunction:: specfem::utilities::unit_cast

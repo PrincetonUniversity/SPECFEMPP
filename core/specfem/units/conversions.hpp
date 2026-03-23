@@ -4,26 +4,36 @@
 
 namespace specfem::units {
 
-// constexpr 2π — avoids depending on the non-constexpr specfem::constants::pi
+/**
+ * @brief Internal constants for spectral conversions.
+ *
+ * Provides compile-time π values to avoid runtime dependencies.
+ */
 namespace impl {
-constexpr type_real pi = 2 * std::atan(type_real(1.0));
-constexpr type_real two_pi = 4 * std::arctan(type_real(1.0));
+// TODO (Lucas : CPP20): Replace with std::numbers::pi when available
+constexpr type_real pi =
+    type_real(3.141592653589793238462643383279502884L); ///< π
+constexpr type_real two_pi =
+    type_real(6.283185307179586476925286766559005768L); ///< 2π
 } // namespace impl
 
-// ---------------------------------------------------------------------------
-// unit_cast_impl — primary is undefined; partial/full specializations below.
-// Unsupported conversion pairs produce a clean "incomplete type" compile error.
-// ---------------------------------------------------------------------------
-
+/**
+ * @brief Implementation dispatcher for unit conversions.
+ *
+ * Primary template is undefined; specializations handle specific conversions.
+ * Unsupported conversions produce compile-time errors.
+ *
+ * @tparam To Target quantity type
+ * @tparam From Source quantity type
+ */
 template <typename To, typename From, typename = void> struct unit_cast_impl;
 
-// Identity: no-op
+/// Identity conversion (no-op)
 template <typename T> struct unit_cast_impl<T, T, void> {
   static constexpr T call(T q) noexcept { return q; }
 };
 
-// Same-dim scale conversion (only when To and From have the same D but
-// different Scale)
+/// Scale conversion within same dimension (e.g., meters ↔ kilometers)
 template <typename D, typename S_to, typename S_from>
 struct unit_cast_impl<Quantity<D, S_to>, Quantity<D, S_from>,
                       std::enable_if_t<!std::is_same<S_to, S_from>::value> > {
@@ -33,53 +43,60 @@ struct unit_cast_impl<Quantity<D, S_to>, Quantity<D, S_from>,
   }
 };
 
-// ---------------------------------------------------------------------------
-// Cross-dim conversions (full specializations — different D types, so the
-// same-dim partial spec above never matches these)
-// ---------------------------------------------------------------------------
+/**
+ * @name Cross-dimensional spectral conversions
+ * @brief Convert between time and frequency representations.
+ *
+ * Supports bidirectional conversions:
+ * - Seconds ↔ Hertz: @f$ f = 1/T @f$
+ * - Seconds ↔ Omega: @f$ \omega = 2\pi/T @f$
+ * - Hertz ↔ Omega: @f$ \omega = 2\pi f @f$
+ * @{
+ */
 
-// Seconds <-> Hertz
+/// Seconds → Hertz
 template <> struct unit_cast_impl<Hertz, Seconds, void> {
   static constexpr Hertz call(Seconds s) noexcept {
     return Hertz(type_real(1) / s.raw());
   }
 };
 
+/// Hertz → Seconds
 template <> struct unit_cast_impl<Seconds, Hertz, void> {
   static constexpr Seconds call(Hertz f) noexcept {
     return Seconds(type_real(1) / f.raw());
   }
 };
 
-// Seconds <-> Omega
+/// Seconds → Omega
 template <> struct unit_cast_impl<Omega, Seconds, void> {
   static constexpr Omega call(Seconds s) noexcept {
     return Omega(impl::two_pi / s.raw());
   }
 };
 
+/// Omega → Seconds
 template <> struct unit_cast_impl<Seconds, Omega, void> {
   static constexpr Seconds call(Omega w) noexcept {
     return Seconds(impl::two_pi / w.raw());
   }
 };
 
-// Hertz <-> Omega
+/// Hertz → Omega
 template <> struct unit_cast_impl<Omega, Hertz, void> {
   static constexpr Omega call(Hertz f) noexcept {
     return Omega(f.raw() * impl::two_pi);
   }
 };
 
+/// Omega → Hertz
 template <> struct unit_cast_impl<Hertz, Omega, void> {
   static constexpr Hertz call(Omega w) noexcept {
     return Hertz(w.raw() / impl::two_pi);
   }
 };
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
+/// @}
 
 /**
  * @brief Convert a quantity from one unit to another.

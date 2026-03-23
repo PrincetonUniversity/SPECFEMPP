@@ -186,13 +186,13 @@ TEST(Units_Quantity, CrossDimWithScale) {
 TEST(Units_Quantity, UnitSymbolsTags) {
   using namespace specfem::units::unit_symbols;
 
-  auto d1 = type_real(5.0) * km_tag;
+  auto d1 = type_real(5.0) * km;
   EXPECT_TRUE(is_close(d1.raw(), type_real(5.0)));
 
-  auto d2 = type_real(3.0) * m_tag;
+  auto d2 = type_real(3.0) * m;
   EXPECT_TRUE(is_close(d2.raw(), type_real(3.0)));
 
-  auto t = type_real(2.0) * s_tag;
+  auto t = type_real(2.0) * s;
   EXPECT_TRUE(is_close(t.raw(), type_real(2.0)));
 
   auto v1 = type_real(4.0) * mps;
@@ -202,6 +202,6 @@ TEST(Units_Quantity, UnitSymbolsTags) {
   EXPECT_TRUE(is_close(v2.raw(), type_real(1.5)));
 
   // tag / tag cross-dim
-  auto v3 = type_real(2.0) * km_tag / (type_real(1.0) * s_tag);
+  auto v3 = type_real(2.0) * km / (type_real(1.0) * s);
   EXPECT_TRUE(is_close(v3.raw(), type_real(2.0)));
 }
