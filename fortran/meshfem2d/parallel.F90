@@ -86,7 +86,6 @@ end module my_mpi
   implicit none
 
 #ifdef WITH_MPI
-  integer :: myrank
   ! local parameters
   integer :: sizeprocs
   integer :: ier
@@ -98,22 +97,12 @@ end module my_mpi
   ! checks if getting size works
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
   if (ier /= 0 ) call stop_the_code('Error getting MPI size')
-  ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read before calling world_split()
-  ! thus read the parameter file
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-  if (ier /= 0 ) call stop_the_code('Error getting MPI rank')
-  if (myrank == 0) then
-    call open_parameter_file_from_main_only()
-    ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read
-    call read_value_integer_p(NUMBER_OF_SIMULTANEOUS_RUNS, 'NUMBER_OF_SIMULTANEOUS_RUNS')
-    call read_value_logical_p(BROADCAST_SAME_MESH_AND_MODEL, 'BROADCAST_SAME_MESH_AND_MODEL')
-    ! close parameter file
-    call close_parameter_file()
-  endif
-  ! broadcast parameters read from main to all processes
+
+  ! NUMBER_OF_SIMULTANEOUS_RUNS is always 1 (multiple simultaneous runs not supported)
+  NUMBER_OF_SIMULTANEOUS_RUNS = 1
+  BROADCAST_SAME_MESH_AND_MODEL = .false.
+
   my_local_mpi_comm_world = MPI_COMM_WORLD
-  call bcast_all_singlei(NUMBER_OF_SIMULTANEOUS_RUNS)
-  call bcast_all_singlel(BROADCAST_SAME_MESH_AND_MODEL)
 ! create sub-communicators if needed, if running more than one earthquake from the same job
   call world_split()
 
@@ -1669,9 +1658,9 @@ end subroutine gather_all_singledp
 
   use my_mpi
 
-  use constants, only: MAX_STRING_LEN,OUTPUT_FILES, &
+  use constants, only: MAX_STRING_LEN, &
     IMAIN,ISTANDARD_OUTPUT,mygroup,I_should_read_the_database
-  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
+  use shared_parameters, only: OUTPUT_FILES,NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none
 

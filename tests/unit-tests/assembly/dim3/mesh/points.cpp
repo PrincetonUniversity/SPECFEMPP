@@ -1,6 +1,6 @@
 #include "../test_fixture.hpp"
 #include "SPECFEM_Environment.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/element_connections.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"

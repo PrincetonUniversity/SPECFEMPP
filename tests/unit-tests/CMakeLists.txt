@@ -273,10 +273,12 @@ add_executable(
   point/properties/dim2/elastic_isotropic.cpp
   point/properties/dim2/elastic_anisotropic.cpp
   point/properties/dim2/acoustic_isotropic.cpp
+  point/properties/dim2/elastic_isotropic_cosserat.cpp
   point/properties/dim2/electromagnetic_isotropic.cpp
   point/properties/dim2/poroelastic_isotropic.cpp
   # Dim 3
-  # point/properties/dim3/elastic_isotropic.cpp
+  point/properties/dim3/elastic_isotropic.cpp
+  point/properties/dim3/elastic_isotropic_cosserat.cpp
 
 )
 
@@ -492,8 +494,8 @@ add_executable(
   assembly/compute_source_array/dim3/compute_source_array_from_tensor.cpp
   assembly/info/compute_tests.cpp
   assembly/info/scatter_minmax_tests.cpp
-  assembly/edge_types/edge_types_tests.cpp
-  assembly/face_types/face_types_tests.cpp
+  assembly/element_intersections/edge_types_tests.cpp
+  assembly/element_intersections/face_types_tests.cpp
 
   # New dim3 tests
   assembly/dim3/mesh/shape_functions.cpp
@@ -662,6 +664,7 @@ target_link_libraries(
 add_executable(
   coupling_integral_tests
   algorithms/dim2/coupling_integral/dshape.cpp
+  algorithms/dim2/coupling_integral/timesshape.cpp
 )
 
 target_link_libraries(
@@ -719,6 +722,21 @@ add_executable(
 
 target_link_libraries(
   chunked_face_tests
+  gtest_main
+  Kokkos::kokkos
+  specfem_environment
+  specfem::enums
+  point
+  -lpthread -lm
+)
+
+add_executable(
+  chunked_face_intersection_tests
+  policies/chunked_face_intersection.cpp
+)
+
+target_link_libraries(
+  chunked_face_intersection_tests
   gtest_main
   Kokkos::kokkos
   specfem_environment
@@ -850,23 +868,6 @@ target_link_libraries(
   gtest_main
 )
 
-# # add_executable(
-# #   source_location_tests
-# #   source/source_location_tests.cpp
-# # )
-
-# # target_link_libraries(
-# #   source_location_tests
-# #   material_class
-# #   specfem_environment
-# #
-# #   yaml-cpp
-# #   mesh
-# #   quadrature
-# #   assembly
-# #   source_class
-# #   -lpthread -lm
-# # )
 
 add_executable(
   displacement_newmark_2d_tests
@@ -978,7 +979,7 @@ target_link_libraries(
 
 
 # Link to gtest only if MPI is disabled
-if(NOT MPI_PARALLEL)
+if(NOT SPECFEM_ENABLE_MPI)
   include(GoogleTest)
   set(TEST_TARGETS
     abort_tests
@@ -987,6 +988,7 @@ if(NOT MPI_PARALLEL)
     attenuation_tests
     chunked_edge_tests
     chunked_face_tests
+    chunked_face_intersection_tests
     compute_coupling_tests
     # compute_acoustic_tests
     # compute_coupled_interfaces_tests

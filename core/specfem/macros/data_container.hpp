@@ -104,7 +104,7 @@
   }
 
 #define _DEFINE_DOMAIN_VIEW(r, data, elem)                                     \
-  specfem::kokkos::DomainView<                                                 \
+  specfem::datatype::DomainView<                                               \
       dimension_tag, type_real,                                                \
       specfem::element::dimension<dimension_tag>::dim + 1,                     \
       Kokkos::DefaultExecutionSpace::memory_space>                             \
@@ -122,7 +122,7 @@
 
 #define _INSTANCE_HOST_VIEW(r, data, elem)                                     \
   BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem))                                 \
-  (specfem::kokkos::create_mirror_view(BOOST_PP_SEQ_ELEM(0, elem)))
+  (specfem::datatype::create_mirror_view(BOOST_PP_SEQ_ELEM(0, elem)))
 
 #define _DATA_DEFINITION(seq) BOOST_PP_SEQ_FOR_EACH(_DEFINE_DOMAIN_VIEW, _, seq)
 
@@ -147,12 +147,12 @@
             BOOST_PP_SEQ_TRANSFORM(_INSTANCE_HOST_VIEW, _, seq)) {}
 
 #define _SYNC_DEVICE(r, data, elem)                                            \
-  specfem::kokkos::deep_copy(BOOST_PP_SEQ_ELEM(0, elem),                       \
-                             BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem)));
+  specfem::datatype::deep_copy(BOOST_PP_SEQ_ELEM(0, elem),                     \
+                               BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem)));
 
 #define _SYNC_HOST(r, data, elem)                                              \
-  specfem::kokkos::deep_copy(BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem)),     \
-                             BOOST_PP_SEQ_ELEM(0, elem));
+  specfem::datatype::deep_copy(BOOST_PP_CAT(h_, BOOST_PP_SEQ_ELEM(0, elem)),   \
+                               BOOST_PP_SEQ_ELEM(0, elem));
 
 #define _DATA_SYNCHRONIZE(seq)                                                 \
   void copy_to_device() { BOOST_PP_SEQ_FOR_EACH(_SYNC_DEVICE, _, seq) }        \
@@ -226,15 +226,15 @@
  * data_container(const int nspec, const int ngllz, const int ngllx)
  *     : rho("rho", nspec, ngllz, ngllx),
  *       kappa("kappa", nspec, ngllz, ngllx),
- *       h_rho(specfem::kokkos::create_mirror_view(rho)),
- *       h_kappa(specfem::kokkos::create_mirror_view(kappa)) {
+ *       h_rho(specfem::datatype::create_mirror_view(rho)),
+ *       h_kappa(specfem::datatype::create_mirror_view(kappa)) {
  *  static_assert(dimension_tag == specfem::element::dimension_tag::dim2,
  *                "Calling 2D constructor from non-2D container");
  * }
  * data_container(const int nspec, const int ngllz, const int nglly, const int
  * ngllx) : rho("rho", nspec, ngllz, ngllx), kappa("kappa", nspec, ngllz,
- * ngllx), h_rho(specfem::kokkos::create_mirror_view(rho)),
- *       h_kappa(specfem::kokkos::create_mirror_view(kappa)) {
+ * ngllx), h_rho(specfem::datatype::create_mirror_view(rho)),
+ *       h_kappa(specfem::datatype::create_mirror_view(kappa)) {
  *  static_assert(dimension_tag == specfem::element::dimension_tag::dim3,
  *                "Calling 3D constructor from non-3D container");
  * }
@@ -254,12 +254,12 @@
  *   f(h_kappa[_index], "kappa");
  * }
  * void copy_to_device() {
- *   specfem::kokkos::deep_copy(rho, h_rho);
- *   specfem::kokkos::deep_copy(kappa, h_kappa);
+ *   specfem::datatype::deep_copy(rho, h_rho);
+ *   specfem::datatype::deep_copy(kappa, h_kappa);
  * }
  * void copy_to_host() {
- *   specfem::kokkos::deep_copy(h_rho, rho);
- *   specfem::kokkos::deep_copy(h_kappa, kappa);
+ *   specfem::datatype::deep_copy(h_rho, rho);
+ *   specfem::datatype::deep_copy(h_kappa, kappa);
  * }
  * template <typename FunctorType>
  * void for_each_device_view(FunctorType f) const {

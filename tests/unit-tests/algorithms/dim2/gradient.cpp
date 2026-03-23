@@ -29,7 +29,7 @@
 
 #include "SPECFEM_Environment.hpp"
 #include "specfem/algorithms/gradient.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/datatype.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"

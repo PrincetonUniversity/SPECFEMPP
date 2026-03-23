@@ -8,7 +8,8 @@
 
 namespace specfem {
 /**
- * @namespace enums namespace is used to store enumerations.
+ * @brief This namespace contains enumerations that are used across the
+ * codebase and could not warrant their own dedicated namespace.
  *
  */
 namespace enums {

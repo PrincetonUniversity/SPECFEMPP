@@ -2,16 +2,10 @@
 
 #include "impl/attenuation_values.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/point/properties.hpp"
 #include "specfem/setup.hpp"
 #include <ostream>
 #include <tuple>
-
-namespace specfem::point {
-template <specfem::element::dimension_tag Dimension,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, bool UseSIMD>
-struct properties;
-} // namespace specfem::point
 
 namespace specfem::medium_container {
 

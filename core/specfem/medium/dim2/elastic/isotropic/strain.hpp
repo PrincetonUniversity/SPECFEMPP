@@ -4,6 +4,7 @@
 #include "specfem/element.hpp"
 #include "specfem/point/field_derivatives.hpp"
 #include <Kokkos_Core.hpp>
+#include <type_traits>
 
 namespace specfem {
 namespace medium_physics {
@@ -32,23 +33,26 @@ namespace medium_physics {
  * \end{pmatrix}
  * \f]
  *
- * @tparam UseSIMD Enable SIMD vectorization
+ * @tparam FieldDerivativesType Point field-derivatives type (deduced)
  * @param field_derivatives Displacement gradients \f$\nabla \mathbf{u}\f$
  * @return 2×2 symmetric strain tensor \f$\boldsymbol{\varepsilon}\f$
  */
-template <bool UseSIMD>
+template <typename FieldDerivativesType,
+          std::enable_if_t<FieldDerivativesType::medium_tag ==
+                               specfem::element::medium_tag::elastic_psv,
+                           int> = 0>
 KOKKOS_INLINE_FUNCTION
-    specfem::datatype::TensorPointViewType<type_real, 2, 2, UseSIMD>
-    impl_compute_strain(const specfem::point::field_derivatives<
-                        specfem::element::dimension_tag::dim2,
-                        specfem::element::medium_tag::elastic_psv, UseSIMD>
-                            &field_derivatives) {
+    specfem::datatype::TensorPointViewType<type_real, 2, 2,
+                                           FieldDerivativesType::using_simd>
+    impl_compute_strain(const FieldDerivativesType &field_derivatives) {
 
-  using datatype =
-      typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
+  using datatype = typename specfem::datatype::simd<
+      type_real, FieldDerivativesType::using_simd>::datatype;
   const auto &du = field_derivatives.du;
 
-  specfem::datatype::TensorPointViewType<type_real, 2, 2, UseSIMD> T;
+  specfem::datatype::TensorPointViewType<type_real, 2, 2,
+                                         FieldDerivativesType::using_simd>
+      T;
 
   T(0, 0) = du(0, 0); // ε_xx = ∂u_x/∂x
   T(1, 1) = du(1, 1); // ε_zz = ∂u_z/∂z
@@ -77,17 +81,17 @@ KOKKOS_INLINE_FUNCTION
  * -\frac{\text{tr}(\boldsymbol{\varepsilon})}{3}\f$ ensures
  * \f$\text{tr}(\boldsymbol{\varepsilon}') = 0\f$ in 3D.
  *
- * @tparam UseSIMD Enable SIMD vectorization
+ * @tparam FieldDerivativesType Point field-derivatives type (deduced)
  * @param field_derivatives Displacement gradients \f$\nabla \mathbf{u}\f$
  * @return 2×2 deviatoric strain tensor \f$\boldsymbol{\varepsilon}'\f$
  */
-template <bool UseSIMD>
-KOKKOS_INLINE_FUNCTION
-    specfem::datatype::TensorPointViewType<type_real, 2, 2, UseSIMD>
-    impl_compute_deviatoric_strain(const specfem::point::field_derivatives<
-                                   specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::elastic_psv,
-                                   UseSIMD> &field_derivatives) {
+template <typename FieldDerivativesType,
+          std::enable_if_t<FieldDerivativesType::medium_tag ==
+                               specfem::element::medium_tag::elastic_psv,
+                           int> = 0>
+KOKKOS_INLINE_FUNCTION specfem::datatype::TensorPointViewType<
+    type_real, 2, 2, FieldDerivativesType::using_simd>
+impl_compute_deviatoric_strain(const FieldDerivativesType &field_derivatives) {
 
   auto epsilon = impl_compute_strain(field_derivatives);
 
@@ -111,21 +115,24 @@ KOKKOS_INLINE_FUNCTION
  * \frac{\partial u_y}{\partial z} \end{pmatrix}
  * \f]
  *
- * @tparam UseSIMD Enable SIMD vectorization
+ * @tparam FieldDerivativesType Point field-derivatives type (deduced)
  * @param field_derivatives Displacement gradients \f$\nabla u_y\f$
  * @return 1×2 strain tensor \f$\boldsymbol{\varepsilon}\f$
  */
-template <bool UseSIMD>
+template <typename FieldDerivativesType,
+          std::enable_if_t<FieldDerivativesType::medium_tag ==
+                               specfem::element::medium_tag::elastic_sh,
+                           int> = 0>
 KOKKOS_INLINE_FUNCTION
-    specfem::datatype::TensorPointViewType<type_real, 1, 2, UseSIMD>
-    impl_compute_strain(const specfem::point::field_derivatives<
-                        specfem::element::dimension_tag::dim2,
-                        specfem::element::medium_tag::elastic_sh, UseSIMD>
-                            &field_derivatives) {
+    specfem::datatype::TensorPointViewType<type_real, 1, 2,
+                                           FieldDerivativesType::using_simd>
+    impl_compute_strain(const FieldDerivativesType &field_derivatives) {
 
   const auto &du = field_derivatives.du;
 
-  specfem::datatype::TensorPointViewType<type_real, 1, 2, UseSIMD> T;
+  specfem::datatype::TensorPointViewType<type_real, 1, 2,
+                                         FieldDerivativesType::using_simd>
+      T;
   T(0, 0) = du(0, 0); // ∂u_y/∂x
   T(0, 1) = du(0, 1); // ∂u_y/∂z
 
@@ -140,18 +147,18 @@ KOKKOS_INLINE_FUNCTION
  * no diagonal strain components. Therefore, \f$\boldsymbol{\varepsilon}' =
  * \boldsymbol{\varepsilon}\f$.
  *
- * @tparam UseSIMD Enable SIMD vectorization
+ * @tparam FieldDerivativesType Point field-derivatives type (deduced)
  * @param field_derivatives Displacement gradients \f$\nabla u_y\f$
  * @return 1×2 deviatoric strain tensor \f$\boldsymbol{\varepsilon}' =
  * \boldsymbol{\varepsilon}\f$
  */
-template <bool UseSIMD>
-KOKKOS_INLINE_FUNCTION
-    specfem::datatype::TensorPointViewType<type_real, 1, 2, UseSIMD>
-    impl_compute_deviatoric_strain(const specfem::point::field_derivatives<
-                                   specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::elastic_sh,
-                                   UseSIMD> &field_derivatives) {
+template <typename FieldDerivativesType,
+          std::enable_if_t<FieldDerivativesType::medium_tag ==
+                               specfem::element::medium_tag::elastic_sh,
+                           int> = 0>
+KOKKOS_INLINE_FUNCTION specfem::datatype::TensorPointViewType<
+    type_real, 1, 2, FieldDerivativesType::using_simd>
+impl_compute_deviatoric_strain(const FieldDerivativesType &field_derivatives) {
 
   return impl_compute_strain(field_derivatives);
 }

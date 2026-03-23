@@ -41,6 +41,10 @@ distance(const specfem::point::global_coordinates<DimensionTag> &p1,
  * Stores the physical coordinates (\f$x, z\f$) for a point in 2D space.
  */
 template <> struct global_coordinates<specfem::element::dimension_tag::dim2> {
+  constexpr static auto dimension_tag = specfem::element::dimension_tag::dim2;
+  constexpr static auto data_class =
+      specfem::data_access::DataClassType::global_coordinates;
+
   type_real x; ///< Global coordinate \f$ x \f$
   type_real z; ///< Global coordinate \f$ z \f$
 

@@ -30,7 +30,7 @@ inline void impl_store(const IndexType &index, const ContainerType &derivatives,
   using mask_type = typename simd::mask_type;
   using tag_type = typename simd::tag_type;
 
-  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+  const auto mask = index.template get_mask<simd>();
 
   const auto &mapping = derivatives.xix.get_mapping();
   const std::size_t _index = mapping(ispec, iz, ix);

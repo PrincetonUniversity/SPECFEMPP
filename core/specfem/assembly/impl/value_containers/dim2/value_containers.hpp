@@ -85,7 +85,7 @@ struct value_containers<specfem::element::dimension_tag::dim2,
 
     /// code path should never be reached
 
-    SUPPRESS_TEMPORARY_REF(return {};)
+    SUPPRESS_UNREACHABLE(return {};)
   }
 
   /**

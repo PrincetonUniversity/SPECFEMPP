@@ -35,6 +35,9 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
 
   this->element_types = { nspec, ngllz, nglly, ngllx, this->mesh, mesh.tags };
 
+  this->element_intersections = { ngllz, nglly, ngllx, this->mesh,
+                                  this->element_types };
+
   this->jacobian_matrix = { this->mesh };
 
   this->properties = { nspec, ngllz,          nglly,

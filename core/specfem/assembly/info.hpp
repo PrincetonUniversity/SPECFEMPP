@@ -67,4 +67,15 @@ template <specfem::element::dimension_tag DimensionTag> struct Info {
 
 } // namespace specfem::assembly
 
-#include "specfem/assembly/info.tpp"
+extern template specfem::assembly::Info<specfem::element::dimension_tag::dim2>::
+    Info(const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &,
+         const specfem::assembly::properties<
+             specfem::element::dimension_tag::dim2> &,
+         const specfem::assembly::element_types<
+             specfem::element::dimension_tag::dim2> &);
+extern template specfem::assembly::Info<specfem::element::dimension_tag::dim3>::
+    Info(const specfem::assembly::mesh<specfem::element::dimension_tag::dim3> &,
+         const specfem::assembly::properties<
+             specfem::element::dimension_tag::dim3> &,
+         const specfem::assembly::element_types<
+             specfem::element::dimension_tag::dim3> &);

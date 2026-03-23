@@ -102,7 +102,7 @@
   subroutine open_parameter_file_from_main_only(ier)
 
   use constants, only: MAX_STRING_LEN
-  use shared_input_parameters, only: Par_file
+  use shared_input_parameters, only: MESH_PAR_FILE
 
   implicit none
 
@@ -110,9 +110,9 @@
   character(len=MAX_STRING_LEN) :: filename_main,filename_run0001
   logical :: exists_main_Par_file,exists_run0001_Par_file
 
-  call param_open(Par_file, len(Par_file), ier)
+  call param_open(MESH_PAR_FILE, len(MESH_PAR_FILE), ier)
   if (ier /= 0) then
-    print *, 'Error opening Par_file: ',trim(Par_file)
+    print *, 'Error opening MESH_PAR_FILE: ',trim(MESH_PAR_FILE)
     stop
   endif
 
@@ -123,20 +123,20 @@
   subroutine open_parameter_file(ier)
 
   use constants, only: MAX_STRING_LEN
-  use shared_input_parameters, only: Par_file
+  use shared_input_parameters, only: MESH_PAR_FILE
 
   implicit none
 
   integer :: ier
   character(len=MAX_STRING_LEN) :: filename_main, filename_run0001
 
-  filename_main = Par_file
+  filename_main = MESH_PAR_FILE
 
   call param_open(filename_main, len(filename_main), ier)
 
   if (ier /= 0) then
-    ! checks second option with Par_file in run0001/DATA/
-    print *, 'Error opening Par_file: ',trim(filename_main)
+    ! checks second option with MESH_PAR_FILE in run0001/DATA/
+    print *, 'Error opening MESH_PAR_FILE: ',trim(filename_main)
     stop
   endif
 

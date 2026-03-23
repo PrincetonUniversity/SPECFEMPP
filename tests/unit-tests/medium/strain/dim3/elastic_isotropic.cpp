@@ -3,6 +3,7 @@
 #include "specfem/medium_physics.hpp"
 #include "specfem/point/field_derivatives.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 #include <gtest/gtest.h>
 
 namespace {
@@ -11,8 +12,8 @@ TEST(Strain, Elastic3D_Basic) {
   static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto elasticTag = specfem::element::medium_tag::elastic;
 
-  using FieldDerivativesType =
-      specfem::point::field_derivatives<dimension, elasticTag, false>;
+  using FieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, elasticTag, false> >;
   using StrainType =
       specfem::datatype::TensorPointViewType<type_real, 3, 3, false>;
 
@@ -48,8 +49,8 @@ TEST(Strain, Elastic3D_Zero) {
   static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto elasticTag = specfem::element::medium_tag::elastic;
 
-  using FieldDerivativesType =
-      specfem::point::field_derivatives<dimension, elasticTag, false>;
+  using FieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, elasticTag, false> >;
   using StrainType =
       specfem::datatype::TensorPointViewType<type_real, 3, 3, false>;
 
@@ -85,8 +86,8 @@ TEST(Strain, DeviatoricElastic3D_Basic) {
   static constexpr auto dimension = specfem::element::dimension_tag::dim3;
   static constexpr auto elasticTag = specfem::element::medium_tag::elastic;
 
-  using FieldDerivativesType =
-      specfem::point::field_derivatives<dimension, elasticTag, false>;
+  using FieldDerivativesType = specfem::point::field_derivatives<
+      specfem::tags::Tags<dimension, elasticTag, false> >;
   using StrainType =
       specfem::datatype::TensorPointViewType<type_real, 3, 3, false>;
 
