@@ -72,6 +72,10 @@ target_link_libraries(meshfem3D_mesh PRIVATE
   meshfem3D::shared_adios_module
 )
 
+if (SPECFEM_ENABLE_MPI)
+  target_link_libraries(meshfem3D_mesh PRIVATE MPI::MPI_Fortran)
+endif()
+
 add_executable(xmeshfem3D meshfem3D.F90)
 target_link_libraries(xmeshfem3D PRIVATE
     meshfem3D::mesh
@@ -85,6 +89,10 @@ target_link_libraries(xmeshfem3D PRIVATE
     meshfem3D::param_reader
     meshfem3D::version
 )
+
+if (SPECFEM_ENABLE_MPI)
+  target_link_libraries(xmeshfem3D PRIVATE MPI::MPI_Fortran)
+endif()
 if (ADIOS)
   target_link_libraries(meshfem3D_mesh_hdf5_module PRIVATE
     meshfem3D::shared_adios_module
