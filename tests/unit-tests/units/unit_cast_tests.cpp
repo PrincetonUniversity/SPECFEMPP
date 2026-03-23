@@ -7,10 +7,10 @@ using specfem::units::Hertz;
 using specfem::units::Kilometers;
 using specfem::units::KilometersPerSecond;
 using specfem::units::Meters;
+using specfem::units::MetersPerSecond;
 using specfem::units::Omega;
 using specfem::units::Seconds;
 using specfem::units::unit_cast;
-using specfem::units::Velocity;
 using specfem::utilities::is_close;
 
 static constexpr type_real two_pi = type_real(6.28318530717958647692);
@@ -143,19 +143,20 @@ TEST(Units_UnitCast, MetersKilometersRoundTrip) {
 // Velocity scale conversions
 // ---------------------------------------------------------------------------
 
-TEST(Units_UnitCast, VelocityToKilometersPerSecond) {
-  auto k = specfem::units::unit_cast<KilometersPerSecond>(Velocity(3000.0));
+TEST(Units_UnitCast, MetersPerSecondToKilometersPerSecond) {
+  auto k =
+      specfem::units::unit_cast<KilometersPerSecond>(MetersPerSecond(3000.0));
   EXPECT_TRUE(is_close(k.raw(), type_real(3.0)));
 }
 
-TEST(Units_UnitCast, KilometersPerSecondToVelocity) {
-  auto v = specfem::units::unit_cast<Velocity>(KilometersPerSecond(3.0));
+TEST(Units_UnitCast, KilometersPerSecondToMetersPerSecond) {
+  auto v = specfem::units::unit_cast<MetersPerSecond>(KilometersPerSecond(3.0));
   EXPECT_TRUE(is_close(v.raw(), type_real(3000.0)));
 }
 
-TEST(Units_UnitCast, VelocityKilometersPerSecondRoundTrip) {
+TEST(Units_UnitCast, MetersPerSecondKilometersPerSecondRoundTrip) {
   constexpr type_real speed = 6789.0;
-  auto back = specfem::units::unit_cast<Velocity>(
-      specfem::units::unit_cast<KilometersPerSecond>(Velocity(speed)));
+  auto back = specfem::units::unit_cast<MetersPerSecond>(
+      specfem::units::unit_cast<KilometersPerSecond>(MetersPerSecond(speed)));
   EXPECT_TRUE(is_close(back.raw(), speed));
 }

@@ -13,8 +13,8 @@ namespace specfem::units::unit_symbols {
 using s = Seconds;
 using m = Meters;
 using km = Kilometers;
-using m_per_s = Velocity;
-using km_per_s = KilometersPerSecond;
+using mps = MetersPerSecond;
+using kmps = KilometersPerSecond;
 
 // ---------------------------------------------------------------------------
 // Construction tags — enables `1.0 * km_tag` → Kilometers{1.0} syntax
@@ -47,23 +47,25 @@ template <typename N> constexpr Seconds operator*(second_tag, N v) {
 }
 
 // Velocity tags
-struct m_per_s_tag {};
-inline constexpr m_per_s_tag mps{};
-struct km_per_s_tag {};
-inline constexpr km_per_s_tag kmps{};
+struct meters_per_second_tag {};
+inline constexpr meters_per_second_tag mps_tag{};
+struct kilometers_per_second_tag {};
+inline constexpr kilometers_per_second_tag kmps_tag{};
 
-template <typename N> constexpr Velocity operator*(N v, m_per_s_tag) {
-  return Velocity(type_real(v));
-}
-template <typename N> constexpr Velocity operator*(m_per_s_tag, N v) {
-  return Velocity(type_real(v));
+template <typename N>
+constexpr MetersPerSecond operator*(N v, meters_per_second_tag) {
+  return MetersPerSecond(type_real(v));
 }
 template <typename N>
-constexpr KilometersPerSecond operator*(N v, km_per_s_tag) {
+constexpr MetersPerSecond operator*(meters_per_second_tag, N v) {
+  return MetersPerSecond(type_real(v));
+}
+template <typename N>
+constexpr KilometersPerSecond operator*(N v, kilometers_per_second_tag) {
   return KilometersPerSecond(type_real(v));
 }
 template <typename N>
-constexpr KilometersPerSecond operator*(km_per_s_tag, N v) {
+constexpr KilometersPerSecond operator*(kilometers_per_second_tag, N v) {
   return KilometersPerSecond(type_real(v));
 }
 

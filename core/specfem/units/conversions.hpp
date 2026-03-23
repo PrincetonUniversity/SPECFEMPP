@@ -5,9 +5,10 @@
 namespace specfem::units {
 
 // constexpr 2π — avoids depending on the non-constexpr specfem::constants::pi
-namespace detail {
-constexpr type_real two_pi = type_real(6.28318530717958647692);
-}
+namespace impl {
+constexpr type_real pi = 2 * std::atan(type_real(1.0));
+constexpr type_real two_pi = 4 * std::arctan(type_real(1.0));
+} // namespace impl
 
 // ---------------------------------------------------------------------------
 // unit_cast_impl — primary is undefined; partial/full specializations below.
@@ -53,26 +54,26 @@ template <> struct unit_cast_impl<Seconds, Hertz, void> {
 // Seconds <-> Omega
 template <> struct unit_cast_impl<Omega, Seconds, void> {
   static constexpr Omega call(Seconds s) noexcept {
-    return Omega(detail::two_pi / s.raw());
+    return Omega(impl::two_pi / s.raw());
   }
 };
 
 template <> struct unit_cast_impl<Seconds, Omega, void> {
   static constexpr Seconds call(Omega w) noexcept {
-    return Seconds(detail::two_pi / w.raw());
+    return Seconds(impl::two_pi / w.raw());
   }
 };
 
 // Hertz <-> Omega
 template <> struct unit_cast_impl<Omega, Hertz, void> {
   static constexpr Omega call(Hertz f) noexcept {
-    return Omega(f.raw() * detail::two_pi);
+    return Omega(f.raw() * impl::two_pi);
   }
 };
 
 template <> struct unit_cast_impl<Hertz, Omega, void> {
   static constexpr Hertz call(Omega w) noexcept {
-    return Hertz(w.raw() / detail::two_pi);
+    return Hertz(w.raw() / impl::two_pi);
   }
 };
 

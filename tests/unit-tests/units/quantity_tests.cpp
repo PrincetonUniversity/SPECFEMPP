@@ -2,15 +2,15 @@
 #include "specfem/utilities/is_close.hpp"
 #include <gtest/gtest.h>
 
-using specfem::units::Density;
+using specfem::units::GramPerCubicMeter;
 using specfem::units::Hertz;
 using specfem::units::Kilometers;
 using specfem::units::KilometersPerSecond;
 using specfem::units::Meters;
+using specfem::units::MetersPerSecond;
 using specfem::units::Omega;
 using specfem::units::Radians;
 using specfem::units::Seconds;
-using specfem::units::Velocity;
 using specfem::utilities::is_close;
 
 // ---------------------------------------------------------------------------
@@ -81,8 +81,9 @@ TEST(Units_Quantity, Comparisons) {
 // ---------------------------------------------------------------------------
 
 TEST(Units_Quantity, CrossDimMultiply) {
-  auto result = Velocity(3.0) * Density(2.0);
-  // Velocity = Dim<0,1,-1>, Density = Dim<1,-3,0> -> Dim<1,-2,-1>
+  auto result = MetersPerSecond(3.0) * GramPerCubicMeter(2.0);
+  // MetersPerSecond = Dim<0,1,-1>, GramPerCubicMeter = Dim<1,-3,0> ->
+  // Dim<1,-2,-1>
   EXPECT_TRUE(is_close(result.raw(), type_real(6.0)));
 }
 
@@ -91,8 +92,8 @@ TEST(Units_Quantity, CrossDimMultiply) {
 // ---------------------------------------------------------------------------
 
 TEST(Units_Quantity, CrossDimDivide) {
-  auto result = Velocity(6.0) / Seconds(2.0);
-  // Velocity = Dim<0,1,-1>, Seconds = Dim<0,0,1> -> Dim<0,1,-2>
+  auto result = MetersPerSecond(6.0) / Seconds(2.0);
+  // MetersPerSecond = Dim<0,1,-1>, Seconds = Dim<0,0,1> -> Dim<0,1,-2>
   EXPECT_TRUE(is_close(result.raw(), type_real(3.0)));
 }
 

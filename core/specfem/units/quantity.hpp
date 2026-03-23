@@ -71,7 +71,7 @@ public:
   constexpr Quantity operator/(type_real s) const noexcept {
     return Quantity(value_ / s);
   }
-  friend constexpr Quantity operator*(type_real s, Quantity q) noexcept {
+  constexpr Quantity operator*(type_real s, Quantity q) noexcept {
     return q * s;
   }
 
@@ -188,36 +188,60 @@ constexpr auto operator/(Quantity<Dim<M1, L1, T1, A1>, S1> a,
 }
 
 // ---------------------------------------------------------------------------
-// Named dimensions
+// Standard SI base unit names
 // ---------------------------------------------------------------------------
 
-using DimLength = Dim<0, 1, 0>;
-using DimSeconds = Dim<0, 0, 1>;
-using DimHertz = Dim<0, 0, -1>;     // cycles / s  (no angle)
-using DimOmega = Dim<0, 0, -1, 1>;  // rad / s
-using DimRadians = Dim<0, 0, 0, 1>; // rad
-using DimVelocity = Dim<0, 1, -1>;  // m / s
-using DimDensity = Dim<1, -3, 0>;   // kg / m³
-using DimModulus = Dim<1, -1, -2>;  // Pa  (μ, κ, pressure share this)
+namespace SI {
+using DimDimensionless = Dim<0, 0, 0>; // (e.g. ratios)
+using DimMass = Dim<1, 0, 0>;          // g
+using DimLength = Dim<0, 1, 0>;        // m
+using DimTime = Dim<0, 0, 1>;          // s
+using DimAngle = Dim<0, 0, 0, 1>;      // rad
+using DimVelocity = Dim<0, 1, -1>;     // m / s
 
-using DimKilometerPerSecond =
-    Dim<0, 1, -1>; // same dimension as velocity, different units
+using DimFrequency =
+    Dim<0, 0, -1>; // s⁻¹ (cycles or radians, distinguished by angle component)
+using DimAngularFrequency = Dim<0, 0, -1, 1>; // rad / s
+using DimDensity = Dim<1, -3, 0>;             // g / m³
+using DimPressure = Dim<1, -1, -2>;           // Pa
+
+} // namespace SI
 
 // ---------------------------------------------------------------------------
 // Named quantity aliases — Scale defaults to ratio<1,1> (SI base units)
 // ---------------------------------------------------------------------------
 
-using Seconds = Quantity<DimSeconds>;
-using Hertz = Quantity<DimHertz>;
-using Omega = Quantity<DimOmega>;
-using Radians = Quantity<DimRadians>;
-using Velocity = Quantity<DimVelocity>;
-using Density = Quantity<DimDensity>;
-using Modulus = Quantity<DimModulus>;
+// Dimensionless (e.g. ratios)
+using Dimensionless = Quantity<SI::DimDimensionless>;
 
-// Scale-specific aliases
-using Meters = Quantity<DimLength>;
-using Kilometers = Quantity<DimLength, std::ratio<1000, 1> >;
-using KilometersPerSecond = Quantity<DimVelocity, std::ratio<1000, 1> >;
+// Mass
+using Grams = Quantity<SI::DimMass>;
+using Kilograms = Quantity<SI::DimMass, std::ratio<1000, 1> >;
+
+// Time
+using Seconds = Quantity<SI::DimTime>;
+
+// Length
+using Meters = Quantity<SI::DimLength>;
+using Kilometers = Quantity<SI::DimLength, std::ratio<1000, 1> >;
+
+// Angle
+using Radians = Quantity<SI::DimAngle>;
+
+// Density
+using GramPerCubicMeter = Quantity<SI::DimDensity>;
+using KilogramPerCubicMeter = Quantity<SI::DimDensity, std::ratio<1000, 1> >;
+
+// Velocity
+using MetersPerSecond = Quantity<SI::DimVelocity>;
+using KilometersPerSecond = Quantity<SI::DimVelocity, std::ratio<1000, 1> >;
+
+// Frequency (angular, cycles etc.)
+using Hertz = Quantity<SI::DimFrequency>;
+using Omega = Quantity<SI::DimAngularFrequency>;
+
+// Pressure
+using Pascal = Quantity<SI::DimPressure>;
+using Megapascal = Quantity<SI::DimPressure, std::ratio<1000000, 1> >;
 
 } // namespace specfem::units
