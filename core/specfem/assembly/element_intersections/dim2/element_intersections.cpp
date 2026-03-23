@@ -52,7 +52,7 @@ specfem::assembly::element_intersections<
 
         const auto &graph = mesh.graph();
 
-        // Filter out corresponding connections
+        // Filter edges by connection type
         auto filter = [&graph](const auto &edge) {
           return graph[edge].connection == _connection_tag_;
         };

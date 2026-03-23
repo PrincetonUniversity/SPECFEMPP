@@ -82,7 +82,7 @@ void check_adjacency_graph(
 
   const auto tolerance = 1e-6 * std::min(xmax - xmin, zmax - zmin);
 
-  const auto &g = graph.graph();
+  const auto &g = graph.local_connections();
   // Filter out strongly conforming connections
   auto filter = [&g](const auto &edge) {
     return g[edge].connection ==
@@ -225,7 +225,7 @@ void specfem::mesh::mesh<
 void specfem::mesh::mesh<specfem::element::dimension_tag::dim2>::
     setup_coupled_interfaces(
         const std::set<std::pair<int, int> > &coupled_interfaces) {
-  auto &graph = this->adjacency_graph.graph();
+  auto &graph = this->adjacency_graph.local_connections();
   auto &materials = this->materials;
 
   int n_matched = 0;
