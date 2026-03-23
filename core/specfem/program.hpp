@@ -95,8 +95,16 @@ bool qplots(const type_real Q, const type_real minfreq, const type_real maxfreq,
             const type_real min_plot_freq, const type_real max_plot_freq,
             const std::string &output_dir);
 
+extern template std::string
+specfem::program::print_header<specfem::element::dimension_tag::dim2>(
+    const specfem::runtime_configuration::setup &,
+    const std::chrono::time_point<std::chrono::system_clock>);
+extern template std::string
+specfem::program::print_header<specfem::element::dimension_tag::dim3>(
+    const specfem::runtime_configuration::setup &,
+    const std::chrono::time_point<std::chrono::system_clock>);
+
 } // namespace specfem::program
 
 #include "program/abort.hpp"
 #include "program/context.hpp"
-#include "specfem/program.tpp"

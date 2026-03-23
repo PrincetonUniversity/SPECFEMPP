@@ -3,7 +3,7 @@
 Cookbooks
 =========
 
-Cookbooks are a collection of examples that demonstrate how to use the package to solve various problems. Each of the cookbook is present with the :repo-file:`examples` directory in the repository.
+Cookbooks are a collection of examples that demonstrate how to use the package to solve various problems.
 
 .. note::
 
@@ -11,7 +11,7 @@ Cookbooks are a collection of examples that demonstrate how to use the package t
 
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
 
-    dim2/index.rst
-    dim3/index.rst
+    wavepropagation/index.rst
+    kernels/index.rst

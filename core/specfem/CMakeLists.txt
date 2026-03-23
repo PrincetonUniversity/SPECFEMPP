@@ -10,6 +10,7 @@ set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
 # Add existing subdirectories
 add_subdirectory(algorithms)
 add_subdirectory(assembly)
+add_subdirectory(compute)
 add_subdirectory(attenuation)
 add_subdirectory(element)
 add_subdirectory(element_connections)
@@ -44,6 +45,7 @@ target_link_libraries(specfem_core_interface
     INTERFACE
         specfem::algorithms
         specfem::attenuation
+        specfem::compute
         specfem::assembly
         specfem::jacobian
         specfem::element

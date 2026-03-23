@@ -1,7 +1,7 @@
 
 #include "impl/interface_container.tpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/enums.hpp"
@@ -11,8 +11,8 @@ specfem::assembly::conforming_interfaces<
     specfem::element::dimension_tag::dim2>::
     conforming_interfaces(
         const int ngllz, const int ngllx,
-        const specfem::assembly::edge_types<
-            specfem::element::dimension_tag::dim2> &edge_types,
+        const specfem::assembly::element_intersections<
+            specfem::element::dimension_tag::dim2> &element_intersections,
         const specfem::assembly::jacobian_matrix<dimension_tag>
             &jacobian_matrix,
         const specfem::assembly::mesh<dimension_tag> &mesh) {
@@ -25,8 +25,8 @@ specfem::assembly::conforming_interfaces<
       CAPTURE(interface_container) {
         _interface_container_ =
             InterfaceContainerType<_interface_tag_, _boundary_tag_,
-                                   _connection_tag_>(ngllz, ngllx, edge_types,
-                                                     jacobian_matrix, mesh);
+                                   _connection_tag_>(
+                ngllz, ngllx, element_intersections, jacobian_matrix, mesh);
       })
 
   return;

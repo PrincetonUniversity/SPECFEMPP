@@ -10,15 +10,19 @@
 #include "specfem/medium_physics.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/quadrature.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/chunk_element.hpp"
 #include "specfem/point.hpp"
 #include "compute_stiffness_interaction.hpp"
+#include "specfem/macros.hpp"
+#include "specfem/tags.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
+namespace specfem::compute::impl {
+
 template <int NGLL, typename Tags>
-int specfem::compute::impl::compute_stiffness_interaction(
+int compute_stiffness_interaction_core(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int &istep) {
 
@@ -82,21 +86,21 @@ int specfem::compute::impl::compute_stiffness_interaction(
       ngll, Tags::dimension_tag, Kokkos::DefaultExecutionSpace::scratch_memory_space,
       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
+  using PointTags = specfem::tags::Tags<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag, using_simd>;
+
   using PointBoundaryType =
       specfem::point::boundary<Tags::boundary_tag, Tags::dimension_tag, using_simd>;
   using PointDisplacementType =
-      specfem::point::displacement<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::displacement<PointTags>;
   using PointVelocityType =
-      specfem::point::velocity<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::velocity<PointTags>;
   using PointAccelerationType =
-      specfem::point::acceleration<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::acceleration<PointTags>;
   using PointJacobianMatrixType =
       specfem::point::jacobian_matrix<Tags::dimension_tag, true, using_simd>;
   using PointPropertyType =
-      specfem::point::properties<Tags::dimension_tag, Tags::medium_tag, Tags::property_tag,
-                                 using_simd>;
-  using PointFieldDerivativesType =
-      specfem::point::field_derivatives<Tags::dimension_tag, Tags::medium_tag, using_simd>;
+      specfem::point::properties<PointTags>;
+  using PointFieldDerivativesType = specfem::point::field_derivatives<PointTags>;
 
   using PointWeightsType = specfem::point::weights<Tags::dimension_tag>;
 
@@ -162,7 +166,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 specfem::assembly::load_on_device(index, field,
                                                   point_displacement);
 
-                auto point_stress = specfem::medium_physics::compute_stress(
+                auto point_stress = specfem::medium_physics::compute_stress<PointTags>(
                     point_property, field_derivatives);
 
                 specfem::medium_physics::compute_cosserat_stress(
@@ -210,7 +214,7 @@ int specfem::compute::impl::compute_stiffness_interaction(
                 const auto factor =
                     point_weights.product() * point_jacobian_matrix.jacobian;
 
-                specfem::medium_physics::compute_damping_force(factor, point_property,
+                specfem::medium_physics::compute_damping_force<decltype(factor), PointTags>(factor, point_property,
                                                        velocity, acceleration);
 
                 // Compute the couple stress from the stress integrand
@@ -241,3 +245,36 @@ int specfem::compute::impl::compute_stiffness_interaction(
 
   return nelements;
 }
+
+template <int NGLL, typename Tags>
+int compute_stiffness_interaction(
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int istep) {
+
+  constexpr auto WavefieldType = Tags::wavefield_tag;
+  constexpr auto DimensionTag = Tags::dimension_tag;
+  constexpr auto MediumTag = Tags::medium_tag;
+
+  int elements_updated = 0;
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2, DIM3),
+       MEDIUM_TAG(ELASTIC, ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
+                  ELASTIC_PSV_T),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET)),
+      {
+        if constexpr (DimensionTag == _dimension_tag_ &&
+                      MediumTag == _medium_tag_) {
+          elements_updated += compute_stiffness_interaction_core<
+              NGLL,
+              specfem::tags::Tags<DimensionTag, WavefieldType, _medium_tag_,
+                                  _property_tag_, _boundary_tag_> >(assembly,
+                                                                    istep);
+        }
+      })
+
+  return elements_updated;
+}
+} // namespace specfem::compute::impl

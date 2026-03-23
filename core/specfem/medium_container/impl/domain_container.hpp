@@ -1,6 +1,6 @@
 #pragma once
 
-#include "domain_view.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/macros.hpp"
 #include <boost/preprocessor.hpp>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "impl/interface_container.hpp"
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
@@ -40,7 +40,8 @@ protected:
 public:
   nonconforming_interfaces(
       const int ngllz, const int ngllx,
-      const specfem::assembly::edge_types<dimension_tag> &edge_types,
+      const specfem::assembly::element_intersections<dimension_tag>
+          &element_intersections,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 
   nonconforming_interfaces() = default;
@@ -73,7 +74,7 @@ public:
 
     // Unreachable code - satisfy compiler return requirements
 
-    SUPPRESS_TEMPORARY_REF(return {};)
+    SUPPRESS_UNREACHABLE(return {};)
   }
 };
 

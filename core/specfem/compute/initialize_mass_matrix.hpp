@@ -2,8 +2,9 @@
 
 #include "impl/compute_mass_matrix.hpp"
 #include "impl/invert_mass_matrix.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
+#include "specfem/setup.hpp"
 #include "specfem/tags.hpp"
 
 namespace specfem::compute {

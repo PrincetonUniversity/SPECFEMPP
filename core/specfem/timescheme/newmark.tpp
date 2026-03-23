@@ -3,7 +3,7 @@
 #include "specfem/execution.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/timescheme/newmark.hpp"
-#include "specfem/assembly.hpp"
+
 
 
 template <specfem::element::dimension_tag DimensionTag,
@@ -22,12 +22,12 @@ int specfem::time_scheme::newmark_impl::corrector_phase_impl(
   constexpr bool using_simd = true;
 #endif
   using PointAccelerationType =
-      specfem::point::acceleration<DimensionTag, MediumTag,
-                                   using_simd>;
+      specfem::point::acceleration<specfem::tags::Tags<DimensionTag, MediumTag,
+                                   using_simd>>;
 
   using PointVelocityType =
-      specfem::point::velocity<DimensionTag, MediumTag,
-                               using_simd>;
+      specfem::point::velocity<specfem::tags::Tags<DimensionTag, MediumTag,
+                                                    using_simd>>;
 
   using parallel_config = specfem::parallel_configuration::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,
@@ -78,15 +78,17 @@ int specfem::time_scheme::newmark_impl::predictor_phase_impl(
   constexpr bool using_simd = true;
 #endif
 
+
+
+  using PointTags = specfem::tags::Tags<DimensionTag, MediumTag,
+                                   using_simd>;
+
   using PointAccelerationType =
-      specfem::point::acceleration<DimensionTag, MediumTag,
-                                   using_simd>;
+      specfem::point::acceleration<PointTags>;
   using PointVelocityType =
-      specfem::point::velocity<DimensionTag, MediumTag,
-                               using_simd>;
+      specfem::point::velocity<PointTags>;
   using PointDisplacementType =
-      specfem::point::displacement<DimensionTag, MediumTag,
-                                   using_simd>;
+      specfem::point::displacement<PointTags>;
 
   using parallel_config = specfem::parallel_configuration::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,

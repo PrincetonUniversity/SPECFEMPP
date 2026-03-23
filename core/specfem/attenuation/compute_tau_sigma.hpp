@@ -39,4 +39,7 @@ compute_tau_sigma(const type_real min_frequency, const type_real max_frequency);
 } // namespace attenuation
 } // namespace specfem
 
-#include "compute_tau_sigma.tpp"
+extern template Kokkos::View<type_real[specfem::constants::N_SLS],
+                             Kokkos::LayoutRight, Kokkos::HostSpace>
+specfem::attenuation::compute_tau_sigma<specfem::constants::N_SLS>(
+    const type_real, const type_real);

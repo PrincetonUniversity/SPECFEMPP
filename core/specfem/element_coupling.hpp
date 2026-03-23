@@ -1,44 +1,22 @@
 #pragma once
 
-#include "specfem/element.hpp"
-#include "specfem/element_connections.hpp"
-
-namespace specfem::point {
-
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct acceleration;
-
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct displacement;
-
-} // namespace specfem::point
-
-namespace specfem::element_coupling {
+#include "specfem/element_connections/tags.hpp"
+#include "specfem/element_coupling/tags.hpp"
+#include "specfem/point/acceleration.hpp"
+#include "specfem/point/displacement.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 
 /**
- * @brief Interface coupling direction types.
+ * @brief Element coupling configuration for multi-physics interfaces.
  *
- * Directional coupling: elastic_acoustic (elastic→acoustic),
- * acoustic_elastic (acoustic→elastic).
+ * Provides compile-time interface configuration for coupling different
+ * physics media (elastic-acoustic, acoustic-elastic). Defines coupling
+ * directions, flux schemes, and field type resolution through template
+ * specializations.
+ *
  */
-enum class interface_tag {
-  elastic_acoustic, ///< Elastic to acoustic interface - elastic field couples
-                    ///< to acoustic
-  acoustic_elastic  ///< Acoustic to elastic interface - acoustic field couples
-                    ///< to elastic
-};
-
-/**
- * @brief Flux scheme used for a coupling
- */
-enum class flux_scheme_tag {
-  natural, ///< Original SPECFEM acoustic-elastic interface (Komatitsch et al.
-           ///< 2000)
-  symmetric_interior_penalty ///< SIPG (Grote et al., Riviere et al., Antonietti
-                             ///< et al., etc.)
-};
+namespace specfem::element_coupling {
 
 /**
  * @brief Compile-time interface field type determination.
@@ -110,10 +88,10 @@ template <>
 struct attributes<specfem::element::dimension_tag::dim2,
                   specfem::element_coupling::interface_tag::elastic_acoustic>::
     self_field<specfem::element_connections::type::weakly_conforming> {
-  using type =
-      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::elastic_psv,
-                                   false>; ///< vector acceleration
+  using type = specfem::point::acceleration<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::elastic_psv,
+                          false> >; ///< vector acceleration
 };
 
 /**
@@ -123,10 +101,10 @@ template <>
 struct attributes<specfem::element::dimension_tag::dim2,
                   specfem::element_coupling::interface_tag::elastic_acoustic>::
     coupled_field<specfem::element_connections::type::weakly_conforming> {
-  using type =
-      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::acoustic,
-                                   false>; ///< scalar acceleration
+  using type = specfem::point::acceleration<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::acoustic,
+                          false> >; ///< scalar acceleration
 };
 
 /**
@@ -184,10 +162,10 @@ template <>
 struct attributes<specfem::element::dimension_tag::dim2,
                   specfem::element_coupling::interface_tag::acoustic_elastic>::
     self_field<specfem::element_connections::type::weakly_conforming> {
-  using type =
-      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::acoustic,
-                                   false>; ///< scalar acceleration
+  using type = specfem::point::acceleration<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::acoustic,
+                          false> >; ///< scalar acceleration
 };
 
 /**
@@ -197,10 +175,10 @@ template <>
 struct attributes<specfem::element::dimension_tag::dim2,
                   specfem::element_coupling::interface_tag::acoustic_elastic>::
     coupled_field<specfem::element_connections::type::weakly_conforming> {
-  using type =
-      specfem::point::displacement<specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::elastic_psv,
-                                   false>; ///< vector displacement
+  using type = specfem::point::displacement<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::elastic_psv,
+                          false> >; ///< vector displacement
 };
 
 } // namespace specfem::element_coupling

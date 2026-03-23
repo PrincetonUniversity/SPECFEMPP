@@ -103,18 +103,9 @@ end module my_mpi
   my_status_tag    = MPI_TAG
 
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read before calling world_split()
-  ! thus read the parameter file
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-  if (myrank == 0) then
-    call open_parameter_file_from_main_only(ier)
-    ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read
-    call read_value_integer(NUMBER_OF_SIMULTANEOUS_RUNS, 'NUMBER_OF_SIMULTANEOUS_RUNS', ier)
-    if (ier /= 0) stop 'Error reading Par_file parameter NUMBER_OF_SIMULTANEOUS_RUNS'
-    call read_value_logical(BROADCAST_SAME_MESH_AND_MODEL, 'BROADCAST_SAME_MESH_AND_MODEL', ier)
-    if (ier /= 0) stop 'Error reading Par_file parameter BROADCAST_SAME_MESH_AND_MODEL'
-    ! close parameter file
-    call close_parameter_file()
-  endif
+  ! MESH_PAR_FILE is set from the CLI after init_mpi(), so no file read is done
+  ! here. NUMBER_OF_SIMULTANEOUS_RUNS defaults to 1.
 
   ! broadcast parameters read from main to all processes
   my_local_mpi_comm_world = MPI_COMM_WORLD

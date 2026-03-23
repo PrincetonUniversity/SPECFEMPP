@@ -1,15 +1,20 @@
 #pragma once
 
+#include <cmath>
 #include <cstdlib>
+#include <filesystem>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <string>
 
-#ifdef MPI_PARALLEL
+#ifdef SPECFEM_ENABLE_MPI
 #include <mpi.h>
 #endif
 
 namespace specfem {
 
-#ifdef MPI_PARALLEL
+#ifdef SPECFEM_ENABLE_MPI
 using reduce_type = MPI_Op;
 const static reduce_type sum = MPI_SUM;
 const static reduce_type min = MPI_MIN;
@@ -64,7 +69,7 @@ public:
    */
   static void sync() {
     check_context();
-#ifdef c
+#ifdef SPECFEM_ENABLE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
   }
@@ -110,6 +115,49 @@ public:
   }
 
   /**
+   * @brief Format filename with processor number using dynamic zero-padding
+   *
+   * For multi-process runs, transforms "dir/stem.ext" into
+   * "dir/stem/proc_N.ext" where N is the zero-padded rank.
+   * For single-process runs, the filename is returned unchanged.
+   *
+   * Examples (size=6, rank=2):
+   * - "foo/bar.bin" -> "foo/bar/proc_2.bin"
+   * - "foo/bar.bin" (size=100, rank=2) -> "foo/bar/proc_02.bin"
+   * - "bar.bin"     -> "bar/proc_2.bin"
+   *
+   * @param filename Input filename (can include directory path)
+   * @return std::string Formatted filename with processor number
+   * @throws Exits with error code 1 if called outside Context scope
+   */
+  static std::string format_proc_filename(const std::string &filename) {
+    check_context();
+
+    // For single process, return filename unchanged
+    if (size_ <= 1) {
+      return filename;
+    }
+
+    // Calculate number of digits needed for processor numbering
+    int ndigits = static_cast<int>(std::log10(size_ - 1)) + 1;
+
+    // Format processor number with zero-padding
+    std::ostringstream proc_str;
+    proc_str << std::setfill('0') << std::setw(ndigits) << rank_;
+
+    // Use std::filesystem for cross-platform path handling
+    std::filesystem::path p(filename);
+    auto stem = p.stem();
+    auto ext = p.extension();
+    auto parent = p.parent_path();
+
+    // New scheme: dir/stem/proc_N.ext
+    std::filesystem::path result =
+        parent / stem / ("proc_" + proc_str.str() + ext.string());
+    return result.string();
+  }
+
+  /**
    * @brief MPI reduce operation
    *
    * @param lvalue Local value to reduce
@@ -121,7 +169,7 @@ public:
   static int reduce(int lvalue, specfem::reduce_type reduce_op) {
     check_context();
     int result = lvalue;
-#ifdef MPI_PARALLEL
+#ifdef SPECFEM_ENABLE_MPI
     MPI_Reduce(&lvalue, &result, 1, MPI_INT, reduce_op, 0, MPI_COMM_WORLD);
 #endif
     return result;
@@ -138,7 +186,7 @@ public:
   static float reduce(float lvalue, specfem::reduce_type reduce_op) {
     check_context();
     float result = lvalue;
-#ifdef MPI_PARALLEL
+#ifdef SPECFEM_ENABLE_MPI
     MPI_Reduce(&lvalue, &result, 1, MPI_FLOAT, reduce_op, 0, MPI_COMM_WORLD);
 #endif
     return result;
@@ -155,7 +203,7 @@ public:
   static double reduce(double lvalue, specfem::reduce_type reduce_op) {
     check_context();
     double result = lvalue;
-#ifdef MPI_PARALLEL
+#ifdef SPECFEM_ENABLE_MPI
     MPI_Reduce(&lvalue, &result, 1, MPI_DOUBLE, reduce_op, 0, MPI_COMM_WORLD);
 #endif
     return result;

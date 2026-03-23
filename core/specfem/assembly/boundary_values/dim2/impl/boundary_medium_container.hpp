@@ -116,7 +116,7 @@ public:
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
-    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+    const auto mask = index.template get_mask<simd>();
 
     for (int icomp = 0; icomp < components; ++icomp)
       Kokkos::Experimental::where(mask, acceleration(icomp))
@@ -144,7 +144,7 @@ public:
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
-    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+    const auto mask = index.template get_mask<simd>();
 
     for (int icomp = 0; icomp < components; ++icomp)
       Kokkos::Experimental::where(mask, acceleration(icomp))

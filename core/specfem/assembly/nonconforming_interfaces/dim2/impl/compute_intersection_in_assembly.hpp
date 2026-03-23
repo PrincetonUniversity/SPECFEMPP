@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/mesh.hpp"
 #include "specfem/quadrature.hpp"
 
 #include <vector>

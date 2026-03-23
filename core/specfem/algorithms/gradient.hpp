@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/jacobian_matrix.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"

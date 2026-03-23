@@ -1,6 +1,6 @@
 #include "../../SPECFEM_Environment.hpp"
 #include "specfem/algorithms.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/assembly/nonconforming_interfaces/dim2/impl/compute_intersection.tpp"
 #include "specfem/io.hpp"
 #include "specfem/point.hpp"
@@ -179,12 +179,13 @@ void test_nonconforming_container_transfers(
           specfem::element_connections::type::nonconforming>();
 
   const auto [acoustic_edges, elastic_edges] =
-      assembly.edge_types.get_edges_on_host(
+      assembly.element_intersections.get_intersections_on_host(
           specfem::element_connections::type::nonconforming,
           specfem::element_coupling::interface_tag::acoustic_elastic,
-          specfem::element::boundary_tag::none);
+          specfem::element::boundary_tag::none,
+          specfem::element_coupling::flux_scheme_tag::natural);
 
-  const int nedges = acoustic_edges.n_edges;
+  const int nedges = acoustic_edges.N;
   ASSERT_EQ(nc_interface_acoustic_elastic.h_transfer_function.extent(0), nedges)
       << "acoustic side of the the acoustic-elastic interface does not have "
          "the correct number of intersections.";

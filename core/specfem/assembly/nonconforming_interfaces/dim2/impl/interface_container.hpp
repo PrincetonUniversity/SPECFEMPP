@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
 #include "specfem/enums.hpp"
@@ -86,13 +86,13 @@ public:
    *
    * @param ngllz Number of GLL points in z-direction
    * @param ngllx Number of GLL points in x-direction
-   * @param edge_types Edge type information from mesh
+   * @param element_intersections Element intersection information from mesh
    * @param mesh Mesh connectivity and geometry
    */
   interface_container(
       const int ngllz, const int ngllx,
-      const specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>
-          &edge_types,
+      const specfem::assembly::element_intersections<
+          specfem::element::dimension_tag::dim2> &element_intersections,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 
   /** @brief Default constructor */

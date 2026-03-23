@@ -37,3 +37,9 @@
     sources/index
     shape_function/index
     timescheme/index
+    mesh_entity/index
+    element/index
+    element_coupling/index
+    element_connections/index
+    enums/index
+    simulation/index

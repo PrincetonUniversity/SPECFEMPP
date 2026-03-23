@@ -37,13 +37,15 @@ TEST_P(ElasticAcousticCouplingTest, CouplingCalculation) {
                      { params.normal[0], params.normal[1] });
 
   // Create coupled field (acceleration from elastic medium)
-  specfem::point::acceleration<specfem::element::dimension_tag::dim2,
-                               specfem::element::medium_tag::acoustic, false>
+  specfem::point::acceleration<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::acoustic, false> >
       coupled_field;
   coupled_field(0) = params.acceleration;
 
-  specfem::point::acceleration<specfem::element::dimension_tag::dim2,
-                               specfem::element::medium_tag::elastic_psv, false>
+  specfem::point::acceleration<
+      specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                          specfem::element::medium_tag::elastic_psv, false> >
       self_field;
 
   // Perform coupling computation

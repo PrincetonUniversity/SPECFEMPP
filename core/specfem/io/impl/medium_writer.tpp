@@ -1,15 +1,16 @@
 #pragma once
 
-#include "domain_view.hpp"
-#include "specfem/element.hpp"
+#include "specfem/datatype.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
-
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/element_types.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/macros.hpp"
 #include <Kokkos_Core.hpp>
-
+#include <stdexcept>
+#include <sstream>
+#include <string>
 template <typename OutputLibrary, typename ContainerType>
 void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
@@ -18,7 +19,7 @@ void specfem::io::impl::write_container(
         &element_types,
     ContainerType &container) {
   using DomainView =
-      specfem::kokkos::DomainView2d<type_real, 3, Kokkos::HostSpace>;
+      specfem::datatype::DomainView2d<type_real, 3, Kokkos::HostSpace>;
 
   container.copy_to_host();
 

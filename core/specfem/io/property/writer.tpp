@@ -3,7 +3,7 @@
 #include "specfem/io/property/writer.hpp"
 #include "specfem/io/impl/medium_writer.hpp"
 #include "writer.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 
 namespace specfem {

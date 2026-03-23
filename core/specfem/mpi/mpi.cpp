@@ -7,7 +7,7 @@ int MPI::rank_ = -1;
 int MPI::size_ = -1;
 
 void MPI::initialize(int *argc, char ***argv) {
-#ifdef MPI_PARALLEL
+#ifdef SPECFEM_ENABLE_MPI
   int initialized;
   MPI_Initialized(&initialized);
 
@@ -25,7 +25,7 @@ void MPI::initialize(int *argc, char ***argv) {
 }
 
 void MPI::finalize() {
-#ifdef MPI_PARALLEL
+#ifdef SPECFEM_ENABLE_MPI
   int finalized;
   MPI_Finalized(&finalized);
 

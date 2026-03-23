@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/parallel_configuration.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
@@ -24,11 +24,13 @@ void specfem::compute::impl::invert_mass_matrix(
   constexpr bool using_simd = (dimension_tag == specfem::element::dimension_tag::dim2) ? true : false;
 #endif
 
+  using simd = specfem::datatype::simd<type_real, using_simd>;
+
   using PointMassType =
-      specfem::point::mass_inverse<dimension_tag, medium_tag, using_simd>;
+      specfem::point::mass_inverse<specfem::tags::Tags<dimension_tag, medium_tag, using_simd>>;
 
   using parallel_config = specfem::parallel_configuration::default_range_config<
-      specfem::datatype::simd<type_real, using_simd>,
+      simd,
       Kokkos::DefaultExecutionSpace>;
 
   using IndexType = specfem::point::assembly_index<using_simd>;
@@ -36,7 +38,7 @@ void specfem::compute::impl::invert_mass_matrix(
   specfem::execution::RangeIterator range(parallel_config(), nglob);
 
   specfem::execution::for_all(
-      "specfem::compute::divide_mass_matrix", range,
+      "specfem::compute::invert_mass_matrix", range,
       KOKKOS_LAMBDA(const typename decltype(range)::base_index_type &iterator_index) {
         const auto index = iterator_index.get_index();
         PointMassType mass;

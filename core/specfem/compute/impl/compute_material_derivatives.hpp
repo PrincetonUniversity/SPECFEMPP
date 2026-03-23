@@ -1,7 +1,8 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
+#include "specfem/setup.hpp"
 
 namespace specfem {
 namespace compute {
