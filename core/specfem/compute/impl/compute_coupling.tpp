@@ -2,6 +2,7 @@
 
 #include "compute_coupling.hpp"
 #include "specfem/algorithms.hpp"
+#include "specfem/tags.hpp"
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/boundary_conditions.hpp"
 #include "specfem/chunk_edge.hpp"
@@ -16,8 +17,10 @@
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
+namespace specfem::compute::impl {
+
 template <int NGLL, int NQuad_intersection, typename Tags>
-void specfem::compute::impl::compute_coupling_weakly_conforming(
+void compute_coupling_core_weakly_conforming(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
 
   constexpr static auto dimension_tag = Tags::dimension_tag;
@@ -39,7 +42,7 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
   const auto &conforming_interfaces = assembly.conforming_interfaces;
   const auto [self_intersections, coupled_intersections] =
       assembly.element_intersections.get_intersections_on_device(
-          connection_tag, interface_tag, boundary_tag);
+          connection_tag, interface_tag, boundary_tag, flux_scheme_tag);
 
   if (self_intersections.N != coupled_intersections.N) {
     KOKKOS_ABORT_WITH_LOCATION(
@@ -107,7 +110,7 @@ void specfem::compute::impl::compute_coupling_weakly_conforming(
 }
 
 template <int NGLL, int NQuad_intersection, typename Tags>
-void specfem::compute::impl::compute_coupling_nonconforming(
+void compute_coupling_core_nonconforming(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
 
   constexpr bool using_simd = false;
@@ -127,7 +130,7 @@ void specfem::compute::impl::compute_coupling_nonconforming(
   const auto &nonconforming_interfaces = assembly.nonconforming_interfaces;
   const auto [self_intersections, coupled_intersections] =
       assembly.element_intersections.get_intersections_on_device(
-          connection_tag, interface_tag, boundary_tag);
+          connection_tag, interface_tag, boundary_tag, flux_scheme_tag);
 
   if (self_intersections.N == 0 && coupled_intersections.N == 0)
     return;
@@ -233,3 +236,46 @@ void specfem::compute::impl::compute_coupling_nonconforming(
 
   return;
 }
+
+template <int NGLL, int NQuad_intersection, typename Tags>
+void compute_coupling_core(
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
+  constexpr auto connection_tag = Tags::connection_tag;
+  if constexpr (connection_tag ==
+                specfem::element_connections::type::nonconforming) {
+    compute_coupling_core_nonconforming<NGLL, NQuad_intersection, Tags>(assembly);
+  } else {
+    compute_coupling_core_weakly_conforming<NGLL, NQuad_intersection, Tags>(assembly);
+  }
+}
+
+template <int NGLL, typename Tags>
+void compute_coupling(
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
+
+  constexpr auto WavefieldType = Tags::wavefield_tag;
+  constexpr auto DimensionTag = Tags::dimension_tag;
+  constexpr auto MediumTag = Tags::medium_tag;
+
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
+       INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
+       BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
+                    COMPOSITE_STACEY_DIRICHLET),
+       FLUX_SCHEME_TAG(NATURAL)),
+      {
+        constexpr auto self_medium = specfem::element_coupling::attributes<
+            _dimension_tag_, _interface_tag_>::self_medium();
+        if constexpr (DimensionTag == _dimension_tag_ &&
+                      self_medium == MediumTag) {
+          compute_coupling_core<NGLL, NGLL,
+                        specfem::tags::Tags<_dimension_tag_, _connection_tag_,
+                                            WavefieldType, _interface_tag_,
+                                            _boundary_tag_,
+                                            _flux_scheme_tag_> >(assembly);
+          // second ngll is the number of quadrature points on the mortar.
+        }
+      })
+}
+
+} // namespace specfem::compute::impl

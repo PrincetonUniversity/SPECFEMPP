@@ -32,10 +32,13 @@ specfem::assembly::conforming_interfaces_impl::interface_container<
         "The number of GLL points in z and x must be the same.");
   }
 
+  //TODO replace with struct template parameter later
+  specfem::element_coupling::flux_scheme_tag FluxSchemeTag = specfem::element_coupling::flux_scheme_tag::natural;
+
   const auto [self_edges, coupled_edges] =
       element_intersections.get_intersections_on_host(
           specfem::element_connections::type::weakly_conforming, InterfaceTag,
-          BoundaryTag);
+          BoundaryTag, FluxSchemeTag);
 
   const int N = self_edges.N;
   const int npoints = self_edges.n_points;

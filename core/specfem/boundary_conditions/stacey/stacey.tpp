@@ -830,13 +830,12 @@ specfem::boundary_conditions::impl_compute_mass_matrix_terms(
   constexpr static bool using_simd = PointPropertyType::simd::using_simd;
 
   using PointVelocityType =
-      specfem::point::velocity<specfem::element::dimension_tag::dim2, MediumTag,
-                               using_simd>;
+      specfem::point::velocity<specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
+                                                    using_simd>>;
 
   using PointAccelerationType =
-      specfem::point::acceleration<specfem::element::dimension_tag::dim2, MediumTag,
-                                   using_simd>;
-
+      specfem::point::acceleration<specfem::tags::Tags<specfem::element::dimension_tag::dim2, MediumTag,
+                                                        using_simd>>;
   using ViewType = typename PointVelocityType::value_type;
 
   using datatype = typename ViewType::value_type;

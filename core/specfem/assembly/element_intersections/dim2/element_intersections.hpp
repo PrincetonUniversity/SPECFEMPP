@@ -1,9 +1,9 @@
 #pragma once
 
 #include "specfem/assembly/element_types.hpp"
+#include "specfem/element_coupling/flux_scheme_configuration.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
-#include "specfem/mesh.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::assembly {
@@ -168,6 +168,14 @@ struct EdgeView {
              Kokkos::subview(iz, edge_range, Kokkos::ALL()),
              Kokkos::subview(ix, edge_range, Kokkos::ALL()) };
   }
+
+  /**
+   * @brief Get total number of quadrature points across all edges in this view.
+   *
+   * @return Total number of quadrature points
+   */
+  KOKKOS_FORCEINLINE_FUNCTION
+  int get_total_points() const { return N * n_points; }
 };
 
 /**
@@ -236,7 +244,8 @@ public:
   get_intersections_on_host(
       const specfem::element_connections::type connection,
       const specfem::element_coupling::interface_tag edge,
-      const specfem::element::boundary_tag boundary) const;
+      const specfem::element::boundary_tag boundary,
+      const specfem::element_coupling::flux_scheme_tag flux_scheme) const;
 
   /**
    * @brief Get edge pairs for coupling computations in device memory.
@@ -249,7 +258,8 @@ public:
   std::tuple<EdgeViewType, EdgeViewType> get_intersections_on_device(
       const specfem::element_connections::type connection,
       const specfem::element_coupling::interface_tag edge,
-      const specfem::element::boundary_tag boundary) const;
+      const specfem::element::boundary_tag boundary,
+      const specfem::element_coupling::flux_scheme_tag flux_scheme) const;
 
   /**
    * @brief Construct 2D edge types from mesh and element information.
@@ -258,11 +268,18 @@ public:
    * @param ngllz Number of quadrature points in z-direction
    * @param mesh 2D assembly mesh with connectivity information
    * @param element_types Element classification for coupling detection
+   * @param flux_scheme_config Flux-scheme classification for proper
+   * flux-tagging
+   * @param materials Container for ispec->material_index mapping for
+   * material-based flux-tagging
    */
   element_intersections(
       const int ngllx, const int ngllz,
       const specfem::assembly::mesh<dimension_tag> &mesh,
-      const specfem::assembly::element_types<dimension_tag> &element_types);
+      const specfem::assembly::element_types<dimension_tag> &element_types,
+      const specfem::element_coupling::flux_scheme_configuration
+          &flux_scheme_config =
+              specfem::element_coupling::flux_scheme_configuration());
 
   /**
    * @brief Default constructor.
@@ -274,7 +291,8 @@ private:
                        CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
                        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
                        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET)),
+                                    COMPOSITE_STACEY_DIRICHLET),
+                       FLUX_SCHEME_TAG(NATURAL, SYMMETRIC_INTERIOR_PENALTY)),
                       DECLARE((EdgeViewType, self_edges),
                               (EdgeViewType::HostMirror, h_self_edges),
                               (EdgeViewType, coupled_edges),

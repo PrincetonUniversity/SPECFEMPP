@@ -17,4 +17,5 @@ target_link_libraries(
         specfem::logger
         specfem::io
         specfem::assembly
+        specfem::compute
 )

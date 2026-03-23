@@ -215,10 +215,11 @@ public:
             std::enable_if_t<
                 std::is_floating_point<typename U::value_type>::value, int> = 0>
   KOKKOS_INLINE_FUNCTION bool operator==(const RegisterArray &other) const {
+    using scalar_type = typename U::value_type;
     for (std::size_t i = 0; i < size; ++i) {
       if (Kokkos::Experimental::any_of(
               Kokkos::abs(m_value[i] - other.m_value[i]) >
-              1e-6 * Kokkos::abs(m_value[i]))) {
+              static_cast<scalar_type>(1e-6) * Kokkos::abs(m_value[i]))) {
         return false;
       }
     }

@@ -7,11 +7,11 @@
 namespace specfem::compute::impl {
 
 template <int NGLL, int NQuad_intersection, typename Tags>
-void compute_coupling_weakly_conforming(
+void coupling_core_weakly_conforming(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly);
 
 template <int NGLL, int NQuad_intersection, typename Tags>
-void compute_coupling_nonconforming(
+void coupling_core_nonconforming(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly);
 
 /**
@@ -31,16 +31,7 @@ void compute_coupling_nonconforming(
  *
  * @param assembly SPECFEM++ assembly object.
  */
-template <int NGLL, int NQuad_intersection, typename Tags>
+template <int NGLL, typename Tags>
 void compute_coupling(
-    const specfem::assembly::assembly<Tags::dimension_tag> &assembly) {
-  constexpr auto connection_tag = Tags::connection_tag;
-  if constexpr (connection_tag ==
-                specfem::element_connections::type::nonconforming) {
-    compute_coupling_nonconforming<NGLL, NQuad_intersection, Tags>(assembly);
-  } else {
-    compute_coupling_weakly_conforming<NGLL, NQuad_intersection, Tags>(
-        assembly);
-  }
-}
+    const specfem::assembly::assembly<Tags::dimension_tag> &assembly);
 } // namespace specfem::compute::impl

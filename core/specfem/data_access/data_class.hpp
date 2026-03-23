@@ -55,6 +55,7 @@ enum DataClassType {
   intersection_normal,       ///< Interface normal vectors
   nonconforming_interface,   ///< Non-conforming mesh interfaces
   conforming_interface,      ///< Conforming mesh interfaces
-  global_coordinates         ///< Global coordinate data
+  global_coordinates,        ///< Global coordinate data
+  attenuation, ///< Combined attenuation factors + memory variables
 };
 } // namespace specfem::data_access
