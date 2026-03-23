@@ -147,6 +147,7 @@ add_executable(
   attenuation/maxwell_tests.cpp
   attenuation/compute_tau_eps_tests.cpp
   attenuation/compute_factors_tests.cpp
+  attenuation/compute_integration_factors_tests.cpp
 )
 
 target_link_libraries(
