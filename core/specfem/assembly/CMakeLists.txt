@@ -1,6 +1,6 @@
-file(GLOB_RECURSE COMPUTE_SOURCE_FILES "*.cpp")
+file(GLOB_RECURSE ASSEMBLY_SOURCE_FILES "*.cpp")
 
-add_library(assembly ${COMPUTE_SOURCE_FILES})
+add_library(assembly ${ASSEMBLY_SOURCE_FILES})
 add_library(specfem::assembly ALIAS assembly)
 
 target_link_libraries(
