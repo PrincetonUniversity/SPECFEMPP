@@ -66,10 +66,10 @@ public:
       ConnectionTag, specfem::element::dimension_tag::dim2,
       std::enable_if_t<ConnectionTag == specfem::element_connections::type::
                                             weakly_conforming> > {
-    using type =
-        specfem::point::acceleration<specfem::element::dimension_tag::dim2,
-                                     specfem::element::medium_tag::elastic_psv,
-                                     false>; ///< vector acceleration
+    using type = specfem::point::acceleration<
+        specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                            specfem::element::medium_tag::elastic_psv,
+                            false> >; ///< vector acceleration
   };
 
   template <specfem::element_connections::type ConnectionTag>
@@ -77,10 +77,10 @@ public:
       ConnectionTag, specfem::element::dimension_tag::dim3,
       std::enable_if_t<ConnectionTag == specfem::element_connections::type::
                                             weakly_conforming> > {
-    using type =
-        specfem::point::acceleration<specfem::element::dimension_tag::dim3,
-                                     specfem::element::medium_tag::elastic,
-                                     false>; ///< vector acceleration
+    using type = specfem::point::acceleration<
+        specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                            specfem::element::medium_tag::elastic,
+                            false> >; ///< vector acceleration
   };
 
   /**
@@ -99,10 +99,9 @@ public:
       ConnectionTag, DimensionTag,
       std::enable_if_t<ConnectionTag == specfem::element_connections::type::
                                             weakly_conforming> > {
-    using type =
-        specfem::point::acceleration<DimensionTag,
-                                     specfem::element::medium_tag::acoustic,
-                                     false>; ///< scalar acceleration
+    using type = specfem::point::acceleration<specfem::tags::Tags<
+        DimensionTag, specfem::element::medium_tag::acoustic,
+        false> >; ///< scalar acceleration
   };
 
   /// Type alias for self field
@@ -160,10 +159,9 @@ public:
       ConnectionTag, DimensionTag,
       std::enable_if_t<ConnectionTag == specfem::element_connections::type::
                                             weakly_conforming> > {
-    using type =
-        specfem::point::acceleration<DimensionTag,
-                                     specfem::element::medium_tag::acoustic,
-                                     false>; ///< scalar acceleration
+    using type = specfem::point::acceleration<specfem::tags::Tags<
+        DimensionTag, specfem::element::medium_tag::acoustic,
+        false> >; ///< scalar acceleration
   };
 
   template <specfem::element_connections::type ConnectionTag,
@@ -178,10 +176,10 @@ public:
       ConnectionTag, specfem::element::dimension_tag::dim2,
       std::enable_if_t<ConnectionTag == specfem::element_connections::type::
                                             weakly_conforming> > {
-    using type =
-        specfem::point::displacement<specfem::element::dimension_tag::dim2,
-                                     specfem::element::medium_tag::elastic_psv,
-                                     false>; ///< vector displacement
+    using type = specfem::point::displacement<
+        specfem::tags::Tags<specfem::element::dimension_tag::dim2,
+                            specfem::element::medium_tag::elastic_psv,
+                            false> >; ///< vector displacement
   };
 
   template <specfem::element_connections::type ConnectionTag>
@@ -189,10 +187,10 @@ public:
       ConnectionTag, specfem::element::dimension_tag::dim3,
       std::enable_if_t<ConnectionTag == specfem::element_connections::type::
                                             weakly_conforming> > {
-    using type =
-        specfem::point::displacement<specfem::element::dimension_tag::dim3,
-                                     specfem::element::medium_tag::elastic,
-                                     false>; ///< vector displacement
+    using type = specfem::point::displacement<
+        specfem::tags::Tags<specfem::element::dimension_tag::dim3,
+                            specfem::element::medium_tag::elastic,
+                            false> >; ///< vector displacement
   };
 
   /// Type alias for self field
