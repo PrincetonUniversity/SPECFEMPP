@@ -99,7 +99,7 @@ NMATERIALS                      = 1
 #     Q_mu             : Q_mu attenuation quality factor
 #     anisotropy_flag  : 0 = no anisotropy / 1,2,... check the implementation in file aniso_model.f90
 #     domain_id        : 1 = acoustic / 2 = elastic
-1   2300.0   1500.0   2800.0   1e6 1e4 300.0 4 25.0 500.0
+1   2300.0   1500.0   2800.0   1e6 1e4 300.0 25.0 500.0 4
 
 #-----------------------------------------------------------
 #
