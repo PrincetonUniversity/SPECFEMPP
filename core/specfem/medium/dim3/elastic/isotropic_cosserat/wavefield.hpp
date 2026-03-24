@@ -113,11 +113,11 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
           // The rotational component of the
           wavefield(ielement, index.iz, index.iy, index.ix, 0) =
-              active_field(ielement, index.iz, index.ix, 3);
+              active_field(ielement, index.iz, index.iy, index.ix, 3);
           wavefield(ielement, index.iz, index.iy, index.ix, 1) =
-              active_field(ielement, index.iz, index.ix, 4);
+              active_field(ielement, index.iz, index.iy, index.ix, 4);
           wavefield(ielement, index.iz, index.iy, index.ix, 2) =
-              active_field(ielement, index.iz, index.ix, 5);
+              active_field(ielement, index.iz, index.iy, index.ix, 5);
         });
     return;
 
@@ -154,13 +154,13 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           // Here we compute the intrinsic rotation wavefield from the
           // rotation field and the curl of the displacement field.
           wavefield(ielement, index.iz, index.iy, index.ix, 0) =
-              active_field(ielement, index.iz, index.ix, 3) -
+              active_field(ielement, index.iz, index.iy, index.ix, 3) -
               static_cast<type_real>(0.5) * du(2, 1) - du(1, 2);
           wavefield(ielement, index.iz, index.iy, index.ix, 1) =
-              active_field(ielement, index.iz, index.ix, 4) -
+              active_field(ielement, index.iz, index.iy, index.ix, 4) -
               static_cast<type_real>(0.5) * (du(0, 2) - du(2, 0));
           wavefield(ielement, index.iz, index.iy, index.ix, 2) =
-              active_field(ielement, index.iz, index.ix, 5) -
+              active_field(ielement, index.iz, index.iy, index.ix, 5) -
               static_cast<type_real>(0.5) * (du(1, 0) - du(0, 1));
         });
 
@@ -174,11 +174,11 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         const auto index = iterator_index.get_index();
         const int ielement = iterator_index.get_local_index().ispec;
         wavefield(ielement, index.iz, index.iy, index.ix, 0) =
-            active_field(ielement, index.iz, index.ix, 0);
+            active_field(ielement, index.iz, index.iy, index.ix, 0);
         wavefield(ielement, index.iz, index.iy, index.ix, 1) =
-            active_field(ielement, index.iz, index.ix, 1);
+            active_field(ielement, index.iz, index.iy, index.ix, 1);
         wavefield(ielement, index.iz, index.iy, index.ix, 2) =
-            active_field(ielement, index.iz, index.ix, 2);
+            active_field(ielement, index.iz, index.iy, index.ix, 2);
       });
 
   return;
