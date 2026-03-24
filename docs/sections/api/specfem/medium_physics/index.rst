@@ -13,6 +13,7 @@
     compute_frechet_derivatives/index
     compute_mass_matrix/index
     compute_source_contribution/index
+    compute_strain/index
     compute_stress/index
     compute_wavefield
     cosserat_coupled_stress/index

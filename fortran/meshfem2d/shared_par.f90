@@ -367,7 +367,7 @@ module shared_input_parameters
    logical :: use_binary_for_wavefield_dumps
 
    ! NUMBER_OF_SIMULTANEOUS_RUNS
-   integer :: NUMBER_OF_SIMULTANEOUS_RUNS
+   integer :: NUMBER_OF_SIMULTANEOUS_RUNS = 1
    logical :: BROADCAST_SAME_MESH_AND_MODEL
 
 end module shared_input_parameters
