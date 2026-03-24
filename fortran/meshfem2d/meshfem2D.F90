@@ -411,6 +411,12 @@ program meshfem2D
       ! ***
       ! *** parse command line arguments
       call parse_command_line_arguments()
+   endif
+
+   ! broadcast Par_file to all ranks
+   call bcast_all_string(Par_file)
+
+   if (myrank == 0) then
 
       ! ***
       ! *** read the parameter file

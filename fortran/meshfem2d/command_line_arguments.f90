@@ -19,7 +19,7 @@ end subroutine print_help_message
 
 subroutine parse_command_line_arguments()
 
-  use constants, only: MAX_STRING_LEN, one
+  use constants, only: MAX_STRING_LEN, one, myrank
   use shared_parameters, only: Par_file
 
   implicit none
@@ -31,7 +31,7 @@ subroutine parse_command_line_arguments()
   ! get the number of command line arguments
   n_args = command_argument_count()
 
-  if (n_args == 0) then
+  if (n_args == 0 .and. myrank == 0) then
     ! print help message
     call print_help_message()
     ! stop the code

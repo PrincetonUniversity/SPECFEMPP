@@ -86,7 +86,7 @@
 
   ! debug: for vtk output
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: tmp1,tmp2
-  integer :: ier
+  integer :: ier, sizeprocs
   character(len=MAX_STRING_LEN) :: filename,prname
 
   logical :: IMAIN_opened
@@ -532,7 +532,8 @@
       call write_checkmesh_xdmf_hdf5(NSPEC_AB)
     else
       ! default output
-      call create_name_database(prname,myrank,LOCAL_PATH)
+      call world_size(sizeprocs)
+      call create_name_database(prname,myrank,LOCAL_PATH,sizeprocs)
 
       ! user output
       if (myrank == 0 .and. IMAIN_opened) then

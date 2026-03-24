@@ -12,8 +12,3 @@ target_include_directories(specfem_mpi
 if(TARGET MPI::MPI_CXX)
     target_link_libraries(specfem_mpi PUBLIC MPI::MPI_CXX)
 endif()
-
-# Set MPI_PARALLEL define if MPI is enabled
-if(MPI_PARALLEL)
-    target_compile_definitions(specfem_mpi PUBLIC MPI_PARALLEL)
-endif()

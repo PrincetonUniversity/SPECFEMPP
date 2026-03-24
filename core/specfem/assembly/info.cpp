@@ -18,7 +18,7 @@ specfem::assembly::Info<specfem::element::dimension_tag::dim2>::string() const {
       << element_size.max << "]\n";
   oss << " GLL Distance: ........... [" << gll_distance.min << ", "
       << gll_distance.max << "]\n";
-  oss << " Largest Minimum Period: . " << largest_minimum_period << "\n";
+  oss << " Minimum Period: . " << largest_minimum_period << "\n";
   oss << " Suggested Time Step: .... " << suggested_time_step << "\n";
   return oss.str();
 }
@@ -42,7 +42,7 @@ specfem::assembly::Info<specfem::element::dimension_tag::dim3>::string() const {
       << element_size.max << "]\n";
   oss << " GLL Distance: ........... [" << gll_distance.min << ", "
       << gll_distance.max << "]\n";
-  oss << " Largest Minimum Period: . " << largest_minimum_period << "\n";
+  oss << " Minimum Period: . " << largest_minimum_period << "\n";
   oss << " Suggested Time Step: .... " << suggested_time_step << "\n";
   return oss.str();
 }
