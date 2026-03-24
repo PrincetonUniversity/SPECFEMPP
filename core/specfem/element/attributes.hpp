@@ -212,6 +212,27 @@ public:
 };
 
 /**
+ * @brief Attributes for 3D elastic Cosserat waves (full displacement field).
+ *
+ * Handles 3D elastic wave propagation with displacement components u_x, u_y,
+ * u_z, and rotation components phi_x, phi_y, phi_z.
+ */
+template <>
+class attributes<specfem::element::dimension_tag::dim3,
+                 specfem::element::medium_tag::elastic_spin> {
+public:
+  inline static constexpr int dimension = 3; ///< Spatial dimension
+  inline static constexpr int components =
+      6; ///< Field components (u_x, u_y, u_z, phi_x, phi_y, phi_z)
+
+  constexpr static bool has_damping_force = false; ///< No damping physics
+  inline constexpr static bool has_cosserat_stress =
+      true; ///< Has Cosserat stress
+  inline constexpr static bool has_cosserat_couple_stress =
+      true; ///< Has couple stress
+};
+
+/**
  * @brief Type trait to identify elastic media.
  *
  * @tparam MediumTag Medium type to check
@@ -227,7 +248,8 @@ using is_elastic = typename std::conditional_t<
     (MediumTag == specfem::element::medium_tag::elastic ||
      MediumTag == specfem::element::medium_tag::elastic_psv ||
      MediumTag == specfem::element::medium_tag::elastic_sh ||
-     MediumTag == specfem::element::medium_tag::elastic_psv_t),
+     MediumTag == specfem::element::medium_tag::elastic_psv_t ||
+     MediumTag == specfem::element::medium_tag::elastic_spin),
     std::true_type, std::false_type>::type;
 
 /**

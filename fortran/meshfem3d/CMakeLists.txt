@@ -12,16 +12,23 @@ enable_language(C)
 set(CMAKE_Fortran_STANDARD 95)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
-unset(WITH_MPI)
 unset(WITH_SCOTCH)
 
 option(SPECFEM_ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
-option(WITH_MPI "Build with MPI support" OFF)
 option(WITH_SCOTCH "Build with SCOTCH support" OFF)
 option(WITH_ADIOS "Build with ADIOS support" OFF)
 option(FORCE_VECTORIZATION "Force vectorization" OFF)
 option(BEOWULF_CLUSTER "Build for Beowulf cluster" OFF)
 option(SPECFEM_INSTALL "Install SPECFEM" ON)
+
+if (SPECFEM_ENABLE_MPI)
+    add_compile_definitions(WITH_MPI)
+    message(STATUS "-- Building with MPI support")
+    # Find MPI for Fortran
+    if (NOT TARGET MPI::MPI_Fortran)
+        find_package(MPI REQUIRED COMPONENTS Fortran)
+    endif()
+endif()
 
 
 if (SPECFEM_INSTALL)

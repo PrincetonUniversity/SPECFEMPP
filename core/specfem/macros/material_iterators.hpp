@@ -83,6 +83,14 @@
 /** @} */
 
 /**
+ * @brief Medium tag for Elastic Spin
+ */
+#define MEDIUM_TAG_ELASTIC_SPIN                                                \
+  (7, specfem::element::medium_tag::elastic_spin, elastic_spin,                \
+   _ENUM_ID_MEDIUM_TAG)
+/** @} */
+
+/**
  * @defgroup property_tag_macros Property Tag Macros
  * @brief Macros for property tags.
  * @{
@@ -167,7 +175,8 @@
 
 #define MEDIUM_TAGS_DIM3                                                       \
   ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC))(                                  \
-      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC))
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC))(                              \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_SPIN))
 
 #define MEDIUM_TAGS MEDIUM_TAGS_DIM2 MEDIUM_TAGS_DIM3
 
@@ -210,7 +219,9 @@
       (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC,         \
        ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
       (DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
-       ATTENUATION_TAG_CONSTANT_ISOTROPIC))
+       ATTENUATION_TAG_CONSTANT_ISOTROPIC))(                                   \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_SPIN,                            \
+       PROPERTY_TAG_ISOTROPIC_COSSERAT, ATTENUATION_TAG_NONE))
 
 #define MATERIAL_SYSTEMS MATERIAL_SYSTEMS_DIM2 MATERIAL_SYSTEMS_DIM3
 
@@ -252,7 +263,9 @@
 #define ELEMENT_TYPES_DIM3                                                     \
   ((DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC,            \
     BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM3, MEDIUM_TAG_ACOUSTIC,              \
-                         PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
+                         PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))(          \
+      (DIMENSION_TAG_DIM3, MEDIUM_TAG_ELASTIC_SPIN,                            \
+       PROPERTY_TAG_ISOTROPIC_COSSERAT, BOUNDARY_TAG_NONE))
 
 #define ELEMENT_TYPES ELEMENT_TYPES_DIM2 ELEMENT_TYPES_DIM3
 

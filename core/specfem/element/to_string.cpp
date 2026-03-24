@@ -43,6 +43,9 @@ specfem::element::to_string(const specfem::element::medium_tag &medium) {
   case specfem::element::medium_tag::elastic_psv_t:
     medium_string = "elastic_psv_t";
     break;
+  case specfem::element::medium_tag::elastic_spin:
+    medium_string = "elastic_spin";
+    break;
   case specfem::element::medium_tag::acoustic:
     medium_string = "acoustic";
     break;
@@ -71,6 +74,9 @@ specfem::element::to_string(const specfem::element::property_tag &property) {
     break;
   case specfem::element::property_tag::anisotropic:
     property_string = "anisotropic";
+    break;
+  case specfem::element::property_tag::isotropic_cosserat:
+    property_string = "isotropic_cosserat";
     break;
   default:
     property_string = "unknown";
