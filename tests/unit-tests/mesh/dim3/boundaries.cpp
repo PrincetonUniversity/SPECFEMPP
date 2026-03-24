@@ -139,6 +139,29 @@ static const std::unordered_map<std::string, ExpectedBoundaries3D>
                 // Z_MAX boundary face
                 Boundaries3D(4, specfem::mesh_entity::dim3::type::top,
                              face_direction::Z_MAX),
+            }) },
+      { "EightNodeElasticCosserat",
+        ExpectedBoundaries3D(
+            TotalFaces(24, 2, 2, 2),
+            {
+                // X_MIN boundary face
+                Boundaries3D(0, specfem::mesh_entity::dim3::type::left,
+                             face_direction::X_MIN),
+                // X_MAX boundary face
+                Boundaries3D(1, specfem::mesh_entity::dim3::type::right,
+                             face_direction::X_MAX),
+                // Y_MIN boundary face
+                Boundaries3D(0, specfem::mesh_entity::dim3::type::front,
+                             face_direction::Y_MIN),
+                // Y_MAX boundary face
+                Boundaries3D(2, specfem::mesh_entity::dim3::type::back,
+                             face_direction::Y_MAX),
+                // Z_MIN boundary face
+                Boundaries3D(0, specfem::mesh_entity::dim3::type::bottom,
+                             face_direction::Z_MIN),
+                // Z_MAX boundary face
+                Boundaries3D(4, specfem::mesh_entity::dim3::type::top,
+                             face_direction::Z_MAX),
             }) }
     };
 
