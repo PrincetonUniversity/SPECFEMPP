@@ -488,14 +488,9 @@ For elastic isotropic Cosserat materials, use the following format:
 :Format: ``material_id  rho  kappa  mu  nu  j  lambda_c  mu_c  nu_c  domain_id``
 
 .. code-block::
-    :caption: Example (Elastic)
+    :caption: Example
 
-    1   2300.0   2800.0   1500.0   0   0   0   2
-
-.. code-block::
-    :caption: Example (Acoustic, vs = 0)
-
-    2   1020.0   1500.0   0.0   0   0   0   1
+    1   2300.0   1500.0   2800.0   1e6 1e4 300.0 25.0 500.0 4
 
 
 Poroelastic Materials
