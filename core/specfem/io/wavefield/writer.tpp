@@ -5,12 +5,30 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/utilities.hpp"
 #include "specfem/logger.hpp"
+#include "specfem/mpi.hpp"
+#include <boost/filesystem.hpp>
 
 template <typename OutputLibrary>
 specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
     const std::string &output_folder, const bool save_boundary_values)
-    : output_folder(output_folder), save_boundary_values(save_boundary_values),
-      file(typename OutputLibrary::File(output_folder + "/ForwardWavefield")) {}
+    : output_folder(output_folder),
+      save_boundary_values(save_boundary_values),
+      // Build rank-specific path:
+      //   serial:   {output_folder}/ForwardWavefield
+      //   parallel: {output_folder}/ForwardWavefield/proc_N
+      // file_path is declared before file in the header, so it is initialized
+      // first and can safely be passed to the File constructor.
+      file_path([&output_folder]() {
+        const std::string formatted = specfem::MPI::format_proc_filename(
+            output_folder + "/ForwardWavefield.dir");
+        const boost::filesystem::path p(formatted);
+        if (specfem::MPI::get_size() > 1) {
+          boost::filesystem::create_directories(p.parent_path());
+          return (p.parent_path() / p.stem()).string();
+        }
+        return output_folder + "/ForwardWavefield";
+      }()),
+      file(typename OutputLibrary::File(file_path)) {}
 
 template <typename OutputLibrary>
 void specfem::io::wavefield_writer<OutputLibrary>::initialize(
@@ -108,7 +126,7 @@ void specfem::io::wavefield_writer<OutputLibrary>::initialize(
   file.createDataset("medium_tags", medium_tags).write();
   file.flush();
 
-  specfem::Logger::info("Coordinates written to " + output_folder + "/ForwardWavefield");
+  specfem::Logger::info("Coordinates written to " + file_path);
 }
 
 template <typename OutputLibrary>
@@ -196,5 +214,5 @@ void specfem::io::wavefield_writer<OutputLibrary>::finalize(
     file.flush();
   }
 
-  specfem::Logger::info("Wavefield written to " + output_folder + "/ForwardWavefield");
+  specfem::Logger::info("Wavefield written to " + file_path);
 }
