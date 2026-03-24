@@ -36,11 +36,11 @@
 
   use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M,MAX_NEIGHBORS
 
-  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,NGNOD,NGNOD2D
+  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,NGNOD,NGNOD2D,LOCAL_PATH
 
   use meshfem_par, only: ibool,xstore,ystore,zstore, &
     addressing,NPROC_XI,NPROC_ETA,iproc_xi_current,iproc_eta_current, &
-    prname, &
+    prname,sizeprocs, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
     NMATERIALS,material_properties,material_properties_undef, &
     nspec_CPML,is_CPML,CPML_to_spec,CPML_regions, &
@@ -93,6 +93,11 @@
   !integer,dimension(2,nspec) :: material_index
   integer,dimension(:,:),allocatable :: material_index
   character(len=MAX_STRING_LEN), dimension(6,1) :: undef_mat_prop
+
+  ! for new MPI database path: database/proc_N.bin
+  character(len=MAX_STRING_LEN) :: database_file
+  character(len=32) :: proc_str_db, format_str_db
+  integer :: ndigits_db
 
   ! temporary array for local nodes (either NGNOD2D or NGNOD)
   integer, dimension(NGNOD) :: loc_node
@@ -152,11 +157,26 @@
     call flush_IMAIN()
   endif
 
+  ! construct database file path: DATABASE/proc_N.bin for MPI, Database.bin for serial
+  if (sizeprocs <= 1) then
+    database_file = trim(LOCAL_PATH) // '/Database.bin'
+  else
+    ndigits_db = int(log10(real(sizeprocs-1))) + 1
+    write(format_str_db,'(a,i0,a,i0,a)') '(i', ndigits_db, '.', ndigits_db, ')'
+    write(proc_str_db, format_str_db) myrank
+    ! create Database/ subdirectory on rank 0, then synchronize
+    if (myrank == 0) then
+      call execute_command_line('mkdir -p ' // trim(LOCAL_PATH) // '/Database', wait=.true.)
+    endif
+    call synchronize_all()
+    database_file = trim(LOCAL_PATH) // '/Database/proc_' // trim(proc_str_db) // '.bin'
+  endif
+
   ! opens database file
-  open(unit=IIN_database,file=prname(1:len_trim(prname))//'Database.bin', &
+  open(unit=IIN_database,file=trim(database_file), &
        status='unknown',action='write',form='unformatted',iostat=ier)
   if (ier /= 0) then
-    print *,'Error opening Database file: ',prname(1:len_trim(prname))//'Database'
+    print *,'Error opening Database file: ',trim(database_file)
     stop 'error opening Database file'
   endif
 

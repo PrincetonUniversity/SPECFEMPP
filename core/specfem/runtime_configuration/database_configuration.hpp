@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>
@@ -29,7 +30,9 @@ public:
    */
   database_configuration(const YAML::Node &Node);
 
-  std::string get_databases() const { return this->fortran_database; }
+  std::string get_databases() const {
+    return specfem::MPI::format_proc_filename(this->fortran_database);
+  }
 
 private:
   std::string fortran_database; ///< location of fortran binary database

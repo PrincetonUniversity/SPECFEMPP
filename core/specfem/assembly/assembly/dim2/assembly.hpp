@@ -14,10 +14,10 @@
 #include "specfem/assembly/properties.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/assembly/sources.hpp"
+#include "specfem/element_coupling/flux_scheme_configuration.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/receivers.hpp"
-#include "specfem/runtime_configuration/flux_schemes.hpp"
 #include "specfem/source.hpp"
 
 namespace specfem::io {

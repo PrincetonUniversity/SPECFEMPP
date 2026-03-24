@@ -149,8 +149,8 @@ TYPED_TEST(PointPropertiesTest, ElasticIsotropicCosserat3D) {
         kappa_val - static_cast<type_real>(2.0) / static_cast<type_real>(3.0) *
                         mu_val; // Lamé's first parameter
     constexpr type_real lambdaplus2mu_scalar = kappa_val + (4.0 / 3.0) * mu_val;
-    constexpr type_real vp = std::sqrt(lambdaplus2mu_scalar / rho_val);
-    constexpr type_real vs = std::sqrt(mu_val / rho_val);
+    const type_real vp = std::sqrt(lambdaplus2mu_scalar / rho_val);
+    const type_real vs = std::sqrt(mu_val / rho_val);
 
     // Assign to our variables
     rho = rho_val;

@@ -109,7 +109,6 @@ end module constants
 
   character(len=MAX_STRING_LEN) :: TOMOGRAPHY_PATH
 
-  character(len=MAX_STRING_LEN) :: Par_file
   character(len=MAX_STRING_LEN) :: MESH_PAR_FILE
 
   ! fault parameters
@@ -143,7 +142,7 @@ end module constants
   logical :: USE_SOURCES_RECEIVERS_Z
 
   ! for simultaneous runs from the same batch job
-  integer :: NUMBER_OF_SIMULTANEOUS_RUNS
+  integer :: NUMBER_OF_SIMULTANEOUS_RUNS = 1
   logical :: BROADCAST_SAME_MESH_AND_MODEL
 
   ! movies
