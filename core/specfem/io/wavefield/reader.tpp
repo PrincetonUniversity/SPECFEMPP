@@ -1,5 +1,6 @@
 #pragma once
 
+#include "specfem/assembly.hpp"
 #include "specfem/io/wavefield/reader.hpp"
 #include "specfem/utilities.hpp"
 

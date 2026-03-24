@@ -1,5 +1,13 @@
 #pragma once
 
+#include "specfem/assembly/fwd.hpp"
+#include <string>
+
+namespace specfem::assembly {
+template <specfem::element::dimension_tag DimensionTag> struct mesh;
+template <specfem::element::dimension_tag DimensionTag> struct element_types;
+} // namespace specfem::assembly
+
 namespace specfem {
 namespace io {
 namespace impl {
