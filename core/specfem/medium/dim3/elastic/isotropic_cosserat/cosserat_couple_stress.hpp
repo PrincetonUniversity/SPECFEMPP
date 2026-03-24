@@ -71,8 +71,6 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
     const PointStressIntegrandViewType &F,
     PointAccelerationType &acceleration) {
 
-  // TODO: figure out what these are called in 3D
-
   const auto &xix = point_jacobian_matrix.xix;
   const auto &xiy = point_jacobian_matrix.xiy;
   const auto &xiz = point_jacobian_matrix.xiz;
