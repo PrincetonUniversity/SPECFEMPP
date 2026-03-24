@@ -485,7 +485,6 @@ For elastic isotropic Cosserat materials, use the following format:
 - ``domain_id``: must be 4 for elastic isotropic Cosserat
 
 :Type: ``string``
-1   2300.0   1500.0   2800.0   1e6 1e4 300.0 25.0 500.0 4
 :Format: ``material_id  rho  kappa  mu  nu  j  lambda_c  mu_c  nu_c  domain_id``
 
 .. code-block::
