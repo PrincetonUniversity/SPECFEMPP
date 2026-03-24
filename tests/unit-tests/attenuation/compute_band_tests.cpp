@@ -1,9 +1,15 @@
 #include "specfem/attenuation.hpp"
+#include "specfem/units.hpp"
+#include "specfem/utilities/band.hpp"
 #include "specfem/utilities/is_close.hpp"
 #include <cmath>
 #include <gtest/gtest.h>
 
 using specfem::attenuation::compute_band;
+using specfem::units::Omega;
+using specfem::units::Seconds;
+using specfem::units::unit_cast;
+using specfem::utilities::Band;
 using specfem::utilities::is_close;
 
 // ---------------------------------------------------------------------------
@@ -14,24 +20,36 @@ using specfem::utilities::is_close;
 TEST(Attenuation_ComputeBand, MinPeriodEqualsInput) {
   constexpr type_real min_resolved = 0.5;
 
-  EXPECT_TRUE(
-      is_close(compute_band<2>(min_resolved).min_period(), min_resolved));
-  EXPECT_TRUE(
-      is_close(compute_band<3>(min_resolved).min_period(), min_resolved));
-  EXPECT_TRUE(
-      is_close(compute_band<4>(min_resolved).min_period(), min_resolved));
-  EXPECT_TRUE(
-      is_close(compute_band<5>(min_resolved).min_period(), min_resolved));
+  EXPECT_TRUE(is_close(
+      unit_cast<Seconds>(compute_band<2>(Seconds(min_resolved))).min.raw(),
+      min_resolved));
+  EXPECT_TRUE(is_close(
+      unit_cast<Seconds>(compute_band<3>(Seconds(min_resolved))).min.raw(),
+      min_resolved));
+  EXPECT_TRUE(is_close(
+      unit_cast<Seconds>(compute_band<4>(Seconds(min_resolved))).min.raw(),
+      min_resolved));
+  EXPECT_TRUE(is_close(
+      unit_cast<Seconds>(compute_band<5>(Seconds(min_resolved))).min.raw(),
+      min_resolved));
 }
 
 // max_period must be strictly larger than min_period for all valid N_SLS
 TEST(Attenuation_ComputeBand, MaxPeriodExceedsMin) {
   constexpr type_real min_resolved = 0.5;
 
-  EXPECT_GT(compute_band<2>(min_resolved).max_period(), min_resolved);
-  EXPECT_GT(compute_band<3>(min_resolved).max_period(), min_resolved);
-  EXPECT_GT(compute_band<4>(min_resolved).max_period(), min_resolved);
-  EXPECT_GT(compute_band<5>(min_resolved).max_period(), min_resolved);
+  EXPECT_GT(
+      unit_cast<Seconds>(compute_band<2>(Seconds(min_resolved))).max.raw(),
+      min_resolved);
+  EXPECT_GT(
+      unit_cast<Seconds>(compute_band<3>(Seconds(min_resolved))).max.raw(),
+      min_resolved);
+  EXPECT_GT(
+      unit_cast<Seconds>(compute_band<4>(Seconds(min_resolved))).max.raw(),
+      min_resolved);
+  EXPECT_GT(
+      unit_cast<Seconds>(compute_band<5>(Seconds(min_resolved))).max.raw(),
+      min_resolved);
 }
 
 // The decade width theta(N_SLS) gives max_period = min_period * 10^theta
@@ -40,15 +58,16 @@ TEST(Attenuation_ComputeBand, DecadeWidthMatchesTheta) {
   constexpr type_real min_resolved = 1.0;
 
   auto check = [&](auto band, double theta) {
+    auto period_band = unit_cast<Seconds>(band);
     type_real expected_ratio = static_cast<type_real>(std::pow(10.0, theta));
     EXPECT_TRUE(
-        is_close(band.max_period() / band.min_period(), expected_ratio));
+        is_close((period_band.max / period_band.min).raw(), expected_ratio));
   };
 
-  check(compute_band<2>(min_resolved), 0.75);
-  check(compute_band<3>(min_resolved), 1.75);
-  check(compute_band<4>(min_resolved), 2.25);
-  check(compute_band<5>(min_resolved), 2.85);
+  check(compute_band<2>(Seconds(min_resolved)), 0.75);
+  check(compute_band<3>(Seconds(min_resolved)), 1.75);
+  check(compute_band<4>(Seconds(min_resolved)), 2.25);
+  check(compute_band<5>(Seconds(min_resolved)), 2.85);
 }
 
 // The band scales linearly with min_resolved_period
@@ -56,23 +75,23 @@ TEST(Attenuation_ComputeBand, ScalesWithInput) {
   constexpr type_real base = 0.1;
   constexpr type_real scale = 5.0;
 
-  auto b1 = compute_band<3>(base);
-  auto b2 = compute_band<3>(base * scale);
+  auto b1 = unit_cast<Seconds>(compute_band<3>(Seconds(base)));
+  auto b2 = unit_cast<Seconds>(compute_band<3>(Seconds(base * scale)));
 
-  EXPECT_TRUE(is_close(b2.min_period(), b1.min_period() * scale));
-  EXPECT_TRUE(is_close(b2.max_period(), b1.max_period() * scale));
+  EXPECT_TRUE(is_close(b2.min.raw(), b1.min.raw() * scale));
+  EXPECT_TRUE(is_close(b2.max.raw(), b1.max.raw() * scale));
 }
 
 // Increasing N_SLS widens the band (larger theta -> larger max_period)
 TEST(Attenuation_ComputeBand, MoreSLSGivesWiderBand) {
   constexpr type_real min_resolved = 1.0;
 
-  auto b2 = compute_band<2>(min_resolved);
-  auto b3 = compute_band<3>(min_resolved);
-  auto b4 = compute_band<4>(min_resolved);
-  auto b5 = compute_band<5>(min_resolved);
+  auto b2 = unit_cast<Seconds>(compute_band<2>(Seconds(min_resolved)));
+  auto b3 = unit_cast<Seconds>(compute_band<3>(Seconds(min_resolved)));
+  auto b4 = unit_cast<Seconds>(compute_band<4>(Seconds(min_resolved)));
+  auto b5 = unit_cast<Seconds>(compute_band<5>(Seconds(min_resolved)));
 
-  EXPECT_LT(b2.max_period(), b3.max_period());
-  EXPECT_LT(b3.max_period(), b4.max_period());
-  EXPECT_LT(b4.max_period(), b5.max_period());
+  EXPECT_LT(b2.max, b3.max);
+  EXPECT_LT(b3.max, b4.max);
+  EXPECT_LT(b4.max, b5.max);
 }
