@@ -261,7 +261,8 @@ public:
   get_intersections_on_host(
       const specfem::element_connections::type connection,
       const specfem::element_coupling::interface_tag face,
-      const specfem::element::boundary_tag boundary) const;
+      const specfem::element::boundary_tag boundary,
+      const specfem::element_coupling::flux_scheme_tag flux_scheme) const;
 
   /**
    * @brief Get face pairs for coupling computations in device memory.
@@ -274,7 +275,8 @@ public:
   std::tuple<FaceViewType, FaceViewType> get_intersections_on_device(
       const specfem::element_connections::type connection,
       const specfem::element_coupling::interface_tag face,
-      const specfem::element::boundary_tag boundary) const;
+      const specfem::element::boundary_tag boundary,
+      const specfem::element_coupling::flux_scheme_tag flux_scheme) const;
 
   /**
    * @brief Construct 3D face types from mesh and element information.
@@ -300,7 +302,8 @@ private:
                        CONNECTION_TAG(WEAKLY_CONFORMING, NONCONFORMING),
                        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
                        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET)),
+                                    COMPOSITE_STACEY_DIRICHLET),
+                       FLUX_SCHEME_TAG(NATURAL)),
                       DECLARE((FaceViewType, self_faces),
                               (FaceViewType::HostMirror, h_self_faces),
                               (FaceViewType, coupled_faces),
@@ -310,8 +313,9 @@ private:
 /**
  * @brief Build a host-side FaceView from a collection of 3D face entities.
  *
- * Constructs and fills a host-memory FaceView by mapping each collected face's
- * quadrature point indices using the provided element coordinate mapping.
+ * Constructs and fills a host-memory FaceView by mapping each collected
+ * face's quadrature point indices using the provided element coordinate
+ * mapping.
  *
  * @param label Base label for Kokkos view names
  * @param collected_faces Vector of 3D face entities to convert

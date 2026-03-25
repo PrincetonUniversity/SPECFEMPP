@@ -16,3 +16,7 @@ target_link_libraries(
         specfem::io
         ${BOOST_LIBS}
 )
+
+set_target_properties(specfem_mesh PROPERTIES
+        UNITY_BUILD $<NOT:$<BOOL:${__APPLE__}>>
+)
