@@ -135,6 +135,10 @@ end module create_meshfem_par
   ! Build the adjacency graph
   call compute_adjacency_graph(nglob)
 
+  ! Exchange MPI interface buffers and compute cross-MPI adjacencies
+  call assemble_MPI()
+  call compute_mpi_adjacency()
+
   ! CPML initialization
   call create_CPML_regions(nspec,nglob,nodes_coords)
 
