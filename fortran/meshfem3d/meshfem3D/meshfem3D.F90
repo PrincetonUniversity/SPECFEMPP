@@ -60,8 +60,6 @@
   double precision :: time_start,tCPU
   character(len=3) :: str_unit
 
-  call parse_command_line_arguments()
-
   ! MPI initialization
   call init_mpi()
 
@@ -71,6 +69,13 @@
   ! and also takes care of the main output
   call world_size(sizeprocs)
   call world_rank(myrank)
+
+  if (myrank == 0) then
+    call parse_command_line_arguments()
+  endif
+
+  ! broadcast MESH_PAR_FILE to all ranks
+  call bcast_all_string(MESH_PAR_FILE)
 
   ! open main output file, only written to by process 0
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then

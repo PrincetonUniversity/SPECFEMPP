@@ -118,7 +118,7 @@ end module create_meshfem_par
   endif
 
   ! create the name for the database of the current slide and region
-  call create_name_database(prname,myrank,LOCAL_PATH)
+  call create_name_database(prname,myrank,LOCAL_PATH,sizeprocs)
 
   ! allocates arrays
   call cmm_allocate_arrays()

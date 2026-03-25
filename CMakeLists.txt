@@ -28,6 +28,9 @@ set(SPECFEMPP_UNITY_BUILD_BATCH_SIZE 8 CACHE STRING "Set the batch size for unit
 
 if (SPECFEM_ENABLE_MPI)
     message(STATUS "Compiling SPECFEM with MPI")
+    find_package(MPI REQUIRED)
+    add_compile_definitions(SPECFEM_ENABLE_MPI)
+    message(STATUS "MPI enabled - found MPI::MPI_CXX")
 else()
     message(STATUS "Compiling SPECFEM without MPI")
 endif()
@@ -159,12 +162,6 @@ include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 # Include VTK if available (MUST BE AFTER ADIOS2, VTK is smarter about finding
 # the pugixml dependency than ADIOS2)
 include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
-
-# Find MPI if enabled
-if (SPECFEM_ENABLE_MPI)
-    find_package(MPI REQUIRED)
-    message(STATUS "MPI enabled - found MPI::MPI_CXX")
-endif()
 
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")

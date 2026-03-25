@@ -28,7 +28,7 @@ namespace impl {
 template <int NGLL, typename Tags>
 void compute_source_interaction(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-    const int &timestep);
+    const int istep);
 } // namespace impl
 } // namespace compute
 } // namespace specfem
