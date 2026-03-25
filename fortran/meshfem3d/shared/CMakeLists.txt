@@ -55,6 +55,7 @@ set(MESHFEM3D_SHARED_MODULE
   sort_array_coordinates.f90
   utm_geo.f90
   write_VTK_data.f90
+  assemble_MPI.F90
 )
 
 add_library(meshfem3D_shared_module shared_par.F90)

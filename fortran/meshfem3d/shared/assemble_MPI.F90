@@ -98,7 +98,9 @@ subroutine assemble_MPI()
    !!
    !! This is a no-op when NPROC_XI == 1 and NPROC_ETA == 1.
 
+#ifdef WITH_MPI
    use mpi
+#endif
    use constants, only: NDIM, myrank
    use constants_meshfem, only: NGLLY_M, NGLLZ_M
    use meshfem_par, only: nspec, addressing, iproc_xi_current, iproc_eta_current
@@ -120,7 +122,9 @@ subroutine assemble_MPI()
    integer :: ireq, ierr
 
    ! Initialize request handles
+#ifdef WITH_MPI
    requests(:) = MPI_REQUEST_NULL
+#endif
    nb_interfaces = 0
    interfaces(:) = .false.
    nspec_send(:) = 0
@@ -133,8 +137,7 @@ subroutine assemble_MPI()
       ibool_corners_SE, ibool_corners_SW)
 
 
-   call get_communication_partners(iMPIcut_xi, iMPIcut_eta, &
-      nb_interfaces, interfaces, nspec_send, nspec_recv)
+   call get_communication_partners(iMPIcut_xi, iMPIcut_eta)
 
    !! Allocate the communication buffers based on the counts in nspec_send and
    !! nspec_recv for each interface.
@@ -406,16 +409,18 @@ subroutine assemble_MPI()
       endif
 
       !! Wait for all sends and receives to complete before returning
+#ifdef WITH_MPI
       call MPI_Waitall(ireq+1, requests(1:ireq+1), &
          MPI_STATUSES_IGNORE, ierr)
       if (ierr /= MPI_SUCCESS) &
          call exit_MPI(myrank, &
          'MPI_Waitall failed in assemble_MPI')
+#endif
    endif
 
 end subroutine assemble_MPI
 
-subroutine set_ibool_corners(ibool_corners_W, ibool_corners_E, ibool_corners_S, &
+subroutine assemble_ibool_corners(ibool_corners_W, ibool_corners_E, ibool_corners_S, &
    ibool_corners_N, ibool_corners_NW, ibool_corners_NE, &
    ibool_corners_SE, ibool_corners_SW)
    !! Initialize the ibool corner index arrays for each interface type.
@@ -473,12 +478,11 @@ subroutine set_ibool_corners(ibool_corners_W, ibool_corners_E, ibool_corners_S, 
    ibool_corners_SW(1, :) = [1, 1, 1] ! corner: (xi=1, eta=1)
    ibool_corners_SW(2, :) = [1, 1, NGLLZ_M] ! corner: (xi=1, eta=1, zeta=NGLLZ_M)
 
-end subroutine set_ibool_corners
+end subroutine assemble_ibool_corners
 
 
 subroutine get_communication_partners( &
-   iMPIcut_xi, iMPIcut_eta, nb_interfaces, &
-   interfaces, nspec_send, nspec_recv)
+   iMPIcut_xi, iMPIcut_eta)
    !! Determine MPI communication partners and exchange element counts
    !! for each mesh slice in a 2D processor grid (NPROC_XI x NPROC_ETA).
    !!
@@ -510,19 +514,19 @@ subroutine get_communication_partners( &
    !! This routine is a no-op when NPROC_XI == 1 and NPROC_ETA == 1
    !! (single-process run).
 
+#ifdef WITH_MPI
    use mpi
+#endif
    use constants, only: myrank
    use meshfem_par, only: nspec, addressing, NPROC_XI, NPROC_ETA, &
       iproc_xi_current, iproc_eta_current
-   use assemble_MPI_par
+   use assemble_MPI_par, only: nb_interfaces, interfaces, nspec_send, &
+      nspec_recv, W, E, S, N, NW, NE, SE, SW
 
    implicit none
 
    ! Arguments
    logical, intent(in) :: iMPIcut_xi(2, nspec), iMPIcut_eta(2, nspec)
-   integer, intent(out) :: nb_interfaces
-   logical, intent(out) :: interfaces(8)
-   integer, intent(out) :: nspec_send(8), nspec_recv(8)
 
    ! Local variables
    integer :: iproc_partner, ierr
@@ -598,6 +602,7 @@ subroutine get_communication_partners( &
       nspec_send(SW) = count(iMPIcut_xi(1,:) .and. iMPIcut_eta(1,:))
 
    !! Do all the sends first
+#ifdef WITH_MPI
    if (interfaces(W)) then
       iproc_partner = addressing(iproc_xi_current-1, iproc_eta_current)
       nrequests = nrequests + 1
@@ -670,10 +675,12 @@ subroutine get_communication_partners( &
       if (ierr /= MPI_SUCCESS) &
          call exit_MPI(myrank, 'MPI_ISend failed for SW interface')
    endif
+#endif
 
    nspec_recv(:) = 0
 
    !! Do all the receives
+#ifdef WITH_MPI
    if (interfaces(W)) then
       iproc_partner = addressing(iproc_xi_current-1, iproc_eta_current)
       nrequests = nrequests + 1
@@ -753,6 +760,7 @@ subroutine get_communication_partners( &
    if (ierr /= MPI_SUCCESS) &
       call exit_MPI(myrank, &
       'MPI_Waitall failed in get_communication_partners')
+#endif
 
 end subroutine get_communication_partners
 
@@ -907,7 +915,9 @@ subroutine send_communication_buffers( &
    !! the send buffers can be safely reused. Each call is checked
    !! for errors.
 
+#ifdef WITH_MPI
    use mpi
+#endif
    use constants, only: NDIM, myrank
    use meshfem_par, only: NPROC_XI, NPROC_ETA
 
@@ -926,6 +936,7 @@ subroutine send_communication_buffers( &
 
    if (NPROC_XI == 1 .and. NPROC_ETA == 1) return
 
+#ifdef WITH_MPI
    call MPI_ISend(interface_buffer, nspec_send * 2, MPI_INTEGER, &
       iproc_partner, tag_interface, MPI_COMM_WORLD, &
       request(1), ierr)
@@ -937,6 +948,7 @@ subroutine send_communication_buffers( &
       request(2), ierr)
    if (ierr /= MPI_SUCCESS) &
       call exit_MPI(myrank, 'MPI_ISend failed for coordinate buffer')
+#endif
 
 end subroutine send_communication_buffers
 
@@ -958,7 +970,9 @@ subroutine receive_communication_buffers( &
    !! the receive buffers can be read. Each call is checked for
    !! errors.
 
+#ifdef WITH_MPI
    use mpi
+#endif
    use constants, only: NDIM, myrank
    use meshfem_par, only: NPROC_XI, NPROC_ETA
 
@@ -977,6 +991,7 @@ subroutine receive_communication_buffers( &
 
    if (NPROC_XI == 1 .and. NPROC_ETA == 1) return
 
+#ifdef WITH_MPI
    call MPI_IRecv(interface_buffer, nspec_recv * 2, MPI_INTEGER, &
       iproc_partner, tag_interface, MPI_COMM_WORLD, &
       request(1), ierr)
@@ -988,6 +1003,7 @@ subroutine receive_communication_buffers( &
       request(2), ierr)
    if (ierr /= MPI_SUCCESS) &
       call exit_MPI(myrank, 'MPI_IRecv failed for coordinate buffer')
+#endif
 
 end subroutine receive_communication_buffers
 
@@ -1025,7 +1041,7 @@ subroutine compute_mpi_adjacency()
    !! Does nothing when num_mpi_adjacencies == 0 (single-process or
    !! all interfaces empty).
 
-   use constants, only: NDIM
+   use constants, only: NDIM, myrank
    use meshfem_par, only: addressing, iproc_xi_current, iproc_eta_current
    use assemble_MPI_par
 
@@ -1055,7 +1071,7 @@ subroutine compute_mpi_adjacency()
    if (num_mpi_adjacencies == 0) return
 
    allocate(mpi_adjacency(num_mpi_adjacencies, 5), stat=ier)
-   if (ier /= 0) stop 'Error allocating mpi_adjacency'
+   if (ier /= 0) call exit_MPI(myrank, 'Error allocating mpi_adjacency')
 
    ! Second pass: fill mpi_adjacency
    count = 0

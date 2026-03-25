@@ -88,6 +88,8 @@ end module create_meshfem_par
 
   use adjacency_graph, only: compute_adjacency_graph
 
+  use assemble_MPI_par, only: num_mpi_adjacencies
+
   implicit none
 
   ! local parameters
