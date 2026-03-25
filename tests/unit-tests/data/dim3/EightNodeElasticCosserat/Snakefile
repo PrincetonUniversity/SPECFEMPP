@@ -1,4 +1,4 @@
-# Snakemake workflow to generate database for 4-node elastic problem in 3D
+# Snakemake workflow to generate database for 8-node elastic Cosserat problem in 3D
 
 rule all:
     input:
@@ -6,7 +6,7 @@ rule all:
     shell:
         "echo 'All tasks completed successfully.'"
 
-rule check_executible:
+rule check_executable:
     output:
         executable_checked = "executable_checked.txt",
     shell:

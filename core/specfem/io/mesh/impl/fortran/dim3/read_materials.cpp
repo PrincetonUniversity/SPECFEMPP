@@ -165,7 +165,7 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
       if (mu < 0.0 || mu_c < 0.0 || 3 * lambda + 2 * mu < 0.0 ||
           3 * lambda_c + 2 * mu_c < 0.0) {
         throw std::runtime_error(
-            "Invalid elastic parameters for Cosserat material. u, mu_c, "
+            "Invalid elastic parameters for Cosserat material. mu, mu_c, "
             "3*lambda + 2*mu, and 3*lambda_c + 2*mu_c must be non-negative.");
       }
       specfem::medium_container::material<
@@ -179,6 +179,7 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
                           specfem::element::property_tag::isotropic_cosserat,
                           specfem::element::attenuation_tag::none, index,
                           imat });
+      break;
     }
     default:
       throw std::runtime_error("Unknown material ID: " +
