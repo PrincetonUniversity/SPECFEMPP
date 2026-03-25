@@ -209,6 +209,60 @@ public:
     return result;
   }
 
+  /**
+   * @brief MPI all-reduce operation for float arrays
+   *
+   * Reduces data across all ranks and distributes the result to every rank.
+   * In serial builds this is a no-op (the local values are already "global").
+   *
+   * @param data Pointer to local data; overwritten with the reduced result
+   * @param count Number of elements
+   * @param reduce_op Reduction operation (specfem::sum, specfem::min,
+   * specfem::max)
+   * @throws Exits with error code 1 if called outside Context scope
+   */
+  static void allreduce(float *data, int count,
+                        specfem::reduce_type reduce_op) {
+    check_context();
+#ifdef SPECFEM_ENABLE_MPI
+    MPI_Allreduce(MPI_IN_PLACE, data, count, MPI_FLOAT, reduce_op,
+                  MPI_COMM_WORLD);
+#endif
+  }
+
+  /**
+   * @brief MPI all-reduce operation for double arrays
+   *
+   * @param data Pointer to local data; overwritten with the reduced result
+   * @param count Number of elements
+   * @param reduce_op Reduction operation
+   * @throws Exits with error code 1 if called outside Context scope
+   */
+  static void allreduce(double *data, int count,
+                        specfem::reduce_type reduce_op) {
+    check_context();
+#ifdef SPECFEM_ENABLE_MPI
+    MPI_Allreduce(MPI_IN_PLACE, data, count, MPI_DOUBLE, reduce_op,
+                  MPI_COMM_WORLD);
+#endif
+  }
+
+  /**
+   * @brief MPI all-reduce operation for int arrays
+   *
+   * @param data Pointer to local data; overwritten with the reduced result
+   * @param count Number of elements
+   * @param reduce_op Reduction operation
+   * @throws Exits with error code 1 if called outside Context scope
+   */
+  static void allreduce(int *data, int count, specfem::reduce_type reduce_op) {
+    check_context();
+#ifdef SPECFEM_ENABLE_MPI
+    MPI_Allreduce(MPI_IN_PLACE, data, count, MPI_INT, reduce_op,
+                  MPI_COMM_WORLD);
+#endif
+  }
+
 private:
   MPI() = default;
   ~MPI() = default;

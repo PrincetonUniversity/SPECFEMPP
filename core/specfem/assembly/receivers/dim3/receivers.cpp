@@ -5,9 +5,11 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/receivers.hpp"
 #include "specfem/element.hpp"
+#include "specfem/mpi.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <limits>
 #include <vector>
 
 specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
@@ -65,7 +67,50 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     seismogram_type_map[seis_type] = isies;
   }
 
-  for (int ireceiver = 0; ireceiver < receivers.size(); ++ireceiver) {
+  // MPI-aware receiver location: each rank locates receivers in its mesh
+  // partition, allreduce selects the owning rank per receiver.
+  const int nreceivers = static_cast<int>(receivers.size());
+  const int myrank = specfem::MPI::get_rank();
+
+  std::vector<type_real> local_dists(nreceivers,
+                                     std::numeric_limits<type_real>::max());
+  std::vector<
+      specfem::point::local_coordinates<specfem::element::dimension_tag::dim3> >
+      local_coords(nreceivers);
+  for (int i = 0; i < nreceivers; ++i)
+    local_coords[i].ispec = -1;
+
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
+    const auto gcoord = specfem::point::global_coordinates<
+        specfem::element::dimension_tag::dim3>{ receivers[ireceiver]->get_x(),
+                                                receivers[ireceiver]->get_y(),
+                                                receivers[ireceiver]->get_z() };
+    try {
+      const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
+      const auto found = specfem::algorithms::locate_point(lcoord, mesh);
+      local_dists[ireceiver] = specfem::point::distance(gcoord, found);
+      local_coords[ireceiver] = lcoord;
+    } catch (const std::exception &) {
+    }
+  }
+
+  std::vector<type_real> global_dists = local_dists;
+  specfem::MPI::allreduce(global_dists.data(), nreceivers, specfem::min);
+
+  std::vector<int> islice_selected(nreceivers, -1);
+  for (int i = 0; i < nreceivers; ++i) {
+    if (local_dists[i] <= global_dists[i])
+      islice_selected[i] = myrank;
+  }
+  specfem::MPI::allreduce(islice_selected.data(), nreceivers, specfem::max);
+
+  for (int i = 0; i < nreceivers; ++i) {
+    if (islice_selected[i] < 0)
+      throw std::runtime_error("Receiver " + std::to_string(i) +
+                               " could not be located in any MPI partition");
+  }
+
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     const auto receiver = receivers[ireceiver];
     std::string station_name = receiver->get_station_name();
     std::string network_name = receiver->get_network_name();
@@ -74,12 +119,12 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
     network_names_.push_back(network_name);
     station_network_map[station_name][network_name] = ireceiver;
 
-    const auto gcoord = specfem::point::global_coordinates<
-        specfem::element::dimension_tag::dim3>{ receiver->get_x(),
-                                                receiver->get_y(),
-                                                receiver->get_z() };
-    const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
+    if (islice_selected[ireceiver] != myrank) {
+      h_elements(ireceiver) = -1;
+      continue;
+    }
 
+    const auto &lcoord = local_coords[ireceiver];
     h_elements(ireceiver) = lcoord.ispec;
 
     const auto xi = mesh.h_xi;
@@ -129,7 +174,8 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
         for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
           int ispec = h_elements(ireceiver);
-          if (element_types.get_medium_tag(ispec) == _medium_tag_ &&
+          if (ispec >= 0 &&
+              element_types.get_medium_tag(ispec) == _medium_tag_ &&
               element_types.get_property_tag(ispec) == _property_tag_ &&
               element_types.get_attenuation_tag(ispec) == _attenuation_tag_) {
             count++;
@@ -145,7 +191,8 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
 
         for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {
           int ispec = h_elements(ireceiver);
-          if (element_types.get_medium_tag(ispec) == _medium_tag_ &&
+          if (ispec >= 0 &&
+              element_types.get_medium_tag(ispec) == _medium_tag_ &&
               element_types.get_property_tag(ispec) == _property_tag_ &&
               element_types.get_attenuation_tag(ispec) == _attenuation_tag_) {
             _h_elements_(index) = ispec;

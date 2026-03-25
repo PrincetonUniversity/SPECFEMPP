@@ -527,6 +527,12 @@ sort_sources_per_medium(
     // Get the source
     const auto &source = sources[isource];
 
+    // In MPI builds a source not owned by this rank has ispec = -1.
+    // Skip it here so it is never added to any medium's source list.
+    if (source->get_local_coordinates().ispec < 0) {
+      continue;
+    }
+
     // Get the medium tag for the source
     const specfem::element::medium_tag medium_tag = source->get_medium_tag();
 

@@ -100,12 +100,21 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim3>::sources(
                 nsteps);
       })
 
-  // if the number of sources is not equal to the number of sources
-  if (nsources != sources.size()) {
+  // Count sources owned by this rank (ispec >= 0 after locate_sources).
+  // In MPI builds each rank owns a subset of the global source list; in
+  // serial builds every source is local, so this equals sources.size().
+  int local_source_count = 0;
+  for (const auto &src : sources) {
+    if (src->get_local_coordinates().ispec >= 0) {
+      local_source_count++;
+    }
+  }
+
+  if (nsources != local_source_count) {
     std::cout << "nsources: " << nsources << std::endl;
-    std::cout << "sources.size(): " << sources.size() << std::endl;
-    throw std::runtime_error(
-        "Not all sources were assigned or sources are assigned multiple times");
+    std::cout << "local_source_count: " << local_source_count << std::endl;
+    throw std::runtime_error("Not all local sources were assigned or sources "
+                             "are assigned multiple times");
   }
 
   FOR_EACH_IN_PRODUCT(
