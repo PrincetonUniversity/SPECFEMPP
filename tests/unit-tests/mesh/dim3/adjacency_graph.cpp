@@ -95,8 +95,8 @@ struct ExpectedAdjacency3D {
 using namespace specfem::test_configuration;
 
 static const std::unordered_map<std::string, ExpectedAdjacency3D>
-    expected_adjacency_map = { {
-        "EightNodeElastic",
+    expected_adjacency_map = {
+      { "EightNodeElastic",
         ExpectedAdjacency3D(
             8,
             { Connection(
@@ -116,9 +116,30 @@ static const std::unordered_map<std::string, ExpectedAdjacency3D>
                   specfem::mesh_entity::dim3::type::top),
               Connection(
                   4, 0, specfem::element_connections::type::strongly_conforming,
-                  specfem::mesh_entity::dim3::type::bottom) })
-        // Add more test cases as needed
-    } };
+                  specfem::mesh_entity::dim3::type::bottom) }) },
+      { "EightNodeElasticCosserat",
+        ExpectedAdjacency3D(
+            8,
+            { Connection(
+                  0, 1, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::right),
+              Connection(
+                  1, 0, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::left),
+              Connection(
+                  0, 2, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::back),
+              Connection(
+                  2, 0, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::front),
+              Connection(
+                  0, 4, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::top),
+              Connection(
+                  4, 0, specfem::element_connections::type::strongly_conforming,
+                  specfem::mesh_entity::dim3::type::bottom) }) }
+      // Add more test cases as needed
+    };
 
 TEST_P(Mesh3DTest, AdjacencyGraph) {
   const auto &param_name = GetParam();

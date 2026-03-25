@@ -178,6 +178,8 @@ private:
    * - material<acoustic, anisotropic>: Acoustic anisotropic materials
    * - material<elastic, isotropic>: Elastic isotropic materials
    * - material<elastic, anisotropic>: Elastic anisotropic materials
+   * - material<elastic_spin, isotropic_cosserat>: Elastic Cosserat isotropic
+   *       materials
    *
    * The DECLARE macro generates member variable declarations with names
    * derived from the template parameters, enabling compile-time dispatch
@@ -190,8 +192,8 @@ private:
    * - Integration with SPECFEM++ template metaprogramming patterns
    */
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
        ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
       DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
                 (_MEDIUM_TAG_, _PROPERTY_TAG_, _ATTENUATION_TAG_)),
@@ -265,8 +267,8 @@ public:
 #endif
 
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC, ELASTIC_SPIN),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
          ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
         CAPTURE(material) {
           if constexpr (MediumTag == _medium_tag_ &&
@@ -325,16 +327,17 @@ public:
                                                     AttenuationTag> &
   get_container() {
 
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
-                         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-                        CAPTURE(material) {
-                          if constexpr (_medium_tag_ == MediumTag &&
-                                        _property_tag_ == PropertyTag &&
-                                        _attenuation_tag_ == AttenuationTag) {
-                            return _material_;
-                          }
-                        })
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC, ELASTIC_SPIN),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+        CAPTURE(material) {
+          if constexpr (_medium_tag_ == MediumTag &&
+                        _property_tag_ == PropertyTag &&
+                        _attenuation_tag_ == AttenuationTag) {
+            return _material_;
+          }
+        })
 
     Kokkos::abort("Invalid material type detected in material specification");
   }

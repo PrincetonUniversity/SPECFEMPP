@@ -92,7 +92,7 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
           // Isotropic elastic material
           if (material_id != 2) {
             throw std::runtime_error(
-                "Shear wave velocity (Vs) cannot be zero for elastic "
+                "Shear wave velocity (Vs) cannot be nonzero for acoustic "
                 "materials.");
           }
 
@@ -146,6 +146,39 @@ specfem::io::mesh::impl::fortran::dim3::read_materials(std::ifstream &stream,
       throw std::runtime_error(
           "Poroelastic materials are not supported yet for 3D simulations.");
       break;
+    }
+    case 4: {
+      // Elastic Cosserat material
+      const type_real rho = material_properties[0];
+      const type_real kappa = material_properties[1];
+      const type_real mu = material_properties[2];
+      const type_real nu = material_properties[3];
+      const type_real j = material_properties[4];
+      const type_real lambda_c = material_properties[5];
+      // material_properties[6] is the material ID
+      const type_real mu_c = material_properties[7];
+      const type_real nu_c = material_properties[8];
+
+      const type_real lambda = kappa - static_cast<type_real>(2.0) /
+                                           static_cast<type_real>(3.0) * mu;
+
+      if (mu < 0.0 || mu_c < 0.0 || 3 * lambda + 2 * mu < 0.0 ||
+          3 * lambda_c + 2 * mu_c < 0.0) {
+        throw std::runtime_error(
+            "Invalid elastic parameters for Cosserat material. u, mu_c, "
+            "3*lambda + 2*mu, and 3*lambda_c + 2*mu_c must be non-negative.");
+      }
+      specfem::medium_container::material<
+          specfem::element::dimension_tag::dim3,
+          specfem::element::medium_tag::elastic_spin,
+          specfem::element::property_tag::isotropic_cosserat,
+          specfem::element::attenuation_tag::none>
+          material(rho, kappa, mu, nu, j, lambda_c, mu_c, nu_c);
+      const int index = materials.add_material(material);
+      mapping.push_back({ specfem::element::medium_tag::elastic_spin,
+                          specfem::element::property_tag::isotropic_cosserat,
+                          specfem::element::attenuation_tag::none, index,
+                          imat });
     }
     default:
       throw std::runtime_error("Unknown material ID: " +
