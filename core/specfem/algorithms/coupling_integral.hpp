@@ -65,7 +65,8 @@ KOKKOS_FUNCTION void coupling_integral(
                           IntersectionFieldViewType::simd::using_simd> >;
   using SelfTransferFunctionType = specfem::point::transfer_function_self<
       IntersectionFactor::n_quad_intersection, dimension_tag,
-      IntersectionFactor::interface_tag, IntersectionFactor::boundary_tag>;
+      IntersectionFactor::interface_tag, IntersectionFactor::boundary_tag,
+      IntersectionFactor::flux_scheme_tag>;
 
   constexpr int ncomp = PointFieldType::components;
   constexpr int nquad_intersection = IntersectionFactor::n_quad_intersection;

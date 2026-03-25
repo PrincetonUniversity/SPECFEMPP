@@ -52,9 +52,9 @@ inline void load_on_host(const IndexType &index, const ContainerType &container,
                              IndexType::accessor_type>;
 
   container
-      .template get_interface_container<AccessorType::interface_tag,
-                                        AccessorType::boundary_tag,
-                                        AccessorType::connection_tag>()
+      .template get_interface_container<
+          AccessorType::interface_tag, AccessorType::boundary_tag,
+          AccessorType::connection_tag, AccessorType::flux_scheme_tag>()
       .template impl_load<false>(accessor_dispatch(), index, accessor);
 }
 
@@ -98,9 +98,9 @@ KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
       std::integral_constant<specfem::datatype::AccessorType,
                              IndexType::accessor_type>;
   container
-      .template get_interface_container<AccessorType::interface_tag,
-                                        AccessorType::boundary_tag,
-                                        AccessorType::connection_tag>()
+      .template get_interface_container<
+          AccessorType::interface_tag, AccessorType::boundary_tag,
+          AccessorType::connection_tag, AccessorType::flux_scheme_tag>()
       .template impl_load<true>(accessor_dispatch(), index, accessor);
 
   return;

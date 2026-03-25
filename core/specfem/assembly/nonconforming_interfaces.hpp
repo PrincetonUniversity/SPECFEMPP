@@ -2,6 +2,7 @@
 
 #include "specfem/element_connections.hpp"
 #include "specfem/element_coupling.hpp"
+#include "specfem/element_coupling/tags.hpp"
 #include "specfem/enums.hpp"
 
 namespace specfem::assembly {
@@ -11,7 +12,8 @@ namespace nonconforming_interfaces_impl {
 template <specfem::element::dimension_tag DimensionTag,
           specfem::element_coupling::interface_tag InterfaceTag,
           specfem::element::boundary_tag BoundaryTag,
-          specfem::element_connections::type ConnectionTag>
+          specfem::element_connections::type ConnectionTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
 struct interface_container;
 
 } // namespace nonconforming_interfaces_impl

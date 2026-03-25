@@ -162,11 +162,11 @@ void compute_coupling_core_nonconforming(
                                         using_simd> >;
 
   using CouplingTermsPack = specfem::chunk_edge::coupling_terms_pack<
-      dimension_tag, interface_tag, boundary_tag, parallel_config::chunk_size,
-      NGLL, NQuad_intersection>;
+      dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
+      parallel_config::chunk_size, NGLL, NQuad_intersection>;
   using IntegrationFactor = specfem::chunk_edge::intersection_factor<
-      dimension_tag, interface_tag, boundary_tag, parallel_config::chunk_size,
-      NQuad_intersection>;
+      dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
+      parallel_config::chunk_size, NQuad_intersection>;
 
   using InterfaceFieldViewType = specfem::datatype::VectorChunkEdgeViewType<
       type_real, dimension_tag, parallel_config::chunk_size, NQuad_intersection,
