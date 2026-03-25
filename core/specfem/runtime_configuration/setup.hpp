@@ -358,13 +358,8 @@ public:
                                                          time_scheme, tasks);
   }
 
-  specfem::element_coupling::flux_scheme_configuration
-  instantiate_flux_scheme_configuration() {
-    if (this->flux_schemes) {
-      return this->flux_schemes->generate_configuration();
-    } else {
-      return specfem::element_coupling::flux_scheme_configuration();
-    }
+  auto get_flux_scheme_configuration() const {
+    return this->flux_schemes->get_flux_scheme();
   }
 
   /**

@@ -270,8 +270,6 @@ public:
    * @param element_types Element classification for coupling detection
    * @param flux_scheme_config Flux-scheme classification for proper
    * flux-tagging
-   * @param materials Container for ispec->material_index mapping for
-   * material-based flux-tagging
    */
   element_intersections(
       const int ngllx, const int ngllz,
