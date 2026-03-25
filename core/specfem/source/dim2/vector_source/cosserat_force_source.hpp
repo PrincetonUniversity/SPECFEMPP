@@ -1,15 +1,9 @@
 #pragma once
 
-#include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
-#include "specfem/quadrature.hpp"
-#include "specfem/source.hpp"
-#include "specfem/source_time_functions.hpp"
-
-#include "specfem/setup.hpp"
-#include "specfem/utilities.hpp"
-#include "yaml-cpp/yaml.h"
-#include <Kokkos_Core.hpp>
+#include "specfem/macros/kokkos_abort_with_location.hpp"
+#include "specfem/source/base_template.hpp"
+#include "specfem/source/vector_source.hpp"
+#include "specfem/utilities/is_close.hpp"
 
 namespace specfem {
 namespace sources {

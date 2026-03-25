@@ -3,6 +3,7 @@
 #include "source.hpp"
 
 #include "specfem/setup.hpp"
+#include "specfem/source_time_functions.hpp"
 #include <yaml-cpp/yaml.h>
 
 

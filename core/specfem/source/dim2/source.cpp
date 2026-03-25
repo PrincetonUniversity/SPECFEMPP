@@ -1,6 +1,4 @@
 #include "specfem/source.hpp"
-
-#include "specfem/setup.hpp"
 #include <cmath>
 
 template <>

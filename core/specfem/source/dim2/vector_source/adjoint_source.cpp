@@ -1,7 +1,6 @@
 
+#include "specfem/source/dim2/vector_source/adjoint_source.hpp"
 #include "specfem/algorithms.hpp"
-#include "specfem/enums.hpp"
-#include "specfem/source.hpp"
 
 std::vector<specfem::element::medium_tag> specfem::sources::adjoint_source<
     specfem::element::dimension_tag::dim2>::get_supported_media() const {

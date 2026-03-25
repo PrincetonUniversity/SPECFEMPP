@@ -1,11 +1,6 @@
 
 
-#include "specfem/enums.hpp"
-#include "specfem/setup.hpp"
-#include "specfem/source.hpp"
-#include "specfem/source_time_functions.hpp"
-// #include "utilities.cpp"
-#include "yaml-cpp/yaml.h"
+#include "specfem/source/dim3/tensor_source/moment_tensor_source.hpp"
 #include <cmath>
 #include <stdexcept>
 

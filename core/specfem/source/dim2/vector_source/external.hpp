@@ -1,8 +1,7 @@
 #pragma once
 
-#include "specfem/enums.hpp"
-#include "specfem/source.hpp"
-#include "yaml-cpp/yaml.h"
+#include "specfem/source/base_template.hpp"
+#include "specfem/source/vector_source.hpp"
 
 namespace specfem {
 namespace sources {

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "specfem/assembly/assembly.hpp"
-#include "specfem/enums.hpp"
+#include "specfem/assembly/fwd.hpp"
 #include "specfem/io/writer.hpp"
 
 namespace specfem {

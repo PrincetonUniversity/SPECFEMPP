@@ -1,8 +1,5 @@
 #include "specfem/source.hpp"
 
-#include "specfem/setup.hpp"
-#include <cmath>
-
 template specfem::sources::source<
     specfem::element::dimension_tag::dim3>::source(YAML::Node &Node,
                                                    const int nsteps,

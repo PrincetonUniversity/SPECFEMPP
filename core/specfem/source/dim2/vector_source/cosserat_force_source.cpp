@@ -1,9 +1,5 @@
 
-#include "specfem/enums.hpp"
-#include "specfem/setup.hpp"
-#include "specfem/source.hpp"
-#include "specfem/source_time_functions.hpp"
-#include "specfem/utilities.hpp"
+#include "specfem/source/dim2/vector_source/cosserat_force_source.hpp"
 #include <cmath>
 
 std::vector<specfem::element::medium_tag> specfem::sources::cosserat_force<

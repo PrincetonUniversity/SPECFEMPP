@@ -1,18 +1,18 @@
 #pragma once
 
-#include "specfem/constants.hpp"
-
 #include "specfem/enums.hpp"
 #include "specfem/point.hpp"
-#include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
-#include "specfem/source.hpp"
-#include "specfem/source_time_functions.hpp"
-#include "specfem/utilities.hpp"
+#include "specfem/source_time_functions/source_time_function.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 
 namespace specfem::sources {
+
+enum class source_type {
+  vector_source, ///< Vector source
+  tensor_source, ///< Tensor source
+};
 
 /**
  * @brief Base class for all source types

@@ -31,14 +31,7 @@
  * - @ref specfem::sources::vector_source
  * - @ref specfem::sources::tensor_source
  */
-namespace specfem::sources {
-
-enum class source_type {
-  vector_source, ///< Vector source
-  tensor_source, ///< Tensor source
-};
-
-}
+namespace specfem::sources {}
 
 #include "source/source.tpp"
 #include "source/tensor_source.hpp"

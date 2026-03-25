@@ -1,8 +1,5 @@
-#include "specfem/enums.hpp"
-#include "specfem/macros.hpp"
-#include "specfem/setup.hpp"
-#include "specfem/source.hpp"
-#include "specfem/source_time_functions.hpp"
+#include "specfem/source/dim2/vector_source/external.hpp"
+#include "specfem/macros/kokkos_abort_with_location.hpp"
 #include <cmath>
 
 std::vector<specfem::element::medium_tag> specfem::sources::external<

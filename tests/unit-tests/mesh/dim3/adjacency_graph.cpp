@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "specfem/element_connections.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/mesh.hpp"
 #include "specfem/setup.hpp"
