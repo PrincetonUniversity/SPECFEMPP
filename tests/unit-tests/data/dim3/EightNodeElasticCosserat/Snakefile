@@ -32,7 +32,7 @@ rule generate_database:
         mkdir -p OUTPUT_FILES
         mkdir -p OUTPUT_FILES/DATABASES_MPI
         xmeshfem3D -p {input.par_file}
-        mv OUTPUT_FILES/DATABASES_MPI/proc000000_Database.bin {output.database}
+        mv OUTPUT_FILES/DATABASES_MPI/Database.bin {output.database}
         """
 
 rule clean:
