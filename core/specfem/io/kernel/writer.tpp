@@ -22,7 +22,7 @@ void kernel_writer<OutputLibrary>::write(
   //   serial:   {output_folder}/Kernels/
   //   parallel: {output_folder}/Kernels/proc_N/
   const std::string formatted =
-      specfem::MPI::format_proc_filename(output_folder + "/Kernels.dir");
+      specfem::MPI::format_proc_filename(output_folder + "/Kernels");
   const boost::filesystem::path formatted_path(formatted);
   const std::string base_folder = formatted_path.parent_path().string();
   const std::string ns = formatted_path.stem().string();

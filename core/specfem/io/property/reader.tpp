@@ -23,7 +23,7 @@ void specfem::io::property_reader<InputLibrary>::read(
   //   serial:   {input_folder}/Properties/
   //   parallel: {input_folder}/Properties/proc_N/
   const std::string formatted =
-      specfem::MPI::format_proc_filename(input_folder + "/Properties.dir");
+      specfem::MPI::format_proc_filename(input_folder + "/Properties");
   const boost::filesystem::path formatted_path(formatted);
   const std::string base_folder = formatted_path.parent_path().string();
   const std::string ns = formatted_path.stem().string();

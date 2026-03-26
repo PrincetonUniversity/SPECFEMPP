@@ -16,12 +16,12 @@ specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
       // first and can safely be passed to the File constructor.
       file_path([&output_folder]() {
         const std::string formatted = specfem::MPI::format_proc_filename(
-            output_folder + "/ForwardWavefield.dir");
+            output_folder + "/ForwardWavefield");
         const boost::filesystem::path p(formatted);
         if (specfem::MPI::get_size() > 1) {
           return (p.parent_path() / p.stem()).string();
         }
-        return output_folder + "/ForwardWavefield";
+        return p.string();
       }()),
       file(typename IOLibrary::File(file_path)) {}
 

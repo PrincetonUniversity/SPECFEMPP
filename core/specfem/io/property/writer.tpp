@@ -22,7 +22,7 @@ void property_writer<OutputLibrary>::write(specfem::assembly::assembly<specfem::
   //   parallel: {output_folder}/Properties/proc_N/
   // format_proc_filename("foo.ext") -> "foo/proc_N.ext" (nproc>1) or "foo.ext" (nproc==1)
   const std::string formatted =
-      specfem::MPI::format_proc_filename(output_folder + "/Properties.dir");
+      specfem::MPI::format_proc_filename(output_folder + "/Properties");
   const boost::filesystem::path formatted_path(formatted);
   const std::string base_folder = formatted_path.parent_path().string();
   const std::string ns = formatted_path.stem().string();
