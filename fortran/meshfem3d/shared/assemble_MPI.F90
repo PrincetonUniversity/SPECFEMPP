@@ -75,7 +75,7 @@ module assemble_MPI_par
 end module assemble_MPI_par
 
 
-subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
+subroutine assemble_MPI(nglob, iMPIcut_xi, iMPIcut_eta, nodes_coords)
    !! Set up and exchange MPI interface data between neighboring mesh
    !! slices on a 2-D processor grid (NPROC_XI x NPROC_ETA).
    !!
@@ -108,7 +108,9 @@ subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
 
    implicit none
 
+   integer, intent(in) :: nglob
    logical, intent(in) :: iMPIcut_xi(2, nspec), iMPIcut_eta(2, nspec)
+   double precision, intent(in) :: nodes_coords(nglob, NDIM)
 
    ! ibool corner indices for each interface type
    ! Face interfaces (W,E,S,N) use all 4 corners;
@@ -200,7 +202,7 @@ subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
             nspec, iMPIcut_xi(1,:), nspec_send(W), W, &
             interface_buffer_W_send)
          call prepare_interface_coordinates_buffers( &
-            nspec, iMPIcut_xi(1,:), nspec_send(W), W, &
+            nspec, nglob, iMPIcut_xi(1,:), nodes_coords, nspec_send(W), W, &
             ibool_corners_W, coordinate_buffer_W_send)
          call send_communication_buffers( &
             nspec_send(W), &
@@ -216,7 +218,7 @@ subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
             nspec, iMPIcut_xi(2,:), nspec_send(E), E, &
             interface_buffer_E_send)
          call prepare_interface_coordinates_buffers( &
-            nspec, iMPIcut_xi(2,:), nspec_send(E), E, &
+            nspec, nglob, iMPIcut_xi(2,:), nodes_coords, nspec_send(E), E, &
             ibool_corners_E, coordinate_buffer_E_send)
          call send_communication_buffers( &
             nspec_send(E), &
@@ -232,7 +234,7 @@ subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
             nspec, iMPIcut_eta(1,:), nspec_send(S), S, &
             interface_buffer_S_send)
          call prepare_interface_coordinates_buffers( &
-            nspec, iMPIcut_eta(1,:), nspec_send(S), S, &
+            nspec, nglob, iMPIcut_eta(1,:), nodes_coords, nspec_send(S), S, &
             ibool_corners_S, coordinate_buffer_S_send)
          call send_communication_buffers( &
             nspec_send(S), &
@@ -248,7 +250,7 @@ subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
             nspec, iMPIcut_eta(2,:), nspec_send(N), N, &
             interface_buffer_N_send)
          call prepare_interface_coordinates_buffers( &
-            nspec, iMPIcut_eta(2,:), nspec_send(N), N, &
+            nspec, nglob, iMPIcut_eta(2,:), nodes_coords, nspec_send(N), N, &
             ibool_corners_N, coordinate_buffer_N_send)
          call send_communication_buffers( &
             nspec_send(N), &
@@ -264,7 +266,7 @@ subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
             nspec, (iMPIcut_xi(1,:) .and. iMPIcut_eta(2,:)), &
             nspec_send(NW), NW, interface_buffer_NW_send)
          call prepare_interface_coordinates_buffers( &
-            nspec, (iMPIcut_xi(1,:) .and. iMPIcut_eta(2,:)), &
+            nspec, nglob, (iMPIcut_xi(1,:) .and. iMPIcut_eta(2,:)), nodes_coords, &
             nspec_send(NW), NW, ibool_corners_NW, &
             coordinate_buffer_NW_send)
          call send_communication_buffers( &
@@ -281,7 +283,7 @@ subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
             nspec, (iMPIcut_xi(2,:) .and. iMPIcut_eta(2,:)), &
             nspec_send(NE), NE, interface_buffer_NE_send)
          call prepare_interface_coordinates_buffers( &
-            nspec, (iMPIcut_xi(2,:) .and. iMPIcut_eta(2,:)), &
+            nspec, nglob, (iMPIcut_xi(2,:) .and. iMPIcut_eta(2,:)), nodes_coords, &
             nspec_send(NE), NE, ibool_corners_NE, &
             coordinate_buffer_NE_send)
          call send_communication_buffers( &
@@ -298,7 +300,7 @@ subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
             nspec, (iMPIcut_xi(2,:) .and. iMPIcut_eta(1,:)), &
             nspec_send(SE), SE, interface_buffer_SE_send)
          call prepare_interface_coordinates_buffers( &
-            nspec, (iMPIcut_xi(2,:) .and. iMPIcut_eta(1,:)), &
+            nspec, nglob, (iMPIcut_xi(2,:) .and. iMPIcut_eta(1,:)), nodes_coords, &
             nspec_send(SE), SE, ibool_corners_SE, &
             coordinate_buffer_SE_send)
          call send_communication_buffers( &
@@ -315,7 +317,7 @@ subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
             nspec, (iMPIcut_xi(1,:) .and. iMPIcut_eta(1,:)), &
             nspec_send(SW), SW, interface_buffer_SW_send)
          call prepare_interface_coordinates_buffers( &
-            nspec, (iMPIcut_xi(1,:) .and. iMPIcut_eta(1,:)), &
+            nspec, nglob, (iMPIcut_xi(1,:) .and. iMPIcut_eta(1,:)), nodes_coords, &
             nspec_send(SW), SW, ibool_corners_SW, &
             coordinate_buffer_SW_send)
          call send_communication_buffers( &
@@ -829,7 +831,7 @@ end subroutine prepare_interface_definition_buffers
 
 
 subroutine prepare_interface_coordinates_buffers( &
-   nspec, iMPIcut, ncommunication_elements, interface_type, &
+   nspec, nglob, iMPIcut, nodes_coord, ncommunication_elements, interface_type, &
    ibool_corners, buffer)
    !! Fill buffer with the coordinates of the 4 face-corner nodes for
    !! each spectral element marked for communication across the
@@ -850,7 +852,6 @@ subroutine prepare_interface_coordinates_buffers( &
 
    use constants, only: NDIM, myrank
    use meshfem_par, only: ibool
-   use create_meshfem_par, only: nodes_coords
 
    implicit none
 
@@ -861,6 +862,9 @@ subroutine prepare_interface_coordinates_buffers( &
    integer, intent(in) :: ibool_corners(4, 3)
    double precision, intent(out) :: buffer(ncommunication_elements, 4, NDIM)
 
+   integer, intent(in) :: nglob
+   double precision, intent(in) :: nodes_coord(nglob, 3)
+
    ! Local variables
    integer :: index, ispec, icorner
 
@@ -870,7 +874,7 @@ subroutine prepare_interface_coordinates_buffers( &
          index = index + 1
          if (interface_type <= 4) then
             do icorner = 1, 4
-               buffer(index, icorner, :) = nodes_coords( &
+               buffer(index, icorner, :) = nodes_coord( &
                   ibool(ibool_corners(icorner, 1), &
                   ibool_corners(icorner, 2), &
                   ibool_corners(icorner, 3), ispec), :)
@@ -879,7 +883,7 @@ subroutine prepare_interface_coordinates_buffers( &
 
          if (interface_type > 4) then
             do icorner = 1, 2
-               buffer(index, icorner, :) = nodes_coords( &
+               buffer(index, icorner, :) = nodes_coord( &
                   ibool(ibool_corners(icorner, 1), &
                   ibool_corners(icorner, 2), &
                   ibool_corners(icorner, 3), ispec), :)
