@@ -19,21 +19,22 @@ namespace runtime_configuration {
 class flux_schemes {
 public:
   flux_schemes(const YAML::Node &Node);
+  flux_schemes()
+      : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural) {};
 
 private:
-  bool config_provided;
-  YAML::Node flux_schemes_node; /// Node that contains flux scheme information
-
-  std::map<specfem::element_coupling::interface_tag,
-           std::pair<specfem::element_coupling::flux_scheme_tag, YAML::Node> >
-      per_interface_configs;
-
-  std::map<std::pair<int, int>,
-           std::pair<specfem::element_coupling::flux_scheme_tag, YAML::Node> >
-      per_material_configs;
+  specfem::element_coupling::flux_scheme_tag flux_scheme_tag;
 
 public:
-  specfem::element_coupling::flux_scheme_configuration generate_configuration();
+  specfem::element_coupling::flux_scheme_configuration get_flux_scheme() const {
+    specfem::element_coupling::flux_scheme_configuration config;
+
+    config.flux_scheme_tag = flux_scheme_tag;
+
+    return config;
+  }
+
+  YAML::Node flux_schemes_node;
 };
 } // namespace runtime_configuration
 } // namespace specfem

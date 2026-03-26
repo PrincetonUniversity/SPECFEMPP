@@ -6,15 +6,17 @@
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/assembly/nonconforming_interfaces.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element_coupling/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/jacobian.hpp"
 #include "specfem/macros.hpp"
 
 template <specfem::element_coupling::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag>
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
 specfem::assembly::nonconforming_interfaces_impl::interface_container<
     specfem::element::dimension_tag::dim2, InterfaceTag, BoundaryTag,
-    specfem::element_connections::type::nonconforming>::
+    specfem::element_connections::type::nonconforming, FluxSchemeTag>::
     interface_container(
         const int ngllz, const int ngllx,
         const specfem::assembly::element_intersections<
@@ -49,8 +51,6 @@ specfem::assembly::nonconforming_interfaces_impl::interface_container<
 
   const auto element = specfem::mesh_entity::element(ngllz, ngllx);
 
-  //TODO replace with struct template parameter later
-  specfem::element_coupling::flux_scheme_tag FluxSchemeTag = specfem::element_coupling::flux_scheme_tag::natural;
   const auto [self_edges, coupled_edges] =
       element_intersections.get_intersections_on_host(
           specfem::element_connections::type::nonconforming, InterfaceTag,
