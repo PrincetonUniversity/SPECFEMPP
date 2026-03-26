@@ -75,7 +75,7 @@ module assemble_MPI_par
 end module assemble_MPI_par
 
 
-subroutine assemble_MPI()
+subroutine assemble_MPI(iMPIcut_xi, iMPIcut_eta)
    !! Set up and exchange MPI interface data between neighboring mesh
    !! slices on a 2-D processor grid (NPROC_XI x NPROC_ETA).
    !!
@@ -104,10 +104,11 @@ subroutine assemble_MPI()
    use constants, only: NDIM, myrank
    use constants_meshfem, only: NGLLY_M, NGLLZ_M
    use meshfem_par, only: nspec, addressing, iproc_xi_current, iproc_eta_current
-   use create_meshfem_par, only: iMPIcut_xi, iMPIcut_eta
    use assemble_MPI_par
 
    implicit none
+
+   logical, intent(in) :: iMPIcut_xi(2, nspec), iMPIcut_eta(2, nspec)
 
    ! ibool corner indices for each interface type
    ! Face interfaces (W,E,S,N) use all 4 corners;
@@ -521,7 +522,9 @@ subroutine get_communication_partners( &
    use meshfem_par, only: nspec, addressing, NPROC_XI, NPROC_ETA, &
       iproc_xi_current, iproc_eta_current
    use assemble_MPI_par, only: nb_interfaces, interfaces, nspec_send, &
-      nspec_recv, W, E, S, N, NW, NE, SE, SW
+      nspec_recv, W, E, S, N, NW, NE, SE, SW, &
+      tag_send_W, tag_send_E, tag_send_S, tag_send_N, &
+      tag_send_NW, tag_send_NE, tag_send_SE, tag_send_SW
 
    implicit none
 
