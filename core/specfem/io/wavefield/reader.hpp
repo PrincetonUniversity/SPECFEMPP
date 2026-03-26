@@ -43,7 +43,8 @@ public:
                &assembly) {}
 
 private:
-  std::string output_folder;     ///< Path to output folder
+  std::string output_folder; ///< Path to output folder
+  std::string file_path; ///< Rank-specific path to the wavefield file/folder
   typename IOLibrary::File file; ///< File object to read from
 };
 
