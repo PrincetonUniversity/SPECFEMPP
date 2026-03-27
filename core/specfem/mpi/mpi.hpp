@@ -53,13 +53,6 @@ private:
   static int size_; ///< Total number of MPI processes (-1 if not initialized)
 
 public:
-#ifdef SPECFEM_ENABLE_MPI
-  template <typename T> inline MPI_Datatype datatype() = delete;
-  template <> inline MPI_Datatype datatype<float>() { return MPI_FLOAT; }
-  template <> inline MPI_Datatype datatype<double>() { return MPI_DOUBLE; }
-  template <> inline MPI_Datatype datatype<int>() { return MPI_INT; }
-#endif
-
   /**
    * @brief Synchronize all MPI processes (MPI_Barrier)
    *

@@ -54,7 +54,7 @@ void specfem::assembly::sources_impl::locate_sources(
   std::vector<type_real> global_dists = local_dists;
   SPECFEM_MPI_SAFECALL(
       MPI_Allreduce(MPI_IN_PLACE, global_dists.data(), nsources,
-                    specfem::MPI::datatype<type_real>(), MPI_MIN,
+                    SPECFEM_MPI_TYPE_REAL, MPI_MIN,
                     MPI_COMM_WORLD));
 
   // Step 3: Determine the owning rank for each source.
@@ -68,7 +68,7 @@ void specfem::assembly::sources_impl::locate_sources(
     }
   }
   SPECFEM_MPI_SAFECALL(
-      MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(), nsources, specfem::MPI::datatype<int>(),
+      MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(), nsources, MPI_INT,
                     MPI_MAX, MPI_COMM_WORLD));
 
   // Sanity check: every source must have been claimed by at least one rank.
