@@ -93,7 +93,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
   std::vector<type_real> global_dists = local_dists;
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(
       MPI_IN_PLACE, global_dists.data(), nreceivers,
-      specfem::mpi::datatype<type_real>(), MPI_MIN, MPI_COMM_WORLD));
+      specfem::MPI::datatype<type_real>(), MPI_MIN, MPI_COMM_WORLD));
 
   std::vector<int> islice_selected(nreceivers, -1);
   for (int i = 0; i < nreceivers; ++i) {
@@ -101,7 +101,7 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
       islice_selected[i] = myrank;
   }
   SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(),
-                                     nreceivers, specfem::mpi::datatype<int>(),
+                                     nreceivers, specfem::MPI::datatype<int>(),
                                      MPI_MAX, MPI_COMM_WORLD));
 
   for (int i = 0; i < nreceivers; ++i) {
