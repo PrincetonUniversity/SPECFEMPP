@@ -1,4 +1,4 @@
-# Snakemake workflow to generate database for 4-node elastic problem in 3D
+# Snakemake workflow to generate database for 8-node elastic Cosserat problem in 3D
 
 rule all:
     input:
@@ -6,7 +6,7 @@ rule all:
     shell:
         "echo 'All tasks completed successfully.'"
 
-rule check_executible:
+rule check_executable:
     output:
         executable_checked = "executable_checked.txt",
     shell:
@@ -32,7 +32,7 @@ rule generate_database:
         mkdir -p OUTPUT_FILES
         mkdir -p OUTPUT_FILES/DATABASES_MPI
         xmeshfem3D -p {input.par_file}
-        mv OUTPUT_FILES/DATABASES_MPI/proc000000_Database.bin {output.database}
+        mv OUTPUT_FILES/DATABASES_MPI/Database.bin {output.database}
         """
 
 rule clean:

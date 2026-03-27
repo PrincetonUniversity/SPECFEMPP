@@ -97,7 +97,9 @@ struct ExpectedMaterials3D {
       // Retrieve the material and verify it matches expected
       // Note: Update this macro when adding new material types
       FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)), {
+          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ELASTIC_SPIN),
+           PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT)),
+          {
             if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
               const auto computed_material =
                   materials.get_material<_medium_tag_, _property_tag_>(
