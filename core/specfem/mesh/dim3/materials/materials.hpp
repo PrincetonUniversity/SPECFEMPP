@@ -65,10 +65,11 @@ template <> struct materials<specfem::element::dimension_tag::dim3> {
    * - Local indices within type-specific material containers
    */
   struct material_specification {
-    /** @brief Physical medium type (acoustic, elastic, etc.) */
+    /** @brief Physical medium type (acoustic, elastic, elastic_spin, etc.) */
     specfem::element::medium_tag type;
 
-    /** @brief Material property type (isotropic, anisotropic) */
+    /** @brief Material property type (isotropic, anisotropic,
+     * isotropic_cosserat) */
     specfem::element::property_tag property;
 
     /** @brief Attenuation type (none, constant_isotropic, etc.) */
@@ -178,6 +179,8 @@ private:
    * - material<acoustic, anisotropic>: Acoustic anisotropic materials
    * - material<elastic, isotropic>: Elastic isotropic materials
    * - material<elastic, anisotropic>: Elastic anisotropic materials
+   * - material<elastic_spin, isotropic_cosserat>: Elastic Cosserat isotropic
+   *       materials
    *
    * The DECLARE macro generates member variable declarations with names
    * derived from the template parameters, enabling compile-time dispatch
@@ -190,8 +193,8 @@ private:
    * - Integration with SPECFEM++ template metaprogramming patterns
    */
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
        ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
       DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
                 (_MEDIUM_TAG_, _PROPERTY_TAG_, _ATTENUATION_TAG_)),
@@ -223,8 +226,9 @@ public:
    * compile-time template parameters for the specified medium and property
    * types.
    *
-   * @tparam MediumTag Medium type (acoustic, elastic)
-   * @tparam PropertyTag Property type (isotropic, anisotropic)
+   * @tparam MediumTag Medium type (acoustic, elastic, elastic_spin)
+   * @tparam PropertyTag Property type (isotropic, anisotropic,
+   * isotropic_cosserat)
    * @param index Element index to retrieve material for
    * @return Material object with specified medium and property types
    *
@@ -265,8 +269,8 @@ public:
 #endif
 
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC, ELASTIC_SPIN),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
          ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
         CAPTURE(material) {
           if constexpr (MediumTag == _medium_tag_ &&
@@ -300,8 +304,9 @@ public:
    * specified type combination for direct access by material management
    * functions.
    *
-   * @tparam MediumTag Medium type (acoustic, elastic)
-   * @tparam PropertyTag Property type (isotropic, anisotropic)
+   * @tparam MediumTag Medium type (acoustic, elastic, elastic_spin)
+   * @tparam PropertyTag Property type (isotropic, anisotropic,
+   * isotropic_cosserat)
    * @return Reference to the material container for specified types
    *
    * @code
@@ -325,16 +330,17 @@ public:
                                                     AttenuationTag> &
   get_container() {
 
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC),
-                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
-                         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
-                        CAPTURE(material) {
-                          if constexpr (_medium_tag_ == MediumTag &&
-                                        _property_tag_ == PropertyTag &&
-                                        _attenuation_tag_ == AttenuationTag) {
-                            return _material_;
-                          }
-                        })
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ACOUSTIC, ELASTIC, ELASTIC_SPIN),
+         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
+         ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
+        CAPTURE(material) {
+          if constexpr (_medium_tag_ == MediumTag &&
+                        _property_tag_ == PropertyTag &&
+                        _attenuation_tag_ == AttenuationTag) {
+            return _material_;
+          }
+        })
 
     Kokkos::abort("Invalid material type detected in material specification");
   }
@@ -345,8 +351,9 @@ public:
    * Adds a material to the appropriate container based on its type, updates
    * counts, and creates mapping to the original MESHFEM3D database index.
    *
-   * @tparam MediumTag Medium type (acoustic, elastic)
-   * @tparam PropertyTag Property type (isotropic, anisotropic)
+   * @tparam MediumTag Medium type (acoustic, elastic, elastic_spin)
+   * @tparam PropertyTag Property type (isotropic, anisotropic,
+   * isotropic_cosserat)
    * @param new_material Material object to add
    * @param database_index Original MESHFEM3D database index
    * @return Local index of the added material within its container

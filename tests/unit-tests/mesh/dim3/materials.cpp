@@ -97,7 +97,9 @@ struct ExpectedMaterials3D {
       // Retrieve the material and verify it matches expected
       // Note: Update this macro when adding new material types
       FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)), {
+          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ELASTIC_SPIN),
+           PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT)),
+          {
             if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
               const auto computed_material =
                   materials.get_material<_medium_tag_, _property_tag_>(
@@ -129,30 +131,58 @@ struct ExpectedMaterials3D {
 using namespace specfem::test_configuration;
 
 static const std::unordered_map<std::string, ExpectedMaterials3D>
-    expected_materials_map = { {
-        "EightNodeElastic",
-        ExpectedMaterials3D(
-            TotalMaterials(1, 8),
-            { // Element 0
-              ElementMaterial(specfem::element::medium_tag::elastic,
-                              specfem::element::property_tag::isotropic, 0,
-                              specfem::medium_container::material<
-                                  specfem::element::dimension_tag::dim3,
-                                  specfem::element::medium_tag::elastic,
-                                  specfem::element::property_tag::isotropic,
-                                  specfem::element::attenuation_tag::none>(
-                                  2300.0, 1500.0, 2800.0, 0.0)),
-              // Element 5
-              ElementMaterial(specfem::element::medium_tag::elastic,
-                              specfem::element::property_tag::isotropic, 5,
-                              specfem::medium_container::material<
-                                  specfem::element::dimension_tag::dim3,
-                                  specfem::element::medium_tag::elastic,
-                                  specfem::element::property_tag::isotropic,
-                                  specfem::element::attenuation_tag::none>(
-                                  2300.0, 1500.0, 2800.0, 0.0)) }),
-        // Add more test cases as needed
-    } };
+    expected_materials_map = {
+      {
+          "EightNodeElastic",
+          ExpectedMaterials3D(
+              TotalMaterials(1, 8),
+              { // Element 0
+                ElementMaterial(specfem::element::medium_tag::elastic,
+                                specfem::element::property_tag::isotropic, 0,
+                                specfem::medium_container::material<
+                                    specfem::element::dimension_tag::dim3,
+                                    specfem::element::medium_tag::elastic,
+                                    specfem::element::property_tag::isotropic,
+                                    specfem::element::attenuation_tag::none>(
+                                    2300.0, 1500.0, 2800.0, 0.0)),
+                // Element 5
+                ElementMaterial(specfem::element::medium_tag::elastic,
+                                specfem::element::property_tag::isotropic, 5,
+                                specfem::medium_container::material<
+                                    specfem::element::dimension_tag::dim3,
+                                    specfem::element::medium_tag::elastic,
+                                    specfem::element::property_tag::isotropic,
+                                    specfem::element::attenuation_tag::none>(
+                                    2300.0, 1500.0, 2800.0, 0.0)) }),
+      },
+      {
+          "EightNodeElasticCosserat",
+          ExpectedMaterials3D(
+              TotalMaterials(1, 8),
+              { // Element 0
+                ElementMaterial(
+                    specfem::element::medium_tag::elastic_spin,
+                    specfem::element::property_tag::isotropic_cosserat, 0,
+                    specfem::medium_container::material<
+                        specfem::element::dimension_tag::dim3,
+                        specfem::element::medium_tag::elastic_spin,
+                        specfem::element::property_tag::isotropic_cosserat,
+                        specfem::element::attenuation_tag::none>(
+                        2300.0, 1500.0, 2800.0, 1e6, 1e4, 300.0, 25.0, 500.0)),
+                // Element 5
+                ElementMaterial(
+                    specfem::element::medium_tag::elastic_spin,
+                    specfem::element::property_tag::isotropic_cosserat, 5,
+                    specfem::medium_container::material<
+                        specfem::element::dimension_tag::dim3,
+                        specfem::element::medium_tag::elastic_spin,
+                        specfem::element::property_tag::isotropic_cosserat,
+                        specfem::element::attenuation_tag::none>(
+                        2300.0, 1500.0, 2800.0, 1e6, 1e4, 300.0, 25.0,
+                        500.0)) }),
+          // Add more test cases as needed
+      }
+    };
 
 TEST_P(Mesh3DTest, Materials) {
   const auto &param_name = GetParam();
