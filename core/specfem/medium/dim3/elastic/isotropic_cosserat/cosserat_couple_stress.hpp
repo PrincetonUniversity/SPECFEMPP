@@ -93,21 +93,22 @@ KOKKOS_INLINE_FUNCTION void impl_compute_cosserat_couple_stress(
   //       [etax    etay    etaz   ]
   //       [gammax  gammay  gammaz ]
   // Then the inverse Jacobian matrix is:
-  //   J^-1 = [∂x/∂ξ ∂x/∂η ∂x/∂γ]              [ (etay*gammaz-etaz*gammay)
-  //   -(xiy*gammaz-xiz*gammay)   (xiy*etaz-xiz*etay) ]
-  //          [∂y/∂ξ ∂y/∂η ∂y/∂γ]  = (1/det) * [ -(etax*gammaz-etaz*gammax)
-  //          (xix*gammaz-xiz*gammax)  -(xix*etaz-xiz*etax) ] [∂z/∂ξ ∂z/∂η
-  //          ∂z/∂γ]              [ (etax*gammay-etay*gammax)
-  //          -(xix*gammay-xiy*gammax)   (xix*etay-xiy*etax) ]
+  //   J^-1 = [∂x/∂ξ ∂x/∂η ∂x/∂γ]
+  //          [∂y/∂ξ ∂y/∂η ∂y/∂γ]
+  //          [∂z/∂ξ ∂z/∂η ∂z/∂γ]
+  //   =            [ ηy*γz-ηz*γy    -(ξy*γz-ξz*γy)   ξy*ηz-ξz*ηy   ]
+  //     (1/ det) * [-(ηx*γz-ηz*γx)   (ξx*γz-ξz*γx)  -(ξx*ηz-ξz*ηx) ]
+  //                [ ηx*γy-ηy*γx    -(ξx*γy-ξy*γx)   ξx*ηy-ξy*ηx   ]
+
   const auto xxi = (etay * gammaz - etaz * gammay) * invD;    // ∂x/∂ξ
   const auto xeta = -(etax * gammaz - etaz * gammax) * invD;  // ∂x/∂η
   const auto xgamma = (etax * gammay - etay * gammax) * invD; // ∂x/∂γ
   const auto yxi = -(xiy * gammaz - xiz * gammay) * invD;     // ∂y/∂ξ
   const auto yeta = (xix * gammaz - xiz * gammax) * invD;     // ∂y/∂η
   const auto ygamma = -(xix * gammay - xiy * gammax) * invD;  // ∂y/∂γ
-  const auto zxi = (xiy * gammax - xiz * etay) * invD;        // ∂z/∂ξ
-  const auto zeta = -(xix * gammax - xiz * etax) * invD;      // ∂z/∂η
-  const auto zgamma = (xix * gammay - xiy * etax) * invD;     // ∂z/∂γ
+  const auto zxi = (etax * gammay - etay * gammax) * invD;    // ∂z/∂ξ
+  const auto zeta = -(xix * gammay - xiy * gammax) * invD;    // ∂z/∂η
+  const auto zgamma = (xix * etay - xiy * etax) * invD;       // ∂z/∂γ
 
   // Transform Stress integrand F to stress tensor T
   // const auto t_00 = (F(0, 0) * xxi + F(0, 1) * xgamma); // σ_xx

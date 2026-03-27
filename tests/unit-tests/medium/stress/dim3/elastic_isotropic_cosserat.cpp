@@ -359,7 +359,8 @@ TEST(Stress, ElasticIsotropicCosserat3D_CoupleStressAcceleration) {
   using PropertiesType = specfem::point::properties<Tags>;
   using FieldDerivativesType = specfem::point::field_derivatives<Tags>;
   using StressType = specfem::point::stress<Tags>;
-  using JacobianMatrixType = specfem::point::jacobian_matrix<Tags>;
+  using JacobianMatrixType =
+      specfem::point::jacobian_matrix<dimension, true, Tags::using_simd>;
   using AccelerationType = specfem::point::acceleration<Tags>;
 
   const type_real rho = 1.0;
@@ -417,8 +418,21 @@ TEST(Stress, ElasticIsotropicCosserat3D_CoupleStressAcceleration) {
 
   // Apply couple stress acceleration
   const type_real factor = 1.0;
+  struct StressIntegrandAdapter {
+    StressType::value_type F;
+
+    static constexpr int rank() { return 2; }
+
+    static constexpr int static_extent(const int dim) {
+      return (dim == 0) ? StressType::components : StressType::dimension;
+    }
+
+    type_real operator()(const int i, const int j) const { return F(i, j); }
+  };
+
+  const StressIntegrandAdapter stress_integrand{ stress * jacobian_matrix };
   specfem::medium_physics::compute_cosserat_couple_stress(
-      jacobian_matrix, properties, factor, stress, acceleration);
+      jacobian_matrix, properties, factor, stress_integrand, acceleration);
 
   // Expected angular accelerations from asymmetric stress
   // acceleration(3) -= (sigma_zy - sigma_yz) * factor / jacobian
@@ -426,15 +440,12 @@ TEST(Stress, ElasticIsotropicCosserat3D_CoupleStressAcceleration) {
   // acceleration(5) -= (sigma_yx - sigma_xy) * factor / jacobian
 
   // From our setup:
-  // sigma_xx = lambda*3 + 2*mu*1, sigma_yy = lambda*3 + 2*mu*1, sigma_zz =
-  // lambda*3 + 2*mu*1 sigma_yz = mu*(1+2) + nu*(1-2) = 3*mu - nu (asymmetric
-  // pair) sigma_zy = mu*(2+1) + nu*(2-1) = 3*mu + nu All other shear stresses
-  // are zero (no asymmetry needed for xz/zx, xy/yx in this test)
-
+  // sigma_yz = mu*(du(2,1)+du(1,2)) + nu*(du(2,1)-du(1,2)) = 3*mu + nu
+  // sigma_zy = mu*(du(1,2)+du(2,1)) + nu*(du(1,2)-du(2,1)) = 3*mu - nu
   const type_real sigma_yz =
-      mu * (1.0 + 2.0) + nu * (1.0 - 2.0); // = 3 - 0.5 = 2.5
-  const type_real sigma_zy =
       mu * (2.0 + 1.0) + nu * (2.0 - 1.0); // = 3 + 0.5 = 3.5
+  const type_real sigma_zy =
+      mu * (1.0 + 2.0) + nu * (1.0 - 2.0); // = 3 - 0.5 = 2.5
 
   AccelerationType expected_acceleration;
   expected_acceleration(0) = 0.0;
