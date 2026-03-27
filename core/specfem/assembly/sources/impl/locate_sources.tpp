@@ -6,7 +6,6 @@
 #include "specfem/mpi.hpp"
 #include "specfem/source.hpp"
 
-#include <limits>
 #include <stdexcept>
 #include <vector>
 
@@ -20,79 +19,28 @@ void specfem::assembly::sources_impl::locate_sources(
   const int nsources = static_cast<int>(sources.size());
   const int myrank = specfem::MPI::get_rank();
 
-  // Per-source local best-fit distances and element coordinates.
-  // Initialized as invalid: distance = max, ispec = -1.
-  std::vector<type_real> local_dists(nsources,
-                                     std::numeric_limits<type_real>::max());
-  std::vector<specfem::point::local_coordinates<DimensionTag> > local_coords(
-      nsources);
-  for (int isrc = 0; isrc < nsources; ++isrc) {
-    local_coords[isrc].ispec = -1;
-  }
+  // Collect global coordinates for all sources.
+  std::vector<specfem::point::global_coordinates<DimensionTag>> coords;
+  coords.reserve(nsources);
+  for (int isrc = 0; isrc < nsources; ++isrc)
+    coords.push_back(sources[isrc]->get_global_coordinates());
 
-  // Step 1: Each rank tries to locate every source in its local mesh
-  // partition. Sources outside the partition cause locate_point to throw; we
-  // catch those and leave the corresponding entry invalid.
-  for (int isrc = 0; isrc < nsources; ++isrc) {
-    const auto &coord = sources[isrc]->get_global_coordinates();
+  // Locate all sources across MPI partitions with inside-preference.
+  // The function prefers elements where xi/eta/gamma ∈ [-1,1] and falls back
+  // to minimum Cartesian distance when no rank owns an inside element.
+  auto [lcoords, islice_selected] =
+      specfem::algorithms::locate_point_mpi_slice(coords, mesh);
 
-    try {
-      const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
-
-      // Back-project to global coordinates to measure the location misfit.
-      const auto found_global =
-          specfem::algorithms::locate_point(lcoord, mesh);
-      local_dists[isrc] = specfem::point::distance(coord, found_global);
-      local_coords[isrc] = lcoord;
-    } catch (const std::exception &) {
-      // Source lies outside this rank's mesh partition; leave entry invalid.
-    }
-  }
-
-  // Step 2: allreduce(min) so every rank learns the global minimum distance
-  // for each source.
-  std::vector<type_real> global_dists = local_dists;
-  SPECFEM_MPI_SAFECALL(
-      MPI_Allreduce(MPI_IN_PLACE, global_dists.data(), nsources,
-                    SPECFEM_MPI_TYPE_REAL, MPI_MIN,
-                    MPI_COMM_WORLD));
-
-  // Step 3: Determine the owning rank for each source.
-  // A rank claims ownership when its local distance matches the global
-  // minimum. Ties are resolved by allreduce(max), which selects the
-  // highest-numbered tied rank (matches reference SPECFEM behavior).
-  std::vector<int> islice_selected(nsources, -1);
-  for (int isrc = 0; isrc < nsources; ++isrc) {
-    if (local_dists[isrc] <= global_dists[isrc]) {
-      islice_selected[isrc] = myrank;
-    }
-  }
-  SPECFEM_MPI_SAFECALL(
-      MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(), nsources, MPI_INT,
-                    MPI_MAX, MPI_COMM_WORLD));
-
-  // Sanity check: every source must have been claimed by at least one rank.
-  for (int isrc = 0; isrc < nsources; ++isrc) {
-    if (islice_selected[isrc] < 0) {
-      throw std::runtime_error(
-          "Source " + std::to_string(isrc) +
-          " could not be located in any MPI partition");
-    }
-  }
-
-  // Step 4: Assign local coordinates and medium tags.
-  // Only the owning rank sets valid coordinates; all other ranks receive an
-  // invalid entry (ispec = -1) so that sort_sources_per_medium ignores them.
-  // islice_selected is identical on all ranks after allreduce, so every rank
-  // can record which rank owns each source for informational purposes.
+  // Assign local coordinates and medium tags to each source.
+  // Only the owning rank sets valid coordinates; all others receive ispec = -1
+  // so that downstream filtering skips them.
   for (int isrc = 0; isrc < nsources; ++isrc) {
     sources[isrc]->set_islice(islice_selected[isrc]);
     if (islice_selected[isrc] == myrank) {
-      const auto &lcoord = local_coords[isrc];
+      const auto &lcoord = lcoords[isrc];
       sources[isrc]->set_local_coordinates(lcoord);
       sources[isrc]->set_medium_tag(element_types.get_medium_tag(lcoord.ispec));
     } else {
-      // Mark as non-local so downstream filtering skips this source.
       specfem::point::local_coordinates<DimensionTag> invalid;
       invalid.ispec = -1;
       sources[isrc]->set_local_coordinates(invalid);

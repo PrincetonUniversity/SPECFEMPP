@@ -9,7 +9,6 @@
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>
-#include <limits>
 #include <vector>
 
 specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
@@ -64,51 +63,22 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
     seismogram_type_map[seis_type] = isies;
   }
 
-  // MPI-aware receiver location: each rank locates receivers in its mesh
-  // partition, allreduce selects the owning rank per receiver.
+  // MPI-aware receiver location with inside-preference: prefer elements where
+  // xi/gamma ∈ [-1,1]; fall back to minimum distance if no rank has an inside
+  // element. Uses locate_point_mpi_slice for unified MPI communication.
   const int nreceivers = static_cast<int>(receivers.size());
   const int myrank = specfem::MPI::get_rank();
 
-  std::vector<type_real> local_dists(nreceivers,
-                                     std::numeric_limits<type_real>::max());
-  std::vector<
-      specfem::point::local_coordinates<specfem::element::dimension_tag::dim2> >
-      local_coords(nreceivers);
-  for (int i = 0; i < nreceivers; ++i)
-    local_coords[i].ispec = -1;
+  std::vector<specfem::point::global_coordinates<
+      specfem::element::dimension_tag::dim2> >
+      gcoords;
+  gcoords.reserve(nreceivers);
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver)
+    gcoords.push_back(
+        { receivers[ireceiver]->get_x(), receivers[ireceiver]->get_z() });
 
-  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
-    const auto gcoord = specfem::point::global_coordinates<
-        specfem::element::dimension_tag::dim2>{ receivers[ireceiver]->get_x(),
-                                                receivers[ireceiver]->get_z() };
-    try {
-      const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
-      const auto found = specfem::algorithms::locate_point(lcoord, mesh);
-      local_dists[ireceiver] = specfem::point::distance(gcoord, found);
-      local_coords[ireceiver] = lcoord;
-    } catch (const std::exception &) {
-    }
-  }
-
-  std::vector<type_real> global_dists = local_dists;
-  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, global_dists.data(),
-                                     nreceivers, SPECFEM_MPI_TYPE_REAL, MPI_MIN,
-                                     MPI_COMM_WORLD));
-
-  std::vector<int> islice_selected(nreceivers, -1);
-  for (int i = 0; i < nreceivers; ++i) {
-    if (local_dists[i] <= global_dists[i])
-      islice_selected[i] = myrank;
-  }
-  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(),
-                                     nreceivers, MPI_INT, MPI_MAX,
-                                     MPI_COMM_WORLD));
-
-  for (int i = 0; i < nreceivers; ++i) {
-    if (islice_selected[i] < 0)
-      throw std::runtime_error("Receiver " + std::to_string(i) +
-                               " could not be located in any MPI partition");
-  }
+  auto [local_coords, islice_selected] =
+      specfem::algorithms::locate_point_mpi_slice(gcoords, mesh);
 
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     const auto receiver = receivers[ireceiver];
