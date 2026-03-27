@@ -22,8 +22,7 @@ void specfem::assembly::Attenuation<
 
       FOR_EACH_IN_PRODUCT(
           (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
-           PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
-           ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
+           PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
           CAPTURE(attn_medium) {
             using medium_t = std::remove_reference_t<decltype(_attn_medium_)>;
             auto elements = element_types.get_elements_on_host(

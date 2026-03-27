@@ -1,13 +1,5 @@
 #pragma once
 
-#include "specfem/assembly/fwd.hpp"
-#include <string>
-
-namespace specfem::assembly {
-template <specfem::element::dimension_tag DimensionTag> struct mesh;
-template <specfem::element::dimension_tag DimensionTag> struct element_types;
-} // namespace specfem::assembly
-
 namespace specfem {
 namespace io {
 namespace impl {
@@ -33,6 +25,14 @@ void write_container(
     const specfem::assembly::element_types<
         specfem::element::dimension_tag::dim2> &element_types,
     ContainerType &container);
+
+template <typename GroupType, typename ElementIndicesType,
+          typename DataContainerType>
+int write_medium_group(
+    GroupType &group,
+    const specfem::assembly::mesh<specfem::element::dimension_tag::dim2> &mesh,
+    const ElementIndicesType &element_indices,
+    const DataContainerType &data_container);
 } // namespace impl
 } // namespace io
 } // namespace specfem

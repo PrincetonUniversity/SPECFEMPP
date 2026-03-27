@@ -10,17 +10,13 @@ specfem::assembly::FieldDerivativeStorage<
 
   // Initialize storage for all CONSTANT_ISOTROPIC combinations.
   // NONE combinations are default-constructed (empty, no-op).
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2),
-                       MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                  POROELASTIC, ELASTIC_PSV_T),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-                       ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
-                      CAPTURE(fd_medium) {
-                        using medium_t =
-                            std::remove_reference_t<decltype(_fd_medium_)>;
-                        auto elements = element_types.get_elements_on_host(
-                            _medium_tag_, _property_tag_, _attenuation_tag_);
-                        _fd_medium_ =
-                            medium_t(elements, nspec_global, ngllz, 0, ngllx);
-                      })
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC),
+       ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
+      CAPTURE(fd_medium) {
+        using medium_t = std::remove_reference_t<decltype(_fd_medium_)>;
+        auto elements = element_types.get_elements_on_host(
+            _medium_tag_, _property_tag_, _attenuation_tag_);
+        _fd_medium_ = medium_t(elements, nspec_global, ngllz, ngllx);
+      })
 }

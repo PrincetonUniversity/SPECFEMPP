@@ -86,7 +86,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2,
 
   // One attenuation_medium member per (medium, property) combination
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
-                       PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+                       PROPERTY_TAG(ISOTROPIC),
                        ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
                       DECLARE(((specfem::assembly::impl::attenuation_medium,
                                 (_DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_,
@@ -130,7 +130,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2,
       specfem::element::attenuation_tag::constant_isotropic> const &
   get_medium() const {
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
-                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+                         PROPERTY_TAG(ISOTROPIC),
                          ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
                         CAPTURE(attn_medium) {
                           if constexpr (_medium_tag_ == MediumTag &&
@@ -147,7 +147,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2,
    */
   void copy_to_host() {
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
-                         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+                         PROPERTY_TAG(ISOTROPIC),
                          ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
                         CAPTURE(attn_medium) { _attn_medium_.copy_to_host(); })
   }
@@ -157,8 +157,7 @@ struct Attenuation<specfem::element::dimension_tag::dim2,
    */
   void copy_to_device() {
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
-         PROPERTY_TAG(ISOTROPIC, ANISOTROPIC),
+        (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV), PROPERTY_TAG(ISOTROPIC),
          ATTENUATION_TAG(CONSTANT_ISOTROPIC)),
         CAPTURE(attn_medium) { _attn_medium_.copy_to_device(); })
   }
