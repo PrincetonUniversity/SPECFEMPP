@@ -52,7 +52,10 @@ void specfem::assembly::sources_impl::locate_sources(
   // Step 2: allreduce(min) so every rank learns the global minimum distance
   // for each source.
   std::vector<type_real> global_dists = local_dists;
-  specfem::MPI::allreduce(global_dists.data(), nsources, specfem::min);
+  SPECFEM_MPI_SAFECALL(
+      MPI_Allreduce(MPI_IN_PLACE, global_dists.data(), nsources,
+                    specfem::mpi::datatype<type_real>(), MPI_MIN,
+                    MPI_COMM_WORLD));
 
   // Step 3: Determine the owning rank for each source.
   // A rank claims ownership when its local distance matches the global
@@ -64,7 +67,9 @@ void specfem::assembly::sources_impl::locate_sources(
       islice_selected[isrc] = myrank;
     }
   }
-  specfem::MPI::allreduce(islice_selected.data(), nsources, specfem::max);
+  SPECFEM_MPI_SAFECALL(
+      MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(), nsources, specfem::mpi::datatype<int>(),
+                    MPI_MAX, MPI_COMM_WORLD));
 
   // Sanity check: every source must have been claimed by at least one rank.
   for (int isrc = 0; isrc < nsources; ++isrc) {

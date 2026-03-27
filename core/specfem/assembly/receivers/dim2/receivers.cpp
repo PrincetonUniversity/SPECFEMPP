@@ -91,14 +91,18 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim2>::receivers(
   }
 
   std::vector<type_real> global_dists = local_dists;
-  specfem::MPI::allreduce(global_dists.data(), nreceivers, specfem::min);
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(
+      MPI_IN_PLACE, global_dists.data(), nreceivers,
+      specfem::mpi::datatype<type_real>(), MPI_MIN, MPI_COMM_WORLD));
 
   std::vector<int> islice_selected(nreceivers, -1);
   for (int i = 0; i < nreceivers; ++i) {
     if (local_dists[i] <= global_dists[i])
       islice_selected[i] = myrank;
   }
-  specfem::MPI::allreduce(islice_selected.data(), nreceivers, specfem::max);
+  SPECFEM_MPI_SAFECALL(MPI_Allreduce(MPI_IN_PLACE, islice_selected.data(),
+                                     nreceivers, specfem::mpi::datatype<int>(),
+                                     MPI_MAX, MPI_COMM_WORLD));
 
   for (int i = 0; i < nreceivers; ++i) {
     if (islice_selected[i] < 0)

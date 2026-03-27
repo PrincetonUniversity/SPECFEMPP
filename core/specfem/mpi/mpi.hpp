@@ -14,15 +14,6 @@
 
 namespace specfem {
 
-#ifdef SPECFEM_ENABLE_MPI
-using reduce_type = MPI_Op;
-const static reduce_type sum = MPI_SUM;
-const static reduce_type min = MPI_MIN;
-const static reduce_type max = MPI_MAX;
-#else
-enum reduce_type { sum, min, max };
-#endif
-
 // Forward declaration
 namespace program {
 class Context;
@@ -62,6 +53,13 @@ private:
   static int size_; ///< Total number of MPI processes (-1 if not initialized)
 
 public:
+#ifdef SPECFEM_ENABLE_MPI
+  template <typename T> inline MPI_Datatype datatype() = delete;
+  template <> inline MPI_Datatype datatype<float>() { return MPI_FLOAT; }
+  template <> inline MPI_Datatype datatype<double>() { return MPI_DOUBLE; }
+  template <> inline MPI_Datatype datatype<int>() { return MPI_INT; }
+#endif
+
   /**
    * @brief Synchronize all MPI processes (MPI_Barrier)
    *
@@ -130,6 +128,14 @@ public:
    * @return std::string Formatted filename with processor number
    * @throws Exits with error code 1 if called outside Context scope
    */
+  static bool check_context() {
+    if (rank_ == -1 || size_ == -1) {
+      std::cerr << "ERROR: MPI used outside Context scope" << std::endl;
+      std::exit(1);
+    }
+    return true;
+  }
+
   static std::string format_proc_filename(const std::string &filename) {
     check_context();
 
@@ -157,112 +163,6 @@ public:
     return result.string();
   }
 
-  /**
-   * @brief MPI reduce operation
-   *
-   * @param lvalue Local value to reduce
-   * @param reduce_op Reduction operation (specfem::sum, specfem::min,
-   * specfem::max)
-   * @return Reduced value (only valid on root process)
-   * @throws Exits with error code 1 if called outside Context scope
-   */
-  static int reduce(int lvalue, specfem::reduce_type reduce_op) {
-    check_context();
-    int result = lvalue;
-#ifdef SPECFEM_ENABLE_MPI
-    MPI_Reduce(&lvalue, &result, 1, MPI_INT, reduce_op, 0, MPI_COMM_WORLD);
-#endif
-    return result;
-  }
-
-  /**
-   * @brief MPI reduce operation for float
-   *
-   * @param lvalue Local value to reduce
-   * @param reduce_op Reduction operation
-   * @return Reduced value (only valid on root process)
-   * @throws Exits with error code 1 if called outside Context scope
-   */
-  static float reduce(float lvalue, specfem::reduce_type reduce_op) {
-    check_context();
-    float result = lvalue;
-#ifdef SPECFEM_ENABLE_MPI
-    MPI_Reduce(&lvalue, &result, 1, MPI_FLOAT, reduce_op, 0, MPI_COMM_WORLD);
-#endif
-    return result;
-  }
-
-  /**
-   * @brief MPI reduce operation for double
-   *
-   * @param lvalue Local value to reduce
-   * @param reduce_op Reduction operation
-   * @return Reduced value (only valid on root process)
-   * @throws Exits with error code 1 if called outside Context scope
-   */
-  static double reduce(double lvalue, specfem::reduce_type reduce_op) {
-    check_context();
-    double result = lvalue;
-#ifdef SPECFEM_ENABLE_MPI
-    MPI_Reduce(&lvalue, &result, 1, MPI_DOUBLE, reduce_op, 0, MPI_COMM_WORLD);
-#endif
-    return result;
-  }
-
-  /**
-   * @brief MPI all-reduce operation for float arrays
-   *
-   * Reduces data across all ranks and distributes the result to every rank.
-   * In serial builds this is a no-op (the local values are already "global").
-   *
-   * @param data Pointer to local data; overwritten with the reduced result
-   * @param count Number of elements
-   * @param reduce_op Reduction operation (specfem::sum, specfem::min,
-   * specfem::max)
-   * @throws Exits with error code 1 if called outside Context scope
-   */
-  static void allreduce(float *data, int count,
-                        specfem::reduce_type reduce_op) {
-    check_context();
-#ifdef SPECFEM_ENABLE_MPI
-    MPI_Allreduce(MPI_IN_PLACE, data, count, MPI_FLOAT, reduce_op,
-                  MPI_COMM_WORLD);
-#endif
-  }
-
-  /**
-   * @brief MPI all-reduce operation for double arrays
-   *
-   * @param data Pointer to local data; overwritten with the reduced result
-   * @param count Number of elements
-   * @param reduce_op Reduction operation
-   * @throws Exits with error code 1 if called outside Context scope
-   */
-  static void allreduce(double *data, int count,
-                        specfem::reduce_type reduce_op) {
-    check_context();
-#ifdef SPECFEM_ENABLE_MPI
-    MPI_Allreduce(MPI_IN_PLACE, data, count, MPI_DOUBLE, reduce_op,
-                  MPI_COMM_WORLD);
-#endif
-  }
-
-  /**
-   * @brief MPI all-reduce operation for int arrays
-   *
-   * @param data Pointer to local data; overwritten with the reduced result
-   * @param count Number of elements
-   * @param reduce_op Reduction operation
-   * @throws Exits with error code 1 if called outside Context scope
-   */
-  static void allreduce(int *data, int count, specfem::reduce_type reduce_op) {
-    check_context();
-#ifdef SPECFEM_ENABLE_MPI
-    MPI_Allreduce(MPI_IN_PLACE, data, count, MPI_INT, reduce_op,
-                  MPI_COMM_WORLD);
-#endif
-  }
-
 private:
   MPI() = default;
   ~MPI() = default;
@@ -288,23 +188,15 @@ private:
    */
   static void finalize();
 
-  /**
-   * @brief Check if MPI is initialized (Context exists)
-   *
-   * Verifies that rank and size are valid (not -1).
-   * Exits with error code 1 if check fails.
-   */
-  static bool check_context() {
-    if (rank_ == -1 || size_ == -1) {
-      std::cerr << "ERROR: MPI used outside Context scope" << std::endl;
-      std::exit(1);
-    }
-    return true;
-  }
-
   friend class specfem::program::Context;
   friend void specfem::program::abort(const std::string &, int, const int,
                                       const char *);
 };
 
 } // namespace specfem
+
+#ifndef SPECFEM_ENABLE_MPI
+#define SPECFEM_MPI_SAFECALL(call) ((void)0)
+#else
+#define SPECFEM_MPI_SAFECALL(call) (specfem::MPI::check_context(), (call))
+#endif
