@@ -65,12 +65,12 @@ TEST(Stress, ElasticIsotropicCosserat3D_DisplacementGradients) {
   expected_stress.T(2, 2) = lambda * div_u + 2.0 * mu * 3.0; // sigma_zz
 
   // Shear stresses with nu coupling
-  expected_stress.T(0, 1) = mu * (5.0 + 4.0) + nu * (5.0 - 4.0); // sigma_xy
-  expected_stress.T(1, 0) = mu * (4.0 + 5.0) + nu * (4.0 - 5.0); // sigma_yx
-  expected_stress.T(0, 2) = mu * (7.0 + 6.0) + nu * (7.0 - 6.0); // sigma_xz
-  expected_stress.T(2, 0) = mu * (6.0 + 7.0) + nu * (6.0 - 7.0); // sigma_zx
-  expected_stress.T(1, 2) = mu * (9.0 + 8.0) + nu * (9.0 - 8.0); // sigma_yz
-  expected_stress.T(2, 1) = mu * (8.0 + 9.0) + nu * (8.0 - 9.0); // sigma_zy
+  expected_stress.T(1, 0) = mu * (5.0 + 4.0) + nu * (5.0 - 4.0); // sigma_xy
+  expected_stress.T(0, 1) = mu * (4.0 + 5.0) + nu * (4.0 - 5.0); // sigma_yx
+  expected_stress.T(2, 0) = mu * (7.0 + 6.0) + nu * (7.0 - 6.0); // sigma_xz
+  expected_stress.T(0, 2) = mu * (6.0 + 7.0) + nu * (6.0 - 7.0); // sigma_zx
+  expected_stress.T(2, 1) = mu * (9.0 + 8.0) + nu * (9.0 - 8.0); // sigma_yz
+  expected_stress.T(1, 2) = mu * (8.0 + 9.0) + nu * (8.0 - 9.0); // sigma_zy
 
   // Couple stress components (zero since rotation gradients are zero)
   expected_stress.T(3, 0) = 0.0; // sigma_c_xx
@@ -153,12 +153,12 @@ TEST(Stress, ElasticIsotropicCosserat3D_DisplacementAndRotationGradients) {
   expected_stress.T(1, 1) = lambda * div_u + 2.0 * mu * 2.0;
   expected_stress.T(2, 2) = lambda * div_u + 2.0 * mu * 3.0;
 
-  expected_stress.T(0, 1) = mu * (5.0 + 4.0) + nu * (5.0 - 4.0);
-  expected_stress.T(1, 0) = mu * (4.0 + 5.0) + nu * (4.0 - 5.0);
-  expected_stress.T(0, 2) = mu * (7.0 + 6.0) + nu * (7.0 - 6.0);
-  expected_stress.T(2, 0) = mu * (6.0 + 7.0) + nu * (6.0 - 7.0);
-  expected_stress.T(1, 2) = mu * (9.0 + 8.0) + nu * (9.0 - 8.0);
-  expected_stress.T(2, 1) = mu * (8.0 + 9.0) + nu * (8.0 - 9.0);
+  expected_stress.T(1, 0) = mu * (5.0 + 4.0) + nu * (5.0 - 4.0);
+  expected_stress.T(0, 1) = mu * (4.0 + 5.0) + nu * (4.0 - 5.0);
+  expected_stress.T(2, 0) = mu * (7.0 + 6.0) + nu * (7.0 - 6.0);
+  expected_stress.T(0, 2) = mu * (6.0 + 7.0) + nu * (6.0 - 7.0);
+  expected_stress.T(2, 1) = mu * (9.0 + 8.0) + nu * (9.0 - 8.0);
+  expected_stress.T(1, 2) = mu * (8.0 + 9.0) + nu * (8.0 - 9.0);
 
   // Couple stress from rotation gradients
   const type_real div_phi = 0.1 + 0.5 + 0.9;                       // = 1.5
