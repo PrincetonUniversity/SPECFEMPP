@@ -205,6 +205,8 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
         Kokkos::deep_copy(_receiver_indices_, _h_receiver_indices_);
       })
 
+  receiver_islice_.assign(islice_selected.begin(), islice_selected.end());
+
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
   Kokkos::deep_copy(elements, h_elements);
 

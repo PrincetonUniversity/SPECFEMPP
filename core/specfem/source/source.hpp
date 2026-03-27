@@ -289,6 +289,9 @@ public:
    */
   specfem::element::medium_tag get_medium_tag() const { return medium_tag; }
 
+  int get_islice() const { return islice_; }
+  void set_islice(int rank) { islice_ = rank; }
+
 protected:
   // Read-only member variables
   static constexpr const char *name =
@@ -305,6 +308,7 @@ protected:
       global_coordinates; ///< Global coordinates of the source in the global
                           ///< coordinate system
   specfem::element::medium_tag medium_tag;
+  int islice_ = -1; ///< MPI rank that owns this source (-1 = not yet located)
 };
 
 } // namespace specfem::sources

@@ -292,6 +292,8 @@ public:
    * }
    * @endcode
    */
+  const std::vector<int> &get_islice() const { return source_islice_; }
+
   void update_timestep(const int timestep) { this->timestep = timestep; }
   ///@}
 
@@ -427,6 +429,7 @@ private:
    * in 3D simulations. Updated via `update_timestep()` method.
    */
   int timestep;
+  std::vector<int> source_islice_;
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),

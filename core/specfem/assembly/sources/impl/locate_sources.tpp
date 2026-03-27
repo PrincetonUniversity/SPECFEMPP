@@ -78,7 +78,10 @@ void specfem::assembly::sources_impl::locate_sources(
   // Step 4: Assign local coordinates and medium tags.
   // Only the owning rank sets valid coordinates; all other ranks receive an
   // invalid entry (ispec = -1) so that sort_sources_per_medium ignores them.
+  // islice_selected is identical on all ranks after allreduce, so every rank
+  // can record which rank owns each source for informational purposes.
   for (int isrc = 0; isrc < nsources; ++isrc) {
+    sources[isrc]->set_islice(islice_selected[isrc]);
     if (islice_selected[isrc] == myrank) {
       const auto &lcoord = local_coords[isrc];
       sources[isrc]->set_local_coordinates(lcoord);

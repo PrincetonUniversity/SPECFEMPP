@@ -2,6 +2,7 @@
 #include "specfem/enums.hpp"
 #include "specfem/io.hpp"
 #include "specfem/mesh.hpp"
+#include <map>
 
 specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::assembly(
     const specfem::mesh::mesh<dimension_tag> &mesh,
@@ -120,5 +121,41 @@ specfem::assembly::assembly<specfem::element::dimension_tag::dim3>::print()
             << "\n";
     throw std::runtime_error(message.str());
   }
+
+#ifdef SPECFEM_ENABLE_MPI
+  {
+    const auto &src_islice = this->sources.get_islice();
+    if (!src_islice.empty()) {
+      std::map<int, std::vector<int> > sources_per_rank;
+      for (int i = 0; i < static_cast<int>(src_islice.size()); ++i)
+        sources_per_rank[src_islice[i]].push_back(i);
+      message << "Sources per MPI rank:\n";
+      for (const auto &[rank, indices] : sources_per_rank) {
+        message << "  Rank " << rank << " :";
+        for (int idx : indices)
+          message << " " << idx;
+        message << "\n";
+      }
+    }
+    if (this->receivers.size() > 0) {
+      std::map<int, std::vector<std::string> > stations_per_rank;
+      size_t idx = 0;
+      for (const auto &station : this->receivers.stations()) {
+        int rank = this->receivers.get_receiver_islice(idx);
+        stations_per_rank[rank].push_back(station.network_name + "." +
+                                          station.station_name);
+        ++idx;
+      }
+      message << "Stations per MPI rank:\n";
+      for (const auto &[rank, names] : stations_per_rank) {
+        message << "  Rank " << rank << " :";
+        for (const auto &name : names)
+          message << " " << name;
+        message << "\n";
+      }
+    }
+  }
+#endif
+
   return message.str();
 }

@@ -74,6 +74,10 @@ specfem::assembly::sources<specfem::element::dimension_tag::dim2>::sources(
   // global element index, and medium that the source is located in
   specfem::assembly::sources_impl::locate_sources(element_types, mesh, sources);
 
+  source_islice_.resize(sources.size());
+  for (int i = 0; i < static_cast<int>(sources.size()); ++i)
+    source_islice_[i] = sources[i]->get_islice();
+
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
                                        POROELASTIC, ELASTIC_PSV_T)),
