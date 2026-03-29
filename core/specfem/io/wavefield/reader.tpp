@@ -18,7 +18,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
-                                       ACOUSTIC, POROELASTIC)),
+                                       ACOUSTIC, ELASTIC_SPIN, POROELASTIC)),
       {
         if (buffer.get_nglob<_medium_tag_>() > 0) {
           ngroups++;
@@ -30,7 +30,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_PSV_T, ELASTIC_SH,
-                                       ACOUSTIC, POROELASTIC)),
+                                       ACOUSTIC, ELASTIC_SPIN, POROELASTIC)),
       {
         if (buffer.get_nglob<_medium_tag_>() > 0) {
           const std::string current_tag = specfem::element::to_string(_medium_tag_);
@@ -72,7 +72,7 @@ void specfem::io::wavefield_reader<IOLibrary>::initialize(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
+                                       POROELASTIC, ELASTIC_PSV_T, ELASTIC_SPIN)),
       CAPTURE((container, boundary_values.stacey.container)) {
         if (_container_.h_values.size() > 0) {
           const std::string dataset_name =
@@ -98,7 +98,7 @@ void specfem::io::wavefield_reader<IOLibrary>::run(
 
   FOR_EACH_IN_PRODUCT(
       (DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC,
-                                       POROELASTIC, ELASTIC_PSV_T)),
+                                       POROELASTIC, ELASTIC_PSV_T, ELASTIC_SPIN)),
       {
         int nglob_medium = buffer.get_nglob<_medium_tag_>();
 
