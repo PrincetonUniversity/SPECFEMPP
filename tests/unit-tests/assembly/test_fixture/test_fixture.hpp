@@ -129,7 +129,9 @@ protected:
 // 2D config specialization
 template <> struct config<specfem::element::dimension_tag::dim2> {
 public:
-  config() : nproc(1), elastic_wave("P_SV"), electromagnetic_wave("TE") {};
+  config()
+      : nproc(1), elastic_wave("P_SV"), electromagnetic_wave("TE"),
+        attenuation_enabled(false) {};
   config(const YAML::Node &Node) {
     nproc = Node["nproc"].as<int>();
     if (Node["elastic_wave"].IsDefined())
@@ -185,7 +187,7 @@ private:
 // 3D config specialization
 template <> struct config<specfem::element::dimension_tag::dim3> {
 public:
-  config() : nproc(1) {};
+  config() : nproc(1), attenuation_enabled(false) {};
   config(const YAML::Node &Node) {
     nproc = Node["nproc"].as<int>();
 

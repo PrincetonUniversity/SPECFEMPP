@@ -72,8 +72,8 @@ Example parameter file
           ## attenuation
           attenuation:
             enabled: true
-            min_attenation_frequency: 0.1
-            max_attenation_frequency: 20.0
+            min_attenuation_frequency: 0.1
+            max_attenuation_frequency: 20.0
 
 
 
@@ -1025,7 +1025,7 @@ Parameter definitions
         .. dropdown:: ``min_attenuation_frequency``
 
             Minimum frequency for attenuation in Hz. This parameter is used to
-            calculate the absorbtion band for the simulation.
+            calculate the absorption band for the simulation.
 
             :default value: None
 
@@ -1039,7 +1039,7 @@ Parameter definitions
         .. dropdown:: ``max_attenuation_frequency``
 
             Maximum frequency for attenuation in Hz. This parameter is used to
-            calculate the absorbtion band for the simulation.
+            calculate the absorption band for the simulation.
 
             :default value: None
 

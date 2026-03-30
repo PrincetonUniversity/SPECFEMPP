@@ -314,7 +314,7 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
   }
 
   // Get attenuation configuration
-  if (const YAML::Node &attenuation_node = simulation_setup["attenuation"]) {
+  if (const YAML::Node &attenuation_node = runtime_config["attenuation"]) {
     this->attenuation =
         std::make_unique<specfem::runtime_configuration::Attenuation>(
             attenuation_node);
