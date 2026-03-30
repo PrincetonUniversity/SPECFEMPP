@@ -53,7 +53,8 @@ namespace io {
 specfem::mesh::mesh<specfem::element::dimension_tag::dim2>
 read_2d_mesh(const std::string &filename,
              const specfem::enums::elastic_wave wave,
-             const specfem::enums::electromagnetic_wave electromagnetic_wave);
+             const specfem::enums::electromagnetic_wave electromagnetic_wave,
+             const bool attenuation_enabled);
 
 /**
  * @brief Construct a 3D mesh object from MESHFEM3D Fortran binary database file
@@ -68,7 +69,7 @@ read_2d_mesh(const std::string &filename,
  * @endcode
  */
 specfem::mesh::mesh<specfem::element::dimension_tag::dim3>
-read_3d_mesh(const std::string &database_file);
+read_3d_mesh(const std::string &database_file, const bool attenuation_enabled);
 
 /**
  * @brief Read station file

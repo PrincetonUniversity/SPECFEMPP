@@ -312,7 +312,18 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
     message << "Error reading specfem solver configuration. \n" << e.what();
     throw std::runtime_error(message.str());
   }
-}
+
+  // Get attenuation configuration
+  if (const YAML::Node &attenuation_node = simulation_setup["attenuation"]) {
+    this->attenuation =
+        std::make_unique<specfem::runtime_configuration::Attenuation>(
+            attenuation_node);
+  } else {
+    // Default is attenuation disabled
+    this->attenuation =
+        std::make_unique<specfem::runtime_configuration::Attenuation>();
+  }
+};
 
 // Explicit template instantiations for instantiate_timescheme
 template std::shared_ptr<specfem::time_scheme::time_scheme>

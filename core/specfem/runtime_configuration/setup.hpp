@@ -1,5 +1,6 @@
 #pragma once
 
+#include "attenuation.hpp"
 #include "database_configuration.hpp"
 #include "elastic_wave.hpp"
 #include "electromagnetic_wave.hpp"
@@ -211,6 +212,13 @@ public:
   }
 
   /**
+   * @brief Whether attenuation is enabled in the simulation
+   */
+  bool is_attenuation_enabled() const {
+    return this->attenuation && this->attenuation->is_attenuation_enabled();
+  }
+
+  /**
    * @brief Create wavefield writer for periodic output.
    *
    * @tparam DimensionTag Spatial dimension (2D/3D)
@@ -395,6 +403,8 @@ public:
 private:
   std::unique_ptr<specfem::runtime_configuration::header>
       header; ///< Simulation header configuration
+  std::unique_ptr<specfem::runtime_configuration::Attenuation>
+      attenuation; ///< Attenuation configuration
   std::unique_ptr<specfem::runtime_configuration::elastic_wave>
       elastic_wave; ///< Elastic wave type configuration
   std::unique_ptr<specfem::runtime_configuration::electromagnetic_wave>
