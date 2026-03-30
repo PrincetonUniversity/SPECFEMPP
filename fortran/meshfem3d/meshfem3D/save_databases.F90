@@ -637,9 +637,19 @@
   write(IIN_database) num_mpi_adjacencies
   index = 0
 
-  ! Write MPI adjacencies
-  ! Format: myindex, neighbor_iproc, neighbor_index, my_connection_id,
-  !         neighbor_connection_id, anchor_local_corner, anchor_remote_corner
+  ! Write MPI adjacencies with anchor point constraints
+  ! Format per row (7 columns):
+  !   col 1: myindex            — local element index (1-based)
+  !   col 2: neighbor_iproc     — MPI rank of the neighbor processor
+  !   col 3: neighbor_index     — element index on neighbor processor
+  !   col 4: my_connection_id   — face/edge/corner ID on local element
+  !   col 5: neighbor_conn_id   — face/edge/corner ID on remote element
+  !   col 6: anchor_local       — corner index (1-based) on local element
+  !                               that anchors the orientation
+  !   col 7: anchor_remote      — corner index (1-based) on remote element
+  !                               matched to anchor_local via coordinates
+  ! These anchor points remove rotational ambiguity on MPI surfaces by
+  ! establishing a canonical reference frame through corner correspondences.
   write(IIN_database) num_mpi_adjacencies
   do i = 1, num_mpi_adjacencies
     write(IIN_database) mpi_adjacency(i, 1), mpi_adjacency(i, 2), &

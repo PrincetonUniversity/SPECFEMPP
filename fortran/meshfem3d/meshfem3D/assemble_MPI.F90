@@ -1449,6 +1449,7 @@ subroutine match_interface_elements(dir, nsend, nrecv, ncorners, &
             ! Compute anchor point indices for orientation
             call compute_anchor_points_for_match(send_coords(isend,:,:), &
                recv_coords(irecv,:,:), ncorners, &
+               my_conn_id, neighbor_conn_id, &
                anchor_local, anchor_remote)
 
             ! Fill mpi_adjacency row
@@ -1476,20 +1477,23 @@ end subroutine match_interface_elements
 
 
 subroutine compute_anchor_points_for_match(coords_local, coords_remote, ncorners, &
-   anchor_local, anchor_remote)
+   conn_id_local, conn_id_remote, anchor_local, anchor_remote)
    !! Compute anchor point indices from matched corner coordinates.
    !!
    !! After two interface elements have been matched by coordinate sets,
    !! this routine identifies a canonical pair of corner indices that
-   !! connect the two elements. This provides orientation information
-   !! and eliminates rotation ambiguity.
+   !! connect the two elements. The corner indices returned are
+   !! element-absolute IDs (19-26) as defined in adjacency_graph.f90,
+   !! not interface-relative indices.
    !!
    !! Algorithm:
    !!   1. For each corner in the LOCAL element (unsorted), find the
-   !!      closest matching corner in the REMOTE element.
+   !!      closest matching corner in the REMOTE element by coordinate.
    !!   2. Return the lexicographically smallest local corner index
    !!      and its matched remote counterpart as the anchor pair.
-   !!   3. This ensures reproducible, deterministic anchor selection
+   !!   3. Map interface corner indices (1-4 or 1-2) to element-absolute
+   !!      corner IDs (19-26) using the face/edge ID mappings.
+   !!   4. This ensures reproducible, deterministic anchor selection
    !!      independent of corner ordering.
    !!
    !! Arguments:
@@ -1498,26 +1502,31 @@ subroutine compute_anchor_points_for_match(coords_local, coords_remote, ncorners
    !!   coords_remote(4, 3)    — unsorted corner coordinates of remote
    !!                             element interface face/edge
    !!   ncorners               — number of corners to match (2 or 4)
-   !!   anchor_local           — output: corner index (1-4) on local
-   !!   anchor_remote          — output: corner index (1-4) on remote
+   !!   conn_id_local          — connection ID (face 1-6 or edge 7-18)
+   !!                             on local element
+   !!   conn_id_remote         — connection ID on remote element
+   !!   anchor_local           — output: element corner ID (19-26) on local
+   !!   anchor_remote          — output: element corner ID (19-26) on remote
    !!
-   !! For a face (ncorners=4), corners are ordered as:
+   !! For a face (ncorners=4), interface corners are ordered as:
    !!   1 = bottom_left, 2 = bottom_right, 3 = top_right, 4 = top_left
    !!
    !! Returns the first (lexicographically smallest by coordinate)
-   !! unmatched pair.
+   !! unmatched pair, mapped to element-absolute corner IDs.
 
-   use constants, only: NDIM
+   use constants, only: NDIM, myrank
 
    implicit none
 
    double precision, intent(in) :: coords_local(4, NDIM)
    double precision, intent(in) :: coords_remote(4, NDIM)
    integer, intent(in) :: ncorners
+   integer, intent(in) :: conn_id_local, conn_id_remote
    integer, intent(out) :: anchor_local, anchor_remote
 
    double precision, parameter :: COORD_TOL = 1.0d-10
    integer :: ic, ic_remote
+   integer :: ic_local_interface, ic_remote_interface
    double precision :: tol
    logical :: matched_remote(4)
    logical :: found
@@ -1536,20 +1545,129 @@ subroutine compute_anchor_points_for_match(coords_local, coords_remote, ncorners
          if (dabs(coords_local(ic,1) - coords_remote(ic_remote,1)) <= tol .and. &
             dabs(coords_local(ic,2) - coords_remote(ic_remote,2)) <= tol .and. &
             dabs(coords_local(ic,3) - coords_remote(ic_remote,3)) <= tol) then
-            anchor_local = ic
-            anchor_remote = ic_remote
+            ic_local_interface = ic
+            ic_remote_interface = ic_remote
             matched_remote(ic_remote) = .true.
-            found = .true.
+
+            ! Convert interface-relative corner indices to element-absolute
+            ! corner IDs (19-26) using connection ID mappings
+            anchor_local = get_element_corner_id(conn_id_local, &
+               ic_local_interface, ncorners)
+            anchor_remote = get_element_corner_id(conn_id_remote, &
+               ic_remote_interface, ncorners)
             return
          endif
       end do
    end do
 
-   ! Fallback (should not reach here if corners_match succeeded)
-   anchor_local = 1
-   anchor_remote = 1
+   ! Error: no matching corner pair found (should not reach here if corners_match succeeded)
+   call exit_MPI(myrank, &
+      'Error in compute_anchor_points_for_match: ' // &
+      'no matching anchor point pair detected. ' // &
+      'This indicates a mismatch between corners_match and ' // &
+      'the anchor detection algorithm.')
 
 end subroutine compute_anchor_points_for_match
+
+
+integer function get_element_corner_id(conn_id, interface_corner_idx, ncorners)
+   !! Map interface corner index to element-absolute corner ID.
+   !!
+   !! Given a connection ID (face 1-6 or edge 7-18) and an interface
+   !! corner index (1-4 for faces, 1-2 for edges), returns the element-
+   !! absolute corner ID (19-26) using the mapping defined in
+   !! adjacency_graph.f90.
+   !!
+   !! Corner ID convention:
+   !!   19: bottom_front_left        20: bottom_front_right
+   !!   21: bottom_back_left         22: bottom_back_right
+   !!   23: top_front_left           24: top_front_right
+   !!   25: top_back_left            26: top_back_right
+   !!
+   !! Arguments:
+   !!   conn_id            — connection ID (1-18)
+   !!   interface_corner_idx — corner position on face/edge (1-4 or 1-2)
+   !!   ncorners           — number of corners (4 for faces, 2 for edges)
+   !!
+   !! Returns:
+   !!   element_corner_id (19-26), or 0 if inputs are invalid
+
+   implicit none
+
+   integer, intent(in) :: conn_id, interface_corner_idx, ncorners
+
+   ! Mapping tables: [interface corner 1-4] -> element corner ID
+   ! Faces (1-6): 4 corners each
+   integer, parameter :: face_1_map(4) = [19, 20, 22, 21]  ! bottom
+   integer, parameter :: face_2_map(4) = [20, 24, 26, 22]  ! right
+   integer, parameter :: face_3_map(4) = [23, 24, 26, 25]  ! top
+   integer, parameter :: face_4_map(4) = [19, 23, 25, 21]  ! left
+   integer, parameter :: face_5_map(4) = [19, 20, 24, 23]  ! front
+   integer, parameter :: face_6_map(4) = [21, 25, 26, 22]  ! back
+
+   ! Edges (7-18): 2 corners each
+   integer, parameter :: edge_7_map(2) = [19, 21]   ! bottom_left
+   integer, parameter :: edge_8_map(2) = [23, 25]   ! top_left
+   integer, parameter :: edge_9_map(2) = [19, 20]   ! front_bottom
+   integer, parameter :: edge_10_map(2) = [20, 22]  ! bottom_right
+   integer, parameter :: edge_11_map(2) = [24, 26]  ! top_right
+   integer, parameter :: edge_12_map(2) = [21, 22]  ! back_bottom
+   integer, parameter :: edge_13_map(2) = [19, 23]  ! front_left
+   integer, parameter :: edge_14_map(2) = [20, 24]  ! front_right
+   integer, parameter :: edge_15_map(2) = [25, 21]  ! back_left
+   integer, parameter :: edge_16_map(2) = [26, 22]  ! back_right
+   integer, parameter :: edge_17_map(2) = [23, 24]  ! front_top
+   integer, parameter :: edge_18_map(2) = [25, 26]  ! back_top
+
+   ! Validate input
+   if (interface_corner_idx < 1 .or. interface_corner_idx > ncorners) then
+      get_element_corner_id = 0
+      return
+   endif
+
+   ! Map based on connection ID
+   select case (conn_id)
+    case (1)
+      get_element_corner_id = face_1_map(interface_corner_idx)
+    case (2)
+      get_element_corner_id = face_2_map(interface_corner_idx)
+    case (3)
+      get_element_corner_id = face_3_map(interface_corner_idx)
+    case (4)
+      get_element_corner_id = face_4_map(interface_corner_idx)
+    case (5)
+      get_element_corner_id = face_5_map(interface_corner_idx)
+    case (6)
+      get_element_corner_id = face_6_map(interface_corner_idx)
+    case (7)
+      get_element_corner_id = edge_7_map(interface_corner_idx)
+    case (8)
+      get_element_corner_id = edge_8_map(interface_corner_idx)
+    case (9)
+      get_element_corner_id = edge_9_map(interface_corner_idx)
+    case (10)
+      get_element_corner_id = edge_10_map(interface_corner_idx)
+    case (11)
+      get_element_corner_id = edge_11_map(interface_corner_idx)
+    case (12)
+      get_element_corner_id = edge_12_map(interface_corner_idx)
+    case (13)
+      get_element_corner_id = edge_13_map(interface_corner_idx)
+    case (14)
+      get_element_corner_id = edge_14_map(interface_corner_idx)
+    case (15)
+      get_element_corner_id = edge_15_map(interface_corner_idx)
+    case (16)
+      get_element_corner_id = edge_16_map(interface_corner_idx)
+    case (17)
+      get_element_corner_id = edge_17_map(interface_corner_idx)
+    case (18)
+      get_element_corner_id = edge_18_map(interface_corner_idx)
+    case default
+      get_element_corner_id = 0
+   end select
+
+end function get_element_corner_id
 
 
 logical function corners_match(coords_a, coords_b, ncorners)
