@@ -108,6 +108,10 @@ public:
   // -----------------------------------------------------------------------
   constexpr static specfem::element::dimension_tag dimension_tag =
       specfem::element::dimension_tag::dim2;
+  constexpr static specfem::element::medium_tag medium_tag =
+      specfem::element::medium_tag::elastic_psv;
+  constexpr static specfem::element::property_tag property_tag =
+      specfem::element::property_tag::isotropic;
   constexpr static specfem::element::attenuation_tag attenuation_tag =
       specfem::element::attenuation_tag::constant_isotropic;
   constexpr static int N_SLS = specfem::constants::N_SLS;
@@ -313,6 +317,10 @@ public:
   // -----------------------------------------------------------------------
   constexpr static specfem::element::dimension_tag dimension_tag =
       specfem::element::dimension_tag::dim3;
+  constexpr static specfem::element::medium_tag medium_tag =
+      specfem::element::medium_tag::elastic;
+  constexpr static specfem::element::property_tag property_tag =
+      specfem::element::property_tag::isotropic;
   constexpr static specfem::element::attenuation_tag attenuation_tag =
       specfem::element::attenuation_tag::constant_isotropic;
   constexpr static int N_SLS = specfem::constants::N_SLS;

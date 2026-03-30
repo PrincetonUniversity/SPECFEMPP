@@ -34,7 +34,7 @@ specfem::assembly::properties<specfem::element::dimension_tag::dim2>::
        MEDIUM_TAG(ELASTIC_PSV, ELASTIC_SH, ACOUSTIC, POROELASTIC,
                   ELASTIC_PSV_T),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
-       ATTENUATION_TAG(NONE)),
+       ATTENUATION_TAG(NONE, ISOTROPIC_CONSTANT)),
       CAPTURE(value) {
         _value_ = specfem::assembly::impl::domain_properties<
             _dimension_tag_, _medium_tag_, _property_tag_>(

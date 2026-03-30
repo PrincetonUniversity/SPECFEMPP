@@ -19,6 +19,14 @@ struct attenuation_medium<DimensionTag, MediumTag, PropertyTag,
   attenuation_medium() = default;
   void copy_to_host() {}
   void copy_to_device() {}
+
+  template <typename IndexType, typename PointType>
+  KOKKOS_INLINE_FUNCTION void load_device_values(const IndexType &,
+                                                 PointType &) const {}
+
+  template <typename IndexType, typename PointType>
+  KOKKOS_INLINE_FUNCTION void
+  store_device_values(const IndexType &, const PointType &) const {}
 };
 
 } // namespace specfem::assembly::impl

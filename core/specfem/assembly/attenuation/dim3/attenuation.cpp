@@ -74,6 +74,17 @@ specfem::assembly::Attenuation<
   this->beta_rk = rk.beta;
   this->gamma_rk = rk.gamma;
 
+  // Copy RK coefficients to device for use in device kernels
+  this->d_alpha_rk = Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+                                  Kokkos::DefaultExecutionSpace>("d_alpha_rk");
+  Kokkos::deep_copy(this->d_alpha_rk, this->alpha_rk);
+  this->d_beta_rk = Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+                                 Kokkos::DefaultExecutionSpace>("d_beta_rk");
+  Kokkos::deep_copy(this->d_beta_rk, this->beta_rk);
+  this->d_gamma_rk = Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+                                  Kokkos::DefaultExecutionSpace>("d_gamma_rk");
+  Kokkos::deep_copy(this->d_gamma_rk, this->gamma_rk);
+
   init_memory_variables(element_types, mesh, materials, fc, f0, band,
                         tau_sigma);
 }

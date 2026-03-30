@@ -12,3 +12,5 @@ struct Attenuation;
 
 #include "specfem/assembly/attenuation/dim2/attenuation.hpp"
 #include "specfem/assembly/attenuation/dim3/attenuation.hpp"
+#include "specfem/assembly/attenuation/load_on_device.hpp"
+#include "specfem/assembly/attenuation/store_on_device.hpp"

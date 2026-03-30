@@ -48,6 +48,12 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
   view_type memory_variable_Rxz;
   view_type::HostMirror h_memory_variable_Rxz;
 
+  // Index mapping: global ispec -> compact attenuation index (-1 if not attenuating)
+  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
+      h_attenuation_index_mapping;
+  Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
+      attenuation_index_mapping;
+
   attenuation_medium() = default;
 
   attenuation_medium(
@@ -89,6 +95,19 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
         view_type("mem_Rxz", nspec_attn, ngllz, ngllx, N_SLS);
     h_memory_variable_Rxz =
         specfem::kokkos::create_mirror_view(memory_variable_Rxz);
+
+    // Allocate and populate the inverse index mapping (global ispec -> compact index)
+    h_attenuation_index_mapping =
+        Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>(
+            "h_attenuation_index_mapping", mesh.nspec);
+    Kokkos::deep_copy(h_attenuation_index_mapping, -1);
+    for (int i = 0; i < nspec_attn; ++i) {
+      h_attenuation_index_mapping(elements(i)) = i;
+    }
+    attenuation_index_mapping =
+        Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(
+            "attenuation_index_mapping", mesh.nspec);
+    Kokkos::deep_copy(attenuation_index_mapping, h_attenuation_index_mapping);
 
     // Sync zero-initialized device views to host mirrors
     copy_to_host();
@@ -165,6 +184,89 @@ struct attenuation_medium<specfem::element::dimension_tag::dim2,
     Kokkos::deep_copy(memory_variable_kappa, h_memory_variable_kappa);
     Kokkos::deep_copy(memory_variable_Rxx, h_memory_variable_Rxx);
     Kokkos::deep_copy(memory_variable_Rxz, h_memory_variable_Rxz);
+  }
+
+  /**
+   * @brief Load attenuation data for a single GLL point from device views
+   *        into a point-local attenuation struct.
+   *
+   * Populates relaxation rates and memory variables. The global RK
+   * coefficients are NOT populated here; they are added by the outer
+   * load_on_device free function.
+   */
+  template <typename IndexType, typename PointType>
+  KOKKOS_INLINE_FUNCTION void load_device_values(const IndexType &index,
+                                                 PointType &point) const {
+    const int i = attenuation_index_mapping(index.ispec);
+    if constexpr (!IndexType::using_simd) {
+      for (int j = 0; j < N_SLS; ++j) {
+        point.kappa_relaxation_rate(j) =
+            kappa_relaxation_rate(i, index.iz, index.ix, j);
+        point.mu_relaxation_rate(j) =
+            mu_relaxation_rate(i, index.iz, index.ix, j);
+        point.Rxx(j) = memory_variable_Rxx(i, index.iz, index.ix, j);
+        point.Rxz(j) = memory_variable_Rxz(i, index.iz, index.ix, j);
+        point.Rkappa(j) = memory_variable_kappa(i, index.iz, index.ix, j);
+      }
+    } else {
+      using simd = typename PointType::simd;
+      using mask_type = typename simd::mask_type;
+      using tag_type = typename simd::tag_type;
+      mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+      for (int j = 0; j < N_SLS; ++j) {
+        Kokkos::Experimental::where(mask, point.kappa_relaxation_rate(j))
+            .copy_from(&kappa_relaxation_rate(i, index.iz, index.ix, j),
+                       tag_type());
+        Kokkos::Experimental::where(mask, point.mu_relaxation_rate(j))
+            .copy_from(&mu_relaxation_rate(i, index.iz, index.ix, j),
+                       tag_type());
+        Kokkos::Experimental::where(mask, point.Rxx(j))
+            .copy_from(&memory_variable_Rxx(i, index.iz, index.ix, j),
+                       tag_type());
+        Kokkos::Experimental::where(mask, point.Rxz(j))
+            .copy_from(&memory_variable_Rxz(i, index.iz, index.ix, j),
+                       tag_type());
+        Kokkos::Experimental::where(mask, point.Rkappa(j))
+            .copy_from(&memory_variable_kappa(i, index.iz, index.ix, j),
+                       tag_type());
+      }
+    }
+  }
+
+  /**
+   * @brief Store evolved SLS memory variables from a point-local struct back
+   *        to the device views.
+   *
+   * Only the memory variables (Rxx, Rxz, Rkappa) are written; relaxation
+   * rates are simulation-lifetime constants and are not written back.
+   */
+  template <typename IndexType, typename PointType>
+  KOKKOS_INLINE_FUNCTION void
+  store_device_values(const IndexType &index, const PointType &point) const {
+    const int i = attenuation_index_mapping(index.ispec);
+    if constexpr (!IndexType::using_simd) {
+      for (int j = 0; j < N_SLS; ++j) {
+        memory_variable_Rxx(i, index.iz, index.ix, j) = point.Rxx(j);
+        memory_variable_Rxz(i, index.iz, index.ix, j) = point.Rxz(j);
+        memory_variable_kappa(i, index.iz, index.ix, j) = point.Rkappa(j);
+      }
+    } else {
+      using simd = typename PointType::simd;
+      using mask_type = typename simd::mask_type;
+      using tag_type = typename simd::tag_type;
+      mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+      for (int j = 0; j < N_SLS; ++j) {
+        Kokkos::Experimental::where(mask, point.Rxx(j))
+            .copy_to(&memory_variable_Rxx(i, index.iz, index.ix, j),
+                     tag_type());
+        Kokkos::Experimental::where(mask, point.Rxz(j))
+            .copy_to(&memory_variable_Rxz(i, index.iz, index.ix, j),
+                     tag_type());
+        Kokkos::Experimental::where(mask, point.Rkappa(j))
+            .copy_to(&memory_variable_kappa(i, index.iz, index.ix, j),
+                     tag_type());
+      }
+    }
   }
 };
 

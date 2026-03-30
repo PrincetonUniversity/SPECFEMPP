@@ -84,6 +84,17 @@ struct Attenuation<specfem::element::dimension_tag::dim2,
                Kokkos::DefaultHostExecutionSpace>
       gamma_rk;
 
+  // Device-accessible Runge-Kutta factors for use in device kernels
+  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+               Kokkos::DefaultExecutionSpace>
+      d_alpha_rk;
+  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+               Kokkos::DefaultExecutionSpace>
+      d_beta_rk;
+  Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight,
+               Kokkos::DefaultExecutionSpace>
+      d_gamma_rk;
+
   // One attenuation_medium member per (medium, property) combination
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), MEDIUM_TAG(ELASTIC_PSV),
                        PROPERTY_TAG(ISOTROPIC),
