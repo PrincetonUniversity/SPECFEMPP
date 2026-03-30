@@ -1,4 +1,3 @@
-#include "update_wavefields.hpp"
 #include "impl/compute_coupling.hpp"
 #include "impl/compute_source_interaction.hpp"
 #include "impl/compute_stiffness_interaction.hpp"
@@ -6,6 +5,7 @@
 #include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/tags.hpp"
+#include "update_wavefields.hpp"
 
 namespace specfem::compute {
 
@@ -26,11 +26,13 @@ namespace specfem::compute {
  * @return int Number of elements updated
  */
 template <int NGLL, typename Tags>
-int update_wavefields(specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-                      const int istep) {
+int update_wavefields(
+    specfem::assembly::assembly<Tags::dimension_tag> &assembly,
+    const int istep) {
   impl::compute_coupling<NGLL, Tags>(assembly);
   impl::compute_source_interaction<NGLL, Tags>(assembly, istep);
-  const int n = impl::compute_stiffness_interaction<NGLL, Tags>(assembly, istep);
+  const int n =
+      impl::compute_stiffness_interaction<NGLL, Tags>(assembly, istep);
   impl::divide_mass_matrix<NGLL, Tags>(assembly);
   return n;
 }

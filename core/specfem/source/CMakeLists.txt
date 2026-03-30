@@ -14,6 +14,5 @@ target_link_libraries(
         yaml-cpp
         specfem::element
         specfem::enums
-        specfem::algorithms
         ${BOOST_LIBS}
 )

@@ -97,11 +97,6 @@ specfem::io::read_2d_mesh(
     throw;
   }
 
-  int ninterfaces;
-  int max_interface_size;
-
-  specfem::io::fortran_read_line(stream, &ninterfaces, &max_interface_size);
-
   try {
     mesh.boundaries = specfem::io::mesh::impl::fortran::dim2::read_boundaries(
         stream, mesh.parameters.nspec, mesh.parameters.nelemabs,
