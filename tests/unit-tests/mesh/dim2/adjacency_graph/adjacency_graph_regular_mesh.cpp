@@ -41,7 +41,7 @@ TEST(AdjacencyGraphRegularMesh, CheckConnections) {
                                 specfem::enums::electromagnetic_wave::te);
 
   const auto &adjacency_graph = mesh.adjacency_graph;
-  const auto g = adjacency_graph.graph();
+  const auto g = adjacency_graph.local_connections();
 
   LOCAL_EXPECT_NO_THROW(adjacency_graph.assert_symmetry());
 

@@ -7,6 +7,8 @@
 #include "specfem/enums.hpp"
 #include "specfem/medium/dim2/coupling_terms/acoustic_elastic.hpp"
 #include "specfem/medium/dim2/coupling_terms/elastic_acoustic.hpp"
+#include "specfem/medium/dim3/coupling_terms/acoustic_elastic.hpp"
+#include "specfem/medium/dim3/coupling_terms/elastic_acoustic.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 

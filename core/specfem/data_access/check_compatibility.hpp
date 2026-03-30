@@ -157,7 +157,8 @@ struct is_index_type<
     T, std::enable_if_t<
            T::data_class == specfem::data_access::DataClassType::index ||
            T::data_class == specfem::data_access::DataClassType::mapped_index ||
-           T::data_class == specfem::data_access::DataClassType::edge_index> >
+           T::data_class == specfem::data_access::DataClassType::edge_index ||
+           T::data_class == specfem::data_access::DataClassType::face_index> >
     : std::true_type {};
 
 /// @brief Detects global assembly index types

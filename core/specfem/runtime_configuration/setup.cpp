@@ -59,6 +59,9 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
     this->flux_schemes =
         std::make_unique<specfem::runtime_configuration::flux_schemes>(
             flux_schemes_node);
+  } else {
+    this->flux_schemes =
+        std::make_unique<specfem::runtime_configuration::flux_schemes>();
   }
 
   // Get Elastic Wave type Default is P_SV

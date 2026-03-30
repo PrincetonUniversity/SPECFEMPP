@@ -9,6 +9,7 @@
 #include "point/face_index.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/global_coordinates.hpp"
+#include "point/gradient_field_pack.hpp"
 #include "point/index.hpp"
 #include "point/interface_index.hpp"
 #include "point/jacobian_matrix.hpp"
