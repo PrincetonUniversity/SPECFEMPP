@@ -10,19 +10,15 @@ namespace attenuation {
 
 template <int N_SLS>
 Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
-compute_tau_sigma(const type_real min_period, const type_real max_period) {
+compute_tau_sigma(const type_real min_frequency, const type_real max_frequency) {
   static_assert(N_SLS > 1, "N_SLS must be greater than 1 to avoid division by zero");
 
   Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace> tau_s(
       "tau_sigma");
 
-  // min/max frequencies
-  const type_real f1 = 1.0 / max_period;
-  const type_real f2 = 1.0 / min_period;
-
-  // logarithms
-  const type_real exp1 = std::log10(f1);
-  const type_real exp2 = std::log10(f2);
+  // logarithms of the input frequencies
+  const type_real exp1 = std::log10(min_frequency);
+  const type_real exp2 = std::log10(max_frequency);
 
   // equally spaced in log10 frequency
   const type_real dexpval =

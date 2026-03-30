@@ -113,12 +113,13 @@ TYPED_TEST(PointAttenuationTest, ValueConstructor2D) {
       element::dimension_tag::dim2, element::medium_tag::elastic_psv,
       element::attenuation_tag::constant_isotropic, using_simd>;
 
-  typename att_type::common_factor_type kappa_val(1.5);
-  typename att_type::common_factor_type mu_val(2.5);
-  type_real alpha = 0.5, beta = 0.3, gamma = 0.1;
+  typename att_type::value_type kappa_val(1.5);
+  typename att_type::value_type mu_val(2.5);
+  typename att_type::value_type alpha_val(0.5), beta_val(0.3), gamma_val(0.1);
   typename att_type::value_type rxx_val(1.0), rxz_val(2.0), rk_val(3.0);
 
-  att_type att(kappa_val, mu_val, alpha, beta, gamma, rxx_val, rxz_val, rk_val);
+  att_type att(kappa_val, mu_val, alpha_val, beta_val, gamma_val, rxx_val,
+               rxz_val, rk_val);
 
   for (int i = 0; i < N; ++i) {
     EXPECT_TRUE(
@@ -135,13 +136,15 @@ TYPED_TEST(PointAttenuationTest, ValueConstructor2D) {
         << "Rxz(" << i << "): " << ExpectedGot(rxz_val(i), att.Rxz(i));
     EXPECT_TRUE(specfem::utilities::is_close(att.Rkappa(i), rk_val(i)))
         << "Rkappa(" << i << "): " << ExpectedGot(rk_val(i), att.Rkappa(i));
+    EXPECT_TRUE(specfem::utilities::is_close(att.alpha_rk(i), alpha_val(i)))
+        << "alpha_rk(" << i
+        << "): " << ExpectedGot(alpha_val(i), att.alpha_rk(i));
+    EXPECT_TRUE(specfem::utilities::is_close(att.beta_rk(i), beta_val(i)))
+        << "beta_rk(" << i << "): " << ExpectedGot(beta_val(i), att.beta_rk(i));
+    EXPECT_TRUE(specfem::utilities::is_close(att.gamma_rk(i), gamma_val(i)))
+        << "gamma_rk(" << i
+        << "): " << ExpectedGot(gamma_val(i), att.gamma_rk(i));
   }
-  EXPECT_TRUE(specfem::utilities::is_close(att.alpha_rk, alpha))
-      << ExpectedGot(alpha, att.alpha_rk);
-  EXPECT_TRUE(specfem::utilities::is_close(att.beta_rk, beta))
-      << ExpectedGot(beta, att.beta_rk);
-  EXPECT_TRUE(specfem::utilities::is_close(att.gamma_rk, gamma))
-      << ExpectedGot(gamma, att.gamma_rk);
 }
 
 // ============================================================
@@ -156,14 +159,14 @@ TYPED_TEST(PointAttenuationTest, ValueConstructor3D) {
       element::dimension_tag::dim3, element::medium_tag::elastic,
       element::attenuation_tag::constant_isotropic, using_simd>;
 
-  typename att_type::common_factor_type kappa_val(3.0);
-  typename att_type::common_factor_type mu_val(4.0);
-  type_real alpha = 0.7, beta = 0.2, gamma = 0.1;
+  typename att_type::value_type kappa_val(3.0);
+  typename att_type::value_type mu_val(4.0);
+  typename att_type::value_type alpha_val(0.7), beta_val(0.2), gamma_val(0.1);
   typename att_type::value_type rxx(1.0), ryy(2.0), rxy(3.0), rxz(4.0),
       ryz(5.0), rk(6.0);
 
-  att_type att(kappa_val, mu_val, alpha, beta, gamma, rxx, ryy, rxy, rxz, ryz,
-               rk);
+  att_type att(kappa_val, mu_val, alpha_val, beta_val, gamma_val, rxx, ryy, rxy,
+               rxz, ryz, rk);
 
   for (int i = 0; i < N; ++i) {
     EXPECT_TRUE(
@@ -176,10 +179,10 @@ TYPED_TEST(PointAttenuationTest, ValueConstructor3D) {
     EXPECT_TRUE(specfem::utilities::is_close(att.Rxz(i), rxz(i)));
     EXPECT_TRUE(specfem::utilities::is_close(att.Ryz(i), ryz(i)));
     EXPECT_TRUE(specfem::utilities::is_close(att.Rkappa(i), rk(i)));
+    EXPECT_TRUE(specfem::utilities::is_close(att.alpha_rk(i), alpha_val(i)));
+    EXPECT_TRUE(specfem::utilities::is_close(att.beta_rk(i), beta_val(i)));
+    EXPECT_TRUE(specfem::utilities::is_close(att.gamma_rk(i), gamma_val(i)));
   }
-  EXPECT_TRUE(specfem::utilities::is_close(att.alpha_rk, alpha));
-  EXPECT_TRUE(specfem::utilities::is_close(att.beta_rk, beta));
-  EXPECT_TRUE(specfem::utilities::is_close(att.gamma_rk, gamma));
 }
 
 // ============================================================
@@ -194,12 +197,13 @@ TYPED_TEST(PointAttenuationTest, InitMethod2D) {
       element::dimension_tag::dim2, element::medium_tag::elastic_psv,
       element::attenuation_tag::constant_isotropic, using_simd>;
 
-  typename att_type::common_factor_type kappa_val(1.0);
-  typename att_type::common_factor_type mu_val(2.0);
+  typename att_type::value_type kappa_val(1.0);
+  typename att_type::value_type mu_val(2.0);
   typename att_type::value_type const_val(5.0);
   typename att_type::value_type zero(0.0);
 
-  att_type att(kappa_val, mu_val, 0.5, 0.3, 0.1, const_val, const_val,
+  typename att_type::value_type rk_val(0.5);
+  att_type att(kappa_val, mu_val, rk_val, rk_val, rk_val, const_val, const_val,
                const_val);
   att.init();
 
@@ -218,12 +222,13 @@ TYPED_TEST(PointAttenuationTest, InitMethod3D) {
       element::dimension_tag::dim3, element::medium_tag::elastic,
       element::attenuation_tag::constant_isotropic, using_simd>;
 
-  typename att_type::common_factor_type kappa_val(1.0);
-  typename att_type::common_factor_type mu_val(2.0);
+  typename att_type::value_type kappa_val(1.0);
+  typename att_type::value_type mu_val(2.0);
   typename att_type::value_type const_val(7.0);
   typename att_type::value_type zero(0.0);
 
-  att_type att(kappa_val, mu_val, 0.5, 0.3, 0.1, const_val, const_val,
+  typename att_type::value_type rk_val(0.5);
+  att_type att(kappa_val, mu_val, rk_val, rk_val, rk_val, const_val, const_val,
                const_val, const_val, const_val, const_val);
   att.init();
 
@@ -249,13 +254,14 @@ TYPED_TEST(PointAttenuationTest, Addition2D) {
       element::dimension_tag::dim2, element::medium_tag::elastic_psv,
       element::attenuation_tag::constant_isotropic, using_simd>;
 
-  typename att_type::common_factor_type kf(1.0);
-  typename att_type::common_factor_type mf(2.0);
+  typename att_type::value_type kf(1.0);
+  typename att_type::value_type mf(2.0);
   typename att_type::value_type a_rxx(1.0), a_rxz(2.0), a_rk(3.0);
   typename att_type::value_type b_rxx(10.0), b_rxz(20.0), b_rk(30.0);
 
-  att_type a(kf, mf, 0.5, 0.3, 0.1, a_rxx, a_rxz, a_rk);
-  att_type b(kf, mf, 0.5, 0.3, 0.1, b_rxx, b_rxz, b_rk);
+  typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
+  att_type a(kf, mf, alpha_rk, beta_rk, gamma_rk, a_rxx, a_rxz, a_rk);
+  att_type b(kf, mf, alpha_rk, beta_rk, gamma_rk, b_rxx, b_rxz, b_rk);
   att_type c = a + b;
 
   for (int i = 0; i < N; ++i) {
@@ -277,13 +283,14 @@ TYPED_TEST(PointAttenuationTest, AdditionAssignment2D) {
       element::dimension_tag::dim2, element::medium_tag::elastic_psv,
       element::attenuation_tag::constant_isotropic, using_simd>;
 
-  typename att_type::common_factor_type kf(1.0);
-  typename att_type::common_factor_type mf(2.0);
+  typename att_type::value_type kf(1.0);
+  typename att_type::value_type mf(2.0);
   typename att_type::value_type a_rxx(1.0), a_rxz(2.0), a_rk(3.0);
   typename att_type::value_type b_rxx(10.0), b_rxz(20.0), b_rk(30.0);
 
-  att_type a(kf, mf, 0.5, 0.3, 0.1, a_rxx, a_rxz, a_rk);
-  att_type b(kf, mf, 0.5, 0.3, 0.1, b_rxx, b_rxz, b_rk);
+  typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
+  att_type a(kf, mf, alpha_rk, beta_rk, gamma_rk, a_rxx, a_rxz, a_rk);
+  att_type b(kf, mf, alpha_rk, beta_rk, gamma_rk, b_rxx, b_rxz, b_rk);
   a += b;
 
   for (int i = 0; i < N; ++i) {
@@ -306,12 +313,13 @@ TYPED_TEST(PointAttenuationTest, ScalarMultiplication2D) {
       element::attenuation_tag::constant_isotropic, using_simd>;
 
   if constexpr (!using_simd) {
-    typename att_type::common_factor_type kf(1.0);
-    typename att_type::common_factor_type mf(2.0);
+    typename att_type::value_type kf(1.0);
+    typename att_type::value_type mf(2.0);
     typename att_type::value_type rxx_val(1.0), rxz_val(2.0), rk_val(3.0);
+    typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
     type_real scalar = 2.5;
 
-    att_type att(kf, mf, 0.5, 0.3, 0.1, rxx_val, rxz_val, rk_val);
+    att_type att(kf, mf, alpha_rk, beta_rk, gamma_rk, rxx_val, rxz_val, rk_val);
     att_type result = att * scalar;
 
     for (int i = 0; i < N; ++i) {
@@ -337,15 +345,18 @@ TYPED_TEST(PointAttenuationTest, Addition3D) {
       element::dimension_tag::dim3, element::medium_tag::elastic,
       element::attenuation_tag::constant_isotropic, using_simd>;
 
-  typename att_type::common_factor_type kf(1.0);
-  typename att_type::common_factor_type mf(2.0);
+  typename att_type::value_type kf(1.0);
+  typename att_type::value_type mf(2.0);
   typename att_type::value_type a_rxx(1.0), a_ryy(2.0), a_rxy(3.0), a_rxz(4.0),
       a_ryz(5.0), a_rk(6.0);
   typename att_type::value_type b_rxx(10.0), b_ryy(20.0), b_rxy(30.0),
       b_rxz(40.0), b_ryz(50.0), b_rk(60.0);
 
-  att_type a(kf, mf, 0.5, 0.3, 0.1, a_rxx, a_ryy, a_rxy, a_rxz, a_ryz, a_rk);
-  att_type b(kf, mf, 0.5, 0.3, 0.1, b_rxx, b_ryy, b_rxy, b_rxz, b_ryz, b_rk);
+  typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
+  att_type a(kf, mf, alpha_rk, beta_rk, gamma_rk, a_rxx, a_ryy, a_rxy, a_rxz,
+             a_ryz, a_rk);
+  att_type b(kf, mf, alpha_rk, beta_rk, gamma_rk, b_rxx, b_ryy, b_rxy, b_rxz,
+             b_ryz, b_rk);
   att_type c = a + b;
 
   for (int i = 0; i < N; ++i) {
@@ -370,15 +381,18 @@ TYPED_TEST(PointAttenuationTest, AdditionAssignment3D) {
       element::dimension_tag::dim3, element::medium_tag::elastic,
       element::attenuation_tag::constant_isotropic, using_simd>;
 
-  typename att_type::common_factor_type kf(1.0);
-  typename att_type::common_factor_type mf(2.0);
+  typename att_type::value_type kf(1.0);
+  typename att_type::value_type mf(2.0);
   typename att_type::value_type a_rxx(1.0), a_ryy(2.0), a_rxy(3.0), a_rxz(4.0),
       a_ryz(5.0), a_rk(6.0);
   typename att_type::value_type b_rxx(10.0), b_ryy(20.0), b_rxy(30.0),
       b_rxz(40.0), b_ryz(50.0), b_rk(60.0);
 
-  att_type a(kf, mf, 0.5, 0.3, 0.1, a_rxx, a_ryy, a_rxy, a_rxz, a_ryz, a_rk);
-  att_type b(kf, mf, 0.5, 0.3, 0.1, b_rxx, b_ryy, b_rxy, b_rxz, b_ryz, b_rk);
+  typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
+  att_type a(kf, mf, alpha_rk, beta_rk, gamma_rk, a_rxx, a_ryy, a_rxy, a_rxz,
+             a_ryz, a_rk);
+  att_type b(kf, mf, alpha_rk, beta_rk, gamma_rk, b_rxx, b_ryy, b_rxy, b_rxz,
+             b_ryz, b_rk);
   a += b;
 
   for (int i = 0; i < N; ++i) {
@@ -404,13 +418,15 @@ TYPED_TEST(PointAttenuationTest, ScalarMultiplication3D) {
       element::attenuation_tag::constant_isotropic, using_simd>;
 
   if constexpr (!using_simd) {
-    typename att_type::common_factor_type kf(1.0);
-    typename att_type::common_factor_type mf(2.0);
+    typename att_type::value_type kf(1.0);
+    typename att_type::value_type mf(2.0);
     typename att_type::value_type rxx(1.0), ryy(2.0), rxy(3.0), rxz(4.0),
         ryz(5.0), rk(6.0);
+    typename att_type::value_type alpha_rk(0.5), beta_rk(0.3), gamma_rk(0.1);
     type_real scalar = 2.5;
 
-    att_type att(kf, mf, 0.5, 0.3, 0.1, rxx, ryy, rxy, rxz, ryz, rk);
+    att_type att(kf, mf, alpha_rk, beta_rk, gamma_rk, rxx, ryy, rxy, rxz, ryz,
+                 rk);
     att_type result = att * scalar;
 
     for (int i = 0; i < N; ++i) {
@@ -436,17 +452,17 @@ TYPED_TEST(PointAttenuationTest, EqualityOperator2D) {
       element::dimension_tag::dim2, element::medium_tag::elastic_psv,
       element::attenuation_tag::constant_isotropic, using_simd>;
 
-  typename att_type::common_factor_type kappa_val(1.0);
-  typename att_type::common_factor_type mu_val(2.0);
-  type_real alpha = 0.5, beta = 0.3, gamma = 0.1;
+  typename att_type::value_type kappa_val(1.0);
+  typename att_type::value_type mu_val(2.0);
+  typename att_type::value_type alpha(0.5), beta(0.3), gamma(0.1);
   typename att_type::value_type rxx(1.0), rxz(2.0), rk(3.0);
   typename att_type::value_type rxx_alt(9.0);
+  typename att_type::value_type alpha_alt(0.6);
 
   att_type att1(kappa_val, mu_val, alpha, beta, gamma, rxx, rxz, rk);
   att_type att2(kappa_val, mu_val, alpha, beta, gamma, rxx, rxz, rk);
   // Different alpha_rk
-  att_type att3(kappa_val, mu_val, alpha + static_cast<type_real>(0.1), beta,
-                gamma, rxx, rxz, rk);
+  att_type att3(kappa_val, mu_val, alpha_alt, beta, gamma, rxx, rxz, rk);
   // Different Rxx
   att_type att4(kappa_val, mu_val, alpha, beta, gamma, rxx_alt, rxz, rk);
 
@@ -466,9 +482,9 @@ TYPED_TEST(PointAttenuationTest, EqualityOperator3D) {
       element::dimension_tag::dim3, element::medium_tag::elastic,
       element::attenuation_tag::constant_isotropic, using_simd>;
 
-  typename att_type::common_factor_type kappa_val(1.0);
-  typename att_type::common_factor_type mu_val(2.0);
-  type_real alpha = 0.5, beta = 0.3, gamma = 0.1;
+  typename att_type::value_type kappa_val(1.0);
+  typename att_type::value_type mu_val(2.0);
+  typename att_type::value_type alpha(0.5), beta(0.3), gamma(0.1);
   typename att_type::value_type rxx(1.0), ryy(2.0), rxy(3.0), rxz(4.0),
       ryz(5.0), rk(6.0);
   typename att_type::value_type ryy_alt(9.0);
@@ -496,10 +512,10 @@ TYPED_TEST(PointAttenuationTest, PrintMethod2D) {
       element::attenuation_tag::constant_isotropic, using_simd>;
 
   if constexpr (!using_simd) {
-    typename att_type::common_factor_type kappa_val(1.0);
-    typename att_type::common_factor_type mu_val(2.0);
+    typename att_type::value_type kappa_val(1.0);
+    typename att_type::value_type mu_val(2.0);
     typename att_type::value_type rxx(1.0), rxz(2.0), rk(3.0);
-    type_real alpha = 0.5, beta = 0.3, gamma = 0.1;
+    typename att_type::value_type alpha(0.5), beta(0.3), gamma(0.1);
 
     att_type att(kappa_val, mu_val, alpha, beta, gamma, rxx, rxz, rk);
     std::string s = att.print();
