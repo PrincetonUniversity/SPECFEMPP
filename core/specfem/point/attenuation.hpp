@@ -3,6 +3,7 @@
 #include "specfem/constants.hpp"
 #include "specfem/data_access/accessor.hpp"
 #include "specfem/element.hpp"
+#include "specfem/utilities/is_close.hpp"
 #include <sstream>
 
 namespace specfem::point {
@@ -64,8 +65,6 @@ public:
   // -----------------------------------------------------------------------
   using simd = typename base_type::template simd<type_real>;
   using value_type = typename base_type::template vector_type<type_real, N_SLS>;
-  using common_factor_type =
-      typename base_type::template vector_type<type_real, N_SLS>;
 
   // -----------------------------------------------------------------------
   // Constructors
@@ -118,18 +117,18 @@ public:
   // Type aliases
   // -----------------------------------------------------------------------
   using simd = typename base_type::template simd<type_real>;
-  using common_factor_type =
-      typename base_type::template vector_type<type_real, N_SLS>;
   using value_type = typename base_type::template vector_type<type_real, N_SLS>;
 
   // -----------------------------------------------------------------------
   // Data members — attenuation factors
   // -----------------------------------------------------------------------
-  common_factor_type kappa_common_factor;
-  common_factor_type mu_common_factor;
-  type_real alpha_rk;
-  type_real beta_rk;
-  type_real gamma_rk;
+  value_type kappa_common_factor;
+  value_type mu_common_factor;
+  /// Runge-Kutta coefficients; one entry per SLS mechanism (computed from
+  /// tau_sigma and deltat; constant throughout a run).
+  value_type alpha_rk;
+  value_type beta_rk;
+  value_type gamma_rk;
 
   // -----------------------------------------------------------------------
   // Data members — memory variables (dim2)
@@ -153,19 +152,19 @@ public:
    *
    * @param kappa_common_factor Common factor for kappa attenuation
    * @param mu_common_factor    Common factor for mu attenuation
-   * @param alpha_rk            Runge-Kutta alpha factor
-   * @param beta_rk             Runge-Kutta beta factor
-   * @param gamma_rk            Runge-Kutta gamma factor
+   * @param alpha_rk            Runge-Kutta alpha factors (per SLS)
+   * @param beta_rk             Runge-Kutta beta factors (per SLS)
+   * @param gamma_rk            Runge-Kutta gamma factors (per SLS)
    * @param Rxx                 Memory variable R_xx
    * @param Rxz                 Memory variable R_xz
    * @param Rkappa              Memory variable R_kappa
    */
   KOKKOS_FUNCTION
-  attenuation(const common_factor_type &kappa_common_factor,
-              const common_factor_type &mu_common_factor,
-              const type_real &alpha_rk, const type_real &beta_rk,
-              const type_real &gamma_rk, const value_type &Rxx,
-              const value_type &Rxz, const value_type &Rkappa)
+  attenuation(const value_type &kappa_common_factor,
+              const value_type &mu_common_factor, const value_type &alpha_rk,
+              const value_type &beta_rk, const value_type &gamma_rk,
+              const value_type &Rxx, const value_type &Rxz,
+              const value_type &Rkappa)
       : kappa_common_factor(kappa_common_factor),
         mu_common_factor(mu_common_factor), alpha_rk(alpha_rk),
         beta_rk(beta_rk), gamma_rk(gamma_rk), Rxx(Rxx), Rxz(Rxz),
@@ -183,7 +182,7 @@ public:
     this->Rkappa = value_type(typename value_type::value_type(0));
   }
 
-  /** @brief Component-wise addition on R fields. */
+  /** @brief Component-wise addition on R fields; RK/common factors copied. */
   KOKKOS_FUNCTION attenuation operator+(const attenuation &rhs) const {
     attenuation result;
     result.kappa_common_factor = this->kappa_common_factor;
@@ -211,7 +210,7 @@ public:
     return *this;
   }
 
-  /** @brief Scalar multiplication on R fields. */
+  /** @brief Scalar multiplication on R fields; RK/common factors copied. */
   KOKKOS_FUNCTION attenuation operator*(const type_real &rhs) const {
     attenuation result;
     result.kappa_common_factor = this->kappa_common_factor;
@@ -231,11 +230,26 @@ public:
   /** @brief Equality — compares all fields (factors and R). */
   KOKKOS_INLINE_FUNCTION
   bool operator==(const attenuation &other) const {
-    return kappa_common_factor == other.kappa_common_factor &&
-           mu_common_factor == other.mu_common_factor &&
-           alpha_rk == other.alpha_rk && beta_rk == other.beta_rk &&
-           gamma_rk == other.gamma_rk && Rxx == other.Rxx && Rxz == other.Rxz &&
-           Rkappa == other.Rkappa;
+    constexpr int N = specfem::constants::N_SLS;
+    if (!(kappa_common_factor == other.kappa_common_factor))
+      return false;
+    if (!(mu_common_factor == other.mu_common_factor))
+      return false;
+    for (int i = 0; i < N; ++i) {
+      if (!specfem::utilities::is_close(alpha_rk(i), other.alpha_rk(i)))
+        return false;
+      if (!specfem::utilities::is_close(beta_rk(i), other.beta_rk(i)))
+        return false;
+      if (!specfem::utilities::is_close(gamma_rk(i), other.gamma_rk(i)))
+        return false;
+      if (!specfem::utilities::is_close(Rxx(i), other.Rxx(i)))
+        return false;
+      if (!specfem::utilities::is_close(Rxz(i), other.Rxz(i)))
+        return false;
+      if (!specfem::utilities::is_close(Rkappa(i), other.Rkappa(i)))
+        return false;
+    }
+    return true;
   }
 
   /** @brief String representation (non-SIMD only). */
@@ -248,9 +262,12 @@ public:
     for (int i = 0; i < N_SLS; ++i)
       oss << "  mu_common_factor(" << i << ") = " << mu_common_factor(i)
           << "\n";
-    oss << "  alpha_rk = " << alpha_rk << "\n";
-    oss << "  beta_rk = " << beta_rk << "\n";
-    oss << "  gamma_rk = " << gamma_rk << "\n";
+    for (int i = 0; i < N_SLS; ++i)
+      oss << "  alpha_rk(" << i << ") = " << alpha_rk(i) << "\n";
+    for (int i = 0; i < N_SLS; ++i)
+      oss << "  beta_rk(" << i << ") = " << beta_rk(i) << "\n";
+    for (int i = 0; i < N_SLS; ++i)
+      oss << "  gamma_rk(" << i << ") = " << gamma_rk(i) << "\n";
     oss << "Memory Variables (dim2):\n";
     for (int i = 0; i < N_SLS; ++i)
       oss << "  Rxx(" << i << ") = " << Rxx(i) << "\n";
@@ -305,18 +322,18 @@ public:
   // Type aliases
   // -----------------------------------------------------------------------
   using simd = typename base_type::template simd<type_real>;
-  using common_factor_type =
-      typename base_type::template vector_type<type_real, N_SLS>;
   using value_type = typename base_type::template vector_type<type_real, N_SLS>;
 
   // -----------------------------------------------------------------------
   // Data members — attenuation factors
   // -----------------------------------------------------------------------
-  common_factor_type kappa_common_factor;
-  common_factor_type mu_common_factor;
-  type_real alpha_rk;
-  type_real beta_rk;
-  type_real gamma_rk;
+  value_type kappa_common_factor;
+  value_type mu_common_factor;
+  /// Runge-Kutta coefficients; one entry per SLS mechanism (computed from
+  /// tau_sigma and deltat; constant throughout a run).
+  value_type alpha_rk;
+  value_type beta_rk;
+  value_type gamma_rk;
 
   // -----------------------------------------------------------------------
   // Data members — memory variables (dim3)
@@ -343,9 +360,9 @@ public:
    *
    * @param kappa_common_factor Common factor for kappa attenuation
    * @param mu_common_factor    Common factor for mu attenuation
-   * @param alpha_rk            Runge-Kutta alpha factor
-   * @param beta_rk             Runge-Kutta beta factor
-   * @param gamma_rk            Runge-Kutta gamma factor
+   * @param alpha_rk            Runge-Kutta alpha factors (per SLS)
+   * @param beta_rk             Runge-Kutta beta factors (per SLS)
+   * @param gamma_rk            Runge-Kutta gamma factors (per SLS)
    * @param Rxx                 Memory variable R_xx
    * @param Ryy                 Memory variable R_yy
    * @param Rxy                 Memory variable R_xy
@@ -354,13 +371,12 @@ public:
    * @param Rkappa              Memory variable R_kappa
    */
   KOKKOS_FUNCTION
-  attenuation(const common_factor_type &kappa_common_factor,
-              const common_factor_type &mu_common_factor,
-              const type_real &alpha_rk, const type_real &beta_rk,
-              const type_real &gamma_rk, const value_type &Rxx,
-              const value_type &Ryy, const value_type &Rxy,
-              const value_type &Rxz, const value_type &Ryz,
-              const value_type &Rkappa)
+  attenuation(const value_type &kappa_common_factor,
+              const value_type &mu_common_factor, const value_type &alpha_rk,
+              const value_type &beta_rk, const value_type &gamma_rk,
+              const value_type &Rxx, const value_type &Ryy,
+              const value_type &Rxy, const value_type &Rxz,
+              const value_type &Ryz, const value_type &Rkappa)
       : kappa_common_factor(kappa_common_factor),
         mu_common_factor(mu_common_factor), alpha_rk(alpha_rk),
         beta_rk(beta_rk), gamma_rk(gamma_rk), Rxx(Rxx), Ryy(Ryy), Rxy(Rxy),
@@ -381,7 +397,7 @@ public:
     this->Rkappa = value_type(typename value_type::value_type(0));
   }
 
-  /** @brief Component-wise addition on R fields. */
+  /** @brief Component-wise addition on R fields; RK/common factors copied. */
   KOKKOS_FUNCTION attenuation operator+(const attenuation &rhs) const {
     attenuation result;
     result.kappa_common_factor = this->kappa_common_factor;
@@ -415,7 +431,7 @@ public:
     return *this;
   }
 
-  /** @brief Scalar multiplication on R fields. */
+  /** @brief Scalar multiplication on R fields; RK/common factors copied. */
   KOKKOS_FUNCTION attenuation operator*(const type_real &rhs) const {
     attenuation result;
     result.kappa_common_factor = this->kappa_common_factor;
@@ -438,12 +454,32 @@ public:
   /** @brief Equality — compares all fields (factors and R). */
   KOKKOS_INLINE_FUNCTION
   bool operator==(const attenuation &other) const {
-    return kappa_common_factor == other.kappa_common_factor &&
-           mu_common_factor == other.mu_common_factor &&
-           alpha_rk == other.alpha_rk && beta_rk == other.beta_rk &&
-           gamma_rk == other.gamma_rk && Rxx == other.Rxx && Ryy == other.Ryy &&
-           Rxy == other.Rxy && Rxz == other.Rxz && Ryz == other.Ryz &&
-           Rkappa == other.Rkappa;
+    constexpr int N = specfem::constants::N_SLS;
+    if (!(kappa_common_factor == other.kappa_common_factor))
+      return false;
+    if (!(mu_common_factor == other.mu_common_factor))
+      return false;
+    for (int i = 0; i < N; ++i) {
+      if (!specfem::utilities::is_close(alpha_rk(i), other.alpha_rk(i)))
+        return false;
+      if (!specfem::utilities::is_close(beta_rk(i), other.beta_rk(i)))
+        return false;
+      if (!specfem::utilities::is_close(gamma_rk(i), other.gamma_rk(i)))
+        return false;
+      if (!specfem::utilities::is_close(Rxx(i), other.Rxx(i)))
+        return false;
+      if (!specfem::utilities::is_close(Ryy(i), other.Ryy(i)))
+        return false;
+      if (!specfem::utilities::is_close(Rxy(i), other.Rxy(i)))
+        return false;
+      if (!specfem::utilities::is_close(Rxz(i), other.Rxz(i)))
+        return false;
+      if (!specfem::utilities::is_close(Ryz(i), other.Ryz(i)))
+        return false;
+      if (!specfem::utilities::is_close(Rkappa(i), other.Rkappa(i)))
+        return false;
+    }
+    return true;
   }
 
   /** @brief String representation (non-SIMD only). */
@@ -456,9 +492,12 @@ public:
     for (int i = 0; i < N_SLS; ++i)
       oss << "  mu_common_factor(" << i << ") = " << mu_common_factor(i)
           << "\n";
-    oss << "  alpha_rk = " << alpha_rk << "\n";
-    oss << "  beta_rk = " << beta_rk << "\n";
-    oss << "  gamma_rk = " << gamma_rk << "\n";
+    for (int i = 0; i < N_SLS; ++i)
+      oss << "  alpha_rk(" << i << ") = " << alpha_rk(i) << "\n";
+    for (int i = 0; i < N_SLS; ++i)
+      oss << "  beta_rk(" << i << ") = " << beta_rk(i) << "\n";
+    for (int i = 0; i < N_SLS; ++i)
+      oss << "  gamma_rk(" << i << ") = " << gamma_rk(i) << "\n";
     oss << "Memory Variables (dim3):\n";
     for (int i = 0; i < N_SLS; ++i)
       oss << "  Rxx(" << i << ") = " << Rxx(i) << "\n";

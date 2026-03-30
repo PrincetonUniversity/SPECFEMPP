@@ -115,6 +115,8 @@ target_link_libraries(
 add_executable(
   logspace_tests
   utilities/logspace_tests.cpp
+  utilities/logarithmic_center_tests.cpp
+  utilities/band_tests.cpp
 )
 
 target_link_libraries(
@@ -124,14 +126,28 @@ target_link_libraries(
   gtest_main
   Kokkos::kokkos
 )
+add_executable(
+  units_tests
+  units/quantity_tests.cpp
+  units/unit_cast_tests.cpp
+)
+
+target_link_libraries(
+  units_tests
+  specfem::utilities
+  gtest_main
+  Kokkos::kokkos
+)
 
 add_executable(
   attenuation_tests
   attenuation/runner.cpp
+  attenuation/compute_band_tests.cpp
   attenuation/compute_tau_sigma_tests.cpp
   attenuation/maxwell_tests.cpp
   attenuation/compute_tau_eps_tests.cpp
   attenuation/compute_factors_tests.cpp
+  attenuation/compute_integration_factors_tests.cpp
 )
 
 target_link_libraries(
@@ -1025,6 +1041,7 @@ if(NOT SPECFEM_ENABLE_MPI)
     stress_tests
     test_mesh_utilities_mapping_2d
     test_mesh_utilities_mapping_3d
+    units_tests
   )
   foreach(test_target IN LISTS TEST_TARGETS)
       gtest_discover_tests(${test_target}

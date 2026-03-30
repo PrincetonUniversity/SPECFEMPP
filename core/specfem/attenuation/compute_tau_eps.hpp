@@ -76,8 +76,7 @@ template <int N_SLS> struct AttenuationObjective {
  * \f$N_\text{SLS}\f$ standard linear solids.
  *
  * The algorithm:
- * 1. Computes \f$\tau_\sigma\f$ from the period range using compute_tau_sigma
- * 2. Sets up \f$N_F=100\f$ evaluation frequencies equally spaced in
+ * 1. Sets up \f$N_F=100\f$ evaluation frequencies equally spaced in
  * \f$\log_{10}\f$
  * 3. Uses Nelder-Mead simplex to minimize the misfit between achieved
  *    and target \f$1/Q\f$ values over the frequency range
@@ -92,8 +91,10 @@ template <int N_SLS> struct AttenuationObjective {
  * @param Q Target quality factor \f$Q\f$ (must be positive)
  * @param tau_sigma Pre-computed stress relaxation times \f$\tau_\sigma\f$ from
  * compute_tau_sigma
- * @param min_period Minimum period \f$T_\text{min}\f$ (s) for frequency range
- * @param max_period Maximum period \f$T_\text{max}\f$ (s) for frequency range
+ * @param min_frequency Minimum frequency \f$f_\text{min}\f$ (Hz) for frequency
+ * range
+ * @param max_frequency Maximum frequency \f$f_\text{max}\f$ (Hz) for frequency
+ * range
  *
  * @return View containing \f$N_\text{SLS}\f$ strain relaxation times
  * \f$\tau_\epsilon\f$
@@ -107,8 +108,9 @@ template <int N_SLS> struct AttenuationObjective {
  * type_real Q = 200.0;
  * type_real min_period = 0.01;
  * type_real max_period = 10.0;
- * auto tau_sigma = compute_tau_sigma<N_SLS>(min_period, max_period);
- * auto tau_eps = compute_tau_eps<N_SLS>(Q, tau_sigma, min_period, max_period);
+ * auto tau_sigma = compute_tau_sigma<N_SLS>(min_frequency, max_frequency);
+ * auto tau_eps = compute_tau_eps<N_SLS>(Q, tau_sigma, min_frequency,
+ * max_frequency);
  * @endcode
  */
 template <int N_SLS>
@@ -117,7 +119,7 @@ compute_tau_eps(
     type_real Q,
     Kokkos::View<type_real[N_SLS], Kokkos::LayoutRight, Kokkos::HostSpace>
         tau_sigma,
-    type_real min_period, type_real max_period);
+    type_real min_frequency, type_real max_frequency);
 
 } // namespace attenuation
 } // namespace specfem
