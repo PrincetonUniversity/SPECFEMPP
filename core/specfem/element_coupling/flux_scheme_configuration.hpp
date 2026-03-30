@@ -12,8 +12,9 @@ struct flux_scheme_configuration {
       : flux_scheme_tag(specfem::element_coupling::flux_scheme_tag::natural) {}
 
   /**
-   * @brief Get the flux scheme tag for a given intersection between two
-   * materials.
+   * @brief Get the flux scheme tag for a given intersection. At the moment, the
+   * flux scheme tag is global, so only one tag will ever be returned per
+   * simulation.
    *
    * @return specfem::element_coupling::flux_scheme_tag the flux scheme
    * corresponding to the intersection.

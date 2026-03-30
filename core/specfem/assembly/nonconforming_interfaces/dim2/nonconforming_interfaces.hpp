@@ -4,8 +4,10 @@
 #include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element_coupling/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/macros.hpp"
+#include "specfem/macros/interface_iterators.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 
@@ -23,18 +25,21 @@ public:
 protected:
   template <specfem::element_coupling::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
-            specfem::element_connections::type ConnectionTag>
+            specfem::element_connections::type ConnectionTag,
+            specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
   using InterfaceContainerType =
       specfem::assembly::nonconforming_interfaces_impl::interface_container<
-          dimension_tag, InterfaceTag, BoundaryTag, ConnectionTag>;
+          dimension_tag, InterfaceTag, BoundaryTag, ConnectionTag,
+          FluxSchemeTag>;
 
   FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(NONCONFORMING),
                        INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
                        BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                    COMPOSITE_STACEY_DIRICHLET)),
+                                    COMPOSITE_STACEY_DIRICHLET),
+                       FLUX_SCHEME_TAG(NATURAL)),
                       DECLARE(((InterfaceContainerType,
                                 (_INTERFACE_TAG_, _BOUNDARY_TAG_,
-                                 _CONNECTION_TAG_)),
+                                 _CONNECTION_TAG_, _FLUX_SCHEME_TAG_)),
                                interface_container)))
 
 public:
@@ -48,19 +53,23 @@ public:
 
   template <specfem::element_coupling::interface_tag InterfaceTag,
             specfem::element::boundary_tag BoundaryTag,
-            specfem::element_connections::type ConnectionTag>
+            specfem::element_connections::type ConnectionTag,
+            specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
   KOKKOS_INLINE_FUNCTION const
-      InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag> &
+      InterfaceContainerType<InterfaceTag, BoundaryTag, ConnectionTag,
+                             FluxSchemeTag> &
       get_interface_container() const {
     // Compile-time dispatch using FOR_EACH_IN_PRODUCT macro
     FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM2), CONNECTION_TAG(NONCONFORMING),
                          INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
                          BOUNDARY_TAG(NONE, ACOUSTIC_FREE_SURFACE, STACEY,
-                                      COMPOSITE_STACEY_DIRICHLET)),
+                                      COMPOSITE_STACEY_DIRICHLET),
+                         FLUX_SCHEME_TAG(NATURAL)),
                         CAPTURE((interface_container, interface_container)) {
                           if constexpr (InterfaceTag == _interface_tag_ &&
                                         BoundaryTag == _boundary_tag_ &&
-                                        ConnectionTag == _connection_tag_) {
+                                        ConnectionTag == _connection_tag_ &&
+                                        FluxSchemeTag == _flux_scheme_tag_) {
                             return _interface_container_;
                           }
                         })
