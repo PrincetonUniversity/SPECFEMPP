@@ -191,5 +191,16 @@ private:
 #ifndef SPECFEM_ENABLE_MPI
 #define SPECFEM_MPI_SAFECALL(call) ((void)0)
 #else
-#define SPECFEM_MPI_SAFECALL(call) (specfem::MPI::check_context(), (call))
+#define SPECFEM_MPI_SAFECALL(call) do { \
+    specfem::MPI::check_context(); \
+    int e = call; \ 
+    if (e != MPI_SUCCESS) {                           \
+        char err[MPI_MAX_ERROR_STRING];                 \
+        int len;                                        \
+        MPI_Error_string(e, err, &len);                 \
+        fprintf(stderr, "MPI error %s:%d: %s\n",        \
+                __FILE__, __LINE__, err);               \
+        MPI_Abort(MPI_COMM_WORLD, e);                   \
+    } \
+} while(0)
 #endif
