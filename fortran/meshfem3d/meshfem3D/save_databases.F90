@@ -638,12 +638,14 @@
   index = 0
 
   ! Write MPI adjacencies
-  ! Format: myindex, neighbor_iproc, neighbor_index, my_connection_id, neighbor_connection_id
+  ! Format: myindex, neighbor_iproc, neighbor_index, my_connection_id,
+  !         neighbor_connection_id, anchor_local_corner, anchor_remote_corner
   write(IIN_database) num_mpi_adjacencies
   do i = 1, num_mpi_adjacencies
     write(IIN_database) mpi_adjacency(i, 1), mpi_adjacency(i, 2), &
                         mpi_adjacency(i, 3), mpi_adjacency(i, 4), &
-                        mpi_adjacency(i, 5)
+                        mpi_adjacency(i, 5), mpi_adjacency(i, 6), &
+                        mpi_adjacency(i, 7)
     index = index + 1
   enddo
 

@@ -1029,7 +1029,7 @@ subroutine compute_mpi_adjacency()
    !!     match in the received buffer. This determines the total
    !!     allocation size for mpi_adjacency.
    !!   Pass 2 — match_interface_elements: repeat the same loop but now
-   !!     fill rows of mpi_adjacency(num_mpi_adjacencies, 5).
+   !!     fill rows of mpi_adjacency(num_mpi_adjacencies, 7).
    !!
    !! On exit, mpi_adjacency is allocated and populated. Each row has:
    !!   col 1 = myindex             — local element index (1-based)
@@ -1039,6 +1039,8 @@ subroutine compute_mpi_adjacency()
    !!                                  the local element
    !!   col 5 = neighbor_connection_id — corresponding face/edge ID on
    !!                                     the remote element
+   !!   col 6 = anchor_local_corner — corner index (1-4) on local element
+   !!   col 7 = anchor_remote_corner — corner index (1-4) on remote element
    !!
    !! Connection ID convention (from adjacency_graph.f90):
    !!   Faces:  bottom=1, right=2, top=3, left=4, front=5, back=6
@@ -1077,7 +1079,7 @@ subroutine compute_mpi_adjacency()
 
    if (num_mpi_adjacencies == 0) return
 
-   allocate(mpi_adjacency(num_mpi_adjacencies, 5), stat=ier)
+   allocate(mpi_adjacency(num_mpi_adjacencies, 7), stat=ier)
    if (ier /= 0) call exit_MPI(myrank, 'Error allocating mpi_adjacency')
 
    ! Second pass: fill mpi_adjacency
@@ -1390,6 +1392,8 @@ subroutine match_interface_elements(dir, nsend, nrecv, ncorners, &
    !!   mpi_adjacency(count, 3) = neighbor's local element index
    !!   mpi_adjacency(count, 4) = local connection ID (face/edge)
    !!   mpi_adjacency(count, 5) = neighbor connection ID (face/edge)
+   !!   mpi_adjacency(count, 6) = anchor corner index on local element
+   !!   mpi_adjacency(count, 7) = anchor corner index on remote element
    !!
    !! The local/neighbor element indices come from column 1 of the
    !! interface_buffer_{dir}_{send,recv} arrays.  Connection IDs come
@@ -1421,6 +1425,7 @@ subroutine match_interface_elements(dir, nsend, nrecv, ncorners, &
    integer, allocatable :: send_iface(:,:), recv_iface(:,:)
    integer :: isend, irecv
    integer :: my_ispec, neighbor_ispec
+   integer :: anchor_local, anchor_remote
    logical :: found
    logical, external :: corners_match
 
@@ -1440,11 +1445,20 @@ subroutine match_interface_elements(dir, nsend, nrecv, ncorners, &
             count = count + 1
             my_ispec = send_iface(isend, 1)
             neighbor_ispec = recv_iface(irecv, 1)
+
+            ! Compute anchor point indices for orientation
+            call compute_anchor_points_for_match(send_coords(isend,:,:), &
+               recv_coords(irecv,:,:), ncorners, &
+               anchor_local, anchor_remote)
+
+            ! Fill mpi_adjacency row
             mpi_adjacency(count, 1) = my_ispec
             mpi_adjacency(count, 2) = iproc_neighbor
             mpi_adjacency(count, 3) = neighbor_ispec
             mpi_adjacency(count, 4) = my_conn_id
             mpi_adjacency(count, 5) = neighbor_conn_id
+            mpi_adjacency(count, 6) = anchor_local
+            mpi_adjacency(count, 7) = anchor_remote
             found = .true.
             exit
          endif
@@ -1459,6 +1473,83 @@ subroutine match_interface_elements(dir, nsend, nrecv, ncorners, &
    deallocate(send_coords, recv_coords, send_iface, recv_iface)
 
 end subroutine match_interface_elements
+
+
+subroutine compute_anchor_points_for_match(coords_local, coords_remote, ncorners, &
+   anchor_local, anchor_remote)
+   !! Compute anchor point indices from matched corner coordinates.
+   !!
+   !! After two interface elements have been matched by coordinate sets,
+   !! this routine identifies a canonical pair of corner indices that
+   !! connect the two elements. This provides orientation information
+   !! and eliminates rotation ambiguity.
+   !!
+   !! Algorithm:
+   !!   1. For each corner in the LOCAL element (unsorted), find the
+   !!      closest matching corner in the REMOTE element.
+   !!   2. Return the lexicographically smallest local corner index
+   !!      and its matched remote counterpart as the anchor pair.
+   !!   3. This ensures reproducible, deterministic anchor selection
+   !!      independent of corner ordering.
+   !!
+   !! Arguments:
+   !!   coords_local(4, 3)     — unsorted corner coordinates of local
+   !!                             element interface face/edge
+   !!   coords_remote(4, 3)    — unsorted corner coordinates of remote
+   !!                             element interface face/edge
+   !!   ncorners               — number of corners to match (2 or 4)
+   !!   anchor_local           — output: corner index (1-4) on local
+   !!   anchor_remote          — output: corner index (1-4) on remote
+   !!
+   !! For a face (ncorners=4), corners are ordered as:
+   !!   1 = bottom_left, 2 = bottom_right, 3 = top_right, 4 = top_left
+   !!
+   !! Returns the first (lexicographically smallest by coordinate)
+   !! unmatched pair.
+
+   use constants, only: NDIM
+
+   implicit none
+
+   double precision, intent(in) :: coords_local(4, NDIM)
+   double precision, intent(in) :: coords_remote(4, NDIM)
+   integer, intent(in) :: ncorners
+   integer, intent(out) :: anchor_local, anchor_remote
+
+   double precision, parameter :: COORD_TOL = 1.0d-10
+   integer :: ic, ic_remote
+   double precision :: tol
+   logical :: matched_remote(4)
+   logical :: found
+
+   matched_remote(:) = .false.
+
+   ! Find the lexicographically smallest unmatched local corner
+   ! and its matching remote corner
+   do ic = 1, ncorners
+      found = .false.
+      do ic_remote = 1, ncorners
+         if (matched_remote(ic_remote)) cycle
+
+         ! Check if this pair of corners match within tolerance
+         tol = COORD_TOL * (1.0d0 + maxval(dabs(coords_local(ic,:))))
+         if (dabs(coords_local(ic,1) - coords_remote(ic_remote,1)) <= tol .and. &
+            dabs(coords_local(ic,2) - coords_remote(ic_remote,2)) <= tol .and. &
+            dabs(coords_local(ic,3) - coords_remote(ic_remote,3)) <= tol) then
+            anchor_local = ic
+            anchor_remote = ic_remote
+            matched_remote(ic_remote) = .true.
+            found = .true.
+            return
+         endif
+      end do
+   end do
+
+   ! Fallback (should not reach here if corners_match succeeded)
+   anchor_local = 1
+   anchor_remote = 1
+
+end subroutine compute_anchor_points_for_match
 
 
 logical function corners_match(coords_a, coords_b, ncorners)

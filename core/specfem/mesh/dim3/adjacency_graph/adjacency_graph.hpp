@@ -137,6 +137,32 @@ public:
         : connection(conn), orientation(orient) {}
   };
 
+  struct MPIEdgeProperties : public EdgeProperties {
+    size_t neighbor_partition;   ///< MPI rank of the neighboring partition for
+                                 ///< this edge
+    size_t neighbor_local_index; ///< Local index of the neighboring element in
+                                 ///< the adjacent partition
+    size_t local_index; ///< Local index of the element in the current partition
+                        ///< associated with this edge
+    size_t local_anchor_point;    ///< Local index of the anchor point in the
+                                  ///< current partition for this edge
+    size_t neighbor_anchor_point; ///< Local index of the anchor point in the
+                                  ///< neighboring partition for this edge
+
+    MPIEdgeProperties() = default;
+
+    MPIEdgeProperties(const specfem::element_connections::type conn,
+                      const specfem::mesh_entity::dim3::type orient,
+                      const size_t neighbor_rank,
+                      const size_t neighbor_local_idx, const size_t local_idx,
+                      const size_t local_anchor_idx,
+                      const size_t neighbor_anchor_idx)
+        : EdgeProperties(conn, orient), neighbor_partition(neighbor_rank),
+          neighbor_local_index(neighbor_local_idx), local_index(local_idx),
+          local_anchor_point(local_anchor_idx),
+          neighbor_anchor_point(neighbor_anchor_idx) {}
+  };
+
 private:
   /**
    * @brief Boost Graph Library adjacency list type definition
@@ -159,6 +185,11 @@ private:
    * elements and edges representing interfaces with their properties.
    */
   std::shared_ptr<Graph> graph_;
+
+  std::vector<MPIEdgeProperties> mpi_connections_; ///< List of MPI edge
+                                                   ///< properties for
+                                                   ///< inter-partition
+                                                   ///< adjacency
 
 public:
   int nspec; ///< Number of spectral elements in the mesh
@@ -206,7 +237,7 @@ public:
    * @return Graph& Reference to the internal boost::adjacency_list
    *
    * @code
-   * auto& graph = adj_graph.graph();
+   * auto& graph = adj_graph.local_connections();
    *
    * // Add edge with properties
    * boost::add_edge(0, 1, EdgeProperties(
@@ -217,7 +248,7 @@ public:
    * auto [adj_iter, adj_end] = boost::adjacent_vertices(0, graph);
    * @endcode
    */
-  Graph &graph() { return *graph_; }
+  Graph &local_connections() { return *graph_; }
 
   /**
    * @brief Immutable access to the underlying Boost Graph
@@ -228,7 +259,7 @@ public:
    * @return const Graph& Const reference to the internal boost::adjacency_list
    *
    * @code
-   * const auto& graph = adj_graph.graph();
+   * const auto& graph = adj_graph.local_connections();
    *
    * // Query graph properties
    * size_t num_elements = boost::num_vertices(graph);
@@ -242,7 +273,11 @@ public:
    * }
    * @endcode
    */
-  const Graph &graph() const { return *graph_; }
+  const Graph &local_connections() const { return *graph_; }
+
+  auto &mpi_connections() { return mpi_connections_; }
+
+  const auto &mpi_connections() const { return mpi_connections_; }
 
   /**
    * @brief Verify graph symmetry for undirected adjacency relationships
