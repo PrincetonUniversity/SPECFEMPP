@@ -1,7 +1,9 @@
+#include "specfem/program.hpp"
 #include "dim2/program.hpp"
 #include "dim3/program.hpp"
 #include "specfem/logger.hpp"
 #include "specfem/mesh.hpp"
+#include "specfem/program.tpp"
 #include "specfem/receivers.hpp"
 #include "specfem/runtime_configuration.hpp"
 #include "specfem/setup.hpp"
@@ -88,3 +90,12 @@ bool execute(const std::string &dimension, const YAML::Node &parameter_dict) {
 }
 
 } // namespace specfem::program
+
+template std::string
+specfem::program::print_header<specfem::element::dimension_tag::dim2>(
+    const specfem::runtime_configuration::setup &,
+    const std::chrono::time_point<std::chrono::system_clock>);
+template std::string
+specfem::program::print_header<specfem::element::dimension_tag::dim3>(
+    const specfem::runtime_configuration::setup &,
+    const std::chrono::time_point<std::chrono::system_clock>);

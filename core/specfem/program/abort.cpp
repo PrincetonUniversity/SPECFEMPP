@@ -3,7 +3,7 @@
 #include "specfem/mpi.hpp"
 #include <iostream>
 
-#ifdef MPI_PARALLEL
+#ifdef SPECFEM_ENABLE_MPI
 #include <mpi.h>
 #endif
 
@@ -50,7 +50,7 @@ void abort(const std::string &message, int error_code, const int line,
       (specfem::MPI::rank_ != -1 && specfem::MPI::size_ != -1);
   if (have_context) {
     // MPI is initialized, use MPI_Abort for proper parallel cleanup
-#ifdef MPI_PARALLEL
+#ifdef SPECFEM_ENABLE_MPI
     MPI_Abort(MPI_COMM_WORLD, error_code);
 #else
     std::exit(error_code);

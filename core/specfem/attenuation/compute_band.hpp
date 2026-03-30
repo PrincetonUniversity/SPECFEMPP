@@ -2,7 +2,8 @@
 
 #include "specfem/constants.hpp"
 #include "specfem/setup.hpp"
-#include "specfem/utilities/frequency_band.hpp"
+#include "specfem/units.hpp"
+#include "specfem/utilities/band.hpp"
 
 namespace specfem {
 namespace attenuation {
@@ -30,25 +31,12 @@ namespace attenuation {
  * | 5     | 2.85        | ~708          |
  *
  * @tparam N_SLS Number of standard linear solids (must be 2–5)
- * @param min_resolved_period Minimum period resolved by the mesh (seconds)
- * @return FrequencyBand containing the computed attenuation band limits
- *
- * @code
- * // Compute attenuation band for 3 SLS mechanisms
- * constexpr type_real min_period = 0.5; // seconds
- * auto band = specfem::attenuation::compute_band<3>(min_period);
- *
- * // Access band limits
- * type_real f_min = band.min_frequency();
- * type_real f_max = band.max_frequency();
- * type_real T_min = band.min_period();  // equals min_period
- * type_real T_max = band.max_period();  // min_period * 10^1.75
- * @endcode
- *
- * @see tests/unit-tests/attenuation/compute_band_tests.cpp for usage examples
+ * @param min_resolved_period Minimum period resolved by the mesh (s)
+ * @return Band with @c min and @c max
  */
 template <int N_SLS>
-specfem::utilities::FrequencyBand compute_band(type_real min_resolved_period);
+specfem::utilities::Band<specfem::units::Omega>
+compute_band(specfem::units::Seconds min_resolved_period);
 
 } // namespace attenuation
 } // namespace specfem

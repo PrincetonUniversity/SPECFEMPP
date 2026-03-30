@@ -1,9 +1,10 @@
 
 #pragma once
 
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
 #include "specfem/data_access.hpp"
+#include "specfem/element_coupling/tags.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/execution.hpp"
 
@@ -22,10 +23,11 @@ namespace specfem::assembly::nonconforming_interfaces_impl {
  * @tparam BoundaryTag Boundary condition type (NONE, STACEY, etc.)
  */
 template <specfem::element_coupling::interface_tag InterfaceTag,
-          specfem::element::boundary_tag BoundaryTag>
-struct interface_container<specfem::element::dimension_tag::dim2, InterfaceTag,
-                           BoundaryTag,
-                           specfem::element_connections::type::nonconforming>
+          specfem::element::boundary_tag BoundaryTag,
+          specfem::element_coupling::flux_scheme_tag FluxSchemeTag>
+struct interface_container<
+    specfem::element::dimension_tag::dim2, InterfaceTag, BoundaryTag,
+    specfem::element_connections::type::nonconforming, FluxSchemeTag>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::edge,
           specfem::data_access::DataClassType::nonconforming_interface,
@@ -37,6 +39,8 @@ public:
   constexpr static auto interface_tag = InterfaceTag;
   /** @brief Boundary condition type */
   constexpr static auto boundary_tag = BoundaryTag;
+  /** @brief Flux scheme type */
+  constexpr static auto flux_scheme_tag = FluxSchemeTag;
   /** @brief Medium type on the self side of the interface */
   constexpr static auto self_medium =
       specfem::element_coupling::attributes<dimension_tag,
@@ -86,13 +90,13 @@ public:
    *
    * @param ngllz Number of GLL points in z-direction
    * @param ngllx Number of GLL points in x-direction
-   * @param edge_types Edge type information from mesh
+   * @param element_intersections Element intersection information from mesh
    * @param mesh Mesh connectivity and geometry
    */
   interface_container(
       const int ngllz, const int ngllx,
-      const specfem::assembly::edge_types<specfem::element::dimension_tag::dim2>
-          &edge_types,
+      const specfem::assembly::element_intersections<
+          specfem::element::dimension_tag::dim2> &element_intersections,
       const specfem::assembly::mesh<dimension_tag> &mesh);
 
   /** @brief Default constructor */

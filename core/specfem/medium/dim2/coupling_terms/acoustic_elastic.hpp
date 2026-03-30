@@ -2,7 +2,9 @@
 
 #include "specfem/algorithms.hpp"
 #include "specfem/data_access.hpp"
-#include "specfem/enums.hpp"
+#include "specfem/element.hpp"
+#include "specfem/element_connections.hpp"
+#include "specfem/element_coupling.hpp"
 #include <Kokkos_Core.hpp>
 #include <type_traits>
 

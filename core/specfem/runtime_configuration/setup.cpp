@@ -4,9 +4,11 @@
 #include <chrono>
 #include <ctime>
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <sys/stat.h>
 #include <tuple>
+#include <yaml-cpp/exceptions.h>
 
 void create_folder_if_not_exists(const std::string &folder_name) {
   struct stat info;
@@ -50,6 +52,16 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict) {
         std::make_unique<specfem::runtime_configuration::sources>(source_node);
   } else {
     throw std::runtime_error("Error reading specfem source configuration.");
+  }
+
+  // Get flux scheme info (optional)
+  if (const YAML::Node &flux_schemes_node = simulation_setup["flux-scheme"]) {
+    this->flux_schemes =
+        std::make_unique<specfem::runtime_configuration::flux_schemes>(
+            flux_schemes_node);
+  } else {
+    this->flux_schemes =
+        std::make_unique<specfem::runtime_configuration::flux_schemes>();
   }
 
   // Get Elastic Wave type Default is P_SV

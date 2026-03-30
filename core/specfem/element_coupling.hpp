@@ -1,208 +1,22 @@
 #pragma once
 
-#include "specfem/element.hpp"
-#include "specfem/element_connections.hpp"
-
-namespace specfem::point {
-
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct acceleration;
-
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::medium_tag MediumTag, bool UseSIMD>
-struct displacement;
-
-} // namespace specfem::point
-
-namespace specfem::element_coupling {
+#include "specfem/element_connections/tags.hpp"
+#include "specfem/element_coupling/tags.hpp"
+#include "specfem/point/acceleration.hpp"
+#include "specfem/point/displacement.hpp"
+#include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 
 /**
- * @brief Interface coupling direction types.
+ * @brief Element coupling configuration for multi-physics interfaces.
  *
- * Directional coupling: elastic_acoustic (elastic→acoustic),
- * acoustic_elastic (acoustic→elastic).
- */
-enum class interface_tag {
-  elastic_acoustic, ///< Elastic to acoustic interface - elastic field couples
-                    ///< to acoustic
-  acoustic_elastic  ///< Acoustic to elastic interface - acoustic field couples
-                    ///< to elastic
-};
-
-/**
- * @brief Flux scheme used for a coupling
- */
-enum class flux_scheme_tag {
-  natural, ///< Original SPECFEM acoustic-elastic interface (Komatitsch et al.
-           ///< 2000)
-  symmetric_interior_penalty ///< SIPG (Grote et al., Riviere et al., Antonietti
-                             ///< et al., etc.)
-};
-
-/**
- * @brief Compile-time interface field type determination.
+ * Provides compile-time interface configuration for coupling different
+ * physics media (elastic-acoustic, acoustic-elastic). Defines coupling
+ * directions, flux schemes, and field type resolution through template
+ * specializations.
  *
- * @tparam DimensionTag Spatial dimension (2D or 3D)
- * @tparam InterfaceTag Interface coupling type
- *
- * @code
- * using attrs = attributes<dim2, interface_tag::elastic_acoustic>;
- * static_assert(attrs::self_medium() == medium_tag::elastic_psv);
- * @endcode
  */
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element_coupling::interface_tag InterfaceTag>
-class attributes;
+namespace specfem::element_coupling {} // namespace specfem::element_coupling
 
-/**
- * @brief 2D elastic→acoustic coupling attributes.
- *
- * Self: elastic_psv (vector acceleration), Coupled: acoustic (scalar
- * acceleration).
- */
-template <>
-class attributes<specfem::element::dimension_tag::dim2,
-                 specfem::element_coupling::interface_tag::elastic_acoustic> {
-public:
-  /**
-   * @brief Self medium (receives coupling).
-   * @return elastic_psv medium tag
-   */
-  static constexpr specfem::element::medium_tag self_medium() {
-    return specfem::element::medium_tag::elastic_psv;
-  }
-
-  /**
-   * @brief Coupled medium (provides coupling).
-   * @return acoustic medium tag
-   */
-  static constexpr specfem::element::medium_tag coupled_medium() {
-    return specfem::element::medium_tag::acoustic;
-  }
-
-  /**
-   * @brief Self field type for connection types.
-   * @tparam ConnectionTag Connection type (weakly_conforming, etc.)
-   */
-  template <specfem::element_connections::type ConnectionTag> struct self_field;
-
-  /**
-   * @brief Coupled field type for connection types.
-   * @tparam ConnectionTag Connection type (weakly_conforming, etc.)
-   */
-  template <specfem::element_connections::type ConnectionTag>
-  struct coupled_field;
-
-  /// Type alias for self field
-  template <specfem::element_connections::type ConnectionTag>
-  using self_field_t = typename self_field<ConnectionTag>::type;
-
-  /// Type alias for coupled field
-  template <specfem::element_connections::type ConnectionTag>
-  using coupled_field_t = typename coupled_field<ConnectionTag>::type;
-};
-
-/**
- * @brief 2D weakly conforming elastic→acoustic self field type.
- */
-template <>
-struct attributes<specfem::element::dimension_tag::dim2,
-                  specfem::element_coupling::interface_tag::elastic_acoustic>::
-    self_field<specfem::element_connections::type::weakly_conforming> {
-  using type =
-      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::elastic_psv,
-                                   false>; ///< vector acceleration
-};
-
-/**
- * @brief 2D weakly conforming elastic→acoustic coupled field type.
- */
-template <>
-struct attributes<specfem::element::dimension_tag::dim2,
-                  specfem::element_coupling::interface_tag::elastic_acoustic>::
-    coupled_field<specfem::element_connections::type::weakly_conforming> {
-  using type =
-      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::acoustic,
-                                   false>; ///< scalar acceleration
-};
-
-/**
- * @brief 2D acoustic→elastic coupling attributes.
- *
- * Self: acoustic (scalar acceleration), Coupled: elastic_psv (vector
- * displacement).
- */
-template <>
-class attributes<specfem::element::dimension_tag::dim2,
-                 specfem::element_coupling::interface_tag::acoustic_elastic> {
-public:
-  /**
-   * @brief Self medium (receives coupling).
-   * @return acoustic medium tag
-   */
-  static constexpr specfem::element::medium_tag self_medium() {
-    return specfem::element::medium_tag::acoustic;
-  }
-
-  /**
-   * @brief Coupled medium (provides coupling).
-   * @return elastic_psv medium tag
-   */
-  static constexpr specfem::element::medium_tag coupled_medium() {
-    return specfem::element::medium_tag::elastic_psv;
-  }
-
-  /**
-   * @brief Self field type for connection types.
-   * @tparam ConnectionTag Connection type (weakly_conforming, etc.)
-   */
-  template <specfem::element_connections::type ConnectionTag> struct self_field;
-
-  /**
-   * @brief Coupled field type for connection types.
-   * @tparam ConnectionTag Connection type (weakly_conforming, etc.)
-   */
-  template <specfem::element_connections::type ConnectionTag>
-  struct coupled_field;
-
-  /// Type alias for self field
-  template <specfem::element_connections::type ConnectionTag>
-  using self_field_t = typename self_field<ConnectionTag>::type;
-
-  /// Type alias for coupled field
-  template <specfem::element_connections::type ConnectionTag>
-  using coupled_field_t = typename coupled_field<ConnectionTag>::type;
-};
-
-/**
- * @brief 2D weakly conforming acoustic→elastic self field type.
- */
-template <>
-struct attributes<specfem::element::dimension_tag::dim2,
-                  specfem::element_coupling::interface_tag::acoustic_elastic>::
-    self_field<specfem::element_connections::type::weakly_conforming> {
-  using type =
-      specfem::point::acceleration<specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::acoustic,
-                                   false>; ///< scalar acceleration
-};
-
-/**
- * @brief 2D weakly conforming acoustic→elastic coupled field type.
- */
-template <>
-struct attributes<specfem::element::dimension_tag::dim2,
-                  specfem::element_coupling::interface_tag::acoustic_elastic>::
-    coupled_field<specfem::element_connections::type::weakly_conforming> {
-  using type =
-      specfem::point::displacement<specfem::element::dimension_tag::dim2,
-                                   specfem::element::medium_tag::elastic_psv,
-                                   false>; ///< vector displacement
-};
-
-} // namespace specfem::element_coupling
-
+#include "element_coupling/attributes.hpp"
 #include "element_coupling/to_string.hpp"

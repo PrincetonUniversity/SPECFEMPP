@@ -1,22 +1,18 @@
 #pragma once
 
+#include <cmath>
 #include <cstdlib>
+#include <filesystem>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <string>
 
-#ifdef MPI_PARALLEL
+#ifdef SPECFEM_ENABLE_MPI
 #include <mpi.h>
 #endif
 
 namespace specfem {
-
-#ifdef MPI_PARALLEL
-using reduce_type = MPI_Op;
-const static reduce_type sum = MPI_SUM;
-const static reduce_type min = MPI_MIN;
-const static reduce_type max = MPI_MAX;
-#else
-enum reduce_type { sum, min, max };
-#endif
 
 // Forward declaration
 namespace program {
@@ -64,7 +60,7 @@ public:
    */
   static void sync() {
     check_context();
-#ifdef c
+#ifdef SPECFEM_ENABLE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
   }
@@ -110,55 +106,54 @@ public:
   }
 
   /**
-   * @brief MPI reduce operation
+   * @brief Format filename with processor number using dynamic zero-padding
    *
-   * @param lvalue Local value to reduce
-   * @param reduce_op Reduction operation (specfem::sum, specfem::min,
-   * specfem::max)
-   * @return Reduced value (only valid on root process)
+   * For multi-process runs, transforms "dir/stem.ext" into
+   * "dir/stem/proc_N.ext" where N is the zero-padded rank.
+   * For single-process runs, the filename is returned unchanged.
+   *
+   * Examples (size=6, rank=2):
+   * - "foo/bar.bin" -> "foo/bar/proc_2.bin"
+   * - "foo/bar.bin" (size=100, rank=2) -> "foo/bar/proc_02.bin"
+   * - "bar.bin"     -> "bar/proc_2.bin"
+   *
+   * @param filename Input filename (can include directory path)
+   * @return std::string Formatted filename with processor number
    * @throws Exits with error code 1 if called outside Context scope
    */
-  static int reduce(int lvalue, specfem::reduce_type reduce_op) {
-    check_context();
-    int result = lvalue;
-#ifdef MPI_PARALLEL
-    MPI_Reduce(&lvalue, &result, 1, MPI_INT, reduce_op, 0, MPI_COMM_WORLD);
-#endif
-    return result;
+  static bool check_context() {
+    if (rank_ == -1 || size_ == -1) {
+      std::cerr << "ERROR: MPI used outside Context scope" << std::endl;
+      std::exit(1);
+    }
+    return true;
   }
 
-  /**
-   * @brief MPI reduce operation for float
-   *
-   * @param lvalue Local value to reduce
-   * @param reduce_op Reduction operation
-   * @return Reduced value (only valid on root process)
-   * @throws Exits with error code 1 if called outside Context scope
-   */
-  static float reduce(float lvalue, specfem::reduce_type reduce_op) {
+  static std::string format_proc_filename(const std::string &filename) {
     check_context();
-    float result = lvalue;
-#ifdef MPI_PARALLEL
-    MPI_Reduce(&lvalue, &result, 1, MPI_FLOAT, reduce_op, 0, MPI_COMM_WORLD);
-#endif
-    return result;
-  }
 
-  /**
-   * @brief MPI reduce operation for double
-   *
-   * @param lvalue Local value to reduce
-   * @param reduce_op Reduction operation
-   * @return Reduced value (only valid on root process)
-   * @throws Exits with error code 1 if called outside Context scope
-   */
-  static double reduce(double lvalue, specfem::reduce_type reduce_op) {
-    check_context();
-    double result = lvalue;
-#ifdef MPI_PARALLEL
-    MPI_Reduce(&lvalue, &result, 1, MPI_DOUBLE, reduce_op, 0, MPI_COMM_WORLD);
-#endif
-    return result;
+    // For single process, return filename unchanged
+    if (size_ <= 1) {
+      return filename;
+    }
+
+    // Calculate number of digits needed for processor numbering
+    int ndigits = static_cast<int>(std::log10(size_ - 1)) + 1;
+
+    // Format processor number with zero-padding
+    std::ostringstream proc_str;
+    proc_str << std::setfill('0') << std::setw(ndigits) << rank_;
+
+    // Use std::filesystem for cross-platform path handling
+    std::filesystem::path p(filename);
+    auto stem = p.stem();
+    auto ext = p.extension();
+    auto parent = p.parent_path();
+
+    // New scheme: dir/stem/proc_N.ext
+    std::filesystem::path result =
+        parent / stem / ("proc_" + proc_str.str() + ext.string());
+    return result.string();
   }
 
 private:
@@ -186,23 +181,26 @@ private:
    */
   static void finalize();
 
-  /**
-   * @brief Check if MPI is initialized (Context exists)
-   *
-   * Verifies that rank and size are valid (not -1).
-   * Exits with error code 1 if check fails.
-   */
-  static bool check_context() {
-    if (rank_ == -1 || size_ == -1) {
-      std::cerr << "ERROR: MPI used outside Context scope" << std::endl;
-      std::exit(1);
-    }
-    return true;
-  }
-
   friend class specfem::program::Context;
   friend void specfem::program::abort(const std::string &, int, const int,
                                       const char *);
 };
 
 } // namespace specfem
+
+#ifndef SPECFEM_ENABLE_MPI
+#define SPECFEM_MPI_SAFECALL(call) ((void)0)
+#else
+#define SPECFEM_MPI_SAFECALL(call)                                             \
+  do {                                                                         \
+    specfem::MPI::check_context();                                             \
+    int e = call;                                                              \
+    if (e != MPI_SUCCESS) {                                                    \
+      char err[MPI_MAX_ERROR_STRING];                                          \
+      int len;                                                                 \
+      MPI_Error_string(e, err, &len);                                          \
+      fprintf(stderr, "MPI error %s:%d: %s\n", __FILE__, __LINE__, err);       \
+      MPI_Abort(MPI_COMM_WORLD, e);                                            \
+    }                                                                          \
+  } while (0)
+#endif

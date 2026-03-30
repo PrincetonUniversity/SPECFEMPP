@@ -4,6 +4,4 @@
 ``specfem::point::properties``
 ==============================
 
-.. doxygenstruct:: specfem::point::properties
-    :members:
-    :private-members:
+.. doxygentypedef:: specfem::point::properties

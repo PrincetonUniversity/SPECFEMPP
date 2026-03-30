@@ -1,5 +1,5 @@
 #include "program.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/io.hpp"
 #include "specfem/logger.hpp"
@@ -90,7 +90,8 @@ void program_2d(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
-      setup.allocate_boundary_values(), setup.instantiate_property_reader());
+      setup.allocate_boundary_values(), setup.instantiate_property_reader(),
+      setup.get_flux_scheme_configuration());
 
   specfem::Logger::info(assembly.print());
 

@@ -4,6 +4,8 @@
 #include "specfem/chunk_edge.hpp"
 #include "specfem/enums.hpp"
 
+#include "utilities/include/builder/edgeview.hpp"
+#include "utilities/include/builder/nonconforming_interfaces.hpp"
 #include "utilities/include/fixture/impl/accessors.hpp"
 #include "utilities/include/fixture/nonconforming_interface.hpp"
 
@@ -11,55 +13,14 @@
 #include "utilities/include/fixture/nonconforming_interface/quadrature.hpp"
 #include <gtest/gtest.h>
 
-/**
- * @brief Patches assembly::nonconforming_interfaces to not require mesh and
- * edge types.
- *
- * nonconforming_interfaces only provides const access to the impl containers.
- * This class grants access to resizing these containers directly. Note that
- * const access still allows modification of values inside the views.
- */
-class nonconforming_interfaces_patch
-    : public specfem::assembly::nonconforming_interfaces<
-          specfem::element::dimension_tag::dim2> {
-  int ngllz;
-  int ngllx;
-  int nquad_intersection;
-
-public:
-  nonconforming_interfaces_patch(const int &ngllz, const int &ngllx,
-                                 const int &nquad_intersection)
-      : ngllz(ngllz), ngllx(ngllx), nquad_intersection(nquad_intersection) {};
-
-  template <specfem::element_coupling::interface_tag InterfaceTag,
-            specfem::element::boundary_tag BoundaryTag,
-            specfem::element_connections::type ConnectionTag>
-  void reinit_container(const int &num_edges) {
-
-    FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM2), CONNECTION_TAG(NONCONFORMING),
-         INTERFACE_TAG(ELASTIC_ACOUSTIC, ACOUSTIC_ELASTIC),
-         BOUNDARY_TAG(NONE, STACEY, ACOUSTIC_FREE_SURFACE,
-                      COMPOSITE_STACEY_DIRICHLET)),
-        CAPTURE(interface_container) {
-          if constexpr (_interface_tag_ == InterfaceTag &&
-                        _boundary_tag_ == BoundaryTag &&
-                        _connection_tag_ == ConnectionTag) {
-            _interface_container_ =
-                InterfaceContainerType<_interface_tag_, _boundary_tag_,
-                                       _connection_tag_>(
-                    ngllz, ngllx, nquad_intersection, num_edges);
-          }
-        })
-  }
-};
-
 // temporary test for purposes of uncombined coupling_integral
 void execute_simple_dshape_test() {
   constexpr auto dimension_tag = specfem::element::dimension_tag::dim2;
   constexpr auto interface_tag =
       specfem::element_coupling::interface_tag::acoustic_elastic;
   constexpr auto boundary_tag = specfem::element::boundary_tag::none;
+  constexpr auto flux_scheme_tag =
+      specfem::element_coupling::flux_scheme_tag::natural;
   using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
   // ==========================================================
@@ -101,7 +62,8 @@ void execute_simple_dshape_test() {
   // we will probably fixturize this at some point to make it not so bloated
   using IntersectionFactor =
       specfem::test_fixture::impl::NonconformingIntersectionFactorPatch<
-          interface_tag, boundary_tag, num_edges, QuadIntersection::nquad>;
+          interface_tag, boundary_tag, flux_scheme_tag, num_edges,
+          QuadIntersection::nquad>;
   auto intersection_factor = IntersectionFactor("dshape::intersection_factor");
 
   {
@@ -158,16 +120,17 @@ void execute_simple_dshape_test() {
   constexpr auto ncomp_self =
       specfem::element::attributes<dimension_tag, medium_self>::components;
 
-  nonconforming_interfaces_patch nonconforming_interfaces(ngllz, ngllx,
-                                                          nquad_intersection);
+  specfem::test_builder::NonconformingInterfacesPatch<dimension_tag>
+      nonconforming_interfaces(ngllz, ngllx, nquad_intersection);
   nonconforming_interfaces.template reinit_container<
       interface_tag, boundary_tag,
-      specfem::element_connections::type::nonconforming>(num_edges);
+      specfem::element_connections::type::nonconforming, flux_scheme_tag>(
+      num_edges);
 
   const auto &interface_container =
       nonconforming_interfaces.template get_interface_container<
           interface_tag, boundary_tag,
-          specfem::element_connections::type::nonconforming>();
+          specfem::element_connections::type::nonconforming, flux_scheme_tag>();
 
   // =================================================================
   // populate this nonconforming interface container and
@@ -199,37 +162,12 @@ void execute_simple_dshape_test() {
   }
   // =================================================================
 
-  using EdgeTypesView = Kokkos::View<specfem::mesh_entity::dim2::type *,
-                                     memory_space, Kokkos::MemoryTraits<> >;
-  EdgeTypesView edge_types("dshape::edge_types", num_edges);
-  EdgeTypesView::HostMirror h_edge_types =
-      Kokkos::create_mirror_view(edge_types);
+  auto edge_list_builder = specfem::test_builder::EdgeView(ngllz, ngllx)
+                               .set_label("dshape::edgelist");
   for (int iedge = 0; iedge < num_edges; iedge++) {
-    h_edge_types(iedge) = side;
+    edge_list_builder.add_edge({ iedge, iedge, side, false });
   }
-  Kokkos::deep_copy(edge_types, h_edge_types);
-
-  specfem::assembly::EdgeView<Kokkos::DefaultExecutionSpace> edgelist(
-      "dshape::edgelist", num_edges, nquad_element);
-  {
-
-    std::vector<specfem::mesh_entity::edge<dimension_tag> > edge_collect;
-    const auto element = specfem::mesh_entity::element(ngllz, ngllx);
-    for (int iedge = 0; iedge < num_edges; iedge++) {
-      edge_collect.push_back({ iedge, iedge, side, false });
-    }
-
-    const auto h_edgelist = specfem::assembly::edge_view_from_collected_edges(
-        "dshape::edgelist_host_mirror", edge_collect, element);
-
-    // specfem::assembly::edge_types<dimension_tag>::deep_copy(edgelist,
-    // h_edgelist);
-    Kokkos::deep_copy(edgelist.element_index, h_edgelist.element_index);
-    Kokkos::deep_copy(edgelist.edge_index, h_edgelist.edge_index);
-    Kokkos::deep_copy(edgelist.edge_types, h_edgelist.edge_types);
-    Kokkos::deep_copy(edgelist.iz, h_edgelist.iz);
-    Kokkos::deep_copy(edgelist.ix, h_edgelist.ix);
-  }
+  const auto edgelist = edge_list_builder.build_on_device();
 
   // chunk subviews (FunctionType comes from copied test template -- skip the
   // rest and assume num_edges == 1)
@@ -329,9 +267,10 @@ void execute_simple_dshape_test() {
   }
   const auto shape_function_normal_derivatives =
       specfem::algorithms::shape_function_self_normal_derivatives<
-          interface_tag, boundary_tag, nquad_element_, nquad_intersection_>(
-          edgelist, nonconforming_interfaces, ngllz, ngllx,
-          lagrange_derivative.xi, intersection_contra_normal);
+          interface_tag, boundary_tag, flux_scheme_tag, nquad_element_,
+          nquad_intersection_>(edgelist, nonconforming_interfaces, ngllz, ngllx,
+                               lagrange_derivative.xi,
+                               intersection_contra_normal);
 
   using default_parallel_config =
       specfem::parallel_configuration::default_chunk_edge_config<

@@ -157,7 +157,8 @@ struct is_index_type<
     T, std::enable_if_t<
            T::data_class == specfem::data_access::DataClassType::index ||
            T::data_class == specfem::data_access::DataClassType::mapped_index ||
-           T::data_class == specfem::data_access::DataClassType::edge_index> >
+           T::data_class == specfem::data_access::DataClassType::edge_index ||
+           T::data_class == specfem::data_access::DataClassType::face_index> >
     : std::true_type {};
 
 /// @brief Detects global assembly index types
@@ -178,6 +179,16 @@ template <typename T>
 struct is_edge_index<
     T, std::enable_if_t<T::data_class ==
                         specfem::data_access::DataClassType::edge_index> >
+    : std::true_type {};
+
+/// @brief Detects face connectivity index types
+template <typename T, typename = void>
+struct is_face_index : std::false_type {};
+
+template <typename T>
+struct is_face_index<
+    T, std::enable_if_t<T::data_class ==
+                        specfem::data_access::DataClassType::face_index> >
     : std::true_type {};
 
 /// @brief Detects interface intersection factor types
@@ -248,8 +259,9 @@ struct is_global_coordinates : std::false_type {};
 
 template <typename T>
 struct is_global_coordinates<
-    T, std::enable_if_t<T::data_class ==
-                        specfem::data_access::DataClassType::global_coordinates> >
+    T,
+    std::enable_if_t<T::data_class ==
+                     specfem::data_access::DataClassType::global_coordinates> >
     : std::true_type {};
 
 /// @brief Detects multi-component packed accessors

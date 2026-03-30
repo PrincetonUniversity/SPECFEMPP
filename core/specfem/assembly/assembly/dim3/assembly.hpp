@@ -2,8 +2,8 @@
 
 #include "specfem/assembly/boundaries.hpp"
 #include "specfem/assembly/boundary_values.hpp"
-#include "specfem/assembly/compute_source_array.hpp"
 #include "specfem/assembly/conforming_interfaces.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/fields.hpp"
 #include "specfem/assembly/info.hpp"
 #include "specfem/assembly/jacobian_matrix.hpp"
@@ -60,6 +60,11 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
    */
   specfem::assembly::element_types<dimension_tag> element_types;
 
+  specfem::assembly::element_intersections<dimension_tag>
+      element_intersections; ///< Element intersections for different types of
+                             ///< interfaces between two media (e.g.,
+                             ///< fluid-solid interface).
+
   /**
    * @brief Partial derivatives of the basis functions at every quadrature point
    *
@@ -102,11 +107,9 @@ template <> struct assembly<specfem::element::dimension_tag::dim3> {
 
   specfem::assembly::boundaries<dimension_tag> boundaries; ///< Boundary
                                                            ///< conditions
-  // specfem::assembly::coupled_interfaces<dimension_tag>
-  // coupled_interfaces;                          ///< Coupled
-  //                                         ///< interfaces
-  //                                         ///< between 2
-  //                                         ///< media
+  specfem::assembly::conforming_interfaces<dimension_tag>
+      conforming_interfaces; ///< Conforming interfaces between different media
+                             ///< (e.g., fluid-solid interface)
 
   specfem::assembly::boundary_values<dimension_tag>
       boundary_values; ///< Field

@@ -7,18 +7,17 @@
 #pragma once
 
 #include "specfem/element.hpp"
+#include "specfem/element_connections/tags.hpp"
 #include <string>
 
-namespace specfem::element_connections {
-
 /**
- * @brief Connection conformity types between mesh elements.
+ * @brief Element connectivity and coordinate mapping utilities.
+ *
+ * Provides connection types and coordinate transformations between adjacent
+ * spectral elements in multi-physics computational domains. Handles conforming
+ * and non-conforming element interfaces through compile-time mapping classes.
  */
-enum class type : int {
-  strongly_conforming = 1, ///< Nodes match exactly
-  weakly_conforming = 2, ///< Nodes match, shape functions may be discontinuous
-  nonconforming = 3      ///< No matching nodes, geometrically adjacent
-};
+namespace specfem::element_connections {
 
 /**
  * @brief Convert connection type to string.

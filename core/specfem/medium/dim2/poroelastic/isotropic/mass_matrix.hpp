@@ -42,15 +42,26 @@ namespace medium_physics {
  * @param properties Poroelastic material properties
  * @return Inverse mass matrix components for explicit time integration
  */
-template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::mass_inverse<
-    specfem::element::dimension_tag::dim2,
-    specfem::element::medium_tag::poroelastic, UseSIMD>
-impl_mass_matrix_component(
-    const specfem::point::properties<specfem::element::dimension_tag::dim2,
-                                     specfem::element::medium_tag::poroelastic,
-                                     specfem::element::property_tag::isotropic,
-                                     UseSIMD> &properties);
+template <
+    typename Tags,
+    std::enable_if_t<
+        Tags::dimension_tag == specfem::element::dimension_tag::dim2 &&
+            Tags::medium_tag == specfem::element::medium_tag::poroelastic &&
+            Tags::property_tag == specfem::element::property_tag::isotropic,
+        int> = 0>
+KOKKOS_FUNCTION specfem::point::mass_inverse<Tags>
+impl_mass_matrix_component(const specfem::point::properties<Tags> &properties) {
+
+  const auto solid_component =
+      (properties.rho_bar() -
+       properties.phi() * properties.rho_f() / properties.tortuosity());
+  const auto fluid_component =
+      (properties.rho_f() * properties.tortuosity() * properties.rho_bar() -
+       properties.phi() * properties.rho_f() * properties.rho_f()) /
+      (properties.phi() * properties.rho_bar());
+
+  return { solid_component, solid_component, fluid_component, fluid_component };
+}
 
 } // namespace medium_physics
 } // namespace specfem

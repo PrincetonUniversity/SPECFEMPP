@@ -1,15 +1,17 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
-#include "specfem/assembly/edge_types.hpp"
+#include "specfem/assembly/element_intersections.hpp"
 #include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/nonconforming_interfaces.hpp"
 #include "specfem/chunk_edge/nonconforming_interface.hpp"
 #include "specfem/element/tags.hpp"
 #include "specfem/element_coupling.hpp"
 #include "specfem/execution.hpp"
 #include "specfem/point.hpp"
 #include <Kokkos_Core.hpp>
-
+#include <sstream>
+#include <stdexcept>
+#include <string>
 namespace specfem::algorithms {
 
 /**
@@ -27,9 +29,11 @@ namespace specfem::algorithms {
  * @param nonconforming_interfaces - assembly.nonconforming_interfaces struct
  */
 template <specfem::element_coupling::interface_tag interface_tag,
-          specfem::element::boundary_tag boundary_tag, int nquad_element_,
-          int nquad_intersection_, typename SelfEdgeListView,
-          typename HPrimeView, typename TransformedIntersectionNormalView>
+          specfem::element::boundary_tag boundary_tag,
+          specfem::element_coupling::flux_scheme_tag flux_scheme_tag,
+          int nquad_element_, int nquad_intersection_,
+          typename SelfEdgeListView, typename HPrimeView,
+          typename TransformedIntersectionNormalView>
 Kokkos::View<type_real ****, Kokkos::DefaultExecutionSpace>
 shape_function_self_normal_derivatives(
     const SelfEdgeListView &self_edges,
@@ -53,8 +57,7 @@ shape_function_self_normal_derivatives(
         std::to_string(nquad_intersection));
   }
   ReturnViewType normal_derivs("shape_function_self_normal_derivatives",
-                               self_edges.n_edges, ngllz, ngllx,
-                               nquad_intersection);
+                               self_edges.N, ngllz, ngllx, nquad_intersection);
 
   using parallel_config =
       specfem::parallel_configuration::default_chunk_edge_config<
@@ -62,8 +65,8 @@ shape_function_self_normal_derivatives(
   specfem::execution::ChunkedEdgeIterator chunk(parallel_config(), self_edges);
 
   using TransferFunctionSelf = specfem::chunk_edge::transfer_function_self<
-      dimension_tag, interface_tag, boundary_tag, parallel_config::chunk_size,
-      nquad_intersection_, nquad_element_>;
+      dimension_tag, interface_tag, boundary_tag, flux_scheme_tag,
+      parallel_config::chunk_size, nquad_intersection_, nquad_element_>;
 
   specfem::execution::for_each_level(
       "specfem::compute::shape_function_normal_derivative",

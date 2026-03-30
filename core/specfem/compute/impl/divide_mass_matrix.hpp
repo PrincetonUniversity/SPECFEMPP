@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 
@@ -22,7 +22,7 @@ namespace impl {
  * @tparam BoundaryTag Boundary tag (e.g., none, stacey)
  *
  */
-template <typename Tags>
+template <int NGLL, typename Tags>
 void divide_mass_matrix(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly);
 } // namespace impl

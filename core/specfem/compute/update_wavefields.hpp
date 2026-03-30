@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/enums.hpp"
 
 namespace specfem::compute {
@@ -24,4 +24,5 @@ template <int NGLL, typename Tags>
 int update_wavefields(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
     const int istep);
+
 } // namespace specfem::compute

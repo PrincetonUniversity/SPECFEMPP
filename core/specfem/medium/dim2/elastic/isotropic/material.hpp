@@ -4,6 +4,7 @@
 #include "specfem/constants.hpp"
 #include "specfem/element.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/tags.hpp"
 #include <exception>
 #include <iostream>
 #include <ostream>
@@ -274,8 +275,8 @@ public:
    *
    * @return specfem::point::properties Material properties
    */
-  inline specfem::point::properties<dimension_tag, medium_tag, property_tag,
-                                    false>
+  inline specfem::point::properties<
+      specfem::tags::Tags<dimension_tag, medium_tag, property_tag, false> >
   get_properties() const {
     if (attenuation_tag == specfem::element::attenuation_tag::none) {
       return { this->kappa, this->mu, this->density };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 #include "specfem/tags.hpp"
@@ -34,7 +34,7 @@ namespace impl {
 template <int NGLL, typename Tags>
 int compute_stiffness_interaction(
     const specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-    const int &istep);
+    const int istep);
 } // namespace impl
 } // namespace compute
 } // namespace specfem

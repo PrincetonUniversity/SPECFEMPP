@@ -28,6 +28,9 @@ set(SPECFEMPP_UNITY_BUILD_BATCH_SIZE 8 CACHE STRING "Set the batch size for unit
 
 if (SPECFEM_ENABLE_MPI)
     message(STATUS "Compiling SPECFEM with MPI")
+    find_package(MPI REQUIRED)
+    add_compile_definitions(SPECFEM_ENABLE_MPI)
+    message(STATUS "MPI enabled - found MPI::MPI_CXX")
 else()
     message(STATUS "Compiling SPECFEM without MPI")
 endif()
@@ -160,12 +163,6 @@ include("${CMAKE_SOURCE_DIR}/cmake/adios2.cmake")
 # the pugixml dependency than ADIOS2)
 include("${CMAKE_SOURCE_DIR}/cmake/vtk.cmake")
 
-# Find MPI if enabled
-if (SPECFEM_ENABLE_MPI)
-    find_package(MPI REQUIRED)
-    message(STATUS "MPI enabled - found MPI::MPI_CXX")
-endif()
-
 if (SPECFEM_ENABLE_SIMD)
     message(STATUS "Enabling SIMD")
     add_compile_definitions(SPECFEM_ENABLE_SIMD)
@@ -179,19 +176,19 @@ endif()
 if (SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling double precision")
     set(TYPE_REAL "double")
+    set(MPI_TYPE_REAL "MPI_DOUBLE")
 else(SPECFEM_ENABLE_DOUBLE_PRECISION)
     message(STATUS "Enabling single precision")
     set(TYPE_REAL "float")
+    set(MPI_TYPE_REAL "MPI_FLOAT")
 endif(SPECFEM_ENABLE_DOUBLE_PRECISION)
 
 # Add the include directories so that the generated files can be found
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core)
-include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
 message(STATUS "INCLUDE DIRECTORIES:")
 message(STATUS "    core: ${CMAKE_CURRENT_SOURCE_DIR}/core")
-message(STATUS "    include: ${CMAKE_SOURCE_DIR}/include")
 message(STATUS "    binary: ${CMAKE_BINARY_DIR}/include")
 
 

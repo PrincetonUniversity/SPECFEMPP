@@ -1,6 +1,6 @@
 #pragma once
 
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/assembly.hpp"
 #include "specfem/element.hpp"
 #include "specfem/enums.hpp"
 
@@ -28,7 +28,7 @@ namespace impl {
 template <int NGLL, typename Tags>
 void compute_source_interaction(
     specfem::assembly::assembly<Tags::dimension_tag> &assembly,
-    const int &timestep);
+    const int istep);
 } // namespace impl
 } // namespace compute
 } // namespace specfem

@@ -41,8 +41,8 @@ namespace specfem::execution {
  * @tparam KokkosIndexType Type of the underlying Kokkos policy index
  * @tparam ExecutionSpace Kokkos execution space for parallel operations
  */
-template <specfem::element::dimension_tag DimensionTag, typename KokkosIndexType,
-          typename ExecutionSpace>
+template <specfem::element::dimension_tag DimensionTag,
+          typename KokkosIndexType, typename ExecutionSpace>
 class FacePointIndex {
 public:
   using index_type = specfem::point::face_index<DimensionTag>;
@@ -163,9 +163,8 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   ChunkFaceIterator(const TeamMemberType &team_member, const ViewType &faces_)
-      : num_points(faces_.n_points), nfaces(faces_.n_faces),
-        base_type(team_member,
-                  faces_.n_faces * faces_.n_points * faces_.n_points),
+      : num_points(faces_.n_points), nfaces(faces_.N),
+        base_type(team_member, faces_.N * faces_.n_points * faces_.n_points),
         faces(faces_) {}
 
   const int nfaces; ///< Total number of faces in this chunk
@@ -245,7 +244,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   Kokkos::pair<std::size_t, std::size_t> get_range() const {
     return Kokkos::make_pair(faces(0).face_index,
-                             faces(faces.n_faces - 1).face_index + 1);
+                             faces(faces.N - 1).face_index + 1);
   }
 
 private:
@@ -308,9 +307,9 @@ public:
    * @param faces View of mesh faces to process
    */
   ChunkedFaceIterator(const ViewType faces)
-      : faces(faces), base_type(((faces.n_faces / chunk_size) +
-                                 ((faces.n_faces % chunk_size) != 0)),
-                                Kokkos::AUTO, Kokkos::AUTO) {}
+      : faces(faces),
+        base_type(((faces.N / chunk_size) + ((faces.N % chunk_size) != 0)),
+                  Kokkos::AUTO, Kokkos::AUTO) {}
 
   /**
    * @brief Constructor with parallel configuration
@@ -335,8 +334,8 @@ public:
   const index_type operator()(const policy_index_type &team) const {
     const auto league_id = team.league_rank();
     const int start = league_id * chunk_size;
-    const int end = (start + chunk_size < faces.n_faces) ? start + chunk_size
-                                                         : faces.n_faces;
+    const int end =
+        (start + chunk_size < faces.N) ? start + chunk_size : faces.N;
     return index_type{ faces(Kokkos::make_pair(start, end)), team };
   }
 

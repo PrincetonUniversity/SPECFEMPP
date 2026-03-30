@@ -1,7 +1,10 @@
 #include "specfem/receivers.hpp"
 
 #include "specfem/algorithms.hpp"
-#include "specfem/assembly.hpp"
+#include "specfem/assembly/element_types.hpp"
+#include "specfem/assembly/mesh.hpp"
+#include "specfem/assembly/receivers.hpp"
+#include "specfem/element.hpp"
 #include "specfem/quadrature.hpp"
 #include "specfem/setup.hpp"
 #include <Kokkos_Core.hpp>

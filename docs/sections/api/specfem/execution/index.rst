@@ -3,6 +3,9 @@
 ``specfem::execution``
 ======================
 
+.. doxygennamespace:: specfem::execution
+    :desc-only:
+
 .. toctree::
     :maxdepth: 1
 

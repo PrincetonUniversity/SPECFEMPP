@@ -1,7 +1,6 @@
 #pragma once
 
 #include "plotter.hpp"
-#include "specfem/assembly.hpp"
 #include "specfem/enums.hpp"
 #include <boost/filesystem.hpp>
 
