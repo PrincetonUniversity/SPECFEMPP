@@ -41,3 +41,9 @@
 
 .. doxygengroup:: specfem_stress_computation_dim3_acoustic
     :content-only:
+
+3D Elastic Isotropic Cosserat Stress Computation
+================================================
+
+.. doxygengroup:: specfem_stress_computation_dim3_elastic_isotropic_cosserat
+    :content-only:
