@@ -38,6 +38,10 @@ using AnyQuantity =
 
 namespace impl {
 
+// TODO (Lucas : CPP20) update units - fix replace void_t detection with a
+// requires clause:
+//   requires { unit_cast_impl<To, From>::call(std::declval<From>()); }
+
 /**
  * @brief Detects whether unit_cast_impl<To, From>::call is well-formed.
  *
@@ -46,9 +50,8 @@ namespace impl {
  * unsupported conversion pair without triggering an incomplete-type hard
  * error.
  *
- * // TODO (Lucas : CPP20) update units - fix replace void_t detection with a
- * requires clause:
- *   requires { unit_cast_impl<To, From>::call(std::declval<From>()); }
+ * @tparam To Target quantity type
+ * @tparam From Source quantity type
  */
 template <typename To, typename From, typename = void>
 struct has_unit_cast : std::false_type {};
@@ -58,17 +61,17 @@ struct has_unit_cast<To, From,
                      std::void_t<decltype(unit_cast_impl<To, From>::call(
                          std::declval<From>()))> > : std::true_type {};
 
+// TODO (Lucas : CPP20) update units - fix replace this struct with a
+// generic auto-lambda passed directly to std::visit once C++20 templated
+// lambdas are available:
+//   std::visit([](auto q) -> To { ... }, v)
+
 /**
  * @brief std::visit visitor that converts an AnyQuantity to type @p To.
  *
  * For each alternative From in AnyQuantity:
  *   - if unit_cast_impl<To, From>::call is defined  → convert
  *   - otherwise                                     → throw at runtime
- *
- * // TODO (Lucas : CPP20) update units - fix replace this struct with a
- * generic auto-lambda passed directly to std::visit once C++20 templated
- * lambdas are available:
- *   std::visit([](auto q) -> To { ... }, v)
  */
 template <typename To> struct quantity_cast_visitor {
   template <typename From> To operator()(From q) const {
@@ -82,6 +85,9 @@ template <typename To> struct quantity_cast_visitor {
   }
 };
 
+// TODO (Lucas : CPP20) update units - fix prefix scan with
+// std::string_view::starts_with instead of std::string::compare.
+
 /**
  * @brief Strip a leading SI prefix from @p unit and return whether one was
  * found.
@@ -92,9 +98,6 @@ template <typename To> struct quantity_cast_visitor {
  * "mu" are accepted as alternatives to "µ" (UTF-8 U+00B5 = 0xC2 0xB5).
  *
  * Supported prefixes: k (×1e3), M (×1e6), m (×1e-3), u/mu/µ (×1e-6).
- *
- * // TODO (Lucas : CPP20) update units - fix prefix scan with
- * std::string_view::starts_with instead of std::string::compare.
  */
 inline bool strip_si_prefix(std::string_view unit, type_real &factor,
                             std::string &base_unit) {
@@ -124,6 +127,10 @@ inline bool strip_si_prefix(std::string_view unit, type_real &factor,
 // ---------------------------------------------------------------------------
 // parse
 // ---------------------------------------------------------------------------
+
+// TODO (Lucas : CPP20) update units - fix use a std::string_view-keyed
+// unordered_map (heterogeneous lookup, P0919R3) to avoid constructing a
+// std::string from the unit string_view on each lookup call.
 
 /**
  * @brief Parse a string representation of a physical quantity.
@@ -160,9 +167,6 @@ inline bool strip_si_prefix(std::string_view unit, type_real &factor,
  * @return   AnyQuantity variant holding the parsed quantity.
  * @throws   std::invalid_argument on malformed number or unknown unit.
  *
- * // TODO (Lucas : CPP20) update units - fix use a std::string_view-keyed
- * unordered_map (heterogeneous lookup, P0919R3) to avoid constructing a
- * std::string from the unit string_view on each lookup call.
  */
 inline AnyQuantity parse(std::string_view s) {
   // ── Tokenise: numeric prefix + unit suffix ────────────────────────────────
@@ -313,6 +317,11 @@ inline AnyQuantity parse(std::string_view s) {
 // quantity_cast
 // ---------------------------------------------------------------------------
 
+// TODO (Lucas : CPP20) update units - fix replace
+// impl::quantity_cast_visitor struct with a generic auto-lambda once C++20
+// templated lambdas are fully supported by all targeted compilers: return
+// std::visit([](auto q) -> To { ... }, v);
+
 /**
  * @brief Convert an AnyQuantity to a specific statically-typed Quantity.
  *
@@ -331,10 +340,6 @@ inline AnyQuantity parse(std::string_view s) {
  * auto omega = specfem::units::quantity_cast<Omega>(any); // 2π·20 rad/s
  * @endcode
  *
- * // TODO (Lucas : CPP20) update units - fix replace
- * impl::quantity_cast_visitor struct with a generic auto-lambda once C++20
- * templated lambdas are fully supported by all targeted compilers: return
- * std::visit([](auto q) -> To { ... }, v);
  */
 template <typename To> To quantity_cast(const AnyQuantity &v) {
   return std::visit(impl::quantity_cast_visitor<To>{}, v);
