@@ -2,18 +2,6 @@
 # Generates a formatted summary table of all configuration options
 
 function(specfem_print_configuration_summary)
-  # Color codes for console output
-  if(NOT WIN32)
-    string(ASCII 27 ESC)
-    set(BOLD "${ESC}[1m")
-    set(RESET "${ESC}[0m")
-    set(CYAN "${ESC}[36m")
-  else()
-    set(BOLD "")
-    set(RESET "")
-    set(CYAN "")
-  endif()
-
   # Build the summary string
   set(SUMMARY_STRING "")
 
@@ -57,41 +45,29 @@ function(specfem_print_configuration_summary)
   string(APPEND SUMMARY_STRING "---------------------\n")
 
   set(FORCE_ADIOS2 "OFF")
-  if(SPECFEM_FORCE_INSTALL_ADIOS2)
+  if(SPECFEM_ENABLE_ADIOS2_FORCE_INSTALL)
     set(FORCE_ADIOS2 "ON")
   endif()
 
   set(FORCE_HDF5 "OFF")
-  if(SPECFEM_FORCE_INSTALL_HDF5)
+  if(SPECFEM_ENABLE_HDF5_FORCE_INSTALL)
     set(FORCE_HDF5 "ON")
   endif()
 
-  set(FORCE_NPZ "OFF")
-  if(SPECFEM_FORCE_INSTALL_NPZ)
-    set(FORCE_NPZ "ON")
+  set(FORCE_ZLIB "OFF")
+  if(SPECFEM_ENABLE_ZLIB_FORCE_INSTALL)
+    set(FORCE_ZLIB "ON")
   endif()
 
   set(FORCE_BOOST "OFF")
-  if(SPECFEM_FORCE_INSTALL_BOOST)
+  if(SPECFEM_ENABLE_BOOST_FORCE_INSTALL)
     set(FORCE_BOOST "ON")
   endif()
 
-  set(FORCE_KOKKOS "OFF")
-  if(SPECFEM_FORCE_INSTALL_KOKKOS)
-    set(FORCE_KOKKOS "ON")
-  endif()
-
-  set(FORCE_YAML "OFF")
-  if(SPECFEM_FORCE_INSTALL_YAML)
-    set(FORCE_YAML "ON")
-  endif()
-
-  string(APPEND SUMMARY_STRING "  SPECFEM_FORCE_INSTALL_ADIOS2             | ${FORCE_ADIOS2}\n")
-  string(APPEND SUMMARY_STRING "  SPECFEM_FORCE_INSTALL_HDF5               | ${FORCE_HDF5}\n")
-  string(APPEND SUMMARY_STRING "  SPECFEM_FORCE_INSTALL_NPZ                | ${FORCE_NPZ}\n")
-  string(APPEND SUMMARY_STRING "  SPECFEM_FORCE_INSTALL_BOOST              | ${FORCE_BOOST}\n")
-  string(APPEND SUMMARY_STRING "  SPECFEM_FORCE_INSTALL_KOKKOS             | ${FORCE_KOKKOS}\n")
-  string(APPEND SUMMARY_STRING "  SPECFEM_FORCE_INSTALL_YAML               | ${FORCE_YAML}\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_ADIOS2_FORCE_INSTALL      | ${FORCE_ADIOS2}\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_HDF5_FORCE_INSTALL        | ${FORCE_HDF5}\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_ZLIB_FORCE_INSTALL        | ${FORCE_ZLIB}\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_BOOST_FORCE_INSTALL       | ${FORCE_BOOST}\n")
   string(APPEND SUMMARY_STRING "\n")
 
   # ============================================================================
@@ -101,12 +77,12 @@ function(specfem_print_configuration_summary)
   string(APPEND SUMMARY_STRING "--------------------\n")
 
   set(TESTS_STATUS "OFF")
-  if(SPECFEM_ENABLE_TESTS)
+  if(SPECFEM_BUILD_TESTS)
     set(TESTS_STATUS "ON")
   endif()
 
   set(BENCHMARKS_STATUS "OFF")
-  if(SPECFEM_ENABLE_BENCHMARKS)
+  if(SPECFEM_BUILD_BENCHMARKS)
     set(BENCHMARKS_STATUS "ON")
   endif()
 
@@ -115,8 +91,8 @@ function(specfem_print_configuration_summary)
     set(UNITY_BUILD_STATUS "ON")
   endif()
 
-  string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_TESTS                     | ${TESTS_STATUS}\n")
-  string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_BENCHMARKS                | ${BENCHMARKS_STATUS}\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM_BUILD_TESTS                     | ${TESTS_STATUS}\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM_BUILD_BENCHMARKS                | ${BENCHMARKS_STATUS}\n")
   string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_UNITY_BUILD               | ${UNITY_BUILD_STATUS}\n")
   string(APPEND SUMMARY_STRING "\n")
 
@@ -147,7 +123,7 @@ function(specfem_print_configuration_summary)
   endif()
 
   set(PYTHON_BINDING_STATUS "OFF")
-  if(SPECFEM_ENABLE_PYTHON_BINDING)
+  if(SPECFEM_BINDING_PYTHON)
     set(PYTHON_BINDING_STATUS "ON")
   endif()
 
@@ -155,21 +131,28 @@ function(specfem_print_configuration_summary)
   string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_PROFILING                 | ${PROFILING_STATUS}\n")
   string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_DOUBLE_PRECISION          | ${DOUBLE_PRECISION_STATUS}\n")
   string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_MPI                       | ${MPI_STATUS}\n")
-  string(APPEND SUMMARY_STRING "  SPECFEM_ENABLE_PYTHON_BINDING            | ${PYTHON_BINDING_STATUS}\n")
+  string(APPEND SUMMARY_STRING "  SPECFEM_BINDING_PYTHON                   | ${PYTHON_BINDING_STATUS}\n")
   string(APPEND SUMMARY_STRING "\n")
 
   # ============================================================================
-  # GPU/CPU BUILD
+  # BUILD TYPE
   # ============================================================================
-  string(APPEND SUMMARY_STRING "GPU/CPU BUILD\n")
-  string(APPEND SUMMARY_STRING "-------------\n")
+  string(APPEND SUMMARY_STRING "BUILD TYPE\n")
+  string(APPEND SUMMARY_STRING "-----------\n")
 
-  set(BUILD_DEVICE ${CMAKE_BUILD_TYPE})
-  if(NOT BUILD_DEVICE)
-    set(BUILD_DEVICE "Release (default)")
+  set(BUILD_TYPE_VALUE "")
+  set(MULTI_CONFIG_INDICATOR "")
+  if(CMAKE_BUILD_TYPE)
+    set(BUILD_TYPE_VALUE "${CMAKE_BUILD_TYPE}")
+  elseif(CMAKE_CONFIGURATION_TYPES)
+    set(BUILD_TYPE_VALUE "${CMAKE_CONFIGURATION_TYPES}")
+    set(MULTI_CONFIG_INDICATOR " (multi-config)")
+  else()
+    set(BUILD_TYPE_VALUE "Release (default)")
   endif()
 
-  string(APPEND SUMMARY_STRING "  CMAKE_BUILD_TYPE                         | ${BUILD_DEVICE}\n")
+  string(APPEND SUMMARY_STRING "  CMAKE_BUILD_TYPE                         | ${BUILD_TYPE_VALUE}${MULTI_CONFIG_INDICATOR}\n")
+  string(APPEND SUMMARY_STRING "  CMAKE_GENERATOR                          | ${CMAKE_GENERATOR}\n")
   string(APPEND SUMMARY_STRING "\n")
 
   # ============================================================================
@@ -179,8 +162,8 @@ function(specfem_print_configuration_summary)
   string(APPEND SUMMARY_STRING "----------------------------\n")
 
   string(APPEND SUMMARY_STRING "  CMAKE_INSTALL_PREFIX                     | ${CMAKE_INSTALL_PREFIX}\n")
-  if(SPECFEM_BATCH_SIZE)
-    string(APPEND SUMMARY_STRING "  SPECFEM_BATCH_SIZE                       | ${SPECFEM_BATCH_SIZE}\n")
+  if(CMAKE_UNITY_BUILD_BATCH_SIZE)
+    string(APPEND SUMMARY_STRING "  CMAKE_UNITY_BUILD_BATCH_SIZE             | ${CMAKE_UNITY_BUILD_BATCH_SIZE}\n")
   endif()
   string(APPEND SUMMARY_STRING "\n")
 
