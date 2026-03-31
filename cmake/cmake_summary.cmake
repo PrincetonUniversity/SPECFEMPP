@@ -148,7 +148,7 @@ function(specfem_print_configuration_summary)
     set(BUILD_TYPE_VALUE "${CMAKE_CONFIGURATION_TYPES}")
     set(MULTI_CONFIG_INDICATOR " (multi-config)")
   else()
-    set(BUILD_TYPE_VALUE "Release (default)")
+    set(BUILD_TYPE_VALUE "(not set)")
   endif()
 
   string(APPEND SUMMARY_STRING "  CMAKE_BUILD_TYPE                         | ${BUILD_TYPE_VALUE}${MULTI_CONFIG_INDICATOR}\n")
