@@ -144,6 +144,14 @@ static const std::unordered_map<std::string, ExpectedControlNodes3D>
               ControlNode3D(0.0, 0.0, 0.0, 4, 4, 4),
               // Shared nodes
               ControlNode3D(50000.0, 40000.0, -30000.0, 62, 0, 6),
+              ControlNode3D(50000.0, 40000.0, -30000.0, 62, 2, 5) }) },
+      { "EightNodeElasticCosserat",
+        ExpectedControlNodes3D(
+            TotalControlNodes(8, 8),
+            { // Domain corner
+              ControlNode3D(0.0, 0.0, 0.0, 4, 4, 4),
+              // Shared nodes
+              ControlNode3D(50000.0, 40000.0, -30000.0, 62, 0, 6),
               ControlNode3D(50000.0, 40000.0, -30000.0, 62, 2, 5) }) }
     };
 

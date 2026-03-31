@@ -17,6 +17,9 @@ namespace specfem::assembly {
  * The 3D implementation currently focuses on elastic media with displacement,
  * velocity, and acceleration field components (ux, uy, uz and derivatives).
  *
+ * It also implements elastic Cosserat media with spin field components
+ * (phix, phiy, phiz) and their derivatives.
+ *
  * @tparam SimulationWavefieldType Type of simulation field (forward, adjoint,
  * backward, buffer)
  */
@@ -114,7 +117,7 @@ public:
     this->nglly = rhs.nglly;
     this->ngllx = rhs.ngllx;
     FOR_EACH_IN_PRODUCT(
-        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
         CAPTURE(field, (rhs_field, rhs.field), assembly_index_mapping,
                 (rhs_assembly_index_mapping, rhs.assembly_index_mapping),
                 h_assembly_index_mapping,
@@ -126,7 +129,8 @@ public:
   }
 
   /**
-   * @brief Get number of global points for 3D elastic medium.
+   * @brief Get number of global points for 3D elastic or elastic Cosserat
+   * medium.
    *
    * Returns the total number of global degrees of freedom for the elastic
    * medium type in the 3D simulation field.
@@ -141,12 +145,13 @@ public:
    */
   template <specfem::element::medium_tag MediumTag>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                        CAPTURE(field) {
-                          if constexpr (MediumTag == _medium_tag_) {
-                            return _field_.nglob;
-                          }
-                        })
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+        CAPTURE(field) {
+          if constexpr (MediumTag == _medium_tag_) {
+            return _field_.nglob;
+          }
+        })
 
     Kokkos::abort("Medium type not supported");
     return 0;
@@ -158,6 +163,9 @@ public:
    * Provides access to the underlying 3D field storage for the elastic medium,
    * containing displacement, velocity, and acceleration components (ux, uy, uz
    * and their time derivatives) appropriate for 3D wave propagation.
+   *
+   * For elastic Cosserat media, also provides access to spin field components
+   * phix, phiy, phiz, and their time derivatives.
    *
    * @tparam MediumTag Medium type to access (elastic for 3D applications)
    * @return Const reference to the 3D field implementation for elastic medium
@@ -173,12 +181,13 @@ public:
       constexpr specfem::assembly::fields_impl::field_impl<dimension_tag,
                                                            MediumTag> const &
       get_field() const {
-    FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                        CAPTURE(field) {
-                          if constexpr (MediumTag == _medium_tag_) {
-                            return _field_;
-                          }
-                        })
+    FOR_EACH_IN_PRODUCT(
+        (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+        CAPTURE(field) {
+          if constexpr (MediumTag == _medium_tag_) {
+            return _field_;
+          }
+        })
 
     Kokkos::abort("Medium type not supported");
     /// Code path should never be reached
@@ -195,22 +204,23 @@ public:
   get_iglob(const int &ispec, const int &iz, const int &iy, const int &ix,
             const specfem::element::medium_tag MediumTag) const {
     if constexpr (on_device) {
-      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                          CAPTURE(assembly_index_mapping) {
-                            if (MediumTag == _medium_tag_) {
-                              return _assembly_index_mapping_(
-                                  index_mapping(ispec, iz, iy, ix));
-                            }
-                          })
+      FOR_EACH_IN_PRODUCT(
+          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+          CAPTURE(assembly_index_mapping) {
+            if (MediumTag == _medium_tag_) {
+              return _assembly_index_mapping_(index_mapping(ispec, iz, iy, ix));
+            }
+          })
 
     } else {
-      FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                          CAPTURE(h_assembly_index_mapping) {
-                            if (MediumTag == _medium_tag_) {
-                              return _h_assembly_index_mapping_(
-                                  h_index_mapping(ispec, iz, iy, ix));
-                            }
-                          })
+      FOR_EACH_IN_PRODUCT(
+          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+          CAPTURE(h_assembly_index_mapping) {
+            if (MediumTag == _medium_tag_) {
+              return _h_assembly_index_mapping_(
+                  h_index_mapping(ispec, iz, iy, ix));
+            }
+          })
     }
 
     // If we reach here, it means the medium type is not defined in the macro
@@ -257,13 +267,13 @@ public:
   IndexViewType::HostMirror h_index_mapping; ///< Host mirror of 3D index
                                              ///< mapping for CPU operations
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
-                      DECLARE(((specfem::assembly::fields_impl::field_impl,
-                                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
-                               field),
-                              (AssemblyIndexViewType, assembly_index_mapping),
-                              (AssemblyIndexViewType::HostMirror,
-                               h_assembly_index_mapping)))
+  FOR_EACH_IN_PRODUCT(
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
+      DECLARE(((specfem::assembly::fields_impl::field_impl,
+                (_DIMENSION_TAG_, _MEDIUM_TAG_)),
+               field),
+              (AssemblyIndexViewType, assembly_index_mapping),
+              (AssemblyIndexViewType::HostMirror, h_assembly_index_mapping)))
 
   /**
    * @brief Get total degrees of freedom in the 3D elastic system.
@@ -309,7 +319,7 @@ inline void deep_copy(SimulationWavefieldType1 &dst,
   dst.nglob = src.nglob;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
       CAPTURE((src_assembly_index_mapping, src.assembly_index_mapping),
               (dst_assembly_index_mapping, dst.assembly_index_mapping),
               (src_h_assembly_index_mapping, src.h_assembly_index_mapping),

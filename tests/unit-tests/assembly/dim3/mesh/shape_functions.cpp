@@ -123,9 +123,12 @@ using namespace specfem::assembly_test;
 
 const static std::unordered_map<std::string,
                                 specfem::assembly_test::ShapeFunction3D>
-    expected_shape_functions_map = { { "EightNodeElastic",
-                                       specfem::assembly_test::ShapeFunction3D(
-                                           5, 5, 5, 8) } };
+    expected_shape_functions_map = {
+      { "EightNodeElastic",
+        specfem::assembly_test::ShapeFunction3D(5, 5, 5, 8) },
+      { "EightNodeElasticCosserat",
+        specfem::assembly_test::ShapeFunction3D(5, 5, 5, 8) }
+    };
 
 TEST_P(Assembly3DTest, ShapeFunctions) {
   const auto &param_name = GetParam();

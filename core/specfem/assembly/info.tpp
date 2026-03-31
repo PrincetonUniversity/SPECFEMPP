@@ -225,8 +225,8 @@ specfem::assembly::Info<DimensionTag>::Info(
   } else {
     FOR_EACH_IN_PRODUCT(
         (DIMENSION_TAG(DIM3),
-         MEDIUM_TAG(ELASTIC, ACOUSTIC),
-         PROPERTY_TAG(ISOTROPIC),
+         MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+         PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT),
          ATTENUATION_TAG(NONE)),
         {
           info::impl::process_medium_elements<_dimension_tag_, _medium_tag_,

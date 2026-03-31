@@ -121,8 +121,8 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::receivers(
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
-       PROPERTY_TAG(ISOTROPIC), ATTENUATION_TAG(NONE)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+       PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT), ATTENUATION_TAG(NONE)),
       CAPTURE(elements, h_elements, receiver_indices, h_receiver_indices) {
         int count = 0;
         int index = 0;
@@ -173,7 +173,8 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::
         const specfem::element::attenuation_tag attenuation_tag) const {
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, POROELASTIC),
+      (DIMENSION_TAG(DIM3),
+       MEDIUM_TAG(ELASTIC, ACOUSTIC, POROELASTIC, ELASTIC_SPIN),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
        ATTENUATION_TAG(NONE)),
       CAPTURE(h_elements, h_receiver_indices) {
@@ -199,7 +200,8 @@ specfem::assembly::receivers<specfem::element::dimension_tag::dim3>::
         const specfem::element::attenuation_tag attenuation_tag) const {
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, POROELASTIC),
+      (DIMENSION_TAG(DIM3),
+       MEDIUM_TAG(ELASTIC, ACOUSTIC, POROELASTIC, ELASTIC_SPIN),
        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
        ATTENUATION_TAG(NONE)),
       CAPTURE(elements, receiver_indices) {

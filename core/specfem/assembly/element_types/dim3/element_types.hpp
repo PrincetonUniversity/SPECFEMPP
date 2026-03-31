@@ -25,6 +25,7 @@ namespace specfem::assembly {
  *
  * Supported 3D medium types:
  * - ELASTIC: 3D elastic wave propagation (primary focus for 3D)
+ * - ELASTIC_SPIN: 3D elastic Cosserat media with additional spin fields
  *
  * The 3D implementation is currently optimized for elastic media with
  * support for various material property combinations and boundary conditions.
@@ -290,17 +291,20 @@ public:
   }
 
 private:
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3),
+                       MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
                       DECLARE((IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3),
+                       MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
                        PROPERTY_TAG(ISOTROPIC, ANISOTROPIC, ISOTROPIC_COSSERAT),
                        ATTENUATION_TAG(NONE, CONSTANT_ISOTROPIC)),
                       DECLARE((IndexViewType, material_elements),
                               (IndexViewType::HostMirror, h_material_elements)))
 
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3),
+                       MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
                        PROPERTY_TAG(ISOTROPIC), BOUNDARY_TAG(NONE)),
                       DECLARE((IndexViewType, elements),
                               (IndexViewType::HostMirror, h_elements)))

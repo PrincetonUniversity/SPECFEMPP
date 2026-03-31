@@ -171,6 +171,15 @@ const std::unordered_map<std::string, ExpectedMapping> expected_mappings = {
     //    Corner points: 27 corners * 1 = 27
     //    Total = 216 + 324 + 162 + 27 = 729
     ExpectedMapping(TotalQuadraturePoints(8, 5, 5, 5, 729),
+                    "data/dim3/EightNodeElastic/database.bin") },
+  { "EightNodeElasticCosserat",
+    // Total quadrature points:
+    //    Interior points: 8 elements * 3 * 3 * 3 = 216
+    //    Face points: 36 faces * 3 * 3 = 324
+    //    Edge points: 54 edges * 3 = 162
+    //    Corner points: 27 corners * 1 = 27
+    //    Total = 216 + 324 + 162 + 27 = 729
+    ExpectedMapping(TotalQuadraturePoints(8, 5, 5, 5, 729),
                     "data/dim3/EightNodeElastic/database.bin") }
 };
 

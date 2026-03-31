@@ -193,7 +193,9 @@ struct ExpectedProperties3D {
 
       // Type-safe property validation using template metaprogramming
       FOR_EACH_IN_PRODUCT(
-          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC), PROPERTY_TAG(ISOTROPIC)), {
+          (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN),
+           PROPERTY_TAG(ISOTROPIC, ISOTROPIC_COSSERAT)),
+          {
             if (_medium_tag_ == expected.medium_tag &&
                 _property_tag_ == expected.property_tag) {
               const int ispec = expected.ispec;
@@ -275,6 +277,23 @@ std::unordered_map<std::string, ExpectedProperties3D>
                         11.132e9, 5.175e9, 2300)) // κ, μ, ρ
                                                   // Add more GLL points as
                                                   // needed
+            }) },
+      { "EightNodeElasticCosserat",
+        ExpectedProperties3D(
+            8, GLLGrid(5, 5, 5),
+            {
+                // Element 0: Corner GLL point with elastic isotropic properties
+                Properties3D(
+                    0, 0, 0, 0, specfem::element::medium_tag::elastic_spin,
+                    specfem::element::property_tag::isotropic_cosserat,
+                    specfem::point::properties<specfem::tags::Tags<
+                        specfem::element::dimension_tag::dim3,
+                        specfem::element::medium_tag::elastic_spin,
+                        specfem::element::property_tag::isotropic_cosserat,
+                        false> >(2300.0, 1500.0, 2800.0, 1e6, 1e4, 300.0, 25.0,
+                                 500.0)) // \rho, \kappa, \mu, \nu, j,
+                                         // \lambda_c, \mu_c, \nu_c Add more GLL
+                                         // points as needed
             }) }
     };
 

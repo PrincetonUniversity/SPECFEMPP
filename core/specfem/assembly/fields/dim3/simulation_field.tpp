@@ -44,7 +44,7 @@ specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
   this->h_index_mapping = mesh.h_index_mapping;
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
       CAPTURE(assembly_index_mapping, h_assembly_index_mapping, field) {
         _assembly_index_mapping_ =
             Kokkos::View<int *, Kokkos::LayoutLeft,
@@ -76,7 +76,7 @@ int specfem::assembly::simulation_field<
   }
 
   FOR_EACH_IN_PRODUCT(
-      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)), CAPTURE(field) {
+      (DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)), CAPTURE(field) {
         total_degrees_of_freedom +=
             this->get_nglob<_medium_tag_>() *
             specfem::element::attributes<_dimension_tag_,
@@ -89,13 +89,13 @@ int specfem::assembly::simulation_field<
 template <specfem::simulation::field_type WavefieldType>
 void specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
                                          WavefieldType>::copy_to_host() {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
                       CAPTURE(field) { _field_.copy_to_host(); })
 }
 
 template <specfem::simulation::field_type WavefieldType>
 void specfem::assembly::simulation_field<specfem::element::dimension_tag::dim3,
                                          WavefieldType>::copy_to_device() {
-  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC)),
+  FOR_EACH_IN_PRODUCT((DIMENSION_TAG(DIM3), MEDIUM_TAG(ELASTIC, ACOUSTIC, ELASTIC_SPIN)),
                       CAPTURE(field) { _field_.copy_to_device(); })
 }
