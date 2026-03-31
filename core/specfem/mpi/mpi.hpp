@@ -199,8 +199,23 @@ private:
       char err[MPI_MAX_ERROR_STRING];                                          \
       int len;                                                                 \
       MPI_Error_string(e, err, &len);                                          \
-      fprintf(stderr, "MPI error %s:%d: %s\n", __FILE__, __LINE__, err);       \
+      std::cerr << "MPI error at " << __FILE__ << ":" << __LINE__ << ": "      \
+                << err << std::endl;                                           \
       MPI_Abort(MPI_COMM_WORLD, e);                                            \
+    }                                                                          \
+  } while (0)
+#endif
+
+#ifndef SPECFEM_ENABLE_MPI
+#define SPECFEM_MPI_ON_ROOT(code)                                              \
+  do {                                                                         \
+    code                                                                       \
+  } while (0)
+#else
+#define SPECFEM_MPI_ON_ROOT(code)                                              \
+  do {                                                                         \
+    if (specfem::MPI::main_proc()) {                                           \
+      code                                                                     \
     }                                                                          \
   } while (0)
 #endif

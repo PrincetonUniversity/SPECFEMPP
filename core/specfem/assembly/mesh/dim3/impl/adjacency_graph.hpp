@@ -45,6 +45,15 @@ public:
                   const mesh_to_compute_mapping<dimension_tag> &mapping,
                   const specfem::mesh::adjacency_graph<dimension_tag>
                       &mesh_adjacency_graph);
+
+  auto &graph() { return base_type::local_connections(); }
+
+  const auto &graph() const { return base_type::local_connections(); }
+
+  auto &local_connections() = delete;
+  const auto &local_connections() const = delete;
+  auto &mpi_connections() = delete;
+  const auto &mpi_connections() const = delete;
 };
 
 } // namespace specfem::assembly::mesh_impl

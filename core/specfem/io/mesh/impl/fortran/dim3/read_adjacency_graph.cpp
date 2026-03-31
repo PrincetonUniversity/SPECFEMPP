@@ -75,26 +75,29 @@ specfem::io::mesh::impl::fortran::dim3::read_adjacency_graph(
 
   specfem::io::fortran_read_line(stream, &mpi_adjacencies);
 
-  for (int i = 0; i < mpi_adjacencies; ++i) {
-    int elem1, elem2;
-    int connection_type_int, orientation_int;
-    int neighbor_rank, neighbor_local_idx, local_idx, local_anchor_idx,
-        neighbor_anchor_idx;
+  using MPIEdgeProperties = specfem::mesh::adjacency_graph<
+      specfem::element::dimension_tag::dim3>::MPIEdgeProperties;
 
-    specfem::io::fortran_read_line(stream, &elem1, &elem2, &connection_type_int,
-                                   &orientation_int, &neighbor_rank,
-                                   &neighbor_local_idx, &local_idx,
-                                   &local_anchor_idx, &neighbor_anchor_idx);
+  for (int i = 0; i < mpi_adjacencies; ++i) {
+    int local_elem, neighbor_rank, neighbor_elem, local_conn_id,
+        neighbor_conn_id, local_anchor, neighbor_anchor;
+
+    specfem::io::fortran_read_line(
+        stream, &local_elem, &neighbor_rank, &neighbor_elem, &local_conn_id,
+        &neighbor_conn_id, &local_anchor, &neighbor_anchor);
 
     // Convert to zero-based indexing
-    elem1 -= 1;
-    elem2 -= 1;
+    local_elem -= 1;
+    neighbor_elem -= 1;
 
     MPIEdgeProperties mpi_edge_props(
-        static_cast<specfem::element_connections::type>(connection_type_int),
-        static_cast<specfem::mesh_entity::dim3::type>(orientation_int),
-        neighbor_rank, neighbor_local_idx, local_idx, local_anchor_idx,
-        neighbor_anchor_idx);
+        specfem::element_connections::type::strongly_conforming,
+        static_cast<specfem::mesh_entity::dim3::type>(local_conn_id),
+        neighbor_rank,
+        static_cast<specfem::mesh_entity::dim3::type>(neighbor_conn_id),
+        local_elem, neighbor_elem,
+        static_cast<specfem::mesh_entity::dim3::type>(local_anchor),
+        static_cast<specfem::mesh_entity::dim3::type>(neighbor_anchor));
     mpi_conns.push_back(mpi_edge_props);
   }
 
