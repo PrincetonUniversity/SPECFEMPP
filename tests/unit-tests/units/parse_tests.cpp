@@ -314,3 +314,21 @@ TEST(Units_QuantityCast, ThrowsHertzToMeters) {
 TEST(Units_QuantityCast, ThrowsMetersToSeconds) {
   EXPECT_THROW(quantity_cast<Seconds>(parse("100.0 m")), std::invalid_argument);
 }
+
+// ---------------------------------------------------------------------------
+// quantity_cast string overload
+// ---------------------------------------------------------------------------
+
+TEST(Units_QuantityCast, StringOverloadHertz) {
+  auto f = quantity_cast<Hertz>("20.0 Hz");
+  EXPECT_TRUE(is_close(f.raw(), type_real(20.0)));
+}
+
+TEST(Units_QuantityCast, StringOverloadCrossDimension) {
+  auto w = quantity_cast<Omega>("20.0 Hz");
+  EXPECT_TRUE(is_close(w.raw(), type_real(20.0) * parse_two_pi));
+}
+
+TEST(Units_QuantityCast, StringOverloadThrowsUnknownUnit) {
+  EXPECT_THROW((quantity_cast<Hertz>("1.0 lightyear")), std::invalid_argument);
+}

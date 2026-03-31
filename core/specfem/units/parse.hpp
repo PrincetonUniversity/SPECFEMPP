@@ -340,4 +340,23 @@ template <typename To> To quantity_cast(const AnyQuantity &v) {
   return std::visit(impl::quantity_cast_visitor<To>{}, v);
 }
 
+/**
+ * @brief Parse a string and convert directly to a specific quantity type.
+ *
+ * Convenience overload combining parse() and quantity_cast().
+ *
+ * @code
+ * auto f = specfem::units::quantity_cast<Hertz>("20.0 Hz");
+ * auto w = specfem::units::quantity_cast<Omega>("20.0 Hz"); // 2π·20 rad/s
+ * @endcode
+ *
+ * @tparam To  Target Quantity type.
+ * @param  s   Input string (number + unit symbol).
+ * @return     Converted quantity in the target unit.
+ * @throws std::invalid_argument on malformed input or unsupported conversion.
+ */
+template <typename To> To quantity_cast(std::string_view s) {
+  return quantity_cast<To>(parse(s));
+}
+
 } // namespace specfem::units

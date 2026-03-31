@@ -2,6 +2,8 @@
 
 #include "specfem/mpi.hpp"
 #include "specfem/setup.hpp"
+#include "specfem/units.hpp"
+#include "specfem/utilities/band.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem::runtime_configuration {
@@ -20,8 +22,8 @@ public:
    */
   Attenuation()
       : attenuation_enabled(false), reference_frequency(-1.0),
-        maximum_attenuation_frequency(-1.0),
-        minimum_attenuation_frequency(-1.0) {};
+        attenuation_frequency_band(specfem::units::Hertz(-10.0),
+                                   specfem::units::Hertz(-1.0)) {};
 
   /**
    * @brief Construct a new attenuation configuration object
@@ -37,8 +39,9 @@ public:
               const type_real minimum_attenuation_frequency)
       : attenuation_enabled(attenuation_enabled),
         reference_frequency(reference_frequency),
-        maximum_attenuation_frequency(maximum_attenuation_frequency),
-        minimum_attenuation_frequency(minimum_attenuation_frequency) {};
+        attenuation_frequency_band(
+            specfem::units::Hertz(minimum_attenuation_frequency),
+            specfem::units::Hertz(maximum_attenuation_frequency)) {};
 
   /**
    * @brief Construct a new attenuation configuration object
@@ -48,27 +51,22 @@ public:
   Attenuation(const YAML::Node &Node);
 
   bool is_attenuation_enabled() const { return this->attenuation_enabled; }
-  type_real get_reference_frequency() const {
-    return this->reference_frequency;
+  specfem::units::Hertz get_reference_frequency() const {
+    return specfem::units::Hertz(this->reference_frequency);
   }
-  type_real get_maximum_attenuation_frequency() const {
-    return this->maximum_attenuation_frequency;
-  }
-  type_real get_minimum_attenuation_frequency() const {
-    return this->minimum_attenuation_frequency;
+  specfem::utilities::Band<specfem::units::Hertz>
+  get_attenuation_frequency_band() const {
+    return this->attenuation_frequency_band;
   }
 
 private:
-  bool attenuation_enabled;      ///< whether to include attenuation in the
-                                 ///< simulation
-  type_real reference_frequency; ///< whether to include reference frequency in
-                                 ///< the simulation
-  type_real maximum_attenuation_frequency; ///< whether to include maximum
-                                           ///< attenuation frequency in the
-                                           ///< simulation
-  type_real minimum_attenuation_frequency; ///< whether to include minimum
-                                           ///< attenuation frequency in the
-                                           ///< simulation
+  bool attenuation_enabled; ///< whether to include attenuation in the
+                            ///< simulation
+  specfem::units::Hertz reference_frequency; ///< whether to include reference
+                                             ///< frequency in the simulation
+  specfem::utilities::Band<specfem::units::Hertz>
+      attenuation_frequency_band; ///< frequency band for attenuation in the
+                                  ///< simulation
 };
 
 } // namespace specfem::runtime_configuration
