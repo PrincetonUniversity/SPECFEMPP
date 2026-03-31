@@ -5,9 +5,7 @@
 
 #include <type_traits>
 
-void specfem::assembly::Attenuation<
-    specfem::element::dimension_tag::dim2,
-    specfem::element::attenuation_tag::constant_isotropic>::
+void specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
     init_memory_variables(
         const specfem::assembly::element_types<
             specfem::element::dimension_tag::dim2> &element_types,
@@ -32,9 +30,7 @@ void specfem::assembly::Attenuation<
           })
     }
 
-specfem::assembly::Attenuation<
-    specfem::element::dimension_tag::dim2,
-    specfem::element::attenuation_tag::constant_isotropic>::
+specfem::assembly::Attenuation<specfem::element::dimension_tag::dim2>::
     Attenuation(
         const specfem::units::Hertz reference_frequency,
         const specfem::units::Hertz min_frequency,

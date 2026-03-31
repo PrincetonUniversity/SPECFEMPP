@@ -16,8 +16,7 @@
 namespace specfem::assembly {
 
 template <>
-struct Attenuation<specfem::element::dimension_tag::dim2,
-                   specfem::element::attenuation_tag::constant_isotropic>
+struct Attenuation<specfem::element::dimension_tag::dim2>
     : public specfem::data_access::Container<
           specfem::data_access::ContainerType::domain,
           specfem::data_access::DataClassType::attenuation,
@@ -53,11 +52,6 @@ struct Attenuation<specfem::element::dimension_tag::dim2,
 
   constexpr static auto dimension_tag =
       specfem::element::dimension_tag::dim2; ///< Dimension tag for 2D
-  constexpr static auto attenuation_tag =
-      specfem::element::attenuation_tag::constant_isotropic; ///< Attenuation
-                                                             ///< tag for
-                                                             ///< constant
-                                                             ///< isotropic
   constexpr static int N_SLS =
       specfem::constants::N_SLS; ///< Number of standard linear solids
 

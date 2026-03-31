@@ -4,9 +4,7 @@
 
 namespace specfem::assembly {
 
-template <specfem::element::dimension_tag DimensionTag,
-          specfem::element::attenuation_tag AttenuationTag>
-struct Attenuation;
+template <specfem::element::dimension_tag DimensionTag> struct Attenuation;
 
 } // namespace specfem::assembly
 

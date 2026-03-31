@@ -46,9 +46,8 @@ template <typename PointAttenuationType, typename IndexType,
               int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
     const IndexType &lcoord,
-    const specfem::assembly::Attenuation<
-        PointAttenuationType::dimension_tag,
-        specfem::element::attenuation_tag::constant_isotropic> &attenuation,
+    const specfem::assembly::Attenuation<PointAttenuationType::dimension_tag>
+        &attenuation,
     PointAttenuationType &point) {
 
   constexpr auto MediumTag = PointAttenuationType::medium_tag;
